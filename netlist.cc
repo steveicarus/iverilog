@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.150 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: netlist.cc,v 1.151 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -303,7 +303,7 @@ NetNode* NetNode::next_node()
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 : NetObj(s, n, npins), sig_next_(0), sig_prev_(0),
-    type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
+    type_(t), port_type_(NOT_A_PORT), signed_(false), msb_(npins-1), lsb_(0),
     local_flag_(false), eref_count_(0)
 {
       assert(s);
@@ -336,8 +336,8 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 : NetObj(s, n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
     sig_prev_(0), type_(t),
-    port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false),
-    eref_count_(0)
+    port_type_(NOT_A_PORT), signed_(false), msb_(ms), lsb_(ls),
+    local_flag_(false), eref_count_(0)
 {
       assert(s);
 
@@ -392,6 +392,16 @@ NetNet::PortType NetNet::port_type() const
 void NetNet::port_type(NetNet::PortType t)
 {
       port_type_ = t;
+}
+
+bool NetNet::get_signed() const
+{
+      return signed_;
+}
+
+void NetNet::set_signed(bool flag)
+{
+      signed_ = flag;
 }
 
 long NetNet::lsb() const
@@ -2163,6 +2173,11 @@ string NetESignal::name() const
       return net_->name();
 }
 
+bool NetESignal::has_sign() const
+{
+      return net_->get_signed();
+}
+
 unsigned NetESignal::pin_count() const
 {
       return net_->pin_count();
@@ -2465,6 +2480,10 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.151  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.150  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *

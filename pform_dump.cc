@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.64 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.65 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 /*
@@ -217,6 +217,10 @@ void PWire::dump(ostream&out) const
 	    break;
 	  case NetNet::NOT_A_PORT:
 	    break;
+      }
+
+      if (signed_) {
+	    out << " signed";
       }
 
       assert(msb_.count() == lsb_.count());
@@ -806,6 +810,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.65  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.64  2000/12/10 22:01:36  steve
  *  Support decimal constants in behavioral delays.
  *

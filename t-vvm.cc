@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.188 2000/12/10 06:41:59 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.189 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -706,16 +706,26 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'G': // >=
-	    tgt_->defn << "      " << result << "[0] = vvm_binop_ge("
-		<< lres << "," << rres << ");" << endl;
+	    if (expr->left()->has_sign() && expr->right()->has_sign()) {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_ge_s("
+			     << lres << "," << rres << ");" << endl;
+	    } else {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_ge("
+			     << lres << "," << rres << ");" << endl;
+	    }
 	    break;
 	  case 'l': // left shift(<<)
 	    tgt_->defn << "      " << "vvm_binop_shiftl(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'L': // <=
-	    tgt_->defn << "      " << result << "[0] = vvm_binop_le("
-		<< lres << "," << rres << ");" << endl;
+	    if (expr->left()->has_sign() && expr->right()->has_sign()) {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_le_s("
+			     << lres << "," << rres << ");" << endl;
+	    } else {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_le("
+			     << lres << "," << rres << ");" << endl;
+	    }
 	    break;
 	  case 'N': // !==
 	    tgt_->defn << "      " << result << "[0] = vvm_binop_nee("
@@ -726,12 +736,22 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '<':
-	    tgt_->defn << "      " << result << "[0] = vvm_binop_lt("
-		<< lres << "," << rres << ");" << endl;
+	    if (expr->left()->has_sign() && expr->right()->has_sign()) {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_lt_s("
+			     << lres << "," << rres << ");" << endl;
+	    } else {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_lt("
+			     << lres << "," << rres << ");" << endl;
+	    }
 	    break;
 	  case '>':
-	    tgt_->defn << "      " << result << "[0] = vvm_binop_gt("
-		<< lres << "," << rres << ");" << endl;
+	    if (expr->left()->has_sign() && expr->right()->has_sign()) {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_gt_s("
+			     << lres << "," << rres << ");" << endl;
+	    } else {
+		  tgt_->defn << "      " << result << "[0] = vvm_binop_gt("
+			     << lres << "," << rres << ");" << endl;
+	    }
 	    break;
 	  case 'o': // logical or (||)
 	    tgt_->defn << "      " << result << "[0] = vvm_binop_lor("
@@ -3370,6 +3390,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.189  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.188  2000/12/10 06:41:59  steve
  *  Support delays on continuous assignment from idents. (PR#40)
  *

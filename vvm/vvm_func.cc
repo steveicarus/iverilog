@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.12 2000/07/06 18:12:28 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.13 2000/12/11 00:31:44 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -385,6 +385,34 @@ vpip_bit_t vvm_binop_lt(const vvm_bitset_t&l, const vvm_bitset_t&r)
       return result;
 }
 
+/*
+ * This is the < operator that applies to signed operands.
+ */
+vpip_bit_t vvm_binop_lt_s(const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      vpip_bit_t l_pad = l.get_bit(l.get_width()-1);
+      vpip_bit_t r_pad = r.get_bit(r.get_width()-1);
+
+	/* If l>=0 and r>=0, return $unsigned(l) < $unsigned(r) */
+      if (B_IS0(l_pad) && B_IS0(r_pad))
+	    return vvm_binop_lt(l, r);
+
+	/* If l < 0 and r < 0, return $unsigned(r) < $unsigned(l) */
+      if (B_IS1(l_pad) && B_IS1(r_pad))
+	    return vvm_binop_lt(r, l);
+
+	/* If l >= 0 and r < 0, return false; */
+      if (B_IS0(l_pad) && B_IS1(r_pad))
+	    return St0;
+
+	/* if l < 0 and r >= 0, return true; */
+      if (B_IS1(l_pad) && B_IS0(r_pad))
+	    return St1;
+
+	/* Otherwise, one or the other side is unknown. Return X. */
+      return StX;
+}
+
 vpip_bit_t vvm_binop_le(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = St1;
@@ -404,6 +432,34 @@ vpip_bit_t vvm_binop_le(const vvm_bitset_t&l, const vvm_bitset_t&r)
       }
 
       return result;
+}
+
+/*
+ * This is the <= operator that applies to signed operands.
+ */
+vpip_bit_t vvm_binop_le_s(const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      vpip_bit_t l_pad = l.get_bit(l.get_width()-1);
+      vpip_bit_t r_pad = r.get_bit(r.get_width()-1);
+
+	/* If l>=0 and r>=0, return $unsigned(l) <= $unsigned(r) */
+      if (B_IS0(l_pad) && B_IS0(r_pad))
+	    return vvm_binop_le(l, r);
+
+	/* If l < 0 and r < 0, return $unsigned(r) <= $unsigned(l) */
+      if (B_IS1(l_pad) && B_IS1(r_pad))
+	    return vvm_binop_le(r, l);
+
+	/* If l >= 0 and r < 0, return false; */
+      if (B_IS0(l_pad) && B_IS1(r_pad))
+	    return St0;
+
+	/* if l < 0 and r >= 0, return true; */
+      if (B_IS1(l_pad) && B_IS0(r_pad))
+	    return St1;
+
+	/* Otherwise, one or the other side is unknown. Return X. */
+      return StX;
 }
 
 vpip_bit_t vvm_binop_gt(const vvm_bitset_t&l, const vvm_bitset_t&r)
@@ -430,6 +486,34 @@ vpip_bit_t vvm_binop_gt(const vvm_bitset_t&l, const vvm_bitset_t&r)
       return result;
 }
 
+/*
+ * This is the > operator that applies to signed operands.
+ */
+vpip_bit_t vvm_binop_gt_s(const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      vpip_bit_t l_pad = l.get_bit(l.get_width()-1);
+      vpip_bit_t r_pad = r.get_bit(r.get_width()-1);
+
+	/* If l>=0 and r>=0, return $unsigned(l) > $unsigned(r) */
+      if (B_IS0(l_pad) && B_IS0(r_pad))
+	    return vvm_binop_gt(l, r);
+
+	/* If l < 0 and r < 0, return $unsigned(r) > $unsigned(l) */
+      if (B_IS1(l_pad) && B_IS1(r_pad))
+	    return vvm_binop_gt(r, l);
+
+	/* If l >= 0 and r < 0, return true; */
+      if (B_IS0(l_pad) && B_IS1(r_pad))
+	    return St1;
+
+	/* if l < 0 and r >= 0, return false; */
+      if (B_IS1(l_pad) && B_IS0(r_pad))
+	    return St0;
+
+	/* Otherwise, one or the other side is unknown. Return X. */
+      return StX;
+}
+
 vpip_bit_t vvm_binop_ge(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = St1;
@@ -451,6 +535,34 @@ vpip_bit_t vvm_binop_ge(const vvm_bitset_t&l, const vvm_bitset_t&r)
       }
 
       return result;
+}
+
+/*
+ * This is the >= operator that applies to signed operands.
+ */
+vpip_bit_t vvm_binop_ge_s(const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      vpip_bit_t l_pad = l.get_bit(l.get_width()-1);
+      vpip_bit_t r_pad = r.get_bit(r.get_width()-1);
+
+	/* If l>=0 and r>=0, return $unsigned(l) >= $unsigned(r) */
+      if (B_IS0(l_pad) && B_IS0(r_pad))
+	    return vvm_binop_ge(l, r);
+
+	/* If l < 0 and r < 0, return $unsigned(r) >= $unsigned(l) */
+      if (B_IS1(l_pad) && B_IS1(r_pad))
+	    return vvm_binop_ge(r, l);
+
+	/* If l >= 0 and r < 0, return true; */
+      if (B_IS0(l_pad) && B_IS1(r_pad))
+	    return St1;
+
+	/* if l < 0 and r >= 0, return false; */
+      if (B_IS1(l_pad) && B_IS0(r_pad))
+	    return St0;
+
+	/* Otherwise, one or the other side is unknown. Return X. */
+      return StX;
 }
 
 vpip_bit_t vvm_binop_land(const vvm_bitset_t&l, const vvm_bitset_t&r)
@@ -495,6 +607,10 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.13  2000/12/11 00:31:44  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.12  2000/07/06 18:12:28  steve
  *  unop_not can take out width same as in width.
  *

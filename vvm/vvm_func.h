@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.29 2000/05/19 04:22:56 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.30 2000/12/11 00:31:44 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -184,17 +184,21 @@ extern vpip_bit_t vvm_binop_xeq(const vvm_bitset_t&l, const vvm_bitset_t&r);
 extern vpip_bit_t vvm_binop_zeq(const vvm_bitset_t&l, const vvm_bitset_t&r);
 
 
-extern vpip_bit_t vvm_binop_lt(const vvm_bitset_t&l, const vvm_bitset_t&r);
-
 /*
- * The <= operator takes operands of natural width and returns a
- * single bit. The result is V1 if l <= r, otherwise V0;
+ * The _s variants are signed versions. That is, it assumes the
+ * operands are signed values and does the comparison on that basis.
  */
+extern vpip_bit_t vvm_binop_lt(const vvm_bitset_t&l, const vvm_bitset_t&r);
+extern vpip_bit_t vvm_binop_lt_s(const vvm_bitset_t&l, const vvm_bitset_t&r);
+
 extern vpip_bit_t vvm_binop_le(const vvm_bitset_t&l, const vvm_bitset_t&r);
+extern vpip_bit_t vvm_binop_le_s(const vvm_bitset_t&l, const vvm_bitset_t&r);
 
 extern vpip_bit_t vvm_binop_gt(const vvm_bitset_t&l, const vvm_bitset_t&r);
+extern vpip_bit_t vvm_binop_gt_s(const vvm_bitset_t&l, const vvm_bitset_t&r);
 
 extern vpip_bit_t vvm_binop_ge(const vvm_bitset_t&l, const vvm_bitset_t&r);
+extern vpip_bit_t vvm_binop_ge_s(const vvm_bitset_t&l, const vvm_bitset_t&r);
 
 extern vpip_bit_t vvm_binop_land(const vvm_bitset_t&l, const vvm_bitset_t&r);
 
@@ -206,6 +210,10 @@ extern void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.30  2000/12/11 00:31:44  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.29  2000/05/19 04:22:56  steve
  *  Add the integer modulus function.
  *

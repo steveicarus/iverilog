@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.6 2000/12/04 17:37:04 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.7 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -341,12 +341,17 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    NetNet*sig = new NetNet(scope, path + "." +basename, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
+	    sig->set_signed(get_signed());
 	    sig->set_attributes(attributes);
       }
 }
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.7  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.6  2000/12/04 17:37:04  steve
  *  Add Attrib class for holding NetObj attributes.
  *

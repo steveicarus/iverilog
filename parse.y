@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.112 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: parse.y,v 1.113 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -195,13 +195,12 @@ source_file
      rule has presumably set up the scope. */
 block_item_decl
 	: K_reg range register_variable_list ';'
-		{ pform_set_net_range($3, $2);
+		{ pform_set_net_range($3, $2, false);
 		}
 	| K_reg register_variable_list ';'
 		{ delete $2; }
 	| K_reg K_signed range register_variable_list ';'
-		{ pform_set_net_range($4, $3);
-		  yyerror(@2, "sorry: signed reg not supported.");
+		{ pform_set_net_range($4, $3, true);
 		}
 	| K_reg K_signed register_variable_list ';'
 		{ delete $3;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.106 2000/12/10 06:41:59 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.107 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 /*
@@ -73,6 +73,8 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    pin_count() << "]";
       if (local_flag_)
 	    o << " (local)";
+      if (signed_)
+	    o << " signed";
       o << " (eref=" << get_eref() << ")";
       if (scope())
 	    o << " scope=" << scope()->name();
@@ -996,6 +998,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.107  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.106  2000/12/10 06:41:59  steve
  *  Support delays on continuous assignment from idents. (PR#40)
  *

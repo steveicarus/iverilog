@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.67 2000/11/30 17:31:42 steve Exp $"
+#ident "$Id: pform.cc,v 1.68 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -328,7 +328,9 @@ void pform_make_udp(const char*name, list<string>*parms,
  * only called by the parser within the scope of the net declaration,
  * and the name that I receive only has the tail component.
  */
-static void pform_set_net_range(const char*name, const svector<PExpr*>*range)
+static void pform_set_net_range(const char*name,
+				const svector<PExpr*>*range,
+				bool signed_flag)
 {
       assert(range);
       assert(range->count() == 2);
@@ -342,9 +344,12 @@ static void pform_set_net_range(const char*name, const svector<PExpr*>*range)
       assert((*range)[0]);
       assert((*range)[1]);
       cur->set_range((*range)[0], (*range)[1]);
+      cur->set_signed(signed_flag);
 }
 
-void pform_set_net_range(list<char*>*names, svector<PExpr*>*range)
+void pform_set_net_range(list<char*>*names,
+			 svector<PExpr*>*range,
+			 bool signed_flag)
 {
       assert(range->count() == 2);
 
@@ -352,7 +357,7 @@ void pform_set_net_range(list<char*>*names, svector<PExpr*>*range)
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    char*txt = *cur;
-	    pform_set_net_range(txt, range);
+	    pform_set_net_range(txt, range, signed_flag);
 	    free(txt);
       }
 
@@ -676,7 +681,7 @@ void pform_makewire(const vlltype&li,
 	    char*txt = *cur;
 	    pform_makewire(li, txt, type);
 	    if (range)
-		  pform_set_net_range(txt, range);
+		  pform_set_net_range(txt, range, false);
 	    free(txt);
       }
 
@@ -878,7 +883,7 @@ void pform_set_port_type(list<char*>*names,
 	    char*txt = *cur;
 	    pform_set_port_type(txt, pt);
 	    if (range)
-		  pform_set_net_range(txt, range);
+		  pform_set_net_range(txt, range, false);
 	    free(txt);
       }
 
@@ -902,6 +907,7 @@ static void pform_set_reg_integer(const char*nm)
 
       cur->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
 		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
+      cur->set_signed(true);
 }
 
 void pform_set_reg_integer(list<char*>*names)
@@ -1002,6 +1008,10 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.68  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.67  2000/11/30 17:31:42  steve
  *  Change LineInfo to store const C strings.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.h,v 1.8 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: PWire.h,v 1.9 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -49,6 +49,9 @@ class PWire : public LineInfo {
       NetNet::PortType get_port_type() const;
       bool set_port_type(NetNet::PortType);
 
+      void set_signed(bool flag);
+      bool get_signed() const;
+
       void set_range(PExpr*msb, PExpr*lsb);
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
@@ -64,6 +67,7 @@ class PWire : public LineInfo {
       string name_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
+      bool signed_;
 
 	// These members hold expressions for the bit width of the
 	// wire. If they do not exist, the wire is 1 bit wide.
@@ -82,6 +86,10 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.9  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.8  2000/05/02 16:27:38  steve
  *  Move signal elaboration to a seperate pass.
  *

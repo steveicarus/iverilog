@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.185 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: netlist.h,v 1.186 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 /*
@@ -334,6 +334,11 @@ class NetNet  : public NetObj, public LineInfo {
       PortType port_type() const;
       void port_type(PortType t);
 
+	/* If a NetNet is signed, then its value is to be treated as
+	   signed. Otherwise, it is unsigned. */
+      bool get_signed() const;
+      void set_signed(bool);
+
 	/* These methods return the msb and lsb indices for the most
 	   significant and least significant bits. These are signed
 	   longs, and may be different from pin numbers. For example,
@@ -366,6 +371,7 @@ class NetNet  : public NetObj, public LineInfo {
     private:
       Type   type_;
       PortType port_type_;
+      bool signed_;
 
       long msb_, lsb_;
 
@@ -2477,6 +2483,10 @@ class NetESignal  : public NetExpr {
       NetESignal(NetNet*n);
       ~NetESignal();
 
+	// a NetESignal expression is signed if the NetNet that it
+	// refers to is signed.
+      bool has_sign() const;
+
       string name() const;
       virtual bool set_width(unsigned);
 
@@ -2825,6 +2835,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.186  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.185  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *

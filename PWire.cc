@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.cc,v 1.3 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: PWire.cc,v 1.4 2000/12/11 00:31:43 steve Exp $"
 #endif
 
 # include  "PWire.h"
 # include  <assert.h>
 
 PWire::PWire(const string&n, NetNet::Type t, NetNet::PortType pt)
-: name_(n), type_(t), port_type_(pt), lidx_(0), ridx_(0)
+: name_(n), type_(t), port_type_(pt), signed_(false), lidx_(0), ridx_(0)
 {
 }
 
@@ -83,6 +83,16 @@ bool PWire::set_port_type(NetNet::PortType pt)
       }
 }
 
+void PWire::set_signed(bool flag)
+{
+      signed_ = flag;
+}
+
+bool PWire::get_signed() const
+{
+      return signed_;
+}
+
 void PWire::set_range(PExpr*m, PExpr*l)
 {
       msb_ = svector<PExpr*>(msb_,m);
@@ -100,6 +110,10 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.4  2000/12/11 00:31:43  steve
+ *  Add support for signed reg variables,
+ *  simulate in t-vvm signed comparisons.
+ *
  * Revision 1.3  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
