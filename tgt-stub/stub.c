@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.84 2003/12/03 04:27:10 steve Exp $"
+#ident "$Id: stub.c,v 1.85 2004/06/16 16:22:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -193,6 +193,23 @@ static void show_lpm(ivl_lpm_t net)
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Q %u: %s\n", idx,
 			      ivl_nexus_name(ivl_lpm_q(net, idx)));
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
+		      fprintf(out, "    Data A %u: %s\n", idx,
+			      nex? ivl_nexus_name(nex) : "");
+		}
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
+		      fprintf(out, "    Data B %u: %s\n", idx,
+			      nex? ivl_nexus_name(nex) : "");
+		}
+		break;
+	  }
+
+	  case IVL_LPM_CMP_NE: {
+		fprintf(out, "  LPM_COMPARE(NE) %s: <width=%u>\n",
+			ivl_lpm_basename(net), width);
+		fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
 		for (idx = 0 ;  idx < width ;  idx += 1) {
 		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
 		      fprintf(out, "    Data A %u: %s\n", idx,
@@ -892,6 +909,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.85  2004/06/16 16:22:04  steve
+ *  Dump NE LPM device.
+ *
  * Revision 1.84  2003/12/03 04:27:10  steve
  *  Pre-gcc3 compile error.
  *
