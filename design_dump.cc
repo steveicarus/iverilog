@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.23 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.24 1999/05/17 04:53:47 steve Exp $"
 #endif
 
 /*
@@ -465,14 +465,32 @@ void NetEBinary::dump(ostream&o) const
 	  case 'a':
 	    o << "&&";
 	    break;
+	  case 'E':
+	    o << "===";
+	    break;
 	  case 'e':
 	    o << "==";
+	    break;
+	  case 'G':
+	    o << ">=";
+	    break;
+	  case 'l':
+	    o << "<<";
+	    break;
+	  case 'L':
+	    o << "<=";
 	    break;
 	  case 'n':
 	    o << "!=";
 	    break;
+	  case 'N':
+	    o << "!==";
+	    break;
 	  case 'o':
 	    o << "||";
+	    break;
+	  case 'r':
+	    o << ">>";
 	    break;
       }
       o << "(";
@@ -580,6 +598,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.24  1999/05/17 04:53:47  steve
+ *  translate the letter synonyms for operators.
+ *
  * Revision 1.23  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>
