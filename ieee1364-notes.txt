@@ -1,0 +1,107 @@
+
+                Icarus Verilog vs. IEEE1364
+                Copyright 2000 Stephen Williams
+
+The IEEE1364 standard is the bible that defines the correctness of the
+Icarus Verilog implementation and behavior of the compiled
+program. The IEEE1364.1 is also referenced for matters of
+synthesis. So the ultimate definition of right and wrong comes from
+those documents.
+
+That does not mean that a Verilog implementation is fully
+constrained. The standard document allows for implementation specific
+behavior that, when properly accounted for, does not effect the
+intended semantics of the specified language. It is therefore possible
+and common to write programs that produce different results when run
+by different Verilog implementations.
+
+
+STANDARDIZATION ISSUES
+
+These are some issues where the IEEE1364 left unclear, unspecified or
+simply wrong. I'll try to be precise as I can, and reference the
+standard as needed. I've made implementation decisions for Icarus
+Verilog, and I will make clear what those decisions are and how they
+affect the language.
+
+* OBJECTS CAN BE DECLARED ANYWHERE IN THE MODULE
+
+Consider this module:
+
+    module sample1;
+        initial foo = 1;
+	reg foo;
+	wire tmp = bar;
+	initial #1 $display("foo = %b, bar = %b", foo, tmp);
+    endmodule
+
+Notice that the ``reg foo;'' declaration is placed after the first
+initial statement. It turns out that this is a perfectly legal module
+according to the -1995 and -2000 versions of the standard. The
+statement ``reg foo;'' is a module_item_declaration which is in turn a
+module_item. The BNF in the appendix of IEEE1364-1995 treats all
+module_item statements equally, so no order is imposed.
+
+Furthermore, there is no text (that I can find) elsewhere in the
+standard that imposes any ordering restriction. The sorts of
+restrictions I would look for are "module_item_declarations must
+appear before all other module_items" or "variables must be declared
+textually before they are referenced." Such statements simply do not
+exist. (Personally, I think it is fine that they don't.)
+
+The closest is the rules for implicit declarations of variables that
+are otherwise undeclared. In the above example, ``bar'' is implicitly
+declared and is therefore a wire. However, although ``initial foo = 1;''
+is written before foo is declared, foo *is* declared within the
+module, and declared legally by the BNF of the standard.
+
+Here is another example:
+
+    module sample2;
+	initial x.foo = 1;
+        test x;
+	initial #1 $display("foo = %b", x.foo);
+    endmodule
+
+    module test;
+        reg foo;
+    endmodule;
+
+From this example one can clearly see that foo is once again declared
+after its use in behavioral code. One also sees a forward reference of
+an entire module. Once again, the standard places no restriction on
+the order of module declarations in a source file, so this program is,
+according to the standard, perfectly well formed.
+
+Icarus Verilog interprets both of these examples according to "The
+Standard As I Understand It." However, commercial tools in general
+break down with these programs. In particular, the first example
+may generate different errors depending on the tool. The most common
+error is to claim that ``foo'' is declared twice, once (implicitly) as
+a wire and once as a reg.
+
+So the question now becomes, "Is the standard broken, or are the tools
+limited?" Coverage of the standard seems to vary widely from tool to
+tool so it is not clear that the standard really is at fault. It is
+clear, however, that somebody goofed somewhere.
+
+My personal opinion is that there is no logical need to require that
+all module_item_declarations preceed any other module items. I
+personally would oppose such a restriction. It may make sense to
+require that declarations of variables within a module be preceded by
+their use, although even that is not necessary for the implementation
+of efficient compilers.
+
+However, the existence hierarchical naming syntax as demonstrated in
+sample2 can have implications that affect any declaration order
+rules. When reaching into a module with a hierarchical name, the
+module being referenced is already completely declared (or not
+declared at all, as in sample2) so module_item order is completely
+irrelevent. But a "declare before use" rule would infect module
+ordering, by requiring that modules that are used be first defined.
+
+$Id: ieee1364-notes.txt,v 1.1 2000/07/23 18:06:31 steve Exp $
+$Log: ieee1364-notes.txt,v $
+Revision 1.1  2000/07/23 18:06:31  steve
+ Document ieee1364 issues.
+
