@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.16 2003/05/29 03:46:21 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.17 2003/06/11 05:07:31 steve Exp $"
 #endif
 
 /*
@@ -256,7 +256,39 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    }
 	    break;
 
+	  case vpiVectorVal:
+	    vp->value.vector = (s_vpi_vecval*)
+		  need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL);
+	    assert(vp->value.vector);
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  int word = idx/32;
+		  PLI_INT32 mask = 1 << (idx%32);
+
+		  switch (get_bit(rfp,idx)) {
+		      case 0:
+			vp->value.vector[word].aval &= ~mask;
+			vp->value.vector[word].bval &= ~mask;
+			break;
+		      case 1:
+			vp->value.vector[word].aval |=  mask;
+			vp->value.vector[word].bval &= ~mask;
+			break;
+		      case 2:
+			vp->value.vector[word].aval |=  mask;
+			vp->value.vector[word].bval |=  mask;
+			break;
+		      case 3:
+			vp->value.vector[word].aval &= ~mask;
+			vp->value.vector[word].bval |=  mask;
+			break;
+		  }
+	    }
+	    break;
+
 	  default:
+	    fprintf(stderr, "internal error: vpi_get_value(<format=%d>)"
+		    " not implemented for vthr_vectors.\n", vp->format);
 	      /* XXXX Not implemented yet. */
 	    assert(0);
       }
@@ -487,6 +519,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.17  2003/06/11 05:07:31  steve
+ *  support vpiVectorVal for value of thread vector.
+ *
  * Revision 1.16  2003/05/29 03:46:21  steve
  *  Add tf_getp/putp support for integers
  *  and real valued arguments.
