@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.54 2001/10/22 02:04:37 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.55 2001/10/24 03:43:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -266,9 +266,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
  * it writes out the resolver declarations needed to perform strength
  * resolution.
  *
- * The string that this returns must be copied out before this
- * function is called again. Otherwise, the string memory will be
- * overwritten.
+ * The string that this returns is bound to the nexus, so the pointer
+ * remains valid.
  */
 static const char* draw_net_input(ivl_nexus_t nex)
 {
@@ -404,11 +403,12 @@ static void draw_net_in_scope(ivl_signal_t sig)
       unsigned idx;
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
-      char**args;
+      typedef const char*const_charp;
+      const_charp* args;
 
       const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
 
-      args = (char**)calloc(ivl_signal_pins(sig), sizeof(char*));
+      args = (const_charp*)calloc(ivl_signal_pins(sig), sizeof(char*));
 
 	/* Connect all the pins of the signal to something. */
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
@@ -510,8 +510,13 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       const char*lcasc = 0x0;
       char identity_val = '0';
       int level;
-      int ninp;
+      int ninp = ivl_logic_pins(lptr) - 1;
+      typedef const char*const_charp;
+      const_charp*input_strings = calloc(ninp, sizeof(const_charp));
 
+      for (pdx = 0 ;  pdx < ninp ;  pdx += 1)
+	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
+      
       switch (ivl_logic_type(lptr)) {
 
           case IVL_LO_UDP:
@@ -615,6 +620,13 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       if (!lcasc)
 	lcasc = ltype;
 
+	/* Get all the input label that I will use for parameters to
+	   the functor that I create later. */
+      ninp = ivl_logic_pins(lptr) - 1;
+      input_strings = calloc(ninp, sizeof(char*));
+      for (pdx = 0 ;  pdx < ninp ;  pdx += 1)
+	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
+      
       level = 0;
       ninp = ivl_logic_pins(lptr) - 1;
       while (ninp) {
@@ -636,9 +648,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 				      level - 1,
 				      pdx*4 );
 			} else {
-			      ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
-			      fprintf(vvp_out, ", ");
-			      draw_input_from_net(nex);
+			      fprintf(vvp_out, ", %s", input_strings[pdx]);
 			}
 		  }
 		  for ( ;  pdx < inst+4 ;  pdx += 1) {
@@ -653,6 +663,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  ninp = 0;
 	    level += 1;
       }
+
+	/* Free the array of char*. The strings themselves are
+	   persistent, held by the ivl_nexus_t objects. */
+      free(input_strings);
 }
 
 static void draw_event_in_scope(ivl_event_t obj)
@@ -1204,6 +1218,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.55  2001/10/24 03:43:45  steve
+ *  Write resolvers before the .functor (PR#300)
+ *
  * Revision 1.54  2001/10/22 02:04:37  steve
  *  unused idx warning.
  *
