@@ -1,0 +1,106 @@
+
+WHAT IS VVM
+
+The vvm target is C++ output that uses the VVM library for a
+runtime. The Verilog module that is elaborated must have no ports, as
+the output program is self contained. It is useful to write a "main"
+module that tests a part being designed. This output type is most
+useful for batch simulation.
+
+Although none are required, these processing steps are recommended:
+	 nobufz
+	 sigfold
+	 propinit
+
+So a sample command line to compile a Verilog file to C++ would be:
+
+	ivl -F nobufz -F sigfold -F propinit -t vvm -o foo.cc foo.vl
+
+ATTRIBUTES
+
+(none)
+
+INITIALIZATION OF THE SIMULATION
+
+The t-vvm generates initialization code that causes gates to get
+initial values for their inputs, if any were specified by the
+programmer, and outputs if the device is sequential. This
+initialization code goes into the generated design_init() function.
+
+The t-vvm also generates startup code that causes gates to generate
+outputs from the initial inputs. This cannot be done in the
+design_init() function because of the possibilities of cycles and
+other complexities in the netlist.
+
+
+THREADS
+
+The generated code does not actually use threads. It instead supports
+threads of verilog behavior by reducing the sequential process into
+basic blocks, and calling those basic blocks as needed.
+
+SMALL SEQUENTIAL UDP GATES
+
+For gates with 8 or fewer inputs, vvm has a table based
+representation. When a transition happens, the transition is converted
+into a table index that addresses the next output value. This is a
+compact method for representing even the most degenerate UDP
+transition tables, but these degenerate tables can get pretty
+large. Hence the practical limit.
+
+The index into the transtion table is made up of the current output
+and current inputs with the following recursive formula:
+
+	I[0] = X
+	I[N] = X[N] + 3 * I[N-1]
+
+where X[N], the value of pin N, is 0 for V0, 1 for V1 and 2 for Vx. In
+other words:
+
+	unsigned state = current_output;
+	for (unsigned idx = 1 ;  idx < npins ;  idx += 1)
+	    state = 3*state + current_input[idx];
+
+The state indexes into an array of 32bit words that contain all the
+transitions out of that state. Each pin transition is represented by 4
+bits--two bits for each possible transition for the pin. The 4 bits
+represent transitions as in this table:
+
+	bits [3:2]	bits [1:0]
+	0 -> 1		0 -> x
+	1 -> 0		1 -> x
+	x -> 0		x -> 1
+
+The values of the bit pairs in the table entry are 2b'00 for V0, 2b'01
+for V1 and 2b'10 for Vx. The transitions are arranged in the 32bit
+entry with the last pin in the lowest 4 bits, the next to last pin in
+the next 4 bits, and so on. So, if P is the changing pin on a 7 pin
+UDP, and E is the 32bit entry for the current state, the transition
+bits are at:
+
+	(E >> 4*(6-P)) & 0xf
+
+/*
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+ $Id: vvm.txt,v 1.1 1999/04/29 16:29:04 steve Exp $
+ $Log: vvm.txt,v $
+ Revision 1.1  1999/04/29 16:29:04  steve
+  Add vvm target documentation
+
