@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.8 2002/06/30 02:21:31 steve Exp $"
+#ident "$Id: net_link.cc,v 1.9 2002/07/03 03:08:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -248,6 +248,11 @@ void Nexus::unlink(Link*that)
 	    name_ = 0;
       }
 
+	/* If the link I'm removing was a driver for this nexus, then
+	   cancel my guess of the driven value. */
+      if (that->get_dir() != Link::INPUT)
+	    driven_ = NO_GUESS;
+
       assert(that);
       if (list_ == that) {
 	    list_ = that->next_;
@@ -273,6 +278,11 @@ void Nexus::relink(Link*that)
 	    delete[] name_;
 	    name_ = 0;
       }
+
+	/* If the link I'm adding is a driver for this nexus, then
+	   cancel my guess of the driven value. */
+      if (that->get_dir() != Link::INPUT)
+	    driven_ = NO_GUESS;
 
       assert(that->nexus_ == 0);
       assert(that->next_ == 0);
@@ -447,6 +457,9 @@ bool NexusSet::contains(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.9  2002/07/03 03:08:47  steve
+ *  Clear drive cache on link or unlink.
+ *
  * Revision 1.8  2002/06/30 02:21:31  steve
  *  Add structure for asynchronous logic synthesis.
  *
