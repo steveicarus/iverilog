@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.1 1998/11/09 23:44:10 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.2 1999/05/31 15:46:36 steve Exp $"
 #endif
 
 # include  "vvm_calltf.h"
@@ -155,6 +155,8 @@ void vvm_calltask(vvm_simulation*sim, const string&fname,
 		case vvm_calltf_parm::BITS:
 		  cout << *parms[idx].as_bits();
 		  break;
+		case vvm_calltf_parm::TIME:
+		  break;
 	    }
       }
       cout << ")" << endl;
@@ -162,6 +164,9 @@ void vvm_calltask(vvm_simulation*sim, const string&fname,
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.2  1999/05/31 15:46:36  steve
+ *  Handle time in more places.
+ *
  * Revision 1.1  1998/11/09 23:44:10  steve
  *  Add vvm library.
  *
