@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.59 2001/01/18 03:16:35 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.60 2001/01/24 02:52:30 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -169,9 +169,34 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 
 	// If the desired output size if creater then the largest
 	// operand, then include the carry of the adder as an output.
+#if 0
       unsigned owidth = width;
       if (lwidth > owidth)
 	    owidth = width + 1;
+#else
+	/* The owidth is the output width of the lpm_add_sub
+	   device. If the desired with is greater then the width of
+	   the operands, then widen the adder and let code below pad
+	   the operands. If this is an adder, we can take advantage of
+	   the carry bit. */
+      unsigned owidth = width;
+      switch (op_) {
+	  case '+':
+	    if (lwidth > owidth) {
+		  owidth = lwidth;
+		  width = lwidth-1;
+	    }
+	    break;
+	  case '-':
+	    if (lwidth > owidth) {
+		  owidth = lwidth;
+		  width = lwidth;
+	    }
+	    break;
+	  default:
+	    assert(0);
+      }
+#endif
 
 	// Pad out the operands, if necessary, the match the width of
 	// the adder device.
@@ -182,7 +207,9 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    rsig = pad_to_width(des, path, rsig, width);
 
 	// Make the adder as wide as the widest operand
-      osig = new NetTmp(scope, des->local_symbol(path), owidth);
+      osig = new NetNet(scope, des->local_symbol(path),
+			NetNet::WIRE, owidth);
+      osig->local_flag(true);
       NetAddSub*adder = new NetAddSub(name, width);
 
 	// Connect the adder to the various parts.
@@ -322,10 +349,6 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, const string&path,
 	    assert(0);
       }
 
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
-	    delete tmp;
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
-	    delete tmp;
 
       return osig;
 }
@@ -768,12 +791,12 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, const string&path,
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet*lsig = left_->elaborate_net(des, path, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
-      NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet*rsig = right_->elaborate_net(des, path, lwidth, 0, 0, 0);
       if (rsig == 0) return 0;
 
-      unsigned rwidth = lsig->pin_count() + rsig->pin_count();
+      unsigned rwidth = lwidth;
       NetMult*mult = new NetMult(des->local_symbol(path), rwidth,
 				 lsig->pin_count(),
 				 rsig->pin_count());
@@ -829,14 +852,14 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
       if (verinum*rval = right_->eval_const(des, path)) {
 	    assert(rval->is_defined());
 	    unsigned dist = rval->as_ulong();
-	    if (dist > lsig->pin_count())
-		  dist = lsig->pin_count();
+	    if (dist > lwidth)
+		  dist = lwidth;
 
 	      /* Very special case, constant 0 shift. */
 	    if (dist == 0) return lsig;
 
 	    NetNet*osig = new NetNet(scope, des->local_symbol(path),
-				     NetNet::WIRE, lsig->pin_count());
+				     NetNet::WIRE, lwidth);
 	    osig->local_flag(true);
 
 	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
@@ -846,8 +869,11 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 		  unsigned idx;
 		  for (idx = 0 ;  idx < dist ;  idx += 1)
 			connect(osig->pin(idx), zero->pin(0));
-		  for (idx = dist ;  idx < lsig->pin_count() ;  idx += 1)
+		  for (    ; (idx<lwidth) && ((idx-dist) < lsig->pin_count())
+			   ; idx += 1)
 			connect(osig->pin(idx), lsig->pin(idx-dist));
+		  for (    ;  idx < lwidth ;  idx += 1)
+			connect(osig->pin(idx), zero->pin(0));
 
 	    } else {
 		  assert(op_ == 'r');
@@ -855,7 +881,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 		  unsigned keep = lsig->pin_count()-dist;
 		  for (idx = 0 ;  idx < keep ;  idx += 1)
 			connect(osig->pin(idx), lsig->pin(idx+dist));
-		  for (idx = keep ;  idx < lsig->pin_count() ;  idx += 1)
+		  for (idx = keep ;  idx < lwidth ;  idx += 1)
 			connect(osig->pin(idx), zero->pin(0));
 	    }
 
@@ -1664,9 +1690,17 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetNet* sub_sig = expr_->elaborate_net(des, path,
-					     op_=='~'?width:0,
-					     0, 0, 0);
+	// Some unary operands allow the operand to be
+	// self-determined, and some do not.
+      unsigned owidth = 0;
+      switch (op_) {
+	  case '~':
+	  case '-':
+	    owidth = width;
+	    break;
+      }
+
+      NetNet* sub_sig = expr_->elaborate_net(des, path, owidth, 0, 0, 0);
       if (sub_sig == 0) {
 	    des->errors += 1;
 	    return 0;
@@ -1784,19 +1818,72 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    gate->decay_time(decay);
 	    break;
 
+	  case '-': // Unary 2's complement.
+	    sig = new NetNet(scope, des->local_symbol(path),
+			     NetNet::WIRE, sub_sig->pin_count());
+	    sig->local_flag(true);
+
+	    switch (sub_sig->pin_count()) {
+		case 0:
+		  assert(0);
+		  break;
+
+		case 1:
+		  gate = new NetLogic(scope, des->local_symbol(path),
+				      2, NetLogic::BUF);
+		  connect(gate->pin(0), sig->pin(0));
+		  connect(gate->pin(1), sub_sig->pin(0));
+		  des->add_node(gate);
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  break;
+
+		case 2:
+		  gate = new NetLogic(scope, des->local_symbol(path),
+				      2, NetLogic::BUF);
+		  connect(gate->pin(0), sig->pin(0));
+		  connect(gate->pin(1), sub_sig->pin(0));
+		  des->add_node(gate);
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+
+		  gate = new NetLogic(scope, des->local_symbol(path),
+				      3, NetLogic::XOR);
+		  connect(gate->pin(0), sig->pin(1));
+		  connect(gate->pin(1), sub_sig->pin(0));
+		  connect(gate->pin(2), sub_sig->pin(1));
+		  des->add_node(gate);
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  break;
+
+		default:
+		  cerr << get_line() << ": internal error: Wide unary " 
+		       << "minus not supported here." << endl;
+		  des->errors += 1;
+		  sig = 0;
+		  break;
+	    }
+	    break;
+
 	  default:
 	    cerr << "internal error: Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
 
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(sub_sig))
-	    delete tmp;
 
       return sig;
 }
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.60  2001/01/24 02:52:30  steve
+ *  Handle some special cases of unary 2's complement,
+ *  and improve netlist expression width handling.
+ *
  * Revision 1.59  2001/01/18 03:16:35  steve
  *  NetMux needs a scope. (PR#115)
  *
