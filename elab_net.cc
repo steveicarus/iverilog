@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.57 2001/01/10 03:13:23 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.58 2001/01/16 04:51:52 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -413,7 +413,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	      // The comparison generates gates to bitwise compare
 	      // each pair, and AND all the comparison results.
 	    gate = new NetLogic(scope, des->local_symbol(path),
-				1+lsig->pin_count(),
+				1+dwidth,
 				NetLogic::AND);
 	    connect(gate->pin(0), osig->pin(0));
 	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
@@ -1797,6 +1797,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.58  2001/01/16 04:51:52  steve
+ *  Fix out-of-bound pins for comparator (PR#108)
+ *
  * Revision 1.57  2001/01/10 03:13:23  steve
  *  Build task outputs as lval instead of nets. (PR#98)
  *
