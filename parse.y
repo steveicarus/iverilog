@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.68 1999/09/29 18:36:04 steve Exp $"
+#ident "$Id: parse.y,v 1.69 1999/09/29 21:16:32 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -207,7 +207,7 @@ case_item
 		  $$ = tmp;
 		}
 	| error ':' statement_opt
-		{ yyerror(@1, "Incomprehensible case expression.");
+		{ yyerror(@1, "error: Incomprehensible case expression.");
 		  yyerrok;
 		}
 	;
@@ -241,11 +241,12 @@ defparam_assign
 	: identifier '=' expression
 		{ PExpr*tmp = $3;
 		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "parameter value must be constant.");
+			yyerror(@3, "error: parameter value "
+			            "must be constant.");
 			delete tmp;
 			tmp = 0;
 		  }
-		  yyerror(@1, "Sorry, defparam assignments not supported.");
+		  yyerror(@1, "sorry: defparam assignments not supported.");
 		  delete $1;
 		  delete $3;
 		}
@@ -254,8 +255,8 @@ defparam_assign
 defparam_assign_list
 	: defparam_assign
 	| range defparam_assign
-		{ yyerror(@1, "Ranges in parameter definition "
-		          "are not supported.");
+		{ yywarn(@1, "Ranges in parameter definition "
+		             "are not supported.");
 		  delete $1;
 		}
 	| defparam_assign_list ',' defparam_assign
@@ -281,7 +282,7 @@ delay_value
 	: NUMBER
 		{ verinum*tmp = $1;
 		  if (tmp == 0) {
-			yyerror(@1, "XXXX internal error: delay.");
+			yyerror(@1, "internal error: delay.");
 			$$ = 0;
 		  } else {
 			$$ = new PENumber(tmp);
@@ -324,7 +325,7 @@ description
 
 event_control
 	: '@' IDENTIFIER
-		{ yyerror(@1, "Sorry, event control not supported.");
+		{ yyerror(@1, "sorry: event control not supported.");
 		  $$ = 0;
 		}
 	| '@' '(' event_expression ')'
@@ -335,7 +336,7 @@ event_control
 		  $$ = tmp;
 		}
 	| '@' '(' error ')'
-		{ yyerror(@1, "Malformed event control expression.");
+		{ yyerror(@1, "error: Malformed event control expression.");
 		  $$ = 0;
 		}
 	;
@@ -590,7 +591,7 @@ expr_primary
 		  $$ = tmp;
 		}
 	| REALTIME
-		{ yyerror(@1, "Sorry, real constants not supported.");
+		{ yyerror(@1, "sorry: real constants not supported.");
 		  delete $1;
 		  $$ = 0;
 		}
@@ -647,7 +648,7 @@ expr_primary
 	| '(' expression ')'
 		{ $$ = $2; }
 	| '(' expression ':' expression ':' expression ')'
-		{ yyerror(@2, "Sorry, (min:typ:max) not supported.");
+		{ yyerror(@2, "sorry: (min:typ:max) not supported.");
 		  $$ = $4;
 		  delete $2;
 		  delete $6;
@@ -662,7 +663,8 @@ expr_primary
 	| '{' expression '{' expression_list '}' '}'
 		{ PExpr*rep = $2;
 		  if (!pform_expression_is_constant($2)) {
-			yyerror(@2, "Repeat expression must be constant.");
+			yyerror(@2, "error: Repeat expression "
+			            "must be constant.");
 			delete rep;
 			delete $2;
 			rep = 0;
@@ -680,7 +682,7 @@ func_body
 	: function_item_list statement
                 { $$ = new PFunction($1, $2); }
 	| function_item_list
-		{ yyerror(@1, "function body has no statement."); }
+		{ yyerror(@1, "error: function body has no statement."); }
 	;
 
 function_item
@@ -812,7 +814,7 @@ identifier
 	: IDENTIFIER
 		{ $$ = $1; }
 	| HIDENTIFIER
-		{ yyerror(@1, "Sorry, qualified identifiers not supported.");
+		{ yyerror(@1, "sorry: qualified identifiers not supported.");
 		  $$ = $1;
 		}
 	;
@@ -867,7 +869,7 @@ lavalue
 		{ PEIdent*tmp = new PEIdent($1);
 		  PExpr*sel = $3;
 		  if (! pform_expression_is_constant(sel)) {
-			yyerror(@2, "Bit select in lvalue must "
+			yyerror(@2, "eror: Bit select in lvalue must "
 			        "contain a constant expression.");
 			delete sel;
 		  } else {
@@ -991,7 +993,7 @@ module_item
 		  delete $3;
 		}
 	| K_trireg charge_strength_opt range_opt delay_opt list_of_variables ';'
-		{ yyerror(@1, "Sorry, trireg nets not supported.");
+		{ yyerror(@1, "sorry: trireg nets not supported.");
 		  delete $3;
 		}
 	| port_type range_opt list_of_variables ';'
@@ -1005,7 +1007,7 @@ module_item
 	| block_item_decl
 	| K_defparam defparam_assign_list ';'
 	| K_event list_of_variables ';'
-		{ yyerror(@1, "Sorry, named events not supported.");
+		{ yyerror(@1, "sorry: named events not supported.");
 		  delete $2;
 		}
 	| K_parameter parameter_assign_list ';'
@@ -1061,7 +1063,7 @@ module_item
 		  delete $7;
 		}
 	| KK_attribute '(' error ')' ';'
-		{ yyerror(@1, "Misformed $attribute parameter list."); }
+		{ yyerror(@1, "error: Misformed $attribute parameter list."); }
 	;
 
 module_item_list
@@ -1121,7 +1123,8 @@ parameter_assign
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
 		  if (!pform_expression_is_constant(tmp)) {
-			yyerror(@3, "parameter value must be constant.");
+			yyerror(@3, "error: parameter value "
+			            "must be constant.");
 			delete tmp;
 			tmp = 0;
 		  }
@@ -1133,7 +1136,7 @@ parameter_assign
 parameter_assign_list
 	: parameter_assign
 	| range parameter_assign
-		{ yyerror(@1, "Ranges in parameter definition "
+		{ yywarn(@1, "Ranges in parameter definition "
 		          "are not supported.");
 		  delete $1;
 		}
@@ -1198,11 +1201,11 @@ port_reference
 		  wtmp->set_file(@1.text);
 		  wtmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
-			yyerror(@3, "msb expression of port bit select "
+			yyerror(@3, "error: msb expression of port bit select "
 			        "must be constant.");
 		  }
 		  if (!pform_expression_is_constant($5)) {
-			yyerror(@5, "lsb expression of port bit select "
+			yyerror(@5, "error: lsb expression of port bit select "
 			        "must be constant.");
 		  }
 		  wtmp->set_range($3, $5);
@@ -1213,7 +1216,7 @@ port_reference
 		  $$ = ptmp;
 		}
 	| IDENTIFIER '[' error ']'
-		{ yyerror(@1, "invalid port bit select");
+		{ yyerror(@1, "error: invalid port bit select");
 		  Module::port_t*ptmp = new Module::port_t(1);
 		  PWire*wtmp = new PWire($1, NetNet::IMPLICIT,
 					 NetNet::PIMPLICIT);
@@ -1250,7 +1253,7 @@ port_name
 		  $$ = tmp;
 		}
 	| PORTNAME '(' error ')'
-		{ yyerror(@3, "invalid port connection expression.");
+		{ yyerror(@3, "error: invalid port connection expression.");
 		  portname_t*tmp = new portname_t;
 		  tmp->name = $1;
 		  tmp->parm = 0;
@@ -1290,12 +1293,12 @@ range
 	: '[' expression ':' expression ']'
 		{ svector<PExpr*>*tmp = new svector<PExpr*> (2);
 		  if (!pform_expression_is_constant($2))
-			yyerror(@2, "msb of range must be constant.");
+			yyerror(@2, "error: msb of range must be constant.");
 
 		  (*tmp)[0] = $2;
 
 		  if (!pform_expression_is_constant($4))
-			yyerror(@4, "msb of range must be constant.");
+			yyerror(@4, "error: msb of range must be constant.");
 
 		  (*tmp)[1] = $4;
 
@@ -1328,16 +1331,16 @@ register_variable
 		}
 	| IDENTIFIER '=' expression
 		{ pform_makewire(@1, $1, NetNet::REG);
-		  yyerror(@2, "net declaration assignment to reg/integer not allowed.");
+		  yyerror(@2, "error: net declaration assignment to reg/integer not allowed.");
 		  delete $3;
 		  $$ = $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
 		{ pform_makewire(@1, $1, NetNet::REG);
 		  if (! pform_expression_is_constant($3))
-			yyerror(@3, "msb of register range must be constant.");
+			yyerror(@3, "error: msb of register range must be constant.");
 		  if (! pform_expression_is_constant($5))
-			yyerror(@3, "lsb of register range must be constant.");
+			yyerror(@3, "error: lsb of register range must be constant.");
 		  pform_set_reg_idx($1, $3, $5);
 		  $$ = $1;
 		}
@@ -1361,8 +1364,7 @@ register_variable_list
 specify_item
 	: K_specparam specparam_list ';'
 	| specify_simple_path '=' '(' expression_list ')' ';'
-		{ /* yyerror(@1, "Sorry, specify path declarations not supported."); */
-		  delete $4;
+		{ delete $4;
 		}
 	;
 
@@ -1378,8 +1380,7 @@ specify_simple_path
 
 specparam
 	: IDENTIFIER '=' expression
-		{ /* yyerror(@1, "Sorry, specparam assignments not supported."); */
-		  delete $1;
+		{ delete $1;
 		  delete $3;
 		}
 	;
@@ -1393,7 +1394,7 @@ spec_polarity: '+' | '-' | ;
 
 statement
 	: K_assign lavalue '=' expression ';'
-		{ yyerror(@1, "Sorry, procedural continuous assign not supported.");
+		{ yyerror(@1, "sorry: procedural continuous assign not supported.");
 		  $$ = 0;
 		}
 	| K_begin statement_list K_end
@@ -1430,16 +1431,16 @@ statement
 	| K_begin error K_end
 		{ yyerrok; }
 	| K_deassign lavalue';'
-		{ yyerror(@1, "Sorry, deassign not supported.");
+		{ yyerror(@1, "sorry:, deassign not supported.");
 		  $$ = 0;
 		}
 	| K_disable IDENTIFIER ';'
-		{ yyerror(@1, "Sorry, disable statements not supported.");
+		{ yyerror(@1, "sorry: disable statements not supported.");
 		  delete $2;
 		  $$ = 0;
 		}
 	| K_force lavalue '=' expression ';'
-		{ yyerror(@1, "Sorry, procedural force assign not supported.");
+		{ yyerror(@1, "sorry: procedural force assign not supported.");
 		  $$ = 0;
 		}
 	| K_forever statement
@@ -1480,7 +1481,7 @@ statement
 		  $$ = tmp;
 		}
 	| K_release lavalue ';'
-		{ yyerror(@1, "Sorry, release not supported.");
+		{ yyerror(@1, "sorry: release not supported.");
 		  $$ = 0;
 		}
 	| K_repeat '(' expression ')' statement
@@ -1526,11 +1527,11 @@ statement
 		  $$ = tmp;
 		}
 	| K_if '(' error ')' statement_opt
-		{ yyerror(@1, "Malformed conditional expression.");
+		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
 	| K_if '(' error ')' statement_opt K_else statement_opt
-		{ yyerror(@1, "Malformed conditional expression.");
+		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
@@ -1543,16 +1544,16 @@ statement
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement
 		{ $$ = 0;
-		  yyerror(@9, "Error in for loop step assigment.");
+		  yyerror(@9, "error: Error in for loop step assigment.");
 		}
 	| K_for '(' lpvalue '=' expression ';' error ';'
 	  lpvalue '=' expression ')' statement
 		{ $$ = 0;
-		  yyerror(@7, "Error in for loop condition expression.");
+		  yyerror(@7, "error: Error in for loop condition expression.");
 		}
 	| K_for '(' error ')' statement
 		{ $$ = 0;
-		  yyerror(@3, "Incomprehensible for loop.");
+		  yyerror(@3, "error: Incomprehensible for loop.");
 		}
 	| K_while '(' expression ')' statement
 		{ PWhile*tmp = new PWhile($3, $5);
@@ -1560,12 +1561,12 @@ statement
 		}
 	| K_while '(' error ')' statement
 		{ $$ = 0;
-		  yyerror(@3, "Error in while loop condition.");
+		  yyerror(@3, "error: Error in while loop condition.");
 		}
 	| delay statement_opt
 		{ PExpr*del = (*$1)[0];
 		  if ($1->count() != 1)
-			yyerror(@1, "Sorry, delay lists not supported here.");
+			yyerror(@1, "sorry: delay lists not supported here.");
 		  PDelayStatement*tmp = new PDelayStatement(del, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1574,7 +1575,7 @@ statement
 	| event_control statement_opt
 		{ PEventStatement*tmp = $1;
 		  if (tmp == 0) {
-			yyerror(@1, "Invalid event control.");
+			yyerror(@1, "error: Invalid event control.");
 			$$ = 0;
 		  } else {
 			tmp->set_statement($2);
@@ -1680,7 +1681,7 @@ statement
 		  $$ = tmp;
 		}
 	| error ';'
-		{ yyerror(@1, "malformed statement");
+		{ yyerror(@1, "error: malformed statement");
 		  yyerrok;
 		  $$ = new PNoop;
 		}
