@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.86 2004/05/31 23:34:36 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.87 2004/06/04 23:34:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -886,6 +886,16 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 		  val.has_sign(true);
 		  tmp = new NetEConst(val);
 		  delete ip;
+
+	    } else if (NetECReal*ipc = dynamic_cast<NetECReal*>(ip)) {
+
+		    /* When taking the - of a real, fold this into the
+		       constant value. */
+		  verireal val = - ipc->value();
+		  tmp = new NetECReal(val);
+		  tmp->set_line( *ip );
+		  delete ip;
+
 	    } else {
 		  tmp = new NetEUnary(op_, ip);
 		  tmp->set_line(*this);
@@ -955,6 +965,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.87  2004/06/04 23:34:15  steve
+ *  Special case for unary - of real literal.
+ *
  * Revision 1.86  2004/05/31 23:34:36  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better
