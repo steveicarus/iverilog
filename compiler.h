@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.10 2002/05/24 01:13:00 steve Exp $"
+#ident "$Id: compiler.h,v 1.11 2002/05/28 00:50:39 steve Exp $"
 #endif
 
 # include  <list>
@@ -90,8 +90,16 @@ enum generation_t {
 
 extern generation_t generation_flag;
 
+  /* This is the string to use to invoke the preprocessor. */
+extern char*ivlpp_string;
+
 /*
  * $Log: compiler.h,v $
+ * Revision 1.11  2002/05/28 00:50:39  steve
+ *  Add the ivl -C flag for bulk configuration
+ *  from the driver, and use that to run library
+ *  modules through the preprocessor.
+ *
  * Revision 1.10  2002/05/24 01:13:00  steve
  *  Support language generation flag -g.
  *

@@ -19,13 +19,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.12 2002/05/24 01:13:00 steve Exp $"
+#ident "$Id: globals.h,v 1.13 2002/05/28 00:50:40 steve Exp $"
 #endif
 
 # include  <stddef.h>
 
   /* This is the base (i.e. -B<value>) of the Icarus Verilog files. */
 extern const char*base;
+
+  /* This is the path to the iconfig file sent to ivl. */
+extern char* iconfig_path;
 
   /* This is a list of all the -f<key>=<value> options from the
      command line, concatenated together. */
@@ -85,6 +88,11 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.13  2002/05/28 00:50:40  steve
+ *  Add the ivl -C flag for bulk configuration
+ *  from the driver, and use that to run library
+ *  modules through the preprocessor.
+ *
  * Revision 1.12  2002/05/24 01:13:00  steve
  *  Support language generation flag -g.
  *

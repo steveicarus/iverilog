@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.55 2002/05/24 01:13:00 steve Exp $"
+#ident "$Id: main.cc,v 1.56 2002/05/28 00:50:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -83,6 +83,8 @@ map<string,string> flags;
 list<const char*> library_dirs;
 list<const char*> library_suff;
 
+char*ivlpp_string = 0;
+
 FILE *depend_file = NULL;
 /*
  * These are the warning enable flags.
@@ -97,6 +99,40 @@ bool error_implicit = false;
  */
 bool verbose_flag = false;
 
+static void read_iconfig_file(const char*ipath)
+{
+      char buf[8*1024];
+
+      FILE*ifile = fopen(ipath, "r");
+      if (ifile == 0)
+	    return;
+
+      while (fgets(buf, sizeof buf, ifile) != 0) {
+	    char*cp = strchr(buf, ':');
+	    if (cp == 0)
+		  continue;
+
+	    *cp++ = 0;
+	    char*ep = cp + strlen(cp);
+	    while (ep > cp) {
+		  ep -= 1;
+		  switch (*ep) {
+		      case '\r':
+		      case '\n':
+		      case ' ':
+		      case '\t':
+			*ep = 0;
+			break;
+		      default:
+			ep = cp;
+		  }
+	    }
+
+	    if (strcmp(buf, "ivlpp") == 0) {
+		  ivlpp_string = strdup(cp);
+	    }
+      }
+}
 
 static void parm_to_flagmap(const string&flag)
 {
@@ -211,7 +247,12 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:g:hm:M:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "C:F:f:g:hm:M:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
+
+	  case 'C':
+	    read_iconfig_file(optarg);
+	    break;
+
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -529,6 +570,11 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.56  2002/05/28 00:50:39  steve
+ *  Add the ivl -C flag for bulk configuration
+ *  from the driver, and use that to run library
+ *  modules through the preprocessor.
+ *
  * Revision 1.55  2002/05/24 01:13:00  steve
  *  Support language generation flag -g.
  *

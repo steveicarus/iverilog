@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.38 2002/05/27 23:14:06 steve Exp $"
+#ident "$Id: main.c,v 1.39 2002/05/28 00:50:40 steve Exp $"
 
 # include "config.h"
 
@@ -110,6 +110,9 @@ char*source_path = 0;
 FILE*source_file = 0;
 unsigned source_count = 0;
 
+char*iconfig_path = 0;
+FILE*iconfig_file = 0;
+
 int synth_flag = 0;
 int verbose_flag = 0;
 int command_file = 0;
@@ -161,6 +164,7 @@ static int t_default(char*cmd, unsigned ncmd)
 
       rc = system(cmd);
       remove(source_path);
+      remove(iconfig_path);
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
@@ -431,6 +435,8 @@ int main(int argc, char **argv)
       base = ivl_root;
 #endif
 
+	/* Create a temporary file for communicating input parameters
+	   to the preprocessor. */
       source_path = strdup(tempnam(NULL, "ivrlg"));
       assert(source_path);
       source_file = fopen(source_path, "w");
@@ -689,6 +695,31 @@ int main(int argc, char **argv)
 	    return 0;
       }
 
+	/* Create another temporary file for passing configuration
+	   information to ivl. */
+      iconfig_path = strdup(tempnam(NULL, "ivrlh"));
+      assert(iconfig_path);
+      iconfig_file = fopen(iconfig_path, "w");
+      if (NULL == iconfig_file) {
+	    fprintf(stderr, "%s: Error opening temporary file %s\n",
+		    argv[0], iconfig_path);
+	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
+	    fclose(source_file);
+	    remove(source_path);
+	    return 1;
+      }
+
+	/* Write the preprocessor command needed to preprocess a
+	   single file. This may be used to preprocess library
+	   files. */
+      fprintf(iconfig_file, "ivlpp:%s%civlpp -D__ICARUS__ -L %s %s\n",
+	      base, sep,
+	      inc_list? inc_list : "",
+	      def_list? def_list : "");
+
+	/* Done writing to the iconfig file. Close it now. */
+      fclose(iconfig_file);
+
       if (strcmp(targ,"vvm") == 0)
 	    return t_vvm(cmd, ncmd);
       else {
@@ -700,6 +731,11 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.39  2002/05/28 00:50:40  steve
+ *  Add the ivl -C flag for bulk configuration
+ *  from the driver, and use that to run library
+ *  modules through the preprocessor.
+ *
  * Revision 1.38  2002/05/27 23:14:06  steve
  *  Predefine __ICARUS__
  *

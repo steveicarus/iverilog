@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.8 2002/05/24 01:13:00 steve Exp $"
+#ident "$Id: build_string.c,v 1.9 2002/05/28 00:50:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,6 +70,12 @@ int build_string(char*output, size_t olen, const char*pattern)
 			strcpy(output, base);
 			output += strlen(base);
 			olen -= strlen(base);
+			break;
+
+		      case 'C':
+			strcpy(output, iconfig_path);
+			output += strlen(iconfig_path);
+			olen -= strlen(iconfig_path);
 			break;
 
 		      case 'g':
@@ -175,6 +181,11 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.9  2002/05/28 00:50:39  steve
+ *  Add the ivl -C flag for bulk configuration
+ *  from the driver, and use that to run library
+ *  modules through the preprocessor.
+ *
  * Revision 1.8  2002/05/24 01:13:00  steve
  *  Support language generation flag -g.
  *
