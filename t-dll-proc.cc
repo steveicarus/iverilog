@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.47 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.48 2002/06/16 19:19:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -136,6 +136,8 @@ void dll_target::proc_assign(const NetAssign*net)
       stmt_cur_->u_.assign_.lval_ = new struct ivl_lval_s[cnt];
       stmt_cur_->u_.assign_.delay = 0;
 
+	/* The assignment may have multiple concatenated
+	   l-values. Scan them and accumulate an ivl_lval_t list. */
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
 	    const NetAssign_*asn = net->l_val(idx);
@@ -150,6 +152,10 @@ void dll_target::proc_assign(const NetAssign*net)
 		  if (asn->bmux()) {
 			assert(expr_ == 0);
 			asn->bmux()->expr_scan(this);
+
+			if (asn->sig()->lsb() != 0)
+			      sub_off_from_expr_(asn->sig()->lsb());
+
 			cur->type_ = IVL_LVAL_MUX;
 			cur->idx = expr_;
 			expr_ = 0;
@@ -776,6 +782,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.48  2002/06/16 19:19:16  steve
+ *  Generate runtime code to normalize indices.
+ *
  * Revision 1.47  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

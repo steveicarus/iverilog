@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.84 2002/05/26 01:39:03 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.85 2002/06/16 19:19:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1821,6 +1821,8 @@ void dll_target::signal(const NetNet*net)
 
       obj->width_ = net->pin_count();
       obj->signed_= net->get_signed()? 1 : 0;
+      obj->lsb_index = net->lsb();
+      obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
 
       switch (net->port_type()) {
 
@@ -1946,6 +1948,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.85  2002/06/16 19:19:16  steve
+ *  Generate runtime code to normalize indices.
+ *
  * Revision 1.84  2002/05/26 01:39:03  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.83 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: t-dll.h,v 1.84 2002/06/16 19:19:16 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -503,6 +503,11 @@ struct ivl_signal_s {
       unsigned width_  :24;
       unsigned signed_ : 1;
 
+	/* These encode the run-time index for the least significant
+	   bit, and the distance to the second bit. */
+      signed lsb_index :24;
+      signed lsb_dist  : 8;
+
       char*name_;
       ivl_scope_t scope_;
 
@@ -603,6 +608,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.84  2002/06/16 19:19:16  steve
+ *  Generate runtime code to normalize indices.
+ *
  * Revision 1.83  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

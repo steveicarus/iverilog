@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.24 2002/05/29 22:05:54 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.25 2002/06/16 19:19:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -293,15 +293,12 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr);
 
-      if (net->sig()->lsb() > net->sig()->msb() ) {
-	    cerr << net->get_line() << ": sorry: LSB for signal "
-		 << "is > MSB." << endl;
-      }
-
       expr->type_ = IVL_EX_BITSEL;
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->u_.bitsel_.sig = find_signal(des_, net->sig());
+
+      assert(expr->u_.bitsel_.sig->lsb_index == net->sig()->lsb());
 
       net->index()->expr_scan(this);
       assert(expr_);
@@ -322,12 +319,12 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
 	    to reflect the normalizing of vectors that is done by the
 	    compiler. */
 
-      if (net->sig()->lsb() != 0) {
+      if (expr->u_.bitsel_.sig->lsb_index != 0) {
 
 	      /* Create in tmpc the constant offset (4 in the above
 		 example) to be subtracted from the index. */
 	    char*bits;
-	    long lsb = net->sig()->lsb();
+	    long lsb = expr->u_.bitsel_.sig->lsb_index;
 	    ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 	    tmpc->type_  = IVL_EX_NUMBER;
 	    tmpc->width_ = expr->u_.bitsel_.bit->width_;
@@ -351,6 +348,34 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
 
 	      /* Replace (x) with (x-4) */
 	    expr->u_.bitsel_.bit = tmps;
+
+	      /* If the index item distance (the distance to the next
+		 most significant bit) is not 1, then multiply the
+		 previous result to convert the index. */
+	    if (expr->u_.bitsel_.sig->lsb_dist != 1) {
+		  long dist = expr->u_.bitsel_.sig->lsb_dist;
+
+		  tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+		  tmpc->type_  = IVL_EX_NUMBER;
+		  tmpc->width_ = expr->u_.bitsel_.bit->width_;
+		  tmpc->signed_ = 1;
+		  tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
+		  for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
+			bits[idx] = (dist & 1)? '1' : '0';
+			dist >>= 1;
+		  }
+
+		  tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+		  tmps->type_  = IVL_EX_BINARY;
+		  tmps->width_ = tmpc->width_;
+		  tmps->signed_ = 1;
+		  tmps->u_.binary_.op_  = '*';
+		  tmps->u_.binary_.lef_ = expr->u_.bitsel_.bit;
+		  tmps->u_.binary_.rig_ = tmpc;
+
+		  expr->u_.bitsel_.bit = tmps;
+	    }
+
       }
 
       expr_ = expr;
@@ -404,6 +429,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.25  2002/06/16 19:19:16  steve
+ *  Generate runtime code to normalize indices.
+ *
  * Revision 1.24  2002/05/29 22:05:54  steve
  *  Offset lvalue index expressions.
  *
@@ -448,40 +476,5 @@ void dll_target::expr_unary(const NetEUnary*net)
  * Revision 1.12  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.11  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.10  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.9  2001/04/02 00:28:35  steve
- *  Support the scope expression node.
- *
- * Revision 1.8  2001/03/29 02:52:39  steve
- *  Add unary ~ operator to tgt-vvp.
- *
- * Revision 1.7  2000/10/28 22:32:34  steve
- *  API for concatenation expressions.
- *
- * Revision 1.6  2000/10/28 17:55:03  steve
- *  stub for the concat operator.
- *
- * Revision 1.5  2000/10/05 05:03:01  steve
- *  xor and constant devices.
- *
- * Revision 1.4  2000/09/30 02:18:15  steve
- *  ivl_expr_t support for binary operators,
- *  Create a proper ivl_scope_t object.
- *
- * Revision 1.3  2000/09/26 00:30:07  steve
- *  Add EX_NUMBER and ST_TRIGGER to dll-api.
- *
- * Revision 1.2  2000/09/24 02:21:53  steve
- *  Add support for signal expressions.
- *
- * Revision 1.1  2000/09/23 05:15:07  steve
- *  Add enough tgt-verilog code to support hello world.
- *
  */
 
