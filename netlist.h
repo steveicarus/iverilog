@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.258 2002/08/16 05:18:27 steve Exp $"
+#ident "$Id: netlist.h,v 1.259 2002/08/18 22:07:16 steve Exp $"
 #endif
 
 /*
@@ -282,8 +282,13 @@ class NexusSet {
 
       unsigned count() const;
 
+	// Add the nexus to the set, if it is not already present.
       void add(Nexus*that);
       void add(const NexusSet&that);
+
+	// Remove the nexus from the set, if it is present.
+      void rem(Nexus*that);
+      void rem(const NexusSet&that);
 
       Nexus* operator[] (unsigned idx) const;
 
@@ -3011,6 +3016,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.259  2002/08/18 22:07:16  steve
+ *  Detect temporaries in sequential block synthesis.
+ *
  * Revision 1.258  2002/08/16 05:18:27  steve
  *  Fix intermix of node functors and node delete.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.7 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: synth2.cc,v 1.8 2002/08/18 22:07:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -282,11 +282,13 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 	    return;
 
       if (! top->is_asynchronous()) {
+	    bool synth_error_flag = false;
 	    if (top->attribute("ivl_combinational").as_ulong() != 0) {
 		  cerr << top->get_line() << ": error: "
 		       << "Process is marked combinational,"
 		       << " but isn't really." << endl;
 		  des->errors += 1;
+		  synth_error_flag = true;
 	    }
 
 	    if (top->attribute("ivl_synthesis_on").as_ulong() != 0) {
@@ -294,10 +296,13 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 		       << "Process is marked for synthesis,"
 		       << " but I can't do it." << endl;
 		  des->errors += 1;
+		  synth_error_flag = true;
 	    }
 
-	    cerr << top->get_line() << ": warning: "
-		 << "Process not synthesized." << endl;
+	    if (! synth_error_flag)
+		  cerr << top->get_line() << ": warning: "
+		       << "Process not synthesized." << endl;
+
 	    return;
       }
 
@@ -319,6 +324,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.8  2002/08/18 22:07:16  steve
+ *  Detect temporaries in sequential block synthesis.
+ *
  * Revision 1.7  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

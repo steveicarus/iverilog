@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: async.cc,v 1.3 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: async.cc,v 1.4 2002/08/18 22:07:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,9 @@ bool NetCondit::is_asynchronous()
 
 bool NetEvWait::is_asynchronous()
 {
+	/* The "sense" set contains the set of Nexa that are in the
+	   sensitivity list. We also presume here that the list is
+	   only LEVEL sensitive. */
       NexusSet*sense = new NexusSet;
       for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
 	    NexusSet*tmp = event(idx)->nex_async_();
@@ -78,6 +81,9 @@ bool NetProcTop::is_asynchronous()
 
 /*
  * $Log: async.cc,v $
+ * Revision 1.4  2002/08/18 22:07:16  steve
+ *  Detect temporaries in sequential block synthesis.
+ *
  * Revision 1.3  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

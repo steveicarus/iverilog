@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.5 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.6 2002/08/18 22:07:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -173,20 +173,60 @@ NexusSet* NetAssignBase::nex_input()
       return result;
 }
 
+/*
+ * The nex_input of a begin/end block is the NexusSet of bits that the
+ * block reads from outside the block. That means it is the union of
+ * the nex_input for all the substatements.
+ *
+ * The input set for a sequential set is not exactly the union of the
+ * input sets because there is the possibility of intermediate values,
+ * that don't deserve to be in the input set. To wit:
+ *
+ *      begin
+ *         t = a + b;
+ *         c = ~t;
+ *      end
+ *
+ * In this example, "t" should not be in the input set because it is
+ * used by the sequence as a temporary value.
+ */
 NexusSet* NetBlock::nex_input()
 {
       if (last_ == 0)
 	    return new NexusSet;
 
-      NetProc*cur = last_;
-      NexusSet*result = cur->nex_input();
-      cur = cur->next_;
-      while (cur != last_) {
+      if (type_ == PARA) {
+	    cerr << get_line() << ": internal error: Sorry, "
+		 << "I don't know how to synthesize fork/join blocks."
+		 << endl;
+	    return 0;
+      }
+
+      NetProc*cur = last_->next_;
+	/* This is the accumulated input set. */
+      NexusSet*result = new NexusSet;
+	/* This is an accumulated output set. */
+      NexusSet*prev = new NexusSet;
+
+      do {
+	      /* Get the inputs for the current statement. */
 	    NexusSet*tmp = cur->nex_input();
+
+	      /* Remove from the input set those bits that are outputs
+		 from previous statements. They aren't really inputs
+		 to the block, just internal intermediate values. */
+	    tmp->rem(*prev);
+
+	      /* Add the corrected set to the accumulated input set. */
 	    result->add(*tmp);
 	    delete tmp;
+
+	      /* Add the current outputs to the accumulated output
+		 set, for processing of later statements. */
+	    cur->nex_output(*prev);
+
 	    cur = cur->next_;
-      }
+      } while (cur != last_->next_);
 
       return result;
 }
@@ -318,6 +358,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.6  2002/08/18 22:07:16  steve
+ *  Detect temporaries in sequential block synthesis.
+ *
  * Revision 1.5  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

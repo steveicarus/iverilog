@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.10 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_link.cc,v 1.11 2002/08/18 22:07:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -424,6 +424,35 @@ void NexusSet::add(const NexusSet&that)
 	    add(that.items_[idx]);
 }
 
+void NexusSet::rem(Nexus*that)
+{
+      if (nitems_ == 0)
+	    return;
+
+      unsigned ptr = bsearch_(that);
+      if ((ptr >= nitems_) || (items_[ptr] != that))
+	    return;
+
+      if (nitems_ == 1) {
+	    free(items_);
+	    items_ = 0;
+	    nitems_ = 0;
+	    return;
+      }
+
+      for (unsigned idx = ptr ;  idx < (nitems_-1) ;  idx += 1)
+	    items_[idx] = items_[idx+1];
+
+      items_ = (Nexus**)realloc(items_, (nitems_-1) * sizeof(Nexus*));
+      nitems_ -= 1;
+}
+
+void NexusSet::rem(const NexusSet&that)
+{
+      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1)
+	    rem(that.items_[idx]);
+}
+
 Nexus* NexusSet::operator[] (unsigned idx) const
 {
       assert(idx < nitems_);
@@ -457,6 +486,9 @@ bool NexusSet::contains(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.11  2002/08/18 22:07:16  steve
+ *  Detect temporaries in sequential block synthesis.
+ *
  * Revision 1.10  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
