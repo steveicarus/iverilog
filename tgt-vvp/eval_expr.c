@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.55 2002/01/28 00:52:42 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.56 2002/02/03 05:53:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1001,7 +1001,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 
 	/* If the subv result is a magic constant, then make a copy in
 	   writeable vector space and work from there instead. */
-      if (subv.base < 0) {
+      if (subv.base < 4) {
 	    res.base = allocate_vector(subv.wid);
 	    res.wid = wid;
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
@@ -1503,6 +1503,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.56  2002/02/03 05:53:00  steve
+ *  Fix parameter bit select check for magic constants.
+ *
  * Revision 1.55  2002/01/28 00:52:42  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the
