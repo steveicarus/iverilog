@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.90 2000/04/15 19:51:30 steve Exp $"
+#ident "$Id: parse.y,v 1.91 2000/04/21 03:22:18 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -523,6 +523,16 @@ expression
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;
+		}
+	| '!' error %prec UNARY_PREC
+		{ yyerror(@1, "error: Operand of unary ! "
+			  "is not a primary expression.");
+		  $$ = 0;
+		}
+	| '^' error %prec UNARY_PREC
+		{ yyerror(@1, "error: Operand of reduction ^ "
+			  "is not a primary expression.");
+		  $$ = 0;
 		}
 	| expression '^' expression
 		{ PEBinary*tmp = new PEBinary('^', $1, $3);
