@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.17 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.18 2000/03/12 18:22:11 steve Exp $"
 #endif
 
 
@@ -38,7 +38,6 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
  */
 NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope) const
 {
-      bool flag;
       NetExpr*lp = left_->elaborate_expr(des, scope);
       NetExpr*rp = right_->elaborate_expr(des, scope);
       if ((lp == 0) || (rp == 0)) {
@@ -62,7 +61,20 @@ NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope) const
 	}
       }
 
+      NetEBinary*tmp = elaborate_expr_base_(des, lp, rp);
+}
+
+/*
+ * This is common elaboration of the operator. It presumes that the
+ * operands are elaborated as necessary, and all I need to do is make
+ * the correct NetEBinary object and connect the parameters.
+ */
+NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
+					   NetExpr*lp, NetExpr*rp) const
+{
+      bool flag;
       NetEBinary*tmp;
+
       switch (op_) {
 	  default:
 	    tmp = new NetEBinary(op_, lp, rp);
@@ -428,6 +440,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.18  2000/03/12 18:22:11  steve
+ *  Binary and unary operators in parameter expressions.
+ *
  * Revision 1.17  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

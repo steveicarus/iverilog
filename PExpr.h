@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.31 2000/03/12 04:35:22 steve Exp $"
+#ident "$Id: PExpr.h,v 1.32 2000/03/12 18:22:11 steve Exp $"
 #endif
 
 # include  <string>
@@ -230,6 +230,7 @@ class PEUnary : public PExpr {
 				    unsigned long fall,
 				    unsigned long decay) const;
       virtual NetEUnary*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
     private:
       char op_;
@@ -251,12 +252,15 @@ class PEBinary : public PExpr {
 				    unsigned long fall,
 				    unsigned long decay) const;
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
     private:
       char op_;
       PExpr*left_;
       PExpr*right_;
+
+      NetEBinary*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp) const;
 
       NetNet* elaborate_net_add_(Design*des, const string&path,
 				 unsigned lwidth,
@@ -337,6 +341,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.32  2000/03/12 18:22:11  steve
+ *  Binary and unary operators in parameter expressions.
+ *
  * Revision 1.31  2000/03/12 04:35:22  steve
  *  Allow parameter identifiers in parameter expressions.
  *

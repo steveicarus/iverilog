@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.13 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.14 2000/03/12 18:22:11 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -89,8 +89,15 @@ PEConcat::~PEConcat()
  */
 bool PEIdent::is_constant(Module*mod) const
 {
-      map<string,PExpr*>::const_iterator cur = mod->parameters.find(text_);
-      return cur != mod->parameters.end();
+      map<string,PExpr*>::const_iterator cur;
+
+      cur = mod->parameters.find(text_);
+      if (cur != mod->parameters.end()) return true;
+
+      cur = mod->localparams.find(text_);
+      if (cur != mod->localparams.end()) return true;
+
+      return false;
 }
 
 bool PENumber::is_the_same(const PExpr*that) const
@@ -128,6 +135,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.14  2000/03/12 18:22:11  steve
+ *  Binary and unary operators in parameter expressions.
+ *
  * Revision 1.13  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *
