@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.145 2002/01/23 03:35:17 steve Exp $"
+#ident "$Id: parse.y,v 1.146 2002/03/31 04:07:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1046,6 +1046,7 @@ identifier
 		  delete $3;
 		  $$ = tmp;
 		}
+	;
 
 list_of_ports
 	: port_opt

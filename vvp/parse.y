@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.44 2002/03/18 00:19:34 steve Exp $"
+#ident "$Id: parse.y,v 1.45 2002/03/31 04:06:49 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -490,6 +490,7 @@ symbol
 		{ $$.text = $1;
 		  $$.idx = $3;
 		}
+	;
 
 symbol_opt
 	: symbol
@@ -549,6 +550,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.45  2002/03/31 04:06:49  steve
+ *  Update for newer bison.
+ *
  * Revision 1.44  2002/03/18 00:19:34  steve
  *  Add the .ufunc statement.
  *

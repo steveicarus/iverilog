@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.4 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: parse.y,v 1.5 2002/03/31 04:07:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -132,7 +132,7 @@ const char*lookup_pattern(const char*key)
 
 %%
 
-start: section_list
+start: section_list ;
 
 section_list
 	: section
