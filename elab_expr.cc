@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.57 2002/04/27 05:03:46 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.58 2002/05/05 21:11:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -182,6 +182,29 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    return sub;
       }
 
+	/* Interpret the internal $sizeof system function to return
+	   the bit width of the sub-expression. The value of the
+	   sub-expression is not used, so the expression itself can be
+	   deleted. */
+      if (strcmp(path_.peek_name(0), "$sizeof") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $sizeof() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
+	    verinum val (sub->expr_width(), sizeof(unsigned));
+	    delete sub;
+
+	    sub = new NetEConst(val);
+	    sub->set_line(*this);
+
+	    return sub;
+      }
+
       unsigned wid = 32;
 
       if (strcmp(path_.peek_name(0), "$time") == 0)
@@ -322,7 +345,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
-      unsigned repeat = 1;
+      NetExpr* repeat = 0;
 
 	/* If there is a repeat expression, then evaluate the constant
 	   value and set the repeat count. */
@@ -338,10 +361,9 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 		  cerr << get_line() << ":      : The expression is: "
 		       << *tmp << endl;
 		  des->errors += 1;
-		  return 0;
 	    }
 
-	    repeat = rep->value().as_ulong();
+	    repeat = rep;
       }
 
 	/* Make the empty concat expression. */
@@ -842,6 +864,13 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.58  2002/05/05 21:11:49  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.57  2002/04/27 05:03:46  steve
  *  Preserve stringiness string part select and concatenation.
  *

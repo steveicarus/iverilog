@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.37 2002/04/27 05:03:46 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.38 2002/05/05 21:11:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -705,6 +705,9 @@ NetEConst* NetEBShift::eval_tree()
 
 NetEConst* NetEConcat::eval_tree()
 {
+      unsigned repeat_val = repeat();
+
+      unsigned gap = 0;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 
 	      // Parameter not here? This is an error, but presumably
@@ -712,10 +715,13 @@ NetEConst* NetEConcat::eval_tree()
 	    if (parms_[idx] == 0)
 		  continue;
 
+
 	      // If this parameter is already a constant, all is well
 	      // so go on.
-	    if (dynamic_cast<NetEConst*>(parms_[idx]))
+	    if (dynamic_cast<NetEConst*>(parms_[idx])) {
+		  gap += parms_[idx]->expr_width();
 		  continue;
+	    }
 
 	      // Finally, try to evaluate the parameter expression
 	      // that is here. If I succeed, reset the parameter to
@@ -725,23 +731,24 @@ NetEConst* NetEConcat::eval_tree()
 	    if (expr) {
 		  delete parms_[idx];
 		  parms_[idx] = expr;
+		  gap += expr->expr_width();
 	    }
       }
 
 	// Handle the special case that the repeat expression is
 	// zero. In this case, just return a 0 value with the expected
 	// width.
-      if (repeat_ == 0) {
+      if (repeat_val == 0) {
 	    verinum val (verinum::V0, expr_width());
 	    NetEConst*res = new NetEConst(val);
 	    res->set_width(val.len());
 	    return res;
       }
 
-	// Figure out the width of the repeated expression, and make a
-	// verinum to hold the result.
-      unsigned gap = expr_width() / repeat_;
-      verinum val (verinum::Vx, repeat_ * gap);
+	// At this point, the "gap" is the width of a single repeat of
+	// the concatenation. The total width of the result is the gap
+	// times the repeat count.
+      verinum val (verinum::Vx, repeat_val * gap);
 
 	// build up the result from least significant to most.
 
@@ -754,7 +761,7 @@ NetEConst* NetEConcat::eval_tree()
 
 	    verinum tmp = expr->value();
 	    for (unsigned bit = 0;  bit < tmp.len(); bit += 1, cur += 1)
-		  for (unsigned rep = 0 ;  rep < repeat_ ;  rep += 1)
+		  for (unsigned rep = 0 ;  rep < repeat_val ;  rep += 1)
 			val.set(rep*gap+cur, tmp[bit]);
 
 	    is_string_flag = is_string_flag && tmp.is_string();
@@ -1079,6 +1086,13 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.38  2002/05/05 21:11:50  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.37  2002/04/27 05:03:46  steve
  *  Preserve stringiness string part select and concatenation.
  *

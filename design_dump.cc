@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.122 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.123 2002/05/05 21:11:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -850,8 +850,8 @@ void NetEBinary::dump(ostream&o) const
 
 void NetEConcat::dump(ostream&o) const
 {
-      if (repeat_ != 1)
-	    o << repeat_;
+      if (repeat_)
+	    o << *repeat_;
 
       if (parms_[0])
 	    o << "{" << *parms_[0];
@@ -980,6 +980,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.123  2002/05/05 21:11:49  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.122  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

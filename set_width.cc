@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.21 2002/04/27 04:49:27 steve Exp $"
+#ident "$Id: set_width.cc,v 1.22 2002/05/05 21:11:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -220,7 +220,7 @@ bool NetEConcat::set_width(unsigned w)
 	    if (parms_[idx] != 0)
 		  sum += parms_[idx]->expr_width();
 
-      sum *= repeat_;
+      sum *= repeat();
       expr_width(sum);
       if (sum != w) return false;
       return true;
@@ -357,6 +357,13 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.22  2002/05/05 21:11:50  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.21  2002/04/27 04:49:27  steve
  *  If the verinum is already right, no need to reset it.
  *

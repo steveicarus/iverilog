@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.235 2002/04/21 22:31:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.236 2002/05/05 21:11:50 steve Exp $"
 #endif
 
 /*
@@ -2332,13 +2332,14 @@ class NetEBShift : public NetEBinary {
 class NetEConcat  : public NetExpr {
 
     public:
-      NetEConcat(unsigned cnt, unsigned repeat =1);
+      NetEConcat(unsigned cnt, NetExpr* repeat =0);
       ~NetEConcat();
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
 
-      unsigned repeat() const { return repeat_; }
+      unsigned repeat();
+      unsigned repeat() const;
       unsigned nparms() const { return parms_.count() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
@@ -2352,7 +2353,9 @@ class NetEConcat  : public NetExpr {
 
     private:
       svector<NetExpr*>parms_;
-      unsigned repeat_;
+      NetExpr* repeat_;
+      unsigned repeat_value_;
+      bool repeat_calculated_;
 };
 
 /*
@@ -2977,6 +2980,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.236  2002/05/05 21:11:50  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.235  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated

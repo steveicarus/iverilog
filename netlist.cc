@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.184 2002/04/21 04:59:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.185 2002/05/05 21:11:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1983,41 +1983,6 @@ NetEBShift* NetEBShift::dup_expr() const
       return result;
 }
 
-NetEConcat::NetEConcat(unsigned cnt, unsigned r)
-: parms_(cnt), repeat_(r)
-{
-      expr_width(0);
-}
-
-NetEConcat::~NetEConcat()
-{
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
-	    delete parms_[idx];
-}
-
-void NetEConcat::set(unsigned idx, NetExpr*e)
-{
-      assert(idx < parms_.count());
-      assert(parms_[idx] == 0);
-      parms_[idx] = e;
-      expr_width( expr_width() + repeat_*e->expr_width() );
-}
-
-NetEConcat* NetEConcat::dup_expr() const
-{
-      NetEConcat*dup = new NetEConcat(parms_.count(), repeat_);
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
-	    if (parms_[idx]) {
-		  NetExpr*tmp = parms_[idx]->dup_expr();
-		  assert(tmp);
-		  dup->parms_[idx] = tmp;
-	    }
-
-
-      dup->expr_width(expr_width());
-      return dup;
-}
-
 NetEConst::NetEConst(const verinum&val)
 : NetExpr(val.len()), value_(val)
 {
@@ -2394,6 +2359,13 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.185  2002/05/05 21:11:50  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.184  2002/04/21 04:59:08  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

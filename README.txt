@@ -405,6 +405,35 @@ constructs.
   - force to nets are not supported. Force to variables, and
     assign/deassign, are supported.
 
+5.0 Nonstandard Constructs
+
+Icarus Verilog includes some features that are not part of the
+IEEE1364 standard, but have well defined meaning. These are extensions
+to the language.
+
+    $sizeof(<expr>)
+	This system function returns the size in bits of the
+	expression that is its argument. The result of this
+	function is undefined if the argument doesn't have a
+	self-determined size.
+
+    Builtin system functions
+
+	Certain of the system functions have well defined meanings, so
+	can theoretically be evaluated at compile time, instead of
+	using runtime VPI code. Doing so means that VPI cannot
+	override the definitions of functions handled in this
+	manner. On the other hand, this makes them synthesizeable, and
+	also allows for more agressive constant propagation. The
+	functions handled in this manner are:
+
+		$signed
+		$sizeof
+		$unsigned
+
+	Implementations of these system functions in VPI modules will
+	be ignored.
+
 6.0 CREDITS
 
 Except where otherwise noted, Icarus Verilog, ivl and ivlpp are

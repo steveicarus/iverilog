@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.13 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.14 2002/05/05 21:11:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -66,28 +66,21 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
  */
 NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      unsigned repeat = 1;
+      NetExpr* repeat = 0;
 
 	/* If there is a repeat expression, then evaluate the constant
-	   value and set the repeat count.
-
-	   XXXX Potential bug XXX In principle, the repeat expression
-	   can have a parameter name in it. Since where are in the
-	   working of parameters now, we will not be able to
-	   accurately evaluate such expressions. So eventually, I will
-	   need to be able to defer the evaluation of the expression. */
+	   value and set the repeat count.  */
       if (repeat_) {
-	    verinum*vrep = repeat_->eval_const(des, scope);
-	    if (vrep == 0) {
+	    repeat = repeat_->elaborate_pexpr(des, scope);
+	    if (repeat == 0) {
 		  cerr << get_line() << ": error: "
 			"concatenation repeat expression cannot be evaluated."
 		       << endl;
 		  des->errors += 1;
-		  return 0;
 	    }
 
-	    repeat = vrep->as_ulong();
-	    delete vrep;
+	      /* continue on even if the repeat expression doesn't
+		 work, as we can find more errors. */
       }
 
 	/* Make the empty concat expression. */
@@ -224,6 +217,13 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.14  2002/05/05 21:11:50  steve
+ *  Put off evaluation of concatenation repeat expresions
+ *  until after parameters are defined. This allows parms
+ *  to be used in repeat expresions.
+ *
+ *  Add the builtin $signed system function.
+ *
  * Revision 1.13  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the
