@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.96 2003/08/22 23:14:26 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.97 2003/10/09 23:45:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -946,6 +946,8 @@ static void draw_event_in_scope(ivl_event_t obj)
 		    vvp_mangle_name(ivl_event_basename(obj)));
 
       } else if (cnt > 1) {
+	      /* There are a bunch of events that need to be event/or
+		 combined. */
 	    unsigned idx;
 	    unsigned ecnt = 0;
 
@@ -1008,43 +1010,45 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    fprintf(vvp_out, ";\n");
 	    
       } else {
+	    unsigned num_input_strings = nany + nneg + npos;
 	    unsigned idx;
-
-	    fprintf(vvp_out, "E_%p .event ", obj);
+	    const char* input_strings[4];
+	    const char*edge = 0;
 
 	    if (nany > 0) {
 		  assert((nneg + npos) == 0);
 		  assert(nany <= 4);
 		  
-		  fprintf(vvp_out, "edge");
+		  edge = "edge";
 		  
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
-			fprintf(vvp_out, ", ");
-			draw_input_from_net(nex);
+			input_strings[idx] = draw_net_input(nex);
 		  }
 		  
 	    } else if (nneg > 0) {
 		  assert((nany + npos) == 0);
-		  fprintf(vvp_out, "negedge");
+		  edge = "negedge";
 
 		  for (idx = 0 ;  idx < nneg ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_neg(obj, idx);
-			fprintf(vvp_out, ", ");
-			draw_input_from_net(nex);
+			input_strings[idx] = draw_net_input(nex);
 		  }
 		  
 	    } else {
 		  assert((nany + nneg) == 0);
-		  fprintf(vvp_out, "posedge");
+		  edge = "posedge";
 		  
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
-			fprintf(vvp_out, ", ");
-			draw_input_from_net(nex);
+			input_strings[idx] = draw_net_input(nex);
 		  }
 	    }
-	    
+
+	    fprintf(vvp_out, "E_%p .event %s", obj, edge);
+	    for (idx = 0 ;  idx < num_input_strings ;  idx += 1)
+		  fprintf(vvp_out, ", %s", input_strings[idx]);
+
 	    fprintf(vvp_out, ";\n");
       }
 }
@@ -1654,6 +1658,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.97  2003/10/09 23:45:03  steve
+ *  Emit .event inputs before the .event statement.
+ *
  * Revision 1.96  2003/08/22 23:14:26  steve
  *  Preserve variable ranges all the way to the vpi.
  *
