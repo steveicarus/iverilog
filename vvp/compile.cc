@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.21 2001/03/31 17:36:02 steve Exp $"
+#ident "$Id: compile.cc,v 1.22 2001/03/31 19:00:43 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -160,6 +160,13 @@ struct cresolv_list_s {
 
 static struct cresolv_list_s*cresolv_list = 0;
 
+void compile_vpi_symbol(const char*label, vpiHandle obj)
+{
+      symbol_value_t val;
+      val.ptr = obj;
+      sym_set_value(sym_vpi, label, val);
+}
+
 /*
  * Initialize the compiler by allocation empty symbol tables and
  * initializing the various address spaces.
@@ -167,8 +174,11 @@ static struct cresolv_list_s*cresolv_list = 0;
 void compile_init(void)
 {
       sym_vpi = new_symbol_table();
+      compile_vpi_symbol("$time", vpip_sim_time());
+
       sym_functors = new_symbol_table();
       functor_init();
+
       sym_codespace = new_symbol_table();
       codespace_init();
 
@@ -515,13 +525,6 @@ void compile_thread(char*start_sym)
       free(start_sym);
 }
 
-void compile_vpi_symbol(const char*label, vpiHandle obj)
-{
-      symbol_value_t val;
-      val.ptr = obj;
-      sym_set_value(sym_vpi, label, val);
-}
-
 vpiHandle compile_vpi_lookup(const char*label)
 {
       symbol_value_t val;
@@ -689,6 +692,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.22  2001/03/31 19:00:43  steve
+ *  Add VPI support for the simulation time.
+ *
  * Revision 1.21  2001/03/31 17:36:02  steve
  *  Add the jmp/1 instruction.
  *

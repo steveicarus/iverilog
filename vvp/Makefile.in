@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.11 2001/03/25 05:59:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.12 2001/03/31 19:00:43 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -39,8 +39,8 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 STRIP = @STRIP@
 
-CPPFLAGS = @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
-CXXFLAGS = @CXXFLAGS@ -I. -I$(srcdir)/..
+CPPFLAGS = -I. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
+CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 dllib=@DLLIB@
@@ -58,7 +58,7 @@ check: all
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 
 V = vpi_modules.o vpi_const.o vpi_iter.o vpi_mcd.o vpi_priv.o \
-vpi_scope.o vpi_signal.o vpi_tasks.o
+vpi_scope.o vpi_signal.o vpi_tasks.o vpi_time.o
 
 O = main.o parse.o parse_misc.o lexor.o compile.o functor.o symbols.o \
 codes.o vthread.o schedule.o tables.o $V

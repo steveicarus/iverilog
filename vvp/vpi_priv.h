@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.7 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.8 2001/03/31 19:00:44 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -180,8 +180,13 @@ extern void vpip_execute_vpi_call(vpiHandle obj);
  * and to finish compilation in preparation for execution.
  */
 
+vpiHandle vpip_sim_time(void);
+
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.8  2001/03/31 19:00:44  steve
+ *  Add VPI support for the simulation time.
+ *
  * Revision 1.7  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.3 2001/03/19 01:55:38 steve Exp $"
+#ident "$Id: schedule.cc,v 1.4 2001/03/31 19:00:43 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -150,6 +150,8 @@ void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
 }
 
 static unsigned long schedule_time;
+unsigned long schedule_simtime(void)
+{ return schedule_time; }
 
 void schedule_simulate(void)
 {
@@ -192,6 +194,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.4  2001/03/31 19:00:43  steve
+ *  Add VPI support for the simulation time.
+ *
  * Revision 1.3  2001/03/19 01:55:38  steve
  *  Add support for the vpiReset sim control.
  *
