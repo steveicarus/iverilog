@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_mult.cc,v 1.2 2000/02/23 02:56:57 steve Exp $"
+#ident "$Id: vvm_mult.cc,v 1.3 2000/03/04 01:13:54 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -27,20 +27,52 @@ void vvm_binop_mult(vpip_bit_t*r, unsigned nr,
 		    const vpip_bit_t*a, unsigned na,
 		    const vpip_bit_t*b, unsigned nb)
 {
-      assert(nr >= (na+nb));
+      assert(nr <= 8*sizeof(unsigned long));
+      assert(na <= 8*sizeof(unsigned long));
+      assert(nb <= 8*sizeof(unsigned long));
 
-      for (unsigned idx = 0 ;  idx < nr ;  idx += 1)
-	    r[idx] = V0;
+      unsigned long av = 0, bv = 0;
+      unsigned long rv;
 
-      for (unsigned bdx = 0 ; bdx < nb ;  bdx += 1) {
-	    unsigned rdx = bdx;
-	    vpip_bit_t c = V0;
-	    for (unsigned idx = 0 ;  idx < na ;  idx += 1) {
-		  r[rdx] = add_with_carry(r[rdx],a[idx]&b[bdx],c);
-		  rdx += 1;
-	    }
-	    if (rdx < nr) r[rdx] = add_with_carry(r[rdx],c,c);
+      for (unsigned idx = 0 ;  idx < na ;  idx += 1) switch (a[idx]) {
+
+	  case V0:
+	    break;
+	  case V1:
+	    av |= 1 << idx;
+	    break;
+	  default:
+	    goto unknown_result;
       }
+
+      for (unsigned idx = 0 ;  idx < nb ;  idx += 1) switch (b[idx]) {
+
+	  case V0:
+	    break;
+	  case V1:
+	    bv |= 1 << idx;
+	    break;
+	  default:
+	    goto unknown_result;
+      }
+
+      rv = av * bv;
+
+      for (unsigned idx = 0 ;  idx < nr ;  idx += 1) {
+
+	    if (rv & 1)
+		  r[idx] = V1;
+	    else
+		  r[idx] = V0;
+
+	    rv >>= 1;
+      }
+
+      return;
+
+ unknown_result:
+      for (unsigned idx= 0 ;  idx < nr ;  idx += 1)
+	    r[idx] = Vx;
 }
 
 vvm_mult::vvm_mult(unsigned rwid, unsigned awid,
@@ -107,6 +139,9 @@ void vvm_mult::set_DataB(unsigned idx, vpip_bit_t val)
 
 /*
  * $Log: vvm_mult.cc,v $
+ * Revision 1.3  2000/03/04 01:13:54  steve
+ *  Simpler implementation of multiplication.
+ *
  * Revision 1.2  2000/02/23 02:56:57  steve
  *  Macintosh compilers do not support ident.
  *
