@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.163 2004/03/09 04:29:42 steve Exp $"
+#ident "$Id: Makefile.in,v 1.164 2004/03/11 06:13:58 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -78,13 +78,6 @@ ifeq (@WIN32@,yes)
 all: dep dosify.exe
 dosify.exe: dosify.c
 	$(CC) -o dosify.exe dosify.c
-
-ifeq (@MINGW32@,yes)
-SUBDIRS += driver-vpi
-endif
-
-else
-all: dep iverilog-vpi
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
@@ -149,9 +142,11 @@ ivl@EXEEXT@: $O
 
 endif
 
-ifeq (@WIN32@,yes)
-
+ifeq (@MINGW32@,yes)
+SUBDIRS += driver-vpi
 else
+all: dep iverilog-vpi
+
 iverilog-vpi: iverilog-vpi.sh
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
 	    -e 's;@INCLUDEDIR@;@includedir@;' \
