@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.123 2003/11/13 05:55:33 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.124 2003/11/26 01:37:38 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  <iostream>
 
+# include  <stdio.h>   // sprintf()
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  "netmisc.h"
@@ -2169,6 +2170,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.124  2003/11/26 01:37:38  steve
+ *  Warning about sprintf.
+ *
  * Revision 1.123  2003/11/13 05:55:33  steve
  *  Move the DLL= flag to target config files.
  *
