@@ -8,6 +8,8 @@ Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-20030730.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
+BuildRequires: zlib-devel, bison, flex, gperf, readline-devel
+
 BuildRoot: /tmp/ivl
 
 # This provides tag allows me to use a more specific name for things
