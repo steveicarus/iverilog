@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.51 2000/10/14 02:23:02 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.52 2000/10/30 20:55:53 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1080,7 +1080,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
 	    } else {
 		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
-					  sig->type(), midx-lidx+1);
+					  sig->type(), lidx-midx+1);
 		  tmp->local_flag(true);
 
 		  assert(tmp->pin_count() <= sig->pin_count());
@@ -1752,6 +1752,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.52  2000/10/30 20:55:53  steve
+ *  get width right for reversed part select net. (PR#33)
+ *
  * Revision 1.51  2000/10/14 02:23:02  steve
  *  Check for missing concat subexpressions (PR#11)
  *
