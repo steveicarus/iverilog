@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.23 2001/04/13 03:55:18 steve Exp $"
+#ident "$Id: vthread.cc,v 1.24 2001/04/14 05:10:05 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -61,6 +61,20 @@
  * If A then executes 2 %joins, it will read C and X (when it ends)
  * leaving B in purgatory. What's worse, A will block on the schedules
  * of X and C instead of C and B, possibly creating incorrect timing.
+ *
+ * The schedule_parent_on_end flag is used by threads to tell their
+ * children that they are waiting for it to end. It is set by a %join
+ * instruction if the child is not already done. The thread that
+ * executes a %join instruction sets the flag in its child.
+ *
+ * The i_have_ended flag, on the other hand, is used by threads to
+ * tell their parents that they are already dead. A thread that
+ * executes %end will set its own i_have_ended flag and let its parent
+ * reap it when the parent does the %join. If a thread has its
+ * schedule_parent_on_end flag set already when it %ends, then it
+ * reaps itself and simply schedules its parent. If a child has its
+ * i_have_ended flag set when a thread executes %join, then it is free
+ * to reap the child immediately.
  */
 
 struct vthread_s {
@@ -127,6 +141,7 @@ vthread_t vthread_new(unsigned long pc)
 
       thr->schedule_parent_on_end = 0;
       thr->i_have_ended = 0;
+      thr->waiting_for_event = 0;
 
       thr_put_bit(thr, 0, 0);
       thr_put_bit(thr, 1, 1);
@@ -682,6 +697,9 @@ bool of_ZOMBIE(vthread_t, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.24  2001/04/14 05:10:05  steve
+ *  Initialize the waiting_for_event member.
+ *
  * Revision 1.23  2001/04/13 03:55:18  steve
  *  More complete reap of all threads.
  *
