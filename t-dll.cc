@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.104 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.105 2003/03/03 02:22:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -187,11 +187,11 @@ static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 		  return 0;
 
 	    for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
-		  if (strcmp(tmp->name_, cur->name().c_str()) == 0)
+		  if (strcmp(tmp->name_, cur->basename()) == 0)
 			return tmp;
 
       } else {
-	    if (strcmp(root->name_, cur->name().c_str()) == 0)
+	    if (strcmp(root->name_, cur->basename()) == 0)
 		  return root;
       }
 
@@ -442,8 +442,8 @@ static void scope_add_var(ivl_scope_t scope, ivl_variable_t net)
 void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
-      const char *name = s->name().c_str();
-      root_->name_ = strings_.add(name);
+      const char *name = s->basename();
+      root_->name_ = name;
       root_->child_ = 0;
       root_->sibling_ = 0;
       root_->parent = 0;
@@ -1802,7 +1802,7 @@ void dll_target::scope(const NetScope*net)
 
       } else {
 	    scope = new struct ivl_scope_s;
-	    scope->name_ = strings_.add(net->name().c_str());
+	    scope->name_ = net->basename();
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
 	    scope->parent = find_scope(des_, net->parent());
@@ -1887,16 +1887,6 @@ void dll_target::signal(const NetNet*net)
 
       obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
 
-#ifndef NDEBUG
-      { size_t name_len = strlen(obj->scope_->name_);
-        if (0 != strncmp(obj->scope_->name_, obj->name_, name_len)) {
-	      cerr << net->get_line() << ": internal error: "
-		   << "Malformed name " << obj->name_ << " in "
-		   << obj->scope_->name_ << endl;
-	}
-	assert(0 == strncmp(obj->scope_->name_, obj->name_, name_len));
-      }
-#endif
 
 	/* Save the primitive properties of the signal in the
 	   ivl_signal_t object. */
@@ -2033,6 +2023,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.105  2003/03/03 02:22:41  steve
+ *  Scope names stored only as basename.
+ *
  * Revision 1.104  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *

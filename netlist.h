@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.277 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.278 2003/03/03 02:22:41 steve Exp $"
 #endif
 
 /*
@@ -2878,6 +2878,9 @@ class NetScope {
 
     public:
       enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN };
+
+	/* Create a new scope, and attach it to the given parent. The
+	   name is expected to have been permallocated. */
       NetScope(NetScope*up, const char*name, TYPE t);
       ~NetScope();
 
@@ -3201,6 +3204,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.278  2003/03/03 02:22:41  steve
+ *  Scope names stored only as basename.
+ *
  * Revision 1.277  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

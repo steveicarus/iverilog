@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.91 2003/02/26 01:29:24 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.92 2003/03/03 02:22:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1101,10 +1101,7 @@ extern "C" const char* ivl_scope_basename(ivl_scope_t net)
 {
       assert(net);
 
-      if (net->parent == 0)
-	    return net->name_;
-
-      return basename(net->parent, net->name_);
+      return net->name_;
 }
 
 extern "C" int ivl_scope_children(ivl_scope_t net,
@@ -1191,9 +1188,41 @@ extern "C" ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx)
       return net->mem_[idx];
 }
 
+static void push_scope_basename(ivl_scope_t net, char*buf)
+{
+      if (net->parent == 0) {
+	    strcpy(buf, net->name_);
+	    return;
+      }
+
+      push_scope_basename(net->parent, buf);
+      strcat(buf, ".");
+      strcat(buf, net->name_);
+}
+
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
 {
-      return net->name_;
+      static char*name_buffer = 0;
+      static unsigned name_size = 0;
+
+      if (net->parent == 0)
+	    return net->name_;
+
+      ivl_scope_t cur;
+
+      unsigned needlen = 0;
+      for (cur = net ;  cur ;  cur = cur->parent)
+	    needlen += strlen(cur->name_) + 1;
+
+      if (name_size < needlen) {
+	    name_buffer = (char*)realloc(name_buffer, needlen);
+	    name_size = needlen;
+      }
+
+
+      push_scope_basename(net, name_buffer);
+
+      return name_buffer;
 }
 
 extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
@@ -1679,6 +1708,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.92  2003/03/03 02:22:41  steve
+ *  Scope names stored only as basename.
+ *
  * Revision 1.91  2003/02/26 01:29:24  steve
  *  LPM objects store only their base names.
  *
