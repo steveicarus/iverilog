@@ -17,6 +17,17 @@ AC_LANG_CPLUSPLUS
 
 AC_CHECK_HEADERS(getopt.h iosfwd sys/wait.h)
 
+AC_MSG_CHECKING(for sys/times)
+AC_TRY_LINK(
+#include <unistd.h>
+#include <sys/times.h>
+,{clock_t a = times(0)/sysconf(_SC_CLK_TCK);},
+do_times=yes
+AC_DEFINE(HAVE_TIMES,1),
+do_times=no
+)
+AC_MSG_RESULT($do_times)
+
 AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
 AC_ARG_WITH(ipal,enable PAL target,
 if test "$with_ipal" = no; then

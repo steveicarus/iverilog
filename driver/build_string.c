@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.2 2000/10/28 03:45:47 steve Exp $"
+#ident "$Id: build_string.c,v 1.3 2001/07/03 04:09:25 steve Exp $"
 #endif
 
 # include  "globals.h"
@@ -51,6 +51,7 @@ int build_string(char*output, size_t olen, const char*pattern)
 			    tmp_buf[tail-pattern-1] = 0;
 
 			    if (((*pattern == 's') && start)
+				|| ((*pattern == 'v') && verbose_flag)
 				|| ((*pattern == 'N') && npath)
 				|| ((*pattern == 'T') && mtm)) {
 				  int rc = build_string(output, olen,
@@ -141,6 +142,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.3  2001/07/03 04:09:25  steve
+ *  Generate verbuse status messages (Stephan Boettcher)
+ *
  * Revision 1.2  2000/10/28 03:45:47  steve
  *  Use the conf file to generate the vvm ivl string.
  *

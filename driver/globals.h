@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.3 2000/11/09 21:58:00 steve Exp $"
+#ident "$Id: globals.h,v 1.4 2001/07/03 04:09:25 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -51,6 +51,9 @@ extern int synth_flag;
   /* This is the name of the selected target. */
 extern const char*targ;
 
+  /* -v */
+extern int verbose_flag;
+
 extern char warning_flags[];
 
 extern const char*lookup_pattern(const char*key);
@@ -59,6 +62,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.4  2001/07/03 04:09:25  steve
+ *  Generate verbuse status messages (Stephan Boettcher)
+ *
  * Revision 1.3  2000/11/09 21:58:00  steve
  *  Remember to include the -S condition.
  *

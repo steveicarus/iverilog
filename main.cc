@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.43 2001/07/02 01:57:27 steve Exp $"
+#ident "$Id: main.cc,v 1.44 2001/07/03 04:09:24 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -45,6 +45,9 @@ const char NOTICE[] =
 # include  <map>
 # include  <unistd.h>
 # include  <stdlib.h>
+#if defined(HAVE_TIMES)
+# include  <sys/times.h>
+#endif
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
@@ -121,17 +124,51 @@ net_func name_to_net_func(const string&name)
       return 0;
 }
 
+const char *net_func_to_name(const net_func func)
+{
+      for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
+	    if (func == func_table[idx].func)
+		  return func_table[idx].name;
+
+      return "This cannot happen";
+}
+
+#if defined(HAVE_TIMES)
+static double cycles_diff(struct tms *a, struct tms *b)
+{
+      clock_t aa = a->tms_utime 
+	    +      a->tms_stime 
+	    +      a->tms_cutime 
+	    +      a->tms_cstime;
+
+      clock_t bb = b->tms_utime 
+	    +      b->tms_stime 
+	    +      b->tms_cutime 
+	    +      b->tms_cstime;
+
+      return (aa-bb)/(double)sysconf(_SC_CLK_TCK);
+}
+#else // ! defined(HAVE_TIMES)
+// Provide dummies
+struct tms { int x; };
+inline static void times(struct tms *) { }
+inline static double cycles_diff(struct tms *a, struct tms *b) { return 0; }
+#endif // ! defined(HAVE_TIMES)
 
 int main(int argc, char*argv[])
 {
       bool help_flag = false;
       bool verbose_flag = false;
+      bool times_flag = false;
+
       const char* net_path = 0;
       const char* pf_path = 0;
       const char* warn_en = "";
       int opt;
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
+
+      struct tms cycles[5];
 
       flags["VPI_MODULE_LIST"] = "system";
       flags["-o"] = "a.out";
@@ -193,10 +230,13 @@ int main(int argc, char*argv[])
 	  case 't':
 	    target = optarg;
 	    break;
-	  case 'V':
-	    verbose_flag = true;
-	    break;
 	  case 'v':
+	    verbose_flag = true;
+#          if defined(HAVE_TIMES)
+	    times_flag = true;
+#          endif
+	    break;
+	  case 'V':
 	    cout << "Icarus Verilog version " << VERSION << endl;
 	    cout << COPYRIGHT << endl;
 	    cout << endl << NOTICE << endl;
@@ -237,7 +277,9 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-	    cout << "PARSING INPUT..." << endl;
+	    if (times_flag)
+		  times(cycles+0);
+	    cout << "PARSING INPUT ..." << endl;
       }
 
 	/* Parse the input. Make the pform. */
@@ -306,7 +348,12 @@ int main(int argc, char*argv[])
 
 
       if (verbose_flag) {
-	    cout << "ELABORATING DESIGN..." << endl;
+	    if (times_flag) {
+		  times(cycles+1);
+		  cerr<<" ... done, "
+		      <<cycles_diff(cycles+1, cycles+0)<<" seconds."<<endl;
+	    }
+	    cout << "ELABORATING DESIGN -s "<<start_module<<" ..." << endl;
       }
 
 	/* On with the process of elaborating the module. */
@@ -327,12 +374,19 @@ int main(int argc, char*argv[])
 
 
       if (verbose_flag) {
-	    cout << "RUNNING FUNCTORS..." << endl;
+	    if (times_flag) {
+		  times(cycles+2);
+		  cerr<<" ... done, "
+		      <<cycles_diff(cycles+2, cycles+1)<<" seconds."<<endl;
+	    }
+	    cout << "RUNNING FUNCTORS ..." << endl;
       }
 
       while (!net_func_queue.empty()) {
 	    net_func func = net_func_queue.front();
 	    net_func_queue.pop();
+	    if (verbose_flag)
+		  cerr<<" -F "<<net_func_to_name(func)<<endl;
 	    func(des);
       }
 
@@ -343,7 +397,12 @@ int main(int argc, char*argv[])
 
 
       if (verbose_flag) {
-	    cout << "STARTING CODE GENERATOR..." << endl;
+	    if (times_flag) {
+		  times(cycles+3);
+		  cerr<<" ... done, "
+		      <<cycles_diff(cycles+3, cycles+2)<<" seconds."<<endl;
+	    }
+	    cout << "CODE GENERATION -t "<<target<<" ..." << endl;
       }
 
       bool emit_rc = emit(des, target);
@@ -353,7 +412,12 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
-	    cout << "DONE." << endl;
+	    if (times_flag) {
+		  times(cycles+4);
+		  cerr<<" ... done, "
+		      <<cycles_diff(cycles+4, cycles+3)<<" seconds."<<endl;
+	    } else
+		  cout << "DONE." << endl;
       }
 
       return 0;
@@ -361,6 +425,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.44  2001/07/03 04:09:24  steve
+ *  Generate verbuse status messages (Stephan Boettcher)
+ *
  * Revision 1.43  2001/07/02 01:57:27  steve
  *  Add the -V flag, and some verbose messages.
  *
