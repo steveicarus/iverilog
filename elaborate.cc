@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.169 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.170 2000/05/07 21:17:21 steve Exp $"
 #endif
 
 /*
@@ -1066,10 +1066,18 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 		  connect(cur->pin(idx), reg->pin(reg->sb_to_idx(idx+lsb)));
 
       } else {
-	    assert(reg->pin_count() == 1);
-	    cur = new NetAssignNB(des->local_symbol(path), des, 1, mux, rv);
-	    connect(cur->pin(0), reg->pin(0));
+
+	      /* In this case, there is a mux expression (detected by
+		 the elaborate_lval method) that selects where the bit
+		 value goes. Create a NetAssignNB object that carries
+		 that mux expression, and connect it to the entire
+		 width of the lval. */
+	    cur = new NetAssignNB(des->local_symbol(path), des,
+				  reg->pin_count(), mux, rv);
+	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx));
       }
+
 
       unsigned long rise_time, fall_time, decay_time;
       delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
@@ -2350,6 +2358,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.170  2000/05/07 21:17:21  steve
+ *  non-blocking assignment to a bit select.
+ *
  * Revision 1.169  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

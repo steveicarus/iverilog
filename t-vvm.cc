@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.146 2000/05/07 19:40:26 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.147 2000/05/07 21:17:21 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1946,28 +1946,50 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	   generate bunches of temporaries. */
 
       if (const NetEConst*rc = dynamic_cast<const NetEConst*>(net->rval())) {
-	    assert(net->bmux() == 0);
+
 	    const verinum value = rc->value();
+
+	    if (net->bmux()) {
+
+		    // This is a bit select. Assign the low bit of the
+		    // constant to the selected bit of the lval.
+
+		  const char*rval = vvm_val_name(value.get(0),
+						 Link::STRONG,
+						 Link::STRONG);
+
+		  string bval = emit_proc_rval(defn, this, net->bmux());
+
+		  defn << "      switch (" << bval
+		       << ".as_unsigned()) {" << endl;
+
+		  for (unsigned idx = 0; idx < net->pin_count(); idx += 1) {
+
+			string nexus = nexus_from_link(&net->pin(idx));
+			unsigned ncode = nexus_wire_map[nexus];
+
+			defn << "      case " << idx << ":" << endl;
+
+			defn << "        nexus_wire_table["<<ncode<<"]"
+			     << ".reg_assign(" << rval << ");" << endl;
+			defn << "        break;" << endl;
+
+		  }
+
+		  defn << "      }" << endl;
+		  return;
+	    }
 
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 		  string nexus = nexus_from_link(&net->pin(idx));
 		  unsigned ncode = nexus_wire_map[nexus];
-		  defn << "      nexus_wire_table[" <<ncode<< "].reg_assign(";
-		  switch (value.get(idx)) {
-		      case verinum::V0:
-			defn << "St0";
-			break;
-		      case verinum::V1:
-			defn << "St1";
-			break;
-		      case verinum::Vx:
-			defn << "StX";
-			break;
-		      case verinum::Vz:
-			defn << "HiZ";
-			break;
-		  }
-		  defn << ");" << endl;
+
+		  const char*rval = vvm_val_name(value.get(idx),
+						 Link::STRONG,
+						 Link::STRONG);
+
+		  defn << "      nexus_wire_table[" <<ncode<< "]"
+		       << ".reg_assign(" << rval << ");" << endl;
 	    }
 	    return;
       }
@@ -2077,7 +2099,7 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 
 		  defn << "      case " << idx << ":" << endl;
 		  defn << "        vvm_delayed_assign(nexus_wire_table["
-		       << ncode << "], " << rval << ", " << delay << ");"
+		       << ncode << "], " << rval << "[0], " << delay << ");"
 		       << endl;
 		  defn << "        break;" << endl;
 	    }
@@ -2802,6 +2824,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.147  2000/05/07 21:17:21  steve
+ *  non-blocking assignment to a bit select.
+ *
  * Revision 1.146  2000/05/07 19:40:26  steve
  *  Fix connection of Direction of LMP_CLSHIFT
  *  to constant values. Remember to add a signal
