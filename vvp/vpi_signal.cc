@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.35 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.36 2002/06/30 02:52:36 steve Exp $"
 #endif
 
 /*
@@ -331,10 +331,15 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.str = result_buf;
 	    break;
 
-          case vpiVectorVal:
-	    {
-	      s_vpi_vecval *op = vp->value.vector;
+          case vpiVectorVal: {
 	      unsigned int obit = 0;
+	      unsigned hwid = (wid - 1)/32 + 1;
+
+	      need_result_buf(hwid * sizeof(s_vpi_vecval));
+	      s_vpi_vecval *op = (p_vpi_vecval)result_buf;
+	      vp->value.vector = op;
+
+	      op->aval = op->bval = 0;
 	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
 		switch (functor_get(fptr)) {
@@ -356,13 +361,14 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		  break;
 		}
 		obit++;
-		if (obit == 8*sizeof(op->aval)) {
+		if (!(obit % 32)) {
 		  op++;
+		  op->aval = op->bval = 0;
 		  obit = 0;
 		}
 	      }
+	      break;
 	    }
-	    break;
 
 	  default:
 	    fprintf(stderr, "vvp internal error: signal_get_value: "
@@ -660,6 +666,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.36  2002/06/30 02:52:36  steve
+ *  vpiVectorVal of very wide signals.
+ *
  * Revision 1.35  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *
