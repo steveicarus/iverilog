@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.19 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.20 1999/04/25 00:44:10 steve Exp $"
 #endif
 
 /*
@@ -680,41 +680,56 @@ NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
 
 NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 {
-      if (text_[0] == '$') {
+	// System identifiers show up in the netlist as identifiers.
+      if (text_[0] == '$')
 	    return new NetEIdent(text_, 64);
 
-      } else {
-	    string name = path+"."+text_;
+      string name = path+"."+text_;
 
-	    if (NetExpr*ex = des->get_parameter(name))
-		  return ex;
+	// If the identifier name a paramter name, then return
+	// the expression that it represents.
+      if (NetExpr*ex = des->get_parameter(name))
+	    return ex;
 
-	    if (NetNet*net = des->find_signal(name)) {
-		  NetESignal*node = des->get_esignal(net);
-		  return node;
+	// If the identifier names a signal (a register or wire)
+	// then create a NetESignal node to handle it.
+      if (NetNet*net = des->find_signal(name)) {
+	    NetESignal*node = des->get_esignal(net);
+	    assert(idx_ == 0);
+	    assert(lsb_ == 0);
+	    if (msb_) {
+		  NetExpr*ex = msb_->elaborate_expr(des, path);
+		  NetESubSignal*ss = new NetESubSignal(node, ex);
+		  return ss;
 	    }
-
-	    if (NetMemory*mem = des->find_memory(name)) {
-		  assert(msb_ != 0);
-		  assert(lsb_ == 0);
-		  assert(idx_ == 0);
-		  NetExpr*i = msb_->elaborate_expr(des, path);
-		  if (i == 0) {
-			cerr << get_line() << ": Unable to exaborate "
-			      "index expression `" << *msb_ << "'" << endl;
-			des->errors += 1;
-			return 0;
-		  }
-
-		  NetEMemory*node = new NetEMemory(mem, i);
-		  return node;
-	    }
-
-	    cerr << get_line() << ": Unable to bind wire/reg/memory "
-		  "`" << path << "." << text_ << "'" << endl;
-	    des->errors += 1;
-	    return 0;
+	    assert(msb_ == 0);
+	    return node;
       }
+
+	// If the identifier names a memory, then this is a
+	// memory reference and I must generate a NetEMemory
+	// object to handle it.
+      if (NetMemory*mem = des->find_memory(name)) {
+	    assert(msb_ != 0);
+	    assert(lsb_ == 0);
+	    assert(idx_ == 0);
+	    NetExpr*i = msb_->elaborate_expr(des, path);
+	    if (i == 0) {
+		  cerr << get_line() << ": Unable to exaborate "
+			"index expression `" << *msb_ << "'" << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    NetEMemory*node = new NetEMemory(mem, i);
+	    return node;
+      }
+
+	// I cannot interpret this identifier. Error message.
+      cerr << get_line() << ": Unable to bind wire/reg/memory "
+	    "`" << path << "." << text_ << "'" << endl;
+      des->errors += 1;
+      return 0;
 }
 
 NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
@@ -1028,6 +1043,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.20  1999/04/25 00:44:10  steve
+ *  Core handles subsignal expressions.
+ *
  * Revision 1.19  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.20 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: netlist.cc,v 1.21 1999/04/25 00:44:10 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -536,6 +536,16 @@ void NetESignal::set_width(unsigned w)
       expr_width(w);
 }
 
+NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
+: sig_(sig), idx_(ex)
+{
+}
+
+NetESubSignal::~NetESubSignal()
+{
+      idx_.clr_and_delete();
+}
+
 NetEUnary::~NetEUnary()
 {
       expr_.clr_and_delete();
@@ -1016,6 +1026,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.21  1999/04/25 00:44:10  steve
+ *  Core handles subsignal expressions.
+ *
  * Revision 1.20  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.6 1999/04/19 01:59:37 steve Exp $"
+#ident "$Id: target.cc,v 1.7 1999/04/25 00:44:10 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -164,6 +164,12 @@ void expr_scan_t::expr_signal(const NetESignal*)
 	    "unhandled expr_signal." << endl;
 }
 
+void expr_scan_t::expr_subsignal(const NetESubSignal*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_subsignal." << endl;
+}
+
 void expr_scan_t::expr_unary(const NetEUnary*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -178,6 +184,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.7  1999/04/25 00:44:10  steve
+ *  Core handles subsignal expressions.
+ *
  * Revision 1.6  1999/04/19 01:59:37  steve
  *  Add memories to the parse and elaboration phases.
  *

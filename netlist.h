@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.24 1999/04/22 04:56:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.25 1999/04/25 00:44:10 steve Exp $"
 #endif
 
 /*
@@ -973,6 +973,29 @@ class NetESignal  : public NetExpr, public NetNode {
 };
 
 /*
+ * An expression that takes a portion of a signal is represented as
+ * one of these. For example, ``foo[x+5]'' is a signal and x+5 is an
+ * expression to select a single bit from that signal. I can't just
+ * make a new NetESignal node connected to the single net because the
+ * expression may vary during execution, so the structure is not known
+ * at compile (elaboration) time.
+ */
+class NetESubSignal  : public NetExpr {
+
+    public:
+      NetESubSignal(NetESignal*sig, NetExpr*ex);
+      ~NetESubSignal();
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+    private:
+	// For now, only support single-bit selects of a signal.
+      NetESignal*sig_;
+      NetExpr::REF idx_;
+};
+
+/*
  * This class contains an entire design. It includes processes and a
  * netlist, and can be passed around from function to function.
  */
@@ -1103,6 +1126,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.25  1999/04/25 00:44:10  steve
+ *  Core handles subsignal expressions.
+ *
  * Revision 1.24  1999/04/22 04:56:58  steve
  *  Add to vvm proceedural memory references.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.17 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.18 1999/04/25 00:44:10 steve Exp $"
 #endif
 
 /*
@@ -469,6 +469,14 @@ void NetESignal::dump(ostream&o) const
       o << name();
 }
 
+void NetESubSignal::dump(ostream&o) const
+{
+      sig_->dump(o);
+      o << "[";
+      idx_->dump(o);
+      o << "]";
+}
+
 void NetEMemory::dump(ostream&o) const
 {
       o << mem_->name() << "[";
@@ -543,6 +551,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.18  1999/04/25 00:44:10  steve
+ *  Core handles subsignal expressions.
+ *
  * Revision 1.17  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *

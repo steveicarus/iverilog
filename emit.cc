@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.7 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: emit.cc,v 1.8 1999/04/25 00:44:10 steve Exp $"
 #endif
 
 /*
@@ -229,6 +229,11 @@ void NetESignal::emit_node(ostream&o, struct target_t*tgt) const
       tgt->net_esignal(o, this);
 }
 
+void NetESubSignal::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_subsignal(this);
+}
+
 void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_unary(this);
@@ -248,6 +253,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.8  1999/04/25 00:44:10  steve
+ *  Core handles subsignal expressions.
+ *
  * Revision 1.7  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *
