@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.31 2001/06/18 00:51:23 steve Exp $
+ *  $Id: README.txt,v 1.32 2001/06/30 23:03:16 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -46,6 +46,18 @@ This header statement names a vpi module that vvp should load before
 the rest of the program is compiled. The compiler looks in the
 standard VPI_MODULE_PATH for files named "name.vpi", and tries to
 dynamic load them.
+
+* :vpi_time_precision [+|-]<value>;
+
+This header statement specifies the time precision of a single tick of
+the simulation clock. This is mostly used for display (and VPI)
+purposes, because the engine itself does not care about units. The
+compiler scales time values ahead of time.
+
+The value is the size of a simulation tick in seconds, and is
+expressed as a power of 10. For example, +0 is 1 second, and -9 is 1
+nano-second. If the record is left out, then the precision is taken to
+be +0.
 
 LABELS AND SYMBOLS
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.51 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.52 2001/06/30 23:03:16 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -318,6 +318,7 @@ bool dll_target::start_design(const Design*des)
 
 	// Initialize the design object.
       des_.self = des;
+      des_.time_precision = des->get_precision();
       des_.root_ = new struct ivl_scope_s;
       des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
       des_.root_->child_ = 0;
@@ -1381,6 +1382,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.52  2001/06/30 23:03:16  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.51  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.32 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: parse.y,v 1.33 2001/06/30 23:03:17 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,7 +60,7 @@ extern FILE*yyin;
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_vpi_call K_vpi_func K_disable K_fork
-%token K_vpi_module
+%token K_vpi_module K_vpi_time_precision
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -93,6 +93,10 @@ header_lines
 header_line
 	: K_vpi_module T_STRING ';'
 		{ compile_load_vpi_module($2); }
+	| K_vpi_time_precision '+' T_NUMBER ';'
+		{ compile_vpi_time_precision($3); }
+	| K_vpi_time_precision '-' T_NUMBER ';'
+		{ compile_vpi_time_precision(-$3); }
 	;
 
   /* A program is simply a list of statements. No other structure. */
@@ -474,6 +478,10 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.33  2001/06/30 23:03:17  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.32  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

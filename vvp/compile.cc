@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.82 2001/06/30 21:07:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.83 2001/06/30 23:03:16 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -243,6 +243,11 @@ void compile_load_vpi_module(char*name)
 #endif      
       vpip_load_module(name, module_path);
       free(name);
+}
+
+void compile_vpi_time_precision(long pre)
+{
+      vpip_set_time_precision(pre);
 }
 
 /*
@@ -1450,6 +1455,10 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.83  2001/06/30 23:03:16  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.82  2001/06/30 21:07:26  steve
  *  Support non-const right shift (unsigned).
  *

@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.cc,v 1.2 2001/04/03 03:46:14 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.3 2001/06/30 23:03:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <assert.h>
+
+
+static int vpi_time_precision = 0;
 
 static struct __vpiSystemTime {
       struct __vpiHandle base;
@@ -73,8 +76,23 @@ vpiHandle vpip_sim_time(void)
       return &time_handle.base;
 }
 
+int vpip_get_time_precision(void)
+{
+      return vpi_time_precision;
+}
+
+void vpip_set_time_precision(int pre)
+{
+      vpi_time_precision = pre;
+}
+
+
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.3  2001/06/30 23:03:17  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.2  2001/04/03 03:46:14  steve
  *  VPI access time as a decimal string, and
  *  stub vpi access to the scopes.

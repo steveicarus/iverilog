@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.51 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.52 2001/06/30 23:03:16 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -45,6 +45,11 @@ extern "C" int ivl_design_process(ivl_design_t des,
 extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
 {
       return des->root_;
+}
+
+extern "C" int ivl_design_time_precision(ivl_design_t des)
+{
+      return des->time_precision;
 }
 
 extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
@@ -1227,6 +1232,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.52  2001/06/30 23:03:16  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.51  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

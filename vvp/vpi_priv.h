@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.17 2001/06/21 22:54:12 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.18 2001/06/30 23:03:17 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -249,8 +249,15 @@ extern void vpip_execute_vpi_call(vthread_t thr, vpiHandle obj);
 
 vpiHandle vpip_sim_time(void);
 
+extern int vpip_get_time_precision(void);
+extern void vpip_set_time_precision(int pres);
+
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.18  2001/06/30 23:03:17  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.17  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.69 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.70 2001/06/30 23:03:16 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -317,12 +317,17 @@ typedef int (ivl_scope_f)(ivl_scope_t net, void*cd);
  *    A design has a root named scope that is an instance of the top
  *    level module in the design. This is a hook for naming the
  *    design, or for starting the scope scan.
+ *
+ * ivl_design_time_precision
+ *    A design as a time precision. This is the size in seconds (a
+ *    signed power of 10) of a simulation tick.
  */
 
 extern const char* ivl_design_flag(ivl_design_t des, const char*key);
 extern int         ivl_design_process(ivl_design_t des,
 				      ivl_process_f fun, void*cd);
 extern ivl_scope_t ivl_design_root(ivl_design_t des);
+extern int         ivl_design_time_precision(ivl_design_t des);
 
 /*
  * These methods apply to ivl_net_const_t objects.
@@ -884,6 +889,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.70  2001/06/30 23:03:16  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.69  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *

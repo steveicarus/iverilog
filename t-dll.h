@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.51 2001/06/30 21:07:26 steve Exp $"
+#ident "$Id: t-dll.h,v 1.52 2001/06/30 23:03:16 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -37,6 +37,8 @@ typedef shl_t ivl_dll_t;
 #endif
 
 struct ivl_design_s {
+
+      int time_precision;
 
       ivl_scope_t root_;
 
@@ -539,6 +541,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.52  2001/06/30 23:03:16  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.51  2001/06/30 21:07:26  steve
  *  Support non-const right shift (unsigned).
  *

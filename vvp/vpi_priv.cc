@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.6 2001/06/21 22:54:12 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.7 2001/06/30 23:03:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -44,8 +44,7 @@ static int vpip_get_global(int property)
       switch (property) {
 
 	  case vpiTimePrecision:
-	    fprintf(stderr, "vpi Sorry: vpiTimePrecision not supported\n");
-	    return 0;
+	    return vpip_get_time_precision();
 
 	  default:
 	    fprintf(stderr, "vpi error: bad global property: %d\n", property);
@@ -152,6 +151,10 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.7  2001/06/30 23:03:17  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.6  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  *

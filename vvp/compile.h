@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.28 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: compile.h,v 1.29 2001/06/30 23:03:17 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -47,6 +47,8 @@ extern unsigned compile_errors;
 
 extern const char* module_path;
 extern void compile_load_vpi_module(char*name);
+
+extern void compile_vpi_time_precision(long pre);
 
 /*
  * This function is called by the parser to compile a functor
@@ -198,6 +200,10 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.29  2001/06/30 23:03:17  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.28  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

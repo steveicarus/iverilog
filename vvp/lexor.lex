@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.23 2001/06/18 03:10:34 steve Exp $"
+#ident "$Id: lexor.lex,v 1.24 2001/06/30 23:03:17 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -32,6 +32,7 @@
 
   /* These are some special header keywords. */
 ^":vpi_module" { return K_vpi_module; }
+^":vpi_time_precision" { return K_vpi_time_precision; }
 
 
   /* A label is any non-blank text that appears left justified. */
@@ -145,6 +146,10 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.24  2001/06/30 23:03:17  steve
+ *  support fast programming by only writing the bits
+ *  that are listed in the input file.
+ *
  * Revision 1.23  2001/06/18 03:10:34  steve
  *   1. Logic with more than 4 inputs
  *   2. Id and name mangling
