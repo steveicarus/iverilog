@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.48 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: main.cc,v 1.49 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -102,7 +102,7 @@ static void parm_to_flagmap(const string&flag)
 
 extern Design* elaborate(const map<string,Module*>&modules,
 			 const map<string,PUdp*>&primitives,
-			 list <string>root);
+			 list <const char*>root);
 
 extern void cprop(Design*des);
 extern void synth(Design*des);
@@ -175,7 +175,7 @@ int main(int argc, char*argv[])
       int opt;
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
-      list<string> roots;
+      list<const char*> roots;
 
       struct tms cycles[5];
 
@@ -218,7 +218,7 @@ int main(int argc, char*argv[])
 	    parm_to_flagmap(optarg);
 	    break;
 	  case 's':
-	    roots.push_back(string(optarg));
+	    roots.push_back(optarg);
 	    break;
 	  case 'T':
 	    if (strcmp(optarg,"min") == 0) {
@@ -359,10 +359,10 @@ int main(int argc, char*argv[])
 	    }
 
 	    for (mod = modules.begin(); mod != modules.end(); mod++) {
-		  if (mentioned_p[(*mod).second->get_name()] == false) {
+		  if (mentioned_p[(*mod).second->mod_name()] == false) {
 			if (verbose_flag)
-			      cout << " " << (*mod).second->get_name();
-			roots.push_back((*mod).second->get_name());
+			      cout << " " << (*mod).second->mod_name();
+			roots.push_back((*mod).second->mod_name());
 		  }
 	    }
 	    if (verbose_flag)
@@ -455,6 +455,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.49  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.48  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *

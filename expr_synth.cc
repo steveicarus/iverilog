@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.26 2001/08/31 22:59:48 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.27 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -353,27 +353,36 @@ NetNet* NetEBLogic::synthesize(Design*des)
 
 NetNet* NetEConcat::synthesize(Design*des)
 {
-      NetScope*scope = des->find_root_scope();
-      assert(scope);
-      assert(repeat_ == 1);
+	/* First, synthesize the operands. */
+      NetNet**tmp = new NetNet*[parms_.count()];
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+	    tmp[idx] = parms_[idx]->synthesize(des);
 
+      assert(tmp[0]);
+      NetScope*scope = tmp[0]->scope();
+      assert(scope);
+
+	/* Make a NetNet object to carry the output vector. */
       string path = scope->name() + "." + scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
+	/* Connect the output vector to the operands. */
       unsigned obit = 0;
       for (unsigned idx = parms_.count() ;  idx > 0 ;  idx -= 1) {
-	    NetNet*tmp = parms_[idx-1]->synthesize(des);
 
-	    for (unsigned bit = 0 ;  bit < tmp->pin_count() ;  bit += 1) {
-		  connect(osig->pin(obit), tmp->pin(bit));
+	    assert(tmp[idx-1]);
+
+	    for (unsigned bit = 0;  bit < tmp[idx-1]->pin_count(); bit += 1) {
+		  connect(osig->pin(obit), tmp[idx-1]->pin(bit));
 		  obit += 1;
 	    }
 
-	    if (tmp->local_flag() && tmp->get_eref() == 0)
-		  delete tmp;
+	    if (tmp[idx-1]->local_flag() && tmp[idx-1]->get_eref() == 0)
+		  delete tmp[idx-1];
       }
 
+      delete[]tmp;
       return osig;
 }
 
@@ -553,6 +562,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.27  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.26  2001/08/31 22:59:48  steve
  *  synthesize the special case of compare with 0.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.10 2001/10/09 02:01:04 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.11 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -134,7 +134,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       for (tasks_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++ ) {
 
-	    NetScope*task_scope = new NetScope(scope, (*cur).first,
+	    NetScope*task_scope = new NetScope(scope, (*cur).first.c_str(),
 					       NetScope::TASK);
 	    (*cur).second->elaborate_scope(des, task_scope);
       }
@@ -149,7 +149,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       for (funcs_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++ ) {
 
-	    NetScope*func_scope = new NetScope(scope, (*cur).first,
+	    NetScope*func_scope = new NetScope(scope, (*cur).first.c_str(),
 					       NetScope::FUNC);
 	    (*cur).second->elaborate_scope(des, func_scope);
       }
@@ -197,7 +197,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 {
       if (get_name() == "") {
 	    cerr << get_line() << ": error: Instantiation of module "
-		 << mod->get_name() << " requires an instance name." << endl;
+		 << mod->mod_name() << " requires an instance name." << endl;
 	    des->errors += 1;
 	    return;
       }
@@ -227,11 +227,11 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    if (scn->type() != NetScope::MODULE)
 		  continue;
 
-	    if (mod->get_name() != scn->module_name())
+	    if (strcmp(mod->mod_name(), scn->module_name()) != 0)
 		  continue;
 
 	    cerr << get_line() << ": error: You cannot instantiate "
-		 << "module " << mod->get_name() << " within itself." << endl;
+		 << "module " << mod->mod_name() << " within itself." << endl;
 
 	    cerr << get_line() << ":      : The offending instance is "
 		 << sc->name() << "." << get_name() << " within "
@@ -242,8 +242,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
       }
 
 	// Create the new scope as a MODULE with my name.
-      NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
-      my_scope->set_module_name(mod->get_name().c_str());
+      NetScope*my_scope = new NetScope(sc, get_name().c_str(), NetScope::MODULE);
+      my_scope->set_module_name(mod->mod_name());
 
 	// Set time units and precision.
       my_scope->time_unit(mod->time_unit);
@@ -349,7 +349,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
       NetScope*my_scope = scope;
 
       if (name_ != "") {
-	    my_scope = new NetScope(scope, name_, bl_type_==BL_PAR
+	    my_scope = new NetScope(scope, name_.c_str(), bl_type_==BL_PAR
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
       }
@@ -458,6 +458,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.11  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.10  2001/10/09 02:01:04  steve
  *  Tasks can have sub-scopes.
  *

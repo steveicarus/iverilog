@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.13 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.14 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,7 +34,7 @@
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
+NetScope::NetScope(NetScope*up, const char*n, NetScope::TYPE t)
 : type_(t), up_(up), sib_(0), sub_(0)
 {
       memories_ = 0;
@@ -63,8 +63,8 @@ NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 	    module_name_ = 0;
 	    break;
       }
-      name_ = new char[n.length()+1];
-      strcpy(name_, n.c_str());
+      name_ = new char[strlen(n)+1];
+      strcpy(name_, n);
 }
 
 NetScope::~NetScope()
@@ -371,6 +371,9 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.14  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.13  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

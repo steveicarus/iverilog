@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.78 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: pform.cc,v 1.79 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -108,7 +108,7 @@ static unsigned long evaluate_delay(PExpr*delay)
       return pp->value().as_ulong();
 }
 
-void pform_startmodule(const string&name, svector<Module::port_t*>*ports)
+void pform_startmodule(const char*name, svector<Module::port_t*>*ports)
 {
       assert( pform_cur_module == 0 );
 
@@ -126,10 +126,10 @@ void pform_startmodule(const string&name, svector<Module::port_t*>*ports)
       delete ports;
 }
 
-void pform_endmodule(const string&name)
+void pform_endmodule(const char*name)
 {
       assert(pform_cur_module);
-      assert(name == pform_cur_module->get_name());
+      assert(strcmp(name, pform_cur_module->mod_name()) == 0);
       vl_modules[name] = pform_cur_module;
       pform_cur_module = 0;
 }
@@ -1019,6 +1019,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.79  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.78  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

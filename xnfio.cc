@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.18 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.19 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -317,7 +317,7 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
       if (dev->width() > 4)
 	    return false;
 
-      NetScope*scope = des->find_root_scope();
+      NetScope*scope = dev->scope();
 
       verinum side (verinum::V0, dev->width());
 
@@ -367,6 +367,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.19  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.18  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.45 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: pform.h,v 1.46 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -110,8 +110,8 @@ struct lgate {
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
  */
-extern void pform_startmodule(const string&, svector<Module::port_t*>*);
-extern void pform_endmodule(const string&);
+extern void pform_startmodule(const char*, svector<Module::port_t*>*);
+extern void pform_endmodule(const char*);
 
 extern void pform_make_udp(const char*name, list<string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
@@ -202,6 +202,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.46  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.45  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

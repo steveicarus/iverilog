@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.21 2000/11/05 06:05:59 steve Exp $"
+#ident "$Id: Module.h,v 1.22 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include  <list>
@@ -58,7 +58,8 @@ class Module {
       };
 
     public:
-      explicit Module(const string&name, const svector<port_t*>*);
+      explicit Module(const char*name, const svector<port_t*>*);
+      ~Module();
 
 
 	/* The module has parameters that are evaluated when the
@@ -88,7 +89,7 @@ class Module {
 	   set by the `timescale directive. */
       int time_unit, time_precision;
 
-      const string&get_name() const { return name_; }
+      const char*mod_name() const { return name_; }
 
       void add_gate(PGate*gate);
 
@@ -122,7 +123,7 @@ class Module {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      const string name_;
+      char* name_;
 
 	/* This is an array of port descriptors, which is in turn a
 	   named array of PEident pointers. */
@@ -142,6 +143,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.22  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.21  2000/11/05 06:05:59  steve
  *  Handle connectsion to internally unconnected modules (PR#38)
  *

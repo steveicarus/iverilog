@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.221 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.222 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2285,7 +2285,7 @@ struct root_elem {
 
 Design* elaborate(const map<string,Module*>&modules,
 		  const map<string,PUdp*>&primitives,
-		  list<string>roots)
+		  list<const char*>roots)
 {
       svector<root_elem*> root_elems(roots.size());
       bool rc = true;
@@ -2298,7 +2298,7 @@ Design* elaborate(const map<string,Module*>&modules,
       modlist = &modules;
       udplist = &primitives;
 
-      for (list<string>::const_iterator root = roots.begin();
+      for (list<const char*>::const_iterator root = roots.begin();
 	   root != roots.end(); root++) {
 	    // Look for the root module in the list.
 	    map<string,Module*>::const_iterator mod = modules.find(*root);
@@ -2372,6 +2372,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.222  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.221  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *

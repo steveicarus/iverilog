@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.21 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: net_design.cc,v 1.22 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,22 +77,16 @@ unsigned long Design::scale_to_precision(unsigned long val,
       return val;
 }
 
-NetScope* Design::make_root_scope(const string&root)
+NetScope* Design::make_root_scope(const char*root)
 {
       NetScope *root_scope_;
       root_scope_ = new NetScope(0, root, NetScope::MODULE);
-      root_scope_->set_module_name(root.c_str());
+      root_scope_->set_module_name(root);
       root_scopes_.push_back(root_scope_);
       return root_scope_;
 }
 
 NetScope* Design::find_root_scope()
-{
-      assert(root_scopes_.front());
-      return root_scopes_.front();
-}
-
-const NetScope* Design::find_root_scope() const
 {
       assert(root_scopes_.front());
       return root_scopes_.front();
@@ -495,6 +489,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.22  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.21  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *

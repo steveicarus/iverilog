@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.15 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: Module.cc,v 1.16 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,12 +27,17 @@
 # include  "PWire.h"
 # include  <assert.h>
 
-Module::Module(const string&name, const svector<Module::port_t*>*pp)
-: name_(name)
+Module::Module(const char*name, const svector<Module::port_t*>*pp)
+: name_(strdup(name))
 {
       if (pp)
 	    ports_ = *pp;
 
+}
+
+Module::~Module()
+{
+      free(name_);
 }
 
 void Module::add_gate(PGate*gate)
@@ -137,6 +142,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.16  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.15  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

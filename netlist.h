@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.217 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.218 2001/10/20 05:21:51 steve Exp $"
 #endif
 
 /*
@@ -2558,7 +2558,7 @@ class NetScope {
 
     public:
       enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN };
-      NetScope(NetScope*up, const string&name, TYPE t);
+      NetScope(NetScope*up, const char*name, TYPE t);
       ~NetScope();
 
 	/* Parameters exist within a scope, and these methods allow
@@ -2709,11 +2709,10 @@ class Design {
 
       string get_flag(const string&key) const;
 
-      NetScope* make_root_scope(const string&name);
+      NetScope* make_root_scope(const char*name);
       NetScope* find_root_scope();
       list<NetScope*> find_root_scopes();
 
-      const NetScope* find_root_scope() const;
       const list<NetScope*> find_root_scopes() const;
 
 	/* Attempt to set the precision to the specified value. If the
@@ -2851,6 +2850,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.218  2001/10/20 05:21:51  steve
+ *  Scope/module names are char* instead of string.
+ *
  * Revision 1.217  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *
