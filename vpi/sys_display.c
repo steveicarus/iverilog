@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.52 2003/02/06 17:40:02 steve Exp $"
+#ident "$Id: sys_display.c,v 1.53 2003/02/10 05:20:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1112,6 +1112,7 @@ static int sys_monitor_calltf(char*name)
 		case vpiNet:
 		case vpiReg:
 		case vpiIntegerVar:
+		case vpiRealVar:
 		    /* Monitoring reg and net values involves setting
 		       a callback for value changes. pass the storage
 		       pointer for the callback itself as user_data so
@@ -1699,6 +1700,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.53  2003/02/10 05:20:48  steve
+ *  Support monitor of real variables.
+ *
  * Revision 1.52  2003/02/06 17:40:02  steve
  *  Format real values as time.
  *
