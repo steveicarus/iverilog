@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.105 2001/10/12 03:00:08 steve Exp $"
+#ident "$Id: compile.cc,v 1.106 2001/10/14 03:41:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -714,10 +714,14 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 	/* Recalculate the output based on the given ival. if the oval
 	   turns out to *not* be x, then schedule the functor so that
 	   the value gets propagated. */
-      unsigned char out = obj->table[obj->ival >> 2];
-      obj->oval = 3 & (out >> 2 * (obj->ival&3));
-      if (obj->oval != 2)
-	    schedule_functor(fdx, 0);
+      if (obj->mode == M42) {
+	    obj->obj->set(fdx, obj, false);
+      } else {
+	    unsigned char out = obj->table[obj->ival >> 2];
+	    obj->oval = 3 & (out >> 2 * (obj->ival&3));
+	    if (obj->oval != 2)
+		  schedule_functor(fdx, 0);
+      }
 
       free(label);
       free(type);
@@ -1569,6 +1573,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.106  2001/10/14 03:41:58  steve
+ *  Handle mode-42 functor init.
+ *
  * Revision 1.105  2001/10/12 03:00:08  steve
  *  M42 implementation of mode 2 (Stephan Boettcher)
  *
