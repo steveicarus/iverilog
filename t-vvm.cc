@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.92 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.93 2000/01/02 17:57:56 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -844,23 +844,27 @@ void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
 	    if (cur->get_dir() == NetObj::Link::OUTPUT)
 		  continue;
 
-	      // Check to see if the name has already been
+	    if (! dynamic_cast<const NetObj*>(cur->get_obj()))
+		  continue;
+
+	      // Build an init statement for the link, that writes the
+	      // value.
+	    ostrstream line;
+	    line << "      " << mangle(cur->get_obj()->name()) <<
+		  ".init_" << cur->get_name() << "(" <<
+		  cur->get_inst() << ", V" << val << ");" << endl << ends;
+
+
+	      // Check to see if the line has already been
 	      // written to. This can happen if the object is a
 	      // NetESignal, because there can be many of them
 	      // with the same name.
-	    if (written[cur->get_obj()->name()])
+	    if (written[line.str()])
 		  continue;
 
-	    written[cur->get_obj()->name()] = true;
+	    written[line.str()] = true;
 
-	      // Write initial values to nodes and nets.
-	    if (dynamic_cast<const NetObj*>(cur->get_obj())) {
-		  init_code << "      " <<
-			mangle(cur->get_obj()->name()) <<
-			".init_" << cur->get_name() << "(" <<
-			cur->get_inst() << ", V" << val << ");" <<
-			endl;
-	    }
+	    init_code << line.str();
       }
 }
 
@@ -1954,6 +1958,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.93  2000/01/02 17:57:56  steve
+ *  It is possible for node to initialize several pins of a signal.
+ *
  * Revision 1.92  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *
