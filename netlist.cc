@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.57 1999/09/04 01:57:15 steve Exp $"
+#ident "$Id: netlist.cc,v 1.58 1999/09/08 04:05:30 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -370,13 +370,6 @@ NetAssign_::~NetAssign_()
 NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
 : NetAssign_(n, w), rval_(rv)
 {
-      bool flag = rval_->set_width(w);
-      if (flag == false) {
-	    cerr << rv->get_line() << ": Expression bit width of " <<
-		  rv->expr_width() << " conflicts with l-value bit width of "
-		 << w << "." << endl;
-	    des->errors += 1;
-      }
 }
 
 NetAssign::~NetAssign()
@@ -1754,6 +1747,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.58  1999/09/08 04:05:30  steve
+ *  Allow assign to not match rvalue width.
+ *
  * Revision 1.57  1999/09/04 01:57:15  steve
  *  Generate fake adder code in vvm.
  *

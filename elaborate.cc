@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.79 1999/09/08 02:24:39 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.80 1999/09/08 04:05:30 steve Exp $"
 #endif
 
 /*
@@ -1417,13 +1417,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       if (mux == 0) {
 	    unsigned wid = msb - lsb + 1;
 
-	    if (! rv->set_width(wid)) {
-		  cerr << get_line() << ": Unable to match expression "
-			"width of " << rv->expr_width() << " to l-value"
-			" width of " << wid << "." << endl;
-		    //XXXX delete rv;
-		  return 0;
-	    }
+	    rv->set_width(wid);
 
 	    cur = new NetAssign(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -2186,6 +2180,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.80  1999/09/08 04:05:30  steve
+ *  Allow assign to not match rvalue width.
+ *
  * Revision 1.79  1999/09/08 02:24:39  steve
  *  Empty conditionals (pmonta@imedia.com)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.60 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.61 1999/09/08 04:05:30 steve Exp $"
 #endif
 
 /*
@@ -601,6 +601,10 @@ class NetProc {
  * lvalue object and represents the elaborated lvalue. Thus, this
  * appears as a procedural statement AND a structural node. The
  * LineInfo is the location of the assignment statement in the source.
+ *
+ * NOTE: The elaborator will make an effort to match the width of the
+ * r-value to the with of the assign node, but targets and functions
+ * should know that this is not a guarantee.
  */
 
 class NetAssign_ : public NetProc, public NetNode, public LineInfo {
@@ -1548,6 +1552,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.61  1999/09/08 04:05:30  steve
+ *  Allow assign to not match rvalue width.
+ *
  * Revision 1.60  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *
