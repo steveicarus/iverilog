@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.50 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: compile.h,v 1.51 2003/04/11 05:15:39 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -107,9 +107,9 @@ extern void compile_arith_sum(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
-extern void compile_cmp_ge(char*label, long width,
+extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
-extern void compile_cmp_gt(char*label, long width,
+extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_shiftl(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
@@ -264,6 +264,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.51  2003/04/11 05:15:39  steve
+ *  Add signed versions of .cmp/gt/ge
+ *
  * Revision 1.50  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *

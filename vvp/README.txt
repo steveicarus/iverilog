@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.43 2003/03/10 23:37:07 steve Exp $
+ *  $Id: README.txt,v 1.44 2003/04/11 05:15:38 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -502,11 +502,14 @@ similar:
 
 	<label> .cmp/ge  <wid>, <symbols_list>;
 	<label> .cmp/gt  <wid>, <symbols_list>;
+	<label> .cmp/ge.s <wid>, <symbols_list>;
+	<label> .cmp/gt.s <wid>, <symbols_list>;
 
 Whereas the arithmetic statements create an array of functor outputs,
 there is only one useful functor output for the comparators. That
 functor output is 1 of the comparison is true, 0 if false, and x
-otherwise.
+otherwise. The plain versions do unsigned comparison, but the ".s"
+versions to signed comparisons.
 
 
 STRUCTURAL SHIFTER STATEMENTS:

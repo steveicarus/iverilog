@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.14 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: arith.h,v 1.15 2003/04/11 05:15:38 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -104,17 +104,21 @@ class vvp_arith_sub  : public vvp_wide_arith_ {
 class vvp_cmp_ge  : public vvp_arith_ {
 
     public:
-      explicit vvp_cmp_ge(unsigned wid) : vvp_arith_(wid) {}
-
+      explicit vvp_cmp_ge(unsigned wid, bool signed_flag);
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+    private:
+      bool signed_flag_;
 };
 
 class vvp_cmp_gt  : public vvp_arith_ {
 
     public:
-      explicit vvp_cmp_gt(unsigned wid) : vvp_arith_(wid) {}
-
+      explicit vvp_cmp_gt(unsigned wid, bool signed_flag);
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+    private:
+      bool signed_flag_;
 };
 
 class vvp_shiftl  : public vvp_arith_ {
@@ -135,6 +139,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.15  2003/04/11 05:15:38  steve
+ *  Add signed versions of .cmp/gt/ge
+ *
  * Revision 1.14  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *

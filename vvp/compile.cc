@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.158 2003/03/28 02:33:56 steve Exp $"
+#ident "$Id: compile.cc,v 1.159 2003/04/11 05:15:38 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -906,7 +906,8 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, wid, argc, argv);
 }
 
-void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
+void compile_cmp_ge(char*label, long wid, bool signed_flag,
+		    unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
@@ -916,12 +917,13 @@ void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
 	    return;
       }
 
-      vvp_arith_ *arith = new vvp_cmp_ge(wid);
+      vvp_arith_ *arith = new vvp_cmp_ge(wid, signed_flag);
 
       make_arith(arith, label, wid, argc, argv);
 }
 
-void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
+void compile_cmp_gt(char*label, long wid, bool signed_flag,
+		    unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
@@ -931,7 +933,7 @@ void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
 	    return;
       }
 
-      vvp_arith_ *arith = new vvp_cmp_gt(wid);
+      vvp_arith_ *arith = new vvp_cmp_gt(wid, signed_flag);
 
       make_arith(arith, label, wid, argc, argv);
 }
@@ -1528,6 +1530,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.159  2003/04/11 05:15:38  steve
+ *  Add signed versions of .cmp/gt/ge
+ *
  * Revision 1.158  2003/03/28 02:33:56  steve
  *  Add support for division of real operands.
  *

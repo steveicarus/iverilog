@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.52 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: parse.y,v 1.53 2003/04/11 05:15:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -58,7 +58,7 @@ extern FILE*yyin;
 
 
 %token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
-%token K_CMP_GE K_CMP_GT
+%token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
@@ -217,12 +217,21 @@ statement
 
 	| T_LABEL K_CMP_GE T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
-		  compile_cmp_ge($1, $3, obj.cnt, obj.vect);
+		  compile_cmp_ge($1, $3, false, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_GE_S T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_ge($1, $3, true, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_CMP_GT T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
-		  compile_cmp_gt($1, $3, obj.cnt, obj.vect);
+		  compile_cmp_gt($1, $3, false, obj.cnt, obj.vect);
+		}
+	| T_LABEL K_CMP_GT_S T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);
 		}
 
 
@@ -575,6 +584,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.53  2003/04/11 05:15:39  steve
+ *  Add signed versions of .cmp/gt/ge
+ *
  * Revision 1.52  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.39 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: lexor.lex,v 1.40 2003/04/11 05:15:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -89,7 +89,9 @@
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sum"  { return K_ARITH_SUM; }
 ".cmp/ge"   { return K_CMP_GE; }
+".cmp/ge.s" { return K_CMP_GE_S; }
 ".cmp/gt"   { return K_CMP_GT; }
+".cmp/gt.s" { return K_CMP_GT_S; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
 ".functor"  { return K_FUNCTOR; }
@@ -177,6 +179,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.40  2003/04/11 05:15:39  steve
+ *  Add signed versions of .cmp/gt/ge
+ *
  * Revision 1.39  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *

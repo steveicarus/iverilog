@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.24 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: arith.cc,v 1.25 2003/04/11 05:15:38 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -380,6 +380,11 @@ void vvp_arith_sub::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       output_val_(base, push);
 }
 
+vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
+: vvp_arith_(wid), signed_flag_(flag)
+{
+}
+
 
 void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
@@ -415,21 +420,54 @@ void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       put_oval(out_val, push);
 }
 
+vvp_cmp_gt::vvp_cmp_gt(unsigned wid, bool flag)
+: vvp_arith_(wid), signed_flag_(flag)
+{
+}
+
 void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
       unsigned out_val = 0;
-      
-      for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
+
+      unsigned idx = wid_;
+
+	/* If this is a signed compare, then check the MSB of the
+	   input vectors. If they are different, then the values are
+	   on the different sides of zero, and we know the result. */
+      if (signed_flag_) {
+	    vvp_ipoint_t ptr = ipoint_index(base, wid_-1);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned val = obj->ival;
+	    if (val & 0x0a) {
+		  out_val = 2;
+		  goto check_for_x_complete;
+	    }
+
+	    unsigned a = (val & 0x01)? 1 : 0;
+	    unsigned b = (val & 0x04)? 1 : 0;
+
+	      /* If a==0 and b==1, then a>=0 and b<0 so return true.
+		 If a==1 and b==0, then a<0 and b>=0 so return false.
+		 It turns out that out_val=b gets the right result. */
+	    if (a ^ b) {
+		  out_val = b;
+		  idx = wid_-1;
+		  goto check_for_x;
+	    }
+      }
+
+      for (idx = wid_ ;  idx > 0 ;  idx -= 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base, idx-1);
 	    functor_t obj = functor_index(ptr);
 
 	    unsigned val = obj->ival;
 	    if (val & 0x0a) {
 		  out_val = 2;
-		  break;
+		  goto check_for_x_complete;
 	    }
 
 	    unsigned a = (val & 0x01)? 1 : 0;
@@ -445,6 +483,24 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 		  break;
 	    }
       }
+
+ check_for_x:
+	/* Continue further checking bits, looking for unknown
+	   results. */
+      while ((idx > 0) && (out_val != 2)) {
+	    vvp_ipoint_t ptr = ipoint_index(base, idx-1);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned val = obj->ival;
+	    if (val & 0x0a) {
+		  out_val = 2;
+		  break;
+	    }
+
+	    idx -= 1;
+      }
+
+ check_for_x_complete:
 
       put_oval(out_val, push);
 }
@@ -551,6 +607,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.25  2003/04/11 05:15:38  steve
+ *  Add signed versions of .cmp/gt/ge
+ *
  * Revision 1.24  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *
