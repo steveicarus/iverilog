@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.42 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: sys_display.c,v 1.43 2002/08/22 23:34:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -136,25 +136,41 @@ static void format_time(unsigned mcd, int fsize, const char*value)
       bp -= strlen(timeformat_info.suff);
       strcpy(bp, timeformat_info.suff);
 
-	/* Draw 0s to pad out the precision to the requested count. */
+	/* cnt is the number of digits that the simulation precision
+	   units exceeds the time format units. For example, if the
+	   simulation is in 1ps (-12) and $timeformat units is 1ns (-9)
+	   then cnt is 3. */
+
       cnt = timeformat_info.units - prec;
-      while (cnt < timeformat_info.prec) {
+
+	/* Draw 0s to pad out the precision to the requested count.
+	   This accounts for the case that the difference between
+	   simulation units and timeformat units is not enough for the
+	   requested timeformat precision. */
+      while (cnt < (int)timeformat_info.prec) {
 	    *--bp = '0';
 	    cnt += 1;
       }
 
-	/* Chop excess precision. */
-      while (cnt > timeformat_info.prec) {
+
+	/* Chop excess precision. This accounts for the case where the
+	   simulation precision is greater then the timeformat
+	   precision. Remove least significant digits from the integer
+	   value of the time strings. */
+      while (cnt > (int)timeformat_info.prec) {
 	    if (cp > value)
 		  cp -= 1;
 	    cnt -= 1;
 	    prec += 1;
       }
 
+      assert(cnt == timeformat_info.prec);
+
+
 	/* Draw the digits of the time that are to the right of the
 	   decimal point. Pad to the right with zeros if needed, to
 	   get to the decimal point. */
-      if (prec < timeformat_info.units) {
+      if (prec <= timeformat_info.units) {
 	    while (prec < timeformat_info.units) {
 		  char val;
 		  if (cp == value)
@@ -1348,6 +1364,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.43  2002/08/22 23:34:52  steve
+ *  Watch signed comparisons, that lead to infinite loops.
+ *
  * Revision 1.42  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *
