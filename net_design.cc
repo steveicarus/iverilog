@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.1 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: net_design.cc,v 1.2 2000/03/10 06:20:48 steve Exp $"
 #endif
 
 /*
@@ -90,7 +90,7 @@ NetScope* Design::make_scope(const string&path,
  * more step down the tree until the name runs out or the search
  * fails.
  */
-NetScope* Design::find_scope(const string&key)
+NetScope* Design::find_scope(const string&key) const
 {
       if (key == root_scope_->name())
 	    return root_scope_;
@@ -109,6 +109,35 @@ NetScope* Design::find_scope(const string&key)
       }
 
       return cur;
+}
+
+/*
+ * This is a relative lookup of a scope by name. The starting point is
+ * the scope parameter is the place within which I start looking for
+ * the scope. If I do not find the scope within the passed scope,
+ * start looking in parent scopes until I find it, or I run out of
+ * parent scopes.
+ */
+NetScope* Design::find_scope(NetScope*scope, const string&name) const
+{
+      assert(scope);
+
+      for ( ; scope ;  scope = scope->parent()) {
+	    string path = name;
+	    string key = parse_first_name(path);
+
+	    NetScope*cur = scope;
+	    do {
+		  cur = cur->child(key);
+		  if (cur == 0) break;
+		  key = parse_first_name(path);
+	    } while (key != "");
+
+	    if (cur) return cur;
+      }
+
+	// Last chance. Look for the name starting at the root.
+      return find_scope(name);
 }
 
 /*
@@ -169,7 +198,7 @@ void NetScope::run_defparams(Design*des)
 	    string path = (*pp).first;
 	    string name = parse_last_name(path);
 
-	    NetScope*targ_scope = des->find_scope(path);
+	    NetScope*targ_scope = des->find_scope(this, path);
 	    if (targ_scope == 0) {
 		  cerr << val->get_line() << ": warning: scope of " <<
 			path << "." << name << " not found." << endl;
@@ -522,6 +551,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.2  2000/03/10 06:20:48  steve
+ *  Handle defparam to partial hierarchical names.
+ *
  * Revision 1.1  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

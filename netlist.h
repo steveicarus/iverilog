@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.111 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.112 2000/03/10 06:20:48 steve Exp $"
 #endif
 
 /*
@@ -1998,6 +1998,7 @@ class NetScope {
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
+      NetScope* parent();
       NetScope* child(const string&name);
       const NetScope* parent() const;
       const NetScope* child(const string&name) const;
@@ -2054,7 +2055,13 @@ class Design {
       NetScope* make_root_scope(const string&name);
       NetScope* make_scope(const string&path, NetScope::TYPE t,
 			   const string&name);
-      NetScope* find_scope(const string&path);
+
+	/* look up a scope. If no starting scope is passed, then the
+	   path name string is taken as an absolute scope
+	   name. Otherwise, the scope is located starting at the
+	   passed scope and working up if needed. */
+      NetScope* find_scope(const string&path) const;
+      NetScope* find_scope(NetScope*, const string&path) const;
 
 	// PARAMETERS
 
@@ -2188,6 +2195,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.112  2000/03/10 06:20:48  steve
+ *  Handle defparam to partial hierarchical names.
+ *
  * Revision 1.111  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.106 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.107 2000/03/10 06:20:48 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2328,6 +2328,11 @@ const NetScope* NetScope::child(const string&name) const
       return cur;
 }
 
+NetScope* NetScope::parent()
+{
+      return up_;
+}
+
 const NetScope* NetScope::parent() const
 {
       return up_;
@@ -2627,6 +2632,9 @@ void NetUDP::set_initial(char val)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.107  2000/03/10 06:20:48  steve
+ *  Handle defparam to partial hierarchical names.
+ *
  * Revision 1.106  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

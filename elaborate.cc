@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.146 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.147 2000/03/10 06:20:48 steve Exp $"
 #endif
 
 /*
@@ -1920,12 +1920,22 @@ Design* elaborate(const map<string,Module*>&modules,
 	    return 0;
       }
 
+	// This method recurses through the scopes, looking for
+	// defparam assignments to apply to the parameters in the
+	// various scopes. This needs to be done after all the scopes
+	// and basic parameters are taken care of because the defparam
+	// can assign to a paramter declared *after* it.
       des->run_defparams();
+
+
+	// At this point, all parameter overrides are done. Scane the
+	// scopes and evaluate the parameters all the way down to
+	// constants.
       des->evaluate_parameters();
+
 
 	// Now that the structure and parameters are taken care of,
 	// run through the pform again and generate the full netlist.
-
       bool rc = rmod->elaborate(des, scope);
 
 
@@ -1943,6 +1953,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.147  2000/03/10 06:20:48  steve
+ *  Handle defparam to partial hierarchical names.
+ *
  * Revision 1.146  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters
