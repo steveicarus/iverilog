@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.11 2005/01/29 17:52:06 steve Exp $"
+#ident "$Id: logic.h,v 1.12 2005/02/12 22:50:52 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -91,13 +91,28 @@ class vvp_fun_bufz: public vvp_net_fun_t {
     private:
 };
 
+/*
+ * The muxz functor is an A-B mux device, with the data inputs on
+ * ports 0 and 1. port 2 is the select input.
+ */
+class vvp_fun_muxz : public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_muxz();
+      virtual ~vvp_fun_muxz();
+
+      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+
+    private:
+      vvp_vector4_t a_;
+      vvp_vector4_t b_;
+      int select_;
+};
+
 // table functor types
 
-extern const unsigned char ft_AND[];
-extern const unsigned char ft_BUF[];
 extern const unsigned char ft_BUFIF0[];
 extern const unsigned char ft_BUFIF1[];
-extern const unsigned char ft_BUFZ[];
 extern const unsigned char ft_PMOS[];
 extern const unsigned char ft_NMOS[];
 extern const unsigned char ft_MUXX[];
@@ -115,6 +130,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.12  2005/02/12 22:50:52  steve
+ *  Implement the vvp_fun_muxz functor.
+ *
  * Revision 1.11  2005/01/29 17:52:06  steve
  *  move AND to buitin instead of table.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.18 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: logic.cc,v 1.19 2005/02/12 22:50:52 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -148,6 +148,76 @@ void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       vvp_send_vec4(ptr.ptr()->out, bit);
 }
 
+vvp_fun_muxz::vvp_fun_muxz()
+{
+      count_functors_table += 1;
+      select_ = 2;
+}
+
+vvp_fun_muxz::~vvp_fun_muxz()
+{
+}
+
+void vvp_fun_muxz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      switch (ptr.port()) {
+	  case 0:
+	    a_ = bit;
+	    break;
+	  case 1:
+	    b_ = bit;
+	    break;
+	  case 2:
+	    assert(bit.size() == 1);
+	    switch (bit.value(0)) {
+		case BIT4_0:
+		  select_ = 0;
+		  break;
+		case BIT4_1:
+		  select_ = 1;
+		  break;
+		default:
+		  select_ = 2;
+	    }
+	    break;
+	  default:
+	    return;
+      }
+
+      switch (select_) {
+	  case 0:
+	    vvp_send_vec4(ptr.ptr()->out, a_);
+	    break;
+	  case 1:
+	    vvp_send_vec4(ptr.ptr()->out, b_);
+	    break;
+	  default:
+	      {
+		    unsigned min_size = a_.size();
+		    unsigned max_size = a_.size();
+		    if (b_.size() < min_size)
+			  min_size = b_.size();
+		    if (b_.size() > max_size)
+			  max_size = b_.size();
+
+		    vvp_vector4_t res (max_size);
+
+		    for (unsigned idx = 0 ;  idx < min_size ;  idx += 1) {
+			  if (a_.value(idx) == b_.value(idx))
+				res.set_bit(idx, a_.value(idx));
+			  else
+				res.set_bit(idx, BIT4_X);
+		    }
+
+		    for (unsigned idx = min_size ;  idx < max_size ;  idx += 1)
+			  res.set_bit(idx, BIT4_X);
+
+		    vvp_send_vec4(ptr.ptr()->out, res);
+	      }
+	    break;
+      }
+}
+
 /*
  * The parser calls this function to create a logic functor. I allocate a
  * functor, and map the name to the vvp_ipoint_t address for the
@@ -194,7 +264,7 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_MUXX);
 
       } else if (strcmp(type, "MUXZ") == 0) {
-	    obj = new table_functor_s(ft_MUXZ);
+	    obj = new vvp_fun_muxz();
 
       } else if (strcmp(type, "EEQ") == 0) {
 	    obj = new table_functor_s(ft_EEQ);
@@ -244,6 +314,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.19  2005/02/12 22:50:52  steve
+ *  Implement the vvp_fun_muxz functor.
+ *
  * Revision 1.18  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

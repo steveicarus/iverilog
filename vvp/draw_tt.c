@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.18 2005/01/29 17:52:06 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.19 2005/02/12 22:50:52 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -328,6 +328,7 @@ static void draw_MUXX(void)
       printf("};\n");
 }
 
+#if 0
 static void draw_MUXZ(void)
 {
       unsigned i0, i1, i2, i3;
@@ -368,6 +369,7 @@ static void draw_MUXZ(void)
 
       printf("};\n");
 }
+#endif
 
 static void draw_EEQ(void)
 {
@@ -744,7 +746,6 @@ main()
       draw_PMOS();
       draw_NMOS();
       draw_MUXX();
-      draw_MUXZ();
       draw_EEQ();
       draw_NAND();
       draw_NOR();
@@ -761,6 +762,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.19  2005/02/12 22:50:52  steve
+ *  Implement the vvp_fun_muxz functor.
+ *
  * Revision 1.18  2005/01/29 17:52:06  steve
  *  move AND to buitin instead of table.
  *
