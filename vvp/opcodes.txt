@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.27 2001/07/22 00:04:50 steve Exp $
+ *  $Id: opcodes.txt,v 1.28 2001/08/26 22:59:32 steve Exp $
  */
 
 
@@ -56,6 +56,19 @@ This instruction does a non-blocking assignment to a bit in a memory
 from the specified thread register <bit>.  The memory bit is addressed
 by index register 3.  Bit address zero is the LSB of the first memory
 word.
+
+
+* %assign/x0 <var-label>, <delay>, <bit>
+
+This does a non-blocking assignment to a functor, similar to the
+%assign instruction. The <var-label> identifies the base functor of
+the affected variable, and the <delay> gives the delay when the
+assignment takes place. The delay may be 0. The actual functor used is
+calculated by using <var-label> as a base, and indexing with the
+index[0] index register. This supports indexed assignment.
+
+The <bit> is the address of the thread register that contains the bit
+value to assign.
 
 
 * %breakpoint
@@ -305,6 +318,13 @@ This instruction set a bit in a memory from the specified thread
 register bit. The memory bit is addressed by index register 3.  Bit
 address zero is the LSB of the first memory word.  This instruction
 sets only a single bit.
+
+
+* %set/x <var-label>, <bit>, <idx>
+
+This sets the bit of a variable functor, the address calculated by
+using the index register <idx> (0, 1, 2 or 3) to index the functor
+address of <var-label>.
 
 
 * %shiftl/i0 <bit>, <wid>

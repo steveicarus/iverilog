@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.52 2001/08/08 00:53:50 steve Exp $"
+#ident "$Id: vthread.cc,v 1.53 2001/08/26 22:59:32 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -374,6 +374,14 @@ bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
       schedule_assign(cp->iptr, bit_val, cp->bit_idx1);
+      return true;
+}
+
+bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
+      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[0]);
+      schedule_assign(itmp, bit_val, cp->bit_idx1);
       return true;
 }
 
@@ -1140,6 +1148,15 @@ bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SET_X(vthread_t thr, vvp_code_t cp)
+{
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
+      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[cp->bit_idx2&3]);
+      functor_set(itmp, bit_val, strong_values[bit_val], true);
+
+      return true;
+}
+
 bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx1;
@@ -1336,6 +1353,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.53  2001/08/26 22:59:32  steve
+ *  Add the assign/x0 and set/x opcodes.
+ *
  * Revision 1.52  2001/08/08 00:53:50  steve
  *  signed/unsigned warnings?
  *
