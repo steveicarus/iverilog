@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.166 2004/06/09 22:13:14 steve Exp $"
+#ident "$Id: Makefile.in,v 1.167 2004/09/18 01:59:44 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -84,6 +84,7 @@ endif
 # sure the basics were compiled properly.
 check: all
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) check); done
+	test -r check.conf || cp $(srcdir)/check.conf .
 	driver/iverilog -B. -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
