@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.56 2004/06/01 01:04:57 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.57 2004/06/12 15:00:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -363,10 +363,61 @@ NetNet* NetEBMult::synthesize(Design*des)
 
 NetNet* NetEBDiv::synthesize(Design*des)
 {
-      cerr << get_line() << ": internal error: cannot synthesize division: "
-	   << *this << endl;
-      des->errors += 1;
-      return 0;
+      NetNet*lsig = left_->synthesize(des);
+      NetNet*rsig  = right_->synthesize(des);
+
+      NetScope*scope = lsig->scope();
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, expr_width());
+      osig->local_flag(true);
+
+      switch (op()) {
+
+	  case '/': {
+		NetDivide*div = new NetDivide(scope, scope->local_symbol(),
+					      expr_width(),
+					      lsig->pin_count(),
+					      rsig->pin_count());
+		des->add_node(div);
+
+		for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+		      connect(div->pin_DataA(idx), lsig->pin(idx));
+		for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+		      connect(div->pin_DataB(idx), rsig->pin(idx));
+		for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
+		      connect(div->pin_Result(idx), osig->pin(idx));
+		break;
+	  }
+
+	  case '%': {
+		NetModulo*div = new NetModulo(scope, scope->local_symbol(),
+					      expr_width(),
+					      lsig->pin_count(),
+					      rsig->pin_count());
+		des->add_node(div);
+
+		for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+		      connect(div->pin_DataA(idx), lsig->pin(idx));
+		for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+		      connect(div->pin_DataB(idx), rsig->pin(idx));
+		for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
+		      connect(div->pin_Result(idx), osig->pin(idx));
+		break;
+	  }
+
+	  default: {
+		cerr << get_line() << ": internal error: "
+		     << "NetEBDiv has unexpeced op() code: "
+		     << op() << endl;
+		des->errors += 1;
+
+		delete osig;
+		return 0;
+	  }
+      }
+
+      return osig;
 }
 
 NetNet* NetEBLogic::synthesize(Design*des)
@@ -828,6 +879,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.57  2004/06/12 15:00:02  steve
+ *  Support / and % in synthesized contexts.
+ *
  * Revision 1.56  2004/06/01 01:04:57  steve
  *  Fix synthesis method for logical and/or
  *
