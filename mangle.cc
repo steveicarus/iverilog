@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: mangle.cc,v 1.3 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: mangle.cc,v 1.4 2000/10/25 23:21:37 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -32,7 +32,7 @@ string mangle(const string&str)
       string tmp = str;
 
       while (tmp.length() > 0) {
-	    size_t pos = tmp.find_first_of(".<");
+	    size_t pos = tmp.find_first_of(".<\\");
 	    if (pos > tmp.length())
 		  pos = tmp.length();
 
@@ -55,6 +55,10 @@ string mangle(const string&str)
 		  tmp = tmp.substr(1);
 		  res << "_";
 		  break;
+		case '\\':
+		  res << "$";
+		  tmp = tmp.substr(1);
+		  break;
 	    }
       }
       res << ends;
@@ -63,6 +67,9 @@ string mangle(const string&str)
 
 /*
  * $Log: mangle.cc,v $
+ * Revision 1.4  2000/10/25 23:21:37  steve
+ *  mangle the backslash to a dollar.
+ *
  * Revision 1.3  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
