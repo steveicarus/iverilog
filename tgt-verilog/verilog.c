@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.5 2000/09/30 02:18:15 steve Exp $"
+#ident "$Id: verilog.c,v 1.6 2000/10/04 02:24:20 steve Exp $"
 #endif
 
 /*
@@ -112,6 +112,10 @@ int target_net_signal(const char*name, ivl_signal_t net)
       unsigned cnt = ivl_signal_pins(net);
 
       switch (ivl_signal_type(net)) {
+
+	  case IVL_SIT_REG:
+	    fprintf(out, "      reg [%u:0] %s;\n", cnt-1, name);
+	    break;
 
 	  case IVL_SIT_WIRE:
 	    fprintf(out, "      wire [%u:0] %s;\n", cnt-1, name);
@@ -263,6 +267,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.6  2000/10/04 02:24:20  steve
+ *  print reg signals.
+ *
  * Revision 1.5  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.
