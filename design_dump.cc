@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.48 1999/10/07 05:25:33 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.49 1999/10/08 02:00:35 steve Exp $"
 #endif
 
 /*
@@ -413,10 +413,13 @@ void NetCase::dump(ostream&o, unsigned ind) const
       switch (type_) {
 	  case EQ:
 	    o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
+	    break;
 	  case EQX:
 	    o << setw(ind) << "" << "casex (" << *expr_ << ")" << endl;
+	    break;
 	  case EQZ:
 	    o << setw(ind) << "" << "casez (" << *expr_ << ")" << endl;
+	    break;
       }
 
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
@@ -786,6 +789,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.49  1999/10/08 02:00:35  steve
+ *  Fix dump of sase statements.
+ *
  * Revision 1.48  1999/10/07 05:25:33  steve
  *  Add non-const bit select in l-value of assignment.
  *
