@@ -1,5 +1,5 @@
-#ifndef __config_H
-#define __config_H
+#ifndef __debug_H
+#define __debug_H
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
@@ -19,41 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.4 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: debug.h,v 1.1 2001/05/05 23:55:46 steve Exp $"
 #endif
 
-# define SIZEOF_UNSIGNED_LONG 0
-# define SIZEOF_UNSIGNED 0
-
-# undef HAVE_DLFCN_H
-# undef HAVE_DL_H
-# undef HAVE_LIBREADLINE
-
-# define LU ""
-# define TU ""
-
-#ifndef MODULE_DIR
-# define MODULE_DIR "."
-#endif
-
-#if defined(HAVE_LIBREADLINE)
-# define WITH_DEBUG 1
-#endif
+extern void breakpoint(void);
 
 /*
- * $Log: config.h.in,v $
- * Revision 1.4  2001/05/05 23:55:46  steve
+ * $Log: debug.h,v $
+ * Revision 1.1  2001/05/05 23:55:46  steve
  *  Add the beginnings of an interactive debugger.
- *
- * Revision 1.3  2001/03/22 21:26:53  steve
- *  Compile in a default VPI module dir.
- *
- * Revision 1.2  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
  *
  */
 #endif

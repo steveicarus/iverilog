@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.53 2001/05/02 23:16:50 steve Exp $"
+#ident "$Id: compile.cc,v 1.54 2001/05/05 23:55:46 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -73,6 +73,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
+      { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1044,6 +1045,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.54  2001/05/05 23:55:46  steve
+ *  Add the beginnings of an interactive debugger.
+ *
  * Revision 1.53  2001/05/02 23:16:50  steve
  *  Document memory related opcodes,
  *  parser uses numbv_s structures instead of the

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.17 2001/05/02 23:16:50 steve Exp $
+ *  $Id: opcodes.txt,v 1.18 2001/05/05 23:55:46 steve Exp $
  */
 
 
@@ -48,6 +48,17 @@ This instruction does a non-blocking assignment to a bit in a memory
 from the specified thread register <bit>.  The memory bit is addressed
 by index register 3.  Bit address zero is the LSB of the first memory
 word.
+
+
+* %breakpoint
+
+This instruction unconditionally breaks the simulator into the
+interactive debugger. The idea is to stop the simulator here and give
+the user a chance to display the state of the simulation using
+debugger commands.
+
+This may not work on all platforms. If run-time debugging is compiled
+out, then this function is a no-op.
 
 
 * %cmp/u <bit-l>, <bit-r>, <wid>

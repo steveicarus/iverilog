@@ -10,6 +10,9 @@ AC_PROG_INSTALL
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned)
 
+AC_CHECK_LIB(termcap, tputs)
+AC_CHECK_LIB(readline, readline)
+
 # --
 # Look for a dl library to use. First look for the standard dlopen
 # functions, and failing that look for the HP specific shl_load function.

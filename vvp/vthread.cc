@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.34 2001/05/02 23:16:50 steve Exp $"
+#ident "$Id: vthread.cc,v 1.35 2001/05/05 23:55:46 steve Exp $"
 #endif
 
 # include  "vthread.h"
 # include  "codes.h"
+# include  "debug.h"
 # include  "schedule.h"
 # include  "functor.h"
 # include  "vpi_priv.h"
@@ -335,6 +336,14 @@ bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
       schedule_memory(cp->mem, thr->index[3], bit_val, cp->bit_idx1);
+      return true;
+}
+
+bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
+{
+#if defined(WITH_DEBUG)
+      breakpoint();
+#endif
       return true;
 }
 
@@ -969,6 +978,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.35  2001/05/05 23:55:46  steve
+ *  Add the beginnings of an interactive debugger.
+ *
  * Revision 1.34  2001/05/02 23:16:50  steve
  *  Document memory related opcodes,
  *  parser uses numbv_s structures instead of the
