@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.8 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.9 2000/11/18 05:12:45 steve Exp $"
 #endif
 
 /*
@@ -52,12 +52,12 @@ void nodangle_f::event(Design*des, NetEvent*ev)
 
 void nodangle_f::signal(Design*des, NetNet*sig)
 {
-      if (! sig->local_flag())
-	    return;
+	/* Cannot delete signals referenced in an expression. */
       if (sig->get_eref() > 0)
 	    return;
 
-	/* Look for a completely unconnected signal. */
+	/* Check to see if the signal is completely unconnected. If
+	   all the bits are unlinked, then delete it. */
       unsigned unlinked = 0;
       for (unsigned idx =  0 ;  idx < sig->pin_count() ;  idx += 1)
 	    if (! sig->pin(idx).is_linked()) unlinked += 1;
@@ -66,6 +66,11 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 	    delete sig;
 	    return;
       }
+
+	/* The remaining things can only be done to synthesized
+	   signals, not ones that appear in the original Verilog. */
+      if (! sig->local_flag())
+	    return;
 
 	/* Check to see if there is some significant signal connected
 	   to every pin of this signal. */
@@ -105,6 +110,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.9  2000/11/18 05:12:45  steve
+ *  Delete unreferenced signals no matter what.
+ *
  * Revision 1.8  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.
