@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.57 2002/04/13 02:33:17 steve Exp $"
+#ident "$Id: PExpr.h,v 1.58 2002/04/14 03:55:25 steve Exp $"
 #endif
 
 # include  <string>
@@ -340,8 +340,8 @@ class PEUnary : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEUnary*elaborate_expr(Design*des, NetScope*,
-				       bool sys_task_arg =false) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
 
@@ -487,6 +487,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.58  2002/04/14 03:55:25  steve
+ *  Precalculate unary - if possible.
+ *
  * Revision 1.57  2002/04/13 02:33:17  steve
  *  Detect missing indices to memories (PR#421)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.52 2002/04/13 02:33:17 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.53 2002/04/14 03:55:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -652,7 +652,7 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
       return res;
 }
 
-NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
+NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       NetExpr*ip = expr_->elaborate_expr(des, scope);
       if (ip == 0) return 0;
@@ -661,12 +661,31 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
        * just like in PEBinary::elaborate_expr() ?
        */
 
-      NetEUnary*tmp;
+      NetExpr*tmp;
       switch (op_) {
 	  default:
 	    tmp = new NetEUnary(op_, ip);
 	    tmp->set_line(*this);
 	    break;
+
+	  case '-':
+	    if (NetEConst*ipc = dynamic_cast<NetEConst*>(ip)) {
+		  verinum val = ipc->value();
+		  verinum zero (verinum::V0, val.len(), val.has_len());
+		  val = zero - val;
+		  val.has_sign(ipc->has_sign());
+		  tmp = new NetEConst(val);
+		  delete ip;
+	    } else {
+		  tmp = new NetEUnary(op_, ip);
+		  tmp->set_line(*this);
+	    }
+	    break;
+
+	  case '+':
+	    tmp = ip;
+	    break;
+
 	  case '!': // Logical NOT
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
@@ -677,6 +696,7 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 	    tmp = new NetEUReduce(op_, ip);
 	    tmp->set_line(*this);
 	    break;
+
 	  case '~':
 	    tmp = new NetEUBits(op_, ip);
 	    tmp->set_line(*this);
@@ -688,6 +708,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.53  2002/04/14 03:55:25  steve
+ *  Precalculate unary - if possible.
+ *
  * Revision 1.52  2002/04/13 02:33:17  steve
  *  Detect missing indices to memories (PR#421)
  *
