@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.4 2003/03/31 00:04:21 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.5 2003/03/31 00:25:19 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -1021,6 +1021,7 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
 
 	   The I3-I0 inputs are A1 A0 B1 B0 in that order. */
 
+      assert(ivl_lpm_width(net) >= 2);
       check_cell_lut4();
 
       lut = edif_cellref_create(edf, cell_lut4);
@@ -1082,10 +1083,12 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
       edif_add_to_joint(jnt, lut, LUT_O);
       edif_add_to_joint(jnt, muxcy_prev, MUXCY_S);
       { edif_cellref_t p0 = edif_cellref_create(edf, cell_0);
-        edif_cellref_t p1 = edif_cellref_create(edf, cell_0);
+        edif_cellref_t p1 = edif_cellref_create(edf, cell_1);
+
 	jnt = edif_joint_create(edf);
 	edif_add_to_joint(jnt, p0, 0);
 	edif_add_to_joint(jnt, muxcy_prev, MUXCY_DI);
+
 	jnt = edif_joint_create(edf);
 	edif_add_to_joint(jnt, p1, 0);
 	edif_add_to_joint(jnt, muxcy_prev, MUXCY_CI);
@@ -1139,6 +1142,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.5  2003/03/31 00:25:19  steve
+ *  Fix wrong input constant to bottom of GE.
+ *
  * Revision 1.4  2003/03/31 00:04:21  steve
  *  Proper sliced >= comparator.
  *
