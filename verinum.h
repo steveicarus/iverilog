@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.4 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: verinum.h,v 1.5 1999/05/13 04:02:09 steve Exp $"
 #endif
 
 # include  <string>
@@ -37,14 +37,31 @@ class verinum {
 
       verinum();
       verinum(const string&str);
-      verinum(const V*v, unsigned nbits);
+      verinum(const V*v, unsigned nbits, bool has_len =true);
       verinum(V, unsigned nbits =1);
       verinum(unsigned long val, unsigned bits);
       verinum(const verinum&);
+
+	// Copy only the specified number of bits from the
+	// source. Also mark this number as has_len.
+      verinum(const verinum&, unsigned bits);
+
       ~verinum();
+      verinum& operator= (const verinum&);
 
 	// Number of significant bits in this number.
       unsigned len() const { return nbits_; }
+
+	// A number "has a length" if the length was specified fixed
+	// in some way.
+      bool has_len() const { return has_len_; }
+
+	// A number is "defined" if there are no x or z bits in its value.
+      bool is_defined() const;
+
+	// A number is "a string" if its value came directly from
+	// an ascii description instead of a number value.
+      bool is_string() const { return string_flag_; }
 
 	// Individual bits can be accessed with the get and set
 	// methods.
@@ -58,18 +75,14 @@ class verinum {
       signed long   as_long() const;
       string as_string() const;
 
-      bool is_string() const { return string_flag_; }
-
     private:
       V* bits_;
       unsigned nbits_;
+      bool has_len_;
 
 	// These are some convenience flags that help us do a better
 	// job of pretty-printing values.
       bool string_flag_;
-
-    private: // not implemented
-      verinum& operator= (const verinum&);
 };
 
 
@@ -81,6 +94,9 @@ extern bool operator == (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.5  1999/05/13 04:02:09  steve
+ *  More precise handling of verinum bit lengths.
+ *
  * Revision 1.4  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.13 1999/05/08 20:19:20 steve Exp $"
+#ident "$Id: lexor.lex,v 1.14 1999/05/13 04:02:09 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -158,7 +158,7 @@ static verinum*make_unsized_hex(const char*txt);
 	    bits[idx] = (value&1) ? verinum::V1 : verinum::V0;
       }
 
-      yylval.number = new verinum(bits, nbits);
+      yylval.number = new verinum(bits, nbits, false);
       delete[]bits;
       return NUMBER; }
 
@@ -312,7 +312,7 @@ static int check_identifier(const char*name)
       return IDENTIFIER;
 }
 
-static verinum*make_binary_with_size(unsigned size, const char*ptr)
+static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 {
       assert(tolower(*ptr) == 'b');
       verinum::V*bits = new verinum::V[size];
@@ -364,7 +364,7 @@ static verinum*make_binary_with_size(unsigned size, const char*ptr)
 	    }
       }
 
-      return new verinum(bits, size);
+      return new verinum(bits, size, fixed);
 }
 
 static verinum*make_sized_binary(const char*txt)
@@ -375,14 +375,14 @@ static verinum*make_sized_binary(const char*txt)
       ptr += 1;
       assert(tolower(*ptr) == 'b');
 
-      return make_binary_with_size(size, ptr);
+      return make_binary_with_size(size, true, ptr);
 }
 
 static verinum*make_unsized_binary(const char*txt)
 {
       assert(*txt == '\'');
       txt += 1;
-      return make_binary_with_size(64, txt);
+      return make_binary_with_size(64, false, txt);
 }
 
 static verinum*make_sized_octal(const char*txt)
@@ -433,7 +433,7 @@ static verinum*make_sized_octal(const char*txt)
 	    bits[idx++] = verinum::V0;
       }
 
-      return new verinum(bits, size);
+      return new verinum(bits, size, true);
 }
 
 static verinum*make_unsized_octal(const char*txt)
@@ -507,7 +507,7 @@ static verinum*make_sized_hex(const char*txt)
 	    bits[idx++] = verinum::V0;
       }
 
-      return new verinum(bits, size);
+      return new verinum(bits, size, true);
 }
 
 static verinum*make_unsized_hex(const char*txt)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.7 1999/05/09 01:38:33 steve Exp $"
+#ident "$Id: verinum.cc,v 1.8 1999/05/13 04:02:09 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -25,12 +25,12 @@
 # include  <cassert>
 
 verinum::verinum()
-: bits_(0), nbits_(0), string_flag_(false)
+: bits_(0), nbits_(0), has_len_(false), string_flag_(false)
 {
 }
 
-verinum::verinum(const V*bits, unsigned nbits)
-: string_flag_(false)
+verinum::verinum(const V*bits, unsigned nbits, bool has_len)
+: has_len_(has_len), string_flag_(false)
 {
       nbits_ = nbits;
       bits_ = new V [nbits];
@@ -40,7 +40,7 @@ verinum::verinum(const V*bits, unsigned nbits)
 }
 
 verinum::verinum(const string&str)
-: string_flag_(true)
+: has_len_(true), string_flag_(true)
 {
       nbits_ = str.length() * 8;
       bits_ = new V [nbits_];
@@ -61,7 +61,7 @@ verinum::verinum(const string&str)
 }
 
 verinum::verinum(verinum::V val, unsigned n)
-: string_flag_(false)
+: has_len_(true), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -70,7 +70,7 @@ verinum::verinum(verinum::V val, unsigned n)
 }
 
 verinum::verinum(unsigned long val, unsigned n)
-: string_flag_(false)
+: has_len_(true), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -85,6 +85,18 @@ verinum::verinum(const verinum&that)
       string_flag_ = that.string_flag_;
       nbits_ = that.nbits_;
       bits_ = new V[nbits_];
+      has_len_ = that.has_len_;
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+	    bits_[idx] = that.bits_[idx];
+}
+
+verinum::verinum(const verinum&that, unsigned nbits)
+{
+      assert(nbits <= that.nbits_);
+      string_flag_ = false;
+      nbits_ = nbits;
+      bits_ = new V[nbits_];
+      has_len_ = true;
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
 }
@@ -92,6 +104,20 @@ verinum::verinum(const verinum&that)
 verinum::~verinum()
 {
       delete[]bits_;
+}
+
+verinum& verinum::operator= (const verinum&that)
+{
+      if (this == &that) return *this;
+      delete[]bits_;
+      nbits_ = that.nbits_;
+      bits_ = new V[that.nbits_];
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+	    bits_[idx] = that.bits_[idx];
+
+      has_len_ = that.has_len_;
+      string_flag_ = that.string_flag_;
+      return *this;
 }
 
 verinum::V verinum::get(unsigned idx) const
@@ -182,6 +208,15 @@ string verinum::as_string() const
       return result;
 }
 
+bool verinum::is_defined() const
+{
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
+	    if (bits_[idx] == Vx) return false;
+	    if (bits_[idx] == Vz) return false;
+      }
+      return true;
+}
+
 ostream& operator<< (ostream&o, verinum::V v)
 {
       switch (v) {
@@ -201,9 +236,38 @@ ostream& operator<< (ostream&o, verinum::V v)
       return o;
 }
 
+/*
+ * This operator is used by various dumpers to write the verilog
+ * number in a Verilog format.
+ */
 ostream& operator<< (ostream&o, const verinum&v)
 {
-      o << v.len() << "'b";
+	/* If the verinum number has a fixed length, dump all the bits
+	   literally. This is how we express the fixed length in the
+	   output. */
+      if (v.has_len()) {
+	    o << v.len() << "'b";
+	    if (v.len() == 0) {
+		  o << "0";
+		  return o;
+	    }
+
+	    for (unsigned idx = v.len() ;  idx > 0 ;  idx -= 1)
+		  o << v[idx-1];
+
+	    return o;
+      }
+
+	/* If the number is fully defined (no x or z) then print it
+	   out as a decimal number. */
+      if (v.is_defined()) {
+	    o << "'d" << v.as_ulong();
+	    return o;
+      }
+
+	/* Oh, well. Print the minimum to get the value properly
+	   displayed. */
+      o << "'b";
 
       if (v.len() == 0) {
 	    o << "0";
@@ -241,6 +305,9 @@ bool operator == (const verinum&left, const verinum&right)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.8  1999/05/13 04:02:09  steve
+ *  More precise handling of verinum bit lengths.
+ *
  * Revision 1.7  1999/05/09 01:38:33  steve
  *  Add implementation of integer to verunum constructor.
  *

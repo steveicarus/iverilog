@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.24 1999/05/12 04:03:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.25 1999/05/13 04:02:09 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -375,6 +375,8 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
       assert(idx < nitems_);
       items_[idx].guard = e;
       items_[idx].statement = p;
+      if (items_[idx].guard.ref())
+	    items_[idx].guard.ref()->set_width(expr_.ref()->expr_width());
 }
 
 NetTask::~NetTask()
@@ -506,6 +508,7 @@ NetEConst::~NetEConst()
 void NetEConst::set_width(unsigned w)
 {
       assert(w <= value_.len());
+      value_ = verinum(value_, w);
       expr_width(w);
 }
 
@@ -1051,6 +1054,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.25  1999/05/13 04:02:09  steve
+ *  More precise handling of verinum bit lengths.
+ *
  * Revision 1.24  1999/05/12 04:03:19  steve
  *  emit NetAssignMem objects in vvm target.
  *
