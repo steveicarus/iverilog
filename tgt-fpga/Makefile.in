@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.14 2003/10/27 06:12:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.15 2003/11/13 03:10:38 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -96,10 +96,16 @@ INSTALL_DOC = $(mandir)/man1/iverilog-fpga.1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(libdir)/ivl/fpga.tgt $(INSTALL_DOC)
+install: all installdirs $(libdir)/ivl/fpga.tgt $(INSTALL_DOC) $(libdir)/ivl/fpga.conf $(libdir)/ivl/fpga-s.conf
 
 $(libdir)/ivl/fpga.tgt: ./fpga.tgt
 	$(INSTALL_PROGRAM) ./fpga.tgt $(libdir)/ivl/fpga.tgt
+
+$(libdir)/ivl/fpga.conf: $(srcdir)/fpga.conf
+	$(INSTALL_DATA) $(srcdir)/fpga.conf $(libdir)/ivl/fpga.conf
+
+$(libdir)/ivl/fpga-s.conf: $(srcdir)/fpga-s.conf
+	$(INSTALL_DATA) $(srcdir)/fpga-s.conf $(libdir)/ivl/fpga-s.conf
 
 
 $(mandir)/man1/iverilog-fpga.1: $(srcdir)/iverilog-fpga.man
@@ -114,5 +120,7 @@ installdirs: ../mkinstalldirs
 uninstall:
 	rm -f $(libdir)/ivl/fpga.tgt
 	rm -f $(INSTALL_DOC)
+	rm -f $(libdir)/ivl/fpga-s.conf
+	rm -f $(libdir)/ivl/fpga.conf
 
 -include $(patsubst %.o, dep/%.d, $O)

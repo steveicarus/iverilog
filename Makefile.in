@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.157 2003/11/01 04:22:50 steve Exp $"
+#ident "$Id: Makefile.in,v 1.158 2003/11/13 03:10:37 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -217,7 +217,9 @@ endif
 
 CONF_INSTALL = $(libdir)/ivl/iverilog.conf
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(CONF_INSTALL) $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+XNF_INSTALL = $(libdir)/ivl/xnf.conf $(libdir)/ivl/xnf-s.conf
+
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(CONF_INSTALL) $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC) $(XNF_INSTALL)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
@@ -235,6 +237,12 @@ $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 # dates in the source bundle.
 $(libdir)/ivl/iverilog.conf: $(srcdir)/iverilog.conf
 	$(INSTALL_DATA) $(srcdir)/iverilog.conf $(libdir)/ivl/iverilog.conf
+
+$(libdir)/ivl/xnf-s.conf: $(srcdir)/xnf-s.conf
+	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(libdir)/ivl/xnf-s.conf
+
+$(libdir)/ivl/xnf.conf: $(srcdir)/xnf.conf
+	$(INSTALL_DATA) $(srcdir)/xnf.conf $(libdir)/ivl/xnf.conf
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(includedir)/ivl_target.h

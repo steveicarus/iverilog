@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.75 2003/11/10 20:59:03 steve Exp $"
+#ident "$Id: main.cc,v 1.76 2003/11/13 03:10:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -203,6 +203,9 @@ static void process_generation_flag(const char*gen)
  *    -T:<min/typ/max>
  *        Select which expression to use.
  *
+ *    -t:<target>
+ *        Usually, "-t:dll"
+ *
  *    depfile:<path>
  *        Give the path to an output dependency file.
  *
@@ -326,6 +329,9 @@ static void read_iconfig_file(const char*ipath)
 	    } else if (strcmp(buf, "-Y") == 0) {
 		  library_suff.push_back(strdup(cp));
 
+	    } else if (strcmp(buf,"-t") == 0) {
+		  target = strdup(cp);
+
 	    } else if (strcmp(buf,"-T") == 0) {
 		  if (strcmp(cp,"min") == 0) {
 			min_typ_max_flag = MIN;
@@ -405,23 +411,12 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "C:F:f:hN:P:p:t:Vv")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "C:f:hN:P:p:Vv")) != EOF) switch (opt) {
 
 	  case 'C':
 	    read_iconfig_file(optarg);
 	    break;
 
-	  case 'F': {
-		net_func tmp = name_to_net_func(optarg);
-		if (tmp == 0) {
-		      cerr << "No such design transform function ``"
-			   << optarg << "''." << endl;
-		      flag_errors += 1;
-		      break;
-		}
-		net_func_queue.push(tmp);
-		break;
-	  }
 	  case 'f':
 	    parm_to_flagmap(optarg);
 	    break;
@@ -436,9 +431,6 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'p':
 	    parm_to_flagmap(optarg);
-	    break;
-	  case 't':
-	    target = optarg;
 	    break;
 	  case 'v':
 	    verbose_flag = true;
@@ -464,12 +456,10 @@ int main(int argc, char*argv[])
 "usage: ivl <options> <file>\n"
 "options:\n"
 "\t-C <name>        Config file from driver.\n"
-"\t-F <name>        Apply netlist function <name>.\n"
 "\t-h               Print usage information, and exit.\n"
 "\t-N <file>        Dump the elaborated netlist to <file>.\n"
 "\t-P <file>        Write the parsed input to <file>.\n"
 "\t-p <assign>      Set a parameter value.\n"
-"\t-t <name>        Select target <name>.\n"
 "\t-v               Print progress indications"
 #if defined(HAVE_TIMES)
                                            " and execution times"
@@ -478,12 +468,6 @@ int main(int argc, char*argv[])
 "\t-V               Print version and copyright information, and exit.\n"
 
 		  ;
-	    cout << "Netlist functions:" << endl;
-	    for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
-		  cout << "\t-F " << func_table[idx].name << endl;
-	    cout << "Target types:" << endl;
-	    for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1)
-		  cout << "\t-t " << target_table[idx]->name << endl;
 	    return 0;
       }
 
@@ -716,6 +700,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.76  2003/11/13 03:10:38  steve
+ *  ivl -F and -t flags are onpassed throught the -C file.
+ *
  * Revision 1.75  2003/11/10 20:59:03  steve
  *  Design::get_flag returns const char* instead of string.
  *
