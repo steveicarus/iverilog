@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.41 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.42 2001/07/29 22:22:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -529,7 +529,18 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	    return node;
       }
 
-	// Finally, if this is a scope name, then return that.
+	// Finally, if this is a scope name, then return that. Look
+	// first to see if this is a name of a local scope. Failing
+	// that, search globally for a heirarchical name.
+      if (NetScope*nsc = scope->child(text_)) {
+	    NetEScope*tmp = new NetEScope(nsc);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// NOTE: This search pretty much assumes that text_ is a
+	// complete hierarchical name, since there is no mention of
+	// the current scope in the call to find_scope.
       if (NetScope*nsc = des->find_scope(text_)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
@@ -625,6 +636,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.42  2001/07/29 22:22:40  steve
+ *  support local reference to scope in expressions.
+ *
  * Revision 1.41  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of
