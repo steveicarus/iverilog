@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.150 2000/05/20 02:26:23 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.151 2000/05/20 02:48:51 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -421,31 +421,6 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
       os_ << "      vvm_bitset_t " << tname << "(bits_table+"
 	  << number_off << ", " << expr->expr_width() << ");" << endl;
 
-#if 0
-      os_ << "      vpip_bit_t " << tname<<"_bits["
-	  << expr->expr_width() << "];" << endl;
-      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
-	    os_ << "      " << tname << "_bits["<<idx<<"] = ";
-	    switch (expr->value().get(idx)) {
-		case verinum::V0:
-		  os_ << "St0";
-		  break;
-		case verinum::V1:
-		  os_ << "St1";
-		  break;
-		case verinum::Vx:
-		  os_ << "StX";
-		  break;
-		case verinum::Vz:
-		  os_ << "HiZ";
-		  break;
-	    }
-	    os_ << ";" << endl;
-      }
-
-      os_ << "      vvm_bitset_t " << tname << "(" << tname
-	  << "_bits, " << expr->expr_width() << ");" << endl;
-#endif
       result = tname;
 }
 
@@ -836,30 +811,11 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
       if (res == 0) {
 	    res = tgt_->number_counter ++;
 	    unsigned width = expr->expr_width();
-	    tgt_->init_code << "      { vpip_bit_t*bits = new vpip_bit_t["
-			    << width << "];" << endl;
-
-	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
-		  tgt_->init_code << "        bits[" << idx << "] = ";
-		  switch(expr->value().get(idx)) {
-		      case verinum::V0:
-			tgt_->init_code << "St0;" << endl;
-			break;
-		      case verinum::V1:
-			tgt_->init_code << "St1;" << endl;
-			break;
-		      case verinum::Vx:
-			tgt_->init_code << "StX;" << endl;
-			break;
-		      case verinum::Vz:
-			tgt_->init_code << "HiZ;" << endl;
-			break;
-		  }
-	    }
-	    tgt_->init_code << "        vpip_make_number_const("
-		  "&number_table[" << res << "], bits, " << width <<
-		  ");" << endl;
-	    tgt_->init_code << "      }" << endl;
+	    unsigned bit_idx = tgt_->bits_table.position(expr->value());
+	    tgt_->init_code << "      vpip_make_number_const("
+			    << "&number_table[" << res << "], "
+			    << "bits_table+" << bit_idx << ", "
+			    << width << ");" << endl;
       }
 
       ostrstream tmp;
@@ -2042,10 +1998,6 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 		       << val_str << ");" << endl;
       }
 
-#if 0
-      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1)
-	    emit_init_value_(gate->pin(idx), gate->value(idx));
-#endif
 }
 
 
@@ -3063,6 +3015,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.151  2000/05/20 02:48:51  steve
+ *  Add vpi numbers to the bits table.
+ *
  * Revision 1.150  2000/05/20 02:26:23  steve
  *  Combine constants into a bit table.
  *
