@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.42 1999/09/29 21:15:58 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.43 1999/09/30 00:48:50 steve Exp $"
 #endif
 
 /*
@@ -474,7 +474,10 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    out << (*ports_)[idx]->name() << ";" << endl;
       }
 
-      statement_->dump(out, ind);
+      if (statement_)
+	    statement_->dump(out, ind);
+      else
+	    out << setw(ind) << "" << "/* NOOP */" << endl;
 }
 
 void PRepeat::dump(ostream&out, unsigned ind) const
@@ -663,6 +666,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.43  1999/09/30 00:48:50  steve
+ *  Cope with errors during ternary operator elaboration.
+ *
  * Revision 1.42  1999/09/29 21:15:58  steve
  *  Handle some mor missing names.
  *

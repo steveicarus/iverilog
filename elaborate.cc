@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.103 1999/09/29 22:57:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.104 1999/09/30 00:48:50 steve Exp $"
 #endif
 
 /*
@@ -1157,16 +1157,6 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       return sig;
 }
 
-NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
-{
-      NetExpr*con = expr_->elaborate_expr(des, path);
-      NetExpr*tru = tru_->elaborate_expr(des, path);
-      NetExpr*fal = fal_->elaborate_expr(des, path);
-
-      NetETernary*res = new NetETernary(con, tru, fal);
-      return res;
-}
-
 NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 			       unsigned long rise,
 			       unsigned long fall,
@@ -1401,8 +1391,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       NetNet*reg = des->find_signal(path, id->name());
 
       if (reg == 0) {
-	    cerr << get_line() << ": Could not match signal ``" <<
+	    cerr << get_line() << ": error: Could not match signal ``" <<
 		  id->name() << "'' in ``" << path << "''" << endl;
+	    des->errors += 1;
 	    return 0;
       }
       assert(reg);
@@ -1416,8 +1407,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       if (id->msb_ && id->lsb_) {
 	    verinum*vl = id->lsb_->eval_const(des, path);
 	    if (vl == 0) {
-		  cerr << id->lsb_->get_line() << ": Expression must be"
-			" constant in this context: " << *id->lsb_;
+		  cerr << id->lsb_->get_line() << ": error: "
+			"Expression must be constant in this context: "
+		       << *id->lsb_;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -2508,6 +2500,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.104  1999/09/30 00:48:50  steve
+ *  Cope with errors during ternary operator elaboration.
+ *
  * Revision 1.103  1999/09/29 22:57:10  steve
  *  Move code to elab_expr.cc
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.4 1999/09/29 22:57:10 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.5 1999/09/30 00:48:49 steve Exp $"
 #endif
 
 
@@ -283,7 +283,42 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 }
 
 /*
+ * Elaborate the Ternary operator. I know that the expressions were
+ * parsed so I can presume that they exist, and call elaboration
+ * methods. If any elaboration fails, then give up and return 0.
+ */
+NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
+{
+      assert(expr_);
+      assert(tru_);
+      assert(fal_);
+
+      NetExpr*con = expr_->elaborate_expr(des, path);
+      if (con == 0)
+	    return 0;
+
+      NetExpr*tru = tru_->elaborate_expr(des, path);
+      if (tru == 0) {
+	    delete con;
+	    return 0;
+      }
+
+      NetExpr*fal = fal_->elaborate_expr(des, path);
+      if (fal == 0) {
+	    delete con;
+	    delete tru;
+	    return 0;
+      }
+
+      NetETernary*res = new NetETernary(con, tru, fal);
+      return res;
+}
+
+/*
  * $Log: elab_expr.cc,v $
+ * Revision 1.5  1999/09/30 00:48:49  steve
+ *  Cope with errors during ternary operator elaboration.
+ *
  * Revision 1.4  1999/09/29 22:57:10  steve
  *  Move code to elab_expr.cc
  *
