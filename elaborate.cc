@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.286 2003/08/28 04:11:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.287 2003/09/04 20:28:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2470,6 +2470,42 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 
 	    top->set_line(*(*st));
 	    des->add_process(top);
+
+	      /* Detect the special case that this is a combinational
+		 always block. We want to attach an _ivl_schedule_push
+		 attribute to this process so that it starts up and
+		 gets into its wait statement before non-combinational
+		 code is executed. */
+	    do {
+		  if (top->type() != NetProcTop::KALWAYS)
+			break;
+
+		  NetEvWait*st = dynamic_cast<NetEvWait*>(top->statement());
+		  if (st == 0)
+			break;
+
+		  if (st->nevents() != 1)
+			break;
+
+		  NetEvent*ev = st->event(0);
+
+		  if (ev->nprobe() == 0)
+			break;
+
+		  bool anyedge_test = true;
+		  for (unsigned idx = 0 ;  anyedge_test && (idx<ev->nprobe())
+			     ; idx += 1) {
+			const NetEvProbe*pr = ev->probe(idx);
+			if (pr->edge() != NetEvProbe::ANYEDGE)
+			      anyedge_test = false;
+		  }
+
+		  if (! anyedge_test)
+			break;
+
+		  top->attribute("_ivl_schedule_push", verinum(1));
+	    } while (0);
+
       }
 
       return result_flag;
@@ -2579,6 +2615,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.287  2003/09/04 20:28:05  steve
+ *  Support time0 resolution of combinational threads.
+ *
  * Revision 1.286  2003/08/28 04:11:17  steve
  *  Spelling patch.
  *

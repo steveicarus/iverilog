@@ -423,6 +423,16 @@ language that are defined.
 	where one wants to iterate over all the objects in a scope
 	without iterating over all the contained types explicitly.
 
+    time 0 race resolution.
+
+	Combinational logic is routinely modeled using always
+	blocks. However, this can lead to race conditions if the
+	inputs to the combinational block are initialized in initial
+	statements. Icarus Verilog slightly modifies time 0 scheduling
+	by arranging for always statements with ANYEDGE sensitivity
+	lists to be scheduled before any other threads. This causes
+	combinational always blocks to be triggered when the values in
+	the sensitivity list are initialzed by initial threads.
 
 6.0 CREDITS
 
@@ -445,7 +455,7 @@ removed from the list) send e-mail to me.
       FreeBSD/{Intel,alpha}
 	Ying-Chieh Liao <ijliao@FreeBSD.org>
 
-      Linux/{alpha,Intel} (RPMS)
+      Linux/{alpha,AMD64,Intel} (RPMS)
 	Stephen Williams <steve@icarus.com>
 
       Linux/* (.debs)

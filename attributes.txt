@@ -1,4 +1,13 @@
 
+ATTRIBUTE NAMING CONVENTIONS
+
+Attributes that are specific to Icarus Verilog, and are intended to be
+of use to programmers, start with the prefix "ivl_".
+
+Attributes with the "_ivl_" prefix are set aside for internal
+use. They may be generated internally by the compiler. They need not
+be documented here.
+
 ATTRIBUTES TO CONTROL SYNTHESIS
 
 The following is a summary of Verilog attributes that Icarus Verilog
@@ -62,3 +71,15 @@ warning.)
 * Other Attributes
 
 [ none defined yet ]
+
+
+MISC
+
+(* _ivl_schedule_push *)
+
+    If this attribute is attached to a thread object (always or
+    initial statement) then the vvp code generator will generate code
+    that causes the scheduler to push this thread at compile time. The
+    compiler may internally add this attribute to always statements if
+    it detects that it is combinational. This helps resolve time-0
+    races.

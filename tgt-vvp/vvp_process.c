@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.88 2003/07/29 05:12:10 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.89 2003/09/04 20:28:06 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1461,8 +1461,26 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 int draw_process(ivl_process_t net, void*x)
 {
       int rc = 0;
+      unsigned idx;
       ivl_scope_t scope = ivl_process_scope(net);
       ivl_statement_t stmt = ivl_process_stmt(net);
+
+      int push_flag = 0;
+
+      for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
+
+	    ivl_attribute_t attr = ivl_process_attr_val(net, idx);
+
+	    if (strcmp(attr->key, "_ivl_schedule_push") == 0) {
+
+		  push_flag = 1;
+
+	    } else if (strcmp(attr->key, "ivl_combinational") == 0) {
+
+		  push_flag = 1;
+
+	    }
+      }
 
       local_count = 0;
       fprintf(vvp_out, "    .scope S_%p;\n", scope);
@@ -1492,8 +1510,12 @@ int draw_process(ivl_process_t net, void*x)
 
 	/* Now write out the .thread directive that tells vvp where
 	   the thread starts. */
-      fprintf(vvp_out, "    .thread T_%d;\n", thread_count);
 
+      if (push_flag) {
+	    fprintf(vvp_out, "    .thread T_%d, $push;\n", thread_count);
+      } else {
+	    fprintf(vvp_out, "    .thread T_%d;\n", thread_count);
+      }
 
       thread_count += 1;
       return rc;
@@ -1535,6 +1557,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.89  2003/09/04 20:28:06  steve
+ *  Support time0 resolution of combinational threads.
+ *
  * Revision 1.88  2003/07/29 05:12:10  steve
  *  All the threads of a named fork go into sub-scope.
  *
@@ -1555,132 +1580,5 @@ int draw_func_definition(ivl_scope_t scope)
  *
  * Revision 1.82  2003/03/06 01:17:46  steve
  *  Use number for event labels.
- *
- * Revision 1.81  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- * Revision 1.80  2003/02/27 20:38:12  steve
- *  Handle assign of real values to vectors.
- *
- * Revision 1.79  2003/02/03 01:09:20  steve
- *  Allow $display of $simtime.
- *
- * Revision 1.78  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.77  2003/01/26 21:16:00  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.76  2002/11/21 22:43:13  steve
- *  %set/x0 instruction to support bounds checking.
- *
- * Revision 1.75  2002/11/17 18:31:09  steve
- *  Generate unique labels for force functors.
- *
- * Revision 1.74  2002/11/08 05:00:31  steve
- *  Use the vectorized %assign where appropriate.
- *
- * Revision 1.73  2002/11/07 05:19:55  steve
- *  Use Vector %set to set constants in variables.
- *
- * Revision 1.72  2002/11/07 03:12:18  steve
- *  Vectorize load from REG variables.
- *
- * Revision 1.71  2002/09/27 20:24:42  steve
- *  Allow expression lookaside map to spam statements.
- *
- * Revision 1.70  2002/09/27 16:33:34  steve
- *  Add thread expression lookaside map.
- *
- * Revision 1.69  2002/09/24 04:20:32  steve
- *  Allow results in register bits 47 in certain cases.
- *
- * Revision 1.68  2002/09/13 03:12:50  steve
- *  Optimize ==1 when in context where x vs z doesnt matter.
- *
- * Revision 1.67  2002/09/01 00:19:35  steve
- *  Watch for x indices in l-value of non-blocking assignments.
- *
- * Revision 1.66  2002/08/31 03:48:50  steve
- *  Fix reverse bit ordered bit select in continuous assignment.
- *
- * Revision 1.65  2002/08/27 05:39:57  steve
- *  Fix l-value indexing of memories and vectors so that
- *  an unknown (x) index causes so cell to be addresses.
- *
- *  Fix tangling of label identifiers in the fork-join
- *  code generator.
- *
- * Revision 1.64  2002/08/19 00:06:12  steve
- *  Allow release to handle removal of target net.
- *
- * Revision 1.63  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.62  2002/08/07 00:54:39  steve
- *  Add force to nets.
- *
- * Revision 1.61  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.60  2002/08/03 22:30:48  steve
- *  Eliminate use of ivl_signal_name for signal labels.
- *
- * Revision 1.59  2002/06/02 18:57:17  steve
- *  Generate %cmpi/u where appropriate.
- *
- * Revision 1.58  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.57  2002/04/22 02:41:30  steve
- *  Reduce the while loop expression if needed.
- *
- * Revision 1.56  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
- *
- * Revision 1.55  2002/04/14 19:19:21  steve
- *  Handle empty true case of conditional statements.
- *
- * Revision 1.54  2002/04/14 03:54:40  steve
- *  Vector constants to vpi_call can have sign.
- *
- * Revision 1.53  2002/04/14 02:56:19  steve
- *  Support signed expressions through to VPI.
- *
- * Revision 1.52  2002/01/11 05:23:05  steve
- *  Handle certain special cases of stime.
- *
- * Revision 1.51  2001/12/05 05:41:20  steve
- *  Make sure fork labels are globally unique.
- *
- * Revision 1.50  2001/11/18 01:28:18  steve
- *  Generate force code for variable l-values.
- *
- * Revision 1.49  2001/11/14 03:28:49  steve
- *  DLL target support for force and release.
- *
- * Revision 1.48  2001/11/01 19:31:40  steve
- *  make fork label into complete statemnt.
- *
- * Revision 1.47  2001/11/01 04:26:57  steve
- *  Generate code for deassign and cassign.
- *
- * Revision 1.46  2001/10/19 23:52:36  steve
- *  Add trailing ; to fork-join out labels.
- *
- * Revision 1.45  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.44  2001/09/01 00:58:16  steve
- *  dead comments.
  */
 
