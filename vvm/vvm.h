@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.27 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: vvm.h,v 1.28 2000/01/06 05:56:02 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -222,6 +222,7 @@ class vvm_memory_t : public __vpiMemory {
       void set_word(unsigned addr,
 		    const vvm_bitset_t<WIDTH>&val)
 	    { unsigned base = WIDTH * addr;
+	      assert(addr < size);
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    bits[base+idx] = val[idx];
 	      call_list_(addr);
@@ -230,6 +231,7 @@ class vvm_memory_t : public __vpiMemory {
       void set_word(unsigned addr,
 		    const vpip_bit_t val[WIDTH])
 	    { unsigned base = WIDTH * addr;
+	      assert(addr < size);
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    bits[base+idx] = val[idx];
 	      call_list_(addr);
@@ -238,6 +240,7 @@ class vvm_memory_t : public __vpiMemory {
       vvm_bitset_t<WIDTH> get_word(unsigned addr) const
 	    { vvm_bitset_t<WIDTH> val;
 	      unsigned base = WIDTH * addr;
+	      assert(addr < size);
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    val[idx] = bits[base+idx];
 	      return val;
@@ -258,6 +261,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.28  2000/01/06 05:56:02  steve
+ *  Add memory address range check.
+ *
  * Revision 1.27  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *
