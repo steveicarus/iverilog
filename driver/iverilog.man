@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2000/10/08 22:36:56 $" Version "$Date: 2000/10/08 22:36:56 $"
+.TH iverilog 1 "$Date: 2000/10/18 21:53:05 $" Version "$Date: 2000/10/18 21:53:05 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-s topmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile[s]
+[-ESv] [-Cpath] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -24,6 +24,14 @@ compile the verilog source. Normally, the path used to locate these
 tools is built into the \fIiverilog\fP program. However, the \fB-B\fP
 switch allows the user to select a different set of programs. The path
 given is used to locate \fIivlpp\fP, \fIivl\fP and the VPI modules.
+.TP 8
+.B -C\fIpath\fP
+This flag selects the driver configuration file to use. Normally, the
+iverilog program will read its configuration file from
+/usr/lib/ivl/iverilog.conf (or the install path configured at compile
+time) but the user can specify the path to a different configuration
+file. This is useful when testing new configuration files. See the
+installed configuration file for a summary of the file format.
 .TP 8
 .B -D\fImacro\fP
 Defines macro \fImacro\fP with the string `1' as its definition. This
