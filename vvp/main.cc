@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.30 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: main.cc,v 1.31 2002/09/18 03:34:07 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -245,7 +245,7 @@ int main(int argc, char*argv[])
 	    fprintf(stderr, "           %8lu resolv\n", count_functors_resolv);
 	    fprintf(stderr, "           %8lu variable\n", count_functors_var);
 	    fprintf(stderr, " ... %8lu opcodes (%lu bytes)\n",
-		    count_opcodes, size_opcodes);
+		    count_opcodes, (unsigned long)size_opcodes);
 	    fprintf(stderr, " ... %8lu nets\n",     count_vpi_nets);
 	    fprintf(stderr, " ... %8lu memories\n", count_vpi_memories);
 	    fprintf(stderr, " ... %8lu scopes\n",   count_vpi_scopes);
@@ -280,6 +280,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.31  2002/09/18 03:34:07  steve
+ *  printf size warning.
+ *
  * Revision 1.30  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
