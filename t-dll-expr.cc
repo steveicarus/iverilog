@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.14 2001/07/07 20:20:10 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.15 2001/07/22 00:17:49 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -218,7 +218,31 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
-      expr_->u_.subsig_.name_ = strdup(net->name().c_str());
+      expr_->u_.subsig_.sig = find_signal(des_.root_, net->sig());
+}
+
+void dll_target::expr_subsignal(const NetESubSignal*net)
+{
+      assert(expr_ == 0);
+
+      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr);
+
+      if (net->sig()->lsb() != 0) {
+	    cerr << net->get_line() << ": sorry: LSB for signal "
+		 << "is not zero." << endl;
+      }
+
+      expr->type_ = IVL_EX_BITSEL;
+      expr->width_= net->expr_width();
+      expr->signed_ = net->has_sign()? 1 : 0;
+      expr->u_.subsig_.sig = find_signal(des_.root_, net->sig());
+
+      net->index()->expr_scan(this);
+      assert(expr_);
+      expr->u_.subsig_.msb_ = expr_;
+
+      expr_ = expr;
 }
 
 void dll_target::expr_ufunc(const NetEUFunc*net)
@@ -268,6 +292,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.15  2001/07/22 00:17:49  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.14  2001/07/07 20:20:10  steve
  *  Pass parameters to system functions.
  *

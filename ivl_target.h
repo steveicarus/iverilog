@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.72 2001/07/19 04:55:06 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.73 2001/07/22 00:17:49 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -158,6 +158,7 @@ typedef enum ivl_drive_e {
 /* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
+      IVL_EX_BITSEL,
       IVL_EX_BINARY,
       IVL_EX_CONCAT,
       IVL_EX_MEMORY,
@@ -166,7 +167,6 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
-      IVL_EX_SUBSIG,
       IVL_EX_TERNARY,
       IVL_EX_UFUNC,
       IVL_EX_ULONG,
@@ -398,7 +398,7 @@ extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
-  /* IVL_EX_BINARY IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
+  /* IVL_EX_BINARY IVL_EX_BITSEL IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
@@ -412,6 +412,8 @@ extern unsigned    ivl_expr_parms(ivl_expr_t net);
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);
   /* IVL_EX_SCOPE */
 extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
+  /* IVL_EX_BITSEL */
+extern ivl_signal_t ivl_expr_signal(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
   /* IVL_EX_STRING */
@@ -892,6 +894,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.73  2001/07/22 00:17:49  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.72  2001/07/19 04:55:06  steve
  *  Support calculated delays in vvp.tgt.
  *

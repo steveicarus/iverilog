@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.55 2001/07/19 04:55:06 steve Exp $"
+#ident "$Id: t-dll.h,v 1.56 2001/07/22 00:17:50 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -118,6 +118,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_const(const NetEConst*);
       void expr_scope(const NetEScope*);
       void expr_sfunc(const NetESFunc*);
+      void expr_subsignal(const NetESubSignal*);
       void expr_ternary(const NetETernary*);
       void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
@@ -125,6 +126,10 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
       ivl_memory_t lookup_memory_(const NetMemory*mem);
+
+    private:
+      static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur);
+      static ivl_signal_t find_signal(ivl_scope_t root, const NetNet*net);
 };
 
 /*
@@ -182,7 +187,7 @@ struct ivl_expr_s {
 	    } string_;
 
 	    struct {
-		  char*name_;
+		  ivl_signal_t sig;
 		  ivl_expr_t msb_;
 		  ivl_expr_t lsb_;
 	    } subsig_;
@@ -552,6 +557,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.56  2001/07/22 00:17:50  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.55  2001/07/19 04:55:06  steve
  *  Support calculated delays in vvp.tgt.
  *
@@ -588,55 +596,5 @@ struct ivl_statement_s {
  *
  * Revision 1.45  2001/05/20 15:09:39  steve
  *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.44  2001/05/17 04:37:02  steve
- *  Behavioral ternary operators for vvp.
- *
- * Revision 1.43  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.42  2001/05/06 17:48:20  steve
- *  Support memory objects. (Stephan Boettcher)
- *
- * Revision 1.41  2001/04/29 23:17:38  steve
- *  Carry drive strengths in the ivl_nexus_ptr_t, and
- *  handle constant devices in targets.'
- *
- * Revision 1.40  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.39  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.38  2001/04/15 02:58:11  steve
- *  vvp support for <= with internal delay.
- *
- * Revision 1.37  2001/04/07 19:26:32  steve
- *  Add the disable statemnent.
- *
- * Revision 1.36  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.35  2001/04/05 03:20:58  steve
- *  Generate vvp code for the repeat statement.
- *
- * Revision 1.34  2001/04/04 04:50:35  steve
- *  Support forever loops in the tgt-vvp target.
- *
- * Revision 1.33  2001/04/03 04:50:37  steve
- *  Support non-blocking assignments.
- *
- * Revision 1.32  2001/04/02 02:28:12  steve
- *  Generate code for task calls.
- *
- * Revision 1.31  2001/04/02 00:28:35  steve
- *  Support the scope expression node.
- *
- * Revision 1.30  2001/04/01 06:52:28  steve
- *  support the NetWhile statement.
- *
- * Revision 1.29  2001/04/01 01:48:21  steve
- *  Redesign event information to support arbitrary edge combining.
  */
 #endif

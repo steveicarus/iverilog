@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.211 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.212 2001/07/22 00:17:49 steve Exp $"
 #endif
 
 /*
@@ -2473,6 +2473,8 @@ class NetESignal  : public NetExpr {
       unsigned pin_count() const;
       Link& pin(unsigned idx);
 
+      const NetNet* sig() const;
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -2498,6 +2500,8 @@ class NetESubSignal  : public NetExpr {
       const NetExpr*index() const { return idx_; }
 
       virtual bool set_width(unsigned);
+
+      const NetNet* sig() const;
 
       NetESubSignal* dup_expr() const;
 
@@ -2812,6 +2816,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.212  2001/07/22 00:17:49  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.211  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *

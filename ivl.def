@@ -32,6 +32,7 @@ ivl_expr_parm
 ivl_expr_parms
 ivl_expr_repeat
 ivl_expr_scope
+ivl_expr_signal
 ivl_expr_signed
 ivl_expr_string
 ivl_expr_uvalue

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.36 2001/07/09 15:38:35 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.37 2001/07/22 00:17:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -553,6 +553,27 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
       return rv;
 }
 
+static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+      ivl_signal_t sig = ivl_expr_signal(exp);
+      ivl_expr_t sel = ivl_expr_oper1(exp);
+
+	/* Evaluate the bit select expression and save the result into
+	   index register 0. */
+      res = draw_eval_expr(sel);
+      fprintf(vvp_out, "    %%ix/get 0, %u,%u;\n", res.base, res.wid);
+      clr_vector(res);
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      fprintf(vvp_out, "    %%load/x %u, V_%s, 0;\n", res.base,
+	      vvp_mangle_id(ivl_signal_name(sig)));
+
+      return res;
+}
+
 static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 {
       unsigned idx, off;
@@ -1082,6 +1103,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    res = draw_binary_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_BITSEL:
+	    res = draw_bitsel_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_CONCAT:
 	    res = draw_concat_expr(exp, wid);
 	    break;
@@ -1125,6 +1150,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.37  2001/07/22 00:17:50  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.36  2001/07/09 15:38:35  steve
  *  Properly step through wide inputs. (Stephan Boettcher)
  *

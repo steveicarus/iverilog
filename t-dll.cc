@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.54 2001/07/07 03:01:37 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.55 2001/07/22 00:17:49 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -94,7 +94,7 @@ static struct dll_target dll_target_obj;
  * NetScope object. The search works by looking for the parent scope,
  * then scanning the parent scope for the NetScope object.
  */
-static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
+ivl_scope_t dll_target::find_scope(ivl_scope_t root, const NetScope*cur)
 {
       ivl_scope_t parent, tmp;
 
@@ -116,6 +116,26 @@ static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
 ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
 {
       return find_scope(des_.root_, cur);
+}
+
+/*
+ * This is a convenience function to locate an ivl_signal_t object
+ * given the NetESignal that has the signal name.
+ */
+ivl_signal_t dll_target::find_signal(ivl_scope_t root, const NetNet*net)
+{
+      ivl_scope_t scope = find_scope(root, net->scope());
+      assert(scope);
+
+      const char*nname = net->name();
+
+      for (unsigned idx = 0 ;  idx < scope->nsigs_ ;  idx += 1) {
+	    if (strcmp(scope->sigs_[idx]->name_, nname) == 0)
+		  return scope->sigs_[idx];
+      }
+
+      assert(0);
+      return 0;
 }
 
 /*
@@ -1460,6 +1480,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.55  2001/07/22 00:17:49  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.54  2001/07/07 03:01:37  steve
  *  Detect and make available to t-dll the right shift.
  *

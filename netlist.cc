@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.166 2001/07/07 03:01:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.167 2001/07/22 00:17:49 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2208,6 +2208,11 @@ NetESignal* NetESignal::dup_expr() const
       assert(0);
 }
 
+const NetNet* NetESignal::sig() const
+{
+      return net_;
+}
+
 NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
 : sig_(sig), idx_(ex)
 {
@@ -2224,6 +2229,11 @@ NetESubSignal::~NetESubSignal()
 string NetESubSignal::name() const
 {
       return sig_->name();
+}
+
+const NetNet* NetESubSignal::sig() const
+{
+      return sig_->sig();
 }
 
 NetESubSignal* NetESubSignal::dup_expr() const
@@ -2348,6 +2358,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.167  2001/07/22 00:17:49  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.166  2001/07/07 03:01:37  steve
  *  Detect and make available to t-dll the right shift.
  *

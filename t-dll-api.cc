@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.56 2001/07/19 04:55:06 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.57 2001/07/22 00:17:49 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -204,7 +204,7 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	    return net->u_.sfunc_.name_;
 
 	  case IVL_EX_SIGNAL:
-	    return net->u_.subsig_.name_;
+	    return net->u_.subsig_.sig->name_;
 
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.mem_->name_;
@@ -237,6 +237,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
       switch (net->type_) {
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.lef_;
+
+	  case IVL_EX_BITSEL:
+	    return net->u_.subsig_.msb_;
 
 	  case IVL_EX_UNARY:
 	    return net->u_.unary_.sub_;
@@ -340,6 +343,19 @@ extern "C" ivl_scope_t ivl_expr_scope(ivl_expr_t net)
       assert(net);
       assert(net->type_ == IVL_EX_SCOPE);
       return net->u_.scope_.scope;
+}
+
+extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_EX_BITSEL:
+	    return net->u_.subsig_.sig;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" int ivl_expr_signed(ivl_expr_t net)
@@ -1262,6 +1278,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.57  2001/07/22 00:17:49  steve
+ *  Support the NetESubSignal expressions in vvp.tgt.
+ *
  * Revision 1.56  2001/07/19 04:55:06  steve
  *  Support calculated delays in vvp.tgt.
  *
