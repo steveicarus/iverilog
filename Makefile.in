@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.147 2003/03/13 16:33:25 steve Exp $"
+#ident "$Id: Makefile.in,v 1.148 2003/03/15 05:47:51 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -68,11 +68,11 @@ TARGETS += tgt-pal
 endif
 
 all: dep ivl@EXEEXT@
-	for dir in $(SUBDIRS) ; do (cd $$dir ; $(MAKE) all); done
-	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) all); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub; \
-	    do (cd $$dir ; $(MAKE) all); done
-	cd driver ; $(MAKE) VERSION=$(VERSION) all
+	    do (cd $$dir ; $(MAKE) $@); done
+	cd driver ; $(MAKE) VERSION=$(VERSION) $@
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
@@ -97,19 +97,19 @@ check: all
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
 clean:
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) clean); done
-	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) clean); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
-	    do (cd $$dir ; $(MAKE) clean); done
+	    do (cd $$dir ; $(MAKE) $@); done
 	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc 
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
 	rm -rf dep ivl@EXEEXT@
 
 distclean: clean
-	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) distclean); done
-	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) distclean); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
-	    do (cd $$dir ; $(MAKE) distclean); done
+	    do (cd $$dir ; $(MAKE) $@); done
 	rm -f Makefile config.status config.log config.cache config.h
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-xnf.o
@@ -211,11 +211,10 @@ WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
 install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
-	cd vpi ; $(MAKE) install
-	cd ivlpp ; $(MAKE) install
-	cd driver ; $(MAKE) install
-	for tgt in $(SUBDIRS); do (cd $$tgt ; $(MAKE) install); done
-	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) install); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
+	for dir in vpi ivlpp driver; \
+	    do (cd $$dir ; $(MAKE) $@); done
 
 $(bindir)/iverilog-vpi: ./iverilog-vpi
 	$(INSTALL_SCRIPT) ./iverilog-vpi $(bindir)/iverilog-vpi
@@ -276,23 +275,18 @@ installdirs: mkinstalldirs
 	    $(mandir) $(mandir)/man1
 
 uninstall:
-	rm -f $(libdir)/ivl/iverilog.conf
-	rm -f $(libdir)/ivl/ivl
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
+	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
+	for dir in vpi ivlpp driver; \
+	    do (cd $$dir ; $(MAKE) $@); done
+	for f in iverilog.conf ivl; \
+	    do rm -f $(libdir)/ivl/$$f; done
 	-rmdir $(libdir)/ivl
-	rm -f $(bindir)/verilog
-	rm -f $(bindir)/iverilog-vpi
-	rm -f $(bindir)/gverilog@EXEEXT@
-	rm -f $(includedir)/ivl_target.h
-	rm -f $(includedir)/vpi_user.h
-	rm -f $(includedir)/_pli_types.h
-	rm -f $(includedir)/acc_user.h
-	rm -f $(includedir)/veriuser.h
+	for f in verilog iverilog-vpi gverilog@EXEEXT@; \
+	    do rm -f $(bindir)/$$f; done
+	for f in ivl_target.h vpi_user.h _pli_types.h acc_user.h veriuser.h; \
+	    do rm -f $(includedir)/$$f; done
 	rm -f $(mandir)/man1/iverilog-vpi.1
-	cd driver ; $(MAKE) uninstall
-	cd vpi ; $(MAKE) uninstall
-	cd ivlpp ; $(MAKE) uninstall
-	for tgt in $(SUBDIRS); do (cd $$tgt ; $(MAKE) uninstall); done
-	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) uninstall); done
 
 
 -include $(patsubst %.o, dep/%.d, $O)
