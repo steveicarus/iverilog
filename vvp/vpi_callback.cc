@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.30 2003/04/19 23:32:57 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.31 2003/04/25 04:36:42 steve Exp $"
 #endif
 
 /*
@@ -257,12 +257,15 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
-      assert(cur->cb_data.cb_rtn != 0);
-
-      assert(vpi_mode_flag == VPI_MODE_NONE);
-      vpi_mode_flag = cb->sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
-      (cur->cb_data.cb_rtn)(&cur->cb_data);
-      vpi_mode_flag = VPI_MODE_NONE;
+	/* Run the callback. If the cb_rtn function pointer is set to
+	   null, then just skip the whole thing and free it. This is
+	   the usual way to cancel one-time callbacks of this sort. */
+      if (cur->cb_data.cb_rtn != 0) {
+	    assert(vpi_mode_flag == VPI_MODE_NONE);
+	    vpi_mode_flag = cb->sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
+	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    vpi_mode_flag = VPI_MODE_NONE;
+      }
 
       vpi_free_object(&cur->base);
 }
@@ -560,6 +563,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.31  2003/04/25 04:36:42  steve
+ *  Properly skip cancelled callbacks.
+ *
  * Revision 1.30  2003/04/19 23:32:57  steve
  *  Add support for cbNextSimTime.
  *
