@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.59 2000/07/07 04:53:53 steve Exp $"
+#ident "$Id: Makefile.in,v 1.60 2000/07/11 23:07:28 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -54,7 +54,7 @@ all: ivl verilog iverilog
 	cd ivlpp ; $(MAKE) all
 
 clean:
-	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc verilog
+	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog iverilog
 	cd vpi ; $(MAKE) clean
 	cd vvm ; $(MAKE) clean
 	cd ivlpp ; $(MAKE) clean
@@ -129,7 +129,7 @@ lexor.cc: $(srcdir)/lexor.lex
 lexor_keyword.o dep/lexor_keyword.d: lexor_keyword.cc
 
 lexor_keyword.cc: lexor_keyword.gperf
-	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t lexor_keyword.gperf > lexor_keyword.cc
+	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
 
 install: all installdirs $(bindir)/iverilog $(libdir)/ivl/ivl $(mandir)/man1/iverilog.1
