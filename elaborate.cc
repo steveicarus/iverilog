@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.34 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.35 1999/06/06 23:07:43 steve Exp $"
 #endif
 
 /*
@@ -1058,6 +1058,13 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetBlock*cur = new NetBlock(NetBlock::SEQU);
       bool fail_flag = false;
 
+	// Handle the special case that the block contains only one
+	// statement. There is no need to keep the block node.
+      if (size() == 1) {
+	    NetProc*tmp = stat(0)->elaborate(des, path);
+	    return tmp;
+      }
+
       for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
 	    NetProc*tmp = stat(idx)->elaborate(des, path);
 	    if (tmp == 0) {
@@ -1360,6 +1367,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.35  1999/06/06 23:07:43  steve
+ *  Drop degenerate blocks.
+ *
  * Revision 1.34  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,
