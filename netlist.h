@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.161 2000/09/07 00:06:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.162 2000/09/10 02:18:16 steve Exp $"
 #endif
 
 /*
@@ -1128,6 +1128,11 @@ class NetProc : public LineInfo {
  * assignment has its effect. The NetAssign_ class is not to be
  * derived from. 
  *
+ * The collection is arranged from lsb up to msb, and represents the
+ * concatenation of l-values. The elaborator may collapse some
+ * concatenations into a single NetAssign_. The "more" member of the
+ * NetAssign_ object points to the next most significant bits of l-value.
+ *
  * NOTE: The elaborator will make an effort to match the width of the
  * r-value to the with of the l-value, but targets and functions
  * should know that this is not a guarantee.
@@ -1154,6 +1159,9 @@ class NetAssign_ : public NetNode {
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
+	// This pointer is for keeping simple lists.
+      NetAssign_* more;
+
     private:
       NetExpr*bmux_;
 };
@@ -1177,6 +1185,8 @@ class NetAssignBase : public NetProc {
 	// This returns the total width of the accumulated l-value. It
 	// accounts for any grouping of NetAssign_ objects that might happen.
       unsigned lwidth() const;
+
+      void dump_lval(ostream&) const;
 
     private:
       NetAssign_*lval_;
@@ -2752,6 +2762,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.162  2000/09/10 02:18:16  steve
+ *  elaborate complex l-values
+ *
  * Revision 1.161  2000/09/07 00:06:53  steve
  *  encapsulate access to the l-value expected width.
  *

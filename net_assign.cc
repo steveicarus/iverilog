@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.3 2000/09/07 00:06:53 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.4 2000/09/10 02:18:16 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -34,10 +34,12 @@ NetAssign_::NetAssign_(const string&n, unsigned w)
 	    pin(idx).set_name("P", idx);
       }
 
+      more = 0;
 }
 
 NetAssign_::~NetAssign_()
 {
+      assert( more == 0 );
       if (bmux_) delete bmux_;
 }
 
@@ -66,7 +68,12 @@ NetAssignBase::NetAssignBase(NetAssign_*lv, NetExpr*rv)
 NetAssignBase::~NetAssignBase()
 {
       if (rval_) delete rval_;
-      if (lval_) delete lval_;
+      while (lval_) {
+	    NetAssign_*tmp = lval_;
+	    lval_ = tmp->more;
+	    tmp->more = 0;
+	    delete tmp;
+      }
 }
 
 NetExpr* NetAssignBase::rval()
@@ -87,20 +94,40 @@ void NetAssignBase::set_rval(NetExpr*r)
 
 NetAssign_* NetAssignBase::l_val(unsigned idx)
 {
+      NetAssign_*cur = lval_;
+      while (idx > 0) {
+	    if (cur == 0)
+		  return cur;
+
+	    cur = cur->more;
+	    idx -= 1;
+      }
+
       assert(idx == 0);
-      return lval_;
+      return cur;
 }
 
 const NetAssign_* NetAssignBase::l_val(unsigned idx) const
 {
+      const NetAssign_*cur = lval_;
+      while (idx > 0) {
+	    if (cur == 0)
+		  return cur;
+
+	    cur = cur->more;
+	    idx -= 1;
+      }
+
       assert(idx == 0);
-      return lval_;
+      return cur;
 }
 
 unsigned NetAssignBase::lwidth() const
 {
-      assert(lval_);
-      return lval_->lwidth();
+      unsigned sum = 0;
+      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more)
+	    sum += cur->lwidth();
+      return sum;
 }
 
 
@@ -124,6 +151,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.4  2000/09/10 02:18:16  steve
+ *  elaborate complex l-values
+ *
  * Revision 1.3  2000/09/07 00:06:53  steve
  *  encapsulate access to the l-value expected width.
  *

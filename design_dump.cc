@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.95 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.96 2000/09/10 02:18:16 steve Exp $"
 #endif
 
 /*
@@ -422,41 +422,43 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetAssignBase::dump_lval(ostream&o) const
+{
+      o << "" << "{" << lval_->name();
+      if (lval_->bmux())
+	    o << "[" << *lval_->bmux() << "]";
+
+      for (NetAssign_*cur = lval_->more ;  cur ;  cur = cur->more) {
+	    o << ", " << cur->name();
+	    if (cur->bmux())
+		  o << "[" << *cur->bmux() << "]";
+      }
+
+      o << "}";
+}
+
 /* Dump an assignment statement */
 void NetAssign::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
+      dump_lval(o);
 
-      if (l_val(0)->bmux()) {
-	    o << l_val(0)->name() << "[" << *l_val(0)->bmux() << "] = ";
-	    if (l_val(0)->rise_time())
-		  o << "#" << l_val(0)->rise_time() << " ";
-	    o << *rval() << ";" << endl;
-
-      } else {
-	    o << l_val(0)->name() << " = ";
-	    if (l_val(0)->rise_time())
-		  o << "#" << l_val(0)->rise_time() << " ";
-	    o << *rval() << ";" << endl;
-      }
+      o << " = ";
+      if (l_val(0)->rise_time())
+	    o << "#" << l_val(0)->rise_time() << " ";
+      o << *rval() << ";" << endl;
 }
 
 void NetAssignNB::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
+      dump_lval(o);
 
-      if (l_val(0)->bmux()) {
-	    o << l_val(0)->name() << "[" << *l_val(0)->bmux() << "] <= ";
-	    if (l_val(0)->rise_time())
-		  o << "#" << l_val(0)->rise_time() << " ";
-	    o << *rval() << ";" << endl;
+      o << " <= ";
+      if (l_val(0)->rise_time())
+	    o << "#" << l_val(0)->rise_time() << " ";
+      o << *rval() << ";" << endl;
 
-      } else {
-	    o << l_val(0)->name() << " <= ";
-	    if (l_val(0)->rise_time())
-		  o << "#" << l_val(0)->rise_time() << " ";
-	    o << *rval() << ";" << endl;
-      }
 }
 
 void NetAssignMem::dump(ostream&o, unsigned ind) const
@@ -967,6 +969,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.96  2000/09/10 02:18:16  steve
+ *  elaborate complex l-values
+ *
  * Revision 1.95  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.172 2000/09/08 17:08:10 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.173 2000/09/10 02:18:16 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -174,6 +174,10 @@ class target_vvm : public target_t {
       virtual void net_probe(const NetEvProbe*);
       virtual bool process(const NetProcTop*);
       virtual void proc_assign(const NetAssign*);
+              void proc_assign_rval(const NetAssign_*, const NetEConst*,
+				    unsigned off);
+              void proc_assign_rval(const NetAssign_*, const string&,
+				    unsigned wid, unsigned off);
       virtual void proc_assign_mem(const NetAssignMem*);
       virtual void proc_assign_nb(const NetAssignNB*);
       virtual void proc_assign_mem_nb(const NetAssignMemNB*);
@@ -2140,6 +2144,140 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
 }
 
 /*
+ * This method handles the special case of the assignment of a
+ * constant r-value to the l-value. In this case, I can set specific
+ * values to each of the bits instead of calculating bit values or
+ * even reading values from a vpip_bit_t elsewhere.
+ */
+void target_vvm::proc_assign_rval(const NetAssign_*lv,
+				  const NetEConst*rv,
+				  unsigned off)
+{
+      const verinum value = rv->value();
+
+	/* This condition catches the special case of assigning to a
+	   non-constant bit select. This cal be something like:
+
+		a[idx] = x;
+
+	   For this sort of assignment, I only need a single bit of
+	   the r-value. That bit is written into a single bit of the
+	   target using a generated switch statement, where each case
+	   of the switch assignes to a specific nexus. This is not
+	   unreasonable because there aren't typically all that many
+	   bits in the l-value. */
+
+      if (lv->bmux()) {
+
+	      // This is a bit select. Assign the low bit of the
+	      // constant to the selected bit of the lval.
+
+	    const char*rval = vvm_val_name(value.get(off),
+					   Link::STRONG,
+					   Link::STRONG);
+
+	    string bval = emit_proc_rval(this, lv->bmux());
+
+	    defn << "      switch (" << bval
+		 << ".as_unsigned()) {" << endl;
+
+	    for (unsigned idx = 0; idx < lv->pin_count(); idx += 1) {
+
+		  string nexus = lv->pin(idx).nexus()->name();
+		  unsigned ncode = nexus_wire_map[nexus];
+
+		  defn << "      case " << idx << ":" << endl;
+
+		  defn << "        nexus_wire_table["<<ncode<<"]"
+		       << ".reg_assign(" << rval << ");" << endl;
+		  defn << "        break;" << endl;
+
+	    }
+
+	    defn << "      }" << endl;
+	    return;
+      }
+
+
+	/* We've handled the case of bit selects, so here we know that
+	   we are doing a good ol' assignment to an l-value. So for
+	   the entire width of the l-value, assign constant bit values
+	   to the appropriate nexus. */
+
+      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
+	    string nexus = lv->pin(idx).nexus()->name();
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    verinum::V val = (idx+off) < value.len() 
+		  ? value.get(idx+off)
+		  : verinum::V0;
+	    const char*rval = vvm_val_name(val, Link::STRONG, Link::STRONG);
+
+	    defn << "      nexus_wire_table[" <<ncode<< "]"
+		 << ".reg_assign(" << rval << ");" << endl;
+      }
+}
+
+/*
+ * This method does the grunt work of generating an assignment given a
+ * generated rval result.
+ */
+void target_vvm::proc_assign_rval(const NetAssign_*lv,
+				  const string&rval,
+				  unsigned wid, unsigned off)
+{
+      assert(lv);
+
+	/* Now, if there is a mux on the l-value, generate a code to
+	   assign a single bit to one of the bits of the
+	   l-value. Otherwise, generate code for a complete
+	   assignment. */
+
+      if (lv->bmux()) {
+
+	      // This is a bit select. Assign the low bit of the rval
+	      // to the selected bit of the lval.
+	    string bval = emit_proc_rval(this, lv->bmux());
+
+	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
+
+	    for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
+
+		  string nexus = lv->pin(idx).nexus()->name();
+		  unsigned ncode = nexus_wire_map[nexus];
+
+		  defn << "      case " << idx << ":" << endl;
+
+		  defn << "        nexus_wire_table["<<ncode<<"]"
+		       << ".reg_assign(" << rval << "["<<off<<"]);" << endl;
+		  defn << "        break;" << endl;
+
+	    }
+
+	    defn << "      }" << endl;
+
+      } else {
+	    unsigned min_count = lv->pin_count();
+	    if ((wid-off) < min_count)
+		  min_count = wid - off;
+
+	    for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
+		  string nexus = lv->pin(idx).nexus()->name();
+		  unsigned ncode = nexus_wire_map[nexus];
+		  defn << "      nexus_wire_table["<<ncode<<"].reg_assign("
+		       << rval << "[" << (idx+off) << "]);" << endl;
+	    }
+
+	    for (unsigned idx = min_count; idx < lv->pin_count(); idx += 1) {
+		  string nexus = lv->pin(idx).nexus()->name();
+		  unsigned ncode = nexus_wire_map[nexus];
+		  defn << "      nexus_wire_table["<<ncode<<"]"
+		       << ".reg_assign(St0);" << endl;
+	    }
+      }
+}
+
+/*
  * This method generates code for a procedural assignment. The lval is
  * a signal, but the assignment should generate code to go to all the
  * connected devices/events.
@@ -2148,59 +2286,22 @@ void target_vvm::proc_assign(const NetAssign*net)
 {
 
 	/* Detect the very special (and very common) case that the
-	   rvalue is a constant in this assignment. I this case, there
-	   is no reason to go scan the expression, and in the process
+	   rvalue is a constant value. In this case, there is no
+	   reason to go scan the expression, and in the process
 	   generate bunches of temporaries. */
 
       if (const NetEConst*rc = dynamic_cast<const NetEConst*>(net->rval())) {
 
-	    const verinum value = rc->value();
-
-	    if (net->l_val(0)->bmux()) {
-
-		    // This is a bit select. Assign the low bit of the
-		    // constant to the selected bit of the lval.
-
-		  const char*rval = vvm_val_name(value.get(0),
-						 Link::STRONG,
-						 Link::STRONG);
-
-		  string bval = emit_proc_rval(this, net->l_val(0)->bmux());
-
-		  defn << "      switch (" << bval
-		       << ".as_unsigned()) {" << endl;
-
-		  for (unsigned idx = 0; idx < net->l_val(0)->pin_count(); idx += 1) {
-
-			string nexus = net->l_val(0)->pin(idx).nexus()->name();
-			unsigned ncode = nexus_wire_map[nexus];
-
-			defn << "      case " << idx << ":" << endl;
-
-			defn << "        nexus_wire_table["<<ncode<<"]"
-			     << ".reg_assign(" << rval << ");" << endl;
-			defn << "        break;" << endl;
-
-		  }
-
-		  defn << "      }" << endl;
-		  return;
+	    const NetAssign_*cur = net->l_val(0);
+	    unsigned off = 0;
+	    unsigned idx = 0;
+	    while (cur != 0) {
+		  proc_assign_rval(cur, rc, off);
+		  off += cur->lwidth();
+		  idx += 1;
+		  cur = net->l_val(idx);
 	    }
 
-	    for (unsigned idx = 0 ;  idx < net->l_val(0)->pin_count() ;  idx += 1) {
-		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
-		  unsigned ncode = nexus_wire_map[nexus];
-
-		  verinum::V val = idx < value.len() 
-			? value.get(idx)
-			: verinum::V0;
-		  const char*rval = vvm_val_name(val,
- 						 Link::STRONG,
- 						 Link::STRONG);
-
-		  defn << "      nexus_wire_table[" <<ncode<< "]"
-		       << ".reg_assign(" << rval << ");" << endl;
-	    }
 	    return;
       }
 
@@ -2218,12 +2319,11 @@ void target_vvm::proc_assign(const NetAssign*net)
 
       if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
 
-	    if (net->l_val(0)->pin_count() > rs->pin_count()) {
+	    if (net->lwidth() > rs->pin_count()) {
 		  rval = emit_proc_rval(this, net->rval());
 
 	    } else {
-		  assert((net->l_val(0)->pin_count() <= rs->pin_count())
-			 || (net->l_val(0)->bmux() && (rs->pin_count() >= 1)));
+
 		  rval = mangle(rs->name()) + ".bits";
 	    }
 
@@ -2235,53 +2335,16 @@ void target_vvm::proc_assign(const NetAssign*net)
 
       defn << "      // " << net->get_line() << ": " << endl;
 
-
-	/* Now, if there is a mux on the l-value, generate a code to
-	   assign a single bit to one of the bits of the
-	   l-value. Otherwise, generate code for a complete
-	   assignment. */
-
-      if (net->l_val(0)->bmux()) {
-
-	      // This is a bit select. Assign the low bit of the rval
-	      // to the selected bit of the lval.
-	    string bval = emit_proc_rval(this, net->l_val(0)->bmux());
-
-	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
-
-	    for (unsigned idx = 0 ;  idx < net->l_val(0)->pin_count() ;  idx += 1) {
-
-		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
-		  unsigned ncode = nexus_wire_map[nexus];
-
-		  defn << "      case " << idx << ":" << endl;
-
-		  defn << "        nexus_wire_table["<<ncode<<"]"
-		       << ".reg_assign(" << rval << "[0]);" << endl;
-		  defn << "        break;" << endl;
-
-	    }
-
-	    defn << "      }" << endl;
-
-      } else {
-	    unsigned min_count = net->l_val(0)->pin_count();
-	    if (net->rval()->expr_width() < min_count)
-		  min_count = net->rval()->expr_width();
-
-	    for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
-		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
-		  unsigned ncode = nexus_wire_map[nexus];
-		  defn << "      nexus_wire_table["<<ncode<<"].reg_assign("
-		       << rval << "[" << idx << "]);" << endl;
-	    }
-
-	    for (unsigned idx = min_count; idx < net->l_val(0)->pin_count(); idx += 1) {
-		  string nexus = net->l_val(0)->pin(idx).nexus()->name();
-		  unsigned ncode = nexus_wire_map[nexus];
-		  defn << "      nexus_wire_table["<<ncode<<"]"
-		       << ".reg_assign(St0);" << endl;
-	    }
+      { const NetAssign_*cur = net->l_val(0);
+        unsigned wid = net->rval()->expr_width();
+        unsigned off = 0;
+	unsigned idx = 0;
+	while (cur != 0) {
+	      proc_assign_rval(cur, rval, wid, off);
+	      off += cur->lwidth();
+	      idx += 1;
+	      cur = net->l_val(idx);
+	}
       }
 }
 
@@ -2319,6 +2382,9 @@ void target_vvm::proc_assign_nb(const NetAssignNB*net)
 {
       string rval = emit_proc_rval(this, net->rval());
       const unsigned long delay = net->l_val(0)->rise_time();
+
+	// XXXX I cannot handle this yet.
+      assert(net->l_val(1) == 0);
 
       if (net->l_val(0)->bmux()) {
 	      /* If the l-value has a bit select, set the output bit
@@ -3116,6 +3182,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.173  2000/09/10 02:18:16  steve
+ *  elaborate complex l-values
+ *
  * Revision 1.172  2000/09/08 17:08:10  steve
  *  initialize vlog info.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.1 2000/09/09 15:21:26 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.2 2000/09/10 02:18:16 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -79,23 +79,31 @@ NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * Concatenation expressions can appear as l-values. Handle them here.
- * XXXX For now, cheat and use elaborate_net to cope.
  */
 NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 {
+#if 0
       NetNet*ll = elaborate_net(des, scope->name(), 0, 0, 0, 0,
 				Link::STRONG, Link::STRONG);
-      if (ll == 0) {
-	    cerr << get_line() << ": Assignment l-value too complex."
-		 << endl;
-	    return 0;
+      if (ll != 0) {
+	    NetAssign_*lv = new NetAssign_(scope->local_symbol(),
+					   ll->pin_count());
+	    for (unsigned idx = 0 ; idx < ll->pin_count() ;  idx += 1)
+		  connect(lv->pin(idx), ll->pin(idx));
+	    des->add_node(lv);
+	    return lv;
+      }
+#endif
+      NetAssign_*res = 0;
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope);
+	    assert(tmp);
+
+	    tmp->more = res;
+	    res = tmp;
       }
 
-      NetAssign_*lv = new NetAssign_(scope->local_symbol(), ll->pin_count());
-      for (unsigned idx = 0 ; idx < ll->pin_count() ;  idx += 1)
-	    connect(lv->pin(idx), ll->pin(idx));
-      des->add_node(lv);
-      return lv;
+      return res;
 }
 
 /*
@@ -195,7 +203,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		 NetAssign_ the width of the target reg and attach a
 		 bmux to select the target bit. */
 	    unsigned wid = reg->pin_count();
-	    lv = new NetAssign_(scope->local_symbol(), wid);
+	    lv = new NetAssign_(des->local_symbol(scope->name()), wid);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(lv->pin(idx), reg->pin(idx));
@@ -210,7 +218,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 	    unsigned wid = (msb >= lsb)? (msb-lsb+1) : (lsb-msb+1);
 	    assert(wid <= reg->pin_count());
 
-	    lv = new NetAssign_(scope->local_symbol(), wid);
+	    lv = new NetAssign_(des->local_symbol(scope->name()), wid);
 	    unsigned off = reg->sb_to_idx(lsb);
 	    assert((off+wid) <= reg->pin_count());
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -226,6 +234,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.2  2000/09/10 02:18:16  steve
+ *  elaborate complex l-values
+ *
  * Revision 1.1  2000/09/09 15:21:26  steve
  *  move lval elaboration to PExpr virtual methods.
  *
