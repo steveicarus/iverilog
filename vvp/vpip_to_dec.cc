@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpip_to_dec.cc,v 1.4 2002/05/11 04:39:36 steve Exp $"
+#ident "$Id: vpip_to_dec.cc,v 1.5 2002/05/17 04:05:38 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -205,8 +205,10 @@ unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 			  const char*buf, bool signed_flag)
 {
-	/* The str string is the decimal value with the least
-	   significant digit first. */
+ 	/* The str string is the decimal value with the least
+	   significant digit first. This loop creates that string by
+	   reversing the order of the buf string. For example, if the
+	   input is "1234", str gets "4321". */
       unsigned slen = strlen(buf);
       char*str = new char[slen + 1];
       for (unsigned idx = 0 ;  idx < slen ;  idx += 1) {
@@ -215,6 +217,8 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
             else
 		  str[idx] = '0';
       }
+
+      str[slen] = 0;
 
       for (unsigned idx = 0 ;  idx < nbits ;  idx += 1) {
 	    unsigned val = 0;
@@ -231,6 +235,7 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 
 	    bits[idx] = val;
 
+	      /* Divide the str string by 2 in decimal. */
 	    char*cp = str;
 	    while (*cp) {
 		  unsigned val = cp[0] - '0';
@@ -249,6 +254,9 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpip_to_dec.cc,v $
+ * Revision 1.5  2002/05/17 04:05:38  steve
+ *  null terminate the reversed decimal string
+ *
  * Revision 1.4  2002/05/11 04:39:36  steve
  *  Set and get memory words by string value.
  *
