@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.17 2001/04/01 06:49:04 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.18 2001/04/02 00:27:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -387,6 +387,29 @@ static int show_system_task_call(ivl_statement_t net)
 
 	    switch (ivl_expr_type(expr)) {
 
+		case IVL_EX_NUMBER: {
+			/* CHEAT! For now, only draw decimal values. I
+			   should draw this as a vector, but I'm lazy. */
+		      unsigned bit, wid = ivl_expr_width(expr);
+		      const char*bits = ivl_expr_bits(expr);
+		      unsigned long val = 0, mask;
+		      assert(wid < 8*sizeof val);
+
+		      for (bit = 0, mask = 1; bit < wid; bit += 1, mask <<= 1)
+			    switch (bits[bit]) {
+				case '1':
+				  val |= mask;
+				  break;
+				case '0':
+				  break;
+				default:
+				  assert(0);
+			    }
+
+		      fprintf(vvp_out, ", %lu", val);
+		      break;
+		}
+
 		case IVL_EX_SIGNAL:
 		  fprintf(vvp_out, ", V_%s", ivl_expr_name(expr));
 		  break;
@@ -395,12 +418,18 @@ static int show_system_task_call(ivl_statement_t net)
 		  fprintf(vvp_out, ", \"%s\"", ivl_expr_string(expr));
 		  break;
 
+		case IVL_EX_SCOPE:
+		  fprintf(vvp_out, ", S_%s",
+			  ivl_scope_name(ivl_expr_scope(expr)));
+		  break;
+
 		case IVL_EX_SFUNC:
 		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
 			fprintf(vvp_out, ", $time");
 		  else
 			fprintf(vvp_out, ", ?");
 		  break;
+
 		default:
 		  fprintf(vvp_out, ", ?");
 		  break;
@@ -534,6 +563,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.18  2001/04/02 00:27:53  steve
+ *  Scopes and numbers as vpi_call parameters.
+ *
  * Revision 1.17  2001/04/01 06:49:04  steve
  *  Generate code for while statements.
  *
