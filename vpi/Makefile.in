@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.27 2001/06/12 03:53:10 steve Exp $"
+#ident "$Id: Makefile.in,v 1.28 2001/06/15 05:05:04 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -57,8 +57,13 @@ O = sys_table.o sys_deposit.o sys_display.o sys_finish.o sys_random.o \
 sys_readmem.o sys_readmem_lex.o sys_time.o sys_vcd.o \
 mt19937int.o
 
+SYSTEM_VPI_LDFLAGS = -L.. -lvpi
+ifeq (@WIN32@,yes)
+    SYSTEM_VPI_LDFLAGS += -liberty
+endif
+
 system.vpi: $O ../libvpi.a
-	$(CC) @shared@ -o $@ $O -L.. -lvpi -liberty
+	$(CC) @shared@ -o $@ $O $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
