@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.34 2002/04/04 05:26:13 steve Exp $"
+#ident "$Id: main.c,v 1.35 2002/04/15 00:04:23 steve Exp $"
 
 # include "config.h"
 
@@ -273,11 +273,14 @@ static void process_warning_switch(const char*name)
 	    strcpy(warning_flags, "-W");
 
       if (strcmp(name,"all") == 0) {
-	    strcat(warning_flags, "i");
+	    strcat(warning_flags, "it");
 
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags+2, 'i'))
 		  strcat(warning_flags, "i");
+      }else if (strcmp(name,"timescale") == 0) {
+	    if (! strchr(warning_flags+2, 't'))
+		  strcat(warning_flags, "t");
       }
 }
 
@@ -654,6 +657,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.35  2002/04/15 00:04:23  steve
+ *  Timescale warnings.
+ *
  * Revision 1.34  2002/04/04 05:26:13  steve
  *  Add dependency generation.
  *

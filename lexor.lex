@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.70 2002/04/14 21:42:01 steve Exp $"
+#ident "$Id: lexor.lex,v 1.71 2002/04/15 00:04:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -74,7 +74,7 @@ static const char* set_file_name(char*text)
 }
 
 
-extern void pform_set_timescale(int, int);
+extern void pform_set_timescale(int, int, const char*file, unsigned line);
 
 void reset_lexor();
 static void line_directive();
@@ -1083,7 +1083,7 @@ static void process_timescale(const char*txt)
 	    return;
       }
 
-      pform_set_timescale(unit, prec);
+      pform_set_timescale(unit, prec, yylloc.text, yylloc.first_line);
 }
 
 int yywrap()

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.91 2002/04/12 02:57:08 steve Exp $"
+#ident "$Id: pform.cc,v 1.92 2002/04/15 00:04:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,8 +45,16 @@ string vl_file = "";
 extern int VLparse();
 
 static Module*pform_cur_module = 0;
+
+/*
+ * These variables track the current time scale, as well as where the
+ * timescale was set. This supports warnings about tangled timescales.
+ */
 static int pform_time_unit = 0;
 static int pform_time_prec = 0;
+
+static char*pform_timescale_file = 0;
+static unsigned pform_timescale_line = 0;
 
 /*
  * The scope stack and the following functions handle the processing
@@ -80,11 +88,43 @@ static hname_t hier_name(const char*tail)
       return name;
 }
 
-void pform_set_timescale(int unit, int prec)
+/*
+ * The lexor calls this function to set the active timescale when it
+ * detects a `timescale directive. The function saves the directive
+ * values (for use by modules) and if warnings are enabled checks to
+ * see if some modules have no timescale.
+ */
+void pform_set_timescale(int unit, int prec,
+			 const char*file, unsigned lineno)
 {
       assert(unit >= prec);
       pform_time_unit = unit;
       pform_time_prec = prec;
+
+      if (pform_timescale_file)
+	    free(pform_timescale_file);
+
+      pform_timescale_file = strdup(file);
+      pform_timescale_line = lineno;
+
+      if (warn_timescale && (pform_modules.size() > 0)) {
+	    cerr << file << ":" << lineno << ": warning: "
+		 << "Some modules have no timescale. This may cause"
+		 << endl;
+	    cerr << file << ":" << lineno << ":        : "
+		 << "confusing timing results.  Affected modules are:"
+		 << endl;
+
+	    map<string,Module*>::iterator mod;
+	    for (mod = pform_modules.begin()
+		       ; mod != pform_modules.end() ; mod++) {
+		  const Module*mp = (*mod).second;
+
+		  cerr << file << ":" << lineno << ":        : "
+		       << "  -- module " << (*mod).first
+		       << " declared here: " << mp->get_line() << endl;
+	    }
+      }
 }
 
 
@@ -124,6 +164,16 @@ void pform_startmodule(const char*name, svector<Module::port_t*>*ports,
       pform_cur_module->set_lineno(lineno);
 
       delete ports;
+
+      if (warn_timescale && pform_timescale_file
+	  && (strcmp(pform_timescale_file,file) != 0)) {
+
+	    cerr << pform_cur_module->get_line() << ": warning: "
+		 << "timescale for " << name
+		 << " inherited from another file." << endl;
+	    cerr << pform_timescale_file << ":" << pform_timescale_line
+		 << ": ...: The inherited timescale is here." << endl;
+      }
 }
 
 void pform_endmodule(const char*name)
@@ -1179,6 +1229,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.92  2002/04/15 00:04:23  steve
+ *  Timescale warnings.
+ *
  * Revision 1.91  2002/04/12 02:57:08  steve
  *  Detect mismatches in reg as module items and ports.
  *

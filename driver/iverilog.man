@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2002/04/04 05:26:13 $" Version "$Date: 2002/04/04 05:26:13 $"
+.TH iverilog 1 "$Date: 2002/04/15 00:04:23 $" Version "$Date: 2002/04/15 00:04:23 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -188,6 +188,14 @@ This enables all supported warning categories.
 This enables warnings for creation of implicit declarations. For
 example, if a scalar wire X is used but not declared in the Verilog
 source, this will print a warning at its first use.
+
+.TP 8
+.B timescale
+This enables warnings for inconsistent use of the timescale
+directive. It detects if some modules have no timescale, or if modules
+inherit timescale from another file. Both probably mean that
+timescales are inconsistent, and simulation timing can be confusing
+and dependent on compilation order.
 
 .SH "COMMAND FILES"
 The command file allows the user to place source file names and

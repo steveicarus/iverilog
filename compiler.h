@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.7 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: compiler.h,v 1.8 2002/04/15 00:04:22 steve Exp $"
 #endif
 
 # include  <list>
@@ -68,6 +68,9 @@
 /* Implicit definitions of wires. */
 extern bool warn_implicit;
 
+/* inherit timescales accross files. */
+extern bool warn_timescale;
+
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 
@@ -77,6 +80,9 @@ extern list<const char*>library_suff;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.8  2002/04/15 00:04:22  steve
+ *  Timescale warnings.
+ *
  * Revision 1.7  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
  *

@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.52 2002/04/04 05:26:13 steve Exp $"
+#ident "$Id: main.cc,v 1.53 2002/04/15 00:04:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -85,8 +85,8 @@ FILE *depend_file = NULL;
 /*
  * These are the warning enable flags.
  */
-bool warn_implicit = false;
-
+bool warn_implicit  = false;
+bool warn_timescale = false;
 /*
  * Verbose messages enabled.
  */
@@ -335,6 +335,9 @@ int main(int argc, char*argv[])
 	  case 'i':
 	    warn_implicit = true;
 	    break;
+	  case 't':
+	    warn_timescale = true;
+	    break;
 	  default:
 	    break;
       }
@@ -490,6 +493,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.53  2002/04/15 00:04:22  steve
+ *  Timescale warnings.
+ *
  * Revision 1.52  2002/04/04 05:26:13  steve
  *  Add dependency generation.
  *
