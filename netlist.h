@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.246 2002/06/24 01:49:39 steve Exp $"
+#ident "$Id: netlist.h,v 1.247 2002/06/25 01:33:22 steve Exp $"
 #endif
 
 /*
@@ -250,6 +250,10 @@ class Nexus {
 	   this nexus are constant. It will also return true if there
 	   are no drivers at all. */
       bool drivers_constant() const;
+
+	/* Given the nexus has constant drivers, this method returns
+	   the value that has been driven. */
+      verinum::V driven_value() const;
 
       void* t_cookie() const;
       void* t_cookie(void*) const;
@@ -2937,6 +2941,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.247  2002/06/25 01:33:22  steve
+ *  Cache calculated driven value.
+ *
  * Revision 1.246  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.

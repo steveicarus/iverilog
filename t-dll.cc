@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.87 2002/06/24 01:49:39 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.88 2002/06/25 01:33:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1030,7 +1030,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       if (net->pin_Direction().is_linked()) {
 	    assert( net->pin_Direction().nexus()->drivers_constant() );
 
-	    verinum::V dir = driven_value(net->pin_Direction());
+	    verinum::V dir = net->pin_Direction().nexus()->driven_value();
 	    switch (dir) {
 		case verinum::V0:
 		  break;
@@ -1950,6 +1950,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.88  2002/06/25 01:33:22  steve
+ *  Cache calculated driven value.
+ *
  * Revision 1.87  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.

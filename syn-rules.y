@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.21 2002/06/08 23:42:46 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.22 2002/06/25 01:33:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -226,7 +226,7 @@ static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn)
 
       for (unsigned idx = 0 ;  idx < asn->l_val(0)->lwidth() ;  idx += 1) {
 
-	    verinum::V bit = driven_value(rsig->bit(idx));
+	    verinum::V bit = rsig->bit(idx).nexus()->driven_value();
 
 	    Nexus*nex = asn->l_val(0)->sig()->pin(idx).nexus();
 	    for (Link*cur = nex->first_nlink()

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.13 2002/06/24 01:49:39 steve Exp $"
+#ident "$Id: link_const.cc,v 1.14 2002/06/25 01:33:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -101,13 +101,29 @@ bool Nexus::drivers_constant() const
       return true;
 }
 
-verinum::V driven_value(const Link&lnk)
+verinum::V Nexus::driven_value() const
 {
-      verinum::V val = lnk.get_init();
+      switch (driven_) {
+	  case V0:
+	    return verinum::V0;
+	  case V1:
+	    return verinum::V1;
+	  case Vx:
+	    return verinum::Vx;
+	  case Vz:
+	    return verinum::Vz;
+	  case VAR:
+	    assert(0);
+	    break;
+	  case NO_GUESS:
+	    break;
+      }
 
-      const Nexus*nex = lnk.nexus();
-      for (const Link*cur = nex->first_nlink()
-		 ; cur  ;  cur = cur->next_nlink()) {
+      const Link*cur = list_;
+
+      verinum::V val = verinum::Vz;
+
+      for (cur = list_ ; cur  ;  cur = cur->next_) {
 
 	    const NetConst*obj;
 	    const NetNet*sig;
@@ -116,12 +132,31 @@ verinum::V driven_value(const Link&lnk)
 
 	    } else if (sig = dynamic_cast<const NetNet*>(cur->get_obj())) {
 
-		  if (sig->type() == NetNet::SUPPLY0)
+		  if (sig->type() == NetNet::SUPPLY0) {
+			driven_ = V0;
 			return verinum::V0;
-
-		  if (sig->type() == NetNet::SUPPLY1)
+		  }
+		  if (sig->type() == NetNet::SUPPLY1) {
+			driven_ = V1;
 			return verinum::V1;
+		  }
 	    }
+      }
+
+	/* Cache the result. */
+      switch (val) {
+	  case verinum::V0:
+	    driven_ = V0;
+	    break;
+	  case verinum::V1:
+	    driven_ = V1;
+	    break;
+	  case verinum::Vx:
+	    driven_ = Vx;
+	    break;
+	  case verinum::Vz:
+	    driven_ = Vz;
+	    break;
       }
 
       return val;
@@ -129,6 +164,9 @@ verinum::V driven_value(const Link&lnk)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.14  2002/06/25 01:33:22  steve
+ *  Cache calculated driven value.
+ *
  * Revision 1.13  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.

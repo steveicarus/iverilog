@@ -88,10 +88,12 @@ to build properly.
 
 This, believe it or not, should be the easy part:
 
-	$ make
+	$ /usr/bin/make
 
 It could take a while. Now is a good time to go get some coffee or
-take a tea break.
+take a tea break. I suggest using the complete path to make, because
+the mingw version will not know how to execute the /usr/bin/install
+program.
 
 
 * Install Icarus Verilog
@@ -106,7 +108,7 @@ window.
 
 When you are ready, install like this:
 
-	$ make install
+	$ /usr/bin/make STRIP=/usr/bin/strip.exe install
 
 This is part of what the configure program did for you. The Makefiles
 now know to put the files under the D:\iverilog (or whatever directory

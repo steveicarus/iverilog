@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.36 2002/06/24 01:49:38 steve Exp $"
+#ident "$Id: cprop.cc,v 1.37 2002/06/25 01:33:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -65,7 +65,7 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	// adder. These will be eliminated later.
       while ((obj->width() > 1)
 	     && obj->pin_DataA(0).nexus()->drivers_constant()
-	     && (driven_value(obj->pin_DataA(0)) == verinum::V0)) {
+	     && (obj->pin_DataA(0).nexus()->driven_value() == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
 	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
@@ -90,7 +90,7 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	// Now do the same thing on the B side.
       while ((obj->width() > 1)
 	     && obj->pin_DataB(0).nexus()->drivers_constant()
-	     && (driven_value(obj->pin_DataB(0)) == verinum::V0)) {
+	     && (obj->pin_DataB(0).nexus()->driven_value() == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
 	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
@@ -164,8 +164,8 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 		  continue;
 	    if (! obj->pin_DataB(idx).nexus()->drivers_constant())
 		  continue;
-	    if (driven_value(obj->pin_DataA(idx)) ==
-		driven_value(obj->pin_DataB(idx)))
+	    if (obj->pin_DataA(idx).nexus()->driven_value() ==
+		obj->pin_DataB(idx).nexus()->driven_value())
 		  continue;
 
 	    NetConst*zero = new NetConst(scope, obj->name(), verinum::V0);
@@ -315,7 +315,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    continue;
 		      }
 
-		      if (driven_value(obj->pin(idx)) == verinum::V1) {
+		      if (obj->pin(idx).nexus()->driven_value()==verinum::V1) {
 			    obj->pin(idx).unlink();
 			    top -= 1;
 			    if (idx < top) {
@@ -326,7 +326,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    continue;
 		      }
 
-		      if (driven_value(obj->pin(idx)) != verinum::V0) {
+		      if (obj->pin(idx).nexus()->driven_value() != verinum::V0) {
 			    idx += 1;
 			    xs += 1;
 			    continue;
@@ -462,7 +462,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    continue;
 		      }
 
-		      if (driven_value(obj->pin(idx)) == verinum::V0) {
+		      if (obj->pin(idx).nexus()->driven_value() == verinum::V0) {
 			    obj->pin(idx).unlink();
 			    top -= 1;
 			    if (idx < top) {
@@ -473,7 +473,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    continue;
 		      }
 
-		      if (driven_value(obj->pin(idx)) != verinum::V1) {
+		      if (obj->pin(idx).nexus()->driven_value() != verinum::V1) {
 			    idx += 1;
 			    continue;
 		      }
@@ -593,7 +593,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    continue;
 		      }
 
-		      if (driven_value(obj->pin(idx)) == verinum::V0) {
+		      if (obj->pin(idx).nexus()->driven_value() == verinum::V0) {
 			    obj->pin(idx).unlink();
 			    top -= 1;
 			    if (idx < top) {
@@ -623,7 +623,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    continue;
 		      }
 
-		      if (driven_value(obj->pin(idx)) == verinum::V1) {
+		      if (obj->pin(idx).nexus()->driven_value() == verinum::V1) {
 			    if (one == 0) {
 				  one = idx;
 				  ones += 1;
@@ -684,7 +684,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      unsigned save;
 		      if (! obj->pin(1).nexus()->drivers_constant())
 			    save = 1;
-		      else if (driven_value(obj->pin(1)) != verinum::V1)
+		      else if (obj->pin(1).nexus()->driven_value() != verinum::V1)
 			    save = 1;
 		      else
 			    save = 2;
@@ -782,7 +782,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  break;
 	    }
 
-	    if (driven_value(obj->pin_Data(idx, 0)) != verinum::Vz) {
+	    if (obj->pin_Data(idx, 0).nexus()->driven_value() != verinum::Vz) {
 		  flag = false;
 		  break;
 	    }
@@ -814,7 +814,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 		  break;
 	    }
 
-	    if (driven_value(obj->pin_Data(idx, 1)) != verinum::Vz) {
+	    if (obj->pin_Data(idx, 1).nexus()->driven_value() != verinum::Vz) {
 		  flag = false;
 		  break;
 	    }
@@ -949,6 +949,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.37  2002/06/25 01:33:22  steve
+ *  Cache calculated driven value.
+ *
  * Revision 1.36  2002/06/24 01:49:38  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.

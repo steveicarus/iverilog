@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.21 2002/06/24 01:49:39 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.22 2002/06/25 01:33:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -323,7 +323,7 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 	    if (! dev->pin_DataB(idx).nexus()->drivers_constant())
 		  return false;
 
-	    side.set(idx, driven_value(dev->pin_DataB(idx)));
+	    side.set(idx, dev->pin_DataB(idx).nexus()->driven_value());
       }
 
 	/* Handle the special case of comparing A to 0. Use an N-input
@@ -363,6 +363,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.22  2002/06/25 01:33:22  steve
+ *  Cache calculated driven value.
+ *
  * Revision 1.21  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.
