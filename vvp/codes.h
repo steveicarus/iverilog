@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.58 2003/02/27 20:36:29 steve Exp $"
+#ident "$Id: codes.h,v 1.59 2003/03/28 02:33:56 steve Exp $"
 #endif
 
 
@@ -63,6 +63,7 @@ extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_DIV(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_S(vthread_t thr, vvp_code_t code);
+extern bool of_DIV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
@@ -170,6 +171,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.59  2003/03/28 02:33:56  steve
+ *  Add support for division of real operands.
+ *
  * Revision 1.58  2003/02/27 20:36:29  steve
  *  Add the cvt/vr instruction.
  *

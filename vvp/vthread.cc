@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.105 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: vthread.cc,v 1.106 2003/03/28 02:33:57 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1234,6 +1234,15 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
+      return true;
+}
+
+bool of_DIV_WR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = l / r;
 
       return true;
 }
@@ -2675,6 +2684,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.106  2003/03/28 02:33:57  steve
+ *  Add support for division of real operands.
+ *
  * Revision 1.105  2003/03/13 04:36:57  steve
  *  Remove the obsolete functor delete functions.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.50 2003/02/27 20:36:29 steve Exp $
+ *  $Id: opcodes.txt,v 1.51 2003/03/28 02:33:56 steve Exp $
  */
 
 
@@ -224,6 +224,12 @@ This instruction arithmetically divides the <bit-l> vector by the
 the bits in either vector are x or z, the entire result is x.
 
 The %div/s instruction is the same as %div, but does signed division.
+
+
+* %div/wr <bit-l>, <bit-r>
+
+This opcode divides the left operand by the right operand. If the
+right operand is 0, then the result is NaN.
 
 
 * %force <fofu-label>, <width>

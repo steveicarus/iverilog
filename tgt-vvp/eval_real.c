@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.6 2003/03/15 04:45:18 steve Exp $"
+#ident "$Id: eval_real.c,v 1.7 2003/03/28 02:33:56 steve Exp $"
 #endif
 
 /*
@@ -74,6 +74,11 @@ static int draw_binary_real(ivl_expr_t exp)
 
 	  case '*':
 	    fprintf(vvp_out, "    %%mul/wr %d, %d;\n", l, r);
+	    clr_word(r);
+	    break;
+
+	  case '/':
+	    fprintf(vvp_out, "    %%div/wr %d, %d;\n", l, r);
 	    clr_word(r);
 	    break;
 
@@ -283,6 +288,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.7  2003/03/28 02:33:56  steve
+ *  Add support for division of real operands.
+ *
  * Revision 1.6  2003/03/15 04:45:18  steve
  *  Allow real-valued vpi functions to have arguments.
  *

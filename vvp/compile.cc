@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.157 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: compile.cc,v 1.158 2003/03/28 02:33:56 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -109,6 +109,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%div",    of_DIV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%div/s",  of_DIV_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%div/wr", of_DIV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%force",  of_FORCE,  2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -1527,6 +1528,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.158  2003/03/28 02:33:56  steve
+ *  Add support for division of real operands.
+ *
  * Revision 1.157  2003/03/13 04:36:57  steve
  *  Remove the obsolete functor delete functions.
  *
