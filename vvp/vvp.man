@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2001/07/28 03:29:42 $" Version "$Date: 2001/07/28 03:29:42 $"
+.TH vvp 1 "$Date: 2001/07/29 22:50:44 $" Version "$Date: 2001/07/29 22:50:44 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -50,6 +50,7 @@ progress to be printed to standard out.
 Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
+iverilog(1),
 .BR "<http://www.icarus.com/eda/verilog/>"
 
 .SH COPYRIGHT
