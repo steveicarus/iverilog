@@ -2,3 +2,4 @@ Makefile
 sys_readmem_lex.c
 system.vpi
 dep
+bin32
