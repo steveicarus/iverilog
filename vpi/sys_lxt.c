@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.3 2002/04/06 21:33:29 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.4 2002/06/03 03:56:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -527,6 +527,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       switch (vpi_get(vpiType, item)) {
 
+	  case vpiMemory:
+	      /* don't know how to watch memories. */
+	    break;
+
+	  case vpiNamedEvent:
+	      /* There is nothing in named events to dump. */
+	    break;
+
 	  case vpiNet:  type = "wire";    if(0){
 	  case vpiReg:  type = "reg";    }
 
@@ -772,6 +780,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.4  2002/06/03 03:56:06  steve
+ *  Ignore memories and named events.
+ *
  * Revision 1.3  2002/04/06 21:33:29  steve
  *  allow runtime selection of VCD vs LXT.
  *
