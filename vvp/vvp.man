@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2002/04/12 02:44:02 $" Version "$Date: 2002/04/12 02:44:02 $"
+.TH vvp 1 "$Date: 2002/07/12 02:35:35 $" Version "$Date: 2002/07/12 02:35:35 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -58,6 +58,19 @@ available to the standard system tasks, but can still be accessed via
 PLI code via the \fIvpi_get_vlog_info\fP function. This means that
 vpi modules may use arguments that do not start with + and be assured
 that they do not interfere with user defined plus-args.
+
+.SH ENVIRONMENT
+.PP
+The vvp command also accepts some environment variables that control
+its behavior. These can be used to make semi-permanent changes.
+
+.TP 8
+.B IVERILOG_DUMPER=\fIlxt|vcd\fP
+This selects the output format for the waveform output. Normally,
+waveforms are dumped in vcd format, but this variable can be used to
+select lxt format, which is far more compact, though limited to
+gtkwave for compatible viewers.
+
 .SH "AUTHOR"
 .nf
 Steve Williams (steve@icarus.com)
