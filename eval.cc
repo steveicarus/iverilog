@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.14 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: eval.cc,v 1.15 2000/09/07 22:38:13 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -141,9 +141,31 @@ verinum* PETernary::eval_const(const Design*des, const string&path) const
       }
 }
 
+verinum* PEUnary::eval_const(const Design*des, const string&path) const
+{
+      verinum*val = expr_->eval_const(des, path);
+      if (val == 0)
+	    return 0;
+
+      switch (op_) {
+	  case '+':
+	    return val;
+
+	  case '-':
+	    *val = v_not(*val) + verinum(verinum::V1, 1);
+	    return val;
+
+      }
+	    delete val;
+      return 0;
+}
+
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.15  2000/09/07 22:38:13  steve
+ *  Support unary + and - in constants.
+ *
  * Revision 1.14  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.41 2000/06/30 15:50:20 steve Exp $"
+#ident "$Id: PExpr.h,v 1.42 2000/09/07 22:38:13 steve Exp $"
 #endif
 
 # include  <string>
@@ -260,6 +260,7 @@ class PEUnary : public PExpr {
 				    Link::strength_t drive1) const;
       virtual NetEUnary*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+      virtual verinum* eval_const(const Design*des, const string&path) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -383,6 +384,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.42  2000/09/07 22:38:13  steve
+ *  Support unary + and - in constants.
+ *
  * Revision 1.41  2000/06/30 15:50:20  steve
  *  Allow unary operators in constant expressions.
  *
