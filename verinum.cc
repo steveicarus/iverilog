@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.16 2000/02/23 04:43:43 steve Exp $"
+#ident "$Id: verinum.cc,v 1.17 2000/06/12 03:56:51 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -445,9 +445,18 @@ verinum operator + (const verinum&left, const verinum&right)
 
 verinum operator - (const verinum&left, const verinum&r)
 {
-      verinum right = v_not(r);
+      verinum right;
       unsigned min = left.len();
-      if (right.len() < min) min = right.len();
+      if (r.len() < min) {
+	    right = verinum(verinum::V0, min);
+	    for (unsigned idx = 0 ;  idx < r.len() ;  idx += 1)
+		  right.set(idx, r[idx]);
+
+      } else {
+	    right = r;
+      }
+
+      right = v_not(right);
 
       unsigned max = left.len();
       if (right.len() > max) max = right.len();
@@ -458,19 +467,19 @@ verinum operator - (const verinum&left, const verinum&r)
       for (unsigned idx = 0 ;  idx < min ;  idx += 1)
 	    val.set(idx, add_with_carry(left[idx], right[idx], carry));
 
-      if (left.len() > right.len()) {
-	    for (unsigned idx = min ;  idx < max ;  idx += 1)
-		  val.set(idx,add_with_carry(left[idx], verinum::V0, carry));
-      } else {
-	    for (unsigned idx = min ;  idx < max ;  idx += 1)
-		  val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
-      }
+      assert(left.len() <= right.len());
+      for (unsigned idx = min ;  idx < max ;  idx += 1)
+	    val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
+
 
       return val;
 }
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.17  2000/06/12 03:56:51  steve
+ *  Fix subract of short value form long one.
+ *
  * Revision 1.16  2000/02/23 04:43:43  steve
  *  Some compilers do not accept the not symbol.
  *
