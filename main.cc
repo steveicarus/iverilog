@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.41 2001/05/20 17:35:05 steve Exp $"
+#ident "$Id: main.cc,v 1.42 2001/06/23 18:41:02 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -44,6 +44,7 @@ const char NOTICE[] =
 # include  <queue>
 # include  <map>
 # include  <unistd.h>
+# include  <stdlib.h>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
@@ -336,6 +337,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.42  2001/06/23 18:41:02  steve
+ *  Include stdlib.h
+ *
  * Revision 1.41  2001/05/20 17:35:05  steve
  *  declare getopt by hand in mingw32 compile.
  *

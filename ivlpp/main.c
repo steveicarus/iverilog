@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.9 2001/05/20 18:08:07 steve Exp $"
+#ident "$Id: main.c,v 1.10 2001/06/23 18:41:02 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -39,6 +39,7 @@ const char NOTICE[] =
 const char VERSION[] = "$Name:  $ $State: Exp $";
 
 # include  <stdio.h>
+# include  <stdlib.h>
 # include  <malloc.h>
 # include  <unistd.h>
 # include  <string.h>
@@ -183,6 +184,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.10  2001/06/23 18:41:02  steve
+ *  Include stdlib.h
+ *
  * Revision 1.9  2001/05/20 18:08:07  steve
  *  local declares if the header is missing.
  *
