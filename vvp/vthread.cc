@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.59 2001/10/20 23:20:32 steve Exp $"
+#ident "$Id: vthread.cc,v 1.60 2001/10/23 03:49:13 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -159,7 +159,7 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 	    val[idx] = 0;
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    unsigned bit = thr_get_bit(thr, addr);
+	    unsigned long bit = thr_get_bit(thr, addr);
 
 	    if (bit & 2)
 		  goto x_out;
@@ -348,9 +348,17 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       unsigned long carry;
       carry = 0;
       for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
-	    unsigned long tmp = (lva[idx] | lvb[idx]) & TOP_BIT;
-	    lva[idx] += lvb[idx] + carry;
-	    carry = (tmp > lva[idx]) ? 1 : 0;
+
+	    unsigned long tmp = lvb[idx] + carry;
+	    unsigned long sum = lva[idx] + tmp;
+	    carry = 0;
+	    if (tmp < lvb[idx])
+		  carry = 1;
+	    if (sum < tmp)
+		  carry = 1;
+	    if (sum < lva[idx])
+		  carry = 1;
+	    lva[idx] = sum;
       }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
@@ -1665,6 +1673,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.60  2001/10/23 03:49:13  steve
+ *  Fix carry between works for %add instruction.
+ *
  * Revision 1.59  2001/10/20 23:20:32  steve
  *  Catch and X division by 0.
  *
