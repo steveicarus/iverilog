@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.12 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: acc_user.h,v 1.13 2003/05/24 03:02:04 steve Exp $"
 #endif
 
 /*
@@ -216,6 +216,7 @@ extern char*     acc_fetch_type_str(PLI_INT32 type);
 
 extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
 
+extern handle acc_handle_by_name(const char*name, handle scope);
 extern handle acc_handle_object(const char*name);
 extern handle acc_handle_parent(handle obj);
 
@@ -243,6 +244,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.13  2003/05/24 03:02:04  steve
+ *  Add implementation of acc_handle_by_name.
+ *
  * Revision 1.12  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *
