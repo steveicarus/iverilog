@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.26 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: netlist.cc,v 1.27 1999/05/20 05:07:37 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -553,9 +553,9 @@ NetESignal::~NetESignal()
 void NetESignal::set_width(unsigned w)
 {
       if (w != pin_count()) {
-	    cerr << "Width of " << w << " does not match " << *this <<
-		  endl;
-	    abort();
+	    cerr << get_line() << ": Width of " << w << " does not match "
+		 << *this << endl;
+	    assert(0);
       }
       assert(w == pin_count());
       expr_width(w);
@@ -1059,6 +1059,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.27  1999/05/20 05:07:37  steve
+ *  Line number info with match error message.
+ *
  * Revision 1.26  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.
