@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.97 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.98 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -418,6 +418,13 @@ extern "C" unsigned ivl_expr_repeat(ivl_expr_t net)
       assert(net);
       assert(net->type_ == IVL_EX_CONCAT);
       return net->u_.concat_.rept;
+}
+
+extern "C" ivl_event_t ivl_expr_event(ivl_expr_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_EX_EVENT);
+      return net->u_.event_.event;
 }
 
 extern "C" ivl_scope_t ivl_expr_scope(ivl_expr_t net)
@@ -1826,6 +1833,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.98  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.97  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.

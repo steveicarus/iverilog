@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.6 2003/04/12 23:25:20 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.7 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -77,6 +77,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		case IVL_EX_NONE:
 		case IVL_EX_NUMBER:
 		case IVL_EX_STRING:
+		case IVL_EX_EVENT:
 		case IVL_EX_SCOPE:
 		case IVL_EX_VARIABLE:
 		  continue;
@@ -198,6 +199,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  }
 		  continue;
 
+		case IVL_EX_EVENT:
+		  fprintf(vvp_out, ", E_%p", ivl_expr_event(expr));
+		  continue;
+
 		case IVL_EX_SCOPE:
 		  fprintf(vvp_out, ", S_%p", ivl_expr_scope(expr));
 		  continue;
@@ -289,6 +294,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.7  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.6  2003/04/12 23:25:20  steve
  *  Properly pass $signed(signal) to tasks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.35 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.36 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -302,6 +302,30 @@ void dll_target::expr_creal(const NetECReal*net)
       expr_->u_.real_.value = net->value().as_double();
 }
 
+void dll_target::expr_event(const NetEEvent*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_EVENT;
+      expr_->value_= IVL_VT_VOID;
+
+        /* Locate the event by name. Save the ivl_event_t in the
+           expression so that the generator can find it easily. */
+      const NetEvent*ev = net->event();
+      ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+
+      for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
+            const char*ename = ivl_event_basename(ev_scope->event_[idx]);
+            if (strcmp(ev->name(), ename) == 0) {
+                  expr_->u_.event_.event = ev_scope->event_[idx];
+                  break;
+            }
+      }
+}
+
 void dll_target::expr_scope(const NetEScope*net)
 {
       assert(expr_ == 0);
@@ -579,6 +603,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.36  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.35  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.211 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.212 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1942,6 +1942,21 @@ NetEMemory* NetEMemory::dup_expr() const
       assert(0);
 }
 
+NetEEvent::NetEEvent(NetEvent*e)
+: event_(e)
+{
+    e->exprref_ += 1;
+}
+
+NetEEvent::~NetEEvent()
+{
+}
+
+const NetEvent* NetEEvent::event() const
+{
+      return event_;
+}
+
 NetEScope::NetEScope(NetScope*s)
 : scope_(s)
 {
@@ -2162,6 +2177,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.212  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.211  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.

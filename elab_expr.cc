@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.75 2003/04/19 04:19:38 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.76 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -778,6 +778,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return node;
       }
 
+	// If the identifier is a named event.
+	// is a variable reference.
+      if (NetEvent*nev = des->find_event(scope, path_)) {
+	    NetEEvent*tmp = new NetEEvent(nev);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
 	// Finally, if this is a scope name, then return that. Look
 	// first to see if this is a name of a local scope. Failing
 	// that, search globally for a hierarchical name.
@@ -953,6 +961,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.76  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.75  2003/04/19 04:19:38  steve
  *  Set line number for ternary expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.13 2003/03/15 18:08:43 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.14 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,6 +44,12 @@ NetEConstParam* NetEConstParam::dup_expr() const
       NetEConstParam*tmp = new NetEConstParam(scope_, name_, value());
       tmp->set_line(*this);
       return tmp;
+}
+
+NetEEvent* NetEEvent::dup_expr() const
+{
+      assert(0);
+      return 0;
 }
 
 NetEScope* NetEScope::dup_expr() const
@@ -116,6 +122,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.14  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.13  2003/03/15 18:08:43  steve
  *  Comparison operators do have defined width.
  *

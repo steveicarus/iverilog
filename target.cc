@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.66 2003/03/10 23:40:54 steve Exp $"
+#ident "$Id: target.cc,v 1.67 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -346,6 +346,12 @@ void expr_scan_t::expr_memory(const NetEMemory*)
 	    "unhandled expr_memory." << endl;
 }
 
+void expr_scan_t::expr_event(const NetEEvent*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_event." << endl;
+}
+
 void expr_scan_t::expr_scope(const NetEScope*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -408,6 +414,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.67  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.66  2003/03/10 23:40:54  steve
  *  Keep parameter constants for the ivl_target API.
  *

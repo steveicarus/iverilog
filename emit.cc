@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.72 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: emit.cc,v 1.73 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -435,6 +435,11 @@ void NetEParam::expr_scan(struct expr_scan_t*tgt) const
 	   << endl;
 }
 
+void NetEEvent::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_event(this);
+}
+
 void NetEScope::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_scope(this);
@@ -497,6 +502,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.73  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.72  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: nodangle.cc,v 1.17 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.18 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,7 +46,7 @@ void nodangle_f::event(Design*des, NetEvent*ev)
 	/* If there are no references to this event, then go right
 	   ahead and delete in. There is no use looking further at
 	   it. */
-      if ((ev->nwait() + ev->ntrig()) == 0) {
+      if ((ev->nwait() + ev->ntrig() + ev->nexpr()) == 0) {
 	    delete ev;
 	    etotal += 1;
 	    return;
@@ -164,6 +164,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.18  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.17  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

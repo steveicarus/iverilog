@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.62 2003/03/10 23:40:54 steve Exp $"
+#ident "$Id: target.h,v 1.63 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -135,6 +135,7 @@ struct expr_scan_t {
       virtual void expr_creal(const NetECReal*);
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_memory(const NetEMemory*);
+      virtual void expr_event(const NetEEvent*);
       virtual void expr_scope(const NetEScope*);
       virtual void expr_select(const NetESelect*);
       virtual void expr_sfunc(const NetESFunc*);
@@ -168,6 +169,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.63  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.62  2003/03/10 23:40:54  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.285 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.286 2003/04/22 04:48:30 steve Exp $"
 #endif
 
 /*
@@ -1734,6 +1734,7 @@ class NetEvent : public LineInfo {
       friend class NetEvProbe;
       friend class NetEvTrig;
       friend class NetEvWait;
+      friend class NetEEvent;
 
     public:
 	// The name of the event is the basename, and should not
@@ -1752,8 +1753,8 @@ class NetEvent : public LineInfo {
 
 	// Return the number of NetEvWait nodes that reference me.
       unsigned nwait() const;
-
       unsigned ntrig() const;
+      unsigned nexpr() const;
 
       NetScope* scope();
       const NetScope* scope() const;
@@ -1794,6 +1795,9 @@ class NetEvent : public LineInfo {
 	    struct wcell_*next;
       };
       struct wcell_ *wlist_;
+
+	// expression references, ala. task/funcs
+      unsigned exprref_;
 
     private: // not implemented
       NetEvent(const NetEvent&);
@@ -2646,6 +2650,27 @@ class NetESelect  : public NetExpr {
 };
 
 /*
+ * This node is for representation of named events.
+ */
+class NetEEvent : public NetExpr {
+
+    public:
+      NetEEvent(NetEvent*);
+      ~NetEEvent();
+
+      const NetEvent* event() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEEvent* dup_expr() const;
+      virtual NexusSet* nex_input();
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      NetEvent*event_;
+};
+
+/*
  * This class is a special (and magical) expression node type that
  * represents scope names. These can only be found as parameters to
  * NetSTask objects.
@@ -3250,6 +3275,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.286  2003/04/22 04:48:30  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.285  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.

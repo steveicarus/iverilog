@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.138 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.139 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -915,6 +915,11 @@ void NetECReal::dump(ostream&o) const
       o << value_;
 }
 
+void NetEEvent::dump(ostream&o) const
+{
+      o << "<event=" << event_->name() << ">";
+}
+
 void NetEScope::dump(ostream&o) const
 {
       o << "<scope=" << scope_->name() << ">";
@@ -1028,6 +1033,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.139  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.138  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

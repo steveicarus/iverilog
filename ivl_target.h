@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.116 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.117 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -167,25 +167,28 @@ typedef enum ivl_drive_e {
       IVL_DR_SUPPLY = 7
 } ivl_drive_t;
 
-/* This is the type of an ivl_expr_t object. */
+/* This is the type of an ivl_expr_t object. The explicit numbers
+   allow additions to the enumeration without causing values to shift
+   and incompatibilities to be introduced. */
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
-      IVL_EX_BITSEL,
-      IVL_EX_BINARY,
-      IVL_EX_CONCAT,
-      IVL_EX_MEMORY,
-      IVL_EX_NUMBER,
-      IVL_EX_SCOPE,
-      IVL_EX_SELECT,
-      IVL_EX_SFUNC,
-      IVL_EX_SIGNAL,
-      IVL_EX_STRING,
-      IVL_EX_TERNARY,
-      IVL_EX_UFUNC,
-      IVL_EX_ULONG,
-      IVL_EX_UNARY,
-      IVL_EX_VARIABLE,
-      IVL_EX_REALNUM
+      IVL_EX_BITSEL = 1,
+      IVL_EX_BINARY = 2,
+      IVL_EX_CONCAT = 3,
+      IVL_EX_EVENT  = 17,
+      IVL_EX_MEMORY = 4,
+      IVL_EX_NUMBER = 5,
+      IVL_EX_SCOPE  = 6,
+      IVL_EX_SELECT = 7,
+      IVL_EX_SFUNC  = 8,
+      IVL_EX_SIGNAL = 9,
+      IVL_EX_STRING = 10,
+      IVL_EX_TERNARY = 11,
+      IVL_EX_UFUNC = 12,
+      IVL_EX_ULONG = 13,
+      IVL_EX_UNARY = 14,
+      IVL_EX_VARIABLE = 15,
+      IVL_EX_REALNUM  = 16
 } ivl_expr_type_t;
 
 /* This is the type code for an ivl_net_logic_t object. */
@@ -493,6 +496,8 @@ extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);
+  /* IVL_EX_EVENT */
+extern ivl_event_t ivl_expr_event(ivl_expr_t net);
   /* IVL_EX_SCOPE */
 extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
   /* IVL_EX_BITSEL */
@@ -1209,6 +1214,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.117  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.116  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.

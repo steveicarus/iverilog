@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.8 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.9 2003/04/22 04:48:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -98,6 +98,11 @@ NexusSet* NetEMemory::nex_input()
  * value, even if that value is a constant expression.
  */
 NexusSet* NetEParam::nex_input()
+{
+      return new NexusSet;
+}
+
+NexusSet* NetEEvent::nex_input()
 {
       return new NexusSet;
 }
@@ -372,6 +377,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.9  2003/04/22 04:48:29  steve
+ *  Support event names as expressions elements.
+ *
  * Revision 1.8  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
