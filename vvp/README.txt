@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.19 2001/04/29 22:59:46 steve Exp $
+ *  $Id: README.txt,v 1.20 2001/04/30 04:51:27 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -74,6 +74,9 @@ If the functor is part of a vector, then the symbol is the
 vvp_ipoint_t for the first functor. The [] operator can then be used
 to reference a functor other then the first in the vector.
 
+There are some special symbols that in certain contexts have special
+meanings. As inputs to functors, the symbols "C<0>", "C<1>", "C<x>"
+and "C<z>" represent a constant driver of the given value.
 
 FUNCTOR STATEMENTS:
 
@@ -93,7 +96,14 @@ program. The references .ftype describes the behavoir of the
 functor.
 
 The <init> value is the 8-bit initial value of the 4 input ports. The
-LSB is port 0, and the MSB port 3.
+LSB is port 0, and the MSB port 3. If there are any constant inputs,
+then the constantat the input becomes the initial value of the
+corresponding input, replacing the value given in the <init>
+position. Also, the output of the functor is calculated at compile
+time given the init and constant input values. If the output is
+different from "x", then a propagation event is schedule for the
+functor so that when the simulation starts, the non-x value gets
+propagated.
 
 Almost all of the structural aspects of a simulation can be
 represented by functors, which perform the very basic task of
