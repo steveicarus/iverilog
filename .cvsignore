@@ -2,10 +2,14 @@ lexor_keyword.cc
 parse.h
 parse.cc
 parse.cc.output
+parse.output
 syn-rules.cc
 syn-rules.cc.output
+syn-rules.output
 lexor.cc
 iverilog-vpi
+iverilog-vpi.pdf
+iveirlog-vpi.ps
 ivl
 ivl.exp
 dep
