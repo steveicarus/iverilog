@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.4 2003/02/04 04:03:40 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.5 2003/02/10 05:20:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
+# include  "schedule.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
@@ -33,7 +34,27 @@ struct __vpiRealVar {
       struct __vpiHandle base;
       const char*name;
       double value;
+
+      struct __vpiCallback*cb;
 };
+
+static char* real_var_get_str(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code == vpiRealVar);
+
+      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+
+      switch (code) {
+
+	  case vpiName:
+	    return const_cast<char*>(rfp->name);
+
+	  default:
+	    return 0;
+      }
+
+      return 0;
+}
 
 static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 {
@@ -101,6 +122,16 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp,
 
       assert(vp->format == vpiRealVal);
       rfp->value = vp->value.real;
+
+      for (struct __vpiCallback*cur = rfp->cb ;  cur ;  cur = cur->next) {
+	    cur->cb_data.time->type = vpiSimTime;
+	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+
+	    assert(cur->cb_data.cb_rtn != 0);
+
+	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+      }
+
       return 0;
 }
 
@@ -108,7 +139,7 @@ static const struct __vpirt vpip_real_var_rt = {
       vpiRealVar,
 
       0,
-      0,
+      &real_var_get_str,
       &real_var_get_value,
       &real_var_put_value,
 
@@ -119,6 +150,14 @@ static const struct __vpirt vpip_real_var_rt = {
       0
 };
 
+void vpip_real_value_change(struct __vpiCallback*cbh,
+			     vpiHandle ref)
+{
+      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      cbh->next = rfp->cb;
+      rfp->cb = cbh;
+}
+
 vpiHandle vpip_make_real_var(const char*name)
 {
       struct __vpiRealVar*obj = (struct __vpiRealVar*)
@@ -127,12 +166,16 @@ vpiHandle vpip_make_real_var(const char*name)
       obj->base.vpi_type = &vpip_real_var_rt;
       obj->name = vpip_string(name);
       obj->value = 0.0;
+      obj->cb = 0;
 
       return &obj->base;
 }
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.5  2003/02/10 05:20:10  steve
+ *  Add value change callbacks to real variables.
+ *
  * Revision 1.4  2003/02/04 04:03:40  steve
  *  Add hex and binary formatting of real values.
  *

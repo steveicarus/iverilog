@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.47 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.48 2003/02/10 05:20:10 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -202,6 +202,8 @@ struct __vpiNamedEvent {
 
 extern vpiHandle vpip_make_named_event(const char*name);
 extern void vpip_run_named_event_callbacks(vpiHandle ref);
+extern void vpip_real_value_change(struct __vpiCallback*cbh,
+				   vpiHandle ref);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -395,6 +397,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.48  2003/02/10 05:20:10  steve
+ *  Add value change callbacks to real variables.
+ *
  * Revision 1.47  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

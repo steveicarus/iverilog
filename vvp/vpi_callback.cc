@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.26 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.27 2003/02/10 05:20:10 steve Exp $"
 #endif
 
 /*
@@ -216,6 +216,10 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 		 callback functors. */
 	    obj->next = sig->callback->cb_handle;
 	    sig->callback->cb_handle = obj;
+	    break;
+
+	  case vpiRealVar:
+	    vpip_real_value_change(obj, data->obj);
 	    break;
 
 	  case vpiNamedEvent:
@@ -530,6 +534,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.27  2003/02/10 05:20:10  steve
+ *  Add value change callbacks to real variables.
+ *
  * Revision 1.26  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
