@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.12 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.13 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -139,10 +139,11 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 	// of the netlist, to create a ring without a signal. Detect
 	// this case and create a new signal.
       if (count_signals(buf->pin(1)) == 0) {
-	    NetNet*tmp = new NetNet(0, des->local_symbol("$"), NetNet::WIRE);
+	    NetNet*tmp = new NetNet(net->scope(),
+				    des->local_symbol("$"),
+				    NetNet::WIRE);
 	    tmp->local_flag(true);
 	    connect(buf->pin(1), tmp->pin(0));
-	    des->add_signal(tmp);
       }
 
       return buf;
@@ -201,6 +202,9 @@ static void absorb_OFF(Design*des, NetLogic*buf)
 
 static void make_ibuf(Design*des, NetNet*net)
 {
+      NetScope*scope = net->scope();
+      assert(scope);
+
       assert(net->pin_count() == 1);
 	// XXXX For now, require at least one input.
       assert(count_inputs(net->pin(0)) > 0);
@@ -245,9 +249,10 @@ static void make_ibuf(Design*des, NetNet*net)
 	// of the netlist, to create a ring without a signal. Detect
 	// this case and create a new signal.
       if (count_signals(buf->pin(0)) == 0) {
-	    NetNet*tmp = new NetNet(0, des->local_symbol("$"), NetNet::WIRE);
+	    NetNet*tmp = new NetNet(scope,
+				    des->local_symbol(scope->name()),
+				    NetNet::WIRE);
 	    connect(buf->pin(0), tmp->pin(0));
-	    des->add_signal(tmp);
       }
 }
 
@@ -351,6 +356,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.13  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.12  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

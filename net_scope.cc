@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.4 2000/04/18 04:50:20 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.5 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -34,6 +34,7 @@
 NetScope::NetScope(const string&n)
 : type_(NetScope::MODULE), name_(n), up_(0), sib_(0), sub_(0)
 {
+      signals_ = 0;
       events_ = 0;
       lcounter_ = 0;
 }
@@ -41,6 +42,7 @@ NetScope::NetScope(const string&n)
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
 : type_(t), name_(n), up_(up), sib_(0), sub_(0)
 {
+      signals_ = 0;
       events_ = 0;
       sib_ = up_->sub_;
       up_->sub_ = this;
@@ -89,6 +91,11 @@ NetScope::TYPE NetScope::type() const
       return type_;
 }
 
+string NetScope::basename() const
+{
+      return name_;
+}
+
 string NetScope::name() const
 {
       if (up_)
@@ -131,6 +138,49 @@ NetEvent* NetScope::find_event(const string&name)
 	    if (cur->name() == name)
 		  return cur;
 
+      return 0;
+}
+
+void NetScope::add_signal(NetNet*net)
+{
+      if (signals_ == 0) {
+	    net->sig_next_ = net;
+	    net->sig_prev_ = net;
+      } else {
+	    net->sig_next_ = signals_->sig_next_;
+	    net->sig_prev_ = signals_;
+	    net->sig_next_->sig_prev_ = net;
+	    net->sig_prev_->sig_next_ = net;
+      }
+      signals_ = net;
+}
+
+void NetScope::rem_signal(NetNet*net)
+{
+      assert(net->scope_ == this);
+      if (signals_ == net)
+	    signals_ = net->sig_prev_;
+
+      if (signals_ == net) {
+	    signals_ = 0;
+      } else {
+	    net->sig_prev_->sig_next_ = net->sig_next_;
+	    net->sig_next_->sig_prev_ = net->sig_prev_;
+      }
+}
+
+NetNet* NetScope::find_signal(const string&key)
+{
+      if (signals_ == 0)
+	    return 0;
+
+      string fulname = name()+"."+key;
+      NetNet*cur = signals_;
+      do {
+	    if (cur->name() == fulname)
+		  return cur;
+	    cur = cur->sig_prev_;
+      } while (cur != signals_);
       return 0;
 }
 
@@ -184,6 +234,9 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.5  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.4  2000/04/18 04:50:20  steve
  *  Clean up unneeded NetEvent objects.
  *

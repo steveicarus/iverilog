@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.141 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.142 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -384,6 +384,9 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 	/* Scan the parameter expressions, and assign the values to
 	   the parameter port register. */
       for (unsigned idx = 0 ;  idx < pcnt ;  idx += 1) {
+	    assert(expr->parm(idx));
+	    assert(def->port(idx+1));
+
 	    expr->parm(idx)->expr_scan(this);
 	    string bname = mangle(def->port(idx+1)->name());
 	    for (unsigned bit = 0 ; 
@@ -2689,6 +2692,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.142  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.141  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *

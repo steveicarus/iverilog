@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.30 2000/04/28 21:00:29 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.31 2000/05/02 00:58:11 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -139,6 +139,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
       NetNet*lsig = left_->elaborate_net(des, path, lwidth, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, path, lwidth, 0, 0, 0);
       if (lsig == 0) {
@@ -178,7 +179,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    rsig = pad_to_width(des, path, rsig, width);
 
 	// Make the adder as wide as the widest operand
-      osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE, owidth);
+      osig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE, owidth);
       NetAddSub*adder = new NetAddSub(name, width);
 
 	// Connect the adder to the various parts.
@@ -192,7 +193,6 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    connect(osig->pin(width), adder->pin_Cout());
 
       gate = adder;
-      des->add_signal(osig);
       gate->rise_time(rise);
       gate->fall_time(fall);
       gate->decay_time(decay);
@@ -223,6 +223,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, const string&path,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
       NetNet*lsig = left_->elaborate_net(des, path, width, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, path, width, 0, 0, 0);
       if (lsig == 0) {
@@ -253,7 +254,7 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, const string&path,
 
       assert(lsig->pin_count() == rsig->pin_count());
 
-      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
+      NetNet*osig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE,
 			       lsig->pin_count());
       osig->local_flag(true);
 
@@ -318,8 +319,6 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, const string&path,
 	    assert(0);
       }
 
-      des->add_signal(osig);
-
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
 	    delete tmp;
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
@@ -340,6 +339,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
       NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
       if (lsig == 0) {
@@ -362,12 +362,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
       if (lsig->pin_count() != rsig->pin_count()) {
 	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
 	    des->add_node(tmp);
-	    zero = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
-	    des->add_signal(zero);
+	    zero = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    connect(tmp->pin(0), zero->pin(0));
       }
 
-      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+      NetNet*osig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
       osig->local_flag(true);
 
       NetNode*gate;
@@ -431,11 +430,10 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 		  des->add_node(cmp);
 
 		    // Attach a label to this intermediate wire
-		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
+		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
 					  NetNet::WIRE);
 		  tmp->local_flag(true);
 		  connect(cmp->pin(0), tmp->pin(0));
-		  des->add_signal(tmp);
 	    }
 	    break;
 
@@ -460,11 +458,10 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 		  connect(cmp->pin(0), gate->pin(idx+1));
 		  des->add_node(cmp);
 
-		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
+		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
 					  NetNet::WIRE);
 		  tmp->local_flag(true);
 		  connect(cmp->pin(0), tmp->pin(0));
-		  des->add_signal(tmp);
 	    }
 	    break;
 
@@ -488,11 +485,10 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 		  connect(cmp->pin(0), gate->pin(idx+1));
 		  des->add_node(cmp);
 
-		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
+		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
 					  NetNet::WIRE);
 		  tmp->local_flag(true);
 		  connect(cmp->pin(0), tmp->pin(0));
-		  des->add_signal(tmp);
 	    }
 	    break;
 
@@ -500,7 +496,6 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	    assert(0);
       }
 
-      des->add_signal(osig);
       gate->rise_time(rise);
       gate->fall_time(fall);
       gate->decay_time(decay);
@@ -518,6 +513,8 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
       NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0);
       if (lsig == 0) return 0;
       NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
@@ -537,10 +534,9 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
 	    connect(div->pin_DataB(idx), rsig->pin(idx));
 
       if (lwidth == 0) lwidth = rwidth;
-      NetNet*osig = new NetNet(0, des->local_symbol(path),
+      NetNet*osig = new NetNet(scope, des->local_symbol(path),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
-      des->add_signal(osig);
 
       unsigned cnt = osig->pin_count();
       if (cnt > rwidth) cnt = rwidth;
@@ -566,6 +562,9 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0),
 	    *rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
       if (lsig == 0) {
@@ -608,11 +607,10 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
-	    NetNet*tmp = new NetTmp(des->local_symbol(path));
+	    NetNet*tmp = new NetTmp(scope, des->local_symbol(path));
 	    connect(gate->pin(1), tmp->pin(0));
 
 	    des->add_node(gate_t);
-	    des->add_signal(tmp);
 
       } else {
 	    connect(gate->pin(1), lsig->pin(0));
@@ -628,21 +626,19 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, const string&path,
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
-	    NetNet*tmp = new NetTmp(des->local_symbol(path));
+	    NetNet*tmp = new NetTmp(scope, des->local_symbol(path));
 	    connect(gate->pin(2), tmp->pin(0));
 
 	    des->add_node(gate_t);
-	    des->add_signal(tmp);
 
       } else {
 	    connect(gate->pin(2), rsig->pin(0));
       }
 
 	// The output is the AND/OR of the two logic values.
-      NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+      NetNet*osig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
       osig->local_flag(true);
       connect(gate->pin(0), osig->pin(0));
-      des->add_signal(osig);
       des->add_node(gate);
       return osig;
 }
@@ -653,6 +649,9 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, const string&path,
 				       unsigned long fall,
 				       unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0);
       if (lsig == 0) return 0;
       NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
@@ -670,10 +669,9 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, const string&path,
 	    connect(mult->pin_DataB(idx), rsig->pin(idx));
 
       if (lwidth == 0) lwidth = rwidth;
-      NetNet*osig = new NetNet(0, des->local_symbol(path),
+      NetNet*osig = new NetNet(scope, des->local_symbol(path),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
-      des->add_signal(osig);
 
       unsigned cnt = osig->pin_count();
       if (cnt > rwidth) cnt = rwidth;
@@ -699,6 +697,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 				       unsigned long fall,
 				       unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetNet*lsig = left_->elaborate_net(des, path, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
 
@@ -718,8 +719,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	      /* Very special case, constant 0 shift. */
 	    if (dist == 0) return lsig;
 
-	    NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
-				     lsig->pin_count());
+	    NetNet*osig = new NetNet(scope, des->local_symbol(path),
+				     NetNet::WIRE, lsig->pin_count());
 	    osig->local_flag(true);
 
 	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
@@ -742,7 +743,6 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 			connect(osig->pin(idx), zero->pin(0));
 	    }
 
-	    des->add_signal(osig);
 	    return osig;
       }
 
@@ -760,7 +760,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
       NetCLShift*gate = new NetCLShift(des->local_symbol(path),
 				       lwidth, rsig->pin_count());
 
-      NetNet*osig = new NetNet(0, des->local_symbol(path),
+      NetNet*osig = new NetNet(scope, des->local_symbol(path),
 			       NetNet::WIRE, lwidth);
       osig->local_flag(true);
 
@@ -774,9 +774,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 
       if (lsig->pin_count() < lwidth) {
 	    NetConst*zero = new NetConst(des->local_symbol(path), verinum::V0);
-	    NetTmp*tmp = new NetTmp(des->local_symbol(path));
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path));
 	    des->add_node(zero);
-	    des->add_signal(tmp);
 	    connect(zero->pin(0), tmp->pin(0));
 	    for (unsigned idx = lsig->pin_count() ; idx < lwidth ;  idx += 1)
 		  connect(zero->pin(0), gate->pin_Data(idx));
@@ -793,7 +792,6 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	    des->add_node(dir);
       }
 
-      des->add_signal(osig);
       des->add_node(gate);
 
       return osig;
@@ -809,6 +807,9 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 				unsigned long fall,
 				unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       svector<NetNet*>nets (parms_.count());
       unsigned pins = 0;
       unsigned errors = 0;
@@ -827,7 +828,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 	    assert(parms_.count() == 1);
 	    NetNet*obj = parms_[0]->elaborate_net(des, path, 0, rise,
 						  fall, decay);
-	    NetTmp*tmp = new NetTmp(des->local_symbol(path),
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
 				    repeat * obj->pin_count());
 
 	    for (unsigned idx = 0 ;  idx < repeat ;  idx += 1) {
@@ -836,7 +837,6 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 			connect(tmp->pin(base+pin), obj->pin(pin));
 	    }
 
-	    des->add_signal(tmp);
 	    return tmp;
       }
 
@@ -864,7 +864,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(0, des->local_symbol(path),
+      NetNet*osig = new NetNet(scope, des->local_symbol(path),
 			       NetNet::IMPLICIT, pins);
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
@@ -876,7 +876,6 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
       }
 
       osig->local_flag(true);
-      des->add_signal(osig);
       return osig;
 }
 
@@ -902,18 +901,16 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
 		  verinum pvalue = pc->value();
-		  sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT,
+		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT,
 				   pc->expr_width());
 		  NetConst*cp = new NetConst(des->local_symbol(path), pvalue);
 		  des->add_node(cp);
-		  des->add_signal(sig);
 		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
 			connect(sig->pin(idx), cp->pin(idx));
 
 	    } else {
 
 		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT, 1);
-		  des->add_signal(sig);
 
 		  if (warn_implicit)
 			cerr << get_line() << ": warning: implicit "
@@ -950,9 +947,8 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
 
 	    if (midx >= lidx) {
-		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
 					  midx-lidx+1);
-		  des->add_signal(tmp);
 		  if (tmp->pin_count() > sig->pin_count()) {
 			cerr << get_line() << ": bit select out of "
 			     << "range for " << sig->name() << endl;
@@ -965,9 +961,8 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  sig = tmp;
 
 	    } else {
-		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
 					  lidx-midx+1);
-		  des->add_signal(tmp);
 		  assert(tmp->pin_count() <= sig->pin_count());
 		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
 			connect(tmp->pin(idx-midx), sig->pin(idx));
@@ -992,8 +987,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  des->errors += 1;
 		  idx = 0;
 	    }
-	    NetTmp*tmp = new NetTmp(des->local_symbol(path), 1);
-	    des->add_signal(tmp);
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path), 1);
 	    connect(tmp->pin(0), sig->pin(idx));
 	    sig = tmp;
       }
@@ -1011,6 +1005,9 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
 				    unsigned long fall,
 				    unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       if (msb_ == 0) {
 	    cerr << get_line() << ": error: memory reference without"
 		  " the required index expression." << endl;
@@ -1030,8 +1027,8 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
 	    connect(ram->pin_Address(idx), adr->pin(idx));
 
-      NetNet*osig = new NetTmp(des->local_symbol(mem->name()), ram->width());
-      des->add_signal(osig);
+      NetNet*osig = new NetTmp(scope, des->local_symbol(mem->name()),
+			       ram->width());
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
 	    connect(ram->pin_Q(idx), osig->pin(idx));
@@ -1045,6 +1042,9 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
  */
 NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
 	      /* Don't allow memories here. Is it a memory? */
@@ -1056,8 +1056,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	    }
 
 	      /* Fine, create an implicit wire as an l-value. */
-	    sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT, 1);
-	    des->add_signal(sig);
+	    sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT, 1);
 
 	    if (warn_implicit)
 		  cerr << get_line() << ": warning: implicit "
@@ -1087,9 +1086,8 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
 
 	    if (midx >= lidx) {
-		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
 					  midx-lidx+1);
-		  des->add_signal(tmp);
 		  if (tmp->pin_count() > sig->pin_count()) {
 			cerr << get_line() << ": bit select out of "
 			     << "range for " << sig->name() << endl;
@@ -1102,9 +1100,8 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 		  sig = tmp;
 
 	    } else {
-		  NetTmp*tmp = new NetTmp(des->local_symbol(path),
+		  NetTmp*tmp = new NetTmp(scope, des->local_symbol(path),
 					  lidx-midx+1);
-		  des->add_signal(tmp);
 		  assert(tmp->pin_count() <= sig->pin_count());
 		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
 			connect(tmp->pin(idx-midx), sig->pin(idx));
@@ -1129,8 +1126,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 		  des->errors += 1;
 		  idx = 0;
 	    }
-	    NetTmp*tmp = new NetTmp(des->local_symbol(path), 1);
-	    des->add_signal(tmp);
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path), 1);
 	    connect(tmp->pin(0), sig->pin(idx));
 	    sig = tmp;
       }
@@ -1147,11 +1143,14 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 				unsigned long fall,
 				unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	/* If we are constrained by a l-value size, then just make a
 	   number constant with the correct size and set as many bits
 	   in that constant as make sense. Pad excess with zeros. */
       if (lwidth > 0) {
-	    NetNet*net = new NetNet(0, des->local_symbol(path),
+	    NetNet*net = new NetNet(scope, des->local_symbol(path),
 				    NetNet::IMPLICIT, lwidth);
 	    net->local_flag(true);
 
@@ -1165,7 +1164,6 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 		  connect(net->pin(idx), tmp->pin(idx));
 
 	    des->add_node(tmp);
-	    des->add_signal(net);
 	    return net;
       }
 
@@ -1173,7 +1171,7 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 	   number. Generate a constant object of exactly the user
 	   specified size. */
       if (value_->has_len()) {
-	    NetNet*net = new NetNet(0, des->local_symbol(path),
+	    NetNet*net = new NetNet(scope, des->local_symbol(path),
 				    NetNet::IMPLICIT, value_->len());
 	    net->local_flag(true);
 	    NetConst*tmp = new NetConst(des->local_symbol(path), *value_);
@@ -1181,7 +1179,6 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 		  connect(net->pin(idx), tmp->pin(idx));
 
 	    des->add_node(tmp);
-	    des->add_signal(net);
 	    return net;
       }
 
@@ -1210,7 +1207,7 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    num.set(idx, value_->get(idx));
 
-      NetNet*net = new NetNet(0, des->local_symbol(path),
+      NetNet*net = new NetNet(scope, des->local_symbol(path),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
       NetConst*tmp = new NetConst(des->local_symbol(path), num);
@@ -1218,7 +1215,6 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 	    connect(net->pin(idx), tmp->pin(idx));
 
       des->add_node(tmp);
-      des->add_signal(net);
       return net;
 }
 
@@ -1233,6 +1229,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 				 unsigned long fall,
 				 unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetNet* expr_sig = expr_->elaborate_net(des, path, 0, 0, 0, 0);
       NetNet* tru_sig = tru_->elaborate_net(des, path, width, 0, 0, 0);
       NetNet* fal_sig = fal_->elaborate_net(des, path, width, 0, 0, 0);
@@ -1245,7 +1244,7 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       assert(width == tru_sig->pin_count());
       assert(expr_sig->pin_count() == 1);
 
-      NetNet*sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
+      NetNet*sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE,
 		       tru_sig->pin_count());
       sig->local_flag(true);
 
@@ -1258,7 +1257,6 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
       }
 
-      des->add_signal(sig);
       des->add_node(mux);
 
       return sig;
@@ -1270,6 +1268,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 			       unsigned long fall,
 			       unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       NetNet* sub_sig = expr_->elaborate_net(des, path,
 					     op_=='~'?width:0,
 					     0, 0, 0);
@@ -1283,7 +1284,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
       NetLogic*gate;
       switch (op_) {
 	  case '~': // Bitwise NOT
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE,
 			     sub_sig->pin_count());
 	    sig->local_flag(true);
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1) {
@@ -1296,12 +1297,11 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 		  gate->fall_time(fall);
 		  gate->decay_time(decay);
 	    }
-	    des->add_signal(sig);
 	    break;
 
 	  case 'N': // Reduction NOR
 	  case '!': // Reduction NOT
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1310,7 +1310,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
 		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_signal(sig);
 	    des->add_node(gate);
 	    gate->rise_time(rise);
 	    gate->fall_time(fall);
@@ -1318,7 +1317,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '&': // Reduction AND
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1327,7 +1326,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
 		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_signal(sig);
 	    des->add_node(gate);
 	    gate->rise_time(rise);
 	    gate->fall_time(fall);
@@ -1335,7 +1333,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '|': // Reduction OR
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1344,7 +1342,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
 		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_signal(sig);
 	    des->add_node(gate);
 	    gate->rise_time(rise);
 	    gate->fall_time(fall);
@@ -1352,7 +1349,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case '^': // Reduction XOR
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1361,7 +1358,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
 		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_signal(sig);
 	    des->add_node(gate);
 	    gate->rise_time(rise);
 	    gate->fall_time(fall);
@@ -1369,7 +1365,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
 
 	  case 'A': // Reduction NAND (~&)
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1378,7 +1374,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
 		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_signal(sig);
 	    des->add_node(gate);
 	    gate->rise_time(rise);
 	    gate->fall_time(fall);
@@ -1387,7 +1382,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 
 	  case 'X': // Reduction XNOR (~^)
-	    sig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
@@ -1396,7 +1391,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
 		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
-	    des->add_signal(sig);
 	    des->add_node(gate);
 	    gate->rise_time(rise);
 	    gate->fall_time(fall);
@@ -1416,6 +1410,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.31  2000/05/02 00:58:11  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.30  2000/04/28 21:00:29  steve
  *  Over agressive signal elimination in constant probadation.
  *

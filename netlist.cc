@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.119 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: netlist.cc,v 1.120 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -369,35 +369,43 @@ NetNode::~NetNode()
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
-: NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0), scope_(s),
+: NetObj(n, npins), sig_next_(0), sig_prev_(0), scope_(s),
     type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
     local_flag_(false), eref_count_(0)
 {
+      assert(scope_);
+
       ivalue_ = new verinum::V[npins];
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
 	    ivalue_[idx] = verinum::Vz;
       }
+
+      scope_->add_signal(this);
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 : NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
-    sig_prev_(0), design_(0), scope_(s), type_(t),
+    sig_prev_(0), scope_(s), type_(t),
     port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false),
     eref_count_(0)
 {
+      assert(scope_);
+
       ivalue_ = new verinum::V[pin_count()];
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
 	    ivalue_[idx] = verinum::Vz;
       }
+
+      scope_->add_signal(this);
 }
 
 NetNet::~NetNet()
 {
       assert(eref_count_ == 0);
-      if (design_)
-	    design_->del_signal(this);
+      if (scope_)
+	    scope_->rem_signal(this);
 }
 
 NetScope* NetNet::scope()
@@ -434,8 +442,8 @@ unsigned NetNet::get_eref() const
       return eref_count_;
 }
 
-NetTmp::NetTmp(const string&name, unsigned npins)
-: NetNet(0, name, IMPLICIT, npins)
+NetTmp::NetTmp(NetScope*s, const string&name, unsigned npins)
+: NetNet(s, name, IMPLICIT, npins)
 {
       local_flag(true);
 }
@@ -2537,6 +2545,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.120  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.119  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.17 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: functor.cc,v 1.18 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -78,22 +78,22 @@ void NetScope::run_functor(Design*des, functor_t*fun)
 	    cur = cur->snext_;
 	    fun->event(des, tmp);
       }
-}
-
-void Design::functor(functor_t*fun)
-{
-	// Scan the scopes
-      root_scope_->run_functor(this, fun);
 
 	// apply to signals
       if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
 	    do {
 		  NetNet*tmp = cur->sig_next_;
-		  fun->signal(this, cur);
+		  fun->signal(des, cur);
 		  cur = tmp;
 	    } while (cur != signals_->sig_next_);
       }
+}
+
+void Design::functor(functor_t*fun)
+{
+	// Scan the scopes
+      root_scope_->run_functor(this, fun);
 
 	// apply to processes
       procs_idx_ = procs_;
@@ -217,6 +217,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.18  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.17  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

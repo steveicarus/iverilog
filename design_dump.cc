@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.79 2000/04/28 21:00:29 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.80 2000/05/02 00:58:11 steve Exp $"
 #endif
 
 /*
@@ -668,6 +668,15 @@ void NetScope::dump(ostream&o) const
 	      << "// " << cur->get_line() << endl;
       }
 
+	// Dump the signals,
+      if (signals_) {
+	    NetNet*cur = signals_->sig_next_;
+	    do {
+		  cur->dump_net(o, 4);
+		  cur = cur->sig_next_;
+	    } while (cur != signals_->sig_next_);
+      }
+
 	/* Dump any sub-scopes. */
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->dump(o);
@@ -867,17 +876,6 @@ void Design::dump(ostream&o) const
       o << "SCOPES:" << endl;
       root_scope_->dump(o);
 
-      o << "ELABORATED SIGNALS:" << endl;
-
-	// Dump the signals,
-      if (signals_) {
-	    NetNet*cur = signals_->sig_next_;
-	    do {
-		  cur->dump_net(o, 0);
-		  cur = cur->sig_next_;
-	    } while (cur != signals_->sig_next_);
-      }
-
       o << "ELABORATED MEMORIES:" << endl;
       {
 	    map<string,NetMemory*>::const_iterator pp;
@@ -926,6 +924,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.80  2000/05/02 00:58:11  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.79  2000/04/28 21:00:29  steve
  *  Over agressive signal elimination in constant probadation.
  *

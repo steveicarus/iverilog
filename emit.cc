@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.41 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: emit.cc,v 1.42 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 /*
@@ -289,6 +289,14 @@ void NetScope::emit_scope(ostream&o, struct target_t*tgt) const
 
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->emit_scope(o, tgt);
+
+      if (signals_) {
+	    NetNet*cur = signals_->sig_next_;
+	    do {
+		  tgt->signal(o, cur);
+		  cur = cur->sig_next_;
+	    } while (cur != signals_->sig_next_);
+      }
 }
 
 void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
@@ -304,6 +312,7 @@ bool Design::emit(ostream&o, struct target_t*tgt) const
 	// enumerate the scopes
       root_scope_->emit_scope(o, tgt);
 
+#if 0
 	// emit signals
       if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
@@ -312,7 +321,7 @@ bool Design::emit(ostream&o, struct target_t*tgt) const
 		  cur = cur->sig_next_;
 	    } while (cur != signals_->sig_next_);
       }
-
+#endif
 
 	// emit memories
       {
@@ -431,6 +440,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.42  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.41  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *

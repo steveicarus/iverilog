@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.165 2000/04/28 23:12:12 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.166 2000/05/02 00:58:11 steve Exp $"
 #endif
 
 /*
@@ -164,7 +164,6 @@ void PWire::elaborate(Design*des, NetScope*scope) const
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  sig->set_ival(idx, iv);
 
-	    des->add_signal(sig);
       }
 }
 
@@ -692,6 +691,9 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
  */
 NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       svector<NetNet*>nets (parms_.count());
       unsigned pins = 0;
       unsigned errors = 0;
@@ -725,7 +727,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(0, des->local_symbol(path),
+      NetNet*osig = new NetNet(scope, des->local_symbol(path),
 			       NetNet::IMPLICIT, pins);
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
@@ -737,7 +739,6 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
       }
 
       osig->local_flag(true);
-      des->add_signal(osig);
       return osig;
 }
 
@@ -987,9 +988,8 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		  return 0;
 	    }
 
-	    NetNet*tmp = new NetNet(0, n, NetNet::REG, wid);
+	    NetNet*tmp = new NetNet(scope, n, NetNet::REG, wid);
 	    tmp->set_line(*this);
-	    des->add_signal(tmp);
 
 	      /* Generate an assignment of the l-value to the temporary... */
 	    n = des->local_symbol(path);
@@ -1998,29 +1998,69 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 }
 
 /*
- * Elaborating function definitions takes 2 passes. The first creates
- * the NetFuncDef object and attaches the ports to it. The second pass
- * (elaborate_2) elaborates the statement that is contained
- * within. These passes are needed because the statement may invoke
- * the function itself (or other functions) so can't be elaborated
- * until all the functions are partially elaborated.
+ * (See the PTask::elaborate methods for basic common stuff.)
  *
- * In both cases, the scope parameter is the scope of the function. In
- * other words, it is the scope that has the name of the function with
- * the path of the containing module.
+ * The return value of a function is represented as a reg variable
+ * within the scope of the function that has the name of the
+ * function. So for example with the function:
+ *
+ *    function [7:0] incr;
+ *      input [7:0] in1;
+ *      incr = in1 + 1;
+ *    endfunction
+ *
+ * The scope of the function is <parent>.incr and there is a reg
+ * variable <parent>.incr.incr. The elaborate_1 method is called with
+ * the scope of the function, so the return reg is easily located.
+ *
+ * The function parameters are all inputs, except for the synthetic
+ * output parameter that is the return value. The return value goes
+ * into port 0, and the parameters are all the remaining ports.
  */
 void PFunction::elaborate_1(Design*des, NetScope*scope) const
 {
-	/* Translate the wires that are ports to NetNet pointers by
-	   presuming that the name is already elaborated, and look it
-	   up in the design. Then save that pointer for later use by
-	   calls to the task. (Remember, the task itself does not need
-	   these ports.) */
+      string fname = scope->basename();
+
       svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
-      ports[0] = des->find_signal(scope->name(), scope->name());
+
+	/* Get the reg for the return value. I know the name of the
+	   reg variable, and I know that it is in this scope, so look
+	   it up directly. */
+      ports[0] = scope->find_signal(scope->basename());
+      if (ports[0] == 0) {
+	    cerr << get_line() << ": internal error: function scope "
+		 << scope->name() << " is missing return reg "
+		 << fname << "." << endl;
+	    scope->dump(cerr);
+	    des->errors += 1;
+	    return;
+      }
+
       for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
-	    NetNet*tmp = des->find_signal(scope->name(),
-					  (*ports_)[idx]->name());
+
+	      /* Parse the port name into the task name and the reg
+		 name. We know by design that the port name is given
+		 as two components: <func>.<port>. */
+
+	    string pname = (*ports_)[idx]->name();
+	    string ppath = parse_first_name(pname);
+
+	    if (ppath != scope->basename()) {
+		  cerr << get_line() << ": internal error: function "
+		       << "port " << (*ports_)[idx]->name()
+		       << " has wrong name for function "
+		       << scope->name() << "." << endl;
+		  des->errors += 1;
+	    }
+
+	    NetNet*tmp = scope->find_signal(pname);
+	    if (tmp == 0) {
+		  cerr << get_line() << ": internal error: function "
+		       << scope->name() << " is missing port "
+		       << pname << "." << endl;
+		  scope->dump(cerr);
+		  des->errors += 1;
+	    }
 
 	    ports[idx+1] = tmp;
       }
@@ -2106,22 +2146,63 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  * it contains, and connecting its ports to NetNet objects. The
  * netlist doesn't really need the array of parameters once elaboration
  * is complete, but this is the best place to store them.
+ *
+ * The first elaboration pass finds the reg objects that match the
+ * port names, and creates the NetTaskDef object. The port names are
+ * in the form task.port.
+ *
+ *      task foo;
+ *        output blah;
+ *        begin <body> end
+ *      endtask
+ *
+ * So in the foo example, the PWire objects that represent the ports
+ * of the task will include a foo.blah for the blah port. This port is
+ * bound to a NetNet object by looking up the name.
+ *
+ * Elaboration pass 2 for the task definition causes the statement of
+ * the task to be elaborated and attached to the NetTaskDef object
+ * created in pass 1.
+ *
+ * NOTE: I am not sure why I bothered to prepend the task name to the
+ * port name when making the port list. It is not really useful, but
+ * that is what I did in pform_make_task_ports, so there it is.
  */
 void PTask::elaborate_1(Design*des, const string&path) const
 {
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-	/* Translate the wires that are ports to NetNet pointers by
-	   presuming that the name is already elaborated, and look it
-	   up in the design. Then save that pointer for later use by
-	   calls to the task. (Remember, the task itself does not need
-	   these ports.) */
       svector<NetNet*>ports (ports_? ports_->count() : 0);
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
-	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
 
-	    assert(tmp->scope() == scope);
+	      /* Parse the port name into the task name and the reg
+		 name. We know by design that the port name is given
+		 as two components: <task>.<port>. */
+
+	    string pname = (*ports_)[idx]->name();
+	    string ppath = parse_first_name(pname);
+	    assert(pname != "");
+
+	      /* check that the current scope really does have the
+		 name of the first component of the task port name. Do
+		 this by looking up the task scope in the parent of
+		 the current scope. */
+	    if (scope->parent()->child(ppath) != scope) {
+		  cerr << "internal error: task scope " << ppath
+		       << " not the same as scope " << scope->name()
+		       << "?!" << endl;
+		  return;
+	    }
+
+	    NetNet*tmp = scope->find_signal(pname);
+
+	    if (tmp == 0) {
+		  cerr << get_line() << ": internal error: "
+		       << "Could not find port " << pname
+		       << " in scope " << scope->name() << endl;
+		  scope->dump(cerr);
+	    }
 	    ports[idx] = tmp;
       }
 
@@ -2350,6 +2431,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.166  2000/05/02 00:58:11  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.165  2000/04/28 23:12:12  steve
  *  Overly aggressive eliding of task calls.
  *

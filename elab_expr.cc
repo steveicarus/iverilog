@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.21 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.22 2000/05/02 00:58:11 steve Exp $"
 #endif
 
 
@@ -286,7 +286,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 		  assert(net->sb_to_idx(msv) >= net->sb_to_idx(lsv));
 
 		  string tname = des->local_symbol(scope->name());
-		  NetTmp*tsig = new NetTmp(tname, wid);
+		  NetTmp*tsig = new NetTmp(scope, tname, wid);
 
 		    // Connect the pins from the lsb up to the msb.
 		  unsigned off = net->sb_to_idx(lsv);
@@ -296,7 +296,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 		  NetESignal*tmp = new NetESignal(tsig);
 		  tmp->set_line(*this);
 
-		  des->add_signal(tsig);
 		  return tmp;
 	    }
 
@@ -318,12 +317,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 		  }
 
 		  string tname = des->local_symbol(scope->name());
-		  NetTmp*tsig = new NetTmp(tname);
+		  NetTmp*tsig = new NetTmp(scope, tname);
 		  connect(tsig->pin(0), net->pin(idx));
 		  NetESignal*tmp = new NetESignal(tsig);
 		  tmp->set_line(*this);
 
-		  des->add_signal(tsig);
 		  return tmp;
 	    }
 
@@ -456,6 +454,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.22  2000/05/02 00:58:11  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.21  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *

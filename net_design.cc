@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.5 2000/04/28 16:50:53 steve Exp $"
+#ident "$Id: net_design.cc,v 1.6 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 /*
@@ -44,7 +44,7 @@ static string parse_last_name(string&path)
 }
 
 Design:: Design()
-: errors(0), root_scope_(0), signals_(0), nodes_(0), procs_(0), lcounter_(0)
+: errors(0), root_scope_(0), nodes_(0), procs_(0), lcounter_(0)
 {
 }
 
@@ -67,6 +67,11 @@ NetScope* Design::make_root_scope(const string&root)
       return root_scope_;
 }
 
+NetScope* Design::find_root_scope()
+{
+      assert(root_scope_);
+      return root_scope_;
+}
 
 /*
  * This method locates a scope in the design, given its rooted
@@ -260,69 +265,27 @@ string Design::get_flag(const string&key) const
 	    return (*tmp).second;
 }
 
-void Design::add_signal(NetNet*net)
-{
-      assert(net->design_ == 0);
-      if (signals_ == 0) {
-	    net->sig_next_ = net;
-	    net->sig_prev_ = net;
-      } else {
-	    net->sig_next_ = signals_->sig_next_;
-	    net->sig_prev_ = signals_;
-	    net->sig_next_->sig_prev_ = net;
-	    net->sig_prev_->sig_next_ = net;
-      }
-      signals_ = net;
-      net->design_ = this;
-}
-
-void Design::del_signal(NetNet*net)
-{
-      assert(net->design_ == this);
-      if (signals_ == net)
-	    signals_ = net->sig_prev_;
-
-      if (signals_ == net) {
-	    signals_ = 0;
-      } else {
-	    net->sig_prev_->sig_next_ = net->sig_next_;
-	    net->sig_next_->sig_prev_ = net->sig_prev_;
-      }
-      net->design_ = 0;
-}
-
 /*
  * This method looks for a string given a current context as a
  * starting point.
  */
 NetNet* Design::find_signal(const string&path, const string&name)
 {
-      if (signals_ == 0)
-	    return 0;
-
-      const NetScope*scope = find_scope(path);
+      NetScope*scope = find_scope(path);
       if (scope == 0) {
 	    cerr << "internal error: invalid scope: " << path << endl;
 	    return 0;
       }
       assert(scope);
 
-      for (;;) {
-	    string fulname = scope? (scope->name() + "." + name) : name;
-
-	    NetNet*cur = signals_;
-	    do {
-		  if (cur->name() == fulname)
-			return cur;
-
-		  cur = cur->sig_prev_;
-	    } while (cur != signals_);
-
-	    if (scope == 0)
-		  return 0;
+      while (scope) {
+	    if (NetNet*net = scope->find_signal(name))
+		  return net;
 
 	    scope = scope->parent();
       }
+
+      return 0;
 }
 
 void Design::add_memory(NetMemory*mem)
@@ -352,7 +315,7 @@ NetMemory* Design::find_memory(const string&path, const string&name)
       return 0;
 }
 
-void Design::find_symbol(const NetScope*scope, const string&key,
+void Design::find_symbol(NetScope*scope, const string&key,
 			 NetNet*&sig, NetMemory*&mem)
 {
       sig = 0;
@@ -362,18 +325,11 @@ void Design::find_symbol(const NetScope*scope, const string&key,
 	      /* Form the full heirarchical name for lookups. */
 	    string fulname = scope? (scope->name() + "." + key) : key;
 
-	      /* Is this a signal? If so, we are done. */
-	    if (signals_) {
-		  NetNet*cur = signals_;
-		  do {
-			if (cur->name() == fulname) {
-			      sig = cur;
-			      return;
-			}
-
-			cur = cur->sig_prev_;
-		  } while (cur != signals_);
-	    }
+	    if (scope)
+		  if (NetNet*cur = scope->find_signal(fulname)) {
+			sig = cur;
+			return;
+		  }
 
 	      /* Is this a memory? If so, we are again done. */
 	    map<string,NetMemory*>::const_iterator cur
@@ -530,18 +486,6 @@ void Design::clear_node_marks()
       } while (cur != nodes_);
 }
 
-void Design::clear_signal_marks()
-{
-      if (signals_ == 0)
-	    return;
-
-      NetNet*cur = signals_;
-      do {
-	    cur->set_mark(false);
-	    cur = cur->sig_next_;
-      } while (cur != signals_);
-}
-
 NetNode* Design::find_node(bool (*func)(const NetNode*))
 {
       if (nodes_ == 0)
@@ -558,24 +502,11 @@ NetNode* Design::find_node(bool (*func)(const NetNode*))
       return 0;
 }
 
-NetNet* Design::find_signal(bool (*func)(const NetNet*))
-{
-      if (signals_ == 0)
-	    return 0;
-
-      NetNet*cur = signals_->sig_next_;
-      do {
-	    if ((cur->test_mark() == false) && func(cur))
-		  return cur;
-
-	    cur = cur->sig_next_;
-      } while (cur != signals_->sig_next_);
-
-      return 0;
-}
-
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.6  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.5  2000/04/28 16:50:53  steve
  *  Catch memory word parameters to tasks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pad_to_width.cc,v 1.4 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.5 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -47,6 +47,9 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
 
 NetNet*pad_to_width(Design*des, const string&path, NetNet*net, unsigned wid)
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       if (net->pin_count() >= wid)
 	    return net;
 
@@ -54,9 +57,9 @@ NetNet*pad_to_width(Design*des, const string&path, NetNet*net, unsigned wid)
       NetConst*con = new NetConst(des->local_symbol(path), pad);
       des->add_node(con);
 
-      NetNet*tmp = new NetNet(0, des->local_symbol(path), NetNet::WIRE, wid);
+      NetNet*tmp = new NetNet(scope, des->local_symbol(path),
+			      NetNet::WIRE, wid);
       tmp->local_flag(true);
-      des->add_signal(tmp);
 
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1)
 	    connect(tmp->pin(idx), net->pin(idx));
@@ -68,6 +71,9 @@ NetNet*pad_to_width(Design*des, const string&path, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.5  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.4  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

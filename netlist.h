@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.132 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.133 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 /*
@@ -215,14 +215,16 @@ class NetNode  : public NetObj {
 
 /*
  * NetNet is a special kind of NetObj that doesn't really do anything,
- * but carries the properties of the wire/reg/trireg. Thus, a set of
- * pins connected together would also be connected to exactly one of
- * these.
+ * but carries the properties of the wire/reg/trireg, including its
+ * name. A scaler wire is a NetNet with one pin, a vector a wider
+ * NetNet. NetNet objects also appear as side effects of synthesis or
+ * other abstractions.
  *
- * Note that a net of any sort has exactly one pin. The pins feature
- * of the NetObj class is used to make a set of identical wires, in
- * order to support ranges, or busses. When dealing with vectors,
- * pin(0) is always the least significant bit.
+ * NetNet objects have a name and exist within a scope, so the
+ * constructor takes a pointer to the containing scope. The object
+ * automatically adds itself to the scope.
+ *
+ * NetNet objects are located by searching NetScope objects.
  */
 class NetNet  : public NetObj, public LineInfo {
 
@@ -276,10 +278,9 @@ class NetNet  : public NetObj, public LineInfo {
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
-	// The Design class uses this for listing signals.
-      friend class Design;
+	// The NetScope class uses this for listing signals.
+      friend class NetScope;
       NetNet*sig_next_, *sig_prev_;
-      Design*design_;
 
     private:
       NetScope*scope_;
@@ -749,12 +750,14 @@ class NetEConst  : public NetExpr {
 /*
  * The NetTmp object is a network that is only used momentarily by
  * elaboration to carry links around. A completed netlist should not
- * have any of these within. This is a kind of wire, so it is NetNet type.
+ * have any of these within. This is a kind of wire, so it is NetNet
+ * type. The constructor for this class also marks the NetNet as
+ * local, so that it is not likely to suppress a real symbol.
  */
 class NetTmp  : public NetNet {
 
     public:
-      explicit NetTmp(const string&name, unsigned npins =1);
+      explicit NetTmp(NetScope*s, const string&name, unsigned npins =1);
 
 };
 
@@ -2253,6 +2256,17 @@ class NetScope {
       void rem_event(NetEvent*);
       NetEvent*find_event(const string&name);
 
+
+	/* These methods manage signals. The add_ and rem_signal
+	   methods are used by the NetNet objects to make themselves
+	   available to the scope, and the find_signal method can be
+	   used to locate signals within a scope. */
+
+      void add_signal(NetNet*);
+      void rem_signal(NetNet*);
+
+      NetNet* find_signal(const string&name);
+
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
       NetScope* parent();
@@ -2261,6 +2275,11 @@ class NetScope {
       const NetScope* child(const string&name) const;
 
       TYPE type() const;
+
+	/* The name of the scope is the fully qualified hierarchical
+	   name, whereas the basename is just my name within my parent
+	   scope. */
+      string basename() const;
       string name() const;
 
       void run_defparams(class Design*);
@@ -2292,6 +2311,7 @@ class NetScope {
       map<string,NetExpr*>localparams_;
 
       NetEvent*events_;
+      NetNet  *signals_;
 
       NetScope*up_;
       NetScope*sib_;
@@ -2323,6 +2343,7 @@ class Design {
       string get_flag(const string&key) const;
 
       NetScope* make_root_scope(const string&name);
+      NetScope* find_root_scope();
 
 	/* look up a scope. If no starting scope is passed, then the
 	   path name string is taken as an absolute scope
@@ -2341,9 +2362,11 @@ class Design {
       void run_defparams();
       void evaluate_parameters();
 
-	// SIGNALS
-      void add_signal(NetNet*);
-      void del_signal(NetNet*);
+	/* This method locates a signal, starting at a given
+	   scope. The name parameter may be partially hierarchical, so
+	   this method, unlike the NetScope::find_signal method,
+	   handles global name binding. */
+
       NetNet*find_signal(const string&path, const string&name);
 
 	// Memories
@@ -2352,7 +2375,7 @@ class Design {
 
 	/* This is a more general lookup that finds the named signal
 	   or memory, whichever is first in the search path. */
-      void find_symbol(const NetScope*,const string&key,
+      void find_symbol(NetScope*,const string&key,
 		       NetNet*&sig, NetMemory*&mem);
 
 	// Functions
@@ -2381,9 +2404,6 @@ class Design {
       void clear_node_marks();
       NetNode*find_node(bool (*test)(const NetNode*));
 
-      void clear_signal_marks();
-      NetNet*find_signal(bool (*test)(const NetNet*));
-
 	// This is incremented by elaboration when an error is
 	// detected. It prevents code being emitted.
       unsigned errors;
@@ -2395,9 +2415,6 @@ class Design {
 	// Keep a tree of scopes. The NetScope class handles the wide
 	// tree and per-hop searches for me.
       NetScope*root_scope_;
-
-	// List all the signals in the design.
-      NetNet*signals_;
 
       map<string,NetMemory*> memories_;
 
@@ -2468,6 +2485,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.133  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.132  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *

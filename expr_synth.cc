@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.13 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.14 2000/05/02 00:58:12 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -45,7 +45,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
       assert(lsig->pin_count() == rsig->pin_count());
       unsigned width=lsig->pin_count();
 
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
 
       string oname = des->local_symbol(path);
       NetAddSub *adder = new NetAddSub(oname, width);
@@ -55,7 +55,6 @@ NetNet* NetEBAdd::synthesize(Design*des)
 	    connect(osig->pin(idx), adder->pin_Result(idx));
       }
       des->add_node(adder);
-      des->add_signal(osig);
 
       switch (op()) {
 	  case '+':
@@ -82,7 +81,8 @@ NetNet* NetEBBits::synthesize(Design*des)
       NetNet*rsig = right_->synthesize(des);
 
       assert(lsig->pin_count() == rsig->pin_count());
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, lsig->pin_count());
+      NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT,
+			       lsig->pin_count());
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
@@ -116,7 +116,6 @@ NetNet* NetEBBits::synthesize(Design*des)
 	    des->add_node(gate);
       }
 
-      des->add_signal(osig);
       return osig;
 }
 
@@ -130,7 +129,7 @@ NetNet* NetEBComp::synthesize(Design*des)
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
 
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, 1);
+      NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, 1);
       osig->local_flag(true);
 
 	/* Handle the special case of a single bit equality
@@ -211,10 +210,12 @@ NetNet* NetEBDiv::synthesize(Design*des)
 
 NetNet* NetEConcat::synthesize(Design*des)
 {
+      NetScope*scope = des->find_root_scope();
+      assert(scope);
       assert(repeat_ == 1);
 
       string path = des->local_symbol("SYNTH");
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, expr_width());
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
       unsigned obit = 0;
@@ -230,23 +231,24 @@ NetNet* NetEConcat::synthesize(Design*des)
 		  delete tmp;
       }
 
-      des->add_signal(osig);
       return osig;
 }
 
 NetNet* NetEConst::synthesize(Design*des)
 {
+      NetScope*scope = des->find_root_scope();
+      assert(scope);
+
       string path = des->local_symbol("SYNTH");
       unsigned width=expr_width();
 
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
       NetConst*con = new NetConst(des->local_symbol(path), value());
       for (unsigned idx = 0 ;  idx < width;  idx += 1)
 	    connect(osig->pin(idx), con->pin(idx));
 
       des->add_node(con);
-      des->add_signal(osig);
       return osig;
 }
 
@@ -259,7 +261,8 @@ NetNet* NetEUBits::synthesize(Design*des)
       string path = des->local_symbol("SYNTH");
       NetNet*isig = expr_->synthesize(des);
 
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, isig->pin_count());
+      NetNet*osig = new NetNet(isig->scope(), path, NetNet::IMPLICIT,
+			       isig->pin_count());
       osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
@@ -279,7 +282,7 @@ NetNet* NetEUBits::synthesize(Design*des)
 
 	    des->add_node(gate);
       }
-      des->add_signal(osig);
+
       return osig;
 }
 
@@ -294,7 +297,7 @@ NetNet* NetETernary::synthesize(Design *des)
       assert(csig->pin_count() == 1);
       assert(tsig->pin_count() == fsig->pin_count());
       unsigned width=tsig->pin_count();
-      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
       string oname = des->local_symbol(path);
@@ -306,7 +309,7 @@ NetNet* NetETernary::synthesize(Design *des)
       }
       des->add_node(mux);
       connect(csig->pin(0), mux->pin_Sel(0));
-      des->add_signal(osig);
+
       return osig;
 }
 
@@ -317,6 +320,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.14  2000/05/02 00:58:12  steve
+ *  Move signal tables to the NetScope class.
+ *
  * Revision 1.13  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *
