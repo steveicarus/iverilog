@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.14 2001/04/18 04:21:23 steve Exp $
+ *  $Id: opcodes.txt,v 1.15 2001/05/01 05:00:02 steve Exp $
  */
 
 
@@ -44,7 +44,7 @@ that contains the bit value to assign.
 
 These instructions perform a generic comparison of two vectors of equal
 size. The <bit-l> and <bit-r> numbers address the least-significant
-bit of each vector, and <wid> is the width. If either operator is 0,
+bit of each vector, and <wid> is the width. If either operand is 0,
 1, 2 or 3 then it is taken to be a constant replicated to the selected
 width.
 
@@ -66,7 +66,8 @@ to implement all the Verilog comparison operators.
 
 The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 %cmp/u does an unsigned compare, whereas the %cmp/s does a signed
-compare.
+compare. In either case, if either operand constains x or z, then lt
+bit gets the x value.
 
 * %cmp/z <bit-l>, <bit-r>, <wid>
 * %cmp/x <bit-l>, <bit-r>, <wid>
@@ -118,6 +119,14 @@ bit:
 	z  --> x
 
 
+* %ix/load <idx>, <value>
+
+This instruction loads an immediate value into the addressed index
+register. The index register holds numeric values, so the <value> is a
+number. The idx value selects the index register, and may be 0, 1, 2
+or 3.
+
+
 * %jmp <code-label>
 
 The %jmp instruction performs an unconditional branch to a given
@@ -141,17 +150,22 @@ continues. It has no effect in the current thread other then to wait
 until the top child is cleared.
 
 It is an error to execute %join if there are no children in the child
-stack. If a child thread terminates before this instruction is called,
-it remains in the stack as a zombie until the %join reaps it.
+stack. Every %join in the thread must have a matching %fork that
+spawned off a child thread.
 
-If a thread terminates (i.e. executes %end) all its children are
-terminated as well.
+If the matching child instruction is still running, a %join suspends
+the calling thread until the child ends. If the child is already
+ended, then the %join does not block or yield the thread.
 
 
 * %load <bit>, <functor-label>
 
 This instruction loads a value from the given functor output into the
-specified thread register bit.
+specified thread register bit. The functor-label can refer to a .net,
+a .var or a .functor, and may be indexed with array syntax to get at a
+functor within a vector of functors. This instruction loads only a
+single bit.
+
 
 * %mov <dst>, <src>, <wid>
 
@@ -159,22 +173,32 @@ This instruction copies a vector from one place in register space to
 another. The destination and source vectors are assumed to be the same
 width and non-overlapping. The <dst> may not be 0-3, but if the <src>
 is one of the 4 constant bits, the effect is to replicate the value
-into the destination vector. Useful for filling a vector.
+into the destination vector. This is useful for filling a vector.
+
 
 * %nor/r <dst>, <src>, <wid>
 
 The %nor/r instruction is a reduction nor. That is, the <src> is a
 vector with width, but the result is a single bit. The <src> vector is
-not affected by the operation unless the <dst> bit is within the vector.
+not affected by the operation unless the <dst> bit is within the
+vector. The result is calculated before the <dst> bit is written, so
+it is valid to place the <dst> within the <src>.
+
+The actual operation performed is the inverted or of all the bits in
+the vector.
+
 
 * %or <dst>, <src>, <wid>
 
-Perform the bitwise or of the vectors.
+Perform the bitwise or of the vectors. Each bit in the <dst> is
+combined with the corresponding bit in the source, according to the
+truth table:
 
 	1 or ? --> 1
 	? or 1 --> 1
 	0 or 0 --> 0
 	otherwise  x
+
 
 * %set <var-label>, <bit>
 
@@ -190,6 +214,7 @@ This instruction makes a call to a system task or function that was
 declared using VPI. The operands are compiled down to a vpiHandle for
 the call. The instruction contains only the vpiHandle for the
 call. See the vpi.txt file for more on system task/function calls.
+
 
 * %wait <functor-label>
 

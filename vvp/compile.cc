@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.49 2001/05/01 02:18:15 steve Exp $"
+#ident "$Id: compile.cc,v 1.50 2001/05/01 05:00:02 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -82,7 +82,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
-      { "%ix/load",of_IX_LOAD,3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%ix/load",of_IX_LOAD,2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
@@ -1064,6 +1064,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.50  2001/05/01 05:00:02  steve
+ *  Implement %ix/load.
+ *
  * Revision 1.49  2001/05/01 02:18:15  steve
  *  Account for ipoint_input_index behavior in inputs_connect.
  *

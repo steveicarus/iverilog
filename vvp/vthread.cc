@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.30 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: vthread.cc,v 1.31 2001/05/01 05:00:02 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -644,8 +644,8 @@ bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
 
 bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 {
-  // TODO
-  return true;
+      thr->index[cp->bit_idx1 & 3] = cp->number;
+      return true;
 }
 
 
@@ -925,6 +925,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.31  2001/05/01 05:00:02  steve
+ *  Implement %ix/load.
+ *
  * Revision 1.30  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
