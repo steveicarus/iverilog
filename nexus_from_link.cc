@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nexus_from_link.cc,v 1.1 2000/03/16 19:03:03 steve Exp $"
+#ident "$Id: nexus_from_link.cc,v 1.2 2000/03/20 17:40:54 steve Exp $"
 #endif
 
 # include  "netmisc.h"
@@ -66,8 +66,9 @@ string nexus_from_link(const NetObj::Link*lnk)
 	    const NetObj*obj = lnk->get_obj();
 	    pin = lnk->get_pin();
 	    cerr << "internal error: No signal for nexus of " <<
-		  obj->name() << " pin " << pin << " (type=" <<
-		  typeid(*obj).name() << ")?" << endl;
+		  obj->name() << " pin " << pin << "(" <<
+		  lnk->get_name() << "<" << lnk->get_inst() << ">)"
+		  " type=" << typeid(*obj).name() << "?" << endl;
       }
       assert(sig);
       ostrstream tmp;
@@ -81,6 +82,9 @@ string nexus_from_link(const NetObj::Link*lnk)
 
 /*
  * $Log: nexus_from_link.cc,v $
+ * Revision 1.2  2000/03/20 17:40:54  steve
+ *  More complete error message about no signal.
+ *
  * Revision 1.1  2000/03/16 19:03:03  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and
