@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.21 2001/04/29 23:16:31 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.22 2001/04/30 00:00:27 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -49,55 +49,56 @@ void draw_nexus_input(ivl_nexus_t nex)
 
       for (ndx = 0 ;  ndx < ivl_nexus_ptrs(nex) ;  ndx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, ndx);
+	    unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
 
 	    lptr = ivl_nexus_ptr_log(nptr);
-	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ)) {
+	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) &&
+		(nptr_pin == 0)) {
 		  draw_nexus_input(ivl_logic_pin(lptr, 1));
 
 		  assert(driver == 0);
 		  driver = nptr;
-		  return; /* XXXX */
+		  continue;
 	    }
 
 	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
 		  fprintf(vvp_out, "C<0>");
 		  assert(driver == 0);
 		  driver = nptr;
-		  return; /* XXXX */
+		  continue;
 	    }
 
 	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
 		  fprintf(vvp_out, "C<1>");
 		  assert(driver == 0);
 		  driver = nptr;
-		  return; /* XXXX */
+		  continue;
 	    }
 
-	    if (lptr && (ivl_nexus_ptr_pin(nptr) == 0)) {
+	    if (lptr && (nptr_pin == 0)) {
 		  fprintf(vvp_out, "L_%s", ivl_logic_name(lptr));
 
 		  assert(driver == 0);
 		  driver = nptr;
-		  return; /* XXXX */
+		  continue;
 	    }
 
 	    sptr = ivl_nexus_ptr_sig(nptr);
 	    if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
 		  fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sptr),
-			  ivl_nexus_ptr_pin(nptr));
+			  nptr_pin);
 
 		  assert(driver == 0);
 		  driver = nptr;
-		  return; /* XXXX */
+		  continue;
 	    }
 
 	    cptr = ivl_nexus_ptr_con(nptr);
 	    if (cptr) {
 		  const char*bits = ivl_const_bits(cptr);
-		  unsigned pin = ivl_nexus_ptr_pin(nptr);
-		  fprintf(vvp_out, "C<%c>", bits[pin]);
+		  fprintf(vvp_out, "C<%c>", bits[nptr_pin]);
 		  driver = nptr;
-		  return; /* XXXX */
+		  continue;
 	    }
 
 	    lpm = ivl_nexus_ptr_lpm(nptr);
@@ -111,7 +112,7 @@ void draw_nexus_input(ivl_nexus_t nex)
 
 			      assert(driver == 0);
 			      driver = nptr;
-			      return; /* XXXX */
+			      continue;
 			}
 
 	    }
@@ -510,6 +511,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.22  2001/04/30 00:00:27  steve
+ *  detect multiple drivers on nexa.
+ *
  * Revision 1.21  2001/04/29 23:16:31  steve
  *  Add bufif and pull devices.
  *
