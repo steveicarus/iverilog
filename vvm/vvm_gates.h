@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.47 2000/03/18 02:26:02 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.48 2000/03/18 23:22:37 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -246,52 +246,37 @@ class vvm_compare  : public vvm_nexus::recvr_t {
 
 
 /*
- * This class simulates the LPM flip-flop device.
- * XXXX Inverted clock not yet supported.
+ * This class simulates the LPM flip-flop device. The vvm_ff class
+ * supports arbitrary width devices. For each output Q, there is a
+ * unique input D. The CLK input is common for all the bit lanes.
  */
-template <unsigned WIDTH> class vvm_ff {
+class vvm_ff  : public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_ff()
-	    { clk_ = Vx;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    q_[idx] = Vx;
-	    }
-      ~vvm_ff() { }
+      explicit vvm_ff(unsigned wid);
+      ~vvm_ff();
 
-      void init_Data(unsigned idx, vpip_bit_t val) { d_[idx] = val; }
-      void init_Clock(unsigned, vpip_bit_t val) { clk_ = val; }
+      vvm_nexus::drive_t* config_rout(unsigned idx);
 
-      void set_Clock(unsigned, vpip_bit_t val)
-	    { if (val == clk_) return;
-	      bool flag = posedge(clk_, val);
-	      clk_ = val;
-	      if (flag) latch_();
-	    }
+      unsigned key_Data(unsigned idx) const;
+      unsigned key_Clock() const;
 
-      void set_Data(unsigned idx, vpip_bit_t val)
-	    { d_[idx] = val;
-	    }
-
-      void config_rout(unsigned idx, vvm_out_event::action_t o)
-	    { out_[idx] = o;
-	    }
+      void init_Data(unsigned idx, vpip_bit_t val);
+      void init_Clock(unsigned, vpip_bit_t val);
 
     private:
-      vpip_bit_t d_[WIDTH];
-      vpip_bit_t q_[WIDTH];
+      void take_value(unsigned key, vpip_bit_t val);
+      unsigned width_;
+      vpip_bit_t*bits_;
       vpip_bit_t clk_;
 
-      vvm_out_event::action_t out_[WIDTH];
+      vvm_nexus::drive_t* out_;
 
-      void latch_()
-	    { q_ = d_;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    if (out_[idx]) {
-			  vvm_event*ev = new vvm_out_event(q_[idx], out_[idx]);
-			  ev->schedule();
-		    }
-	    }
+      void latch_();
+
+    private: // not implemeneted
+      vvm_ff(const vvm_ff&);
+      vvm_ff& operator= (const vvm_ff&);
 };
 
 /*
@@ -817,6 +802,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.48  2000/03/18 23:22:37  steve
+ *  Update the FF device to nexus style.
+ *
  * Revision 1.47  2000/03/18 02:26:02  steve
  *  Update bufz to nexus style.
  *

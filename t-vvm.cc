@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.117 2000/03/18 02:26:02 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.118 2000/03/18 23:22:37 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -119,9 +119,6 @@ class target_vvm : public target_t {
       char*defn_name;
       ofstream defn;
 
-      char*delayed_name;
-      ofstream delayed;
-
       char*init_code_name;
       ofstream init_code;
 
@@ -150,7 +147,7 @@ class target_vvm : public target_t {
 
 
 target_vvm::target_vvm()
-: function_def_flag_(false), delayed_name(0), init_code_name(0)
+: function_def_flag_(false), init_code_name(0)
 {
 }
 
@@ -650,9 +647,6 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       defn_name = tempnam(0, "ivldf");
       defn.open(defn_name, ios::in | ios::out | ios::trunc);
 
-      delayed_name = tempnam(0, "ivlde");
-      delayed.open(delayed_name, ios::in | ios::out | ios::trunc);
-
       init_code_name = tempnam(0, "ivlic");
       init_code.open(init_code_name, ios::in | ios::out | ios::trunc);
 
@@ -729,16 +723,6 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       free(defn_name);
       defn_name = 0;
       os << "// **** end definition code" << endl;
-
-      delayed.close();
-      os << "// **** Delayed code" << endl;
-      { ifstream rdelayed (delayed_name);
-	os << rdelayed.rdbuf();
-      }
-      unlink(delayed_name);
-      free(delayed_name);
-      delayed_name = 0;
-      os << "// **** end delayed code" << endl;
 
 
       os << "// **** init_code" << endl;
@@ -928,15 +912,8 @@ string target_vvm::defn_gate_outputfun_(ostream&os,
 					const NetNode*gate,
 					unsigned gpin)
 {
-      const NetObj::Link&lnk = gate->pin(gpin);
-
-      ostrstream tmp;
-      tmp << mangle(gate->name()) << "_output_" << lnk.get_name() <<
-	    "_" << lnk.get_inst() << ends;
-      string name = tmp.str();
-
-      os << "static void " << name << "(vpip_bit_t);" << endl;
-      return name;
+      assert(0);
+      return "";
 }
 
 void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
@@ -980,41 +957,7 @@ void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
  */
 void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 {
-      const NetObj::Link&lnk = gate->pin(gpin);
-
-      delayed << "static void " << mangle(gate->name()) <<
-	    "_output_" << lnk.get_name() << "_" << lnk.get_inst() <<
-	    "(vpip_bit_t val)" <<
-	    endl << "{" << endl;
-
-	/* The output function connects to gpin of the netlist part
-	   and causes the inputs that it is connected to to be set
-	   with the new value. */
-
-      const NetObj*cur;
-      unsigned pin;
-      gate->pin(gpin).next_link(cur, pin);
-      for ( ; cur != gate ; cur->pin(pin).next_link(cur, pin)) {
-
-	      // Skip pins that are output only.
-	    if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-		  continue;
-
-	    if (cur->pin(pin).get_name() != "") {
-
-		  delayed << "      " << mangle(cur->name()) << ".set_"
-			  << cur->pin(pin).get_name() << "(" <<
-			cur->pin(pin).get_inst() << ", val);" << endl;
-
-	    } else {
-
-		  delayed << "      " << mangle(cur->name()) << ".set("
-			  << pin << ", val);" << endl;
-	    }
-
-      }
-
-      delayed << "}" << endl;
+      assert(0);
 }
 
 void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
@@ -1179,16 +1122,40 @@ void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
 
 void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
 {
+      string nexus;
+      unsigned ncode;
       string mname = mangle(gate->name());
-      os << "static vvm_ff<" << gate->width() << "> " << mname << ";"
-	 << endl;
+
+      os << "static vvm_ff " << mname << "(" << gate->width() << ");" << endl;
+
+	/* Connect the clock input... */
+
+      nexus = nexus_from_link(&gate->pin_Clock());
+      ncode = nexus_wire_map[nexus];
+
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		<< mname << ", " << mname << ".key_Clock());" << endl;
+
+	/* Connect the Q output pins... */
 
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    unsigned pin = gate->pin_Q(idx).get_pin();
-	    string outfun = defn_gate_outputfun_(os, gate, pin);
-	    init_code << "      " << mangle(gate->name()) <<
-		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
-	    emit_gate_outputfun_(gate, pin);
+	    nexus = nexus_from_link(&gate->pin_Q(idx));
+	    ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
+      }
+
+
+	/* Connect the Data input pins... */
+
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    nexus = nexus_from_link(&gate->pin_Data(idx));
+	    ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_Data(" << idx
+		      << "));" << endl;
       }
 }
 
@@ -2292,6 +2259,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.118  2000/03/18 23:22:37  steve
+ *  Update the FF device to nexus style.
+ *
  * Revision 1.117  2000/03/18 02:26:02  steve
  *  Update bufz to nexus style.
  *
@@ -2332,120 +2302,5 @@ extern const struct target tgt_vvm = {
  *  drivers and resolution functions can be used, and
  *  the t-vvm module doesn't need to write a zillion
  *  output functions.
- *
- * Revision 1.107  2000/03/08 04:36:54  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.106  2000/02/29 05:20:21  steve
- *  Remove excess variable.
- *
- * Revision 1.105  2000/02/29 05:02:30  steve
- *  Handle scope of complex guards when writing case in functions.
- *
- * Revision 1.104  2000/02/24 01:57:10  steve
- *  I no longer need to declare string and number tables early.
- *
- * Revision 1.103  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.102  2000/02/14 01:20:50  steve
- *  Support case in functions.
- *
- * Revision 1.101  2000/02/14 00:12:09  steve
- *  support if-else in function definitions.
- *
- * Revision 1.100  2000/02/13 19:59:33  steve
- *  Handle selecting memory words at run time.
- *
- * Revision 1.99  2000/02/13 19:18:27  steve
- *  Accept memory words as parameter to $display.
- *
- * Revision 1.98  2000/01/18 04:53:57  steve
- *  missing break is switch.
- *
- * Revision 1.97  2000/01/13 06:05:46  steve
- *  Add the XNOR operator.
- *
- * Revision 1.96  2000/01/13 05:11:25  steve
- *  Support for multiple VPI modules.
- *
- * Revision 1.95  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.94  2000/01/08 03:09:14  steve
- *  Non-blocking memory writes.
- *
- * Revision 1.93  2000/01/02 17:57:56  steve
- *  It is possible for node to initialize several pins of a signal.
- *
- * Revision 1.92  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
- *
- * Revision 1.91  1999/12/16 02:42:15  steve
- *  Simulate carry output on adders.
- *
- * Revision 1.90  1999/12/12 19:47:54  steve
- *  Remove the useless vvm_simulation class.
- *
- * Revision 1.89  1999/12/12 06:03:14  steve
- *  Allow memories without indices in expressions.
- *
- * Revision 1.88  1999/12/05 02:24:09  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.87  1999/12/02 16:58:58  steve
- *  Update case comparison (Eric Aardoom).
- *
- * Revision 1.86  1999/11/29 00:38:27  steve
- *  Properly initialize registers.
- *
- * Revision 1.85  1999/11/28 23:59:22  steve
- *  Remove useless tests for NetESignal.
- *
- * Revision 1.84  1999/11/28 23:42:03  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.83  1999/11/28 18:05:37  steve
- *  Set VPI_MODULE_PATH in the target code, if desired.
- *
- * Revision 1.82  1999/11/28 01:16:19  steve
- *  gate outputs need to set signal values.
- *
- * Revision 1.81  1999/11/28 00:56:08  steve
- *  Build up the lists in the scope of a module,
- *  and get $dumpvars to scan the scope for items.
- *
- * Revision 1.80  1999/11/27 19:07:58  steve
- *  Support the creation of scopes.
- *
- * Revision 1.79  1999/11/24 04:38:49  steve
- *  LT and GT fixes from Eric Aardoom.
- *
- * Revision 1.78  1999/11/21 01:16:51  steve
- *  Fix coding errors handling names of logic devices,
- *  and add support for buf device in vvm.
- *
- * Revision 1.77  1999/11/21 00:13:09  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.76  1999/11/14 23:43:45  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.75  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.74  1999/11/13 03:46:52  steve
- *  Support the LPM_MUX in vvm.
- *
- * Revision 1.73  1999/11/10 02:52:24  steve
- *  Create the vpiMemory handle type.
- *
- * Revision 1.72  1999/11/06 16:00:17  steve
- *  Put number constants into a static table.
  */
 
