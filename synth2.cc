@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.37 2004/03/15 18:40:12 steve Exp $"
+#ident "$Id: synth2.cc,v 1.38 2004/08/28 15:08:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,6 +114,13 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(off).nexus());
 	    connect(nex_out->pin(ptr), rsig->pin(idx));
       }
+
+	/* This lval_ represents a reg that is a WIRE in the
+	   synthesized results. This function signals the destructor
+	   to change the REG that this l-value refers to into a
+	   WIRE. It is done then, at the last minute, so that pending
+	   synthesis can continue to work with it as a WIRE. */
+      lval_->turn_sig_to_wire_on_release();
 
       DEBUG_SYNTH2_EXIT("NetAssignBase",true)
       return true;
@@ -978,6 +985,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.38  2004/08/28 15:08:32  steve
+ *  Do not change reg to wire in NetAssign_ unless synthesizing.
+ *
  * Revision 1.37  2004/03/15 18:40:12  steve
  *  Only include DEBUG_SYNTH2 if __FUNCTION__ defined.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.29 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.30 2004/08/28 15:08:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -131,6 +131,13 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
       if (pclk->edge() == NetEvProbe::NEGEDGE)
 	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
 
+
+	/* This lval_ represents a reg that is a WIRE in the
+	   synthesized results. This function signals the destructor
+	   to change the REG that this l-value refers to into a
+	   WIRE. It is done then, at the last minute, so that pending
+	   synthesis can continue to work with it as a WIRE. */
+      a->turn_sig_to_wire_on_release();
 }
 
 static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
@@ -163,6 +170,13 @@ static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
 	   same NetMemory, that have the same address pins and are
 	   otherwise compatible. This absorbs them into this object. */
       ram->absorb_partners();
+
+	/* This lval_ represents a reg that is a WIRE in the
+	   synthesized results. This function signals the destructor
+	   to change the REG that this l-value refers to into a
+	   WIRE. It is done then, at the last minute, so that pending
+	   synthesis can continue to work with it as a WIRE. */
+      a->turn_sig_to_wire_on_release();
 }
 
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,

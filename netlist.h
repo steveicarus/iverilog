@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.315 2004/06/30 15:32:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.316 2004/08/28 15:08:31 steve Exp $"
 #endif
 
 /*
@@ -1427,6 +1427,11 @@ class NetAssign_ {
       NetMemory*mem() const;
       NetVariable*var() const;
 
+	// Mark that the synthesizer has worked with this l-value, so
+	// when it is released, the l-value signal should be turned
+	// into a wire.
+      void turn_sig_to_wire_on_release();
+
 	// This pointer is for keeping simple lists.
       NetAssign_* more;
 
@@ -1438,6 +1443,7 @@ class NetAssign_ {
       NetVariable*var_;
       NetExpr*bmux_;
 
+      bool turn_sig_to_wire_on_release_;
       unsigned loff_;
       unsigned lwid_;
 };
@@ -3343,6 +3349,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.316  2004/08/28 15:08:31  steve
+ *  Do not change reg to wire in NetAssign_ unless synthesizing.
+ *
  * Revision 1.315  2004/06/30 15:32:18  steve
  *  nex_output for NetPDelay statements.
  *

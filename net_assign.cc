@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.17 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.18 2004/08/28 15:08:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,7 @@ NetAssign_::~NetAssign_()
 {
       if (sig_) {
 	    sig_->decr_lref();
-	    if (sig_->peek_lref() == 0)
+	    if (turn_sig_to_wire_on_release_ && sig_->peek_lref() == 0)
 		  sig_->type(NetNet::WIRE);
       }
 
@@ -140,6 +140,13 @@ void NetAssign_::set_part(unsigned lo, unsigned lw)
 unsigned NetAssign_::get_loff() const
 {
       return loff_;
+}
+
+/*
+ */
+void NetAssign_::turn_sig_to_wire_on_release()
+{
+      turn_sig_to_wire_on_release_ = true;
 }
 
 NetAssignBase::NetAssignBase(NetAssign_*lv, NetExpr*rv)
@@ -254,6 +261,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.18  2004/08/28 15:08:31  steve
+ *  Do not change reg to wire in NetAssign_ unless synthesizing.
+ *
  * Revision 1.17  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *
@@ -292,37 +302,5 @@ NetAssignNB::~NetAssignNB()
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated
  *  at run time.
- *
- * Revision 1.8  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.7  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.6  2000/10/18 20:04:39  steve
- *  Add ivl_lval_t and support for assignment l-values.
- *
- * Revision 1.5  2000/09/20 02:53:15  steve
- *  Correctly measure comples l-values of assignments.
- *
- * Revision 1.4  2000/09/10 02:18:16  steve
- *  elaborate complex l-values
- *
- * Revision 1.3  2000/09/07 00:06:53  steve
- *  encapsulate access to the l-value expected width.
- *
- * Revision 1.2  2000/09/02 23:40:13  steve
- *  Pull NetAssign_ creation out of constructors.
- *
- * Revision 1.1  2000/09/02 20:54:20  steve
- *  Rearrange NetAssign to make NetAssign_ separate.
- *
  */
 
