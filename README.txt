@@ -209,7 +209,7 @@ command line.
 3.6 ATTRIBUTES
 
     NOTE: The $attribute syntax will soon be deprecated in favor of the
-    Verilog-2001 attribute syntax, which cleaner and standardized.
+    Verilog-2001 attribute syntax, which is cleaner and standardized.
 
 The parser accepts, as an extension to Verilog, the $attribute module
 item. The syntax of the $attribute item is:
@@ -313,6 +313,13 @@ constructs.
   - Net delays, of the form "wire #N foo;" do not work. Delays in
     every other context do work properly, including the V2001 form
     "wire #5 foo = bar;"
+
+  - Event controls inside non-blocking assignments are not supported.
+    i.e.: a <= @(posedge clk) b;
+
+  - Lists of named events of the form @(event_1 or event_2) are not
+    supported. Named events are otherwise supported, and lists of
+    other kinds of events are also supported.
 
 5.1 Nonstandard Constructs or Behaviors
 
