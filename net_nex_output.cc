@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11 2004/09/16 03:17:33 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.12 2005/02/14 04:58:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,10 +47,7 @@ void NetAssignBase::nex_output(NexusSet&out)
 {
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
 	    if (NetNet*lsig = cur->sig()) {
-		  for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
-			unsigned off = cur->get_loff() + idx;
-			out.add(lsig->pin(off).nexus());
-		  }
+		  out.add(lsig->pin(0).nexus());
 	    } else {
 		    /* Quoting from netlist.h comments for class NetMemory:
 		     * "This is not a node because memory objects can only be
@@ -122,6 +119,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.12  2005/02/14 04:58:50  steve
+ *  l-value input may be a vector.
+ *
  * Revision 1.11  2004/09/16 03:17:33  steve
  *  net_output handles l-value concatenations.
  *
