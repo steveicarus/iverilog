@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.51 2001/10/18 16:41:49 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.52 2001/10/24 05:06:54 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1174,7 +1174,6 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
       int inv = 0;
 
       switch (ivl_expr_opcode(exp)) {
-	  case '!': rop = "nor";  break;
 	  case '&': rop = "and";  break;
 	  case '|': rop = "or";   break;
 	  case '^': rop = "xor";  break;
@@ -1228,6 +1227,31 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '!':
+	    res = draw_eval_expr(sub);
+	    if (res.wid > 1) {
+		    /* a ! on a vector is implemented with a reduction
+		       nor. Generate the result into the first bit of
+		       the input vector and free the rest of the
+		       vector. */
+		  struct vector_info tmp;
+		  assert(res.base >= 4);
+		  tmp.base = res.base+1;
+		  tmp.wid = res.wid - 1;
+		  fprintf(vvp_out, "    %%nor/r %u, %u, %u;\n",
+			  res.base, res.base, res.wid);
+		  clr_vector(tmp);
+		  res.wid = 1;
+	    } else {
+		  unsigned label_out = local_count++;
+		  fprintf(vvp_out, "    %%mov 4, %u, 1;\n", res.base);
+		  fprintf(vvp_out, "    %%mov %u, 1, 1;\n", res.base);
+		  fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 4;\n",
+			  thread_count, label_out);
+		  fprintf(vvp_out, "    %%mov %u, 0, 1;\n", res.base);
+		  fprintf(vvp_out, "T_%u.%u ;\n", thread_count, label_out);
+	    }
+	    break;
+
 	  case 'N':
 	  case 'A':
 	  case 'X':
@@ -1237,10 +1261,6 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	  case '^':
 	    res = draw_eval_expr(sub);
 	    if (res.wid > 1) {
-		    /* a ! on a vector is implemented with a reduction
-		       nor. Generate the result into the first bit of
-		       the input vector and free the rest of the
-		       vector. */
 		  struct vector_info tmp;
 		  assert(res.base >= 4);
 		  tmp.base = res.base+1;
@@ -1333,6 +1353,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.52  2001/10/24 05:06:54  steve
+ *  The ! expression returns 0 to x and z values.
+ *
  * Revision 1.51  2001/10/18 16:41:49  steve
  *  Evaluate string expressions (Philip Blundell)
  *
