@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.197 2001/02/10 20:29:39 steve Exp $"
+#ident "$Id: netlist.h,v 1.198 2001/02/10 21:20:38 steve Exp $"
 #endif
 
 /*
@@ -843,8 +843,13 @@ class NetExpr  : public LineInfo {
 	// This returns true if the expression has a definite
 	// width. This is generally true, but in some cases the
 	// expression is amorphous and desires a width from its
-	// environment.
+	// environment. For example, 'd5 has indefinite width, but
+	// 5'd5 has a definite width.
+
+	// This method is only really used within concatenation
+	// expressions to check validity.
       virtual bool has_width() const;
+
 
 	// This method evaluates the expression and returns an
 	// equivilent expression that is reduced as far as compile
@@ -2078,6 +2083,11 @@ class NetEBinary  : public NetExpr {
 
       virtual bool set_width(unsigned w);
 
+	// A binary expression node only has a definite
+	// self-determinable width if the operands both have definite
+	// widths.
+      virtual bool has_width() const;
+
       virtual NetEBinary* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2855,6 +2865,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.198  2001/02/10 21:20:38  steve
+ *  Binary operators with operands of indefinite width
+ *  has itself an indefinite width.
+ *
  * Revision 1.197  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.156 2001/02/08 01:10:30 steve Exp $"
+#ident "$Id: netlist.cc,v 1.157 2001/02/10 21:20:38 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1882,6 +1882,11 @@ NetEBinary::~NetEBinary()
       delete right_;
 }
 
+bool NetEBinary::has_width() const
+{
+      return left_->has_width() && right_->has_width();
+}
+
 NetEBinary* NetEBinary::dup_expr() const
 {
       assert(0);
@@ -2455,6 +2460,10 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.157  2001/02/10 21:20:38  steve
+ *  Binary operators with operands of indefinite width
+ *  has itself an indefinite width.
+ *
  * Revision 1.156  2001/02/08 01:10:30  steve
  *  Remove dead code.
  *
