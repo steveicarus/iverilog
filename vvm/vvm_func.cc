@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.10 2000/05/18 20:35:08 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.11 2000/06/30 15:47:06 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -46,7 +46,7 @@ vpip_bit_t vvm_unop_lnot(const vvm_bitset_t&r)
 
 void vvm_unop_not(vvm_bitset_t&v, const vvm_bitset_t&p)
 {
-      assert(v.nbits == p.nbits);
+      assert(v.nbits < p.nbits);
       for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
 	    v[idx] = B_NOT(p[idx]);
 }
@@ -495,6 +495,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.11  2000/06/30 15:47:06  steve
+ *  Reduce result is OK in ~ operator.
+ *
  * Revision 1.10  2000/05/18 20:35:08  steve
  *  Ternary operator handles bit sizes.
  *
