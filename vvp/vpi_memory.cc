@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.4 2002/01/31 04:28:17 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.5 2002/02/06 04:48:34 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -35,6 +35,8 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+extern const char hex_digits[256];
+static char buf[4096];
 
 struct __vpiMemoryWord {
       struct __vpiHandle base;
@@ -254,6 +256,56 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	  default:
 	    assert(!"not implemented");
 
+          case vpiBinStrVal:
+	      assert(width < sizeof(buf));
+	      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		  unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
+		  
+		  buf[width-idx-1] = "01xz"[bit];
+	      }
+	      buf[width] = 0;
+	      vp->value.str = buf;
+	      break;
+
+	  case vpiHexStrVal: {
+		unsigned hval, hwid;
+		hwid = (width + 3) / 4;
+
+		assert(hwid < sizeof(buf) );
+		buf[hwid] = 0;
+
+		hval = 0;
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		    unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
+		    hval = hval | (bit << 2*(idx % 4));
+
+		    if (idx%4 == 3) {
+			hwid -= 1;
+			buf[hwid] = hex_digits[hval];
+			hval = 0;
+		    }
+		}
+
+		if (hwid > 0) {
+		    unsigned padd = 0;
+
+		    hwid -= 1;
+		    buf[hwid] = hex_digits[hval];
+		    switch(buf[hwid]) {
+		    case 'X': padd = 2; break;
+		    case 'Z': padd = 3; break;
+		    }
+		    if (padd) {
+			for (unsigned idx = width % 4; idx < 4; idx += 1) {
+			    hval = hval | padd << 2*idx;
+			}
+			buf[hwid] = hex_digits[hval];
+		    }
+		}
+		vp->value.str = buf;
+		break;
+	  }
+
       	  case vpiIntVal:
 	    vp->value.integer = 0;
 	    for (unsigned idx = 0;  idx < width;  idx += 1) {
@@ -311,6 +363,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.5  2002/02/06 04:48:34  steve
+ *  get bin or hex string values of memory words.
+ *
  * Revision 1.4  2002/01/31 04:28:17  steve
  *  Full support for $readmem ranges (Tom Verbeure)
  *
