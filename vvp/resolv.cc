@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.9 2001/12/06 03:31:25 steve Exp $"
+#ident "$Id: resolv.cc,v 1.10 2001/12/15 01:54:39 steve Exp $"
 #endif
 
 # include  "resolv.h"
 # include  "schedule.h"
+# include  <assert.h>
 
 /*
  * A signal value is unambiguous if the top 4 bits and the bottom 4
@@ -132,6 +133,17 @@ static unsigned blend(unsigned a, unsigned b)
       return res;
 }
 
+resolv_functor_s::resolv_functor_s(unsigned hiz_value)
+{
+      istr[0]=istr[1]=istr[2]=istr[3]=StX;
+      assert(hiz_value < 4);
+      hiz_ = hiz_value;
+}
+
+resolv_functor_s::~resolv_functor_s()
+{
+}
+
 /*
  * Resolve the strength values of the inputs, two at a time. Pairs of
  * inputs are resolved with the blend function, and the final value is
@@ -149,7 +161,7 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
 
       unsigned val;
       if (sval == HiZ) {
-	    val = 3;
+	    val = hiz_;
 
       } else switch (sval & 0x88) {
 	  case 0x00:
@@ -175,6 +187,9 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.10  2001/12/15 01:54:39  steve
+ *  Support tri0 and tri1 resolvers.
+ *
  * Revision 1.9  2001/12/06 03:31:25  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

@@ -19,21 +19,35 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.h,v 1.3 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: resolv.h,v 1.4 2001/12/15 01:54:39 steve Exp $"
 #endif
 
 # include  "functor.h"
 
+/*
+ * This functor type resolves its inputs using the verilog method of
+ * combining signals, and outputs that resolved value. If the result
+ * is HiZ, then drive the hiz_value instead. This supports tri0 and
+ * tri1.
+ */
 class resolv_functor_s: public functor_s {
 
     public:
-      resolv_functor_s() { istr[0]=istr[1]=istr[2]=istr[3]=StX; }
+      explicit resolv_functor_s(unsigned hiz_value);
+      ~resolv_functor_s();
+
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+    private:
       unsigned char istr[4];
+      unsigned hiz_;
 };
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.4  2001/12/15 01:54:39  steve
+ *  Support tri0 and tri1 resolvers.
+ *
  * Revision 1.3  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.
