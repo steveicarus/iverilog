@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.3 2003/03/06 00:27:54 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -28,6 +28,7 @@
 int tf_getlongtime(int *hightime)
 {
       s_vpi_time time;
+      time.type = vpiSimTime;
       vpi_get_time (0 /* NULL */, &time);
       *hightime = time.high;
       return time.low;
@@ -39,6 +40,9 @@ int tf_getlongsimtime(int *hightime) \
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.3  2003/03/06 00:27:54  steve
+ *  Fill in required fields when getting time.
+ *
  * Revision 1.2  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
