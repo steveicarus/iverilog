@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.107 2004/06/19 16:17:37 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.108 2004/06/30 03:07:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -251,6 +251,11 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
       struct vector_info lv;
       struct vector_info rv;
 
+      if ((ivl_expr_value(le) == IVL_VT_REAL)
+	  ||(ivl_expr_value(re) == IVL_VT_REAL))  {
+	    return draw_binary_expr_eq_real(exp);
+      }
+
       if ((ivl_expr_type(re) == IVL_EX_ULONG)
 	  && (0 == (ivl_expr_uvalue(re) & ~0xffff)))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
@@ -259,11 +264,6 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, 16))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
-
-      if ((ivl_expr_value(le) == IVL_VT_REAL)
-	  ||(ivl_expr_value(re) == IVL_VT_REAL))  {
-	    return draw_binary_expr_eq_real(exp);
-      }
 
       assert(ivl_expr_value(le) == IVL_VT_VECTOR);
       assert(ivl_expr_value(re) == IVL_VT_VECTOR);
@@ -1742,6 +1742,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */
       if (parm_count == 0) {
+	    assert(ivl_expr_value(exp) == IVL_VT_VECTOR);
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
 	    fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u;\n",
@@ -2136,6 +2137,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.108  2004/06/30 03:07:32  steve
+ *  Watch out for real compared to constant. Handle as real.
+ *
  * Revision 1.107  2004/06/19 16:17:37  steve
  *  Generate signed modulus if appropriate.
  *
