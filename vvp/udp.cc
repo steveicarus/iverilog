@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.7 2001/07/16 19:08:32 steve Exp $"
+#ident "$Id: udp.cc,v 1.8 2001/07/24 01:44:50 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -26,9 +26,7 @@
 #include "symbols.h"
 #include <assert.h>
 #include <malloc.h>
-
-static symbol_table_t udp_table;
-
+#include <stdio.h>
 
 void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
 {
@@ -61,6 +59,9 @@ unsigned vvp_udp_s::get(vvp_ipoint_t i, functor_t f)
       assert(0);
 }
 
+
+static symbol_table_t udp_table;
+
 struct vvp_udp_s *udp_create(char *label)
 {
   if (!udp_table)
@@ -89,149 +90,285 @@ struct vvp_udp_s *udp_find(char *label)
   return (struct vvp_udp_s *)v.ptr;
 }
 
+typedef unsigned int udp_vec_t;
+struct udp_table_entry_s 
+{
+  udp_vec_t not_0;          // all inputs that must not be 0
+  udp_vec_t not_1x;         // all inputs that bust not be 1 or x
+  unsigned char edge_idx;   // input index of the edge
+  unsigned char edge_type;  // permissible transitions. 0: no edge.
+  unsigned char out;        // new output, 0..2
+};
+
+enum edge_type_e 
+{
+  EDGE_0   = 0x01,
+  EDGE_1   = 0x02,
+  EDGE_x   = 0x0c,
+  EDGE_any = 0x0f,
+};
+
 unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 {
   functor_t fu = functor_index(uix);
 
   unsigned char ret = 2;
 
-  for (char **rptr = table; *rptr ; rptr++) 
-    {
-      char *row = *rptr;
+  unsigned edge_idx = 0;  // input index that changed
+  unsigned edge_type = 0; // input transition
 
-      if (sequ)
+  udp_vec_t invec = 0x0; // vector of 2-bit inputs
+
+  for (int i=0;  i < nin;  i+=4)
+    {
+      int idx = ipoint_input_index(uix, i);
+      functor_t pfun = functor_index(idx);
+
+      invec |= pfun->ival << (2*i);
+
+      unsigned char diff = pfun->ival ^ pfun->old_ival;
+      if (diff)
 	{
-	  char old_out = (fu->oval&3)["01xx"];
-	  if (  row[0]=='?' 
-	    ||  row[0]==old_out
-	    || (row[0]=='b' && old_out!='x')
-	    || (row[0]=='l' && old_out!='1')
-	    || (row[0]=='h' && old_out!='0') )
-	    row++;
-	  else
-	    continue;
+	  unsigned ii = 0;
+	  if (diff & 0x03) ii = 0;
+	  if (diff & 0x0c) ii = 1;
+	  if (diff & 0x30) ii = 2;
+	  if (diff & 0xc0) ii = 3;
+
+	  edge_idx = i+ii;
+
+	  unsigned old_in = (pfun->old_ival >> (2*ii)) & 3;
+	  edge_type = (1<<old_in);
 	}
 
-      int i;
+      pfun->old_ival = pfun->ival;
+    }
 
-      for (i=0;  i < nin;  i++, row++)
+  if (sequ)
+    {
+      invec <<= 2;
+      invec |= (fu->oval&3);
+    }
+
+  udp_vec_t inx  =  invec & 0xaaaaaaaaU; // all 'x'/'z'
+  udp_vec_t in01 =  ~(inx>>1);           // masks all 'x'/'z'
+  udp_vec_t in1x =  invec & in01;        // all 'x' and '1'
+  udp_vec_t in0  = ~invec & in01;        // all '0'
+
+  for (int ri=0;  ri < ntable;  ri++)
+    {
+      udp_table_entry_t row = table+ri;
+
+      if ((in1x & row->not_1x) || (in0 & row->not_0))
+	continue;
+
+      if (!row->edge_type)
 	{
-	  assert (*row);
-	  
-	  int idx = ipoint_input_index(uix, i);
-	  int port = ipoint_port(idx);
-	  functor_t pfun = functor_index(idx);
-	  
-	  char new_bit = ((pfun->ival >> (2*port))&3)["01xx"];
-
-	  if (    *row != new_bit  
-	      &&  *row != '?'
-	      && (*row != 'b' || new_bit == 'x')
-	      && (*row != 'l' || new_bit == '1')
-	      && (*row != 'h' || new_bit == '0') )
-	    {
-	      char old_bit = ((pfun->old_ival >> (2*port))&3)["01xx"];
-	      if (new_bit == old_bit)
-		break;
-
-	      switch (*row)
-		{
-		case '*':
-		  continue;
-		case '_':
-		  if (new_bit == '0')
-		    continue;
-		  break;
-		case '+':
-		  if (new_bit == '1')
-		    continue;
-		  break;
-		case '%':
-		  if (new_bit == 'x')
-		    continue;
-		  break;
-		case 'B':
-		  if (old_bit == 'x')
-		    continue;
-		  break;
-		case 'r':
-		  if (old_bit=='0' && new_bit=='1')
-		    continue;
-		  break;
-		case 'R':
-		  if (old_bit=='x' && new_bit=='1')
-		    continue;
-		  break;
-		case 'f':
-		  if (old_bit=='1' && new_bit=='0')
-		    continue;
-		  break;
-		case 'F':
-		  if (old_bit=='x' && new_bit=='0')
-		    continue;
-		  break;
-		case 'P':
-		  if (old_bit=='0')
-		    continue;
-		  break;
-		case 'p':
-		  if (old_bit=='0' || new_bit=='1')
-		    continue;
-		  break;
-		case 'N':
-		  if (old_bit=='1')
-		    continue;
-		  break;
-		case 'n':
-		  if (old_bit=='1' || new_bit=='0')
-		    continue;
-		  break;
-		case 'Q':
-		  if (old_bit=='0' && new_bit=='x')
-		    continue;
-		  break;
-		case 'M':
-		  if (old_bit=='1' && new_bit=='x')
-		    continue;
-		  break;
-		}
-	      break;
-	    }
+	  ret = row->out;
+	  break;
 	}
       
-      if (i == nin)
+      if (row->edge_idx != edge_idx)
+	continue;
+
+      if (row->edge_type & edge_type)
 	{
-	  assert(*row);
-	  if (*row == '-')
-	    ret = fu->oval;
-	  else 
-	    switch (*row) 
-	      {
-	      case '0':
-		ret = 0;
-		break;
-	      case '1':
-		ret = 1;
-		break;
-	      default:
-		ret = 2;
-		break;
-	      }
+	  ret = row->out;
 	  break;
 	}
     }
- 
-  for (int i=0;  i < nin;  i+=4)
+
+  if (ret>2)
+    ret = fu->oval;
+
+  return ret;
+}
+
+void vvp_udp_s::compile_table(char **tab)
+{
+  ntable = 0;
+  for (char **ss = tab; *ss; ss++)
+    ntable++;
+  table = new struct udp_table_entry_s[ntable];
+  for (unsigned i = 0; i < ntable; i++)
     {
-      functor_t fu = functor_index(ipoint_input_index(uix, i));
-      fu->old_ival = fu->ival;
+      compile_row_(&table[i], tab[i]);
+      free(tab[i]);
+    }
+  free(tab);
+}
+
+void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
+{
+  row->not_0  = 0;     // all inputs that must not be 0
+  row->not_1x = 0;     // all inputs that bust not be 1 or x
+  row->edge_idx = 0;   // input index of the edge
+  row->edge_type = 0;  // permissible transitions. 0: no edge.
+
+  char *s = rchr;
+  for (unsigned i = (sequ ? 0 : 1); i <= nin; i++)
+    {
+      char c = *s;
+      s++;
+
+      unsigned char n0 = 0;
+      unsigned char n1x = 0;
+      unsigned char edge = 0;
+
+      switch (c)
+	{
+	default:
+	  fprintf(stderr, "vvp: Illegal character (%d) in UDP table\n", c);
+	  assert(0);
+	  break;
+
+	case '?':
+	  break;
+	case '0':
+	  n1x = 3; // 1, x not allowed
+	  break;
+	case '1':
+	  n0  = 1; // 0 not allowed
+	  n1x = 2; // x not allowed
+	  break;
+	case 'x':
+	  n0  = 1; // 0 not allowed
+	  n1x = 1; // 1 not allowed
+	  break;
+	case 'b':
+	  n1x = 2; // x not allowed
+	  break;
+	case 'l':
+	  n1x = 1; // 1 not allowed
+	  break;
+	case 'h':
+	  n0 = 1;  // 0 not allowed
+	  break;
+
+	case '*':
+	  edge = EDGE_any;
+	  break;
+
+	case '+':
+	  n0  = 1; // 0 not allowed
+	  n1x = 2; // x not allowed
+	  edge = EDGE_any;
+	  break;
+	case '_':
+	  n1x = 3; // 1, x not allowed
+	  edge = EDGE_any;
+	  break;
+	case '%':
+	  n0  = 1; // 0 not allowed
+	  n1x = 1; // 1 not allowed
+	  edge = EDGE_any;
+	  break;
+	  
+	case 'N':
+	  edge = EDGE_1;
+	  break;
+	case 'P':
+	  edge = EDGE_0;
+	  break;
+	case 'B':
+	  edge = EDGE_x;
+	  break;
+
+	case 'r':
+	  n0  = 1; // 0 not allowed
+	  n1x = 2; // x not allowed
+	  edge = EDGE_0;
+	  break;
+	case 'R':
+	  n0  = 1; // 0 not allowed
+	  n1x = 2; // x not allowed
+	  edge = EDGE_x;
+	  break;
+	case 'f':
+	  n1x = 3; // 1, x not allowed
+	  edge = EDGE_1;
+	  break;
+	case 'F':
+	  n1x = 3; // 1, x not allowed
+	  edge = EDGE_x;
+	  break;
+	case 'Q':
+	  n0  = 1; // 0 not allowed
+	  n1x = 1; // 1 not allowed
+	  edge = EDGE_0;
+	  break;
+	case 'M':
+	  n0  = 1; // 0 not allowed
+	  n1x = 1; // 1 not allowed
+	  edge = EDGE_1;
+	  break;
+
+	case 'n':
+	  n1x = 1; // 1 not allowed
+	  edge = EDGE_1 | EDGE_x;
+	  break;
+	case 'p':
+	  n0 = 1; // 0 not allowed
+	  edge = EDGE_0 | EDGE_x;
+	  break;
+	case 'v':
+	  n1x = 2; // x not allowed
+	  edge = EDGE_0 | EDGE_1;
+	  break;
+	}
+      
+      if (edge)
+	{
+	  if (!sequ)
+	    {
+	      fprintf(stderr, "vvp: edge in compinatorial UDP\n");
+	      assert(0);
+	    }
+	  if (!i)
+	    {
+	      fprintf(stderr, "vvp: edge in UDP output state\n");
+	      assert(0);
+	    }
+	  row->edge_idx = i-1;
+	  if (row->edge_type)
+	    {
+	      fprintf(stderr, "vvp: multiple edges in UDP table row\n");
+	      assert(0);
+	    }
+	  row->edge_type = edge;
+	}
+
+      int j = sequ ? i : i-1;
+      row->not_0  |= n0  << (2*j);
+      row->not_1x |= n1x << (2*j);
+    }
+
+  switch (*s)
+    {
+    case '0':
+      row->out = 0;
+      break;
+    case '1':
+      row->out = 1;
+      break;
+    case 'x':
+      row->out = 2;
+      break;
+    case '-':
+      row->out = 4;
+      break;
+    default:
+      fprintf(stderr, "vvp: illegal character (%d) in udp output spec\n", *s);
+      assert(0);
     }
   
-  return ret;
 }
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.8  2001/07/24 01:44:50  steve
+ *  Fast UDP tables (Stephan Boettcher)
+ *
  * Revision 1.7  2001/07/16 19:08:32  steve
  *  Schedule instead of propagating UDP output. (Stephan Boettcher)
  *
