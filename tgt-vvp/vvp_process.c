@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.95 2004/12/11 05:43:30 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.96 2004/12/17 04:46:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -819,17 +819,25 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
       return 0;
 }
 
-static int show_stmt_cassign(ivl_statement_t net)
+static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 {
-      ivl_expr_t rval;
-      struct vector_info rvec;
+      unsigned lidx;
       unsigned roff = 0;
-      unsigned lidx = 0;
 
-      rval = ivl_stmt_rval(net);
-      assert(rval);
+      const char*command_name;
 
-      rvec = draw_eval_expr(rval, STUFF_OK_47);
+      switch (ivl_statement_type(net)) {
+	  case IVL_ST_CASSIGN:
+	    command_name = "%cassign/v";
+	    break;
+	  case IVL_ST_FORCE:
+	    command_name = "%force/v";
+	    break;
+	  default:
+	    command_name = "ERROR";
+	    assert(0);
+	    break;
+      }
 
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ; lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
@@ -843,17 +851,33 @@ static int show_stmt_cassign(ivl_statement_t net)
 	    use_wid = ivl_signal_width(lsig);
 	    assert(roff + use_wid <= rvec.wid);
 
-	    fprintf(vvp_out, "  %%cassign/v V_%s, %u, %u;\n",
+	    fprintf(vvp_out, "  %s V_%s, %u, %u;\n", command_name,
 		    vvp_signal_label(lsig), rvec.base+roff, use_wid);
 
 	    if (rvec.base >= 4)
 		  roff += use_wid;
       }
+}
 
-	/* FIXME: The above assumes that the expression is a constant
-	   value to be assigned to the target. If it is not, then we
-	   will need to generate a thread or netlist to deal with the
-	   expression and repetitively assign to the target. */
+static int show_stmt_cassign(ivl_statement_t net)
+{
+      ivl_expr_t rval;
+      struct vector_info rvec;
+
+      rval = ivl_stmt_rval(net);
+      assert(rval);
+
+      rvec = draw_eval_expr(rval, STUFF_OK_47);
+
+	/* Write out initial continuous assign instructions to assign
+	   the expression value to the l-value. */
+      force_vector_to_lval(net, rvec);
+
+	/* FIXME: The above, left as is, assumes that the expression
+	   is a constant value to be assigned to the target. If it is
+	   not, then we will need to generate a thread or netlist to
+	   deal with the expression and repetitively assign to the
+	   target. */
 
       return 0;
 }
@@ -998,37 +1022,24 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_stmt_force(ivl_statement_t net)
 {
-      ivl_lval_t lval;
-      ivl_signal_t lsig;
-      unsigned idx;
-      static unsigned force_functor_label = 0;
-      char*tmp_label;
+      ivl_expr_t rval;
+      struct vector_info rvec;
 
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
+      rval = ivl_stmt_rval(net);
+      assert(rval);
 
-      lsig = ivl_lval_sig(lval);
-      assert(lsig != 0);
-      assert(ivl_lval_mux(lval) == 0);
-      assert(ivl_lval_part_off(lval) == 0);
-#if 0
-      force_functor_label += 1;
-      tmp_label = strdup(vvp_signal_label(lsig));
-      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    fprintf(vvp_out, "f_%u.%u .force V_%s[%u], %s;\n",
-		    force_functor_label, idx,
-		    tmp_label, idx,
-		    draw_net_input(ivl_stmt_nexus(net, idx)));
-      }
-      free(tmp_label);
+      rvec = draw_eval_expr(rval, STUFF_OK_47);
 
-      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    fprintf(vvp_out, "    %%force f_%u.%u, 1;\n",
-		    force_functor_label, idx);
-      }
-#else
-      fprintf(stderr, "XXXX I forgot how to implement %%force\n");
-#endif
+	/* Write out initial continuous assign instructions to assign
+	   the expression value to the l-value. */
+      force_vector_to_lval(net, rvec);
+
+	/* FIXME: The above, left as is, assumes that the expression
+	   is a constant value to be assigned to the target. If it is
+	   not, then we will need to generate a thread or netlist to
+	   deal with the expression and repetitively assign to the
+	   target. */
+
       return 0;
 }
 
@@ -1114,39 +1125,32 @@ static int show_stmt_noop(ivl_statement_t net)
 
 static int show_stmt_release(ivl_statement_t net)
 {
-      ivl_lval_t lval;
-      ivl_signal_t lsig;
-      unsigned idx;
+      unsigned lidx;
 
-	/* If there are no l-vals (the target signal has been elided)
-	   then turn the release into a no-op. In other words, we are
-	   done before we start. */
-      if (ivl_stmt_lvals(net) == 0)
-	    return 0;
-#if 0
-      assert(ivl_stmt_lvals(net) == 1);
-      lval = ivl_stmt_lval(net, 0);
+      for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
+	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
+	    ivl_signal_t lsig = ivl_lval_sig(lval);
+	    const char*opcode = 0;
 
-      lsig = ivl_lval_sig(lval);
-      assert(lsig != 0);
-      assert(ivl_lval_mux(lval) == 0);
-      assert(ivl_lval_part_off(lval) == 0);
+	    assert(lsig != 0);
+	    assert(ivl_lval_mux(lval) == 0);
+	    assert(ivl_lval_part_off(lval) == 0);
 
-	/* On release, reg variables hold the value that was forced on
-	   to them. */
-      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    if (ivl_signal_type(lsig) == IVL_SIT_REG) {
-		  fprintf(vvp_out, "    %%load 4, V_%s[%u];\n",
-			  vvp_signal_label(lsig), idx);
-		  fprintf(vvp_out, "    %%set V_%s[%u], 4;\n",
-			  vvp_signal_label(lsig), idx);
+	    switch (ivl_signal_type(lsig)) {
+		case IVL_SIT_REG:
+		  opcode = "reg";
+		  break;
+		default:
+		  opcode = "net";
+		  break;
 	    }
-	    fprintf(vvp_out, "    %%release V_%s[%u];\n",
-		    vvp_signal_label(lsig), idx);
+
+	      /* Generate the appropriate release statement for this
+		 l-value. */
+	    fprintf(vvp_out, "  %%release/%s V_%s;\n",
+		    opcode, vvp_signal_label(lsig));
       }
-#else
-      fprintf(stderr, "XXXX I forgot how to implement %%release\n");
-#endif
+
       return 0;
 }
 
@@ -1529,6 +1533,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.96  2004/12/17 04:46:40  steve
+ *  Implement release functionality.
+ *
  * Revision 1.95  2004/12/11 05:43:30  steve
  *  cassign and deassign handle concatenated l-values.
  *
