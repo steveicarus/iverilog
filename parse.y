@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.155 2002/06/11 03:34:33 steve Exp $"
+#ident "$Id: parse.y,v 1.156 2002/06/11 13:58:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2151,6 +2151,10 @@ spec_reference_event
 	| K_negedge expr_primary K_TAND expression
 		{ delete $2;
 		  delete $4;
+		}
+	| expr_primary K_TAND expression
+		{ delete $1;
+		  delete $3;
 		}
         | expr_primary
 		{ delete $1; }
