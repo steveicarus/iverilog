@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.218 2003/08/15 02:23:52 steve Exp $"
+#ident "$Id: netlist.cc,v 1.219 2003/09/03 23:32:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -613,6 +613,11 @@ Link& NetFF::pin_Sload()
 }
 
 Link& NetFF::pin_Sset()
+{
+      return pin(6);
+}
+
+const Link& NetFF::pin_Sset() const
 {
       return pin(6);
 }
@@ -2194,6 +2199,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.219  2003/09/03 23:32:10  steve
+ *  Oops, missing pin_Sset implementation.
+ *
  * Revision 1.218  2003/08/15 02:23:52  steve
  *  Add synthesis support for synchronous reset.
  *
