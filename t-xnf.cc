@@ -17,12 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.25 2000/04/23 21:15:07 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.26 2000/04/23 23:03:13 steve Exp $"
 #endif
 
 /* XNF BACKEND
  * This target supports generating Xilinx Netlist Format netlists for
  * use by Xilinx tools, and other tools that accepts Xilinx designs.
+ *
+ * The code generator automatically detects ports to top level modules
+ * and generates SIG records that make the XNF useable as a schematic.
  *
  * FLAGS
  * The XNF backend uses the following flags from the command line to
@@ -323,6 +326,37 @@ void target_xnf::memory(ostream&, const NetMemory*)
  */
 void target_xnf::signal(ostream&os, const NetNet*net)
 {
+
+	/* Look for signals that are ports to the root module. If they
+	   are, the write a SIG record and generate a pin name so that
+	   this module can be used as a macro. */
+
+      if (const NetScope*scope = net->scope()) do {
+
+	    if (scope->parent())
+		  break;
+
+	    if (net->port_type() == NetNet::NOT_A_PORT)
+		  break;
+
+	    string mname = mangle(net->name());
+	    string pname = mname.substr(mname.find('/')+1, mname.length());
+
+	    if (net->pin_count() == 1) {
+		  os << "SIG, " << mangle(net->name()) << ", PIN="
+		     << pname << endl;
+
+	    } else for (unsigned idx = 0; idx < net->pin_count(); idx += 1) {
+		  os << "SIG, " << mangle(net->name()) << "<" << idx
+		     << ">, PIN=" << pname << idx << endl;
+	    }
+
+      } while (0);
+
+
+	/* Now look to see if a PAD attribute is attached, and if so
+	   write out PAD information to the XNF and the ncf files. */
+
       string pad = net->attribute("PAD");
       if (pad == "")
 	    return;
@@ -853,6 +887,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.26  2000/04/23 23:03:13  steve
+ *  automatically generate macro interface code.
+ *
  * Revision 1.25  2000/04/23 21:15:07  steve
  *  Emit code for the bufif devices.
  *

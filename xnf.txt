@@ -22,6 +22,32 @@ and the prog.ncf netlist constraints file. The verilog program
 arranges to call the preprocessor and the ivl compiler with all the
 correct switches for generating XNF.
 
+GENERATING XNF MACROS
+
+Icarus Verilog can be used to generate XNF implementations of devices
+that are written in Verilog and used by schematic editors such as
+OrCAD. The trick here is that the code generator automatically notices
+ports to the root module and generates the PIN= attributes needed so
+that external tools can link to the generated XNF.
+
+Icarus Verilog chooses a name for the pin. The name it chooses is the
+port name of the module. If the port is a vector, a pin is generated
+for all the bits of the vector with the bit number appended. For
+example:
+
+	module foo(in);
+	input [3:0] in;
+
+causes the single bit ports ``in0'' through ``in3'' be
+generated. Internally, the XNF file uses the bussed names instead of
+the pin name.
+
+The implication of this is that there is a chance of name collision
+with the generated XNF macro if the port names are chosen badly. It is
+best to not end a port name with decimal digits, as that can cause
+trouble at link time. Also, XNF is not case sensitive and that should
+be accounted for as well.
+
 XNF PADS IN VERILOG SOURCE
 
 You can assign wires to pads using the Icarus Verilog $attribute
@@ -219,6 +245,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.11  2000/04/23 23:03:13  steve
+  automatically generate macro interface code.
+
  Revision 1.10  1999/12/05 19:30:43  steve
   Generate XNF RAMS from synthesized memories.
 
