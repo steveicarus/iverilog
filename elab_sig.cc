@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.15 2001/10/31 03:11:15 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.16 2001/11/01 05:21:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -85,6 +85,16 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 			     << "Port " << pp->expr[cc]->name() << " ("
 			     << (idx+1) << ") of module " << name_
 			     << " is not declared within module." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		  if ((*wt).second->get_port_type() == NetNet::NOT_A_PORT) {
+			cerr << get_line() << ": error: "
+			     << "Port " << pp->expr[cc]->name() << " ("
+			     << (idx+1) << ") of module " << name_
+			     << " has no direction declaration."
+			     << endl;
 			des->errors += 1;
 		  }
 	    }
@@ -466,6 +476,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.16  2001/11/01 05:21:26  steve
+ *  Catch ports that have no direction.
+ *
  * Revision 1.15  2001/10/31 03:11:15  steve
  *  detect module ports not declared within the module.
  *
