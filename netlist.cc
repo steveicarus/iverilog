@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.202 2002/11/06 02:25:13 steve Exp $"
+#ident "$Id: netlist.cc,v 1.203 2002/11/09 00:25:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1707,12 +1707,6 @@ const NetScope* NetEUFunc::func() const
       return func_;
 }
 
-NetEUFunc* NetEUFunc::dup_expr() const
-{
-      assert(0);
-      return 0;
-}
-
 NetUTask::NetUTask(NetScope*def)
 : task_(def)
 {
@@ -2292,6 +2286,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.203  2002/11/09 00:25:27  steve
+ *  Add dup_expr for user defined function calls.
+ *
  * Revision 1.202  2002/11/06 02:25:13  steve
  *  No need to keep excess width from an
  *  unsigned constant value, if it can

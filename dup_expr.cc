@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.8 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.9 2002/11/09 00:25:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -65,6 +65,21 @@ NetETernary* NetETernary::dup_expr() const
       return tmp;
 }
 
+NetEUFunc* NetEUFunc::dup_expr() const
+{
+      NetEUFunc*tmp;
+      svector<NetExpr*> tmp_parms (parms_.count());
+
+      for (unsigned idx = 0 ;  idx < tmp_parms.count() ;  idx += 1) {
+	    assert(parms_[idx]);
+	    tmp_parms[idx] = parms_[idx]->dup_expr();
+      }
+
+      tmp = new NetEUFunc(func_, result_->dup_expr(), tmp_parms);
+
+      return tmp;
+}
+
 NetEUnary* NetEUnary::dup_expr() const
 {
       NetEUnary*tmp = new NetEUnary(op_, expr_->dup_expr());
@@ -74,6 +89,9 @@ NetEUnary* NetEUnary::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.9  2002/11/09 00:25:27  steve
+ *  Add dup_expr for user defined function calls.
+ *
  * Revision 1.8  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
@@ -97,12 +115,5 @@ NetEUnary* NetEUnary::dup_expr() const
  * Revision 1.3  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.
- *
- * Revision 1.2  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.1  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
  */
 
