@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.36 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.37 2001/10/30 02:52:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -388,6 +388,11 @@ void dll_target::proc_case(const NetCase*net)
       stmt_cur_ = save_cur;
 }
 
+bool dll_target::proc_cassign(const NetCAssign*net)
+{
+      return false;
+}
+
 void dll_target::proc_condit(const NetCondit*net)
 {
       assert(stmt_cur_);
@@ -411,6 +416,11 @@ void dll_target::proc_condit(const NetCondit*net)
       net->emit_recurse_else(this);
 
       stmt_cur_ = save_cur_;
+}
+
+bool dll_target::proc_deassign(const NetDeassign*net)
+{
+      return false;
 }
 
 bool dll_target::proc_delay(const NetPDelay*net)
@@ -669,6 +679,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.37  2001/10/30 02:52:07  steve
+ *  Stubs for assign/deassign for t-dll.
+ *
  * Revision 1.36  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.68 2001/10/22 02:05:21 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.69 2001/10/30 02:52:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -648,6 +648,11 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       obj->name_ = strdup(net->name());
 
       scope_add_logic(scope, obj);
+}
+
+bool dll_target::net_cassign(const NetCAssign*)
+{
+      return false;
 }
 
 void dll_target::udp(const NetUDP*net)
@@ -1656,6 +1661,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.69  2001/10/30 02:52:07  steve
+ *  Stubs for assign/deassign for t-dll.
+ *
  * Revision 1.68  2001/10/22 02:05:21  steve
  *  Handle activating tasks in another root.
  *

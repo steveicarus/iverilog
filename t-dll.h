@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.66 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: t-dll.h,v 1.67 2001/10/30 02:52:07 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -77,6 +77,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_mux(const NetMux*);
       void lpm_ram_dq(const NetRamDq*);
       void net_assign(const NetAssign_*);
+      bool net_cassign(const NetCAssign*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
 
@@ -102,7 +103,9 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_assign_mem_nb(const NetAssignMemNB*net);
       bool proc_block(const NetBlock*);
       void proc_case(const NetCase*);
+      bool proc_cassign(const NetCAssign*);
       void proc_condit(const NetCondit*);
+      bool proc_deassign(const NetDeassign*);
       bool proc_delay(const NetPDelay*);
       bool proc_disable(const NetDisable*);
       void proc_forever(const NetForever*);
@@ -572,6 +575,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.67  2001/10/30 02:52:07  steve
+ *  Stubs for assign/deassign for t-dll.
+ *
  * Revision 1.66  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *
