@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.26 2000/05/11 23:37:26 steve Exp $"
+#ident "$Id: Statement.h,v 1.27 2000/07/26 05:08:07 steve Exp $"
 #endif
 
 # include  <string>
@@ -286,6 +286,23 @@ class PDelayStatement  : public Statement {
       Statement*statement_;
 };
 
+
+/*
+ * This represends the parsing of a disable <scope> statement.
+ */
+class PDisable  : public Statement {
+
+    public:
+      explicit PDisable(const string&sc);
+      ~PDisable();
+
+      virtual void dump(ostream&out, unsigned ind) const;
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+
+    private:
+      string scope_;
+};
+
 /*
  * The event statement represents the event delay in behavioral
  * code. It comes from such things as:
@@ -437,6 +454,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.27  2000/07/26 05:08:07  steve
+ *  Parse disable statements to pform.
+ *
  * Revision 1.26  2000/05/11 23:37:26  steve
  *  Add support for procedural continuous assignment.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.102 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: parse.y,v 1.103 2000/07/26 05:08:07 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1901,18 +1901,22 @@ statement
 		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
+		  delete $3;
 		  $$ = tmp;
 		}
 
-	| K_disable IDENTIFIER ';'
-		{ yyerror(@1, "sorry: disable statements not supported.");
+	| K_disable identifier ';'
+		{ PDisable*tmp = new PDisable($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $2;
-		  $$ = 0;
+		  $$ = tmp;
 		}
 	| K_TRIGGER IDENTIFIER ';'
 		{ PTrigger*tmp = new PTrigger($2);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
+		  delete $2;
 		  $$ = tmp;
 		}
 	| K_forever statement

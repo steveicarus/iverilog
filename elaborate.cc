@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.179 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.180 2000/07/26 05:08:07 steve Exp $"
 #endif
 
 /*
@@ -698,9 +698,10 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 
 NetProc* Statement::elaborate(Design*des, const string&path) const
 {
-      cerr << "internal error: elaborate: What kind of statement? " <<
+      cerr << get_line() << ": internal error: elaborate: What kind of statement? " <<
 	    typeid(*this).name() << endl;
       NetProc*cur = new NetProc;
+      des->errors += 1;
       return cur;
 }
 
@@ -1630,6 +1631,17 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 }
 
 /*
+ * The disable statement is not yet supported.
+ */
+NetProc* PDisable::elaborate(Design*des, const string&path) const
+{
+      cerr << get_line() << ": sorry: disable not supported " << endl;
+      NetProc*cur = new NetProc;
+      des->errors += 1;
+      return cur;
+}
+
+/*
  * An event statement is an event delay of some sort, attached to a
  * statement. Some Verilog examples are:
  *
@@ -2477,6 +2489,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.180  2000/07/26 05:08:07  steve
+ *  Parse disable statements to pform.
+ *
  * Revision 1.179  2000/07/22 22:09:03  steve
  *  Parse and elaborate timescale to scopes.
  *

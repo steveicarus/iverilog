@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.21 2000/05/11 23:37:26 steve Exp $"
+#ident "$Id: Statement.cc,v 1.22 2000/07/26 05:08:07 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -165,6 +165,14 @@ PDelayStatement::~PDelayStatement()
 {
 }
 
+PDisable::PDisable(const string&sc)
+: scope_(sc)
+{
+}
+
+PDisable::~PDisable()
+{
+}
 
 PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
 : expr_(ee), statement_(0)
@@ -252,6 +260,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.22  2000/07/26 05:08:07  steve
+ *  Parse disable statements to pform.
+ *
  * Revision 1.21  2000/05/11 23:37:26  steve
  *  Add support for procedural continuous assignment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.60 2000/05/23 16:03:13 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.61 2000/07/26 05:08:07 steve Exp $"
 #endif
 
 /*
@@ -509,6 +509,12 @@ void PDelayStatement::dump(ostream&out, unsigned ind) const
       }
 }
 
+void PDisable::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "disable " << scope_ << "; /* "
+	  << get_line() << " */" << endl;
+}
+
 void PEventStatement::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "@(" << *(expr_[0]);
@@ -774,6 +780,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.61  2000/07/26 05:08:07  steve
+ *  Parse disable statements to pform.
+ *
  * Revision 1.60  2000/05/23 16:03:13  steve
  *  Better parsing of expressions lists will empty expressoins.
  *
