@@ -18,9 +18,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.14 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.15 2005/02/12 06:13:22 steve Exp $"
 
+# include  <stdio.h>
 # include  <assert.h>
+
 
 /* Data types */
 class  vvp_scaler_t;
@@ -171,6 +173,8 @@ class vvp_scaler_t {
 	// Get the vvp_bit4_t version of the value
       vvp_bit4_t value() const;
 
+      void dump(FILE*fd);
+
     private:
       unsigned char value_;
 };
@@ -203,6 +207,8 @@ class vvp_vector8_t {
       unsigned size() const { return size_; }
       vvp_scaler_t value(unsigned idx) const;
       void set_bit(unsigned idx, vvp_scaler_t val);
+
+      void dump(FILE*fd);
 
       vvp_vector8_t(const vvp_vector8_t&that);
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
@@ -567,6 +573,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.15  2005/02/12 06:13:22  steve
+ *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
+ *
  * Revision 1.14  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

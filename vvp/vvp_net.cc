@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.15 2005/02/10 04:54:41 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.16 2005/02/12 06:13:22 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -549,6 +549,17 @@ void vvp_vector8_t::set_bit(unsigned idx, vvp_scaler_t val)
       bits_[idx] = val;
 }
 
+void vvp_vector8_t::dump(FILE*out)
+{
+      fprintf(out, "C8<");
+      for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
+	    vvp_scaler_t tmp = value(size()-idx-1);
+	    tmp.dump(out);
+      }
+
+      fprintf(out,">");
+}
+
 vvp_net_fun_t::vvp_net_fun_t()
 {
 }
@@ -768,8 +779,8 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
 # define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
 #else
-# define STREN1(v) ((v)&0xf0)
-# define STREN0(v) ((v)&0x0f)
+# define STREN1(v) (((v)&0x70) >> 4)
+# define STREN0(v) ((v)&0x07)
 #endif
 
 vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str)
@@ -785,6 +796,7 @@ vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str)
 	    break;
 	  case BIT4_X:
 	    value_ = str | (str<<4) | 0x80;
+	    break;
 	  case BIT4_Z:
 	    value_ = 0;
 	    break;
@@ -829,6 +841,25 @@ vvp_bit4_t vvp_scaler_t::value() const
 	    return BIT4_1;
 	  default:
 	    return BIT4_X;
+      }
+}
+
+void vvp_scaler_t::dump(FILE*out)
+{
+      fprintf(out, "%01u%01u", STREN0(value_), STREN1(value_));
+      switch (value()) {
+	  case BIT4_0:
+	    fprintf(out, "0");
+	    break;
+	  case BIT4_1:
+	    fprintf(out, "1");
+	    break;
+	  case BIT4_X:
+	    fprintf(out, "x");
+	    break;
+	  case BIT4_Z:
+	    fprintf(out, "z");
+	    break;
       }
 }
 
@@ -1067,6 +1098,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.16  2005/02/12 06:13:22  steve
+ *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
+ *
  * Revision 1.15  2005/02/10 04:54:41  steve
  *  Simplify vvp_scaler strength representation.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.127 2005/01/28 05:34:25 steve Exp $"
+#ident "$Id: vthread.cc,v 1.128 2005/02/12 06:13:22 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1480,16 +1480,16 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
       for (unsigned idx = 0 ;  idx < cp->bit_idx[1] ;  idx += 1) {
-	    unsigned val = thr_get_bit(thr, cp->bit_idx[0]+idx);
+	    vvp_bit4_t val = thr_get_bit(thr, cp->bit_idx[0]+idx);
 	    switch (val) {
-		case 0:
-		  val = 1;
+		case BIT4_0:
+		  val = BIT4_1;
 		  break;
-		case 1:
-		  val = 0;
+		case BIT4_1:
+		  val = BIT4_0;
 		  break;
 		default:
-		  val = 2;
+		  val = BIT4_X;
 		  break;
 	    }
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, val);
@@ -3067,6 +3067,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.128  2005/02/12 06:13:22  steve
+ *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
+ *
  * Revision 1.127  2005/01/28 05:34:25  steve
  *  Add vector4 implementation of .arith/mult.
  *
