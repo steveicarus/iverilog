@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.85 2002/11/21 22:42:48 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.86 2002/11/22 00:01:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -666,6 +666,19 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 
 	  case 'l': /* << (left shift) */
 	    lv = draw_eval_expr_wid(le, wid, 0);
+
+	      /* shifting 0 gets 0. */
+	    if (lv.base == 0)
+		  break;
+
+	    if (lv.base < 4) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(lv.wid);
+		  tmp.wid = lv.wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, lv.base, lv.wid);
+		  lv = tmp;
+	    }
 	    fprintf(vvp_out, "    %%shiftl/i0  %u, %u;\n", lv.base, lv.wid);
 	    break;
 
@@ -679,6 +692,19 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 		  lv = draw_eval_expr_wid(le, wid, 0);
 	    } else {
 		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
+	    }
+
+	      /* shifting 0 gets 0. */
+	    if (lv.base == 0)
+		  break;
+
+	    if (lv.base < 4) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(lv.wid);
+		  tmp.wid = lv.wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, lv.base, lv.wid);
+		  lv = tmp;
 	    }
 	    fprintf(vvp_out, "    %%shiftr/i0  %u, %u;\n", lv.base, lv.wid);
 	    break;
@@ -1937,6 +1963,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.86  2002/11/22 00:01:50  steve
+ *  Careful of left operands to shift that are constant.
+ *
  * Revision 1.85  2002/11/21 22:42:48  steve
  *  Allow right values of right shift to shift in.
  *

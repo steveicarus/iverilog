@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.94 2002/11/21 22:43:14 steve Exp $"
+#ident "$Id: vthread.cc,v 1.95 2002/11/22 00:01:50 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2221,6 +2221,8 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->number;
       unsigned long shift = thr->index[0];
 
+      assert(base >= 4);
+
       if (shift >= wid) {
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  thr_put_bit(thr, base+idx, 0);
@@ -2494,6 +2496,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.95  2002/11/22 00:01:50  steve
+ *  Careful of left operands to shift that are constant.
+ *
  * Revision 1.94  2002/11/21 22:43:14  steve
  *  %set/x0 instruction to support bounds checking.
  *
