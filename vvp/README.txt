@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.23 2001/05/02 23:16:50 steve Exp $
+ *  $Id: README.txt,v 1.24 2001/05/08 23:58:43 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -100,6 +100,10 @@ value is passed around as run-time behavior. If the inputs have C<?>
 symbols, then the inputs are initialized to the specified bit value,
 and if this causes the output to be something other then x, a
 propagation event is created to be executed at the start of run time.
+
+The strengths of inputs are ignored by functors, and the output has
+fixed drive0 and drive1 strengths. So strength information is
+typically lost as it passes through functors.
 
 Almost all of the structural aspects of a simulation can be
 represented by functors, which perform the very basic task of
@@ -379,6 +383,17 @@ an event or expression in the Verilog) then this form can be used:
 In this case, the symbols list all the events that are to be combined
 to trigger this event. Only one of the input events needs to trigger
 to make this one go.
+
+
+RESOLVER STATEMENTS:
+
+Resolver statements are functors with 4 inputs, but their job is to
+calculate a resolved output using strength resolution. The type of the
+functor is used to select a specific resolution function.
+
+	<label> .resolv/tri  <symbols_list>;
+	<label> .resolv/tri0 <symbols_list>;
+	<label> .resolv/tri1 <symbols_list>;
 
 
 THREAD STATEMENTS:
