@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.49 1999/07/18 05:52:47 steve Exp $"
+#ident "$Id: netlist.h,v 1.50 1999/07/18 21:17:50 steve Exp $"
 #endif
 
 /*
@@ -581,6 +581,7 @@ class NetAssign  : public NetAssign_ {
       explicit NetAssign(const string&, Design*des, unsigned w, NetExpr*rv);
       ~NetAssign();
 
+      NetExpr*rval() { return rval_; }
       const NetExpr*rval() const { return rval_; }
 
       void find_lval_range(const NetNet*&net, unsigned&msb,
@@ -715,8 +716,14 @@ class NetCondit  : public NetProc {
 
     public:
       explicit NetCondit(NetExpr*ex, NetProc*i, NetProc*e);
+      ~NetCondit();
 
-      const NetExpr*expr() const { return expr_; }
+      const NetExpr*expr() const;
+      NetExpr*expr();
+
+      NetProc* if_clause();
+      NetProc* else_clause();
+
       void emit_recurse_if(ostream&, struct target_t*) const;
       void emit_recurse_else(ostream&, struct target_t*) const;
 
@@ -783,6 +790,7 @@ class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
       ~NetPEvent();
 
       string name() const { return name_; }
+      NetProc* statement();
       const NetProc* statement() const;
 
       virtual void emit_proc(ostream&, struct target_t*) const;
@@ -949,11 +957,12 @@ class NetProcTop  : public LineInfo {
     public:
       enum Type { KINITIAL, KALWAYS };
 
-      NetProcTop(Type t, NetProc*st);
+      NetProcTop(Type t, class NetProc*st);
       ~NetProcTop();
 
       Type type() const { return type_; }
-      const NetProc*statement() const { return statement_; }
+      NetProc*statement();
+      const NetProc*statement() const;
 
       void dump(ostream&, unsigned ind) const;
       void emit(ostream&, struct target_t*tgt) const;
@@ -1274,10 +1283,6 @@ class Design {
       void add_node(NetNode*);
       void del_node(NetNode*);
 
-	// ESIGNALS
-      NetESignal* get_esignal(NetNet*net);
-      void set_esignal(NetESignal*sig);
-
 	// PROCESSES
       void add_process(NetProcTop*);
       void delete_process(NetProcTop*);
@@ -1321,9 +1326,6 @@ class Design {
       NetProcTop*procs_idx_;
 
       map<string,string> flags_;
-
-	// Use this map to prevent duplicate signals.
-      map<string,NetESignal*> esigs_;
 
       unsigned lcounter_;
 
@@ -1374,6 +1376,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.50  1999/07/18 21:17:50  steve
+ *  Add support for CE input to XNF DFF, and do
+ *  complete cleanup of replaced design nodes.
+ *
  * Revision 1.49  1999/07/18 05:52:47  steve
  *  xnfsyn generates DFF objects for XNF output, and
  *  properly rewrites the Design netlist in the process.

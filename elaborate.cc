@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.57 1999/07/17 19:50:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.58 1999/07/18 21:17:50 steve Exp $"
 #endif
 
 /*
@@ -987,7 +987,6 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 			connect(tmp->pin(idx), net->pin(idx+lsv));
 
 		  des->add_node(tmp);
-		  des->set_esignal(tmp);
 		  return tmp;
 	    }
 
@@ -1005,11 +1004,11 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 		  connect(tmp->pin(0), net->pin(msv));
 
 		  des->add_node(tmp);
-		  des->set_esignal(tmp);
 		  return tmp;
 	    }
 
-	    NetESignal*node = des->get_esignal(net);
+	    NetESignal*node = new NetESignal(net);
+	    des->add_node(node);
 	    assert(idx_ == 0);
 
 	      // Non-constant bit select? punt and make a subsignal
@@ -1258,7 +1257,8 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		  connect(a1->pin(idx), tmp->pin(idx));
 
 	    n = des->local_symbol(path);
-	    NetESignal*sig = des->get_esignal(tmp);
+	    NetESignal*sig = new NetESignal(tmp);
+	    des->add_node(sig);
 	    NetAssign*a2 = new NetAssign(n, des, wid, sig);
 	    a2->set_line(*this);
 	    des->add_node(a2);
@@ -1862,6 +1862,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.58  1999/07/18 21:17:50  steve
+ *  Add support for CE input to XNF DFF, and do
+ *  complete cleanup of replaced design nodes.
+ *
  * Revision 1.57  1999/07/17 19:50:59  steve
  *  netlist support for ternary operator.
  *

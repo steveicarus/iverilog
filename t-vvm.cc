@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.31 1999/07/17 03:39:11 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.32 1999/07/18 21:17:51 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -77,6 +77,11 @@ class target_vvm : public target_t {
       ostrstream start_code;
       unsigned process_counter;
       unsigned thread_step_;
+
+	// These methods are use to help prefent duplicate printouts
+	// of things that may be scanned multiple times.
+      map<string,bool>esignal_printed_flag;
+      map<string,bool>pevent_printed_flag;
 };
 
 
@@ -790,6 +795,11 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 
 void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 {
+      bool&flag = esignal_printed_flag[net->name()];
+      if (flag)
+	    return;
+
+      flag = true;
       os << "static vvm_bitset_t<" << net->pin_count() << "> " <<
 	    mangle(net->name()) << "_bits; /* " << net->name() <<
 	    " */" << endl;
@@ -813,10 +823,11 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
       string pevent = mangle(gate->fore_ptr()->name());
       os << "  /* " << gate->name() << " */" << endl;
 
-      os << "#ifndef PEVENT_" << pevent << endl;
-      os << "#define PEVENT_" << pevent << endl;
-      os << "static vvm_sync " << pevent << ";" << endl;
-      os << "#endif" << endl;
+      bool&printed = pevent_printed_flag[pevent];
+      if (! printed) {
+	    printed = true;
+	    os << "static vvm_sync " << pevent << ";" << endl;
+      }
 
       os << "static vvm_pevent<" << gate->pin_count() << "> " <<
 	    mangle(gate->name()) << "(&" << pevent << ", ";
@@ -1276,6 +1287,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.32  1999/07/18 21:17:51  steve
+ *  Add support for CE input to XNF DFF, and do
+ *  complete cleanup of replaced design nodes.
+ *
  * Revision 1.31  1999/07/17 03:39:11  steve
  *  simplified process scan for targets.
  *

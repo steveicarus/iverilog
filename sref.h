@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sref.h,v 1.2 1999/07/18 05:52:47 steve Exp $"
+#ident "$Id: sref.h,v 1.3 1999/07/18 21:17:51 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -45,6 +45,7 @@ template <class T1, class T2> class sref_back {
       ~sref_back() { assert(sback_ == 0); }
 
       svector<const T2*>* back_list() const;
+      svector<T2*>* back_list();
 
     private:
       void desert_(sref<T1,T2>*);
@@ -101,6 +102,29 @@ svector<const T2*>* sref_back<T1,T2>::back_list() const
       return result;
 }
 
+template <class T1,class T2>
+svector<class T2*>* sref_back<T1,T2>::back_list()
+{
+      if (sback_ == 0) return 0;
+      unsigned cnt = 1;
+      sref<T1,T2>*cur = sback_->next_;
+      while (cur != sback_) {
+	    cnt += 1;
+	    cur = cur->next_;
+      }
+
+      svector<class T2*>* result = new svector<class T2*>(cnt);
+      (*result)[0] = dynamic_cast<class T2*>(sback_);
+      cur = sback_->next_;
+      cnt = 1;
+      while (cur != sback_) {
+	    (*result)[cnt] = dynamic_cast<class T2*>(cur);
+	    cnt += 1;
+	    cur = cur->next_;
+      }
+      return result;
+}
+
 template <class T1, class T2> void sref_back<T1,T2>::desert_(sref<T1,T2>*item)
 {
       if (item == sback_)
@@ -122,6 +146,10 @@ template <class T1, class T2> void sref_back<T1,T2>::desert_(sref<T1,T2>*item)
 
 /*
  * $Log: sref.h,v $
+ * Revision 1.3  1999/07/18 21:17:51  steve
+ *  Add support for CE input to XNF DFF, and do
+ *  complete cleanup of replaced design nodes.
+ *
  * Revision 1.2  1999/07/18 05:52:47  steve
  *  xnfsyn generates DFF objects for XNF output, and
  *  properly rewrites the Design netlist in the process.

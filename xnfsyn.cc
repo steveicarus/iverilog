@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfsyn.cc,v 1.1 1999/07/18 05:52:47 steve Exp $"
+#ident "$Id: xnfsyn.cc,v 1.2 1999/07/18 21:17:51 steve Exp $"
 #endif
 
 /*
@@ -29,7 +29,16 @@
  *
  * Currently, this transform recognizes the following patterns:
  *
- *    always @(posedge CLK) Q = D     // DFF
+ *    always @(posedge CLK) Q = D     // DFF:D,Q,C
+ *    always @(negedge CLK) Q = D     // DFF:D,Q,~C
+ *
+ *    always @(posedge CLK) if (CE) Q = D;
+ *    always @(negedge CLK) if (CE) Q = D;
+ *
+ * The r-value of the assignments must be identifiers (i.e. wires or
+ * registers) and the CE must be single-bine identifiers. Enough
+ * devices will be created to accommodate the width of Q and D, though
+ * the CLK and CE will be shared by all the devices.
  */
 # include  "functor.h"
 # include  "netlist.h"
@@ -40,7 +49,21 @@ class xnfsyn_f  : public functor_t {
       void process(class Design*, class NetProcTop*);
 
     private:
-      void proc_always(class Design*, class NetProcTop*);
+      void proc_always_(class Design*);
+      void proc_casn_(class Design*);
+      void proc_ccon_(class Design*);
+
+	// The matcher does something like a recursive descent search
+	// for the templates. These variables are filled in as the
+	// searcher finds them.
+
+      class NetProcTop*top_;
+
+      class NetPEvent *pclk_;
+      class NetNEvent *nclk_;
+
+      class NetCondit *con_;
+      class NetAssign *asn_;
 };
 
 
@@ -52,68 +75,154 @@ void xnfsyn_f::process(class Design*des, class NetProcTop*top)
 {
       switch (top->type()) {
 	  case NetProcTop::KALWAYS:
-	    proc_always(des, top);
+	    top_ = top;
+	    proc_always_(des);
 	    break;
       }
-
 }
 
 /*
- * Look for DFF devices. The pattern I'm looking for is:
- *
- *     always @(posedge CLK) Q = D;
- *
- * This creates a DFF with the CLK, D and Q hooked up the obvious
- * way. CE and PRE/CLR are left unconnected.
+ * An "always ..." statement has been found.
  */
-void xnfsyn_f::proc_always(class Design*des, class NetProcTop*top)
+void xnfsyn_f::proc_always_(class Design*des)
 {
 	// The statement must be a NetPEvent, ...
-      const NetProc*st = top->statement();
-      const NetPEvent*ev = dynamic_cast<const NetPEvent*>(st);
-      if (ev == 0)
+      pclk_ = dynamic_cast<class NetPEvent*>(top_->statement());
+      if (pclk_ == 0)
 	    return;
 
 	// ... there must be a single event source, ...
-      svector<const NetNEvent*>*neb = ev->back_list();
+      svector<class NetNEvent*>*neb = pclk_->back_list();
       if (neb == 0)
 	    return;
       if (neb->count() != 1) {
 	    delete neb;
 	    return;
       }
-      const NetNEvent*nev = (*neb)[0];
+      nclk_ = (*neb)[0];
       delete neb;
 
-	// ... the event must be POSEDGE, ...
-      if (nev->type() != NetNEvent::POSEDGE)
+	// ... the event must be an edge, ...
+      switch (nclk_->type()) {
+	  case NetNEvent::POSEDGE:
+	  case NetNEvent::NEGEDGE:
+	    break;
+	  default:
 	    return;
+      }
 
-	// the NetPEvent must guard an assignment, ...
-      const NetAssign*asn = dynamic_cast<const NetAssign*>(ev->statement());
-      if (asn == 0)
+	// Is this a clocked assignment?
+      asn_ = dynamic_cast<NetAssign*>(pclk_->statement());
+      if (asn_) {
+	    proc_casn_(des);
 	    return;
+      }
+
+      con_ = dynamic_cast<NetCondit*>(pclk_->statement());
+      if (con_) {
+	    proc_ccon_(des);
+	    return;
+      }
+}
+
+/*
+ * The process so far has been matched as:
+ *
+ *   always @(posedge nclk_) asn_ = <r>;
+ *   always @(negedge nclk_) asn_ = <r>;
+ */
+void xnfsyn_f::proc_casn_(class Design*des)
+{
 
 	// ... and the rval must be a simple signal.
-      const NetESignal*sig = dynamic_cast<const NetESignal*>(asn->rval());
+      NetESignal*sig = dynamic_cast<NetESignal*>(asn_->rval());
       if (sig == 0)
 	    return ;
 
-	// XXXX For now, only handle single bit.
-      assert(asn->pin_count() == 1);
-      assert(sig->pin_count() == 1);
+	// The signal and the assignment must be the same width...
+      assert(asn_->pin_count() == sig->pin_count());
 
-      NetUDP*dff = new NetUDP(asn->name(), 3, true);
-      connect(dff->pin(0), asn->pin(0));
-      connect(dff->pin(1), sig->pin(0));
-      connect(dff->pin(2), nev->pin(0));
+	// Geneate enough DFF objects to handle the entire width.
+      for (unsigned idx = 0 ;  idx < asn_->pin_count() ;  idx += 1) {
 
-      dff->attribute("XNF-LCA", "DFF:Q,D,CLK");
-      des->add_node(dff);
+	      // XXXX FIXME: Objects need unique names!
+	    NetUDP*dff = new NetUDP(asn_->name(), 3, true);
+
+	    connect(dff->pin(0), asn_->pin(idx));
+	    connect(dff->pin(1), sig->pin(idx));
+	    connect(dff->pin(2), nclk_->pin(0));
+
+	    switch (nclk_->type()) {
+		case NetNEvent::POSEDGE:
+		  dff->attribute("XNF-LCA", "DFF:Q,D,C");
+		  break;
+		case NetNEvent::NEGEDGE:
+		  dff->attribute("XNF-LCA", "DFF:Q,D,~C");
+		  break;
+	    }
+
+	    des->add_node(dff);
+      }
 
 	// This process is matched and replaced with a DFF. Get
 	// rid of the now useless NetProcTop.
-      des->delete_process(top);
+      des->delete_process(top_);
+}
+
+/*
+ * The process si far has been matches as:
+ *
+ *    always @(posedge nclk_) if ...;
+ *    always @(negedge nclk_) if ...;
+ */
+void xnfsyn_f::proc_ccon_(class Design*des)
+{
+      if (con_->else_clause())
+	    return;
+
+      asn_ = dynamic_cast<NetAssign*>(con_->if_clause());
+      if (asn_ == 0)
+	    return;
+
+      NetESignal*sig = dynamic_cast<NetESignal*>(asn_->rval());
+      if (sig == 0)
+	    return;
+
+	// The signal and the assignment must be the same width...
+      assert(asn_->pin_count() == sig->pin_count());
+
+      NetESignal*ce = dynamic_cast<NetESignal*>(con_->expr());
+      if (ce == 0)
+	    return;
+      if (ce->pin_count() != 1)
+	    return;
+
+	// Geneate enough DFF objects to handle the entire width.
+      for (unsigned idx = 0 ;  idx < asn_->pin_count() ;  idx += 1) {
+
+	      // XXXX FIXME: Objects need unique names!
+	    NetUDP*dff = new NetUDP(asn_->name(), 4, true);
+
+	    connect(dff->pin(0), asn_->pin(idx));
+	    connect(dff->pin(1), sig->pin(idx));
+	    connect(dff->pin(2), nclk_->pin(0));
+	    connect(dff->pin(3), ce->pin(0));
+
+	    switch (nclk_->type()) {
+		case NetNEvent::POSEDGE:
+		  dff->attribute("XNF-LCA", "DFF:Q,D,C,CE");
+		  break;
+		case NetNEvent::NEGEDGE:
+		  dff->attribute("XNF-LCA", "DFF:Q,D,~C,CE");
+		  break;
+	    }
+
+	    des->add_node(dff);
+      }
+
+	// This process is matched and replaced with a DFF. Get
+	// rid of the now useless NetProcTop.
+      des->delete_process(top_);
 }
 
 void xnfsyn(Design*des)
@@ -124,6 +233,10 @@ void xnfsyn(Design*des)
 
 /*
  * $Log: xnfsyn.cc,v $
+ * Revision 1.2  1999/07/18 21:17:51  steve
+ *  Add support for CE input to XNF DFF, and do
+ *  complete cleanup of replaced design nodes.
+ *
  * Revision 1.1  1999/07/18 05:52:47  steve
  *  xnfsyn generates DFF objects for XNF output, and
  *  properly rewrites the Design netlist in the process.

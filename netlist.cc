@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.46 1999/07/18 05:52:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.47 1999/07/18 21:17:50 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -283,6 +283,16 @@ NetProcTop::~NetProcTop()
       delete statement_;
 }
 
+NetProc* NetProcTop::statement()
+{
+      return statement_;
+}
+
+const NetProc* NetProcTop::statement() const
+{
+      return statement_;
+}
+
 NetAssign_::NetAssign_(const string&n, unsigned w)
 : NetNode(n, w)
 {
@@ -309,6 +319,7 @@ NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
 
 NetAssign::~NetAssign()
 {
+      delete rval_;
 }
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
@@ -441,6 +452,33 @@ NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 {
 }
 
+NetCondit::~NetCondit()
+{
+      delete expr_;
+      if (if_) delete if_;
+      if (else_) delete else_;
+}
+
+const NetExpr* NetCondit::expr() const
+{
+      return expr_;
+}
+
+NetExpr* NetCondit::expr()
+{
+      return expr_;
+}
+
+NetProc* NetCondit::if_clause()
+{
+      return if_;
+}
+
+NetProc* NetCondit::else_clause()
+{
+      return else_;
+}
+
 NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
 : NetNode(ev, wid), sref<NetPEvent,NetNEvent>(pe), edge_(e)
 {
@@ -457,7 +495,7 @@ NetPEvent::NetPEvent(const string&n, NetProc*st)
 
 NetPEvent::~NetPEvent()
 {
-      svector<const NetNEvent*>*back = back_list();
+      svector<NetNEvent*>*back = back_list();
       if (back) {
 	    for (unsigned idx = 0 ;  idx < back->count() ;  idx += 1) {
 		  NetNEvent*ne = (*back)[idx];
@@ -465,6 +503,13 @@ NetPEvent::~NetPEvent()
 	    }
 	    delete back;
       }
+
+      delete statement_;
+}
+
+NetProc* NetPEvent::statement()
+{
+      return statement_;
 }
 
 const NetProc* NetPEvent::statement() const
@@ -1348,24 +1393,6 @@ void Design::del_node(NetNode*net)
       net->design_ = 0;
 }
 
-NetESignal* Design::get_esignal(NetNet*net)
-{
-      NetESignal*&node = esigs_[net->name()];
-      if (node == 0) {
-	    node = new NetESignal(net);
-	    add_node(node);
-      }
-
-      return node;
-}
-
-void Design::set_esignal(NetESignal*sig)
-{
-      NetESignal*&node = esigs_[sig->name()];
-      assert( node == 0 );
-      node = sig;
-}
-
 void Design::add_process(NetProcTop*pro)
 {
       pro->next_ = procs_;
@@ -1452,6 +1479,10 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.47  1999/07/18 21:17:50  steve
+ *  Add support for CE input to XNF DFF, and do
+ *  complete cleanup of replaced design nodes.
+ *
  * Revision 1.46  1999/07/18 05:52:46  steve
  *  xnfsyn generates DFF objects for XNF output, and
  *  properly rewrites the Design netlist in the process.
