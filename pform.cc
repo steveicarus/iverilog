@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.86 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: pform.cc,v 1.87 2001/12/07 05:03:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -907,16 +907,38 @@ void pform_set_task(const string&name, PTask*task)
  * with the trappings that are discovered after the basic function
  * name is parsed.
  */
-void pform_set_function(const char*name, svector<PExpr*>*ra, PFunction *func)
+void pform_set_function(const char*name, NetNet::Type ntype,
+			svector<PExpr*>*ra, PFunction *func)
 {
+      if (ntype == NetNet::IMPLICIT)
+	    ntype = NetNet::REG;
+
+	/* Form into path_return a hierarchical name for the synthetic
+	   return value for the function. The return value is the same
+	   name as the function, so if the function name is "foo", the
+	   wire is "foo.foo". */
       hname_t path_return (name);
       path_return.append(name);
-      PWire*out = new PWire(path_return, NetNet::REG, NetNet::POUTPUT);
+
+      PWire*out = new PWire(path_return, ntype, NetNet::POUTPUT);
       if (ra) {
 	    assert(ra->count() == 2);
 	    out->set_range((*ra)[0], (*ra)[1]);
 	    delete ra;
       }
+
+	/* If the return type of the function is INTEGER, then convert
+	   it to a signed reg, and generate a range for it. The
+	   parse.y uses IMPLICIT_REG as a signal that this is an
+	   integer, because there is no such thing as
+	   NetNet::INTEGER. */
+      if (ntype == NetNet::IMPLICIT_REG) {
+	    out->set_wire_type(NetNet::REG);
+	    out->set_signed(true);
+	    out->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
+			   new PENumber(new verinum(0UL, INTEGER_WIDTH)));
+      }
+
       pform_cur_module->add_wire(out);
       func->set_output(out);
       pform_cur_module->add_function(name, func);
@@ -1136,6 +1158,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.87  2001/12/07 05:03:13  steve
+ *  Support integer for function return value.
+ *
  * Revision 1.86  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.53 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: pform.h,v 1.54 2001/12/07 05:03:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -159,7 +159,8 @@ extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<char*>*names);
 extern void pform_set_reg_time(list<char*>*names);
 extern void pform_set_task(const string&, PTask*);
-extern void pform_set_function(const char*, svector<PExpr*>*, PFunction*);
+extern void pform_set_function(const char*, NetNet::Type,
+			       svector<PExpr*>*, PFunction*);
 extern void pform_set_attrib(const char*name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
@@ -217,6 +218,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.54  2001/12/07 05:03:13  steve
+ *  Support integer for function return value.
+ *
  * Revision 1.53  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

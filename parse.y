@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.139 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: parse.y,v 1.140 2001/12/07 05:03:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -79,6 +79,8 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
       PEventStatement*event_statement;
       Statement*statement;
       svector<Statement*>*statement_list;
+
+      struct { svector<PExpr*>*range; NetNet::Type ntype; } range_type;
 
       struct { svector<PExpr*>*range; svector<PExpr*>*delay; } range_delay;
       net_decl_assign_t*net_decl_assign;
@@ -159,7 +161,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <porttype> port_type
 %type <parmvalue> parameter_value_opt
 
-%type <exprs> range_or_type_opt
+%type <range_type> range_or_type_opt
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
@@ -1331,7 +1333,7 @@ module_item
 		  tmp->set_lineno(@1.first_line);
 		  tmp->set_ports($6);
 		  tmp->set_statement($7);
-		  pform_set_function($3, $2, tmp);
+		  pform_set_function($3, $2.ntype, $2.range, tmp);
 		  pform_pop_scope();
 		  delete $3;
 		}
@@ -1791,14 +1793,14 @@ range_opt
 	| { $$ = 0; }
 	;
 
-  /* This is used to express the retur type of a function. */
+  /* This is used to express the return type of a function. */
 range_or_type_opt
-	: range { $$ = $1; }
-	| K_integer { $$ = 0; }
-	| K_real { $$ = 0; }
-	| K_realtime { $$ = 0; }
-	| K_time { $$ = 0; }
-	| { $$ = 0; }
+	: range      { $$.range = $1; $$.ntype = NetNet::REG; }
+	| K_integer  { $$.range = 0;  $$.ntype = NetNet::IMPLICIT_REG; }
+	| K_real     { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
+	| K_realtime { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
+	| K_time     { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
+	|            { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
 	;
 
   /* The register_variable rule is matched only when I am parsing
