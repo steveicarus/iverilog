@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.16 2000/03/12 17:09:40 steve Exp $"
+#ident "$Id: Module.h,v 1.17 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  <list>
@@ -27,6 +27,7 @@
 # include  "svector.h"
 # include  "named.h"
 # include  <string>
+class PEvent;
 class PExpr;
 class PGate;
 class PTask;
@@ -81,6 +82,10 @@ class Module {
            a parameter-index to its name. */
       list<string> param_names;
 
+	/* Keep a table of named events declared in the module. */
+      map<string,PEvent*>events;
+
+
       const string&get_name() const { return name_; }
 
       void add_gate(PGate*gate);
@@ -130,6 +135,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.17  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.16  2000/03/12 17:09:40  steve
  *  Support localparam.
  *

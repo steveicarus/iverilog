@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.37 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: pform.h,v 1.38 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -141,6 +141,9 @@ extern svector<PWire*>* pform_make_udp_input_ports(list<string>*);
 
 extern bool pform_expression_is_constant(const PExpr*);
 
+extern void pform_make_events(const list<string>*names,
+			      const string&file, unsigned lineno);
+
 /*
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
@@ -182,6 +185,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.38  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.37  2000/03/12 17:09:41  steve
  *  Support localparam.
  *

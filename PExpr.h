@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.32 2000/03/12 18:22:11 steve Exp $"
+#ident "$Id: PExpr.h,v 1.33 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  <string>
@@ -112,21 +112,33 @@ class PEConcat : public PExpr {
       PExpr*repeat_;
 };
 
+/*
+ * Event expressions are expressions that can be combined with the
+ * event "or" operator. These include "posedge foo" and similar, and
+ * also include named events. "edge" events are associated with an
+ * expression, whereas named events simply have a name, which
+ * represents an event variable.
+ */
 class PEEvent : public PExpr {
 
     public:
-      PEEvent(NetNEvent::Type t, PExpr*e)
-      : type_(t), expr_(e)
-      { }
+	// Use this constructor to create events based on edges or levels.
+      PEEvent(NetNEvent::Type t, PExpr*e);
+	// Use this to create named events.
+      PEEvent(const string&n);
 
-      NetNEvent::Type type() const { return type_; }
-      PExpr*          expr() const { return expr_; }
+      ~PEEvent();
+
+      NetNEvent::Type type() const;
+      PExpr*          expr() const;
+      string          name() const;
 
       virtual void dump(ostream&) const;
 
     private:
       NetNEvent::Type type_;
       PExpr*expr_;
+      string name_;
 };
 
 class PEIdent : public PExpr {
@@ -341,6 +353,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.33  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.32  2000/03/12 18:22:11  steve
  *  Binary and unary operators in parameter expressions.
  *

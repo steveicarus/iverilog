@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.22 2000/03/11 03:25:51 steve Exp $"
+#ident "$Id: Statement.h,v 1.23 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  <string>
@@ -258,15 +258,21 @@ class PDelayStatement  : public Statement {
       Statement*statement_;
 };
 
+/*
+ * The event statement represents the event delay in behavioral
+ * code. It comes from such things as:
+ *
+ *      @name <statement>;
+ *      @(expr) <statement>;
+ */
 class PEventStatement  : public Statement {
 
     public:
 
-      PEventStatement(const svector<PEEvent*>&ee)
-      : expr_(ee), statement_(0) { }
+      explicit PEventStatement(const svector<PEEvent*>&ee);
+      explicit PEventStatement(PEEvent*ee);
 
-      PEventStatement(PEEvent*ee)
-      : expr_(1), statement_(0) { expr_[0] = ee; }
+      ~PEventStatement();
 
       void set_statement(Statement*st) { statement_ = st; }
 
@@ -341,6 +347,23 @@ class PRepeat : public Statement {
       Statement*statement_;
 };
 
+/*
+ * The PTrigger statement sends a trigger to a named event. Take the
+ * name here.
+ */
+class PTrigger  : public Statement {
+
+    public:
+      explicit PTrigger(const string&ev);
+      ~PTrigger();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      string event_;
+};
+
 class PWhile  : public Statement {
 
     public:
@@ -359,6 +382,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.23  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.22  2000/03/11 03:25:51  steve
  *  Locate scopes in statements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.151 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.152 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 /*
@@ -1828,6 +1828,14 @@ void PTask::elaborate_2(Design*des, const string&path) const
       def->set_proc(st);
 }
 
+NetProc* PTrigger::elaborate(Design*des, const string&path) const
+{
+      cerr << get_line() << ": sorry: named event trigger not supported."
+	   << endl;
+      des->errors += 1;
+      return 0;
+}
+
 /*
  * The while loop is fairly directly represented in the netlist.
  */
@@ -2003,6 +2011,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.152  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.151  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

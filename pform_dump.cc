@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.51 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.52 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 /*
@@ -27,6 +27,7 @@
  * module in question.
  */
 # include  "pform.h"
+# include  "PEvent.h"
 # include  <iostream>
 # include  <iomanip>
 # include  <typeinfo>
@@ -80,20 +81,24 @@ void PECallFunction::dump(ostream &out) const
 
 void PEEvent::dump(ostream&out) const
 {
-      switch (type_) {
-	  case NetNEvent::ANYEDGE:
-	    break;
-	  case NetNEvent::POSEDGE:
-	    out << "posedge ";
-	    break;
-	  case NetNEvent::NEGEDGE:
-	    out << "negedge ";
-	    break;
-	  case NetNEvent::POSITIVE:
-	    out << "positive ";
-	    break;
+      if (expr_) {
+	    switch (type_) {
+		case NetNEvent::ANYEDGE:
+		  break;
+		case NetNEvent::POSEDGE:
+		  out << "posedge ";
+		  break;
+		case NetNEvent::NEGEDGE:
+		  out << "negedge ";
+		  break;
+		case NetNEvent::POSITIVE:
+		  out << "positive ";
+		  break;
+	    }
+	    out << *expr_;
+      } else {
+	    out << "<event " << name_ << ">";
       }
-      out << *expr_;
 }
 
 void PENumber::dump(ostream&out) const
@@ -541,6 +546,10 @@ void PTask::dump(ostream&out, unsigned ind) const
 	    out << setw(ind) << "" << "/* NOOP */" << endl;
 }
 
+void PTrigger::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "-> " << event_ << ";" << endl;
+}
 
 void PWhile::dump(ostream&out, unsigned ind) const
 {
@@ -625,6 +634,13 @@ void Module::dump(ostream&out) const
 		  out << *(*cur).second << ";" << endl;
 	    else
 		  out << "/* ERROR */;" << endl;
+      }
+
+      for (map<string,PEvent*>::const_iterator cur = events.begin()
+		 ; cur != events.end() ;  cur ++ ) {
+	    PEvent*ev = (*cur).second;
+	    out << "    event " << ev->name() << "; // "
+		<< ev->get_line() << endl;
       }
 
 	// Iterate through and display all the wires.
@@ -720,6 +736,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.52  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.51  2000/03/12 17:09:41  steve
  *  Support localparam.
  *

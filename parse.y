@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.86 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: parse.y,v 1.87 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -388,8 +388,14 @@ dr_strength1 : K_supply1 | K_strong1 | K_pull1 | K_weak1 ;
 
 event_control
 	: '@' IDENTIFIER
-		{ yyerror(@1, "sorry: event control not supported.");
-		  $$ = 0;
+		{ PEEvent*tmpe = new PEEvent($2);
+		  tmpe->set_file(@2.text);
+		  tmpe->set_lineno(@2.first_line);
+		  delete[]$2;
+		  PEventStatement*tmps = new PEventStatement(tmpe);
+		  tmps->set_file(@1.text);
+		  tmps->set_lineno(@1.first_line);
+		  $$ = tmps;
 		}
 	| '@' '(' event_expression_list ')'
 		{ PEventStatement*tmp = new PEventStatement(*$3);
@@ -1093,7 +1099,7 @@ module_item
 	| block_item_decl
 	| K_defparam defparam_assign_list ';'
 	| K_event list_of_variables ';'
-		{ yyerror(@1, "sorry: named events not supported.");
+		{ pform_make_events($2, @1.text, @1.first_line);
 		  delete $2;
 		}
 	| K_parameter parameter_assign_list ';'
@@ -1642,8 +1648,10 @@ statement
 		  $$ = 0;
 		}
 	| K_TRIGGER IDENTIFIER ';'
-		{ yyerror(@1, "sorry: event trigger not supported.");
-		  $$ = 0;
+		{ PTrigger*tmp = new PTrigger($2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| K_forever statement
 		{ PForever*tmp = new PForever($2);

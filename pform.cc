@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.56 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: pform.cc,v 1.57 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  "compiler.h"
 # include  "pform.h"
 # include  "parse_misc.h"
+# include  "PEvent.h"
 # include  "PUdp.h"
 # include  <list>
 # include  <map>
@@ -263,6 +264,25 @@ void pform_make_udp(const char*name, list<string>*parms,
       delete decl;
       delete table;
       delete init_expr;
+}
+
+/*
+ * This is invoked to make a named event. This is the declaration of
+ * the event, and not necessarily the use of it.
+ */
+static void pform_make_event(const string&name, const string&fn, unsigned ln)
+{
+      PEvent*event = new PEvent(name);
+      event->set_file(fn);
+      event->set_lineno(ln);
+      pform_cur_module->events[name] = event;
+}
+
+void pform_make_events(const list<string>*names, const string&fn, unsigned ln)
+{
+      list<string>::const_iterator cur;
+      for (cur = names->begin() ;  cur != names->end() ;  cur++)
+	    pform_make_event(*cur, fn, ln);
 }
 
 /*
@@ -833,6 +853,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.57  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.56  2000/03/12 17:09:41  steve
  *  Support localparam.
  *

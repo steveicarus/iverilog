@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.14 2000/03/12 18:22:11 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.15 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -83,6 +83,35 @@ PEConcat::~PEConcat()
       delete repeat_;
 }
 
+PEEvent::PEEvent(NetNEvent::Type t, PExpr*e)
+: type_(t), expr_(e)
+{
+}
+
+PEEvent::PEEvent(const string&n)
+: name_(n)
+{
+}
+
+PEEvent::~PEEvent()
+{
+}
+
+NetNEvent::Type PEEvent::type() const
+{
+      return type_;
+}
+
+PExpr* PEEvent::expr() const
+{
+      return expr_;
+}
+
+string PEEvent::name() const
+{
+      return name_;
+}
+
 /*
  * An identifier can be in a constant expresion if (and only if) it is
  * a parameter.
@@ -135,6 +164,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.15  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.14  2000/03/12 18:22:11  steve
  *  Binary and unary operators in parameter expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.17 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: Statement.cc,v 1.18 2000/04/01 19:31:57 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -129,6 +129,23 @@ PCondit::~PCondit()
       delete else_;
 }
 
+PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
+: expr_(ee), statement_(0)
+{
+}
+
+
+PEventStatement::PEventStatement(PEEvent*ee)
+: expr_(1), statement_(0)
+{
+      expr_[0] = ee;
+}
+
+PEventStatement::~PEventStatement()
+{
+	// delete the events and the statement?
+}
+
 PForever::PForever(Statement*s)
 : statement_(s)
 {
@@ -155,6 +172,15 @@ PRepeat::~PRepeat()
       delete statement_;
 }
 
+PTrigger::PTrigger(const string&e)
+: event_(e)
+{
+}
+
+PTrigger::~PTrigger()
+{
+}
+
 PWhile::~PWhile()
 {
       delete cond_;
@@ -163,6 +189,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.18  2000/04/01 19:31:57  steve
+ *  Named events as far as the pform.
+ *
  * Revision 1.17  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
