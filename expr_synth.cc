@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.31 2001/12/30 17:06:52 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.32 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -62,10 +62,10 @@ NetNet* NetEBAdd::synthesize(Design*des)
 
       switch (op()) {
 	  case '+':
-	    adder->attribute("LPM_Direction", "ADD");
+	    adder->attribute("LPM_Direction", verinum("ADD"));
 	    break;
 	  case '-':
-	    adder->attribute("LPM_Direction", "SUB");
+	    adder->attribute("LPM_Direction", verinum("SUB"));
 	    break;
       }
 
@@ -587,6 +587,14 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.32  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.31  2001/12/30 17:06:52  steve
  *  Synthesize reduction logic.
  *

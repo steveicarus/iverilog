@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.77 2002/03/17 19:30:47 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.78 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -434,13 +434,27 @@ extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
       assert(net);
       unsigned idx;
 
-      for (idx = 0 ;  idx < net->nattr_ ;  idx += 1) {
+      for (idx = 0 ;  idx < net->nattr ;  idx += 1) {
 
-	    if (strcmp(net->akey_[idx], key) == 0)
-		  return net->aval_[idx];
+	    if (strcmp(net->attr[idx].key, key) == 0)
+		  return net->attr[idx].type == IVL_ATT_STR
+			? net->attr[idx].val.str
+			: 0;
       }
 
       return 0;
+}
+
+extern "C" unsigned ivl_logic_attr_cnt(ivl_net_logic_t net)
+{
+      return net->nattr;
+}
+
+extern "C" ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net,
+					      unsigned idx)
+{
+      assert(idx < net->nattr);
+      return net->attr + idx;
 }
 
 extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
@@ -1495,6 +1509,14 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.78  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.77  2002/03/17 19:30:47  steve
  *  Add API to support user defined function.
  *

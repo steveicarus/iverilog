@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.151 2002/05/20 02:06:01 steve Exp $"
+#ident "$Id: parse.y,v 1.152 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -63,8 +63,8 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
       Module::port_t *mport;
       svector<Module::port_t*>*mports;
 
-      portname_t*portname;
-      svector<portname_t*>*portnames;
+      named_pexpr_t*named_pexpr;
+      svector<named_pexpr_t*>*named_pexprs;
       struct parmvalue_t*parmvalue;
 
       PExpr*expr;
@@ -99,6 +99,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
 %token K_PO_POS K_PO_NEG
+%token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
@@ -143,8 +144,11 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> function_item function_item_list
 
-%type <portname> port_name parameter_value_byname
-%type <portnames> port_name_list parameter_value_byname_list
+%type <named_pexpr> port_name parameter_value_byname
+%type <named_pexprs> port_name_list parameter_value_byname_list
+
+%type <named_pexpr> attribute
+%type <named_pexprs> attribute_list attribute_list_opt
 
 %type <citem>  case_item
 %type <citems> case_items
@@ -201,6 +205,55 @@ source_file
 	: description
 	| source_file description
 	;
+
+  /* Verilog-2001 supports attribute lists, which can be attached to a
+     variety of different objects. The syntax inside the (* *) is a
+     comma separated list of names or names with assigned values. */
+attribute_list_opt
+	: K_PSTAR attribute_list K_STARP { $$ = $2; }
+	| K_PSTAR K_STARP { $$ = 0; }
+	| { $$ = 0; }
+	;
+
+attribute_list
+	: attribute_list ',' attribute
+		{ svector<named_pexpr_t*>*tmp =
+			new svector<named_pexpr_t*>(*$1,$3);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| attribute
+		{ svector<named_pexpr_t*>*tmp = new svector<named_pexpr_t*>(1);
+		  (*tmp)[0] = $1;
+		  $$ = tmp;
+		}
+	;
+
+
+attribute
+	: IDENTIFIER
+		{ named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = string($1);
+		  tmp->parm = 0;
+		  delete $1;
+		  $$ = tmp;
+		}
+	| IDENTIFIER '=' expression
+		{ PExpr*tmp = $3;
+		  if (!pform_expression_is_constant(tmp)) {
+			yyerror(@3, "error: attibute value "
+			            "expression must be constant.");
+			delete tmp;
+			tmp = 0;
+		  }
+		  named_pexpr_t*tmp2 = new named_pexpr_t;
+		  tmp2->name = string($1);
+		  tmp2->parm = tmp;
+		  delete $1;
+		  $$ = tmp2;
+		}
+	;
+
 
   /* The block_item_decl is used in function definitions, task
      definitions, module definitions and named blocks. Wherever a new
@@ -446,7 +499,6 @@ description
 		{ pform_set_type_attrib($3, $5, $7);
 		  delete $3;
 		  delete $5;
-		  delete $7;
 		}
 	;
 
@@ -1329,38 +1381,40 @@ module_item
   /* Most gate types have an optional drive strength and optional
      three-value delay. These rules handle the different cases. */
 
-	| gatetype gate_instance_list ';'
-		{ pform_makegates($1, str_strength, 0, $2);
+	| attribute_list_opt gatetype gate_instance_list ';'
+		{ pform_makegates($2, str_strength, 0, $3, $1);
 		}
 
-	| gatetype delay3 gate_instance_list ';'
-		{ pform_makegates($1, str_strength, $2, $3);
+	| attribute_list_opt gatetype delay3 gate_instance_list ';'
+		{ pform_makegates($2, str_strength, $3, $4, $1);
 		}
 
-	| gatetype drive_strength gate_instance_list ';'
-		{ pform_makegates($1, $2, 0, $3);
+	| attribute_list_opt gatetype drive_strength gate_instance_list ';'
+		{ pform_makegates($2, $3, 0, $4, $1);
 		}
 
-	| gatetype drive_strength delay3 gate_instance_list ';'
-		{ pform_makegates($1, $2, $3, $4);
+	| attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
+		{ pform_makegates($2, $3, $4, $5, $1);
 		}
 
   /* Pullup and pulldown devices cannot have delays, and their
      strengths are limited. */
 
 	| K_pullup gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, pull_strength, 0, $2);
+		{ pform_makegates(PGBuiltin::PULLUP, pull_strength, 0,
+				  $2, 0);
 		}
 	| K_pulldown gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, pull_strength, 0, $2);
+		{ pform_makegates(PGBuiltin::PULLDOWN, pull_strength,
+				  0, $2, 0);
 		}
 
 	| K_pullup '(' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5);
+		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5, 0);
 		}
 
 	| K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5);
+		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5, 0);
 		}
 
   /* This rule handles instantiations of modules and user defined
@@ -1476,7 +1530,6 @@ module_item
 		{ pform_set_attrib($3, $5, $7);
 		  delete $3;
 		  delete $5;
-		  delete $7;
 		}
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Misformed $attribute parameter list."); }
@@ -1646,14 +1699,14 @@ parameter_value_opt
 
 parameter_value_byname
 	: '.' IDENTIFIER '(' expression ')'
-		{ portname_t*tmp = new portname_t;
+		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = $2;
 		  tmp->parm = $4;
 		  free($2);
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' ')'
-		{ portname_t*tmp = new portname_t;
+		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = $2;
 		  tmp->parm = 0;
 		  free($2);
@@ -1663,12 +1716,13 @@ parameter_value_byname
 
 parameter_value_byname_list
 	: parameter_value_byname
-		{ svector<portname_t*>*tmp = new svector<portname_t*>(1);
+		{ svector<named_pexpr_t*>*tmp = new svector<named_pexpr_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| parameter_value_byname_list ',' parameter_value_byname
-		{ svector<portname_t*>*tmp = new svector<portname_t*>(*$1,$3);
+		{ svector<named_pexpr_t*>*tmp =
+			new svector<named_pexpr_t*>(*$1,$3);
 		  delete $1;
 		  $$ = tmp;
 		}
@@ -1822,7 +1876,7 @@ port_reference_list
 
 port_name
 	: '.' IDENTIFIER '(' expression ')'
-		{ portname_t*tmp = new portname_t;
+		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = $2;
 		  tmp->parm = $4;
 		  delete $2;
@@ -1830,14 +1884,14 @@ port_name
 		}
 	| '.' IDENTIFIER '(' error ')'
 		{ yyerror(@4, "error: invalid port connection expression.");
-		  portname_t*tmp = new portname_t;
+		  named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = $2;
 		  tmp->parm = 0;
 		  delete $2;
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' ')'
-		{ portname_t*tmp = new portname_t;
+		{ named_pexpr_t*tmp = new named_pexpr_t;
 		  tmp->name = $2;
 		  tmp->parm = 0;
 		  delete $2;
@@ -1847,13 +1901,13 @@ port_name
 
 port_name_list
 	: port_name_list ',' port_name
-		{ svector<portname_t*>*tmp;
-		  tmp = new svector<portname_t*>(*$1, $3);
+		{ svector<named_pexpr_t*>*tmp;
+		  tmp = new svector<named_pexpr_t*>(*$1, $3);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| port_name
-		{ svector<portname_t*>*tmp = new svector<portname_t*>(1);
+		{ svector<named_pexpr_t*>*tmp = new svector<named_pexpr_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}

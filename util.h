@@ -19,9 +19,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: util.h,v 1.4 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: util.h,v 1.5 2002/05/23 03:08:52 steve Exp $"
 #endif
 
+# include  <map>
+# include  <string>
+# include  "verinum.h"
+
+class PExpr;
+class Design;
+class NetScope;
 
 /*
  * This file attempts to locate a module in a file. It operates by
@@ -31,8 +38,27 @@
 extern bool load_module(const char*type);
 
 
+
+struct attrib_list_t {
+      string key;
+      verinum val;
+};
+
+extern attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
+					  unsigned&natt,
+					  const Design*des,
+					  const NetScope*scope);
+
 /*
  * $Log: util.h,v $
+ * Revision 1.5  2002/05/23 03:08:52  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.4  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

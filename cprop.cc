@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.33 2002/04/14 02:51:37 steve Exp $"
+#ident "$Id: cprop.cc,v 1.34 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,7 +56,7 @@ void cprop_functor::signal(Design*des, NetNet*obj)
 void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 {
 	// For now, only additions are handled.
-      if (obj->attribute("LPM_Direction") != "ADD")
+      if (obj->attribute("LPM_Direction") != verinum("ADD"))
 	    return;
 
 	// If the low bit on the A side is 0, then eliminate it from
@@ -949,6 +949,14 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.34  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.33  2002/04/14 02:51:37  steve
  *  Fix bug removing pairs of ones in XOR.
  *

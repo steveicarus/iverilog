@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Attrib.cc,v 1.2 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: Attrib.cc,v 1.3 2002/05/23 03:08:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,14 +36,15 @@ Attrib::~Attrib()
       delete[] list_;
 }
 
-void Attrib::set_attributes(const map<string,string>&attr)
+#if 0
+void Attrib::copy_attributes(const map<string,verinum>&attr)
 {
       assert(list_ == 0);
 
       nlist_ = attr.size();
       list_ = new cell_[nlist_];
 
-      map<string,string>::const_iterator idx;
+      map<string,verinum>::const_iterator idx;
       unsigned jdx;
       for (idx = attr.begin(), jdx = 0 ;  idx != attr.end() ;  idx ++, jdx++) {
 	    struct cell_*tmp = list_ + jdx;
@@ -51,8 +52,9 @@ void Attrib::set_attributes(const map<string,string>&attr)
 	    tmp->val = (*idx).second;
       }
 }
+#endif
 
-string Attrib::attribute(const string&key) const
+const verinum& Attrib::attribute(const string&key) const
 {
       for (unsigned idx = 0 ;  idx < nlist_ ;  idx += 1) {
 
@@ -60,10 +62,11 @@ string Attrib::attribute(const string&key) const
 		  return list_[idx].val;
       }
 
-      return "";
+      static const verinum null;
+      return null;
 }
 
-void Attrib::attribute(const string&key, const string&value)
+void Attrib::attribute(const string&key, const verinum&value)
 {
       unsigned idx;
 
@@ -92,7 +95,7 @@ bool Attrib::has_compat_attributes(const Attrib&that) const
 
       for (idx = 0 ;  idx < that.nlist_ ;  idx += 1) {
 
-	    string tmp = attribute(that.list_[idx].key);
+	    verinum tmp = attribute(that.list_[idx].key);
 	    if (tmp != that.list_[idx].val)
 		  return false;
       }
@@ -111,7 +114,7 @@ string Attrib::key(unsigned idx) const
       return list_[idx].key;
 }
 
-string Attrib::value(unsigned idx) const
+const verinum& Attrib::value(unsigned idx) const
 {
       assert(idx < nlist_);
       return list_[idx].val;
@@ -120,6 +123,14 @@ string Attrib::value(unsigned idx) const
 
 /*
  * $Log: Attrib.cc,v $
+ * Revision 1.3  2002/05/23 03:08:50  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.2  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.43 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.44 2002/05/23 03:08:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -340,7 +340,7 @@ void target_xnf::signal(const NetNet*net)
 	/* Now look to see if a PAD attribute is attached, and if so
 	   write out PAD information to the XNF and the ncf files. */
 
-      string pad = net->attribute("PAD");
+      string pad = net->attribute("PAD").as_string();
       if (pad == "")
 	    return;
 
@@ -672,19 +672,19 @@ void target_xnf::lpm_compare_le_(ostream&os, const NetCompare*dev)
 
 void target_xnf::lpm_ff(const NetFF*net)
 {
-      string type = net->attribute("LPM_FFType");
+      string type = net->attribute("LPM_FFType").as_string();
       if (type == "") type = "DFF";
 
 	// XXXX For now, only support DFF
       assert(type == "DFF");
 
-      string lcaname = net->attribute("XNF-LCA");
+      string lcaname = net->attribute("XNF-LCA").as_string();
       if (lcaname != "") {
 	    draw_sym_with_lcaname(out_, lcaname, net);
 	    return;
       }
 
-      assert(net->attribute("XNF-LCA") == "");
+      assert(net->attribute("XNF-LCA") == verinum(""));
 
 	/* Create a DFF object for each bit of width. The symbol name
 	   has the index number appended so that read XNF may be able
@@ -711,7 +711,7 @@ void target_xnf::lpm_ff(const NetFF*net)
 	    draw_pin(out_, "Q", net->pin_Q(idx));
 	    draw_pin(out_, "D", net->pin_Data(idx));
 
-	    if (net->attribute("Clock:LPM_Polarity") == "INVERT")
+	    if (net->attribute("Clock:LPM_Polarity") == verinum("INVERT"))
 		  draw_pin(out_, "~C", net->pin_Clock());
 	    else
 		  draw_pin(out_, "C", net->pin_Clock());
@@ -811,7 +811,7 @@ void target_xnf::logic(const NetLogic*net)
 {
 	// The XNF-LCA attribute overrides anything I might guess
 	// about this object.
-      string lca = net->attribute("XNF-LCA");
+      string lca = net->attribute("XNF-LCA").as_string();
       if (lca != "") {
 	    draw_sym_with_lcaname(out_, lca, net);
 	    return;
@@ -909,7 +909,7 @@ bool target_xnf::bufz(const NetBUFZ*net)
 
 void target_xnf::udp(const NetUDP*net)
 {
-      string lca = net->attribute("XNF-LCA");
+      string lca = net->attribute("XNF-LCA").as_string();
 
 	// I only know how to draw a UDP if it has the XNF-LCA
 	// attribute attached to it.
@@ -927,6 +927,14 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.44  2002/05/23 03:08:52  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.43  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

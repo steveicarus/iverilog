@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.57 2002/04/27 04:20:52 steve Exp $"
+#ident "$Id: stub.c,v 1.58 2002/05/23 03:08:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -556,6 +556,22 @@ static void show_logic(ivl_net_logic_t net)
 	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
 
       fprintf(out, ");\n");
+
+      npins = ivl_logic_attr_cnt(net);
+      for (idx = 0 ;  idx < npins ;  idx += 1) {
+	    ivl_attribute_t cur = ivl_logic_attr_val(net,idx);
+	    switch (cur->type) {
+		case IVL_ATT_VOID:
+		  fprintf(out, "    %s\n", cur->key);
+		  break;
+		case IVL_ATT_NUM:
+		  fprintf(out, "    %s = %ld\n", cur->key, cur->val.num);
+		  break;
+		case IVL_ATT_STR:
+		  fprintf(out, "    %s = %s\n", cur->key, cur->val.str);
+		  break;
+	    }
+      }
 }
 
 static int show_scope(ivl_scope_t net, void*x)
@@ -630,6 +646,14 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.58  2002/05/23 03:08:52  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.57  2002/04/27 04:20:52  steve
  *  Dump parametres for system functions.
  *

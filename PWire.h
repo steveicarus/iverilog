@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.h,v 1.11 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: PWire.h,v 1.12 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -69,7 +69,7 @@ class PWire : public LineInfo {
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
-      map<string,string> attributes;
+      map<string,PExpr*> attributes;
 
 	// Write myself to the specified stream.
       void dump(ostream&out) const;
@@ -99,6 +99,14 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.12  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.11  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

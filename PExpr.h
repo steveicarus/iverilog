@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.59 2002/04/23 03:53:59 steve Exp $"
+#ident "$Id: PExpr.h,v 1.60 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -328,6 +328,7 @@ class PEString : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
+      verinum* PEString::eval_const(const Design*, const NetScope*) const;
 
       virtual bool is_constant(Module*) const;
 
@@ -496,6 +497,14 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.60  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.59  2002/04/23 03:53:59  steve
  *  Add support for non-constant bit select.
  *

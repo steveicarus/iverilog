@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.94 2002/03/17 19:30:20 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.95 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -300,6 +300,24 @@ typedef int (*ivl_process_f)(ivl_process_t net, void*cd);
    the user passes to the scanner. */
 typedef int (ivl_scope_f)(ivl_scope_t net, void*cd);
 
+/* Attributes, which can be attached to various object types, have
+   this form. */
+typedef enum ivl_attribute_type_e {
+      IVL_ATT_VOID = 0,
+      IVL_ATT_STR,
+      IVL_ATT_NUM
+} ivl_attribute_type_t;
+
+struct ivl_attribute_s {
+      const char*key;
+      ivl_attribute_type_t type;
+      union val_ {
+	    const char*str;
+	    long num;
+      } val;
+};
+typedef const struct ivl_attribute_s*ivl_attribute_t;
+
 
 /* DESIGN
  * When handed a design (ivl_design_t) there are a few things that you
@@ -480,6 +498,12 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * ivl_logic_attr
  *    Return the value of a specific attribute, given the key name as
  *    a string. If the key is not defined, then return 0 (null).
+ *
+ * ivl_logic_attr_cnt
+ * ivl_logic_attr_val
+ *    These support iterating over logic attributes. The _cnt method
+ *    returns the number of attributes attached to the gate, and the
+ *    ivl_logic_attr_val returns the value of the attribute.
  */
 
 extern const char* ivl_logic_name(ivl_net_logic_t net);
@@ -491,7 +515,11 @@ extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
 extern unsigned    ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
 
+  /* DEPRICATED */
 extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);
+
+extern unsigned        ivl_logic_attr_cnt(ivl_net_logic_t net);
+extern ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net, unsigned idx);
 
 /* UDP
  * 
@@ -1006,6 +1034,14 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.95  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.94  2002/03/17 19:30:20  steve
  *  Add API to support user defined function.
  *

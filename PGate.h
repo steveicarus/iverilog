@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.22 2001/11/22 06:20:59 steve Exp $"
+#ident "$Id: PGate.h,v 1.23 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -79,7 +79,7 @@ class PGate : public LineInfo {
       void strength0(strength_t);
       void strength1(strength_t);
 
-      map<string,string> attributes;
+      map<string,PExpr*> attributes;
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
@@ -222,6 +222,14 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.23  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.22  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *

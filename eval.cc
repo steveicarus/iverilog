@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.26 2001/12/29 22:10:10 steve Exp $"
+#ident "$Id: eval.cc,v 1.27 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -166,6 +166,11 @@ verinum* PENumber::eval_const(const Design*, const NetScope*) const
       return new verinum(value());
 }
 
+verinum* PEString::eval_const(const Design*, const NetScope*) const
+{
+      return new verinum(string(text_));
+}
+
 verinum* PETernary::eval_const(const Design*des, const NetScope*scope) const
 {
       verinum*test = expr_->eval_const(des, scope);
@@ -217,6 +222,14 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.27  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.26  2001/12/29 22:10:10  steve
  *  constant eval of arithmetic with x and z.
  *

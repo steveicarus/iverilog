@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.57 2002/05/20 02:06:01 steve Exp $"
+#ident "$Id: pform.h,v 1.58 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -77,11 +77,11 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max);
 /* This is information about port name information for named port
    connections. */
 
-typedef struct named<PExpr*> portname_t;
+typedef struct named<PExpr*> named_pexpr_t;
 
 struct parmvalue_t {
       svector<PExpr*>*by_order;
-      svector<portname_t*>*by_name;
+      svector<named_pexpr_t*>*by_name;
 };
 
 struct str_pair_t { PGate::strength_t str0, str1; };
@@ -102,7 +102,7 @@ struct lgate {
 
       string name;
       svector<PExpr*>*parms;
-      svector<portname_t*>*parms_by_name;
+      svector<named_pexpr_t*>*parms_by_name;
 
       PExpr*range[2];
 
@@ -184,10 +184,16 @@ extern void pform_set_reg_time(list<char*>*names);
 extern void pform_set_task(const string&, PTask*);
 extern void pform_set_function(const char*, NetNet::Type,
 			       svector<PExpr*>*, PFunction*);
+
+  /* pform_set_attrib and pform_set_type_attrib exist to support the
+     $attribute syntax, which can only set string values to
+     attributes. The functions keep the value strings that are
+     passed in. */
 extern void pform_set_attrib(const char*name, const string&key,
-			     const string&value);
+			     char*value);
 extern void pform_set_type_attrib(const string&name, const string&key,
-				  const string&value);
+				  char*value);
+
 extern void pform_set_parameter(const string&name, PExpr*expr);
 extern void pform_set_localparam(const string&name, PExpr*expr);
 extern void pform_set_defparam(const hname_t&name, PExpr*expr);
@@ -207,7 +213,8 @@ extern void pform_make_events(list<char*>*names,
 extern void pform_makegates(PGBuiltin::Type type,
 			    struct str_pair_t str,
 			    svector<PExpr*>*delay,
-			    svector<lgate>*gates);
+			    svector<lgate>*gates,
+			    svector<named_pexpr_t*>*attr);
 
 extern void pform_make_modgates(const char*type,
 				struct parmvalue_t*overrides,
@@ -241,6 +248,14 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.58  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.57  2002/05/20 02:06:01  steve
  *  Add ranges and signed to port list declarations.
  *

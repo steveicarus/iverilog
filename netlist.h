@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.236 2002/05/05 21:11:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.237 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 /*
@@ -101,9 +101,8 @@ class NetObj {
       void fall_time(unsigned d) { delay2_ = d; }
       void decay_time(unsigned d) { delay3_ = d; }
 
-      void set_attributes(const map<string,string>&);
-      string attribute(const string&key) const;
-      void attribute(const string&key, const string&value);
+      const verinum& attribute(const string&key) const;
+      void attribute(const string&key, const verinum&value);
 
 	// Return true if this has all the attributes in that and they
 	// all have the same values.
@@ -111,7 +110,7 @@ class NetObj {
 
       unsigned nattr() const;
       const char* attr_key(unsigned) const;
-      const char* attr_value(unsigned) const;
+      const verinum& attr_value(unsigned) const;
 
       Link&pin(unsigned idx);
       const Link&pin(unsigned idx) const;
@@ -2980,6 +2979,14 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.237  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.236  2002/05/05 21:11:50  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms

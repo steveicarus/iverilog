@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.185 2002/05/05 21:11:50 steve Exp $"
+#ident "$Id: netlist.cc,v 1.186 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -205,17 +205,12 @@ const NetScope* NetObj::scope() const
       return scope_;
 }
 
-void NetObj::set_attributes(const map<string,string>&attr)
-{
-      attributes_.set_attributes(attr);
-}
-
-string NetObj::attribute(const string&key) const
+const verinum& NetObj::attribute(const string&key) const
 {
       return attributes_.attribute(key);
 }
 
-void NetObj::attribute(const string&key, const string&value)
+void NetObj::attribute(const string&key, const verinum&value)
 {
       attributes_.attribute(key, value);
 }
@@ -235,9 +230,9 @@ const char* NetObj::attr_key(unsigned idx) const
       return attributes_.key(idx).c_str();
 }
 
-const char* NetObj::attr_value(unsigned idx) const
+const verinum& NetObj::attr_value(unsigned idx) const
 {
-      return attributes_.value(idx).c_str();
+      return attributes_.value(idx);
 }
 
 
@@ -2359,6 +2354,14 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.186  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.185  2002/05/05 21:11:50  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms

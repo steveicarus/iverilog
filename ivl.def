@@ -43,6 +43,8 @@ ivl_expr_uvalue
 ivl_expr_width
 
 ivl_logic_attr
+ivl_logic_attr_cnt
+ivl_logic_attr_val
 ivl_logic_delay
 ivl_logic_name
 ivl_logic_basename

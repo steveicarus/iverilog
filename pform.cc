@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.95 2002/05/20 02:06:01 steve Exp $"
+#ident "$Id: pform.cc,v 1.96 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -555,7 +555,8 @@ void pform_make_events(list<char*>*names, const char*fn, unsigned ln)
 void pform_makegate(PGBuiltin::Type type,
 		    struct str_pair_t str,
 		    svector<PExpr*>* delay,
-		    const lgate&info)
+		    const lgate&info,
+		    svector<named_pexpr_t*>*attr)
 {
       if (info.parms_by_name) {
 	    cerr << info.file << ":" << info.lineno << ": Gates do not "
@@ -568,6 +569,13 @@ void pform_makegate(PGBuiltin::Type type,
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
+      if (attr) {
+	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		  named_pexpr_t*tmp = (*attr)[idx];
+		  cur->attributes[tmp->name] = tmp->parm;
+	    }
+      }
+
       cur->strength0(str.str0);
       cur->strength1(str.str1);
       cur->set_file(info.file);
@@ -579,10 +587,19 @@ void pform_makegate(PGBuiltin::Type type,
 void pform_makegates(PGBuiltin::Type type,
 		     struct str_pair_t str,
 		     svector<PExpr*>*delay,
-		     svector<lgate>*gates)
+		     svector<lgate>*gates,
+		     svector<named_pexpr_t*>*attr)
 {
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
-	    pform_makegate(type, str, delay, (*gates)[idx]);
+	    pform_makegate(type, str, delay, (*gates)[idx], attr);
+      }
+
+      if (attr) {
+	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		  named_pexpr_t*cur = (*attr)[idx];
+		  delete cur;
+	    }
+	    delete attr;
       }
 
       delete gates;
@@ -611,7 +628,7 @@ static void pform_make_modgate(const char*type,
 	    named<PExpr*>*byname = new named<PExpr*>[cnt];
 
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-		  portname_t*curp = (*overrides->by_name)[idx];
+		  named_pexpr_t*curp = (*overrides->by_name)[idx];
 		  byname[idx].name = curp->name;
 		  byname[idx].parm = curp->parm;
 	    }
@@ -628,14 +645,14 @@ static void pform_make_modgate(const char*type,
 static void pform_make_modgate(const char*type,
 			       const string&name,
 			       struct parmvalue_t*overrides,
-			       svector<portname_t*>*bind,
+			       svector<named_pexpr_t*>*bind,
 			       PExpr*msb, PExpr*lsb,
 			       const char*fn, unsigned ln)
 {
       unsigned npins = bind->count();
       named<PExpr*>*pins = new named<PExpr*>[npins];
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
-	    portname_t*curp = (*bind)[idx];
+	    named_pexpr_t*curp = (*bind)[idx];
 	    pins[idx].name = curp->name;
 	    pins[idx].parm = curp->parm;
       }
@@ -650,7 +667,7 @@ static void pform_make_modgate(const char*type,
 	    named<PExpr*>*byname = new named<PExpr*>[cnt];
 
 	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-		  portname_t*curp = (*overrides->by_name)[idx];
+		  named_pexpr_t*curp = (*overrides->by_name)[idx];
 		  byname[idx].name = curp->name;
 		  byname[idx].parm = curp->parm;
 	    }
@@ -1094,17 +1111,18 @@ void pform_set_function(const char*name, NetNet::Type ntype,
       pform_cur_module->add_function(name, func);
 }
 
-void pform_set_attrib(const char*name, const string&key, const string&value)
+void pform_set_attrib(const char*name, const string&key, char*value)
 {
       hname_t path (name);
 
       if (PWire*cur = pform_cur_module->get_wire(path)) {
-	    cur->attributes[key] = value;
+	    cur->attributes[key] = new PEString(value);
 
       } else if (PGate*cur = pform_cur_module->get_gate(name)) {
-	    cur->attributes[key] = value;
+	    cur->attributes[key] = new PEString(value);
 
       } else {
+	    free(value);
 	    VLerror("Unable to match name for setting attribute.");
 
       }
@@ -1115,15 +1133,16 @@ void pform_set_attrib(const char*name, const string&key, const string&value)
  * that this applies to every instantiation of the given type.
  */
 void pform_set_type_attrib(const string&name, const string&key,
-			   const string&value)
+			   char*value)
 {
       map<string,PUdp*>::const_iterator udp = pform_primitives.find(name);
       if (udp == pform_primitives.end()) {
 	    VLerror("type name is not (yet) defined.");
+	    free(value);
 	    return;
       }
 
-      (*udp).second ->attributes[key] = value;
+      (*udp).second ->attributes[key] = new PEString(value);
 }
 
 /*
@@ -1308,6 +1327,14 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.96  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.95  2002/05/20 02:06:01  steve
  *  Add ranges and signed to port list declarations.
  *

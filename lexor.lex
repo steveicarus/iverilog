@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.71 2002/04/15 00:04:22 steve Exp $"
+#ident "$Id: lexor.lex,v 1.72 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -128,14 +128,9 @@ W [ \t\b\f\r]+
 <CCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
-  /* Pragma comments are very similar to C-style comments, except that
-     they are allowed to carry tool-specific pragma strings. */
 
-"(*" { comment_enter = YY_START; BEGIN(PCOMMENT); }
-<PCOMMENT>.    { yymore(); }
-<PCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
-<PCOMMENT>"*)" { BEGIN(comment_enter); }
-
+"(*" { return K_PSTAR; }
+"*)" { return K_STARP; }
 "<<" { return K_LS; }
 ">>" { return K_RS; }
 "<=" { return K_LE; }

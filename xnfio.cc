@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.19 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.20 2002/05/23 03:08:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,7 +41,7 @@ class xnfio_f  : public functor_t {
 
 static bool is_a_pad(const NetNet*net)
 {
-      if (net->attribute("PAD") == "")
+      if (net->attribute("PAD") == verinum())
 	    return false;
 
       return true;
@@ -90,7 +90,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", "OBUF:O,I");
+		  tmp->attribute("XNF-LCA", verinum("OBUF:O,I"));
 		  return tmp;
 	    }
 
@@ -103,7 +103,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", "OBUF:O,~I");
+		  tmp->attribute("XNF-LCA", verinum("OBUF:O,~I"));
 		  return tmp;
 	    }
 
@@ -115,7 +115,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", "OBUFT:O,I,~T");
+		  tmp->attribute("XNF-LCA", verinum("OBUFT:O,I,~T"));
 		  return tmp;
 	    }
 
@@ -123,7 +123,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", "OBUFT:O,I,T");
+		  tmp->attribute("XNF-LCA", verinum("OBUFT:O,I,T"));
 		  return tmp;
 	    }
       }
@@ -134,9 +134,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 				  2, NetLogic::BUF);
       des->add_node(buf);
 
-      map<string,string>attr;
-      attr["XNF-LCA"] = "OBUF:O,I";
-      buf->set_attributes(attr);
+      buf->attribute("XNF-LCA", verinum("OBUF:O,I"));
 
 	// Put the buffer between this signal and the rest of the
 	// netlist.
@@ -178,7 +176,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
 	    return;
       if (ff->width() != 1)
 	    return;
-      if (ff->attribute("LPM_FFType") != "DFF")
+      if (ff->attribute("LPM_FFType") != verinum("DFF"))
 	    return;
 
 	/* Connect the flip-flop output to the buffer output and
@@ -192,7 +190,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
       for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
 	    names[idx] = "";
 
-      if (ff->attribute("Clock:LPM_Polarity") == "INVERT")
+      if (ff->attribute("Clock:LPM_Polarity") == verinum("INVERT"))
 	    names[ff->pin_Clock().get_pin()] = "~C";
       else
 	    names[ff->pin_Clock().get_pin()] = "C";
@@ -227,7 +225,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
 		  continue;
 
-	    if (tmp->attribute("XNF-LCA") != "")
+	    if (tmp->attribute("XNF-LCA") != verinum())
 		  continue;
 
 	      // Found a BUF, it is only useable if the only input is
@@ -235,7 +233,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	    if ((tmp->type() == NetLogic::BUF) &&
 		(count_inputs(tmp->pin(1)) == 1) &&
 		(count_outputs(tmp->pin(1)) == 0)) {
-		  tmp->attribute("XNF-LCA", "IBUF:O,I");
+		  tmp->attribute("XNF-LCA", verinum("IBUF:O,I"));
 		  return;
 	    }
 
@@ -246,9 +244,7 @@ static void make_ibuf(Design*des, NetNet*net)
 				  2, NetLogic::BUF);
       des->add_node(buf);
 
-      map<string,string>attr;
-      attr["XNF-LCA"] = "IBUF:O,I";
-      buf->set_attributes(attr);
+      buf->attribute("XNF-LCA", verinum("IBUF:O,I"));
 
 	// Put the buffer between this signal and the rest of the
 	// netlist.
@@ -274,7 +270,7 @@ void xnfio_f::signal(Design*des, NetNet*net)
 	    return;
 
       assert(net->pin_count() == 1);
-      string pattr = net->attribute("PAD");
+      string pattr = net->attribute("PAD").as_string();
 
       switch (pattr[0]) {
 	  case 'i':
@@ -367,6 +363,14 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.20  2002/05/23 03:08:52  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.19  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

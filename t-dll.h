@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.76 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: t-dll.h,v 1.77 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -368,9 +368,8 @@ struct ivl_net_logic_s {
       unsigned npins_;
       ivl_nexus_t*pins_;
 
-      char**akey_;
-      char**aval_;
-      unsigned nattr_;
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
 
       unsigned delay[3];
 };
@@ -599,6 +598,14 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.77  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.76  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

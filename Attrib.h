@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Attrib.h,v 1.1 2000/12/04 17:37:03 steve Exp $"
+#ident "$Id: Attrib.h,v 1.2 2002/05/23 03:08:50 steve Exp $"
 #endif
 
 # include  <string>
 # include  <map>
+# include  "verinum.h"
 
 /*
  * This class keeps a map of key/value pairs. The map can be set from
@@ -35,21 +36,21 @@ class Attrib {
       Attrib();
       ~Attrib();
 
-      void set_attributes(const map<string,string>&attr);
-      string attribute(const string&key) const;
-      void attribute(const string&key, const string&value);
+      const verinum&attribute(const string&key) const;
+      void attribute(const string&key, const verinum&value);
       bool has_compat_attributes(const Attrib&that) const;
 
 
 	/* Provide a means of iterating over the entries in the map. */
       unsigned size() const;
       string key(unsigned idx) const;
-      string value(unsigned idx) const;
+      const verinum& value(unsigned idx) const;
+
 
     private:
       struct cell_ {
-	    string key;
-	    string val;
+	    string  key;
+	    verinum val;
       };
 
       unsigned nlist_;
@@ -62,6 +63,14 @@ class Attrib {
 
 /*
  * $Log: Attrib.h,v $
+ * Revision 1.2  2002/05/23 03:08:50  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.1  2000/12/04 17:37:03  steve
  *  Add Attrib class for holding NetObj attributes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.89 2002/04/23 03:53:59 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.90 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -240,10 +240,10 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
       switch (op_) {
 	  case '+':
-	    gate->attribute("LPM_Direction", "ADD");
+	    gate->attribute("LPM_Direction", verinum("ADD"));
 	    break;
 	  case '-':
-	    gate->attribute("LPM_Direction", "SUB");
+	    gate->attribute("LPM_Direction", verinum("SUB"));
 	    break;
       }
 
@@ -2102,6 +2102,14 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.90  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.89  2002/04/23 03:53:59  steve
  *  Add support for non-constant bit select.
  *

@@ -19,13 +19,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PUdp.h,v 1.5 2001/04/22 23:09:45 steve Exp $"
+#ident "$Id: PUdp.h,v 1.6 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include  <map>
 # include  "svector.h"
 # include  <string>
 # include  "verinum.h"
+
+class PExpr;
 
 svector<string>::svector<string>(unsigned size)
 : nitems_(size), items_(new string[size])
@@ -68,7 +70,7 @@ class PUdp {
 
       verinum::V initial;
 
-      map<string,string> attributes;
+      map<string,PExpr*> attributes;
 
       void dump(ostream&out) const;
 
@@ -82,6 +84,14 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.6  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.5  2001/04/22 23:09:45  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

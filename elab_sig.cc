@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.21 2002/05/19 23:37:28 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.22 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -475,6 +475,10 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       }
 
+      unsigned nattrib = 0;
+      attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
+						      des, scope);
+
       if (lidx_ || ridx_) {
 	    assert(lidx_ && ridx_);
 
@@ -513,12 +517,22 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_signed(get_signed());
-	    sig->set_attributes(attributes);
+
+	    for (unsigned idx = 0 ;  idx < nattrib ;  idx += 1)
+		  sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
       }
 }
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.22  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.21  2002/05/19 23:37:28  steve
  *  Parse port_declaration_lists from the 2001 Standard.
  *

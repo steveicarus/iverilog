@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.81 2002/04/22 03:15:25 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.82 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -475,19 +475,29 @@ int dll_target::end_design(const Design*)
 static void logic_attributes(struct ivl_net_logic_s *obj,
 			     const NetNode*net)
 {
-      obj->nattr_ = net->nattr();
-      if (obj->nattr_ > 0) {
-	    obj->akey_  = (char**)calloc(obj->nattr_, sizeof(char*));
-	    obj->aval_  = (char**)calloc(obj->nattr_, sizeof(char*));
+      obj->nattr = net->nattr();
+      if (obj->nattr > 0) {
+	    obj->attr = new struct ivl_attribute_s[obj->nattr];
+	    for (unsigned idx = 0 ;  idx < obj->nattr ;  idx += 1) {
+		  verinum tmp = net->attr_value(idx);
+		  obj->attr[idx].key = strdup(net->attr_key(idx));
+		  if (tmp.is_string()) {
+			obj->attr[idx].type = IVL_ATT_STR;
+			obj->attr[idx].val.str =
+			      strdup(tmp.as_string().c_str());
 
-	    for (unsigned idx = 0 ;  idx < obj->nattr_ ;  idx += 1) {
-		  obj->akey_[idx] = strdup(net->attr_key(idx));
-		  obj->aval_[idx] = strdup(net->attr_value(idx));
+		  } else if (tmp == verinum()) {
+			obj->attr[idx].type = IVL_ATT_VOID;
+
+		  } else {
+			obj->attr[idx].type = IVL_ATT_NUM;
+			obj->attr[idx].val.num = tmp.as_long();
+		  }
 	    }
 
+
       } else {
-	    obj->akey_  = 0;
-	    obj->aval_  = 0;
+	    obj->attr = 0;
       }
 }
 
@@ -930,7 +940,7 @@ void dll_target::memory(const NetMemory*net)
 void dll_target::lpm_add_sub(const NetAddSub*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      if (net->attribute("LPM_Direction") == "SUB")
+      if (net->attribute("LPM_Direction") == verinum("SUB"))
 	    obj->type = IVL_LPM_SUB;
       else
 	    obj->type = IVL_LPM_ADD;
@@ -1881,7 +1891,7 @@ void dll_target::signal(const NetNet*net)
       obj->aval_  = new char*[obj->nattr_];
       for (unsigned idx = 0 ;  idx < obj->nattr_ ;  idx += 1) {
 	    obj->akey_[idx] = strdup(net->attr_key(idx));
-	    obj->aval_[idx] = strdup(net->attr_value(idx));
+	    obj->aval_[idx] = strdup(net->attr_value(idx).as_string().c_str());
       }
 
 	/* Get the nexus objects for all the pins of the signal. If
@@ -1933,6 +1943,14 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.82  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.81  2002/04/22 03:15:25  steve
  *  Keep delays applied to BUFZ devices.
  *

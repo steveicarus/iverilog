@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.248 2002/05/12 19:16:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.249 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,6 +39,7 @@
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
+
 
 static Link::strength_t drive_type(PGate::strength_t drv)
 {
@@ -265,6 +266,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       unsigned long rise_time, fall_time, decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time);
 
+      struct attrib_list_t*attrib_list = 0;
+      unsigned attrib_list_n = 0;
+      attrib_list = evaluate_attributes(attributes, attrib_list_n,
+					des, scope);
+
 	/* Now make as many gates as the bit count dictates. Give each
 	   a unique name, and set the delay times. */
 
@@ -359,7 +365,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 
-	    cur[idx]->set_attributes(attributes);
+	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+		  cur[idx]->attribute(attrib_list[adx].key,
+				      attrib_list[adx].val);
+
 	    cur[idx]->rise_time(rise_time);
 	    cur[idx]->fall_time(fall_time);
 	    cur[idx]->decay_time(decay_time);
@@ -369,6 +378,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 	    des->add_node(cur[idx]);
       }
+
+
+      delete[]attrib_list;
 
 	/* The gates have all been allocated, this loop runs through
 	   the parameters and attaches the ports of the objects. */
@@ -676,10 +688,19 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
 
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
-      net->set_attributes(udp->attributes);
       net->rise_time(rise_time);
       net->fall_time(fall_time);
       net->decay_time(decay_time);
+
+      struct attrib_list_t*attrib_list = 0;
+      unsigned attrib_list_n = 0;
+      attrib_list = evaluate_attributes(attributes, attrib_list_n,
+					des, scope);
+
+      for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+	    net->attribute(attrib_list[adx].key, attrib_list[adx].val);
+
+      delete[]attrib_list;
 
 	/* Run through the pins, making netlists for the pin
 	   expressions and connecting them to the pin in question. All
@@ -2530,6 +2551,14 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.249  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.248  2002/05/12 19:16:58  steve
  *  Accept errors in memory index expression.
  *

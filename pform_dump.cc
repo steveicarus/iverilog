@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.71 2002/05/19 23:37:28 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.72 2002/05/23 03:08:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -251,11 +251,11 @@ void PWire::dump(ostream&out) const
       }
 
       out << ";" << endl;
-      for (map<string,string>::const_iterator idx = attributes.begin()
+      for (map<string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
 	    out << "        " << (*idx).first << " = \"" <<
-		  (*idx).second << "\"" << endl;
+		  *(*idx).second << "\"" << endl;
       }
 }
 
@@ -813,17 +813,25 @@ void PUdp::dump(ostream&out) const
 
 	// Dump the attributes for the primitive as attribute
 	// statements.
-      for (map<string,string>::const_iterator idx = attributes.begin()
+      for (map<string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
 	    out << "$attribute(" << name_ << ", \"" << (*idx).first <<
-		  "\", \"" << (*idx).second << "\")" << endl;
+		  "\", \"" << *(*idx).second << "\")" << endl;
       }
 }
 
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.72  2002/05/23 03:08:51  steve
+ *  Add language support for Verilog-2001 attribute
+ *  syntax. Hook this support into existing $attribute
+ *  handling, and add number and void value types.
+ *
+ *  Add to the ivl_target API new functions for access
+ *  of complex attributes attached to gates.
+ *
  * Revision 1.71  2002/05/19 23:37:28  steve
  *  Parse port_declaration_lists from the 2001 Standard.
  *
