@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.15 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.16 2000/11/29 02:09:52 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -214,6 +214,81 @@ NetNet* NetEBDiv::synthesize(Design*des)
       return 0;
 }
 
+NetNet* NetEBLogic::synthesize(Design*des)
+{
+      NetNet*lsig = left_->synthesize(des);
+      NetNet*rsig = right_->synthesize(des);
+
+      if (lsig == 0)
+	    return 0;
+
+      if (rsig == 0)
+	    return 0;
+
+      NetScope*scope = lsig->scope();
+      assert(scope);
+      string path = des->local_symbol(scope->name());
+
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
+      osig->local_flag(true);
+
+
+      if (op() == 'o') {
+
+	      /* Logic OR can handle the reduction *and* the logical
+		 comparison with a single wide OR gate. So handle this
+		 magically. */
+
+	    string oname = des->local_symbol(path);
+	    NetLogic*olog;
+
+	    olog = new NetLogic(scope, oname,
+				lsig->pin_count()+rsig->pin_count()+1,
+				NetLogic::OR);
+
+	    connect(osig->pin(0), olog->pin(0));
+
+	    unsigned pin = 1;
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx = 1)
+		  connect(olog->pin(pin+idx), lsig->pin(idx));
+
+	    pin += lsig->pin_count();
+	    for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx = 1)
+		  connect(olog->pin(pin+idx), rsig->pin(idx));
+
+	    des->add_node(olog);
+
+      } else {
+	    assert(op() == 'a');
+
+	      /* Create the logic AND gate. This is a single bit
+		 output, with inputs for each of the operands. */
+	    NetLogic*olog;
+	    string oname = des->local_symbol(path);
+
+	    olog = new NetLogic(scope, oname, 3, NetLogic::AND);
+
+	    connect(osig->pin(0), olog->pin(0));
+	    des->add_node(olog);
+
+	      /* XXXX Here, I need to reduce the parameters with
+		 reduction or. */
+
+
+	      /* By this point, the left and right parameters have been
+		 reduced to single bit values. Now we just connect them to
+		 the logic gate. */
+	    assert(lsig->pin_count() == 1);
+	    connect(lsig->pin(0), olog->pin(1));
+
+	    assert(rsig->pin_count() == 1);
+	    connect(lsig->pin(0), olog->pin(2));
+      }
+
+
+      return osig;
+}
+
 NetNet* NetEConcat::synthesize(Design*des)
 {
       NetScope*scope = des->find_root_scope();
@@ -329,6 +404,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.16  2000/11/29 02:09:52  steve
+ *  Add support for || synthesis (PR#53)
+ *
  * Revision 1.15  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.180 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.181 2000/11/29 02:09:53 steve Exp $"
 #endif
 
 /*
@@ -2176,6 +2176,7 @@ class NetEBComp : public NetEBinary {
  * results. The supported operators are:
  *
  *   a  -- Logical AND (&&)
+ *   o  -- Logical OR (||)
  */
 class NetEBLogic : public NetEBinary {
 
@@ -2186,6 +2187,7 @@ class NetEBLogic : public NetEBinary {
       virtual bool set_width(unsigned w);
       virtual NetEBLogic* dup_expr() const;
       virtual NetEConst* eval_tree();
+      virtual NetNet* synthesize(Design*);
 
     private:
 };
@@ -2812,6 +2814,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.181  2000/11/29 02:09:53  steve
+ *  Add support for || synthesis (PR#53)
+ *
  * Revision 1.180  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *
