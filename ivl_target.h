@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.88 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.89 2001/12/06 03:11:00 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -487,6 +487,7 @@ extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
+extern unsigned    ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
 
 extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);
 
@@ -976,6 +977,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.89  2001/12/06 03:11:00  steve
+ *  Add ivl_logic_delay function to ivl_target.
+ *
  * Revision 1.88  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.70 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.71 2001/12/06 03:11:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -618,6 +618,10 @@ void dll_target::logic(const NetLogic*net)
 
       logic_attributes(obj, net);
 
+      obj->delay[0] = net->rise_time();
+      obj->delay[1] = net->fall_time();
+      obj->delay[2] = net->decay_time();
+
       scope_add_logic(scope, obj);
 }
 
@@ -721,6 +725,10 @@ void dll_target::udp(const NetUDP*net)
 
       obj->scope_= scope;
       obj->name_ = strdup(net->name());
+
+      obj->delay[0] = net->rise_time();
+      obj->delay[1] = net->fall_time();
+      obj->delay[2] = net->decay_time();
 
       scope_add_logic(scope, obj);
 }
@@ -1666,6 +1674,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.71  2001/12/06 03:11:00  steve
+ *  Add ivl_logic_delay function to ivl_target.
+ *
  * Revision 1.70  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *

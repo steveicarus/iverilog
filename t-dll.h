@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.71 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: t-dll.h,v 1.72 2001/12/06 03:11:01 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -361,6 +361,8 @@ struct ivl_net_logic_s {
       char**akey_;
       char**aval_;
       unsigned nattr_;
+
+      unsigned delay[3];
 };
 
 
@@ -587,6 +589,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.72  2001/12/06 03:11:01  steve
+ *  Add ivl_logic_delay function to ivl_target.
+ *
  * Revision 1.71  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *
