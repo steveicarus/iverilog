@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.86 1999/09/15 04:17:52 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.87 1999/09/16 00:33:45 steve Exp $"
 #endif
 
 /*
@@ -2023,12 +2023,17 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 		  return new NetBlock(NetBlock::SEQU);
       }
 
+	// If the condition expression is more then 1 bits, then
+	// generate a comparison operator to get the result down to
+	// one bit. Turn <e> into <e> != 0;
+
       if (! expr->set_width(1)) {
-	    cerr << get_line() << ": Unable to set expression width to 1."
-		 << endl;
-	    des->errors += 1;
-	    delete expr;
-	    return 0;
+	    assert(expr->expr_width() > 1);
+	    verinum zero (verinum::V0, expr->expr_width());
+	    NetEConst*ezero = new NetEConst(zero);
+	    ezero->set_width(expr->expr_width());
+	    NetEBComp*cmp = new NetEBComp('n', expr, ezero);
+	    expr = cmp;
       }
 
 	// Well, I actually need to generate code to handle the
@@ -2580,6 +2585,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.87  1999/09/16 00:33:45  steve
+ *  Handle implicit !=0 in if statements.
+ *
  * Revision 1.86  1999/09/15 04:17:52  steve
  *  separate assign lval elaboration for error checking.
  *

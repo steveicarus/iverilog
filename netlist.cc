@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.62 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: netlist.cc,v 1.63 1999/09/16 00:33:45 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -805,6 +805,7 @@ bool NetEBBits::set_width(unsigned w)
 NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+      expr_width(1);
 }
 
 NetEBComp::~NetEBComp()
@@ -1800,6 +1801,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.63  1999/09/16 00:33:45  steve
+ *  Handle implicit !=0 in if statements.
+ *
  * Revision 1.62  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *
