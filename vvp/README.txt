@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.47 2004/10/04 01:10:58 steve Exp $
+ *  $Id: README.txt,v 1.47.2.1 2005/02/19 16:39:32 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -55,7 +55,7 @@ compiler scales time values ahead of time.
 
 The value is the size of a simulation tick in seconds, and is
 expressed as a power of 10. For example, +0 is 1 second, and -9 is 1
-nano-second. If the record is left out, then the precision is taken to
+nanosecond. If the record is left out, then the precision is taken to
 be +0.
 
 LABELS AND SYMBOLS
@@ -511,7 +511,7 @@ Whereas the arithmetic statements create an array of functor outputs,
 there is only one useful functor output for the comparators. That
 functor output is 1 1f the comparison is true, 0 if false, and x
 otherwise. The plain versions do unsigned comparison, but the ".s"
-versions to signed comparisons. (Eqlality doesn't need to care about
+versions do signed comparison. (Equality doesn't need to care about
 sign.)
 
 

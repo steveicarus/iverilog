@@ -114,7 +114,7 @@ configure script that modify its behavior:
 If you are building for Linux/AMD64 (a.k.a x86_64) then to get the
 most out of your install, first make sure you have both 64bit and
 32bit development libraries installed. Then configure with this
-somewhat more compilcated command:
+somewhat more complex command:
 
   ./configure libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
 

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt-virtex.v,v 1.4 2003/11/25 18:35:31 steve Exp $"
+ *   $Id: sqrt-virtex.v,v 1.4.2.1 2005/02/19 16:39:32 steve Exp $"
  */
 
 /*
@@ -129,7 +129,7 @@
  * This command creates from the chip.ngd the file "chip_root.v" that
  * contains Verilog code that simulates the mapped design. This output
  * Verilog has the single root module "chip_root", which came from the
- * name of the root module when we were making hte EDIF file in the
+ * name of the root module when we were making the EDIF file in the
  * first place. The module has ports named just line the ports of the
  * chip_root module below.
  *

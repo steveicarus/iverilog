@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.11 2003/08/07 05:17:34 steve Exp $
+  $Id: fpga.txt,v 1.11.2.1 2005/02/19 16:39:32 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -44,7 +44,7 @@ map to target gates if desired.
 If this is selected, then the output is formatted as an XNF file,
 suitable for most any type of device. The devices that it emits
 are generic devices from the unified library. Some devices are macros,
-youmay need to further resolve the generated XNF to get working
+you may need to further resolve the generated XNF to get working
 code for your part.
 
 * arch=virtex
@@ -188,6 +188,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.11.2.1  2005/02/19 16:39:32  steve
+ Spellig fixes.
+
 Revision 1.11  2003/08/07 05:17:34  steve
  Add arch=lpm to the documentation.
 

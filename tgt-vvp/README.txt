@@ -3,7 +3,7 @@ THE VVP TARGET
 
 SYMBOL NAME CONVENTIONS
 
-There are some naming conventions that the vp target uses for
+There are some naming conventions that the vvp target uses for
 generating symbol names.
 
 * wires and regs

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59 2004/06/30 02:16:26 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59.2.1 2005/02/19 16:39:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -408,7 +408,7 @@ NetNet* NetEBDiv::synthesize(Design*des)
 
 	  default: {
 		cerr << get_line() << ": internal error: "
-		     << "NetEBDiv has unexpeced op() code: "
+		     << "NetEBDiv has unexpected op() code: "
 		     << op() << endl;
 		des->errors += 1;
 
@@ -875,6 +875,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59.2.1  2005/02/19 16:39:31  steve
+ *  Spellig fixes.
+ *
  * Revision 1.59  2004/06/30 02:16:26  steve
  *  Implement signed divide and signed right shift in nets.
  *

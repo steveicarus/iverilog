@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131.2.1 2005/02/19 16:39:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1104,7 +1104,7 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    obj->type = IVL_LPM_SUB;
       else
 	    obj->type = IVL_LPM_ADD;
-      obj->name = net->name(); // NetAddSub names are permallocated.
+      obj->name = net->name(); // NetAddSub names are permallocated
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1803,7 +1803,7 @@ void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
-      obj->name  = net->name(); // The NetMux perallocates its name.
+      obj->name  = net->name(); // NetMux names are permallocated
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -2180,6 +2180,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131.2.1  2005/02/19 16:39:31  steve
+ *  Spellig fixes.
+ *
  * Revision 1.131  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.138.2.1 2005/01/29 00:18:23 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.138.2.2 2005/02/19 16:39:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1327,7 +1327,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    delete etmp;
 
 	    if (repeat == 0) {
-		  cerr << get_line() << ": error: Concatenation epeat "
+		  cerr << get_line() << ": error: Concatenation repeat "
 			"may not be 0."
 		       << endl;
 		  des->errors += 1;
@@ -2517,6 +2517,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.138.2.2  2005/02/19 16:39:30  steve
+ *  Spellig fixes.
+ *
  * Revision 1.138.2.1  2005/01/29 00:18:23  steve
  *  Fix evaluate of constants in netlist concatenation repeats.
  *

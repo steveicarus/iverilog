@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.33 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.33.2.1 2005/02/19 16:39:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -194,7 +194,7 @@ const NetFuncDef* NetScope::func_def() const
 void NetScope::set_module_name(perm_string n)
 {
       assert(type_ == MODULE);
-      module_name_ = n; /* NOTE: n mus have been permallocated. */
+      module_name_ = n; /* NOTE: n must have been permallocated. */
 }
 
 perm_string NetScope::module_name() const
@@ -467,6 +467,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.33.2.1  2005/02/19 16:39:31  steve
+ *  Spellig fixes.
+ *
  * Revision 1.33  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *
