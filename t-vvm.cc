@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.109 2000/03/16 21:47:27 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.110 2000/03/16 23:13:49 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1177,12 +1177,31 @@ void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
       os << "static vvm_mux<" << mux->width() << "," << mux->size() <<
 	    "," << mux->sel_width() << "> " << mname << ";" << endl;
 
+	/* Connect the select inputs... */
+      for (unsigned idx = 0 ;  idx < mux->sel_width() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&mux->pin_Sel(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&"
+		      << mangle(mux->name()) << ", " << mangle(mux->name())
+		      << ".key_Sel(" << idx << "));" << endl;
+      }
+
+	/* Connect the data inputs... */
+      for (unsigned idx = 0 ;  idx < mux->size() ;  idx += 1) {
+	    for (unsigned wid = 0 ;  wid < mux->width() ;  wid += 1) {
+		  string nexus = mangle(nexus_from_link(&mux->pin_Data(wid, idx)));
+		  init_code << "      " << nexus << "_nex.connect(&"
+			    << mangle(mux->name()) << ", "
+			    << mangle(mux->name()) << ".key_Data("
+			    << wid << "," << idx << "));" << endl;
+	    }
+      }
+
+	/* Connect the outputs... */
       for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
-	    unsigned pin = mux->pin_Result(idx).get_pin();
-	    string outfun = defn_gate_outputfun_(os, mux, pin);
-	    init_code << "      " << mangle(mux->name()) <<
-		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
-	    emit_gate_outputfun_(mux, pin);
+	    string nexus = mangle(nexus_from_link(&mux->pin_Result(idx)));
+	    init_code << "      " << nexus << "_nex.connect(" <<
+		  mangle(mux->name()) << ".config_rout(" << idx <<
+			 "));" << endl;
       }
 }
 
@@ -2278,6 +2297,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.110  2000/03/16 23:13:49  steve
+ *  Update LPM_MUX to nexus style.
+ *
  * Revision 1.109  2000/03/16 21:47:27  steve
  *  Update LMP_CLSHIFT to use nexus interface.
  *

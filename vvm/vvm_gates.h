@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.39 2000/03/16 21:47:27 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.40 2000/03/16 23:13:49 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -468,12 +468,12 @@ class vvm_mult {
  * (or bus) path, SIZE is the number of alternative inputs and SELWID
  * is the size (in bits) of the selector input.
  */
-template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
+template <unsigned WIDTH, unsigned SIZE, unsigned SELWID>
+class vvm_mux  : public vvm_nexus::recvr_t {
 
     public:
       explicit vvm_mux()
 	    { unsigned idx;
-	      for (idx = 0 ;  idx < WIDTH ;  idx += 1) out_[idx] = 0;
 	      for (idx = 0 ;  idx < WIDTH ;  idx += 1) output_[idx] = Vx;
 	      for (idx = 0 ;  idx < SELWID;  idx += 1) sel_[idx] = Vx;
 	      for (idx = 0 ;  idx < WIDTH*SIZE;  idx += 1) input_[idx] = Vx;
@@ -484,6 +484,23 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
 
       void init_Data(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
+
+      vvm_nexus::drive_t* config_rout(unsigned idx)
+	    { return out_+idx; }
+
+      unsigned key_Sel(unsigned idx) const { return idx; }
+      unsigned key_Data(unsigned wi, unsigned si) const
+            { return 0x10000 + si*WIDTH + wi; }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val)
+      { unsigned code = key >> 16;
+        unsigned idx = key & 0xffff;
+	if (code == 1)
+	      set_Data(idx, val);
+	else
+	      set_Sel(idx, val);
+      }
 
       void set_Sel(unsigned idx, vpip_bit_t val)
 	    { if (sel_[idx] == val) return;
@@ -497,15 +514,12 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
 	      evaluate_();
 	    }
 
-      void config_rout(unsigned idx, vvm_out_event::action_t o)
-	    { out_[idx] = o; }
-
     private:
       vpip_bit_t sel_[SELWID];
       vpip_bit_t input_[WIDTH * SIZE];
       vpip_bit_t output_[WIDTH];
 
-      vvm_out_event::action_t out_[WIDTH];
+      vvm_nexus::drive_t out_[WIDTH];
 
       void evaluate_()
 	    { vpip_bit_t tmp[WIDTH];
@@ -513,9 +527,7 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    if (tmp[idx] != output_[idx]) {
 			  output_[idx] = tmp[idx];
-			  vvm_event*ev = new vvm_out_event(output_[idx],
-							   out_[idx]);
-			  ev->schedule();
+			  out_[idx].set_value(output_[idx]);
 		    }
 	    }
 };
@@ -992,6 +1004,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.40  2000/03/16 23:13:49  steve
+ *  Update LPM_MUX to nexus style.
+ *
  * Revision 1.39  2000/03/16 21:47:27  steve
  *  Update LMP_CLSHIFT to use nexus interface.
  *
