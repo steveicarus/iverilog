@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.20 2003/04/01 05:32:56 steve Exp $"
+#ident "$Id: udp.cc,v 1.21 2003/06/17 21:28:59 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -104,7 +104,7 @@ unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
 
   udp_vec_t invec = 0x0; // vector of 2-bit inputs
 
-  for (int i=0;  i < nin;  i+=4)
+  for (unsigned i=0; i < nin;  i+=4)
     {
       int idx = ipoint_input_index(base, i);
       edge_inputs_functor_s *pfun = 
@@ -144,7 +144,7 @@ unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
   udp_vec_t in1x =  invec & in01;        // all 'x' and '1'
   udp_vec_t in0  = ~invec & in01;        // all '0'
 
-  for (int ri=0;  ri < ntable;  ri++)
+  for (unsigned ri=0; ri < ntable;  ri++)
     {
       udp_table_entry_t row = table+ri;
 
@@ -360,6 +360,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.21  2003/06/17 21:28:59  steve
+ *  Remove short int restrictions from vvp opcodes. (part 2)
+ *
  * Revision 1.20  2003/04/01 05:32:56  steve
  *  Propagate output of sequential udp like non-blocksing assign.
  *

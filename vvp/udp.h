@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.11 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: udp.h,v 1.12 2003/06/17 21:28:59 steve Exp $"
 #endif
 
 #include "functor.h"
@@ -33,9 +33,9 @@ struct vvp_udp_s
 {
       char *name;
       udp_table_entry_t table;
-      unsigned short ntable;
-      unsigned short sequ;
-      unsigned short nin;
+      unsigned ntable;
+      unsigned sequ;
+      unsigned nin;
       unsigned char init;
   
       void compile_table(char **tab);
@@ -62,6 +62,9 @@ public:
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.12  2003/06/17 21:28:59  steve
+ *  Remove short int restrictions from vvp opcodes. (part 2)
+ *
  * Revision 1.11  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

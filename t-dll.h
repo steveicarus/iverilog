@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.102 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: t-dll.h,v 1.103 2003/06/17 21:28:59 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -178,7 +178,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 struct ivl_event_s {
       const char*name;
       ivl_scope_t scope;
-      unsigned short nany, nneg, npos;
+      unsigned nany, nneg, npos;
       ivl_nexus_t*pins;
 };
 
@@ -192,7 +192,7 @@ struct ivl_expr_s {
       ivl_expr_type_t type_;
       ivl_variable_type_t value_;
 
-      unsigned width_  :24;
+      unsigned width_;
       unsigned signed_ : 1;
 
       union {
@@ -208,8 +208,8 @@ struct ivl_expr_s {
 	    } bitsel_;
 
 	    struct {
-		  unsigned   rept  :16;
-		  unsigned   parms :16;
+		  unsigned   rept;
+		  unsigned   parms;
 		  ivl_expr_t*parm;
 	    } concat_;
 
@@ -232,9 +232,9 @@ struct ivl_expr_s {
 	    } signal_;
 
 	    struct {
-		  const char    *name_;
-		  ivl_expr_t    *parm;
-		  unsigned short parms;
+		  const char *name_;
+		  ivl_expr_t *parm;
+		  unsigned   parms;
 	    } sfunc_;
 
 	    struct {
@@ -255,8 +255,8 @@ struct ivl_expr_s {
 
 	    struct {
 		  ivl_scope_t def;
-		  ivl_expr_t    *parm;
-		  unsigned short parms;
+		  ivl_expr_t  *parm;
+		  unsigned    parms;
 	    } ufunc_;
 
 	    struct {
@@ -293,8 +293,8 @@ struct ivl_lpm_s {
 
       union {
 	    struct ivl_lpm_ff_s {
-		  unsigned short width;
-		  unsigned short swid; // ram only
+		  unsigned width;
+		  unsigned swid; // ram only
 		  ivl_nexus_t clk;
 		  ivl_nexus_t we;
 		  ivl_nexus_t aclr;
@@ -316,9 +316,9 @@ struct ivl_lpm_s {
 	    } ff;
 
 	    struct ivl_lpm_mux_s {
-		  unsigned short width;
-		  unsigned short size;
-		  unsigned short swid;
+		  unsigned width;
+		  unsigned size;
+		  unsigned swid;
 		  ivl_nexus_t*d;
 		  union {
 			ivl_nexus_t*pins;
@@ -331,23 +331,23 @@ struct ivl_lpm_s {
 	    } mux;
 
 	    struct ivl_lpm_shift_s {
-		  unsigned short width;
-		  unsigned short select;
+		  unsigned width;
+		  unsigned select;
 		  ivl_nexus_t*q;
 		  ivl_nexus_t*d;
 		  ivl_nexus_t*s;
 	    } shift;
 
 	    struct ivl_lpm_arith_s {
-		  unsigned width :16;
+		  unsigned width;
 		  unsigned signed_flag :1;
 		  ivl_nexus_t*q, *a, *b;
 	    } arith;
 
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
-		  unsigned short ports;
-		  unsigned short*port_wid;
+		  unsigned ports;
+		  unsigned *port_wid;
 		  ivl_nexus_t*pins;
 	    } ufunc;
       } u_;
@@ -368,8 +368,8 @@ enum ivl_lval_type_t {
 };
 
 struct ivl_lval_s {
-      unsigned width_  :24;
-      unsigned loff_   :24;
+      unsigned width_;
+      unsigned loff_;
       unsigned type_   : 8;
       ivl_expr_t idx;
       union {
@@ -384,7 +384,7 @@ struct ivl_lval_s {
  * structural context.
  */
 struct ivl_net_const_s {
-      unsigned width_  :24;
+      unsigned width_;
       unsigned signed_ : 1;
 
       union {
@@ -425,7 +425,7 @@ struct ivl_net_logic_s {
 struct ivl_udp_s {
       const char* name;
       unsigned nin;
-      unsigned short sequ;
+      unsigned sequ;
       char init;
       unsigned nrows;
       typedef const char*ccharp_t;
@@ -445,7 +445,7 @@ struct ivl_udp_s {
  * input to the device, then the drives are both HiZ.
  */
 struct ivl_nexus_ptr_s {
-      unsigned pin_  :24;
+      unsigned pin_;
       unsigned type_ : 8;
       unsigned drive0 : 3;
       unsigned drive1 : 3;
@@ -475,7 +475,7 @@ struct ivl_nexus_s {
 struct ivl_memory_s {
       const char*basename_;
       ivl_scope_t scope_;
-      unsigned width_  :24;
+      unsigned width_;
       unsigned signed_ : 1;
       unsigned size_;
       int root_;
@@ -559,15 +559,15 @@ struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
 
-      unsigned width_  :24;
+      unsigned width_;
       unsigned signed_ : 1;
       unsigned isint_  : 1;
       unsigned local_  : 1;
 
 	/* These encode the run-time index for the least significant
 	   bit, and the distance to the second bit. */
-      signed lsb_index :24;
-      signed lsb_dist  : 8;
+      signed lsb_index;
+      signed lsb_dist;
 
       const char*name_;
       ivl_scope_t scope_;
@@ -678,6 +678,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.103  2003/06/17 21:28:59  steve
+ *  Remove short int restrictions from vvp opcodes. (part 2)
+ *
  * Revision 1.102  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *

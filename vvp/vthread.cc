@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.109 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: vthread.cc,v 1.110 2003/06/17 21:28:59 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2372,7 +2372,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       if (idx < 0)
 	    return true;
 
-      if (idx > cp->bit_idx[1])
+      if ((unsigned)idx > cp->bit_idx[1])
 	    return true;
 
 	/* Form the functor pointer from the base pointer and the
@@ -2722,6 +2722,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.110  2003/06/17 21:28:59  steve
+ *  Remove short int restrictions from vvp opcodes. (part 2)
+ *
  * Revision 1.109  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *

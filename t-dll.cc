@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.112 2003/05/13 16:30:39 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.113 2003/06/17 21:28:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -946,7 +946,7 @@ bool dll_target::net_function(const NetUserFunc*net)
 	/* Save information about the ports in the ivl_lpm_s
 	   structure. Note that port 0 is the return value. */
       obj->u_.ufunc.ports = net->port_count();
-      obj->u_.ufunc.port_wid = new unsigned short[net->port_count()];
+      obj->u_.ufunc.port_wid = new unsigned[net->port_count()];
       for (unsigned idx = 0 ;  idx < obj->u_.ufunc.ports ;  idx += 1)
 	    obj->u_.ufunc.port_wid[idx] = net->port_width(idx);
 
@@ -2128,6 +2128,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.113  2003/06/17 21:28:59  steve
+ *  Remove short int restrictions from vvp opcodes. (part 2)
+ *
  * Revision 1.112  2003/05/13 16:30:39  steve
  *  Clear pin pointers if pin is not connected.
  *
