@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.10 2001/03/29 03:46:36 steve Exp $
+ *  $Id: README.txt,v 1.11 2001/03/30 04:55:22 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -29,7 +29,7 @@ semicolon that terminates a statement. Like so:
 The semicolon is required, whether the comment is there or not.
 
 Statements may span multiple lines, as long as there is no text (other
-then the first character of a label) in the first column of hte
+then the first character of a label) in the first column of the
 continuation line.
 
 HEADER SYNTAX
@@ -54,7 +54,7 @@ Labels and symbols consist of the characters:
 	a-z
 	A-Z
 	0-9
-	.$_
+	.$_<>
 
 Labels and symbols may not start with a digit or a '.', so that they
 are easily distinguished from keywords and numbers. A Label is a
@@ -228,6 +228,25 @@ create threads at startup.
 This statement creates a thread with a starting address at the
 instruction given by <symbol>.
 
+
+THREADS IN GENERAL:
+
+Thread statements create the initial threads of a design. These
+include the ``initial'' and ``always'' statements of the original
+Verilog, and possibly some other synthetic threads for various
+purposes. It is also possible to create transient threads from
+behavioral code. These are needed to support such constructs as
+fork/join, named blocks and task activation.
+
+A transient thread is created with a %fork instruction. When a
+transient thread is created this way, the operand to the %fork gives
+the starting address, and the new thread is said to be a child of the
+forking thread. The children of a thread are pushed onto a stack of
+children.
+
+A transient thread is reaped with a %join instruction. %join waits for
+the top thread in the stack of children to complete, then
+continues. It is an error to %join when there are no children.
 
 TRUTH TABLES
 
@@ -425,6 +444,17 @@ becomes:
 	a	.var "a", 0, 0;
 
 
+* named events
+
+Events in general are implemented as functors, but named events in
+partinular have no inputs and only the event output. The way to
+generate code for these is like so:
+
+	a  .event "name";
+
+This creates a functor and makes it into a mode-2 functor. Then the
+trigger statement, "-> a", cause a ``%set a, 0;'' statement be
+generated. This is sufficient to trigger the event.
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

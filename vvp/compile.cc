@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.18 2001/03/29 03:46:36 steve Exp $"
+#ident "$Id: compile.cc,v 1.19 2001/03/30 04:55:22 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -69,10 +69,12 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%fork",   of_FORK,   1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
+      { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
@@ -685,6 +687,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.19  2001/03/30 04:55:22  steve
+ *  Add fork and join instructions.
+ *
  * Revision 1.18  2001/03/29 03:46:36  steve
  *  Support named events as mode 2 functors.
  *

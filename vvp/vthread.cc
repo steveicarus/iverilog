@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.13 2001/03/29 03:46:36 steve Exp $"
+#ident "$Id: vthread.cc,v 1.14 2001/03/30 04:55:22 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -34,6 +34,10 @@ struct vthread_s {
       unsigned long pc;
       unsigned char *bits;
       unsigned short nbits;
+	/* This points to the top (youngest) child of the thread. */
+      struct vthread_s*child;
+	/* This is set if the parent is waiting for me to end. */
+      struct vthread_s*reaper;
 	/* This is used for keeping wait queues. */
       struct vthread_s*next;
 };
@@ -78,6 +82,8 @@ vthread_t v_newthread(unsigned long pc)
       thr->pc = pc;
       thr->bits = (unsigned char*)malloc(16);
       thr->nbits = 16*4;
+      thr->child = 0;
+      thr->reaper = 0;
       thr->next = 0;
 
       thr_put_bit(thr, 0, 0);
@@ -85,6 +91,13 @@ vthread_t v_newthread(unsigned long pc)
       thr_put_bit(thr, 2, 2);
       thr_put_bit(thr, 3, 3);
       return thr;
+}
+
+static void vthread_reap(vthread_t thr)
+{
+      assert(thr->next == 0);
+      assert(thr->child == 0);
+      free(thr);
 }
 
 
@@ -169,8 +182,19 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
 
 bool of_END(vthread_t thr, vvp_code_t cp)
 {
-	//printf("thread %p: %%end\n", thr);
+      if (thr->reaper)
+	    schedule_vthread(thr->reaper, 0);
+      thr->reaper = thr;
       return false;
+}
+
+bool of_FORK(vthread_t thr, vvp_code_t cp)
+{
+      vthread_t child = v_newthread(cp->cptr);
+      child->child = thr->child;
+      thr->child = child;
+      schedule_vthread(child, 0);
+      return true;
 }
 
 bool of_INV(vthread_t thr, vvp_code_t cp)
@@ -212,6 +236,19 @@ bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
       if (thr_get_bit(thr, cp->bit_idx1) != 1)
 	    thr->pc = cp->cptr;
       return true;
+}
+
+bool of_JOIN(vthread_t thr, vvp_code_t cp)
+{
+      assert(thr->child);
+      if (thr->child->reaper == thr->child) {
+	    vthread_reap(thr->child);
+	    return true;
+      }
+
+      assert(thr->child->reaper == 0);
+      thr->child->reaper = thr;
+      return false;
 }
 
 bool of_LOAD(vthread_t thr, vvp_code_t cp)
@@ -278,6 +315,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.14  2001/03/30 04:55:22  steve
+ *  Add fork and join instructions.
+ *
  * Revision 1.13  2001/03/29 03:46:36  steve
  *  Support named events as mode 2 functors.
  *

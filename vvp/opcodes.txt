@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.6 2001/03/26 04:00:39 steve Exp $
+ *  $Id: opcodes.txt,v 1.7 2001/03/30 04:55:22 steve Exp $
  */
 
 
@@ -9,7 +9,9 @@
 EXECUTABLE INSTRUCTION OPCODES
 
 Instruction opcodes all start with a % character and have 0 or more
-operands. In no case are there more then 3 operands.
+operands. In no case are there more then 3 operands. This chapter
+describes the specific behavior of each opcode, in hopefully enough
+detail that its complete effect can be predicted.
 
 
 * %assign <var-label>, <delay>, <bit>
@@ -68,9 +70,29 @@ future to reschedule, and is >= 0. If the %delay is zero, then the
 thread yields the processor for another thread, but will be resumed in
 the current time step.
 
+* %fork <code-label>
+
+This instruction is similar to %jmp, except that it creates a new
+thread to start executing at the specified address. The new thread is
+created and pushed onto the child stack.  It is also marked runnable,
+but is not necessarily started until the current thread yields.
+
+The %fork instruction has no effect other then to push a child thread.
+
+See also %join.
+
+
 * %inv <bit>, <wid>
 
-Perform a bitwise invert of the vector starting at <bit>.
+Perform a bitwise invert of the vector starting at <bit>. The result
+replaces the input. Invert means the following, independently for each
+bit:
+
+	0  --> 1
+	1  --> 0
+	x  --> x
+	z  --> x
+
 
 * %jmp <code-label>
 
@@ -86,6 +108,21 @@ values in the part after the /, the jump is taken. For example:
 	%jmp/xz T_label, 8;
 
 will jump to T_label if bit 8 is x or z.
+
+* %join
+
+This is the partner to %fork. This instruction causes the thread to
+wait for the top thread in the child stack to terminate, then
+continues. It has no effect in the current thread other then to wait
+until the top child is cleared.
+
+It is an error to execute %join if there are no children in the child
+stack. If a child thread terminates before this instruction is called,
+it remains in the stack as a zombie until the %join reaps it.
+
+If a thread terminates (i.e. executes %end) all its children are
+terminated as well.
+
 
 * %load <bit>, <functor-label>
 
