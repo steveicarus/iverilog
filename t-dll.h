@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.50 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: t-dll.h,v 1.51 2001/06/30 21:07:26 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -434,8 +434,8 @@ struct ivl_scope_s {
 };
 
 /*
- * A signal is a think like a wire, a reg, or whatever. It has a type,
- * and if it is a port is also has a directory. Signals are collected
+ * A signal is a thing like a wire, a reg, or whatever. It has a type,
+ * and if it is a port is also has a direction. Signals are collected
  * into scopes (which also point back to me) and have pins that
  * connect to the rest of the netlist.
  */
@@ -539,6 +539,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.51  2001/06/30 21:07:26  steve
+ *  Support non-const right shift (unsigned).
+ *
  * Revision 1.50  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *

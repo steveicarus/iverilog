@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.81 2001/06/23 18:26:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.82 2001/06/30 21:07:26 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -112,6 +112,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
+      { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1449,6 +1450,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.82  2001/06/30 21:07:26  steve
+ *  Support non-const right shift (unsigned).
+ *
  * Revision 1.81  2001/06/23 18:26:26  steve
  *  Add the %shiftl/i0 instruction.
  *

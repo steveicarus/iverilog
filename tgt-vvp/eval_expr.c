@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.33 2001/06/23 18:40:34 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.34 2001/06/30 21:07:26 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -383,9 +383,12 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 
 /*
  * Draw code to evaluate the << expression. Use the %shiftl/i0
- * instruction to do the real work of shifting.
+ * or %shiftr/i0 instruction to do the real work of shifting. This
+ * means that I can handle both left and right shifts in this
+ * function, with the only difference the opcode I generate at the
+ * end.
  */
-static struct vector_info draw_binary_expr_ls(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -434,80 +437,23 @@ static struct vector_info draw_binary_expr_ls(ivl_expr_t exp, unsigned wid)
 
       lv = draw_eval_expr_wid(le, wid);
 
-      fprintf(vvp_out, "    %%shiftl/i0  %u, %u;\n", lv.base, lv.wid);
+      switch (ivl_expr_opcode(exp)) {
+
+	  case 'l': /* << (left shift) */
+	    fprintf(vvp_out, "    %%shiftl/i0  %u, %u;\n", lv.base, lv.wid);
+	    break;
+
+	  case 'r': /* >> (unsigned right shift) */
+	    fprintf(vvp_out, "    %%shiftr/i0  %u, %u;\n", lv.base, lv.wid);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
       return lv;
 }
 
-static struct vector_info draw_binary_expr_rs(ivl_expr_t exp, unsigned wid)
-{
-      ivl_expr_t le = ivl_expr_oper1(exp);
-      ivl_expr_t re = ivl_expr_oper2(exp);
-
-      unsigned shift = 0;
-
-      struct vector_info lv;
-      struct vector_info rs;
-
-	/* XXXX support only constant right expressions. */
-      switch (ivl_expr_type(re)) {
-	  case IVL_EX_NUMBER: {
-		unsigned idx, nbits = ivl_expr_width(re);
-		const char*bits = ivl_expr_bits(re);
-
-		for (idx = 0 ;  idx < nbits ;  idx += 1) switch (bits[idx]) {
-
-		    case '0':
-		      break;
-		    case '1':
-		      assert(idx < (8*sizeof shift));
-		      shift |= 1 << idx;
-		      break;
-		    default:
-		      assert(0);
-		}
-		break;
-	  }
-	    
-	  case IVL_EX_ULONG:
-	    shift = ivl_expr_uvalue(re);
-	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
-
-      if (shift >= wid) {
-	    rs.base = 0;
-	    rs.wid  = wid;
-	    return rs;
-      }
-
-      lv = draw_eval_expr_wid(le, wid);
-
-
-      switch (lv.base) {
-	  case 0:
-	    return lv;
-	  case 1:
-	  case 2:
-	  case 3:
-	    rs.base = allocate_vector(wid);
-	    rs.wid = wid;
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", rs.base,
-		    lv.base, wid-shift);
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    rs.base+wid-shift, shift);
-	    return rs;
-
-	  default:
-	    assert(lv.wid == wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", lv.base,
-		    lv.base+shift, wid-shift);
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    lv.base+wid-shift, shift);
-	    return lv;
-      }
-}
 
 static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 {
@@ -581,15 +527,12 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case 'l': /* << */
-	    rv = draw_binary_expr_ls(exp, wid);
+	  case 'r': /* >> */
+	    rv = draw_binary_expr_lrs(exp, wid);
 	    break;
 
 	  case 'o': /* || (logical or) */
 	    rv = draw_binary_expr_lor(exp, wid);
-	    break;
-
-	  case 'r': /* >> */
-	    rv = draw_binary_expr_rs(exp, wid);
 	    break;
 
 	  case '&':
@@ -1066,6 +1009,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.34  2001/06/30 21:07:26  steve
+ *  Support non-const right shift (unsigned).
+ *
  * Revision 1.33  2001/06/23 18:40:34  steve
  *  Generate %shiftl instructions for shift.
  *

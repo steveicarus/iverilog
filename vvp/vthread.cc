@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.46 2001/06/23 18:26:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.47 2001/06/30 21:07:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1099,6 +1099,31 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * This is an unsigned right shift.
+ */
+bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned base = cp->bit_idx1;
+      unsigned wid = cp->number;
+      long shift = thr->index[0];
+
+      if (shift >= wid) {
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, 0);
+
+      } else if (shift > 0) {
+	    for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1) {
+		  unsigned src = base + idx + shift;
+		  unsigned dst = base + idx;
+		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
+	    }
+	    for (unsigned idx = (wid-shift) ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, 0);
+      }
+      return true;
+}
+
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
@@ -1249,6 +1274,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.47  2001/06/30 21:07:26  steve
+ *  Support non-const right shift (unsigned).
+ *
  * Revision 1.46  2001/06/23 18:26:26  steve
  *  Add the %shiftl/i0 instruction.
  *

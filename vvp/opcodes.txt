@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.24 2001/06/23 18:26:26 steve Exp $
+ *  $Id: opcodes.txt,v 1.25 2001/06/30 21:07:26 steve Exp $
  */
 
 
@@ -299,6 +299,15 @@ This instruction shifts the vector left (towards more significant
 bits) by the amount in index register 0. The <bit> is the address of
 the lsb of the vector, and <wid> the width of the vector. The shift is
 done in place. Zero values are shifted in.
+
+* %shiftr/i0 <bit>, <wid>
+
+This instruction shifts the vector right (towards the less significant
+bits) by the amount in the index register 0. The <bit> is the address
+of the lsb of the vector, and <wid> is the width of the vector. The
+shift is done in place.
+
+This is an unsigned down shift, so zeros are shifted into the top bits.
 
 * %sub <bit-l>, <bit-r>, <wid>
 
