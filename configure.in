@@ -7,5 +7,47 @@ AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_HEADERS(getopt.h)
 AC_PROG_INSTALL
+AC_CHECK_LIB(dl,main,[DLLIB=-ldl])
+AC_SUBST(DLLIB)
+
+#######################
+## test for underscores
+#######################
+
+AC_MSG_CHECKING("for leading and/or trailing underscores")
+cat << EOF > underscore.c
+       void underscore(void){}
+EOF
+$CC -c underscore.c > /dev/null 2>&1
+
+CC_LEADING_UNDERSCORE=no
+CC_TRAILING_UNDERSCORE=no
+
+output=`nm underscore.o|grep _underscore 2>&1`
+if test ! -z "$output"; then
+  CC_LEADING_UNDERSCORE=yes
+  AC_DEFINE(NEED_LU)
+fi
+
+output=`nm underscore.o|grep underscore_ 2>&1`
+if test ! -z "$output"; then
+  CC_TRAILING_UNDERSCORE=yes
+  AC_DEFINE(NEED_TU)
+fi
+
+if test "$CC_LEADING_UNDERSCORE" = yes; then
+  AC_DEFINE(WLU)
+fi
+if test "$CC_TRAILING_UNDERSCORE" = yes; then
+  AC_DEFINE(WTU)
+fi
+
+rm underscore.c underscore.o
+
+AC_MSG_RESULT("$CC_LEADING_UNDERSCORE $CC_TRAILING_UNDERSCORE")
+
+#######################
+## end of test for underscores
+#######################
 
 AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile)

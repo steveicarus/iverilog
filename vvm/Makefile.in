@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.17 2000/01/23 23:54:36 steve Exp $"
+#ident "$Id: Makefile.in,v 1.18 2000/01/24 00:18:20 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -50,12 +50,12 @@ all: libvvm.a
 
 %.o dep/%.d: %.cc
 	@[ -d dep ] || mkdir dep
-	$(CXX) -Wall -fno-exceptions $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) -Wall -fno-exceptions $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 %.o dep/%.d: %.c
 	@[ -d dep ] || mkdir dep
-	$(CC) -Wall $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = vvm_bit.o vvm_calltf.o vvm_event.o vvm_gates.o vvm_mult.o \

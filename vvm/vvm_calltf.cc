@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.9 1999/11/28 18:05:37 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.10 2000/01/24 00:18:20 steve Exp $"
 #endif
 
+# include  "machine.h"
 # include  "vvm_calltf.h"
 # include  <vpi_user.h>
 # include  "vpi_priv.h"
@@ -99,7 +100,7 @@ void vvm_load_vpi_module(const char*name)
 	    return;
       }
 
-      void*table = dlsym(mod, "vlog_startup_routines");
+      void*table = dlsym(mod, LU "vlog_startup_routines" TU);
       vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;
       if (routines == 0) {
 	    cerr << name << ": Unable to locate the vlog_startup_routines"
@@ -116,6 +117,9 @@ void vvm_load_vpi_module(const char*name)
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.10  2000/01/24 00:18:20  steve
+ *  Handle systems that need underscores in symbols.
+ *
  * Revision 1.9  1999/11/28 18:05:37  steve
  *  Set VPI_MODULE_PATH in the target code, if desired.
  *
