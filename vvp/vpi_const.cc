@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.5 2001/07/11 04:40:52 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.6 2001/08/08 00:57:20 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -28,8 +28,6 @@
 
 static int string_get(int code, vpiHandle ref)
 {
-      struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant);
 
       switch (code) {
 	  case vpiConstType:
@@ -86,8 +84,6 @@ vpiHandle vpip_make_string_const(char*text)
 
 static int binary_get(int code, vpiHandle ref)
 {
-      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant);
 
       switch (code) {
 	  case vpiConstType:
@@ -198,6 +194,9 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.6  2001/08/08 00:57:20  steve
+ *  Unused variable warnings.
+ *
  * Revision 1.5  2001/07/11 04:40:52  steve
  *  Get endian of vpiIntVal from constants.
  *
