@@ -1,5 +1,5 @@
 /* vi:sw=6
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002,2003 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,36 +17,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: putp.c,v 1.3 2003/03/15 05:42:39 steve Exp $"
+#ident "$Id: putp.c,v 1.4 2003/05/29 03:46:21 steve Exp $"
 #endif
 
-#include  <assert.h>
-#include  <veriuser.h>
-#include  <vpi_user.h>
+# include  <assert.h>
+# include  <veriuser.h>
+# include  <vpi_user.h>
+# include  "priv.h"
 
 /*
- * tf_putp implemented using VPI interface
+ * tf_putp and friends implemented using VPI interface
  */
-void tf_putp(int n, int value)
+PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
 {
       vpiHandle sys_h, sys_i, arg_h = 0;
       s_vpi_value val;
-      int type;
+      int rtn = 0, type;
 
       assert(n >= 0);
 
       /* get task/func handle */
-      sys_h = vpi_handle(vpiSysTfCall, 0);
+      sys_h = (vpiHandle)obj;
       sys_i = vpi_iterate(vpiArgument, sys_h);
 
       type = vpi_get(vpiType, sys_h);
 
       /* verify function */
-      assert(!(n == 0 && type != vpiSysFuncCall));
+      if (n == 0 && type != vpiSysFuncCall) { rtn = 1; goto free; }
 
       /* find nth arg */
       while (n > 0) {
-	    if (!(arg_h = vpi_scan(sys_i))) assert(0);
+	    if (!(arg_h = vpi_scan(sys_i))) { rtn = 1; goto out; }
 	    n--;
       }
       if (!arg_h) arg_h = sys_h;
@@ -56,11 +57,83 @@ void tf_putp(int n, int value)
       val.value.integer = value;
       (void)vpi_put_value(arg_h, &val, 0, vpiNoDelay);
 
+free:
       vpi_free_object(sys_i);
+
+out:
+      if (pli_trace) {
+	    fprintf(pli_trace, "tf_iputp(n=%d, value=%d, obj=%p) --> %d\n",
+		  n, value, obj, rtn);
+	    fflush(pli_trace);
+      }
+
+      return rtn;
 }
 
+PLI_INT32 tf_putp(PLI_INT32 n, PLI_INT32 value)
+{
+      int rtn = tf_iputp(n, value, vpi_handle(vpiSysTfCall, 0));
+
+      return rtn;
+}
+
+
+PLI_INT32 tf_iputrealp(PLI_INT32 n, double value, void *obj)
+{
+      vpiHandle sys_h, sys_i, arg_h = 0;
+      s_vpi_value val;
+      int rtn = 0, type;
+
+      assert(n >= 0);
+
+      /* get task/func handle */
+      sys_h = (vpiHandle)obj;
+      sys_i = vpi_iterate(vpiArgument, sys_h);
+
+      type = vpi_get(vpiType, sys_h);
+
+      /* verify function */
+      if (n == 0 && type != vpiSysFuncCall) { rtn = 1; goto free; }
+
+      /* find nth arg */
+      while (n > 0) {
+	    if (!(arg_h = vpi_scan(sys_i))) { rtn = 1; goto out; }
+	    n--;
+      }
+      if (!arg_h) arg_h = sys_h;
+
+      /* fill in vpi_value */
+      val.format = vpiRealVal;
+      val.value.real = value;
+      (void)vpi_put_value(arg_h, &val, 0, vpiNoDelay);
+
+free:
+      vpi_free_object(sys_i);
+
+out:
+      if (pli_trace) {
+	    fprintf(pli_trace, "tf_iputrealp(n=%d, value=%f, obj=%p) --> %d\n",
+		  n, value, obj, rtn);
+	    fflush(pli_trace);
+      }
+
+      return rtn;
+}
+
+PLI_INT32 tf_putrealp(PLI_INT32 n, double value)
+{
+      int rtn = tf_iputrealp(n, value, vpi_handle(vpiSysTfCall, 0));
+
+      return rtn;
+}
 /*
  * $Log: putp.c,v $
+ * Revision 1.4  2003/05/29 03:46:21  steve
+ *  Add tf_getp/putp support for integers
+ *  and real valued arguments.
+ *
+ *  Add tf_mipname function.
+ *
  * Revision 1.3  2003/03/15 05:42:39  steve
  *  free argument iterators.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.27 2003/05/28 03:38:05 steve Exp $"
+#ident "$Id: veriuser.h,v 1.28 2003/05/29 03:46:21 steve Exp $"
 #endif
 
 /*
@@ -249,7 +249,11 @@ extern PLI_BYTE8* tf_getinstance(void);
 
 extern int tf_getlongp(int*aof_highvalue, int pnum);
 
-extern int tf_getp(int pnum);
+extern PLI_INT32 tf_getp(PLI_INT32);
+extern PLI_INT32 tf_igetp(PLI_INT32, void*);
+
+extern double tf_getrealp(PLI_INT32);
+extern double tf_igetrealp(PLI_INT32, void*);
 
 extern char *tf_strgettime(void);
 extern PLI_INT32 tf_gettime(void);
@@ -272,15 +276,19 @@ extern PLI_INT32 tf_message(PLI_INT32 level, char*facility,
 extern void tf_multiply_long(PLI_INT32*aof_low1, PLI_INT32*aof_high1,
 			     PLI_INT32 aof_low2, PLI_INT32 aof_high2);
 
-extern int tf_nump(void);
-extern int tf_inump(void*);
+extern PLI_INT32 tf_nump(void);
+extern PLI_INT32 tf_inump(void*);
 
 /* IEEE1364 NOTE: tf_putlongp is listed as returning in in the header
    file shown in the standard, but as returning void in the detailed
-   description of the function. So I call it void. Same for tf_putp. */
+   description of the function. So I call it void. */
 extern void tf_putlongp(int pnum, int lowvalue, int highvalue);
 
-extern void tf_putp(int pnum, int value);
+extern PLI_INT32 tf_putp(PLI_INT32, PLI_INT32);
+extern PLI_INT32 tf_iputp(PLI_INT32, PLI_INT32, void*);
+
+extern PLI_INT32 tf_putrealp(PLI_INT32, double);
+extern PLI_INT32 tf_iputrealp(PLI_INT32, double, void*);
 
 /* Activate the misctf function after a delay. The units are of the
    current scope. The tf_isetdelay variant specifies a particular
@@ -299,6 +307,9 @@ extern PLI_INT32 tf_setworkarea(void*workarea);
    task call. */
 extern char* tf_spname(void);
 
+extern char* tf_mipname(void);
+extern char* tf_imipname(void*);
+
 extern PLI_INT32 tf_synchronize(void);
 extern PLI_INT32 tf_isynchronize(void* sys);
 
@@ -311,6 +322,12 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.28  2003/05/29 03:46:21  steve
+ *  Add tf_getp/putp support for integers
+ *  and real valued arguments.
+ *
+ *  Add tf_mipname function.
+ *
  * Revision 1.27  2003/05/28 03:38:05  steve
  *  Implement tf_inump
  *

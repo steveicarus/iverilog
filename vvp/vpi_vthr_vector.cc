@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.15 2003/05/28 03:10:52 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.16 2003/05/29 03:46:21 steve Exp $"
 #endif
 
 /*
@@ -412,6 +412,10 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.real = val;
 	    break;
 
+	  case vpiIntVal:
+	    vp->value.integer = (int)(val + 0.5);
+	    break;
+
 	  case vpiDecStrVal:
 	    sprintf(rbuf, "%0.0f", val);
 	    vp->value.str = rbuf;
@@ -447,6 +451,9 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	  }
 
 	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		      "by vpiConstant (Real)\n", vp->format);
+
 	    vp->format = vpiSuppressVal;
 	    break;
       }
@@ -480,6 +487,12 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.16  2003/05/29 03:46:21  steve
+ *  Add tf_getp/putp support for integers
+ *  and real valued arguments.
+ *
+ *  Add tf_mipname function.
+ *
  * Revision 1.15  2003/05/28 03:10:52  steve
  *  Some asserts that check for thread vector overflow.
  *

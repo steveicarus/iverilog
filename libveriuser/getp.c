@@ -1,5 +1,5 @@
 /* vi:sw=6
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002,2003 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,31 +17,32 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getp.c,v 1.3 2003/03/15 05:42:39 steve Exp $"
+#ident "$Id: getp.c,v 1.4 2003/05/29 03:46:21 steve Exp $"
 #endif
 
-#include  <assert.h>
-#include  <veriuser.h>
-#include  <vpi_user.h>
+# include  <assert.h>
+# include  <veriuser.h>
+# include  <vpi_user.h>
+# include  "priv.h"
 
 /*
- * tf_getp implemented using VPI interface
+ * tf_getp and friends, implemented using VPI interface
  */
-int tf_getp(int n)
+PLI_INT32 tf_igetp(PLI_INT32 n, void *obj)
 {
       vpiHandle sys_h, sys_i, arg_h = 0;
       s_vpi_value value;
-      int rtn;
+      int rtn = 0;
 
       assert(n > 0);
 
       /* get task/func handle */
-      sys_h = vpi_handle(vpiSysTfCall, 0);
+      sys_h = (vpiHandle)obj;
       sys_i = vpi_iterate(vpiArgument, sys_h);
 
       /* find nth arg */
       while (n > 0) {
-	    if (!(arg_h = vpi_scan(sys_i))) assert(0);
+	    if (!(arg_h = vpi_scan(sys_i))) { goto out; }
 	    n--;
       }
 
@@ -60,11 +61,80 @@ int tf_getp(int n)
 
       vpi_free_object(sys_i);
 
+out:
+      if (pli_trace) {
+	    fprintf(pli_trace, "tf_igetp(n=%d, obj=%p) --> %d\n",
+		  n, obj, rtn);
+	    fflush(pli_trace);
+      }
+
       return rtn;
 }
 
+PLI_INT32 tf_getp(PLI_INT32 n)
+{
+      int rtn = tf_igetp(n, vpi_handle(vpiSysTfCall, 0));
+
+      return rtn;
+}
+
+
+double tf_igetrealp(PLI_INT32 n, void *obj)
+{
+      vpiHandle sys_h, sys_i, arg_h = 0;
+      s_vpi_value value;
+      double rtn = 0.0;
+
+      assert(n > 0);
+
+      /* get task/func handle */
+      sys_h = (vpiHandle)obj;
+      sys_i = vpi_iterate(vpiArgument, sys_h);
+
+      /* find nth arg */
+      while (n > 0) {
+	    if (!(arg_h = vpi_scan(sys_i))) { goto out; }
+	    n--;
+      }
+
+      if (vpi_get(vpiType, arg_h) == vpiConstant &&
+	  vpi_get(vpiConstType, arg_h) == vpiStringConst)
+      {
+	    rtn = 0.0;
+      } else {
+	    value.format = vpiRealVal;
+	    vpi_get_value(arg_h, &value);
+	    rtn = value.value.real;
+      }
+
+      vpi_free_object(sys_i);
+
+out:
+      if (pli_trace) {
+	    fprintf(pli_trace, "tf_igetrealp(n=%d, obj=%p) --> %f\n",
+		  n, obj, rtn);
+	    fflush(pli_trace);
+      }
+
+      return rtn;
+}
+
+double tf_getrealp(PLI_INT32 n)
+{
+      double rtn = tf_igetrealp(n, vpi_handle(vpiSysTfCall, 0));
+
+      return rtn;
+}
+
+
 /*
  * $Log: getp.c,v $
+ * Revision 1.4  2003/05/29 03:46:21  steve
+ *  Add tf_getp/putp support for integers
+ *  and real valued arguments.
+ *
+ *  Add tf_mipname function.
+ *
  * Revision 1.3  2003/03/15 05:42:39  steve
  *  free argument iterators.
  *

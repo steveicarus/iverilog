@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.28 2003/03/17 23:47:25 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.29 2003/05/29 03:46:21 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -317,6 +317,36 @@ static void binary_vpiStringVal(struct __vpiBinaryConst*rfp, p_vpi_value vp)
       vp->value.str = rbuf;
 }
 
+static int bits2int(struct __vpiBinaryConst*rfp)
+{
+      unsigned val = 0;
+      unsigned bit_val = 0;
+      unsigned bit_limit = rfp->nbits;
+      if (bit_limit > 8*sizeof(val))
+	bit_limit = 8*sizeof(val);
+
+      for (unsigned idx = 0 ;  idx < bit_limit ;  idx += 1) {
+	unsigned nibble = idx/4;
+	unsigned shift  = 2 * (idx%4);
+	bit_val = (rfp->bits[nibble] >> shift) & 3;
+	if (bit_val > 1) {
+	      return 0;
+	} else {
+	      val |= bit_val << idx;
+	}
+      }
+
+      /* sign extend */
+      if (rfp->signed_flag && bit_val) {
+	  for (unsigned idx = rfp->nbits; idx <sizeof(val)*8; idx++)
+	  {
+	  val |= bit_val << idx;
+	  }
+      }
+
+      return val;
+}
+
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
       assert(ref->vpi_type->type_code == vpiConstant);
@@ -385,33 +415,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	  }
 
 	  case vpiIntVal: {
-		unsigned val = 0;
-		unsigned bit_val = 0;
-		unsigned bit_limit = rfp->nbits;
-		if (bit_limit > 8*sizeof(val))
-		      bit_limit = 8*sizeof(val);
-
-		for (unsigned idx = 0 ;  idx < bit_limit ;  idx += 1) {
-		      unsigned nibble = idx/4;
-		      unsigned shift  = 2 * (idx%4);
-		      bit_val = (rfp->bits[nibble] >> shift) & 3;
-		      if (bit_val > 1) {
-			    vp->value.integer = 0;
-			    return;
-		      } else {
-			    val |= bit_val << idx;
-		      }
-		}
-
-		/* sign extend */
-		if (rfp->signed_flag && bit_val) {
-		    for (unsigned idx = rfp->nbits; idx <sizeof(val)*8; idx++)
-		    {
-			val |= bit_val << idx;
-		    }
-		}
-
-		vp->value.integer = val;
+		vp->value.integer = bits2int(rfp);
 		break;
 	  }
 
@@ -457,6 +461,10 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	      }
 	      break;
 	  }
+
+	  case vpiRealVal:
+	      vp->value.real = (double)bits2int(rfp);
+	    break;
 
 	  case vpiStringVal:
 	    binary_vpiStringVal(rfp, vp);
@@ -633,6 +641,12 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.29  2003/05/29 03:46:21  steve
+ *  Add tf_getp/putp support for integers
+ *  and real valued arguments.
+ *
+ *  Add tf_mipname function.
+ *
  * Revision 1.28  2003/03/17 23:47:25  steve
  *  Make a safe copy of const string values.
  *

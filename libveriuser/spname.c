@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: spname.c,v 1.2 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: spname.c,v 1.3 2003/05/29 03:46:21 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -43,8 +43,24 @@ char* tf_spname(void)
       return rtn;
 }
 
+char *tf_imipname(void *obj)
+{
+      return vpi_get_str(vpiFullName, vpi_handle(vpiScope, (vpiHandle)obj));
+}
+
+char *tf_mipname(void)
+{
+      return tf_imipname(vpi_handle(vpiSysTfCall,0));
+}
+
 /*
  * $Log: spname.c,v $
+ * Revision 1.3  2003/05/29 03:46:21  steve
+ *  Add tf_getp/putp support for integers
+ *  and real valued arguments.
+ *
+ *  Add tf_mipname function.
+ *
  * Revision 1.2  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *
