@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.54 2004/05/19 03:26:24 steve Exp $
+ *  $Id: opcodes.txt,v 1.55 2004/06/19 15:52:53 steve Exp $
  */
 
 
@@ -387,13 +387,15 @@ value. The sign bit is OR-ed into the <exp> value at bit 0x2000, and
 is removed from the <exp> before calculating the real value.
 
 
-* %mod <bit-l>, <bit-r>, <wid>
+* %mod   <bit-l>, <bit-r>, <wid>
+* %mod/s <bit-l>, <bit-r>, <wid>
 
 This instruction calculates the modulus %r of the left operand, and
 replaces the left operand with the result. The <wid> gives the width
 of the left and the right vectors, and the left vector is completely
 replaced with the result.
 
+The /s form does signed %.
 
 * %mov <dst>, <src>, <wid>
 

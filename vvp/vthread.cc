@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.119 2004/06/04 23:26:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.120 2004/06/19 15:52:53 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1652,70 +1652,49 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_MOD(vthread_t thr, vvp_code_t cp)
+static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
+			    bool left_is_neg, bool right_is_neg)
 {
-      assert(cp->bit_idx[0] >= 4);
+      bool out_is_neg = left_is_neg != right_is_neg;
+      int len=cp->number;
+      unsigned char *a, *z, *t;
+      a = new unsigned char[len+1];
+      z = new unsigned char[len+1];
+      t = new unsigned char[len+1];
 
-if(cp->number <= 8*sizeof(unsigned long)) {
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned long lv = 0, rv = 0;
+      unsigned char carry;
+      unsigned char temp;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
-
-	    if ((lb | rb) & 2)
-		  goto x_out;
-
-	    lv |= lb << idx;
-	    rv |= rb << idx;
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
-      }
-
-      if (rv == 0)
-	    goto x_out;
-
-      lv %= rv;
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
-	    lv >>= 1;
-      }
-
-      return true;
-
-} else {
-
-	int len=cp->number;
-      	unsigned char *a, *z, *t;
-      	a = new unsigned char[len+1];
-      	z = new unsigned char[len+1];
-      	t = new unsigned char[len+1];
-
-	unsigned char carry;
-	unsigned char temp;
-
-	int mxa = -1, mxz = -1;
-	int i;
-	int current, copylen;
+      int mxa = -1, mxz = -1;
+      int i;
+      int current, copylen;
 
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
+      unsigned lb_carry = left_is_neg? 1 : 0;
+      unsigned rb_carry = right_is_neg? 1 : 0;
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lb = thr_get_bit(thr, idx1);
 	    unsigned rb = thr_get_bit(thr, idx2);
 
 	    if ((lb | rb) & 2) {
-      		delete []t;
-      		delete []z;
-      		delete []a;
-		goto x_out;
-		}
+		  delete []t;
+		  delete []z;
+		  delete []a;
+		  goto x_out;
+	    }
+
+	    if (left_is_neg) {
+		  lb = (1-lb) + lb_carry;
+		  lb_carry = (lb & ~1)? 1 : 0;
+		  lb &= 1;
+	    }
+	    if (right_is_neg) {
+		  rb = (1-rb) + rb_carry;
+		  rb_carry = (rb & ~1)? 1 : 0;
+		  rb &= 1;
+	    }
 
 	    z[idx]=lb;
 	    a[idx]=1-rb;	// for 2s complement add..
@@ -1724,71 +1703,181 @@ if(cp->number <= 8*sizeof(unsigned long)) {
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
+
       z[len]=0;
       a[len]=1;
 
-	for(i=len-1;i>=0;i--)
-	        {
-	        if(!a[i])
-	                {
-	                mxa=i; break;
-	                }
-	        }
-         
-	for(i=len-1;i>=0;i--)
-	        {
-	        if(z[i])
-	                {
-	                mxz=i; break;
-	                }
-	        }
+      for(i=len-1;i>=0;i--) {
+	    if(!a[i]) {
+		  mxa=i;
+		  break;
+	    }
+      }
 
-	if((mxa>mxz)||(mxa==-1))
-	        {
-	        if(mxa==-1) {
-		      delete []t;
-		      delete []z;
-		      delete []a;
-		      goto x_out;
-		}
-	                 
-	        goto tally;
-	        }
+      for(i=len-1;i>=0;i--) {
+	    if(z[i]) {
+		  mxz=i;
+		  break;
+	    }
+      }
 
-	copylen = mxa + 2;
-	current = mxz - mxa; 
-         
-	while(current > -1)
-	        {
-	        carry = 1;
-	        for(i=0;i<copylen;i++)
-	                {
-	                temp = z[i+current] + a[i] + carry;
-	                t[i] = (temp&1);
-	                carry = (temp>>1);
-	                }  
-	                 
-	        if(carry)
-	                {
-	                for(i=0;i<copylen;i++)
-	                        {
-	                        z[i+current] = t[i];
-	                        }
-       	         	}
-       	  
-       	 	current--;
-       	 	}
+      if((mxa>mxz)||(mxa==-1)) {
+	    if(mxa==-1) {
+		  delete []t;
+		  delete []z;
+		  delete []a;
+		  goto x_out;
+	    }
 
-tally:
+	    goto tally;
+      }
+
+      copylen = mxa + 2;
+      current = mxz - mxa; 
+
+      while(current > -1) {
+	    carry = 1;
+	    for(i=0;i<copylen;i++) {
+		  temp = z[i+current] + a[i] + carry;
+		  t[i] = (temp&1);
+		  carry = (temp>>1);
+	    }  
+
+	    if(carry) {
+		  for(i=0;i<copylen;i++) {
+			z[i+current] = t[i];
+		  }
+	    }
+
+	    current--;
+      }
+
+ tally:
+
+      carry = out_is_neg? 1 : 0;
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, z[idx]);
+	    unsigned ob = z[idx];
+	    if (out_is_neg) {
+		  ob = (1-ob) + carry;
+		  carry = (ob & ~1)? 1 : 0;
+		  ob = ob & 1;
+	    }
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, ob);
       }
 
       delete []t;
       delete []z;
       delete []a;
+      return;
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
+      return;
+}
+
+bool of_MOD(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      if(cp->number <= 8*sizeof(unsigned long long)) {
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned idx2 = cp->bit_idx[1];
+	    unsigned long long lv = 0, rv = 0;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  unsigned long long lb = thr_get_bit(thr, idx1);
+		  unsigned long long rb = thr_get_bit(thr, idx2);
+
+		  if ((lb | rb) & 2)
+			goto x_out;
+
+		  lv |= lb << idx;
+		  rv |= rb << idx;
+
+		  idx1 += 1;
+		  if (idx2 >= 4)
+			idx2 += 1;
+	    }
+
+	    if (rv == 0)
+		  goto x_out;
+
+	    lv %= rv;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  lv >>= 1;
+	    }
+
+	    return true;
+
+      } else {
+	    do_verylong_mod(thr, cp, false, false);
+	    return true;
+      }
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
       return true;
 }
+
+bool of_MOD_S(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+	/* Handle the case that we can fit the bits into a long-long
+	   variable. We cause use native % to do the work. */
+      if(cp->number <= 8*sizeof(long long)) {
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned idx2 = cp->bit_idx[1];
+	    long long lv = 0, rv = 0;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  long long lb = thr_get_bit(thr, idx1);
+		  long long rb = thr_get_bit(thr, idx2);
+
+		  if ((lb | rb) & 2)
+			goto x_out;
+
+		  lv |= lb << idx;
+		  rv |= rb << idx;
+
+		  idx1 += 1;
+		  if (idx2 >= 4)
+			idx2 += 1;
+	    }
+
+	    if (rv == 0)
+		  goto x_out;
+
+	      /* Sign extend the signed operands. */
+	    if (lv & (1 << (cp->number-1)))
+		  lv |= -1LL << cp->number;
+	    if (rv & (1 << (cp->number-1)))
+		  rv |= -1LL << cp->number;
+
+	    lv %= rv;
+
+	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
+		  lv >>= 1;
+	    }
+
+	    return true;
+
+      } else {
+
+	    bool left_is_neg
+		  = thr_get_bit(thr,cp->bit_idx[0]+cp->number-1) == 1;
+	    bool right_is_neg
+		  = thr_get_bit(thr,cp->bit_idx[1]+cp->number-1) == 1;
+	    do_verylong_mod(thr, cp, left_is_neg, right_is_neg);
+	    return true;
+      }
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
@@ -2785,6 +2874,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.120  2004/06/19 15:52:53  steve
+ *  Add signed modulus operator.
+ *
  * Revision 1.119  2004/06/04 23:26:34  steve
  *  Pick sign bit from the right place in the exponent number.
  *
