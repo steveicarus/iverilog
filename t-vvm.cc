@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.52 1999/09/29 18:36:04 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.53 1999/09/30 21:26:59 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -666,6 +666,7 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
       os << "    private:" << endl;
       os << "      vvm_thread*back_;" << endl;
       os << "      bool (" << name << "::*step_)();" << endl;
+      os << "      vvm_thread*callee_;" << endl;
       os << "      bool step_0_() {" << endl;
       def->proc()->emit_proc(os, this);
       os << "        sim_->thread_active(back_);" << endl;
@@ -1576,6 +1577,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.53  1999/09/30 21:26:59  steve
+ *  Remember to declare the calee_ member.
+ *
  * Revision 1.52  1999/09/29 18:36:04  steve
  *  Full case support
  *
