@@ -391,11 +391,6 @@ constructs.
 		[...]
 	    end
 
-  - Functions in structural contexts are not supported.
-
-            assign foo = user_function(a,b); // sorry
-	    always @(a or b) foo = user_function(a,b); // OK
-
   - real data types not supported. This includes real and
     realtime. However, floating point constants in delay expressions
     are supported so that `timescale works properly.
