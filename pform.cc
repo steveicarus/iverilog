@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.6 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: pform.cc,v 1.7 1998/12/09 04:02:47 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -27,6 +27,11 @@
 # include  <map>
 # include  <assert.h>
 # include  <typeinfo>
+
+/*
+ * The lexor accesses the vl_* variables.
+ */
+string vl_file = "";
 
 extern int VLparse();
 
@@ -463,10 +468,16 @@ Statement* pform_make_calltask(string*name, list<PExpr*>*parms)
 }
 
 FILE*vl_input = 0;
-int pform_parse(FILE*input, map<string,Module*>&modules,
+int pform_parse(const char*path, map<string,Module*>&modules,
 		map<string,PUdp*>&prim)
 {
-      vl_input = input;
+      vl_file = path;
+      vl_input = fopen(path, "r");
+      if (vl_input == 0) {
+	    cerr << "Unable to open " <<vl_file << "." << endl;
+	    return 11;
+      }
+
       error_count = 0;
       warn_count = 0;
       int rc = VLparse();
@@ -482,6 +493,9 @@ int pform_parse(FILE*input, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.7  1998/12/09 04:02:47  steve
+ *  Support the include directive.
+ *
  * Revision 1.6  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

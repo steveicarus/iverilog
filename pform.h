@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.4 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: pform.h,v 1.5 1998/12/09 04:02:47 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -126,12 +126,15 @@ extern void pform_make_pgassign(const string&lval, PExpr*sel, PExpr*rval);
  * parses the source file and places all the modules it finds into the
  * mod list. The dump function dumps a module to the output stream.
  */
-extern int  pform_parse(FILE*, map<string,Module*>&mod,
+extern int  pform_parse(const char*path, map<string,Module*>&mod,
 			map<string,PUdp*>&prim);
 extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.5  1998/12/09 04:02:47  steve
+ *  Support the include directive.
+ *
  * Revision 1.4  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.9 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: main.cc,v 1.10 1998/12/09 04:02:47 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -32,7 +32,6 @@
 
 extern void pform_parse();
 
-const char*vl_file = "";
 const char*target = "verilog";
 string start_module = "";
 
@@ -151,18 +150,10 @@ int main(int argc, char*argv[])
 	    return 1;
       }
 
-	/* Open the input (source) file. */
-      vl_file = argv[optind];
-      FILE*input = fopen(vl_file, "r");
-      if (input == 0) {
-	    cerr << "Unable to open " <<vl_file << "." << endl;
-	    return 1;
-      }
-
 	/* Parse the input. Make the pform. */
       map<string,Module*> modules;
       map<string,PUdp*>   primitives;
-      int rc = pform_parse(input, modules, primitives);
+      int rc = pform_parse(argv[optind], modules, primitives);
 
       if (rc) {
 	    return rc;
@@ -231,6 +222,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.10  1998/12/09 04:02:47  steve
+ *  Support the include directive.
+ *
  * Revision 1.9  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.5 1998/11/25 02:35:53 steve Exp $"
+#ident "$Id: lexor.lex,v 1.6 1998/12/09 04:02:47 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -30,7 +30,7 @@
 # include  <ctype.h>
 
 extern FILE*vl_input;
-extern const char*vl_file;
+extern string vl_file;
 
 # define YY_USER_INIT reset_lexor();
 # define yylval VLlval
@@ -38,17 +38,18 @@ extern YYLTYPE yylloc;
 
 static void reset_lexor();
 static int check_identifier(const char*name);
+static void ppinclude_filename();
+static void ppdo_include();
 static verinum*make_sized_binary(const char*txt);
 static verinum*make_sized_octal(const char*txt);
 static verinum*make_sized_hex(const char*txt);
 
 %}
 
-%option noyywrap
-
 %x CCOMMENT
 %x CSTRING
 %s UDPTABLE
+%x PPINCLUDE
 
 %%
 
@@ -137,6 +138,20 @@ static verinum*make_sized_hex(const char*txt);
       yylval.number = new verinum(bits, nbits);
       delete[]bits;
       return NUMBER; }
+
+`include {
+      BEGIN(PPINCLUDE); }
+
+<PPINCLUDE>\"[^\"]*\" {
+      ppinclude_filename(); }
+
+<PPINCLUDE>[ \t\b\f\r] { ; }
+
+<PPINCLUDE>\n {
+      BEGIN(0);
+      yylloc.first_line += 1;
+      ppdo_include(); }
+
 
 . {   cerr << yylloc.first_line << ": unmatched character (";
       if (isgraph(yytext[0]))
@@ -449,9 +464,71 @@ static verinum*make_sized_hex(const char*txt)
       return new verinum(bits, size);
 }
 
+struct include_stack_t {
+      string path;
+      FILE*file;
+      unsigned lineno;
+      YY_BUFFER_STATE yybs;
+
+      struct include_stack_t*next;
+};
+
+static include_stack_t*include_stack = 0;
+
+static string ppinclude_path;
+
+static void ppinclude_filename()
+{
+      ppinclude_path = yytext+1;
+      ppinclude_path = ppinclude_path.substr(0, ppinclude_path.length()-1);
+}
+
+static void ppdo_include()
+{
+      FILE*file = fopen(ppinclude_path.c_str(), "r");
+      if (file == 0) {
+	    cerr << ppinclude_path << ": Unable to open include file." << endl;
+	    return;
+      }
+
+      include_stack_t*isp = new include_stack_t;
+      isp->path = vl_file;
+      isp->file = vl_input;
+      isp->lineno = yylloc.first_line;
+      isp->next = include_stack;
+      isp->yybs = YY_CURRENT_BUFFER;
+
+      vl_file = ppinclude_path;
+      vl_input = file;
+      yylloc.first_line = 1;
+      yylloc.text = vl_file.c_str();
+      yy_switch_to_buffer(yy_new_buffer(vl_input, YY_BUF_SIZE));
+      include_stack = isp;
+}
+
+static int yywrap()
+{
+      include_stack_t*isp = include_stack;
+      if (isp == 0)
+	    return 1;
+
+      yy_delete_buffer(YY_CURRENT_BUFFER);
+      fclose(vl_input);
+
+      vl_input = isp->file;
+      vl_file  = isp->path;
+      yy_switch_to_buffer(isp->yybs);
+      yylloc.first_line = isp->lineno;
+      yylloc.text = vl_file.c_str();
+      include_stack = isp->next;
+      delete isp;
+      return 0;
+}
+
 static void reset_lexor()
 {
       yyrestart(vl_input);
+      include_stack = 0;
       yylloc.first_line = 1;
-      yylloc.text = vl_file;
+      yylloc.text = vl_file.c_str();
 }
