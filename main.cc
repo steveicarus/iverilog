@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.33 2000/05/08 05:29:43 steve Exp $"
+#ident "$Id: main.cc,v 1.34 2000/05/13 20:55:47 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -89,6 +89,7 @@ extern Design* elaborate(const map<string,Module*>&modules,
 extern void cprop(Design*des);
 extern void propinit(Design*des);
 extern void synth(Design*des);
+extern void syn_rules(Design*des);
 extern void nodangle(Design*des);
 extern void xnfio(Design*des);
 
@@ -101,6 +102,7 @@ static struct net_func_map {
       { "nodangle",&nodangle },
       { "propinit",&propinit },
       { "synth",   &synth },
+      { "syn-rules",   &syn_rules },
       { "xnfio",   &xnfio },
       { 0, 0 }
 };
@@ -303,6 +305,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.34  2000/05/13 20:55:47  steve
+ *  Use yacc based synthesizer.
+ *
  * Revision 1.33  2000/05/08 05:29:43  steve
  *  no need for nobufz functor.
  *

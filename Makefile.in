@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.54 2000/05/12 05:23:15 steve Exp $"
+#ident "$Id: Makefile.in,v 1.55 2000/05/13 20:55:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -67,7 +67,7 @@ distclean: clean
 	rm -f Makefile
 
 TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
-FF = nodangle.o propinit.o synth.o xnfio.o
+FF = nodangle.o propinit.o synth.o syn-rules.o xnfio.o
 
 O = main.o cprop.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_net.o elab_pexpr.o elab_scope.o elab_sig.o emit.o eval.o eval_tree.o \
@@ -118,6 +118,9 @@ parse.o dep/parse.d: parse.cc
 parse.h parse.cc: $(srcdir)/parse.y
 	bison --verbose -t -p VL -d $(srcdir)/parse.y -o parse.cc
 	mv parse.cc.h parse.h
+
+syn-rules.cc: $(srcdir)/syn-rules.y
+	bison --verbose -p syn_ -o syn-rules.cc $(srcdir)/syn-rules.y
 
 lexor.cc: $(srcdir)/lexor.lex
 	flex -PVL -s -olexor.cc $(srcdir)/lexor.lex

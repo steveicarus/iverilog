@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.12 2000/05/09 00:02:13 steve Exp $"
+#ident "$Id: iverilog.c,v 1.13 2000/05/13 20:55:47 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -96,7 +96,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
 
       sprintf(tmp, " | %s/ivl %s -o %s.cc -tvvm -Fcprop %s -Fnodangle"
 	      " -fVPI_MODULE_PATH=%s", base, warning_flags, opath,
-	      synth_flag?"-Fsynth":"", base);
+	      synth_flag?"-Fsynth -Fsyn-rules":"", base);
 
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
@@ -155,7 +155,7 @@ static int t_xnf(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s/ivl %s -o %s -txnf -Fcprop -Fsynth "
+      sprintf(tmp, " | %s/ivl %s -o %s -txnf -Fcprop -Fsynth -Fsyn-rules "
 	      "-Fnodangle -Fxnfio", base, warning_flags, opath);
 
       rc = strlen(tmp);
@@ -355,6 +355,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.13  2000/05/13 20:55:47  steve
+ *  Use yacc based synthesizer.
+ *
  * Revision 1.12  2000/05/09 00:02:13  steve
  *  Parameterize LD lib in C++ command line.
  *

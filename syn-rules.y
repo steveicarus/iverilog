@@ -1,0 +1,350 @@
+
+%{
+/*
+ * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: syn-rules.y,v 1.1 2000/05/13 20:55:47 steve Exp $"
+#endif
+
+/*
+ * This file implements synthesys based on matching threads and
+ * converting them to equivilent devices. The trick here is that the
+ * proc_match_t functor can be used to scan a process and generate a
+ * string of tokens. That string of tokens can then be matched by the
+ * rules to determin what kind of device is to be made.
+ */
+
+# include  "netlist.h"
+# include  "functor.h"
+
+struct syn_token_t {
+      int token;
+
+      NetAssign*assign;
+      NetAssignMem*assign_mem;
+      NetProcTop*top;
+      NetEvWait*evwait;
+      NetEvent*event;
+      NetExpr*expr;
+
+      syn_token_t*next_;
+};
+#define YYSTYPE syn_token_t*
+
+static int yylex();
+static void yyerror(const char*);
+static Design*des_;
+
+static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
+			NetEvent*eclk, NetExpr*cexp, NetAssign*asn);
+static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
+			NetEvent*eclk, NetExpr*cexp, NetAssignMem*asn);
+%}
+
+%token S_ALWAYS S_ASSIGN S_ASSIGN_MEM S_ELSE S_EVENT S_EXPR S_IF S_INITIAL
+
+%%
+
+start
+
+  /* These rules match simple DFF devices. Clocked assignments are
+     simply implemented as DFF, and a CE is easily expressed with a
+     conditional statement. The typical Verilog that get these are:
+
+     always @(posedge CLK) Q = D
+     always @(negedge CLK) Q = D
+
+     always @(posedge CLK) if (CE) Q = D;
+     always @(negedge CLK) if (CE) Q = D;
+
+     The width of Q and D cause a wide register to be created. The
+     code generators generally implement that as an array of
+     flip-flops. */
+
+	: S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN
+		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
+			      0, $6->assign);
+		  des_->delete_process($1->top);
+		}
+
+	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN ';'
+		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
+			      $7->expr, $8->assign);
+		  des_->delete_process($1->top);
+		}
+
+
+  /* These rules match RAM devices. They are similar to DFF, except
+     that there is an index for the word. The typical Verilog that get
+     these are:
+
+     always @(posedge CLK) M[a] = D
+     always @(negedge CLK) M[a] = D
+
+     always @(posedge CLK) if (CE) M[a] = D;
+     always @(negedge CLK) if (CE) M[a] = D;
+
+     The width of Q and D cause a wide register to be created. The
+     code generators generally implement that as an array of
+     flip-flops. */
+
+	| S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN_MEM ';'
+		{ make_RAM_CE(des_, $1->top, $2->evwait, $4->event,
+			      0, $6->assign_mem);
+		  des_->delete_process($1->top);
+		}
+
+	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN_MEM ';' ';'
+		{ make_RAM_CE(des_, $1->top, $2->evwait, $4->event,
+			      $7->expr, $8->assign_mem);
+		  des_->delete_process($1->top);
+		}
+	;
+
+%%
+
+
+  /* Various actions. */
+static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
+			NetEvent*eclk, NetExpr*cexp, NetAssign*asn)
+{
+      NetEvProbe*pclk = eclk->probe(0);
+      NetNet*d = asn->rval()->synthesize(des);
+      NetNet*ce = cexp? cexp->synthesize(des) : 0;
+
+      NetFF*ff = new NetFF(asn->name(), asn->pin_count());
+
+      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
+	    connect(ff->pin_Data(idx), d->pin(idx));
+	    connect(ff->pin_Q(idx), asn->pin(idx));
+      }
+
+      connect(ff->pin_Clock(), pclk->pin(0));
+      if (ce) connect(ff->pin_Enable(), ce->pin(0));
+
+      ff->attribute("LPM_FFType", "DFF");
+      if (pclk->edge() == NetEvProbe::NEGEDGE)
+	    ff->attribute("Clock:LPM_Polarity", "INVERT");
+
+      des->add_node(ff);
+}
+
+static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
+			NetEvent*eclk, NetExpr*cexp, NetAssignMem*asn)
+{
+      NetMemory*mem = asn->memory();
+      NetNet*adr = asn->index();
+
+      NetEvProbe*pclk = eclk->probe(0);
+      NetNet*d = asn->rval()->synthesize(des);
+      NetNet*ce = cexp? cexp->synthesize(des) : 0;
+
+      NetRamDq*ram = new NetRamDq(des_->local_symbol(mem->name()), mem,
+				  adr->pin_count());
+
+      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
+	    connect(adr->pin(idx), ram->pin_Address(idx));
+
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1)
+	    connect(ram->pin_Data(idx), d->pin(idx));
+
+      if (ce) connect(ram->pin_WE(), ce->pin(0));
+
+      assert(pclk->edge() == NetEvProbe::POSEDGE);
+      connect(ram->pin_InClock(), pclk->pin(0));
+
+      ram->absorb_partners();
+      des_->add_node(ram);
+
+      des->add_node(ram);
+}
+
+static syn_token_t*first_ = 0;
+static syn_token_t*last_ = 0;
+static syn_token_t*ptr_ = 0;
+
+/*
+ * The match class is used to take a process and turn it into a stream
+ * of tokens. This stream is used by the yylex function to feed tokens
+ * to the parser.
+ */
+struct tokenize : public proc_match_t {
+      tokenize() { }
+      ~tokenize() { }
+
+      int assign(NetAssign*dev)
+      {
+	    syn_token_t*cur;
+	    cur = new syn_token_t;
+	    cur->token = S_ASSIGN;
+	    cur->assign = dev;
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+	    return 0;
+      }
+
+      int assign_mem(NetAssignMem*dev)
+      {
+	    syn_token_t*cur;
+	    cur = new syn_token_t;
+	    cur->token = S_ASSIGN_MEM;
+	    cur->assign_mem = dev;
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+	    return 0;
+      }
+
+      int condit(NetCondit*dev)
+      {
+	    syn_token_t*cur;
+	    
+	    cur = new syn_token_t;
+	    cur->token = S_IF;
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+
+	    cur = new syn_token_t;
+	    cur->token = S_EXPR;
+	    cur->expr = dev->expr();
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+
+	    dev -> if_clause() -> match_proc(this);
+
+	    if (dev->else_clause()) {
+		  cur = new syn_token_t;
+		  cur->token = S_ELSE;
+		  cur->next_ = 0;
+		  last_->next_ = cur;
+		  last_ = cur;
+
+		  dev -> else_clause() -> match_proc(this);
+	    }
+
+	    cur = new syn_token_t;
+	    cur->token = ';';
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+	    return 0;
+      }
+
+      int event_wait(NetEvWait*dev)
+      {
+	    syn_token_t*cur;
+	    
+	    cur = new syn_token_t;
+	    cur->token = '@';
+	    cur->evwait = dev;
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+
+	    cur = new syn_token_t;
+	    cur->token = '(';
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+
+	    for (unsigned idx = 0;  idx < dev->nevents(); idx += 1) {
+		  cur = new syn_token_t;
+		  cur->token = S_EVENT;
+		  cur->event = dev->event(idx);
+		  cur->next_ = 0;
+		  last_->next_ = cur;
+		  last_ = cur;
+	    }
+
+	    cur = new syn_token_t;
+	    cur->token = ')';
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+
+	    dev -> statement() -> match_proc(this);
+
+	    cur = new syn_token_t;
+	    cur->token = ';';
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+	    return 0;
+      }
+};
+
+static void syn_start_process(NetProcTop*t)
+{
+      first_ = new syn_token_t;
+      last_ = first_;
+      ptr_ = first_;
+
+      first_->token = (t->type() == NetProcTop::KALWAYS)? S_ALWAYS : S_INITIAL;
+      first_->top = t;
+      first_->next_ = 0;
+
+      tokenize go;
+      t -> statement() -> match_proc(&go);
+}
+
+static void syn_done_process()
+{
+      while (first_) {
+	    syn_token_t*cur = first_;
+	    first_ = cur->next_;
+	    delete cur;
+      }
+}
+
+static int yylex()
+{
+      if (ptr_ == 0) {
+	    yylval = 0;
+	    return EOF;
+      }
+
+      yylval = ptr_;
+      ptr_ = ptr_->next_;
+      return yylval->token;
+}
+
+struct syn_rules_f  : public functor_t {
+      ~syn_rules_f() { }
+
+      void process(class Design*des, class NetProcTop*top)
+      {
+	    syn_start_process(top);
+	    yyparse();
+	    syn_done_process();
+      }
+};
+
+void syn_rules(Design*d)
+{
+      des_ = d;
+      syn_rules_f obj;
+      des_->functor(&obj);
+}
+
+static void yyerror(const char*)
+{
+}
