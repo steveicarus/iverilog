@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.1 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: net_force.cc,v 1.2 2000/05/12 01:22:41 steve Exp $"
 #endif
 
 /*
@@ -30,9 +30,22 @@
 # include  "netlist.h"
 # include  <assert.h>
 
+/*
+ * Construct the procedural continuous assignment statement. This is a
+ * bit different from a normal assignment because the the lval is only
+ * intermittantly connected. The deassign in particular disconnects
+ * the signals when they are not being assigned anymore. Because of
+ * this, there is no other reference to the lval to make it stay put
+ * so we increment the eref.
+ *
+ * XXXX I'm not sure this is the right way. Perhaps I should create
+ * output pins to connect to the netlist? But that would cause the
+ * link ring to grow, and that is not quite correct either. Hmm...
+ */
 NetCAssign::NetCAssign(const string&n, NetNet*l)
 : NetNode(n, l->pin_count()), lval_(l)
 {
+      lval_->incr_eref();
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
 	    pin(idx).set_name("I", idx);
@@ -41,6 +54,7 @@ NetCAssign::NetCAssign(const string&n, NetNet*l)
 
 NetCAssign::~NetCAssign()
 {
+      lval_->decr_eref();
 }
 
 const Link& NetCAssign::lval_pin(unsigned idx) const
@@ -52,10 +66,12 @@ const Link& NetCAssign::lval_pin(unsigned idx) const
 NetDeassign::NetDeassign(NetNet*l)
 : lval_(l)
 {
+      lval_->incr_eref();
 }
 
 NetDeassign::~NetDeassign()
 {
+      lval_->decr_eref();
 }
 
 const NetNet*NetDeassign::lval() const
@@ -99,6 +115,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.2  2000/05/12 01:22:41  steve
+ *  NetCAssign needs to incr_eref its lval to lock it down.
+ *
  * Revision 1.1  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *
