@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.7 2003/02/16 02:21:20 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.8 2003/02/16 05:42:06 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -35,7 +35,7 @@ typedef shl_t ivl_dll_t;
 #endif
 
 #if defined(__MINGW32__)
-inline ivl_dll_t ivl_dlopen(const char *name)
+inline ivl_dll_t ivl_dlopen(const char *name, bool global_flag)
 { return (void *)LoadLibrary(name); }
 
 inline void *ivl_dlsym(ivl_dll_t dll, const char *nm)
@@ -90,6 +90,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.8  2003/02/16 05:42:06  steve
+ *  Take the global_flag to ivl_dlopen.
+ *
  * Revision 1.7  2003/02/16 02:21:20  steve
  *  Support .vpl files as loadable LIBRARIES.
  *
