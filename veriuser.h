@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.6 2002/05/30 02:12:17 steve Exp $"
+#ident "$Id: veriuser.h,v 1.7 2002/05/30 02:37:26 steve Exp $"
 #endif
 
 /*
@@ -46,6 +46,38 @@
 
 EXTERN_C_START
 
+/*
+ * structure for veriusertfs array
+ */
+typedef struct t_tfcell
+{
+      short type;               /* usertask|userfunction|userrealfunction */
+      short data;               /* data passed to user routine */
+      int   (*checktf)();       /* pointer to checktf routine */
+      int   (*sizetf)();        /* pointer to sizetf routine */
+      int   (*calltf)();        /* pointer to calltf routine */
+      int   (*misctf)();        /* pointer to misctf routine */
+      char  *tfname;            /* name of the system task/function */
+      int   forwref;            /* usually set to 1 */
+      char  *tfveritool;        /* usually ignored */
+      char  *tferrmessage;      /* usually ignored */
+      char  pad[20];            /* Pad of XL */
+} s_tfcell, *p_tfcell;
+
+extern s_tfcell veriusertfs[];
+extern void veriusertfs_register();
+
+#define usertask 1
+#define userfunction 2
+#define userrealfunction 3
+
+/* misctf callback reasons */
+#define reason_paramvc 7
+#define reason_finish 9
+#define reason_endofcompile 16
+
+
+/* Extern functions from the library. */
 extern void io_printf (const char *, ...)
       __attribute__((format (printf,1,2)));
 extern char* mc_scan_plusargs(char*plusarg);
@@ -66,6 +98,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.7  2002/05/30 02:37:26  steve
+ *  Add the veriusertf_register funciton.
+ *
  * Revision 1.6  2002/05/30 02:12:17  steve
  *  Add tf_nump from mruff.
  *
