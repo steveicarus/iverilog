@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.24 2001/02/10 04:50:54 steve Exp $"
+#ident "$Id: cprop.cc,v 1.25 2001/02/16 03:27:31 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -39,6 +39,8 @@ struct cprop_functor  : public functor_t {
       unsigned count;
 
       virtual void lpm_add_sub(Design*des, NetAddSub*obj);
+      virtual void lpm_compare(Design*des, NetCompare*obj);
+      virtual void lpm_compare_eq_(Design*des, NetCompare*obj);
       virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
@@ -126,6 +128,110 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	    return;
       }
 
+}
+
+void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
+{
+      if (obj->pin_AEB().is_linked()) {
+	    assert( ! obj->pin_AGB().is_linked() );
+	    assert( ! obj->pin_AGEB().is_linked() );
+	    assert( ! obj->pin_ALB().is_linked() );
+	    assert( ! obj->pin_ALEB().is_linked() );
+	    assert( ! obj->pin_AGB().is_linked() );
+	    assert( ! obj->pin_ANEB().is_linked() );
+	    lpm_compare_eq_(des, obj);
+	    return;
+      }
+}
+
+void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
+{
+
+	/* First, look for the case where constant bits on matching A
+	   and B inputs are different. This this is so, the device can
+	   be completely eliminated and replaced with a constant 0. */
+
+      for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
+	    if (! link_drivers_constant(obj->pin_DataA(idx)))
+		  continue;
+	    if (! link_drivers_constant(obj->pin_DataB(idx)))
+		  continue;
+	    if (driven_value(obj->pin_DataA(idx)) ==
+		driven_value(obj->pin_DataB(idx)))
+		  continue;
+
+	    NetConst*zero = new NetConst(obj->name(), verinum::V0);
+	    connect(zero->pin(0), obj->pin_AEB());
+	    delete obj;
+	    des->add_node(zero);
+	    count += 1;
+	    return;
+      }
+
+	/* Still may need the gate. Run through the inputs again, and
+	   look for pairs of constants. Those inputs can be removed. */
+
+      unsigned top = obj->width();
+      for (unsigned idx = 0 ;  idx < top ; ) {
+	    if (! link_drivers_constant(obj->pin_DataA(idx))) {
+		  idx += 1;
+		  continue;
+	    }
+	    if (! link_drivers_constant(obj->pin_DataB(idx))) {
+		  idx += 1;
+		  continue;
+	    }
+
+	    obj->pin_DataA(idx).unlink();
+	    obj->pin_DataB(idx).unlink();
+
+	    top -= 1;
+	    for (unsigned jj = idx ;  jj < top ;  jj += 1) {
+		  connect(obj->pin_DataA(jj), obj->pin_DataA(jj+1));
+		  connect(obj->pin_DataB(jj), obj->pin_DataB(jj+1));
+		  obj->pin_DataA(jj+1).unlink();
+		  obj->pin_DataB(jj+1).unlink();
+	    }
+      }
+
+	/* If we wound up disconnecting all the inputs, then remove
+	   the device and replace it with a constant. */
+      if (top == 0) {
+	    NetConst*one = new NetConst(obj->name(), verinum::V1);
+	    connect(one->pin(0), obj->pin_AEB());
+	    delete obj;
+	    des->add_node(one);
+	    count += 1;
+	    return;
+      }
+
+	/* If there is only one bit left, then replace the comparator
+	   with a simple XOR gate. */
+      if (top == 1) {
+	    NetLogic*tmp = new NetLogic(obj->scope(), obj->name(), 3,
+					NetLogic::XOR);
+	    connect(tmp->pin(0), obj->pin_AEB());
+	    connect(tmp->pin(1), obj->pin_DataA(0));
+	    connect(tmp->pin(2), obj->pin_DataB(0));
+	    delete obj;
+	    des->add_node(tmp);
+	    count += 1;
+	    return;
+      }
+
+
+      if (top == obj->width())
+	    return;
+
+      NetCompare*tmp = new NetCompare(obj->name(), top);
+      connect(tmp->pin_AEB(), obj->pin_AEB());
+      for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
+	    connect(tmp->pin_DataA(idx), obj->pin_DataA(idx));
+	    connect(tmp->pin_DataB(idx), obj->pin_DataB(idx));
+      }
+      delete obj;
+      des->add_node(tmp);
+      count += 1;
 }
 
 void cprop_functor::lpm_ff(Design*des, NetFF*obj)
@@ -826,6 +932,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.25  2001/02/16 03:27:31  steve
+ *  Constant propagation for compare ==.
+ *
  * Revision 1.24  2001/02/10 04:50:54  steve
  *  Catch constants driving root module ports. (PR#130)
  *
