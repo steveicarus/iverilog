@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.113 1999/10/08 17:48:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.114 1999/10/09 19:24:04 steve Exp $"
 #endif
 
 /*
@@ -797,8 +797,17 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		break;
 	  }
 
+	  case 'l':
+	  case 'r':
+	    cerr << get_line() << ": sorry: combinational shift"
+		  " not supported here." << endl;
+	    des->errors += 1;
+	    osig = 0;
+	    break;
 	  default:
-	    cerr << "internal eror: Unhandled BINARY '" << op_ << "'" << endl;
+	    cerr << get_line() << ": internal error: unsupported"
+		  " combinational operator (" << op_ << ")." << endl;
+	    des->errors += 1;
 	    osig = 0;
       }
 
@@ -2587,6 +2596,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.114  1999/10/09 19:24:04  steve
+ *  Better message for combinational operators.
+ *
  * Revision 1.113  1999/10/08 17:48:08  steve
  *  Support + in constant expressions.
  *

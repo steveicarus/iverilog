@@ -2,7 +2,7 @@
 			   September 18, 1999		
 
 
-1.0 What is ICARUS Verilog(IVL)?
+1.0 What is ICARUS Verilog?
 
 Icarus Verilog is intended to compile ALL of the Verilog HDL as described
 in the IEEE-1364 standard. Of course, it's not quite there yet. It does
@@ -266,11 +266,19 @@ current state of support for Verilog.
 
   - fork/join is not supported in vvm runtime
 
-  - structural arithmetic operators are in general not
-    supported. Procedural expressions are OK.
+  - structural arithmetic operators are in general not supported.
+    Procedural expressions are OK. Constant expressions are OK.
 
             assign foo = a + b; // sorry
             always @(a or b) foo = a + b; // OK
+	    parameter foo = a + b; // OK
+
+  - Structural shift operators are in general not supported.
+    Procedural expressions are OK. Constant expressions are OK.
+
+            assign foo = a << b; // sorry
+	    always @(a or b) foo = a << b; // OK
+	    parameter foo = a << b; // OK
 
   - Functions in structural contexts are not supported.
 
