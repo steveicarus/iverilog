@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.12 2003/04/23 04:57:41 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.13 2003/05/10 16:06:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -63,6 +63,43 @@ static int check_integer_constant(char*name, vpiHandle handle)
     return 0;
 }
 
+/*
+ * This function makes sure the handle is of an object that can get a
+ * string value for a file name.
+ */
+static int check_file_name(const char*name, vpiHandle item)
+{
+      switch (vpi_get(vpiType, item)) {
+
+	  case vpiConstant:
+	    if (vpi_get(vpiConstType, item) != vpiStringConst) {
+		  vpi_printf("ERROR: %s argument 1: file name argument "
+			     "must be a string.\n", name);
+		  return 0;
+	    }
+	    break;
+
+	  case vpiParameter:
+	    if (vpi_get(vpiConstType,item) != vpiStringConst) {
+		  vpi_printf("ERROR: %s argument 1: Parameter %s is "
+			     "not a string in this context.\n",
+			     name, vpi_get_str(vpiName,item));
+		  return 0;
+	    }
+	    break;
+
+	  case vpiReg:
+	    break;
+
+	  default:
+	    vpi_printf("ERROR: %s argument 1: must be a string\n", name);
+	    return 0;
+      }
+
+      return 1;
+}
+
+
 static int sys_readmem_calltf(char*name)
 {
       int code;
@@ -105,23 +142,18 @@ static int sys_readmem_calltf(char*name)
 	    return 0;
       }
 
-      if ((vpi_get(vpiType, item) != vpiConstant)
-	  && (vpi_get(vpiType, item) != vpiParameter)) {
-	    vpi_printf("ERROR: %s file name must be a constant (vpiType=%d)\n",
-		       name, vpi_get(vpiType, item));
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s parameter must be a string\n", name);
+	/* Check then get the first argument, the file name. It is
+	   possible that Verilog would right-justify a name to fit a
+	   reg value to fit the reg width, so chop off leading white
+	   space in the process. */
+      if (check_file_name(name, item) == 0) {
 	    vpi_free_object(argv);
 	    return 0;
       }
 
       value.format = vpiStringVal;
       vpi_get_value(item, &value);
-      path = strdup(value.value.str);
+      path = strdup(value.value.str + strspn(value.value.str, " "));
 
 	/* Get and check the second parameter. It must be a memory. */
       mitem = vpi_scan(argv);
@@ -544,6 +576,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.13  2003/05/10 16:06:50  steve
+ *  $readmem more flexible with file name argument.
+ *
  * Revision 1.12  2003/04/23 04:57:41  steve
  *  Accept string parameters for file name argument.
  *
