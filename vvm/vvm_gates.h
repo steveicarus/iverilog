@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.11 1999/06/09 00:58:29 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.12 1999/07/17 03:07:27 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -438,6 +438,11 @@ template <unsigned WIDTH> class vvm_pevent {
 	      value_[idx] = val;
 	    }
 
+      void init(int idx, vvm_bit_t val)
+	    { assert(idx < WIDTH);
+	      value_[idx] = val;
+	    }
+
     private:
       vvm_sync*target_;
       vvm_bitset_t<WIDTH> value_;
@@ -450,6 +455,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.12  1999/07/17 03:07:27  steve
+ *  pevent objects have initial values.
+ *
  * Revision 1.11  1999/06/09 00:58:29  steve
  *  Support for binary | (Stephen Tell)
  *
