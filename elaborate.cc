@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.261 2002/08/13 05:35:00 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.262 2002/08/15 02:11:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1368,20 +1368,27 @@ NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
  * A call to a system task involves elaborating all the parameters,
  * then passing the list to the NetSTask object.
  *XXXX
- * There is a single special in the call to a system task. Normally,
- * an expression cannot take an unindexed memory. However, it is
- * possible to take a system task parameter a memory if the expression
- * is trivial.
+ * There is a single special case in the call to a system
+ * task. Normally, an expression cannot take an unindexed
+ * memory. However, it is possible to take a system task parameter a
+ * memory if the expression is trivial.
  */
 NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      svector<NetExpr*>eparms (nparms());
+      unsigned parm_count = nparms();
 
-      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+	/* Catch the special case that the system task has no
+	   parameters. The "()" string will be parsed as a single
+	   empty parameter, when we really mean no parameters at all. */
+      if ((nparms() == 1) && (parm(0) == 0))
+	    parm_count = 0;
+
+      svector<NetExpr*>eparms (parm_count);
+
+      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    PExpr*ex = parm(idx);
-
 	    eparms[idx] = ex? ex->elaborate_expr(des, scope, true) : 0;
       }
 
@@ -2504,6 +2511,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.262  2002/08/15 02:11:54  steve
+ *  Handle special case of empty system task argument list.
+ *
  * Revision 1.261  2002/08/13 05:35:00  steve
  *  Do not elide named blocks.
  *
