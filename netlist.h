@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.152 2000/08/01 02:48:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.153 2000/08/02 14:48:15 steve Exp $"
 #endif
 
 /*
@@ -337,12 +337,6 @@ class NetNet  : public NetObj, public LineInfo {
       void decr_eref();
       unsigned get_eref() const;
 
-#if 0
-      verinum::V get_ival(unsigned pin) const
-	    { return ivalue_[pin]; }
-      void set_ival(unsigned pin, verinum::V val)
-	    { ivalue_[pin] = val; }
-#endif
 
       virtual void dump_net(ostream&, unsigned) const;
 
@@ -2728,6 +2722,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.153  2000/08/02 14:48:15  steve
+ *  cleanup.
+ *
  * Revision 1.152  2000/08/01 02:48:42  steve
  *  Support <= in synthesis of DFF and ram devices.
  *
