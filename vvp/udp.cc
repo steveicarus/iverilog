@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.21 2003/06/17 21:28:59 steve Exp $"
+#ident "$Id: udp.cc,v 1.22 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -41,7 +41,7 @@ void udp_functor_s::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	// UDP, then push according to the push flag. However, do
 	// *not* push sequential outputs. This output schedules like a
 	// non-blocking assignment.
-      put_oval(out, push && !udp->sequ);
+      put_oval(out, push & !udp->sequ, udp->sequ);
 }
 
 
@@ -360,6 +360,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.22  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.21  2003/06/17 21:28:59  steve
  *  Remove short int restrictions from vvp opcodes. (part 2)
  *

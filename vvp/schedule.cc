@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.25 2003/04/19 23:32:57 steve Exp $"
+#ident "$Id: schedule.cc,v 1.26 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -38,23 +38,16 @@ unsigned long count_gen_events = 0;
 unsigned long count_prop_events = 0;
 unsigned long count_thread_events = 0;
 unsigned long count_event_pool = 0;
+unsigned long count_time_pool = 0;
+
 
 /*
- * The event queue is arranged as a skip list, with the simulation
- * time the key to the list. The simulation time is stored in each
- * event as the delta time from the previous event so that there is no
- * limit to the time values that are supported.
- *
- * The list is started by the ``list'' variable below. This points to
- * the very next event to be executed.  Each event, in turn, points to
- * the next item in the event queue with the ->next member.
- *
- * The ->last member points to the last event in the current
- * time. That is, all the events to and including the ->last event are
- * zero delay from the current event.
+ * The event_s and event_time_s structures implement the Verilog
+ * stratified event queue. The event_time_s objects are one per time
+ * step. Each time step in turn contains a list of event_s objects
+ * that are the actual events.
  */
 struct event_s {
-      unsigned delay;
 
       union {
 	    vthread_t thr;
@@ -64,10 +57,8 @@ struct event_s {
       };
       unsigned val  :2;
       unsigned type :2;
-      // unsigned char str;
 
       struct event_s*next;
-      struct event_s*last;
 
       void* operator new (size_t);
       void operator delete(void*obj, size_t s);
@@ -77,31 +68,45 @@ const unsigned TYPE_THREAD = 1;
 const unsigned TYPE_PROP   = 2;
 const unsigned TYPE_ASSIGN = 3;
 
+struct event_time_s {
+      vvp_time64_t delay;
+
+      struct event_s*active;
+      struct event_s*nbassign;
+      struct event_s*rosync;
+
+      struct event_time_s*next;
+
+      void* operator new (size_t);
+      void operator delete(void*obj, size_t s);
+};
+
+
 /*
 ** These event_s will be required a lot, at high frequency.
 ** Once allocated, we never free them, but stash them away for next time. 
 */
 
-static struct event_s* free_list = 0;
+static struct event_s* event_free_list = 0;
 static const unsigned CHUNK_COUNT = 8192 / sizeof(struct event_s);
 
 inline void* event_s::operator new (size_t size)
 {
       assert(size == sizeof(struct event_s));
 
-      struct event_s* cur = free_list;
+      struct event_s* cur = event_free_list;
       if (!cur) {
 	    cur = (struct event_s*)
 		  malloc(CHUNK_COUNT * sizeof(struct event_s));
 	    for (unsigned idx = 1 ;  idx < CHUNK_COUNT ;  idx += 1) {
-		  cur[idx].next = free_list;
-		  free_list = cur + idx;
+		  cur[idx].next = event_free_list;
+		  event_free_list = cur + idx;
 	    }
 
 	    count_event_pool += CHUNK_COUNT;
 
       } else {
-	    free_list = cur->next;
+	    event_free_list = cur->next;
       }
 
       return cur;
@@ -110,8 +115,40 @@ inline void* event_s::operator new (size_t size)
 inline void event_s::operator delete(void*obj, size_t size)
 {
       struct event_s*cur = reinterpret_cast<event_s*>(obj);
-      cur->next = free_list;
-      free_list = cur;
+      cur->next = event_free_list;
+      event_free_list = cur;
+}
+
+static struct event_time_s* time_free_list = 0;
+static const unsigned TIME_CHUNK_COUNT = 8192 / sizeof(struct event_time_s);
+
+inline void* event_time_s::operator new (size_t size)
+{
+      assert(size == sizeof(struct event_time_s));
+
+      struct event_time_s* cur = time_free_list;
+      if (!cur) {
+	    cur = (struct event_time_s*)
+		  malloc(TIME_CHUNK_COUNT * sizeof(struct event_time_s));
+	    for (unsigned idx = 1 ;  idx < TIME_CHUNK_COUNT ;  idx += 1) {
+		  cur[idx].next = time_free_list;
+		  time_free_list = cur + idx;
+	    }
+
+	    count_time_pool += TIME_CHUNK_COUNT;
+
+      } else {
+	    time_free_list = cur->next;
+      }
+
+      return cur;
+}
+
+inline void event_time_s::operator delete(void*obj, size_t size)
+{
+      struct event_time_s*cur = reinterpret_cast<event_time_s*>(obj);
+      cur->next = time_free_list;
+      time_free_list = cur;
 }
 
 /*
@@ -119,7 +156,7 @@ inline void event_s::operator delete(void*obj, size_t size)
  * the events that have not been executed yet, and reaches into the
  * future.
  */
-static struct event_s* sched_list = 0;
+static struct event_time_s* sched_list = 0;
 
 /*
  * At the current time, events that are marked as synch events are put
@@ -183,122 +220,162 @@ static void signals_revert(void)
  * itself, and the structure is placed in the right place in the
  * queue.
  */
-static void schedule_event_(struct event_s*cur)
+typedef enum event_queue_e { SEQ_ACTIVE, SEQ_NBASSIGN, SEQ_ROSYNC } event_queue_t;
+
+static void schedule_event_(struct event_s*cur, vvp_time64_t delay,
+			    event_queue_t select_queue)
 {
-      cur->last = cur;
+      cur->next = cur;
 
-	/* If the list is completely empty, then start the list with
-	   this the only event. */
+      struct event_time_s*ctim = sched_list;
+
       if (sched_list == 0) {
-	    sched_list = cur;
-	    cur->next = 0;
-	    return;
-      }
+	      /* Is the event_time list completely empty? Create the
+		 first event_time object. */
+	    ctim = new struct event_time_s;
+	    ctim->active = 0;
+	    ctim->nbassign = 0;
+	    ctim->rosync = 0;
+	    ctim->delay = delay;
+	    ctim->next  = 0;
+	    sched_list = ctim;
 
-      struct event_s*idx = sched_list;
-      if (cur->delay < idx->delay) {
-	      /* If this new event is earlier then even the first
-		 event, then insert it in front. Adjust the delay of
-		 the next event, and set the start to me. */
-	    idx->delay -= cur->delay;
-	    cur->next = idx;
-	    sched_list = cur;
+      } else if (sched_list->delay > delay) {
+
+	      /* Am I looking for an event before the first event_time?
+		 If so, create a new event_time to go in front. */
+	    struct event_time_s*tmp = new struct event_time_s;
+	    tmp->active = 0;
+	    tmp->nbassign = 0;
+	    ctim->rosync = 0;
+	    tmp->delay = delay;
+	    tmp->next = ctim;
+	    ctim->delay -= delay;
+	    ctim = tmp;
+	    sched_list = ctim;
 
       } else {
+	    struct event_time_s*prev = 0;
 
-	      /* Look for the first event after the cur
-		 event. Decrease the cur->delay as I go, and use the
-		 skip member to accelerate the search. When I'm done,
-		 prev will point to the event immediately before where
-		 this event goes. */
-	    struct event_s*prev = idx;
-	    while (cur->delay > idx->delay) {
-		  cur->delay -= idx->delay;
-		  prev = idx->last;
-		  if (prev->next == 0) {
-			cur->next = 0;
-			prev->next = cur;
-			return;
-		  }
-		  idx = prev->next;
+	    while (ctim->next && (ctim->delay < delay)) {
+		  delay -= ctim->delay;
+		  prev = ctim;
+		  ctim = ctim->next;
 	    }
 
-	    if (cur->delay < idx->delay) {
-		  idx->delay -= cur->delay;
-		    //cur->last = cur;
-		  cur->next = idx;
-		  prev->next = cur;
+	    if (ctim->delay > delay) {
+		  struct event_time_s*tmp = new struct event_time_s;
+		  tmp->active = 0;
+		  tmp->nbassign = 0;
+		  tmp->rosync = 0;
+		  tmp->delay = delay;
+		  tmp->next  = prev->next;
+		  prev->next = tmp;
+
+		  tmp->next->delay -= delay;
+		  ctim = tmp;
+
+	    } else if (ctim->delay == delay) {
 
 	    } else {
-		  assert(cur->delay == idx->delay);
-		  cur->delay = 0;
-		    //cur->last = cur;
-		  cur->next = idx->last->next;
-		  idx->last->next = cur;
-		  idx->last = cur;
+		  assert(ctim->next == 0);
+		  struct event_time_s*tmp = new struct event_time_s;
+		  tmp->active = 0;
+		  tmp->nbassign = 0;
+		  tmp->rosync = 0;
+		  tmp->delay = delay - ctim->delay;
+		  tmp->next = 0;
+		  ctim->next = tmp;
+
+		  ctim = tmp;
 	    }
       }
+
+	/* By this point, ctim is the event_time structure that is to
+	   receive the event at hand. Put the event in to the
+	   appropriate list for the kind of assign we have at hand. */
+
+      switch (select_queue) {
+
+	  case SEQ_ACTIVE:
+	    if (ctim->active == 0) {
+		  ctim->active = cur;
+
+	    } else {
+		    /* Put the cur event on the end of the active list. */
+		  cur->next = ctim->active->next;
+		  ctim->active->next = cur;
+		  ctim->active = cur;
+	    }
+	    break;
+
+	  case SEQ_NBASSIGN:
+	    if (ctim->nbassign == 0) {
+		  ctim->nbassign = cur;
+
+	    } else {
+		    /* Put the cur event on the end of the active list. */
+		  cur->next = ctim->nbassign->next;
+		  ctim->nbassign->next = cur;
+		  ctim->nbassign = cur;
+	    }
+	    break;
+
+	  case SEQ_ROSYNC:
+	    if (ctim->rosync == 0) {
+		  ctim->rosync = cur;
+
+	    } else {
+		    /* Put the cur event on the end of the active list. */
+		  cur->next = ctim->rosync->next;
+		  ctim->rosync->next = cur;
+		  ctim->rosync = cur;
+	    }
+	    break;
+      }
 }
+
 static void schedule_event_push_(struct event_s*cur)
 {
-      assert(cur->delay == 0);
-      cur->last = cur;
-
-      if (sched_list == 0) {
-	    sched_list = cur;
-	    cur->next = 0;
+      if ((sched_list == 0) || (sched_list->delay > 0)) {
+	    schedule_event_(cur, 0, SEQ_ACTIVE);
 	    return;
       }
 
-      if (sched_list->delay == 0)
-	    cur->last = sched_list->last;
-      cur->next = sched_list;
-      sched_list = cur;
+      struct event_time_s*ctim = sched_list;
+
+      if (ctim->active == 0) {
+	    cur->next = cur;
+	    ctim->active = cur;
+	    return;
+      }
+
+      cur->next = ctim->active->next;
+      ctim->active->next = cur;
 }
 
 
 /*
- * The synch_list is managed as a doubly-linked circular list. There is
- * no need for the skip capabilities, so use the "last" member as a
- * prev pointer. This function appends the event to the synch_list.
  */
-static void postpone_sync_event(struct event_s*cur)
-{
-      if (synch_list == 0) {
-	    synch_list = cur;
-	    cur->next = cur;
-	    cur->last = cur;
-	    return;
-      }
-
-      cur->next = synch_list;
-      cur->last = synch_list->last;
-      cur->next->last = cur;
-      cur->last->next = cur;
-}
-
 static struct event_s* pull_sync_event(void)
 {
       if (synch_list == 0)
 	    return 0;
 
-      struct event_s*cur = synch_list;
-      synch_list = cur->next;
-      if (cur == synch_list) {
+      struct event_s*cur = synch_list->next;
+      if (cur->next == cur) {
 	    synch_list = 0;
       } else {
-	    cur->next->last = cur->last;
-	    cur->last->next = cur->next;
+	    synch_list->next = cur->next;
       }
 
       return cur;
 }
 
-void schedule_vthread(vthread_t thr, unsigned delay, bool push_flag)
+void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 {
       struct event_s*cur = new event_s;
 
-      cur->delay = delay;
       cur->thr = thr;
       cur->type = TYPE_THREAD;
       vthread_mark_scheduled(thr);
@@ -311,45 +388,41 @@ void schedule_vthread(vthread_t thr, unsigned delay, bool push_flag)
 	    schedule_event_push_(cur);
 
       } else {
-	    schedule_event_(cur);
+	    schedule_event_(cur, delay, SEQ_ACTIVE);
       }
 }
 
-void functor_s::schedule(unsigned delay)
+void functor_s::schedule(vvp_time64_t delay, bool nba_flag)
 {
       struct event_s*cur = new event_s;
 
-      cur->delay = delay;
       cur->funp = this;
       cur->type = TYPE_PROP;
-      // cur->str = get_ostr();
-      // cur->val = get_oval();
 
-      schedule_event_(cur);
+      schedule_event_(cur, delay, nba_flag? SEQ_NBASSIGN:SEQ_ACTIVE);
 }
 
-void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
+void schedule_assign(vvp_ipoint_t fun, unsigned char val, vvp_time64_t delay)
 {
       struct event_s*cur = new event_s;
 
-      cur->delay = delay;
       cur->fun = fun;
       cur->val = val;
       cur->type= TYPE_ASSIGN;
 
-      schedule_event_(cur);
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
-void schedule_generic(vvp_gen_event_t obj, unsigned char val, unsigned delay)
+void schedule_generic(vvp_gen_event_t obj, unsigned char val,
+		      vvp_time64_t delay, bool sync_flag)
 {
       struct event_s*cur = new event_s;
 
-      cur->delay = delay;
       cur->obj = obj;
       cur->val = val;
       cur->type= TYPE_GEN;
 
-      schedule_event_(cur);
+      schedule_event_(cur, delay, sync_flag? SEQ_ROSYNC : SEQ_ACTIVE);
 }
 
 static vvp_time64_t schedule_time;
@@ -377,48 +450,67 @@ void schedule_simulate(void)
 		  continue;
 	    }
 
-	      /* Pull the first item off the list. Fixup the last
-		 pointer in the next cell, if necessary. */
-	    struct event_s*cur = sched_list;
-	    sched_list = cur->next;
-	    if (cur->last != cur) {
-		  assert(sched_list);
-		  assert(sched_list->delay == 0);
-		  sched_list->last = cur->last;
-
-	    }
+	      /* ctim is the current time step. */
+	    struct event_time_s* ctim = sched_list;
+	    assert(ctim);
 
 	      /* If the time is advancing, then first run the
 		 postponed sync events. Run them all. */
-	    if (cur->delay > 0) {
+	    if (ctim->delay > 0) {
+
 		  struct event_s*sync_cur;
 		  while ( (sync_cur = pull_sync_event()) ) {
 			assert(sync_cur->type == TYPE_GEN);
 			if (sync_cur->obj && sync_cur->obj->run) {
-			      assert(sync_cur->obj->sync_flag);
 			      sync_cur->obj->run(sync_cur->obj, sync_cur->val);
 			}
 			delete sync_cur;
 		  }
 
 
-		  schedule_time += cur->delay;
+		  schedule_time += ctim->delay;
+		  ctim->delay = 0;
 
 		  vpiNextSimTime();
+	    }
+
+
+	      /* If there are no more active events, advance the event
+		 queues. If there are not events at all, then release
+		 the event_time object. */
+	    if (ctim->active == 0) {
+		  ctim->active = ctim->nbassign;
+		  ctim->nbassign = 0;
+
+		  if (ctim->active == 0) {
+			sched_list = ctim->next;
+			synch_list = ctim->rosync;
+			delete ctim;
+			continue;
+		  }
+	    }
+	    assert(ctim->active);
+
+	      /* Pull the first item off the list. If this is the last
+		 cell in the list, then clear the list. Execute that
+		 event type, and delete it. */
+	    struct event_s*cur = ctim->active->next;
+	    if (cur->next == cur) {
+		  ctim->active = 0;
+	    } else {
+		  ctim->active->next = cur->next;
 	    }
 
 	    switch (cur->type) {
 		case TYPE_THREAD:
 		  count_thread_events += 1;
 		  vthread_run(cur->thr);
-		  delete cur;
 		  break;
 
 		case TYPE_PROP:
 		    //printf("Propagate %p\n", cur->fun);
 		  count_prop_events += 1;
 		  cur->funp->propagate(false);
-		  delete(cur);
 		  break;
 
 		case TYPE_ASSIGN:
@@ -437,23 +529,18 @@ void schedule_simulate(void)
 			functor_set(cur->fun, cur->val, HiZ, false);
 			break;
 		  }
-		  delete(cur);
 		  break;
 
 		case TYPE_GEN:
 		  count_gen_events += 1;
-		  if (cur->obj && cur->obj->run) {
-			if (cur->obj->sync_flag == false) {
-			      cur->obj->run(cur->obj, cur->val);
-			      delete (cur);
+		  if (cur->obj && cur->obj->run)
+			cur->obj->run(cur->obj, cur->val);
 
-			} else {
-			      postpone_sync_event(cur);
-			}
-		  }
 		  break;
 
 	    }
+
+	    delete (cur);
       }
 
 	/* Clean up lingering ReadOnlySync events. It is safe to do
@@ -464,10 +551,8 @@ void schedule_simulate(void)
 
 	    assert(sync_cur->type == TYPE_GEN);
 
-	    if (sync_cur->obj && sync_cur->obj->run) {
-		  assert(sync_cur->obj->sync_flag);
+	    if (sync_cur->obj && sync_cur->obj->run)
 		  sync_cur->obj->run(sync_cur->obj, sync_cur->val);
-	    }
 
 	    delete (sync_cur);
       }
@@ -481,6 +566,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.26  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.25  2003/04/19 23:32:57  steve
  *  Add support for cbNextSimTime.
  *
@@ -489,31 +577,5 @@ void schedule_simulate(void)
  *
  * Revision 1.23  2003/02/21 03:40:35  steve
  *  Add vpiStop and interactive mode.
- *
- * Revision 1.22  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.21  2003/01/06 23:57:26  steve
- *  Schedule wait lists of threads as a single event,
- *  to save on events. Also, improve efficiency of
- *  event_s allocation. Add some event statistics to
- *  get an idea where performance is really going.
- *
- * Revision 1.20  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/07/31 03:22:44  steve
- *  Account for the tail readonly callbacks.
- *
- * Revision 1.18  2002/05/12 23:44:41  steve
- *  task calls and forks push the thread event in the queue.
- *
- * Revision 1.17  2002/05/04 03:03:17  steve
- *  Add simulator event callbacks.
- *
- * Revision 1.16  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
  */
 

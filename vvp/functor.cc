@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.42 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: functor.cc,v 1.43 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -153,7 +153,8 @@ void functor_s::propagate(unsigned val, unsigned str, bool push)
 
 }
 
-void functor_s::put_ostr(unsigned val, unsigned str, bool push)
+void functor_s::put_ostr(unsigned val, unsigned str,
+			 bool push, bool nba_flag)
 {
       if (str != get_ostr() || val != get_oval()) {
 
@@ -176,7 +177,7 @@ void functor_s::put_ostr(unsigned val, unsigned str, bool push)
 		  propagate(push);
 	    }
 	    else
-		  schedule(del);
+		  schedule(del, nba_flag);
       }
 }
 
@@ -221,6 +222,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.43  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.42  2003/03/13 04:36:57  steve
  *  Remove the obsolete functor delete functions.
  *

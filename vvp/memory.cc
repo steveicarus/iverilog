@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.20 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: memory.cc,v 1.21 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -481,7 +481,6 @@ inline static struct mem_assign_s* ma_alloc()
   else
     ma_free_list = cur->next;
 
-  cur->sync_flag = false;
   return cur;
 }
 
@@ -505,11 +504,14 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
   e->run = run_mem_assign;
   e->mem = mem;
   e->idx = idx;
-  schedule_generic(e, val, delay);
+  schedule_generic(e, val, delay, false);
 }
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.21  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.20  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

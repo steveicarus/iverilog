@@ -1,7 +1,7 @@
 #ifndef __schedule_H
 #define __schedule_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.15 2003/02/22 02:52:06 steve Exp $"
+#ident "$Id: schedule.h,v 1.16 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -34,7 +34,7 @@
  * to the front of the queue. %fork uses this to get the thread
  * execution ahead of non-blocking assignments.
  */
-extern void schedule_vthread(vthread_t thr, unsigned delay,
+extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 			     bool push_flag =false);
 
 /*
@@ -42,7 +42,7 @@ extern void schedule_vthread(vthread_t thr, unsigned delay,
  * the specified input when the delay times out.
  */
 extern void schedule_assign(vvp_ipoint_t fun, unsigned char val,
-			    unsigned delay);
+			    vvp_time64_t delay);
 
 
 /*
@@ -57,12 +57,11 @@ extern void schedule_assign(vvp_ipoint_t fun, unsigned char val,
 typedef struct vvp_gen_event_s *vvp_gen_event_t;
 
 extern void schedule_generic(vvp_gen_event_t obj, unsigned char val,
-			     unsigned delay);
+			     vvp_time64_t delay, bool sync_flag);
 
 struct vvp_gen_event_s
 {
       void (*run)(vvp_gen_event_t obj, unsigned char val);
-      bool sync_flag;
 };
 
 /*
@@ -109,6 +108,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.16  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.15  2003/02/22 02:52:06  steve
  *  Check for stopped flag in certain strategic points.
  *
@@ -129,37 +131,5 @@ extern unsigned long count_event_pool;
  *
  * Revision 1.10  2002/05/12 23:44:41  steve
  *  task calls and forks push the thread event in the queue.
- *
- * Revision 1.9  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
- *
- * Revision 1.8  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.7  2001/07/11 02:27:21  steve
- *  Add support for REadOnlySync and monitors.
- *
- * Revision 1.6  2001/05/02 01:38:13  steve
- *  Describe a generic event a bit.
- *
- * Revision 1.5  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.4  2001/03/31 19:00:43  steve
- *  Add VPI support for the simulation time.
- *
- * Revision 1.3  2001/03/19 01:55:38  steve
- *  Add support for the vpiReset sim control.
- *
- * Revision 1.2  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
  */
 #endif

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.50 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: functor.h,v 1.51 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -188,9 +188,15 @@ struct functor_s {
       inline unsigned char get_ostr() { return ostr; }
 
       void put(vvp_ipoint_t ipt, unsigned val);
-      void put_oval(unsigned val, bool push);
-      void put_ostr(unsigned val, unsigned str, bool push);
-      void schedule(unsigned delay);
+      void put_oval(unsigned val,
+		    bool push, bool nba_flag =false);
+      void put_ostr(unsigned val, unsigned str,
+		    bool push, bool nba_flag=false);
+	// Schedule the functor to propagate. If the nba_flag is true,
+	// then schedule this as a non-blocking
+	// assignment. (sequential primitives use this feature.)
+      void schedule(vvp_time64_t delay, bool nba_flag =false);
+
       bool disable(vvp_ipoint_t ptr);
       bool enable(vvp_ipoint_t ptr);
       void propagate(bool push);
@@ -214,7 +220,7 @@ inline void functor_s::propagate(bool push)
       propagate(get_oval(), get_ostr(), push);
 }
 
-inline void functor_s::put_oval(unsigned val, bool push)
+inline void functor_s::put_oval(unsigned val, bool push, bool nba_flag)
 {
       unsigned char str;
       switch (val) {
@@ -232,7 +238,7 @@ inline void functor_s::put_oval(unsigned val, bool push)
 	    break;
       }
 
-      put_ostr(val, str, push);
+      put_ostr(val, str, push, nba_flag);
 }
 
 /*
@@ -337,6 +343,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.51  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.50  2003/03/13 04:36:57  steve
  *  Remove the obsolete functor delete functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.31 2003/04/25 04:36:42 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.32 2003/09/09 00:56:45 steve Exp $"
 #endif
 
 /*
@@ -80,6 +80,7 @@ const struct __vpirt callback_rt = {
 
 struct sync_cb  : public vvp_gen_event_s {
       struct __vpiCallback*handle;
+      bool sync_flag;
 };
 
 
@@ -288,16 +289,16 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
       switch (obj->cb_time.type) {
 	  case vpiSuppressTime:
-	    schedule_generic(cb, 0, 0);
+	    schedule_generic(cb, 0, 0, readonly_flag);
 	    break;
 
 	  case vpiSimTime:
 	      { vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
 		vvp_time64_t tn = schedule_simtime();
 		if (tv < tn) {
-		      schedule_generic(cb, 0, 0);
+		      schedule_generic(cb, 0, 0, readonly_flag);
 		} else {
-		      schedule_generic(cb, 0, tv - tn);
+		      schedule_generic(cb, 0, tv - tn, readonly_flag);
 		}
 		break;
 	      }
@@ -328,7 +329,7 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data)
       switch (obj->cb_time.type) {
 	  case vpiSimTime: {
 		vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
-		schedule_generic(cb, 0, tv);
+		schedule_generic(cb, 0, tv, false);
 		break;
 	  }
 
@@ -563,6 +564,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.32  2003/09/09 00:56:45  steve
+ *  Reimpelement scheduler to divide nonblocking assign queue out.
+ *
  * Revision 1.31  2003/04/25 04:36:42  steve
  *  Properly skip cancelled callbacks.
  *
