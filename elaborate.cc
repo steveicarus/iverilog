@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.213 2001/04/29 20:19:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.214 2001/05/17 03:35:22 steve Exp $"
 #endif
 
 /*
@@ -102,6 +102,11 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	    NetNet*rid = id->elaborate_net(des, path, lval->pin_count(),
 					   0, 0, 0, Link::STRONG,
 					   Link::STRONG);
+	    if (rid == 0) {
+		  des->errors += 1;
+		  return;
+	    }
+
 	    assert(rid);
 
 
@@ -2315,6 +2320,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.214  2001/05/17 03:35:22  steve
+ *  do not assert if memory reference is invalid.
+ *
  * Revision 1.213  2001/04/29 20:19:10  steve
  *  Add pullup and pulldown devices.
  *
