@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.9 2002/04/20 04:33:23 steve Exp $"
+#ident "$Id: schedule.h,v 1.10 2002/05/12 23:44:41 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -29,8 +29,13 @@
  * This causes a thread to be scheduled for execution. The schedule
  * puts the event into the event queue after any existing events for a
  * given time step. The delay is a relative time.
+ *
+ * If the delay is zero, the push_flag can be used to force the event
+ * to the front of the queue. %fork uses this to get the thread
+ * execution ahead of non-blocking assignments.
  */
-extern void schedule_vthread(vthread_t thr, unsigned delay);
+extern void schedule_vthread(vthread_t thr, unsigned delay,
+			     bool push_flag =false);
 
 /*
  * Create an assignment event. The val passed here will be assigned to
@@ -88,6 +93,9 @@ extern bool schedule_finished(void);
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.10  2002/05/12 23:44:41  steve
+ *  task calls and forks push the thread event in the queue.
+ *
  * Revision 1.9  2002/04/20 04:33:23  steve
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.

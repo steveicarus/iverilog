@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.17 2002/05/04 03:03:17 steve Exp $"
+#ident "$Id: schedule.cc,v 1.18 2002/05/12 23:44:41 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -189,6 +189,23 @@ static void schedule_event_(struct event_s*cur)
 	    }
       }
 }
+static void schedule_event_push_(struct event_s*cur)
+{
+      assert(cur->delay == 0);
+      cur->last = cur;
+
+      if (sched_list == 0) {
+	    sched_list = cur;
+	    cur->next = 0;
+	    return;
+      }
+
+      if (sched_list->delay == 0)
+	    cur->last = sched_list->last;
+      cur->next = sched_list;
+      sched_list = cur;
+}
+
 
 /*
  * The synch_list is managed as a doubly-linked circular list. There is
@@ -227,7 +244,7 @@ static struct event_s* pull_sync_event(void)
       return cur;
 }
 
-void schedule_vthread(vthread_t thr, unsigned delay)
+void schedule_vthread(vthread_t thr, unsigned delay, bool push_flag)
 {
       struct event_s*cur = e_alloc();
 
@@ -236,7 +253,16 @@ void schedule_vthread(vthread_t thr, unsigned delay)
       cur->type = TYPE_THREAD;
       vthread_mark_scheduled(thr);
 
-      schedule_event_(cur);
+      if (push_flag && (delay == 0)) {
+	      /* Special case: If the delay is 0, the push_flag means
+		 I can push this event in front of everything. This is
+		 used by the %fork statement, for example, to perform
+		 task calls. */
+	    schedule_event_push_(cur);
+
+      } else {
+	    schedule_event_(cur);
+      }
 }
 
 void functor_s::schedule(unsigned delay)
@@ -372,6 +398,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.18  2002/05/12 23:44:41  steve
+ *  task calls and forks push the thread event in the queue.
+ *
  * Revision 1.17  2002/05/04 03:03:17  steve
  *  Add simulator event callbacks.
  *

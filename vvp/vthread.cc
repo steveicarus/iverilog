@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.69 2002/04/21 22:29:49 steve Exp $"
+#ident "$Id: vthread.cc,v 1.70 2002/05/12 23:44:41 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -641,7 +641,7 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 	    if (tmp->schedule_parent_on_end) {
 		    /* If a parent is waiting in a %join, wake it up. */
 		  assert(tmp->parent);
-		  schedule_vthread(tmp->parent, 0);
+		  schedule_vthread(tmp->parent, 0, true);
 		  vthread_reap(tmp);
 
 	    } else if (tmp->parent) {
@@ -980,7 +980,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	   %join for the parent. */
       if (thr->schedule_parent_on_end) {
 	    assert(thr->parent);
-	    schedule_vthread(thr->parent, 0);
+	    schedule_vthread(thr->parent, 0, true);
 	    vthread_reap(thr);
 	    return false;
       }
@@ -1021,7 +1021,7 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 	    assert(child->child->parent == thr);
 	    child->child->parent = child;
       }
-      schedule_vthread(child, 0);
+      schedule_vthread(child, 0, true);
       return true;
 }
 
@@ -1884,6 +1884,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.70  2002/05/12 23:44:41  steve
+ *  task calls and forks push the thread event in the queue.
+ *
  * Revision 1.69  2002/04/21 22:29:49  steve
  *  Add the assign/d instruction for computed delays.
  *
