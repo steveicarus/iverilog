@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.34 2003/03/13 04:34:18 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.35 2003/03/14 05:02:34 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -148,6 +148,42 @@ static int vpip_get_global(int property)
       }
 }
 
+static const char* vpi_property_str(PLI_INT32 code)
+{
+      static char buf[32];
+      switch (code) {
+	  case vpiConstType:
+	    return "vpiConstType";
+	  case vpiName:
+	    return "vpiName";
+	  case vpiFullName:
+	    return "vpiFullName";
+	  case vpiTimeUnit:
+	    return "vpiTimeUnit";
+	  default:
+	    sprintf(buf, "%d", code);
+      }
+      return buf;
+}
+
+static const char* vpi_type_values(PLI_INT32 code)
+{
+      static char buf[32];
+      switch (code) {
+	  case vpiConstant:
+	    return "vpiConstant";
+	  case vpiModule:
+	    return "vpiModule";
+	  case vpiNet:
+	    return "vpiNet";
+	  case vpiReg:
+	    return "vpiReg";
+	  default:
+	    sprintf(buf, "%d", code);
+      }
+      return buf;
+}
+
 int vpi_get(int property, vpiHandle ref)
 {
       if (ref == 0)
@@ -155,8 +191,8 @@ int vpi_get(int property, vpiHandle ref)
 
       if (property == vpiType) {
 	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %d\n",
-			  ref, ref->vpi_type->type_code);
+		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %s\n",
+			  ref, vpi_type_values(ref->vpi_type->type_code));
 		  fflush(vpi_trace);
 	    }
 
@@ -167,14 +203,21 @@ int vpi_get(int property, vpiHandle ref)
 		  return ref->vpi_type->type_code;
       }
 
-      if (ref->vpi_type->vpi_get_ == 0)
+      if (ref->vpi_type->vpi_get_ == 0) {
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_get(%s, %p) --X\n",
+			  vpi_property_str(property), ref);
+		  fflush(vpi_trace);
+	    }
+
 	    return vpiUndefined;
+      }
 
       int res = (ref->vpi_type->vpi_get_)(property, ref);
 
       if (vpi_trace) {
-	    fprintf(vpi_trace, "vpi_get(%d, %p) --> %d\n",
-		    property, ref, res);
+	    fprintf(vpi_trace, "vpi_get(%s, %p) --> %d\n",
+		    vpi_property_str(property), ref, res);
 	    fflush(vpi_trace);
       }
 
@@ -184,16 +227,16 @@ int vpi_get(int property, vpiHandle ref)
 char* vpi_get_str(int property, vpiHandle ref)
 {
       if (ref == 0) {
-	    fprintf(stderr, "vpi error: vpi_get_str(%d, 0) called "
-		    "with null vpiHandle.\n", property);
+	    fprintf(stderr, "vpi error: vpi_get_str(%s, 0) called "
+		    "with null vpiHandle.\n", vpi_property_str(property));
 	    return 0;
       }
 
       assert(ref);
       if (ref->vpi_type->vpi_get_str_ == 0) {
 	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_get_str(%d, %p) --X\n",
-			  property, ref);
+		  fprintf(vpi_trace, "vpi_get_str(%s, %p) --X\n",
+			  vpi_property_str(property), ref);
 		  fflush(vpi_trace);
 	    }
 	    return 0;
@@ -202,8 +245,8 @@ char* vpi_get_str(int property, vpiHandle ref)
       char*res = (char*)(ref->vpi_type->vpi_get_str_)(property, ref);
 
       if (vpi_trace) {
-	    fprintf(vpi_trace, "vpi_get_str(%d, %p) --> %s\n",
-		    property, ref, res);
+	    fprintf(vpi_trace, "vpi_get_str(%s, %p) --> %s\n",
+		    vpi_property_str(property), ref, res);
 	    fflush(vpi_trace);
       }
 
@@ -302,13 +345,29 @@ vpiHandle vpi_handle(int type, vpiHandle ref)
 {
       if (type == vpiSysTfCall) {
 	    assert(ref == 0);
+
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
+			  "-> %p (%s)\n", &vpip_cur_task->base,
+			  vpip_cur_task->defn->info.tfname);
+		  fflush(vpi_trace);
+	    }
+
 	    return &vpip_cur_task->base;
       }
 
       assert(ref);
 
-      if (ref->vpi_type->handle_ == 0)
+      if (ref->vpi_type->handle_ == 0) {
+
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_handle(%d, %p) -X\n",
+			  type, ref);
+		  fflush(vpi_trace);
+	    }
+
 	    return 0;
+      }
 
       assert(ref->vpi_type->handle_);
       vpiHandle res = (ref->vpi_type->handle_)(type, ref);
@@ -350,10 +409,26 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
       if (ref == 0)
 	    return vpi_iterate_global(type);
 
-      if (ref->vpi_type->iterate_)
+      if (ref->vpi_type->iterate_) {
+
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_iterate(%d, %p) ->\n",
+			  type, ref);
+		  fflush(vpi_trace);
+	    }
+
 	  return (ref->vpi_type->iterate_)(type, ref);
-      else
+
+      } else {
+
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_iterate(%d, %p) -X\n",
+			  type, ref);
+		  fflush(vpi_trace);
+	    }
+
 	  return 0;
+      }
 }
 
 vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
@@ -515,6 +590,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.35  2003/03/14 05:02:34  steve
+ *  More detail in vpi tracing.
+ *
  * Revision 1.34  2003/03/13 04:34:18  steve
  *  Add VPI_TRACE tracing of VPI calls.
  *  vpi_handle_by_name takes a const char*.
