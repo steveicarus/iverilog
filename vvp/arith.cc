@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.14 2001/10/16 02:47:37 steve Exp $"
+#ident "$Id: arith.cc,v 1.15 2001/10/16 03:06:18 steve Exp $"
 #endif
 
 # include  "arith.h"
 # include  "schedule.h"
 # include  <limits.h>
+# include  <stdio.h>
 # include  <assert.h>
 
 
@@ -76,6 +77,11 @@ void vvp_arith_div::set(vvp_ipoint_t i, functor_t f, bool push)
 
 	    }
 
+	    if (b == 0) {
+		  output_x_(push);
+		  return;
+	    }
+
 	    unsigned long sum = a / b;
 
 	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
@@ -117,6 +123,7 @@ if(wid_ <= 8*sizeof(unsigned long)) {
 
 	    unsigned ival = obj->ival;
 	    if (ival & 0xaa) {
+		  fprintf(stderr, "Division by 0 error: returning X value\n");
 		  output_x_(push);
 		  return;
 	    }
@@ -626,6 +633,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.15  2001/10/16 03:06:18  steve
+ *  Catch division by zero in .arith/div.
+ *
  * Revision 1.14  2001/10/16 02:47:37  steve
  *  Add arith/div object.
  *
