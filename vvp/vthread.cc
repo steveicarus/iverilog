@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.88 2002/09/21 04:55:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.89 2002/09/21 23:47:30 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -258,8 +258,6 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
  */
 static void vthread_reap(vthread_t thr)
 {
-      assert(thr->wait_next == 0);
-
       free(thr->bits);
       thr->bits = 0;
 
@@ -285,6 +283,7 @@ static void vthread_reap(vthread_t thr)
 	   execute the thread at of_ZOMBIE) delete the object. */
       if ((thr->is_scheduled == 0) && (thr->waiting_for_event == 0)) {
 	    assert(thr->fork_count == 0);
+	    assert(thr->wait_next == 0);
 	    delete thr;
       }
 }
@@ -795,7 +794,6 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	      /* If a parent is waiting in a %join, wake it up. */
 	    assert(thr->parent);
 	    assert(thr->parent->fork_count > 0);
-	    assert(thr->waiting_for_event == 0);
 
 	    thr->parent->fork_count -= 1;
 	    schedule_vthread(thr->parent, 0, true);
@@ -2424,6 +2422,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.89  2002/09/21 23:47:30  steve
+ *  Remove some now useless asserts.
+ *
  * Revision 1.88  2002/09/21 04:55:00  steve
  *  Fix disable in arbitrary fork/join situations.
  *
