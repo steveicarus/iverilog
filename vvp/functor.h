@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.45 2002/03/17 03:23:10 steve Exp $"
+#ident "$Id: functor.h,v 1.46 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -328,6 +328,14 @@ unsigned functor_get(vvp_ipoint_t ptr)
 
 //          Special infrastructure functor types
 
+/*
+ * A "waitable" functor is one that the %wait instruction can wait
+ * on. This includes the infrastructure needed to hold threads.
+ */
+struct waitable_hooks_s {
+      vthread_t threads;
+};
+
 
 // The extra_outputs_functor_s class is for devices that require 
 // multiple inputs and outputs.
@@ -386,6 +394,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.46  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.45  2002/03/17 03:23:10  steve
  *  Force the push flags to be explicit.
  *

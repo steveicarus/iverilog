@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.16 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.17 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 /*
@@ -78,26 +78,12 @@ const struct __vpirt callback_rt = {
  * event. This member is only used for things like cbReadOnlySync.
  */
 
-struct __vpiCallback {
-      struct __vpiHandle base;
-
-	// user supplied callback data
-      struct t_cb_data cb_data;
-      struct t_vpi_time cb_time;
-
-	// scheduled event
-      struct sync_cb* cb_sync;
-
-	// Used for listing callbacks.
-      struct __vpiCallback*next;
-};
-
 struct sync_cb  : public vvp_gen_event_s {
       struct __vpiCallback*handle;
 };
 
 
-inline static struct __vpiCallback* new_vpi_callback()
+struct __vpiCallback* new_vpi_callback()
 {
       struct __vpiCallback* obj;
 
@@ -209,21 +195,39 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 
       assert(data->obj);
       assert(data->obj->vpi_type);
-      assert((data->obj->vpi_type->type_code == vpiReg)
-	     || (data->obj->vpi_type->type_code == vpiNet));
-      struct __vpiSignal*sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-	/* Create callback functors, if necessary, to do the value
-	   change detection and carry the callback objects. */
-      if (sig->callback == 0) {
-	    sig->callback = vvp_fvector_make_callback(sig->bits);
-	    assert(sig->callback);
+      switch (data->obj->vpi_type->type_code) {
+
+	  case vpiReg:
+	  case vpiNet:
+	    struct __vpiSignal*sig;
+	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
+
+	      /* Create callback functors, if necessary, to do the
+		 value change detection and carry the callback
+		 objects. */
+	    if (sig->callback == 0) {
+		  sig->callback = vvp_fvector_make_callback(sig->bits);
+		  assert(sig->callback);
+	    }
+
+	      /* Attach the __vpiCallback object to the signals
+		 callback functors. */
+	    obj->next = sig->callback->cb_handle;
+	    sig->callback->cb_handle = obj;
+	    break;
+
+	  case vpiNamedEvent:
+	    struct __vpiNamedEvent*nev;
+	    nev = reinterpret_cast<__vpiNamedEvent*>(data->obj);
+	    obj->next = nev->callbacks;
+	    nev->callbacks = obj;
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
       }
-
-	/* Attach the __vpiCallback object to the signals callback
-	   functors. */
-      obj->next = sig->callback->cb_handle;
-      sig->callback->cb_handle = obj;
 
       return obj;
 }
@@ -410,6 +414,18 @@ int vpi_remove_cb(vpiHandle ref)
       return 0;
 }
 
+void callback_execute(struct __vpiCallback*cur)
+{
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_RWSYNC;
+
+      cur->cb_data.time->type = vpiSimTime;
+      vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
+      (cur->cb_data.cb_rtn)(&cur->cb_data);
+
+      vpi_mode_flag = VPI_MODE_NONE;
+}
+
 /*
  * A callback_functor_s functor uses its set method to detect value
  * changes. When a value comes in, the __vpiCallback objects that are
@@ -435,14 +451,7 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 		  }
 	    }
 
-	    assert(vpi_mode_flag == VPI_MODE_NONE);
-	    vpi_mode_flag = VPI_MODE_RWSYNC;
-
-	    cur->cb_data.time->type = vpiSimTime;
-	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
-	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-
-	    vpi_mode_flag = VPI_MODE_NONE;
+	    callback_execute(cur);
       }
 }
 
@@ -450,6 +459,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.17  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.16  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.h,v 1.1 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: event.h,v 1.2 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -28,13 +28,12 @@
  *  Event / edge detection functors
  */
 
-struct event_functor_s: public edge_inputs_functor_s {
+struct event_functor_s: public edge_inputs_functor_s, public waitable_hooks_s {
       typedef unsigned short edge_t;
       explicit event_functor_s(edge_t e);
       virtual ~event_functor_s();
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
       edge_t edge;
-      vthread_t threads;
 };
 
 #define VVP_EDGE(a,b) (1<<(((a)<<2)|(b)))
@@ -59,6 +58,20 @@ const event_functor_s::edge_t vvp_edge_anyedge = 0x7bde;
 const event_functor_s::edge_t vvp_edge_none = 0;
 
 /*
+ * This is a functor to represent named events. This functor has no
+ * inputs, and no output. It is a functor so that the %wait and %set
+ * instructions can get at it.
+ */
+struct named_event_functor_s  : public waitable_hooks_s, public functor_s {
+
+    public:
+      ~named_event_functor_s();
+      void set(vvp_ipoint_t ipt, bool push, unsigned val, unsigned str =0);
+
+      struct __vpiHandle* handle;
+};
+
+/*
  * Callback functors.
  */
 struct callback_functor_s *vvp_fvector_make_callback
@@ -66,6 +79,9 @@ struct callback_functor_s *vvp_fvector_make_callback
 
 /*
  * $Log: event.h,v $
+ * Revision 1.2  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.1  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *

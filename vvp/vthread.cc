@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.70 2002/05/12 23:44:41 steve Exp $"
+#ident "$Id: vthread.cc,v 1.71 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1760,7 +1760,7 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
-      vvp_event_t ep = dynamic_cast<vvp_event_t>(functor_index(cp->iptr));
+      waitable_hooks_s* ep = dynamic_cast<waitable_hooks_s*>(functor_index(cp->iptr));
       assert(ep);
       thr->wait_next = ep->threads;
       ep->threads = thr;
@@ -1884,6 +1884,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.71  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.70  2002/05/12 23:44:41  steve
  *  task calls and forks push the thread event in the queue.
  *

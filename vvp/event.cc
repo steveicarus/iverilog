@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.6 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: event.cc,v 1.7 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 # include  "event.h"
 # include  "compile.h"
 # include  "vthread.h"
 # include  "schedule.h"
+# include  "vpi_priv.h"
 
 # include  <string.h>
 # include  <assert.h>
@@ -33,8 +34,10 @@
 #endif
 
 event_functor_s::event_functor_s(edge_t e) 
-      : edge(e), threads(0) 
-{}
+: edge(e)
+{
+      threads = 0;
+}
 
 event_functor_s::~event_functor_s() 
 {}
@@ -85,6 +88,24 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 		    //schedule_assign(out, 0, 0);
 	    }
       }
+}
+
+named_event_functor_s::~named_event_functor_s()
+{
+}
+
+void named_event_functor_s::set(vvp_ipoint_t ptr, bool push,
+				unsigned val, unsigned str)
+{
+      put(ptr, val);
+
+      if (threads) {
+	    vthread_t tmp = threads;
+	    threads = 0;
+	    vthread_schedule_list(tmp);
+      }
+
+      vpip_run_named_event_callbacks(handle);
 }
 
 /*
@@ -148,20 +169,23 @@ void compile_event(char*label, char*type,
  */
 void compile_named_event(char*label, char*name)
 {
-      functor_t obj = new event_functor_s(vvp_edge_none);
+      named_event_functor_s* obj = new named_event_functor_s;
 
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_define(fdx, obj);
       define_functor_symbol(label, fdx);
 
-      vpiHandle vpi = vpip_make_named_event(name);
-      vpip_attach_to_current_scope(vpi);
+      obj->handle = vpip_make_named_event(name);
+      vpip_attach_to_current_scope(obj->handle);
 
       free(label);
 }
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.7  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.6  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

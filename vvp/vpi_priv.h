@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.35 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.36 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -108,6 +108,27 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 				    bool free_args_flag);
 
 /*
+ * This represents callback handles. There are some privat types that
+ * are defined and used in vpi_callback.cc.
+ */
+struct __vpiCallback {
+      struct __vpiHandle base;
+
+	// user supplied callback data
+      struct t_cb_data cb_data;
+      struct t_vpi_time cb_time;
+
+	// scheduled event
+      struct sync_cb* cb_sync;
+
+	// Used for listing callbacks.
+      struct __vpiCallback*next;
+};
+
+extern struct __vpiCallback* new_vpi_callback();
+extern void callback_execute(struct __vpiCallback*cur);
+
+/*
  * Scopes are created by .scope statements in the source.
  */
 struct __vpiScope {
@@ -155,7 +176,18 @@ extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
  * passed in will be saved, so the caller must allocate it (or not
  * free it) after it is handed to this function.
  */
+struct __vpiNamedEvent {
+      struct __vpiHandle base;
+	/* base name of the event object */
+      char*name;
+	/* Parent scope of this object. */
+      struct __vpiScope*scope;
+	/* List of callbacks interested in this event. */
+      struct __vpiCallback*callbacks;
+};
+
 extern vpiHandle vpip_make_named_event(char*name);
+extern void vpip_run_named_event_callbacks(vpiHandle ref);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -326,6 +358,9 @@ extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.36  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.35  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

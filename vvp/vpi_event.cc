@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_event.cc,v 1.1 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.2 2002/05/19 05:18:16 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,27 +30,59 @@
 # include  <string.h>
 # include  <assert.h>
 
-struct __vpiNamedEvent {
-      struct __vpiHandle base;
-	/* base name of the event object */
-      char*name;
-	/* Parent scope of this object. */
-      struct __vpiScope*scope;
-};
+static char* named_event_str(int code, vpiHandle ref)
+{
+      assert((ref->vpi_type->type_code==vpiNamedEvent));
+
+      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
+
+      switch (code) {
+
+	  case vpiName:
+	    return obj->name;
+
+      }
+
+      return 0;
+}
+
+static vpiHandle named_event_get_handle(int code, vpiHandle ref)
+{
+      assert((ref->vpi_type->type_code==vpiNamedEvent));
+
+      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
+
+      switch (code) {
+
+	  case vpiScope:
+	    return &obj->scope->base;
+      }
+
+      return 0;
+}
+
+/*
+ * We keep the object around, in case we need it again. It's all we
+ * can do, because it cannot be recreated.
+ */
+static int named_event_free_object(vpiHandle)
+{
+      return 0;
+}
 
 static const struct __vpirt vpip_named_event_rt = {
       vpiNamedEvent,
 
       0,
-      0,
-      0,
-      0,
-
-      0,
+      named_event_str,
       0,
       0,
 
-      0
+      named_event_get_handle,
+      0,
+      0,
+
+      named_event_free_object
 };
 
 vpiHandle vpip_make_named_event(char*name)
@@ -61,12 +93,30 @@ vpiHandle vpip_make_named_event(char*name)
       obj->base.vpi_type = &vpip_named_event_rt;
       obj->name = name;
       obj->scope = vpip_peek_current_scope();
+      obj->callbacks = 0;
 
       return &obj->base;
 }
 
+void vpip_run_named_event_callbacks(vpiHandle ref)
+{
+      assert((ref->vpi_type->type_code==vpiNamedEvent));
+
+      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
+
+      struct __vpiCallback*cur = obj->callbacks;
+      while (cur) {
+	    struct __vpiCallback*next = cur->next;
+	    callback_execute(cur);
+	    cur = next;
+      }
+}
+
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.2  2002/05/19 05:18:16  steve
+ *  Add callbacks for vpiNamedEvent objects.
+ *
  * Revision 1.1  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *
