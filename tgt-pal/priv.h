@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: priv.h,v 1.3 2000/12/14 23:37:47 steve Exp $"
+#ident "$Id: priv.h,v 1.4 2001/01/09 03:10:48 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
 # include  <ipal.h>
+
 
 extern pal_t pal;
 
@@ -46,24 +47,49 @@ typedef struct term_s {
       ivl_nexus_t nex;
 } term_t;
 
+/*
+ * This structure describes a target device pin. If the pin is not
+ * controlled by the pal (i.e. it is a power pin) then the sop field
+ * is null. Otherwise, the sop in the macrocell that controls the pin.
+ *
+ * If the pin has an enable, then the sop for the enable function is
+ * stored here as well.
+ *
+ * This structure for collecting the PAL design assumes that all the
+ * macrocells are associated with pins, or are enables for other
+ * pins.
+ *
+ * The bind_pin array is the complete description of the target as it
+ * is accumulated.
+ */
 struct pal_bind_s {
 	/* This is the netlist connection for the pin. */
       ivl_nexus_t nexus;
 	/* If the pin is an output, this is is sop that drives it. */
       pal_sop_t sop;
-	/* If the output has an enable, this is it. */
+
+	/* If the output has an enable, this is it, along with the
+	   single term that activates it. */
       ivl_net_logic_t enable;
       term_t **enable_ex;
+
 	/* If there is a register here, this is it. */
       ivl_lpm_ff_t reg;
       unsigned reg_q;
+
 	/* The input to the cell is this expression. */
       term_t **sop_ex;
+	/* These are the SOP flags that I believe I need. */
+      unsigned sop_inv  : 1;
 };
 
 extern unsigned pins;
 extern struct pal_bind_s* bind_pin;
 
+
+/*
+ * These are various stepps in the fitting process.
+ */
 extern int get_pad_bindings(ivl_scope_t net);
 
 extern void absorb_pad_enables(void);
@@ -72,8 +98,13 @@ extern int fit_registers(ivl_scope_t scope);
 
 extern int fit_logic(void);
 
+extern int emit_jedec(const char*path);
+
 /*
  * $Log: priv.h,v $
+ * Revision 1.4  2001/01/09 03:10:48  steve
+ *  Generate the jedec to configure the macrocells.
+ *
  * Revision 1.3  2000/12/14 23:37:47  steve
  *  Start support for fitting the logic.
  *

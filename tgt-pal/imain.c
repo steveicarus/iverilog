@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.4 2000/12/14 23:37:47 steve Exp $"
+#ident "$Id: imain.c,v 1.5 2001/01/09 03:10:48 steve Exp $"
 #endif
 
 /*
@@ -67,7 +67,7 @@ int target_design(ivl_design_t des)
 	   key. Given the part type, try to open the pal description
 	   so that we can figure out the device. */
       part = ivl_design_flag(des, "part");
-      if (part == 0) {
+      if ((part == 0) || (*part == 0)) {
 	    fprintf(stderr, "error: part must be specified. Specify a\n");
 	    fprintf(stderr, "     : type with the -fpart=<type> option.\n");
 	    return -1;
@@ -89,7 +89,8 @@ int target_design(ivl_design_t des)
       assert(bind_pin);
 
 	/* Connect all the macrocells that drive pins to the pin that
-	   they drive. */
+	   they drive. This doesn't yet look at the design, but is
+	   initializing the bind_pin array with part information. */
       for (idx = 0 ;  idx < pal_sops(pal) ;  idx += 1) {
 	    pal_sop_t sop = pal_sop(pal, idx);
 	    int spin = pal_sop_pin(sop);
@@ -136,6 +137,7 @@ int target_design(ivl_design_t des)
       }
 
       dump_final_design(stdout);
+      emit_jedec(ivl_design_flag(des, "-o"));
 
       pal_free(pal);
       return 0;
@@ -148,6 +150,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.5  2001/01/09 03:10:48  steve
+ *  Generate the jedec to configure the macrocells.
+ *
  * Revision 1.4  2000/12/14 23:37:47  steve
  *  Start support for fitting the logic.
  *
