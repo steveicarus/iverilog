@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: mangle.cc,v 1.4 2000/10/25 23:21:37 steve Exp $"
+#ident "$Id: mangle.cc,v 1.5 2000/12/11 01:06:24 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -32,7 +32,7 @@ string mangle(const string&str)
       string tmp = str;
 
       while (tmp.length() > 0) {
-	    size_t pos = tmp.find_first_of(".<\\");
+	    size_t pos = tmp.find_first_of(".<\\[]");
 	    if (pos > tmp.length())
 		  pos = tmp.length();
 
@@ -56,7 +56,15 @@ string mangle(const string&str)
 		  res << "_";
 		  break;
 		case '\\':
-		  res << "$";
+		  res << "$$";
+		  tmp = tmp.substr(1);
+		  break;
+		case '[':
+		  res << "$lb$";
+		  tmp = tmp.substr(1);
+		  break;
+		case ']':
+		  res << "$rb$";
 		  tmp = tmp.substr(1);
 		  break;
 	    }
@@ -67,6 +75,9 @@ string mangle(const string&str)
 
 /*
  * $Log: mangle.cc,v $
+ * Revision 1.5  2000/12/11 01:06:24  steve
+ *  Mangle [] characters. (PR#67)
+ *
  * Revision 1.4  2000/10/25 23:21:37  steve
  *  mangle the backslash to a dollar.
  *
