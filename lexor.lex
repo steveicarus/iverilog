@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.28 1999/07/03 21:27:22 steve Exp $"
+#ident "$Id: lexor.lex,v 1.29 1999/07/07 00:24:42 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -153,23 +153,23 @@ static int comment_enter;
 [0-9][0-9_]*[ \t]*\'d[ \t]*[0-9][0-9_]* {
       yylval.number = make_sized_dec(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[bB][ \t]*[0-1xz_]+ {
+[0-9][0-9_]*[ \t]*\'[bB][ \t]*[0-1xzXZ_]+ {
       yylval.number = make_sized_binary(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[oO][ \t]*[0-7xz_]+ {
+[0-9][0-9_]*[ \t]*\'[oO][ \t]*[0-7xzXZ_]+ {
       yylval.number = make_sized_octal(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[hH][ \t]*[0-9a-fA-Fxz_]+ {
+[0-9][0-9_]*[ \t]*\'[hH][ \t]*[0-9a-fA-FxzXZ_]+ {
       yylval.number = make_sized_hex(yytext);
       return NUMBER; }
 
 \'d[ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
                          return NUMBER; }
-\'[bB][ \t]*[0-1xz_]+ { yylval.number = make_unsized_binary(yytext);
+\'[bB][ \t]*[0-1xzXZ_]+ { yylval.number = make_unsized_binary(yytext);
                         return NUMBER; }
-\'[oO][ \t]*[0-7xz_]+ { yylval.number = make_unsized_octal(yytext);
+\'[oO][ \t]*[0-7xzXZ_]+ { yylval.number = make_unsized_octal(yytext);
                         return NUMBER; }
-\'[hH][ \t]*[0-9a-fA-Fxz_]+ { yylval.number = make_unsized_hex(yytext);
+\'[hH][ \t]*[0-9a-fA-FxzXZ_]+ { yylval.number = make_unsized_hex(yytext);
                               return NUMBER; }
 
 [0-9][0-9_]*		 {
@@ -373,10 +373,10 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 		case '1':
 		  bits[idx++] = verinum::V1;
 		  break;
-		case 'z':
+		case 'z': case 'Z':
 		  bits[idx++] = verinum::Vz;
 		  break;
-		case 'x':
+		case 'x': case 'X':
 		  bits[idx++] = verinum::Vx;
 		  break;
 		default:
@@ -393,10 +393,10 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 		case '1':
 		  bits[idx++] = verinum::V0;
 		  break;
-		case 'z':
+		case 'z': case 'Z':
 		  bits[idx++] = verinum::Vz;
 		  break;
-		case 'x':
+		case 'x': case 'X':
 		  bits[idx++] = verinum::Vx;
 		  break;
 		default:
@@ -426,7 +426,7 @@ static verinum*make_unsized_binary(const char*txt)
       assert(*ptr == '\'');
       ptr += 1;
       assert(tolower(*ptr) == 'b');
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
+      while (*ptr && ((*ptr == 'b') || (*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
       unsigned size = 0;
@@ -453,6 +453,7 @@ static verinum*make_unsized_binary(const char*txt)
 		  case '_':
 		  break;
 		default:
+		  fprintf(stderr, "%c\n", ptr[0]);
 		  assert(0);
 	    }
 	    ptr += 1;
@@ -481,12 +482,12 @@ static verinum*make_sized_octal(const char*txt)
 
       while ((eptr > ptr) && (idx < (size-3))) {
 	    switch (*eptr) {
-		case 'x':
+		case 'x': case 'X':
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  break;
-		case 'z':
+		case 'z': case 'Z':
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
@@ -504,10 +505,10 @@ static verinum*make_sized_octal(const char*txt)
 
 	// zero extend octal numbers
       while (idx < size) switch (ptr[1]) {
-	  case 'x':
+	  case 'x': case 'X':
 	    bits[idx++] = verinum::Vx;
 	    break;
-	  case 'z':
+	  case 'z': case 'Z':
 	    bits[idx++] = verinum::Vz;
 	    break;
 	  default:
@@ -545,12 +546,12 @@ static verinum*make_unsized_octal(const char*txt)
 		  bits[--idx] = (val&2) ? verinum::V1 : verinum::V0;
 		  bits[--idx] = (val&1) ? verinum::V1 : verinum::V0;
 		  break;
-		case 'x':
+		case 'x': case 'X':
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  break;
-		case 'z':
+		case 'z': case 'Z':
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
@@ -589,13 +590,13 @@ static verinum*make_sized_hex(const char*txt)
 
       while ((eptr >= ptr) && (idx <= (size-4))) {
 	    switch (*eptr) {
-		case 'x':
+		case 'x': case 'X':
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  break;
-		case 'z':
+		case 'z': case 'Z':
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
@@ -632,10 +633,10 @@ static verinum*make_sized_hex(const char*txt)
 
 	// zero extend octal numbers
       while (idx < size) switch (ptr[1]) {
-	  case 'x':
+	  case 'x': case 'X':
 	    bits[idx++] = verinum::Vx;
 	    break;
-	  case 'z':
+	  case 'z': case 'Z':
 	    bits[idx++] = verinum::Vz;
 	    break;
 	  default:
@@ -682,13 +683,13 @@ static verinum*make_unsized_hex(const char*txt)
 		  bits[--idx] = (val&2) ? verinum::V1 : verinum::V0;
 		  bits[--idx] = (val&1) ? verinum::V1 : verinum::V0;
 		  break;
-		case 'x':
+		case 'x': case 'X':
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  break;
-		case 'z':
+		case 'z': case 'Z':
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
