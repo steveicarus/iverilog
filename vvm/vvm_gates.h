@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.66 2000/11/04 06:36:24 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.67 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -32,6 +32,8 @@ extern vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_or(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count);
+
+extern vpip_bit_t reduce_strength(vpip_bit_t);
 
 extern void compute_mux(vpip_bit_t*out, unsigned wid,
 			const vpip_bit_t*sel, unsigned swid,
@@ -641,6 +643,34 @@ class vvm_bufif1  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       void take_value(unsigned key, vpip_bit_t val);
 };
 
+class vvm_notif0  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_notif0(unsigned long d);
+      ~vvm_notif0();
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
+class vvm_notif1  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_notif1(unsigned long d);
+      ~vvm_notif1();
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
 template <unsigned WIDTH> 
 class vvm_nand : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
@@ -679,6 +709,58 @@ class vvm_not  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       void init_I(unsigned, vpip_bit_t);
       void start();
     private:
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
+class vvm_nmos  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_nmos(unsigned long d);
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
+class vvm_rnmos  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_rnmos(unsigned long d);
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
+class vvm_pmos  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_pmos(unsigned long d);
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
+      void take_value(unsigned key, vpip_bit_t val);
+};
+
+class vvm_rpmos  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_rpmos(unsigned long d);
+
+      void init_I(unsigned, vpip_bit_t);
+      void start() { }
+
+    private:
+      vpip_bit_t input_[2];
       void take_value(unsigned key, vpip_bit_t val);
 };
 
@@ -924,6 +1006,13 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.67  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.66  2000/11/04 06:36:24  steve
  *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
  *

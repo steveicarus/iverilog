@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.27 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.28 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -165,11 +165,15 @@ typedef enum ivl_logic_e {
       IVL_LO_BUFIF1,
       IVL_LO_BUFZ,
       IVL_LO_NAND,
+      IVL_LO_NMOS,
       IVL_LO_NOR,
       IVL_LO_NOT,
       IVL_LO_NOTIF0,
       IVL_LO_NOTIF1,
       IVL_LO_OR,
+      IVL_LO_RNMOS,
+      IVL_LO_RPMOS,
+      IVL_LO_PMOS,
       IVL_LO_XNOR,
       IVL_LO_XOR
 } ivl_logic_t;
@@ -594,6 +598,13 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.28  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.27  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *

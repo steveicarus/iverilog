@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.29 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.30 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 /*
@@ -70,22 +70,37 @@ struct __vpirt;
  */
 typedef unsigned char vpip_bit_t;
 
-# define Su1 0xff
-# define St1 0xee
-# define Pu1 0xdd
-# define La1 0xcc
-# define We1 0xbb
-# define Me1 0xaa
-# define Sm1 0x99
-# define Su0 0x77
-# define St0 0x66
-# define Pu0 0x55
-# define La0 0x44
-# define We0 0x33
-# define Me0 0x22
-# define Sm0 0x11
-# define StX 0xe6
-# define HiZ 0x08
+# define Su1 0xff          //supply1
+# define St1 0xee          //strong1
+# define Pu1 0xdd          //pull1
+# define La1 0xcc          //large1
+# define We1 0xbb          //weak1
+# define Me1 0xaa          //medium1
+# define Sm1 0x99          //samll1
+
+# define Su0 0x77          //supply0
+# define St0 0x66          //strong0
+# define Pu0 0x55          //pull0
+# define La0 0x44          //large0
+# define We0 0x33          //weak0
+# define Me0 0x22          //medium0
+# define Sm0 0x11          //small0
+
+# define SuX 0xf7          //supplyx
+# define StX 0xe6          //strongx
+# define PuX 0xd5          //pullx
+# define LaX 0xc4          //largex
+# define WeX 0xb3          //weakx
+# define MeX 0xa2          //mediumx
+# define SmX 0x91          //smallx
+
+# define HiZ  0x08         //highz
+# define HiZ0 0x08         //highz
+# define HiZ1 0x08         //highz
+
+# define StH 0xe8          //strong 1 highz
+# define StL 0x06          //highz  strong0
+
 
 	/* Compare the logic values of two vpip_bit_t variables. This
 	   is like the === operator of Verilog, it ignored strengths. */
@@ -392,6 +407,13 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.30  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.29  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

@@ -17,10 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.18 2000/07/11 23:08:33 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.19 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
+# include  <stdlib.h>
+# include  <typeinfo>
+# include  <string>
+# include  <map>
+# include  <sys/time.h>
+# include  <unistd.h>
 
 vvm_out_event::vvm_out_event(vpip_bit_t v, vvm_nexus::drive_t*o)
 : output_(o), val_(v)
@@ -68,15 +74,6 @@ void vvm_1bit_out::driveZ(vpip_bit_t v)
 
 void vvm_1bit_out::output(vpip_bit_t val)
 {
-      if (B_IS0(val))
-	    val = drive0_;
-      else if (B_IS1(val))
-	    val = drive1_;
-      else if (B_ISZ(val))
-	    val = driveZ_;
-      else
-	    val = driveX_;
-
       if (delay_) {
 	    vvm_event*ev = new vvm_out_event(val, this);
 	    ev -> schedule(delay_);
@@ -126,6 +123,55 @@ vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count)
 vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count)
 {
       return B_NOT(compute_xor(inp,count));
+}
+
+vpip_bit_t reduce_strength(vpip_bit_t val)
+{
+    if (B_IS0(val)) {
+
+	if ((val == Su0) ||
+	    (val == St0))
+	    return(Pu0);
+	else if (val == Pu0)
+	    return(We0);
+	else if ((val == We0) ||
+		 (val == La0))
+	    return(Me0);
+	else if ((val == Me0) ||
+		 (val == Sm0))
+	    return(Sm0);
+
+    } else if (B_IS1(val)) {
+
+	if ((val == Su1) ||
+	    (val == St1))
+	    return(Pu1);
+	else if (val == Pu1)
+	    return(We1);
+	else if ((val == We1) ||
+	     (val == La1))
+	    return(Me1);
+	else if ((val == Me1) ||
+		 (val == Sm1))
+	    return(Sm1);
+
+    } else if (B_ISX(val)) {
+
+	if ((val == SuX) ||
+	    (val == StX))
+	    return(PuX);
+	else if (val == PuX)
+	    return(WeX);
+	else if ((val == WeX) ||
+		 (val == LaX))
+	    return(MeX);
+	else if ((val == MeX) ||
+		 (val == SmX))
+	    return(SmX);
+
+    }
+
+    return(HiZ);
 }
 
 vvm_and2::vvm_and2(unsigned long d)
@@ -205,14 +251,24 @@ void vvm_bufif0::take_value(unsigned key, vpip_bit_t val)
       if (input_[key] == val) return;
       input_[key] = val;
 
-      if (! B_IS0(input_[1]))
+      if ( B_IS1(input_[1]))
 	    output(HiZ);
-      else if (B_ISXZ(input_[0]))
+      else if ( B_ISX(input_[0]) ||
+		B_ISZ(input_[0]))
 	    output(StX);
-      else if (B_IS1(input_[0]))
-	    output(St1);
-      else
-	    output(St0);
+      else if (B_IS0(input_[0])) {
+	    if (B_IS0(input_[1])) {
+	       output(St0);
+	    } else {
+	       output(StL);
+	    }
+      } else {
+	  if (B_IS0(input_[1])) {
+		output(St1);
+	    } else {
+		output(StH);
+	    }
+      }
 }
 
 vvm_bufif1::vvm_bufif1(unsigned long d)
@@ -237,14 +293,24 @@ void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
       if (input_[key] == val) return;
       input_[key] = val;
 
-      if (! B_IS1(input_[1]))
+      if ( B_IS0(input_[1]))
 	    output(HiZ);
-      else if (B_ISXZ(input_[0]))
+      else if ( B_ISX(input_[0]) ||
+		B_ISZ(input_[0]))
 	    output(StX);
-      else if (B_IS1(input_[0]))
-	    output(St1);
-      else
-	    output(St0);
+      else if (B_IS0(input_[0])) {
+	    if (B_IS1(input_[1])) {
+	       output(St0);
+	    } else {
+	       output(StL);
+	    }
+      } else {
+	  if (B_IS1(input_[1])) {
+		output(St1);
+	    } else {
+		output(StH);
+	    }
+      }
 }
 
 vvm_bufz::vvm_bufz()
@@ -301,13 +367,165 @@ vpip_bit_t vvm_eeq::compute_() const
       return outval;
 }
 
-vvm_nor2::vvm_nor2(unsigned long d)
+vvm_nmos::vvm_nmos(unsigned long d)
 : vvm_1bit_out(d)
 {
+      input_[0] = StX;
+      input_[1] = StX;
 }
 
-vvm_nor2::~vvm_nor2()
+void vvm_nmos::init_I(unsigned key, vpip_bit_t val)
 {
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_nmos::take_value(unsigned key, vpip_bit_t val)
+{
+ 
+      if (input_[key] == val) {
+	  return;
+      }
+      input_[key] = val;
+
+      if ( B_IS0(input_[1])) {
+	    output(HiZ);
+      } else if (B_ISX(input_[0]))
+	    output(StX);
+      else if (B_ISZ(input_[0])) {
+	    output(HiZ);
+      } else if (B_IS0(input_[0])) {
+	    if (B_IS1(input_[1])) {
+		output(St0);
+	    } else {
+		output(StL);
+	    }
+      } else {
+	    if (B_IS1(input_[1])) {
+		output(St1);
+	    } else {
+		output(StH);
+	    }
+      }
+}
+
+vvm_rnmos::vvm_rnmos(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = StX;
+      input_[1] = StX;
+}
+
+void vvm_rnmos::init_I(unsigned key, vpip_bit_t val)
+{
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_rnmos::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if ( B_IS0(input_[1]))
+	     output(HiZ);
+      else if (B_ISX(input_[0]))
+	     output(reduce_strength(input_[0]));
+      else if (B_ISZ(input_[0]))
+	     output(HiZ);
+      else if (B_IS0(input_[0])) {
+	    if (B_IS1(input_[1])) {
+		output(reduce_strength(input_[0]));
+	    } else {
+		output(StL);
+	    }
+      } else {
+	    if (B_IS1(input_[1])) {
+		output(reduce_strength(input_[0]));
+	    } else {
+		output(StH);
+	    }
+      }
+}
+
+vvm_pmos::vvm_pmos(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = StX;
+      input_[1] = StX;
+}
+
+
+void vvm_pmos::init_I(unsigned key, vpip_bit_t val)
+{
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_pmos::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if ( B_IS1(input_[1]))
+	    output(HiZ);
+      else if (B_ISX(input_[0]))
+	    output(StX);
+      else if (B_ISZ(input_[0]))
+	    output(HiZ);
+      else if (B_IS0(input_[0])) {
+	  if (B_IS0(input_[1])) {
+	      output(St0);
+	  } else {
+	      output(StL);
+	  }
+      } else {
+	  if (B_IS0(input_[1])) {
+	      output(St1);
+	  } else {
+	      output(StH);
+	  }
+      }
+}
+
+vvm_rpmos::vvm_rpmos(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = StX;
+      input_[1] = StX;
+}
+
+
+void vvm_rpmos::init_I(unsigned key, vpip_bit_t val)
+{
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_rpmos::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if ( B_IS1(input_[1]))
+	    output(HiZ);
+      else if (B_ISX(input_[0]))
+	    output(reduce_strength(input_[0]));
+      else if (B_ISZ(input_[0]))
+	    output(HiZ);
+      else if (B_IS0(input_[0])) {
+	  if (B_IS0(input_[1])) {
+	      output(reduce_strength(input_[0]));
+	  } else {
+	      output(StL);
+	  }
+      } else {
+	  if (B_IS0(input_[1])) {
+	      output(reduce_strength(input_[0]));
+	  } else {
+	      output(StH);
+	  }
+      }
 }
 
 void vvm_nor2::init_I(unsigned idx, vpip_bit_t val)
@@ -319,6 +537,15 @@ void vvm_nor2::init_I(unsigned idx, vpip_bit_t val)
 void vvm_nor2::start()
 {
       output(B_NOT(B_OR(input_[0], input_[1])));
+}
+
+vvm_nor2::vvm_nor2(unsigned long d)
+: vvm_1bit_out(d)
+{
+}
+
+vvm_nor2::~vvm_nor2()
+{
 }
 
 void vvm_nor2::take_value(unsigned key, vpip_bit_t val)
@@ -352,9 +579,99 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
       output(B_NOT(val));
 }
 
+vvm_notif0::vvm_notif0(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = StX;
+      input_[1] = StX;
+}
+
+vvm_notif0::~vvm_notif0()
+{
+}
+
+void vvm_notif0::init_I(unsigned key, vpip_bit_t val)
+{
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_notif0::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if ( B_IS1(input_[1]))
+	    output(HiZ);
+      else if ( B_ISX(input_[0]) ||
+		B_ISZ(input_[0]))
+	    output(StX);
+      else if (B_IS0(input_[0])) {
+	    if (B_IS0(input_[1])) {
+	       output(St1);
+	    } else {
+	       output(StH);
+	    }
+      } else {
+	  if (B_IS0(input_[1])) {
+	      output(St0);
+	  } else {
+	      output(StL);
+	  }
+      }
+}
+
+vvm_notif1::vvm_notif1(unsigned long d)
+: vvm_1bit_out(d)
+{
+      input_[0] = StX;
+      input_[1] = StX;
+}
+
+vvm_notif1::~vvm_notif1()
+{
+}
+
+void vvm_notif1::init_I(unsigned key, vpip_bit_t val)
+{
+      assert(key < 2);
+      input_[key] = val;
+}
+
+void vvm_notif1::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val) return;
+      input_[key] = val;
+
+      if ( B_IS0(input_[1]))
+	    output(HiZ);
+      else if ( B_ISX(input_[0]) ||
+		B_ISZ(input_[0]))
+	    output(StX);
+      else if (B_IS0(input_[0])) {
+	    if (B_IS1(input_[1])) {
+	       output(St1);
+	    } else {
+	       output(StH);
+	    }
+      } else {
+	  if (B_IS1(input_[1])) {
+	       output(St0);
+	    } else {
+	       output(StL);
+	    }
+      }
+}
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.19  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.18  2000/07/11 23:08:33  steve
  *  proper init method for bufz devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.196 2000/11/05 06:05:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.197 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 /*
@@ -296,6 +296,10 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::NAND);
 		  break;
+		case NMOS:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::NMOS);
+		  break;
 		case NOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::NOR);
@@ -304,9 +308,29 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::NOT);
 		  break;
+		case NOTIF0:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::NOTIF0);
+		  break;
+		case NOTIF1:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::NOTIF1);
+		  break;
 		case OR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
 					  NetLogic::OR);
+		  break;
+		case RNMOS:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::RNMOS);
+		  break;
+		case RPMOS:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::RPMOS);
+		  break;
+		case PMOS:
+		  cur[idx] = new NetLogic(scope, inm, pin_count(),
+					  NetLogic::PMOS);
 		  break;
 		case XNOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
@@ -2300,6 +2324,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.197  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.196  2000/11/05 06:05:59  steve
  *  Handle connectsion to internally unconnected modules (PR#38)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.62 2000/10/14 02:23:02 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.63 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 /*
@@ -297,8 +297,26 @@ void PGBuiltin::dump(ostream&out) const
 	  case PGBuiltin::BUFIF1:
 	    out << "    bufif1 ";
 	    break;
+	  case PGBuiltin::NOTIF0:
+	    out << "    bufif0 ";
+	    break;
+	  case PGBuiltin::NOTIF1:
+	    out << "    bufif1 ";
+	    break;
 	  case PGBuiltin::NAND:
 	    out << "    nand ";
+	    break;
+	  case PGBuiltin::NMOS:
+	    out << "    nmos ";
+	    break;
+	  case PGBuiltin::RNMOS:
+	    out << "    rnmos ";
+	    break;
+	  case PGBuiltin::RPMOS:
+	    out << "    rpmos ";
+	    break;
+	  case PGBuiltin::PMOS:
+	    out << "    pmos ";
 	    break;
 	  default:
 	    out << "    builtin gate ";
@@ -783,6 +801,13 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.63  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.62  2000/10/14 02:23:02  steve
  *  Check for missing concat subexpressions (PR#11)
  *

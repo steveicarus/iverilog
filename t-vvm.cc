@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.183 2000/11/04 06:36:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.184 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1786,6 +1786,9 @@ void target_vvm::logic(const NetLogic*gate)
 	  case NetLogic::NAND:
 	    out << "static vvm_nand" << "<" << gate->pin_count()-1 << "> ";
 	    break;
+	  case NetLogic::NMOS:
+	    out << "static vvm_nmos ";
+	    break;
 	  case NetLogic::NOR:
 	    if ((gate->pin_count()-1) == 2)
 		  out << "static vvm_nor2 ";
@@ -1795,8 +1798,23 @@ void target_vvm::logic(const NetLogic*gate)
 	  case NetLogic::NOT:
 	    out << "static vvm_not ";
 	    break;
+	  case NetLogic::NOTIF0:
+	    out << "static vvm_notif0 ";
+	    break;
+	  case NetLogic::NOTIF1:
+	    out << "static vvm_notif1 ";
+	    break;
 	  case NetLogic::OR:
 	    out << "static vvm_or" << "<" << gate->pin_count()-1 << "> ";
+	    break;
+	  case NetLogic::RNMOS:
+	    out << "static vvm_rnmos ";
+	    break;
+	  case NetLogic::RPMOS:
+	    out << "static vvm_rpmos ";
+	    break;
+	  case NetLogic::PMOS:
+	    out << "static vvm_pmos ";
 	    break;
 	  case NetLogic::XNOR:
 	    out << "static vvm_xnor" << "<" << gate->pin_count()-1 << "> ";
@@ -3329,6 +3347,13 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.184  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.183  2000/11/04 06:36:24  steve
  *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
  *

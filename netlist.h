@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.178 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.179 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 /*
@@ -975,8 +975,8 @@ class NetConst  : public NetNode {
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NOR, NOT, NOTIF0,
-		  NOTIF1, OR, XNOR, XOR };
+      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NMOS, NOR, NOT, NOTIF0,
+		  NOTIF1, OR, RNMOS, RPMOS, PMOS, XNOR, XOR };
 
       explicit NetLogic(NetScope*s, const string&n, unsigned pins, TYPE t);
 
@@ -2812,6 +2812,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.179  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.178  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *

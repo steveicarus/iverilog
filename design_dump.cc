@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.103 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.104 2000/11/11 01:52:09 steve Exp $"
 #endif
 
 /*
@@ -276,14 +276,32 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	  case NAND:
 	    o << "nand";
 	    break;
+	  case NMOS:
+	    o << "nmos";
+	    break;
 	  case NOR:
 	    o << "nor";
 	    break;
 	  case NOT:
 	    o << "not";
 	    break;
+	  case NOTIF0:
+	    o << "notif0";
+	    break;
+	  case NOTIF1:
+	    o << "notif1";
+	    break;
 	  case OR:
 	    o << "or";
+	    break;
+	  case RNMOS:
+	    o << "rnmos";
+	    break;
+	  case RPMOS:
+	    o << "rpmos";
+	    break;
+	  case PMOS:
+	    o << "pmos";
 	    break;
 	  case XNOR:
 	    o << "xnor";
@@ -977,6 +995,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.104  2000/11/11 01:52:09  steve
+ *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
+ *  change set to correct behavior of bufif0 and bufif1
+ *  (Tim Leight)
+ *
+ *  Also includes fix for PR#27
+ *
  * Revision 1.103  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *
