@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.54 2003/03/06 04:32:00 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.55 2003/04/12 18:56:57 steve Exp $"
 #endif
 
 /*
@@ -250,6 +250,26 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		  }
 	    }
 	    break;
+
+	  case vpiScalarVal: {
+		vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, 0);
+		switch (functor_get(fptr)) {
+		    case 0:
+		      vp->value.scalar = vpi0;
+		      break;
+		    case 1:
+		      vp->value.scalar = vpi1;
+		      break;
+		    case 2:
+		      vp->value.scalar = vpiX;
+		      break;
+		    case 3:
+		      vp->value.scalar = vpiZ;
+		      break;
+		}
+
+		break;
+	  }
 
 	  case vpiBinStrVal:
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
@@ -779,6 +799,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.55  2003/04/12 18:56:57  steve
+ *  Add vpoiScalarVal support for signals.
+ *
  * Revision 1.54  2003/03/06 04:32:00  steve
  *  Use hashed name strings for identifiers.
  *
