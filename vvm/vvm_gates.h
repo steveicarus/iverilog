@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.1 1998/11/09 23:44:11 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.2 1998/11/10 00:48:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -205,6 +205,7 @@ class vvm_pevent {
       void wait(EDGE, vvm_thread*);
 
       void set(vvm_simulation*sim, unsigned, vvm_bit_t val);
+      vvm_bit_t get() const { return value_; }
 
     private:
       vvm_bit_t value_;
@@ -218,6 +219,11 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.2  1998/11/10 00:48:31  steve
+ *  Add support it vvm target for level-sensitive
+ *  triggers (i.e. the Verilog wait).
+ *  Fix display of $time is format strings.
+ *
  * Revision 1.1  1998/11/09 23:44:11  steve
  *  Add vvm library.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_thread.h,v 1.1 1998/11/09 23:44:11 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.2 1998/11/10 00:48:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -38,7 +38,11 @@ class vvm_thread {
     public:
       explicit vvm_thread(vvm_simulation*sim);
       virtual ~vvm_thread();
-      virtual void go() =0;
+
+	// This method executes a setp of the thread. The engine will
+	// continue to call go as long as it returns true. The thread
+	// will return false if it is ready to give up the CPU.
+      virtual bool go() =0;
 
     protected:
       vvm_simulation*const sim_;
@@ -46,6 +50,11 @@ class vvm_thread {
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.2  1998/11/10 00:48:31  steve
+ *  Add support it vvm target for level-sensitive
+ *  triggers (i.e. the Verilog wait).
+ *  Fix display of $time is format strings.
+ *
  * Revision 1.1  1998/11/09 23:44:11  steve
  *  Add vvm library.
  *

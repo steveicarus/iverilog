@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: display.cc,v 1.1 1998/11/09 23:44:10 steve Exp $"
+#ident "$Id: display.cc,v 1.2 1998/11/10 00:48:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -28,31 +28,35 @@ static void format_bit(ostream&os, class vvm_calltf_parm*parm)
 {
       switch (parm->type()) {
 	  case vvm_calltf_parm::NONE:
-	    cout << "z";
+	    os << "z";
 	    break;
 	  case vvm_calltf_parm::ULONG:
-	    cout << ((parm->as_ulong()&1) ? "0" : "1");
+	    os << ((parm->as_ulong()&1) ? "0" : "1");
 	    break;
 	  case vvm_calltf_parm::STRING:
-	    cout << parm->as_string();
+	    os << parm->as_string();
 	    break;
 	  case vvm_calltf_parm::BITS:
-	    cout << parm->as_bits()->get_bit(0);
+	    os << parm->as_bits()->get_bit(0);
 	    break;
       }
 }
 
-static void format_dec(ostream&os, class vvm_calltf_parm*parm)
+static void format_dec(vvm_simulation*sim, ostream&os,
+		       class vvm_calltf_parm*parm)
 {
       switch (parm->type()) {
+	  case vvm_calltf_parm::TIME:
+	    os << sim->get_sim_time();
+	    break;
 	  case vvm_calltf_parm::NONE:
-	    cout << "0";
+	    os << "0";
 	    break;
 	  case vvm_calltf_parm::ULONG:
-	    cout << parm->as_ulong();
+	    os << parm->as_ulong();
 	    break;
 	  case vvm_calltf_parm::STRING:
-	    cout << parm->as_string();
+	    os << parm->as_string();
 	    break;
 	  case vvm_calltf_parm::BITS: {
 		unsigned long val = 0;
@@ -62,7 +66,7 @@ static void format_dec(ostream&os, class vvm_calltf_parm*parm)
 		      if (bstr->get_bit(idx) == V1) val |= mask;
 		      mask <<= 1;
 		}
-		cout << val;
+		os << val;
 		break;
 	  }
       }
@@ -71,6 +75,9 @@ static void format_dec(ostream&os, class vvm_calltf_parm*parm)
 static void format_name(ostream&os, class vvm_calltf_parm*parm)
 {
       switch (parm->type()) {
+	  case vvm_calltf_parm::TIME:
+	    os << "$time";
+	    break;
 	  case vvm_calltf_parm::NONE:
 	    break;
 	  case vvm_calltf_parm::ULONG:
@@ -85,7 +92,8 @@ static void format_name(ostream&os, class vvm_calltf_parm*parm)
       }
 }
 
-static unsigned format(const string&str, unsigned nparms,
+static unsigned format(vvm_simulation*sim, const string&str,
+		       unsigned nparms,
 		       class vvm_calltf_parm*parms)
 {
       char prev = 0;
@@ -101,7 +109,7 @@ static unsigned format(const string&str, unsigned nparms,
 			break;
 		      case 'd':
 		      case 'D':
-			format_dec(cout, parms+next_parm);
+			format_dec(sim, cout, parms+next_parm);
 			next_parm += 1;
 			break;
 		      case 'm':
@@ -144,8 +152,8 @@ void Sdisplay(vvm_simulation*sim, const string&name,
 		  cout << parms[idx].as_ulong();
 		  break;
 		case vvm_calltf_parm::STRING:
-		  idx += format(parms[idx].as_string(),
-				   nparms-idx-1, parms+idx+1);
+		  idx += format(sim, parms[idx].as_string(),
+				nparms-idx-1, parms+idx+1);
 		  break;
 		case vvm_calltf_parm::BITS:
 		  cout << *parms[idx].as_bits();
@@ -198,6 +206,11 @@ void Smonitor(vvm_simulation*sim, const string&name,
 
 /*
  * $Log: display.cc,v $
+ * Revision 1.2  1998/11/10 00:48:31  steve
+ *  Add support it vvm target for level-sensitive
+ *  triggers (i.e. the Verilog wait).
+ *  Fix display of $time is format strings.
+ *
  * Revision 1.1  1998/11/09 23:44:10  steve
  *  Add vvm library.
  *

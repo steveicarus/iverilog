@@ -17,29 +17,35 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_bit.cc,v 1.1 1998/11/09 23:44:10 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.2 1998/11/10 00:48:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
+
+ostream& operator << (ostream&os, vvm_bit_t bit)
+{
+      switch (bit) {
+	  case V0:
+	    os << "0";
+	    break;
+	  case V1:
+	    os << "1";
+	    break;
+	  case Vx:
+	    os << "x";
+	    break;
+	  case Vz:
+	    os << "z";
+	    break;
+      }
+      return os;
+}
 
 ostream& operator << (ostream&os, const vvm_bits_t&str)
 {
       os << str.get_width() << "b'";
       for (unsigned idx = str.get_width() ;  idx > 0 ;  idx -= 1)
-	    switch (str.get_bit(idx)) {
-		case V0:
-		  os << "0";
-		  break;
-		case V1:
-		  os << "1";
-		  break;
-		case Vx:
-		  os << "x";
-		  break;
-		case Vz:
-		  os << "z";
-		  break;
-	    }
+	    os << str.get_bit(idx);
 
       return os;
 }
@@ -94,6 +100,11 @@ vvm_bit_t add_with_carry(vvm_bit_t l, vvm_bit_t r, vvm_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.2  1998/11/10 00:48:31  steve
+ *  Add support it vvm target for level-sensitive
+ *  triggers (i.e. the Verilog wait).
+ *  Fix display of $time is format strings.
+ *
  * Revision 1.1  1998/11/09 23:44:10  steve
  *  Add vvm library.
  *

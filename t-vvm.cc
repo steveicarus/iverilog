@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.4 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.5 1998/11/10 00:48:31 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -445,12 +445,12 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
       os << "      { }" << endl;
       os << "      ~thread" << process_counter << "_t() { }" << endl;
       os << endl;
-      os << "      void go() { (this->*step_)(); }" << endl;
+      os << "      bool go() { return (this->*step_)(); }" << endl;
       os << "    private:" << endl;
-      os << "      void (thread" << process_counter <<
+      os << "      bool (thread" << process_counter <<
 	    "_t::*step_)();" << endl;
 
-      os << "      void step_0_() {" << endl;
+      os << "      bool step_0_() {" << endl;
 }
 
 /*
@@ -566,25 +566,57 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
       thread_step_ += 1;
       os << setw(indent_) << "" << "step_ = &step_" << thread_step_ <<
 	    "_;" << endl;
-      os << setw(indent_) << "" << mangle(proc->name()) <<
-	    ".wait(vvm_pevent::";
-      switch (proc->edge()) {
-	  case NetPEvent::ANYEDGE:
-	    os << "ANYEDGE";
-	    break;
-	  case NetPEvent::POSEDGE:
-	    os << "POSEDGE";
-	    break;
-	  case NetPEvent::NEGEDGE:
-	    os << "NEGEDGE";
-	    break;
-	  case NetPEvent::POSITIVE:
-	    os << "POSITIVE";
-	    break;
+
+	/* POSITIVE is for the wait construct, and needs to be handled
+	   specially. The structure of the generated code is:
+
+	     if (event.get()==V1) {
+	         return true;
+	     } else {
+	         event.wait(vvm_pevent::POSEDGE, this);
+		 return false;
+	     }
+
+	   This causes the wait to not even block the thread if the
+	   event value is already positive, otherwise wait for a
+	   rising edge. All the edge triggers look like this:
+
+	     event.wait(vvm_pevent::POSEDGE, this);
+	     return false;
+
+	   POSEDGE is replaced with the correct type for the desired
+	   edge. */
+
+      if (proc->edge() == NetPEvent::POSITIVE) {
+	    os << setw(indent_) << "" << "if (" <<
+		  mangle(proc->name()) << ".get()==V1) {" << endl;
+	    os << setw(indent_+3) << "" << "return true;" << endl;
+	    os << setw(indent_) << "" << "} else {" << endl;
+	    os << setw(indent_+3) << "" << mangle(proc->name()) <<
+		  ".wait(vvm_pevent::POSEDGE, this);" << endl;
+	    os << setw(indent_+3) << "" << "return false;" << endl;
+	    os << setw(indent_) << "" << "}" << endl;
+
+      } else {
+	    os << setw(indent_) << "" << mangle(proc->name()) <<
+		  ".wait(vvm_pevent::";
+	    switch (proc->edge()) {
+		case NetPEvent::ANYEDGE:
+		  os << "ANYEDGE";
+		  break;
+		case NetPEvent::POSITIVE:
+		case NetPEvent::POSEDGE:
+		  os << "POSEDGE";
+		  break;
+		case NetPEvent::NEGEDGE:
+		  os << "NEGEDGE";
+		  break;
+	    }
+	    os << ", this);" << endl;
+	    os << setw(indent_+3) << "" << "return false;" << endl;
       }
-      os << ", this);" << endl;
       os << "      }" << endl;
-      os << "      void step_" << thread_step_ << "_()" << endl;
+      os << "      bool step_" << thread_step_ << "_()" << endl;
       os << "      {" << endl;
 
       proc->emit_proc_recurse(os, this);
@@ -599,8 +631,9 @@ void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
       os << "        step_ = &step_" << thread_step_ << "_;" << endl;
       os << "        sim_->thread_delay(" << proc->delay() << ", this);"
 	 << endl;
+      os << "        return false;" << endl;
       os << "      }" << endl;
-      os << "      void step_" << thread_step_ << "_()" << endl;
+      os << "      bool step_" << thread_step_ << "_()" << endl;
       os << "      {" << endl;
 
       proc->emit_proc_recurse(os, this);
@@ -609,10 +642,11 @@ void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 void target_vvm::end_process(ostream&os, const NetProcTop*proc)
 {
       if (proc->type() == NetProcTop::KALWAYS) {
-	    os << "        step_ = &step_0_;" << endl;
-	    os << "        step_0_(); // XXXX" << endl;
+	    os << setw(indent_) << "" << "step_ = &step_0_;" << endl;
+	    os << setw(indent_) << "" << "return true;" << endl;
       } else {
-	    os << "        step_ = 0;" << endl;
+	    os << setw(indent_) << "" << "step_ = 0;" << endl;
+	    os << setw(indent_) << "" << "return false;" << endl;
       }
 
       os << "      }" << endl;
@@ -628,6 +662,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.5  1998/11/10 00:48:31  steve
+ *  Add support it vvm target for level-sensitive
+ *  triggers (i.e. the Verilog wait).
+ *  Fix display of $time is format strings.
+ *
  * Revision 1.4  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,
