@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.5 2002/05/30 02:10:08 steve Exp $"
+#ident "$Id: veriuser.h,v 1.6 2002/05/30 02:12:17 steve Exp $"
 #endif
 
 /*
@@ -57,6 +57,8 @@ extern int tf_dostop(void);
 extern void tf_error(const char*, ...)
       __attribute__((format (printf,1,2)));
 
+extern int tf_nump(void);
+
 extern void tf_warning(const char*, ...)
       __attribute__((format (printf,1,2)));
 
@@ -64,6 +66,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.6  2002/05/30 02:12:17  steve
+ *  Add tf_nump from mruff.
+ *
  * Revision 1.5  2002/05/30 02:10:08  steve
  *  Add tf_error and tf_warning from mruff
  *
