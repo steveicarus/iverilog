@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.19 2003/02/16 02:23:22 steve Exp $"
+#ident "$Id: veriuser.h,v 1.20 2003/02/17 06:39:47 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,7 @@
  * This API is provided by Icarus Verilog only to support legacy software.
  */
 
+
 #ifdef __cplusplus
 # define EXTERN_C_START extern "C" {
 # define EXTERN_C_END }
@@ -56,15 +57,7 @@
 
 EXTERN_C_START
 
-#ifndef PLI_TYPES
-#define PLI_TYPES
-typedef signed int     PLI_INT32;
-typedef unsigned int   PLI_UINT32;
-typedef signed short   PLI_INT16;
-typedef unsigned short PLI_UINT12;
-typedef signed char    PLI_BYTE8;
-typedef unsigned char  PLI_UBYTE8;
-#endif
+# include  "_pli_types.h"
 
 /*
  * defines for tf_message
@@ -258,6 +251,14 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.20  2003/02/17 06:39:47  steve
+ *  Add at least minimal implementations for several
+ *  acc_ functions. Add support for standard ACC
+ *  string handling.
+ *
+ *  Add the _pli_types.h header file to carry the
+ *  IEEE1364-2001 standard PLI type declarations.
+ *
  * Revision 1.19  2003/02/16 02:23:22  steve
  *  Change the IV veriusertfs_register to accept table pointers.
  *

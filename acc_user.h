@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.6 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: acc_user.h,v 1.7 2003/02/17 06:39:47 steve Exp $"
 #endif
 
 /*
@@ -30,6 +30,7 @@
  * stub. The functions that are implemented here are actually
  * implemented using VPI routines.
  */
+
 
 #ifdef __cplusplus
 # define EXTERN_C_START extern "C" {
@@ -42,16 +43,24 @@
 
 EXTERN_C_START
 
+# include  "_pli_types.h"
+
 /*
  * This is a declaration of the "handle" type that is compatible with
- * the vpiHandle from vpi_user.h.
+ * the vpiHandle from vpi_user.h. The libveriuser library implements
+ * the acc handle type as a vpiHandle, to prevent useless indirection.
  */
 typedef struct __vpiHandle *handle;
 
 /* OBJECT TYPES */
-#define accScope   21
-#define accScalar  300
-#define accVector  302
+#define accModule    20
+#define accScope     21
+#define accNet       25
+#define accReg       30
+#define accParameter 220
+#define accScalar    300
+#define accVector    302
+#define accConstant  600
 
 /* type VALUES FOR t_setval_delay STRUCTURE */
 #define accNoDelay  0
@@ -105,25 +114,46 @@ typedef struct t_setval_value {
       } value;
 } s_setval_value, *p_setval_value, s_acc_value, *p_acc_value;
 
+typedef struct t_location {
+      PLI_INT32 line_no;
+      const char*filename;
+} s_location, *p_location;
+
 extern int acc_error_flag;
 
 extern int acc_initialize(void);
 
 extern void acc_close(void);
 
+/*
+ * This is the acc_configure command, and the config_param
+ * codes that are accepted.
+ */
+extern int   acc_configure(PLI_INT32 config_param, const char*value);
+#define accDevelopmentVersion 11
+
 extern int   acc_fetch_argc(void);
 extern char**acc_fetch_argv(void);
 
 extern char* acc_fetch_fullname(handle obj);
 
+extern int   acc_fetch_location(p_location loc, handle obj);
+
+extern char* acc_fetch_name(handle obj);
+
 extern int   acc_fetch_tfarg_int(int n);
 extern char* acc_fetch_tfarg_str(int n);
 
+extern PLI_INT32 acc_fetch_type(handle obj);
+extern char* acc_fetch_type_str(PLI_INT32 type);
+
 extern handle acc_handle_tfarg(int n);
+extern handle acc_handle_tfinst(void);
 
 extern handle acc_next_topmod(handle prev_topmod);
 
-extern int acc_object_of_type(handle object, int type);
+extern int acc_object_in_typelist(handle object, PLI_INT32*typelist);
+extern int acc_object_of_type(handle object, PLI_INT32 type);
 
 extern char*acc_product_version(void);
 
@@ -136,6 +166,14 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.7  2003/02/17 06:39:47  steve
+ *  Add at least minimal implementations for several
+ *  acc_ functions. Add support for standard ACC
+ *  string handling.
+ *
+ *  Add the _pli_types.h header file to carry the
+ *  IEEE1364-2001 standard PLI type declarations.
+ *
  * Revision 1.6  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

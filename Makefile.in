@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.144 2003/02/08 19:49:21 steve Exp $"
+#ident "$Id: Makefile.in,v 1.145 2003/02/17 06:39:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -212,7 +212,7 @@ else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 	cd driver ; $(MAKE) install
@@ -234,6 +234,9 @@ $(libdir)/ivl/iverilog.conf: $(libdir)/ivl/ivl@EXEEXT@
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(includedir)/ivl_target.h
+
+$(includedir)/_pli_types.h: $(srcdir)/_pli_types.h
+	$(INSTALL_DATA) $(srcdir)/_pli_types.h $(includedir)/_pli_types.h
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h

@@ -1,5 +1,5 @@
-/* vi:sw=6
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+/*
+ * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,28 +17,33 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_fullname.c,v 1.3 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: a_configure.c,v 1.1 2003/02/17 06:39:47 steve Exp $"
 #endif
 
-#include  <vpi_user.h>
 #include  <acc_user.h>
+#include  <vpi_user.h>
 
-/*
- * acc_fetch_fullname implemented using VPI interface
- */
-char *acc_fetch_fullname(handle object)
+int acc_configure(PLI_INT32 config_param, const char*value)
 {
-      return __acc_newstring(vpi_get_str(vpiFullName, object));
+      int rc;
+      switch (config_param) {
+	  case accDevelopmentVersion:
+	    vpi_printf("Request PLI Development Version %s\n", value);
+	    rc = 1;
+	    break;
+
+	  default:
+	    vpi_printf("XXXX acc_configure(%d, %s)\n", config_param, value);
+	    rc = 0;
+	    break;
+      }
+
+      return rc;
 }
 
-char* acc_fetch_name(handle object)
-{
-      return __acc_newstring(vpi_get_str(vpiName, object));
-}
-
 /*
- * $Log: a_fetch_fullname.c,v $
- * Revision 1.3  2003/02/17 06:39:47  steve
+ * $Log: a_configure.c,v $
+ * Revision 1.1  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC
  *  string handling.
@@ -46,10 +51,5 @@ char* acc_fetch_name(handle object)
  *  Add the _pli_types.h header file to carry the
  *  IEEE1364-2001 standard PLI type declarations.
  *
- * Revision 1.2  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/06/07 02:58:58  steve
- *  Add a bunch of acc/tf functions. (mruff)
- *
  */
+

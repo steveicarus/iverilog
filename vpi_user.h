@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.18 2003/02/01 05:50:27 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.19 2003/02/17 06:39:47 steve Exp $"
 #endif
 
 
@@ -45,6 +45,7 @@
 EXTERN_C_START
 
 # include  <stdarg.h>
+# include  "_pli_types.h"
 
 typedef struct __vpiHandle *vpiHandle;
 
@@ -371,6 +372,14 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.19  2003/02/17 06:39:47  steve
+ *  Add at least minimal implementations for several
+ *  acc_ functions. Add support for standard ACC
+ *  string handling.
+ *
+ *  Add the _pli_types.h header file to carry the
+ *  IEEE1364-2001 standard PLI type declarations.
+ *
  * Revision 1.18  2003/02/01 05:50:27  steve
  *  Make $time and $realtime available to $display uniquely.
  *

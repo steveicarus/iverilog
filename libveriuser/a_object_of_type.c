@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_object_of_type.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: a_object_of_type.c,v 1.3 2003/02/17 06:39:47 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -27,7 +27,7 @@
 /*
  * acc_object_of_type implemented using VPI interface
  */
-int acc_object_of_type(handle object, int type)
+int acc_object_of_type(handle object, PLI_INT32 type)
 {
       int vtype;
       int rtn = 0;	/* false */
@@ -36,19 +36,44 @@ int acc_object_of_type(handle object, int type)
       vtype = vpi_get(vpiType, object);
 
       switch (type) {
-	    case accScope:
-		  if (vtype == vpiModule || vtype == vpiNamedBegin ||
-		      vtype == vpiNamedFork || vtype == vpiTask ||
-		      vtype == vpiFunction) rtn = 1;
-		  break;
-	    case accScalar:
-		  if (vtype == vpiReg || vtype == vpiNet)
-			rtn = vpi_get(vpiSize, object) == 1;
-		  break;
-	    case accVector:
-		  if (vtype == vpiReg || vtype == vpiNet)
-			rtn = vpi_get(vpiSize, object) > 1;
-		  break;
+	  case accModule:
+	    if (vtype == vpiModule)
+		  rtn = 1;
+	    break;
+
+	  case accScope:
+	    if (vtype == vpiModule || vtype == vpiNamedBegin ||
+		vtype == vpiNamedFork || vtype == vpiTask ||
+		vtype == vpiFunction) rtn = 1;
+	    break;
+
+	  case accNet:
+	    if (vtype == vpiNet)
+		  rtn = 1;
+	    break;
+
+	  case accReg:
+	    if (vtype == vpiReg)
+		  rtn = 1;
+	    break;
+
+	  case accScalar:
+	    if (vtype == vpiReg || vtype == vpiNet)
+		  rtn = vpi_get(vpiSize, object) == 1;
+	    break;
+
+	  case accVector:
+	    if (vtype == vpiReg || vtype == vpiNet)
+		  rtn = vpi_get(vpiSize, object) > 1;
+	    break;
+
+	  case accParameter:
+#ifdef vpiParameter
+	    if (vtype == vpiParameter)
+		  rtn = 1;
+#endif
+	    break;
+
 	    default:
 		  vpi_printf("acc_object_of_type: Unknown type %d\n", type);
 		  assert(0);
@@ -57,8 +82,29 @@ int acc_object_of_type(handle object, int type)
       return rtn;
 }
 
+int acc_object_in_typelist(handle object, PLI_INT32*typelist)
+{
+      while (typelist[0] != 0) {
+	    int rtn = acc_object_of_type(object, typelist[0]);
+	    if (rtn)
+		  return rtn;
+
+	    typelist += 1;
+      }
+
+      return 0;
+}
+
 /*
  * $Log: a_object_of_type.c,v $
+ * Revision 1.3  2003/02/17 06:39:47  steve
+ *  Add at least minimal implementations for several
+ *  acc_ functions. Add support for standard ACC
+ *  string handling.
+ *
+ *  Add the _pli_types.h header file to carry the
+ *  IEEE1364-2001 standard PLI type declarations.
+ *
  * Revision 1.2  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
