@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.123 2005/03/19 06:23:49 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.124 2005/04/04 05:29:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -902,7 +902,8 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	     inputs. The proper behavior is to attach a HiZ to the
 	     port. */
 	if (nex == 0) {
-	      fprintf(vvp_out, ", C<z>");
+	      assert(ivl_logic_width(lptr) == 1);
+	      fprintf(vvp_out, ", C4<z>");
 
 	} else {
 	      fprintf(vvp_out, ", ");
@@ -1986,6 +1987,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.124  2005/04/04 05:29:53  steve
+ *  Generate the right coes for unconnected UDP port.
+ *
  * Revision 1.123  2005/03/19 06:23:49  steve
  *  Handle LPM shifts.
  *
