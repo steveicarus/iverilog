@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.12 2000/04/18 04:50:19 steve Exp $"
+#ident "$Id: functor.h,v 1.13 2000/04/20 00:28:03 steve Exp $"
 #endif
 
 /*
@@ -46,6 +46,9 @@ struct functor_t {
 
 	/* This method is called for each structural adder. */
       virtual void lpm_add_sub(class Design*des, class NetAddSub*);
+
+	/* This method is called for each structural comparator. */
+      virtual void lpm_compare(class Design*des, class NetCompare*);
 
 	/* This method is called for each structural constant. */
       virtual void lpm_const(class Design*des, class NetConst*);
@@ -76,6 +79,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.13  2000/04/20 00:28:03  steve
+ *  Catch some simple identity compareoptimizations.
+ *
  * Revision 1.12  2000/04/18 04:50:19  steve
  *  Clean up unneeded NetEvent objects.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.125 2000/04/18 04:50:20 steve Exp $"
+#ident "$Id: netlist.h,v 1.126 2000/04/20 00:28:03 steve Exp $"
 #endif
 
 /*
@@ -403,6 +403,7 @@ class NetCompare  : public NetNode {
       const NetObj::Link& pin_DataA(unsigned idx) const;
       const NetObj::Link& pin_DataB(unsigned idx) const;
 
+      virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
 
@@ -2390,6 +2391,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.126  2000/04/20 00:28:03  steve
+ *  Catch some simple identity compareoptimizations.
+ *
  * Revision 1.125  2000/04/18 04:50:20  steve
  *  Clean up unneeded NetEvent objects.
  *

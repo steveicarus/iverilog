@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.11 2000/04/16 23:32:18 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.12 2000/04/20 00:28:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -132,6 +132,32 @@ NetNet* NetEBComp::synthesize(Design*des)
 
       NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, 1);
       osig->local_flag(true);
+
+	/* Handle the special case of a single bit equality
+	   operation. Make an XNOR gate instead of a comparator. */
+      if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
+	    NetLogic*gate = new NetLogic(des->local_symbol(path),
+					 3, NetLogic::XNOR);
+	    connect(gate->pin(0), osig->pin(0));
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    des->add_node(gate);
+	    return osig;
+      }
+
+	/* Handle the special case of a single bit inequality
+	   operation. This is similar to single bit equality, but uses
+	   an XOR instead of an XNOR gate. */
+      if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
+	    NetLogic*gate = new NetLogic(des->local_symbol(path),
+					 3, NetLogic::XOR);
+	    connect(gate->pin(0), osig->pin(0));
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    des->add_node(gate);
+	    return osig;
+      }
+
 
       NetCompare*dev = new NetCompare(des->local_symbol(path), width);
       des->add_node(dev);
@@ -283,6 +309,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.12  2000/04/20 00:28:03  steve
+ *  Catch some simple identity compareoptimizations.
+ *
  * Revision 1.11  2000/04/16 23:32:18  steve
  *  Synthesis of comparator in expressions.
  *

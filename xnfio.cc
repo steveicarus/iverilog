@@ -17,18 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.11 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.12 2000/04/20 00:28:03 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "netlist.h"
+# include  "netmisc.h"
+# include  <strstream>
 
 class xnfio_f  : public functor_t {
 
     public:
       void signal(Design*des, NetNet*sig);
+      void lpm_compare(Design*des, NetCompare*dev);
 
     private:
+      bool compare_sideb_const(Design*des, NetCompare*dev);
 };
 
 static bool is_a_pad(const NetNet*net)
@@ -277,6 +281,68 @@ void xnfio_f::signal(Design*des, NetNet*net)
       }
 }
 
+/*
+ * Attempt some XNF specific optimizations on comparators.
+ */
+void xnfio_f::lpm_compare(Design*des, NetCompare*dev)
+{
+      if (compare_sideb_const(des, dev))
+	    return;
+
+      return;
+}
+
+bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
+{
+	/* Even if side B is all constant, if there are more then 4
+	   signals on side A we will not be able to fit the operation
+	   into a function unit, so we might as well accept a
+	   comparator. Give up. */
+      if (dev->width() > 4)
+	    return false;
+
+      verinum side (verinum::V0, dev->width());
+
+	/* Is the B side all constant? */
+      for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1) {
+	    NetConst*cobj;
+	    unsigned cidx;
+	    cobj = link_const_value(dev->pin_DataB(idx), cidx);
+	    if (cobj == 0)
+		  return false;
+
+	    side.set(idx, cobj->value(cidx));
+      }
+
+	/* Handle the special case of comparing A to 0. Use an N-input
+	   NOR gate to return 0 if any of the bits is not 0. */
+      if ((side.as_ulong() == 0) && (count_inputs(dev->pin_AEB()) > 0)) {
+	    NetLogic*sub = new NetLogic(dev->name(), dev->width()+1,
+					NetLogic::NOR);
+	    connect(sub->pin(0), dev->pin_AEB());
+	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1)
+		  connect(sub->pin(idx+1), dev->pin_DataA(idx));
+	    delete dev;
+	    des->add_node(sub);
+	    return true;
+      }
+
+	/* Handle the special case of comparing A to 0. Use an N-input
+	   NOR gate to return 0 if any of the bits is not 0. */
+      if ((side.as_ulong() == 0) && (count_inputs(dev->pin_ANEB()) > 0)) {
+	    NetLogic*sub = new NetLogic(dev->name(), dev->width()+1,
+					NetLogic::OR);
+	    connect(sub->pin(0), dev->pin_ANEB());
+	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1)
+		  connect(sub->pin(idx+1), dev->pin_DataA(idx));
+	    delete dev;
+	    des->add_node(sub);
+	    return true;
+      }
+
+      return false;
+}
+
 void xnfio(Design*des)
 {
       xnfio_f xnfio_obj;
@@ -285,6 +351,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.12  2000/04/20 00:28:03  steve
+ *  Catch some simple identity compareoptimizations.
+ *
  * Revision 1.11  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.16 2000/04/18 04:50:19 steve Exp $"
+#ident "$Id: functor.cc,v 1.17 2000/04/20 00:28:03 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -40,6 +40,10 @@ void functor_t::process(class Design*, class NetProcTop*)
 }
 
 void functor_t::lpm_add_sub(class Design*, class NetAddSub*)
+{
+}
+
+void functor_t::lpm_compare(class Design*, class NetCompare*)
 {
 }
 
@@ -118,6 +122,11 @@ void NetNode::functor_node(Design*, functor_t*)
 void NetAddSub::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_add_sub(des, this);
+}
+
+void NetCompare::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_compare(des, this);
 }
 
 void NetConst::functor_node(Design*des, functor_t*fun)
@@ -208,6 +217,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.17  2000/04/20 00:28:03  steve
+ *  Catch some simple identity compareoptimizations.
+ *
  * Revision 1.16  2000/04/18 04:50:19  steve
  *  Clean up unneeded NetEvent objects.
  *

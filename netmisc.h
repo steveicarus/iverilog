@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.4 2000/03/16 19:03:03 steve Exp $"
+#ident "$Id: netmisc.h,v 1.5 2000/04/20 00:28:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -41,9 +41,19 @@ extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
  */
 extern string nexus_from_link(const NetObj::Link*lnk);
 
+/*
+ * Check to see if the link has a constant value driven to it. If
+ * there is only a NetConst driving this pin, the return a pointer to
+ * that NetConst object. Also, return the index of the bit in that
+ * constant through the idx parameter.
+ */
+extern NetConst* link_const_value(NetObj::Link&pin, unsigned&idx);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.5  2000/04/20 00:28:03  steve
+ *  Catch some simple identity compareoptimizations.
+ *
  * Revision 1.4  2000/03/16 19:03:03  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and
