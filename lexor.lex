@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.69 2002/02/15 05:20:58 steve Exp $"
+#ident "$Id: lexor.lex,v 1.70 2002/04/14 21:42:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -88,6 +88,8 @@ static verinum*make_unsized_binary(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
 static verinum*make_unsized_octal(const char*txt);
 static verinum*make_unsized_hex(const char*txt);
+
+static int dec_buf_div2(char *buf);
 
 static void process_timescale(const char*txt);
 
@@ -253,19 +255,38 @@ W [ \t\b\f\r]+
                               return NUMBER; }
 
 [0-9][0-9_]*		 {
-	/* Handle the special case of the unsized decimal number. */
-      unsigned long value = 0;
-      for (const char*cp = yytext ;  *cp ;  cp += 1) {
-	    if (*cp != '_')
-		  value = 10 * value + (*cp - '0');
+      char buf[4096];
+
+      if (strlen(yytext) >= sizeof(buf)-2){
+	  fprintf(stderr, "Ridicilously long decimal constant will be truncated!\n");
       }
 
-      assert(INTEGER_WIDTH <= (8*sizeof(value)));
-      unsigned nbits = INTEGER_WIDTH;
-      verinum::V*bits = new verinum::V[8 * sizeof value];
+      strncpy(buf, yytext, sizeof(buf)-2);
+      buf[sizeof(buf)-1] = 0;
 
-      for (unsigned idx = 0 ;  idx < nbits ;  idx += 1, value >>= 1) {
-	    bits[idx] = (value&1) ? verinum::V1 : verinum::V0;
+      /* Convert the decimal number to a binary value, one digit at
+	 a time. Watch out for overflow. */
+      verinum::V*bits = new verinum::V[INTEGER_WIDTH];
+      unsigned idx=0;
+      unsigned nbits=INTEGER_WIDTH;
+
+      while(idx<nbits){
+	  int rem = dec_buf_div2(buf);
+
+	  bits[idx] = (rem==1) ? verinum::V1 : verinum::V0;
+	  ++idx;
+      }
+
+      for(; idx<nbits; ++idx){
+	  bits[idx] = verinum::V0;
+      }
+      
+      /* If we run out of bits to hold the value, but there are
+	 still valueable bits in the number, print a warning. */
+      if (strcmp(buf, "0") != 0){
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric decimal constant ``" << yytext <<
+           "'' truncated to " << nbits << " bits." << endl;
       }
 
       yylval.number = new verinum(bits, nbits, false);
@@ -836,13 +857,65 @@ static verinum*make_unsized_hex(const char*txt)
       return out;
 }
 
+
+/* Divide the integer given by the string by 2. Return the remainder bit. */
+static int dec_buf_div2(char *buf)
+{
+    int partial;
+    int len = strlen(buf);
+    char *dst_ptr;
+    int pos;
+
+    partial = 0;
+    pos = 0;
+
+    /* dst_ptr overwrites buf, but all characters that are overwritten
+       were already used by the reader. */
+    dst_ptr = buf;
+
+    while(buf[pos] == '0')
+	++pos;
+
+    for(; pos<len; ++pos){
+	if (buf[pos]=='_')
+	    continue;
+
+	assert(isdigit(buf[pos]));
+
+	partial= partial*10 + (buf[pos]-'0');
+
+	if (partial >= 2){
+	    *dst_ptr = partial/2 + '0';
+	    partial = partial & 1;
+
+	    ++dst_ptr;
+	}
+	else{
+	    *dst_ptr = '0';
+	    ++dst_ptr;
+	}
+    }
+
+    // If result of division was zero string, it should remain that way.
+    // Don't eat the last zero...
+    if (dst_ptr == buf){
+	*dst_ptr = '0';
+	++dst_ptr;
+    }
+    *dst_ptr = 0;
+
+    return partial;
+}
+
 /*
  * Making a decimal number is much easier then the other base numbers
  * because there are no z or x values to worry about.
  */
 static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
 {
+      char buf[4096];
       bool signed_flag = false;
+
       if (tolower(*ptr) == 's') {
 	    signed_flag = true;
 	    ptr += 1;
@@ -853,40 +926,36 @@ static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
-      const char*digits = ptr;
-
-	/* Convert the decimal number to a binary value, one digit at
-	   a time. Watch out for overflow. */
-
-      unsigned long value = 0;
-      for ( ; *ptr ; ptr += 1)
-	    if (isdigit(*ptr)) {
-		  unsigned long tmp = value * 10 + (*ptr - '0');
-		  if (tmp < value)
-			cerr << yylloc.text << ":" << yylloc.first_line <<
-			      ": warning: Numeric decimal constant ``"
-			     << digits << "'' is too large." << endl;
-		  value *= 10;
-		  value += *ptr - '0';
-	    } else  {
-		  assert(*ptr == '_');
-	    }
-
-
-      verinum::V*bits = new verinum::V[size];
-
-      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
-	    bits[idx] = (value&1)? verinum::V1 : verinum::V0;
-	    value /= 2;
+      if (strlen(ptr) >= sizeof(buf)-2){
+	  fprintf(stderr, "Ridicilously long decimal constant will be truncated!\n");
       }
 
-	/* If we run out of bits to hold the value, but there are
-	   still valueable bits in the number, print a warning. */
+      strncpy(buf, ptr, sizeof(buf)-2);
+      buf[sizeof(buf)-1] = 0;
 
-      if (value != 0)
+      /* Convert the decimal number to a binary value, one digit at
+	 a time. Watch out for overflow. */
+      verinum::V*bits = new verinum::V[size];
+      unsigned idx=0;
+
+      while(idx<size){
+	  int rem = dec_buf_div2(buf);
+
+	  bits[idx] = (rem==1) ? verinum::V1 : verinum::V0;
+	  ++idx;
+      }
+
+      for(; idx<size; ++idx){
+	  bits[idx] = verinum::V0;
+      }
+      
+      /* If we run out of bits to hold the value, but there are
+	 still valueable bits in the number, print a warning. */
+      if (strcmp(buf, "0") != 0){
         cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric decimal constant ``" << digits <<
+          ": warning: Numeric decimal constant ``" << ptr <<
            "'' truncated to " << size << " bits." << endl;
+      }
 
       verinum*out = new verinum(bits, size, fixed);
       out->has_sign(signed_flag);
