@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.30 2001/04/21 03:26:23 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.31 2001/05/03 04:55:28 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -345,14 +345,14 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
-	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_false);
+	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
 
 	    rc += show_statement(ivl_stmt_cond_false(net), sscope);
 
-	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_out);
+	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_out);
 
       } else {
-	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_false);
+	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
       }
 
       return rc;
@@ -751,6 +751,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.31  2001/05/03 04:55:28  steve
+ *  Generate null statements for conditional labels.
+ *
  * Revision 1.30  2001/04/21 03:26:23  steve
  *  Right shift by constant.
  *
