@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.68 2002/04/14 18:41:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.69 2002/04/21 22:29:49 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -387,6 +387,14 @@ bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       schedule_assign(cp->iptr, bit_val, cp->bit_idx[0]);
+      return true;
+}
+
+bool of_ASSIGN_D(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] < 4);
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
+      schedule_assign(cp->iptr, bit_val, thr->index[cp->bit_idx[0]]);
       return true;
 }
 
@@ -1876,6 +1884,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.69  2002/04/21 22:29:49  steve
+ *  Add the assign/d instruction for computed delays.
+ *
  * Revision 1.68  2002/04/14 18:41:34  steve
  *  Support signed integer division.
  *

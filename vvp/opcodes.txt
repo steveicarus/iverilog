@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.33 2002/04/14 18:41:34 steve Exp $
+ *  $Id: opcodes.txt,v 1.34 2002/04/21 22:29:49 steve Exp $
  */
 
 
@@ -42,12 +42,17 @@ means the following:
 	otherwise   x
 
 * %assign <var-label>, <delay>, <bit>
+* %assign/d <var-label>, <delay>, <bit>
 
 This does a non-blocking assignment to a variable. The <label>
 identifies the affected variable, and the <delay> gives the delay when
 the assignment takes place. The delay may be 0. For blocking
 assignments, see %set. The <bit> is the address of the thread register
 that contains the bit value to assign.
+
+The %assign/d instruction is exactly the same as the %assign
+instruction, except that the <delay> specifies one of the index
+registers, that contain a calculated delay.
 
 
 * %assign/m <memory-label>, <delay>, <bit>

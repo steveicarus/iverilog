@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.39 2002/04/14 18:41:34 steve Exp $"
+#ident "$Id: codes.h,v 1.40 2002/04/21 22:29:49 steve Exp $"
 #endif
 
 
@@ -39,6 +39,7 @@ extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
@@ -152,6 +153,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.40  2002/04/21 22:29:49  steve
+ *  Add the assign/d instruction for computed delays.
+ *
  * Revision 1.39  2002/04/14 18:41:34  steve
  *  Support signed integer division.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.124 2002/04/14 18:41:34 steve Exp $"
+#ident "$Id: compile.cc,v 1.125 2002/04/21 22:29:49 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -83,6 +83,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%assign/d", of_ASSIGN_D, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
@@ -1409,6 +1410,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.125  2002/04/21 22:29:49  steve
+ *  Add the assign/d instruction for computed delays.
+ *
  * Revision 1.124  2002/04/14 18:41:34  steve
  *  Support signed integer division.
  *
