@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.47 2000/08/01 02:14:34 steve Exp $"
+#ident "$Id: lexor.lex,v 1.48 2000/10/14 01:31:30 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -461,6 +461,7 @@ static verinum*make_sized_octal(const char*txt)
 	    ptr += 1;
       }
       assert(tolower(*ptr) == 'o');
+      ptr += 1;
 
 	/* We know from the size number how bit to make the verinom
 	   array, so make it now. */
