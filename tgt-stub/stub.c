@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.97 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: stub.c,v 1.98 2005/01/22 16:23:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -267,6 +267,23 @@ static void show_lpm_cmp_ge(ivl_lpm_t net)
       check_cmp_widths(net);
 }
 
+/* IVL_LPM_CMP_NE
+ * This LPM node supports two-input compare. The output width is
+ * actually always 1, the lpm_width is the expected width of the inputs.
+ */
+static void show_lpm_cmp_ne(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CMP_NE %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+      fprintf(out, "    B: %s\n", ivl_nexus_name(ivl_lpm_data(net,1)));
+      check_cmp_widths(net);
+}
+
 /* IVL_LPM_CONCAT
  * The concat device takes N inputs (N=ivl_lpm_selects) and generates
  * a single output. The total output is known from the ivl_lpm_width
@@ -347,22 +364,9 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_cmp_ge(net);
 	    break;
 
-	  case IVL_LPM_CMP_NE: {
-		fprintf(out, "  LPM_COMPARE(NE) %s: <width=%u>\n",
-			ivl_lpm_basename(net), width);
-		fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
-		      fprintf(out, "    Data B %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		break;
-	  }
+	  case IVL_LPM_CMP_NE:
+	    show_lpm_cmp_ne(net);
+	    break;
 
 	  case IVL_LPM_CONCAT:
 	    show_lpm_concat(net);
@@ -919,6 +923,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.98  2005/01/22 16:23:06  steve
+ *  LPM_CMP_NE/EQ are vectored devices.
+ *
  * Revision 1.97  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

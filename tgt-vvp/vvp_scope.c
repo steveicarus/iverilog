@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.111 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.112 2005/01/22 16:22:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -433,8 +433,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
@@ -449,16 +452,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  return result;
 	    }
 
-	    break;
-
-	  case IVL_LPM_CMP_EQ:
-	  case IVL_LPM_CMP_NE:
-	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  sprintf(result, "L_%s.%s",
-			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(lpm))),
-			  vvp_mangle_id(ivl_lpm_basename(lpm)));
-		  return result;
-	    }
 	    break;
 
       }
@@ -1265,11 +1258,19 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    type = "eeq";
 	    signed_string = "";
 	    break;
+	  case IVL_LPM_CMP_EQ:
+	    type = "eq";
+	    signed_string = "";
+	    break;
 	  case IVL_LPM_CMP_GE:
 	    type = "ge";
 	    break;
 	  case IVL_LPM_CMP_GT:
 	    type = "gt";
+	    break;
+	  case IVL_LPM_CMP_NE:
+	    type = "ne";
+	    signed_string = "";
 	    break;
 	  default:
 	    assert(0);
@@ -1379,34 +1380,6 @@ static void draw_lpm_concat(ivl_lpm_t net)
 	    fprintf(vvp_out, ";\n");
 	    free(tree);
       }
-}
-
-/*
- * XXXX OBSOLETE
- */
-static void draw_lpm_eq(ivl_lpm_t net)
-{
-      unsigned width = ivl_lpm_width(net);
-      const char*type = "";
-
-      switch (ivl_lpm_type(net)) {
-	  case IVL_LPM_CMP_EQ:
-	    type = "eq";
-	    break;
-	  case IVL_LPM_CMP_NE:
-	    type = "ne";
-	    break;
-	  default:
-	    assert(0);
-      }
-
-      fprintf(vvp_out, "L_%s.%s .cmp/%s %u",
-	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-	      vvp_mangle_id(ivl_lpm_basename(net)), type, width);
-
-      draw_lpm_arith_a_b_inputs(net);
-
-      fprintf(vvp_out, ";\n");
 }
 
 /*
@@ -1673,18 +1646,15 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_concat(net);
 	    return;
 
-	  case IVL_LPM_CMP_EQ:
-	  case IVL_LPM_CMP_NE:
-	    draw_lpm_eq(net);
-	    return;
-
 	  case IVL_LPM_FF:
 	    draw_lpm_ff(net);
 	    return;
 
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
 	    draw_lpm_cmp(net);
 	    return;
 
@@ -1824,6 +1794,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.112  2005/01/22 16:22:13  steve
+ *  LPM_CMP_NE/EQ are vectored devices.
+ *
  * Revision 1.111  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *
