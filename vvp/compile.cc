@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.103 2001/10/11 18:29:21 steve Exp $"
+#ident "$Id: compile.cc,v 1.104 2001/10/12 02:53:47 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -175,22 +175,7 @@ static symbol_table_t sym_vpi = 0;
 /*
  *  Add a functor to the symbol table
  */
-#if 0
-static void define_fvector_symbol(char*label, vvp_fvector_t v)
-{
-      symbol_value_t val;
-      val.ptr = v;
-      sym_set_value(sym_functors, label, val);
-}
-#endif
 
-#if 0
-static void define_functor_symbol(char*label, vvp_ipoint_t ipt, unsigned wid)
-{
-      vvp_fvector_t v = vvp_fvector_continuous_new(wid, ipt);
-      define_fvector_symbol(label, v);
-}
-#else
 static void define_functor_symbol(const char*label, vvp_ipoint_t ipt)
 {
       symbol_value_t val;
@@ -203,7 +188,28 @@ static vvp_ipoint_t lookup_functor_symbol(const char*label)
       symbol_value_t val = sym_get_value(sym_functors, label);
       return val.num;
 }
-#endif
+
+static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
+{
+        /* First, look to see if the symbol is a signal, whether net
+	   or reg. If so, get the correct bit out. */
+      symbol_value_t val = sym_get_value(sym_vpi, label);
+      if (val.ptr) {
+	    vpiHandle vpi = (vpiHandle) val.ptr;
+	    assert((vpi->vpi_type->type_code == vpiNet)
+		   || (vpi->vpi_type->type_code == vpiReg));
+
+	    __vpiSignal*sig = (__vpiSignal*)vpi;
+	    return vvp_fvector_get(sig->bits, idx);
+      }
+
+	/* Failing that, look for a general functor. */
+      vvp_ipoint_t tmp = lookup_functor_symbol(label);
+      if (tmp)
+	    tmp = ipoint_index(tmp, idx);
+
+      return tmp;
+}
 
 /*
  * The resolv_list_s is the base class for a symbol resolve action, and
@@ -255,11 +261,9 @@ struct functor_resolv_list_s: public resolv_list_s {
 
 bool functor_resolv_list_s::resolve(bool mes)
 {
-      vvp_ipoint_t tmp = lookup_functor_symbol(source);
+      vvp_ipoint_t tmp = ipoint_lookup(source, idx);
 
       if (tmp) {
-	    tmp = ipoint_index(tmp, idx);
-
 	    functor_t fport = functor_index(tmp);
 	    functor_t iobj = functor_index(port);
 
@@ -301,11 +305,9 @@ struct functor_gen_resolv_list_s: public resolv_list_s {
 
 bool functor_gen_resolv_list_s::resolve(bool mes)
 {
-      vvp_ipoint_t tmp = lookup_functor_symbol(source);
+      vvp_ipoint_t tmp = ipoint_lookup(source, idx);
 
       if (tmp) {
-	    tmp = ipoint_index(tmp, idx);
-
 	    *ref = tmp;
 
 	    free(source);
@@ -419,72 +421,6 @@ void code_label_lookup(struct vvp_code_s *code, char *label)
 
       res->code  = code;
       res->label = label;
-
-      resolv_submit(res);
-}
-
-/*
- * functor label lookup
- */
-
-struct code_functor_resolv_list_s: public resolv_list_s {
-      struct vvp_code_s *code;
-      char *label;
-      unsigned idx;
-      virtual bool resolve(bool mes);
-};
-
-bool code_functor_resolv_list_s::resolve(bool mes)
-{
-      vvp_ipoint_t tmp;
-
-	/* First, look to see if the symbol is a signal, whether net
-	   or reg. If so, get the correct bit out. */
-      symbol_value_t val = sym_get_value(sym_vpi, label);
-      if (val.ptr) {
-	    vpiHandle vpi = (vpiHandle) val.ptr;
-	    assert((vpi->vpi_type->type_code == vpiNet)
-		   || (vpi->vpi_type->type_code == vpiReg));
-
-	    __vpiSignal*sig = (__vpiSignal*)vpi;
-	    tmp = vvp_fvector_get(sig->bits, idx);
-	    if (tmp == 0)
-		  goto error_out;
-
-	    assert(tmp);
-
-	    code->iptr = tmp;
-	    free(label);
-	    return true;
-      }
-
-	/* Failing that, look for a general functor. */
-      tmp = lookup_functor_symbol(label);
-      if (tmp) {
-	    code->iptr = ipoint_index(tmp, idx);
-	    free(label);
-	    return true;
-      }
-
- error_out:
-	/* lookup failed. Possibly try again. */
-      if (mes)
-	    fprintf(stderr, 
-		    "unresolved code reference to functor: %s\n", 
-		    label);
-
-      return false;
-}
-
-inline static
-void code_functor_lookup(struct vvp_code_s *code, char *label, unsigned idx)
-{
-      struct code_functor_resolv_list_s *res
-	    = new struct code_functor_resolv_list_s;
-
-      res->code  = code;
-      res->label = label;
-      res->idx   = idx; 
 
       resolv_submit(res);
 }
@@ -662,62 +598,40 @@ static vvp_ipoint_t make_const_functor(unsigned val,
 
 static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 {
-      if (lab == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(3,6,6);
-	    *ref = cf;
-      } else
+      if (lab == 0)
+	    *ref = make_const_functor(3,6,6);
 
-      if (strcmp(lab, "C<0>") == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(0,6,6);
-	    *ref = cf;
-      } else
+      else if (strcmp(lab, "C<0>") == 0)
+	    *ref = make_const_functor(0,6,6);
 
-      if (strcmp(lab, "C<su0>") == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(0,7,7);
-	    *ref = cf;
-      } else
+      else if (strcmp(lab, "C<su0>") == 0)
+	    *ref = make_const_functor(0,7,7);
 
-      if (strcmp(lab, "C<1>") == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(1,6,6);
-	    *ref = cf;
-      } else
+      else if (strcmp(lab, "C<pu0>") == 0) 
+	    *ref = make_const_functor(0,5,5);
 
-      if (strcmp(lab, "C<su1>") == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(1,7,7);
-	    *ref = cf;
-      } else
+      else if (strcmp(lab, "C<1>") == 0)
+	    *ref = make_const_functor(1,6,6);
 
-      if (strcmp(lab, "C<x>") == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(2,6,6);
-	    *ref = cf;
-      } else
+      else if (strcmp(lab, "C<su1>") == 0)
+	    *ref = make_const_functor(1,7,7);
 
-      if (strcmp(lab, "C<z>") == 0) {
-	    static vvp_ipoint_t cf=0;
-	    if (!cf) 
-		  cf = make_const_functor(3,6,6);
-	    *ref = cf;
-      } else {
-
+      else if (strcmp(lab, "C<pu1>") == 0)
+	    *ref = make_const_functor(1,5,5);
+ 
+      else if (strcmp(lab, "C<x>") == 0)
+	    *ref = make_const_functor(2,6,6);
+      
+      else if (strcmp(lab, "C<z>") == 0)
+	    *ref = make_const_functor(3,6,6);
+      
+      else {
 	    functor_ref_lookup(ref, lab, idx);
 	    return;
       }
 
       free(lab);
 }
-
 
 /*
  * The parser calls this function to create a functor. I allocate a
@@ -1431,9 +1345,9 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  code_functor_lookup(code, 
-				      opa->argv[idx].symb.text,
-				      opa->argv[idx].symb.idx);
+		  functor_ref_lookup(&code->iptr, 
+				     opa->argv[idx].symb.text,
+				     opa->argv[idx].symb.idx);
 		  break;
 
 		case OA_NUMBER:
@@ -1654,6 +1568,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.104  2001/10/12 02:53:47  steve
+ *  functor lookup includes vpi signal search.
+ *
  * Revision 1.103  2001/10/11 18:29:21  steve
  *  Propagate initial value of UDP.
  *
