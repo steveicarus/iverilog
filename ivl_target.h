@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.58 2001/05/06 17:48:20 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.59 2001/05/08 04:13:12 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -160,11 +160,11 @@ typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
       IVL_EX_BINARY,
       IVL_EX_CONCAT,
+      IVL_EX_MEMORY,
       IVL_EX_NUMBER,
       IVL_EX_SCOPE,
       IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
-      IVL_EX_MEMORY,
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
       IVL_EX_UFUNC,
@@ -824,6 +824,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.59  2001/05/08 04:13:12  steve
+ *  sort enumeration values.
+ *
  * Revision 1.58  2001/05/06 17:48:20  steve
  *  Support memory objects. (Stephan Boettcher)
  *
