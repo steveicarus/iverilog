@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.46 1999/10/05 06:19:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.47 1999/10/06 05:06:16 steve Exp $"
 #endif
 
 /*
@@ -130,7 +130,7 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
 void NetAssign::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Procedural assign (NetAssign): " <<
-	    *rval_ << endl;
+	    *rval() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -138,10 +138,10 @@ void NetAssignNB::dump_node(ostream&o, unsigned ind) const
 {
       if (bmux_)
 	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
-	      << name() << "[" << *bmux_ << "] <= " << *rval_ << endl;
+	      << name() << "[" << *bmux_ << "] <= " << *rval() << endl;
       else
 	    o << setw(ind) << "" << "Procedural NB assign (NetAssignNB): "
-	      << name() << " <= " << *rval_ << endl;
+	      << name() << " <= " << *rval() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -340,10 +340,7 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       o << sig->name() << "[" << msb;
       if (pin_count() > 1)
 	    o << ":" << lsb;
-      o << "] = ";
-      
-      rval_->dump(o);
-      o << ";" << endl;
+      o << "] = " << *rval() << ";" << endl;
 }
 
 void NetAssignNB::dump(ostream&o, unsigned ind) const
@@ -354,13 +351,13 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 	    o << name() << "[" << *bmux_ << "] <= ";
 	    if (rise_time())
 		  o << "#" << rise_time() << " ";
-	    o << *rval_ << ";" << endl;
+	    o << *rval() << ";" << endl;
 
       } else {
 	    o << name() << " <= ";
 	    if (rise_time())
 		  o << "#" << rise_time() << " ";
-	    o << *rval_ << ";" << endl;
+	    o << *rval() << ";" << endl;
       }
 }
 
@@ -782,6 +779,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.47  1999/10/06 05:06:16  steve
+ *  Move the rvalue into NetAssign_ common code.
+ *
  * Revision 1.46  1999/10/05 06:19:46  steve
  *  Add support for reduction NOR.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.76 1999/09/30 21:28:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.77 1999/10/06 05:06:16 steve Exp $"
 #endif
 
 /*
@@ -615,18 +615,27 @@ class NetProc  : public LineInfo {
 
 class NetAssign_ : public NetProc, public NetNode {
 
+    public:
+
+	// This is the (procedural) value that is to be assigned when
+	// the assignment is executed.
+      NetExpr*rval();
+      const NetExpr*rval() const;
+
     protected:
       NetAssign_(const string&n, unsigned w);
       virtual ~NetAssign_() =0;
+
+      void set_rval(NetExpr*);
+
+    private:
+      NetExpr*rval_;
 };
 
 class NetAssign  : public NetAssign_ {
     public:
       explicit NetAssign(const string&, Design*des, unsigned w, NetExpr*rv);
       ~NetAssign();
-
-      NetExpr*rval() { return rval_; }
-      const NetExpr*rval() const { return rval_; }
 
       void find_lval_range(const NetNet*&net, unsigned&msb,
 			   unsigned&lsb) const;
@@ -637,7 +646,6 @@ class NetAssign  : public NetAssign_ {
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetExpr* rval_;
 };
 
 /*
@@ -650,9 +658,6 @@ class NetAssignNB  : public NetAssign_ {
 			   NetExpr*mux, NetExpr*rv);
       ~NetAssignNB();
 
-	// This is the (procedural) value that is to be assigned when
-	// the assignment is executed.
-      const NetExpr*rval() const { return rval_; }
 
 	// If this expression exists, then only a single bit is to be
 	// set from the rval, and the value of this expression selects
@@ -665,7 +670,6 @@ class NetAssignNB  : public NetAssign_ {
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetExpr* rval_;
       NetExpr* bmux_;
 };
 
@@ -1707,6 +1711,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.77  1999/10/06 05:06:16  steve
+ *  Move the rvalue into NetAssign_ common code.
+ *
  * Revision 1.76  1999/09/30 21:28:34  steve
  *  Handle mutual reference of tasks by elaborating
  *  task definitions in two passes, like functions.

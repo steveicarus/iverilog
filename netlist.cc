@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.73 1999/10/05 04:02:10 steve Exp $"
+#ident "$Id: netlist.cc,v 1.74 1999/10/06 05:06:16 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -382,7 +382,7 @@ NetObj::Link& NetAddSub::pin_Result(unsigned idx)
 }
 
 NetAssign_::NetAssign_(const string&n, unsigned w)
-: NetNode(n, w)
+: NetNode(n, w), rval_(0)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
 	    pin(idx).set_dir(NetObj::Link::OUTPUT);
@@ -391,44 +391,63 @@ NetAssign_::NetAssign_(const string&n, unsigned w)
 
 NetAssign_::~NetAssign_()
 {
+      if (rval_) delete rval_;
+}
+
+void NetAssign_::set_rval(NetExpr*r)
+{
+      rval_ = r;
+}
+
+NetExpr* NetAssign_::rval()
+{
+      return rval_;
+}
+
+const NetExpr* NetAssign_::rval() const
+{
+      return rval_;
 }
 
 NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssign_(n, w), rval_(rv)
+: NetAssign_(n, w)
 {
+      set_rval(rv);
 }
 
 NetAssign::~NetAssign()
 {
-      delete rval_;
 }
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssign_(n, w), rval_(rv), bmux_(0)
+: NetAssign_(n, w), bmux_(0)
 {
-      if (rval_->expr_width() < w) {
+      if (rv->expr_width() < w) {
 	    cerr << rv->get_line() << ": Expression bit width (" <<
-		  rval_->expr_width() << ") conflicts with l-value "
+		  rv->expr_width() << ") conflicts with l-value "
 		  "bit width (" << w << ")." << endl;
 	    des->errors += 1;
       }
+
+      set_rval(rv);
 }
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
 			 NetExpr*mu, NetExpr*rv)
-: NetAssign_(n, w), rval_(rv), bmux_(mu)
+: NetAssign_(n, w), bmux_(mu)
 {
-      bool flag = rval_->set_width(1);
+      bool flag = rv->set_width(1);
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
 		  " conflicts with l-value bit width." << endl;
 	    des->errors += 1;
       }
+
+      set_rval(rv);
 }
 
 NetAssignNB::~NetAssignNB()
 {
-      delete rval_;
       delete bmux_;
 }
 
@@ -1684,6 +1703,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.74  1999/10/06 05:06:16  steve
+ *  Move the rvalue into NetAssign_ common code.
+ *
  * Revision 1.73  1999/10/05 04:02:10  steve
  *  Relaxed width handling for <= assignment.
  *
