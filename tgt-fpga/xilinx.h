@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.2 2003/06/25 02:55:57 steve Exp $"
+#ident "$Id: xilinx.h,v 1.3 2003/06/26 03:57:05 steve Exp $"
 #endif
 
 /*
@@ -104,11 +104,15 @@ extern void virtex_add(ivl_lpm_t net);
 extern void xilinx_show_scope(ivl_scope_t scope);
 extern void xilinx_pad(ivl_signal_t, const char*str);
 extern void xilinx_logic(ivl_net_logic_t net);
+extern void xilinx_mux(ivl_lpm_t net);
 extern void xilinx_add(ivl_lpm_t net);
 extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.3  2003/06/26 03:57:05  steve
+ *  Add Xilinx support for A/B MUX devices.
+ *
  * Revision 1.2  2003/06/25 02:55:57  steve
  *  Virtex and Virtex2 share much code.
  *

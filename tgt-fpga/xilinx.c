@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.2 2003/06/25 02:55:57 steve Exp $"
+#ident "$Id: xilinx.c,v 1.3 2003/06/26 03:57:05 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -486,6 +486,56 @@ void xilinx_logic(ivl_net_logic_t net)
 }
 
 /*
+ * A fully generic Xilinx MUX is implemented entirely from LUT
+ * devices.
+ */
+void xilinx_mux(ivl_lpm_t net)
+{
+      unsigned idx;
+
+      edif_cellref_t lut;
+      edif_joint_t jnt;
+
+      assert(ivl_lpm_selects(net) == 1);
+
+	/* A/B Mux devices are made from LUT3 devices. I0 is connected
+	   to A, I1 to B, and I2 to the Select input. Create as many
+	   as are needed to implement the requested width.
+
+	   S B A | Q
+	   ------+--
+	   0 0 0 | 0
+	   0 0 1 | 1
+	   0 1 0 | 0
+	   0 1 1 | 1
+	   1 0 0 | 0
+	   1 0 1 | 0
+	   1 1 0 | 1
+	   1 1 1 | 1
+
+	   INIT = "CA" */
+
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+
+	    lut = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, idx));
+	    edif_add_to_joint(jnt, lut, LUT_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data2(net, 0, idx));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data2(net, 1, idx));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_select(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_I2);
+
+	    edif_cellref_pstring(lut, "INIT", "CA");
+      }
+}
+
+/*
  * Any Xilinx device works with this adder.
  * Generic Xilinx add only works for single bit slices.
  */
@@ -682,6 +732,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.3  2003/06/26 03:57:05  steve
+ *  Add Xilinx support for A/B MUX devices.
+ *
  * Revision 1.2  2003/06/25 02:55:57  steve
  *  Virtex and Virtex2 share much code.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.14 2003/06/25 02:55:57 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.15 2003/06/26 03:57:05 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -141,7 +141,7 @@ const struct device_s d_virtex2_edif = {
       virtex_eq,
       virtex_eq,
       virtex_ge,
-      0,
+      xilinx_mux,
       virtex_add,
       virtex_add,
       xilinx_shiftl, /* show_shiftl */
@@ -151,6 +151,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.15  2003/06/26 03:57:05  steve
+ *  Add Xilinx support for A/B MUX devices.
+ *
  * Revision 1.14  2003/06/25 02:55:57  steve
  *  Virtex and Virtex2 share much code.
  *
