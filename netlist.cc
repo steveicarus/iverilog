@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.69 1999/09/23 03:56:57 steve Exp $"
+#ident "$Id: netlist.cc,v 1.70 1999/09/28 03:11:29 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1020,6 +1020,22 @@ NetETernary* NetETernary::dup_expr() const
       assert(0);
 }
 
+NetEUnary::NetEUnary(char op, NetExpr*ex)
+: NetExpr(ex->expr_width()), op_(op), expr_(ex)
+{
+      switch (op_) {
+	  case '!': // Logical not
+	  case '&': // Reduction and
+	  case '|': // Reduction or
+	  case '^': // Reduction XOR
+	  case 'A': // Reduction NAND (~&)
+	  case 'N': // Reduction NOR (~|)
+	  case 'X': // Reduction NXOR (~^)
+	    expr_width(1);
+	    break;
+      }
+}
+
 NetEUnary::~NetEUnary()
 {
       delete expr_;
@@ -1631,6 +1647,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.70  1999/09/28 03:11:29  steve
+ *  Get the bit widths of unary operators that return one bit.
+ *
  * Revision 1.69  1999/09/23 03:56:57  steve
  *  Support shift operators.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.72 1999/09/25 02:57:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.73 1999/09/28 03:11:30 steve Exp $"
 #endif
 
 /*
@@ -1427,8 +1427,7 @@ class NetETernary  : public NetExpr {
 class NetEUnary  : public NetExpr {
 
     public:
-      NetEUnary(char op, NetExpr*ex)
-      : NetExpr(ex->expr_width()), op_(op), expr_(ex) { }
+      NetEUnary(char op, NetExpr*ex);
       ~NetEUnary();
 
       char op() const { return op_; }
@@ -1690,6 +1689,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.73  1999/09/28 03:11:30  steve
+ *  Get the bit widths of unary operators that return one bit.
+ *
  * Revision 1.72  1999/09/25 02:57:30  steve
  *  Parse system function calls.
  *
