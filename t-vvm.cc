@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.90 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.91 1999/12/16 02:42:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -911,6 +911,15 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	    emit_gate_outputfun_(gate, pin);
       }
 
+	// Connect the carry output if necessary.
+      if (gate->pin_Cout().is_linked()) {
+	    unsigned pin = gate->pin_Cout().get_pin();
+	    string outfun = defn_gate_outputfun_(os, gate, pin);
+	    init_code << "      " << mangle(gate->name()) <<
+		  ".config_cout(&" << outfun << ");" << endl;
+	    emit_gate_outputfun_(gate, pin);
+      }
+
       if (gate->attribute("LPM_Direction") == "ADD") {
 	    init_code << "      " <<  mangle(gate->name()) <<
 		  ".init_Add_Sub(0, V1);" << endl;
@@ -920,6 +929,8 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 		  ".init_Add_Sub(0, V0);" << endl;
 
       }
+
+      start_code << "      " << mangle(gate->name()) << ".start();" << endl;
 }
 
 void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
@@ -1071,8 +1082,7 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 
       emit_gate_outputfun_(gate, 0);
 
-      start_code << "      " << mangle(gate->name()) <<
-	    ".start();" << endl;
+      start_code << "      " << mangle(gate->name()) << ".start();" << endl;
 }
 
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
@@ -1955,6 +1965,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.91  1999/12/16 02:42:15  steve
+ *  Simulate carry output on adders.
+ *
  * Revision 1.90  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *

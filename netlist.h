@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.101 1999/12/12 06:03:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.102 1999/12/16 02:42:15 steve Exp $"
 #endif
 
 /*
@@ -321,6 +321,7 @@ class NetAddSub  : public NetNode {
       NetObj::Link& pin_DataB(unsigned idx);
       NetObj::Link& pin_Result(unsigned idx);
 
+      const NetObj::Link& pin_Cout() const;
       const NetObj::Link& pin_DataA(unsigned idx) const;
       const NetObj::Link& pin_DataB(unsigned idx) const;
       const NetObj::Link& pin_Result(unsigned idx) const;
@@ -2069,6 +2070,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.102  1999/12/16 02:42:15  steve
+ *  Simulate carry output on adders.
+ *
  * Revision 1.101  1999/12/12 06:03:14  steve
  *  Allow memories without indices in expressions.
  *

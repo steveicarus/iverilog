@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.32 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.33 1999/12/16 02:42:15 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -81,10 +81,16 @@ class vvm_1bit_out {
 template <unsigned WIDTH> class vvm_add_sub {
 
     public:
-      vvm_add_sub() : ndir_(V0) { }
+      vvm_add_sub() : ndir_(V0), co_(0) { }
 
       void config_rout(unsigned idx, vvm_out_event::action_t a)
 	    { o_[idx] = a;
+	      r_[idx] = Vx;
+	    }
+
+      void config_cout(vvm_out_event::action_t a)
+	    { co_ = a;
+	      c_ = Vx;
 	    }
 
       void init_DataA(unsigned idx, vpip_bit_t val)
@@ -99,6 +105,8 @@ template <unsigned WIDTH> class vvm_add_sub {
 	    { ndir_ = not(val);
 	    }
 
+      void start() { compute_(); }
+
       void set_DataA(unsigned idx, vpip_bit_t val)
 	    { a_[idx] = val;
 	      compute_();
@@ -112,12 +120,14 @@ template <unsigned WIDTH> class vvm_add_sub {
       vpip_bit_t a_[WIDTH];
       vpip_bit_t b_[WIDTH];
       vpip_bit_t r_[WIDTH];
+      vpip_bit_t c_;
 
 	// this is the inverse of the Add_Sub port. It is 0 for add,
 	// and 1 for subtract.
       vpip_bit_t ndir_;
 
       vvm_out_event::action_t o_[WIDTH];
+      vvm_out_event::action_t co_;
 
       void compute_()
 	    { vpip_bit_t carry = ndir_;
@@ -130,6 +140,8 @@ template <unsigned WIDTH> class vvm_add_sub {
 		    vvm_event*ev = new vvm_out_event(val, o_[idx]);
 		    ev->schedule();
 	      }
+	      if (co_ && (carry != c_))
+		    (new vvm_out_event(carry, co_)) -> schedule();
 	    }
 };
 
@@ -921,6 +933,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.33  1999/12/16 02:42:15  steve
+ *  Simulate carry output on adders.
+ *
  * Revision 1.32  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *

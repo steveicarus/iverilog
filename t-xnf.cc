@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.19 1999/12/05 19:30:43 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.20 1999/12/16 02:42:15 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -465,7 +465,7 @@ void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
       unsigned width = gate->width();
 
       // Don't handle carry output yet
-      // assert (count_outputs(gate->pin_Cout())==0);
+      assert (! gate->pin_Cout().is_linked());
       unsigned carry_width = width-1;
 
 	/* Make the force-0 cary mode object to initialize the bottom
@@ -687,6 +687,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.20  1999/12/16 02:42:15  steve
+ *  Simulate carry output on adders.
+ *
  * Revision 1.19  1999/12/05 19:30:43  steve
  *  Generate XNF RAMS from synthesized memories.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.11 1999/12/02 04:08:10 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.12 1999/12/16 02:42:14 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -236,8 +236,14 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
 
+	// If the desired output size if creater then the largest
+	// operand, then include the carry of the adder as an output.
+      unsigned owidth = width;
+      if (lwidth > owidth)
+	    owidth = width + 1;
+
 	// Make the adder as wide as the widest operand
-      osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE, width);
+      osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE, owidth);
       NetAddSub*adder = new NetAddSub(name, width);
 
 	// Connect the adder to the various parts.
@@ -245,8 +251,10 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    connect(lsig->pin(idx), adder->pin_DataA(idx));
       for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
 	    connect(rsig->pin(idx), adder->pin_DataB(idx));
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ; idx += 1)
+      for (unsigned idx = 0 ;  idx < width ; idx += 1)
 	    connect(osig->pin(idx), adder->pin_Result(idx));
+      if (owidth > width)
+	    connect(osig->pin(width), adder->pin_Cout());
 
       gate = adder;
       des->add_signal(osig);
@@ -898,6 +906,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.12  1999/12/16 02:42:14  steve
+ *  Simulate carry output on adders.
+ *
  * Revision 1.11  1999/12/02 04:08:10  steve
  *  Elaborate net repeat concatenations.
  *
