@@ -33,6 +33,7 @@ ivl_expr_opcode
 ivl_expr_oper1
 ivl_expr_oper2
 ivl_expr_oper3
+ivl_expr_parameter
 ivl_expr_parm
 ivl_expr_parms
 ivl_expr_repeat
@@ -107,6 +108,9 @@ ivl_nexus_ptr_lpm
 ivl_nexus_ptr_log
 ivl_nexus_ptr_sig
 
+ivl_parameter_basename
+ivl_parameter_expr
+
 ivl_scope_basename
 ivl_scope_children
 ivl_scope_def
@@ -119,6 +123,8 @@ ivl_scope_lpm
 ivl_scope_mem
 ivl_scope_mems
 ivl_scope_name
+ivl_scope_param
+ivl_scope_params
 ivl_scope_parent
 ivl_scope_port
 ivl_scope_ports
