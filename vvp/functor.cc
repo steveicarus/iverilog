@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: functor.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
 #endif
 
 # include  "functor.h"
+# include  "schedule.h"
 # include  <assert.h>
 
 /*
@@ -68,7 +69,7 @@ void functor_init(void)
 }
 
 /*
- * Allocate normall is just a matter of incrementing the functor_count
+ * Allocate normally is just a matter of incrementing the functor_count
  * and returning a pointer to the next unallocated functor. However,
  * if we overrun a chunk or an index, we need to allocate the needed
  * bits first.
@@ -95,7 +96,11 @@ vvp_ipoint_t functor_allocate(void)
       return res * 4;
 }
 
-
+/*
+ * Given a vvp_ipoint_t pointer, return a pointer to the detailed
+ * functor structure. This does not use the low 2 bits, which address
+ * a specific port of the functor.
+ */
 functor_t functor_index(vvp_ipoint_t point)
 {
       point /= 4;
@@ -112,6 +117,57 @@ functor_t functor_index(vvp_ipoint_t point)
       return functor_table[point]->table[index1]->table + index0;
 }
 
+/*
+ * Set the addressed bit of the functor, and recalculate the
+ * output. If the output changes any, then generate the necessary
+ * propagation events to pass the output on.
+ */
+void functor_set(vvp_ipoint_t ptr, unsigned bit)
+{
+      functor_t fp = functor_index(ptr);
+      unsigned pp = ipoint_port(ptr);
+      assert(fp);
+      assert(fp->table);
+
+	/* Change the bits of the input. */
+      static const unsigned char mask_table[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
+      unsigned char mask = mask_table[pp];
+      fp->ival = (fp->ival & mask) | (bit << (2*pp));
+
+	/* Locate the new output value in the table. */
+      unsigned char out = fp->table[fp->ival >> 2];
+      out >>= 2 * (fp->ival&0x03);
+      out &= 0x03;
+
+	/* If the output changes, then create a propagation event. */
+      if (out != fp->oval) {
+	    fp->oval = out;
+	    schedule_functor(ptr, 0);
+      }
+}
+
+/*
+ * This function is used by the scheduler to implement the propagation
+ * event. The input is the pointer to the functor who's output is to
+ * be propagated. Pass the output to the inputs of all the connected
+ * functors.
+ */
+void functor_propagate(vvp_ipoint_t ptr)
+{
+      functor_t fp = functor_index(ptr);
+      unsigned char oval = fp->oval;
+
+      printf("functor %lx becomes %u\n", ptr, oval);
+
+      vvp_ipoint_t idx = fp->out;
+      while (idx) {
+	    functor_t idxp = functor_index(idx);
+	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
+	    printf("    set %lx to %u\n", idx, oval);
+	    functor_set(idx, oval);
+	    idx = next;
+      }
+}
 
 void functor_dump(FILE*fd)
 {
@@ -124,7 +180,34 @@ void functor_dump(FILE*fd)
 }
 
 /*
+ * The variable functor is special. This is the truth table for it.
+ */
+const unsigned char ft_var[16] = {
+      0xe4, /* 0 0: 11, 10, 01, 00 */
+      0xe4, /* 0 1: 11, 10, 01, 00 */
+      0xe4, /* 0 x: 11, 10, 01, 00 */
+      0xe4, /* 0 z: 11, 10, 01, 00 */
+      0x00, /* 1 0: 00, 00, 00, 00 */
+      0x55, /* 1 1: 01, 01, 01, 01 */
+      0xaa, /* 1 x: 10, 10, 10, 10 */
+      0xff, /* 1 z: 11, 11, 11, 11 */
+      0xe4,
+      0xe4,
+      0xe4,
+      0xe4,
+      0xe4,
+      0xe4,
+      0xe4,
+      0xe4
+};
+
+
+
+/*
  * $Log: functor.cc,v $
+ * Revision 1.2  2001/03/11 22:42:11  steve
+ *  Functor values and propagation.
+ *
  * Revision 1.1  2001/03/11 00:29:38  steve
  *  Add the vvp engine to cvs.
  *

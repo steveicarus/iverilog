@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: schedule.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
 #endif
 
 # include  "schedule.h"
+# include  "functor.h"
 # include  "vthread.h"
 # include  <malloc.h>
 # include  <assert.h>
@@ -28,12 +29,19 @@
 struct event_s {
       unsigned delay;
 
-      vthread_t thr;
-      vvp_ipoint_t fun;
+      union {
+	    vthread_t thr;
+	    vvp_ipoint_t fun;
+      };
+      unsigned val  :2;
+      unsigned type :2;
 
       struct event_s*next;
       struct event_s*last;
 };
+const unsigned TYPE_THREAD = 0;
+const unsigned TYPE_PROP   = 1;
+const unsigned TYPE_ASSIGN = 2;
 
 static struct event_s* list = 0;
 
@@ -91,6 +99,7 @@ void schedule_vthread(vthread_t thr, unsigned delay)
 
       cur->delay = delay;
       cur->thr = thr;
+      cur->type = TYPE_THREAD;
 
       schedule_event_(cur);
 }
@@ -102,8 +111,23 @@ void schedule_functor(vvp_ipoint_t fun, unsigned delay)
 
       cur->delay = delay;
       cur->fun = fun;
+      cur->type = TYPE_PROP;
 
       schedule_event_(cur);
+}
+
+void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
+{
+      struct event_s*cur = (struct event_s*)
+	    calloc(1, sizeof(struct event_s));
+
+      cur->delay = delay;
+      cur->fun = fun;
+      cur->val = val;
+      cur->type= TYPE_ASSIGN;
+
+      schedule_event_(cur);
+
 }
 
 static unsigned long schedule_time;
@@ -127,11 +151,19 @@ void schedule_simulate(void)
 		  printf("TIME: %u\n", schedule_time);
 	    }
 
-	    if (cur->thr) {
+	    switch (cur->type) {
+		case TYPE_THREAD:
 		  vthread_run(cur->thr);
+		  break;
 
-	    } else if (cur->fun) {
-		    /* XXXX not implemented yet */
+		case TYPE_PROP:
+		  printf("Propagate %p\n", cur->fun);
+		  functor_propagate(cur->fun);
+		  break;
+
+		case TYPE_ASSIGN:
+		  functor_set(cur->fun, cur->val);
+		  break;
 
 	    }
 
@@ -141,6 +173,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.2  2001/03/11 22:42:11  steve
+ *  Functor values and propagation.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *

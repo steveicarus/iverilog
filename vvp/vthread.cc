@@ -17,12 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: vthread.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
 #endif
 
 # include  "vthread.h"
 # include  "codes.h"
 # include  "schedule.h"
+# include  "functor.h"
+# include  <assert.h>
 
 struct vthread_s {
 	/* This is the program counter. */
@@ -59,13 +61,23 @@ void vthread_run(vthread_t thr)
 
 bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
-      printf("thread %p: %%assign\n");
+      printf("thread %p: %%assign\n", thr);
+
+      unsigned char bit_val = 3;
+      if ((cp->bit_idx & ~0x3) == 0x0) {
+	    bit_val = cp->bit_idx&3;
+
+      } else {
+	    printf("XXXX bit_idx out of range?\n");
+      }
+
+      schedule_assign(cp->iptr, bit_val, cp->number);
       return true;
 }
 
 bool of_DELAY(vthread_t thr, vvp_code_t cp)
 {
-      printf("thread %p: %%delay %u\n", thr, cp->number);
+      printf("thread %p: %%delay %lu\n", thr, cp->number);
       schedule_vthread(thr, cp->number);
       return false;
 }
@@ -83,12 +95,26 @@ bool of_NOOP(vthread_t thr, vvp_code_t cp)
 
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
-      printf("thread %p: %%set\n");
+      printf("thread %p: %%set %lu, %u\n", thr, cp->iptr, cp->bit_idx);
+
+      unsigned char bit_val = 3;
+      if ((cp->bit_idx & ~0x3) == 0x0) {
+	    bit_val = cp->bit_idx&3;
+
+      } else {
+	    printf("XXXX bit_idx out of range?\n");
+      }
+
+      functor_set(cp->iptr, bit_val);
+
       return true;
 }
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.2  2001/03/11 22:42:11  steve
+ *  Functor values and propagation.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *

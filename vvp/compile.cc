@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: compile.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -125,7 +125,8 @@ void compile_init(void)
  * functor, and map the name to the vvp_ipoint_t address for the
  * functor. Also resolve the inputs to the functor.
  */
-void compile_functor(char*label, char*type, unsigned argc, char**argv)
+void compile_functor(char*label, char*type, unsigned init,
+		     unsigned argc, char**argv)
 {
       vvp_ipoint_t fdx = functor_allocate();
       functor_t obj = functor_index(fdx);
@@ -161,6 +162,19 @@ void compile_functor(char*label, char*type, unsigned argc, char**argv)
 		  res->next = resolv_list;
 		  resolv_list = res;
 	    }
+      }
+
+      obj->ival = init;
+      obj->oval = 2;
+
+      if (strcmp(type, "OR") == 0) {
+	    obj->table = ft_OR;
+
+      } else if (strcmp(type, "AND") == 0) {
+	    obj->table = ft_AND;
+
+      } else {
+	    yyerror("invalid functor type.");
       }
 
       free(argv);
@@ -298,12 +312,20 @@ void compile_thread(char*start_sym)
 void compile_variable(char*label)
 {
       vvp_ipoint_t fdx = functor_allocate();
-      functor_t obj = functor_index(fdx);
       sym_set_value(sym_functors, label, fdx);
+
+      functor_t obj = functor_index(fdx);
+      obj->table = ft_var;
+      obj->ival  = 0x22;
+      obj->oval  = 0x02;
 
       free(label);
 }
 
+/*
+ * When parsing is otherwise complete, this function is called to do
+ * the final stuff. Clean up deferred linking here.
+ */
 void compile_cleanup(void)
 {
       struct resolv_list_s*tmp_list = resolv_list;
@@ -313,12 +335,18 @@ void compile_cleanup(void)
 	    struct resolv_list_s*res = tmp_list;
 	    tmp_list = res->next;
 
+	      /* Get the addressed functor object and select the input
+		 port that needs resolution. */
 	    functor_t obj = functor_index(res->port);
 	    unsigned idx = ipoint_port(res->port);
 
+	      /* Try again to look up the symbol that was not defined
+		 the first time around. */
 	    vvp_ipoint_t tmp = sym_get_value(sym_functors, res->source);
 
 	    if (tmp != 0) {
+		    /* The symbol is defined, link the functor input
+		       to the resolved output. */
 		  functor_t fport = functor_index(tmp);
 		  obj->port[idx] = fport->out;
 		  fport->out = res->port;
@@ -353,6 +381,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.2  2001/03/11 22:42:11  steve
+ *  Functor values and propagation.
+ *
  * Revision 1.1  2001/03/11 00:29:38  steve
  *  Add the vvp engine to cvs.
  *

@@ -50,12 +50,12 @@ statement
   /* Functor statements define functors. The functor must have a
      label and a type name, and may have operands. */
 
-	: T_LABEL K_FUNCTOR T_SYMBOL ',' symbols ';'
-		{ struct textv_s obj = $5;
-		  compile_functor($1, $3, obj.cnt, obj.text);
+	: T_LABEL K_FUNCTOR T_SYMBOL ',' T_NUMBER ',' symbols ';'
+		{ struct textv_s obj = $7;
+		  compile_functor($1, $3, $5, obj.cnt, obj.text);
 		}
-	| T_LABEL K_FUNCTOR T_SYMBOL ';'
-		{ compile_functor($1, $3, 0, 0); }
+	| T_LABEL K_FUNCTOR T_SYMBOL','  T_NUMBER ';'
+		{ compile_functor($1, $3, $5, 0, 0); }
 
   /* Instructions may have a label, and have zero or more
      operands. The meaning of and restrictions on the operands depends

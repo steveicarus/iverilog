@@ -19,7 +19,7 @@ Every statement is terminated by a semicolon. The semicolon is also
 the start of a comment line, so you can put comment text after the
 semicolon that terminates a statement. Like so:
 
-	Label .functor and, x, y  ; This is a comment.
+	Label .functor and, 0x5a, x, y  ; This is a comment.
 
 The semicolon is required, whether the comment is there or not.
 
@@ -59,15 +59,20 @@ label is required for functors.
 
 The general syntax of a functor is:
 
-	<label> .functor <type> [, symbol_list]
+	<label> .functor <type>, <init> [, symbol_list]
 
 The symbol list is 0-4 names of labels of other functors. These
 connect inputs of the functor of the statement to the output of other
 functors. The type is the label of a .ftype statement elsewhere in the
-program. The references .ftype describes the behavoir of the functor.
+program. The references .ftype describes the behavoir of the
+functor.
+
+The <init> value is the 8-bit initial value of the 4 input ports. The
+LSB is port 0, and the MSB port 3.
 
 Almost all of the structural aspects of a simulation can be
-represented by functors.
+represented by functors, which perform the very basic task of
+combining up to four inputs down to one output.
 
 VARIABLE STATEMENTS:
 
@@ -109,6 +114,43 @@ create threads at startup.
 
 This statement creates a thread with a starting address at the
 instruction given by <symbol>.
+
+
+TRUTH TABLES
+
+The logic that a functor represents is expressed as a truth table. The
+functor has four inputs and one output. Each input and output has one
+of four possible values (0, 1, x and z) so two bits are needed to
+represent them. So the input of the functor is 8 bits, and the output
+2 bits. A complete lookup table for generating the 2-bit output from
+an 8-bit input is 512 bits. That can be packed into 64 bytes. This is
+small enough that the table should take less space then the code to
+implement the logic.
+
+To implement the truth table, we need to assign 2-bit encodings for
+the 4-value signals. I choose, pseudo-randomly, the following
+encoding:
+
+	1'b0  : 00
+	1'b1  : 01
+	1'bx  : 10
+	1'bz  : 11
+
+The table is an array of 64 bytes, each byte holding 4 2-bit
+outputs. Construct a 6-bit byte address with inputs 1, 2 and 3 like
+so:
+	 332211
+
+The input 0 2-bits can then be used to select which of the 4 2-bit
+pairs in the 8-bit byte are the output:
+
+	MSB -> zzxx1100 <- LSB
+
+A complete truth table, then is described as 64 8-bit bytes.
+
+The vvp engine includes truth tables for the primitive gate types, so
+none needs to be given by the programmer. It is sufficient to name the
+type to get that truth table.
 
 
 EXECUTABLE INSTRUCTIONS

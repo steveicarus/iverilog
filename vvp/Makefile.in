@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: Makefile.in,v 1.2 2001/03/11 22:42:11 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,7 +52,7 @@ distclean: clean
 	rm -f config.h Makefile config.cache config.log config.status
 
 O = main.o parse.o parse_misc.o lexor.o compile.o functor.o symbols.o \
-codes.o vthread.o schedule.o
+codes.o vthread.o schedule.o tables.o
 
 vvp: $O
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o vvp $O
@@ -63,6 +63,10 @@ vvp: $O
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
+tables.cc: draw_tt.c
+	$(CC) -o draw_tt draw_tt.c
+	./draw_tt > tables.cc
+	rm draw_tt
 
 lexor.o: lexor.cc parse.h
 

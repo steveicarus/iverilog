@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: compile.h,v 1.2 2001/03/11 22:42:11 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -47,7 +47,7 @@ extern void compile_cleanup(void);
  * of the functor. The compile should match those port parameters up
  * to existing functors to manage the linking.
  */
-extern void compile_functor(char*label, char*type,
+extern void compile_functor(char*label, char*type, unsigned init,
 			    unsigned argc, char**argv);
 
 
@@ -97,6 +97,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.2  2001/03/11 22:42:11  steve
+ *  Functor values and propagation.
+ *
  * Revision 1.1  2001/03/11 00:29:38  steve
  *  Add the vvp engine to cvs.
  *

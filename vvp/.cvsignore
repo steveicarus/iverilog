@@ -8,4 +8,5 @@ lexor.cc
 parse.cc
 parse.cc.output
 parse.h
+tables.cc
 vvp
