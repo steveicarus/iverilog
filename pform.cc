@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.102 2002/09/01 03:01:48 steve Exp $"
+#ident "$Id: pform.cc,v 1.103 2003/01/10 03:08:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -421,7 +421,7 @@ void pform_make_udp(const char*name, list<string>*parms,
       }
 
 	/* Verify the "initial" statement, if present, to be sure that
-	   it only assignes to the output and the output is
+	   it only assigns to the output and the output is
 	   registered. Then save the initial value that I get. */
       verinum::V init = verinum::Vx;
       if (init_expr) {
@@ -608,7 +608,7 @@ void pform_makegates(PGBuiltin::Type type,
 /*
  * A module is different from a gate in that there are different
  * constraints, and sometimes different syntax. The X_modgate
- * functions handle the instantaions of modules (and UDP objects) by
+ * functions handle the instantiations of modules (and UDP objects) by
  * making PGModule objects.
  */
 static void pform_make_modgate(const char*type,
@@ -767,13 +767,13 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
  *
  *    reg foo = <expr>;
  *
- * This is equivilent to the combination of statements:
+ * This is equivalent to the combination of statements:
  *
  *    reg foo;
- *    initital foo = <expr>;
+ *    initial foo = <expr>;
  *
  * and that is how it is parsed. This syntax is not part of the
- * IEEE1364-1994 standard, but is approved by OVI as enhancement
+ * IEEE1364-1995 standard, but is approved by OVI as enhancement
  * BTF-B14.
  */
 void pform_make_reginit(const struct vlltype&li,
@@ -862,7 +862,7 @@ void pform_module_define_port(const struct vlltype&li,
  *         reg bar;
  *
  * The output (or other port direction indicator) may or may not have
- * been seen already, so I do not do any cheching with it yet. But I
+ * been seen already, so I do not do any checking with it yet. But I
  * do check to see if the name has already been declared, as this
  * function is called for every declaration.
  */
@@ -1360,6 +1360,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.103  2003/01/10 03:08:13  steve
+ *  Spelling fixes.
+ *
  * Revision 1.102  2002/09/01 03:01:48  steve
  *  Properly cast signedness of parameters with ranges.
  *
