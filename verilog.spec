@@ -54,6 +54,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_priv.h
 %attr(-,root,root) /usr/include/vpi_user.h
+%attr(-,root,root) /usr/include/acc_user.h
 %attr(-,root,root) /usr/include/veriuser.h
 %attr(-,root,root) /usr/include/vvm.h
 %attr(-,root,root) /usr/include/vvm_calltf.h

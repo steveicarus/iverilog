@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.123 2002/05/23 03:08:50 steve Exp $"
+#ident "$Id: Makefile.in,v 1.124 2002/05/23 03:46:42 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -212,7 +212,7 @@ else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(includedir)/veriuser.h $(libdir)/libvpi.a $(WIN32_INSTALL)
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(libdir)/libvpi.a $(WIN32_INSTALL)
 	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 	cd driver ; $(MAKE) install
@@ -237,6 +237,9 @@ $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h
+
+$(includedir)/acc_user.h: $(srcdir)/acc_user.h
+	$(INSTALL_DATA) $(srcdir)/acc_user.h $(includedir)/acc_user.h
 
 $(includedir)/veriuser.h: $(srcdir)/veriuser.h
 	$(INSTALL_DATA) $(srcdir)/veriuser.h $(includedir)/veriuser.h
@@ -267,6 +270,7 @@ uninstall:
 	rm -f $(bindir)/gverilog@EXEEXT@
 	rm -f $(includedir)/ivl_target.h
 	rm -f $(includedir)/vpi_user.h
+	rm -f $(includedir)/acc_user.h
 	rm -f $(includedir)/veriuser.h
 	cd driver ; $(MAKE) uninstall
 	cd vpi ; $(MAKE) uninstall
