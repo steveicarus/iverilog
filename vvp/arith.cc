@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.39 2005/02/19 01:32:52 steve Exp $"
+#ident "$Id: arith.cc,v 1.40 2005/02/19 02:41:23 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -93,7 +93,26 @@ void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    return;
       }
 
+      bool negate = false;
+	/* If we are doing signed divide, then take the sign out of
+	   the operands for now, and remember to put the sign back
+	   later. */
+      if (signed_flag_) {
+	    if (op_a_.value(op_a_.size()-1)) {
+		  a = (-a) & ~ (-1UL << op_a_.size());
+		  negate = !negate;
+	    }
+
+	    if (op_b_.value(op_b_.size()-1)) {
+		  b = (-b) & ~ (-1UL << op_b_.size());
+		  negate = ! negate;
+	    }
+      }
+
       unsigned long val = a / b;
+      if (negate)
+	    val = -val;
+
       assert(wid_ <= 8*sizeof(val));
 
       vvp_vector4_t vval (wid_);
@@ -716,6 +735,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.40  2005/02/19 02:41:23  steve
+ *  Handle signed divide.
+ *
  * Revision 1.39  2005/02/19 01:32:52  steve
  *  Implement .arith/div.
  *
