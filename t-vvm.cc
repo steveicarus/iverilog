@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.155 2000/06/03 02:13:43 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.156 2000/06/06 02:32:45 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -296,7 +296,8 @@ static const char*vvm_val_name(verinum::V val,
 	    return "HiZ";
       }
 
-      return "";
+	/* This should not happen! */
+      return "?strength?";
 }
 
 
@@ -2144,9 +2145,12 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 		  string nexus = nexus_from_link(&net->pin(idx));
 		  unsigned ncode = nexus_wire_map[nexus];
 
-		  const char*rval = vvm_val_name(value.get(idx),
-						 Link::STRONG,
-						 Link::STRONG);
+		  verinum::V val = idx < value.len() 
+			? value.get(idx)
+			: verinum::V0;
+		  const char*rval = vvm_val_name(val,
+ 						 Link::STRONG,
+ 						 Link::STRONG);
 
 		  defn << "      nexus_wire_table[" <<ncode<< "]"
 		       << ".reg_assign(" << rval << ");" << endl;
@@ -3059,6 +3063,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.156  2000/06/06 02:32:45  steve
+ *  Expand constants in its special case assignment. (Stephan Boettcher)
+ *
  * Revision 1.155  2000/06/03 02:13:43  steve
  *  Do not attach temporaries to scopes.
  *
