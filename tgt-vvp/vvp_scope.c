@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.48 2001/10/09 02:28:44 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.49 2001/10/15 02:58:27 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1134,18 +1134,26 @@ static void draw_mem_in_scope(ivl_memory_t net)
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
+      const char *type;
+      switch (ivl_scope_type(net)) {
+      case IVL_SCT_MODULE:   type = "module";   break;
+      case IVL_SCT_FUNCTION: type = "function"; break;
+      case IVL_SCT_TASK:     type = "task";     break;
+      case IVL_SCT_BEGIN:    type = "begin";    break;
+      case IVL_SCT_FORK:     type = "fork";     break;
+      default:               type = "?";        assert(0);
+      }
 
+      fprintf(vvp_out, "S_%s .scope %s, \"%s\"",
+	      vvp_mangle_id(ivl_scope_name(net)), 
+	      type,
+	      vvp_mangle_name(ivl_scope_name(net)));
       if (parent) {
-	    fprintf(vvp_out, "S_%s .scope \"%s\"",
-		    vvp_mangle_id(ivl_scope_name(net)), 
-		    vvp_mangle_name(ivl_scope_name(net)));
 	    fprintf(vvp_out, ", S_%s;\n",
 		    vvp_mangle_id(ivl_scope_name(parent)));
       }
       else
-	    fprintf(vvp_out, "S_%s .scope \"%s\";\n",
-		    vvp_mangle_id(ivl_scope_name(net)), 
-		    vvp_mangle_name(ivl_scope_name(net)));
+	    fprintf(vvp_out, ";\n");
       
 	/* Scan the scope for logic devices. For each device, draw out
 	   a functor that connects pin 0 to the output, and the
@@ -1200,6 +1208,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.49  2001/10/15 02:58:27  steve
+ *  Carry the type of the scope (Stephan Boettcher)
+ *
  * Revision 1.48  2001/10/09 02:28:44  steve
  *  handle nmos and pmos devices.
  *

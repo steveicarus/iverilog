@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.32 2001/07/11 04:43:57 steve Exp $"
+#ident "$Id: compile.h,v 1.33 2001/10/15 02:58:27 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -183,7 +183,7 @@ extern void compile_codelabel(char*label);
  * The parser uses these functions to compile .scope statements.
  * The implementations of these live in the vpi_scope.cc file.
  */
-extern void compile_scope_decl(char*lab, char*nam, char*par);
+extern void compile_scope_decl(char*typ, char*lab, char*nam, char*par);
 extern void compile_scope_recall(char*sym);
 
 /*
@@ -204,6 +204,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.33  2001/10/15 02:58:27  steve
+ *  Carry the type of the scope (Stephan Boettcher)
+ *
  * Revision 1.32  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.8 2001/10/15 01:49:50 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.9 2001/10/15 02:58:27 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -36,8 +36,10 @@ static char* scope_get_str(int code, vpiHandle obj)
       char *n, *nn;
 
       assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiFunction)
+	     || (obj->vpi_type->type_code == vpiTask)
 	     || (obj->vpi_type->type_code == vpiNamedBegin)
-	     || (obj->vpi_type->type_code == vpiTask));
+	     || (obj->vpi_type->type_code == vpiNamedFork));
 
       switch (code) {
 	  case vpiFullName:
@@ -63,8 +65,10 @@ static char* scope_get_str(int code, vpiHandle obj)
 static vpiHandle scope_get_handle(int code, vpiHandle obj)
 {
       assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiFunction)
+	     || (obj->vpi_type->type_code == vpiTask)
 	     || (obj->vpi_type->type_code == vpiNamedBegin)
-	     || (obj->vpi_type->type_code == vpiTask));
+	     || (obj->vpi_type->type_code == vpiNamedFork));
 
       struct __vpiScope*rfp = (struct __vpiScope*)obj;
 
@@ -81,9 +85,10 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
       assert((obj->vpi_type->type_code == vpiModule)
-	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiFunction)
 	     || (obj->vpi_type->type_code == vpiTask)
-	     || (obj->vpi_type->type_code == vpiFunction));
+	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiNamedFork));
 
       switch (code) {
 	  case vpiInternalScope:
@@ -92,8 +97,48 @@ static vpiHandle module_iter(int code, vpiHandle obj)
       return 0;
 }
 
-static const struct __vpirt vpip_scope_rt = {
+static const struct __vpirt vpip_scope_module_rt = {
       vpiModule,
+      0,
+      scope_get_str,
+      0,
+      0,
+      scope_get_handle,
+      module_iter
+};
+
+static const struct __vpirt vpip_scope_task_rt = {
+      vpiTask,
+      0,
+      scope_get_str,
+      0,
+      0,
+      scope_get_handle,
+      module_iter
+};
+
+static const struct __vpirt vpip_scope_function_rt = {
+      vpiFunction,
+      0,
+      scope_get_str,
+      0,
+      0,
+      scope_get_handle,
+      module_iter
+};
+
+static const struct __vpirt vpip_scope_begin_rt = {
+      vpiNamedBegin,
+      0,
+      scope_get_str,
+      0,
+      0,
+      scope_get_handle,
+      module_iter
+};
+
+static const struct __vpirt vpip_scope_fork_rt = {
+      vpiNamedFork,
       0,
       scope_get_str,
       0,
@@ -125,10 +170,19 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
  * and within the addressed parent. The label is used as a key in the
  * symbol table and the name is used to construct the actual object.
  */
-void compile_scope_decl(char*label, char*name, char*parent)
+void compile_scope_decl(char*label, char*type, char*name, char*parent)
 {
       struct __vpiScope*scope = new struct __vpiScope;
-      scope->base.vpi_type = &vpip_scope_rt;
+
+      switch(type[2]) {
+      case 'd': scope->base.vpi_type = &vpip_scope_module_rt;   break;
+      case 'n': scope->base.vpi_type = &vpip_scope_function_rt; break;
+      case 's': scope->base.vpi_type = &vpip_scope_task_rt;     break;
+      case 'r': scope->base.vpi_type = &vpip_scope_fork_rt;     break;
+      case 'g': scope->base.vpi_type = &vpip_scope_begin_rt;    break;
+      default:  scope->base.vpi_type = &vpip_scope_module_rt;  assert(0);
+      }
+
       scope->name = name;
       scope->intern = 0;
       scope->nintern = 0;
@@ -170,6 +224,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.9  2001/10/15 02:58:27  steve
+ *  Carry the type of the scope (Stephan Boettcher)
+ *
  * Revision 1.8  2001/10/15 01:49:50  steve
  *  Support getting scope of scope, and scope of signals.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.36 2001/07/11 04:43:57 steve Exp $"
+#ident "$Id: parse.y,v 1.37 2001/10/15 02:58:27 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -252,11 +252,11 @@ statement
   /* Scope statements come in two forms. There are the scope
      declaration and the scope recall. */
 
-	| T_LABEL K_SCOPE T_STRING ';'
-		{ compile_scope_decl($1, $3, 0); }
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ';'
+		{ compile_scope_decl($1, $3, $5, 0); }
 
-	| T_LABEL K_SCOPE T_STRING ',' T_SYMBOL ';'
-		{ compile_scope_decl($1, $3, $5); }
+	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING ',' T_SYMBOL ';'
+		{ compile_scope_decl($1, $3, $5, $7); }
 
 	|         K_SCOPE T_SYMBOL ';'
 		{ compile_scope_recall($2); }
@@ -504,6 +504,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.37  2001/10/15 02:58:27  steve
+ *  Carry the type of the scope (Stephan Boettcher)
+ *
  * Revision 1.36  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
  *
