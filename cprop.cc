@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.31 2001/12/31 01:56:08 steve Exp $"
+#ident "$Id: cprop.cc,v 1.32 2002/02/03 00:06:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -583,7 +583,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		unsigned idx = 1;
 
 		  /* Eliminate all the 0 inputs. They have no effect
-		     on the output of an XOR gate. */
+		     on the output of an XOR gate. The eliminate works
+		     by unlinking the current input and relinking the
+		     last input to this position. It's like bubbling
+		     all the 0 inputs to the end. */
 		while (idx < top) {
 		      if (! link_drivers_constant(obj->pin(idx))) {
 			    idx += 1;
@@ -651,7 +654,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 
 		  /* If all the inputs were eliminated, then replace
-		     the gate with a constant 0 and I am done. */
+		     the gate with a constant value and I am done. */
 		if (top == 1) {
 		      verinum::V out = obj->type()==NetLogic::XNOR
 			    ? verinum::V1
@@ -887,7 +890,7 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 		  return;
 
 	// Look for signals that have NetESignal nodes attached to
-	// them. If I find any, this this constant is used by a
+	// them. If I find any, then this constant is used by a
 	// behavioral expression somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
 	    Nexus*nex = obj->pin(idx).nexus();
@@ -920,7 +923,6 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	    }
       }
 
-
 	// Done. Delete me.
       delete obj;
 }
@@ -942,6 +944,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.32  2002/02/03 00:06:28  steve
+ *  Comments about xor evaluation.
+ *
  * Revision 1.31  2001/12/31 01:56:08  steve
  *  Get sense of 1-bit == operator right.
  *
