@@ -17,11 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.14 2002/03/09 21:54:49 steve Exp $"
+#ident "$Id: sys_table.c,v 1.15 2002/04/06 21:33:29 steve Exp $"
 #endif
 
 # include "config.h"
-#include "vpi_user.h"
+# include "vpi_user.h"
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
 
 extern void sys_finish_register();
 extern void sys_deposit_register();
@@ -32,6 +35,41 @@ extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_lxt_register();
 
+static void sys_lxt_or_vcd_register()
+{
+      char*dumper;
+
+	/* Get the dumper of choice from the IVERILOG_DUMPER
+	   environment variable. */
+      dumper = getenv("IVERILOG_DUMPER");
+      if (dumper) {
+	    char*cp = strchr(dumper,'=');
+	    if (cp != 0)
+		  dumper = cp + 1;
+
+      } else {
+	    dumper = "vcd";
+      }
+
+      if (strcmp(dumper, "vcd") == 0)
+	    sys_vcd_register();
+
+      else if (strcmp(dumper, "VCD") == 0)
+	    sys_vcd_register();
+
+      else if (strcmp(dumper, "lxt") == 0)
+	    sys_lxt_register();
+
+      else if (strcmp(dumper, "LXT") == 0)
+	    sys_lxt_register();
+
+      else {
+	    fprintf(stderr, "system.vpi: Unknown dumper format: %s\n",
+		    dumper);
+	    sys_vcd_register();
+      }
+}
+
 void (*vlog_startup_routines[])() = {
       sys_finish_register,
       sys_deposit_register,
@@ -39,14 +77,16 @@ void (*vlog_startup_routines[])() = {
       sys_random_register,
       sys_readmem_register,
       sys_time_register,
-      sys_vcd_register,
-      sys_lxt_register,
+      sys_lxt_or_vcd_register,
       0
 };
 
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.15  2002/04/06 21:33:29  steve
+ *  allow runtime selection of VCD vs LXT.
+ *
  * Revision 1.14  2002/03/09 21:54:49  steve
  *  Add LXT dumper support. (Anthony Bybell)
  *

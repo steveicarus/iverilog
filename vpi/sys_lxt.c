@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.2 2002/04/06 20:25:45 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.3 2002/04/06 21:33:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -730,48 +730,51 @@ void sys_lxt_register()
       s_vpi_systf_data tf_data;
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$lxtdumpall";
+      tf_data.tfname    = "$dumpall";
       tf_data.calltf    = sys_dumpall_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$lxtdumpall";
+      tf_data.user_data = "$dumpall";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$lxtdumpoff";
+      tf_data.tfname    = "$dumpoff";
       tf_data.calltf    = sys_dumpoff_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$lxtdumpoff";
+      tf_data.user_data = "$dumpoff";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$lxtdumpon";
+      tf_data.tfname    = "$dumpon";
       tf_data.calltf    = sys_dumpon_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$lxtdumpon";
+      tf_data.user_data = "$dumpon";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$lxtdumpfile";
+      tf_data.tfname    = "$dumpfile";
       tf_data.calltf    = sys_dumpfile_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$lxtdumpfile";
+      tf_data.user_data = "$dumpfile";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
-      tf_data.tfname    = "$lxtdumpvars";
+      tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
       tf_data.compiletf = 0;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$lxtdumpvars";
+      tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.3  2002/04/06 21:33:29  steve
+ *  allow runtime selection of VCD vs LXT.
+ *
  * Revision 1.2  2002/04/06 20:25:45  steve
  *  cbValueChange automatically replays.
  *
