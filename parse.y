@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.79 1999/12/31 17:39:00 steve Exp $"
+#ident "$Id: parse.y,v 1.80 2000/01/01 23:47:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -127,7 +127,7 @@ extern void lex_end_table();
 %type <expr>  expression expr_primary
 %type <expr>  lavalue lpvalue
 %type <expr>  delay_value
-%type <exprs> delay1 delay3 delay3_opt
+%type <exprs> delay1 delay3 delay3_opt parameter_value_opt
 %type <exprs> expression_list
 %type <exprs> assign assign_list
 
@@ -1088,7 +1088,7 @@ module_item
 	| gatetype delay3_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
 		}
-	| IDENTIFIER delay3_opt gate_instance_list ';'
+	| IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ pform_make_modgates($1, $2, $3);
 		  delete $1;
 		}
@@ -1215,6 +1215,20 @@ parameter_assign_list
 		  delete $1;
 		}
 	| parameter_assign_list ',' parameter_assign
+	;
+
+
+  /* The parameters of a module instance can be overridden by writing
+     a list of expressions in a syntax much line a delay list. (The
+     difference being the list can have any length.) The pform that
+     attaches the expression list to the module checks that the
+     expressions are constant. */
+
+parameter_value_opt
+	: '#' '(' expression_list ')'
+		{ $$ = $3; }
+	|
+		{ $$ = 0; }
 	;
 
   /* The port (of a module) is a fairle complex item. Each port is

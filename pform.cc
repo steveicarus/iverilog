@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.49 1999/12/30 19:06:14 steve Exp $"
+#ident "$Id: pform.cc,v 1.50 2000/01/01 23:47:58 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -355,6 +355,13 @@ void pform_make_modgates(const string&type,
 			 svector<PExpr*>*overrides,
 			 svector<lgate>*gates)
 {
+      for (unsigned idx = 0 ;  idx < overrides->count() ;  idx += 1)
+	    if (! pform_expression_is_constant((*overrides)[idx])) {
+		  VLerror("error: Parameter override expression"
+			  " must be constant.");
+		  return;
+	    }
+
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 
@@ -765,6 +772,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.50  2000/01/01 23:47:58  steve
+ *  Fix module parameter override syntax.
+ *
  * Revision 1.49  1999/12/30 19:06:14  steve
  *  Support reg initial assignment syntax.
  *
