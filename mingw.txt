@@ -34,7 +34,7 @@ I have no plans to intentionally support MSVC++ compilation. Don't ask.
 
 This is a brief list of prerequisite packages, along with the URL
 where each can be found. In most cases, the specific version is not
-critical, but these are the version I use.
+critical, but these are the versions I use.
 
      Cygwin                     <http://cygwin.com>
      Mingw32-2.0.0              <http://www.mingw.org>
@@ -50,6 +50,11 @@ collected into the directory:
 
      <ftp://icarus.com/pub/eda/verilog/win32-build-parts>
 
+Incidentally, besides Mingw32, none of these packages are needed after
+installation of Icarus Verilog is complete. These are only needed to
+build the compiler. The Mingw32 package can be used to compile VPI
+modules if you choose.
+
 * Install Cygwin
 
 So, step 1 is "Download and Install Cygwin." See the web page
@@ -61,15 +66,31 @@ setup program, and that prompts you to select the package you want.
 You need in particular the Cygwin base, bison (see notes) flex, make
 and gperf. If you are compiling from CVS, you also need cvs, rcs and
 automake packages. You will also need tar and gunzip, but these are
-hard to not install. I recommend installing the "which" package as well.
+hard to not install. I recommend installing the "which" package as
+well. Beyond the basics, be sure to install these Cygwin packages:
+
+      bison        (*not* 1.875. See Notes.)
+      flex
+      ghostscript  (makes the documentation)
+      gperf
+      gzip
+      make
+      strip
+      tar          (tar and gunzip for unpacking the source)
+      unzip        (For unpacking zip compressed packages.)
+      which
 
     NOTES:
       bison-1.875 is broken, it generates invalid C/C++ code. You
       don't want that version for anything you do. If you have that
       version (use "bison -V" to check the version) then use the
       Cygwin setup program to get a different version. I've downgraded
-      to version 1.75 and couldn't be happier. In fact, a whole host
-      of insane bison bugs can be avoided that way.
+      to 1.75 and couldn't be happier. In fact, a whole host of insane
+      bison bugs can be avoided that way.
+
+      There is a mingw32 runtime package included in the Cygwin
+      distribution. You do *not* need that, as you will be getting
+      everything from the mingw32 distribution itself.
 
 Other then the install of mingw32, most of the remaining steps are
 best done in a Cygwin window. When you installed Cygwin, a start menu
