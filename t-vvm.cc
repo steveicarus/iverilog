@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.63 1999/10/21 02:15:06 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.64 1999/10/23 16:27:53 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1161,6 +1161,8 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
       if (net->bmux()) {
 
+	      // This is a bit select. Assign the low bit of the rval
+	      // to the selected bit of the lval.
 	    string bval = emit_proc_rval(defn, 8, net->bmux());
 
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
@@ -1195,7 +1197,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			written[cur->name()] = true;
 			defn << "        " << mangle(cur->name()) <<
 			      ".set(sim_, " << pin << ", " <<
-			      rval << "[" << idx << "]);" << endl;
+			      rval << "[0]);" << endl;
 		  }
 
 		  defn << "        break;" << endl;
@@ -1744,6 +1746,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.64  1999/10/23 16:27:53  steve
+ *  assignment to bit select is aa single bit.
+ *
  * Revision 1.63  1999/10/21 02:15:06  steve
  *  Make generated code ISO legal.
  *
