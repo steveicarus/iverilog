@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.37 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: Statement.h,v 1.38 2003/05/19 02:50:58 steve Exp $"
 #endif
 
 # include  <string>
@@ -331,6 +331,8 @@ class PEventStatement  : public Statement {
 	// elaborated statement to the event.
       NetProc* elaborate_st(Design*des, NetScope*scope, NetProc*st) const;
 
+      NetProc* elaborate_wait(Design*des, NetScope*scope, NetProc*st) const;
+
     private:
       svector<PEEvent*>expr_;
       Statement*statement_;
@@ -453,6 +455,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.38  2003/05/19 02:50:58  steve
+ *  Implement the wait statement behaviorally instead of as nets.
+ *
  * Revision 1.37  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

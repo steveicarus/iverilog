@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.280 2003/05/04 20:04:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.281 2003/05/19 02:50:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1788,86 +1788,6 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
       assert(scope);
 
 
-	/* The Verilog wait (<expr>) <statement> statement is a level
-	   sensitive wait. Handle this special case by elaborating
-	   something like this:
-
-	       begin
-	         if (! <expr>) @(posedge <expr>)
-	         <statement>
-	       end
-
-	   This is equivalent, and uses the existing capabilities of
-	   the netlist format. The resulting netlist should look like
-	   this:
-
-	       NetBlock ---+---> NetCondit --+--> <expr>
-	                   |                 |
-			   |     	     +--> NetEvWait--> NetEvent
-			   |
-			   +---> <statement>
-
-	   This is quite a mouthful. Should I not move wait handling
-	   to specialized objects? */
-
-
-      if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE)) {
-
-	    bool save_flag = error_implicit;
-	    error_implicit = true;
-	    NetNet*ex = expr_[0]->expr()->elaborate_net(des, scope,
-							1, 0, 0, 0);
-	    error_implicit = save_flag;
-
-	    if (ex == 0) {
-		  expr_[0]->dump(cerr);
-		  cerr << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	      /* Create a NetEvent object to manage this event. Note
-		 that the NetEvent object's name has no hierarchy. */
-	    NetEvent*ev = new NetEvent(lex_strings.add(scope->local_symbol().c_str()));
-	    scope->add_event(ev);
-
-	    NetEvWait*we = new NetEvWait(0);
-	    we->add_event(ev);
-
-	    NetEvProbe*po = new NetEvProbe(scope,
-					   scope->local_symbol(),
-					   ev, NetEvProbe::POSEDGE, 1);
-	    connect(po->pin(0), ex->pin(0));
-
-	    des->add_node(po);
-
-	      /* We want to wait only if the expression is something
-		 other then 1 (0,x,z) . */
-	    NetESignal*ce = new NetESignal(ex);
-	    NetCondit*co = new NetCondit(ce, 0, we);
-
-	    ev->set_line(*this);
-	    we->set_line(*this);
-	    co->set_line(*this);
-
-	      /* If we don't have a sub-statement after all, then we
-		 don't really need the block and we can save the
-		 node. (i.e., wait (foo==1) ;) However, the common case
-		 has a statement in the wait so we create a sequential
-		 block to join the wait and the statement. */
-
-	    if (enet) {
-		  NetBlock*bl = new NetBlock(NetBlock::SEQU, 0);
-		  bl->set_line(*this);
-		  bl->append(co);
-		  bl->append(enet);
-		  return bl;
-	    }
-
-	    return co;
-      }
-
-
 	/* Handle the special case of an event name as an identifier
 	   in an expression. Make a named event reference. */
 
@@ -2008,6 +1928,113 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
       return wa;
 }
 
+/*
+ * This is the special case of the event statement, the wait
+ * statement. This is elaborated into a slightly more complicated
+ * statement that uses non-wait statements:
+ *
+ *     wait (<expr>)  <statement>
+ *
+ * becomes
+ *
+ *     begin
+ *         while (1 !== <expr>)
+ *           @(<expr inputs>) <noop>;
+ *         <statement>;
+ *     end
+ */
+NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
+					 NetProc*enet) const
+{
+      assert(scope);
+      assert(expr_.count() == 1);
+
+      const PExpr *pe = expr_[0]->expr();
+
+      NetExpr*expr = pe->elaborate_expr(des, scope);
+      if (expr == 0) {
+	    cerr << get_line() << ": error: Unable to elaborate"
+		  " wait condition expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      assert(expr->expr_width() == 1);
+      expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
+      NetExpr*tmp = expr->eval_tree();
+      if (tmp) {
+	    delete expr;
+	    expr = tmp;
+      }
+
+	/* Detect the unusual case that the wait expression is
+	   constant. Constant true is OK (it becomes transparent) but
+	   constant false is almost certainly not what is intended. */
+      if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
+	    verinum val = ce->value();
+	    assert(val.len() == 1);
+	    if (val[0] == verinum::V1) {
+		  delete expr;
+		  assert(enet);
+		  return enet;
+	    }
+
+	    cerr << get_line() << ": warning: wait expression is "
+		 << "constant false." << endl;
+	    cerr << get_line() << ":        : The statement will "
+		 << "block permanently." << endl;
+      }
+
+      NetEvent*wait_event = new NetEvent(lex_strings.add(scope->local_symbol().c_str()));
+      scope->add_event(wait_event);
+
+      NetEvWait*wait = new NetEvWait(0 /* noop */);
+      wait->add_event(wait_event);
+      wait->set_line(*this);
+
+      NexusSet*wait_set = expr->nex_input();
+      if (wait_set == 0) {
+	    cerr << get_line() << ": internal error: No NexusSet"
+		 << " from wait expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (wait_set->count() == 0) {
+	    cerr << get_line() << ": internal error: Empty NexusSet"
+		 << " from wait expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetEvProbe*wait_pr = new NetEvProbe(scope, scope->local_symbol(),
+					  wait_event, NetEvProbe::ANYEDGE,
+					  wait_set->count());
+      for (unsigned idx = 0; idx < wait_set->count() ;  idx += 1)
+	    connect(wait_set[0][idx], wait_pr->pin(idx));
+
+      delete wait_set;
+      des->add_node(wait_pr);
+
+      NetWhile*loop = new NetWhile(expr, wait);
+      loop->set_line(*this);
+
+	/* If there is no real substatement (i.e. "wait (foo) ;") then
+	   we are done. */
+      if (enet == 0)
+	    return loop;
+
+	/* Create a sequential block to conbine the wait loop and the
+	   delayed statement. */
+      NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
+      block->append(loop);
+      block->append(enet);
+      block->set_line(*this);
+
+      return block;
+}
+
+
 NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 {
       NetProc*enet = 0;
@@ -2016,6 +2043,9 @@ NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 	    if (enet == 0)
 		  return 0;
       }
+
+      if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE))
+	    return elaborate_wait(des, scope, enet);
 
       return elaborate_st(des, scope, enet);
 }
@@ -2524,6 +2554,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.281  2003/05/19 02:50:58  steve
+ *  Implement the wait statement behaviorally instead of as nets.
+ *
  * Revision 1.280  2003/05/04 20:04:08  steve
  *  Fix truncation of signed constant in constant addition.
  *
