@@ -72,6 +72,11 @@ case "${host}" in
 	rdynamic="-Wl,--export-dynamic"
 	;;
 
+    *-*-openbsd*)
+	whole_archive=""
+	no_whole_archive=""
+	;;
+
     *-*-solaris*)
 	rdynamic=""
 	;;
