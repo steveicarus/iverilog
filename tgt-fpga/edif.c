@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.3 2003/03/30 03:43:44 steve Exp $"
+#ident "$Id: edif.c,v 1.4 2003/04/04 04:59:03 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -54,7 +54,8 @@ struct edif_xlibrary_s {
       const char*name;
 	/* The cells that are contained in this library. */
       struct edif_cell_s*cells;
-
+	/* point to the optional celltable. */
+      const struct edif_xlib_celltable*celltable;
 	/* used to list libraries in an edif_t. */
       struct edif_xlibrary_s*next;
 };
@@ -160,22 +161,40 @@ edif_xlibrary_t edif_xlibrary_create(edif_t edf, const char*name)
 {
       edif_xlibrary_t xlib = malloc(sizeof(struct edif_xlibrary_s));
 
-      xlib->name = name;
-      xlib->cells= 0;
+      xlib->name  = name;
+      xlib->cells = 0;
+      xlib->celltable = 0;
       xlib->next = edf->xlibs;
       edf->xlibs = xlib;
 
       return xlib;
 }
 
+void edif_xlibrary_set_celltable(edif_xlibrary_t xlib,
+				 const struct edif_xlib_celltable*tab)
+{
+      assert(xlib->celltable == 0);
+      xlib->celltable = tab;
+}
+
 edif_cell_t edif_xlibrary_findcell(edif_xlibrary_t xlib,
 				   const char*cell_name)
 {
+      const struct edif_xlib_celltable*tcur;
       edif_cell_t cur;
+
       for (cur = xlib->cells ;  cur ;  cur = cur->next) {
 	    if (strcmp(cell_name, cur->name) == 0)
 		  return cur;
       }
+
+      if (xlib->celltable == 0)
+	    return 0;
+
+      for (tcur = xlib->celltable ;  tcur->cell_name ;  tcur += 1)
+	    if (strcmp(cell_name, tcur->cell_name) == 0) {
+		  return (tcur->cell_func)(xlib);
+	    }
 
       return 0;
 }
@@ -472,6 +491,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.4  2003/04/04 04:59:03  steve
+ *  Add xlibrary celltable.
+ *
  * Revision 1.3  2003/03/30 03:43:44  steve
  *  Handle wide ports of macros.
  *

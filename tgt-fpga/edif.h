@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.2 2003/03/24 02:29:04 steve Exp $"
+#ident "$Id: edif.h,v 1.3 2003/04/04 04:59:03 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -102,6 +102,16 @@ typedef struct edif_cellref_s* edif_cellref_t;
    object, of stand along. */
 typedef struct edif_joint_s* edif_joint_t;
 
+/* This structure defines a table that can be attached to an xlibrary
+   to incorporate black-box cells to the library. The cell_name is the
+   name that may be passed to the edif_xlibrary_findcell function, and
+   the function pointer points to a function that creates the cell and
+   defines ports for it. A real celltable is terminated by an entry
+   with a null pointer for the cell_name. */
+struct edif_xlib_celltable {
+      const char*cell_name;
+      edif_cell_t (*cell_func)(edif_xlibrary_t xlib);
+};
 
 /* FUNCTIONS */
 
@@ -129,6 +139,10 @@ extern void edif_pstring(edif_t edf, const char*name, const char*value);
    will lead to a (external ...) declaration of cells that can be used
    by the design. */
 extern edif_xlibrary_t edif_xlibrary_create(edif_t edf, const char*name);
+
+extern void edif_xlibrary_set_celltable(edif_xlibrary_t lib,
+				       const struct edif_xlib_celltable*table);
+
 
 /* External libraries can be searched for existing cells, given a
    string name. This function searches for the cell by name, and
@@ -197,6 +211,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.3  2003/04/04 04:59:03  steve
+ *  Add xlibrary celltable.
+ *
  * Revision 1.2  2003/03/24 02:29:04  steve
  *  Give proper basenames to PAD signals.
  *

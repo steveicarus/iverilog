@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.6 2003/03/31 01:34:19 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.7 2003/04/04 04:59:03 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -59,7 +59,6 @@ static edif_cell_t cell_opad = 0;
 
 static edif_cell_t cell_buf = 0;
 static edif_cell_t cell_inv = 0;
-static edif_cell_t cell_bufg = 0;
 static edif_cell_t cell_ibuf = 0;
 static edif_cell_t cell_obuf = 0;
 const unsigned BUF_O = 0;
@@ -86,7 +85,6 @@ const unsigned XORCY_O = 0;
 const unsigned XORCY_CI = 1;
 const unsigned XORCY_LI = 2;
 
-static edif_cell_t cell_mult_and = 0;
 const unsigned MULT_AND_LO = 0;
 const unsigned MULT_AND_I0 = 1;
 const unsigned MULT_AND_I1 = 2;
@@ -237,17 +235,30 @@ static void check_cell_xorcy(void)
       edif_cell_portconfig(cell_xorcy, XORCY_LI, "LI", IVL_SIP_INPUT);
 }
 
-static void check_cell_mult_and(void)
-{
-      if (cell_mult_and != 0)
-	    return;
 
-      cell_mult_and = edif_xcell_create(xlib, "MULT_AND", 3);
-      edif_cell_portconfig(cell_mult_and, MULT_AND_LO, "LO", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_mult_and, MULT_AND_I0, "I0", IVL_SIP_INPUT);
-      edif_cell_portconfig(cell_mult_and, MULT_AND_I1, "I1", IVL_SIP_INPUT);
+static edif_cell_t celltable_mult_and(edif_xlibrary_t xlib)
+{
+      edif_cell_t cell = edif_xcell_create(xlib, "MULT_AND", 3);
+      edif_cell_portconfig(cell, MULT_AND_LO, "LO", IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, MULT_AND_I0, "I0", IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, MULT_AND_I1, "I1", IVL_SIP_INPUT);
+      return cell;
 }
 
+static edif_cell_t celltable_bufg(edif_xlibrary_t xlib)
+{
+      edif_cell_t cell = edif_xcell_create(xlib, "BUFG", 2);
+      edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
+      return cell;
+}
+
+const static struct edif_xlib_celltable virtex2_celltable[] = {
+      { "BUFG",     celltable_bufg },
+      { "MULT_AND", celltable_mult_and },
+      { 0, 0}
+};
+	    
 /*
  * The show_header function is called before any of the devices of the
  * netlist are scanned.
@@ -321,6 +332,8 @@ static void virtex2_show_header(ivl_design_t des)
       assert(pidx == nports);
 
       xlib = edif_xlibrary_create(edf, "VIRTEX2");
+      edif_xlibrary_set_celltable(xlib, virtex2_celltable);
+
 
       if ( (part_str = ivl_design_flag(des, "part")) && (part_str[0] != 0) ) {
 	    edif_pstring(edf, "PART", part_str);
@@ -332,9 +345,6 @@ static void virtex2_show_header(ivl_design_t des)
       cell_1 = edif_xcell_create(xlib, "VCC", 1);
       edif_cell_portconfig(cell_1, 0, "VCC", IVL_SIP_OUTPUT);
 
-      cell_bufg = edif_xcell_create(xlib, "BUFG", 2);
-      edif_cell_portconfig(cell_bufg, BUF_O, "O", IVL_SIP_OUTPUT);
-      edif_cell_portconfig(cell_bufg, BUF_I, "I", IVL_SIP_INPUT);
 }
 
 static void virtex2_show_footer(ivl_design_t des)
@@ -1142,6 +1152,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.7  2003/04/04 04:59:03  steve
+ *  Add xlibrary celltable.
+ *
  * Revision 1.6  2003/03/31 01:34:19  steve
  *  Wide shift of MUX was wrong.
  *
