@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.39 2002/05/06 02:30:27 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.40 2002/05/25 16:43:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,8 +81,22 @@ NetEConst* NetEBBits::eval_tree()
       eval_sub_tree_();
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      if (lc == 0) return 0;
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+
+	/* Notice the special case where one of the operands is 0 and
+	   this is a bitwise &. If this happens, then the result is
+	   known to be 0. */
+      if ((op() == '&') && lc && (lc->value() == verinum(0))) {
+	    verinum res (verinum::V0, expr_width());
+	    return new NetEConst(res);
+      }
+
+      if ((op() == '&') && rc && (rc->value() == verinum(0))) {
+	    verinum res (verinum::V0, expr_width());
+	    return new NetEConst(res);
+      }
+
+      if (lc == 0) return 0;
       if (rc == 0) return 0;
 
       verinum lval = lc->value();
@@ -1088,6 +1102,28 @@ NetEConst* NetEUReduce::eval_tree()
 		break;
 	  }
 
+	  case '^': {
+		  /* Reduction XOR. */
+		unsigned ones = 0, unknown = 0;
+		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		      switch (val.get(idx)) {
+			  case verinum::V0:
+			    break;
+			  case verinum::V1:
+			    ones += 1;
+			    break;
+			  default:
+			    unknown += 1;
+			    break;
+		      }
+
+		if (unknown)
+		      return new NetEConst(verinum(verinum::Vx,1,true));
+		if (ones%2)
+		      return new NetEConst(verinum(verinum::V1,1,true));
+		return new NetEConst(verinum(verinum::V0,1,true));
+	  }
+
 	  default:
 	    return 0;
       }
@@ -1098,6 +1134,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.40  2002/05/25 16:43:47  steve
+ *  Eval ^ and &0 expressions.
+ *
  * Revision 1.39  2002/05/06 02:30:27  steve
  *  Allow parameters in concatenation of widths are defined.
  *
