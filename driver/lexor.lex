@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.2 2000/10/28 17:51:01 steve Exp $"
+#ident "$Id: lexor.lex,v 1.3 2000/12/14 23:36:59 steve Exp $"
 #endif
 
 # include  <string.h>
@@ -35,6 +35,7 @@
 "#".* { /* eat comments */; }
 
 "\n" { /* eat line-ends */; }
+"\r" { /* eat line-ends */; }
 
 "[" { BEGIN(CTOKENS); return '['; }
 
