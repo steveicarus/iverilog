@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.2 2000/03/16 21:45:07 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.3 2000/03/18 01:27:00 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -34,7 +34,13 @@ vvm_nexus::vvm_nexus()
 
 vvm_nexus::~vvm_nexus()
 {
-      assert(drivers_ == 0);
+      while (drivers_) {
+	    drive_t*cur = drivers_;
+	    drivers_ = cur->next_;
+	    assert(cur->nexus_ == this);
+	    cur->nexus_ = 0;
+	    cur->next_ = 0;
+      }
 
 	/* assert(recvrs_ == 0); XXXX I really should make a point to
 	   guarantee that all the receivers that I refer to are gone,
@@ -227,6 +233,17 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.3  2000/03/18 01:27:00  steve
+ *  Generate references into a table of nexus objects instead of
+ *  generating lots of isolated nexus objects. Easier on linkers
+ *  and compilers,
+ *
+ *  Add missing nexus support for l-value bit selects,
+ *
+ *  Detemplatize the vvm_mux type.
+ *
+ *  Fix up the vvm_nexus destructor to disconnect from drivers.
+ *
  * Revision 1.2  2000/03/16 21:45:07  steve
  *  Properly initialize driver and nexus values.
  *

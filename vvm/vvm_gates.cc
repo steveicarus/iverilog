@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.9 2000/03/17 19:24:00 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.10 2000/03/18 01:27:00 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -92,46 +92,6 @@ vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count)
 vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count)
 {
       return v_not(compute_xor(inp,count));
-}
-
-void compute_mux(vpip_bit_t*out, unsigned wid,
-		 const vpip_bit_t*sel, unsigned swid,
-		 const vpip_bit_t*dat, unsigned size)
-{
-      unsigned tmp = 0;
-      for (unsigned idx = 0 ;  idx < swid ;  idx += 1)
-	    switch (sel[idx]) {
-		case V0:
-		  break;
-		case V1:
-		  tmp |= (1<<idx);
-		  break;
-		default:
-		  tmp = size;
-		  break;
-	    }
-
-      if (tmp >= size) {
-
-	    if (swid > 1) {
-		  for (unsigned idx = 0; idx < wid ;  idx += 1)
-			out[idx] = Vx;
-	    } else {
-		  const unsigned b0 = 0;
-		  const unsigned b1 = wid;
-		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-			if (dat[idx+b0] == dat[idx+b1])
-			      out[idx] = dat[idx+b0];
-			else
-			      out[idx] = Vx;
-		  }
-	    }
-
-      } else {
-	    unsigned b = tmp * wid;
-	    for (unsigned idx = 0; idx < wid ;  idx += 1)
-		  out[idx] = dat[idx+b];
-      }
 }
 
 vvm_and2::vvm_and2(unsigned long d)
@@ -298,6 +258,17 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.10  2000/03/18 01:27:00  steve
+ *  Generate references into a table of nexus objects instead of
+ *  generating lots of isolated nexus objects. Easier on linkers
+ *  and compilers,
+ *
+ *  Add missing nexus support for l-value bit selects,
+ *
+ *  Detemplatize the vvm_mux type.
+ *
+ *  Fix up the vvm_nexus destructor to disconnect from drivers.
+ *
  * Revision 1.9  2000/03/17 19:24:00  steve
  *  nor2 and and2 optimized gates.
  *

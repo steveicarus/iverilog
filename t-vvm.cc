@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.115 2000/03/17 20:21:14 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.116 2000/03/18 01:26:59 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -135,7 +135,9 @@ class target_vvm : public target_t {
 	// of things that may be scanned multiple times.
       map<string,bool>esignal_printed_flag;
       map<string,bool>pevent_printed_flag;
-      map<string,bool>nexus_printed_flag;
+
+      map<string,unsigned>nexus_wire_map;
+      unsigned nexus_wire_counter;
 
 	// String constants that are made into vpiHandles have th
 	// handle name mapped by this.
@@ -670,6 +672,7 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       process_counter = 0;
       string_counter = 1;
       number_counter = 1;
+      nexus_wire_counter = 1;
 
       init_code << "static void design_init()" << endl;
       init_code << "{" << endl;
@@ -714,8 +717,10 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 	    string_counter+1 << "];" << endl;
       os << "static struct __vpiNumberConst number_table[" <<
 	    number_counter+1 << "];" << endl;
-
+      os << "static vvm_nexus_wire nexus_wire_table[" <<
+	    nexus_wire_counter << "];" << endl;
       defn.close();
+
       os << "// **** Definition code" << endl;
       { ifstream rdefn (defn_name);
         os << rdefn.rdbuf();
@@ -803,15 +808,15 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
       string net_name = mangle(sig->name());
 
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&sig->pin(idx)));
-
-	    if (! nexus_printed_flag[nexus]) {
-		  nexus_printed_flag[nexus] = true;
-		  os << "vvm_nexus_wire " << nexus << "_nex;" << endl;
+	    string nexus = nexus_from_link(&sig->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+	    if (ncode == 0) {
+		  nexus_wire_map[nexus] = ncode = nexus_wire_counter;
+		  nexus_wire_counter += 1;
 	    }
 
-	    init_code << "      " << nexus << "_nex.connect(&" <<
-		  net_name << ", " << idx << ");" << endl;
+	    init_code << "      nexus_wire_table[" << ncode <<
+		  "].connect(&" << net_name << ", " << idx << ");" << endl;
       }
 
       os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
@@ -1020,9 +1025,9 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	/* Connect the DataA inputs. */
 
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    unsigned pin = gate->pin_DataA(idx).get_pin();
-	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
-	    init_code << "      " << nexus << "_nex.connect(&" <<
+	    string nexus = nexus_from_link(&gate->pin_DataA(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
 		  mangle(gate->name()) << ", " <<
 		  mangle(gate->name()) << ".key_DataA(" << idx <<
 		  "));" << endl;
@@ -1031,9 +1036,10 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	/* Connect the DataB inputs. */
 
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    unsigned pin = gate->pin_DataB(idx).get_pin();
-	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
-	    init_code << "      " << nexus << "_nex.connect(&" <<
+	    string nexus = nexus_from_link(&gate->pin_DataB(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
 		  mangle(gate->name()) << ", " <<
 		  mangle(gate->name()) << ".key_DataB(" << idx <<
 		  "));" << endl;
@@ -1042,18 +1048,20 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	/* Connect the outputs of the adder. */
 
       for (unsigned idx = 0 ; idx < gate->width() ;  idx += 1) {
-	    unsigned pin = gate->pin_Result(idx).get_pin();
-	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
-	    init_code << "      " << nexus << "_nex.connect(" <<
+	    string nexus = nexus_from_link(&gate->pin_Result(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(" <<
 		  mangle(gate->name()) << ".config_rout(" << idx <<
 		  "));" << endl;
       }
 
 	// Connect the carry output if necessary.
       if (gate->pin_Cout().is_linked()) {
-	    unsigned pin = gate->pin_Cout().get_pin();
-	    string nexus = mangle(nexus_from_link(&gate->pin(pin)));
-	    init_code << "      " << nexus << "_nex.connect(" <<
+	    string nexus = nexus_from_link(&gate->pin_Cout());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(" <<
 		  mangle(gate->name()) << ".config_cout());" << endl;
       }
 
@@ -1072,32 +1080,39 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 
 void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
 {
-      os << "static vvm_clshift " << mangle(gate->name()) << "(" <<
+      string mname = mangle(gate->name());
+
+      os << "static vvm_clshift " << mname << "(" <<
 	    gate->width() << "," << gate->width_dist() << ");" <<
 	    endl;
 
 	/* Connect the Data input pins... */
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_Data(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&" <<
-		  mangle(gate->name()) << ", " << mangle(gate->name())
+	    string nexus = nexus_from_link(&gate->pin_Data(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
 		      << ".key_Data(" << idx << "));" << endl;
       }
 
 	/* Connect the Distance input pins... */
       for (unsigned idx = 0 ;  idx < gate->width_dist() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_Distance(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&" <<
-		  mangle(gate->name()) << ", " << mangle(gate->name())
+	    string nexus = nexus_from_link(&gate->pin_Distance(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
 		      << ".key_Distance(" << idx << "));" << endl;
       }
 
 	/* Connect the output drivers to the nexus nodes. */
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_Result(idx)));
-	    init_code << "      " << nexus << "_nex.connect(" <<
-		  mangle(gate->name()) << ".config_rout(" << idx <<
-		  "));" << endl;
+	    string nexus = nexus_from_link(&gate->pin_Result(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
       }
 }
 
@@ -1110,43 +1125,55 @@ void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
 
 	/* Connect DataA inputs... */
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_DataA(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&" << mname
-		      << ", " << mname << ".key_DataA(" << idx
+	    string nexus = nexus_from_link(&gate->pin_DataA(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_DataA(" << idx
 		      << "));" << endl;
       }
 
 	/* Connect DataB inputs... */
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_DataB(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&" << mname
-		      << ", " << mname << ".key_DataB(" << idx
+	    string nexus = nexus_from_link(&gate->pin_DataB(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_DataB(" << idx
 		      << "));" << endl;
       }
 
       if (gate->pin_ALB().is_linked()) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_ALB()));
-	    init_code << "      " << nexus << "_nex.connect(" << mname
-		      << ".config_ALB_out());" << endl;
+	    string nexus = nexus_from_link(&gate->pin_ALB());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_ALB_out());" << endl;
       }
 
       if (gate->pin_AGB().is_linked()) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_AGB()));
-	    init_code << "      " << nexus << "_nex.connect(" << mname
-		      << ".config_AGB_out());" << endl;
+	    string nexus = nexus_from_link(&gate->pin_AGB());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_AGB_out());" << endl;
       }
 
 
       if (gate->pin_ALEB().is_linked()) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_ALEB()));
-	    init_code << "      " << nexus << "_nex.connect(" << mname
-		      << ".config_ALEB_out());" << endl;
+	    string nexus = nexus_from_link(&gate->pin_ALEB());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_ALEB_out());" << endl;
       }
 
       if (gate->pin_AGEB().is_linked()) {
-	    string nexus = mangle(nexus_from_link(&gate->pin_AGEB()));
-	    init_code << "      " << nexus << "_nex.connect(" << mname
-		      << ".config_AGEB_out());" << endl;
+	    string nexus = nexus_from_link(&gate->pin_AGEB());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_AGEB_out());" << endl;
       }
 }
 
@@ -1168,6 +1195,7 @@ void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
 void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
 {
       string mname = mangle(mul->name());
+
       os << "static vvm_mult " << mname << "(" << mul->width_r() <<
 	    "," << mul->width_a() << "," << mul->width_b() << "," <<
 	    mul->width_s() << ");" << endl;
@@ -1176,7 +1204,9 @@ void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
 	/* Connect the DataA inputs... */
       for (unsigned idx = 0 ;  idx < mul->width_a() ;  idx += 1) {
 	    string nexus = nexus_from_link(&mul->pin_DataA(idx));
-	    init_code << "      " << mangle(nexus) << "_nex.connect(&"
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
 		      << mname << ", " << mname << ".key_DataA("
 		      << idx << "));" << endl;
       }
@@ -1184,7 +1214,9 @@ void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
 	/* Connect the Datab inputs... */
       for (unsigned idx = 0 ;  idx < mul->width_b() ;  idx += 1) {
 	    string nexus = nexus_from_link(&mul->pin_DataB(idx));
-	    init_code << "      " << mangle(nexus) << "_nex.connect(&"
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
 		      << mname << ", " << mname << ".key_DataB("
 		      << idx << "));" << endl;
       }
@@ -1192,7 +1224,9 @@ void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
 	/* Connect the output pins... */
       for (unsigned idx = 0 ;  idx < mul->width_r() ;  idx += 1) {
 	    string nexus = nexus_from_link(&mul->pin_Result(idx));
-	    init_code << "      " << mangle(nexus) << "_nex.connect("
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
 		      << mname << ".config_rout(" << idx << "));" << endl;
       }
 }
@@ -1200,34 +1234,40 @@ void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
 void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
 {
       string mname = mangle(mux->name());
-      os << "static vvm_mux<" << mux->width() << "," << mux->size() <<
-	    "," << mux->sel_width() << "> " << mname << ";" << endl;
+
+      os << "static vvm_mux " << mname << "(" << mux->width() << ","
+	 << mux->size() << "," << mux->sel_width() << ");" << endl;
 
 	/* Connect the select inputs... */
       for (unsigned idx = 0 ;  idx < mux->sel_width() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&mux->pin_Sel(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&"
-		      << mangle(mux->name()) << ", " << mangle(mux->name())
+	    string nexus = nexus_from_link(&mux->pin_Sel(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
 		      << ".key_Sel(" << idx << "));" << endl;
       }
 
 	/* Connect the data inputs... */
       for (unsigned idx = 0 ;  idx < mux->size() ;  idx += 1) {
 	    for (unsigned wid = 0 ;  wid < mux->width() ;  wid += 1) {
-		  string nexus = mangle(nexus_from_link(&mux->pin_Data(wid, idx)));
-		  init_code << "      " << nexus << "_nex.connect(&"
-			    << mangle(mux->name()) << ", "
-			    << mangle(mux->name()) << ".key_Data("
+		  string nexus = nexus_from_link(&mux->pin_Data(wid, idx));
+		  unsigned ncode = nexus_wire_map[nexus];
+
+		  init_code << "      nexus_wire_table["<<ncode<<"]"
+			    << ".connect(&" << mname << ", "
+			    << mname << ".key_Data("
 			    << wid << "," << idx << "));" << endl;
 	    }
       }
 
 	/* Connect the outputs... */
       for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&mux->pin_Result(idx)));
-	    init_code << "      " << nexus << "_nex.connect(" <<
-		  mangle(mux->name()) << ".config_rout(" << idx <<
-			 "));" << endl;
+	    string nexus = nexus_from_link(&mux->pin_Result(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
       }
 }
 
@@ -1309,15 +1349,18 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
       init_code << "      //  Connect inputs to gate " << gate->name()
 		<< "." << endl;
 
-      { string nexus = mangle(nexus_from_link(&gate->pin(0)));
-        init_code << "      " << nexus << "_nex.connect(&" <<
-	      mangle(gate->name()) << ");" << endl;
+      { string nexus = nexus_from_link(&gate->pin(0));
+        unsigned ncode = nexus_wire_map[nexus];
+	init_code << "      nexus_wire_table[" << ncode <<
+	      "].connect(&" << mangle(gate->name()) << ");" << endl;
       }
 
       for (unsigned idx = 1 ;  idx < gate->pin_count() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&" <<
-		  mangle(gate->name()) << ", " << (idx-1) << ");" << endl;
+	    string nexus = nexus_from_link(&gate->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+	    init_code << "      nexus_wire_table[" << ncode
+		      << "].connect(&" << mangle(gate->name()) << ", "
+		      << (idx-1) << ");" << endl;
       }
 }
 
@@ -1408,29 +1451,34 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 
 void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 {
+      string mname = mangle(gate->name());
       string nexus;
+      unsigned ncode;
 
       assert(gate->pin_count() == 3);
-      os << "static vvm_eeq " << mangle(gate->name()) << "(" <<
+      os << "static vvm_eeq " << mname << "(" <<
 	    gate->rise_time() << ");" << endl;
 
 	/* Connect the output pin */
-      nexus = mangle(nexus_from_link(&gate->pin(0)));
-      init_code << "      " << nexus << "_nex.connect(&" <<
-	    mangle(gate->name()) << ");" << endl;
+      nexus = nexus_from_link(&gate->pin(0));
+      ncode = nexus_wire_map[nexus];
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		<< mname << ");" << endl;
 
 	/* Connect the first input */
-      nexus = mangle(nexus_from_link(&gate->pin(1)));
-      init_code << "      " << nexus << "_nex.connect(&" <<
-	    mangle(gate->name()) << ", 0);" << endl;
+      nexus = nexus_from_link(&gate->pin(1));
+      ncode = nexus_wire_map[nexus];
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		<< mname << ", 0);" << endl;
 
 	/* Connect the second input */
-      nexus = mangle(nexus_from_link(&gate->pin(2)));
-      init_code << "      " << nexus << "_nex.connect(&" <<
-	    mangle(gate->name()) << ", 1);" << endl;
+      nexus = nexus_from_link(&gate->pin(2));
+      ncode  = nexus_wire_map[nexus];
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		<< mname << ", 1);" << endl;
 
 
-      start_code << "      " << mangle(gate->name()) << ".start();" << endl;
+      start_code << "      " << mname << ".start();" << endl;
 }
 
 /*
@@ -1487,8 +1535,10 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 	   source. Write the connect calls into the init code. */
 
       for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1) {
-	    string nexus = mangle(nexus_from_link(&gate->pin(idx)));
-	    init_code << "      " << nexus << "_nex.connect(&" <<
+	    string nexus = nexus_from_link(&gate->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
 		  mangle(gate->name()) << ", " << idx << ");" << endl;
       }
 }
@@ -1538,8 +1588,9 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    const verinum value = rc->value();
 
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
-		  defn << "      " << nexus << "_nex.reg_assign(";
+		  string nexus = nexus_from_link(&net->pin(idx));
+		  unsigned ncode = nexus_wire_map[nexus];
+		  defn << "      nexus_wire_table[" <<ncode<< "].reg_assign(";
 		  switch (value.get(idx)) {
 		      case verinum::V0:
 			defn << "V0";
@@ -1565,8 +1616,6 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
       if (net->bmux()) {
 
-	      //XXXX Not updated to nexus style??
-
 	      // This is a bit select. Assign the low bit of the rval
 	      // to the selected bit of the lval.
 	    string bval = emit_proc_rval(defn, 8, net->bmux());
@@ -1574,43 +1623,26 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  const NetObj*cur;
-		  unsigned pin;
-		  map<string,bool> written;
+
+		  string nexus = nexus_from_link(&net->pin(idx));
+		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
 
-		  for (net->pin(idx).next_link(cur, pin)
-			     ; net->pin(idx) != cur->pin(pin)
-			     ; cur->pin(pin).next_link(cur, pin)) {
-
-			  // Skip output only pins.
-			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			      continue;
-
-			  // It is possible for a named device to show up
-			  // several times in a link. This is the classic
-			  // case with NetESignal objects, which are
-			  // repeated for each expression that uses it.
-			if (written[cur->name()])
-			      continue;
-
-			written[cur->name()] = true;
-			defn << "        " << mangle(cur->name()) <<
-			      ".set_" << cur->pin(pin).get_name() <<
-			      "(" << cur->pin(pin).get_inst() <<
-			      ", " << rval << "[0]);" << endl;
-		  }
-
+		  defn << "        nexus_wire_table["<<ncode<<"]"
+		       << ".reg_assign(" << rval << "[0]);" << endl;
 		  defn << "        break;" << endl;
+
 	    }
+
 	    defn << "      }" << endl;
 
       } else {
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
-		  defn << "      " << nexus << "_nex.reg_assign(" <<
-			rval << "[" << idx << "]);" << endl;
+		  string nexus = nexus_from_link(&net->pin(idx));
+		  unsigned ncode = nexus_wire_map[nexus];
+		  defn << "      nexus_wire_table["<<ncode<<"].reg_assign("
+		       << rval << "[" << idx << "]);" << endl;
 	    }
       }
 }
@@ -1664,11 +1696,13 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
+		  string nexus = nexus_from_link(&net->pin(idx));
+		  unsigned ncode = nexus_wire_map[nexus];
 
 		  defn << "      case " << idx << ":" << endl;
-		  defn << "        vvm_delyed_assign(" << nexus <<
-			"_nex, " << rval << ", " << delay << ");" << endl;
+		  defn << "        vvm_delayed_assign(nexus_wire_table["
+		       << ncode << "], " << rval << ", " << delay << ");"
+		       << endl;
 		  defn << "        break;" << endl;
 	    }
 
@@ -1676,10 +1710,11 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 
       } else {
 	    for (unsigned idx = 0 ; idx < net->pin_count() ;  idx += 1) {
-		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
-		  defn << "      vvm_delayed_assign(" << nexus <<
-			"_nex, " << rval << "[" << idx << "], " <<
-			delay << ");" << endl;
+		  string nexus = nexus_from_link(&net->pin(idx));
+		  unsigned ncode = nexus_wire_map[nexus];
+		  defn << "      vvm_delayed_assign(nexus_wire_table["
+		       << ncode << "], " << rval << "[" << idx << "], "
+		       << delay << ");" << endl;
 	    }
       }
 }
@@ -2245,6 +2280,17 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.116  2000/03/18 01:26:59  steve
+ *  Generate references into a table of nexus objects instead of
+ *  generating lots of isolated nexus objects. Easier on linkers
+ *  and compilers,
+ *
+ *  Add missing nexus support for l-value bit selects,
+ *
+ *  Detemplatize the vvm_mux type.
+ *
+ *  Fix up the vvm_nexus destructor to disconnect from drivers.
+ *
  * Revision 1.115  2000/03/17 20:21:14  steve
  *  Detemplatize the vvm_signal_t class.
  *

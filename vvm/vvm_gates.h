@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.45 2000/03/17 19:24:00 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.46 2000/03/18 01:27:00 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -328,70 +328,36 @@ class vvm_mult  : public vvm_nexus::recvr_t {
 /*
  * This class supports mux devices. The width is the width of the data
  * (or bus) path, SIZE is the number of alternative inputs and SELWID
- * is the size (in bits) of the selector input.
+ * is the size (in bits) of the selector input. The device passes to
+ * the output the bits of the input selected by the selector.
  */
-template <unsigned WIDTH, unsigned SIZE, unsigned SELWID>
 class vvm_mux  : public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_mux()
-	    { unsigned idx;
-	      for (idx = 0 ;  idx < WIDTH ;  idx += 1) output_[idx] = Vx;
-	      for (idx = 0 ;  idx < SELWID;  idx += 1) sel_[idx] = Vx;
-	      for (idx = 0 ;  idx < WIDTH*SIZE;  idx += 1) input_[idx] = Vx;
-	    }
+      explicit vvm_mux(unsigned width, unsigned size, unsigned selwid);
+      ~vvm_mux();
 
-      void init_Sel(unsigned idx, vpip_bit_t val)
-	    { sel_[idx] = val; }
+      void init_Sel(unsigned idx, vpip_bit_t val);
+      void init_Data(unsigned idx, vpip_bit_t val);
 
-      void init_Data(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      vvm_nexus::drive_t* config_rout(unsigned idx);
 
-      vvm_nexus::drive_t* config_rout(unsigned idx)
-	    { return out_+idx; }
-
-      unsigned key_Sel(unsigned idx) const { return idx; }
-      unsigned key_Data(unsigned wi, unsigned si) const
-            { return 0x10000 + si*WIDTH + wi; }
+      unsigned key_Sel(unsigned idx) const;
+      unsigned key_Data(unsigned wi, unsigned si) const;
 
     private:
-      void take_value(unsigned key, vpip_bit_t val)
-      { unsigned code = key >> 16;
-        unsigned idx = key & 0xffff;
-	if (code == 1)
-	      set_Data(idx, val);
-	else
-	      set_Sel(idx, val);
-      }
+      void take_value(unsigned key, vpip_bit_t val);
 
-      void set_Sel(unsigned idx, vpip_bit_t val)
-	    { if (sel_[idx] == val) return;
-	      sel_[idx] = val;
-	      evaluate_();
-	    }
+      unsigned width_, size_, selwid_;
+      vpip_bit_t*bits_;
 
-      void set_Data(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val) return;
-	      input_[idx] = val;
-	      evaluate_();
-	    }
+      vvm_nexus::drive_t*out_;
 
-    private:
-      vpip_bit_t sel_[SELWID];
-      vpip_bit_t input_[WIDTH * SIZE];
-      vpip_bit_t output_[WIDTH];
+      void evaluate_();
 
-      vvm_nexus::drive_t out_[WIDTH];
-
-      void evaluate_()
-	    { vpip_bit_t tmp[WIDTH];
-	      compute_mux(tmp, WIDTH, sel_, SELWID, input_, SIZE);
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    if (tmp[idx] != output_[idx]) {
-			  output_[idx] = tmp[idx];
-			  out_[idx].set_value(output_[idx]);
-		    }
-	    }
+    private: // not implemented
+      vvm_mux(const vvm_mux&);
+      vvm_mux& operator= (vvm_mux&);
 };
 
 template <unsigned WIDTH> 
@@ -848,6 +814,17 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.46  2000/03/18 01:27:00  steve
+ *  Generate references into a table of nexus objects instead of
+ *  generating lots of isolated nexus objects. Easier on linkers
+ *  and compilers,
+ *
+ *  Add missing nexus support for l-value bit selects,
+ *
+ *  Detemplatize the vvm_mux type.
+ *
+ *  Fix up the vvm_nexus destructor to disconnect from drivers.
+ *
  * Revision 1.45  2000/03/17 19:24:00  steve
  *  nor2 and and2 optimized gates.
  *
