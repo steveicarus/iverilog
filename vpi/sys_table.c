@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.20 2003/03/07 02:44:34 steve Exp $"
+#ident "$Id: sys_table.c,v 1.21 2003/09/01 04:04:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,6 +36,7 @@ extern void sys_readmem_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_lxt_register();
+extern void sys_lxt2_register();
 extern void sys_vcdoff_register();
 
 static void sys_lxt_or_vcd_register()
@@ -76,6 +77,18 @@ static void sys_lxt_or_vcd_register()
 	    } else if (strcmp(vlog_info.argv[idx],"-lxt-none") == 0) {
 		  dumper = "none";
 
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt2") == 0) {
+		  dumper = "lxt2";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt2-space") == 0) {
+		  dumper = "lxt2";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt2-speed") == 0) {
+		  dumper = "lxt2";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt2-none") == 0) {
+		  dumper = "none";
+
 	    } else if (strcmp(vlog_info.argv[idx],"-vcd") == 0) {
 		  dumper = "vcd";
 
@@ -99,6 +112,12 @@ static void sys_lxt_or_vcd_register()
 
       else if (strcmp(dumper, "LXT") == 0)
 	    sys_lxt_register();
+
+      else if (strcmp(dumper, "lxt2") == 0)
+	    sys_lxt2_register();
+
+      else if (strcmp(dumper, "LXT2") == 0)
+	    sys_lxt2_register();
 
       else if (strcmp(dumper, "none") == 0)
 	    sys_vcdoff_register();
@@ -129,6 +148,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.21  2003/09/01 04:04:03  steve
+ *  Add lxt2 support.
+ *
  * Revision 1.20  2003/03/07 02:44:34  steve
  *  Implement $realtobits.
  *
