@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_expr.cc,v 1.3 2002/05/05 21:11:50 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.4 2002/05/25 16:51:37 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "netlist.h"
+# include  <iostream.h>
 
 NetEConcat::NetEConcat(unsigned cnt, NetExpr* r)
 : parms_(cnt), repeat_(r)
@@ -146,6 +147,9 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.4  2002/05/25 16:51:37  steve
+ *  include iostream for gcc 3.1
+ *
  * Revision 1.3  2002/05/05 21:11:50  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms
