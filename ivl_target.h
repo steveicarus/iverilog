@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.54 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.55 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -82,12 +82,6 @@ _BEGIN_DECL
  *    device nodes. This object carries a few base properties
  *    (including a type) including a handle to the specific type.
  *
- *    All the ivl_lpm_*_t objects are derived from this type, and
- *    there are methods to get one from the other.
- *
- * ivl_lpm_ff_t
- *    This is a flip-flop.
- *
  * ivl_net_logic_t
  *    This object represents various built in logic devices. In fact,
  *    this includes just about every directional device that has a
@@ -131,7 +125,6 @@ typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_lpm_s      *ivl_lpm_t;
-typedef struct ivl_lpm_ff_s   *ivl_lpm_ff_t;
 typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
@@ -192,7 +185,8 @@ typedef enum ivl_logic_e {
 
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
-      IVL_LPM_FF
+      IVL_LPM_FF,
+      IVL_LPM_MUX
 } ivl_lpm_type_t;
 
 /* Processes are initial or always blocks with a statement. This is
@@ -451,20 +445,37 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    Return the width of the LPM device. What this means depends on
  *    the LPM type, but it generally has to do with the width of the
  *    output data path.
+ *
+ * ivl_lpm_data
+ *    Return the input data nexus for device types that have a single
+ *    input vector.
+ *
+ * ivl_lpm_selects
+ *    This is the size of the select input for a LPM_MUX device
+ *
+ * ivl_lpm_size
+ *    In addition to a width, some devices have a size. The size is
+ *    often the number of inputs per out, i.e. the number of inputs
+ *    per bit for a MUX.
  */
 extern const char*    ivl_lpm_name(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
 extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
-
-/*
- * These are cast functions for the ivl_lpm_t. They cast the object to
- * the requested type, checking for errors along the way.
- */
-extern ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net);
-extern ivl_nexus_t  ivl_lpm_ff_clk(ivl_lpm_ff_t net);
-extern ivl_nexus_t  ivl_lpm_ff_data(ivl_lpm_ff_t net, unsigned idx);
-extern ivl_nexus_t  ivl_lpm_ff_q(ivl_lpm_ff_t net, unsigned idx);
+  /* IVL_LPM_FF */
+extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
+  /* IVL_LPM_FF */
+extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
+  /* IVL_LPM_MUX */
+extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
+  /* IVL_LPM_FF */
+extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
+  /* IVL_LPM_MUX */
+extern unsigned ivl_lpm_selects(ivl_lpm_t net);
+  /* IVL_LPM_MUX */
+extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
+  /* IVL_LPM_MUX */
+extern unsigned ivl_lpm_size(ivl_lpm_t net);
 
 
 /* LVAL
@@ -781,6 +792,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.55  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.54  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

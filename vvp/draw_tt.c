@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.6 2001/04/21 02:04:01 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.7 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -111,6 +111,47 @@ static void draw_BUF(void)
 				    val = 0;
 			      else
 				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_MUXZ(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_MUXZ[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if (i3 == 0)
+				    val = 3;
+			      else if (i3 == 2)
+				    val = 2;
+			      else if (i3 == 3)
+				    val = 2;
+			      else if (i2 >= 2) {
+				    if (i0 == i1)
+					  val = i0;
+				    else
+					  val = 2;
+			      } else if (i2 == 0)
+				    val = i0;
+			      else
+				    val = i1;
 
 			      byte |= val << (i0*2);
 			}
@@ -388,6 +429,7 @@ main()
       printf("# include  \"functor.h\"\n");
       draw_AND();
       draw_BUF();
+      draw_MUXZ();
       draw_NAND();
       draw_NOR();
       draw_NOT();
@@ -401,6 +443,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.7  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.6  2001/04/21 02:04:01  steve
  *  Add NAND and XNOR functors.
  *

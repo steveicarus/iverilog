@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.40 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.41 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -378,41 +378,116 @@ extern "C" const char* ivl_udp_name(ivl_udp_t net)
 }
 
 
-extern "C" ivl_lpm_ff_t ivl_lpm_ff(ivl_lpm_t net)
-{
-      assert(net->type == IVL_LPM_FF);
-      return (ivl_lpm_ff_t)net;
-}
-
-extern "C" ivl_nexus_t ivl_lpm_ff_clk(ivl_lpm_ff_t net)
+extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
 {
       assert(net);
-      return net->clk;
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.clk;
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
-extern "C" ivl_nexus_t ivl_lpm_ff_data(ivl_lpm_ff_t net, unsigned idx)
+extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 {
       assert(net);
-      assert(idx < net->base.width);
-      if (net->base.width == 1)
-	    return net->d.pin;
-      else
-	    return net->d.pins[idx];
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    assert(idx < net->u_.ff.width);
+	    if (net->u_.ff.width == 1)
+		  return net->u_.ff.d.pin;
+	    else
+		  return net->u_.ff.d.pins[idx];
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
-extern "C" ivl_nexus_t ivl_lpm_ff_q(ivl_lpm_ff_t net, unsigned idx)
+extern "C" ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx)
 {
       assert(net);
-      assert(idx < net->base.width);
-      if (net->base.width == 1)
-	    return net->q.pin;
-      else
-	    return net->q.pins[idx];
+      switch (net->type) {
+	  case IVL_LPM_MUX:
+	    assert(sdx < net->u_.mux.size);
+	    assert(idx < net->u_.mux.width);
+	    return net->u_.mux.d[sdx*net->u_.mux.width + idx];
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
 {
       return net->name;
+}
+
+extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
+{
+      assert(net);
+
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    assert(idx < net->u_.ff.width);
+	    if (net->u_.ff.width == 1)
+		  return net->u_.ff.q.pin;
+	    else
+		  return net->u_.ff.q.pins[idx];
+
+	  case IVL_LPM_MUX:
+	    assert(idx < net->u_.mux.width);
+	    if (net->u_.mux.width == 1)
+		  return net->u_.mux.q.pin;
+	    else
+		  return net->u_.mux.q.pins[idx];
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
+{
+      switch (net->type) {
+	  case IVL_LPM_MUX:
+	    assert(idx < net->u_.mux.swid);
+	    if (net->u_.mux.swid == 1)
+		  return net->u_.mux.s.pin;
+	    else
+		  return net->u_.mux.s.pins[idx];
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
+{
+      switch (net->type) {
+	  case IVL_LPM_MUX:
+	    return net->u_.mux.swid;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
+{
+      switch (net->type) {
+	  case IVL_LPM_MUX:
+	    return net->u_.mux.size;
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net)
@@ -422,7 +497,16 @@ extern "C" ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net)
 
 extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 {
-      return net->width;
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.width;
+	  case IVL_LPM_MUX:
+	    return net->u_.mux.width;
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
@@ -949,6 +1033,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.41  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.40  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

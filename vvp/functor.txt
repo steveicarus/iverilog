@@ -28,3 +28,41 @@ A propagation event is the only way that the output of a functor is
 moved to the input of another functor. The propagation event, which is
 given a pointer to the functor to propagate, looks at the output list
 and sets the listed inputs to the current value of the output.
+
+
+BUILT-IN FUNCTOR TABLES
+
+* AND
+
+* BUF
+
+* MUXZ
+
+This is a single-bit A/B mux with an active sigh enable. The 4 inputs
+are A, B, select and enable:
+
+	Se En
+	0  0    z
+	0  1    A
+	1  0	z
+	1  1	B
+	xz 0	z
+	xz 1	x
+
+This is used to implement structural ?: operators. The enable is
+normally initialized to 1 and left unconnected. The device is called
+MUXZ because the x and z values of the A and B inputs are passed
+through.
+	
+* NAND
+
+* NOR
+
+* NOT
+
+* OR
+
+* XNOR
+
+* XOR
+

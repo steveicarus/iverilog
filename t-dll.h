@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.39 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: t-dll.h,v 1.40 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -59,6 +59,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void logic(const NetLogic*);
       void udp(const NetUDP*);
       void lpm_ff(const NetFF*);
+      void lpm_mux(const NetMux*);
       void net_assign(const NetAssign_*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
@@ -186,31 +187,47 @@ struct ivl_expr_s {
 };
 
 /*
- * This is the base part of all ivl_lpm_*_t objects. It contains a
- * type code to identify the extended type, and holds properties that
- * are common to all (or most) lpm devices.
+ * LPM devices are handled by this suite of types. The ivl_lpm_s
+ * structure holds the core, including a type code, the object name
+ * and scope. The other properties of the device are held in the type
+ * specific member of the union.
  */
+
 struct ivl_lpm_s {
       ivl_lpm_type_t type;
       ivl_scope_t scope;
       char* name;
 
-      unsigned width;
-};
-
-struct ivl_lpm_ff_s {
-      struct ivl_lpm_s base;
-
-      ivl_nexus_t clk;
-
       union {
-	    ivl_nexus_t*pins;
-	    ivl_nexus_t pin;
-      } q;
-      union {
-	    ivl_nexus_t*pins;
-	    ivl_nexus_t pin;
-      } d;
+	    struct ivl_lpm_ff_s {
+		  unsigned short width;
+		  ivl_nexus_t clk;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } q;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } d;
+	    } ff;
+
+	    struct ivl_lpm_mux_s {
+		  unsigned short width;
+		  unsigned short size;
+		  unsigned short swid;
+		  ivl_nexus_t*d;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } q;
+		  union {
+			ivl_nexus_t*pins;
+			ivl_nexus_t pin;
+		  } s;
+	    } mux;
+
+      } u_;
 };
 
 /*
@@ -451,6 +468,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.40  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.39  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

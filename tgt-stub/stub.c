@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.37 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: stub.c,v 1.38 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 /*
@@ -100,21 +100,42 @@ static void show_lpm(ivl_lpm_t net)
 
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_FF: {
-		ivl_lpm_ff_t ff = ivl_lpm_ff(net);
 
 		fprintf(out, "  LPM_FF %s: <width=%u>\n",
 			ivl_lpm_name(net), width);
 		fprintf(out, "    clk: %s\n",
-			ivl_nexus_name(ivl_lpm_ff_clk(ff)));
+			ivl_nexus_name(ivl_lpm_clk(net)));
 
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Data %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_ff_data(ff, idx)));
+			      ivl_nexus_name(ivl_lpm_data(net, idx)));
 
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_ff_q(ff, idx)));
+			      ivl_nexus_name(ivl_lpm_q(net, idx)));
 
+		break;
+	  }
+
+	  case IVL_LPM_MUX: {
+		unsigned sdx;
+
+		fprintf(out, "  LPM_MUX %s: <width=%u, size=%u, sel_wid=%u>\n",
+			ivl_lpm_name(net), width, ivl_lpm_size(net),
+			ivl_lpm_selects(net));
+
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Q %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_q(net, idx)));
+
+		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1)
+		      fprintf(out, "    S %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_select(net, idx)));
+
+		for (sdx = 0 ;  sdx < ivl_lpm_size(net) ;  sdx += 1)
+		      for (idx = 0 ;  idx < width ;  idx += 1)
+			    fprintf(out, "    D%u %u: %s\n", sdx, idx,
+				 ivl_nexus_name(ivl_lpm_data2(net,sdx,idx)));
 		break;
 	  }
 
@@ -509,6 +530,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.38  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.37  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

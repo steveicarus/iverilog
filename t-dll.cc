@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.35 2001/04/24 02:23:58 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.36 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -476,14 +476,15 @@ void dll_target::udp(const NetUDP*net)
 
 void dll_target::lpm_ff(const NetFF*net)
 {
-      ivl_lpm_ff_t obj = new struct ivl_lpm_ff_s;
-      obj->base.type  = IVL_LPM_FF;
-      obj->base.name  = strdup(net->name());
-      obj->base.width = net->width();
-      obj->base.scope = find_scope(des_.root_, net->scope());
-      assert(obj->base.scope);
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_FF;
+      obj->name  = strdup(net->name());
+      obj->scope = find_scope(des_.root_, net->scope());
+      assert(obj->scope);
 
-      scope_add_lpm(obj->base.scope, &obj->base);
+      obj->u_.ff.width = net->width();
+
+      scope_add_lpm(obj->scope, obj);
 
       const Nexus*nex;
 
@@ -491,37 +492,104 @@ void dll_target::lpm_ff(const NetFF*net)
 	   point back to this device. */
       nex = net->pin_Clock().nexus();
       assert(nex->t_cookie());
-      obj->clk = (ivl_nexus_t) nex->t_cookie();
-      assert(obj->clk);
-      nexus_lpm_add(obj->clk, &obj->base, 0);
+      obj->u_.ff.clk = (ivl_nexus_t) nex->t_cookie();
+      assert(obj->u_.ff.clk);
+      nexus_lpm_add(obj->u_.ff.clk, obj, 0);
 
-      if (obj->base.width == 1) {
+      if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
-	    obj->q.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->q.pin, &obj->base, 0);
+	    obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0);
 
 	    nex = net->pin_Data(0).nexus();
 	    assert(nex->t_cookie());
-	    obj->d.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->d.pin, &obj->base, 0);
+	    obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0);
 
       } else {
-	    obj->q.pins = new ivl_nexus_t [obj->base.width * 2];
-	    obj->d.pins = obj->q.pins + obj->base.width;
+	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
+	    obj->u_.ff.d.pins = obj->u_.ff.q.pins + obj->u_.ff.width;
 
-	    for (unsigned idx = 0 ;  idx < obj->base.width ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
 		  nex = net->pin_Q(idx).nexus();
 		  assert(nex->t_cookie());
-		  obj->q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->q.pins[idx], &obj->base, 0);
+		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0);
 
 		  nex = net->pin_Data(idx).nexus();
 		  assert(nex->t_cookie());
-		  obj->d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->d.pins[idx], &obj->base, 0);
+		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0);
 	    }
       }
+}
+
+void dll_target::lpm_mux(const NetMux*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_MUX;
+      obj->name  = strdup(net->name());
+      obj->scope = find_scope(des_.root_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.mux.width = net->width();
+      obj->u_.mux.size  = net->size();
+      obj->u_.mux.swid  = net->sel_width();
+
+      scope_add_lpm(obj->scope, obj);
+
+      const Nexus*nex;
+
+	/* Connect the output bits. */
+      if (obj->u_.mux.width == 1) {
+	    nex = net->pin_Result(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.mux.q.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.mux.q.pin, obj, 0);
+
+      } else {
+	    obj->u_.mux.q.pins = new ivl_nexus_t [obj->u_.mux.width];
+
+	    for (unsigned idx = 0 ;  idx < obj->u_.mux.width ;  idx += 1) {
+		  nex = net->pin_Result(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.mux.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.mux.q.pins[idx], obj, 0);
+	    }
+      }
+
+	/* Connect the select bits. */
+      if (obj->u_.mux.swid == 1) {
+	    nex = net->pin_Sel(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.mux.s.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.mux.s.pin, obj, 0);
+
+      } else {
+	    obj->u_.mux.s.pins = new ivl_nexus_t [obj->u_.mux.swid];
+
+	    for (unsigned idx = 0 ;  idx < obj->u_.mux.swid ;  idx += 1) {
+		  nex = net->pin_Sel(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.mux.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.mux.s.pins[idx], obj, 0);
+	    }
+      }
+
+      unsigned width = obj->u_.mux.width;
+      unsigned selects = obj->u_.mux.size;
+
+      obj->u_.mux.d = new ivl_nexus_t [width * selects];
+
+      for (unsigned sdx = 0 ;  sdx < selects ;  sdx += 1)
+	    for (unsigned ddx = 0 ;  ddx < width ;  ddx += 1) {
+		  nex = net->pin_Data(ddx, sdx).nexus();
+		  ivl_nexus_t tmp = (ivl_nexus_t) nex->t_cookie();
+		  obj->u_.mux.d[sdx*width + ddx] = tmp;
+		  nexus_lpm_add(tmp, obj, 0);
+	    }
+
 }
 
 /*
@@ -811,6 +879,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.36  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.35  2001/04/24 02:23:58  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

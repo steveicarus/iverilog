@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.19 2001/04/24 02:59:52 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.20 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -41,7 +41,8 @@ void draw_nexus_input(ivl_nexus_t nex)
 {
       ivl_net_logic_t lptr;
       ivl_signal_t sptr;
-      unsigned ndx;
+      ivl_lpm_t lpm;
+      unsigned idx, ndx;
 
       for (ndx = 0 ;  ndx < ivl_nexus_ptrs(nex) ;  ndx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, ndx);
@@ -62,6 +63,19 @@ void draw_nexus_input(ivl_nexus_t nex)
 		  fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sptr),
 			  ivl_nexus_ptr_pin(nptr));
 		  return;
+	    }
+
+	    lpm = ivl_nexus_ptr_lpm(nptr);
+	    if (lpm) switch (ivl_lpm_type(lpm)) {
+
+		case IVL_LPM_MUX:
+		  for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
+			if (ivl_lpm_q(lpm, idx) == nex) {
+			      fprintf(vvp_out, "L_%s/%u",
+				      ivl_lpm_name(lpm), idx);
+			      return;
+			}
+
 	    }
       }
 }
@@ -336,6 +350,47 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
+static void draw_lpm_mux(ivl_lpm_t net)
+{
+      ivl_nexus_t s;
+      unsigned idx, width;
+
+	/* XXXX Only support A-B muxes for now. */
+      assert(ivl_lpm_size(net) == 2);
+      assert(ivl_lpm_selects(net) == 1);
+
+      width = ivl_lpm_width(net);
+      s = ivl_lpm_select(net, 0);
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t a = ivl_lpm_data2(net, 0, idx);
+	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
+	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, 0x6a",
+		    ivl_lpm_name(net), idx);
+	    fprintf(vvp_out, ", ");
+	    draw_nexus_input(a);
+	    fprintf(vvp_out, ", ");
+	    draw_nexus_input(b);
+	    fprintf(vvp_out, ", ");
+	    draw_nexus_input(s);
+	    fprintf(vvp_out, ";\n");
+      }
+
+}
+
+static void draw_lpm_in_scope(ivl_lpm_t net)
+{
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_MUX:
+	    draw_lpm_mux(net);
+	    return;
+
+	  default:
+	    fprintf(stderr, "XXXX LPM not supported: %s\n",
+		    ivl_lpm_name(net));
+      }
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -380,6 +435,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_event_in_scope(event);
       }
 
+      for (idx = 0 ;  idx < ivl_scope_lpms(net) ;  idx += 1) {
+	    ivl_lpm_t lpm = ivl_scope_lpm(net, idx);
+	    draw_lpm_in_scope(lpm);
+      }
+
       if (ivl_scope_type(net) == IVL_SCT_TASK)
 	    draw_task_definition(net);
 
@@ -392,6 +452,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.20  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.19  2001/04/24 02:59:52  steve
  *  Fix generation of udp/comb definitions.
  *

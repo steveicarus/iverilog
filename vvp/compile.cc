@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.41 2001/04/26 03:10:55 steve Exp $"
+#ident "$Id: compile.cc,v 1.42 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -261,6 +261,9 @@ void compile_functor(char*label, char*type, unsigned init,
 
       } else if (strcmp(type, "BUF") == 0) {
 	    obj->table = ft_BUF;
+
+      } else if (strcmp(type, "MUXZ") == 0) {
+	    obj->table = ft_MUXZ;
 
       } else if (strcmp(type, "NAND") == 0) {
 	    obj->table = ft_NAND;
@@ -954,6 +957,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.42  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.41  2001/04/26 03:10:55  steve
  *  Redo and simplify UDP behavior.
  *

@@ -41,14 +41,15 @@ ivl_logic_type
 ivl_logic_pin
 ivl_logic_pins
 
+ivl_lpm_clk
+ivl_lpm_data
 ivl_lpm_name
+ivl_lpm_q
+ivl_lpm_select
+ivl_lpm_selects
+ivl_lpm_size
 ivl_lpm_type
 ivl_lpm_width
-
-ivl_lpm_ff
-ivl_lpm_ff_clk
-ivl_lpm_ff_data
-ivl_lpm_ff_q
 
 ivl_lval_mux
 ivl_lval_pin

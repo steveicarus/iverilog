@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.14 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: functor.h,v 1.15 2001/04/26 05:12:02 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -174,6 +174,7 @@ extern void functor_dump(FILE*fd);
 
 extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
+extern const unsigned char ft_MUXZ[];
 extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
 extern const unsigned char ft_NOT[];
@@ -184,6 +185,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.15  2001/04/26 05:12:02  steve
+ *  Implement simple MUXZ for ?: operators.
+ *
  * Revision 1.14  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *
