@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.34 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.35 2002/07/07 22:31:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,6 +107,26 @@ NetNet* NetEBBits::synthesize(Design*des)
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
 	    string oname = des->local_symbol(path);
 	    NetLogic*gate;
+
+	      /* If the rsig bit is constant, then look for special
+		 cases that I can use to reduce the generated
+		 logic. If I find one, then handle it immediately and
+		 skip the rest of the processing of this bit. */
+	    if (rsig->pin(idx).nexus()->drivers_constant()) {
+		  verinum::V bval = rsig->pin(idx).nexus()->driven_value();
+
+		    /* (A & 0) is (0) */
+		  if ((op() == '&') && bval == verinum::V0) {
+			connect(osig->pin(idx), rsig->pin(idx));
+			continue;
+		  }
+
+		    /* (A & 1) is A */
+		  if ((op() == '&') && bval == verinum::V1) {
+			connect(osig->pin(idx), lsig->pin(idx));
+			continue;
+		  }
+	    }
 
 	    switch (op()) {
 		case '&':
@@ -588,6 +608,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.35  2002/07/07 22:31:39  steve
+ *  Smart synthesis of binary AND expressions.
+ *
  * Revision 1.34  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *
