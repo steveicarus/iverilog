@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.3 2001/03/21 01:49:43 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.4 2001/03/22 05:06:21 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
 
 static void show_statement(ivl_statement_t net);
+
+static unsigned local_count = 0;
+static unsigned thread_count = 0;
 
 /*
  * This file includes the code needed to generate VVP code for
@@ -67,7 +70,7 @@ static void set_to_nexus(ivl_nexus_t nex, char bit)
 		  bit = '3';
 		  break;
 	    }
-	    fprintf(vvp_out, "    %%set V_%s[%u], %c\n",
+	    fprintf(vvp_out, "    %%set V_%s[%u], %c;\n",
 		    ivl_signal_name(sig), pin, bit);
       }
 }
@@ -100,6 +103,35 @@ static void show_stmt_assign(ivl_statement_t net)
       }
 
       fprintf(stderr, "XXXX EXPRESSION TOO COMPLEX FOR ME?\n");
+}
+
+static void show_stmt_condit(ivl_statement_t net)
+{
+      unsigned lab_false, lab_out;
+      ivl_expr_t exp = ivl_stmt_cond_expr(net);
+      struct vector_info cond = draw_eval_expr(exp);
+
+      assert(cond.wid == 1);
+
+      lab_false = local_count++;
+      lab_out = local_count++;
+
+      fprintf(vvp_out, "    %%jmp/0  T_%05d.%d, %u;\n",
+	      thread_count, lab_false, cond.base);
+
+      show_statement(ivl_stmt_cond_true(net));
+
+      if (ivl_stmt_cond_false(net)) {
+	    fprintf(vvp_out, "    %%jmp T_%05d.%d;\n", thread_count, lab_out);
+	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_false);
+
+	    show_statement(ivl_stmt_cond_false(net));
+
+	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_out);
+
+      } else {
+	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_false);
+      }
 }
 
 /*
@@ -180,6 +212,10 @@ static void show_statement(ivl_statement_t net)
 		break;
 	  }
 
+	  case IVL_ST_CONDIT:
+	    show_stmt_condit(net);
+	    break;
+
 	  case IVL_ST_DELAY:
 	    show_stmt_delay(net);
 	    break;
@@ -207,9 +243,9 @@ static void show_statement(ivl_statement_t net)
 
 int draw_process(ivl_process_t net, void*x)
 {
-      static unsigned thread_count = 0;
       ivl_scope_t scope = ivl_process_scope(net);
 
+      local_count = 0;
       fprintf(vvp_out, "    .scope S_%s;\n", ivl_scope_name(scope));
 
 	/* Generate the entry label. Just give the thread a number so
@@ -245,6 +281,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.4  2001/03/22 05:06:21  steve
+ *  Geneate code for conditional statements.
+ *
  * Revision 1.3  2001/03/21 01:49:43  steve
  *  Scan the scopes of a design, and draw behavioral
  *  blocking  assignments of constants to vectors.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.2 2001/03/21 01:49:43 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.3 2001/03/22 05:06:21 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -39,8 +39,23 @@ extern int draw_process(ivl_process_t net, void*x);
 
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
+
+/*
+ * The draw_eval_expr function writes out the code to evaluate a
+ * behavioral expression.
+ */
+struct vector_info {
+      unsigned short base;
+      unsigned short wid;
+};
+
+extern struct vector_info draw_eval_expr(ivl_expr_t exp);
+
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.3  2001/03/22 05:06:21  steve
+ *  Geneate code for conditional statements.
+ *
  * Revision 1.2  2001/03/21 01:49:43  steve
  *  Scan the scopes of a design, and draw behavioral
  *  blocking  assignments of constants to vectors.
