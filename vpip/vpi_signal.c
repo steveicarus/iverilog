@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.2 2001/10/26 02:29:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -43,7 +43,7 @@ static int signal_get(int code, vpiHandle ref)
       }
 }
 
-static char* signal_get_str(int code, vpiHandle ref)
+static const char* signal_get_str(int code, vpiHandle ref)
 {
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
@@ -127,6 +127,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.2  2001/10/26 02:29:10  steve
+ *  const/non-const warnings. (Stephan Boettcher)
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *

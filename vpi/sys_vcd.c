@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.25 2001/10/25 04:19:53 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.26 2001/10/26 02:29:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -644,7 +644,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 static int draw_scope(vpiHandle item)
 {
       int depth;
-      char *name;
+      const char *name;
       char *type;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
@@ -782,6 +782,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.26  2001/10/26 02:29:10  steve
+ *  const/non-const warnings. (Stephan Boettcher)
+ *
  * Revision 1.25  2001/10/25 04:19:53  steve
  *  VPI support for callback to return values.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.2 2001/10/26 02:29:10 steve Exp $"
 #endif
 
 /*
@@ -150,7 +150,7 @@ struct __vpirt {
 
 	/* These methods extract information from the handle. */
       int   (*vpi_get_)(int, vpiHandle);
-      char* (*vpi_get_str_)(int, vpiHandle);
+      const char* (*vpi_get_str_)(int, vpiHandle);
       void  (*vpi_get_value_)(vpiHandle, p_vpi_value);
       vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value, p_vpi_time, int);
 
@@ -412,6 +412,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.2  2001/10/26 02:29:10  steve
+ *  const/non-const warnings. (Stephan Boettcher)
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.3 2001/06/19 14:57:10 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.4 2001/10/26 02:29:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -143,7 +143,7 @@ char* vpi_get_str(int property, vpiHandle ref)
       if (ref->vpi_type->vpi_get_str_ == 0)
 	    return 0;
 
-      return (ref->vpi_type->vpi_get_str_)(property, ref);
+      return (char*)(ref->vpi_type->vpi_get_str_)(property, ref);
 }
 
 void vpi_get_time(vpiHandle obj, s_vpi_time*t)
@@ -241,6 +241,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.4  2001/10/26 02:29:10  steve
+ *  const/non-const warnings. (Stephan Boettcher)
+ *
  * Revision 1.3  2001/06/19 14:57:10  steve
  *  Get va_start arguments in right order.
  *
