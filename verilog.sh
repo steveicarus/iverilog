@@ -51,7 +51,7 @@ while true ; do
       -X) target="xnf" ; shift ;;
       -o) outputFile=$2 ; shift 2 ;;
       -s) topModule="-s $2 " ; shift 2 ;;
-      -t) target="-t $2" ; shift 2 ;;
+      -t) target="$2" ; shift 2 ;;
       -x) execute="true"; shift ;;
       --) shift ; break ;;
        *) echo "Internal error! Arg is $1 " ; exit 1 ;;
