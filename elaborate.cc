@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.30 1999/05/30 01:11:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.31 1999/05/31 15:45:35 steve Exp $"
 #endif
 
 /*
@@ -942,7 +942,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       assert(reg);
 
       if (reg->type() != NetNet::REG) {
-	    cerr << get_line() << ": " << lval() << " is not a register."
+	    cerr << get_line() << ": " << *lval() << " is not a register."
 		 << endl;
 	    return 0;
       }
@@ -1247,6 +1247,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.31  1999/05/31 15:45:35  steve
+ *  Fix error message.
+ *
  * Revision 1.30  1999/05/30 01:11:46  steve
  *  Exressions are trees that can duplicate, and not DAGS.
  *
