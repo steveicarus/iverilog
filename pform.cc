@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.48 1999/12/11 05:45:41 steve Exp $"
+#ident "$Id: pform.cc,v 1.49 1999/12/30 19:06:14 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -407,6 +407,46 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
 	}
 }
 
+/*
+ * this function makes the initial assignment to a register as given
+ * in the source. It handles the case where a reg variable is assigned
+ * where it it declared:
+ *
+ *    reg foo = <expr>;
+ *
+ * This is equivilent to the combination of statements:
+ *
+ *    reg foo;
+ *    initital foo = <expr>;
+ *
+ * and that is how it is parsed. This syntax is not part of the
+ * IEEE1364-1994 standard, but is approved by OVI as enhancement
+ * BTF-B14.
+ */
+void pform_make_reginit(const struct vlltype&li,
+			const string&name, PExpr*expr)
+{
+      const string sname = scoped_name(name);
+      PWire*cur = pform_cur_module->get_wire(sname);
+      if (cur == 0) {
+	    VLerror(li, "internal error: reginit to non-register?");
+	    delete expr;
+	    return;
+      }
+
+      PEIdent*lval = new PEIdent(sname);
+      lval->set_file(li.text);
+      lval->set_lineno(li.first_line);
+      PAssign*ass = new PAssign(lval, expr);
+      ass->set_file(li.text);
+      ass->set_lineno(li.first_line);
+      PProcess*top = new PProcess(PProcess::PR_INITIAL, ass);
+      top->set_file(li.text);
+      top->set_lineno(li.first_line);
+
+      pform_cur_module->add_behavior(top);
+}
+
 void pform_makewire(const vlltype&li, const string&nm,
 		    NetNet::Type type)
 {
@@ -416,7 +456,7 @@ void pform_makewire(const vlltype&li, const string&nm,
 	    if (cur->get_wire_type() != NetNet::IMPLICIT) {
 		  strstream msg;
 		  msg << name << " previously defined at " <<
-			cur->get_line() << ".";
+			cur->get_line() << "." << ends;
 		  VLerror(msg.str());
 	    } else {
 		  bool rc = cur->set_wire_type(type);
@@ -725,6 +765,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.49  1999/12/30 19:06:14  steve
+ *  Support reg initial assignment syntax.
+ *
  * Revision 1.48  1999/12/11 05:45:41  steve
  *  Fix support for attaching attributes to primitive gates.
  *

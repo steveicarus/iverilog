@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.31 1999/09/10 05:02:09 steve Exp $"
+#ident "$Id: pform.h,v 1.32 1999/12/30 19:06:14 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -116,6 +116,8 @@ extern void pform_makewire(const struct vlltype&li, const string&name,
 			   NetNet::Type type = NetNet::IMPLICIT);
 extern void pform_makewire(const struct vlltype&li, const list<string>*names,
 			   NetNet::Type type);
+extern void pform_make_reginit(const struct vlltype&li,
+			       const string&name, PExpr*expr);
 extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
@@ -174,6 +176,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.32  1999/12/30 19:06:14  steve
+ *  Support reg initial assignment syntax.
+ *
  * Revision 1.31  1999/09/10 05:02:09  steve
  *  Handle integers at task parameters.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.76 1999/11/15 04:43:52 steve Exp $"
+#ident "$Id: parse.y,v 1.77 1999/12/30 19:06:14 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1390,8 +1390,10 @@ register_variable
 		}
 	| IDENTIFIER '=' expression
 		{ pform_makewire(@1, $1, NetNet::REG);
-		  yyerror(@2, "error: net declaration assignment to reg/integer not allowed.");
-		  delete $3;
+		  if (! pform_expression_is_constant($3))
+			yyerror(@3, "error: register declaration assignment"
+				" value must be a constant expression.");
+		  pform_make_reginit(@1, $1, $3);
 		  $$ = $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
