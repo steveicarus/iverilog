@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.28 1999/06/09 03:00:05 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.29 1999/06/15 05:38:15 steve Exp $"
 #endif
 
 /*
@@ -592,7 +592,7 @@ void Design::dump(ostream&o) const
       o << "ELABORATED SIGNALS:" << endl;
 
 	// Dump the signals,
-      {
+      if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
 	    do {
 		  cur->dump_net(o, 0);
@@ -612,7 +612,7 @@ void Design::dump(ostream&o) const
       o << "ELABORATED NODES:" << endl;
 
 	// dump the nodes,
-      {
+      if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
 	    do {
 		  cur->dump_node(o, 0);
@@ -630,6 +630,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.29  1999/06/15 05:38:15  steve
+ *  Handle total lack of signals or nodes.
+ *
  * Revision 1.28  1999/06/09 03:00:05  steve
  *  Add support for procedural concatenation expression.
  *
