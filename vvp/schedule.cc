@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.32 2005/03/06 17:07:48 steve Exp $"
+#ident "$Id: schedule.cc,v 1.33 2005/03/06 17:25:03 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -412,21 +412,6 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
       }
 }
 
-void functor_s::schedule(vvp_time64_t delay, bool nba_flag)
-{
-#if 0
-      struct event_s*cur = new event_s;
-
-      cur->funp = this;
-      cur->type = TYPE_PROP;
-
-      schedule_event_(cur, delay, nba_flag? SEQ_NBASSIGN:SEQ_ACTIVE);
-#else
-      fprintf(stderr, "XXXX I forgot how to schedule functors.\n");
-#endif
-}
-
-
 void schedule_assign_vector(vvp_net_ptr_t ptr,
 			    vvp_vector4_t bit,
 			    vvp_time64_t delay)
@@ -548,38 +533,7 @@ void schedule_simulate(void)
 	    }
 
 	    cur->run_run();
-#if 0
-	    switch (cur->type) {
-		case TYPE_THREAD:
-		  count_thread_events += 1;
-		  vthread_run(cur->thr);
-		  break;
 
-		case TYPE_PROP:
-		    //printf("Propagate %p\n", cur->fun);
-		  count_prop_events += 1;
-		  cur->funp->propagate(false);
-		  break;
-
-		case TYPE_ASSIGN:
-		  count_assign_events += 1;
-		  { static const unsigned val_table[4] = {St0, St1, StX, HiZ};
-		    functor_set(cur->fun,
-				cur->val,
-				val_table[cur->val],
-				false);
-		  }
-		  break;
-
-		case TYPE_GEN:
-		  count_gen_events += 1;
-		  if (cur->obj && cur->obj->run)
-			cur->obj->run(cur->obj, cur->val);
-
-		  break;
-
-	    }
-#endif
 	    delete (cur);
       }
 
@@ -603,6 +557,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.33  2005/03/06 17:25:03  steve
+ *  Remove dead code from scheduler.
+ *
  * Revision 1.32  2005/03/06 17:07:48  steve
  *  Non blocking assign to memory words.
  *

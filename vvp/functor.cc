@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.44 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: functor.cc,v 1.45 2005/03/06 17:25:03 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -156,6 +156,7 @@ void functor_s::propagate(unsigned val, unsigned str, bool push)
 void functor_s::put_ostr(unsigned val, unsigned str,
 			 bool push, bool nba_flag)
 {
+#if 0
       if (str != get_ostr() || val != get_oval()) {
 
 	    unsigned char ooval = oval;
@@ -179,6 +180,7 @@ void functor_s::put_ostr(unsigned val, unsigned str,
 	    else
 		  schedule(del, nba_flag);
       }
+#endif
 }
 
 //          Special infrastructure functor types
@@ -222,6 +224,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.45  2005/03/06 17:25:03  steve
+ *  Remove dead code from scheduler.
+ *
  * Revision 1.44  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

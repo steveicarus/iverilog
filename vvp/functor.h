@@ -19,9 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.53 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: functor.h,v 1.54 2005/03/06 17:25:03 steve Exp $"
 #endif
 
+/* NOTE: THIS FILE IS BEOING PHASED OUT. IT'S FUNCTIONALITY IS OBSOLETE. */
 # include  "pointers.h"
 # include  "delay.h"
 
@@ -334,6 +335,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.54  2005/03/06 17:25:03  steve
+ *  Remove dead code from scheduler.
+ *
  * Revision 1.53  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
