@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.9 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.10 2001/10/07 03:38:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -101,7 +101,22 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 	    assert(parms_[idx]);
 	    NetExpr*ex = parms_[idx]->elaborate_pexpr(des, scope);
 	    if (ex == 0) continue;
+
 	    ex->set_line(*parms_[idx]);
+
+	    if (! ex->has_width()) {
+		  cerr << ex->get_line() << ": error: operand of "
+		       << "concatenation has indefinite width: "
+		       << *ex << endl;
+		  des->errors += 1;
+
+	    } else if (ex->expr_width() == 0) {
+		  cerr << ex->get_line() << ": internal error: "
+		       << "Operand of concatenation has no width: "
+		       << *ex << endl;
+		  des->errors += 1;
+	    }
+
 	    tmp->set(idx, ex);
       }
 
@@ -203,6 +218,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.10  2001/10/07 03:38:08  steve
+ *  parameter names do not have defined size.
+ *
  * Revision 1.9  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.171 2001/09/29 01:53:22 steve Exp $"
+#ident "$Id: netlist.cc,v 1.172 2001/10/07 03:38:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2144,6 +2144,11 @@ NetEParam::~NetEParam()
 {
 }
 
+bool NetEParam::has_width() const
+{
+      return false;
+}
+
 NetEParam* NetEParam::dup_expr() const
 {
       return new NetEParam(des_, scope_, name_);
@@ -2424,6 +2429,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.172  2001/10/07 03:38:08  steve
+ *  parameter names do not have defined size.
+ *
  * Revision 1.171  2001/09/29 01:53:22  steve
  *  Fix the size of unsized constant operants to compare (PR#274)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.214 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.215 2001/10/07 03:38:08 steve Exp $"
 #endif
 
 /*
@@ -2279,6 +2279,7 @@ class NetEParam  : public NetExpr {
       ~NetEParam();
 
       virtual bool set_width(unsigned w);
+      virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetExpr* eval_tree();
       virtual NetEParam* dup_expr() const;
@@ -2847,6 +2848,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.215  2001/10/07 03:38:08  steve
+ *  parameter names do not have defined size.
+ *
  * Revision 1.214  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster
