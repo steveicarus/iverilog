@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.133 2001/10/31 03:11:15 steve Exp $"
+#ident "$Id: parse.y,v 1.134 2001/11/03 04:09:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1892,13 +1892,13 @@ specify_edge_path_decl
 
 specify_edge_path
 	: '(' K_posedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_EG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity K_EG '(' expr_primary polarity_operator expression ')' ')'
 	| '(' K_posedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity K_SG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity K_SG '(' expr_primary polarity_operator expression ')' ')'
 	| '(' K_negedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_EG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity K_EG '(' expr_primary polarity_operator expression ')' ')'
 	| '(' K_negedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity K_SG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity K_SG '(' expr_primary polarity_operator expression ')' ')'
 	;
 
 polarity_operator
@@ -1943,18 +1943,20 @@ specparam_list
 spec_polarity: '+' | '-' | ;
 
 spec_reference_event
-	: K_posedge IDENTIFIER
+	: K_posedge expression
 		{ delete $2; }
-	| K_negedge IDENTIFIER
+	| K_negedge expression
 		{ delete $2; }
-	| K_posedge IDENTIFIER K_TAND expression
+	| K_posedge expr_primary K_TAND expression
 		{ delete $2;
 		  delete $4;
 		}
-	| K_negedge IDENTIFIER K_TAND expression
+	| K_negedge expr_primary K_TAND expression
 		{ delete $2;
 		  delete $4;
 		}
+        | expr_primary
+		{ delete $1; }
 	;
 
 spec_notifier_opt
