@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.24 2003/09/17 03:39:55 steve Exp $"
+#ident "$Id: udp.cc,v 1.25 2003/09/24 20:46:48 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -47,13 +47,11 @@ void udp_functor_s::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 	// Send the result to the output. If this is a combinational
 	// UDP, then push according to the push flag. However, do
-	// *not* push sequential outputs. This output schedules like a
-	// non-blocking assignment.
+	// *not* push sequential outputs.
 
-	// XXXX FIXME: UDP outputs should *NOT* schedule as non-
-	// blocking assignments. This is a hack to cope with some
-	// libraries that make a bad assumption.
-      put_oval(out, push & !udp->sequ, udp->sequ);
+	// Sequential primitive outputs are scheduled as active
+	// events, no matter what common sense and reason say.
+      put_oval(out, push & !udp->sequ, false);
 }
 
 
@@ -376,6 +374,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.25  2003/09/24 20:46:48  steve
+ *  Standard udp scheduling behavior.
+ *
  * Revision 1.24  2003/09/17 03:39:55  steve
  *  Internal documentation of UDP devices.
  *
