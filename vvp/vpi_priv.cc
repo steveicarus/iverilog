@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.3 2001/04/03 03:46:14 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.4 2001/06/10 16:47:49 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -44,7 +44,7 @@ static int vpip_get_global(int property)
       switch (property) {
 
 	  case vpiTimePrecision:
-	    fprintf(stderr, "vpi warning: vpiTimePrecision not supported\n");
+	    fprintf(stderr, "vpi Sorry: vpiTimePrecision not supported\n");
 	    return 0;
 
 	  default:
@@ -145,7 +145,7 @@ void vpi_printf(const char*fmt, ...)
 
 vpiHandle vpi_register_cb(p_cb_data data)
 {
-      assert(0);
+      fprintf(stderr, "vpi Sorry: vpi_register_cb not supported\n");
       return 0;
 }
 
@@ -170,6 +170,9 @@ void vpi_sim_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.4  2001/06/10 16:47:49  steve
+ *  support scan of scope from VPI.
+ *
  * Revision 1.3  2001/04/03 03:46:14  steve
  *  VPI access time as a decimal string, and
  *  stub vpi access to the scopes.

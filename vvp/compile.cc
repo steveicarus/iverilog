@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.72 2001/06/07 03:09:03 steve Exp $"
+#ident "$Id: compile.cc,v 1.73 2001/06/10 16:47:49 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1124,6 +1124,7 @@ void compile_variable(char*label, char*name, int msb, int lsb,
 	/* Make the vpiHandle for the reg. */
       vpiHandle obj = vpip_make_reg(name, msb, lsb, signed_flag, fdx);
       compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
 
       free(label);
 }
@@ -1205,6 +1206,7 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 	/* Make the vpiHandle for the reg. */
       vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, fdx);
       compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
 
       free(label);
       free(argv);
@@ -1299,6 +1301,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.73  2001/06/10 16:47:49  steve
+ *  support scan of scope from VPI.
+ *
  * Revision 1.72  2001/06/07 03:09:03  steve
  *  Implement .arith/sub subtraction.
  *

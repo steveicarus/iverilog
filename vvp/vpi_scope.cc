@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.4 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.5 2001/06/10 16:47:49 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -54,7 +54,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 
       switch (code) {
 	  case vpiInternalScope:
-	    return 0;
+	    return vpip_make_iterator(ref->nintern, ref->intern);
       }
       return 0;
 }
@@ -134,6 +134,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.5  2001/06/10 16:47:49  steve
+ *  support scan of scope from VPI.
+ *
  * Revision 1.4  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
