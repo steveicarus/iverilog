@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.32 2002/02/03 00:06:28 steve Exp $"
+#ident "$Id: cprop.cc,v 1.33 2002/04/14 02:51:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -631,6 +631,8 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 				  continue;
 			    }
 
+			      /* Here we found two constant V1
+				 inputs. Unlink both. */
 			    obj->pin(idx).unlink();
 			    top -= 1;
 			    if (idx < top) {
@@ -645,8 +647,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 				  obj->pin(top).unlink();
 			    }
 
+			      /* Reset ones counter and one index,
+				 start looking for the next pair. */
 			    assert(ones == 1);
 			    ones = 0;
+			    one  = 0;
 			    continue;
 		      }
 
@@ -944,6 +949,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.33  2002/04/14 02:51:37  steve
+ *  Fix bug removing pairs of ones in XOR.
+ *
  * Revision 1.32  2002/02/03 00:06:28  steve
  *  Comments about xor evaluation.
  *
