@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.40 2002/08/28 18:38:07 steve Exp $
+ *  $Id: opcodes.txt,v 1.41 2002/09/12 15:49:43 steve Exp $
  */
 
 
@@ -357,6 +357,18 @@ product.
 
 This instruction is the same as %mul, but the second operand is an
 immediate value that is padded to the width of the result.
+
+
+* %nand <dst>, <src>, <wid>
+
+Perform the bitwise NAND of the two vectors, and store the result in
+the left vector. Each bit is calculated independent of other bits. NAND
+means the following:
+
+	0 and ? --> 1
+	? and 0 --> 1
+	1 and 1 --> 0
+	otherwise   x
 
 
 * %nor/r <dst>, <src>, <wid>

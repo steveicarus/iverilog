@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.260 2002/08/19 00:06:12 steve Exp $"
+#ident "$Id: netlist.h,v 1.261 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 /*
@@ -2157,8 +2157,9 @@ class NetProcTop  : public LineInfo, public Attrib {
  *   n  -- Logical inequality (!=)
  *   N  -- Case inequality (!==)
  *   a  -- Logical AND (&&)
+ *   A  -- Bitwise NAND (~&)
  *   o  -- Logical OR (||)
- *   O  -- Bit-wise NOR
+ *   O  -- Bit-wise NOR (~|)
  *   l  -- Left shift (<<)
  *   r  -- Right shift (>>)
  *   X  -- Bitwise exclusive NOR (~^)
@@ -3026,6 +3027,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.261  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.260  2002/08/19 00:06:12  steve
  *  Allow release to handle removal of target net.
  *

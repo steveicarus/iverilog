@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.159 2002/09/01 03:01:48 steve Exp $"
+#ident "$Id: parse.y,v 1.160 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -732,6 +732,12 @@ expression
 		}
 	| expression '|' expression
 		{ PEBinary*tmp = new PEBinary('|', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| expression K_NAND expression
+		{ PEBinary*tmp = new PEBinary('A', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.140 2002/08/28 18:38:07 steve Exp $"
+#ident "$Id: compile.cc,v 1.141 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -124,6 +124,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%nand",   of_NAND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand/r", of_NANDR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1449,6 +1450,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.141  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.140  2002/08/28 18:38:07  steve
  *  Add the %subi instruction, and use it where possible.
  *

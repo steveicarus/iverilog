@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.63 2002/08/19 02:39:16 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.64 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -121,6 +121,7 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	  case '&':
 	  case '|':
 	  case 'O':
+	  case 'A': // NAND (~&)
 	  case 'X':
 	    tmp = new NetEBBits(op_, lp, rp);
 	    tmp->set_line(*this);
@@ -874,6 +875,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.64  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.63  2002/08/19 02:39:16  steve
  *  Support parameters with defined ranges.
  *

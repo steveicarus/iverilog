@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.49 2002/08/28 18:38:07 steve Exp $"
+#ident "$Id: codes.h,v 1.50 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 
@@ -79,6 +79,7 @@ extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_MULI(vthread_t thr, vvp_code_t code);
+extern bool of_NAND(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
@@ -155,6 +156,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.50  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.49  2002/08/28 18:38:07  steve
  *  Add the %subi instruction, and use it where possible.
  *

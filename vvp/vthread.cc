@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.84 2002/08/28 18:38:07 steve Exp $"
+#ident "$Id: vthread.cc,v 1.85 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1815,6 +1815,37 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_NAND(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb == 0) || (rb == 0)) {
+		  thr_put_bit(thr, idx1, 1);
+
+	    } else if ((lb == 1) && (rb == 1)) {
+		  thr_put_bit(thr, idx1, 0);
+
+	    } else {
+		  thr_put_bit(thr, idx1, 2);
+	    }
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      return true;
+}
+
+
 bool of_NOOP(vthread_t thr, vvp_code_t cp)
 {
       return true;
@@ -2319,6 +2350,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.85  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.84  2002/08/28 18:38:07  steve
  *  Add the %subi instruction, and use it where possible.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.105 2002/08/24 05:03:40 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.106 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -418,7 +418,15 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *
  * ivl_expr_width
  *    This method returns the bit width of the expression at this
- *    node. It can be applied to any expression node.
+ *    node. It can be applied to any expression node, and returns the
+ *    *output* width of the expression node.
+ *
+ * ivl_expr_opcode
+ *    IVL_EX_BINARY and IVL_EX_UNARY expression nodes include an
+ *    upcode from this table:
+ *              &   -- AND
+ *              A   -- NAND (~&)
+ *              X   -- XNOR (~^)
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
@@ -1079,6 +1087,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.106  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.105  2002/08/24 05:03:40  steve
  *  Missing declaration of ivl_memory_scope.
  *

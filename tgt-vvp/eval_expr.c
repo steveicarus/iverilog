@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.74 2002/09/01 01:42:34 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.75 2002/09/12 15:49:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -595,6 +595,11 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 		    lv.base, rv.base, wid);
 	    break;
 
+	  case 'A': /* NAND (~&) */
+	    fprintf(vvp_out, "    %%nand %u, %u, %u;\n",
+		    lv.base, rv.base, wid);
+	    break;
+
 	  case 'X': /* exclusive nor (~^) */
 	    fprintf(vvp_out, "    %%xnor %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
@@ -883,7 +888,8 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	  case '&':
 	  case '|':
 	  case '^':
-	  case 'X':
+	  case 'A': /* NAND (~&) */
+	  case 'X': /* XNOR (~^) */
 	    rv = draw_binary_expr_logic(exp, wid);
 	    break;
 
@@ -1795,6 +1801,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.75  2002/09/12 15:49:43  steve
+ *  Add support for binary nand operator.
+ *
  * Revision 1.74  2002/09/01 01:42:34  steve
  *  Fix leaking vthread bits in ?: eval.
  *
