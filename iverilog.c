@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.7 2000/04/29 01:20:14 steve Exp $"
+#ident "$Id: iverilog.c,v 1.8 2000/05/01 23:55:22 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -124,8 +124,9 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    return rc;
       }
 
-      sprintf(tmp, "g++ -O -rdynamic -fno-exceptions -o %s -I%s "
-	      "-L%s %s.cc -lvvm -ldl", opath, base, base, opath);
+      sprintf(tmp, "%s -O -rdynamic -fno-exceptions -o %s -I%s "
+	      "-L%s %s.cc -lvvm -ldl", CXX, opath, IVL_INC, IVL_LIB,
+	      opath, DLLIB);
 
       if (verbose_flag)
 	    printf("compile: %s\n", tmp);
@@ -287,6 +288,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.8  2000/05/01 23:55:22  steve
+ *  Better inc and lib paths for iverilog.
+ *
  * Revision 1.7  2000/04/29 01:20:14  steve
  *  The -f flag is now in place.
  *
