@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.52 2000/10/30 20:55:53 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.53 2000/10/30 21:35:40 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1061,34 +1061,39 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	      /* This is a part select, create a new NetNet object
 		 that connects to just the desired parts of the
 		 identifier. Make sure the NetNet::Type is compatible
-		 with the sig type. */
+		 with the sig type.
 
-	    if (midx >= lidx) {
-		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
-					  sig->type(), midx-lidx+1);
-		  tmp->local_flag(true);
-		  if (tmp->pin_count() > sig->pin_count()) {
-			cerr << get_line() << ": bit select out of "
-			     << "range for " << sig->name() << endl;
-			return sig;
-		  }
+		 Be careful to check the bit ordering. If the msb is
+		 less significant then the msb, then the source is
+		 broken. I can hack it in order to go on, but report
+		 an error. */
 
-		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
-			connect(tmp->pin(idx-lidx), sig->pin(idx));
+	    if (midx < lidx) {
+		  cerr << get_line() << ": error: part select "
+		       << sig->name() << "[" << mval->as_long() << ":"
+		       << lval->as_long() << "] "
+		       << "has bit order reversed." << endl;
+		  des->errors += 1;
 
-		  sig = tmp;
-
-	    } else {
-		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
-					  sig->type(), lidx-midx+1);
-		  tmp->local_flag(true);
-
-		  assert(tmp->pin_count() <= sig->pin_count());
-		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
-			connect(tmp->pin(idx-midx), sig->pin(idx));
-
-		  sig = tmp;
+		  unsigned tmp = midx;
+		  midx = lidx;
+		  lidx = tmp;
 	    }
+
+	    NetNet*tmp = new NetNet(scope, des->local_symbol(path),
+				    sig->type(), midx-lidx+1);
+	    tmp->local_flag(true);
+	    if (tmp->pin_count() > sig->pin_count()) {
+		  cerr << get_line() << ": bit select out of "
+		       << "range for " << sig->name() << endl;
+		  return sig;
+	    }
+
+	    for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
+		  connect(tmp->pin(idx-lidx), sig->pin(idx));
+
+	    sig = tmp;
+
 
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, path);
@@ -1752,6 +1757,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.53  2000/10/30 21:35:40  steve
+ *  Detect reverse bit order in part select. (PR#33)
+ *
  * Revision 1.52  2000/10/30 20:55:53  steve
  *  get width right for reversed part select net. (PR#33)
  *
