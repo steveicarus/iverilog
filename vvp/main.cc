@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.39 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: main.cc,v 1.40 2005/01/29 06:28:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -142,7 +142,7 @@ int main(int argc, char*argv[])
       }
 #endif
 
-      while ((opt = getopt(argc, argv, "+dhl:M:m:v")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "+hl:M:m:sv")) != EOF) switch (opt) {
          case 'h':
            fprintf(stderr,
                    "Usage: vvp [options] input-file [+plusargs...]\n"
@@ -152,6 +152,7 @@ int main(int argc, char*argv[])
                    " -M path        VPI module directory\n"
 		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
+		   " -s             $stop right away.\n"
                    " -v             Verbose progress messages.\n" );
            exit(0);
 	  case 'l':
@@ -167,6 +168,9 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'm':
 	    module_tab[module_cnt++] = optarg;
+	    break;
+	  case 's':
+	    schedule_stop(0);
 	    break;
 	  case 'v':
 	    verbose_flag = true;
@@ -277,6 +281,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.40  2005/01/29 06:28:19  steve
+ *  Add the -s flag to start up interactive.
+ *
  * Revision 1.39  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

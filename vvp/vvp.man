@@ -1,10 +1,10 @@
-.TH vvp 1 "$Date: 2004/10/04 01:11:00 $" Version "$Date: 2004/10/04 01:11:00 $"
+.TH vvp 1 "$Date: 2005/01/29 06:28:19 $" Version "$Date: 2005/01/29 06:28:19 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[-dv] [-Mpath] [-mmodule] [-llogfile] inputfile [extended-args...]
+[-sv] [-Mpath] [-mmodule] [-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -40,6 +40,11 @@ directory path or .vpi suffix and the search path is scanned to find
 the module. However, if the name includes at least one directory
 character, then the search path is not scanned and the name is assumed
 to be a complete file name.
+.TP 8
+.B -s
+Stop. This will cause the simulation to stop in the beginning, before
+any events are scheduled. This allows the interactive user to get
+hold of the simulation just before it starts.
 .TP 8
 .B -v
 Turn on verbose messages. This will cause information about run time
