@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.51 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.52 2002/04/13 02:33:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,7 +28,7 @@
 # include  "netmisc.h"
 # include  "util.h"
 
-NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
+NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
 {
       cerr << get_line() << ": internal error: I do not know how to elaborate"
 	   << " expression. " << endl;
@@ -43,7 +43,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*) const
  * and right sides, and creating one of a variety of different NetExpr
  * types. 
  */
-NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope) const
+NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       assert(left_);
       assert(right_);
@@ -177,7 +177,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 	    }
 
 	    PExpr*expr = parms_[0];
-	    NetExpr*sub = expr->elaborate_expr(des, scope);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
 	    sub->cast_signed(true);
 	    return sub;
       }
@@ -215,7 +215,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    PExpr*expr = parms_[idx];
 	    if (expr) {
-		  NetExpr*tmp1 = expr->elaborate_expr(des, scope);
+		  NetExpr*tmp1 = expr->elaborate_expr(des, scope, true);
 		  if (NetExpr*tmp2 = tmp1->eval_tree()) {
 			delete tmp1;
 			fun->parm(idx, tmp2);
@@ -241,7 +241,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       return fun;
 }
 
-NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
+NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       if (path_.peek_name(0)[0] == '$')
 	    return elaborate_sfunc_(des, scope);
@@ -320,7 +320,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 }
 
 
-NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope) const
+NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       unsigned repeat = 1;
 
@@ -369,7 +369,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope) const
       return tmp;
 }
 
-NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope) const
+NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       long val = value_->as_long();
       return new NetEConst(verinum(val));
@@ -386,7 +386,8 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope) const
  *
  * The signal name may be escaped, but that affects nothing here.
  */
-NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
+NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
+				 bool sys_task_arg) const
 {
       assert(scope);
 
@@ -538,10 +539,23 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	// object to handle it.
       if (NetMemory*mem = des->find_memory(scope, path_)) {
 	    if (msb_ == 0) {
-		  NetEMemory*node = new NetEMemory(mem);
-		  node->set_line(*this);
-		  return node;
+
+		    // If this memory is an argument to a system task,
+		    // then it is OK for it to not have an index.
+		  if (sys_task_arg) {
+			NetEMemory*node = new NetEMemory(mem);
+			node->set_line(*this);
+			return node;
+		  }
+
+		    // If it is not a simple system task argument,
+		    // this a missing index is an error.
+		  cerr << get_line() << ": error: memory " << mem->name()
+		       << " needs an index in this context." << endl;
+		  des->errors += 1;
+		  return 0;
 	    }
+
 	    assert(msb_ != 0);
 	    if (lsb_) {
 		  cerr << get_line() << ": error: part select of a memory: "
@@ -591,7 +605,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
       return 0;
 }
 
-NetEConst* PENumber::elaborate_expr(Design*des, NetScope*) const
+NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, bool) const
 {
       assert(value_);
       NetEConst*tmp = new NetEConst(*value_);
@@ -599,7 +613,7 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*) const
       return tmp;
 }
 
-NetEConst* PEString::elaborate_expr(Design*des, NetScope*) const
+NetEConst* PEString::elaborate_expr(Design*des, NetScope*, bool) const
 {
       NetEConst*tmp = new NetEConst(value());
       tmp->set_line(*this);
@@ -611,7 +625,7 @@ NetEConst* PEString::elaborate_expr(Design*des, NetScope*) const
  * parsed so I can presume that they exist, and call elaboration
  * methods. If any elaboration fails, then give up and return 0.
  */
-NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope) const
+NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       assert(expr_);
       assert(tru_);
@@ -638,7 +652,7 @@ NetETernary*PETernary::elaborate_expr(Design*des, NetScope*scope) const
       return res;
 }
 
-NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
+NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
       NetExpr*ip = expr_->elaborate_expr(des, scope);
       if (ip == 0) return 0;
@@ -674,6 +688,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.52  2002/04/13 02:33:17  steve
+ *  Detect missing indices to memories (PR#421)
+ *
  * Revision 1.51  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *
@@ -702,33 +719,5 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
  * Revision 1.44  2001/11/19 01:54:14  steve
  *  Port close cropping behavior from mcrgb
  *  Move window array reset to libmc.
- *
- * Revision 1.43  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.42  2001/07/29 22:22:40  steve
- *  support local reference to scope in expressions.
- *
- * Revision 1.41  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.40  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.39  2001/06/30 21:28:35  steve
- *  Detect parameter mismatches.
- *
- * Revision 1.38  2001/06/23 19:53:03  steve
- *  Look up functor return register with tail of name.
- *
- * Revision 1.37  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.36  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
  */
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.56 2002/03/09 04:02:26 steve Exp $"
+#ident "$Id: PExpr.h,v 1.57 2002/04/13 02:33:17 steve Exp $"
 #endif
 
 # include  <string>
@@ -51,8 +51,11 @@ class PExpr : public LineInfo {
 
       virtual void dump(ostream&) const;
 
-	// Procedural elaboration of the expression.
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope) const;
+	// Procedural elaboration of the expression. Set thie
+	// bare_memory_ok flag if the result is allowed to be a
+	// NetEMemory without an index.
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     bool sys_task_arg =false) const;
 
 	// Elaborate expressions that are the r-value of parameter
 	// assignments. This elaboration follows the restrictions of
@@ -131,7 +134,8 @@ class PEConcat : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     bool sys_task_arg =false) const;
       virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
       virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
       virtual bool is_constant(Module*) const;
@@ -190,7 +194,8 @@ class PEFNumber : public PExpr {
 	/* A PEFNumber is a constant, so this returns true. */
       virtual bool is_constant(Module*) const;
 
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual void dump(ostream&) const;
@@ -225,7 +230,8 @@ class PEIdent : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
 
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
 	// Elaborate the PEIdent as a port to a module. This method
@@ -273,7 +279,8 @@ class PENumber : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetEConst*elaborate_expr(Design*des, NetScope*,
+				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
 
@@ -309,7 +316,8 @@ class PEString : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetEConst*elaborate_expr(Design*des, NetScope*,
+				     bool sys_task_arg =false) const;
       virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
@@ -332,7 +340,8 @@ class PEUnary : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEUnary*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetEUnary*elaborate_expr(Design*des, NetScope*,
+				       bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
 
@@ -359,7 +368,8 @@ class PEBinary : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetEBinary*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetEBinary*elaborate_expr(Design*des, NetScope*,
+					bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
       virtual verireal*eval_rconst(const Design*des, const NetScope*sc) const;
@@ -433,7 +443,8 @@ class PETernary : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetETernary*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetETernary*elaborate_expr(Design*des, NetScope*,
+					 bool sys_task_arg =false) const;
       virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
 
@@ -462,7 +473,8 @@ class PECallFunction : public PExpr {
 				    unsigned long decay,
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     bool sys_task_arg =false) const;
 
     private:
       hname_t path_;
@@ -475,6 +487,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.57  2002/04/13 02:33:17  steve
+ *  Detect missing indices to memories (PR#421)
+ *
  * Revision 1.56  2002/03/09 04:02:26  steve
  *  Constant expressions are not l-values for task ports.
  *
@@ -496,26 +511,5 @@ class PECallFunction : public PExpr {
  *
  * Revision 1.50  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
- *
- * Revision 1.49  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.48  2001/01/14 23:04:55  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.47  2000/12/16 19:03:30  steve
- *  Evaluate <= and ?: in parameter expressions (PR#81)
- *
- * Revision 1.46  2000/12/10 22:01:35  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.45  2000/12/06 06:31:09  steve
- *  Check lvalue of procedural continuous assign (PR#29)
- *
- * Revision 1.44  2000/09/17 21:26:15  steve
- *  Add support for modulus (Eric Aardoom)
  */
 #endif

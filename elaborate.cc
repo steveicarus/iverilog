@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.241 2002/03/09 04:02:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.242 2002/04/13 02:33:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1340,7 +1340,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 	    PExpr*ex = parm(idx);
 
-	    eparms[idx] = ex? ex->elaborate_expr(des, scope) : 0;
+	    eparms[idx] = ex? ex->elaborate_expr(des, scope, true) : 0;
       }
 
       NetSTask*cur = new NetSTask(path_.peek_name(0), eparms);
@@ -2423,6 +2423,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.242  2002/04/13 02:33:17  steve
+ *  Detect missing indices to memories (PR#421)
+ *
  * Revision 1.241  2002/03/09 04:02:26  steve
  *  Constant expressions are not l-values for task ports.
  *
