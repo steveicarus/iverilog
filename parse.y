@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.98 2000/05/23 16:03:13 steve Exp $"
+#ident "$Id: parse.y,v 1.99 2000/05/31 01:31:52 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -331,7 +331,7 @@ delay3
 		{ svector<PExpr*>*tmp = new svector<PExpr*>(3);
 		  (*tmp)[0] = $3;
 		  (*tmp)[1] = $5;
-		  (*tmp)[1] = $7;
+		  (*tmp)[2] = $7;
 		  $$ = tmp;
 		}
 	;
