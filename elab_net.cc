@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.116 2003/08/28 04:11:17 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.117 2003/09/03 04:29:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1258,6 +1258,16 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       NetNet*sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
 
       unsigned sig_width = sig->pin_count();
+
+	/* Detect the case of some bits not accessible by the given
+	   select. Figure out how many bits can be selected by the
+	   full range of the select, and limit the input of the mux to
+	   that width. */
+      { unsigned max_width_by_sel = 1 << sel->pin_count();
+        if (sig_width > max_width_by_sel)
+	      sig_width = max_width_by_sel;
+      }
+
       NetMux*mux = new NetMux(scope, scope->local_symbol(), 1,
 			      sig_width, sel->pin_count());
 
@@ -2326,6 +2336,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.117  2003/09/03 04:29:18  steve
+ *  Only build a mux as wide as can be selected.
+ *
  * Revision 1.116  2003/08/28 04:11:17  steve
  *  Spelling patch.
  *
