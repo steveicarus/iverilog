@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_readmem.c,v 1.3 1999/12/15 04:35:34 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.4 2000/01/23 23:54:36 steve Exp $"
 #endif
 
-# include  <vpi_user.h>
+# include  "vpi_user.h"
 # include  <string.h>
 # include  <stdlib.h>
 # include  <stdio.h>
@@ -143,6 +143,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.4  2000/01/23 23:54:36  steve
+ *  Compile time problems with vpi_user.h
+ *
  * Revision 1.3  1999/12/15 04:35:34  steve
  *  Add readmemb.
  *

@@ -19,11 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_readmem_lex.h,v 1.1 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: sys_readmem_lex.h,v 1.2 2000/01/23 23:54:36 steve Exp $"
 #endif
 
 # include  <stdio.h>
-# include  <vpi_user.h>
+# include  "vpi_user.h"
 
 # define MEM_ADDRESS 257
 # define MEM_WORD    258
@@ -34,6 +34,9 @@ extern int readmemlex();
 
 /*
  * $Log: sys_readmem_lex.h,v $
+ * Revision 1.2  2000/01/23 23:54:36  steve
+ *  Compile time problems with vpi_user.h
+ *
  * Revision 1.1  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *

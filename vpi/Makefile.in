@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.8 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: Makefile.in,v 1.9 2000/01/23 23:54:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -68,7 +68,7 @@ install: all installdirs $(libdir)/ivl/system.vpi \
 	$(includedir)/vpi_user.h
 
 $(libdir)/ivl/system.vpi: ./system.vpi
-	$(INSTALL_PROGRAM) ./system.vpi $(libdir)/ivl/system.vpi
+	$(INSTALL_DATA) ./system.vpi $(libdir)/ivl/system.vpi
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2000/01/23 23:54:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -84,7 +84,7 @@ install: all installdirs $(libdir)/libvvm.a \
 	$(includedir)/vvm_calltf.h
 
 $(libdir)/libvvm.a: ./libvvm.a
-	$(INSTALL_PROGRAM) ./libvvm.a $(libdir)/libvvm.a
+	$(INSTALL_DATA) ./libvvm.a $(libdir)/libvvm.a
 
 $(includedir)/vvm.h: $(srcdir)/vvm.h
 	$(INSTALL_DATA) $(srcdir)/vvm.h $(includedir)/vvm.h
