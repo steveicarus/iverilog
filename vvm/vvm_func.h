@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.14 1999/10/05 06:19:47 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.15 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -123,7 +123,7 @@ vvm_bitset_t<WIDTH> vvm_unop_uminus(const vvm_bitset_t<WIDTH>&l)
 {
       vvm_bitset_t<WIDTH> res;
       res = vvm_unop_not(l);
-      vvm_bit_t carry = V1;
+      vpip_bit_t carry = V1;
       for (int i = 0; i < WIDTH; i++)
 	    res[i] = add_with_carry(res[i], V0, carry);
 
@@ -170,7 +170,7 @@ vvm_bitset_t<WIDTH> vvm_binop_plus(const vvm_bitset_t<WIDTH>&l,
 				   const vvm_bitset_t<WIDTH>&r)
 {
       vvm_bitset_t<WIDTH> result;
-      vvm_bit_t carry = V0;
+      vpip_bit_t carry = V0;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 	    result[idx] = add_with_carry(l[idx], r[idx], carry);
 
@@ -188,7 +188,7 @@ vvm_bitset_t<WIDTH> vvm_binop_minus(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> res;
       res = vvm_unop_not(r);
-      vvm_bit_t carry = V1;
+      vpip_bit_t carry = V1;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 	    res[idx] = add_with_carry(l[idx], res[idx], carry);
 
@@ -593,7 +593,7 @@ vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
 }
 
 template <unsigned W>
-vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
+vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 			    const vvm_bitset_t<W>&f)
 {
       switch (c) {
@@ -608,6 +608,12 @@ vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.15  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.14  1999/10/05 06:19:47  steve
  *  Add support for reduction NOR.
  *

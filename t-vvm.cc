@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.64 1999/10/23 16:27:53 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.65 1999/10/28 00:47:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -40,6 +40,9 @@ static string make_temp()
 }
 
 class target_vvm : public target_t {
+
+      friend class vvm_parm_rval;
+
     public:
       target_vvm();
 
@@ -105,6 +108,10 @@ class target_vvm : public target_t {
 	// of things that may be scanned multiple times.
       map<string,bool>esignal_printed_flag;
       map<string,bool>pevent_printed_flag;
+
+	// String constants that are made into vpiHandles have th
+	// handle name mapped by this.
+      map<string,string>string_constants;
 };
 
 
@@ -454,8 +461,8 @@ static string emit_proc_rval(ostream&os, unsigned indent, const NetExpr*expr)
 class vvm_parm_rval  : public expr_scan_t {
 
     public:
-      explicit vvm_parm_rval(ostream&os)
-      : result(""), os_(os) { }
+      explicit vvm_parm_rval(ostream&o, target_vvm*t)
+      : result(""), os_(o), tgt_(t) { }
 
       string result;
 
@@ -466,54 +473,64 @@ class vvm_parm_rval  : public expr_scan_t {
 
     private:
       ostream&os_;
+      target_vvm*tgt_;
 };
 
 void vvm_parm_rval::expr_const(const NetEConst*expr)
 {
       if (expr->value().is_string()) {
-	    result = make_temp();
-	    os_ << "        struct __vpiHandle " << result << ";" << endl;
-	    os_ << "        vvm_make_vpi_parm(&" << result << ", \""
-		<< expr->value().as_string() << "\");" << endl;
-	    result = "&" + result;
+
+	    string& res = tgt_->string_constants[expr->value().as_string()];
+	    if (res != "") {
+		  result = "&" + res + ".base";
+		  return;
+	    }
+
+	    res = make_temp();
+	    tgt_->delayed << "struct __vpiStringConst " << res
+			  << ";" << endl;
+	    tgt_->init_code << "      vpip_make_string_const(&" << res
+			    << ", \"" << expr->value().as_string()
+			    << "\");" << endl;
+	    tgt_->defn << "      extern struct __vpiStringConst " << res
+			  << ";" << endl;
+	    result = "&" + res + ".base";
 	    return;
       }
 
       string tname = make_temp();
-      os_ << "        vvm_bitset_t<" <<
+      tgt_->defn << "        vvm_bitset_t<" <<
 	    expr->expr_width() << "> " << tname << ";" << endl;
       for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
-	    os_ << "        " << tname << "[" << idx << "] = ";
+	    tgt_->defn << "        " << tname << "[" << idx << "] = ";
 	    switch (expr->value().get(idx)) {
 		case verinum::V0:
-		  os_ << "V0";
+		  tgt_->defn << "V0";
 		  break;
 		case verinum::V1:
-		  os_ << "V1";
+		  tgt_->defn << "V1";
 		  break;
 		case verinum::Vx:
-		  os_ << "Vx";
+		  tgt_->defn << "Vx";
 		  break;
 		case verinum::Vz:
-		  os_ << "Vz";
+		  tgt_->defn << "Vz";
 		  break;
 	    }
-	    os_ << ";" << endl;
+	    tgt_->defn << ";" << endl;
       }
 
       result = make_temp();
-      os_ << "        struct __vpiHandle " << result << ";" << endl;
-      os_ << "        vvm_make_vpi_parm(&" << result << ", &" << tname
-	  << ");" << endl;
+      tgt_->defn << "        struct __vpiHandle " << result << ";" << endl;
+      tgt_->defn << "        vvm_make_vpi_parm(&" << result << ", &"
+		 << tname << ");" << endl;
       result = "&" + result;
 }
 
 void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 {
       if (expr->name() == "$time") {
-	    os_ << "        system_time.val.time.low "
-		  "= sim_->get_sim_time();" << endl;
-	    result = string("&system_time");
+	    result = string("vpip_sim_time()");
       } else {
 	    cerr << "Unhandled identifier: " << expr->name() << endl;
       }
@@ -521,13 +538,13 @@ void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 
 void vvm_parm_rval::expr_signal(const NetESignal*expr)
 {
-      string res = string("&") + mangle(expr->name()) + "_vpi";
+      string res = string("&") + mangle(expr->name()) + "_vpi.base";
       result = res;
 }
 
-static string emit_parm_rval(ostream&os, const NetExpr*expr)
+static string emit_parm_rval(ostream&os, target_vvm*tgt, const NetExpr*expr)
 {
-      vvm_parm_rval scan (os);
+      vvm_parm_rval scan (os, tgt);
       expr->expr_scan(&scan);
       return scan.result;
 }
@@ -554,12 +571,11 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       os << "# include \"vpi_user.h\"" << endl;
       os << "# include \"vpi_priv.h\"" << endl;
 
-      os << "static struct __vpiHandle system_time;" << endl;
       process_counter = 0;
 
       init_code << "static void design_init(vvm_simulation&sim)" << endl;
       init_code << "{" << endl;
-      init_code << "      vvm_init_vpi_timevar(&system_time, \"$time\");"
+      init_code << "      vpip_init_simulation();"
 		<< endl;
       start_code << "static void design_start(vvm_simulation&sim)" << endl;
       start_code << "{" << endl;
@@ -1074,13 +1090,16 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 	    mangle(net->name()) << "(\"" << net->name() << "\", &" <<
 	    mangle(net->name()) << "_bits);" << endl;
 
-      os << "static struct __vpiHandle " << mangle(net->name()) <<
+      os << "static struct __vpiSignal " << mangle(net->name()) <<
 	    "_vpi;" << endl;
 
-      init_code << "      vvm_init_vpi_handle(&" <<
-	    mangle(net->name()) << "_vpi, &" << mangle(net->name()) <<
-	    "_bits, &" << mangle(net->name()) << ");" << endl;
-      
+      string vpi_name = mangle(net->name()) + "_vpi";
+      init_code << "      vpip_make_reg(&" << vpi_name << ", \"" <<
+	    net->name() << "\");" << endl;
+      init_code << "      " << vpi_name << ".bits = " <<
+	    mangle(net->name()) << "_bits.bits;" << endl;
+      init_code << "      " << vpi_name << ".nbits = " <<
+	    net->pin_count() << ";" << endl;
 }
 
 /*
@@ -1551,22 +1570,19 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
       for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1) {
 	    string val;
 	    if (net->parm(idx)) {
-		  val = emit_parm_rval(defn, net->parm(idx));
+		  val = emit_parm_rval(os, this, net->parm(idx));
 
 	    } else {
-		  val = make_temp();
-		  defn << "      struct __vpiHandle " << val << ";" << endl;
-		  defn << "      vvm_make_vpi_parm(&" << val << ");" << endl;
-		  val = string("&") + val;
+		  val = string("&vpip_null.base");
 	    }
 
 	    defn << "      " << ptmp << "[" << idx << "] = " << val << ";"
 	       << endl;
       }
 
-      defn << "      vvm_calltask(sim_, \"" << net->name() << "\", " <<
+      defn << "      vpip_calltask(\"" << net->name() << "\", " <<
 	    net->nparms() << ", " << ptmp << ");" << endl;
-      defn << "      if (sim_->finished()) return false;" << endl;
+      defn << "      if (vpip_finished()) return false;" << endl;
 }
 
 void target_vvm::proc_utask(ostream&os, const NetUTask*net)
@@ -1746,6 +1762,12 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.65  1999/10/28 00:47:24  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.64  1999/10/23 16:27:53  steve
  *  assignment to bit select is aa single bit.
  *

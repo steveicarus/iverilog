@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.15 1999/10/13 03:15:51 steve Exp $"
+#ident "$Id: vvm.h,v 1.16 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 # include  <vector>
 # include  <string>
 # include  <cassert>
+# include  "vpi_priv.h"
 
 /*
  * The Verilog Virtual Machine are definitions for the virtual machine
@@ -38,14 +39,8 @@ class vvm_simulation;
 class vvm_simulation_cycle;
 class vvm_thread;
 
-/* The vvm_bit_t is the basic unit of value for a scalar signal in
-   Verilog. It represents all the possible values. The vvm_bitstring_t
-   is a vector of vvm_bit_t and is used when variable-length bit
-   arrays are needed. */
-enum vvm_bit_t { V0 = 0, V1, Vx, Vz };
 
-
-inline vvm_bit_t operator & (vvm_bit_t l, vvm_bit_t r)
+inline vpip_bit_t operator & (vpip_bit_t l, vpip_bit_t r)
 {
       if (l == V0) return V0;
       if (r == V0) return V0;
@@ -53,7 +48,7 @@ inline vvm_bit_t operator & (vvm_bit_t l, vvm_bit_t r)
       return Vx;
 }
 
-inline vvm_bit_t operator | (vvm_bit_t l, vvm_bit_t r)
+inline vpip_bit_t operator | (vpip_bit_t l, vpip_bit_t r)
 {
       if (l == V1) return V1;
       if (r == V1) return V1;
@@ -61,7 +56,7 @@ inline vvm_bit_t operator | (vvm_bit_t l, vvm_bit_t r)
       return Vx;
 }
 
-inline vvm_bit_t operator ^ (vvm_bit_t l, vvm_bit_t r)
+inline vpip_bit_t operator ^ (vpip_bit_t l, vpip_bit_t r)
 {
       if (l == Vx) return Vx;
       if (l == Vz) return Vx;
@@ -71,7 +66,7 @@ inline vvm_bit_t operator ^ (vvm_bit_t l, vvm_bit_t r)
       return (r == V0)? V1 : V0;
 }
 
-inline vvm_bit_t less_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
+inline vpip_bit_t less_with_cascade(vpip_bit_t l, vpip_bit_t r, vpip_bit_t c)
 {
       if (l == Vx) return Vx;
       if (r == Vx) return Vx;
@@ -80,7 +75,7 @@ inline vvm_bit_t less_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
       return c;
 }
 
-inline vvm_bit_t greater_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
+inline vpip_bit_t greater_with_cascade(vpip_bit_t l, vpip_bit_t r, vpip_bit_t c)
 {
       if (l == Vx) return Vx;
       if (r == Vx) return Vx;
@@ -89,9 +84,9 @@ inline vvm_bit_t greater_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
       return c;
 }
 
-extern vvm_bit_t add_with_carry(vvm_bit_t l, vvm_bit_t r, vvm_bit_t&carry);
+extern vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry);
 
-inline vvm_bit_t not(vvm_bit_t l)
+inline vpip_bit_t not(vpip_bit_t l)
 {
       switch (l) {
 	  case V0:
@@ -107,14 +102,14 @@ class vvm_bits_t {
     public:
       virtual ~vvm_bits_t() =0;
       virtual unsigned get_width() const =0;
-      virtual vvm_bit_t get_bit(unsigned idx) const =0;
+      virtual vpip_bit_t get_bit(unsigned idx) const =0;
 };
 
-extern ostream& operator << (ostream&os, vvm_bit_t);
+extern ostream& operator << (ostream&os, vpip_bit_t);
 extern ostream& operator << (ostream&os, const vvm_bits_t&str);
 
 /*
- * The vvm_bitset_t is a fixed width array-like set of vvm_bit_t
+ * The vvm_bitset_t is a fixed width array-like set of vpip_bit_t
  * items. A number is often times made up of bit sets instead of
  * single bits. The fixed array is used when possible because of the
  * more thorough type checking and (hopefully) better optimization.
@@ -124,44 +119,38 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
     public:
       vvm_bitset_t()
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  bits_[idx] = Vz;
+		  bits[idx] = Vz;
 	    }
-	//vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
-	//    { bits_ = that.bits_; }
+
       vvm_bitset_t(const vvm_bits_t&that)
 	    { unsigned wid = WIDTH;
 	      if (that.get_width() < WIDTH)
 		    wid = that.get_width();
 	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		    bits_[idx] = that.get_bit(idx);
+		    bits[idx] = that.get_bit(idx);
 	      for (unsigned idx = wid ;  idx < WIDTH ;  idx += 1)
-		    bits_[idx] = V0;
+		    bits[idx] = V0;
 	    }
 	    
 
-      vvm_bit_t operator[] (unsigned idx) const { return bits_[idx]; }
-      vvm_bit_t&operator[] (unsigned idx) { return bits_[idx]; }
+      vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
+      vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
 
       unsigned get_width() const { return WIDTH; }
-      vvm_bit_t get_bit(unsigned idx) const { return bits_[idx]; }
+      vpip_bit_t get_bit(unsigned idx) const { return bits[idx]; }
 
       unsigned as_unsigned() const
 	    { unsigned result = 0;
 	      for (unsigned idx = WIDTH ;  idx > 0 ;  idx -= 1) {
 		    result <<= 1;
-		    if (bits_[idx-1]) result |= 1;
+		    if (bits[idx-1]) result |= 1;
 	      }
 	      return result;
 	    }
 
-	//vvm_bitset_t<WIDTH>& operator= (const vvm_bitset_t<WIDTH>&that)
-	//    { if (this == &that) return *this;
-	//      bits_ = that.bits_;
-	//      return *this;
-	//    }
 
-    private:
-      vvm_bit_t bits_[WIDTH];
+    public:
+      vpip_bit_t bits[WIDTH];
 };
 
 /*
@@ -174,12 +163,14 @@ class vvm_event {
       friend class vvm_simulation;
 
     public:
-      vvm_event() { }
+      vvm_event();
       virtual ~vvm_event() =0;
       virtual void event_function() =0;
 
+      static void callback_(void*);
+
     private:
-      vvm_event*next_;
+      struct vpip_event*event_;
 
     private: // not implemented
       vvm_event(const vvm_event&);
@@ -225,22 +216,7 @@ class vvm_simulation {
 	// only one event can be a monitor.
       void monitor_event(vvm_event*);
 
-      unsigned long get_sim_time() const { return time_; }
-
-	// The s_finish() method marks the simulation as finished and
-	// prevents more events being executed. The finished() method
-	// returns true if the s_finish() method has been called.
-      void s_finish();
       bool finished() const;
-
-    private:
-      bool going_;
-      vvm_simulation_cycle*sim_;
-
-	// Triggered monitor event.
-      vvm_event*mon_;
-
-      unsigned long time_;
 
     private: // not implemented
       vvm_simulation(const vvm_simulation&);
@@ -248,49 +224,39 @@ class vvm_simulation {
 };
 
 /*
- * The vvm_monitor_t is usually associated with a vvm_bitset_t that
- * represents a signal. The VVM code generator generates calls to the
- * trigger method whenever an assignment or output value is set on
- * the associated signal. The trigger, if enabled, then causes the
- * monitor event to be scheduled in the simulation.
+ * The vvm_monitor_t is a way of attaching a name to the signal, for
+ * use by the vpi_ functions. I need to make a base type so that I can
+ * avoid the casting problems with the vvm_signal_t template below.
  *
- * This object also carries the canonical signal name, for the use of
- * %m display patterns.
+ * The vvm_signal_t template is the real object that handles the
+ * receiving of assignments and doing whatever is done.
  */
 class vvm_monitor_t {
     public:
       vvm_monitor_t(const char*);
-
-      void trigger(vvm_simulation*sim)
-	    { if (event_) sim->monitor_event(event_); }
-
-      const char* name() const { return name_; }
-
-      void enable(vvm_event*e) { event_ = e; }
-
+      ~vvm_monitor_t();
+      const char* name() const;
     private:
       const char* name_;
-      vvm_event*event_;
 
     private: // not implemented
       vvm_monitor_t(const vvm_monitor_t&);
       vvm_monitor_t& operator= (const vvm_monitor_t&);
 };
 
-
-template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
+template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t  {
 
     public:
       vvm_signal_t(const char*n, vvm_bitset_t<WIDTH>*b)
-      : vvm_monitor_t(n), bits_(b)
-	    { }
+      : vvm_monitor_t(n), bits_(b) { }
 
-      void init(unsigned idx, vvm_bit_t val)
+      ~vvm_signal_t() { }
+
+      void init(unsigned idx, vpip_bit_t val)
 	    { (*bits_)[idx] = val; }
 
-      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
+      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { (*bits_)[idx] = val;
-	      trigger(sim);
 	    }
 
       void set(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
@@ -304,6 +270,12 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.16  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.15  1999/10/13 03:15:51  steve
  *  Remove useless operator=.
  *

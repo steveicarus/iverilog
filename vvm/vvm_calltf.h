@@ -19,13 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.h,v 1.2 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: vvm_calltf.h,v 1.3 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  <string>
 
-typedef struct __vpiHandle*vpiHandle;
 
 /*
  * This function loads a vpi module by name.
@@ -34,33 +33,13 @@ extern void vvm_load_vpi_module(const char*path);
 
 
 /*
- * The vvm_init_vpi_handle functions initialize statis VPI handles
- * that may be used many places within the program.
- */
-extern void vvm_init_vpi_handle(vpiHandle, vvm_bits_t*, vvm_monitor_t*);
-extern void vvm_init_vpi_timevar(vpiHandle, const char*name);
-
-/*
- * The vvm_make_vpi_parm functions initialize the vpiHandles to
- * represent objects suitable for use as vvm_calltask parameters.
- */
-extern void vvm_make_vpi_parm(vpiHandle ref, const char*val);
-extern void vvm_make_vpi_parm(vpiHandle ref, vvm_bits_t*val);
-extern void vvm_make_vpi_parm(vpiHandle ref);
-
-/*
- * The vvm environment supports external calls to C++ by
- * vvm_calltask. The code generator generates calls to vvm_calltask
- * that corresponds to the system call in the Verilog source. The
- * vvm_calltask in turn locates the vpi implementation (by name) and
- * calls the VPI that implements the task.
- */
-
-extern void vvm_calltask(vvm_simulation*sim, const string&name,
-			 unsigned nparms, vpiHandle*parms);
-
-/*
  * $Log: vvm_calltf.h,v $
+ * Revision 1.3  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.2  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *

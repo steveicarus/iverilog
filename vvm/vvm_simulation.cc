@@ -17,101 +17,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_simulation.cc,v 1.6 1999/10/06 01:28:18 steve Exp $"
+#ident "$Id: vvm_simulation.cc,v 1.7 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  "vvm_thread.h"
+# include  "vpi_priv.h"
 # include  <assert.h>
-
-/*
- * The state of the simulation is stored as a list of simulation
- * times. Each simulation time contains the delay to get to it, and
- * also a list of events that are to execute here.
- *
- * The "events" member points to a list of inactive events to be made
- * active as a group. Update events go into this list.
- *
- * The "nonblock" member points to a list of events to be executed
- * only after ordinary events run out. This is intended to support the
- * semantics of nonblocking assignment.
- */
-struct vvm_simulation_cycle {
-      unsigned long delay;
-
-      struct vvm_simulation_cycle*next;
-      struct vvm_simulation_cycle*prev;
-
-      struct vvm_event*event_list;
-      struct vvm_event*event_last;
-      struct vvm_event*nonblock_list;
-      struct vvm_event*nonblock_last;
-
-      vvm_simulation_cycle()
-      : event_list(0), event_last(0), nonblock_list(0),
-	nonblock_last(0)
-      { }
-};
 
 vvm_simulation::vvm_simulation()
 {
-      sim_ = new vvm_simulation_cycle;
-      sim_->delay = 0;
-      sim_->next = sim_->prev = sim_;
-      mon_ = 0;
 }
 
 vvm_simulation::~vvm_simulation()
 {
 }
 
-void vvm_simulation::insert_event(unsigned long delay, vvm_event*event)
+void vvm_simulation::monitor_event(vvm_event*)
 {
-      vvm_simulation_cycle*cur = sim_->next;
-
-      while ((cur != sim_) && (cur->delay < delay)) {
-	    delay -= cur->delay;
-	    cur = cur->next;
-      }
-
-
-      if ((cur == sim_) || (cur->delay > delay)) {
-	    vvm_simulation_cycle*cell = new vvm_simulation_cycle;
-	    cell->delay = delay;
-	    if (cur != sim_)
-		  cur->delay -= delay;
-	    cell->next = cur;
-	    cell->prev = cur->prev;
-	    cell->next->prev = cell;
-	    cell->prev->next = cell;
-	    cur = cell;
-      }
-
-      event->next_ = 0;
-      if (cur->event_list == 0) {
-	    cur->event_list = cur->event_last = event;
-
-      } else {
-	    cur->event_last->next_ = event;
-	    cur->event_last = event;
-      }
+      assert(0);
 }
 
-void vvm_simulation::monitor_event(vvm_event*event)
+void vvm_simulation::insert_event(unsigned long delay, vvm_event*event)
 {
-      mon_ = event;
+      event->event_ = vpip_sim_insert_event(delay, event,
+					    vvm_event::callback_, 0);
 }
 
 void vvm_simulation::active_event(vvm_event*event)
 {
-      event->next_ = 0;
-      if (sim_->event_list == 0) {
-	    sim_->event_list = sim_->event_last = event;
-
-      } else {
-	    sim_->event_last->next_ = event;
-	    sim_->event_last = event;
-      }
+      event->event_ = vpip_sim_insert_event(0, event,
+					    vvm_event::callback_, 0);
 }
 
 /*
@@ -121,68 +57,7 @@ void vvm_simulation::active_event(vvm_event*event)
  */
 void vvm_simulation::run()
 {
-      assert(sim_);
-      time_ = 0;
-      going_ = true;
-
-      while  (going_) {
-
-	      /* Step the time forward to the cycle I am about to
-		 execute. */
-	    time_ += sim_->delay;
-	    sim_->delay = 0;
-
-	    while (going_) {
-		    /* Look for some events to make active. If the
-		       main event list is empty, then activate the
-		       nonblock list. */
-		  vvm_event*active = sim_->event_list;
-		  sim_->event_list = 0;
-		  sim_->event_last = 0;
-
-		  if (active == 0) {
-			active = sim_->nonblock_list;
-			sim_->nonblock_list = 0;
-			sim_->nonblock_last = 0;
-		  }
-
-		    /* Oops, no events left. Break out of this time cycle. */
-		  if (active == 0)
-			break;
-
-		  while (active && going_) {
-			vvm_event*cur = active;
-			active = cur->next_;
-			cur->event_function();
-			delete cur;
-		  }
-	    }
-
-	      /* If the simulation was stopped by one of the events,
-		 then break out of the loop before doing any monitor
-		 events, and before clearing the current time. */
-	    if (!going_)
-		  break;
-
-	      /* XXXX Execute monitor events here. */
-	    if (mon_) {
-		  mon_->event_function();
-		  mon_ = 0;
-	    }
-
-	      /* The time cycle is done, delete it from the list and
-		 step to the next time. */
-	    struct vvm_simulation_cycle*next = sim_->next;
-	    if (next == sim_) {
-		  going_ = false;
-		  break;
-	    }
-
-	    sim_->next->prev = sim_->prev;
-	    sim_->prev->next = sim_->next;
-	    delete sim_;
-	    sim_ = next;
-      }
+      vpip_simulation_run();
 }
 
 class delay_event : public vvm_event {
@@ -194,15 +69,6 @@ class delay_event : public vvm_event {
       vvm_thread*thr_;
 };
 
-void vvm_simulation::s_finish()
-{
-      going_ = false;
-}
-
-bool vvm_simulation::finished() const
-{
-      return !going_;
-}
 
 void vvm_simulation::thread_delay(unsigned long delay, vvm_thread*thr)
 {
@@ -219,6 +85,12 @@ void vvm_simulation::thread_active(vvm_thread*thr)
 
 /*
  * $Log: vvm_simulation.cc,v $
+ * Revision 1.7  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.6  1999/10/06 01:28:18  steve
  *  The $finish task should work immediately.
  *

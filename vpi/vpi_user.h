@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.3 1999/08/19 02:51:03 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.4 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -95,6 +95,7 @@ typedef struct t_vpi_value {
 
 /* OBJECT CODES */
 #define vpiConstant     7
+#define vpiIterator    27
 #define vpiNet         36
 #define vpiReg         48
 #define vpiSysTaskCall 57
@@ -102,6 +103,7 @@ typedef struct t_vpi_value {
 #define vpiSysTfCall   85
 #define vpiArgument    89
 
+#define vpiCallback  1000
 
 /* PROPERTIES */
 #define vpiType       1
@@ -119,6 +121,46 @@ typedef struct t_vpi_value {
 /* VPI FUNCTIONS */
 extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
 extern void vpi_printf(const char*fmt, ...);
+
+/*
+ * support for VPI callback functions.
+ */
+typedef struct t_cb_data {
+      int reason;
+      int (*cb_rtn)(struct t_cb_data*cb);
+      vpiHandle obj;
+      p_vpi_time time;
+      p_vpi_value value;
+      int index;
+      char*user_data;
+} s_cb_data, *p_cb_data;
+
+#define cbValueChange        1
+#define cbStmt               2
+#define cbForce              3
+#define cbRelease            4
+#define cbAtStartOfSimTime   5
+#define cbReadWriteSynch     6
+#define cbReadOnlySynch      7
+#define cbNextSimTime        8
+#define cbAfterDelay         9
+#define cbEndOfCompile      10
+#define cbStartOfSimulation 11
+#define cbEndOfSimulation   12
+#define cbError             13
+#define cbTchkViolation     14
+#define cbStartOfSave       15
+#define cbEndOfSave         16
+#define cbStartOfRestart    17
+#define cbEndOfRestart      18
+#define cbStartOfReset      19
+#define cbEndOfReset        20
+#define cbEnterInteractive  21
+#define cbExitInteractive   22
+#define cbInteractiveScopeChange 23
+#define cbUnresolvedSystf   24
+
+extern vpiHandle vpi_register_cb(p_cb_data data);
 
 /*
  * This function allows a vpi application to control the simulation
@@ -161,6 +203,12 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.4  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.3  1999/08/19 02:51:03  steve
  *  Add vpi_sim_control
  *

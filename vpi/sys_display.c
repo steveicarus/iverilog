@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.4 1999/10/10 14:50:50 steve Exp $"
+#ident "$Id: sys_display.c,v 1.5 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -236,6 +236,30 @@ static int sys_display_calltf(char *name)
       return 0;
 }
 
+static int strobe_cb(p_cb_data cb)
+{
+      vpi_printf("%s NOT IMPLEMENTED YET\n", cb->user_data);
+      return 0;
+}
+
+static int sys_strobe_calltf(char*name)
+{
+      struct t_cb_data cb;
+      struct t_vpi_time time;
+
+      time.type = vpiSimTime;
+      time.low = 0;
+      time.high = 0;
+
+      cb.reason = cbReadOnlySynch;
+      cb.cb_rtn = strobe_cb;
+      cb.time = &time;
+      cb.obj = 0;
+      cb.user_data = name;
+      vpi_register_cb(&cb);
+      return 0;
+}
+
 void sys_display_register()
 {
       s_vpi_systf_data tf_data;
@@ -255,11 +279,25 @@ void sys_display_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$write";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$strobe";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$strobe";
+      vpi_register_systf(&tf_data);
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.5  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.4  1999/10/10 14:50:50  steve
  *  Add Octal dump format.
  *

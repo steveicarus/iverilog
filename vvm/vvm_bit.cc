@@ -17,12 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_bit.cc,v 1.2 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.3 1999/10/28 00:47:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
 
-ostream& operator << (ostream&os, vvm_bit_t bit)
+ostream& operator << (ostream&os, vpip_bit_t bit)
 {
       switch (bit) {
 	  case V0:
@@ -54,7 +54,7 @@ vvm_bits_t::~vvm_bits_t()
 {
 }
 
-vvm_bit_t add_with_carry(vvm_bit_t l, vvm_bit_t r, vvm_bit_t&carry)
+vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 {
       unsigned li, ri, ci;
       switch (l) {
@@ -100,6 +100,12 @@ vvm_bit_t add_with_carry(vvm_bit_t l, vvm_bit_t r, vvm_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.3  1999/10/28 00:47:25  steve
+ *  Rewrite vvm VPI support to make objects more
+ *  persistent, rewrite the simulation scheduler
+ *  in C (to interface with VPI) and add VPI support
+ *  for callbacks.
+ *
  * Revision 1.2  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).

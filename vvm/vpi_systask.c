@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,39 +17,40 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_monitor.cc,v 1.3 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
 #endif
 
-# include  "vvm.h"
+# include  "vpi_priv.h"
+# include  <stdlib.h>
+# include  <assert.h>
 
-vvm_monitor_t::vvm_monitor_t(const char*n)
-: name_(n)
+static vpiHandle systask_iter(int type, vpiHandle ref)
 {
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      assert(ref->vpi_type->type_code == vpiSysTaskCall);
+
+      if (rfp->nargs == 0)
+	    return 0;
+
+      return vpip_make_iterator(rfp->nargs, rfp->args);
 }
 
-vvm_monitor_t::~vvm_monitor_t()
-{
-}
-
-const char*vvm_monitor_t::name() const
-{
-      return name_;
-}
-
+const struct __vpirt vpip_systask_rt = {
+      vpiSysTaskCall,
+      0,
+      0,
+      0,
+      0,
+      systask_iter
+};
 
 /*
- * $Log: vvm_monitor.cc,v $
- * Revision 1.3  1999/10/28 00:47:25  steve
+ * $Log: vpi_systask.c,v $
+ * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler
  *  in C (to interface with VPI) and add VPI support
  *  for callbacks.
- *
- * Revision 1.2  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
- * Revision 1.1  1998/11/09 23:44:11  steve
- *  Add vvm library.
  *
  */
 
