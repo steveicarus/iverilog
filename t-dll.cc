@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.72 2001/12/14 02:05:13 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.73 2001/12/15 02:13:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1650,7 +1650,7 @@ void dll_target::signal(const NetNet*net)
 
 	  case NetNet::WIRE:
 	  case NetNet::IMPLICIT:
-	    obj->type_ = IVL_SIT_WIRE;
+	    obj->type_ = IVL_SIT_TRI;
 	    break;
 
 	  case NetNet::WOR:
@@ -1719,6 +1719,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.73  2001/12/15 02:13:17  steve
+ *  The IVL_SIT_WIRE type does not exist, it is a
+ *  synonym for IVL_SIT_TRI.
+ *
  * Revision 1.72  2001/12/14 02:05:13  steve
  *  Parse and handle drive strengths of gates to vvp.
  *

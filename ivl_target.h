@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.89 2001/12/06 03:11:00 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.90 2001/12/15 02:13:17 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -258,7 +258,6 @@ typedef enum ivl_signal_type_e {
       IVL_SIT_TRIAND,
       IVL_SIT_TRIOR,
       IVL_SIT_WAND,
-      IVL_SIT_WIRE,
       IVL_SIT_WOR
 } ivl_signal_type_t;
 
@@ -977,6 +976,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.90  2001/12/15 02:13:17  steve
+ *  The IVL_SIT_WIRE type does not exist, it is a
+ *  synonym for IVL_SIT_TRI.
+ *
  * Revision 1.89  2001/12/06 03:11:00  steve
  *  Add ivl_logic_delay function to ivl_target.
  *

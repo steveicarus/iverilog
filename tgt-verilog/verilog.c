@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.25 2001/09/30 16:45:10 steve Exp $"
+#ident "$Id: verilog.c,v 1.26 2001/12/15 02:13:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -60,7 +60,7 @@ static void draw_scoped_objects(ivl_design_t des)
 			fprintf(out, "    reg %s;\n",
 				ivl_signal_basename(sig));
 		  break;
-		case IVL_SIT_WIRE:
+		case IVL_SIT_TRI:
 		  fprintf(out, "    wire %s;\n", ivl_signal_basename(sig));
 		  break;
 		default:
@@ -439,6 +439,10 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.26  2001/12/15 02:13:17  steve
+ *  The IVL_SIT_WIRE type does not exist, it is a
+ *  synonym for IVL_SIT_TRI.
+ *
  * Revision 1.25  2001/09/30 16:45:10  steve
  *  Fix some Cygwin DLL handling. (Venkat Iyer)
  *

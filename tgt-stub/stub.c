@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.50 2001/09/30 16:45:10 steve Exp $"
+#ident "$Id: stub.c,v 1.51 2001/12/15 02:13:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -408,8 +408,8 @@ static void show_signal(ivl_signal_t net)
 	  case IVL_SIT_REG:
 	    type = "reg";
 	    break;
-	  case IVL_SIT_WIRE:
-	    type = "wire";
+	  case IVL_SIT_TRI:
+	    type = "tri";
 	    break;
 	  case IVL_SIT_SUPPLY0:
 	    type = "supply0";
@@ -606,6 +606,10 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.51  2001/12/15 02:13:17  steve
+ *  The IVL_SIT_WIRE type does not exist, it is a
+ *  synonym for IVL_SIT_TRI.
+ *
  * Revision 1.50  2001/09/30 16:45:10  steve
  *  Fix some Cygwin DLL handling. (Venkat Iyer)
  *
