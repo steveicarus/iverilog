@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.5 1998/11/13 06:23:17 steve Exp $"
+#ident "$Id: netlist.cc,v 1.6 1998/11/16 05:03:53 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -315,6 +315,18 @@ void Design::clear_node_marks()
       } while (cur != nodes_);
 }
 
+void Design::clear_signal_marks()
+{
+      if (signals_ == 0)
+	    return;
+
+      NetNet*cur = signals_;
+      do {
+	    cur->set_mark(false);
+	    cur = cur->sig_next_;
+      } while (cur != signals_);
+}
+
 NetNode* Design::find_node(bool (*func)(const NetNode*))
 {
       if (nodes_ == 0)
@@ -331,8 +343,28 @@ NetNode* Design::find_node(bool (*func)(const NetNode*))
       return 0;
 }
 
+NetNet* Design::find_signal(bool (*func)(const NetNet*))
+{
+      if (signals_ == 0)
+	    return 0;
+
+      NetNet*cur = signals_->sig_next_;
+      do {
+	    if ((cur->test_mark() == false) && func(cur))
+		  return cur;
+
+	    cur = cur->sig_next_;
+      } while (cur != signals_->sig_next_);
+
+      return 0;
+}
+
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.6  1998/11/16 05:03:53  steve
+ *  Add the sigfold function that unlinks excess
+ *  signal nodes, and add the XNF target.
+ *
  * Revision 1.5  1998/11/13 06:23:17  steve
  *  Introduce netlist optimizations with the
  *  cprop function to do constant propogation.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.5 1998/11/13 06:23:17 steve Exp $"
+#ident "$Id: netlist.h,v 1.6 1998/11/16 05:03:53 steve Exp $"
 #endif
 
 /*
@@ -675,6 +675,9 @@ class Design {
       void clear_node_marks();
       NetNode*find_node(bool (*test)(const NetNode*));
 
+      void clear_signal_marks();
+      NetNet*find_signal(bool (*test)(const NetNet*));
+
     private:
 	// List all the signals in the design.
       NetNet*signals_;
@@ -710,6 +713,10 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.6  1998/11/16 05:03:53  steve
+ *  Add the sigfold function that unlinks excess
+ *  signal nodes, and add the XNF target.
+ *
  * Revision 1.5  1998/11/13 06:23:17  steve
  *  Introduce netlist optimizations with the
  *  cprop function to do constant propogation.

@@ -17,21 +17,28 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: targets.cc,v 1.1 1998/11/03 23:29:07 steve Exp $"
+#ident "$Id: targets.cc,v 1.2 1998/11/16 05:03:53 steve Exp $"
 #endif
 
 # include "target.h"
 
 extern const struct target tgt_verilog;
 extern const struct target tgt_vvm;
+extern const struct target tgt_xnf;
+
 const struct target *target_table[] = {
       &tgt_verilog,
       &tgt_vvm,
+      &tgt_xnf,
       0
 };
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.2  1998/11/16 05:03:53  steve
+ *  Add the sigfold function that unlinks excess
+ *  signal nodes, and add the XNF target.
+ *
  * Revision 1.1  1998/11/03 23:29:07  steve
  *  Introduce verilog to CVS.
  *

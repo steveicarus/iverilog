@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.3 1998/11/13 06:23:17 steve Exp $"
+#ident "$Id: main.cc,v 1.4 1998/11/16 05:03:52 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -39,6 +39,7 @@ extern Design* elaborate(const list<Module*>&modules, const string&root);
 extern void emit(ostream&o, const Design*, const char*);
 
 extern void cprop(Design*des);
+extern void sigfold(Design*des);
 extern void stupid(Design*des);
 
 typedef void (*net_func)(Design*);
@@ -46,8 +47,9 @@ static struct net_func_map {
       const char*name;
       void (*func)(Design*);
 } func_table[] = {
-      { "stupid", &stupid },
-      { "cprop",  &cprop },
+      { "cprop",   &cprop },
+      { "sigfold", &sigfold },
+      { "stupid",  &stupid },
       { 0, 0 }
 };
 
@@ -64,12 +66,13 @@ net_func name_to_net_func(const string&name)
 int main(int argc, char*argv[])
 {
       bool dump_flag = false;
+      bool help_flag = false;
       const char* out_path = 0;
       int opt;
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
 
-      while ((opt = getopt(argc, argv, "DF:o:s:t:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "DF:ho:s:t:")) != EOF) switch (opt) {
 	  case 'D':
 	    dump_flag = true;
 	    break;
@@ -83,6 +86,9 @@ int main(int argc, char*argv[])
 		net_func_queue.push(tmp);
 		break;
 	  }
+	  case 'h':
+	    help_flag = true;
+	    break;
 	  case 'o':
 	    out_path = optarg;
 	    break;
@@ -99,6 +105,16 @@ int main(int argc, char*argv[])
 
       if (flag_errors)
 	    return flag_errors;
+
+      if (help_flag) {
+	    cout << "Netlist functions:" << endl;
+	    for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
+		  cout << "    " << func_table[idx].name << endl;
+	    cout << "Target types:" << endl;
+	    for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1)
+		  cout << "    " << target_table[idx]->name << endl;
+	    return 0;
+      }
 
       if (optind == argc) {
 	    cerr << "No input files." << endl;
@@ -176,6 +192,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.4  1998/11/16 05:03:52  steve
+ *  Add the sigfold function that unlinks excess
+ *  signal nodes, and add the XNF target.
+ *
  * Revision 1.3  1998/11/13 06:23:17  steve
  *  Introduce netlist optimizations with the
  *  cprop function to do constant propogation.
