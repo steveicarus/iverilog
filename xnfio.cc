@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.7 1999/11/19 03:02:25 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.8 1999/11/19 05:02:15 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -152,10 +152,14 @@ static void absorb_OFF(Design*des, NetLogic*buf)
 	    return;
       if (count_inputs(buf->pin(1)) != 1)
 	    return;
+	/* For now, only support OUTFF. */
+      if (buf->type() != NetLogic::BUF)
+	    return;
 
       NetObj::Link*drv = find_next_output(&buf->pin(1));
       assert(drv);
 
+	/* Make sure the device is a FF with width 1. */
       NetFF*ff = dynamic_cast<NetFF*>(drv->get_obj());
       if (ff == 0)
 	    return;
@@ -175,13 +179,19 @@ static void absorb_OFF(Design*des, NetLogic*buf)
       for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
 	    names[idx] = "";
 
-      names[ff->pin_Clock().get_pin()] = "C";
+      if (ff->attribute("Clock:LPM_Polarity") == "INVERT")
+	    names[ff->pin_Clock().get_pin()] = "~C";
+      else
+	    names[ff->pin_Clock().get_pin()] = "C";
+
       names[ff->pin_Data(0).get_pin()] = "D";
       names[ff->pin_Q(0).get_pin()] = "Q";
+
       string lname = string("OUTFF:") + names[0];
       for (unsigned idx = 1 ;  idx < ff->pin_count() ;  idx += 1)
 	    lname = lname + "," + names[idx];
       delete[]names;
+
       ff->attribute("XNF-LCA", lname);
 }
 
@@ -272,6 +282,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.8  1999/11/19 05:02:15  steve
+ *  Handle inverted clock into OUTFF.
+ *
  * Revision 1.7  1999/11/19 03:02:25  steve
  *  Detect flip-flops connected to opads and turn
  *  them into OUTFF devices. Inprove support for
