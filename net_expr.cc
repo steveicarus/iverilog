@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_expr.cc,v 1.1 2002/01/28 01:39:45 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.2 2002/01/29 22:36:31 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "netlist.h"
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid)
@@ -59,6 +60,9 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.2  2002/01/29 22:36:31  steve
+ *  include config.h to eliminate warnings.
+ *
  * Revision 1.1  2002/01/28 01:39:45  steve
  *  Add ne_expr.cc
  *
