@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.21 2003/03/07 02:44:14 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.22 2003/03/13 05:07:10 steve Exp $"
 #endif
 
 /*
@@ -171,12 +171,14 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
 
 	  case vpiVectorVal:
 
-	    for (unsigned wdx = 0 ;  wdx < rfp->vwid ;  wdx += 32) {
+	    for (unsigned wdx = 0 ;  wdx < (unsigned)rfp->vwid ;  wdx += 32) {
 		  unsigned word = wdx / 32;
 		  unsigned long aval = vp->value.vector[word].aval;
 		  unsigned long bval = vp->value.vector[word].bval;
 
-		  for (int idx = 0 ;  (wdx+idx) < rfp->vwid ;  idx += 1) {
+		  for (unsigned idx = 0 ;  (wdx+idx) < (unsigned)rfp->vwid ;
+		      idx += 1)
+		  {
 			int bit = (aval&1) | ((bval<<1)&2);
 
 			switch (bit) {
@@ -454,6 +456,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.22  2003/03/13 05:07:10  steve
+ *  signed/unsigned warnings.
+ *
  * Revision 1.21  2003/03/07 02:44:14  steve
  *  Support vector put of function return values.
  *
