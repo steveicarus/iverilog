@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.63 2003/07/21 01:19:58 steve Exp $"
+#ident "$Id: sys_display.c,v 1.64 2003/08/03 03:54:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1253,6 +1253,7 @@ static int sys_fdisplay_calltf(char *name)
 	    case vpiReg:
 	    case vpiRealVar:
 	    case vpiIntegerVar:
+	    case vpiNet:
 	      break;
 
 	  case vpiConstant:
@@ -1744,6 +1745,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.64  2003/08/03 03:54:02  steve
+ *  mcd value can come from a vpiNet.
+ *
  * Revision 1.63  2003/07/21 01:19:58  steve
  *  Careful to save format string to prevent overwrite.
  *
