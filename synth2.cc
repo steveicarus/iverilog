@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.27 2003/06/23 00:14:44 steve Exp $"
+#ident "$Id: synth2.cc,v 1.28 2003/08/10 17:04:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -481,60 +481,74 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
+	/* First try to turn the condition expression into an
+	   asynchronous set/reset. If the condition expression has
+	   inputs that are included in the sensitivity list, then it
+	   is likely intended as an asynchronous input. */
 
-	/* Synthesize the enable expression. */
-      NetNet*ce = expr_->synthesize(des);
-      assert(ce->pin_count() == 1);
-
-	/* Try first to turn the ce into an asynchronous set/reset
-	   input. If the ce is linked to a probe, then that probe is a
-	   set/reset input. */
+      NexusSet*expr_input = expr_->nex_input();
+      assert(expr_input);
       for (unsigned idx = 0 ;  idx < events_in.count() ;  idx += 1) {
+
 	    NetEvProbe*ev = events_in[idx];
+	    NexusSet pin_set;
+	    pin_set.add(ev->pin(0).nexus());
 
-	    if (connected(ce->pin(0), ev->pin(0))) {
+	    if (! expr_input->contains(pin_set))
+		  continue;
 
-		  bool flag = true;
-		  assert(ev->edge() == NetEvProbe::POSEDGE);
+	      /* Ah, this edge is in the sensitivity list for the
+		 expression, so we have an asynchronous
+		 input. Synthesize the set/reset input expression. */
 
-		    /* Synthesize the true clause to figure out what
-		       kind of set/reset we have. */
-		  NetNet*asig = new NetNet(scope, scope->local_symbol(),
-					   NetNet::WIRE, nex_map->pin_count());
-		  asig->local_flag(true);
-		  flag = if_->synth_async(des, scope, nex_map, asig) && flag;
+	    NetNet*rst = expr_->synthesize(des);
+	    assert(rst->pin_count() == 1);
 
-		  assert(asig->pin_count() == ff->width());
+	      /* XXXX I really should find a way to check that the
+		 edge used on the reset input is correct. This would
+		 involve interpreting the exression that is fed by the
+		 reset expression. */
+	      //assert(ev->edge() == NetEvProbe::POSEDGE);
 
-		    /* Collect the set/reset value into a verinum. If
-		       this turns out to be entirely 0 values, then
-		       use the Aclr input. Otherwise, use the Aset
-		       input and save the set value. */
-		  verinum tmp (verinum::V0, ff->width());
-		  for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
+	      /* Synthesize the true clause to figure out what
+		 kind of set/reset we have. */
+	    NetNet*asig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, nex_map->pin_count());
+	    asig->local_flag(true);
+	    bool flag = if_->synth_async(des, scope, nex_map, asig);
 
-			assert(asig->pin(bit).nexus()->drivers_constant());
-			tmp.set(bit, asig->pin(bit).nexus()->driven_value());
-		  }
+	    assert(asig->pin_count() == ff->width());
 
-		  assert(tmp.is_defined());
-		  if (tmp.is_zero()) {
-			connect(ff->pin_Aclr(), ce->pin(0));
+	      /* Collect the set/reset value into a verinum. If
+		 this turns out to be entirely 0 values, then
+		 use the Aclr input. Otherwise, use the Aset
+		 input and save the set value. */
+	    verinum tmp (verinum::V0, ff->width());
+	    for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
 
-		  } else {
-			connect(ff->pin_Aset(), ce->pin(0));
-			ff->aset_value(tmp);
-		  }
-
-		  delete asig;
-
-		  assert(events_in.count() == 1);
-		  return else_->synth_sync(des, scope, ff, nex_map,
-					   nex_out, svector<NetEvProbe*>(0))
-			&& flag;
+		  assert(asig->pin(bit).nexus()->drivers_constant());
+		  tmp.set(bit, asig->pin(bit).nexus()->driven_value());
 	    }
 
+	    assert(tmp.is_defined());
+	    if (tmp.is_zero()) {
+		  connect(ff->pin_Aclr(), rst->pin(0));
+
+	    } else {
+		  connect(ff->pin_Aset(), rst->pin(0));
+		  ff->aset_value(tmp);
+	    }
+
+	    delete asig;
+	    delete expr_input;
+
+	    assert(events_in.count() == 1);
+	    return else_->synth_sync(des, scope, ff, nex_map,
+				     nex_out, svector<NetEvProbe*>(0))
+		  && flag;
       }
+
+      delete expr_input;
 
 	/* Failed to find an asynchronous set/reset, so any events
 	   input are probably in error. */
@@ -543,6 +557,11 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 << " for in process synthesis." << endl;
 	    des->errors += 1;
       }
+
+	/* Synthesize the enable expression. */
+      NetNet*ce = expr_->synthesize(des);
+      assert(ce->pin_count() == 1);
+
 
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
@@ -784,6 +803,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.28  2003/08/10 17:04:23  steve
+ *  Detect asynchronous FF inputs that are expressions.
+ *
  * Revision 1.27  2003/06/23 00:14:44  steve
  *  ivl_synthesis_cell cuts off synthesis within a module.
  *
