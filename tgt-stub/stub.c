@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.108 2005/02/12 06:17:43 steve Exp $"
+#ident "$Id: stub.c,v 1.109 2005/02/12 22:53:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -381,6 +381,57 @@ static void show_lpm_mult(ivl_lpm_t net)
 }
 
 /*
+ * Show an IVL_LPM_MUX.
+ *
+ * The compiler is supposed to make sure that the Q output and data
+ * inputs all have the width of the device. The ivl_lpm_select input
+ * has its own width.
+ */
+static void show_lpm_mux(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned idx;
+      unsigned width = ivl_lpm_width(net);
+      unsigned size  = ivl_lpm_size(net);
+
+      fprintf(out, "  LPM_MUX %s: <width=%u, size=%u>\n",
+	      ivl_lpm_basename(net), width, size);
+
+      nex = ivl_lpm_q(net,0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+      if (width != width_of_nexus(nex)) {
+	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+	/* The select input is a vector with the width from the
+	   ivl_lpm_selects function. */
+      nex = ivl_lpm_select(net,0);
+      fprintf(out, "    S: %s <width=%u>\n",
+	      ivl_nexus_name(nex),
+	      ivl_lpm_selects(net));
+      if (ivl_lpm_selects(net) != width_of_nexus(nex)) {
+	    fprintf(out, "    S: ERROR: Nexus width is %uj\n",
+		    width_of_nexus(nex));
+	    stub_errors += 1;
+      }
+
+	/* The ivl_lpm_size() method give the number of inputs that
+	   can be selected from. */
+      for (idx = 0 ;  idx < size ;  idx += 1) {
+	    nex = ivl_lpm_data(net,idx);
+	    fprintf(out, "    D%u: %s\n", idx, ivl_nexus_name(nex));
+	    if (width != width_of_nexus(nex)) {
+		  fprintf(out, "    D%u: ERROR, Nexus width is %u\n",
+			  idx, width_of_nexus(nex));
+		  stub_errors += 1;
+	    }
+      }
+}
+
+
+/*
  * The reduction operators have similar characteristics and are
  * displayed here.
  */
@@ -588,27 +639,9 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_mult(net);
 	    break;
 
-	  case IVL_LPM_MUX: {
-		unsigned sdx;
-
-		fprintf(out, "  LPM_MUX %s: <width=%u, size=%u, sel_wid=%u>\n",
-			ivl_lpm_basename(net), width, ivl_lpm_size(net),
-			ivl_lpm_selects(net));
-
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-
-		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1)
-		      fprintf(out, "    S %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_select(net, idx)));
-
-		for (sdx = 0 ;  sdx < ivl_lpm_size(net) ;  sdx += 1)
-		      for (idx = 0 ;  idx < width ;  idx += 1)
-			    fprintf(out, "    D%u %u: %s\n", sdx, idx,
-				 ivl_nexus_name(ivl_lpm_data2(net,sdx,idx)));
-		break;
-	  }
+	  case IVL_LPM_MUX:
+	    show_lpm_mux(net);
+	    break;
 
 	  case IVL_LPM_PART_VP: {
 		fprintf(out, "  LPM_PART_VP %s: <width=%u, base=%u, signed=%d>\n",
@@ -1084,6 +1117,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.109  2005/02/12 22:53:41  steve
+ *  Check IVL_LPM_MUX configuration.
+ *
  * Revision 1.108  2005/02/12 06:17:43  steve
  *  Check nexus widths of IVL_LO_ nodes.
  *
