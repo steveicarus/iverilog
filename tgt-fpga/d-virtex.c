@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.27 2003/06/28 04:18:47 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.28 2003/06/30 19:21:21 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -254,7 +254,7 @@ static void virtex_or_wide(ivl_net_logic_t net)
 	    break;
 
 	  case 3:
-	    lut = edif_cellref_create(edf, xilinx_cell_lut2(xlib));
+	    lut = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
 
 	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, lut4_cnt*4+1+0));
 	    edif_add_to_joint(jnt, lut, LUT_I0);
@@ -844,6 +844,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.28  2003/06/30 19:21:21  steve
+ *  lut3 for 3input wide or.
+ *
  * Revision 1.27  2003/06/28 04:18:47  steve
  *  Add support for wide OR/NOR gates.
  *
