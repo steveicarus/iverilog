@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.32 2001/07/19 04:40:55 steve Exp $"
+#ident "$Id: codes.h,v 1.33 2001/07/22 00:04:50 steve Exp $"
 #endif
 
 
@@ -63,6 +63,7 @@ extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_X(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
@@ -137,6 +138,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.33  2001/07/22 00:04:50  steve
+ *  Add the load/x instruction for bit selects.
+ *
  * Revision 1.32  2001/07/19 04:40:55  steve
  *  Add support for the delayx opcode.
  *

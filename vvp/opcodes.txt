@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.26 2001/07/19 04:40:55 steve Exp $
+ *  $Id: opcodes.txt,v 1.27 2001/07/22 00:04:50 steve Exp $
  */
 
 
@@ -231,6 +231,14 @@ This instruction loads a value from a memory bit into the specified
 thread register bit. The memory bit is addressed by index register 3.
 Bit address zero is the LSB of the first memory word.  This
 instruction loads only a single bit.
+
+
+* %load/x <bit>, <functor-label>, <idx>
+
+This is an indexed load. It uses the contents of the specified index
+register to select a bit from an array based at <functor-label>. The
+bit is pulled from the addressed functor and loaded into the
+destination bit. This function does not do any bounds checking.
 
 
 * %mod <bit-l>, <bit-r>, <wid>

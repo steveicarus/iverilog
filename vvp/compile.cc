@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.88 2001/07/19 04:40:55 steve Exp $"
+#ident "$Id: compile.cc,v 1.89 2001/07/22 00:04:50 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -102,6 +102,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
+      { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -707,7 +708,7 @@ void compile_udp_def(int sequ, char *label, char *name,
   u->sequ = sequ;
   u->nin = nin;
   u->init = init;
-  u->table = table;
+  u->compile_table(table);
   free(label);
 }
 
@@ -1545,6 +1546,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.89  2001/07/22 00:04:50  steve
+ *  Add the load/x instruction for bit selects.
+ *
  * Revision 1.88  2001/07/19 04:40:55  steve
  *  Add support for the delayx opcode.
  *

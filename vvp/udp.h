@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.h,v 1.6 2001/05/06 03:51:37 steve Exp $"
+#ident "$Id: udp.h,v 1.7 2001/07/22 00:04:50 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -39,6 +39,8 @@ class vvp_udp_s : public vvp_fobj_s
       unsigned char  init;
       char **table;
 
+      void compile_table(char **t) { table = t; }
+
     private:
       unsigned char propagate_(vvp_ipoint_t i);
 };
@@ -49,6 +51,9 @@ struct vvp_udp_s *udp_find(char *label);
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.7  2001/07/22 00:04:50  steve
+ *  Add the load/x instruction for bit selects.
+ *
  * Revision 1.6  2001/05/06 03:51:37  steve
  *  Regularize the mode-42 functor handling.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.50 2001/07/20 04:57:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.51 2001/07/22 00:04:50 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -835,6 +835,16 @@ bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx2 <  4);
+
+      vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->index[cp->bit_idx2]);
+      thr_put_bit(thr, cp->bit_idx1, functor_get(ptr));
+      return true;
+}
+
 bool of_MOD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
@@ -1326,6 +1336,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.51  2001/07/22 00:04:50  steve
+ *  Add the load/x instruction for bit selects.
+ *
  * Revision 1.50  2001/07/20 04:57:00  steve
  *  Fix of_END when a middle thread ends.
  *
