@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.19 2001/04/02 02:28:13 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.20 2001/04/02 04:09:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -128,6 +128,8 @@ static int show_stmt_assign(ivl_statement_t net)
 
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
 	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
+
+	clr_vector(res);
       }
 
       return 0;
@@ -592,6 +594,9 @@ int draw_task_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.20  2001/04/02 04:09:20  steve
+ *  thread bit allocation leak in assign.
+ *
  * Revision 1.19  2001/04/02 02:28:13  steve
  *  Generate code for task calls.
  *
