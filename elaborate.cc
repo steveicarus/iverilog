@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.202 2000/12/15 01:24:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.203 2001/01/09 05:58:47 steve Exp $"
 #endif
 
 /*
@@ -548,26 +548,56 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	      // not, they are different widths. Note that idx is 0
 	      // based, but users count parameter positions from 1.
 	    if (prts_pin_count != sig->pin_count()) {
-		  cerr << get_line() << ": error: Port " << (idx+1) << " of "
+		  cerr << get_line() << ": warning: Port " << (idx+1) << " of "
 		       << type_ << " expects " << prts_pin_count <<
-			" pins, got " << sig->pin_count() << " from "
-		       << sig->name() << endl;
-		  des->errors += 1;
-		  continue;
+			" pins, got " << sig->pin_count() << "." << endl;
+
+		  if (prts_pin_count > sig->pin_count()) {
+			cerr << get_line() << ":        : Leaving "
+			     << (prts_pin_count-sig->pin_count())
+			     << " high bits of the port unconnected."
+			     << endl;
+		  } else {
+			cerr << get_line() << ":        : Leaving "
+			     << (sig->pin_count()-prts_pin_count)
+			     << " high bits of the parameter dangling."
+			     << endl;
+		  }
 	    }
 
 	      // Connect the sig expression that is the context of the
-	      // module instance to the ports of the elaborated
-	      // module.
+	      // module instance to the ports of the elaborated module.
 
-	    assert(prts_pin_count == sig->pin_count());
-	    for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
-		  for (unsigned p = 0 ;  p < prts[ldx]->pin_count() ; p += 1) {
-			prts_pin_count -= 1;
-			connect(sig->pin(prts_pin_count),
-				prts[ldx]->pin(prts[ldx]->pin_count()-p-1));
+	      // The prts_pin_count variable is the total width of the
+	      // port and is the maximum number of connections to
+	      // make. sig is the elaborated expression that connects
+	      // to that port. If sig has too few pins, then reduce
+	      // the number of connections to make.
+
+	      // Connect this many of the port pins. If the expression
+	      // is too small, the reduce the number of connects.
+	    unsigned ccount = prts_pin_count;
+	    if (sig->pin_count() < ccount)
+		  ccount = sig->pin_count();
+
+	      // Now scan the concatenation that makes up the port,
+	      // connecting pins until we run out of port pins or sig
+	      // pins.
+
+	    unsigned spin = 0;
+	    for (unsigned ldx = prts.count() ;  ldx > 0 ;  ldx -= 1) {
+		  unsigned cnt = prts[ldx-1]->pin_count();
+		  if (cnt > ccount)
+			cnt = ccount;
+		  for (unsigned p = 0 ;  p < cnt ;  p += 1) {
+			connect(sig->pin(spin), prts[ldx-1]->pin(p));
+			ccount -= 1;
+			spin += 1;
 		  }
+		  if (ccount == 0)
+			break;
 	    }
+
 
 	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
 		  delete tmp;
@@ -2358,6 +2388,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.203  2001/01/09 05:58:47  steve
+ *  Cope with width mismatches to module ports (PR#89)
+ *
  * Revision 1.202  2000/12/15 01:24:17  steve
  *  Accept x in outputs of primitive. (PR#84)
  *
