@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: veriusertfs.c,v 1.2 2002/05/31 18:21:39 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.3 2002/06/03 00:08:42 steve Exp $"
 #endif
 
 /*
@@ -135,7 +135,7 @@ static int compiletf(char *data)
 #endif
 
       /* since we are in compiletf, misctf needs to fire */
-      if (tf->misctf) tf->misctf(tf->data, reason_endofcompile);
+      if (tf->misctf) tf->misctf(tf->data, reason_endofcompile, 0);
 
       /* similarly run checktf now */
       if (tf->checktf)
@@ -189,13 +189,16 @@ static int callback (p_cb_data data)
 
       /* execute misctf */
       if (tf->misctf)
-	    return tf->misctf(tf->data, reason);
+	    return tf->misctf(tf->data, reason, 0);
       else
 	    return 0;
 }
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.3  2002/06/03 00:08:42  steve
+ *  Better typing for veriusertfs table.
+ *
  * Revision 1.2  2002/05/31 18:21:39  steve
  *  Check for and don't dereference null pointers,
  *  Avoid copy of static objects.

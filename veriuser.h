@@ -19,16 +19,26 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.10 2002/06/02 18:54:59 steve Exp $"
+#ident "$Id: veriuser.h,v 1.11 2002/06/03 00:08:42 steve Exp $"
 #endif
 
 /*
  * This header file contains the definitions and declarations needed
  * by an Icarus Verilog user using tf_ routines.
  *
- * NOTE: Icarus Verilog does not support tf_ routines. This is just a
- * stub. The functions that are implemented here are actually
- * implemented using VPI routines.
+ * NOTE 1: Icarus Verilog does not directly support tf_ routines. This
+ * header file defines a tf_ compatibility later. The functions that
+ * are implemented here are actually implemented using VPI routines.
+ *
+ * NOTE 2: The routines and definitions of the tf_ library were
+ * clearly not designed to account for C++, or even ANSI-C. This
+ * header file attempts to fix these problems in a source code
+ * compatible way. In the end, though, it is not completely
+ * possible. Instead, users should not use this or the acc_user.h
+ * header files or functions in new applications, and instead use the
+ * more modern vpi_user.h and VPI functions.
+ *
+ * This API is provided by Icarus Verilog only to support legacy software.
  */
 
 #ifdef __cplusplus
@@ -53,10 +63,10 @@ typedef struct t_tfcell
 {
       short type;               /* usertask|userfunction|userrealfunction */
       short data;               /* data passed to user routine */
-      int   (*checktf)();       /* pointer to checktf routine */
-      int   (*sizetf)();        /* pointer to sizetf routine */
-      int   (*calltf)();        /* pointer to calltf routine */
-      int   (*misctf)();        /* pointer to misctf routine */
+      int   (*checktf)(int user_data, int reason);
+      int   (*sizetf)(int user_data, int reason);
+      int   (*calltf)(int user_data, int reason);
+      int   (*misctf)(int user_data, int reason, int paramvc);
       char  *tfname;            /* name of the system task/function */
       int   forwref;            /* usually set to 1 */
       char  *tfveritool;        /* usually ignored */
@@ -102,6 +112,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.11  2002/06/03 00:08:42  steve
+ *  Better typing for veriusertfs table.
+ *
  * Revision 1.10  2002/06/02 18:54:59  steve
  *  Add tf_getinstance function.
  *
