@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.93 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.94 2003/03/06 01:24:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -153,12 +153,31 @@ extern "C" int ivl_const_signed(ivl_net_const_t net)
 
 extern "C" const char* ivl_event_name(ivl_event_t net)
 {
-      return net->name;
+      static char*name_buffer = 0;
+      static unsigned name_size = 0;
+
+      ivl_scope_t scope = net->scope;
+      const char*sn = ivl_scope_name(scope);
+
+      unsigned need = strlen(sn) + 1 + strlen(net->name) + 1;
+      if (need < name_size) {
+	    name_buffer = (char*)realloc(name_buffer, need);
+	    name_size = need;
+      }
+
+      strcpy(name_buffer, sn);
+      char*tmp = name_buffer + strlen(sn);
+      *tmp++ = '.';
+      strcpy(tmp, net->name);
+
+      cerr << "ANACHRONISM: Call to anachronistic ivl_event_name." << endl;
+
+      return name_buffer;
 }
 
 extern "C" const char* ivl_event_basename(ivl_event_t net)
 {
-      return basename(net->scope, net->name);
+      return net->name;
 }
 
 
@@ -1733,6 +1752,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.94  2003/03/06 01:24:37  steve
+ *  Obsolete the ivl_event_name function.
+ *
  * Revision 1.93  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *

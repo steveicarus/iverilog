@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.106 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.107 2003/03/06 01:24:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -625,7 +625,7 @@ void dll_target::event(const NetEvent*net)
       struct ivl_event_s *obj = new struct ivl_event_s;
 
       ivl_scope_t scope = find_scope(des_, net->scope());
-      obj->name = strings_.add(net->full_name().c_str());
+      obj->name = net->name();
       obj->scope = scope;
       scope_add_event(scope, obj);
 
@@ -2023,6 +2023,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.107  2003/03/06 01:24:37  steve
+ *  Obsolete the ivl_event_name function.
+ *
  * Revision 1.106  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *
