@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.32 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.33 2003/02/02 00:19:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -138,7 +138,7 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       expr->value_= IVL_VT_VECTOR;
       expr->width_= val.len();
       expr->signed_ = val.has_sign()? 1 : 0;
-      expr->u_.number_.bits_ = bits = (char*)malloc(expr->width_);
+      expr->u_.number_.bits_ = bits = (char*)malloc(expr->width_ + 1);
       for (idx = 0 ;  idx < expr->width_ ;  idx += 1)
 	    switch (val.get(idx)) {
 		case verinum::V0:
@@ -156,6 +156,8 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
 		default:
 		  assert(0);
 	    }
+
+      bits[expr->width_] = 0;
 
       return expr;
 }
@@ -561,6 +563,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.33  2003/02/02 00:19:27  steve
+ *  Terminate bits string from ivl_expr_bits.
+ *
  * Revision 1.32  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *
