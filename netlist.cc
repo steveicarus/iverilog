@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.170 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: netlist.cc,v 1.171 2001/09/29 01:53:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1878,9 +1878,42 @@ NetEBBits* NetEBBits::dup_expr() const
       return result;
 }
 
+/*
+ * Create a comparison operator with two sub-expressions.
+ *
+ * Handle the special case of an unsized constant on the left or right
+ * side by resizing the number to match the other
+ * expression. Otherwise, the netlist will have to allow the
+ * expressions to have different widths.
+ */
 NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(r)) do {
+
+	    if (tmp->has_width())
+		  break;
+
+	    if (tmp->expr_width() == l->expr_width())
+		  break;
+
+	    tmp->set_width(l->expr_width());
+
+      } while (0);
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(l)) do {
+
+	    if (tmp->has_width())
+		  break;
+
+	    if (tmp->expr_width() == r->expr_width())
+		  break;
+
+	    tmp->set_width(r->expr_width());
+
+      } while (0);
+
+
       expr_width(1);
 }
 
@@ -2391,6 +2424,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.171  2001/09/29 01:53:22  steve
+ *  Fix the size of unsized constant operants to compare (PR#274)
+ *
  * Revision 1.170  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

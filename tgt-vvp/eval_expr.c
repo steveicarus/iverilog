@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.45 2001/09/20 03:46:38 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.46 2001/09/29 01:53:22 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -122,6 +122,11 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
 	    break;
 
 	  case 'e': /* == */
+	    if (lv.wid != rv.wid) {
+		  fprintf(stderr,"internal error: operands of == "
+			  " have different widths: %u vs %u\n",
+			  lv.wid, rv.wid);
+	    }
 	    assert(lv.wid == rv.wid);
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
 		    rv.base, lv.wid);
@@ -1223,6 +1228,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.46  2001/09/29 01:53:22  steve
+ *  Fix the size of unsized constant operants to compare (PR#274)
+ *
  * Revision 1.45  2001/09/20 03:46:38  steve
  *  Handle short l-values to concatenation.
  *
