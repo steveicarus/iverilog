@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.2 2001/08/31 02:59:06 steve Exp $"
+#ident "$Id: d-generic.c,v 1.3 2001/08/31 04:17:56 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -32,6 +32,7 @@ static void generic_show_logic(ivl_net_logic_t net)
 {
       char name[1024];
       ivl_nexus_t nex;
+      unsigned idx;
 
       mangle_logic_name(net, name, sizeof name);
 
@@ -42,10 +43,12 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    fprintf(xnf, "SYM, %s, AND, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
-	    nex = ivl_logic_pin(net, 1);
-	    draw_pin(nex, "I0", 'I');
-	    nex = ivl_logic_pin(net, 2);
-	    draw_pin(nex, "I1", 'I');
+	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+		  char ipin[32];
+		  nex = ivl_logic_pin(net, idx);
+		  sprintf(ipin, "I%u", idx-1);
+		  draw_pin(nex, ipin, 'I');
+	    }
 	    fprintf(xnf, "END\n");
 	    break;
 
@@ -56,6 +59,108 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    draw_pin(nex, "O", 'O');
 	    nex = ivl_logic_pin(net, 1);
 	    draw_pin(nex, "I", 'I');
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_NAND:
+	    assert(ivl_logic_pins(net) == 3);
+	    fprintf(xnf, "SYM, %s, NAND, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+		  char ipin[32];
+		  nex = ivl_logic_pin(net, idx);
+		  sprintf(ipin, "I%u", idx-1);
+		  draw_pin(nex, ipin, 'I');
+	    }
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_NOR:
+	    assert(ivl_logic_pins(net) == 3);
+	    fprintf(xnf, "SYM, %s, NOR, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+		  char ipin[32];
+		  nex = ivl_logic_pin(net, idx);
+		  sprintf(ipin, "I%u", idx-1);
+		  draw_pin(nex, ipin, 'I');
+	    }
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_NOT:
+	    assert(ivl_logic_pins(net) == 2);
+	    fprintf(xnf, "SYM, %s, INV, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    nex = ivl_logic_pin(net, 1);
+	    draw_pin(nex, "I", 'I');
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_OR:
+	    assert(ivl_logic_pins(net) == 3);
+	    fprintf(xnf, "SYM, %s, OR, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+		  char ipin[32];
+		  nex = ivl_logic_pin(net, idx);
+		  sprintf(ipin, "I%u", idx-1);
+		  draw_pin(nex, ipin, 'I');
+	    }
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_XOR:
+	    assert(ivl_logic_pins(net) == 3);
+	    fprintf(xnf, "SYM, %s, XOR, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+		  char ipin[32];
+		  nex = ivl_logic_pin(net, idx);
+		  sprintf(ipin, "I%u", idx-1);
+		  draw_pin(nex, ipin, 'I');
+	    }
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_XNOR:
+	    assert(ivl_logic_pins(net) == 3);
+	    fprintf(xnf, "SYM, %s, XNOR, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    for (idx = 1 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+		  char ipin[32];
+		  nex = ivl_logic_pin(net, idx);
+		  sprintf(ipin, "I%u", idx-1);
+		  draw_pin(nex, ipin, 'I');
+	    }
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_BUFIF0:
+	    fprintf(xnf, "SYM, %s, TBUF, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    nex = ivl_logic_pin(net, 1);
+	    draw_pin(nex, "I", 'I');
+	    nex = ivl_logic_pin(net, 2);
+	    draw_pin(nex, "~T", 'I');
+	    fprintf(xnf, "END\n");
+	    break;
+
+	  case IVL_LO_BUFIF1:
+	    fprintf(xnf, "SYM, %s, TBUF, LIBVER=2.0.0\n", name);
+	    nex = ivl_logic_pin(net, 0);
+	    draw_pin(nex, "O", 'O');
+	    nex = ivl_logic_pin(net, 1);
+	    draw_pin(nex, "I", 'I');
+	    nex = ivl_logic_pin(net, 2);
+	    draw_pin(nex, "T", 'I');
 	    fprintf(xnf, "END\n");
 	    break;
 
@@ -75,12 +180,19 @@ static void generic_show_dff(ivl_lpm_t net)
       mangle_lpm_name(net, name, sizeof name);
 
       fprintf(xnf, "SYM, %s, DFF, LIBVER=2.0.0\n", name);
+
       nex = ivl_lpm_q(net, 0);
       draw_pin(nex, "Q", 'O');
+
       nex = ivl_lpm_data(net, 0);
       draw_pin(nex, "D", 'I');
+
       nex = ivl_lpm_clk(net);
-      draw_pin(nex, "CLK", 'I');
+      draw_pin(nex, "C", 'I');
+
+      if ((nex = ivl_lpm_enable(net)))
+	    draw_pin(nex, "CE", 'I');
+
       fprintf(xnf, "END\n");
 }
 
@@ -92,6 +204,9 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.3  2001/08/31 04:17:56  steve
+ *  Many more logic gate types.
+ *
  * Revision 1.2  2001/08/31 02:59:06  steve
  *  Add root port SIG records.
  *
