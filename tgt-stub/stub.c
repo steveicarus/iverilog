@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.64 2002/07/28 23:57:22 steve Exp $"
+#ident "$Id: stub.c,v 1.65 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -230,7 +230,10 @@ static void show_assign_lval(ivl_lval_t lval, unsigned ind)
 
       if ( (mem = ivl_lval_mem(lval)) ) {
 
-	    fprintf(out, "%*s%s[\n", ind, "", ivl_memory_name(mem));
+	    ivl_scope_t scope = ivl_memory_scope(mem);
+	    fprintf(out, "%*s%s . %s[\n", ind, "",
+		    ivl_scope_name(scope),
+		    ivl_memory_basename(mem));
 	    show_expression(ivl_lval_idx(lval), ind+4);
 	    fprintf(out, "%*s]\n", ind, "");
 
@@ -703,6 +706,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.65  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.64  2002/07/28 23:57:22  steve
  *  dump NOT gates.
  *

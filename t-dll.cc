@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.93 2002/08/04 19:13:16 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.94 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -93,6 +93,13 @@ inline void ivl_dlclose(ivl_dll_t dll)
 inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
+
+inline static const char *basename(ivl_scope_t scope, const char *inst)
+{
+      inst += strlen(ivl_scope_name(scope));
+      assert(*inst == '.');
+      return inst+1;
+}
 
 static struct dll_target dll_target_obj;
 
@@ -240,7 +247,7 @@ ivl_memory_t dll_target::find_memory(ivl_design_s &des, const NetMemory*net)
       const char*nname = net->name();
 
       for (unsigned idx = 0 ;  idx < scope->nmem_ ;  idx += 1) {
-	    if (strcmp(scope->mem_[idx]->name_, nname) == 0)
+	    if (strcmp(scope->mem_[idx]->basename_, nname) == 0)
 		  return scope->mem_[idx];
       }
 
@@ -924,12 +931,13 @@ void dll_target::udp(const NetUDP*net)
 void dll_target::memory(const NetMemory*net)
 {
       ivl_memory_t obj = new struct ivl_memory_s;
-      obj->name_  = strings_.add(net->name());
-      obj->scope_ = find_scope(des_, net->scope());
-      obj->width_ = net->width();
-      obj->signed_ = 0;
-      obj->size_ = net->count();
-      obj->root_ = -net->index_to_address(0);
+
+      obj->scope_    = find_scope(des_, net->scope());
+      obj->basename_ = strings_.add(net->name());
+      obj->width_    = net->width();
+      obj->signed_   = 0;
+      obj->size_     = net->count();
+      obj->root_     = -net->index_to_address(0);
 
       scope_add_mem(obj->scope_, obj);
 }
@@ -1802,6 +1810,11 @@ void dll_target::signal(const NetNet*net)
 
 #ifndef NDEBUG
       { size_t name_len = strlen(obj->scope_->name_);
+        if (0 != strncmp(obj->scope_->name_, obj->name_, name_len)) {
+	      cerr << net->get_line() << ": internal error: "
+		   << "Malformed name " << obj->name_ << " in "
+		   << obj->scope_->name_ << endl;
+	}
 	assert(0 == strncmp(obj->scope_->name_, obj->name_, name_len));
       }
 #endif
@@ -1941,6 +1954,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.94  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.93  2002/08/04 19:13:16  steve
  *  dll uses StringHeap for named items.
  *

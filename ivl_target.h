@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.102 2002/08/04 18:28:14 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.103 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -429,7 +429,7 @@ extern const char* ivl_expr_bits(ivl_expr_t net);
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
   /* IVL_EX_SIGNAL */
 extern unsigned    ivl_expr_lsi(ivl_expr_t net);
-  /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_MEMORY */
+  /* IVL_EX_SIGNAL, IVL_EX_SFUNC */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
@@ -469,13 +469,19 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
  *
  * ivl_memory_size
  * ivl_memory_width
+ *    These functions return the dimensions of the memory. The size is
+ *    the number of words in the memory, and the width is the number
+ *    of bits in each word.
+ *
+ * ivl_memory_scope
+ *    This returns the scope that contains the memory.
  */
 
-extern const char*ivl_memory_name(ivl_memory_t net);
 extern const char*ivl_memory_basename(ivl_memory_t net);
 extern int ivl_memory_root(ivl_memory_t net);
 extern unsigned ivl_memory_size(ivl_memory_t net);
 extern unsigned ivl_memory_width(ivl_memory_t net);
+
 extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
 
 /* LOGIC
@@ -1072,6 +1078,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.103  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.102  2002/08/04 18:28:14  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

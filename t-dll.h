@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.89 2002/08/04 19:13:16 steve Exp $"
+#ident "$Id: t-dll.h,v 1.90 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -436,7 +436,7 @@ struct ivl_nexus_s {
  * Memory.
  */
 struct ivl_memory_s {
-      const char*name_;
+      const char*basename_;
       ivl_scope_t scope_;
       unsigned width_  :24;
       unsigned signed_ : 1;
@@ -616,6 +616,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.90  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.89  2002/08/04 19:13:16  steve
  *  dll uses StringHeap for named items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.93 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.94 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1372,15 +1372,19 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
       if (adr == 0)
 	    return 0;
 
+	// Memory names are only the base names. Since NetObj names
+	// are still fullnames, and we are deriving such names from
+	// the memory name, make a fullname here.
+      string hname = scope->name() + "." + mem->name();
 
-      NetRamDq*ram = new NetRamDq(scope, des->local_symbol(mem->name()),
+      NetRamDq*ram = new NetRamDq(scope, des->local_symbol(hname),
 				  mem, adr->pin_count());
       des->add_node(ram);
 
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
 	    connect(ram->pin_Address(idx), adr->pin(idx));
 
-      NetNet*osig = new NetNet(scope, des->local_symbol(mem->name()),
+      NetNet*osig = new NetNet(scope, des->local_symbol(hname),
 			       NetNet::IMPLICIT, ram->width());
       osig->local_flag(true);
 
@@ -2122,6 +2126,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.94  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.93  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.83 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.84 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -88,14 +88,15 @@ inline static const char *basename(ivl_scope_t scope, const char *inst)
       return inst+1;
 }
 
-extern "C" const char*ivl_memory_name(ivl_memory_t net)
-{
-      return net->name_;
-}
-
 extern "C" const char* ivl_memory_basename(ivl_memory_t net)
 {
-      return basename(net->scope_, net->name_);
+      return net->basename_;
+}
+
+extern "C" ivl_scope_t ivl_memory_scope(ivl_memory_t net)
+{
+      assert(net);
+      return net->scope_;
 }
 
 extern "C" int ivl_memory_root(ivl_memory_t net)
@@ -240,10 +241,10 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig->name_;
-
+#if 0
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.mem_->name_;
-
+#endif
 	  default:
 	    assert(0);
       }
@@ -1552,6 +1553,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.84  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.83  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *

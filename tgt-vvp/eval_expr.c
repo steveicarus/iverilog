@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.67 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.68 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1161,7 +1161,6 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 {
       unsigned swid = ivl_expr_width(exp);
-      const char*name = ivl_expr_name(exp);
       ivl_memory_t mem = ivl_expr_memory(exp);
       struct vector_info res;
       unsigned idx;
@@ -1727,6 +1726,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.68  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.67  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

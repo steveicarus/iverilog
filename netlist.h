@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.255 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.256 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 /*
@@ -672,6 +672,8 @@ class NetMemory  {
       NetMemory(NetScope*sc, const string&n, long w, long s, long e);
       ~NetMemory();
 
+	// This is the BASE name of the memory object. It does not
+	// include scope name, get that from the scope itself.
       const char*name() const;
 
 	// This is the width (in bits) of a single memory position.
@@ -3006,6 +3008,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.256  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.255  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

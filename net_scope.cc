@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.17 2002/07/22 21:07:08 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.18 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -338,10 +338,9 @@ NetMemory* NetScope::find_memory(const string&key)
       if (memories_ == 0)
 	    return 0;
 
-      string fulname = name()+"."+key;
       NetMemory*cur = memories_;
       do {
-	    if (cur->name() == fulname)
+	    if (cur->name() == key)
 		  return cur;
 	    cur = cur->sprev_;
       } while (cur != memories_);
@@ -403,6 +402,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.18  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.17  2002/07/22 21:07:08  steve
  *  Initialize the lcounter_ to 0.
  *

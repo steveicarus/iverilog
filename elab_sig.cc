@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.23 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.24 2002/08/05 04:18:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -498,8 +498,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    assert(lval);
 	    assert(rval);
 
-	    string name = scope->name();
-	    name = name + "." + hname_.peek_tail_name();
+	    string name = hname_.peek_tail_name();
 
 	    long lnum = lval->as_long();
 	    long rnum = rval->as_long();
@@ -526,6 +525,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.24  2002/08/05 04:18:45  steve
+ *  Store only the base name of memories.
+ *
  * Revision 1.23  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *
