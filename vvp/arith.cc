@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.33 2005/01/22 01:06:20 steve Exp $"
+#ident "$Id: arith.cc,v 1.34 2005/01/22 16:21:11 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -394,72 +394,86 @@ vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
 {
 }
 
-#if 0
-void vvp_cmp_eq::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+/*
+ * Compare Vector a and Vector b. If in any bit position the a and b
+ * bits are known and different, then the result is 0. Otherwise, if
+ * there are X/Z bits anywhere in A or B, the result is X. Finally,
+ * the result is 1.
+ */
+void vvp_cmp_eq::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
+      dispatch_operand_(ptr, bit);
 
-      unsigned out_val = 1;
+      assert(op_a_.size() == op_b_.size());
 
-      for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx-1);
-	    functor_t obj = functor_index(ptr);
+      vvp_vector4_t res (1);
+      res.set_bit(0, BIT4_1);
 
-	    unsigned val = obj->ival;
-	    if (val & 0x0a) {
-		  out_val = 2;
-		  break;
-	    }
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
 
-	    unsigned a = (val & 0x01)? 1 : 0;
-	    unsigned b = (val & 0x04)? 1 : 0;
-
-	    if (a != b) {
-		  out_val = 0;
+	    if (a == BIT4_X)
+		  res.set_bit(0, BIT4_X);
+	    else if (a == BIT4_Z)
+		  res.set_bit(0, BIT4_X);
+	    else if (b == BIT4_X)
+		  res.set_bit(0, BIT4_X);
+	    else if (b == BIT4_Z)
+		  res.set_bit(0, BIT4_X);
+            else if (a != b) {
+		  res.set_bit(0, BIT4_0);
 		  break;
 	    }
       }
 
-      put_oval(out_val, push);
+      vvp_net_t*net = ptr.ptr();
+      vvp_send_vec4(net->out, res);
 }
-#endif
+
 
 vvp_cmp_ne::vvp_cmp_ne(unsigned wid)
 : vvp_arith_(wid)
 {
 }
 
-#if 0
-void vvp_cmp_ne::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+/*
+ * Compare Vector a and Vector b. If in any bit position the a and b
+ * bits are known and different, then the result is 1. Otherwise, if
+ * there are X/Z bits anywhere in A or B, the result is X. Finally,
+ * the result is 0.
+ */
+void vvp_cmp_ne::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
+      dispatch_operand_(ptr, bit);
 
-      unsigned out_val = 0;
+      assert(op_a_.size() == op_b_.size());
 
-      for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx-1);
-	    functor_t obj = functor_index(ptr);
+      vvp_vector4_t res (1);
+      res.set_bit(0, BIT4_0);
 
-	    unsigned val = obj->ival;
-	    if (val & 0x0a) {
-		  out_val = 2;
-		  break;
-	    }
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1) {
+	    vvp_bit4_t a = op_a_.value(idx);
+	    vvp_bit4_t b = op_b_.value(idx);
 
-	    unsigned a = (val & 0x01)? 1 : 0;
-	    unsigned b = (val & 0x04)? 1 : 0;
-
-	    if (a != b) {
-		  out_val = 1;
+	    if (a == BIT4_X)
+		  res.set_bit(0, BIT4_X);
+	    else if (a == BIT4_Z)
+		  res.set_bit(0, BIT4_X);
+	    else if (b == BIT4_X)
+		  res.set_bit(0, BIT4_X);
+	    else if (b == BIT4_Z)
+		  res.set_bit(0, BIT4_X);
+            else if (a != b) {
+		  res.set_bit(0, BIT4_1);
 		  break;
 	    }
       }
 
-      put_oval(out_val, push);
+      vvp_net_t*net = ptr.ptr();
+      vvp_send_vec4(net->out, res);
 }
-#endif
+
 
 vvp_cmp_gtge_base_::vvp_cmp_gtge_base_(unsigned wid, bool flag)
 : vvp_arith_(wid), signed_flag_(flag)
@@ -622,6 +636,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.34  2005/01/22 16:21:11  steve
+ *  Implement vectored CMP_EQ and NE
+ *
  * Revision 1.33  2005/01/22 01:06:20  steve
  *  Implement the .cmp/eeq LPM node.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.22 2005/01/22 01:06:20 steve Exp $"
+#ident "$Id: arith.h,v 1.23 2005/01/22 16:21:11 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -115,7 +115,6 @@ class vvp_cmp_eeq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eeq(unsigned wid);
-
       void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 
 };
@@ -124,7 +123,7 @@ class vvp_cmp_eq  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_eq(unsigned wid);
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 
 };
 
@@ -132,9 +131,10 @@ class vvp_cmp_ne  : public vvp_arith_ {
 
     public:
       explicit vvp_cmp_ne(unsigned wid);
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 
 };
+
 
 /*
  * This base class implements both GT and GE comparisons. The derived
@@ -188,6 +188,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.23  2005/01/22 16:21:11  steve
+ *  Implement vectored CMP_EQ and NE
+ *
  * Revision 1.22  2005/01/22 01:06:20  steve
  *  Implement the .cmp/eeq LPM node.
  *
