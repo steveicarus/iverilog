@@ -46,7 +46,7 @@ flags=""
 #fi
 
 # Try to extract given parameters
-parameter=`getopt D:I:Xxf:o:s:t: "$@"` 
+parameter=`getopt D:I:Xxf:m:o:s:t: "$@"` 
 eval set -- "${parameter}" 
 while true ; do 
 
@@ -55,6 +55,7 @@ while true ; do
       -I) extIncPath="${extIncPath} -I $2" ; shift 2 ;;
       -X) target="xnf" ; shift ;;
       -f) flags="$flags -f$2" ; shift 2 ;;
+      -m) flags="$flags -m$2" ; shift 2 ;;
       -o) outputFile=$2 ; shift 2 ;;
       -s) topModule="-s $2 " ; shift 2 ;;
       -t) target="$2" ; shift 2 ;;
