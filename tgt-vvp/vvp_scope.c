@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.14 2001/04/06 02:28:03 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.15 2001/04/14 05:11:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -171,9 +171,38 @@ static void draw_event_in_scope(ivl_event_t obj)
       unsigned nany = ivl_event_nany(obj);
       unsigned nneg = ivl_event_nneg(obj);
       unsigned npos = ivl_event_npos(obj);
+
       if ((nany + nneg + npos) == 0) {
 	    fprintf(vvp_out, "E_%s .event \"%s\";\n",
 		    ivl_event_name(obj), ivl_event_basename(obj));
+
+      } else if ((nany > 4) && ((nneg + npos) == 0)) {
+	    unsigned idx;
+
+	    for (idx = 0 ;  idx < nany ;  idx += 4) {
+		  unsigned sub, top;
+
+		  fprintf(vvp_out, "E_%s/%u .event edge",
+			  ivl_event_name(obj), idx/4);
+
+		  top = idx + 4;
+		  if (nany < top)
+			top = nany;
+		  for (sub = idx ;  sub < top ;  sub += 1) {
+			ivl_nexus_t nex = ivl_event_any(obj, sub);
+			fprintf(vvp_out, ", ");
+			draw_nexus_input(nex);
+		  }
+		  fprintf(vvp_out, ";\n");
+	    }
+
+	    fprintf(vvp_out, "E_%s .event/or E_%s/0",
+		    ivl_event_name(obj), ivl_event_name(obj));
+
+	    for (idx = 1 ;  idx < (nany+3)/4 ;  idx += 1)
+		  fprintf(vvp_out, ", E_%s/%u", ivl_event_name(obj), idx);
+
+	    fprintf(vvp_out, ";\n");
 
       } else {
 	    unsigned idx;
@@ -273,6 +302,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.15  2001/04/14 05:11:49  steve
+ *  Use event/or for wide anyedge statements.
+ *
  * Revision 1.14  2001/04/06 02:28:03  steve
  *  Generate vvp code for functions with ports.
  *
