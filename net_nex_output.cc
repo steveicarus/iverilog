@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_nex_output.cc,v 1.2 2002/07/01 00:54:21 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.3 2002/07/07 22:32:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,6 +47,16 @@ void NetAssignBase::nex_output(NexusSet&out)
 
 }
 
+void NetCase::nex_output(NexusSet&out)
+{
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+
+	    assert(items_[idx].statement);
+	    items_[idx].statement->nex_output(out);
+      }
+
+}
+
 void NetCondit::nex_output(NexusSet&out)
 {
       if (if_ != 0)
@@ -63,6 +73,9 @@ void NetEvWait::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.3  2002/07/07 22:32:15  steve
+ *  Asynchronous synthesis of case statements.
+ *
  * Revision 1.2  2002/07/01 00:54:21  steve
  *  synth_asych of if/else requires redirecting the target
  *  if sub-statements. Use NetNet objects to manage the

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth2.cc,v 1.2 2002/07/01 00:54:21 steve Exp $"
+#ident "$Id: synth2.cc,v 1.3 2002/07/07 22:32:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -64,6 +64,88 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(idx).nexus());
 	    connect(nex_out->pin(ptr), rsig->pin(idx));
       }
+
+      return true;
+}
+
+bool NetCase::synth_async(Design*des, NetScope*scope,
+			  const NetNet*nex_map, NetNet*nex_out)
+{
+      unsigned cur;
+
+      NetNet*esig = expr_->synthesize(des);
+
+	/* Scan the select vector looking for constant bits. The
+	   constant bits will be elided from the select input connect,
+	   but we still need to keep track of them. */
+      unsigned sel_pins = 0;
+      unsigned long sel_mask = 0;
+      unsigned long sel_ref = 0;
+      for (unsigned idx = 0 ;  idx < esig->pin_count() ;  idx += 1) {
+
+	    if (esig->pin(idx).nexus()->drivers_constant()) {
+		  verinum::V bit = esig->pin(idx).nexus()->driven_value();
+		  if (bit == verinum::V1)
+			sel_ref |= 1 << idx;
+
+	    } else {
+		  sel_pins += 1;
+		  sel_mask |= 1 << idx;
+	    }
+      }
+
+	/* Build a map of guard values to mux select values. This
+	   helps account for constant select bits that are being
+	   elided. */
+      map<unsigned long,unsigned long>guard2sel;
+      cur = 0;
+      for (unsigned idx = 0 ;  idx < (1<<esig->pin_count()) ;  idx += 1) {
+	    if ((idx & ~sel_mask) == sel_ref) {
+		  guard2sel[idx] = cur;
+		  cur += 1;
+	    }
+      }
+      assert(cur == (1 << sel_pins));
+
+      NetMux*mux = new NetMux(scope, scope->local_hsymbol(),
+			      nex_out->pin_count(),
+			      1 << sel_pins, sel_pins);
+
+	/* Connect the non-constant select bits to the select input of
+	   the mux device. */
+      cur = 0;
+      for (unsigned idx = 0 ;  idx < esig->pin_count() ;  idx += 1) {
+	      /* skip bits that are known to be constant. */
+	    if ((sel_mask & (1 << idx)) == 0)
+		  continue;
+
+	    connect(mux->pin_Sel(cur), esig->pin(idx));
+	    cur += 1;
+      }
+      assert(cur == sel_pins);
+
+      for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
+	    connect(nex_out->pin(idx), mux->pin_Result(idx));
+
+      for (unsigned item = 0 ;  item < nitems_ ;  item += 1) {
+	    assert(items_[item].guard);
+	    assert(items_[item].statement);
+
+	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
+	    assert(ge);
+	    verinum gval = ge->value();
+	    unsigned sel_idx = guard2sel[gval.as_ulong()];
+
+	    NetNet*sig = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::WIRE, nex_map->pin_count());
+	    sig->local_flag(true);
+	    items_[item].statement->synth_async(des, scope, nex_map, sig);
+
+	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
+		  connect(mux->pin_Data(idx, sel_idx), sig->pin(idx));
+      }
+
+      des->add_node(mux);
 
       return true;
 }
@@ -177,6 +259,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.3  2002/07/07 22:32:15  steve
+ *  Asynchronous synthesis of case statements.
+ *
  * Revision 1.2  2002/07/01 00:54:21  steve
  *  synth_asych of if/else requires redirecting the target
  *  if sub-statements. Use NetNet objects to manage the

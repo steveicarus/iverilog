@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.251 2002/07/03 05:35:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.252 2002/07/07 22:32:15 steve Exp $"
 #endif
 
 /*
@@ -1430,6 +1430,11 @@ class NetCase  : public NetProc {
       const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&out);
+
+      bool synth_async(Design*des, NetScope*scope,
+		       const NetNet*nex_map, NetNet*nex_out);
+
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2997,6 +3002,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.252  2002/07/07 22:32:15  steve
+ *  Asynchronous synthesis of case statements.
+ *
  * Revision 1.251  2002/07/03 05:35:00  steve
  *  Fix scope search for events.
  *
