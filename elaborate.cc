@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.317 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.318 2005/02/10 04:56:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -562,17 +562,21 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
       assert(scope);
 
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: Instantiate module "
+		 << rmod->mod_name() << " With instance name "
+		 << get_name() << " in scope " << scope->name() << endl;
+      }
+
 	// This is the array of pin expressions, shuffled to match the
 	// order of the declaration. If the source instantiation uses
-	// bind by order, this is the same as the source
-	// list. Otherwise, the source list is rearranged by name
-	// binding into this list.
+	// bind by order, this is the same as the source list.Otherwise,
+	// the source list is rearranged by name binding into this list.
       svector<PExpr*>pins (rmod->port_count());
 
-	// Detect binding by name. If I am binding by name, then make
-	// up a pins array that reflects the positions of the named
-	// ports. If this is simply positional binding in the first
-	// place, then get the binding from the base class.
+	// If the instance has a pins_ member, then we know we are
+	// binding by name. Therefore, make up a pins array that
+	// reflects the positions of the named ports.
       if (pins_) {
 	    unsigned nexp = rmod->port_count();
 
@@ -595,7 +599,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 		    // If I already bound something to this port, then
-		    // the (*exp) array will already have a pointer
+		    // the pins array will already have a pointer
 		    // value where I want to place this expression.
 		  if (pins[pidx]) {
 			cerr << get_line() << ": error: port ``" <<
@@ -641,7 +645,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    assert(pin_count() == rmod->port_count());
 	    pins = get_pins();
       }
-
 
 	// Elaborate these instances of the module. The recursive
 	// elaboration causes the module to generate a netlist with
@@ -704,6 +707,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // and the NetNet equivalents, for all the instances.
 	    svector<PEIdent*> mport = rmod->get_port(idx);
 	    svector<NetNet*>prts (mport.count() * instance.count());
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: " << get_name()
+		       << ": Port " << idx << " has " << prts.count()
+		       << " sub-ports." << endl;
+	    }
 
 	      // Count the internal vector bits of the port.
 	    unsigned prts_vector_width = 0;
@@ -802,6 +811,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  continue;
 	    }
 
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: " << get_name()
+		       << ": Port " << idx << " has vector width of "
+		       << prts_vector_width << "." << endl;
+	    }
+
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths. Note that idx is 0
 	      // based, but users count parameter positions from 1.
@@ -865,7 +880,16 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // connected directly.
 		  connect(prts[0]->pin(0), sig->pin(0));
 
-	    } else if (sig->vector_width() == prts_vector_width/instance.count()) {
+	    } else if (sig->vector_width()==prts_vector_width/instance.count()
+		       && prts.count()/instance.count() == 1) {
+
+		  if (debug_elaborate){
+			cerr << get_line() << ": debug: " << get_name()
+			     << ": Replicating " << prts_vector_width
+			     << " bits across all "
+			     << prts_vector_width/instance.count()
+			     << " sub-ports." << endl;
+		  }
 
 		    // The signal width is exactly the width of a
 		    // single instance of the port. In this case,
@@ -887,6 +911,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  break;
 
 		case NetNet::PINPUT:
+		  if (debug_elaborate){
+			cerr << get_line() << ": debug: " << get_name()
+			     << ": Dividing " << prts_vector_width
+			     << " bits across all "
+			     << prts_vector_width/instance.count()
+			     << " input sub-ports of port "
+			     << idx << "." << endl;
+		  }
+
 		  for (unsigned ldx = 0 ;  ldx < prts.count() ;  ldx += 1) {
 			NetNet*sp = prts[prts.count()-ldx-1];
 			NetPartSelect*ptmp = new NetPartSelect(sig, spin,
@@ -2905,6 +2938,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.318  2005/02/10 04:56:58  steve
+ *  distinguish between single port namy instances, and single instances many sub-ports.
+ *
  * Revision 1.317  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *
