@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.118 2004/05/19 03:26:25 steve Exp $"
+#ident "$Id: vthread.cc,v 1.119 2004/06/04 23:26:34 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1643,7 +1643,7 @@ bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
       unsigned idx = cp->bit_idx[0];
       double mant = cp->number;
       int exp = cp->bit_idx[1];
-      double sign = (exp & 0x2000)? -1.0 : 1.0;
+      double sign = (exp & 0x4000)? -1.0 : 1.0;
 
       exp &= 0x1fff;
 
@@ -2785,6 +2785,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.119  2004/06/04 23:26:34  steve
+ *  Pick sign bit from the right place in the exponent number.
+ *
  * Revision 1.118  2004/05/19 03:26:25  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *
