@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.36 2001/06/18 03:10:34 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.37 2001/06/23 00:30:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -123,7 +123,6 @@ static int show_stmt_assign(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_memory_t mem;
 
-
 	/* Handle the special case that the r-value is a constant. We
 	   can generate the %set statement directly, without any worry
 	   about generating code to evaluate the r-value expressions. */
@@ -131,6 +130,7 @@ static int show_stmt_assign(ivl_statement_t net)
       if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
 	    unsigned idx;
 	    const char*bits = ivl_expr_bits(rval);
+	    unsigned wid = ivl_expr_width(rval);
 
 	      /* XXXX Only single l-value supported for now */
 	    assert(ivl_stmt_lvals(net) == 1);
@@ -143,12 +143,21 @@ static int show_stmt_assign(ivl_statement_t net)
 	    if (mem) 
 		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
-	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+	    if (wid > ivl_lval_pins(lval))
+		  wid = ivl_lval_pins(lval);
+
+	    for (idx = 0 ;  idx < wid ;  idx += 1)
 		  if (mem)
 			set_to_memory(mem, idx, bitchar_to_idx(bits[idx]));
 		  else
 			set_to_nexus(ivl_lval_pin(lval, idx),
 				     bitchar_to_idx(bits[idx]));
+
+	    for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+		  if (mem)
+			set_to_memory(mem, idx, 0);
+		  else
+			set_to_nexus(ivl_lval_pin(lval, idx), 0);
 
 	    return 0;
       }
@@ -212,6 +221,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
 	    unsigned idx;
 	    const char*bits = ivl_expr_bits(rval);
+	    unsigned wid = ivl_expr_width(rval);
 
 	      /* XXXX Only single l-value supported for now */
 	    assert(ivl_stmt_lvals(net) == 1);
@@ -224,13 +234,22 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	    if (mem) 
 		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
-	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+	    if (wid > ivl_lval_pins(lval))
+		  wid = ivl_lval_pins(lval);
+
+	    for (idx = 0 ;  idx < wid ;  idx += 1)
 		  if (mem)
 			assign_to_memory(mem, idx, 
 					 bitchar_to_idx(bits[idx]), delay);
 		  else
 			assign_to_nexus(ivl_lval_pin(lval, idx),
 					bitchar_to_idx(bits[idx]), delay);
+	    
+	    for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+		  if (mem)
+			assign_to_memory(mem, idx, 0, delay);
+		  else
+			assign_to_nexus(ivl_lval_pin(lval, idx), 0, delay);
 	    
 	    return 0;
       }
@@ -864,6 +883,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.37  2001/06/23 00:30:42  steve
+ *  Handle short inputs to tasks. (Stephan Boettcher)
+ *
  * Revision 1.36  2001/06/18 03:10:34  steve
  *   1. Logic with more than 4 inputs
  *   2. Id and name mangling
