@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.62 2001/08/31 17:38:41 steve Exp $"
+#ident "$Id: lexor.lex,v 1.63 2001/09/08 01:22:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -746,7 +746,7 @@ static verinum*make_sized_hex(const char*txt)
            "'' truncated to " << size << " bits." << endl;
 
 	// zero extend hex numbers
-      while (idx < size) switch (ptr[1]) {
+      while (idx < size) switch (ptr[0]) {
 	  case 'x': case 'X':
 	    bits[idx++] = verinum::Vx;
 	    break;
