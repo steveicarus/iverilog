@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.11 2003/01/06 23:57:26 steve Exp $"
+#ident "$Id: event.cc,v 1.12 2003/04/23 03:09:25 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -174,14 +174,19 @@ void compile_event(char*label, char*type,
  */
 void compile_named_event(char*label, char*name)
 {
-      named_event_functor_s* obj = new named_event_functor_s;
+      named_event_functor_s* fp = new named_event_functor_s;
 
       vvp_ipoint_t fdx = functor_allocate(1);
-      functor_define(fdx, obj);
-      define_functor_symbol(label, fdx);
+      functor_define(fdx, fp);
 
-      obj->handle = vpip_make_named_event(name);
-      vpip_attach_to_current_scope(obj->handle);
+      vpiHandle obj = vpip_make_named_event(name, fdx);
+
+	/* The event needs a back pointer so that triggers to the
+	   event functor (%set) can access the callbacks. */
+      fp->handle = obj;
+
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
 
       free(label);
       free(name);
@@ -189,6 +194,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.12  2003/04/23 03:09:25  steve
+ *  VPI Access to named events.
+ *
  * Revision 1.11  2003/01/06 23:57:26  steve
  *  Schedule wait lists of threads as a single event,
  *  to save on events. Also, improve efficiency of

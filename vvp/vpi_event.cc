@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_event.cc,v 1.7 2003/03/06 04:32:00 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.8 2003/04/23 03:09:25 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -86,7 +86,7 @@ static const struct __vpirt vpip_named_event_rt = {
       0
 };
 
-vpiHandle vpip_make_named_event(const char*name)
+vpiHandle vpip_make_named_event(const char*name, vvp_ipoint_t funct)
 {
       struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)
 	    malloc(sizeof(struct __vpiNamedEvent));
@@ -94,6 +94,7 @@ vpiHandle vpip_make_named_event(const char*name)
       obj->base.vpi_type = &vpip_named_event_rt;
       obj->name = vpip_name_string(name);
       obj->scope = vpip_peek_current_scope();
+      obj->funct = funct;
       obj->callbacks = 0;
 
       return &obj->base;
@@ -115,6 +116,9 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.8  2003/04/23 03:09:25  steve
+ *  VPI Access to named events.
+ *
  * Revision 1.7  2003/03/06 04:32:00  steve
  *  Use hashed name strings for identifiers.
  *

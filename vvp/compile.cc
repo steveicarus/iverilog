@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.159 2003/04/11 05:15:38 steve Exp $"
+#ident "$Id: compile.cc,v 1.160 2003/04/23 03:09:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -224,17 +224,28 @@ static vvp_ipoint_t lookup_functor_symbol(const char*label)
 
 static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
 {
-        /* First, look to see if the symbol is a signal, whether net
-	   or reg. If so, get the correct bit out. */
+        /* First, look to see if the symbol is a vpi object of some
+	   sort. If it is, then get the vvp_ipoint_t pointer out of
+	   the vpiHandle. */
       symbol_value_t val = sym_get_value(sym_vpi, label);
       if (val.ptr) {
 	    vpiHandle vpi = (vpiHandle) val.ptr;
-	    assert((vpi->vpi_type->type_code == vpiNet)
-		   || (vpi->vpi_type->type_code == vpiReg)
-		   || (vpi->vpi_type->type_code == vpiIntegerVar));
+	    switch (vpi->vpi_type->type_code) {
+		case vpiNet:
+		case vpiReg:
+		case vpiIntegerVar: {
+		      __vpiSignal*sig = (__vpiSignal*)vpi;
+		      return vvp_fvector_get(sig->bits, idx);
+		}
 
-	    __vpiSignal*sig = (__vpiSignal*)vpi;
-	    return vvp_fvector_get(sig->bits, idx);
+		case vpiNamedEvent: {
+		      __vpiNamedEvent*tmp = (__vpiNamedEvent*)vpi;
+		      return tmp->funct;
+		}
+
+		default:
+		  assert(0);
+	    }
       }
 
 	/* Failing that, look for a general functor. */
@@ -1530,6 +1541,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.160  2003/04/23 03:09:25  steve
+ *  VPI Access to named events.
+ *
  * Revision 1.159  2003/04/11 05:15:38  steve
  *  Add signed versions of .cmp/gt/ge
  *

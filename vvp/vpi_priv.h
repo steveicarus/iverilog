@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.52 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.53 2003/04/23 03:09:25 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -198,11 +198,13 @@ struct __vpiNamedEvent {
       const char*name;
 	/* Parent scope of this object. */
       struct __vpiScope*scope;
+	/* The functor, used for %set operations. */
+      vvp_ipoint_t funct;
 	/* List of callbacks interested in this event. */
       struct __vpiCallback*callbacks;
 };
 
-extern vpiHandle vpip_make_named_event(const char*name);
+extern vpiHandle vpip_make_named_event(const char*name, vvp_ipoint_t f);
 extern void vpip_run_named_event_callbacks(vpiHandle ref);
 extern void vpip_real_value_change(struct __vpiCallback*cbh,
 				   vpiHandle ref);
@@ -413,6 +415,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.53  2003/04/23 03:09:25  steve
+ *  VPI Access to named events.
+ *
  * Revision 1.52  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *
