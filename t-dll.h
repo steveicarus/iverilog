@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.57 2001/07/27 02:41:56 steve Exp $"
+#ident "$Id: t-dll.h,v 1.58 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -118,7 +118,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_const(const NetEConst*);
       void expr_scope(const NetEScope*);
       void expr_sfunc(const NetESFunc*);
-      void expr_subsignal(const NetESubSignal*);
+      void expr_subsignal(const NetEBitSel*);
       void expr_ternary(const NetETernary*);
       void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
@@ -163,6 +163,11 @@ struct ivl_expr_s {
 	    } binary_;
 
 	    struct {
+		  ivl_signal_t sig;
+		  ivl_expr_t bit;
+	    } bitsel_;
+
+	    struct {
 		  unsigned   rept  :16;
 		  unsigned   parms :16;
 		  ivl_expr_t*parm;
@@ -177,6 +182,11 @@ struct ivl_expr_s {
 	    } scope_;
 
 	    struct {
+		  ivl_signal_t sig;
+		  unsigned lsi, msi;
+	    } signal_;
+
+	    struct {
 		  char*name_;
 		  ivl_expr_t    *parm;
 		  unsigned short parms;
@@ -185,12 +195,6 @@ struct ivl_expr_s {
 	    struct {
 		  char*value_;
 	    } string_;
-
-	    struct {
-		  ivl_signal_t sig;
-		  ivl_expr_t msb_;
-		  ivl_expr_t lsb_;
-	    } subsig_;
 
 	    struct {
 		  ivl_expr_t cond;
@@ -557,6 +561,11 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.58  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.57  2001/07/27 02:41:56  steve
  *  Fix binding of dangling function ports. do not elide them.
  *

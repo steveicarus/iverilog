@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.39 2001/07/27 02:41:56 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.40 2001/07/27 04:51:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -699,9 +699,16 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+/*
+ * Evaluating a signal expression means loading the bits of the signal
+ * into the thread bits. Remember to account for the part select by
+ * offsetting the read from the lsi (least significant index) of the
+ * signal.
+ */
 static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
+      unsigned lsi = ivl_expr_lsi(exp);
       unsigned swid = ivl_expr_width(exp);
       const char*name = ivl_expr_name(exp);
       struct vector_info res;
@@ -714,7 +721,7 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		    res.base+idx, vvp_mangle_id(name), idx);
+		    res.base+idx, vvp_mangle_id(name), idx+lsi);
 
 	/* Pad the signal value with zeros. */
       if (swid < wid)
@@ -1159,6 +1166,11 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.40  2001/07/27 04:51:45  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.39  2001/07/27 02:41:56  steve
  *  Fix binding of dangling function ports. do not elide them.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.59 2001/07/27 02:41:55 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.60 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -198,6 +198,20 @@ extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
       return 0;
 }
 
+extern "C" unsigned ivl_expr_lsi(ivl_expr_t net)
+{
+      switch (net->type_) {
+
+	  case IVL_EX_SIGNAL:
+	    return net->u_.signal_.lsi;
+
+	  default:
+	    assert(0);
+
+      }
+      return 0;
+}
+
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       switch (net->type_) {
@@ -206,7 +220,7 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	    return net->u_.sfunc_.name_;
 
 	  case IVL_EX_SIGNAL:
-	    return net->u_.subsig_.sig->name_;
+	    return net->u_.signal_.sig->name_;
 
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.mem_->name_;
@@ -241,7 +255,7 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	    return net->u_.binary_.lef_;
 
 	  case IVL_EX_BITSEL:
-	    return net->u_.subsig_.msb_;
+	    return net->u_.bitsel_.bit;
 
 	  case IVL_EX_UNARY:
 	    return net->u_.unary_.sub_;
@@ -352,7 +366,7 @@ extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
       assert(net);
       switch (net->type_) {
 	  case IVL_EX_BITSEL:
-	    return net->u_.subsig_.sig;
+	    return net->u_.bitsel_.sig;
 
 	  default:
 	    assert(0);
@@ -1280,6 +1294,11 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.60  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.59  2001/07/27 02:41:55  steve
  *  Fix binding of dangling function ports. do not elide them.
  *

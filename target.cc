@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.55 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: target.cc,v 1.56 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -357,10 +357,10 @@ void expr_scan_t::expr_signal(const NetESignal*)
 	    "unhandled expr_signal." << endl;
 }
 
-void expr_scan_t::expr_subsignal(const NetESubSignal*)
+void expr_scan_t::expr_subsignal(const NetEBitSel*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
-	    "unhandled expr_subsignal." << endl;
+	    "unhandled bit select expression." << endl;
 }
 
 void expr_scan_t::expr_ternary(const NetETernary*)
@@ -389,6 +389,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.56  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.55  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

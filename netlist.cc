@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.168 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: netlist.cc,v 1.169 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2178,6 +2178,18 @@ NetExpr* NetESFunc::parm(unsigned idx)
 NetESignal::NetESignal(NetNet*n)
 : NetExpr(n->pin_count()), net_(n)
 {
+      msi_ = n->pin_count() - 1;
+      lsi_ = 0;
+      net_->incr_eref();
+      set_line(*n);
+}
+
+NetESignal::NetESignal(NetNet*n, unsigned m, unsigned l)
+: NetExpr(m - l + 1), net_(n)
+{
+      assert(m >= l);
+      msi_ = m;
+      lsi_ = l;
       net_->incr_eref();
       set_line(*n);
 }
@@ -2197,14 +2209,15 @@ bool NetESignal::has_sign() const
       return net_->get_signed();
 }
 
-unsigned NetESignal::pin_count() const
+unsigned NetESignal::bit_count() const
 {
-      return net_->pin_count();
+      return msi_ - lsi_ + 1;
 }
 
-Link& NetESignal::pin(unsigned idx)
+Link& NetESignal::bit(unsigned idx)
 {
-      return net_->pin(idx);
+      assert(idx <= (msi_ - lsi_));
+      return net_->pin(idx + lsi_);
 }
 
 NetESignal* NetESignal::dup_expr() const
@@ -2217,7 +2230,17 @@ const NetNet* NetESignal::sig() const
       return net_;
 }
 
-NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
+unsigned NetESignal::lsi() const
+{
+      return lsi_;
+}
+
+unsigned NetESignal::msi() const
+{
+      return msi_;
+}
+
+NetEBitSel::NetEBitSel(NetESignal*sig, NetExpr*ex)
 : sig_(sig), idx_(ex)
 {
 	// This supports mux type indexing of an expression, so the
@@ -2225,22 +2248,22 @@ NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
       expr_width(1);
 }
 
-NetESubSignal::~NetESubSignal()
+NetEBitSel::~NetEBitSel()
 {
       delete idx_;
 }
 
-string NetESubSignal::name() const
+string NetEBitSel::name() const
 {
       return sig_->name();
 }
 
-const NetNet* NetESubSignal::sig() const
+const NetNet* NetEBitSel::sig() const
 {
       return sig_->sig();
 }
 
-NetESubSignal* NetESubSignal::dup_expr() const
+NetEBitSel* NetEBitSel::dup_expr() const
 {
       assert(0);
 }
@@ -2362,6 +2385,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.169  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.168  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

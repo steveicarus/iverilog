@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.212 2001/07/22 00:17:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.213 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 /*
@@ -2450,12 +2450,16 @@ class NetEMemory  : public NetExpr {
  * structural signal.
  *
  * A signal shows up as a node in the netlist so that structural
- * activity can invoke the expression.
+ * activity can invoke the expression. This node also supports part
+ * select by indexing a range of the NetNet that is associated with
+ * it. The msi() is the mose significant index, and lsi() the least
+ * significant index.
  */
 class NetESignal  : public NetExpr {
 
     public:
       NetESignal(NetNet*n);
+      NetESignal(NetNet*n, unsigned msi, unsigned lsi);
       ~NetESignal();
 
 	// a NetESignal expression is signed if the NetNet that it
@@ -2470,31 +2474,35 @@ class NetESignal  : public NetExpr {
 
 	// These methods actually reference the properties of the
 	// NetNet object that I point to.
-      unsigned pin_count() const;
-      Link& pin(unsigned idx);
+      unsigned bit_count() const;
+      Link& bit(unsigned idx);
 
       const NetNet* sig() const;
+      unsigned msi() const;
+      unsigned lsi() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
     private:
       NetNet*net_;
+      unsigned msi_;
+      unsigned lsi_;
 };
 
 /*
- * An expression that takes a portion of a signal is represented as
+ * An expression that takes a bit of a signal is represented as
  * one of these. For example, ``foo[x+5]'' is a signal and x+5 is an
  * expression to select a single bit from that signal. I can't just
  * make a new NetESignal node connected to the single net because the
  * expression may vary during execution, so the structure is not known
  * at compile (elaboration) time.
  */
-class NetESubSignal  : public NetExpr {
+class NetEBitSel  : public NetExpr {
 
     public:
-      NetESubSignal(NetESignal*sig, NetExpr*ex);
-      ~NetESubSignal();
+      NetEBitSel(NetESignal*sig, NetExpr*ex);
+      ~NetEBitSel();
 
       string name() const;
       const NetExpr*index() const { return idx_; }
@@ -2503,7 +2511,7 @@ class NetESubSignal  : public NetExpr {
 
       const NetNet* sig() const;
 
-      NetESubSignal* dup_expr() const;
+      NetEBitSel* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2816,6 +2824,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.213  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.212  2001/07/22 00:17:49  steve
  *  Support the NetESubSignal expressions in vvp.tgt.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.74 2001/07/27 02:41:55 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.75 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -394,6 +394,8 @@ extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 extern const char* ivl_expr_bits(ivl_expr_t net);
   /* IVL_EX_UFUNC */
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
+  /* IVL_EX_SIGNAL */
+extern unsigned    ivl_expr_lsi(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_MEMORY */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
@@ -894,6 +896,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.75  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.74  2001/07/27 02:41:55  steve
  *  Fix binding of dangling function ports. do not elide them.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.40 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.41 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -448,15 +448,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 			return 0;
 		  }
 
-		  string tname = des->local_symbol(scope->name());
-		  NetTmp*tsig = new NetTmp(scope, tname, wid);
-
-		    // Connect the pins from the lsb up to the msb.
-		  unsigned off = net->sb_to_idx(lsv);
-		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-			connect(tsig->pin(idx), net->pin(idx+off));
-
-		  NetESignal*tmp = new NetESignal(tsig);
+		  NetESignal*tmp = new NetESignal(net,
+						  net->sb_to_idx(msv),
+						  net->sb_to_idx(lsv));
 		  tmp->set_line(*this);
 
 		  return tmp;
@@ -479,10 +473,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 			return 0;
 		  }
 
-		  string tname = des->local_symbol(scope->name());
-		  NetTmp*tsig = new NetTmp(scope, tname);
-		  connect(tsig->pin(0), net->pin(idx));
-		  NetESignal*tmp = new NetESignal(tsig);
+		  NetESignal*tmp = new NetESignal(net, idx, idx);
 		  tmp->set_line(*this);
 
 		  return tmp;
@@ -495,7 +486,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	      // device to mux the bit in the net.
 	    if (msb_) {
 		  NetExpr*ex = msb_->elaborate_expr(des, scope);
-		  NetESubSignal*ss = new NetESubSignal(node, ex);
+		  NetEBitSel*ss = new NetEBitSel(node, ex);
 		  ss->set_line(*this);
 		  return ss;
 	    }
@@ -634,6 +625,11 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.41  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.40  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.12 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.13 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -154,7 +154,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			   asn->l_val(0)->pin_count());
 
       for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
-	    connect(ff->pin_Data(idx), d->pin(idx));
+	    connect(ff->pin_Data(idx), d->bit(idx));
 	    connect(ff->pin_Q(idx), asn->l_val(0)->pin(idx));
       }
 
@@ -191,7 +191,7 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 	    connect(adr->pin(idx), ram->pin_Address(idx));
 
       for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1)
-	    connect(ram->pin_Data(idx), d->pin(idx));
+	    connect(ram->pin_Data(idx), d->bit(idx));
 
       if (ce) connect(ram->pin_WE(), ce->pin(0));
 
@@ -217,7 +217,7 @@ static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn)
 
       for (unsigned idx = 0 ;  idx < asn->l_val(0)->pin_count() ;  idx += 1) {
 
-	    verinum::V bit = driven_value(rsig->pin(idx));
+	    verinum::V bit = driven_value(rsig->bit(idx));
 
 	    Nexus*nex = asn->l_val(0)->pin(idx).nexus();
 	    for (Link*cur = nex->first_nlink()

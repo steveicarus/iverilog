@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.16 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.17 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -222,10 +222,12 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
-      expr_->u_.subsig_.sig = find_signal(des_.root_, net->sig());
+      expr_->u_.signal_.sig = find_signal(des_.root_, net->sig());
+      expr_->u_.signal_.lsi = net->lsi();
+      expr_->u_.signal_.msi = net->msi();
 }
 
-void dll_target::expr_subsignal(const NetESubSignal*net)
+void dll_target::expr_subsignal(const NetEBitSel*net)
 {
       assert(expr_ == 0);
 
@@ -240,11 +242,11 @@ void dll_target::expr_subsignal(const NetESubSignal*net)
       expr->type_ = IVL_EX_BITSEL;
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
-      expr->u_.subsig_.sig = find_signal(des_.root_, net->sig());
+      expr->u_.bitsel_.sig = find_signal(des_.root_, net->sig());
 
       net->index()->expr_scan(this);
       assert(expr_);
-      expr->u_.subsig_.msb_ = expr_;
+      expr->u_.bitsel_.bit = expr_;
 
       expr_ = expr;
 }
@@ -296,6 +298,11 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.17  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.16  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.115 2001/07/27 02:41:55 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.116 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -876,10 +876,10 @@ void NetESFunc::dump(ostream&o) const
 
 void NetESignal::dump(ostream&o) const
 {
-      o << name();
+      o << name() << "[" << msi_<<":"<<lsi_ << "]";
 }
 
-void NetESubSignal::dump(ostream&o) const
+void NetEBitSel::dump(ostream&o) const
 {
       sig_->dump(o);
       o << "[";
@@ -960,6 +960,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.116  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.115  2001/07/27 02:41:55  steve
  *  Fix binding of dangling function ports. do not elide them.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.210 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.211 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -347,7 +347,7 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_memory(const NetEMemory*mem);
       virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
-      virtual void expr_subsignal(const NetESubSignal*sig);
+      virtual void expr_subsignal(const NetEBitSel*sig);
       virtual void expr_ternary(const NetETernary*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
@@ -526,13 +526,13 @@ void vvm_proc_rval::expr_signal(const NetESignal*expr)
       const string tname = make_temp();
 
       tgt_->defn << "      vvm_bitset_t " << tname << "("
-		 << mangle(expr->name()) << ".bits, "
-		 << expr->expr_width() << ");" << endl;
+		 << mangle(expr->name()) << ".bits+" << expr->lsi()
+		 << ", " << expr->expr_width() << ");" << endl;
 
       result = tname;
 }
 
-void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
+void vvm_proc_rval::expr_subsignal(const NetEBitSel*sig)
 {
       string idx = make_temp();
       string val = make_temp();
@@ -956,6 +956,7 @@ void vvm_parm_rval::expr_scope(const NetEScope*escope)
 
 void vvm_parm_rval::expr_signal(const NetESignal*expr)
 {
+      assert(expr->lsi() == 0);
       string res = string("&") + mangle(expr->name()) + ".base";
       result = res;
 }
@@ -2595,7 +2596,7 @@ void target_vvm::proc_assign(const NetAssign*net)
 
       if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
 
-	    if (net->lwidth() > rs->pin_count()) {
+	    if (net->lwidth() > rs->bit_count()) {
 		  rval = emit_proc_rval(this, net->rval());
 
 	    } else {
@@ -2841,7 +2842,7 @@ void target_vvm::proc_assign_nb(const NetAssignNB*net)
 
       if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
 
-	    if (net->lwidth() > rs->pin_count()) {
+	    if (net->lwidth() > rs->bit_count()) {
 		  rval = emit_proc_rval(this, net->rval());
 
 	    } else {
@@ -3644,6 +3645,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.211  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.210  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

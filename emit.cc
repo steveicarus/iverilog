@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.60 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: emit.cc,v 1.61 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -448,7 +448,7 @@ void NetESignal::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_signal(this);
 }
 
-void NetESubSignal::expr_scan(struct expr_scan_t*tgt) const
+void NetEBitSel::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_subsignal(this);
 }
@@ -476,6 +476,11 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.61  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.60  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

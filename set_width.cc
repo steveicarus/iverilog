@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.18 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: set_width.cc,v 1.19 2001/07/27 04:51:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -289,13 +289,13 @@ bool NetESFunc::set_width(unsigned w)
  */
 bool NetESignal::set_width(unsigned w)
 {
-      if (w != pin_count())
+      if (w != bit_count())
 	    return false;
 
       return true;
 }
 
-bool NetESubSignal::set_width(unsigned w)
+bool NetEBitSel::set_width(unsigned w)
 {
       if (w != 1) return false;
       return true;
@@ -341,6 +341,11 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.19  2001/07/27 04:51:44  steve
+ *  Handle part select expressions as variants of
+ *  NetESignal/IVL_EX_SIGNAL objects, instead of
+ *  creating new and useless temporary signals.
+ *
  * Revision 1.18  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
