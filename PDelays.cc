@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.3 2001/01/14 23:04:55 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.4 2001/01/20 02:15:50 steve Exp $"
 #endif
 
 # include  "PDelays.h"
@@ -66,6 +66,13 @@ static unsigned long calculate_val(Design*des, const NetScope*scope,
 
       } else {
 	    verinum*dv = expr->eval_const(des, scope->name());
+	    if (dv == 0) {
+		  cerr << expr->get_line() << ": sorry: non-constant "
+		       << "delays not supported here: " << *expr << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    assert(dv);
 	    val = dv->as_ulong();
 	    val = des->scale_to_precision(val, scope);
@@ -115,6 +122,9 @@ void PDelays::eval_delays(Design*des, const string&path,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.4  2001/01/20 02:15:50  steve
+ *  apologize for not supporting non-constant delays.
+ *
  * Revision 1.3  2001/01/14 23:04:55  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.5 2000/11/30 02:50:54 steve Exp $"
+#ident "$Id: main.c,v 1.6 2001/01/20 02:15:51 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -154,7 +154,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    }
       }
 
-      sprintf(tmp, "%s -O " RDYNAMIC " -fno-exceptions -o %s -I%s "
+      sprintf(tmp, "%s " RDYNAMIC " -fno-exceptions -o %s -I%s "
 	      "-L%s %s.cc -lvvm -lvpip %s", CXX, opath, IVL_INC, IVL_LIB,
 	      opath, DLLIB);
 
@@ -518,6 +518,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.6  2001/01/20 02:15:51  steve
+ *  apologize for not supporting non-constant delays.
+ *
  * Revision 1.5  2000/11/30 02:50:54  steve
  *  Add command file (-c) support from Nadim Shaikli.
  *
