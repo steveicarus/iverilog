@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.8 2003/04/04 06:20:29 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.9 2003/04/05 01:35:40 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -1017,7 +1017,9 @@ static void virtex2_add(ivl_lpm_t net)
  * inverted. To get that effect without putting an inverter on the
  * output of the top muxcy pin CO (which would cost a LUT) the DI
  * inputs are all connected to VCC instead of GND, and the CI of the
- * least significant muxcy is connected to GND instead of VCC.
+ * least significant muxcy is connected to GND instead of VCC. The LUT
+ * expressions for the chained compare are configured for ==, with the
+ * changed CI/DI inputs performing the inversion.
  */
 static void virtex_eq(ivl_lpm_t net)
 {
@@ -1091,10 +1093,10 @@ static void virtex_eq(ivl_lpm_t net)
 		  mux = edif_cellref_create(edf, cell_muxcy);
 		  if (subwid == 2) {
 			lut = edif_cellref_create(edf, cell_lut4);
-			edif_cellref_pstring(lut, "INIT", eq? "9009" : "6FF6");
+			edif_cellref_pstring(lut, "INIT", "9009");
 		  } else {
 			lut = edif_cellref_create(edf, cell_lut2);
-			edif_cellref_pstring(lut, "INIT", eq? "9" : "6");
+			edif_cellref_pstring(lut, "INIT", "9");
 		  }
 
 		  jnt = edif_joint_create(edf);
@@ -1324,6 +1326,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.9  2003/04/05 01:35:40  steve
+ *  Fix LUT function for chained NE.
+ *
  * Revision 1.8  2003/04/04 06:20:29  steve
  *  Add == and some lut logic.
  *
