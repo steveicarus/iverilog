@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.29 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.30 2000/04/28 21:00:29 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -168,6 +168,14 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
       unsigned owidth = width;
       if (lwidth > owidth)
 	    owidth = width + 1;
+
+	// Pad out the operands, if necessary, the match the width of
+	// the adder device.
+      if (lsig->pin_count() < width)
+	    lsig = pad_to_width(des, path, lsig, width);
+
+      if (rsig->pin_count() < width)
+	    rsig = pad_to_width(des, path, rsig, width);
 
 	// Make the adder as wide as the widest operand
       osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE, owidth);
@@ -1408,6 +1416,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.30  2000/04/28 21:00:29  steve
+ *  Over agressive signal elimination in constant probadation.
+ *
  * Revision 1.29  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

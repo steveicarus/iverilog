@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.4 2000/04/18 04:50:20 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.5 2000/04/28 21:00:29 steve Exp $"
 #endif
 
 /*
@@ -53,6 +53,16 @@ void nodangle_f::signal(Design*des, NetNet*sig)
       if (sig->get_eref() > 0)
 	    return;
 
+	/* Look for a completely unconnected signal. */
+      unsigned unlinked = 0;
+      for (unsigned idx =  0 ;  idx < sig->pin_count() ;  idx += 1)
+	    if (! sig->pin(idx).is_linked()) unlinked += 1;
+
+      if (unlinked == sig->pin_count()) {
+	    delete sig;
+	    return;
+      }
+
 	/* Check to see if there is some significant signal connected
 	   to every pin of this signal. */
       unsigned significant_flags = 0;
@@ -84,6 +94,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.5  2000/04/28 21:00:29  steve
+ *  Over agressive signal elimination in constant probadation.
+ *
  * Revision 1.4  2000/04/18 04:50:20  steve
  *  Clean up unneeded NetEvent objects.
  *

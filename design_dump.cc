@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.78 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.79 2000/04/28 21:00:29 steve Exp $"
 #endif
 
 /*
@@ -49,6 +49,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    pin_count() << "]";
       if (local_flag_)
 	    o << " (local)";
+      o << " (eref=" << get_eref() << ")";
       if (scope_)
 	    o << " scope=" << scope_->name();
       o << " #(" << rise_time() << "," << fall_time() << "," <<
@@ -56,6 +57,23 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
 	    o << ivalue_[idx-1];
       o << endl;
+
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    if (! pin(idx).is_linked())
+		  continue;
+
+	    o << setw(ind+4) << "" << "[" << idx << "]:";
+
+	    unsigned cpin;
+	    const NetObj*cur;
+	    for (pin(idx).next_link(cur, cpin)
+		       ; (cur != this) || (cpin != idx)
+		       ; cur->pin(cpin).next_link(cur, cpin)) {
+
+		  o << " " << cur->name() << "[" << cpin << "]";
+	    }
+	    o << endl;
+      }
       dump_obj_attr(o, ind+4);
 }
 
@@ -908,6 +926,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.79  2000/04/28 21:00:29  steve
+ *  Over agressive signal elimination in constant probadation.
+ *
  * Revision 1.78  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *

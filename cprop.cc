@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.7 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: cprop.cc,v 1.8 2000/04/28 21:00:28 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -297,24 +297,6 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	    }
       }
 
-	// If there are no other drivers, delete all the signals that
-	// are also dangling.
-      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
-	    if (count_outputs(obj->pin(idx)) != 1)
-		  continue;
-
-	    NetObj*cur;
-	    unsigned pin;
-	    obj->pin(idx).next_link(cur, pin);
-	    while (cur != obj) {
-		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
-		  cur->pin(pin).next_link(cur, pin);
-		  assert(tmp->get_eref() == 0);
-		  cerr << "cprop: delete dangling signal " <<
-			tmp->name() << "." << endl;
-		  delete tmp;
-	    }
-      }
 
 	// Done. Delete me.
       delete obj;
@@ -337,6 +319,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.8  2000/04/28 21:00:28  steve
+ *  Over agressive signal elimination in constant probadation.
+ *
  * Revision 1.7  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
