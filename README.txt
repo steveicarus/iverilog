@@ -344,6 +344,7 @@ especially testing from many people, including (in alphabetical order):
 	Larry Doolittle <LRDoolittle@lbl.gov>
 	Guy Hutchison <ghutchis@pacbell.net>
 	Ales Hvezda <ahvezda@seul.org>
+	Yasuhisa Kato <ykato@mac.com>
         James Lee <jml@seva.com>
 	Peter Monta <pmonta@halibut.imedia.com>
 	Daniel H. Nelsen <dhn@qedinc.com>
