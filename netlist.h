@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.309 2004/02/19 06:57:10 steve Exp $"
+#ident "$Id: netlist.h,v 1.310 2004/02/19 07:06:57 steve Exp $"
 #endif
 
 /*
@@ -2174,16 +2174,16 @@ class NetVariable : public LineInfo {
     public:
 	// The name must be a permallocated string. This class makes
 	// no attempt to preserve it.
-      NetVariable(const char* name);
+      NetVariable(perm_string name);
       ~NetVariable();
 
-      const char* basename() const;
+      perm_string basename() const;
 
       NetScope* scope();
       const NetScope* scope() const;
 
     private:
-      const char* name_;
+      perm_string name_;
 
       NetScope*scope_;
       NetVariable*snext_;
@@ -3315,6 +3315,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.310  2004/02/19 07:06:57  steve
+ *  LPM, logic and Variables have perm_string names.
+ *
  * Revision 1.309  2004/02/19 06:57:10  steve
  *  Memory and Event names use perm_string.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.28 2004/02/18 17:11:55 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.29 2004/02/19 07:06:57 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -385,7 +385,7 @@ void PData::elaborate_scope(Design*des, NetScope*scope) const
       }
 
       const char*basename = hname_.peek_tail_name();
-      NetVariable*tmp = new NetVariable(lex_strings.add(basename));
+      NetVariable*tmp = new NetVariable(lex_strings.make(basename));
       tmp->set_line(*this);
       sub_scope->add_variable(tmp);
 }
@@ -549,6 +549,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.29  2004/02/19 07:06:57  steve
+ *  LPM, logic and Variables have perm_string names.
+ *
  * Revision 1.28  2004/02/18 17:11:55  steve
  *  Use perm_strings for named langiage items.
  *

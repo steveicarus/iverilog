@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_variable.cc,v 1.2 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: net_variable.cc,v 1.3 2004/02/19 07:06:57 steve Exp $"
 #endif
 
 # include "config.h"
 # include "netlist.h"
 
-NetVariable::NetVariable(const char*name)
+NetVariable::NetVariable(perm_string name)
 {
       name_ = name;
       scope_ = 0;
@@ -34,7 +34,7 @@ NetVariable::~NetVariable()
 {
 }
 
-const char*NetVariable::basename() const
+perm_string NetVariable::basename() const
 {
       return name_;
 }
@@ -70,6 +70,9 @@ const NetVariable* NetEVariable::variable() const
 
 /*
  * $Log: net_variable.cc,v $
+ * Revision 1.3  2004/02/19 07:06:57  steve
+ *  LPM, logic and Variables have perm_string names.
+ *
  * Revision 1.2  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *

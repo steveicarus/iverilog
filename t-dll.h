@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.110 2004/02/19 06:57:11 steve Exp $"
+#ident "$Id: t-dll.h,v 1.111 2004/02/19 07:06:57 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -288,7 +288,7 @@ struct ivl_expr_s {
 struct ivl_lpm_s {
       ivl_lpm_type_t type;
       ivl_scope_t scope;
-      const char* name;
+      perm_string name;
 
       union {
 	    struct ivl_lpm_ff_s {
@@ -408,7 +408,7 @@ struct ivl_net_logic_s {
       ivl_logic_t type_;
       ivl_udp_t udp;
 
-      const char* name_;
+      perm_string name_;
       ivl_scope_t scope_;
 
       unsigned npins_;
@@ -677,12 +677,15 @@ struct ivl_statement_s {
  */
 struct ivl_variable_s {
       ivl_variable_type_t type;
-      const char* name;
+      perm_string name;
       ivl_scope_t scope;
 };
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.111  2004/02/19 07:06:57  steve
+ *  LPM, logic and Variables have perm_string names.
+ *
  * Revision 1.110  2004/02/19 06:57:11  steve
  *  Memory and Event names use perm_string.
  *
