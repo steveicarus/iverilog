@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.25 1999/11/18 03:52:19 steve Exp $"
+#ident "$Id: main.cc,v 1.26 1999/11/29 17:02:21 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -44,6 +44,9 @@ const char NOTICE[] =
 # include  <queue>
 # include  <map>
 # include  <unistd.h>
+#if defined(HAVE_GETOPT_H)
+# include  <getopt.h>
+#endif
 # include  "pform.h"
 # include  "netlist.h"
 # include  "target.h"
@@ -281,6 +284,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.26  1999/11/29 17:02:21  steve
+ *  include getopt if present.
+ *
  * Revision 1.25  1999/11/18 03:52:19  steve
  *  Turn NetTmp objects into normal local NetNet objects,
  *  and add the nodangle functor to clean up the local

@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.3 1999/09/05 22:33:18 steve Exp $"
+#ident "$Id: main.c,v 1.4 1999/11/29 17:02:21 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -42,6 +42,9 @@ const char VERSION[] = "$Name:  $ $State: Exp $";
 # include  <malloc.h>
 # include  <unistd.h>
 # include  <string.h>
+#if defined(HAVE_GETOPT_H)
+# include  <getopt.h>
+#endif
 # include  "globals.h"
 
 char**include_dir = 0;
@@ -140,6 +143,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.4  1999/11/29 17:02:21  steve
+ *  include getopt if present.
+ *
  * Revision 1.3  1999/09/05 22:33:18  steve
  *  Take multiple source files on the command line.
  *
