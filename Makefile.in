@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.139 2002/12/08 03:06:30 steve Exp $"
+#ident "$Id: Makefile.in,v 1.140 2002/12/10 05:45:44 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -233,7 +233,7 @@ install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) install); done
 
 $(bindir)/iverilog-vpi: ./iverilog-vpi
-	$(INSTALL_PROGRAM) ./iverilog-vpi $(bindir)/iverilog-vpi
+	$(INSTALL_SCRIPT) ./iverilog-vpi $(bindir)/iverilog-vpi
 
 $(libdir)/libvpi.a : ./libvpi.a
 	$(INSTALL_DATA) libvpi.a $(libdir)/libvpi.a
