@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.144 2003/07/26 03:34:42 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.145 2003/12/17 16:52:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -493,6 +493,15 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 #endif
       o << *rval() << ";" << endl;
 
+}
+
+void NetAssignBase::dump(ostream&o, unsigned ind) const
+{
+      if (const NetAssignNB *n1 = dynamic_cast<const NetAssignNB*>(this)) {
+	    n1->dump(o,ind);
+      } else if (const NetAssign *n2 = dynamic_cast<const NetAssign*>(this)) {
+	    n2->dump(o,ind);
+      }
 }
 
 /* Dump a block statement */
@@ -1068,6 +1077,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.145  2003/12/17 16:52:39  steve
+ *  Debug dumps for synth2.
+ *
  * Revision 1.144  2003/07/26 03:34:42  steve
  *  Start handling pad of expressions in code generators.
  *

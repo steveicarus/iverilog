@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.32 2003/10/27 02:18:04 steve Exp $"
+#ident "$Id: synth2.cc,v 1.33 2003/12/17 16:52:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,12 @@
 # include  "netlist.h"
 # include  "compiler.h"
 # include  <assert.h>
+
+static int debug_synth2=0;
+#define DEBUG_SYNTH2_ENTRY(class) if (debug_synth2) { cerr << "Enter " << class << "::" \
+       	<< __FUNCTION__ << endl; dump(cerr, 4); }
+#define DEBUG_SYNTH2_EXIT(class,val) if (debug_synth2) { cerr << "Exit " << class << "::" \
+       	<< __FUNCTION__ << ", result " << val << endl; }
 
 bool NetProc::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out)
@@ -37,6 +43,8 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			 const NetNet*nex_map, NetNet*nex_out,
 			 const svector<NetEvProbe*>&events)
 {
+      DEBUG_SYNTH2_ENTRY("NetProc")
+
       if (events.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
@@ -70,6 +78,8 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				const NetNet*nex_map, NetNet*nex_out)
 {
+      DEBUG_SYNTH2_ENTRY("NetAssignBase")
+ 
       NetNet*rsig = rval_->synthesize(des);
       assert(rsig);
 
@@ -86,6 +96,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    connect(nex_out->pin(ptr), rsig->pin(idx));
       }
 
+      DEBUG_SYNTH2_EXIT("NetAssignBase",true)
       return true;
 }
 
@@ -98,8 +109,11 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 bool NetBlock::synth_async(Design*des, NetScope*scope,
 			   const NetNet*nex_map, NetNet*nex_out)
 {
-      if (last_ == 0)
+      DEBUG_SYNTH2_ENTRY("NetBlock")
+      if (last_ == 0) {
+	    DEBUG_SYNTH2_EXIT("NetBlock",true)
 	    return true;
+      }
 
       bool flag = true;
       NetProc*cur = last_;
@@ -137,12 +151,14 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 
       } while (cur != last_);
 
+      DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out)
 {
+      DEBUG_SYNTH2_ENTRY("NetCase")
       unsigned cur;
 
       NetNet*esig = expr_->synthesize(des);
@@ -260,20 +276,25 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       delete[]statement_map;
       des->add_node(mux);
 
+      DEBUG_SYNTH2_EXIT("NetCase", true)
       return true;
 }
 
 bool NetCondit::synth_async(Design*des, NetScope*scope,
 			    const NetNet*nex_map, NetNet*nex_out)
 {
+      DEBUG_SYNTH2_ENTRY("NetCondit")
       NetNet*ssig = expr_->synthesize(des);
       assert(ssig);
 
-      if (if_ == 0)
+      if (if_ == 0) {
+	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
+      }
       if (else_ == 0) {
 	    cerr << get_line() << ": error: Asynchronous if statement"
 		 << " is missing the else clause." << endl;
+	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
       }
 
@@ -308,17 +329,22 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       des->add_node(mux);
 
+      DEBUG_SYNTH2_EXIT("NetCondit",true)
       return true;
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope,
 			    const NetNet*nex_map, NetNet*nex_out)
 {
-      return statement_->synth_async(des, scope, nex_map, nex_out);
+      DEBUG_SYNTH2_ENTRY("NetEvWait")
+      bool flag = statement_->synth_async(des, scope, nex_map, nex_out);
+      DEBUG_SYNTH2_EXIT("NetEvWait",flag)
+      return flag;
 }
 
 bool NetProcTop::synth_async(Design*des)
 {
+      DEBUG_SYNTH2_ENTRY("NetProcTop")
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
@@ -330,6 +356,7 @@ bool NetProcTop::synth_async(Design*des)
       bool flag = statement_->synth_async(des, scope(), nex_out, nex_out);
 
       delete nex_out;
+      DEBUG_SYNTH2_EXIT("NetProcTop",flag)
       return flag;
 }
 
@@ -351,8 +378,11 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
-      if (last_ == 0)
+      DEBUG_SYNTH2_ENTRY("NetBlock")
+      if (last_ == 0) {
+	    DEBUG_SYNTH2_EXIT("NetBlock",true)
 	    return true;
+      }
 
       bool flag = true;
 
@@ -492,6 +522,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	   taken up by the smaller NetFF devices. */
       delete ff;
 
+      DEBUG_SYNTH2_EXIT("NetBlock",flag)
       return flag;
 }
 
@@ -505,6 +536,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
+      DEBUG_SYNTH2_ENTRY("NetCondit")
 	/* First try to turn the condition expression into an
 	   asynchronous set/reset. If the condition expression has
 	   inputs that are included in the sensitivity list, then it
@@ -570,9 +602,11 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    assert(events_in.count() == 1);
 	    assert(else_ != 0);
-	    return else_->synth_sync(des, scope, ff, nex_map,
+	    flag = else_->synth_sync(des, scope, ff, nex_map,
 				     nex_out, svector<NetEvProbe*>(0))
 		  && flag;
+            DEBUG_SYNTH2_EXIT("NetCondit",flag)
+	    return flag;
       }
 
       delete expr_input;
@@ -626,9 +660,11 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    delete a_set;
 
 	    assert(else_ != 0);
-	    return else_->synth_sync(des, scope, ff, nex_map,
+	    flag = else_->synth_sync(des, scope, ff, nex_map,
 				     nex_out, svector<NetEvProbe*>(0))
 		  && flag;
+            DEBUG_SYNTH2_EXIT("NetCondit",flag)
+	    return flag;
       }
 
       delete a_set;
@@ -645,7 +681,9 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
-	    return synth_async(des, scope, nex_map, nex_out);
+	    bool flag = synth_async(des, scope, nex_map, nex_out);
+	    DEBUG_SYNTH2_EXIT("NetCondit",flag)
+	    return flag;
       }
 
       assert(if_);
@@ -694,16 +732,16 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       }
 
       bool flag = if_->synth_sync(des, scope, ff, nex_map, nex_out, events_in);
-      if (flag == false)
-	    return flag;
 
-      return true;
+      DEBUG_SYNTH2_EXIT("NetCondit",flag)
+      return flag;
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out,
 			   const svector<NetEvProbe*>&events_in)
 {
+      DEBUG_SYNTH2_ENTRY("NetEvWait")
       if (events_in.count() > 0) {
 	    cerr << get_line() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
@@ -755,6 +793,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 << " are valid clock inputs." << endl;
 	    cerr << get_line() << ":      : Perhaps the clock"
 		 << " is read by a statement or expression?" << endl;
+	    DEBUG_SYNTH2_EXIT("NetEvWait",false)
 	    return false;
       }
 
@@ -766,11 +805,13 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       bool flag = statement_->synth_sync(des, scope, ff,
 					 nex_map, nex_out, events);
 
+      DEBUG_SYNTH2_EXIT("NetEvWait",flag)
       return flag;
 }
 
 bool NetProcTop::synth_sync(Design*des)
 {
+      DEBUG_SYNTH2_ENTRY("NetProcTop")
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
@@ -805,6 +846,7 @@ bool NetProcTop::synth_sync(Design*des)
 
       delete nex_q;
 
+      DEBUG_SYNTH2_EXIT("NetProcTop",flag)
       return flag;
 }
 
@@ -880,12 +922,16 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 
 void synth2(Design*des)
 {
+      debug_synth2 = atoi(des->get_flag("ivl-synth2-debug"));
       synth2_f synth_obj;
       des->functor(&synth_obj);
 }
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.33  2003/12/17 16:52:39  steve
+ *  Debug dumps for synth2.
+ *
  * Revision 1.32  2003/10/27 02:18:04  steve
  *  Handle special case of FF with enable and constant data.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.306 2003/11/10 20:59:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.307 2003/12/17 16:52:39 steve Exp $"
 #endif
 
 /*
@@ -1463,6 +1463,7 @@ class NetAssignBase : public NetProc {
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
+      virtual void dump(ostream&, unsigned ind) const;
 
     private:
       NetAssign_*lval_;
@@ -3310,6 +3311,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.307  2003/12/17 16:52:39  steve
+ *  Debug dumps for synth2.
+ *
  * Revision 1.306  2003/11/10 20:59:03  steve
  *  Design::get_flag returns const char* instead of string.
  *
