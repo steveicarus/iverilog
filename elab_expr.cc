@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.11 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.12 1999/11/30 04:54:01 steve Exp $"
 #endif
 
 
@@ -180,12 +180,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	    return tmp;
       }
 
-      if (NetScope*nsc = des->find_scope(text_)) {
-	    NetEScope*tmp = new NetEScope(nsc);
-	    tmp->set_line(*this);
-	    return tmp;
-      }
-
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
       if (NetNet*net = des->find_signal(path, text_)) {
@@ -290,6 +284,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	    return node;
       }
 
+	// Finally, if this is a scope name, then return that.
+      if (NetScope*nsc = des->find_scope(text_)) {
+	    NetEScope*tmp = new NetEScope(nsc);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
 	// I cannot interpret this identifier. Error message.
       cerr << get_line() << ": error: Unable to bind wire/reg/memory "
 	    "`" << path << "." << text_ << "'" << endl;
@@ -331,6 +332,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.12  1999/11/30 04:54:01  steve
+ *  Match scope names as last resort.
+ *
  * Revision 1.11  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.
