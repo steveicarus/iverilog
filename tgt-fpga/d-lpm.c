@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.2 2003/08/07 05:18:04 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.3 2003/08/09 02:40:50 steve Exp $"
 #endif
 
 /*
@@ -339,6 +339,84 @@ static void lpm_logic(ivl_net_logic_t net)
       }
 }
 
+
+static void lpm_show_dff(ivl_lpm_t net)
+{
+      char name[64];
+      edif_cell_t cell;
+      edif_cellref_t ref;
+      edif_joint_t jnt;
+
+      unsigned idx;
+      unsigned pin, wid = ivl_lpm_width(net);
+
+      sprintf(name, "fd%s%u", ivl_lpm_enable(net)? "ce" : "", wid);
+      cell = edif_xlibrary_findcell(xlib, name);
+
+      if (cell == 0) {
+	    unsigned nports = 2 * wid + 1;
+	    pin = 0;
+	    if (ivl_lpm_enable(net))
+		  nports += 1;
+
+	    cell = edif_xcell_create(xlib, strdup(name), nports);
+	    edif_cell_pstring(cell,  "LPM_Type", "LPM_FF");
+	    edif_cell_pinteger(cell, "LPM_Width", wid);
+
+	    for (idx = 0 ;  idx < wid ;  idx += 1) {
+
+		  sprintf(name, "Q%u", idx);
+		  edif_cell_portconfig(cell, idx*2+0, strdup(name),
+				       IVL_SIP_OUTPUT);
+
+		  sprintf(name, "Data%u", idx);
+		  edif_cell_portconfig(cell, idx*2+1, strdup(name),
+				       IVL_SIP_INPUT);
+	    }
+
+	    pin = wid*2;
+
+	    if (ivl_lpm_enable(net)) {
+		  edif_cell_portconfig(cell, pin, "Enable", IVL_SIP_INPUT);
+		  pin += 1;
+	    }
+
+	    edif_cell_portconfig(cell, pin, "Clock", IVL_SIP_INPUT);
+	    pin += 1;
+
+	    assert(pin == nports);
+      }
+
+      ref = edif_cellref_create(edf, cell);
+
+      pin = edif_cell_port_byname(cell, "Clock");
+
+      jnt = edif_joint_of_nexus(edf, ivl_lpm_clk(net));
+      edif_add_to_joint(jnt, ref, pin);
+
+      if (ivl_lpm_enable(net)) {
+	    pin = edif_cell_port_byname(cell, "Enable");
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_enable(net));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+
+      for (idx = 0 ;  idx < wid ;  idx += 1) {
+
+	    sprintf(name, "Q%u", idx);
+	    pin = edif_cell_port_byname(cell, name);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, idx));
+	    edif_add_to_joint(jnt, ref, pin);
+
+	    sprintf(name, "Data%u", idx);
+	    pin = edif_cell_port_byname(cell, name);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, idx));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+}
+
 static void lpm_show_mux(ivl_lpm_t net)
 {
       edif_cell_t cell;
@@ -509,7 +587,7 @@ const struct device_s d_lpm_edif = {
       0,
       0,
       lpm_logic,
-      0, /* show_dff */
+      lpm_show_dff, /* show_dff */
       0,
       0,
       0,
@@ -522,6 +600,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.3  2003/08/09 02:40:50  steve
+ *  Generate LPM_FF devices.
+ *
  * Revision 1.2  2003/08/07 05:18:04  steve
  *  Add support for OR/NOR/bufif0/bufif1.
  *
