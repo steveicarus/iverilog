@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_fullname.c,v 1.3 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: a_fetch_fullname.c,v 1.4 2003/03/13 05:07:46 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
 #include  <acc_user.h>
+#include  "priv.h"
 
 /*
  * acc_fetch_fullname implemented using VPI interface
@@ -38,6 +39,9 @@ char* acc_fetch_name(handle object)
 
 /*
  * $Log: a_fetch_fullname.c,v $
+ * Revision 1.4  2003/03/13 05:07:46  steve
+ *  Declaration warnings.
+ *
  * Revision 1.3  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC

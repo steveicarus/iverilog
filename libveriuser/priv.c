@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.c,v 1.1 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: priv.c,v 1.2 2003/03/13 05:07:46 steve Exp $"
 #endif
 
 # include  "priv.h"
@@ -27,7 +27,7 @@
 static char string_buffer[8192];
 static unsigned string_fill = 0;
 
-static buffer_reset(void)
+static void buffer_reset(void)
 {
       string_fill = 0;
 }
@@ -56,6 +56,9 @@ char* __acc_newstring(const char*txt)
 
 /*
  * $Log: priv.c,v $
+ * Revision 1.2  2003/03/13 05:07:46  steve
+ *  Declaration warnings.
+ *
  * Revision 1.1  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC

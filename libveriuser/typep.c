@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: typep.c,v 1.1 2002/12/19 21:37:04 steve Exp $"
+#ident "$Id: typep.c,v 1.2 2003/03/13 05:07:46 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -27,7 +27,6 @@
 PLI_INT32 tf_typep(PLI_INT32 narg)
 {
       vpiHandle sys_h, argv, arg_h = 0;
-      s_vpi_value value;
       int rtn;
 
       assert(narg > 0);
@@ -73,6 +72,9 @@ PLI_INT32 tf_typep(PLI_INT32 narg)
 
 /*
  * $Log: typep.c,v $
+ * Revision 1.2  2003/03/13 05:07:46  steve
+ *  Declaration warnings.
+ *
  * Revision 1.1  2002/12/19 21:37:04  steve
  *  Add tf_message, tf_get/setworkarea, and
  *  ty_typep functions, along with defines

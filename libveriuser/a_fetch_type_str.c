@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type_str.c,v 1.3 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: a_fetch_type_str.c,v 1.4 2003/03/13 05:07:46 steve Exp $"
 #endif
 
 #include  <assert.h>
+#include  <vpi_user.h>
 #include  <acc_user.h>
 
 
@@ -46,6 +47,9 @@ char* acc_fetch_type_str(PLI_INT32 type)
 
 /*
  * $Log: a_fetch_type_str.c,v $
+ * Revision 1.4  2003/03/13 05:07:46  steve
+ *  Declaration warnings.
+ *
  * Revision 1.3  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *
