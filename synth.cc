@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.6 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: synth.cc,v 1.7 2000/04/02 04:26:07 steve Exp $"
 #endif
 
 /*
@@ -140,16 +140,13 @@ int match_dff::pevent(NetPEvent*pe)
 
       pclk_ = pe;
 
-	// ... there must be a single event source, ...
-      svector<class NetNEvent*>*neb = pclk_->back_list();
-      if (neb == 0)
+      NetNEvent*tmp = pclk_->first();
+      if (tmp == 0)
 	    return 0;
-      if (neb->count() != 1) {
-	    delete neb;
+      if (pclk_->next())
 	    return 0;
-      }
-      nclk_ = (*neb)[0];
-      delete neb;
+
+      nclk_ = tmp;
       return pclk_->statement()->match_proc(this);
 }
 
@@ -273,6 +270,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.7  2000/04/02 04:26:07  steve
+ *  Remove the useless sref template.
+ *
  * Revision 1.6  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

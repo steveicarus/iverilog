@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfsyn.cc,v 1.4 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: xnfsyn.cc,v 1.5 2000/04/02 04:26:07 steve Exp $"
 #endif
 
 /*
@@ -91,16 +91,12 @@ void xnfsyn_f::proc_always_(class Design*des)
       if (pclk_ == 0)
 	    return;
 
-	// ... there must be a single event source, ...
-      svector<class NetNEvent*>*neb = pclk_->back_list();
-      if (neb == 0)
+      NetNEvent*tmp = pclk_->first();
+      if (tmp == 0)
 	    return;
-      if (neb->count() != 1) {
-	    delete neb;
+      if (pclk_->next())
 	    return;
-      }
-      nclk_ = (*neb)[0];
-      delete neb;
+      nclk_ = tmp;
 
 	// ... the event must be an edge, ...
       switch (nclk_->type()) {
@@ -236,6 +232,9 @@ void xnfsyn(Design*des)
 
 /*
  * $Log: xnfsyn.cc,v $
+ * Revision 1.5  2000/04/02 04:26:07  steve
+ *  Remove the useless sref template.
+ *
  * Revision 1.4  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.116 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.117 2000/04/02 04:26:06 steve Exp $"
 #endif
 
 /*
@@ -31,7 +31,6 @@
 # include  <string>
 # include  <map>
 # include  "verinum.h"
-# include  "sref.h"
 # include  "LineInfo.h"
 # include  "svector.h"
 
@@ -1319,16 +1318,23 @@ class NetPDelay  : public NetProc {
  *
  * The NetPEvent is the procedural part of the event.
  */
-class NetNEvent;
-class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
+class NetPEvent : public NetProc {
+
+      friend class NetNEvent;
 
     public:
       NetPEvent(const string&n, NetProc*st);
       ~NetPEvent();
 
-      string name() const { return name_; }
+      string name() const;
       NetProc* statement();
       const NetProc* statement() const;
+
+      NetNEvent* first();
+      NetNEvent* next();
+
+      const NetNEvent* first() const;
+      const NetNEvent* next() const;
 
       virtual int match_proc(struct proc_match_t*);
       virtual bool emit_proc(ostream&, struct target_t*) const;
@@ -1339,6 +1345,9 @@ class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
     private:
       string name_;
       NetProc*statement_;
+	// This is a list of the source events that can trigger me.
+      NetNEvent*src_;
+      mutable NetNEvent*idx_;
 };
 
 /*
@@ -1349,7 +1358,9 @@ class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
  * The NetNEvent may have wide input if is is an ANYEDGE type
  * device. This allows detecting changes in wide expressions.
  */
-class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
+class NetNEvent  : public NetNode {
+
+      friend class NetPEvent;
 
     public:
       enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
@@ -1357,7 +1368,8 @@ class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
       NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe);
       ~NetNEvent();
 
-      Type type() const { return edge_; }
+      Type type() const;
+      const NetPEvent*pevent() const;
 
       virtual void emit_node(ostream&, struct target_t*) const;
 
@@ -1366,6 +1378,8 @@ class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
 
     private:
       Type edge_;
+      NetPEvent*event_;
+      NetNEvent*next_;
 };
 
 
@@ -2266,6 +2280,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.117  2000/04/02 04:26:06  steve
+ *  Remove the useless sref template.
+ *
  * Revision 1.116  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

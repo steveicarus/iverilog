@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.110 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: netlist.cc,v 1.111 2000/04/02 04:26:06 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1756,8 +1756,12 @@ const NetNet* NetFuncDef::port(unsigned idx) const
 }
 
 NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
-: NetNode(ev, wid), sref<NetPEvent,NetNEvent>(pe), edge_(e)
+: NetNode(ev, wid), edge_(e)
 {
+      event_ = pe;
+      next_ = pe->src_;
+      pe->src_ = next_;
+
       for (unsigned idx = 0 ;  idx < wid ; idx += 1) {
 	    pin(idx).set_name("P", idx);
       }
@@ -1767,23 +1771,36 @@ NetNEvent::~NetNEvent()
 {
 }
 
-NetPEvent::NetPEvent(const string&n, NetProc*st)
-: name_(n), statement_(st)
+NetNEvent::Type NetNEvent::type() const
 {
+      return edge_;
+}
+
+const NetPEvent* NetNEvent::pevent() const
+{
+      return event_;
+}
+
+NetPEvent::NetPEvent(const string&n, NetProc*st)
+: name_(n), statement_(st), src_(0)
+{
+      idx_ = 0;
 }
 
 NetPEvent::~NetPEvent()
 {
-      svector<NetNEvent*>*back = back_list();
-      if (back) {
-	    for (unsigned idx = 0 ;  idx < back->count() ;  idx += 1) {
-		  NetNEvent*ne = (*back)[idx];
-		  delete ne;
-	    }
-	    delete back;
+      while (src_) {
+	    NetNEvent*cur = src_;
+	    src_ = src_->next_;
+	    delete cur;
       }
 
       delete statement_;
+}
+
+string NetPEvent::name() const
+{
+      return name_;
 }
 
 NetProc* NetPEvent::statement()
@@ -1794,6 +1811,32 @@ NetProc* NetPEvent::statement()
 const NetProc* NetPEvent::statement() const
 {
       return statement_;
+}
+
+NetNEvent* NetPEvent::first()
+{
+      idx_ = src_;
+      return idx_;
+}
+
+NetNEvent* NetPEvent::next()
+{
+      assert(idx_);
+      idx_ = idx_->next_;
+      return idx_;
+}
+
+const NetNEvent* NetPEvent::first() const
+{
+      idx_ = src_;
+      return idx_;
+}
+
+const NetNEvent* NetPEvent::next() const
+{
+      assert(idx_);
+      idx_ = idx_->next_;
+      return idx_;
 }
 
 NetSTask::NetSTask(const string&na, const svector<NetExpr*>&pa)
@@ -2597,6 +2640,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.111  2000/04/02 04:26:06  steve
+ *  Remove the useless sref template.
+ *
  * Revision 1.110  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.71 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.72 2000/04/02 04:26:06 steve Exp $"
 #endif
 
 /*
@@ -388,7 +388,7 @@ void NetNEvent::dump_node(ostream&o, unsigned ind) const
 	    break;
       }
 
-      o << name() << " --> " << fore_ptr()->name() << endl;
+      o << name() << " --> " << event_->name() << endl;
 
       dump_node_pins(o, ind+4);
 }
@@ -556,13 +556,15 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
 void NetPEvent::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "@(";
-      svector<const NetNEvent*>*list = back_list();
-      (*list)[0]->dump_proc(o);
-      for (unsigned idx = 1 ;  idx < list->count() ;  idx += 1) {
-	    o << " or ";
-	    (*list)[idx]->dump_proc(o);
+
+      if (src_) {
+	    const NetNEvent*cur = src_;
+	    for (cur = src_->next_ ;  cur ;  cur = cur->next_) {
+		  o << " or ";
+		  cur->dump_proc(o);
+	    }
       }
-      delete list;
+
       o << ") /* " << name_ << " */";
 
       if (statement_) {
@@ -904,6 +906,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.72  2000/04/02 04:26:06  steve
+ *  Remove the useless sref template.
+ *
  * Revision 1.71  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

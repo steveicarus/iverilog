@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.128 2000/04/01 21:40:23 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.129 2000/04/02 04:26:07 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1746,7 +1746,7 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
  */
 void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 {
-      string pevent = mangle(gate->fore_ptr()->name());
+      string pevent = mangle(gate->pevent()->name());
       os << "  /* " << gate->name() << " */" << endl;
 
       bool&printed = pevent_printed_flag[pevent];
@@ -2453,9 +2453,12 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 	   POSEDGE is replaced with the correct type for the desired
 	   edge. */
 
-      svector<const NetNEvent*>*list = proc->back_list();
-      if ((list->count()==1) && ((*list)[0]->type() == NetNEvent::POSITIVE)) {
-	    defn << "      if (B_IS1(" << mangle((*list)[0]->name()) <<
+      const NetNEvent*tmp = proc->first();
+      if (tmp && (tmp->type() == NetNEvent::POSITIVE)) {
+	      // POSITIVE can have only one input.
+	    assert(0 == proc->next());
+
+	    defn << "      if (B_IS1(" << mangle(tmp->name()) <<
 		  ".get(0))) {" << endl;
 	    defn << "         return true;" << endl;
 	    defn << "      } else {" << endl;
@@ -2463,6 +2466,7 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 		  ".wait(this);" << endl;
 	    defn << "         return false;" << endl;
 	    defn << "      }" << endl;
+
       } else {
 	      /* The canonical wait for an edge puts the thread into
 		 the correct wait object, then returns false from the
@@ -2481,7 +2485,6 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 	    "_() {" << endl;
 
       proc->emit_proc_recurse(os, this);
-      delete list;
 }
 
 /*
@@ -2528,6 +2531,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.129  2000/04/02 04:26:07  steve
+ *  Remove the useless sref template.
+ *
  * Revision 1.128  2000/04/01 21:40:23  steve
  *  Add support for integer division.
  *
