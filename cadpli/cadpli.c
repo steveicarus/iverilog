@@ -16,11 +16,14 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: cadpli.c,v 1.2 2003/02/17 00:01:25 steve Exp $"
+#ident "$Id: cadpli.c,v 1.3 2003/02/22 04:04:38 steve Exp $"
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
+# include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 # include  <string.h>
 # include  <assert.h>
 # include  "ivl_dlfcn.h"
@@ -89,6 +92,9 @@ s_tfcell veriusertfs[0];
 
 /*
  * $Log: cadpli.c,v $
+ * Revision 1.3  2003/02/22 04:04:38  steve
+ *  Only include malloc.h if it is present.
+ *
  * Revision 1.2  2003/02/17 00:01:25  steve
  *  Use a variant of ivl_dlfcn to do dynamic loading
  *  from within the cadpli module.
