@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.16 2001/04/26 15:52:22 steve Exp $"
+#ident "$Id: functor.h,v 1.17 2001/04/29 23:13:34 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -190,6 +190,8 @@ extern void functor_dump(FILE*fd);
 
 extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
+extern const unsigned char ft_BUFIF0[];
+extern const unsigned char ft_BUFIF1[];
 extern const unsigned char ft_MUXZ[];
 extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
@@ -201,6 +203,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.17  2001/04/29 23:13:34  steve
+ *  Add bufif0 and bufif1 functors.
+ *
  * Revision 1.16  2001/04/26 15:52:22  steve
  *  Add the mode-42 functor concept to UDPs.
  *

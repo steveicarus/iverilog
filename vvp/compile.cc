@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.45 2001/04/29 22:59:46 steve Exp $"
+#ident "$Id: compile.cc,v 1.46 2001/04/29 23:13:33 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -281,6 +281,12 @@ void compile_functor(char*label, char*type, unsigned init,
 
       } else if (strcmp(type, "BUF") == 0) {
 	    obj->table = ft_BUF;
+
+      } else if (strcmp(type, "BUFIF0") == 0) {
+	    obj->table = ft_BUFIF0;
+
+      } else if (strcmp(type, "BUFIF1") == 0) {
+	    obj->table = ft_BUFIF1;
 
       } else if (strcmp(type, "MUXZ") == 0) {
 	    obj->table = ft_MUXZ;
@@ -931,6 +937,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.46  2001/04/29 23:13:33  steve
+ *  Add bufif0 and bufif1 functors.
+ *
  * Revision 1.45  2001/04/29 22:59:46  steve
  *  Support .net constant inputs.
  *
