@@ -232,6 +232,11 @@ Usage: ivl <options>... file
 	file. If there are multiple modules, use this option to select
 	the module to be used as the top-level module.
 
+-T [min|typ|max]
+	Normally, ivl will select typ values from min:type:max
+	expressions and print a warning. This flag tells the compiler
+	exactly which value to choose, and suppresses the warning.
+
 -t <name>
 	Select the output format for the compiled result. Use the
 	"ivl -h" command to get a list of configured targets.
@@ -308,10 +313,6 @@ of Verilog.  Below is a description of some of the currently unsupported
 verilog features. This list is not exhaustive, and does not account
 for errors in the compiler. See the Icarus Verilog web page for the
 current state of support for Verilog.
-
-  - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
-
-  - `timescale directive
 
   - block disable not supported, i.e.:
 
