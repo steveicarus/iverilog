@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.22 2001/04/04 04:14:09 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.23 2001/04/04 04:28:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -474,7 +474,7 @@ static int show_system_task_call(ivl_statement_t net)
 		      const char*bits = ivl_expr_bits(expr);
 
 		      fprintf(vvp_out, ", %u'b", wid);
-		      for (bit = wid ;  wid > 0 ;  bit -= 1)
+		      for (bit = wid ;  bit > 0 ;  bit -= 1)
 			    fputc(bits[bit-1], vvp_out);
 		      break;
 		}
@@ -656,6 +656,9 @@ int draw_task_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.23  2001/04/04 04:28:41  steve
+ *  Fix broken look scanning down bits of number.
+ *
  * Revision 1.22  2001/04/04 04:14:09  steve
  *  emit vpi parameters values as vectors.
  *
