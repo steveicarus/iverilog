@@ -10,6 +10,9 @@
  *
  *    Change the function prototypes to use ANSI/ISO C syntax.
  */
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: mt19937int.c,v 1.2 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 /* A C-program for MT19937: Integer version (1998/4/6)            */
 /*  genrand() generates one pseudorandom unsigned integer (32bit) */
@@ -113,3 +116,9 @@ genrand()
     return y; 
 }
 
+/*
+ * $Log: mt19937int.c,v $
+ * Revision 1.2  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

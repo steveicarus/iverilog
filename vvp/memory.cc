@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.16 2002/03/17 03:23:31 steve Exp $"
+#ident "$Id: memory.cc,v 1.17 2002/08/11 23:47:05 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -504,3 +504,10 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
   e->idx = idx;
   schedule_generic(e, val, delay);
 }
+
+/*
+ * $Log: memory.cc,v $
+ * Revision 1.17  2002/08/11 23:47:05  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

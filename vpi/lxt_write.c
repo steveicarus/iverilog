@@ -19,6 +19,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: lxt_write.c,v 1.2 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 #include "lxt_write.h"
 
@@ -1526,3 +1529,10 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 
 return(rc);
 }
+
+/*
+ * $Log: lxt_write.c,v $
+ * Revision 1.2  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

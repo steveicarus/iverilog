@@ -1,3 +1,7 @@
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm_vpi.cc,v 1.2 2002/08/11 23:47:05 steve Exp $"
+#endif
+
 #include <stdarg.h>
 #include "vpi_user.h"
 #include "vpithunk.h"
@@ -31,3 +35,10 @@ void vvm_vpi_init()
   vvmt.vpi_free_object= vpi_free_object;
   vvmt.vpi_get_vlog_info = vpi_get_vlog_info;
 }
+
+/*
+ * $Log: vvm_vpi.cc,v $
+ * Revision 1.2  2002/08/11 23:47:05  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_vlog_info.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_vlog_info.c,v 1.2 2002/08/11 23:47:05 steve Exp $"
 #endif
 
 #include <vpi_priv.h>
@@ -79,3 +79,10 @@ vpip_set_vlog_info(int argc, char** argv)
 	vpip_argc = argc;
 	vpip_argv = argv;
 }
+
+/*
+ * $Log: vpi_vlog_info.c,v $
+ * Revision 1.2  2002/08/11 23:47:05  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

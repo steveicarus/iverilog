@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.c,v 1.4 2001/07/22 18:19:19 steve Exp $"
+#ident "$Id: vpi_mcd.c,v 1.5 2002/08/11 23:47:04 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -145,3 +145,10 @@ int vpi_mcd_fgetc(unsigned int mcd)
 	}
 	return 0;
 }
+
+/*
+ * $Log: vpi_mcd.c,v $
+ * Revision 1.5  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

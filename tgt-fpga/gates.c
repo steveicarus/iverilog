@@ -16,7 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.7 2001/09/09 22:23:28 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: gates.c,v 1.8 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -98,6 +100,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.8  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.7  2001/09/09 22:23:28  steve
  *  Virtex support for mux devices and adders
  *  with carry chains. Also, make Virtex specific

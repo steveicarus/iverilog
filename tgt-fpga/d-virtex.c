@@ -16,7 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.11 2001/10/11 00:12:28 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: d-virtex.c,v 1.12 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -1062,6 +1064,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.12  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.11  2001/10/11 00:12:28  steve
  *  Generate BUF devices for bufz logic.
  *

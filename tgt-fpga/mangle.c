@@ -16,8 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: mangle.c,v 1.4 2001/09/15 18:27:04 steve Exp $"
-
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: mangle.c,v 1.5 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include  "fpga_priv.h"
 # include  <string.h>
@@ -97,6 +98,9 @@ const char* xnf_mangle_nexus_name(ivl_nexus_t net)
 
 /*
  * $Log: mangle.c,v $
+ * Revision 1.5  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.4  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

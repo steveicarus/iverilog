@@ -16,8 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: enables.c,v 1.4 2001/07/25 03:10:50 steve Exp $"
-
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: enables.c,v 1.5 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include "config.h"
 # include  "ivl_target.h"
@@ -79,6 +80,9 @@ void absorb_pad_enables(void)
 
 /*
  * $Log: enables.c,v $
+ * Revision 1.5  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.4  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

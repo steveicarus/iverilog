@@ -18,7 +18,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: device.h,v 1.7 2001/09/16 01:48:16 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: device.h,v 1.8 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include  <ivl_target.h>
 
@@ -66,6 +68,9 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.8  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.7  2001/09/16 01:48:16  steve
  *  Suppor the PAD attribute on signals.
  *

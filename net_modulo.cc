@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_modulo.cc,v 1.3 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.4 2002/08/11 23:47:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -104,4 +104,9 @@ const Link& NetModulo::pin_DataB(unsigned idx) const
       return pin(idx+width_r_+width_a_);
 }
 
-
+/*
+ * $Log: net_modulo.cc,v $
+ * Revision 1.4  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
+ */

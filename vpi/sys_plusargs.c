@@ -16,7 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: sys_plusargs.c,v 1.2 2002/08/10 17:00:31 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: sys_plusargs.c,v 1.3 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include  <vpi_user.h>
 # include  <string.h>
@@ -327,6 +329,9 @@ void sys_plusargs_register()
 
 /*
  * $Log: sys_plusargs.c,v $
+ * Revision 1.3  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.2  2002/08/10 17:00:31  steve
  *  Allow vpiIntegerVar as parameter to $value$plusarg
  *

@@ -18,7 +18,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: fpga_priv.h,v 1.4 2001/09/06 04:28:40 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: fpga_priv.h,v 1.5 2002/08/11 23:47:04 steve Exp $"
+#endif
 
 # include  <stdio.h>
 # include  "device.h"
@@ -81,6 +83,9 @@ extern unsigned edif_uref;
 
 /*
  * $Log: fpga_priv.h,v $
+ * Revision 1.5  2002/08/11 23:47:04  steve
+ *  Add missing Log and Ident strings.
+ *
  * Revision 1.4  2001/09/06 04:28:40  steve
  *  Separate the virtex and generic-edif code generators.
  *
