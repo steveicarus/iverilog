@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.13 2001/03/31 17:36:39 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.14 2001/03/31 19:02:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -160,6 +160,7 @@ static int show_stmt_case(ivl_statement_t net)
 	    }
 
 	    cvec = draw_eval_expr_wid(cex, cond.wid);
+	    assert(cvec.wid == cond.wid);
 
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", cond.base,
 		    cvec.base, cond.wid);
@@ -218,6 +219,9 @@ static int show_stmt_condit(ivl_statement_t net)
 
       fprintf(vvp_out, "    %%jmp/0xz  T_%d.%d, %u;\n",
 	      thread_count, lab_false, cond.base);
+
+	/* Done with the condition expression. */
+      clr_vector(cond);
 
       rc += show_statement(ivl_stmt_cond_true(net));
 
@@ -469,6 +473,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.14  2001/03/31 19:02:13  steve
+ *  Clear results of condition expressions.
+ *
  * Revision 1.13  2001/03/31 17:36:39  steve
  *  Generate vvp code for case statements.
  *
