@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.c,v 1.1 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: delay.c,v 1.2 2003/05/28 02:42:43 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -28,6 +28,7 @@
 static PLI_INT32 delay_callback(struct t_cb_data*cb)
 {
       vpi_printf("XXXX delay_callback called.\n");
+      return 0;
 }
 
 int tf_isetdelay(PLI_INT32 delay, void*ss)
@@ -81,6 +82,9 @@ int tf_setdelay(PLI_INT32 delay)
 
 /*
  * $Log: delay.c,v $
+ * Revision 1.2  2003/05/28 02:42:43  steve
+ *  compiler warnings.
+ *
  * Revision 1.1  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *

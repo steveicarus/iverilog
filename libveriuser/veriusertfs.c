@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.8 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.9 2003/05/28 02:42:43 steve Exp $"
 #endif
 
 /*
@@ -130,7 +130,7 @@ static int compiletf(char *data)
       vpiHandle call_h, arg_i, arg_h;
       p_pli_data dp;
       int paramvc = 1;
-      int rtn;
+      int rtn = 0;
 
       /* cast back from opaque */
       pli = (p_pli_data)data;
@@ -220,7 +220,7 @@ static int calltf(char *data)
       if (tf->calltf) {
 	    if (pli_trace) {
 		  fprintf(pli_trace, "Call %s->calltf(%d, %d)\n",
-			  tf->data, reason_calltf);
+			  tf->tfname, tf->data, reason_calltf);
 		  fflush(pli_trace);
 	    }
 
@@ -292,7 +292,7 @@ PLI_INT32 tf_isynchronize(void*obj)
       cb.cb_rtn = callback;
       cb.obj = sys;
       cb.time = &ti;
-      cb.user_data = pli;
+      cb.user_data = (char *)pli;
 
       vpi_register_cb(&cb);
       return 0;
@@ -305,6 +305,9 @@ PLI_INT32 tf_synchronize(void)
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.9  2003/05/28 02:42:43  steve
+ *  compiler warnings.
+ *
  * Revision 1.8  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *
