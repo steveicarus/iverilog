@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.9 2000/04/26 18:35:12 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.10 2000/12/12 03:30:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -37,12 +37,10 @@ class ostream;
 class vvm_bitset_t  {
 
     public:
-      explicit vvm_bitset_t(vpip_bit_t*b, unsigned nb)
-      : bits(b), nbits(nb) { }
-
+      explicit vvm_bitset_t(vpip_bit_t*b, unsigned nb);
       ~vvm_bitset_t();
 
-      vpip_bit_t operator[] (unsigned idx) const { return get_bit(idx); }
+      vpip_bit_t operator[] (unsigned idx) const;
       vpip_bit_t&operator[] (unsigned idx);
 
       unsigned get_width() const { return nbits; }
@@ -154,6 +152,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.10  2000/12/12 03:30:25  steve
+ *  out-line vvm_bitset_t methods.
+ *
  * Revision 1.9  2000/04/26 18:35:12  steve
  *  Handle assigning small values to big registers.
  *
