@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.4 2001/03/27 03:31:07 steve Exp $"
+#ident "$Id: vvp.c,v 1.5 2001/04/28 20:06:07 steve Exp $"
 #endif
 
 /*
@@ -29,7 +29,14 @@
 
 FILE*vvp_out = 0;
 
-static void draw_module_declarations(ivl_design_t des)
+inline static void draw_execute_header(ivl_design_t des)
+{
+      const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
+      if (cp)
+	fprintf(vvp_out, "#! %s\n", cp);
+}
+
+inline static void draw_module_declarations(ivl_design_t des)
 {
       const char*cp = ivl_design_flag(des, "VPI_MODULE_LIST");
 
@@ -60,6 +67,8 @@ int target_design(ivl_design_t des)
 	    perror(path);
 	    return -1;
       }
+
+      draw_execute_header(des);
 
       draw_module_declarations(des);
 
