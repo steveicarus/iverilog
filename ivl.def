@@ -3,6 +3,7 @@ EXPORTS
 ivl_design_flag
 ivl_design_process
 ivl_design_root
+ivl_design_time_precision
 
 ivl_const_bits
 ivl_const_pin
