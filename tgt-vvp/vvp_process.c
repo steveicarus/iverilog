@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.82 2003/03/06 01:17:46 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.83 2003/03/15 04:45:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1230,7 +1230,7 @@ static int show_system_task_call(ivl_statement_t net)
 	    return 0;
       }
 
-      (void) draw_vpi_taskfunc_call(net, 0, 0);
+      draw_vpi_task_call(net);
 
 	/* VPI calls can manipulate anything, so clear the expression
 	   lookahead table after the call. */
@@ -1435,6 +1435,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.83  2003/03/15 04:45:18  steve
+ *  Allow real-valued vpi functions to have arguments.
+ *
  * Revision 1.82  2003/03/06 01:17:46  steve
  *  Use number for event labels.
  *

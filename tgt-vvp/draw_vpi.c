@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.3 2003/03/10 23:40:54 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.4 2003/03/15 04:45:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -47,14 +47,14 @@ static int is_magic_sfunc(const char*name)
 }
 
 
-struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
-			    ivl_expr_t fnet, unsigned wid)
+static void draw_vpi_taskfunc_args(const char*call_string,
+				   ivl_statement_t tnet,
+				   ivl_expr_t fnet)
 {
       unsigned idx;
       unsigned parm_count = tnet
 	    ? ivl_stmt_parm_count(tnet)
 	    : ivl_expr_parms(fnet);
-      struct vector_info res;
       struct vector_info *vec = 0x0;
       unsigned int vecs= 0;
       unsigned int veci= 0;
@@ -131,18 +131,7 @@ struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
 	    vecs++;
       }
 
-      if (tnet != 0) {
-	      /* for task calls, the res vector is not used. */
-	    res.base = 0;
-	    res.wid = 0;
-	    fprintf(vvp_out, "    %%vpi_call \"%s\"", ivl_stmt_name(tnet));
-
-      } else {
-	    res.base = allocate_vector(wid);
-	    res.wid  = wid;
-	    fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u",
-		    ivl_expr_name(fnet), res.base, res.wid);
-      }
+      fprintf(vvp_out, "%s", call_string);
 
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    ivl_expr_t expr = tnet
@@ -247,12 +236,48 @@ struct vector_info draw_vpi_taskfunc_call(ivl_statement_t tnet,
       }
 
       fprintf(vvp_out, ";\n");
+}
+
+void draw_vpi_task_call(ivl_statement_t tnet)
+{
+      char call_string[1024];
+      sprintf(call_string, "    %%vpi_call \"%s\"", ivl_stmt_name(tnet));
+      draw_vpi_taskfunc_args(call_string, tnet, 0);
+}
+
+struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)
+{
+      char call_string[1024];
+      struct vector_info res;
+
+      res.base = allocate_vector(wid);
+      res.wid  = wid;
+      sprintf(call_string, "    %%vpi_func \"%s\", %u, %u",
+	      ivl_expr_name(fnet), res.base, res.wid);
+
+      draw_vpi_taskfunc_args(call_string, 0, fnet);
+
+      return res;
+}
+
+int draw_vpi_rfunc_call(ivl_expr_t fnet)
+{
+      char call_string[1024];
+      int res = allocate_word();
+
+      sprintf(call_string, "    %%vpi_func/r \"%s\", %d",
+	      ivl_expr_name(fnet), res);
+
+      draw_vpi_taskfunc_args(call_string, 0, fnet);
 
       return res;
 }
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.4  2003/03/15 04:45:18  steve
+ *  Allow real-valued vpi functions to have arguments.
+ *
  * Revision 1.3  2003/03/10 23:40:54  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.92 2003/02/28 20:21:13 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.93 2003/03/15 04:45:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1619,7 +1619,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 
       }
 
-      res = draw_vpi_taskfunc_call(0, exp, wid);
+      res = draw_vpi_func_call(exp, wid);
 
 	/* New basic block starts after VPI calls. */
       clear_expression_lookaside();
@@ -2002,6 +2002,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.93  2003/03/15 04:45:18  steve
+ *  Allow real-valued vpi functions to have arguments.
+ *
  * Revision 1.92  2003/02/28 20:21:13  steve
  *  Merge vpi_call and vpi_func draw functions.
  *

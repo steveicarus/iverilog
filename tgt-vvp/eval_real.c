@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.5 2003/03/08 01:04:01 steve Exp $"
+#ident "$Id: eval_real.c,v 1.6 2003/03/15 04:45:18 steve Exp $"
 #endif
 
 /*
@@ -172,15 +172,19 @@ static int draw_sfunc_real(ivl_expr_t exp)
 {
       struct vector_info sv;
       int res;
-      assert(ivl_expr_parms(exp) == 0);
 
       switch (ivl_expr_value(exp)) {
-	  case IVL_VT_REAL:
-	    res = allocate_word();
-	    fprintf(vvp_out, "    %%vpi_func/r \"%s\", %d;\n",
-		    ivl_expr_name(exp), res);
 
-	    return res;
+	  case IVL_VT_REAL:
+	    if (ivl_expr_parms(exp) == 0) {
+		  res = allocate_word();
+		  fprintf(vvp_out, "    %%vpi_func/r \"%s\", %d;\n",
+			  ivl_expr_name(exp), res);
+
+	    } else {
+		  res = draw_vpi_rfunc_call(exp);
+	    }
+	    break;
 
 	  case IVL_VT_VECTOR:
 	      /* If the value of the sfunc is a vector, then evaluate
@@ -194,13 +198,14 @@ static int draw_sfunc_real(ivl_expr_t exp)
 		    res, sv.base, sv.wid);
 
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
-	    return res;
+	    break;
 
 	  default:
 	    assert(0);
+	    res = -1;
       }
 
-      return -1;
+      return res;
 }
 
 /*
@@ -278,6 +283,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.6  2003/03/15 04:45:18  steve
+ *  Allow real-valued vpi functions to have arguments.
+ *
  * Revision 1.5  2003/03/08 01:04:01  steve
  *  Excess precision breaks some targets.
  *

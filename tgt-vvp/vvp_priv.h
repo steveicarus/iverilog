@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.24 2003/02/28 20:21:13 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.25 2003/03/15 04:45:18 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -70,9 +70,11 @@ extern void draw_lpm_mux(ivl_lpm_t net);
  * statement handle, it will generate a %vpi_call
  * instruction. Otherwise, it will generate a %vpi_func instruction.
  */
-extern struct vector_info draw_vpi_taskfunc_call(ivl_statement_t net,
-						 ivl_expr_t exp,
-						 unsigned wid);
+extern void draw_vpi_task_call(ivl_statement_t net);
+
+extern struct vector_info draw_vpi_func_call(ivl_expr_t exp,
+					     unsigned wid);
+extern int draw_vpi_rfunc_call(ivl_expr_t exp);
 
 /*
  * Given a nexus, draw a string that represents the functor output
@@ -191,6 +193,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.25  2003/03/15 04:45:18  steve
+ *  Allow real-valued vpi functions to have arguments.
+ *
  * Revision 1.24  2003/02/28 20:21:13  steve
  *  Merge vpi_call and vpi_func draw functions.
  *
