@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.cc,v 1.5 2000/04/12 01:53:07 steve Exp $"
+#ident "$Id: vvm_thread.cc,v 1.6 2000/04/14 23:31:53 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -41,7 +41,8 @@ vvm_thread::vvm_thread()
 {
       sync_next_ = 0;
       sync_back_ = 0;
-      thread_yield();
+      callee_ = 0;
+      back_ = 0;
 }
 
 vvm_thread::~vvm_thread()
@@ -54,8 +55,17 @@ void vvm_thread::thread_yield(unsigned long delay)
       ev -> schedule(delay);
 }
 
+bool vvm_thread::go()
+{
+      return (step_)(this);
+}
+
+
 /*
  * $Log: vvm_thread.cc,v $
+ * Revision 1.6  2000/04/14 23:31:53  steve
+ *  No more class derivation from vvm_thread.
+ *
  * Revision 1.5  2000/04/12 01:53:07  steve
  *  Multiple thread can block on an event.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.h,v 1.6 2000/04/12 01:53:07 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.7 2000/04/14 23:31:53 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -38,14 +38,19 @@ class vvm_thread {
 
     public:
       explicit vvm_thread();
-      virtual ~vvm_thread();
+      ~vvm_thread();
 
       void thread_yield(unsigned long delay =0);
 
 	// This method executes a setp of the thread. The engine will
 	// continue to call go as long as it returns true. The thread
 	// will return false if it is ready to give up the CPU.
-      virtual bool go() =0;
+      bool go();
+      bool (*step_)(vvm_thread*);
+
+	// These members are used to handle task invocations.
+      vvm_thread*callee_;
+      vvm_thread*back_;
 
 	// The sync class uses this to list all the threads blocked on it.
       vvm_sync*sync_back_;
@@ -54,6 +59,9 @@ class vvm_thread {
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.7  2000/04/14 23:31:53  steve
+ *  No more class derivation from vvm_thread.
+ *
  * Revision 1.6  2000/04/12 01:53:07  steve
  *  Multiple thread can block on an event.
  *
