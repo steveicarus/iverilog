@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.46 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: functor.cc,v 1.47 2005/04/03 06:13:34 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -132,7 +132,6 @@ functor_s::functor_s()
       inhibit = 0;
 }
 #endif
-
 functor_s::~functor_s()
 {
 }
@@ -184,47 +183,11 @@ void functor_s::put_ostr(unsigned val, unsigned str,
 #endif
 }
 
-//          Special infrastructure functor types
-
-extra_outputs_functor_s::~extra_outputs_functor_s()
-{}
-
-void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push,
-				  unsigned val, unsigned)
-{
-      put(i, val);
-      functor_t base = functor_index(base_);
-      val = base->ival & 3; // yes, this is ugly
-      base->set(base_, push, val);
-}
-
-extra_ports_functor_s::~extra_ports_functor_s()
-{}
-
-void extra_ports_functor_s::set(vvp_ipoint_t i, bool push,
-			       unsigned val, unsigned str)
-{
-      functor_t base = functor_index(base_);
-      base->set(i, push, val, str);
-}
-
-extra_inputs_functor_s::~extra_inputs_functor_s()
-{}
-
-void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
-				 unsigned val, unsigned)
-{
-      put(i, val);
-      functor_t base = functor_index(out);
-      val = base->ival & 3; // yes, this is ugly
-      base->set(ipoint_make(out,0), push, val);
-}
-
-edge_inputs_functor_s::~edge_inputs_functor_s()
-{}
-
 /*
  * $Log: functor.cc,v $
+ * Revision 1.47  2005/04/03 06:13:34  steve
+ *  Remove dead fvectors class.
+ *
  * Revision 1.46  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *

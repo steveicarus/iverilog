@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.55 2005/04/03 06:13:34 steve Exp $"
+#ident "$Id: functor.h,v 1.56 2005/04/03 06:16:54 steve Exp $"
 #endif
 
 /* NOTE: THIS FILE IS BEOING PHASED OUT. IT'S FUNCTIONALITY IS OBSOLETE. */
@@ -276,22 +276,12 @@ unsigned functor_get(vvp_ipoint_t ptr)
       return fp->get();
 }
 
-//          Special infrastructure functor types
-#if 0
-/*
- * Vectors of functors
- */
-
-extern unsigned vvp_fvector_size(vvp_fvector_t v);
-extern vvp_ipoint_t vvp_fvector_get(vvp_fvector_t v, unsigned i);
-extern void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p);
-extern vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i);
-extern vvp_fvector_t vvp_fvector_new(unsigned size);
-extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
-#endif
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.56  2005/04/03 06:16:54  steve
+ *  Remove dead fvectors class.
+ *
  * Revision 1.55  2005/04/03 06:13:34  steve
  *  Remove dead fvectors class.
  *
