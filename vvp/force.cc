@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: force.cc,v 1.4 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: force.cc,v 1.5 2002/03/17 03:23:11 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -39,7 +39,7 @@ inline bool functor_s::enable(vvp_ipoint_t ptr)
       inhibit = 0;
       if (r) {
 	    if (get_str() != get_ostr())
-		  propagate();
+		  propagate(true);
 	    else
 		  assert(get() == get_oval());
       }
@@ -236,6 +236,9 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.5  2002/03/17 03:23:11  steve
+ *  Force the push flags to be explicit.
+ *
  * Revision 1.4  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.44 2002/01/06 17:50:50 steve Exp $"
+#ident "$Id: functor.h,v 1.45 2002/03/17 03:23:10 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -198,13 +198,13 @@ struct functor_s {
       inline unsigned char get_ostr() { return ostr; }
 
       void put(vvp_ipoint_t ipt, unsigned val);
-      void put_oval(unsigned val, bool push = true);
-      void put_ostr(unsigned val, unsigned str, bool push = true);
+      void put_oval(unsigned val, bool push);
+      void put_ostr(unsigned val, unsigned str, bool push);
       void schedule(unsigned delay);
       bool disable(vvp_ipoint_t ptr);
       bool enable(vvp_ipoint_t ptr);
-      void propagate(bool push = true);
-      void propagate(unsigned val, unsigned str, bool push = true);
+      void propagate(bool push);
+      void propagate(unsigned val, unsigned str, bool push);
 };
 
 /*
@@ -259,7 +259,7 @@ inline void functor_s::put_ostr(unsigned val, unsigned str, bool push)
 	      del = 0;
 
 	    if (push && del == 0) {
-		  propagate();
+		  propagate(push);
 	    }
 	    else
 		  schedule(del);
@@ -304,7 +304,7 @@ inline void functor_s::put_oval(unsigned val, bool push)
  * propagation events to pass the output on.
  */
 inline static 
-void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push = true)
+void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
 {
       functor_t fp = functor_index(ptr);
       fp->set(ptr, push, val, str);
@@ -386,6 +386,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.45  2002/03/17 03:23:10  steve
+ *  Force the push flags to be explicit.
+ *
  * Revision 1.44  2002/01/06 17:50:50  steve
  *  Support scope for functors. (Stephan Boettcher)
  *
@@ -413,105 +416,5 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
  *
  * Revision 1.36  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.35  2001/10/31 04:27:46  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.34  2001/10/27 03:43:56  steve
- *  Propagate functor push, to make assign better.
- *
- * Revision 1.33  2001/10/12 03:00:09  steve
- *  M42 implementation of mode 2 (Stephan Boettcher)
- *
- * Revision 1.32  2001/10/09 16:57:47  steve
- *  Collect functor reference handling into a single function. (Stephan Boettcher)
- *
- * Revision 1.31  2001/10/09 02:28:17  steve
- *  Add the PMOS and NMOS functor types.
- *
- * Revision 1.30  2001/08/08 01:05:06  steve
- *  Initial implementation of vvp_fvectors.
- *  (Stephan Boettcher)
- *
- * Revision 1.29  2001/07/28 03:12:39  steve
- *  Support C<su0> and C<su1> special symbols.
- *
- * Revision 1.28  2001/07/16 17:57:51  steve
- *  Merge sig and old_ival into union to save space.
- *
- * Revision 1.27  2001/07/13 03:02:34  steve
- *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
- *
- * Revision 1.26  2001/06/21 22:54:12  steve
- *  Support cbValueChange callbacks.
- *
- * Revision 1.25  2001/06/19 03:01:10  steve
- *  Add structural EEQ gates (Stephan Boettcher)
- *
- * Revision 1.24  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
- * Revision 1.23  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.22  2001/05/12 20:38:06  steve
- *  A resolver that understands some simple strengths.
- *
- * Revision 1.21  2001/05/09 04:23:18  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.20  2001/05/09 02:53:25  steve
- *  Implement the .resolv syntax.
- *
- * Revision 1.19  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
- *
- * Revision 1.18  2001/05/06 03:51:37  steve
- *  Regularize the mode-42 functor handling.
- *
- * Revision 1.17  2001/04/29 23:13:34  steve
- *  Add bufif0 and bufif1 functors.
- *
- * Revision 1.16  2001/04/26 15:52:22  steve
- *  Add the mode-42 functor concept to UDPs.
- *
- * Revision 1.15  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.14  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.13  2001/04/21 02:04:01  steve
- *  Add NAND and XNOR functors.
- *
- * Revision 1.12  2001/04/15 16:37:48  steve
- *  add XOR support.
- *
- * Revision 1.11  2001/04/14 05:10:56  steve
- *  support the .event/or statement.
- *
- * Revision 1.10  2001/04/04 17:43:19  steve
- *  support decimal strings from signals.
- *
- * Revision 1.9  2001/04/03 03:18:34  steve
- *  support functor_set push for blocking assignment.
- *
- * Revision 1.8  2001/04/01 21:31:46  steve
- *  Add the buf functor type.
- *
- * Revision 1.7  2001/03/29 03:46:36  steve
- *  Support named events as mode 2 functors.
- *
- * Revision 1.6  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
  */
 #endif

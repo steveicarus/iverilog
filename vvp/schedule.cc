@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.14 2001/12/06 03:31:25 steve Exp $"
+#ident "$Id: schedule.cc,v 1.15 2002/03/17 03:23:55 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -323,23 +323,23 @@ void schedule_simulate(void)
 
 		case TYPE_PROP:
 		    //printf("Propagate %p\n", cur->fun);
-		  cur->funp->propagate();
+		  cur->funp->propagate(false);
 		  e_free(cur);
 		  break;
 
 		case TYPE_ASSIGN:
 		  switch (cur->val) {
 		      case 0:
-			functor_set(cur->fun, cur->val, St0);
+			functor_set(cur->fun, cur->val, St0, false);
 			break;
 		      case 1:
-			functor_set(cur->fun, cur->val, St1);
+			functor_set(cur->fun, cur->val, St1, false);
 			break;
 		      case 2:
-			functor_set(cur->fun, cur->val, StX);
+			functor_set(cur->fun, cur->val, StX, false);
 			break;
 		      case 3:
-			functor_set(cur->fun, cur->val, HiZ);
+			functor_set(cur->fun, cur->val, HiZ, false);
 			break;
 		  }
 		  e_free(cur);
@@ -364,6 +364,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.15  2002/03/17 03:23:55  steve
+ *  Force the push flags to be explicit.
+ *
  * Revision 1.14  2001/12/06 03:31:25  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

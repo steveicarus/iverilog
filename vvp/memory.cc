@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.15 2002/01/31 04:28:17 steve Exp $"
+#ident "$Id: memory.cc,v 1.16 2002/03/17 03:23:31 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -349,7 +349,7 @@ void update_data(vvp_memory_port_t data)
       vvp_ipoint_t dx = ipoint_index(data->ix, i);
       functor_t df = functor_index(dx);
       unsigned char out = get_bit(data->cur_bits, i + data->bitoff);
-      df->put_oval(out);
+      df->put_oval(out, true);
     }
 }
 
@@ -370,7 +370,7 @@ void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit,
 	    {
 	      vvp_ipoint_t ix = ipoint_index(a->ix, i);
 	      functor_t df = functor_index(ix);
-	      df->put_oval(val);
+	      df->put_oval(val, true);
 	    }
 	}
       a = a->next;
