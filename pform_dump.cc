@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.33 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.34 1999/08/03 04:49:13 steve Exp $"
 #endif
 
 /*
@@ -501,10 +501,10 @@ void Module::dump(ostream&out) const
 		  out << "    input ." << cur->name << "(";
 		  break;
 		case NetNet::POUTPUT:
-		  out << "    input ." << cur->name << "(";
+		  out << "    output ." << cur->name << "(";
 		  break;
 		case NetNet::PINOUT:
-		  out << "    input ." << cur->name << "(";
+		  out << "    inout ." << cur->name << "(";
 		  break;
 		default:
 		  out << "    XXXX ." << cur->name << "(";
@@ -619,6 +619,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.34  1999/08/03 04:49:13  steve
+ *  Proper port type names.
+ *
  * Revision 1.33  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.
