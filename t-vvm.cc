@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.25 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.26 1999/06/24 04:21:45 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -237,8 +237,16 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
 	    expr->expr_width() << ">" << result << ";" << endl;
       switch (expr->op()) {
-	  case 'e':
+	  case 'E': // ===
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_eeq("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case 'e': // ==
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_eq("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case 'N': // !==
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_nee("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'n':
@@ -1193,6 +1201,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.26  1999/06/24 04:21:45  steve
+ *  Add the === and !== binary operators.
+ *
  * Revision 1.25  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.
