@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.51 1999/10/31 04:11:27 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.52 1999/10/31 20:08:24 steve Exp $"
 #endif
 
 /*
@@ -127,6 +127,7 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Adder (NetAddSub): " << name() << endl;
       dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
 }
 
 void NetAssign::dump_node(ostream&o, unsigned ind) const
@@ -797,6 +798,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.52  1999/10/31 20:08:24  steve
+ *  Include subtraction in LPM_ADD_SUB device.
+ *
  * Revision 1.51  1999/10/31 04:11:27  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name

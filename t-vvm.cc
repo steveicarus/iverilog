@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.69 1999/10/31 04:11:28 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.70 1999/10/31 20:08:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -824,6 +824,15 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	    emit_gate_outputfun_(gate, pin);
       }
 
+      if (gate->attribute("LPM_Direction") == "ADD") {
+	    init_code << "      " <<  mangle(gate->name()) <<
+		  ".init_Add_Sub(0, V1);" << endl;
+
+      } else if (gate->attribute("LPM_Direction") == "SUB") {
+	    init_code << "      " <<  mangle(gate->name()) <<
+		  ".init_Add_Sub(0, V0);" << endl;
+
+      }
 }
 
 void target_vvm::logic(ostream&os, const NetLogic*gate)
@@ -1793,6 +1802,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.70  1999/10/31 20:08:24  steve
+ *  Include subtraction in LPM_ADD_SUB device.
+ *
  * Revision 1.69  1999/10/31 04:11:28  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name

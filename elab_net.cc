@@ -1,0 +1,341 @@
+/*
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT)
+#ident "$Id: elab_net.cc,v 1.1 1999/10/31 20:08:24 steve Exp $"
+#endif
+
+# include  "PExpr.h"
+# include  "netlist.h"
+
+/*
+ * Elaborating binary operations generally involves elaborating the
+ * left and right expressions, then making an output wire and
+ * connecting the lot together with the right kind of gate.
+ */
+NetNet* PEBinary::elaborate_net(Design*des, const string&path,
+				unsigned width,
+				unsigned long rise,
+				unsigned long fall,
+				unsigned long decay) const
+{
+      switch (op_) {
+	  case '+':
+	  case '-':
+	    return elaborate_net_add_(des, path, width, rise, fall, decay);
+      }
+
+      NetNet*lsig = left_->elaborate_net(des, path, width, 0, 0, 0),
+	    *rsig = right_->elaborate_net(des, path, width, 0, 0, 0);
+      if (lsig == 0) {
+	    cerr << get_line() << ": error: Cannot elaborate ";
+	    left_->dump(cerr);
+	    cerr << endl;
+	    return 0;
+      }
+      if (rsig == 0) {
+	    cerr << get_line() << ": error: Cannot elaborate ";
+	    right_->dump(cerr);
+	    cerr << endl;
+	    return 0;
+      }
+
+      NetNet*osig;
+      NetNode*gate;
+      NetNode*gate_t;
+
+      switch (op_) {
+	  case '^': // XOR
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
+	    osig->local_flag(true);
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::XOR);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  des->add_node(gate);
+	    }
+	    des->add_signal(osig);
+	    break;
+
+	  case '&': // AND
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
+	    osig->local_flag(true);
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::AND);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  des->add_node(gate);
+	    }
+	    des->add_signal(osig);
+	    break;
+
+	  case '|': // Bitwise OR
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
+	    osig->local_flag(true);
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::OR);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  des->add_node(gate);
+	    }
+	    des->add_signal(osig);
+	    break;
+
+	  case 'a': // && (logical AND)
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
+
+	      // The first OR gate returns 1 if the left value is true...
+	    if (lsig->pin_count() > 1) {
+		  gate_t = new NetLogic(des->local_symbol(path),
+					1+lsig->pin_count(), NetLogic::OR);
+		  for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+			connect(gate_t->pin(idx+1), lsig->pin(idx));
+		  connect(gate->pin(1), gate_t->pin(0));
+		  des->add_node(gate_t);
+	    } else {
+		  connect(gate->pin(1), lsig->pin(0));
+	    }
+
+	      // The second OR gate returns 1 if the right value is true...
+	    if (rsig->pin_count() > 1) {
+		  gate_t = new NetLogic(des->local_symbol(path),
+					1+rsig->pin_count(), NetLogic::OR);
+		  for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+			connect(gate_t->pin(idx+1), rsig->pin(idx));
+		  connect(gate->pin(2), gate_t->pin(0));
+		  des->add_node(gate_t);
+	    } else {
+		  connect(gate->pin(2), rsig->pin(0));
+	    }
+
+	      // The output is the AND of the two logic values.
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    connect(gate->pin(0), osig->pin(0));
+	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    des->add_node(gate);
+	    break;
+
+	  case 'E': // === (Case equals)
+
+	      // The comparison generates gates to bitwise compare
+	      // each pair, and AND all the comparison results.
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+lsig->pin_count(),
+				NetLogic::AND);
+	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate_t = new NetCaseCmp(des->local_symbol(path));
+		  connect(gate_t->pin(1), lsig->pin(idx));
+		  connect(gate_t->pin(2), rsig->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx+1));
+		  des->add_node(gate_t);
+
+		    // Attach a label to this intermediate wire
+		  NetNet*tmp = new NetNet(des->local_symbol(path),
+					  NetNet::WIRE);
+		  tmp->local_flag(true);
+		  connect(gate_t->pin(0), tmp->pin(0));
+		  des->add_signal(tmp);
+	    }
+	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    des->add_node(gate);
+	    break;
+
+	  case 'e': // ==
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+lsig->pin_count(),
+				NetLogic::AND);
+	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate_t = new NetLogic(des->local_symbol(path), 3,
+				        NetLogic::XNOR);
+		  connect(gate_t->pin(1), lsig->pin(idx));
+		  connect(gate_t->pin(2), rsig->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx+1));
+		  des->add_node(gate_t);
+	    }
+	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    des->add_node(gate);
+	    break;
+
+	  case 'n': // !=
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+lsig->pin_count(),
+				NetLogic::OR);
+	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate_t = new NetLogic(des->local_symbol(path), 3,
+				        NetLogic::XOR);
+		  connect(gate_t->pin(1), lsig->pin(idx));
+		  connect(gate_t->pin(2), rsig->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx+1));
+		  des->add_node(gate_t);
+	    }
+	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    des->add_node(gate);
+	    break;
+
+	  case '+':
+	    assert(0);
+	    break;
+
+	  case 'l':
+	  case 'r':
+	    cerr << get_line() << ": sorry: combinational shift"
+		  " not supported here." << endl;
+	    des->errors += 1;
+	    osig = 0;
+	    break;
+	  default:
+	    cerr << get_line() << ": internal error: unsupported"
+		  " combinational operator (" << op_ << ")." << endl;
+	    des->errors += 1;
+	    osig = 0;
+      }
+
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
+	    delete tmp;
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
+	    delete tmp;
+
+      return osig;
+}
+
+/*
+ * Elaborate the structural +/- as an AddSub object. Connect DataA and
+ * DataB to the parameters, and connect the output signal to the
+ * Result. In this context, the device is a combinational adder with
+ * fixed direction, so leave Add_Sub unconnected and set the
+ * LPM_Direction property.
+ */
+NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
+				     unsigned lwidth,
+				     unsigned long rise,
+				     unsigned long fall,
+				     unsigned long decay) const
+{
+      NetNet*lsig = left_->elaborate_net(des, path, lwidth, 0, 0, 0),
+	    *rsig = right_->elaborate_net(des, path, lwidth, 0, 0, 0);
+      if (lsig == 0) {
+	    cerr << get_line() << ": error: Cannot elaborate ";
+	    left_->dump(cerr);
+	    cerr << endl;
+	    return 0;
+      }
+      if (rsig == 0) {
+	    cerr << get_line() << ": error: Cannot elaborate ";
+	    right_->dump(cerr);
+	    cerr << endl;
+	    return 0;
+      }
+
+      NetNet*osig;
+      NetNode*gate;
+      NetNode*gate_t;
+
+      string name = des->local_symbol(path);
+      unsigned width = lsig->pin_count();
+      if (rsig->pin_count() > lsig->pin_count())
+	    width = rsig->pin_count();
+
+	// Make the adder as wide as the widest operand
+      osig = new NetNet(des->local_symbol(path), NetNet::WIRE, width);
+      NetAddSub*adder = new NetAddSub(name, width);
+
+	// Connect the adder to the various parts.
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
+	    connect(lsig->pin(idx), adder->pin_DataA(idx));
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
+	    connect(rsig->pin(idx), adder->pin_DataB(idx));
+      for (unsigned idx = 0 ;  idx < osig->pin_count() ; idx += 1)
+	    connect(osig->pin(idx), adder->pin_Result(idx));
+
+      gate = adder;
+      des->add_signal(osig);
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
+      des->add_node(gate);
+
+      switch (op_) {
+	  case '+':
+	    gate->attribute("LPM_Direction", "ADD");
+	    break;
+	  case '-':
+	    gate->attribute("LPM_Direction", "SUB");
+	    break;
+      }
+
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
+	    delete tmp;
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
+	    delete tmp;
+
+      return osig;
+}
+
+/*
+ * $Log: elab_net.cc,v $
+ * Revision 1.1  1999/10/31 20:08:24  steve
+ *  Include subtraction in LPM_ADD_SUB device.
+ *
+ */
+

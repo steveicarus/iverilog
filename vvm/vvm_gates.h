@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.16 1999/10/31 04:11:28 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.17 1999/10/31 20:08:24 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -51,12 +51,15 @@ class vvm_out_event  : public vvm_event {
 
 /*
  * This template implements the LPM_ADD_SUB device type. The width of
- * the device is a template parameter.
+ * the device is a template parameter. The device handles addition and
+ * subtraction, selectable by the Add_Sub input. When configured as a
+ * subtractor, the device works by adding the 2s complement of
+ * DataB.
  */
 template <unsigned WIDTH> class vvm_add_sub {
 
     public:
-      vvm_add_sub() { }
+      vvm_add_sub() : ndir_(V0) { }
 
       void config_rout(unsigned idx, vvm_out_event::action_t a)
 	    { o_[idx] = a;
@@ -68,6 +71,10 @@ template <unsigned WIDTH> class vvm_add_sub {
 
       void init_DataB(unsigned idx, vpip_bit_t val)
 	    { b_[idx] = val;
+	    }
+
+      void init_Add_Sub(unsigned, vpip_bit_t val)
+	    { ndir_ = not(val);
 	    }
 
       void set_DataA(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
@@ -84,13 +91,17 @@ template <unsigned WIDTH> class vvm_add_sub {
       vpip_bit_t b_[WIDTH];
       vpip_bit_t r_[WIDTH];
 
+	// this is the inverse of the Add_Sub port. It is 0 for add,
+	// and 1 for subtract.
+      vpip_bit_t ndir_;
+
       vvm_out_event::action_t o_[WIDTH];
 
       void compute_(vvm_simulation*sim)
-	    { vpip_bit_t carry = V0;
+	    { vpip_bit_t carry = ndir_;
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
 		    vpip_bit_t val;
-		    val = add_with_carry(a_[idx], b_[idx], carry);
+		    val = add_with_carry(a_[idx], b_[idx] ^ ndir_, carry);
 		    if (val == r_[idx]) continue;
 		    r_[idx] = val;
 		    if (o_[idx] == 0) continue;
@@ -588,6 +599,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.17  1999/10/31 20:08:24  steve
+ *  Include subtraction in LPM_ADD_SUB device.
+ *
  * Revision 1.16  1999/10/31 04:11:28  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name

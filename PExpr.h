@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.21 1999/10/31 04:11:27 steve Exp $"
+#ident "$Id: PExpr.h,v 1.22 1999/10/31 20:08:24 steve Exp $"
 #endif
 
 # include  <string>
@@ -78,6 +78,7 @@ class PExpr : public LineInfo {
 	// identifiers and any other module specific interpretations
 	// of expresions.
       virtual bool is_constant(Module*) const;
+
 };
 
 ostream& operator << (ostream&, const PExpr&);
@@ -241,6 +242,12 @@ class PEBinary : public PExpr {
       char op_;
       PExpr*left_;
       PExpr*right_;
+
+      NetNet* elaborate_net_add_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
 };
 
 /*
@@ -290,6 +297,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.22  1999/10/31 20:08:24  steve
+ *  Include subtraction in LPM_ADD_SUB device.
+ *
  * Revision 1.21  1999/10/31 04:11:27  steve
  *  Add to netlist links pin name and instance number,
  *  and arrange in vvm for pin connections by name
