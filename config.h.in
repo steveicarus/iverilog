@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.8 2003/03/07 02:44:33 steve Exp $"
+#ident "$Id: config.h.in,v 1.9 2003/07/03 16:29:55 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -46,10 +46,13 @@
 # undef HAVE_LIBZ
 # undef HAVE_LIBBZ2
 # undef HAVE_SYS_WAIT_H
-# undef WORD_BIGENDIAN
+# undef WORDS_BIGENDIAN
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.9  2003/07/03 16:29:55  steve
+ *  spemm WORDS_BIGENDIAN correctly.
+ *
  * Revision 1.8  2003/03/07 02:44:33  steve
  *  Implement $realtobits.
  *
