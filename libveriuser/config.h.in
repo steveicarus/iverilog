@@ -1,3 +1,5 @@
+#ifndef __config_H
+#define __config_H
 /*
  * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
  *
@@ -16,33 +18,31 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_parent.c,v 1.2 2003/06/04 01:56:20 steve Exp $"
+#if !defined(WINNT)
+#ident "$Id: config.h.in,v 1.1 2003/06/04 01:56:20 steve Exp $"
 #endif
 
-#include  <vpi_user.h>
-#include  <acc_user.h>
-#include  "priv.h"
+# define SIZEOF_UNSIGNED_LONG_LONG 0
+# define SIZEOF_UNSIGNED_LONG 0
+# define SIZEOF_UNSIGNED 0
 
-handle acc_handle_parent(handle obj)
-{
-      vpiHandle scope = vpi_handle(vpiScope, obj);
-
-      while (scope && (vpi_get(vpiType, scope) != vpiModule))
-	    scope = vpi_handle(vpiScope, scope);
-
-      return scope;
-}
-
-
-handle acc_handle_scope(handle obj)
-{
-      return vpi_handle(vpiScope, obj);
-}
+#if SIZEOF_UNSIGNED >= 8
+typedef unsigned ivl_u64_t;
+#else
+# if SIZEOF_UNSIGNED_LONG >= 8
+typedef unsigned long ivl_u64_t;
+# else
+#  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
+typedef unsigned long long ivl_u64_t;
+#  else
+typedef unsigned long ivl_u64_t;
+#  endif
+# endif
+#endif
 
 /*
- * $Log: a_handle_parent.c,v $
- * Revision 1.2  2003/06/04 01:56:20  steve
+ * $Log: config.h.in,v $
+ * Revision 1.1  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
  *    tf_isetrealdelay, acc_handle_scope
@@ -51,8 +51,5 @@ handle acc_handle_scope(handle obj)
  * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
  * 6) add vpiLeftRange/RigthRange to signals
  *
- * Revision 1.1  2003/03/13 04:35:09  steve
- *  Add a bunch of new acc_ and tf_ functions.
- *
  */
-
+#endif

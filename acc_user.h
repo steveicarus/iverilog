@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.16 2003/05/30 04:18:31 steve Exp $"
+#ident "$Id: acc_user.h,v 1.17 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 /*
@@ -57,14 +57,21 @@ typedef struct __vpiHandle *handle;
 #define accScope     21
 #define accNet       25
 #define accReg       30
+#define accIntegerParam   200
+#define accRealParam 202
 #define accStringParam 204
 #define accParameter   220
 #define accTopModule      224
 #define accModuleInstance 226
+#define accWire        260
+#define accNamedEvent  280
 #define accIntegerVar  281
-#define accIntVar      281
+#define accRealVar   282
+#define accTimeVar   283
+#define accIntVar    accIntegerVar
 #define accScalar    300
 #define accVector    302
+#define accUnknown   412
 #define accConstant  600
 
 /* type VALUES FOR t_setval_delay STRUCTURE */
@@ -215,6 +222,7 @@ extern PLI_INT32 acc_fetch_size(handle obj);
 
 extern PLI_INT32 acc_fetch_type(handle obj);
 extern PLI_INT32 acc_fetch_fulltype(handle obj);
+extern PLI_INT32 acc_fetch_range(handle object, int *msb, int *lsb);
 extern char*     acc_fetch_type_str(PLI_INT32 type);
 
 extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
@@ -222,11 +230,15 @@ extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
 extern handle acc_handle_by_name(const char*name, handle scope);
 extern handle acc_handle_object(const char*name);
 extern handle acc_handle_parent(handle obj);
+extern handle acc_handle_scope(handle obj);
 
 extern handle acc_handle_tfarg(int n);
 extern handle acc_handle_tfinst(void);
 
+extern PLI_INT32 acc_compare_handles(handle, handle);
+
 extern handle acc_next(PLI_INT32 *, handle, handle);
+extern handle acc_next_scope(handle, handle);
 extern handle acc_next_topmod(handle prev_topmod);
 
 extern int acc_object_in_typelist(handle object, PLI_INT32*typelist);
@@ -248,6 +260,15 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.17  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.16  2003/05/30 04:18:31  steve
  *  Add acc_next function.
  *

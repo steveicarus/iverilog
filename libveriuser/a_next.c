@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_next.c,v 1.1 2003/05/30 04:18:31 steve Exp $"
+#ident "$Id: a_next.c,v 1.2 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 #include  <stdio.h>
@@ -30,12 +30,7 @@
  */
 handle acc_next(PLI_INT32 *type, handle scope, handle prev)
 {
-      vpiHandle hand;
-
-      /* preserved state */
-      static vpiHandle pscope = 0;
-      static vpiHandle iter = 0;
-      static vpiHandle rtn = 0;
+      vpiHandle iter, hand = 0;
 
       /* trace */
       if (pli_trace) {
@@ -55,49 +50,59 @@ handle acc_next(PLI_INT32 *type, handle scope, handle prev)
 	    fflush(pli_trace);
       }
 
-      /* initialize or reset if detect user dain bramaged */
-      if (!prev || !*type || scope != pscope || prev != rtn) {
-	    /* if iterator still valid, free it */
-	    if (iter) vpi_free_object(iter);
-
-	    /* iterate across all things in specified scope */
-	    if (!*type) {
-		  pscope = iter = rtn = 0;
-		  goto err;
-	    } else {
-		  pscope = scope;
-		  iter = vpi_iterate(vpiScope, pscope);
+      /*
+       * The acc_next_* functions need to be reentrant, so we need to
+       * rescan all the items upto the previous one, then return
+       * the next one.
+      */
+      iter = vpi_iterate(vpiScope, scope);	// ICARUS extension
+      if (prev) {
+	    while ((hand = vpi_scan(iter))) {
+		  if (hand == prev) break;
 	    }
       }
 
-      /* scan iterator */
-      rtn = 0;
-      while ((hand = vpi_scan(iter))) {
-	    if (acc_object_in_typelist(hand, type)) {
-		  rtn = hand;
-		  break;
+      /* scan for next */
+      if (hand) {
+	    while ((hand = vpi_scan(iter))) {
+		  if (acc_object_in_typelist(hand, type))
+			break;
 	    }
       }
 
-      /* if we exhausted iterator, cleanup */
-      if (!hand) { pscope = iter = 0; }
+      /* don't leak iterators */
+      if (hand) vpi_free_object(iter);
 
-err:
       /* trace */
       if (pli_trace) {
-	    fprintf(pli_trace, " --> %p", rtn);
-	    if (rtn)
-		  fprintf(pli_trace, " \"%s\"\n", vpi_get_str(vpiName, rtn));
+	    fprintf(pli_trace, " --> %p", hand);
+	    if (hand)
+		  fprintf(pli_trace, " \"%s\"\n", vpi_get_str(vpiName, hand));
 	    else
 		  fprintf(pli_trace, "\n");
 
       }
 
-      return rtn;
+      return hand;
+}
+
+handle acc_next_scope(handle scope, handle prev)
+{
+      PLI_INT32 type[2] = {accScope, 0};
+      return acc_next(type, scope, prev);
 }
 
 /*
  * $Log: a_next.c,v $
+ * Revision 1.2  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.1  2003/05/30 04:18:31  steve
  *  Add acc_next function.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.31 2003/05/30 04:22:13 steve Exp $"
+#ident "$Id: veriuser.h,v 1.32 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 /*
@@ -167,6 +167,8 @@ extern void veriusertfs_register_table(p_tfcell vtable);
 #define reason_synch   8
 #define REASON_SYNCH   reason_synch
 #define reason_finish  9
+#define reason_reactivate 10
+#define REASON_REACTIVATE reason_reactivate
 #define reason_rosynch 11
 #define REASON_ROSYNCH reason_rosynch
 #define reason_endofcompile 16
@@ -323,6 +325,9 @@ extern PLI_INT32 tf_isynchronize(void* sys);
 extern PLI_INT32 tf_rosynchronize(void);
 extern PLI_INT32 tf_irosynchronize(void* sys);
 
+extern PLI_INT32 tf_setrealdelay(double realdelay);
+extern PLI_INT32 tf_isetrealdelay(double realdelay, void*inst);
+
 extern PLI_INT32 tf_typep(PLI_INT32 narg);
 
 extern void tf_warning(const char*, ...)
@@ -332,6 +337,15 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.32  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.31  2003/05/30 04:22:13  steve
  *  Add tf_strgetp functions.
  *

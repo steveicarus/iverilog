@@ -17,22 +17,23 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.8 2003/05/30 04:01:55 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.9 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 #include  <veriuser.h>
 #include  <vpi_user.h>
 #include  <stdlib.h>
 #include  <math.h>
+#include  "config.h"
 
 /*
  * some TF time routines implemented using VPI interface
  */
 
-static long long
+static ivl_u64_t
 scale(int high, int low, void*obj) {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
-      long long scaled;
+      ivl_u64_t scaled;
 
       scaled = high;
       scaled = (scaled << 32) | low;
@@ -68,7 +69,7 @@ char *tf_strgettime(void)
 PLI_INT32 tf_getlongtime(PLI_INT32 *high)
 {
       s_vpi_time time;
-      long long scaled;
+      ivl_u64_t scaled;
       time.type = vpiSimTime;
       vpi_get_time (0, &time);
       scaled = scale(time.high, time.low, 0);
@@ -80,7 +81,7 @@ PLI_INT32 tf_getlongtime(PLI_INT32 *high)
 PLI_INT32 tf_igetlongtime(PLI_INT32 *high, void*obj)
 {
       s_vpi_time time;
-      long long scaled;
+      ivl_u64_t scaled;
       time.type = vpiSimTime;
       vpi_get_time ((vpiHandle)obj, &time);
       scaled = scale(time.high, time.low, obj);
@@ -96,7 +97,7 @@ PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) \
 void tf_scale_longdelay(void*obj, PLI_INT32 lo, PLI_INT32 hi,
 			PLI_INT32 *low, PLI_INT32 *high)
 {
-      long long scaled = scale(hi, lo, obj);
+      ivl_u64_t scaled = scale(hi, lo, obj);
       *high = (scaled >> 32) & 0xffffffff;
       *low = scaled & 0xffffffff;
 }
@@ -129,6 +130,15 @@ PLI_INT32 tf_igettimeunit(void*obj)
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.9  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.8  2003/05/30 04:01:55  steve
  *  Add tf_scale_longdelay.
  *

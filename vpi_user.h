@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.27 2003/05/29 02:21:45 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.28 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 
@@ -190,6 +190,8 @@ typedef struct t_vpi_value {
 #define vpiDefName    9
 #define vpiTimeUnit      11
 #define vpiTimePrecision 12
+#define vpiNetType    22
+#   define vpiWire        1
 #define vpiConstType 43
 #   define vpiDecConst    1
 #   define vpiRealConst   2
@@ -397,6 +399,15 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.28  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.27  2003/05/29 02:21:45  steve
  *  Implement acc_fetch_defname and its infrastructure in vvp.
  *

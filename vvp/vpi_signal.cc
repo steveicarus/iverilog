@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.56 2003/05/02 04:29:57 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.57 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 /*
@@ -96,6 +96,15 @@ static int signal_get(int code, vpiHandle ref)
 	    else
 		  return rfp->lsb - rfp->msb + 1;
 
+	  case vpiNetType:
+	    if (ref->vpi_type->type_code==vpiNet)
+		  return vpiWire;
+	    else
+		  return 0;
+
+	  case vpiLeftRange: return rfp->msb;
+	  case vpiRightRange: return rfp->lsb;
+
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
 		  return vvp_fvector_get(rfp->bits, 0);
@@ -103,6 +112,7 @@ static int signal_get(int code, vpiHandle ref)
 		  return 0;
 
 	  default:
+	    vpi_printf("signal_get: property %d is unknown\n", code);
 	    return 0;
       }
 }
@@ -835,6 +845,15 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.57  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.56  2003/05/02 04:29:57  steve
  *  Add put_value with transport delay.
  *

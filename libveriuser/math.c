@@ -17,42 +17,43 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: math.c,v 1.1 2003/04/23 15:01:29 steve Exp $"
+#ident "$Id: math.c,v 1.2 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 # include <string.h>
 # include <stdlib.h>
 # include <assert.h>
+# include "config.h"
 # include "vpi_user.h"
 # include "veriuser.h"
 
 void tf_multiply_long(PLI_INT32*aof_low1, PLI_INT32*aof_high1,
 		      PLI_INT32 aof_low2, PLI_INT32 aof_high2)
 {
-      if (sizeof(long) == 8) {
-	    long a, b;
-	    a = (*aof_high1 << 32) | (*aof_low1);
-	    b = (aof_high2 << 32)  | (aof_low2);
-	    a *= b;
-	    *aof_low1 = a & 0xffffffff;
-	    a >>= 32;
-	    *aof_high1 = a & 0xffffffff;
-
-      } else if (sizeof(long long) == 8) {
-	    long long a, b;
-	    a = (*aof_high1 << 32) | (*aof_low1);
-	    b = ( aof_high2 << 32) | ( aof_low2);
-	    a *= b;
-	    *aof_low1 = a & 0xffffffff;
-	    a >>= 32;
-	    *aof_high1 = a & 0xffffffff;
-      } else {
-	    assert(0);
-      }
+      ivl_u64_t a, b;
+      a = *aof_high1;
+      a <<= 32;
+      a |= *aof_low1;
+      b = aof_high2;
+      b <<= 32;
+      b |= aof_low2;
+      a *= b;
+      *aof_low1 = a & 0xffffffff;
+      a >>= 32;
+      *aof_high1 = a & 0xffffffff;
 }
 
 /*
  * $Log: math.c,v $
+ * Revision 1.2  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.1  2003/04/23 15:01:29  steve
  *  Add tf_synchronize and tf_multiply_long.
  *

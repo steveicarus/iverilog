@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+/* vi:sw=6
+ * Copyright (c) 2003 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,33 +16,21 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_parent.c,v 1.2 2003/06/04 01:56:20 steve Exp $"
+#if !defined(WINNT)
+#ident "$Id: a_compare_handles.c,v 1.1 2003/06/04 01:56:20 steve Exp $"
 #endif
 
-#include  <vpi_user.h>
-#include  <acc_user.h>
-#include  "priv.h"
+# include  <vpi_user.h>
+# include  <acc_user.h>
 
-handle acc_handle_parent(handle obj)
+int acc_compare_handles(handle handle1, handle handle2)
 {
-      vpiHandle scope = vpi_handle(vpiScope, obj);
-
-      while (scope && (vpi_get(vpiType, scope) != vpiModule))
-	    scope = vpi_handle(vpiScope, scope);
-
-      return scope;
-}
-
-
-handle acc_handle_scope(handle obj)
-{
-      return vpi_handle(vpiScope, obj);
+      return handle1 == handle2;
 }
 
 /*
- * $Log: a_handle_parent.c,v $
- * Revision 1.2  2003/06/04 01:56:20  steve
+ * $Log: a_compare_handles.c,v $
+ * Revision 1.1  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
  *    tf_isetrealdelay, acc_handle_scope
@@ -51,8 +39,4 @@ handle acc_handle_scope(handle obj)
  * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
  * 6) add vpiLeftRange/RigthRange to signals
  *
- * Revision 1.1  2003/03/13 04:35:09  steve
- *  Add a bunch of new acc_ and tf_ functions.
- *
  */
-

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_object_of_type.c,v 1.4 2003/05/30 04:18:31 steve Exp $"
+#ident "$Id: a_object_of_type.c,v 1.5 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -43,10 +43,7 @@ PLI_INT32 acc_object_of_type(handle object, PLI_INT32 type)
       vtype = vpi_get(vpiType, object);
 
       switch (type) {
-	  case accModule:
-	    if (vtype == vpiModule)
-		  rtn = 1;
-	    break;
+	  case accModule: rtn = vtype == vpiModule; break;
 
 	  case accScope:
 	    if (vtype == vpiModule || vtype == vpiNamedBegin ||
@@ -54,15 +51,20 @@ PLI_INT32 acc_object_of_type(handle object, PLI_INT32 type)
 		vtype == vpiFunction) rtn = 1;
 	    break;
 
-	  case accNet:
-	    if (vtype == vpiNet)
+	  case accNet: rtn = vtype == vpiNet; break;
+	  case accReg: rtn = vtype == vpiReg; break;
+
+	  case accRealParam:
+	    if (vtype == vpiNamedEvent &&
+	        vpi_get(vpiConstType, object) == vpiRealConst)
 		  rtn = 1;
 	    break;
 
-	  case accReg:
-	    if (vtype == vpiReg)
-		  rtn = 1;
-	    break;
+	  case accParameter: rtn = vtype == vpiParameter; break;
+	  case accNamedEvent: rtn = vtype == vpiNamedEvent; break;
+	  case accIntegerVar: rtn = vtype == vpiIntegerVar; break;
+	  case accRealVar: rtn = vtype == vpiRealVar; break;
+	  case accTimeVar: rtn = vtype == vpiTimeVar; break;
 
 	  case accScalar:
 	    if (vtype == vpiReg || vtype == vpiNet)
@@ -72,11 +74,6 @@ PLI_INT32 acc_object_of_type(handle object, PLI_INT32 type)
 	  case accVector:
 	    if (vtype == vpiReg || vtype == vpiNet)
 		  rtn = vpi_get(vpiSize, object) > 1;
-	    break;
-
-	  case accParameter:
-	    if (vtype == vpiParameter)
-		  rtn = 1;
 	    break;
 
 	    default:
@@ -104,6 +101,15 @@ PLI_INT32 acc_object_in_typelist(handle object, PLI_INT32*typelist)
 
 /*
  * $Log: a_object_of_type.c,v $
+ * Revision 1.5  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.4  2003/05/30 04:18:31  steve
  *  Add acc_next function.
  *

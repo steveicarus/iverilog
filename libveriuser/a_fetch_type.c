@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.6 2003/05/30 04:18:31 steve Exp $"
+#ident "$Id: a_fetch_type.c,v 1.7 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -42,6 +42,9 @@ PLI_INT32 acc_fetch_type(handle obj)
 	    else
 		  return accConstant;
 
+	  case vpiNamedEvent:
+	    return accNamedEvent;
+
 	  case vpiNet:
 	    return accNet;
 
@@ -60,7 +63,7 @@ PLI_INT32 acc_fetch_type(handle obj)
 	  default:
 	    vpi_printf("acc_fetch_type: vpiType %d is what accType?\n",
 		       vpi_get(vpiType, obj));
-	    return 0;
+	    return accUnknown;
       }
 
       return 0;
@@ -68,7 +71,20 @@ PLI_INT32 acc_fetch_type(handle obj)
 
 PLI_INT32 acc_fetch_fulltype(handle obj)
 {
-      switch (vpi_get(vpiType, obj)) {
+      int type = vpi_get(vpiType, obj);
+
+      switch (type) {
+	  case vpiNet: {
+	    type = vpi_get(vpiNetType, obj);
+	    switch(type) {
+		case vpiWire: return accWire;
+		default: 
+		vpi_printf("acc_fetch_fulltype: vpiNetType %d unknown?\n",
+			   type);
+		return accUnknown;
+	    }
+	  }
+
 	  case vpiConstant:
 	      /* see acc_fetch_type */
 	    if (vpi_get(vpiConstType, obj) == vpiStringConst)
@@ -76,8 +92,7 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 	    else
 		  return accConstant;
 
-	  case vpiIntegerVar:
-	    return accIntegerVar;
+	  case vpiIntegerVar: return accIntegerVar;
 
 	  case vpiModule:
 	    if (!vpi_handle(vpiScope, obj))
@@ -86,18 +101,35 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 		return accModuleInstance;
 	    // FIXME accCellInstance
 
-	  case vpiReg:
-	    return accReg;
+	  case vpiNamedEvent: return accNamedEvent;
+
+	  case vpiParameter:
+	    switch(vpi_get(vpiConstType, obj)) {
+		case vpiRealConst: return accRealParam;
+		case vpiStringConst: return accStringParam;
+		default: return accIntegerParam;
+	    }
+
+	  case vpiReg: return accReg;
 
 	  default:
-	    vpi_printf("acc_fetch_fulltype: vpiType %d is what accType?\n",
-		       vpi_get(vpiType, obj));
-	    return 0;
+	    vpi_printf("acc_fetch_fulltype: vpiType %d unknown?\n",
+		       type);
+	    return accUnknown;
       }
 }
 
 /*
  * $Log: a_fetch_type.c,v $
+ * Revision 1.7  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.6  2003/05/30 04:18:31  steve
  *  Add acc_next function.
  *

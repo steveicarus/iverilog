@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.10 2003/05/30 04:05:32 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.11 2003/06/04 01:56:20 steve Exp $"
 #endif
 
 /*
@@ -29,9 +29,11 @@
 # include <string.h>
 # include <stdlib.h>
 # include <assert.h>
+# include <math.h>
+# include "config.h"
+# include "priv.h"
 # include "vpi_user.h"
 # include "veriuser.h"
-# include "priv.h"
 
 /*
  * local structure used to hold the persistent veriusertfs data
@@ -263,6 +265,9 @@ static int callback(p_cb_data data)
 	  case cbReadOnlySynch:
 	    reason = reason_rosynch;
 	    break;
+	  case cbAfterDelay:
+	    reason = reason_reactivate;
+	    break;
 	  default:
 	    assert(0);
       }
@@ -334,8 +339,51 @@ PLI_INT32 tf_rosynchronize(void)
       return tf_irosynchronize(tf_getinstance());
 }
 
+
+PLI_INT32 tf_isetrealdelay(double dly, void*obj)
+{
+      vpiHandle sys = (vpiHandle)obj;
+      p_pli_data pli = vpi_get_userdata(sys);
+      s_cb_data cb;
+      s_vpi_time ti = {vpiSimTime};
+
+      // Scale delay to SimTime
+      ivl_u64_t delay = ((dly
+			 * pow(10, tf_gettimeprecision() - tf_gettimeunit()))
+			 + 0.5);
+      ti.high = delay >> 32 & 0xffffffff;
+      ti.low = delay & 0xffffffff;
+
+      cb.reason = cbAfterDelay;
+      cb.cb_rtn = callback;
+      cb.obj = sys;
+      cb.time = &ti;
+      cb.user_data = (char *)pli;
+
+      vpi_register_cb(&cb);
+
+      if (pli_trace)
+	    fprintf(pli_trace, "tf_isetrealdelay(%f, %p) --> %d\n",
+		  dly, obj, 0);
+
+      return 0;
+}
+
+PLI_INT32 tf_setrealdelay(double dly)
+{
+      return tf_isetrealdelay(dly, tf_getinstance());
+}
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.11  2003/06/04 01:56:20  steve
+ * 1) Adds configure logic to clean up compiler warnings
+ * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
+ *    tf_isetrealdelay, acc_handle_scope
+ * 3) makes acc_next reentrant
+ * 4) adds basic vpiWire type support
+ * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
+ * 6) add vpiLeftRange/RigthRange to signals
+ *
  * Revision 1.10  2003/05/30 04:05:32  steve
  *  Add tf_rosynchronize and friends.
  *
