@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.61 2000/05/08 05:27:32 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.62 2000/05/09 21:16:35 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -69,8 +69,18 @@ class vvm_1bit_out  : public vvm_nexus::drive_t  {
       ~vvm_1bit_out();
       void output(vpip_bit_t);
 
+      void drive0(vpip_bit_t);
+      void drive1(vpip_bit_t);
+      void driveX(vpip_bit_t);
+      void driveZ(vpip_bit_t);
+
     private:
       unsigned delay_;
+
+      vpip_bit_t drive0_;
+      vpip_bit_t drive1_;
+      vpip_bit_t driveX_;
+      vpip_bit_t driveZ_;
 };
 
 /*
@@ -823,7 +833,7 @@ template <unsigned WIDTH> class vvm_udp_ssequ {
  *
  * This device is useful for isolating nets.
  */
-class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_nexus::drive_t {
+class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_1bit_out {
     public:
       explicit vvm_bufz();
       ~vvm_bufz();
@@ -930,6 +940,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.62  2000/05/09 21:16:35  steve
+ *  Give strengths to logic and bufz devices.
+ *
  * Revision 1.61  2000/05/08 05:27:32  steve
  *  Restore vvm_bufz to working condition.
  *

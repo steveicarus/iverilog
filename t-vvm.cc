@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.147 2000/05/07 21:17:21 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.148 2000/05/09 21:16:35 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1567,6 +1567,7 @@ void target_vvm::lpm_ram_dq(ostream&os, const NetRamDq*ram)
 
 void target_vvm::logic(ostream&os, const NetLogic*gate)
 {
+      const string mname = mangle(gate->name());
 
 	/* Draw the definition of the gate object. The exact type to
 	   use depends on the gate type. Whatever the type, the basic
@@ -1614,12 +1615,34 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 		  gate->name() << "\"" << endl;
       }
 
-      os << mangle(gate->name()) << " (" << gate->rise_time() << ");" << endl;
+      os << mname << " (" << gate->rise_time() << ");" << endl;
 
 	/* Write the code to invoke startup for this object. */
 
-      start_code << "      " << mangle(gate->name()) << ".start();" << endl;
+      start_code << "      " << mname << ".start();" << endl;
 
+
+	/* Setup drive strengths that are not STRONG. The gates
+	   default to strong outputs, so don't generate the
+	   unnecessary code to set the signal to strong. We know for
+	   all these types of gates that pin(0) is the output, and the
+	   vvm class takes drive0 and drive1 methods. */
+
+      const char*str0 = vvm_val_name(verinum::V0,
+				     gate->pin(0).drive0(),
+				     gate->pin(0).drive1());
+      if (gate->pin(0).drive0() != Link::STRONG) {
+	    init_code << "      " << mname << ".drive0(" << str0 << ");"
+		      << endl;
+      }
+
+      const char*str1 = vvm_val_name(verinum::V1,
+				     gate->pin(0).drive0(),
+				     gate->pin(0).drive1());
+      if (gate->pin(0).drive1() != Link::STRONG) {
+	    init_code << "      " << mname << ".drive1(" << str1 << ");"
+		      << endl;
+      }
 
 	/* Connect the output and all the inputs of the gate to the
 	   nexus objects, one bit at a time. */
@@ -1652,6 +1675,27 @@ void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 
       nexus = nexus_from_link(&gate->pin(0));
       ncode = nexus_wire_map[nexus];
+
+	/* Setup drive strengths that are not STRONG. The BUFZ
+	   defaults to strong outputs, so don't generate the
+	   unnecessary code to set the signal to strong. We also know
+	   that the vvm_bufz class takes drive0 and drive1 methods. */
+
+      if (gate->pin(0).drive0() != Link::STRONG) {
+	    const char*str = vvm_val_name(verinum::V0,
+					  gate->pin(0).drive0(),
+					  gate->pin(0).drive1());
+	    init_code << "      " << mname << ".drive0(" << str << ");"
+		      << endl;
+      }
+
+      if (gate->pin(0).drive1() != Link::STRONG) {
+	    const char*str = vvm_val_name(verinum::V1,
+					  gate->pin(0).drive0(),
+					  gate->pin(0).drive1());
+	    init_code << "      " << mname << ".drive1(" << str << ");"
+		      << endl;
+      }
 
       init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
 	    mname << ");" << endl;
@@ -2824,6 +2868,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.148  2000/05/09 21:16:35  steve
+ *  Give strengths to logic and bufz devices.
+ *
  * Revision 1.147  2000/05/07 21:17:21  steve
  *  non-blocking assignment to a bit select.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_bit.c,v 1.3 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: vpi_bit.c,v 1.4 2000/05/09 21:16:35 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -34,6 +34,86 @@
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
 # define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
 
+vpip_bit_t vpip_pair_resolve(vpip_bit_t a, vpip_bit_t b)
+{
+      vpip_bit_t res = a;
+
+      if (B_ISZ(b))
+	    return a;
+
+      if (UNAMBIG(a) && UNAMBIG(b)) {
+
+	      /* If both signals are unambiguous, simply choose
+		 the stronger. If they have the same strength
+		 but different values, then this becomes
+		 ambiguous. */
+
+	    if (a == b) {
+
+		    /* values are equal. do nothing. */
+
+	    } else if ((b&0x07) > (res&0x07)) {
+
+		    /* New value is stronger. Take it. */
+		  res = b;
+
+	    } else if ((b&0x77) == (res&0x77)) {
+
+		    /* Strengths are the same. Make value ambiguous. */
+		  res = (res&0x70) | (b&0x07) | 0x80;
+
+	    } else {
+
+		    /* Must be res is the stronger one. */
+	    }
+
+      } else if (UNAMBIG(res) || UNAMBIG(b)) {
+
+	      /* If one of the signals is unambiguous, then it
+		 will sweep up the weaker parts of the ambiguous
+		 signal. The result may be ambiguous, or maybe not. */
+
+	    vpip_bit_t tmp = 0;
+
+	    if ((res&0x70) > (b&0x70))
+		  tmp |= res&0xf0;
+	    else
+		  tmp |= b&0xf0;
+
+	    if ((res&0x07) > (b&0x07))
+		  tmp |= res&0x0f;
+	    else
+		  tmp |= b&0x0f;
+
+	    res = tmp;
+
+      } else {
+
+	      /* If both signals are ambiguous, then the result
+		 has an even wider ambiguity. */
+
+	    vpip_bit_t tmp = 0;
+
+	    if (STREN1(b) > STREN1(res))
+		  tmp |= b&0xf0;
+	    else
+		  tmp |= res&0xf0;
+
+	    if (STREN0(b) < STREN0(res))
+		  tmp |= b&0x0f;
+	    else
+		  tmp |= res&0x0f;
+
+	    res = tmp;
+      }
+
+	/* Cannonicalize the HiZ value. */
+      if ((res&0x77) == 0)
+	    res = HiZ;
+
+      return res;
+}
+
 vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 {
       unsigned idx;
@@ -45,86 +125,18 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 	    idx += 1;
       }
 
-      for ( ;  idx < nbits ;  idx += 1) {
-	      /* High-impedence drives do not affect the result. */
-	    if (bits[idx] == HiZ)
-		  continue;
+      for ( ;  idx < nbits ;  idx += 1)
+	    res = vpip_pair_resolve(res, bits[idx]);
 
-	    if (UNAMBIG(res) && UNAMBIG(bits[idx])) {
-
-		    /* If both signals are unambiguous, simply choose
-		       the stronger. If they have the same strength
-		       but different values, then this becomes
-		       ambiguous. */
-
-		  if (bits[idx] == res) {
-
-			  /* values are equal. do nothing. */
-
-		  } else if ((bits[idx]&0x07) > (res&0x07)) {
-
-			  /* New value is stronger. Take it. */
-			res = bits[idx];
-
-		  } else if ((bits[idx]&0x77) == (res&0x77)) {
-
-			  /* Strengths are the same. Make value ambiguous. */
-			res = (res&0x70) | (bits[idx]&0x07) | 0x80;
-
-		  } else {
-
-			  /* Must be res is the stronger one. */
-		  }
-
-	    } else if (UNAMBIG(res) || UNAMBIG(bits[idx])) {
-
-		    /* If one of the signals is unambiguous, then it
-		       will sweep up the weaker parts of the ambiguous
-		       signal. The result may be ambiguous, or maybe
-		       not. */
-
-		  vpip_bit_t tmp = 0;
-
-		  if ((res&0x70) > (bits[idx]&0x70))
-			tmp |= res&0xf0;
-		  else
-			tmp |= bits[idx]&0xf0;
-
-		  if ((res&0x07) > (bits[idx]&0x07))
-			tmp |= res&0x0f;
-		  else
-			tmp |= bits[idx]&0x0f;
-
-	    } else {
-
-		    /* If both signals are ambiguous, then the result
-		       has an even wider ambiguity. */
-
-		  vpip_bit_t tmp = 0;
-
-		  if (STREN1(bits[idx]) > STREN1(res))
-			tmp |= bits[idx]&0xf0;
-		  else
-			tmp |= res&0xf0;
-
-		  if (STREN0(bits[idx]) < STREN0(res))
-			tmp |= bits[idx]&0x0f;
-		  else
-			tmp |= res&0x0f;
-
-		  res = tmp;
-	    }
-
-      }
-
-      if ((res&0x77) == 0)
-	    res = HiZ;
 
       return res;
 }
 
 /*
  * $Log: vpi_bit.c,v $
+ * Revision 1.4  2000/05/09 21:16:35  steve
+ *  Give strengths to logic and bufz devices.
+ *
  * Revision 1.3  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

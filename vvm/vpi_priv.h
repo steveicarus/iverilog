@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.18 2000/05/07 18:20:08 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.19 2000/05/09 21:16:35 steve Exp $"
 #endif
 
 /*
@@ -98,6 +98,7 @@ typedef unsigned char vpip_bit_t;
 
       /* Take as input an array of bits, and return the resolved
 	 value. The result accounts for the strengths involved. */
+extern vpip_bit_t vpip_pair_resolve(vpip_bit_t a, vpip_bit_t b);
 extern vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
 
 
@@ -367,6 +368,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.19  2000/05/09 21:16:35  steve
+ *  Give strengths to logic and bufz devices.
+ *
  * Revision 1.18  2000/05/07 18:20:08  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

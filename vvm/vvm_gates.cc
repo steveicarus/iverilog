@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.14 2000/05/08 05:27:32 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.15 2000/05/09 21:16:35 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -39,14 +39,47 @@ void vvm_out_event::event_function()
 vvm_1bit_out::vvm_1bit_out(unsigned d)
 : delay_(d)
 {
+      drive0_ = St0;
+      drive1_ = St1;
+      driveX_ = StX;
+      driveZ_ = HiZ;
 }
 
 vvm_1bit_out::~vvm_1bit_out()
 {
 }
 
+void vvm_1bit_out::drive0(vpip_bit_t v)
+{
+      drive0_ = v;
+}
+
+void vvm_1bit_out::drive1(vpip_bit_t v)
+{
+      drive1_ = v;
+}
+
+void vvm_1bit_out::driveX(vpip_bit_t v)
+{
+      driveX_ = v;
+}
+
+void vvm_1bit_out::driveZ(vpip_bit_t v)
+{
+      driveZ_ = v;
+}
+
 void vvm_1bit_out::output(vpip_bit_t val)
 {
+      if (B_IS0(val))
+	    val = drive0_;
+      else if (B_IS1(val))
+	    val = drive1_;
+      else if (B_ISZ(val))
+	    val = driveZ_;
+      else
+	    val = driveX_;
+
       vvm_event*ev = new vvm_out_event(val, this);
       ev -> schedule(delay_);
 }
@@ -214,6 +247,7 @@ void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
 }
 
 vvm_bufz::vvm_bufz()
+: vvm_1bit_out(0)
 {
 }
 
@@ -227,7 +261,7 @@ void vvm_bufz::init_I(unsigned, vpip_bit_t)
 
 void vvm_bufz::take_value(unsigned, vpip_bit_t val)
 {
-      set_value(val);
+      output(val);
 }
 
 vvm_eeq::vvm_eeq(unsigned long d)
@@ -319,6 +353,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.15  2000/05/09 21:16:35  steve
+ *  Give strengths to logic and bufz devices.
+ *
  * Revision 1.14  2000/05/08 05:27:32  steve
  *  Restore vvm_bufz to working condition.
  *
