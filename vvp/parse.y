@@ -105,6 +105,10 @@ statement
 
 	| T_LABEL K_VAR ';'
 		{ compile_variable($1); }
+
+  /* Oh and by the way, empty statements are OK as well. */
+
+	| ';'
 	;
 
 
