@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.44 1999/09/17 02:06:26 steve Exp $"
+#ident "$Id: pform.cc,v 1.45 1999/09/21 00:58:33 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -581,21 +581,26 @@ void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
 {
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    VLerror("name is not a valid net.");
+	    VLerror(" error: name is not a valid net.");
 	    return;
       }
 
       cur->set_memory_idx(l, r);
 }
 
+/*
+ * This function attaches a range to a given name. The function is
+ * only called by the parser within the scope of the net declaration,
+ * and the name that I receive only has the tail component.
+ */
 static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
 {
       assert(range);
       assert(range->count() == 2);
 
-      PWire*cur = pform_cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(scoped_name(name));
       if (cur == 0) {
-	    VLerror("name is not a valid net.");
+	    VLerror(" error: name is not a valid net.");
 	    return;
       }
 
@@ -707,6 +712,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.45  1999/09/21 00:58:33  steve
+ *  Get scope right when setting the net range.
+ *
  * Revision 1.44  1999/09/17 02:06:26  steve
  *  Handle unconnected module ports.
  *
