@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.190 2005/03/09 04:52:40 steve Exp $"
+#ident "$Id: compile.cc,v 1.191 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -967,6 +967,22 @@ void compile_cmp_eeq(char*label, long wid,
       make_arith(arith, label, wid, argc, argv);
 }
 
+void compile_cmp_nee(char*label, long wid,
+		     unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eeq has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_nee(wid);
+
+      make_arith(arith, label, wid, argc, argv);
+}
+
 void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -1645,6 +1661,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.191  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.190  2005/03/09 04:52:40  steve
  *  reimplement memory ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.40 2005/02/19 02:41:23 steve Exp $"
+#ident "$Id: arith.cc,v 1.41 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -497,6 +497,31 @@ void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 		  break;
 	    }
 
+
+      vvp_net_t*net = ptr.ptr();
+      vvp_send_vec4(net->out, eeq);
+}
+
+vvp_cmp_nee::vvp_cmp_nee(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_nee::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t eeq (1);
+      eeq.set_bit(0, BIT4_0);
+
+      assert(op_a_.size() == op_b_.size());
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1)
+	    if (op_a_.value(idx) != op_b_.value(idx)) {
+		  eeq.set_bit(0, BIT4_1);
+		  break;
+	    }
+
+
       vvp_net_t*net = ptr.ptr();
       vvp_send_vec4(net->out, eeq);
 }
@@ -735,6 +760,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.41  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.40  2005/02/19 02:41:23  steve
  *  Handle signed divide.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.156 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.157 2005/03/09 05:52:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -249,7 +249,11 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 
 void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "case compare === : " << name() << endl;
+      if (eeq_)
+	    o << setw(ind) << "" << "case compare === : " << name() << endl;
+      else
+	    o << setw(ind) << "" << "case compare !== : " << name() << endl;
+
       dump_node_pins(o, ind+4);
 }
 
@@ -1139,6 +1143,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.157  2005/03/09 05:52:03  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.156  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *

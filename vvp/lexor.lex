@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.49 2005/02/07 22:42:42 steve Exp $"
+#ident "$Id: lexor.lex,v 1.50 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -91,6 +91,7 @@
 ".arith/sum"  { return K_ARITH_SUM; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
+".cmp/nee"  { return K_CMP_NEE; }
 ".cmp/ne"   { return K_CMP_NE; }
 ".cmp/ge"   { return K_CMP_GE; }
 ".cmp/ge.s" { return K_CMP_GE_S; }
@@ -193,6 +194,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.50  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.49  2005/02/07 22:42:42  steve
  *  Add .repeat functor and BIFIF functors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.119 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.120 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -745,6 +745,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -910,6 +911,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_NEE:
 	    assert(idx == 0);
 	    return net->u_.arith.q;
 
@@ -1016,6 +1018,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1081,6 +1084,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
@@ -1987,6 +1991,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.120  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.119  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *

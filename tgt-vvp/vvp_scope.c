@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.120 2005/03/09 04:53:40 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.121 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1399,6 +1399,10 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    type = "ne";
 	    signed_string = "";
 	    break;
+	  case IVL_LPM_CMP_NEE:
+	    type = "nee";
+	    signed_string = "";
+	    break;
 	  default:
 	    assert(0);
       }
@@ -1855,6 +1859,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
 	    draw_lpm_cmp(net);
 	    return;
 
@@ -2017,6 +2022,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.121  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.120  2005/03/09 04:53:40  steve
  *  Generate code for new form of memory ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.152 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.153 2005/03/09 05:52:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -627,17 +627,17 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	  }
 
 	  case 'E': // Case equals (===)
-	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth);
+	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth, true);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
 	    break;
 
 	  case 'N': // Case equals (!==)
-	    cerr << get_line() << ": internal error: "
-		 << "Forgot how to elaborate !==." << endl;
-	    des->errors += 1;
-	    gate = 0;
+	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth, false);
+	    connect(gate->pin(0), osig->pin(0));
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
 	    break;
 
 	  case 'e': // ==
@@ -2504,6 +2504,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.153  2005/03/09 05:52:03  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.152  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *

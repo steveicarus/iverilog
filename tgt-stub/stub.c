@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.114 2005/03/09 04:53:40 steve Exp $"
+#ident "$Id: stub.c,v 1.115 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -292,15 +292,16 @@ static void show_lpm_divide(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
-/* IVL_LPM_CMP_EEQ
+/* IVL_LPM_CMP_EEQ/NEE
  * This LPM node supports two-input compare. The output width is
  * actually always 1, the lpm_width is the expected width of the inputs.
  */
 static void show_lpm_cmp_eeq(ivl_lpm_t net)
 {
+      const char*str = (ivl_lpm_type(net) == IVL_LPM_CMP_EEQ)? "EEQ" : "NEE";
       unsigned width = ivl_lpm_width(net);
 
-      fprintf(out, "  LPM_CMP_EEQ %s: <width=%u>\n",
+      fprintf(out, "  LPM_CMP_%s %s: <width=%u>\n", str,
 	      ivl_lpm_basename(net), width);
 
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
@@ -609,6 +610,7 @@ static void show_lpm(ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_NEE:
 	    show_lpm_cmp_eeq(net);
 	    break;
 
@@ -1169,6 +1171,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.115  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.114  2005/03/09 04:53:40  steve
  *  Generate code for new form of memory ports.
  *

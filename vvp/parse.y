@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.68 2005/03/09 04:52:40 steve Exp $"
+#ident "$Id: parse.y,v 1.69 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -59,7 +59,8 @@ extern FILE*yyin;
 
 %token K_ARITH_DIV K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
 %token K_ARITH_SUB K_ARITH_SUM
-%token K_CMP_EEQ K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
+%token K_CMP_EEQ K_CMP_EQ K_CMP_NEE K_CMP_NE
+%token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
 %token K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
@@ -241,6 +242,11 @@ statement
 	| T_LABEL K_CMP_EEQ T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_eeq($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_NEE T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_nee($1, $3, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_CMP_EQ T_NUMBER ',' symbols ';'
@@ -673,6 +679,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.69  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.68  2005/03/09 04:52:40  steve
  *  reimplement memory ports.
  *

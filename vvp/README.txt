@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.59 2005/03/09 04:52:40 steve Exp $
+ *  $Id: README.txt,v 1.60 2005/03/09 05:52:04 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -579,6 +579,7 @@ are implemented a bit differently. The syntax, however, is very
 similar:
 
 	<label> .cmp/eeq <wid>, <A>, <B>;
+	<label> .cmp/nee <wid>, <A>, <B>;
 	<label> .cmp/eq  <wid>, <A>, <B>;
 	<label> .cmp/ne  <wid>, <A>, <B>;
 	<label> .cmp/ge  <wid>, <A>, <B>;

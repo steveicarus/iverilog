@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.142 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.143 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -959,7 +959,7 @@ bool dll_target::ureduce(const NetUReduce*net)
 void dll_target::net_case_cmp(const NetCaseCmp*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
-      obj->type  = IVL_LPM_CMP_EEQ;
+      obj->type  = net->eeq()? IVL_LPM_CMP_EEQ : IVL_LPM_CMP_NEE;
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -2168,6 +2168,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.143  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.142  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *

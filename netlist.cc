@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.238 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: netlist.cc,v 1.239 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1503,8 +1503,8 @@ unsigned NetBUFZ::width() const
       return width_;
 }
 
-NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid)
-: NetNode(s, n, 3), width_(wid)
+NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq)
+: NetNode(s, n, 3), width_(wid), eeq_(eeq)
 {
       pin(0).set_dir(Link::OUTPUT); pin(0).set_name(perm_string::literal("O"),0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("I"),0);
@@ -1518,6 +1518,11 @@ NetCaseCmp::~NetCaseCmp()
 unsigned NetCaseCmp::width() const
 {
       return width_;
+}
+
+bool NetCaseCmp::eeq() const
+{
+      return eeq_;
 }
 
 NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
@@ -2191,6 +2196,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.239  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.238  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.335 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.336 2005/03/09 05:52:04 steve Exp $"
 #endif
 
 /*
@@ -1254,16 +1254,19 @@ class NetBUFZ  : public NetNode {
 class NetCaseCmp  : public NetNode {
 
     public:
-      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid);
+      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq);
       ~NetCaseCmp();
 
       unsigned width() const;
+	// true if this is ===, false if this is !==
+      bool eeq() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
+      bool eeq_;
 };
 
 /*
@@ -3414,6 +3417,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.336  2005/03/09 05:52:04  steve
+ *  Handle case inequality in netlists.
+ *
  * Revision 1.335  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *
