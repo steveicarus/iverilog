@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.87 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: parse.y,v 1.88 2000/04/02 04:25:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -88,7 +88,7 @@ extern void lex_end_table();
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
 %token K_reg K_release K_repeat
 %token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalered
-%token K_small K_specify
+%token K_signed K_small K_specify
 %token K_specparam K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
 %token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
@@ -188,6 +188,16 @@ block_item_decl
 		}
 	| K_reg register_variable_list ';'
 		{ delete $2; }
+	| K_reg K_signed range register_variable_list ';'
+		{ pform_set_net_range($4, $3);
+		  delete $3;
+		  delete $4;
+		  yyerror(@2, "sorry: signed reg not supported.");
+		}
+	| K_reg K_signed register_variable_list ';'
+		{ delete $3;
+		  yyerror(@2, "sorry: signed reg not supported.");
+		}
 	| K_integer list_of_variables ';'
 		{ pform_set_reg_integer($2);
 		  delete $2;

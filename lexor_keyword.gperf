@@ -80,6 +80,7 @@ rtran,		K_rtran
 rtranif0,	K_rtranif0
 rtranif1,	K_rtranif1
 scalered,	K_scalered
+signed,		K_signed
 small,		K_small
 specify,	K_specify
 specparam,	K_specparam
