@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.21 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: main.c,v 1.22 2001/10/11 00:12:49 steve Exp $"
 
 # include "config.h"
 
@@ -147,6 +147,11 @@ static int t_default(char*cmd, unsigned ncmd)
 
       rc = system(cmd);
       if (rc != 0) {
+	    if (rc == 127) {
+		  fprintf(stderr, "Failed to execute: %s\n", cmd);
+		  return 1;
+	    }
+
 	    if (WIFEXITED(rc))
 		  return WEXITSTATUS(rc);
 
@@ -639,6 +644,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.22  2001/10/11 00:12:49  steve
+ *  Detect execv failures.
+ *
  * Revision 1.21  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
