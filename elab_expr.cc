@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.65 2002/09/18 04:08:45 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.66 2002/09/21 21:28:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -633,11 +633,21 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  unsigned idx = net->sb_to_idx(msv);
 
 		  if (idx >= net->pin_count()) {
-			cerr << get_line() << ": internal error: "
-			     << "bit " << msv << " out of range of net "
+			  /* The bit select is out of range of the
+			     vector. This is legal, but returns a
+			     constant 1'bx value. */
+			verinum x (verinum::Vx);
+			NetEConst*tmp = new NetEConst(x);
+			tmp->set_line(*this);
+
+			cerr << get_line() << ": warning: Bit select ["
+			     << msv << "] out of range of vector "
 			     << net->name() << "[" << net->msb()
 			     << ":" << net->lsb() << "]." << endl;
-			return 0;
+			cerr << get_line() << ":        : Replacing "
+			     << "expression with a constant 1'bx." << endl;
+			delete msn;
+			return tmp;
 		  }
 
 		  NetESignal*tmp = new NetESignal(net, idx, idx);
@@ -875,6 +885,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.66  2002/09/21 21:28:18  steve
+ *  Allow constant bit selects out of range.
+ *
  * Revision 1.65  2002/09/18 04:08:45  steve
  *  Spelling errors.
  *
