@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
 Version: 0.3
-Release: 1
+Release: 2
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/v0.3/verilog-0.3rc2.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/v0.3/verilog-0.3.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
