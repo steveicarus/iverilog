@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.39 2003/05/08 16:20:17 steve Exp $"
+#ident "$Id: lexor.lex,v 1.40 2003/07/15 02:41:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -104,15 +104,18 @@ W [ \t\b\f]+
 
 %%
 
-"//".* { ECHO; }
+"//"[^\r\n]* { ECHO; }
 
   /* detect multiline, c-style comments, passing them directly to the
      output. This is necessary to allow for ignoring directives that
      are included within the comments. */
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
-<CCOMMENT>.    { ECHO; }
-<CCOMMENT>\n   { istack->lineno += 1; ECHO; }
+<CCOMMENT>[^\r\n]    { ECHO; }
+<CCOMMENT>\n\r { istack->lineno += 1; fputc('\n', yyout); }
+<CCOMMENT>\r\n { istack->lineno += 1; fputc('\n', yyout); }
+<CCOMMENT>\n   { istack->lineno += 1; fputc('\n', yyout); }
+<CCOMMENT>\r   { istack->lineno += 1; fputc('\n', yyout); }
 <CCOMMENT>"*/" { BEGIN(comment_enter); ECHO; }
 
   /* Detect and pass multiline pragma comments. As with C-style
@@ -121,8 +124,11 @@ W [ \t\b\f]+
      expanded, however. */
 
 "(*" { comment_enter = YY_START; BEGIN(PCOMENT); ECHO; }
-<PCOMENT>.    { ECHO; }
-<PCOMENT>\n   { istack->lineno += 1; ECHO; }
+<PCOMENT>[^\r\n]    { ECHO; }
+<PCOMENT>\n\r { istack->lineno += 1; fputc('\n', yyout); }
+<PCOMENT>\r\n { istack->lineno += 1; fputc('\n', yyout); }
+<PCOMENT>\n   { istack->lineno += 1; fputc('\n', yyout); }
+<PCOMENT>\r   { istack->lineno += 1; fputc('\n', yyout); }
 <PCOMENT>"*)" { BEGIN(comment_enter); ECHO; }
 <PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
 
@@ -131,7 +137,10 @@ W [ \t\b\f]+
      string. */
 \"            { comment_enter = YY_START; BEGIN(CSTRING); ECHO; }
 <CSTRING>\\\" { ECHO; }
-<CSTRING>\n   { ECHO; }
+<CSTRING>\r\n { fputc('\n', yyout); }
+<CSTRING>\n\r { fputc('\n', yyout); }
+<CSTRING>\n   { fputc('\n', yyout); }
+<CSTRING>\r   { fputc('\n', yyout); }
 <CSTRING>\"   { BEGIN(comment_enter);  ECHO; }
 <CSTRING>.    { ECHO; }
 <CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
@@ -156,9 +165,10 @@ W [ \t\b\f]+
   /* These finish the include directive (EOF or EOL) so I revert the
      lexor state and execute the inclusion. */
 
-<PPINCLUDE>\n { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE>\r\n { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE>\n\r { istack->lineno += 1; yy_pop_state(); do_include(); }
+<PPINCLUDE>\n   { istack->lineno += 1; yy_pop_state(); do_include(); }
+<PPINCLUDE>\r   { istack->lineno += 1; yy_pop_state(); do_include(); }
 <PPINCLUDE><<EOF>> { istack->lineno += 1; yy_pop_state(); do_include(); }
 
   /* Anything that is not matched by the above is an error of some
@@ -177,11 +187,9 @@ W [ \t\b\f]+
 
 `define{W}[a-zA-Z_][a-zA-Z0-9_$]*{W}? { yy_push_state(PPDEFINE); def_start(); }
 
-<PPDEFINE>.* {
-      do_define();
-  }
+<PPDEFINE>.*[^\r\n] { do_define(); }
 
-<PPDEFINE>(\n|"\r\n"|"\n\r") {
+<PPDEFINE>(\n|"\r\n"|"\n\r"|\r) {
       if (def_is_done()) {
 	    def_finish();
 	    istack->lineno += 1;
@@ -244,9 +252,12 @@ W [ \t\b\f]+
 <IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
 <IFDEF_SUPR>`else  {  }
 
-<IFDEF_FALSE,IFDEF_SUPR>"//".* {  }
-<IFDEF_FALSE,IFDEF_SUPR>.  {  }
-<IFDEF_FALSE,IFDEF_SUPR>\n { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR>"//"[^\r\n]* {  }
+<IFDEF_FALSE,IFDEF_SUPR>[^\r\n]  {  }
+<IFDEF_FALSE,IFDEF_SUPR>\n\r { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR>\r\n { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR>\n   { istack->lineno += 1; fputc('\n', yyout); }
+<IFDEF_FALSE,IFDEF_SUPR>\r   { istack->lineno += 1; fputc('\n', yyout); }
 
 <IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif {
       yy_pop_state();
@@ -258,11 +269,14 @@ W [ \t\b\f]+
   /* Any text that is not a directive just gets passed through to the
      output. Very easy. */
 
-. { ECHO; }
-\n { istack->lineno += 1; ECHO; }
+[^\r\n] { ECHO; }
+\n\r { istack->lineno += 1; fputc('\n', yyout); }
+\r\n { istack->lineno += 1; fputc('\n', yyout); }
+\n   { istack->lineno += 1; fputc('\n', yyout); }
+\r   { istack->lineno += 1; fputc('\n', yyout); }
 
   /* Absorb the rest of the line when a broken directive is detected. */
-<ERROR_LINE>.* { yy_pop_state(); }
+<ERROR_LINE>[^\r\n]* { yy_pop_state(); }
 
 %%
   /* Defined macros are kept in this table for convenient lookup. As
