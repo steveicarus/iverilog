@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.19 2003/03/06 20:04:42 steve Exp $"
+#ident "$Id: sys_table.c,v 1.20 2003/03/07 02:44:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,7 @@
 # include <stdlib.h>
 # include <string.h>
 
+extern void sys_convert_register();
 extern void sys_finish_register();
 extern void sys_deposit_register();
 extern void sys_display_register();
@@ -113,6 +114,7 @@ static void sys_lxt_or_vcd_register()
 }
 
 void (*vlog_startup_routines[])() = {
+      sys_convert_register,
       sys_finish_register,
       sys_deposit_register,
       sys_display_register,
@@ -127,6 +129,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.20  2003/03/07 02:44:34  steve
+ *  Implement $realtobits.
+ *
  * Revision 1.19  2003/03/06 20:04:42  steve
  *  Add means to suppress wveform output
  *
@@ -151,40 +156,5 @@ void (*vlog_startup_routines[])() = {
  * Revision 1.12  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.11  2001/05/22 02:14:47  steve
- *  Update the mingw build to not require cygwin files.
- *
- * Revision 1.10  2001/05/20 15:09:40  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.9  2001/04/26 00:01:33  steve
- *  Support $deposit to a wire or reg.
- *
- * Revision 1.8  2000/12/14 23:36:34  steve
- *  include vpi_user.h.
- *
- * Revision 1.7  2000/11/01 03:19:36  steve
- *  Add the general $time system function.
- *
- * Revision 1.6  2000/09/30 03:20:47  steve
- *  Cygwin port changes from Venkat
- *
- * Revision 1.5  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.4  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  1999/12/15 04:01:14  steve
- *  Add the VPI implementation of $readmemh.
- *
- * Revision 1.2  1999/11/07 20:33:30  steve
- *  Add VCD output and related system tasks.
- *
- * Revision 1.1  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
  */
 
