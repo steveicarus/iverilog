@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.15 1999/11/06 04:51:42 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.16 1999/11/17 01:31:28 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -93,6 +93,10 @@ class target_xnf  : public target_t {
 			   const NetObj::Link&lnk);
       static void draw_sym_with_lcaname(ostream&os, string lca,
 					const NetNode*net);
+      static void draw_xor(ostream&os, const NetAddSub*, unsigned idx);
+      enum adder_type {FORCE0, LOWER, UPPER, DOUBLE };
+      static void draw_carry(ostream&os, const NetAddSub*, unsigned idx,
+			     enum adder_type);
 
       ofstream ncf_;
 };
@@ -285,6 +289,112 @@ void target_xnf::signal(ostream&os, const NetNet*net)
 	   << endl;
 }
 
+void target_xnf::draw_xor(ostream &os, const NetAddSub*gate, unsigned idx)
+{
+      string name = mangle(gate->name());
+      string name_add = name;
+      string name_cout = name + "/COUT";
+
+	      // We only need to pick up the
+	      // carry if we are not the 0 bit. (We know it is 0).
+      os << "SYM, " << name_add << "<" << (idx+0) << ">, XOR, "
+	  "LIBVER=2.0.0" << endl;
+      draw_pin(os, "O",  gate->pin_Result(idx));
+      draw_pin(os, "I0", gate->pin_DataA(idx));
+      draw_pin(os, "I1", gate->pin_DataB(idx));
+      if (idx > 0) {
+	  os << "    PIN, I2, I, " << name_cout << "<" <<
+		idx << ">" << endl;
+      }
+      os << "END" << endl;
+}
+
+void target_xnf::draw_carry(ostream &os, const NetAddSub*gate, unsigned idx,
+      enum adder_type type)
+{
+      string name = mangle(gate->name());
+
+      string name_cy4 = name + "/CY";
+      string name_cym = name + "/CM";
+      string name_cout = name + "/COUT";
+
+      os << "SYM, " << name_cy4 << "<" << idx << ">, CY4, "
+	    "LIBVER=2.0.0" << endl;
+
+      // Less significant bit addends, if any
+      if ( type == LOWER || type == DOUBLE ) {
+	    draw_pin(os, "A0", gate->pin_DataA(idx));
+	    draw_pin(os, "B0", gate->pin_DataB(idx));
+      }
+
+      // More significant bit addends, if any
+      if ( type == UPPER || type == DOUBLE ) {
+	    unsigned int i = (type==UPPER)?idx:(idx+1);
+	    draw_pin(os, "A1", gate->pin_DataA(i));
+	    draw_pin(os, "B1", gate->pin_DataB(i));
+      }
+
+      // Carry input
+      if ( type != FORCE0 && type != UPPER ) {
+	  os  << "    PIN, CIN, I, " << name_cout << "<" <<
+			idx << ">" << endl;
+      }
+
+      // Connect the Cout0 to a signal so that I can connect
+      // it to the adder.
+      if ( type == LOWER || type == DOUBLE ) {
+	    os << "    PIN, COUT0, O, " << name_cout << "<" << (idx+1) <<
+		  ">" << endl;
+      }
+
+      // Connect the Cout, this will connect to the next Cin
+      if ( type == FORCE0 || type == UPPER || type == DOUBLE ) {
+	    unsigned int to = (type==FORCE0)?(0):(idx+2);
+	    if (type==UPPER) to=idx+1;
+	    os << "    PIN, COUT, O, " << name_cout << "<" << to <<
+		  ">" << endl;
+      }
+
+      // Carry In for mode UPPER comes from a strange place
+      if ( type == UPPER ) {
+	    os << "    PIN, A0, I, " << name_cout << "<dummy>" << endl;
+      }
+
+      // These are the mode inputs from the CY_xx pseudo-device
+      for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
+	    os << "    PIN, C" << cn << ", I, " << name << "/C"
+	       << cn << "<" << (idx) << ">" << endl;
+      }
+      os << "END" << endl;
+
+      // Complete the dummy force used above
+       if ( type == UPPER ) {
+	    os << "PWR, 0, " << name_cout << "<dummy>" << endl;
+      }
+
+      // On to the CY_xx pseudo-device itself
+      os << "SYM, " << name_cym << "<" << (idx) << ">, ";
+      switch (type) {
+	case FORCE0:
+	    os << "CY4_37, CYMODE=FORCE-0" << endl;
+	    break;
+	case LOWER:
+	    os << "CY4_01, CYMODE=ADD-F-CI" << endl;
+	    break;
+	case UPPER:
+	    os << "CY4_03, CYMODE=ADD-G-F1" << endl;
+	    break;
+	case DOUBLE:
+	    os << "CY4_02, CYMODE=ADD-FG-CI" << endl;
+	    break;
+      }
+      for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
+	    os << "    PIN, C" << cn << ", O, " << name << "/C"
+	       << cn << "<" << (idx) << ">" << endl;
+      }
+      os << "END" << endl;
+}
+
 /*
  * This function makes an adder out of carry logic symbols. It makes
  * as many 2 bit adders as are possible, then the top bit is made into
@@ -295,148 +405,38 @@ void target_xnf::signal(ostream&os, const NetNet*net)
  *
  * References:
  *    XNF 6.1 Specification
- *    Application note XAPP 013
+ *    Application note XAPP013
+ *    Xilinx Libraries Guide, Chapter 12
  */
 void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
 {
-      // Keep people from thinking this really works.
-	//assert(0);
       unsigned width = gate->width();
 
-      string name = mangle(gate->name());
-
-      string name_add = name;
-      string name_cy4 = name + "/CY";
-      string name_cym = name + "/CM";
-      string name_cout = name + "/COUT";
+      // Don't handle carry output yet
+      // assert (count_outputs(gate->pin_Cout())==0);
+      unsigned carry_width = width-1;
 
 	/* Make the force-0 cary mode object to initialize the bottom
 	   bits of the carry chain. Label this with the width instead
-	   of the bit position so that symbols dont clash. */
-      os << "SYM, " << name_cy4 << "<" << width << ">, CY4, "
-	    "LIBVER=2.0.0" << endl;
-      os << "    PIN, COUT, O, " << name_cout << "<" << width << ">" << endl;
-      for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
-	    os << "    PIN, C" << cn << ", I, " << name << "/C"
-	       << cn << "<" << width << ">" << endl;
+	   of the bit position so that symbols don't clash. */
+      if (carry_width%2) {
+            draw_carry(os, gate, width, FORCE0);
+      } else {
+	    draw_carry(os, gate, 0, UPPER);
       }
-      os << "END" << endl;
-
-      os << "SYM, " << name_cym << "<" << width << ">, CY4_37, "
-	    "CYMODE=FORCE-0" << endl;
-      for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
-	    os << "    PIN, C" << cn << ", O, " << name << "/C"
-	       << cn << "<" << width << ">" << endl;
-      }
-      os << "END" << endl;
 
 	/* Now make the 2 bit adders that chain from the cin
 	   initializer and up. Save the tail bit (if there is one) for
 	   later. */
-      for (unsigned idx = 0 ;  idx < (width&~1) ;  idx += 2) {
-	    os << "SYM, " << name_cy4 << "<" << idx << ">, CY4, "
-		  "LIBVER=2.0.0" << endl;
-
-	    draw_pin(os, "A0", gate->pin_DataA(idx+0));
-	    draw_pin(os, "B0", gate->pin_DataB(idx+0));
-	    draw_pin(os, "A1", gate->pin_DataA(idx+1));
-	    draw_pin(os, "B1", gate->pin_DataB(idx+1));
-
-	      // Connect the Cout0 to a signal so that I can connect
-	      // it to the adder.
-	    os << "    PIN, COUT0, O, " << name_cout << "<" << idx <<
-		  ">" << endl;
-
-	      // Connect the Cout to the next Cin
-	    if ((idx+2) < width)
-		  os << "    PIN, COUT, O, " << name_cout << "<" <<
-			(idx+1) << ">" << endl;
-
-	      // Connect the Cin to the previous Cout
-	    if (idx > 0)
-		  os  << "    PIN, CIN, I, " << name_cout << "<" <<
-			(idx-1) << ">" << endl;
-	    else
-		  os  << "    PIN, CIN, I, " << name_cout << "<" <<
-			(width) << ">" << endl;
-
-
-	    for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
-		  os << "    PIN, C" << cn << ", I, " << name << "/C"
-		     << cn << "<" << idx << ">" << endl;
-	    }
-	    os << "END" << endl;
-
-	    os << "SYM, " << name_cym << "<" << idx << ">, ";
-	    os << "CY4_02, CYMODE=ADD-FG-CI" << endl;
-	    for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
-		  os << "    PIN, C" << cn << ", O, " << name << "/C"
-		     << cn << "<" << idx << ">" << endl;
-	    }
-	    os << "END" << endl;
-
-	      // Draw the first bit adder. We only need to pick up the
-	      // carry if we are not the 0 bit. (We know it is 0).
-	    os << "SYM, " << name_add << "<" << (idx+0) << ">, XOR, "
-		  "LIBVER=2.0.0" << endl;
-	    draw_pin(os, "O",  gate->pin_Result(idx));
-	    draw_pin(os, "I0", gate->pin_DataA(idx));
-	    draw_pin(os, "I1", gate->pin_DataB(idx));
-	    if (idx > 0) {
-		  os << "    PIN, I2, I, " << name_cout << "<" <<
-			(idx-1) << ">" << endl;
-	    }
-	    os << "END" << endl;
-
-	      // Draw the second bit adder. This gets the carry from
-	      // the first bit CY4.
-	    os << "SYM, " << name_add << "<" << (idx+1) << ">, XOR, "
-		  "LIBVER=2.0.0" << endl;
-	    draw_pin(os, "O",  gate->pin_Result(idx+1));
-	    draw_pin(os, "I0", gate->pin_DataA(idx+1));
-	    draw_pin(os, "I1", gate->pin_DataB(idx+1));
-	    os << "    PIN, I2, I, " << name_cout << "<" << idx << ">"
-	       << endl;
-	    os << "END" << endl;
-
+      for (unsigned idx = 1-(carry_width%2) ;  idx < carry_width-1 ;  idx += 2) {
+	    draw_carry(os, gate, idx, DOUBLE);
       }
 
-	/* If there is a tail bit, draw it as a single bit adder that
-	   takes its carry in from the previously drawn adder. */
-      if (width%2) {
-	    os << "SYM, " << name_cy4 << "<" << (width-1) << ">, CY4, "
-		  "LIBVER=2.0.0" << endl;
+	/* Always have a tail bit */
+      draw_carry(os, gate, carry_width-1, LOWER);
 
-	    draw_pin(os, "A0", gate->pin_DataA(width-1));
-	    draw_pin(os, "B0", gate->pin_DataB(width-1));
-
-	    if (width > 2)
-		  os  << "    PIN, CIN, I, " << name_cout << "<" <<
-			(width-2) << ">" << endl;
-
-
-	    for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
-		  os << "    PIN, C" << cn << ", I, " << name << "/C"
-		     << cn << "<" << (width-1) << ">" << endl;
-	    }
-	    os << "END" << endl;
-
-	    os << "SYM, " << name_cym << "<" << (width-1) << ">, ";
-	    os << "CY4_01, CYMODE=ADD-F-CI" << endl;
-	    for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
-		  os << "    PIN, C" << cn << ", O, " << name << "/C"
-		     << cn << "<" << (width-1) << ">" << endl;
-	    }
-	    os << "END" << endl;
-
-	    os << "SYM, " << name_add << "<" << (width-1) << ">, XOR, "
-		  "LIBVER=2.0.0" << endl;
-	    draw_pin(os, "O",  gate->pin_Result(width-1));
-	    draw_pin(os, "I0", gate->pin_DataA(width-1));
-	    draw_pin(os, "I1", gate->pin_DataB(width-1));
-	    os << "    PIN, I2, I, " << name_cout << "<" << (width-2) << ">"
-	       << endl;
-	    os << "END" << endl;
+      for (unsigned idx = 0 ;  idx < width ;  ++idx) {
+	    draw_xor(os, gate, idx);
       }
 
 }
@@ -615,6 +615,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.16  1999/11/17 01:31:28  steve
+ *  Clean up warnings that add_sub got from Alliance
+ *
  * Revision 1.15  1999/11/06 04:51:42  steve
  *  Support writing some XNF things into an NCF file.
  *
