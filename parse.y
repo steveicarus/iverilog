@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.7 1998/11/25 02:35:53 steve Exp $"
+#ident "$Id: parse.y,v 1.8 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -151,6 +151,12 @@ delay_opt
 description
 	: module
 	| udp_primitive
+	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
+		{ pform_set_type_attrib(*$3, *$5, *$7);
+		  delete $3;
+		  delete $5;
+		  delete $7;
+		}
 	;
 
 event_control

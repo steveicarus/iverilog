@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.6 1998/11/23 00:20:22 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.7 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 /*
@@ -89,7 +89,8 @@ static void do_assign(Design*des, const string&path,
   // Urff, I don't like this global variable. I *will* figure out a
   // way to get rid of it. But, for now the PGModule::elaborate method
   // needs it to find the module definition.
-static const list<Module*>* modlist = 0;
+static const map<string,Module*>* modlist = 0;
+static const map<string,PUdp*>*   udplist = 0;
 
 /* Elaborate a source wire. Generally pretty easy. */
 void PWire::elaborate(Design*des, const string&path) const
@@ -201,25 +202,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
  * the parameters. This is done with BUFZ gates so that they look just
  * like continuous assignment connections.
  */
-void PGModule::elaborate(Design*des, const string&path) const
+void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
-	// Look for the module type
-      Module*rmod = 0;
-      for (list<Module*>::const_iterator mod = modlist->begin()
-		 ; mod != modlist->end()
-		 ; mod ++ ) {
-
-	    if ((*mod)->get_name() == type_) {
-		  rmod = *mod;
-		  break;
-	    }
-      }
-
-      if (rmod == 0) {
-	    cerr << "Unknown module: " << type_ << endl;
-	    return;
-      }
-
       string my_name;
       if (get_name() == "")
 	    my_name = local_symbol(path);
@@ -267,6 +251,48 @@ void PGModule::elaborate(Design*des, const string&path) const
 	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
 		  delete tmp;
       }
+}
+
+void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
+{
+      const string my_name = path+"."+get_name();
+      NetUDP*net = new NetUDP(my_name, udp->ports.size());
+      net->set_attributes(udp->attributes);
+
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    NetNet*sig = pin(idx)->elaborate_net(des, path);
+	    if (sig == 0) {
+		  cerr << "Expression too complicated for elaboration:"
+		       << *pin(idx) << endl;
+		  continue;
+	    }
+
+	    connect(sig->pin(0), net->pin(idx));
+
+	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
+		  delete tmp;
+      }
+
+      des->add_node(net);
+}
+
+void PGModule::elaborate(Design*des, const string&path) const
+{
+	// Look for the module type
+      map<string,Module*>::const_iterator mod = modlist->find(type_);
+      if (mod != modlist->end()) {
+	    elaborate_mod_(des, (*mod).second, path);
+	    return;
+      }
+
+	// Try a primitive type
+      map<string,PUdp*>::const_iterator udp = udplist->find(type_);
+      if (udp != udplist->end()) {
+	    elaborate_udp_(des, (*udp).second, path);
+	    return;
+      }
+
+      cerr << "Unknown module: " << type_ << endl;
 }
 
 NetNet* PExpr::elaborate_net(Design*des, const string&path) const
@@ -676,30 +702,26 @@ void Module::elaborate(Design*des, const string&path) const
       }
 }
 
-Design* elaborate(const list<Module*>&modules, const string&root)
+Design* elaborate(const map<string,Module*>&modules,
+		  const map<string,PUdp*>&primitives,
+		  const string&root)
 {
 	// Look for the root module in the list.
-      Module*rmod = 0;
-      for (list<Module*>::const_iterator mod = modules.begin()
-		 ; mod != modules.end()
-		 ; mod ++ ) {
-
-	    if ((*mod)->get_name() == root) {
-		  rmod = *mod;
-		  break;
-	    }
-      }
-
-      if (rmod == 0)
+      map<string,Module*>::const_iterator mod = modules.find(root);
+      if (mod == modules.end())
 	    return 0;
+
+      Module*rmod = (*mod).second;
 
 	// This is the output design. I fill it in as I scan the root
 	// module and elaborate what I find.
       Design*des = new Design;
 
       modlist = &modules;
+      udplist = &primitives;
       rmod->elaborate(des, root);
       modlist = 0;
+      udplist = 0;
 
       return des;
 }
@@ -707,6 +729,14 @@ Design* elaborate(const list<Module*>&modules, const string&root)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.7  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.6  1998/11/23 00:20:22  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.8 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.9 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 /*
@@ -305,6 +305,22 @@ class NetLogic  : public NetNode {
 
     private:
       const TYPE type_;
+};
+
+/*
+ * The UDP is a User Defined Primitive from the Verilog source. Do not
+ * expand it out any further then this in the netlist, as this can be
+ * used to represent target device primitives.
+ */
+class NetUDP  : public NetNode {
+
+    public:
+      explicit NetUDP(const string&n, unsigned pins)
+      : NetNode(n, pins) { }
+
+
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
 };
 
 /* =========
@@ -753,8 +769,18 @@ const NetNet* find_link_signal(const NetObj*net, unsigned pin,
 inline ostream& operator << (ostream&o, const NetExpr&exp)
 { exp.dump(o); return o; }
 
+extern ostream& operator << (ostream&, NetNet::Type);
+
 /*
  * $Log: netlist.h,v $
+ * Revision 1.9  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.8  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

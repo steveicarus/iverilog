@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.1 1998/11/03 23:28:54 steve Exp $"
+#ident "$Id: PGate.h,v 1.2 1998/12/01 00:42:13 steve Exp $"
 #endif
 
 # include  <vector>
 class PExpr;
+class PUdp;
 class Design;
 
 /*
@@ -111,7 +112,9 @@ class PGBuiltin  : public PGate {
 
 /*
  * This kind of gate is an instantiation of a module. The stored type
- * is the name of a module definition somewhere in the pform.
+ * is the name of a module definition somewhere in the pform. This
+ * type als handles UDP devices, because it is generally not known at
+ * parse time whether a name belongs to a module or a UDP.
  */
 class PGModule  : public PGate {
 
@@ -125,10 +128,21 @@ class PGModule  : public PGate {
 
     private:
       string type_;
+
+      void elaborate_mod_(Design*, Module*mod, const string&path) const;
+      void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.2  1998/12/01 00:42:13  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.1  1998/11/03 23:28:54  steve
  *  Introduce verilog to CVS.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.3 1998/11/09 18:55:35 steve Exp $"
+#ident "$Id: target.h,v 1.4 1998/12/01 00:42:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -61,6 +61,7 @@ struct target_t {
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
+      virtual void udp(ostream&os,  const NetUDP*);
       virtual void net_assign(ostream&os, const NetAssign*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_pevent(ostream&os, const NetPEvent*);
@@ -113,6 +114,14 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.4  1998/12/01 00:42:15  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.3  1998/11/09 18:55:35  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

@@ -69,6 +69,16 @@ Attributes are [<key> <value>] pairs and are used to communicate with
 the various processing steps. See the documentation for the processing
 step for a list of the pertinent attributes.
 
+Attributes can also be applied to gate types. When this is done, the
+attribute is given to every instantiation of the primitive. The syntax
+for the attribute statement is the same, except that the <identifier>
+names a primitive earlier in the compilation unit and the statement is
+placed in global scope, instead of within a module. The semicolon is
+not part of a type attribute.
+
+Currently, type attributes are only supported for UDP types.
+
+
 HOW IT WORKS -- STAGES OF PROCESSING
 
 * Parse

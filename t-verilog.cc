@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.2 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.3 1998/12/01 00:42:15 steve Exp $"
 #endif
 
 /*
@@ -55,19 +55,6 @@ class target_verilog : public target_t {
       void emit_expr_(ostream&os, const NetExpr*);
 };
 
-
-static ostream& operator<< (ostream&o, NetNet::Type t)
-{
-      switch (t) {
-	  case NetNet::WIRE:
-	    o << "wire";
-	    break;
-	  case NetNet::REG:
-	    o << "reg";
-	    break;
-      }
-      return o;
-}
 
 /*
  * The output of the design starts here. The emit operation calls the
@@ -307,6 +294,14 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.3  1998/12/01 00:42:15  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.2  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

@@ -19,10 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PUdp.h,v 1.1 1998/11/25 02:35:53 steve Exp $"
+#ident "$Id: PUdp.h,v 1.2 1998/12/01 00:42:13 steve Exp $"
 #endif
 
+# include  <map>
 # include  <vector>
+# include  <string>
 # include  "verinum.h"
 
 /*
@@ -61,6 +63,8 @@ class PUdp {
 
       verinum::V initial;
 
+      map<string,string> attributes;
+
       void dump(ostream&out) const;
 
     private:
@@ -73,6 +77,14 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.2  1998/12/01 00:42:13  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.1  1998/11/25 02:35:53  steve
  *  Parse UDP primitives all the way to pform.
  *

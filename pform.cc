@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.5 1998/11/25 02:35:53 steve Exp $"
+#ident "$Id: pform.cc,v 1.6 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -32,8 +32,8 @@ extern int VLparse();
 
 static Module*cur_module = 0;
 
-static list<Module*>*vl_modules = 0;
-static map<string,PUdp*> vl_primitives;
+static map<string,Module*> vl_modules;
+static map<string,PUdp*>   vl_primitives;
 
 /*
  * This function evaluates delay expressions. The result should be a
@@ -55,8 +55,6 @@ void pform_startmodule(const string&name, list<PWire*>*ports)
       assert( cur_module == 0 );
       cur_module = new Module(name, ports? ports->size() : 0);
 
-      vl_modules->push_back(cur_module);
-
       if (ports) {
 	    unsigned idx = 0;
 	    for (list<PWire*>::iterator cur = ports->begin()
@@ -74,6 +72,7 @@ void pform_endmodule(const string&name)
 {
       assert(cur_module);
       assert(name == cur_module->get_name());
+      vl_modules[name] = cur_module;
       cur_module = 0;
 }
 
@@ -350,6 +349,22 @@ void pform_set_attrib(const string&name, const string&key, const string&value)
       cur->attributes[key] = value;
 }
 
+/*
+ * Set the attribute of a TYPE. This is different from an object in
+ * that this applies to every instantiation of the given type.
+ */
+void pform_set_type_attrib(const string&name, const string&key,
+			   const string&value)
+{
+      map<string,PUdp*>::const_iterator udp = vl_primitives.find(name);
+      if (udp == vl_primitives.end()) {
+	    VLerror("type name is not (yet) defined.");
+	    return;
+      }
+
+      (*udp).second ->attributes[key] = value;
+}
+
 static void pform_set_net_range(const string&name, list<PExpr*>*range)
 {
       assert(range->size() == 2);
@@ -448,10 +463,10 @@ Statement* pform_make_calltask(string*name, list<PExpr*>*parms)
 }
 
 FILE*vl_input = 0;
-int pform_parse(FILE*input, list<Module*>&modules, map<string,PUdp*>&prim)
+int pform_parse(FILE*input, map<string,Module*>&modules,
+		map<string,PUdp*>&prim)
 {
       vl_input = input;
-      vl_modules = &modules;
       error_count = 0;
       warn_count = 0;
       int rc = VLparse();
@@ -459,6 +474,7 @@ int pform_parse(FILE*input, list<Module*>&modules, map<string,PUdp*>&prim)
 	    cerr << "I give up." << endl;
       }
 
+      modules = vl_modules;
       prim = vl_primitives;
       return error_count;
 }
@@ -466,6 +482,14 @@ int pform_parse(FILE*input, list<Module*>&modules, map<string,PUdp*>&prim)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.6  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.5  1998/11/25 02:35:53  steve
  *  Parse UDP primitives all the way to pform.
  *

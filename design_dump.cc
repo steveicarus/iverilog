@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.4 1998/11/23 00:20:22 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.5 1998/12/01 00:42:13 steve Exp $"
 #endif
 
 /*
@@ -28,21 +28,6 @@
 # include  <iomanip>
 # include  "netlist.h"
 
-static ostream& operator<< (ostream&o, NetNet::Type t)
-{
-      switch (t) {
-	  case NetNet::IMPLICIT:
-	    o << "implicit wire";
-	    break;
-	  case NetNet::WIRE:
-	    o << "wire";
-	    break;
-	  case NetNet::REG:
-	    o << "reg";
-	    break;
-      }
-      return o;
-}
 
 static ostream& operator<< (ostream&o, NetBlock::Type t)
 {
@@ -164,6 +149,17 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	<< endl;
 
       dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetUDP::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "UDP: ";
+      o << " #(" << delay1() << "," << delay2() << "," << delay3() <<
+	    ") " << name() << endl;
+
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
 }
 
 void NetPEvent::dump_node(ostream&o, unsigned ind) const
@@ -396,6 +392,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.5  1998/12/01 00:42:13  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.4  1998/11/23 00:20:22  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

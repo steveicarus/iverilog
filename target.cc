@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: target.cc,v 1.4 1998/12/01 00:42:15 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -43,6 +43,12 @@ void target_t::bufz(ostream&os, const NetBUFZ*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled continuous assign (BUFZ)." << endl;
+}
+
+void target_t::udp(ostream&os, const NetUDP*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled UDP." << endl;
 }
 
 void target_t::net_assign(ostream&os, const NetAssign*)
@@ -147,6 +153,14 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.4  1998/12/01 00:42:15  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.3  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

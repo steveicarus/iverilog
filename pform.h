@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.3 1998/11/25 02:35:53 steve Exp $"
+#ident "$Id: pform.h,v 1.4 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -92,6 +92,8 @@ extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, list<PExpr*>*);
 extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
+extern void pform_set_type_attrib(const string&name, const string&key,
+				  const string&value);
 extern void pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_assignment(string*t, PExpr*e);
@@ -124,11 +126,20 @@ extern void pform_make_pgassign(const string&lval, PExpr*sel, PExpr*rval);
  * parses the source file and places all the modules it finds into the
  * mod list. The dump function dumps a module to the output stream.
  */
-extern int  pform_parse(FILE*, list<Module*>&mod, map<string,PUdp*>&prim);
+extern int  pform_parse(FILE*, map<string,Module*>&mod,
+			map<string,PUdp*>&prim);
 extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.4  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.3  1998/11/25 02:35:53  steve
  *  Parse UDP primitives all the way to pform.
  *

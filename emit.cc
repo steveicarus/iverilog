@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: emit.cc,v 1.4 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 /*
@@ -38,6 +38,11 @@ void NetNode::emit_node(ostream&o, struct target_t*tgt) const
 void NetLogic::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->logic(o, this);
+}
+
+void NetUDP::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->udp(o, this);
 }
 
 void NetAssign::emit_node(ostream&o, struct target_t*tgt) const
@@ -218,6 +223,14 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.4  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.3  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

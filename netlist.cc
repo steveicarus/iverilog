@@ -17,12 +17,56 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.8 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: netlist.cc,v 1.9 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 # include  <cassert>
 # include  <typeinfo>
 # include  "netlist.h"
+
+ostream& operator<< (ostream&o, NetNet::Type t)
+{
+      switch (t) {
+	  case NetNet::IMPLICIT:
+	    o << "wire /*implicit*/";
+	    break;
+	  case NetNet::REG:
+	    o << "reg";
+	    break;
+	  case NetNet::SUPPLY0:
+	    o << "supply0";
+	    break;
+	  case NetNet::SUPPLY1:
+	    o << "supply1";
+	    break;
+	  case NetNet::TRI:
+	    o << "tri";
+	    break;
+	  case NetNet::TRI0:
+	    o << "tri0";
+	    break;
+	  case NetNet::TRI1:
+	    o << "tri1";
+	    break;
+	  case NetNet::TRIAND:
+	    o << "triand";
+	    break;
+	  case NetNet::TRIOR:
+	    o << "trior";
+	    break;
+	  case NetNet::WAND:
+	    o << "wand";
+	    break;
+	  case NetNet::WOR:
+	    o << "wor";
+	    break;
+	  case NetNet::WIRE:
+	    o << "wire";
+	    break;
+      }
+      return o;
+}
+
 
 void connect(NetObj::Link&l, NetObj::Link&r)
 {
@@ -452,6 +496,14 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.9  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.8  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

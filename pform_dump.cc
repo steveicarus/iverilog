@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.6 1998/11/25 02:35:54 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.7 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 /*
@@ -95,17 +95,7 @@ void PEBinary::dump(ostream&out) const
 
 void PWire::dump(ostream&out) const
 {
-      switch (type) {
-	  case NetNet::IMPLICIT:
-	    out << "    implicit wire ";
-	    break;
-	  case NetNet::WIRE:
-	    out << "    wire ";
-	    break;
-	  case NetNet::REG:
-	    out << "    reg ";
-	    break;
-      }
+      out << "    " << type;
 
       switch (port_type) {
 	  case NetNet::PIMPLICIT:
@@ -360,11 +350,28 @@ void PUdp::dump(ostream&out) const
 		<< ";" << endl;
 
       out << "endprimitive" << endl;
+
+	// Dump the attributes for the primitive as attribute
+	// statements.
+      for (map<string,string>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end()
+		 ; idx ++) {
+	    out << "$attribute(" << name_ << ", \"" << (*idx).first <<
+		  "\", \"" << (*idx).second << "\")" << endl;
+      }
 }
 
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.7  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.6  1998/11/25 02:35:54  steve
  *  Parse UDP primitives all the way to pform.
  *

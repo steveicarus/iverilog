@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.6 1998/11/25 02:35:53 steve Exp $"
+#ident "$Id: main.cc,v 1.7 1998/12/01 00:42:14 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -55,7 +55,9 @@ static void parm_to_flagmap(const string&flag)
 }
 
 
-extern Design* elaborate(const list<Module*>&modules, const string&root);
+extern Design* elaborate(const map<string,Module*>&modules,
+			 const map<string,PUdp*>&primitives,
+			 const string&root);
 extern void emit(ostream&o, const Design*, const char*);
 
 extern void cprop(Design*des);
@@ -154,8 +156,8 @@ int main(int argc, char*argv[])
       }
 
 	/* Parse the input. Make the pform. */
-      list<Module*>modules;
-      map<string,PUdp*>primitives;
+      map<string,Module*> modules;
+      map<string,PUdp*>   primitives;
       int rc = pform_parse(input, modules, primitives);
 
       if (rc) {
@@ -165,10 +167,10 @@ int main(int argc, char*argv[])
       if (dump_flag) {
 	    ofstream out ("a.pf");
 	    out << "PFORM DUMP MODULES:" << endl;
-	    for (list<Module*>::iterator mod = modules.begin()
+	    for (map<string,Module*>::iterator mod = modules.begin()
 		       ; mod != modules.end()
 		       ; mod ++ ) {
-		  pform_dump(out, *mod);
+		  pform_dump(out, (*mod).second);
 	    }
 	    out << "PFORM DUMP PRIMITIVES:" << endl;
 	    for (map<string,PUdp*>::iterator idx = primitives.begin()
@@ -180,12 +182,11 @@ int main(int argc, char*argv[])
 
 
 	/* Select a root module, and elaborate the design. */
-      if ((start_module == "") && (modules.size() == 1)) {
-	    Module*mod = modules.front();
-	    start_module = mod->get_name();
+      if (start_module == "") {
+	    start_module = "main";
       }
 
-      Design*des = elaborate(modules, start_module);
+      Design*des = elaborate(modules, primitives, start_module);
       if (des == 0) {
 	    cerr << "Unable to elaborate design." << endl;
 	    return 1;
@@ -226,6 +227,14 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.7  1998/12/01 00:42:14  steve
+ *  Elaborate UDP devices,
+ *  Support UDP type attributes, and
+ *  pass those attributes to nodes that
+ *  are instantiated by elaboration,
+ *  Put modules into a map instead of
+ *  a simple list.
+ *
  * Revision 1.6  1998/11/25 02:35:53  steve
  *  Parse UDP primitives all the way to pform.
  *
