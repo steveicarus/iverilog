@@ -1,24 +1,37 @@
 
-  This file describes the procedure to build and install Icarus Verilog on Mac OS X.  I assume that you have experience with Unix and Terminal.app.
+This file describes the procedure to build and install Icarus Verilog
+on Mac OS X.  I assume that you have experience with Unix and
+Terminal.app and a basic knowledge of how to download, compile and
+install software from source form.
 
 
 1)  Obtain and install a libdl compatibility library.
 
-  If you don't already have /usr/local/lib/libdl.{a,dylib} and /usr/local/include/dlfcn.h, you can obtain the source for a compatibility layer from at least one of two places:
+  If you don't already have /usr/local/lib/libdl.{a,dylib} and
+  /usr/local/include/dlfcn.h, you can obtain the source for a
+  compatibility layer from at least one of two places:
 
   http://download.sourceforge.net/fink/dlcompat-20010831.tar.gz
   http://www.omnigroup.com/~bungi/dlcompat-20010831.tar.gz
 
-  Unpack this tar file and read the README and Makefile.  Install the library according to the instructions.  Installation in /usr/local is strongly recommended since otherwise autoconf very likely won't be able to find it.
+  Unpack this tar file and read the README and Makefile.  Install the
+  library according to the instructions.  Installation in /usr/local
+  is strongly recommended since otherwise autoconf very likely won't
+  be able to find it.
 
-2) Make sure you have a copy of the 'gperf' tool.  This does not come with the Mac OS X 10.1 developer tools, so you probably don't.  You can check with:
+2) Make sure you have a copy of the 'gperf' tool.  This does not come
+   with the Mac OS X 10.1 developer tools, so you probably don't.  You
+   can check with:
 
-  %  which gperf
+     %  which gperf
 
-  If not found, grab a gperf source package and install it.
+  If not found, grab a gperf source package and install it. See "GPERF
+   FOR MACOSX" below.
 
-  ftp://ftp.gnu.org/gnu/gperf/gperf-2.7.2.tar.gz
-
+  Snapshots of Icarus Verilog source now come with the
+  lexor_keyword.cc file pre-made, so if you have trouble with gperf,
+  then just make sure the distributed lexor_keyword.cc is newer then
+  lexor_keyword.gperf, and use that.
 
 3)  Configure, build and install the Icarus Verilog sources as normal.
 
@@ -26,12 +39,28 @@
 
     % CC="cc -no-cpp-precomp" ./configure
 
-  This assumes you are using 'sh', 'zsh', or 'bash'.  If you are using 'csh' or 'tcsh', then you'll want something like:
+  This assumes you are using 'sh', 'zsh', or 'bash'.  If you are using
+  'csh' or 'tcsh', then you'll want something like:
 
     % setenv CC "cc -no-cpp-precomp"
     % ./configure
 
   You can, of course, add other configure options.
 
+
 4) Done!
 
+
+GPERF FOR MACOSX
+
+  Get version 2.7.2 of gperf from here:
+
+    <ftp://ftp.gnu.org/gnu/gperf/gperf-2.7.2.tar.gz>
+
+  Get a MacosX patch from here:
+
+    http://www.eternal.nest.or.jp/~shiro/binaries/gperf-2.7.2-macosx-patch.gz
+
+  Apply the patch to the gperf-2.7.2 source that you previously
+  downloaded, then follow the remaining gperf installation
+  instructions.
