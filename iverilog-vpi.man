@@ -1,4 +1,4 @@
-.TH iverilog-vpi 1 "$Date: 2003/08/26 04:45:47 $" Version "$Date: 2003/08/26 04:45:47 $"
+.TH iverilog-vpi 1 "$Date: 2003/10/14 00:40:06 $" Version "$Date: 2003/10/14 00:40:06 $"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
@@ -32,6 +32,12 @@ VPI modules to further reference external libraries.
 Normally, the output VPI module will be named after the first source
 file passed to the command. This flag sets the name (without the .vpi
 suffix) of the output vpi module.
+
+.TP 8
+.B --install-dir
+This flag causes the program to print the install directory for VPI
+modules, then exit. It is a convenience for makefiles or automated
+plug-in installers.
 
 .SH "PC-ONLY OPTIONS"
 
@@ -76,6 +82,11 @@ Print the linker flags (LDFLAGS) needed to link a VPI module.
 .TP 8
 .B --ldlibs
 Print the libraries (LDLIBS) needed to link a VPI module.
+
+.TP 8
+.B -m32
+On 64bit systems that support it (and support vvp32) this flag
+requests a 32bit vpi binary instead of the default 64bit binary.
 
 .P
 Example GNU makefile that takes advantage of these flags:
