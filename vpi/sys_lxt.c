@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.10 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.11 2002/08/15 02:12:20 steve Exp $"
 #endif
 
 # include "config.h"
+# include "sys_priv.h"
 # include "lxt_write.h"
 
 /*
@@ -805,7 +806,7 @@ void sys_lxt_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_vcd_dumpvars_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
@@ -813,6 +814,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.11  2002/08/15 02:12:20  steve
+ *  add dumpvars_compiletf to check first argument.
+ *
  * Revision 1.10  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *

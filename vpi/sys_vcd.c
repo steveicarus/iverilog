@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.36 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.37 2002/08/15 02:12:20 steve Exp $"
 #endif
 
 # include "config.h"
+# include "sys_priv.h"
 
 /*
  * This file contains the implementations of the VCD related
@@ -685,6 +686,48 @@ static int draw_scope(vpiHandle item)
       return depth;
 }
 
+/*
+ * This function is also used in sys_lxt to check the arguments of the
+ * lxt variant of $dumpvars.
+ */
+int sys_vcd_dumpvars_compiletf(char*name)
+{
+      vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv  = vpi_iterate(vpiArgument, sys);
+      vpiHandle tmp;
+
+      if (argv == 0)
+	    return 0;
+
+      tmp = vpi_scan(argv);
+      assert(tmp);
+
+      switch (vpi_get(vpiType, tmp)) {
+	  case vpiConstant:
+	    if (vpi_get(vpiConstType, tmp) == vpiStringConst) {
+		  vpi_printf("ERROR: %s argument must be "
+			     "a number constant.\n", name);
+		  vpi_control(vpiFinish, 1);
+	    }
+	    break;
+
+	  case vpiNet:
+	  case vpiReg:
+	  case vpiIntegerVar:
+	  case vpiMemoryWord:
+	    break;
+
+	  default:
+	    vpi_printf("ERROR: %s argument must be "
+		       "a number constant.\n", name);
+	    vpi_control(vpiFinish, 1);
+	    break;
+      }
+
+      vpi_free_object(argv);
+      return 0;
+}
+
 static int sys_dumpvars_calltf(char*name)
 {
       unsigned depth;
@@ -793,7 +836,7 @@ void sys_vcd_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_vcd_dumpvars_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
@@ -801,6 +844,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.37  2002/08/15 02:12:20  steve
+ *  add dumpvars_compiletf to check first argument.
+ *
  * Revision 1.36  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *
@@ -871,49 +917,5 @@ void sys_vcd_register()
  *
  * Revision 1.14  2001/01/01 08:10:35  steve
  *  Handle function scopes in dumpvars scn (PR#95)
- *
- * Revision 1.13  2000/11/01 06:05:44  steve
- *  VCD scans tasks (PR#35)
- *
- * Revision 1.12  2000/07/31 03:34:31  steve
- *  Report error when dumpfile is missing.
- *
- * Revision 1.11  2000/07/26 04:07:59  steve
- *  Get VCD timescale from design precision.
- *
- * Revision 1.10  2000/06/03 02:22:15  steve
- *  Interpret the depth paramter of dumpvars.
- *
- * Revision 1.9  2000/04/09 04:18:16  steve
- *  Catch duplicate $dumpvars of symbols (ajb)
- *
- * Revision 1.8  2000/04/08 05:28:39  steve
- *  Revamped VCD id generation and duplicates removal. (ajb)
- *
- * Revision 1.8  2000/04/06 21:00:00  ajb
- *  Revamped VCD id generation and duplicates removal.
- *
- * Revision 1.7  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.6  2000/02/17 06:04:30  steve
- *  Fix overlap of identifiers when multiple modules used.
- *
- * Revision 1.5  2000/01/23 23:54:36  steve
- *  Compile time problems with vpi_user.h
- *
- * Revision 1.4  2000/01/20 06:04:55  steve
- *  $dumpall checkpointing in VCD dump.
- *
- * Revision 1.3  2000/01/13 04:48:50  steve
- *  Catch some parameter problems.
- *
- * Revision 1.2  1999/11/28 00:56:08  steve
- *  Build up the lists in the scope of a module,
- *  and get $dumpvars to scan the scope for items.
- *
- * Revision 1.1  1999/11/07 20:33:30  steve
- *  Add VCD output and related system tasks.
- *
  */
 
