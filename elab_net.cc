@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.103 2002/12/06 03:08:19 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.104 2003/01/17 05:48:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1502,8 +1502,6 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 				bool implicit_net_ok) const
 {
-      string path = scope->name();
-
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	      /* Don't allow memories here. Is it a memory? */
@@ -2278,6 +2276,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.104  2003/01/17 05:48:35  steve
+ *  Remove useless variable.
+ *
  * Revision 1.103  2002/12/06 03:08:19  steve
  *  Reword some error messages for clarity.
  *
