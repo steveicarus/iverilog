@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.16 2001/01/23 18:50:26 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.17 2001/06/21 04:15:22 steve Exp $"
 #endif
 
 /*
@@ -72,6 +72,7 @@ static void gen_new_vcd_id(void)
 
 static struct vcd_info*vcd_list = 0;
 unsigned long vcd_cur_time = 0;
+static int dump_is_off = 0;
 
 static char *truncate_bitvec(char *s)
 {
@@ -191,6 +192,9 @@ static int variable_cb(p_cb_data cause)
       cb = *cause;
       vpi_register_cb(&cb);
 
+      if (dump_is_off)
+	    return 0;
+
       if (now != vcd_cur_time) {
 	    fprintf(dump_file, "#%lu\n", now);
 	    vcd_cur_time = now;
@@ -198,6 +202,18 @@ static int variable_cb(p_cb_data cause)
 
       show_this_item(info);
 
+      return 0;
+}
+
+static int sys_dumpoff_calltf(char*name)
+{
+      dump_is_off = 1;
+      return 0;
+}
+
+static int sys_dumpon_calltf(char*name)
+{
+      dump_is_off = 0;
       return 0;
 }
 
@@ -426,6 +442,22 @@ void sys_vcd_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpoff";
+      tf_data.calltf    = sys_dumpoff_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpoff";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpon";
+      tf_data.calltf    = sys_dumpon_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpon";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpfile";
       tf_data.calltf    = sys_dumpfile_calltf;
       tf_data.compiletf = 0;
@@ -444,6 +476,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.17  2001/06/21 04:15:22  steve
+ *  Add dumpon and dumpoff (Stephan Boettcher)
+ *
  * Revision 1.16  2001/01/23 18:50:26  steve
  *  Forgot to actually *open* the VCD output.
  *
