@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.3 2002/11/13 17:25:10 steve Exp $"
+#ident "$Id: Makefile.in,v 1.4 2002/12/04 03:33:38 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -54,6 +54,9 @@ all: iverilog-vpi@EXEEXT@
 clean:
 	rm -f *.o
 	rm -f iverilog-vpi@EXEEXT@
+
+distclean: clean
+	rm -f Makefile
 
 O = main.o res.o
 
