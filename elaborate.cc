@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.214 2001/05/17 03:35:22 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.215 2001/06/27 18:34:43 steve Exp $"
 #endif
 
 /*
@@ -1452,6 +1452,7 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
 	    rval = pad_to_width(des, rval, lval->pin_count());
 
       NetCAssign* dev = new NetCAssign(des->local_symbol(path), lval);
+      dev->set_line(*this);
       des->add_node(dev);
 
       for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
@@ -2320,6 +2321,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.215  2001/06/27 18:34:43  steve
+ *  Report line of unsupported cassign.
+ *
  * Revision 1.214  2001/05/17 03:35:22  steve
  *  do not assert if memory reference is invalid.
  *

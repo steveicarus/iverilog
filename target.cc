@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.53 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: target.cc,v 1.54 2001/06/27 18:34:43 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -140,8 +140,9 @@ void target_t::net_case_cmp(const NetCaseCmp*)
 
 bool target_t::net_cassign(const NetCAssign*dev)
 {
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled NetCAssign node." << endl;
+	cerr << "target (" << typeid(*this).name() <<  "): ";
+	cerr << dev->get_line();
+	cerr << ": Target does not support procedural continous assignment." << endl;
       return false;
 }
 
@@ -211,8 +212,9 @@ void target_t::proc_case(const NetCase*cur)
 
 bool target_t::proc_cassign(const NetCAssign*dev)
 {
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled proc_cassign." << endl;
+	cerr << "target (" << typeid(*this).name() <<  "): ";
+	cerr << dev->get_line();
+	cerr << ": Target does not support procedural continous assignment." << endl;
       return false;
 }
 
@@ -383,6 +385,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.54  2001/06/27 18:34:43  steve
+ *  Report line of unsupported cassign.
+ *
  * Revision 1.53  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *
