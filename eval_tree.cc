@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.12 2000/09/27 18:28:37 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.13 2000/09/29 04:42:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -115,7 +115,91 @@ NetEConst* NetEBComp::eval_leeq_()
       return 0;
 }
 
-      
+NetEConst* NetEBComp::eval_neeq_()
+{
+      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      if (l == 0) return 0;
+      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      if (r == 0) return 0;
+
+      const verinum&lv = l->value();
+      const verinum&rv = r->value();
+
+      verinum::V res = verinum::V0;
+      unsigned top = lv.len();
+      if (rv.len() < top)
+	    top = rv.len();
+
+      for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
+
+	    switch (lv.get(idx)) {
+
+		case verinum::Vx:
+		case verinum::Vz:
+		  res = verinum::Vx;
+		  break;
+
+		default:
+		  break;
+	    }
+
+	    switch (rv.get(idx)) {
+
+		case verinum::Vx:
+		case verinum::Vz:
+		  res = verinum::Vx;
+		  break;
+
+		default:
+		  break;
+	    }
+
+	    if (res == verinum::Vx)
+		  break;
+
+	    if (rv.get(idx) != lv.get(idx))
+		  res = verinum::V1;
+      }
+
+      if (res != verinum::Vx) {
+	    for (unsigned idx = top ;  idx < lv.len() ;  idx += 1)
+		  switch (lv.get(idx)) {
+
+		      case verinum::Vx:
+		      case verinum::Vz:
+			res = verinum::Vx;
+			break;
+
+		      case verinum::V1:
+			if (res != verinum::Vx)
+			      res = verinum::V1;
+			break;
+
+		      default:
+			break;
+		  }
+
+	    for (unsigned idx = top ;  idx < rv.len() ;  idx += 1)
+		  switch (rv.get(idx)) {
+
+		      case verinum::Vx:
+		      case verinum::Vz:
+			res = verinum::Vx;
+			break;
+
+		      case verinum::V1:
+			if (res != verinum::Vx)
+			      res = verinum::V1;
+			break;
+
+		      default:
+			break;
+		  }
+      }
+
+      return new NetEConst(verinum(res));
+}
+
 NetEConst* NetEBComp::eval_tree()
 {
       eval_sub_tree_();
@@ -126,6 +210,9 @@ NetEConst* NetEBComp::eval_tree()
 
 	  case 'L':
 	    return eval_leeq_();
+
+	  case 'n':
+	    return eval_neeq_();
 
 	  default:
 	    return 0;
@@ -326,6 +413,9 @@ NetEConst* NetEUnary::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.13  2000/09/29 04:42:56  steve
+ *  Cnstant evaluation of NE.
+ *
  * Revision 1.12  2000/09/27 18:28:37  steve
  *  multiply in parameter expressions.
  *

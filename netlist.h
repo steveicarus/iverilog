@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.168 2000/09/26 05:05:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.169 2000/09/29 04:43:09 steve Exp $"
 #endif
 
 /*
@@ -2151,6 +2151,7 @@ class NetEBComp : public NetEBinary {
     private:
       NetEConst*eval_eqeq_();
       NetEConst*eval_leeq_();
+      NetEConst*eval_neeq_();
 
 };
 
@@ -2795,6 +2796,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.169  2000/09/29 04:43:09  steve
+ *  Cnstant evaluation of NE.
+ *
  * Revision 1.168  2000/09/26 05:05:58  steve
  *  Detect indefinite widths where definite widths are required.
  *
