@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.316 2004/08/28 15:08:31 steve Exp $"
+#ident "$Id: netlist.h,v 1.317 2004/08/28 16:23:05 steve Exp $"
 #endif
 
 /*
@@ -2142,6 +2142,7 @@ class NetSTask  : public NetProc {
       const NetExpr* parm(unsigned idx) const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3349,6 +3350,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.317  2004/08/28 16:23:05  steve
+ *  Fix use of system tasks in AT_STAR statements.
+ *
  * Revision 1.316  2004/08/28 15:08:31  steve
  *  Do not change reg to wire in NetAssign_ unless synthesizing.
  *
