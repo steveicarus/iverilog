@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.1 1999/07/03 17:24:11 steve Exp $"
+#ident "$Id: lexor.lex,v 1.2 1999/07/03 20:03:47 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -28,6 +28,10 @@
 # include  <assert.h>
 
 # include  "parse.h"
+# include  "globals.h"
+
+static void output_init();
+#define YY_USER_INIT output_init()
 
 static void def_match();
 static void def_start();
@@ -37,6 +41,18 @@ static void include_filename();
 static void do_include();
 static int yywrap();
 
+
+struct include_stack_t {
+      char* path;
+      FILE*file;
+      unsigned lineno;
+      YY_BUFFER_STATE yybs;
+
+      struct include_stack_t*next;
+};
+
+static struct include_stack_t*istack  = 0;
+static struct include_stack_t*standby = 0;
 
 %}
 
@@ -55,7 +71,7 @@ static int yywrap();
 
 <PPINCLUDE>[ \t\b\f\r] { ; }
 
-<PPINCLUDE>\n { BEGIN(0); do_include(); }
+<PPINCLUDE>\n { istack->lineno += 1; BEGIN(0); do_include(); }
 
 
   /* Detect the define directive, and match the name. Match any
@@ -67,7 +83,7 @@ static int yywrap();
 
 <PPDEFINE>.* { do_define(); }
 
-<PPDEFINE>\n { BEGIN(0); ECHO; }
+<PPDEFINE>\n { istack->lineno += 1; BEGIN(0); ECHO; }
 
   /* This pattern notices macros and arranges for it to be replaced. */
 `[a-zA-Z][a-zA-Z0-9]* { def_match(); }
@@ -76,7 +92,7 @@ static int yywrap();
      output. Very easy. */
 
 . { ECHO; }
-\n { ECHO; }
+\n { istack->lineno += 1; ECHO; }
 
 %%
   /* Defined macros are kept in this table for convenient lookup. As
@@ -122,11 +138,11 @@ static void def_start()
       sscanf(yytext, "`define %s", def_name);
 }
 
-static void do_define()
+void define_macro(const char*name, const char*value)
 {
       struct define_t*def = malloc(sizeof(struct define_t));
-      def->name = strdup(def_name);
-      def->value = strdup(yytext);
+      def->name = strdup(name);
+      def->value = strdup(value);
       def->left = 0;
       def->right = 0;
       if (def_table == 0) {
@@ -164,6 +180,11 @@ static void do_define()
       }
 }
 
+static void do_define()
+{
+      define_macro(def_name, yytext);
+}
+
 /*
  * Include file handling works by keeping an include stack of the
  * files that are opened and being processed. The first item on the
@@ -180,17 +201,11 @@ static void do_define()
  * parsing.
  */
 
-struct include_stack_t {
-      char* path;
-      FILE*file;
-      unsigned lineno;
-      YY_BUFFER_STATE yybs;
-
-      struct include_stack_t*next;
-};
-
-static struct include_stack_t*istack  = 0;
-static struct include_stack_t*standby = 0;
+static void output_init()
+{
+      if (line_direct_flag)
+	    fprintf(yyout, "#line \"%s\" 0\n", istack->path);
+}
 
 static void include_filename()
 {
@@ -198,11 +213,28 @@ static void include_filename()
       standby = malloc(sizeof(struct include_stack_t));
       standby->path = strdup(yytext+1);
       standby->path[strlen(standby->path)-1] = 0;
+      standby->lineno = 0;
 }
 
 static void do_include()
 {
-      standby->file = fopen(standby->path, "r");
+
+      if (standby->path[0] == '/') {
+	    standby->file = fopen(standby->path, "r");
+
+      } else {
+	    unsigned idx = 0;
+	    standby->file = 0;
+	    for (idx = 0 ;  idx < include_cnt ;  idx += 1) {
+		  char path[4096];
+		  sprintf(path, "%s/%s", include_dir[idx], standby->path);
+		  standby->file = fopen(path, "r");
+		  if (standby->file)
+			break;
+
+	    }
+      }
+
       if (standby->file == 0) {
 	    perror(standby->path);
 	    exit(1);
@@ -214,6 +246,9 @@ static void do_include()
       istack = standby;
       standby = 0;
       yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
+
+      if (line_direct_flag)
+	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
 }
 
 static int yywrap()
@@ -230,6 +265,9 @@ static int yywrap()
 	    return 1;
 
       yy_switch_to_buffer(istack->yybs);
+
+      if (line_direct_flag)
+	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
       return 0;
 }
 
@@ -238,7 +276,7 @@ static int yywrap()
  * opened, and the lexor is initialized. The include stack is cleared
  * and ready to go.
  */
-void reset_lexor(const char*path)
+void reset_lexor(FILE*out, const char*path)
 {
       struct include_stack_t*isp = malloc(sizeof(struct include_stack_t));
       isp->path = strdup(path);
@@ -247,6 +285,8 @@ void reset_lexor(const char*path)
 	    perror(path);
 	    exit(1);
       }
+
+      yyout = out;
 
       yyrestart(isp->file);
 

@@ -24,9 +24,55 @@ inclusion and macro substitution. The program runs separate from the
 actual compiler so as to ease the task of the compiler proper, and
 provide a means of preprocessing files off-line.
 
+
 USAGE:
 
-	ivlpp <file>
+	ivlpp [options] <file>
 
 The <file> parameter is the name of the file to be read and
-preprocessed. The resulting output is sent to standard output.
+preprocessed. The resulting output is sent to standard output. The
+valid options include:
+
+	-Dname[=value]
+	    Predefine the symbol ``name'' to have the specified
+	    value. If the value is not specified, then ``1'' is
+	    used. This is mostly of use for controlling conditional
+	    compilaiton.
+
+	    This option does *not* override existing `define
+	    directives in the source file.
+
+	-I <dir>
+	    Add a directory to the include path. Normally, only "." is
+	    in the search path. The -I flag causes other directories
+	    to be searched for a named file. There may be as many -I
+	    flags as needed.
+
+	-L
+	    Add to the output #line directives. The ivl compiler
+	    understands these directives and uses them to keep track
+	    of the current line of the original source file. This
+	    makes error messages more meaningful.
+
+	-o <file>
+	    Send the output to the named file, instead of to standard
+	    output.
+
+	-v
+	    Print version and copyright information
+
+
+LOCATING INCLUDED FILES
+
+The ivlpp preprocessor implements the `include directives by
+substituting the contents of the included file in place of the line
+with the `include directive. The name that the programmer specifies is
+a file name. Normally, the preprocessor looks in the current working
+directory for the named file. However, the ``-I'' flags can be used to
+specify a path of directories to search for named include files. The
+current directory will be searched first, followed by all the include
+directories in the order that the -I flag appears.
+
+The exception to this process is include files that have a name that
+starts with the '/' character. These file names are ``rooted names''
+and must be in the rooted location specified.

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.1 1999/07/03 17:24:11 steve Exp $"
+#ident "$Id: Makefile.in,v 1.2 1999/07/03 20:03:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -68,5 +68,6 @@ installdirs: mkinstalldirs
 uninstall:
 	rm -f $(bindir)/ivlpp
 
-lexor.o: lexor.c parse.h
+lexor.o: lexor.c parse.h globals.h
+main.o: main.c globals.h
 parse.o: parse.c
