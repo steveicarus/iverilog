@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_mcd.cc,v 1.10 2003/05/23 04:04:02 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.11 2003/07/21 01:20:59 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -26,6 +26,8 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
+
+extern FILE* vpi_trace;
 
 /*
  * This table keeps track of the MCD files. Note that there may be
@@ -128,28 +130,44 @@ got_entry:
 	if(mcd_table[i].fp == NULL)
 		return 0;
 	mcd_table[i].filename = strdup(name);
+
+	if (vpi_trace) {
+	      fprintf(vpi_trace, "vpi_mcd_open(%s) --> 0x%08x\n",
+		      name, 1 << i);
+	}
+
 	return 1<<i;
 }
 
 extern "C" PLI_INT32
 vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 {
-	int rc = 0;
+      char buffer[4096];
+      int rc = 0;
 
-	if (!IS_MCD(mcd)) return 0;
+      if (!IS_MCD(mcd)) return 0;
 
-	for(int i = 0; i < 31; i++) {
-		if((mcd>>i) & 1) {
-			if(mcd_table[i].fp) {
-				// echo to logfile
-				if (i == 0 && logfile)
-				      vfprintf(logfile, fmt, ap);
-				rc = vfprintf(mcd_table[i].fp, fmt, ap);
-			} else
-				rc = EOF;
-		}
-	}
-	return rc;
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_mcd_vprintf(0x%08x, %s, ...);\n",
+		    mcd, fmt);
+      }
+
+      rc = vsnprintf(buffer, sizeof buffer, fmt, ap);
+
+      for(int i = 0; i < 31; i++) {
+	    if((mcd>>i) & 1) {
+		  if(mcd_table[i].fp) {
+			  // echo to logfile
+			if (i == 0 && logfile)
+			      fputs(buffer, logfile);
+			fputs(buffer, mcd_table[i].fp);
+		  } else {
+			rc = EOF;
+		  }
+	    }
+      }
+
+      return rc;
 }
 
 extern "C" PLI_INT32 vpi_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
@@ -212,6 +230,9 @@ extern "C" FILE *vpi_get_file(PLI_INT32 fd)
 
 /*
  * $Log: vpi_mcd.cc,v $
+ * Revision 1.11  2003/07/21 01:20:59  steve
+ *  vpi_mcd_vprintf can only scan the va_list once.
+ *
  * Revision 1.10  2003/05/23 04:04:02  steve
  *  Add vpi_fopen and vpi_get_file.
  *
