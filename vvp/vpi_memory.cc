@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.5 2002/02/06 04:48:34 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.4.2.1 2002/03/02 00:28:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -363,6 +363,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.4.2.1  2002/03/02 00:28:39  steve
+ *  Get memory word updates from trunk
+ *
  * Revision 1.5  2002/02/06 04:48:34  steve
  *  get bin or hex string values of memory words.
  *
