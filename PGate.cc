@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.cc,v 1.11 2001/10/19 01:55:32 steve Exp $"
+#ident "$Id: PGate.cc,v 1.12 2001/10/21 00:42:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -142,17 +142,24 @@ void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
-PGModule::PGModule(const string&type, const string&name, svector<PExpr*>*pins)
-: PGate(name, pins), type_(type), overrides_(0), pins_(0),
+PGModule::PGModule(const char*type, const string&name, svector<PExpr*>*pins)
+: PGate(name, pins), overrides_(0), pins_(0),
   npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
+      type_ = strdup(type);
 }
 
-PGModule::PGModule(const string&type, const string&name,
+PGModule::PGModule(const char*type, const string&name,
 		   named<PExpr*>*pins, unsigned npins)
-: PGate(name, 0), type_(type), overrides_(0), pins_(pins),
+: PGate(name, 0), overrides_(0), pins_(pins),
   npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
+      type_ = strdup(type);
+}
+
+PGModule::~PGModule()
+{
+      free(type_);
 }
 
 void PGModule::set_parameters(svector<PExpr*>*o)
@@ -178,13 +185,16 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
       lsb_ = lsb;
 }
 
-const string PGModule::get_type()
+const char* PGModule::get_type()
 {
       return type_;
 }
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.12  2001/10/21 00:42:47  steve
+ *  Module types in pform are char* instead of string.
+ *
  * Revision 1.11  2001/10/19 01:55:32  steve
  *  Method to get the type_ member
  *

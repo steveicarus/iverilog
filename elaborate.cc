@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.223 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.224 2001/10/21 00:42:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -745,7 +745,7 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 	// Not a module or primitive that I know about yet, so try to
 	// load a library module file (which parses some new Verilog
 	// code) and try again.
-      if (load_module(type_.c_str())) {
+      if (load_module(type_)) {
 
 	      // Try again to find the module type
 	    mod = pform_modules.find(type_);
@@ -2382,6 +2382,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.224  2001/10/21 00:42:47  steve
+ *  Module types in pform are char* instead of string.
+ *
  * Revision 1.223  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

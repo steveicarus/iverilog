@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.47 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: pform.h,v 1.48 2001/10/21 00:42:48 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -168,7 +168,7 @@ extern void pform_makegates(PGBuiltin::Type type,
 			    svector<PExpr*>*delay,
 			    svector<lgate>*gates);
 
-extern void pform_make_modgates(const string&type,
+extern void pform_make_modgates(const char*type,
 				struct parmvalue_t*overrides,
 				svector<lgate>*gates);
 
@@ -200,6 +200,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.48  2001/10/21 00:42:48  steve
+ *  Module types in pform are char* instead of string.
+ *
  * Revision 1.47  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

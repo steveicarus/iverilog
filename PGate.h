@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.20 2001/10/19 01:55:32 steve Exp $"
+#ident "$Id: PGate.h,v 1.21 2001/10/21 00:42:47 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -173,14 +173,16 @@ class PGModule  : public PGate {
     public:
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
-      explicit PGModule(const string&type, const string&name,
+      explicit PGModule(const char*type, const string&name,
 			svector<PExpr*>*pins);
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
-      explicit PGModule(const string&type, const string&name,
+      explicit PGModule(const char*type, const string&name,
 			named<PExpr*>*pins, unsigned npins);
 
+
+      ~PGModule();
 
 	// Parameter overrides can come as an ordered list, or a set
 	// of named expressions.
@@ -196,10 +198,10 @@ class PGModule  : public PGate {
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
-      const string get_type();
+      const char* get_type();
 
     private:
-      string type_;
+      char* type_;
       svector<PExpr*>*overrides_;
       named<PExpr*>*pins_;
       unsigned npins_;
@@ -220,6 +222,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.21  2001/10/21 00:42:47  steve
+ *  Module types in pform are char* instead of string.
+ *
  * Revision 1.20  2001/10/19 01:55:32  steve
  *  Method to get the type_ member
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.80 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: pform.cc,v 1.81 2001/10/21 00:42:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -439,7 +439,7 @@ void pform_makegates(PGBuiltin::Type type,
  * functions handle the instantaions of modules (and UDP objects) by
  * making PGModule objects.
  */
-static void pform_make_modgate(const string&type,
+static void pform_make_modgate(const char*type,
 			       const string&name,
 			       struct parmvalue_t*overrides,
 			       svector<PExpr*>*wires,
@@ -470,7 +470,7 @@ static void pform_make_modgate(const string&type,
       pform_cur_module->add_gate(cur);
 }
 
-static void pform_make_modgate(const string&type,
+static void pform_make_modgate(const char*type,
 			       const string&name,
 			       struct parmvalue_t*overrides,
 			       svector<portname_t*>*bind,
@@ -510,7 +510,7 @@ static void pform_make_modgate(const string&type,
       pform_cur_module->add_gate(cur);
 }
 
-void pform_make_modgates(const string&type,
+void pform_make_modgates(const char*type,
 			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
@@ -1030,6 +1030,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.81  2001/10/21 00:42:48  steve
+ *  Module types in pform are char* instead of string.
+ *
  * Revision 1.80  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *
