@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.43 2001/07/28 03:18:50 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.44 2001/08/03 17:06:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -619,6 +619,36 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ltype = "EEQ";
 	    break;
 
+	  case IVL_LO_PMOS:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type PMOS");
+	    ltype = "?";
+	    break;
+
+	  case IVL_LO_NMOS:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type NMOS\n");
+	    ltype = "?";
+	    break;
+
+	  case IVL_LO_RPMOS:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type RPMOS\n");
+	    ltype = "?";
+	    break;
+
+	  case IVL_LO_RNMOS:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type RNMOS\n");
+	    ltype = "?";
+	    break;
+
+	  case IVL_LO_NOTIF0:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type NOTIF0\n");
+	    ltype = "?";
+	    break;
+
+	  case IVL_LO_NOTIF1:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type NOTIF1\n");
+	    ltype = "?";
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %u\n",
 		    ivl_logic_type(lptr));
@@ -1106,6 +1136,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.44  2001/08/03 17:06:10  steve
+ *  More detailed messages about unsupported things.
+ *
  * Revision 1.43  2001/07/28 03:18:50  steve
  *  Generate constant symbols for supply nets.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.40 2001/07/27 04:51:45 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.41 2001/08/03 17:06:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1108,8 +1108,15 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
       switch (ivl_expr_type(exp)) {
 	  default:
 	    fprintf(stderr, "vvp error: unhandled expr type: %u\n",
-		    ivl_expr_type(exp));
+	    ivl_expr_type(exp));
 	  case IVL_EX_NONE:
+	    assert(0);
+	    res.base = 0;
+	    res.wid = 0;
+	    break;
+
+	  case IVL_EX_STRING:
+	    fprintf(stderr, "vvp error: unhandled expr type STRING\n");
 	    assert(0);
 	    res.base = 0;
 	    res.wid = 0;
@@ -1166,6 +1173,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.41  2001/08/03 17:06:10  steve
+ *  More detailed messages about unsupported things.
+ *
  * Revision 1.40  2001/07/27 04:51:45  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of
