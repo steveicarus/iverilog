@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.3 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.4 2000/04/09 17:44:30 steve Exp $"
 #endif
 
 /*
@@ -28,6 +28,7 @@
  */
 
 # include  "Module.h"
+# include  "PEvent.h"
 # include  "PExpr.h"
 # include  "PGate.h"
 # include  "PTask.h"
@@ -173,6 +174,17 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    (*cur) -> statement() -> elaborate_scope(des, scope);
       }
 
+	// Scan through all the named events in this scope. We do not
+	// need anything more then the current scope to do this
+	// elaboration, so do it now. This allows for normal
+	// elaboration to reference these events.
+
+      for (map<string,PEvent*>::const_iterator et = events.begin()
+		 ; et != events.end() ;  et ++ ) {
+
+	    (*et).second->elaborate_scope(des, scope);
+      }
+
       return des->errors == 0;
 }
 
@@ -252,6 +264,18 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    assert(val);
 	    delete val;
       }
+}
+
+/*
+ * The isn't really able to create new scopes, but it does create the
+ * event name in the current scope, so can be done during the
+ * elaborate_scope scan.
+ */
+void PEvent::elaborate_scope(Design*des, NetScope*scope) const
+{
+      NetEvent*ev = new NetEvent(name_);
+      ev->set_line(*this);
+      scope->add_event(ev);
 }
 
 void PFunction::elaborate_scope(Design*des, NetScope*scope) const
@@ -391,6 +415,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.4  2000/04/09 17:44:30  steve
+ *  Catch event declarations during scope elaborate.
+ *
  * Revision 1.3  2000/03/12 17:09:41  steve
  *  Support localparam.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PEvent.h,v 1.2 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: PEvent.h,v 1.3 2000/04/09 17:44:30 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -40,7 +40,7 @@ class PEvent : public LineInfo {
 
       string name() const;
 
-      void elaborate(Design*des, NetScope*scope) const;
+      void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
       string name_;
@@ -52,6 +52,9 @@ class PEvent : public LineInfo {
 
 /*
  * $Log: PEvent.h,v $
+ * Revision 1.3  2000/04/09 17:44:30  steve
+ *  Catch event declarations during scope elaborate.
+ *
  * Revision 1.2  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

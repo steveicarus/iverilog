@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.155 2000/04/09 16:43:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.156 2000/04/09 17:44:30 steve Exp $"
 #endif
 
 /*
@@ -47,13 +47,6 @@ string Design::local_symbol(const string&path)
   // needs it to find the module definition.
 static const map<string,Module*>* modlist = 0;
 static const map<string,PUdp*>*   udplist = 0;
-
-void PEvent::elaborate(Design*des, NetScope*scope) const
-{
-      NetEvent*ev = new NetEvent(name_);
-      ev->set_line(*this);
-      scope->add_event(ev);
-}
 
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
@@ -1928,13 +1921,6 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       const string path = scope->name();
       bool result_flag = true;
 
-	// Scan through the named events and elaborate them.
-      for (map<string,PEvent*>::const_iterator et = events.begin()
-		 ; et != events.end() ;  et ++ ) {
-
-	    (*et).second->elaborate(des, scope);
-
-      }
 
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
@@ -2092,6 +2078,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.156  2000/04/09 17:44:30  steve
+ *  Catch event declarations during scope elaborate.
+ *
  * Revision 1.155  2000/04/09 16:43:50  steve
  *  Catch event names in parentheses.
  *
