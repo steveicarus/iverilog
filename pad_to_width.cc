@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pad_to_width.cc,v 1.6 2001/02/15 06:59:36 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.7 2001/02/16 03:25:09 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -55,10 +55,10 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 	    return net;
 
       verinum pad(verinum::V0, wid - net->pin_count());
-      NetConst*con = new NetConst(path + scope->local_symbol(), pad);
+      NetConst*con = new NetConst(path + "." + scope->local_symbol(), pad);
       des->add_node(con);
 
-      NetNet*tmp = new NetNet(scope, path + scope->local_symbol(),
+      NetNet*tmp = new NetNet(scope, path + "." + scope->local_symbol(),
 			      NetNet::WIRE, wid);
       tmp->local_flag(true);
 
@@ -72,6 +72,9 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.7  2001/02/16 03:25:09  steve
+ *  Missing . in names generated from scope locals.
+ *
  * Revision 1.6  2001/02/15 06:59:36  steve
  *  FreeBSD port has a maintainer now.
  *
