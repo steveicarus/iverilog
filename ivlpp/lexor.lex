@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.36 2002/11/08 00:04:16 steve Exp $"
+#ident "$Id: lexor.lex,v 1.37 2003/02/02 23:54:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -405,11 +405,32 @@ static void do_define()
 
       define_continue_flag = 0;
 
-	/* FIXME: This strips trailing line comments out of the
-	   definition. It's not adequate as the "//" may have been
-	   quoted or commented, but it'll do for now. */
-      if(cp = strstr(yytext, "//"))
-	    *cp = 0;
+	/* Look for comments in the definition, and remove them. The
+	   "//" style comments go to the end of the line and terminate
+	   the definition, but the multi-line comments are simply cut
+	   out, and the define continues. */
+      cp = strchr(yytext, '/');
+      while (cp && *cp) {
+	    if (cp[1] == '/') {
+		  *cp = 0;
+		  break;
+	    }
+
+	    if (cp[1] == '*') {
+		  char*tail = strstr(cp+2, "*/");
+		  if (tail == 0) {
+			fprintf(stderr, "%s:%u: Unterminated comment "
+				"in define\n", istack->path, istack->lineno);
+			*cp = 0;
+			break;
+		  }
+
+		  memmove(cp, tail+2, strlen(tail+2)+1);
+		  continue;
+	    }
+
+	    cp = strchr(cp+1, '/');
+      }
 
 	/* Trim trailing white space. */
       cp = yytext + strlen(yytext);
