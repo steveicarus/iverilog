@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.9 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: PExpr.h,v 1.10 1999/06/09 03:00:05 steve Exp $"
 #endif
 
 # include  <string>
@@ -75,6 +75,7 @@ class PEConcat : public PExpr {
 
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
     private:
       svector<PExpr*>parms_;
@@ -196,6 +197,9 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.10  1999/06/09 03:00:05  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.9  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.

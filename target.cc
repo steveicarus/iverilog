@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.10 1999/06/06 20:45:39 steve Exp $"
+#ident "$Id: target.cc,v 1.11 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -164,10 +164,16 @@ void expr_scan_t::expr_const(const NetEConst*)
 	    "unhandled expr_const." << endl;
 }
 
-void expr_scan_t::expr_ident(const NetEIdent*)
+void expr_scan_t::expr_concat(const NetEConcat*that)
 {
-      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
-	    "unhandled expr_ident." << endl;
+      cerr << that->get_line() << ": expr_scan_t (" <<
+	    typeid(*this).name() << "): unhandled expr_concat." << endl;
+}
+
+void expr_scan_t::expr_ident(const NetEIdent*that)
+{
+      cerr << that->get_line() << ": expr_scan_t (" <<
+	    typeid(*this).name() << "): unhandled expr_ident." << endl;
 }
 
 void expr_scan_t::expr_memory(const NetEMemory*)
@@ -202,6 +208,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.11  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.10  1999/06/06 20:45:39  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

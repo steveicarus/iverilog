@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.37 1999/06/09 00:58:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.38 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 /*
@@ -564,13 +564,13 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
       NetNet*lsig = left_->elaborate_net(des, path),
 	    *rsig = right_->elaborate_net(des, path);
       if (lsig == 0) {
-	    cerr << "Cannot elaborate ";
+	    cerr << get_line() << ": Cannot elaborate ";
 	    left_->dump(cerr);
 	    cerr << endl;
 	    return 0;
       }
       if (rsig == 0) {
-	    cerr << "Cannot elaborate ";
+	    cerr << get_line() << ": Cannot elaborate ";
 	    right_->dump(cerr);
 	    cerr << endl;
 	    return 0;
@@ -822,6 +822,19 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
       return tmp;
 }
 
+NetExpr* PEConcat::elaborate_expr(Design*des, const string&path) const
+{
+      NetEConcat*tmp = new NetEConcat(parms_.count());
+      tmp->set_line(*this);
+
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    assert(parms_[idx]);
+	    tmp->set(idx, parms_[idx]->elaborate_expr(des, path));
+      }
+
+      return tmp;
+}
+
 NetExpr* PENumber::elaborate_expr(Design*des, const string&path) const
 {
       assert(value_);
@@ -899,7 +912,8 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 
 NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
 {
-      cerr << "Cannot elaborate expression: " << *this << endl;
+      cerr << get_line() << ": I do not know how to elaborate expression: "
+	   << *this << endl;
       return 0;
 }
 
@@ -1382,6 +1396,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.38  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.37  1999/06/09 00:58:06  steve
  *  Support for binary | (Stephen Tell)
  *

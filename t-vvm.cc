@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.22 1999/06/07 02:23:31 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.23 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -93,6 +93,7 @@ class vvm_proc_rval  : public expr_scan_t {
 
     private:
       virtual void expr_const(const NetEConst*);
+      virtual void expr_concat(const NetEConcat*);
       virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*mem)
 	    {
@@ -108,6 +109,31 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
 };
+
+void vvm_proc_rval::expr_concat(const NetEConcat*expr)
+{
+      string tname = make_temp();
+      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
+	    expr->expr_width() << "> " << tname << ";" << endl;
+
+      unsigned pos = 0;
+      for (unsigned idx = 0 ;  idx < expr->nparms() ;  idx += 1) {
+
+	    NetExpr*pp = expr->parm(expr->nparms() - idx - 1);
+	    pp->expr_scan(this);
+
+	    for (unsigned bit = 0 ;  bit < pp->expr_width() ;  bit += 1) {
+		  os_ << setw(indent_) << "" << tname << "[" << pos <<
+			"] = " << result << "[" << bit << "];" <<
+			endl;
+		  pos+= 1;
+	    }
+	    assert(pos <= expr->expr_width());
+      }
+      assert(pos == expr->expr_width());
+
+      result = tname;
+}
 
 void vvm_proc_rval::expr_const(const NetEConst*expr)
 {
@@ -1121,6 +1147,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.23  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.22  1999/06/07 02:23:31  steve
  *  Support non-blocking assignment down to vvm.
  *

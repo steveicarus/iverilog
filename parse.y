@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.33 1999/06/06 20:45:39 steve Exp $"
+#ident "$Id: parse.y,v 1.34 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -289,10 +289,10 @@ event_expression
 expression
 	: expr_primary
 		{ $$ = $1; }
-	| '(' expression ')'
-		{ $$ = $2; }
 	| '{' expression_list '}'
 		{ PEConcat*tmp = new PEConcat(*$2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -462,12 +462,6 @@ expression
 		{ yyerror(@2, "Sorry, ?: operator not supported.");
 		  $$ = 0;
 		}
-	| '(' expression ':' expression ':' expression ')'
-		{ yyerror(@2, "Sorry, (min:typ:max) not supported.");
-		  $$ = $4;
-		  delete $2;
-		  delete $6;
-		}
 	| IDENTIFIER '(' expression_list ')'
 		{ yyerror(@2, "Sorry, function calls not supported.");
 		  $$ = 0;
@@ -544,6 +538,14 @@ expr_primary
 		  tmp->lsb_ = $5;
 		  delete $1;
 		  $$ = tmp;
+		}
+	| '(' expression ')'
+		{ $$ = $2; }
+	| '(' expression ':' expression ':' expression ')'
+		{ yyerror(@2, "Sorry, (min:typ:max) not supported.");
+		  $$ = $4;
+		  delete $2;
+		  delete $6;
 		}
 	;
 

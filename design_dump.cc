@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.27 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.28 1999/06/09 03:00:05 steve Exp $"
 #endif
 
 /*
@@ -522,6 +522,14 @@ void NetEBinary::dump(ostream&o) const
       o << ")";
 }
 
+void NetEConcat::dump(ostream&o) const
+{
+      o << "{" << *parms_[0];
+      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1)
+	    o << ", " << *parms_[idx];
+      o << "}";
+}
+
 void NetEConst::dump(ostream&o) const
 {
       if (value_.is_string())
@@ -622,6 +630,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.28  1999/06/09 03:00:05  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.27  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.12 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: emit.cc,v 1.13 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 /*
@@ -219,6 +219,11 @@ void NetEBinary::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_binary(this);
 }
 
+void NetEConcat::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_concat(this);
+}
+
 void NetEConst::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_const(this);
@@ -268,6 +273,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.13  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.12  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.10 1999/06/06 20:45:39 steve Exp $"
+#ident "$Id: target.h,v 1.11 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -99,6 +99,7 @@ struct target_t {
 struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
+      virtual void expr_concat(const NetEConcat*);
       virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_signal(const NetESignal*);
@@ -124,6 +125,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.11  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.10  1999/06/06 20:45:39  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

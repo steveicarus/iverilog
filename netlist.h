@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.36 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.37 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 /*
@@ -929,6 +929,36 @@ class NetEBinary  : public NetExpr {
       NetExpr* right_;
 };
 
+/*
+ * This expression node supports the concat expression. This is an
+ * operator that just glues the results of many expressions into a
+ * single value.
+ *
+ * Note that the class stores the parameter expressions in source code
+ * order. That is, the parm(0) is placed in the most significant
+ * position of the result.
+ */
+class NetEConcat  : public NetExpr {
+
+    public:
+      NetEConcat(unsigned cnt);
+      ~NetEConcat();
+
+	// Manipulate the parameters.
+      void set(unsigned idx, NetExpr*e);
+
+      unsigned nparms() const { return parms_.count() ; }
+      NetExpr* parm(unsigned idx) const { return parms_[idx]; }
+
+      virtual bool set_width(unsigned w);
+      virtual NetEConcat* dup_expr() const;
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+    private:
+      svector<NetExpr*>parms_;
+};
+
 class NetEConst  : public NetExpr {
 
     public:
@@ -1207,6 +1237,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.37  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.36  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

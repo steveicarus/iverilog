@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.33 1999/06/07 02:23:31 steve Exp $"
+#ident "$Id: netlist.cc,v 1.34 1999/06/09 03:00:06 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -560,6 +560,40 @@ NetExpr* NetEBinary::eval_tree()
 	  default:
 	    return 0;
       }
+}
+
+NetEConcat::NetEConcat(unsigned cnt)
+: parms_(cnt)
+{
+}
+
+NetEConcat::~NetEConcat()
+{
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+	    delete parms_[idx];
+}
+
+void NetEConcat::set(unsigned idx, NetExpr*e)
+{
+      assert(idx < parms_.count());
+      assert(parms_[idx] == 0);
+      parms_[idx] = e;
+}
+
+bool NetEConcat::set_width(unsigned w)
+{
+      unsigned sum = 0;
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+	    sum += parms_[idx]->expr_width();
+
+      if (sum != w) return false;
+      expr_width(w);
+      return true;
+}
+
+NetEConcat* NetEConcat::dup_expr() const
+{
+      assert(0);
 }
 
 NetEConst::~NetEConst()
@@ -1164,6 +1198,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.34  1999/06/09 03:00:06  steve
+ *  Add support for procedural concatenation expression.
+ *
  * Revision 1.33  1999/06/07 02:23:31  steve
  *  Support non-blocking assignment down to vvm.
  *

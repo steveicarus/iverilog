@@ -223,10 +223,73 @@ IVL is in development - as such it still only supports a (growing) subset
 of verilog.  Below is a description of some of the currently unsupported
 verilog features.
 
-  - Lvalue bit ranges - Example: regvalue [7:3] = 5'b0;
+  - Lvalue bit ranges, i.e. values being assigned to. Examples:
 
-  - Complex delay expressions, specifically min,typ,max expressions.
+                    regval [3:1] = 3'b0;
+                    regval [7:0] = 8'b0;
 
-  - Tasks/functions
+  - Task Enabling isn't implemented: 
+    Example: always @(value)  // This isn't available yet.
+                begin
+                  $display("value changed");
+                end
 
-  - Other things I forgot to mention.
+  - The "?" operator. Example: count = val ? 1 : 0;
+
+  - Ranges within parameter definitions:
+    Example: parameter [15:0] seed = 16'ha3; 
+
+  - The "&&" operator:
+    Example: if (a && 0) do = 1;
+
+  - Concatenation: b = { a , 4'hd };
+
+  - The "===" operator:  Example: if( a === b) do = 1;
+
+  - The ">=" operator: Example: if ( a >= 0) do = 1;
+
+  - The ">" operator: Example: if ( a > 0) do = 1;
+  
+  - The "<=" operator: Example: if ( a <= 0) do = 1;
+
+  - The "<<" shift operator: Example: a = 8'b0000_0010 << 1;  
+
+  - Min/Typ/Max assignments: Example:  a = (1 : 6 : 14);
+
+  - Inversion of a vector with a bit operator:
+    Example: reg [7:0] a;   a = !(8'h01);  
+
+  - The "!==" operator:  Example: if( a !== b) do = 1;
+
+  - Expansion of a string into a larger variable:
+    Example: reg [0:15] b;  b = "b"; 
+
+  - Function declarations/calls.
+
+  - Integer data type.
+
+  - Non-scalar memories, i.e. other than registers. 
+    Example: reg [1:0] b [2:0]; 
+
+  - Delay list. Example:  sample #(9,99) sample1(a,b);
+
+  - Bit ranges within IF. Example: if (a[2:3])  do = 1;
+ 
+  - List of targets for case statement:
+    Example:   
+             case (a)   // Not Okay - 1, 2, and 3 must be separate lines.
+                        1, 2, 3: $write("selected 1, 2, 3 (Not Ok)\n");    
+             endcase   
+ 
+  - Forever key word.
+
+  - Repeat key word.
+
+  - Assignment timing delay: Example: a = #1 0;   #1 a = #2 ~a;
+
+  - Bit Ranges within $write, $display.
+
+  - `timescale directive
+
+  - Task declarations/calls.
+
