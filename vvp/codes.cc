@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.10 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: codes.cc,v 1.11 2002/07/05 03:46:43 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -56,6 +56,8 @@ void codespace_init(void)
       cp->opcode = &of_ZOMBIE;
 
       code_count = 1;
+      size_opcodes += sizeof(struct code_index1);
+      size_opcodes += sizeof(struct code_index0);
 }
 
 vvp_cpoint_t codespace_allocate(void)
@@ -72,12 +74,14 @@ vvp_cpoint_t codespace_allocate(void)
       if (code_table[idx] == 0) {
 	    code_table[idx] = new struct code_index1;
 	    memset(code_table[idx], 0, sizeof(struct code_index1));
+	    size_opcodes += sizeof(struct code_index1);
       }
 
       if (code_table[idx]->table[index1] == 0) {
 	    code_table[idx]->table[index1] = new struct code_index0;
 	    memset(code_table[idx]->table[index1],
 		   0, sizeof(struct code_index0));
+	    size_opcodes += sizeof(struct code_index0);
       }
 
       vvp_cpoint_t res = code_count;
@@ -112,6 +116,9 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.11  2002/07/05 03:46:43  steve
+ *  Track opcode memory space.
+ *
  * Revision 1.10  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *

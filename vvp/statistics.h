@@ -19,15 +19,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: statistics.h,v 1.1 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: statistics.h,v 1.2 2002/07/05 03:46:43 steve Exp $"
 #endif
 
+# include  <stddef.h>
 
 extern unsigned long count_opcodes;
 extern unsigned long count_functors;
 extern unsigned long count_vpi_nets;
+
+extern size_t size_opcodes;
+
 /*
  * $Log: statistics.h,v $
+ * Revision 1.2  2002/07/05 03:46:43  steve
+ *  Track opcode memory space.
+ *
  * Revision 1.1  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *

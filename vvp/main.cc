@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.25 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: main.cc,v 1.26 2002/07/05 03:47:06 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -239,7 +239,8 @@ int main(int argc, char*argv[])
 
       if (verbose_flag) {
 	    fprintf(stderr, " ... %8lu functors\n", count_functors);
-	    fprintf(stderr, " ... %8lu opcodes\n",  count_opcodes);
+	    fprintf(stderr, " ... %8lu opcodes (%lu bytes)\n",
+		    count_opcodes, size_opcodes);
 	    fprintf(stderr, " ... %8lu nets\n",     count_vpi_nets);
       }
 
@@ -272,6 +273,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.26  2002/07/05 03:47:06  steve
+ *  Track opcode memory space.
+ *
  * Revision 1.25  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *

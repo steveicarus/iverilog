@@ -17,8 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: statistics.cc,v 1.1 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: statistics.cc,v 1.2 2002/07/05 03:46:43 steve Exp $"
 #endif
+
+# include  "statistics.h"
 
 /*
  * This is a count of the instruction opcodes that were created.
@@ -29,8 +31,15 @@ unsigned long count_functors = 0;
 
 unsigned long count_vpi_nets = 0;
 
+
+size_t size_opcodes = 0;
+
+
 /*
  * $Log: statistics.cc,v $
+ * Revision 1.2  2002/07/05 03:46:43  steve
+ *  Track opcode memory space.
+ *
  * Revision 1.1  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *
