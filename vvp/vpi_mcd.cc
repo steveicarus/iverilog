@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.cc,v 1.4 2001/06/12 03:53:11 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.5 2001/07/16 18:40:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -37,13 +37,13 @@ static struct mcd_entry mcd_table[32];
 /* Initialize mcd portion of vpi.  Must be called before
  * any vpi_mcd routines can be used.
  */
-void vpi_mcd_init(void)
+void vpi_mcd_init(FILE *log)
 {
 	mcd_table[0].fp = stdout;
 	mcd_table[0].filename = "<stdout>";
 	mcd_table[1].fp = stderr;
 	mcd_table[1].filename = "<stderr>";
-	mcd_table[2].fp = stdout;  /* TODO: initialize this to log file */
+	mcd_table[2].fp = log;
 	mcd_table[2].filename = "<stdlog>";
 }
 

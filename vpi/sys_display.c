@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.26 2001/07/11 02:22:17 steve Exp $"
+#ident "$Id: sys_display.c,v 1.27 2001/07/16 18:40:19 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -246,12 +246,12 @@ static int sys_display_calltf(char *name)
       info.scope = scope;
       array_from_iterator(&info, argv);
 
-      do_display(1, &info);
+      do_display(5, &info);
 
       free(info.items);
 
       if (strcmp(name,"$display") == 0)
-	    vpi_printf("\n");
+	    vpi_mcd_printf(5, "\n");
 
       return 0;
 }
@@ -726,6 +726,10 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.27  2001/07/16 18:40:19  steve
+ *  Add a stdlog output for vvp, and vvp options
+ *  to direct them around. (Stephan Boettcher.)
+ *
  * Revision 1.26  2001/07/11 02:22:17  steve
  *  Manually create the stage-2 callback structure.
  *

@@ -42,6 +42,18 @@ fi
 AC_SUBST(DLLIB)
 
 
+AC_MSG_CHECKING(for sys/times)
+AC_TRY_LINK(
+#include <unistd.h>
+#include <sys/times.h>
+,{clock_t a = times(0)/sysconf(_SC_CLK_TCK);},
+do_times=yes
+AC_DEFINE(HAVE_TIMES,1),
+do_times=no
+)
+AC_MSG_RESULT($do_times)
+
+
 # The -rdynamic flag is used by iverilog when compiling the target,
 # to know how to export symbols of the main program to loadable modules
 # that are brought in by -ldl. VPI support requires this.

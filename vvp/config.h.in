@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.5 2001/05/11 02:06:14 steve Exp $"
+#ident "$Id: config.h.in,v 1.6 2001/07/16 18:40:19 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG 0
@@ -43,8 +43,14 @@
 # define WITH_DEBUG 1
 #endif
 
+# undef HAVE_TIMES
+
 /*
  * $Log: config.h.in,v $
+ * Revision 1.6  2001/07/16 18:40:19  steve
+ *  Add a stdlog output for vvp, and vvp options
+ *  to direct them around. (Stephan Boettcher.)
+ *
  * Revision 1.5  2001/05/11 02:06:14  steve
  *  Add the --enable-vvp-debug option to the configure
  *  script of vvp, and detect getopt.h.
