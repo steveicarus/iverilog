@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.65 2001/05/20 00:46:12 steve Exp $"
+#ident "$Id: compile.cc,v 1.66 2001/05/22 02:14:47 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -35,6 +35,10 @@
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
+
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
 
 unsigned compile_errors = 0;
 
@@ -215,6 +219,15 @@ void compile_init(void)
 
 void compile_load_vpi_module(char*name)
 {
+#ifdef __MINGW32__
+    char module_path[4096], *s;
+    GetModuleFileName(NULL,module_path,1024);
+    /* Get to the end.  Search back twice for backslashes */
+    s = module_path + strlen(module_path);
+    while (*s != '\\') s--; s--;
+    while (*s != '\\') s--; 
+    strcpy(s,"\\lib\\ivl");
+#endif      
       vpip_load_module(name, module_path);
       free(name);
 }
@@ -1193,6 +1206,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.66  2001/05/22 02:14:47  steve
+ *  Update the mingw build to not require cygwin files.
+ *
  * Revision 1.65  2001/05/20 00:46:12  steve
  *  Add support for system function calls.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.10 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: sys_table.c,v 1.11 2001/05/22 02:14:47 steve Exp $"
 #endif
 #include "vpi_user.h"
 
@@ -40,13 +40,16 @@ void (*vlog_startup_routines[])() = {
       0
 };
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.11  2001/05/22 02:14:47  steve
+ *  Update the mingw build to not require cygwin files.
+ *
  * Revision 1.10  2001/05/20 15:09:40  steve
  *  Mingw32 support (Venkat Iyer)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.7 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: vvp.c,v 1.8 2001/05/22 02:14:47 steve Exp $"
 #endif
 
 /*
@@ -83,7 +83,7 @@ int target_design(ivl_design_t des)
       return rc;
 }
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif

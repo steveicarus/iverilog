@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.3 2001/03/23 02:40:22 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.4 2001/05/22 02:14:47 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -30,7 +30,12 @@ typedef void (*vlog_startup_routines_t)(void);
 void vpip_load_module(const char*name, const char*path)
 {
       char buf[4096];
-      sprintf(buf, "%s/%s.vpi", path, name);
+#ifdef __MINGW32__
+      char sep = '\\';
+#else
+      char sep = '/';
+#endif
+      sprintf(buf, "%s%c%s.vpi", path, sep, name);
 	//printf("Load %s...\n", buf);
 
       ivl_dll_t dll = ivl_dlopen(buf);
@@ -54,6 +59,9 @@ void vpip_load_module(const char*name, const char*path)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.4  2001/05/22 02:14:47  steve
+ *  Update the mingw build to not require cygwin files.
+ *
  * Revision 1.3  2001/03/23 02:40:22  steve
  *  Add the :module header statement.
  *

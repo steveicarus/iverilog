@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.41 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: stub.c,v 1.42 2001/05/22 02:14:47 steve Exp $"
 #endif
 
 /*
@@ -543,13 +543,16 @@ int target_design(ivl_design_t des)
       return 0;
 }
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#if  defined (__CYGWIN32__)
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 #endif
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.42  2001/05/22 02:14:47  steve
+ *  Update the mingw build to not require cygwin files.
+ *
  * Revision 1.41  2001/05/20 15:09:40  steve
  *  Mingw32 support (Venkat Iyer)
  *
