@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.47 2001/11/01 04:26:57 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.48 2001/11/01 19:31:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -626,7 +626,7 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       fprintf(vvp_out, "    %%jmp t_%u;\n", out);
 
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
-	    fprintf(vvp_out, "t_%u\n", transient_id+idx);
+	    fprintf(vvp_out, "t_%u ;\n", transient_id+idx);
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), sscope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
@@ -1037,6 +1037,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.48  2001/11/01 19:31:40  steve
+ *  make fork label into complete statemnt.
+ *
  * Revision 1.47  2001/11/01 04:26:57  steve
  *  Generate code for deassign and cassign.
  *
