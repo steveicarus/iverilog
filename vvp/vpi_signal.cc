@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.41 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.42 2002/07/09 03:24:37 steve Exp $"
 #endif
 
 /*
@@ -55,20 +55,19 @@ extern const char oct_digits[256];
  * buffer can be reused for that purpose. Whenever I have a need, the
  * need_result_buf function makes sure that need can be met.
  */
-char *need_result_buf(size_t cnt, int type)
+char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 {
       static char*result_buf[2] = {0, 0};
       static size_t result_buf_size[2] = {0, 0};
-      int idx = type ? 1 : 0;
 
-      if (result_buf_size[idx] == 0) {
-	    result_buf[idx] = (char*)malloc(cnt);
-      } else if (result_buf_size[idx] < cnt) {
-	    result_buf[idx] = (char*)realloc(result_buf[idx], cnt);
+      if (result_buf_size[type] == 0) {
+	    result_buf[type] = (char*)malloc(cnt);
+      } else if (result_buf_size[type] < cnt) {
+	    result_buf[type] = (char*)realloc(result_buf[type], cnt);
       }
-      result_buf_size[idx] = cnt;
+      result_buf_size[type] = cnt;
 
-      return result_buf[idx];
+      return result_buf[type];
 }
 
 /*
@@ -113,7 +112,7 @@ static char* signal_get_str(int code, vpiHandle ref)
       char *bn = vpi_get_str(vpiFullName, &rfp->scope->base);
       char *nm = (char*)rfp->name;
 
-      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, 1);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, RBUF_STR);
 
       switch (code) {
 
@@ -159,7 +158,7 @@ static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       }
 
       unsigned hwid = (wid+2) / 3 + 1;
-      char *rbuf = need_result_buf(hwid, 0);
+      char *rbuf = need_result_buf(hwid, RBUF_VAL);
 
       vpip_bits_to_dec_str(bits, wid, rbuf, hwid, rfp->signed_flag);
 
@@ -179,7 +178,7 @@ static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       /* The result will use a character for each 8 bits of the
 	 vector. Add one extra character for the highest bits that
 	 don't form an 8 bit group. */
-      char *rbuf = need_result_buf(wid/8 + ((wid&7)!=0) + 1, 0);
+      char *rbuf = need_result_buf(wid/8 + ((wid&7)!=0) + 1, RBUF_VAL);
       char *cp = rbuf;
 
       char tmp = 0;
@@ -247,7 +246,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiBinStrVal:
-	    rbuf = need_result_buf(wid+1, 0);
+	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
@@ -261,7 +260,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
 
-		rbuf = need_result_buf(hwid+1, 0);
+		rbuf = need_result_buf(hwid+1, RBUF_VAL);
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -298,7 +297,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned hval, hwid;
 		hwid = (wid + 2) / 3;
 
-		rbuf = need_result_buf(hwid+1, 0);
+		rbuf = need_result_buf(hwid+1, RBUF_VAL);
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -343,7 +342,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	      unsigned int obit = 0;
 	      unsigned hwid = (wid - 1)/32 + 1;
 
-	      rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), 0);
+	      rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 	      s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 	      vp->value.vector = op;
 
@@ -676,6 +675,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.42  2002/07/09 03:24:37  steve
+ *  Dynamic resizevpi result buf in more places.
+ *
  * Revision 1.41  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *

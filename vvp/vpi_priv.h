@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.38 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.39 2002/07/09 03:24:37 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -361,7 +361,22 @@ extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 				 const char*buf, bool signed_flag);
 
 /*
+ * Function defined in vpi_signal.cc to manage vpi_get_* persistent
+ * storage.
+ */
+enum vpi_rbuf_t {
+      RBUF_VAL =0,
+	/* Storage for *_get_value() */
+      RBUF_STR
+	/* Storage for *_get_str() */
+};
+extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type); 
+
+/*
  * $Log: vpi_priv.h,v $
+ * Revision 1.39  2002/07/09 03:24:37  steve
+ *  Dynamic resizevpi result buf in more places.
+ *
  * Revision 1.38  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *
