@@ -1,7 +1,7 @@
 #ifndef __PGate_H
 #define __PGate_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.3 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: PGate.h,v 1.4 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 # include  <vector>
@@ -27,6 +27,7 @@
 class PExpr;
 class PUdp;
 class Design;
+class Module;
 
 /*
  * A PGate represents a Verilog gate. The gate has a name and other
@@ -85,9 +86,16 @@ class PGAssign  : public PGate {
 };
 
 
-/* The Builtin class is specifically a gate with one of the builtin
-   types. The parser recognizes these types during parse. These types
-   have special properties that allow them to be treated specially. */
+/*
+ * The Builtin class is specifically a gate with one of the builtin
+ * types. The parser recognizes these types during parse. These types
+ * have special properties that allow them to be treated specially.
+ *
+ * A PGBuiltin can be grouped into an array of devices. If this is
+ * done, the msb_ and lsb_ are set to the indices of the array
+ * range. Elaboration causes a gate to be created for each element of
+ * the array, and a name will be generated for each gate.
+ */
 class PGBuiltin  : public PGate {
 
     public:
@@ -99,16 +107,20 @@ class PGBuiltin  : public PGate {
     public:
       explicit PGBuiltin(Type t, const string&name,
 			 const vector<PExpr*>&pins, long del = 0)
-      : PGate(name, pins, del), type_(t)
+      : PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
       {  }
 
       Type type() const { return type_; }
+      void set_range(PExpr*msb, PExpr*lsb);
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*, const string&path) const;
 
     private:
       Type type_;
+
+      PExpr*msb_;
+      PExpr*lsb_;
 };
 
 /*
@@ -136,6 +148,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.4  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.3  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.9 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.10 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 /*
@@ -157,6 +157,12 @@ void PGAssign::dump(ostream&out) const
 void PGBuiltin::dump(ostream&out) const
 {
       switch (type()) {
+	  case PGBuiltin::BUFIF0:
+	    out << "    bufif0 #";
+	    break;
+	  case PGBuiltin::BUFIF1:
+	    out << "    bufif1 #";
+	    break;
 	  case PGBuiltin::NAND:
 	    out << "    nand #";
 	    break;
@@ -164,7 +170,13 @@ void PGBuiltin::dump(ostream&out) const
 	    out << "    builtin gate #";
       }
 
-      out << get_delay() << " " << get_name() << "(";
+      out << get_delay() << " " << get_name();
+
+      if (msb_) {
+	    out << " [" << *msb_ << ":" << *lsb_ << "]";
+      }
+
+      out << "(";
       dump_pins(out);
       out << ");" << endl;
 }
@@ -395,6 +407,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.10  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.9  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

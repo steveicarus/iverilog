@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.11 1999/02/08 03:55:55 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.12 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -359,6 +359,12 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	  case NetLogic::AND:
 	    os << "static vvm_and" << "<" << gate->pin_count()-1 <<
 		  "," << gate->delay1() << "> ";
+	    break;
+	  case NetLogic::BUFIF0:
+	    os << "static vvm_bufif0<" << gate->delay1() << "> ";
+	    break;
+	  case NetLogic::BUFIF1:
+	    os << "static vvm_bufif1<" << gate->delay1() << "> ";
 	    break;
 	  case NetLogic::NAND:
 	    os << "static vvm_nand" << "<" << gate->pin_count()-1 <<
@@ -831,6 +837,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.12  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.11  1999/02/08 03:55:55  steve
  *  Do not generate code for signals,
  *  instead use the NetESignal node to

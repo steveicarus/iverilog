@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.8 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: pform.cc,v 1.9 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -226,35 +226,44 @@ void pform_make_udp(string*name, list<string>*parms,
       delete init_expr;
 }
 
-
+/*
+ * pform_makegates is called when a list of gates (with the same type)
+ * are ready to be instantiated. The function runs through the list of
+ * gates and makes an array of wires for the ports of the gate. It
+ * then calls the pform_makegate function to make the individual gate.
+ */
 void pform_makegate(PGBuiltin::Type type,
-		    const string&name,
-		    const vector<PExpr*>&wires,
-		    unsigned long delay_val)
+		    unsigned long delay_val,
+		    const lgate&info)
 {
-      PGate*cur = new PGBuiltin(type, name, wires, delay_val);
+      vector<PExpr*>wires (info.parms->size());
+      for (unsigned idx = 0 ;  idx < wires.size() ;  idx += 1) {
+	    PExpr*ep = info.parms->front();
+	    info.parms->pop_front();
+	    wires[idx] = ep;
+      }
+
+      PGBuiltin*cur = new PGBuiltin(type, info.name, wires, delay_val);
+      if (info.range[0])
+	    cur->set_range(info.range[0], info.range[1]);
+
+      cur->set_file(info.file);
+      cur->set_lineno(info.lineno);
+
       cur_module->add_gate(cur);
 }
 
 void pform_makegates(PGBuiltin::Type type,
 		     PExpr*delay, list<lgate>*gates)
 {
-      unsigned long delay_val = evaluate_delay(delay);
+      unsigned long delay_val = delay? evaluate_delay(delay) : 0;
       delete delay;
 
       while (! gates->empty()) {
 	    lgate cur = gates->front();
 	    gates->pop_front();
 
-	    vector<PExpr*>wires (cur.parms->size());
-	    for (unsigned idx = 0 ;  idx < wires.size() ;  idx += 1) {
-		  PExpr*ep = cur.parms->front();
-		  cur.parms->pop_front();
-
-		  wires[idx] = ep;
-	    }
-
-	    pform_makegate(type, cur.name, wires, delay_val);
+	    pform_makegate(type, delay_val, cur);
       }
 
       delete gates;
@@ -500,6 +509,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.9  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.8  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

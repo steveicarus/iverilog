@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.14 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.15 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 /*
@@ -145,53 +145,127 @@ void PGAssign::elaborate(Design*des, const string&path) const
       do_assign(des, path, lval, rval);
 }
 
-/* Elaborate a Builtin gate. These normally get translated into
-   NetLogic nodes that reflect the particular logic function. */
+/*
+ * Elaborate a Builtin gate. These normally get translated into
+ * NetLogic nodes that reflect the particular logic function.
+ */
 void PGBuiltin::elaborate(Design*des, const string&path) const
 {
-      NetLogic*cur = 0;
+      unsigned count = 1;
+      unsigned low, high;
       string name = get_name();
       if (name == "")
 	    name = des->local_symbol(path);
 
-      switch (type()) {
-	  case AND:
-	    cur = new NetLogic(name, pin_count(), NetLogic::AND);
-	    break;
-	  case BUF:
-	    cur = new NetLogic(name, pin_count(), NetLogic::BUF);
-	    break;
-	  case NAND:
-	    cur = new NetLogic(name, pin_count(), NetLogic::NAND);
-	    break;
-	  case NOR:
-	    cur = new NetLogic(name, pin_count(), NetLogic::NOR);
-	    break;
-	  case NOT:
-	    cur = new NetLogic(name, pin_count(), NetLogic::NOT);
-	    break;
-	  case OR:
-	    cur = new NetLogic(name, pin_count(), NetLogic::OR);
-	    break;
-	  case XNOR:
-	    cur = new NetLogic(name, pin_count(), NetLogic::XNOR);
-	    break;
-	  case XOR:
-	    cur = new NetLogic(name, pin_count(), NetLogic::XOR);
-	    break;
+	/* If the verilog source has a range specification for the
+	   gates, then I am expected to make more then one
+	   gate. Figure out how many are desired. */
+      if (msb_) {
+	    verinum*msb = msb_->eval_const();
+	    verinum*lsb = lsb_->eval_const();
+
+	    if (msb == 0) {
+		  cerr << get_line() << ": Unable to evaluate expression "
+		       << *msb_ << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	    if (lsb == 0) {
+		  cerr << get_line() << ": Unable to evaluate expression "
+		       << *lsb_ << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	    if (msb->as_long() > lsb->as_long())
+		  count = msb->as_long() - lsb->as_long() + 1;
+	    else
+		  count = lsb->as_long() - msb->as_long() + 1;
+
+	    low = lsb->as_long();
+	    high = msb->as_long();
       }
 
+
+	/* Allocate all the getlist nodes for the gates. */
+      NetLogic**cur = new NetLogic*[count];
       assert(cur);
-      cur->delay1(get_delay());
-      cur->delay2(get_delay());
-      cur->delay3(get_delay());
-      des->add_node(cur);
+
+      for (unsigned idx = 0 ;  idx < count ;  idx += 1) {
+	    strstream tmp;
+	    unsigned index;
+	    if (low < high)
+		  index = low + idx;
+	    else
+		  index = low - idx;
+
+	    tmp << name << "<" << index << ">";
+	    const string inm = tmp.str();
+
+	    switch (type()) {
+		case AND:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::AND);
+		  break;
+		case BUF:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::BUF);
+		  break;
+		case BUFIF0:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::BUFIF0);
+		  break;
+		case BUFIF1:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::BUFIF1);
+		  break;
+		case NAND:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::NAND);
+		  break;
+		case NOR:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::NOR);
+		  break;
+		case NOT:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::NOT);
+		  break;
+		case OR:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::OR);
+		  break;
+		case XNOR:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::XNOR);
+		  break;
+		case XOR:
+		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::XOR);
+		  break;
+	    }
+
+	    cur[idx]->delay1(get_delay());
+	    cur[idx]->delay2(get_delay());
+	    cur[idx]->delay3(get_delay());
+	    des->add_node(cur[idx]);
+      }
+
+	/* The gates have all been allocated, this loop runs through
+	   the parameters and attaches the ports of the objects. */
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
 	    NetNet*sig = ex->elaborate_net(des, path);
 	    assert(sig);
-	    connect(cur->pin(idx), sig->pin(0));
+
+	    if (sig->pin_count() == 1)
+		  for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1)
+			connect(cur[gdx]->pin(idx), sig->pin(0));
+
+	    else if (sig->pin_count() == count)
+		  for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1)
+			connect(cur[gdx]->pin(idx), sig->pin(gdx));
+
+	    else {
+		  cerr << get_line() << ": Gate count of " << count <<
+			" does not match net width of " <<
+			sig->pin_count() << " at pin " << idx << "."
+		       << endl;
+		  des->errors += 1;
+	    }
+
 	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
 		  delete tmp;
       }
@@ -873,6 +947,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.15  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.14  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

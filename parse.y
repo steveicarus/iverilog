@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.12 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: parse.y,v 1.13 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -314,6 +314,21 @@ gate_instance
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete $1;
+		  $$ = tmp;
+		}
+	| IDENTIFIER range '(' expression_list ')'
+		{ lgate*tmp = new lgate;
+		  list<PExpr*>*rng = $2;
+		  tmp->name = *$1;
+		  tmp->parms = $4;
+		  tmp->range[0] = rng->front();
+		  rng->pop_front();
+		  tmp->range[1] = rng->front();
+		  rng->pop_front();
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  delete $1;
+		  delete rng;
 		  $$ = tmp;
 		}
 	| '(' expression_list ')'

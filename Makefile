@@ -11,7 +11,7 @@ FF = nobufz.o propinit.o sigfold.o stupid.o xnfio.o
 
 O = main.o cprop.o design_dump.o elaborate.o emit.o eval.o lexor.o mangle.o \
 netlist.o parse.o parse_misc.o pform.o pform_dump.o verinum.o target.o \
-targets.o Module.o PExpr.o Statement.o $(FF) $(TT)
+targets.o Module.o PExpr.o PGate.o Statement.o $(FF) $(TT)
 
 ivl: $O
 	$(CXX) $(CXXFLAGS) -o ivl $O

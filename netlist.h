@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.18 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: netlist.h,v 1.19 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 /*
@@ -337,7 +337,8 @@ class NetConst  : public NetNode {
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, BUF, NAND, NOR, NOT, OR, XNOR, XOR };
+      enum TYPE { AND, BUF, BUFIF0, BUFIF1, NAND, NOR, NOT, OR, XNOR,
+		  XOR };
 
       explicit NetLogic(const string&n, unsigned pins, TYPE t);
 
@@ -959,6 +960,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.19  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.18  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

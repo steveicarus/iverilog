@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.12 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.13 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 /*
@@ -142,6 +142,12 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	    break;
 	  case BUF:
 	    o << "buf";
+	    break;
+	  case BUFIF0:
+	    o << "bufif0";
+	    break;
+	  case BUFIF1:
+	    o << "bufif1";
 	    break;
 	  case NAND:
 	    o << "nand";
@@ -330,7 +336,10 @@ void NetCondit::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "if (";
       expr_->dump(o);
       o << ")" << endl;
-      if_->dump(o, ind+4);
+
+      if (if_) if_->dump(o, ind+4);
+      else o << setw(ind+4) << "" << "/* empty */ ;" << endl;
+
       if (else_) {
 	    o << setw(ind) << "" << "else" << endl;
 	    else_->dump(o, ind+4);
@@ -497,6 +506,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.13  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.12  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

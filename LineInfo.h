@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: LineInfo.h,v 1.2 1999/02/01 00:26:48 steve Exp $"
+#ident "$Id: LineInfo.h,v 1.3 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 # include  <cstdio>
+# include  <string>
 
 class LineInfo {
     public:
@@ -49,6 +50,9 @@ class LineInfo {
 
 /*
  * $Log: LineInfo.h,v $
+ * Revision 1.3  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.2  1999/02/01 00:26:48  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.

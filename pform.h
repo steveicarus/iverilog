@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.6 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: pform.h,v 1.7 1999/02/15 02:06:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -63,10 +63,16 @@ class PExpr;
  */
 
 struct lgate {
-      lgate() : parms(0), lineno(0) { }
+      lgate()
+      : parms(0), lineno(0)
+      { range[0] = 0;
+        range[1] = 0;
+      }
 
       string name;
       list<PExpr*>*parms;
+
+      PExpr*range[2];
 
       string file;
       unsigned lineno;
@@ -110,11 +116,6 @@ extern list<PWire*>* pform_make_udp_input_ports(list<string>*);
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
  */
-extern void pform_makegate(PGBuiltin::Type type,
-			   const string&name,
-			   const vector<string>&wires,
-			   unsigned long delay_value);
-
 extern void pform_makegates(PGBuiltin::Type type,
 			    PExpr*delay,
 			    list<lgate>*gates);
@@ -137,6 +138,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.7  1999/02/15 02:06:15  steve
+ *  Elaborate gate ranges.
+ *
  * Revision 1.6  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.
