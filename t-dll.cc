@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.89 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.90 2002/07/22 21:07:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -795,6 +795,10 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
 
       obj->scope_= scope;
       obj->name_ = strdup(net->name());
+
+      obj->delay[0] = net->rise_time();
+      obj->delay[1] = net->fall_time();
+      obj->delay[2] = net->decay_time();
 
       scope_add_logic(scope, obj);
 }
@@ -1951,6 +1955,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.90  2002/07/22 21:07:40  steve
+ *  Set ivl_target delays for case compare logic.
+ *
  * Revision 1.89  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *
