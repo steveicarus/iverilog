@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.113 2005/02/03 04:56:21 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.114 2005/02/04 05:13:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1330,17 +1330,30 @@ static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start,
       return wid;
 }
 
+/*
+ * Implement the general IVL_LPM_CONCAT using .concat nodes. Use as
+ * many nested nodes as necessary to support the desired number of
+ * input vectors.
+ */
 static void draw_lpm_concat(ivl_lpm_t net)
 {
       const char*src_table[4];
       unsigned icnt = ivl_lpm_selects(net);
 
       if (icnt <= 4) {
+	      /* This is the easies case. There are 4 or fewer input
+		 vectors, so the entire IVL_LPM_CONCAT can be
+		 implemented with a single .concat node. */
 	    draw_lpm_data_inputs(net, 0, icnt, src_table);
 	    fprintf(vvp_out, "L_%p .concat ", net);
 	    lpm_concat_inputs(net, 0, icnt, src_table);
 
       } else {
+	      /* If there are more then 4 inputs, things get more
+		 complicated. We need to generate a balanced tree of
+		 .concat nodes to blend the inputs down to a single
+		 root node, that becomes the output from the
+		 concatenation. */
 	    unsigned idx, depth;
 	    struct concat_tree {
 		  unsigned base;
@@ -1349,6 +1362,10 @@ static void draw_lpm_concat(ivl_lpm_t net)
 
 	    tree = malloc((icnt + 3)/4 * sizeof(struct concat_tree));
 
+	      /* First, fill in all the leaves with the initial inputs
+		 to the tree. After this loop, there are (icnt+3)/4
+		 .concat nodes drawn, that together take all the
+		 inputs. */
 	    for (idx = 0 ;  idx < icnt ;  idx += 4) {
 		  unsigned wid = 0;
 		  unsigned trans = 4;
@@ -1363,20 +1380,58 @@ static void draw_lpm_concat(ivl_lpm_t net)
 		  tree[idx/4].wid  = wid;
 	    }
 
-	    depth = 1;
 	    icnt = (icnt + 3)/4;
+
+	      /* Tree now has icnt nodes that are depth=0 concat nodes
+		 which take in the leaf inputs. The while loop below
+		 starts and ends with a tree of icnt nodes. Each time
+		 through, there are 1/4 the nodes we started
+		 with. Thus, we eventually get down to <=4 nodes, and
+		 that is when we fall out of the loop. */
+
+	    depth = 1;
 	    while (icnt > 4) {
-		    /* XXXX For now, only 4*4==16 inputs are
-		       supported. To support an arbitrary count, this
-		       loop needs to be filled in. */
-		  assert(0);
+		  for (idx = 0 ;  idx < icnt ;  idx += 4) {
+			unsigned tdx;
+			unsigned wid = 0;
+			unsigned trans = 4;
+			if ((idx+trans) > icnt)
+			      trans = icnt - idx;
+
+			fprintf(vvp_out, "LS_%p_%u_%u .concat [",
+				net, depth, idx);
+
+			for (tdx = 0 ;  tdx < trans ;  tdx += 1) {
+			      fprintf(vvp_out, " %u", tree[idx].wid);
+			      wid += tree[idx].wid;
+			}
+
+			for ( ;  tdx < 4 ;  tdx += 1)
+			      fprintf(vvp_out, " 0");
+
+			fprintf(vvp_out, "]");
+
+			for (tdx = 0; tdx < trans ;  tdx += 1) {
+			      fprintf(vvp_out, ", LS_%p_%u_%u", net,
+				      depth-1, tree[idx+tdx].base);
+			}
+
+			fprintf(vvp_out, ";\n");
+			tree[idx/4].base = idx;
+			tree[idx/4].wid = wid;
+		  }
+
 		  depth += 1;
 		  icnt = (icnt + 3)/4;
 	    }
 
+	      /* Finally, draw the root node that takes in the final
+		 row of tree nodes and generates a single output. */
 	    fprintf(vvp_out, "L_%p .concat [", net);
 	    for (idx = 0 ;  idx < icnt ;  idx += 1)
 		  fprintf(vvp_out, " %u", tree[idx].wid);
+	    for ( ;  idx < 4 ;  idx += 1)
+		  fprintf(vvp_out, " 0");
 	    fprintf(vvp_out, "]");
 
 	    for (idx = 0 ;  idx < icnt ;  idx += 1)
@@ -1829,6 +1884,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.114  2005/02/04 05:13:57  steve
+ *  Support .concat with arbitrary input counts.
+ *
  * Revision 1.113  2005/02/03 04:56:21  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *
