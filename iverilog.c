@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.15 2000/05/17 03:53:29 steve Exp $"
+#ident "$Id: iverilog.c,v 1.16 2000/06/16 19:00:06 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -27,6 +27,10 @@
 
 #ifndef IVL_ROOT
 # define IVL_ROOT "."
+#endif
+
+#ifndef RDYNAMIC
+# define RDYNAMIC "-rdynamic"
 #endif
 
 const char*base = IVL_ROOT;
@@ -140,7 +144,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    return rc;
       }
 
-      sprintf(tmp, "%s -O -rdynamic -fno-exceptions -o %s -I%s "
+      sprintf(tmp, "%s -O " RDYNAMIC " -fno-exceptions -o %s -I%s "
 	      "-L%s %s.cc -lvvm %s", CXX, opath, IVL_INC, IVL_LIB,
 	      opath, DLLIB);
 
@@ -376,6 +380,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.16  2000/06/16 19:00:06  steve
+ *  Detect some hosts that do not support -rdynamic.
+ *
  * Revision 1.15  2000/05/17 03:53:29  steve
  *  Add the module option to iverilog.
  *
