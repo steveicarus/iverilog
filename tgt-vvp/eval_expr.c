@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.87 2002/12/19 23:11:29 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.88 2002/12/20 01:11:14 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -618,8 +618,61 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
+      const char*opcode = "?";
 
       struct vector_info lv;
+
+	/* Evaluate the expression that is to be shifted. */
+      switch (ivl_expr_opcode(exp)) {
+
+	  case 'l': /* << (left shift) */
+	    lv = draw_eval_expr_wid(le, wid, 0);
+
+	      /* shifting 0 gets 0. */
+	    if (lv.base == 0)
+		  break;
+
+	    if (lv.base < 4) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(lv.wid);
+		  tmp.wid = lv.wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, lv.base, lv.wid);
+		  lv = tmp;
+	    }
+	    opcode = "%shiftl";
+	    break;
+
+	  case 'r': /* >> (unsigned right shift) */
+
+	      /* with the right shift, there may be high bits that are
+		 shifted into the desired width of the expression, so
+		 we let the expression size itself, if it is bigger
+		 then what is requested of us. */
+	    if (wid > ivl_expr_width(le)) {
+		  lv = draw_eval_expr_wid(le, wid, 0);
+	    } else {
+		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
+	    }
+
+	      /* shifting 0 gets 0. */
+	    if (lv.base == 0)
+		  break;
+
+	    if (lv.base < 4) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(lv.wid);
+		  tmp.wid = lv.wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, lv.base, lv.wid);
+		  lv = tmp;
+	    }
+	    opcode = "%shiftr";
+	    break;
+
+	  default:
+	    assert(0);
+      }
 
 	/* Figure out the shift amount and load that into the index
 	   register. The value may be a constant, or may need to be
@@ -662,56 +715,10 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
       }
 
 
-      switch (ivl_expr_opcode(exp)) {
+      fprintf(vvp_out, "    %s/i0  %u, %u;\n", opcode, lv.base, lv.wid);
 
-	  case 'l': /* << (left shift) */
-	    lv = draw_eval_expr_wid(le, wid, 0);
-
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
-		  break;
-
-	    if (lv.base < 4) {
-		  struct vector_info tmp;
-		  tmp.base = allocate_vector(lv.wid);
-		  tmp.wid = lv.wid;
-		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-			  tmp.base, lv.base, lv.wid);
-		  lv = tmp;
-	    }
-	    fprintf(vvp_out, "    %%shiftl/i0  %u, %u;\n", lv.base, lv.wid);
-	    break;
-
-	  case 'r': /* >> (unsigned right shift) */
-
-	      /* with the right shift, there may be high bits that are
-		 shifted into the desired width of the expression, so
-		 we let the expression size itself, if it is bigger
-		 then what is requested of us. */
-	    if (wid > ivl_expr_width(le)) {
-		  lv = draw_eval_expr_wid(le, wid, 0);
-	    } else {
-		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
-	    }
-
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
-		  break;
-
-	    if (lv.base < 4) {
-		  struct vector_info tmp;
-		  tmp.base = allocate_vector(lv.wid);
-		  tmp.wid = lv.wid;
-		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-			  tmp.base, lv.base, lv.wid);
-		  lv = tmp;
-	    }
-	    fprintf(vvp_out, "    %%shiftr/i0  %u, %u;\n", lv.base, lv.wid);
-	    break;
-
-	  default:
-	    assert(0);
-      }
+      if (lv.base >= 8)
+	    save_expression_lookaside(lv.base, exp, lv.wid);
 
       return lv;
 }
@@ -1963,6 +1970,10 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.88  2002/12/20 01:11:14  steve
+ *  Evaluate shift index after shift operand because
+ *  the chift operand may use the index register itself.
+ *
  * Revision 1.87  2002/12/19 23:11:29  steve
  *  Keep bit select subexpression width if it is constant.
  *
