@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.197 2004/08/26 04:02:03 steve Exp $"
+#ident "$Id: parse.y,v 1.198 2004/09/05 18:09:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1091,6 +1091,22 @@ gate_instance
 		  $$ = tmp;
 		}
 
+  /* Degenerate modules can have no ports. */
+
+	| IDENTIFIER range
+		{ lgate*tmp = new lgate;
+		  svector<PExpr*>*rng = $2;
+		  tmp->name = $1;
+		  tmp->parms = 0;
+		  tmp->range[0] = (*rng)[0];
+		  tmp->range[1] = (*rng)[1];
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
+		  delete $1;
+		  delete rng;
+		  $$ = tmp;
+		}
+
   /* Modules can also take ports by port-name expressions. */
 
 	| IDENTIFIER '(' port_name_list ')'
@@ -1618,6 +1634,10 @@ module_item
 		{ perm_string tmp1 = lex_strings.make($1);
 		  pform_make_modgates(tmp1, $2, $3);
 		  delete $1;
+		}
+
+        | IDENTIFIER parameter_value_opt error ';'
+		{ yyerror(@1, "error: Invalid module instantiation");
 		}
 
   /* Continuous assignment can have an optional drive strength, then
