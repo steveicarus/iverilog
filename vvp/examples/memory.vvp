@@ -1,0 +1,183 @@
+:vpi_module "system";
+
+; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+; Copyright (c) 2001  Stephan Boettcher <stephan@nevis.columbia.edu>
+;
+;    This source code is free software; you can redistribute it
+;    and/or modify it in source code form under the terms of the GNU
+;    General Public License as published by the Free Software
+;    Foundation; either version 2 of the License, or (at your option)
+;    any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License
+;    along with this program; if not, write to the Free Software
+;    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+
+; This sample demonstrates memory,  also including index register
+; arithmetic. 
+
+main	.scope	"example";
+
+;;; Make a memory.
+;
+;   reg [8:2] memory[5:27];
+
+memory	.mem	"memory", 8,2, 27,5 ;
+
+;;; The word width is 7 bits [8:2].  
+;;; The memory size is 23 words, 5..27.
+;;; Memory words are always numbered in ascending order.
+
+;;; An address/data port.
+;
+;   reg [4:0]  a;
+;   wire [5:0] d = memory[a][8:3];
+;   reg [6:0]  m;
+
+a	.var	"a", 4,0;
+d	.net	"d", 5,0, mem[0],mem[1],mem[2],mem[3],mem[4],mem[5];
+mem	.mem/port memory, 6,1, a[0],a[1],a[2],a[3],a[4];
+m	.var	"m", 6,0;
+
+;;; The data port mem[] does not connect to the LSB of the memory.
+
+;;; Initialize some part of the memory.	 Starting at memory bit [20],
+;;; which is in the middle of the third memory word, memory[7].	 The
+;;; memory words occupy 8 bits each, that is 7 rounded up to the next
+;;; multiple of 4.
+
+;;; Four bits ber byte.	 Word fill bits are included.  Commas are
+;;; optional, there may be a comma after the last byte.
+
+	.mem/init memory[20],
+		     0x55
+		0x00 0x00
+		0x50 0x05
+		0x05 0x50
+		0x05 0x05
+		0x00 0x00
+		0x00 0x01
+		0x00 0x04
+		0x00 0x10
+		0x00 0x40
+		0x01 0x00
+		0x04,0x00,
+		0x10,0x00,
+		0x40,0x00,
+		;
+
+;;; Run through the addresses and display the data output.
+;
+;   always 
+;     begin
+;	#5 $display("a:%b d:%b", a, d);
+;	#5 a <= a+1;
+;     end
+
+	.scope main;
+always ;
+	%delay	5;
+
+	%vpi_call "$display", "a:%b d:%b", a, d;
+
+	%delay	5;
+
+	%load	10, a[0];
+	%load	11, a[1];
+	%load	12, a[2];
+	%load	13, a[3];
+	%load	14, a[4];
+	%mov	20, 1, 1;
+	%mov	21, 0, 4;
+	%add	10, 20, 5;
+	%assign	a[0], 0, 10;
+	%assign a[1], 0, 11;
+	%assign a[2], 0, 12;
+	%assign a[3], 0, 13;
+	%assign a[4], 0, 14;
+
+	%jmp	always;
+	.thread	always;
+
+;;; Initialize a[], run some cycles, overwrite a memory word, run a
+;;; bit more, read a memory word, finish.
+;
+;   initial 
+;     begin
+;	a = 0;
+;	#320;
+;	memory[23] <= 'b 1xz01;
+;	#320;
+;	m = memory[9];
+;	$display("memory[9]=%b", m);
+;	#1;
+;	$finish;
+;     end
+
+	.scope	main;
+initial ;
+	%set	a[0], 0;
+	%set	a[1], 0;
+	%set	a[2], 0;
+	%set	a[3], 0;
+	%set	a[4], 0;
+
+	%delay	320;
+
+;;; Memories are indexed by index register 3.  The index register
+;;; points to the bit position in the memory.  Each memory word
+;;; occupies a multiple of 4 bits.  Bit position zero is the LSB of 
+;;; the first memory word, here: memory[5][2].
+
+	%ix/load 3, 23 ;	memory word index
+	%ix/sub	 3,  5 ;	minus memory root index
+	%ix/mul	 3,  8 ;	times memory word size (rounded up)
+	%assign/m memory, 0, 1;
+	%ix/add	 3, 1 ;		next bit
+	%assign/m memory, 0, 0;
+	%ix/add	 3, 1 ;
+	%assign/m memory, 0, 3;
+	%ix/add	 3, 1 ;
+	%assign/m memory, 0, 2;
+	%ix/add	 3, 1 ;
+	%assign/m memory, 0, 1;
+	%ix/add	 3, 1 ;
+	%assign/m memory, 0, 0;
+	%ix/add	 3, 1 ;
+	%assign/m memory, 0, 0;
+
+	%delay	320;
+
+	%ix/load 3,  32 ;	precomputed memory bit index
+	%load/m	 10, memory;
+	%set	 m[0], 10;
+	%ix/add	 3, 1 ;
+	%load/m	 10, memory;
+	%set	 m[1], 10;
+	%ix/add	 3, 1 ;
+	%load/m	 10, memory;
+	%set	 m[2], 10;
+	%ix/add	 3, 1 ;
+	%load/m	 10, memory;
+	%set	 m[3], 10;
+	%ix/add	 3, 1 ;
+	%load/m	 10, memory;
+	%set	 m[4], 10;
+	%ix/add	 3, 1 ;
+	%load/m	 10, memory;
+	%set	 m[5], 10;
+	%ix/add	 3, 1 ;
+	%load/m	 10, memory;
+	%set	 m[6], 10;
+	%vpi_call "$display", "memory[9]=%b", m;
+
+	#1;
+	%vpi_call "$finish";
+
+	%end;
+	.thread initial;
