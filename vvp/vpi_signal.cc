@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.43 2002/07/19 00:36:36 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.44 2002/07/23 02:36:34 steve Exp $"
 #endif
 
 /*
@@ -369,9 +369,10 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		}
 		obit++;
 		if (!(obit % 32)) {
-		  op++;
-		  op->aval = op->bval = 0;
-		  obit = 0;
+		      op += 1;
+		      if ((op - vp->value.vector) < hwid)
+			    op->aval = op->bval = 0;
+		      obit = 0;
 		}
 	      }
 	      break;
@@ -672,6 +673,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.44  2002/07/23 02:36:34  steve
+ *  Careful not to overrun vector buffer.
+ *
  * Revision 1.43  2002/07/19 00:36:36  steve
  *  Support put of wide vpiVectorVal to signal.
  *
