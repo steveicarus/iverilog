@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.136 2000/01/01 06:18:00 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.137 2000/01/02 18:25:37 steve Exp $"
 #endif
 
 /*
@@ -1202,7 +1202,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
 	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx+lsb));
+		  connect(cur->pin(idx), reg->pin(idx));
 
       } else {
 	    assert(reg->pin_count() == 1);
@@ -2078,6 +2078,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.137  2000/01/02 18:25:37  steve
+ *  Do not overrun the pin index when the LSB != 0.
+ *
  * Revision 1.136  2000/01/01 06:18:00  steve
  *  Handle synthesis of concatenation.
  *
