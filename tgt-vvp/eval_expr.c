@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.105 2003/09/24 20:46:20 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.106 2003/10/01 17:44:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1892,7 +1892,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  break;
 		default:
 		  fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
-		  fprintf(vvp_out, "    %%sub %u, 1, %u;\n",res.base,res.wid);
+		  fprintf(vvp_out, "    %%addi %u, 1, %u;\n",res.base,res.wid);
 		  break;
 	    }
 	    break;
@@ -2135,6 +2135,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.106  2003/10/01 17:44:20  steve
+ *  Slightly more efficient unary minus.
+ *
  * Revision 1.105  2003/09/24 20:46:20  steve
  *  Clear expression lookaside after true cause of ternary.
  *
