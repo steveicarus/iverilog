@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.15 2002/04/06 21:33:29 steve Exp $"
+#ident "$Id: sys_table.c,v 1.16 2002/04/07 04:37:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,7 @@
 extern void sys_finish_register();
 extern void sys_deposit_register();
 extern void sys_display_register();
+extern void sys_plusargs_register();
 extern void sys_random_register();
 extern void sys_readmem_register();
 extern void sys_time_register();
@@ -74,6 +75,7 @@ void (*vlog_startup_routines[])() = {
       sys_finish_register,
       sys_deposit_register,
       sys_display_register,
+      sys_plusargs_register,
       sys_random_register,
       sys_readmem_register,
       sys_time_register,
@@ -84,6 +86,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.16  2002/04/07 04:37:53  steve
+ *  Add $plusargs system functions.
+ *
  * Revision 1.15  2002/04/06 21:33:29  steve
  *  allow runtime selection of VCD vs LXT.
  *
