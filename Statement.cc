@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.26 2002/04/21 04:59:07 steve Exp $"
+#ident "$Id: Statement.cc,v 1.27 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,17 +32,19 @@ Statement::~Statement()
 PAssign_::PAssign_(PExpr*lval, PExpr*ex)
 : event_(0), lval_(lval), rval_(ex)
 {
+      delay_ = 0;
 }
 
 PAssign_::PAssign_(PExpr*lval, PExpr*de, PExpr*ex)
 : event_(0), lval_(lval), rval_(ex)
 {
-      if (de) delay_.set_delay(de);
+      delay_ = de;
 }
 
 PAssign_::PAssign_(PExpr*lval, PEventStatement*ev, PExpr*ex)
 : event_(ev), lval_(lval), rval_(ex)
 {
+      delay_ = 0;
 }
 
 PAssign_::~PAssign_()
@@ -293,6 +295,11 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.27  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.26  2002/04/21 04:59:07  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

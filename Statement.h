@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.32 2002/04/21 04:59:07 steve Exp $"
+#ident "$Id: Statement.h,v 1.33 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 # include  <string>
@@ -97,7 +97,7 @@ class PAssign_  : public Statement {
     protected:
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;
 
-      PDelays delay_;
+      PExpr* delay_;
       PEventStatement*event_;
 
     private:
@@ -453,6 +453,11 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.33  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.32  2002/04/21 04:59:07  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.55 2002/04/14 19:19:21 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.56 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -97,16 +97,21 @@ static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
  * a calculated assign.
  */
 static void assign_to_lvariable(ivl_lval_t lval, unsigned idx,
-				unsigned bit, unsigned delay)
+				unsigned bit, unsigned delay,
+				int delay_in_index_flag)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
 
+      char *delay_suffix = delay_in_index_flag? "/d" : "";
+
       if (ivl_lval_mux(lval))
-	    fprintf(vvp_out, "    %%assign/x0 V_%s, %u, %u;\n",
+	    fprintf(vvp_out, "    %%assign/x0%s V_%s, %u, %u;\n",
+		    delay_suffix,
 		    vvp_mangle_id(ivl_signal_name(sig)), delay, bit);
       else
-	    fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
+	    fprintf(vvp_out, "    %%assign%s V_%s[%u], %u, %u;\n",
+		    delay_suffix,
 		    vvp_mangle_id(ivl_signal_name(sig)),
 		    idx+part_off, delay, bit);
 }
@@ -124,6 +129,13 @@ static void calculate_into_x0(ivl_expr_t expr)
 {
       struct vector_info vec = draw_eval_expr(expr);
       fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", vec.base, vec.wid);
+      clr_vector(vec);
+}
+
+static void calculate_into_x1(ivl_expr_t expr)
+{
+      struct vector_info vec = draw_eval_expr(expr);
+      fprintf(vvp_out, "    %%ix/get 1, %u, %u;\n", vec.base, vec.wid);
       clr_vector(vec);
 }
 
@@ -239,10 +251,9 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_memory_t mem;
 
       unsigned long delay = 0;
-      if (del != 0) {
-	      /* XXXX Only support constant values. */
-	    assert(ivl_expr_type(del) == IVL_EX_ULONG);
+      if (del && (ivl_expr_type(del) == IVL_EX_ULONG)) {
 	    delay = ivl_expr_uvalue(del);
+	    del = 0;
       }
 
 	/* Handle the special case that the r-value is a constant. We
@@ -254,6 +265,9 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	    const char*bits = ivl_expr_bits(rval);
 	    unsigned wid = ivl_expr_width(rval);
 	    unsigned cur_rbit = 0;
+
+	    if (del != 0)
+		  calculate_into_x1(del);
 
 	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 		  unsigned idx;
@@ -277,19 +291,26 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 			      assign_to_memory(mem, idx, 
 					       bitchar_to_idx(bits[cur_rbit]),
 					       delay);
+			else if (del != 0)
+			      assign_to_lvariable(lval, idx,
+						  bitchar_to_idx(bits[cur_rbit]),
+						  1, 1);
 			else
 			      assign_to_lvariable(lval, idx,
 						  bitchar_to_idx(bits[cur_rbit]),
-						  delay);
-
+						  delay, 0);
 			cur_rbit += 1;
 		  }
 
 		  for (idx = bit_limit; idx < ivl_lval_pins(lval); idx += 1)
 			if (mem)
 			      assign_to_memory(mem, idx, 0, delay);
+			else if (del != 0)
+			      assign_to_lvariable(lval, idx, 0,
+						  1, 1);
 			else
-			      assign_to_lvariable(lval, idx, 0, delay);
+			      assign_to_lvariable(lval, idx, 0,
+						  delay, 0);
 
 	    }
 	    return 0;
@@ -300,6 +321,9 @@ static int show_stmt_assign_nb(ivl_statement_t net)
         unsigned wid = res.wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
+
+	if (del != 0)
+	      calculate_into_x1(del);
 
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned idx;
@@ -325,8 +349,12 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 			  : (res.base+cur_rbit);
 		    if (mem)
 			  assign_to_memory(mem, idx, bidx, delay);
+		    else if (del != 0)
+			  assign_to_lvariable(lval, idx, bidx,
+					      1, 1);
 		    else
-			  assign_to_lvariable(lval, idx, bidx, delay);
+			  assign_to_lvariable(lval, idx, bidx,
+					      delay, 0);
 
 		    cur_rbit += 1;
 	      }
@@ -334,8 +362,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      for (idx = bit_limit ;  idx < ivl_lval_pins(lval) ;  idx += 1)
 		    if (mem)
 			  assign_to_memory(mem, idx, 0, delay);
+		    else if (del != 0)
+			  assign_to_lvariable(lval, idx, 0, 1, 1);
 		    else
-			  assign_to_lvariable(lval, idx, 0, delay);
+			  assign_to_lvariable(lval, idx, 0, delay, 0);
 
 	}
 
@@ -1105,6 +1135,11 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.56  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.55  2002/04/14 19:19:21  steve
  *  Handle empty true case of conditional statements.
  *

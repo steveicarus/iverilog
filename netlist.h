@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.234 2002/04/21 17:43:13 steve Exp $"
+#ident "$Id: netlist.h,v 1.235 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 /*
@@ -1281,6 +1281,9 @@ class NetAssignBase : public NetProc {
       const NetAssign_* l_val(unsigned) const;
       unsigned l_val_count() const;
 
+      void set_delay(NetExpr*);
+      const NetExpr* get_delay() const;
+
       virtual NexusSet* nex_input();
 
 	// This returns the total width of the accumulated l-value. It
@@ -1293,6 +1296,7 @@ class NetAssignBase : public NetProc {
     private:
       NetAssign_*lval_;
       NetExpr   *rval_;
+      NetExpr   *delay_;
 };
 
 class NetAssign : public NetAssignBase {
@@ -1313,23 +1317,12 @@ class NetAssignNB  : public NetAssignBase {
       explicit NetAssignNB(NetAssign_*lv, NetExpr*rv);
       ~NetAssignNB();
 
-      void rise_time(unsigned);
-      void fall_time(unsigned);
-      void decay_time(unsigned);
-
-      unsigned rise_time() const;
-      unsigned fall_time() const;
-      unsigned decay_time() const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-
-      unsigned rise_time_;
-      unsigned fall_time_;
-      unsigned decay_time_;
 };
 
 /*
@@ -2984,6 +2977,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.235  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.234  2002/04/21 17:43:13  steve
  *  implement nex_input for behavioral statements.
  *

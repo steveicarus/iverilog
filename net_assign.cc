@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.8 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.9 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,7 +99,7 @@ unsigned NetAssign_::get_loff() const
 }
 
 NetAssignBase::NetAssignBase(NetAssign_*lv, NetExpr*rv)
-: lval_(lv), rval_(rv)
+: lval_(lv), rval_(rv), delay_(0)
 {
 }
 
@@ -180,6 +180,15 @@ unsigned NetAssignBase::lwidth() const
       return sum;
 }
 
+void NetAssignBase::set_delay(NetExpr*expr)
+{
+      delay_ = expr;
+}
+
+const NetExpr* NetAssignBase::get_delay() const
+{
+      return delay_;
+}
 
 NetAssign::NetAssign(NetAssign_*lv, NetExpr*rv)
 : NetAssignBase(lv, rv)
@@ -193,47 +202,19 @@ NetAssign::~NetAssign()
 NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv)
 : NetAssignBase(lv, rv)
 {
-      rise_time_ = 0;
-      fall_time_ = 0;
-      decay_time_ = 0;
 }
 
 NetAssignNB::~NetAssignNB()
 {
 }
 
-void NetAssignNB::rise_time(unsigned t)
-{
-      rise_time_ = t;
-}
-
-void NetAssignNB::fall_time(unsigned t)
-{
-      fall_time_ = t;
-}
-
-void NetAssignNB::decay_time(unsigned t)
-{
-      decay_time_ = t;
-}
-
-unsigned NetAssignNB::rise_time() const
-{
-      return rise_time_;
-}
-
-unsigned NetAssignNB::fall_time() const
-{
-      return fall_time_;
-}
-
-unsigned NetAssignNB::decay_time() const
-{
-      return decay_time_;
-}
-
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.9  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.8  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.243 2002/04/21 04:59:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.244 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -875,6 +875,57 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
       return lval_->elaborate_lval(des, scope);
 }
 
+/*
+ * This function elaborates delay expressions. This is a little
+ * different from normal elaboration because the result may need to be
+ * scaled.
+ */
+static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
+{
+
+      if (verireal*dr = expr->eval_rconst(des, scope)) {
+	    int shift = scope->time_unit() - des->get_precision();
+	    long val = dr->as_long(shift);
+	    delete dr;
+	    return new NetEConst(verinum(val));
+
+      }
+
+      if (verinum*dv = expr->eval_const(des, scope)) {
+	    unsigned long val = dv->as_ulong();
+	    val = des->scale_to_precision(val, scope);
+	    return new NetEConst(verinum(val));
+
+      }
+
+      NetExpr*delay = expr->elaborate_expr(des, scope);
+
+      int shift = scope->time_unit() - des->get_precision();
+      if (shift > 0) {
+	    unsigned long scale = 1;
+	    while (shift > 0) {
+		  scale *= 10;
+		  shift -= 1;
+	    }
+
+	    NetExpr*scal_val = new NetEConst(verinum(scale));
+	    delay = new NetEBMult('*', delay, scal_val);
+      }
+
+      if (shift < 0) {
+	    unsigned long scale = 1;
+	    while (shift < 0) {
+		  scale *= 10;
+		  shift += 1;
+	    }
+
+	    NetExpr*scal_val = new NetEConst(verinum(scale));
+	    delay = new NetEBDiv('/', delay, scal_val);
+      }
+
+      return delay;
+}
+
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
@@ -900,9 +951,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-	/* If there is a delay expression, elaborate it. */
-      unsigned long rise_time, fall_time, decay_time;
-      delay_.eval_delays(des, scope, rise_time, fall_time, decay_time);
+	/* If there is an internal delay expression, elaborate it. */
+      NetExpr*delay = 0;
+      if (delay_ != 0)
+	    delay = elaborate_delay_expr(delay_, des, scope);
 
 
 	/* Elaborate the r-value expression. */
@@ -947,7 +999,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   actually and literally represent the delayed assign in the
 	   netlist. The compound statement is exactly equivalent. */
 
-      if (rise_time || event_) {
+      if (delay || event_) {
 	    string n = scope->local_hsymbol();
 	    unsigned wid = lv->lwidth();
 
@@ -995,7 +1047,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 		  assert(st);
 
 	    } else {
-		  NetPDelay*de = new NetPDelay(rise_time, a2);
+		  NetPDelay*de = new NetPDelay(delay, a2);
 		  st = de;
 	    }
 
@@ -1091,15 +1143,13 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	rv = pad_to_width(rv, wid);
       }
 
-
-      unsigned long rise_time, fall_time, decay_time;
-      delay_.eval_delays(des, scope, rise_time, fall_time, decay_time);
+      NetExpr*delay = 0;
+      if (delay_ != 0)
+	    delay = elaborate_delay_expr(delay_, des, scope);
 
 	/* All done with this node. mark its line number and check it in. */
       NetAssignNB*cur = new NetAssignNB(lv, rv);
-      cur->rise_time(rise_time);
-      cur->fall_time(fall_time);
-      cur->decay_time(decay_time);
+      cur->set_delay(delay);
       cur->set_line(*this);
       return cur;
 }
@@ -2454,6 +2504,11 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.244  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.243  2002/04/21 04:59:07  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

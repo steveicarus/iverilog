@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.41 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.42 2002/04/21 22:31:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -157,6 +157,13 @@ void dll_target::proc_assign(const NetAssign*net)
       net->rval()->expr_scan(this);
       stmt_cur_->u_.assign_.rval_ = expr_;
       expr_ = 0;
+
+      const NetExpr*del = net->get_delay();
+      if (del) {
+	    del->expr_scan(this);
+	    stmt_cur_->u_.assign_.delay = expr_;
+	    expr_ = 0;
+      }
 }
 
 
@@ -164,7 +171,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 {
       unsigned cnt = net->l_val_count();
 
-      unsigned long delay_val = net->rise_time();
+      const NetExpr* delay_exp = net->get_delay();
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
@@ -198,13 +205,19 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       stmt_cur_->u_.assign_.rval_ = expr_;
       expr_ = 0;
 
-      if (delay_val > 0) {
+      if (const NetEConst*delay_num = dynamic_cast<const NetEConst*>(delay_exp)) {
+	    verinum val = delay_num->value();
 	    ivl_expr_t de = new struct ivl_expr_s;
 	    de->type_ = IVL_EX_ULONG;
 	    de->width_  = 8 * sizeof(unsigned long);
 	    de->signed_ = 0;
-	    de->u_.ulong_.value = delay_val;
+	    de->u_.ulong_.value = val.as_ulong();
 	    stmt_cur_->u_.assign_.delay = de;
+
+      } else if (delay_exp != 0) {
+	    delay_exp->expr_scan(this);
+	    stmt_cur_->u_.assign_.delay = expr_;
+	    expr_ = 0;
       }
 }
 
@@ -793,6 +806,11 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.42  2002/04/21 22:31:02  steve
+ *  Redo handling of assignment internal delays.
+ *  Leave it possible for them to be calculated
+ *  at run time.
+ *
  * Revision 1.41  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *
