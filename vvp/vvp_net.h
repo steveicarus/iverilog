@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.1 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.2 2004/12/15 17:16:08 steve Exp $"
 
 # include  <assert.h>
 
@@ -348,8 +348,8 @@ class vvp_fun_part  : public vvp_net_fun_t {
 
 /* vvp_fun_signal
  * This node is the place holder in a vvp network for signals,
- * including nets for various sort. The output from a signal is always
- * a vector5, use drivers if the context needs vector8 values.
+ * including nets of various sort. The output from a signal is always
+ * a vector4, use drivers if the context needs vector8 values.
  *
  * If the signal is a net (i.e. a wire or tri) then this node will
  * have an input that is the data source. The data source will connect
@@ -360,7 +360,7 @@ class vvp_fun_part  : public vvp_net_fun_t {
  * %assign statements will write through port-0
  *
  * In any case, behavioral code is able to read the value that this
- * node last propagated, by using the size(). That is important
+ * node last propagated, by using the value() method. That is important
  * functionality of this node.
  *
  * Continuous assignments are made through port-1. When a value is
@@ -369,6 +369,32 @@ class vvp_fun_part  : public vvp_net_fun_t {
  * off again. Writing into this port can be done in behavioral code
  * using the %cassign/v instruction, or can be done by the network by
  * hooking the output of a vvp_net_t to this port.
+ *
+ * Force assignments are made through port-2. When a value is written
+ * here, force mode is activated. In force mode, port-0 data (or
+ * port-1 data if in continuous assign mode) is tracked but not
+ * propagated. The force value is propagated and is what is readable
+ * through the value method.
+ *
+ * Port-3 is a command port, intended for use by procedural
+ * instructions. The client must write long values to this port to
+ * invoke the command of interest. The command values are:
+ *
+ *  1  -- deassign
+ *          The deassign command takes the node out of continuous
+ *          assignment mode. The output value is unchanged, and force
+ *          mode, if active, remains in effect.
+ *
+ *  2  -- release/net
+ *          The release/net command takes the node out of force mode,
+ *          and propagates the tracked port-0 value to the signal
+ *          output. This acts like a release of a net signal.
+ *
+ *  3  -- release/reg
+ *          The release/reg command is similar to the release/net
+ *          command, but the port-0 value is not propagated. Changes
+ *          to port-0 (or port-1 if continuous assing is active) will
+ *          propagate starting at the next input change.
  */
 class vvp_fun_signal  : public vvp_net_fun_t {
 
@@ -384,6 +410,7 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 	// Commands
       void deassign();
+      void release(vvp_net_ptr_t port, bool net);
 
     public:
       struct __vpiCallback*vpi_callbacks;
@@ -392,12 +419,18 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       vvp_vector4_t bits_;
       bool continuous_assign_active_;
 
+      vvp_vector4_t force_;
+      bool force_active_;
+
     private:
       void run_vpi_callbacks();
 };
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.2  2004/12/15 17:16:08  steve
+ *  Add basic force/release capabilities.
+ *
  * Revision 1.1  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

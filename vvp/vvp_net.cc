@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.1 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.2 2004/12/15 17:16:08 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -249,6 +249,7 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid)
 {
       vpi_callbacks = 0;
       continuous_assign_active_ = false;
+      force_active_ = false;
 }
 
 /*
@@ -273,7 +274,10 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    break;
 
 	  case 2: // Force value
-	    assert(0);
+	    force_active_ = true;
+	    force_ = bit;
+	    vvp_send_vec4(ptr.ptr()->out, force_);
+	    run_vpi_callbacks();
 	    break;
 
 	  default:
@@ -287,6 +291,17 @@ void vvp_fun_signal::deassign()
       continuous_assign_active_ = false;
 }
 
+void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
+{
+      force_active_ = false;
+      if (net) {
+	    vvp_send_vec4(ptr.ptr()->out, bits_);
+	    run_vpi_callbacks();
+      } else {
+	    bits_ = force_;
+      }
+}
+
 /*
  * The signal functor takes commands as long values to port-3. This
  * method interprets those commands.
@@ -298,6 +313,12 @@ void vvp_fun_signal::recv_long(vvp_net_ptr_t ptr, long bit)
 	    switch (bit) {
 		case 1: // deassign command
 		  deassign();
+		  break;
+		case 2: // release/net
+		  release(ptr, true);
+		  break;
+		case 3: // release/reg
+		  release(ptr, false);
 		  break;
 		default:
 		  assert(0);
@@ -313,7 +334,10 @@ void vvp_fun_signal::recv_long(vvp_net_ptr_t ptr, long bit)
 
 vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 {
-      return bits_.value(idx);
+      if (force_active_)
+	    return force_.value(idx);
+      else
+	    return bits_.value(idx);
 }
 
 /* **** vvp_scaler_t methods **** */
@@ -485,6 +509,9 @@ vvp_scaler_t resolve(vvp_scaler_t a, vvp_scaler_t b)
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.2  2004/12/15 17:16:08  steve
+ *  Add basic force/release capabilities.
+ *
  * Revision 1.1  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
