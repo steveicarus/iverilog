@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.57 1999/10/05 04:02:10 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.58 1999/10/05 06:19:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -305,32 +305,29 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
       expr->expr()->expr_scan(this);
       string tname = make_temp();
 
-      os_ << "        vvm_bitset_t<" << expr->expr_width() << "> "
+      os_ << "      vvm_bitset_t<" << expr->expr_width() << "> "
 	  << tname << " = ";
       switch (expr->op()) {
 	  case '~':
-	    os_ << "vvm_unop_not(" << result << ");"
-		<< endl;
+	    os_ << "vvm_unop_not(" << result << ");" << endl;
 	    break;
 	  case '&':
-	    os_ << "vvm_unop_and(" << result << ");"
-		<< endl;
+	    os_ << "vvm_unop_and(" << result << ");" << endl;
 	    break;
 	  case '^':
-	    os_ << "vvm_unop_xor(" << result << ");"
-		<< endl;
+	    os_ << "vvm_unop_xor(" << result << ");" << endl;
 	    break;
 	  case '!':
-	    os_ << "vvm_unop_lnot(" << result << ");"
-		<< endl;
+	    os_ << "vvm_unop_lnot(" << result << ");" << endl;
 	    break;
 	  case '-':
-	    os_ << "vvm_unop_uminus(" << result << ");"
-		<< endl;
+	    os_ << "vvm_unop_uminus(" << result << ");" << endl;
+	    break;
+	  case 'N':
+	    os_ << "vvm_unop_nor(" << result << ");" << endl;
 	    break;
 	  case 'X':
-	    os_ << "vvm_unop_xnor(" << result << ");"
-		<< endl;
+	    os_ << "vvm_unop_xnor(" << result << ");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm: Unhandled unary op `" << expr->op() << "'"
@@ -1681,6 +1678,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.58  1999/10/05 06:19:46  steve
+ *  Add support for reduction NOR.
+ *
  * Revision 1.57  1999/10/05 04:02:10  steve
  *  Relaxed width handling for <= assignment.
  *

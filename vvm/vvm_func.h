@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.13 1999/10/01 15:26:29 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.14 1999/10/05 06:19:47 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -76,6 +76,13 @@ vvm_bitset_t<1> vvm_unop_or(const vvm_bitset_t<WIDTH>&r)
 
       res[0] = V0;
       return res;
+}
+
+template <unsigned WIDTH>
+vvm_bitset_t<1> vvm_unop_nor(const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<1>res = vvm_unop_or(r);
+      return vvm_unop_not(res);
 }
 
 template <unsigned WIDTH>
@@ -601,6 +608,9 @@ vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.14  1999/10/05 06:19:47  steve
+ *  Add support for reduction NOR.
+ *
  * Revision 1.13  1999/10/01 15:26:29  steve
  *  Add some vvm operators from Eric Aardoom.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.108 1999/10/05 02:00:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.109 1999/10/05 06:19:46 steve Exp $"
 #endif
 
 /*
@@ -1867,6 +1867,12 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 	// generate a comparison operator to get the result down to
 	// one bit. Turn <e> into <e> != 0;
 
+      if (expr->expr_width() < 1) {
+	    cerr << get_line() << ": internal error: "
+		  "incomprehensible expression width (0)." << endl;
+	    return 0;
+      }
+
       if (! expr->set_width(1)) {
 	    assert(expr->expr_width() > 1);
 	    verinum zero (verinum::V0, expr->expr_width());
@@ -2547,6 +2553,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.109  1999/10/05 06:19:46  steve
+ *  Add support for reduction NOR.
+ *
  * Revision 1.108  1999/10/05 02:00:06  steve
  *  sorry message for non-constant l-value bit select.
  *

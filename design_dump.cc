@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.45 1999/09/30 02:43:01 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.46 1999/10/05 06:19:46 steve Exp $"
 #endif
 
 /*
@@ -698,7 +698,15 @@ void NetEUFunc::dump(ostream&o) const
 
 void NetEUnary::dump(ostream&o) const
 {
-      o << op_ << "(";
+      switch (op_) {
+	  case 'N':
+	    o << "~|";
+	    break;
+	  default:
+	    o << op_;
+	    break;
+      }
+      o << "(";
       expr_->dump(o);
       o << ")";
 }
@@ -774,6 +782,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.46  1999/10/05 06:19:46  steve
+ *  Add support for reduction NOR.
+ *
  * Revision 1.45  1999/09/30 02:43:01  steve
  *  Elaborate ~^ and ~| operators.
  *

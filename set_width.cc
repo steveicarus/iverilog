@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.5 1999/10/05 04:02:10 steve Exp $"
+#ident "$Id: set_width.cc,v 1.6 1999/10/05 06:19:46 steve Exp $"
 #endif
 
 /*
@@ -245,14 +245,8 @@ bool NetEUnary::set_width(unsigned w)
 	  case '-':
 	    flag = expr_->set_width(w);
 	    break;
-	  case '&':
-	  case '!':
-	    if (w != 1) {
-		  flag = false;
-	    }
-	    break;
 	  default:
-	    flag = false;
+	    flag = expr_width() == w;
 	    break;
       }
       expr_width(w);
@@ -262,6 +256,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.6  1999/10/05 06:19:46  steve
+ *  Add support for reduction NOR.
+ *
  * Revision 1.5  1999/10/05 04:02:10  steve
  *  Relaxed width handling for <= assignment.
  *
