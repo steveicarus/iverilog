@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.23 1999/05/01 20:43:55 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.24 1999/05/05 03:04:46 steve Exp $"
 #endif
 
 /*
@@ -860,7 +860,10 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
       assert(num);
 
       unsigned long val = num->as_ulong();
-      return new NetPDelay(val, statement_->elaborate(des, path));
+      if (statement_)
+	    return new NetPDelay(val, statement_->elaborate(des, path));
+      else
+	    return new NetPDelay(val, 0);
 }
 
 /*
@@ -1057,6 +1060,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.24  1999/05/05 03:04:46  steve
+ *  Fix handling of null delay statements.
+ *
  * Revision 1.23  1999/05/01 20:43:55  steve
  *  Handle wide events, such as @(a) where a has
  *  many bits in it.

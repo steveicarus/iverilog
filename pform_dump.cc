@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.14 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.15 1999/05/05 03:04:46 steve Exp $"
 #endif
 
 /*
@@ -298,8 +298,14 @@ void PCondit::dump(ostream&out, unsigned ind) const
 
 void PDelayStatement::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "#" << *delay_ << endl;
-      statement_->dump(out, ind+2);
+      out << setw(ind) << "" << "#" << *delay_ << " /* " <<
+	    get_line() << " */";
+      if (statement_) {
+	    out << endl;
+	    statement_->dump(out, ind+2);
+      } else {
+	    out << " /* noop */;" << endl;
+      }
 }
 
 void PEventStatement::dump(ostream&out, unsigned ind) const
@@ -434,6 +440,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.15  1999/05/05 03:04:46  steve
+ *  Fix handling of null delay statements.
+ *
  * Revision 1.14  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *
