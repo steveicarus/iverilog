@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.234 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.235 2001/12/06 04:44:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -663,8 +663,21 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       else
 	    my_name = scope->name()+"."+my_name;
 
+	/* When the parser notices delay expressions in front of a
+	   module or primitive, it interprets them as parameter
+	   overrides. Correct that misconception here. */
+      unsigned long rise_time = 0, fall_time = 0, decay_time = 0;
+      if (overrides_) {
+	    PDelays tmp_del;
+	    tmp_del.set_delays(overrides_);
+	    delete overrides_;
+      }
+
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
       net->set_attributes(udp->attributes);
+      net->rise_time(rise_time);
+      net->fall_time(fall_time);
+      net->decay_time(decay_time);
 
 	/* Run through the pins, making netlists for the pin
 	   expressions and connecting them to the pin in question. All
@@ -2380,6 +2393,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.235  2001/12/06 04:44:11  steve
+ *  Support delays on UDP instances.
+ *
  * Revision 1.234  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
