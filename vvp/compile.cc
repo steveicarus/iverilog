@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.54 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: compile.cc,v 1.55 2001/05/06 00:18:13 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -914,11 +914,13 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 	    if (strcmp(argv[idx].text, "C<0>") == 0) {
 		  obj->oval = 0;
+		  schedule_functor(ptr, 0);
 		  continue;
 	    }
 
 	    if (strcmp(argv[idx].text, "C<1>") == 0) {
 		  obj->oval = 1;
+		  schedule_functor(ptr, 0);
 		  continue;
 	    }
 
@@ -929,6 +931,7 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 	    if (strcmp(argv[idx].text, "C<z>") == 0) {
 		  obj->oval = 3;
+		  schedule_functor(ptr, 0);
 		  continue;
 	    }
 
@@ -1045,6 +1048,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.55  2001/05/06 00:18:13  steve
+ *  Propagate non-x constant net values.
+ *
  * Revision 1.54  2001/05/05 23:55:46  steve
  *  Add the beginnings of an interactive debugger.
  *
