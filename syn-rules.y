@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.6 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.7 2000/07/26 03:52:59 steve Exp $"
 #endif
 
 /*
@@ -172,7 +172,7 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       assert(d);
 
-      NetRamDq*ram = new NetRamDq(des_->local_symbol(mem->name()), mem,
+      NetRamDq*ram = new NetRamDq(des->local_symbol(mem->name()), mem,
 				  adr->pin_count());
 
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
@@ -187,7 +187,6 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       connect(ram->pin_InClock(), pclk->pin(0));
 
       ram->absorb_partners();
-      des_->add_node(ram);
 
       des->add_node(ram);
       des->delete_process(top);
