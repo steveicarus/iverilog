@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.8 1999/05/13 04:02:09 steve Exp $"
+#ident "$Id: verinum.cc,v 1.9 1999/07/20 05:12:22 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -123,6 +123,11 @@ verinum& verinum::operator= (const verinum&that)
 verinum::V verinum::get(unsigned idx) const
 {
       return bits_[idx];
+}
+
+verinum::V verinum::set(unsigned idx, verinum::V val)
+{
+      return bits_[idx] = val;
 }
 
 unsigned long verinum::as_ulong() const
@@ -305,6 +310,9 @@ bool operator == (const verinum&left, const verinum&right)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.9  1999/07/20 05:12:22  steve
+ *  Implement the set method.
+ *
  * Revision 1.8  1999/05/13 04:02:09  steve
  *  More precise handling of verinum bit lengths.
  *
