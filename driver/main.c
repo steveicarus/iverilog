@@ -16,12 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.31 2001/11/21 02:20:34 steve Exp $"
+#ident "$Id: main.c,v 1.32 2002/02/03 07:05:37 steve Exp $"
 
 # include "config.h"
 
+
 const char HELP[] =
-"Usage: iverilog [-ESv] [-B base] [-C path] [-c cmdfile]\n"
+"Usage: iverilog [-ESvV] [-B base] [-C path] [-c cmdfile]\n"
 "                [-D macro[=defn]] [-I includedir] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
@@ -347,6 +348,7 @@ int main(int argc, char **argv)
       char*cmd;
       unsigned ncmd;
       int e_flag = 0;
+      int version_flag = 0;
       int opt, idx;
       char*cp;
 
@@ -392,7 +394,7 @@ int main(int argc, char **argv)
       source_file = fopen(source_path, "w");
       assert(source_file);
 
-      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vW:y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vVW:y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -493,6 +495,9 @@ int main(int argc, char **argv)
 		case 'v':
 		  verbose_flag = 1;
 		  break;
+		case 'V':
+		  version_flag = 1;
+		  break;
 		case 'W':
 		  process_warning_switch(optarg);
 		  break;
@@ -506,6 +511,15 @@ int main(int argc, char **argv)
 		default:
 		  return 1;
 	    }
+      }
+
+      if (version_flag || verbose_flag) {
+	    printf("Icarus Verilog version " VERSION "\n");
+	    printf("Copyright 1998-2002 Stephen Williams\n");
+	    printf("$Name:  $\n");
+
+	    if (version_flag)
+		  return 0;
       }
 
       if (command_filename) {
@@ -624,6 +638,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.32  2002/02/03 07:05:37  steve
+ *  Support print of version number.
+ *
  * Revision 1.31  2001/11/21 02:20:34  steve
  *  Pass list of file to ivlpp via temporary file.
  *

@@ -16,12 +16,16 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.113 2002/01/28 00:52:41 steve Exp $"
+#ident "$Id: Makefile.in,v 1.114 2002/02/03 07:05:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
 
-VERSION = 0.5
+# This version string is only used in the version message printed
+# by the compiler. It reflects the assigned version number for the
+# product as a whole. Most components also print the CVS Name: token
+# in order to get a more automatic version stamp as well.
+VERSION = 0.6
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -68,7 +72,7 @@ all: ivl@EXEEXT@ libvpi.a
 	cd vvm ; $(MAKE) all
 	cd vpi ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
-	cd driver ; $(MAKE) all
+	cd driver ; $(MAKE) VERSION=$(VERSION) all
 	cd tgt-verilog ; $(MAKE) all
 	cd tgt-stub ; $(MAKE) all
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) all); done

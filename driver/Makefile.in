@@ -18,12 +18,12 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.10 2001/11/17 17:57:58 steve Exp $"
+#ident "$Id: Makefile.in,v 1.11 2002/02/03 07:05:36 steve Exp $"
 #
 #
 SHELL = /bin/sh
 
-VERSION = 0.0
+VERSION = 0.6
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -46,7 +46,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@
-CFLAGS = @CFLAGS@ -I. -I$(srcdir)/..
+CFLAGS = @CFLAGS@ -I. -I$(srcdir)/.. -DVERSION='"$(VERSION)"'
 CXXFLAGS = @CXXFLAGS@ -I. -I$(srcdir)/..
 LDFLAGS = @LDFLAGS@
 

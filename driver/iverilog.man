@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2001/12/08 04:13:07 $" Version "$Date: 2001/12/08 04:13:07 $"
+.TH iverilog 1 "$Date: 2002/02/03 07:05:37 $" Version "$Date: 2002/02/03 07:05:37 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value]
+[-ESVv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value]
 [-Iincludedir] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule]
 [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
@@ -111,7 +111,11 @@ Use this switch to specify the target output format. See the
 .B -v
 Turn on verbose messages. This will print the command lines that are
 executed to perform the actual compilation, along with version
-information from the various components.
+information from the various components, as well as the version of the
+product as a whole.
+.TP 8
+.B -V
+Print the version of the compiler, and exit.
 .TP 8
 .B -W\fIclass\fP
 Turn on different classes of warnings. See the \fBWARNING TYPES\fP
