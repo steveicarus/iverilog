@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.16 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.17 2004/12/31 05:57:25 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -90,6 +90,7 @@ static void draw_NAND(void)
       printf("};\n");
 }
 
+#if 0
 static void draw_BUF(void)
 {
       unsigned i0, i1, i2, i3;
@@ -121,7 +122,9 @@ static void draw_BUF(void)
 
       printf("};\n");
 }
+#endif
 
+#if 0
 static void draw_BUFZ(void)
 {
       unsigned i0, i1, i2, i3;
@@ -147,6 +150,7 @@ static void draw_BUFZ(void)
 
       printf("};\n");
 }
+#endif
 
 static void draw_BUFIF0(void)
 {
@@ -734,10 +738,8 @@ main()
 {
       printf("# include  \"logic.h\"\n");
       draw_AND();
-      draw_BUF();
       draw_BUFIF0();
       draw_BUFIF1();
-      draw_BUFZ();
       draw_PMOS();
       draw_NMOS();
       draw_MUXX();
@@ -758,6 +760,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.17  2004/12/31 05:57:25  steve
+ *  No need to draw BUF or BUFZ tables.
+ *
  * Revision 1.16  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
