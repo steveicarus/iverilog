@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.29 1999/07/07 00:24:42 steve Exp $"
+#ident "$Id: lexor.lex,v 1.30 1999/07/08 02:06:39 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -153,23 +153,23 @@ static int comment_enter;
 [0-9][0-9_]*[ \t]*\'d[ \t]*[0-9][0-9_]* {
       yylval.number = make_sized_dec(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[bB][ \t]*[0-1xzXZ_]+ {
+[0-9][0-9_]*[ \t]*\'[bB][ \t]*[0-1xzXZ_\?]+ {
       yylval.number = make_sized_binary(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[oO][ \t]*[0-7xzXZ_]+ {
+[0-9][0-9_]*[ \t]*\'[oO][ \t]*[0-7xzXZ_\?]+ {
       yylval.number = make_sized_octal(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[hH][ \t]*[0-9a-fA-FxzXZ_]+ {
+[0-9][0-9_]*[ \t]*\'[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ {
       yylval.number = make_sized_hex(yytext);
       return NUMBER; }
 
 \'d[ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
                          return NUMBER; }
-\'[bB][ \t]*[0-1xzXZ_]+ { yylval.number = make_unsized_binary(yytext);
+\'[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
                         return NUMBER; }
-\'[oO][ \t]*[0-7xzXZ_]+ { yylval.number = make_unsized_octal(yytext);
+\'[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
                         return NUMBER; }
-\'[hH][ \t]*[0-9a-fA-FxzXZ_]+ { yylval.number = make_unsized_hex(yytext);
+\'[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
                               return NUMBER; }
 
 [0-9][0-9_]*		 {
@@ -373,7 +373,7 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 		case '1':
 		  bits[idx++] = verinum::V1;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[idx++] = verinum::Vz;
 		  break;
 		case 'x': case 'X':
@@ -393,7 +393,7 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 		case '1':
 		  bits[idx++] = verinum::V0;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[idx++] = verinum::Vz;
 		  break;
 		case 'x': case 'X':
@@ -444,7 +444,7 @@ static verinum*make_unsized_binary(const char*txt)
 		case '1':
 		  bits[--idx] = verinum::V1;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[--idx] = verinum::Vz;
 		  break;
 		case 'x': case 'X':
@@ -487,7 +487,7 @@ static verinum*make_sized_octal(const char*txt)
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
@@ -508,7 +508,7 @@ static verinum*make_sized_octal(const char*txt)
 	  case 'x': case 'X':
 	    bits[idx++] = verinum::Vx;
 	    break;
-	  case 'z': case 'Z':
+	  case 'z': case 'Z': case '?':
 	    bits[idx++] = verinum::Vz;
 	    break;
 	  default:
@@ -551,7 +551,7 @@ static verinum*make_unsized_octal(const char*txt)
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
@@ -596,7 +596,7 @@ static verinum*make_sized_hex(const char*txt)
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
@@ -636,7 +636,7 @@ static verinum*make_sized_hex(const char*txt)
 	  case 'x': case 'X':
 	    bits[idx++] = verinum::Vx;
 	    break;
-	  case 'z': case 'Z':
+	  case 'z': case 'Z': case '?':
 	    bits[idx++] = verinum::Vz;
 	    break;
 	  default:
@@ -689,7 +689,7 @@ static verinum*make_unsized_hex(const char*txt)
 		  bits[--idx] = verinum::Vx;
 		  bits[--idx] = verinum::Vx;
 		  break;
-		case 'z': case 'Z':
+		case 'z': case 'Z': case '?':
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
 		  bits[--idx] = verinum::Vz;
