@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.9 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: net_design.cc,v 1.10 2000/07/16 04:56:08 steve Exp $"
 #endif
 
 /*
@@ -46,6 +46,7 @@ static string parse_last_name(string&path)
 Design:: Design()
 : errors(0), root_scope_(0), nodes_(0), procs_(0), lcounter_(0)
 {
+      procs_idx_ = 0;
 }
 
 Design::~Design()
@@ -470,6 +471,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.10  2000/07/16 04:56:08  steve
+ *  Handle some edge cases during node scans.
+ *
  * Revision 1.9  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.19 2000/07/15 05:13:43 steve Exp $"
+#ident "$Id: functor.cc,v 1.20 2000/07/16 04:56:07 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -110,12 +110,30 @@ void Design::functor(functor_t*fun)
 
 	// apply to nodes
       if (nodes_) {
+	      /* Scan the circular list of nodes, starting with the
+		 front of the list. (nodes_ points to the *end* of the
+		 list.) The bar is the end point. At the end of the
+		 do-while loop, I know that the bar has been
+		 processed or (if bar == 0) no undeleted node has been
+		 processed. */
 	    NetNode*cur = nodes_->node_next_;
+	    NetNode*bar = 0;
 	    do {
 		  NetNode*tmp = cur->node_next_;
 		  cur->functor_node(this, fun);
+
+		    /* Detect the case that cur has been deleted by
+		       noticing if tmp->node_prev_ no longer points to
+		       cur. If that's the case, clear the bar. */
+		  if (tmp->node_prev_ != cur) {
+			if (cur == bar)
+			      bar = 0;
+		  } else if (bar == 0) {
+			bar = cur;
+		  }
 		  cur = tmp;
-	    } while (nodes_ && cur != nodes_->node_next_);
+
+	    } while (nodes_ && (cur != bar));
       }
 }
 
@@ -227,6 +245,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.20  2000/07/16 04:56:07  steve
+ *  Handle some edge cases during node scans.
+ *
  * Revision 1.19  2000/07/15 05:13:43  steve
  *  Detect muxing Vz as a bufufN.
  *

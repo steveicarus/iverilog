@@ -19,13 +19,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.14 2000/07/15 05:13:44 steve Exp $"
+#ident "$Id: functor.h,v 1.15 2000/07/16 04:56:07 steve Exp $"
 #endif
 
 /*
  * The functor is an object that can be applied to a design to
  * transform it. This is different from the target_t, which can only
  * scan the design but not transform it in any way.
+ *
+ * When a functor it scanning a process, signal or node, the functor
+ * is free to manipulate the list by deleting items, including the
+ * node being scanned. The Design class scanner knows how to handle
+ * the situation. However, if objects are added to the netlist, there
+ * is no guarantee that object will be scanned unless the functor is
+ * rerun.
  */
 
 class Design;
@@ -82,6 +89,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.15  2000/07/16 04:56:07  steve
+ *  Handle some edge cases during node scans.
+ *
  * Revision 1.14  2000/07/15 05:13:44  steve
  *  Detect muxing Vz as a bufufN.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.146 2000/07/15 05:13:44 steve Exp $"
+#ident "$Id: netlist.h,v 1.147 2000/07/16 04:56:08 steve Exp $"
 #endif
 
 /*
@@ -266,6 +266,7 @@ class NetNode  : public NetObj {
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump_node(ostream&, unsigned) const;
 
+	// This is used to scan a modifiable netlist, one node at a time.
       virtual void functor_node(Design*, functor_t*);
 
     private:
@@ -2659,6 +2660,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.147  2000/07/16 04:56:08  steve
+ *  Handle some edge cases during node scans.
+ *
  * Revision 1.146  2000/07/15 05:13:44  steve
  *  Detect muxing Vz as a bufufN.
  *
