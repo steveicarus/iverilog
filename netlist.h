@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.336 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.337 2005/03/12 06:43:36 steve Exp $"
 #endif
 
 /*
@@ -674,13 +674,13 @@ class NetModulo  : public NetNode {
       unsigned width_a() const;
       unsigned width_b() const;
 
-      Link& pin_DataA(unsigned idx);
-      Link& pin_DataB(unsigned idx);
-      Link& pin_Result(unsigned idx);
+      Link& pin_DataA();
+      Link& pin_DataB();
+      Link& pin_Result();
 
-      const Link& pin_DataA(unsigned idx) const;
-      const Link& pin_DataB(unsigned idx) const;
-      const Link& pin_Result(unsigned idx) const;
+      const Link& pin_DataA() const;
+      const Link& pin_DataB() const;
+      const Link& pin_Result() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -3417,6 +3417,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.337  2005/03/12 06:43:36  steve
+ *  Update support for LPM_MOD.
+ *
  * Revision 1.336  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

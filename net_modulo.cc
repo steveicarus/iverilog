@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_modulo.cc,v 1.7 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_modulo.cc,v 1.8 2005/03/12 06:43:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,25 +30,22 @@
 # include  "netlist.h"
 # include  "compiler.h"
 
-
+/*
+ *  0 -- Result
+ *  1 -- DataA
+ *  2 -- DataB
+ */
 NetModulo::NetModulo(NetScope*s, perm_string n, unsigned wr,
 		     unsigned wa, unsigned wb)
-: NetNode(s, n, wr+wa+wb),
+: NetNode(s, n, 3),
   width_r_(wr), width_a_(wa), width_b_(wb)
 {
-      unsigned p = 0;
-      for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::OUTPUT);
-	    pin(p).set_name(perm_string::literal("Result"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("DataA"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("DataB"), idx);
-      }
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(0).set_dir(Link::INPUT);
+      pin(0).set_name(perm_string::literal("DataA"), 0);
+      pin(0).set_dir(Link::INPUT);
+      pin(0).set_name(perm_string::literal("DataB"), 0);
 }
 
 NetModulo::~NetModulo()
@@ -70,44 +67,41 @@ unsigned NetModulo::width_b() const
       return width_b_;
 }
 
-Link& NetModulo::pin_Result(unsigned idx)
+Link& NetModulo::pin_Result()
 {
-      assert(idx < width_r_);
-      return pin(idx);
+      return pin(0);
 }
 
-const Link& NetModulo::pin_Result(unsigned idx) const
+const Link& NetModulo::pin_Result() const
 {
-      assert(idx < width_r_);
-      return pin(idx);
+      return pin(0);
 }
 
-Link& NetModulo::pin_DataA(unsigned idx)
+Link& NetModulo::pin_DataA()
 {
-      assert(idx < width_a_);
-      return pin(idx+width_r_);
+      return pin(1);
 }
 
-const Link& NetModulo::pin_DataA(unsigned idx) const
+const Link& NetModulo::pin_DataA() const
 {
-      assert(idx < width_a_);
-      return pin(idx+width_r_);
+      return pin(1);
 }
 
-Link& NetModulo::pin_DataB(unsigned idx)
+Link& NetModulo::pin_DataB()
 {
-      assert(idx < width_b_);
-      return pin(idx+width_r_+width_a_);
+      return pin(2);
 }
 
-const Link& NetModulo::pin_DataB(unsigned idx) const
+const Link& NetModulo::pin_DataB() const
 {
-      assert(idx < width_b_);
-      return pin(idx+width_r_+width_a_);
+      return pin(2);
 }
 
 /*
  * $Log: net_modulo.cc,v $
+ * Revision 1.8  2005/03/12 06:43:35  steve
+ *  Update support for LPM_MOD.
+ *
  * Revision 1.7  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.143 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.144 2005/03/12 06:43:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1388,62 +1388,30 @@ void dll_target::lpm_modulo(const NetModulo*net)
       assert(obj->scope);
 
       unsigned wid = net->width_r();
-      if (wid < net->width_a())
-	    wid = net->width_a();
-      if (wid < net->width_b())
-	    wid = net->width_b();
 
       obj->u_.arith.width = wid;
-#if 0
-      obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
-      obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
-      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
+      obj->u_.arith.signed_flag = 0;
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    const Nexus*nex;
+      const Nexus*nex;
 
-	    if (idx < net->width_r()) {
-		  nex = net->pin_Result(idx).nexus();
-		  assert(nex->t_cookie());
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
 
-		  obj->u_.arith.q[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.q[idx], obj, 0,
-				IVL_DR_STRONG, IVL_DR_STRONG);
+      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
-	    } else {
-		  obj->u_.arith.q[idx] = 0;
-	    }
+      nex = net->pin_DataA().nexus();
+      assert(nex->t_cookie());
 
-	    if (idx < net->width_a()) {
-		  nex = net->pin_DataA(idx).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
+      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
+      nex = net->pin_DataB().nexus();
+      assert(nex->t_cookie());
 
-	    } else {
-		  obj->u_.arith.a[idx] = 0;
-	    }
+      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-
-	    if (idx < net->width_b()) {
-		  nex = net->pin_DataB(idx).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
-
-		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    } else {
-		  obj->u_.arith.b[idx] = 0;
-	    }
-      }
-#else
-      cerr << "XXXX: t-dll.cc: Forgot how to handle lpm_modulo." << endl;
-#endif
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -2168,6 +2136,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.144  2005/03/12 06:43:36  steve
+ *  Update support for LPM_MOD.
+ *
  * Revision 1.143  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.153 2005/03/09 05:52:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.154 2005/03/12 06:43:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -781,42 +781,32 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
       NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (rsig == 0) return 0;
 
+	/* rwidth is result width. */
       unsigned rwidth = lwidth;
       if (rwidth == 0) {
-	    rwidth = lsig->pin_count();
-	    if (rsig->pin_count() > rwidth)
-		  rwidth = rsig->pin_count();
+	    rwidth = lsig->vector_width();
+	    if (rsig->vector_width() > rwidth)
+		  rwidth = rsig->vector_width();
+
+	    lwidth = rwidth;
       }
+
       NetModulo*mod = new NetModulo(scope, scope->local_symbol(), rwidth,
-				    lsig->pin_count(),
-				    rsig->pin_count());
+				    lsig->vector_width(),
+				    rsig->vector_width());
       des->add_node(mod);
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
-	    connect(mod->pin_DataA(idx), lsig->pin(idx));
-      for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
-	    connect(mod->pin_DataB(idx), rsig->pin(idx));
+      connect(mod->pin_DataA(), lsig->pin(0));
+      connect(mod->pin_DataB(), rsig->pin(0));
 
-      if (lwidth == 0) lwidth = rwidth;
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, lwidth);
+			       NetNet::IMPLICIT, rwidth);
       osig->local_flag(true);
 
       unsigned cnt = osig->pin_count();
       if (cnt > rwidth) cnt = rwidth;
 
-      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-	    connect(mod->pin_Result(idx), osig->pin(idx));
-
-	/* If the lvalue is larger then the result, then pad the
-	   output with constant 0. */
-      if (cnt < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
-					verinum::V0);
-	    des->add_node(tmp);
-	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
-		  connect(osig->pin(idx), tmp->pin(0));
-      }
+      connect(mod->pin_Result(), osig->pin(0));
 
       return osig;
 }
@@ -2504,6 +2494,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.154  2005/03/12 06:43:35  steve
+ *  Update support for LPM_MOD.
+ *
  * Revision 1.153  2005/03/09 05:52:03  steve
  *  Handle case inequality in netlists.
  *
