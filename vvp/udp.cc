@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.5 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: udp.cc,v 1.6 2001/06/18 00:51:23 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -169,19 +169,27 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 		  if (old_bit=='x' && new_bit=='0')
 		    continue;
 		  break;
-		case 'p':
+		case 'P':
 		  if (old_bit=='0')
 		    continue;
 		  break;
-		case 'n':
-		  if (old_bit=='1')
-		    continue;
-		  break;
-		case 'P':
-		  if (old_bit=='0' && new_bit=='x')
+		case 'p':
+		  if (old_bit=='0' || new_bit=='1')
 		    continue;
 		  break;
 		case 'N':
+		  if (old_bit=='1')
+		    continue;
+		  break;
+		case 'n':
+		  if (old_bit=='1' || new_bit=='0')
+		    continue;
+		  break;
+		case 'Q':
+		  if (old_bit=='0' && new_bit=='x')
+		    continue;
+		  break;
+		case 'M':
 		  if (old_bit=='1' && new_bit=='x')
 		    continue;
 		  break;
@@ -223,6 +231,10 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.6  2001/06/18 00:51:23  steve
+ *  Add more UDP edge types, and finish up compile
+ *  and run-time support. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.30 2001/06/16 23:45:05 steve Exp $
+ *  $Id: README.txt,v 1.31 2001/06/18 00:51:23 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -149,9 +149,12 @@ For Sequential UDPs, at most one input state specification may be
 replaced by an edge specification.  Valid edges are:
 
 	"*": (??)	"_": (?0)	"+": (?1)	"%": (?x)
-	"p": (0?)			"r": (01)	"P": (0x)
-	"n": (1?)	"f": (10)			"N": (1x)
+	"P": (0?)			"r": (01)	"Q": (0x)
+	"N": (1?)	"f": (10)			"M": (1x)
 	"B": (x?)	"F": (x0)	"R": (x1)	
+
+	"n": (1?) | (?0)
+	"p": (0?) | (?1)
 
 A combinatorial UDP is defined like this:
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_udp.cc,v 1.3 2001/04/22 23:09:46 steve Exp $"
+#ident "$Id: vvm_udp.cc,v 1.4 2001/06/18 00:51:23 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -80,12 +80,15 @@ void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 	    unsigned idx;
 	    for (idx = 0 ;  idx < width_ ;  idx += 1)
 	      {
+		char new_bit = ibits_[idx];
 		if (row[idx] != ibits_[idx]
-		    && row[idx] != '?')
+		    && row[idx] != '?'
+		    && (row[idx] != 'b' || new_bit == 'x')
+		    && (row[idx] != 'l' || new_bit == '1')
+		    && (row[idx] != 'h' || new_bit == '0') )
 		  {
 		    if (idx == key)
 		      {
-			char new_bit = ibits_[idx];
 			switch (row[idx])
 			  {
 			  case '*':
@@ -100,6 +103,10 @@ void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 			    break;
 			  case '%':
 			    if (new_bit == 'x')
+			      continue;
+			    break;
+			  case 'B':
+			    if (old_bit == 'x')
 			      continue;
 			    break;
 			  case 'r':
@@ -118,19 +125,27 @@ void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 			    if (old_bit=='x' && new_bit=='0')
 			      continue;
 			    break;
-			  case 'p':
+			  case 'P':
 			    if (old_bit=='0')
 			      continue;
 			    break;
-			  case 'n':
-			    if (old_bit=='1')
-			      continue;
-			    break;
-			  case 'P':
-			    if (old_bit=='0' && new_bit=='x')
+			  case 'p':
+			    if (old_bit=='0' || new_bit=='1')
 			      continue;
 			    break;
 			  case 'N':
+			    if (old_bit=='1')
+			      continue;
+			    break;
+			  case 'n':
+			    if (old_bit=='1' || new_bit=='0')
+			      continue;
+			    break;
+			  case 'Q':
+			    if (old_bit=='0' && new_bit=='x')
+			      continue;
+			    break;
+			  case 'M':
 			    if (old_bit=='1' && new_bit=='x')
 			      continue;
 			    break;
@@ -177,6 +192,10 @@ void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_udp.cc,v $
+ * Revision 1.4  2001/06/18 00:51:23  steve
+ *  Add more UDP edge types, and finish up compile
+ *  and run-time support. (Stephan Boettcher)
+ *
  * Revision 1.3  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.121 2001/04/29 20:18:34 steve Exp $"
+#ident "$Id: parse.y,v 1.122 2001/06/18 00:51:23 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -2363,12 +2363,17 @@ udp_input_sym
 	| '%' { $$ = '%'; }
 	| 'f' { $$ = 'f'; }
 	| 'F' { $$ = 'F'; }
+	| 'l' { $$ = 'l'; }
+	| 'h' { $$ = 'H'; }
+	| 'B' { $$ = 'B'; }
 	| 'r' { $$ = 'r'; }
 	| 'R' { $$ = 'R'; }
+	| 'M' { $$ = 'M'; }
 	| 'n' { $$ = 'n'; }
 	| 'N' { $$ = 'N'; }
 	| 'p' { $$ = 'p'; }
 	| 'P' { $$ = 'P'; }
+	| 'Q' { $$ = 'Q'; }
 	| '_' { $$ = '_'; }
 	| '+' { $$ = '+'; }
 	;

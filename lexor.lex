@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.57 2001/04/28 18:43:18 steve Exp $"
+#ident "$Id: lexor.lex,v 1.58 2001/06/18 00:51:23 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -157,18 +157,23 @@ W [ \t\b\f\r]+
 <UDPTABLE>\(\?[xX]\) { return '%'; }
 <UDPTABLE>\(\?\?\)  { return '*'; }
 <UDPTABLE>\(01\)    { return 'r'; }
-<UDPTABLE>\(0[xX]\) { return 'P'; }
-<UDPTABLE>\(0\?\)   { return 'p'; }
+<UDPTABLE>\(0[xX]\) { return 'Q'; }
+<UDPTABLE>\(0\?\)   { return 'P'; }
 <UDPTABLE>\(10\)    { return 'f'; }
-<UDPTABLE>\(1[xX]\) { return 'N'; }
-<UDPTABLE>\(1\?\)   { return 'n'; }
+<UDPTABLE>\(1[xX]\) { return 'M'; }
+<UDPTABLE>\(1\?\)   { return 'N'; }
 <UDPTABLE>\([xX]0\) { return 'F'; }
 <UDPTABLE>\([xX]1\) { return 'R'; }
+<UDPTABLE>\([xX]\?\) { return 'B'; }
 <UDPTABLE>[bB]     { return 'b'; }
+<UDPTABLE>[lL]     { return 'l'; /* IVL extension */ }
+<UDPTABLE>[hH]     { return 'h'; /* IVL extension */ }
 <UDPTABLE>[fF]     { return 'f'; }
 <UDPTABLE>[rR]     { return 'r'; }
 <UDPTABLE>[xX]     { return 'x'; }
-<UDPTABLE>[pPnN01\?\*\-] { return yytext[0]; }
+<UDPTABLE>[nN]     { return 'n'; }
+<UDPTABLE>[pP]     { return 'p'; }
+<UDPTABLE>[01\?\*\-] { return yytext[0]; }
 
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
