@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.5 2002/04/30 04:26:42 steve Exp $
+  $Id: fpga.txt,v 1.6 2003/03/24 00:47:54 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -50,6 +50,11 @@ should work properly for any Virtex part.
 
 
 XNF ROOT PORTS
+
+  NOTE: As parts are moved over to EDIF format, XNF support will be
+  phased out. Current Xilinx implementation tools will accept EDIF
+  format files even for the older parts, and non-Xilinx implementation
+  tools accept nothing else.
 
 When the output format is XNF, the code generator will generate "SIG"
 records for the signals that are ports of the root module. The name is
@@ -169,6 +174,10 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.6  2003/03/24 00:47:54  steve
+ Add new virtex2 architecture family, and
+ also the new edif.h EDIF management functions.
+
 Revision 1.5  2002/04/30 04:26:42  steve
  Spelling errors.
 

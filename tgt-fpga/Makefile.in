@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.7 2003/02/27 22:13:22 steve Exp $"
+#ident "$Id: Makefile.in,v 1.8 2003/03/24 00:47:54 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,8 +52,8 @@ dep:
 	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-D = d-generic.o d-generic-edif.o d-virtex.o
-O = fpga.o gates.o mangle.o tables.o $D
+D = d-generic.o d-generic-edif.o d-virtex.o d-virtex2.o
+O = edif.o fpga.o gates.o mangle.o tables.o $D
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl

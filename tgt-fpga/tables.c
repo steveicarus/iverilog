@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: tables.c,v 1.4 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: tables.c,v 1.5 2003/03/24 00:47:54 steve Exp $"
 #endif
 
 # include  "fpga_priv.h"
@@ -27,6 +27,7 @@
 extern const struct device_s d_generic;
 extern const struct device_s d_generic_edif;
 extern const struct device_s d_virtex_edif;
+extern const struct device_s d_virtex2_edif;
 
 
 const struct device_table_s {
@@ -36,6 +37,7 @@ const struct device_table_s {
       { "generic-edif", &d_generic_edif },
       { "generic-xnf",  &d_generic },
       { "virtex",       &d_virtex_edif },
+      { "virtex2",      &d_virtex2_edif },
       { 0, 0 }
 };
 
@@ -56,6 +58,10 @@ device_t device_from_arch(const char*arch)
 
 /*
  * $Log: tables.c,v $
+ * Revision 1.5  2003/03/24 00:47:54  steve
+ *  Add new virtex2 architecture family, and
+ *  also the new edif.h EDIF management functions.
+ *
  * Revision 1.4  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *
