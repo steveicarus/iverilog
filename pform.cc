@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.20 1999/05/29 02:36:17 steve Exp $"
+#ident "$Id: pform.cc,v 1.21 1999/05/31 15:45:59 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -266,7 +266,7 @@ void pform_makegates(PGBuiltin::Type type,
       unsigned long delay_val = delay? evaluate_delay(delay) : 0;
       delete delay;
 
-      for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 0) {
+      for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    pform_makegate(type, delay_val, (*gates)[idx]);
       }
 
@@ -556,6 +556,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.21  1999/05/31 15:45:59  steve
+ *  makegates infinite loop fixed.
+ *
  * Revision 1.20  1999/05/29 02:36:17  steve
  *  module parameter bind by name.
  *
