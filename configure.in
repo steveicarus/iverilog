@@ -190,6 +190,8 @@ if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
 then
     WIN32=yes
 fi
+
+AC_SUBST(MINGW32)
 AC_SUBST(WIN32)
 AC_MSG_RESULT($WIN32)
 AC_SUBST(EXEEXT)
