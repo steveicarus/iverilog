@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.15 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: lexor.lex,v 1.16 1999/06/06 20:42:48 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
 
 # include  <iostream.h>
+# include  "compiler.h"
 # include  "parse_misc.h"
 # include  "parse.h"
 # include  <ctype.h>
@@ -384,7 +385,7 @@ static verinum*make_unsized_binary(const char*txt)
 {
       assert(*txt == '\'');
       txt += 1;
-      return make_binary_with_size(64, false, txt);
+      return make_binary_with_size(INTEGER_WIDTH, false, txt);
 }
 
 static verinum*make_sized_octal(const char*txt)
