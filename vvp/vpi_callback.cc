@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.21 2002/07/12 02:07:36 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.22 2002/07/31 03:22:23 steve Exp $"
 #endif
 
 /*
@@ -250,7 +250,7 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
       assert(vpi_mode_flag == VPI_MODE_NONE);
-      vpi_mode_flag = VPI_MODE_RWSYNC;
+      vpi_mode_flag = cb->sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
       (cur->cb_data.cb_rtn)(&cur->cb_data);
       vpi_mode_flag = VPI_MODE_NONE;
 
@@ -467,6 +467,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.22  2002/07/31 03:22:23  steve
+ *  Set vpi_mode_flag to represent cpReadOnlySync actions.
+ *
  * Revision 1.21  2002/07/12 02:07:36  steve
  *  vpiIntegerVars can have callbacks.
  *
