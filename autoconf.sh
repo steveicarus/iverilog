@@ -14,3 +14,6 @@ do
     echo "Autoconf in $dir..."
     ( cd $dir ; autoconf )
 done
+
+echo "Precompiling lexor_keyword.gperf"
+gperf -o -i 7 -C -k 1-3,\$ -L ANSI-C -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf > lexor_keyword.cc
