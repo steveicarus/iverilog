@@ -163,6 +163,59 @@ address of the instruction, and can be the target of %jmp instructions
 and starting points for threads.
 
 
+THE RELATIONSHIP BETWEEN FUNCTORS, THREADS AND EVENTS
+
+Given the above summary of the major components of vvp, some
+description of their relationship is warrented. Functors provide a
+structural description of the design (so far as it can be described
+structurally) and these functors run independently of the threads. In
+particular, when an input to a functor is set, it calculates a new
+output value; and if that output is different from the existing
+output, a propagation event is created. Functor output is calculated
+by truth table lookup, without the aid of threads.
+
+Propagation events are one of three kinds of events in vvp. They are
+scheduled to execute at some time, and they simply point to the functor
+that is to have its output propagated. When the event expires, the
+output of the referenced functor is propagated to all the inputs that
+it is connected to, and those functors in turn create new events if
+needed.
+
+Assignment events (the second of three types of events) are created
+by non-blocking assignments in behavioral code. When the ``<='' is
+executed (a %assign in vvp) an assign event is created, which includes
+the vvp_ipoint_t pointer to the functor input to receive the value,
+as well as the value. These are distinct from propagation events because:
+
+	a) There is no functor that has as its output the value to be
+	   assigned (this is how values get into the functor net in
+	   the first place), and
+
+	b) This allows for behavioral code to create waveforms of
+	   arbitrary length that feed into a variable. Verilog allows
+	   this of non-blocking assignments, but not of gate outputs.
+
+The last type of event is the thread schedule event. This event simply
+points to a thread to be executed. Threads are made up of a virtual
+processor with a program counter and some private storage. Threads
+can execute %assign instructions to create assignment events, and can
+execute %set instructions to do blocking assignments. Threads can also
+use %load to read the output of functors.
+
+The core event scheduler takes these three kinds of events and calls
+the right kind of code to cause things to happen in the design. If the
+event is a propagate or assignment event, the network of functors is
+tickled, if the event is a thread schedule, then a thread is run. The
+implementation of the event queue is not important, but currently is
+implemented as a ``skip list''. That is, it is a sorted singly linked
+list with skip pointers that skip over delta-time events.
+
+The functor net and the threads are distinct. They communicate through
+thread instructions %set, %assign, %waitfor and %load. So far as a thread
+is concerned, the functor net is a blob of structure that it pokes and
+prods via certain functor access instructions.
+
+
 HOW TO GET FROM THERE TO HERE
 
 The vvp simulation engine is designed to be able to take as input a
