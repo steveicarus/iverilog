@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.59 2003/11/13 04:09:49 steve Exp $"
+#ident "$Id: main.c,v 1.60 2003/11/13 05:55:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -564,6 +564,7 @@ int main(int argc, char **argv)
 	      base,sep, targ, synth_flag? "-s" : "");
 
 	/* Write values to the iconfig file. */
+      fprintf(iconfig_file, "basedir:%s\n", base);
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
@@ -703,6 +704,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.60  2003/11/13 05:55:33  steve
+ *  Move the DLL= flag to target config files.
+ *
  * Revision 1.59  2003/11/13 04:09:49  steve
  *  Pass flags through the temporary config file.
  *

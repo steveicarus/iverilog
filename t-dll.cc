@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.122 2003/11/10 20:59:04 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.123 2003/11/13 05:55:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -563,7 +563,17 @@ bool dll_target::start_design(const Design*des)
 {
       list<NetScope *> root_scopes;
       const char*dll_path_ = des->get_flag("DLL");
+
       dll_ = ivl_dlopen(dll_path_);
+
+      if ((dll_ == 0) && (dll_path_[0] != '/')) {
+	    size_t len = strlen(basedir) + 1 + strlen(dll_path_) + 1;
+	    char*tmp = new char[len];
+	    sprintf(tmp, "%s/%s", basedir, dll_path_);
+	    dll_ = ivl_dlopen(tmp);
+	    delete[]tmp;
+      }
+
       if (dll_ == 0) {
 	    cerr << "error: " << dll_path_ << " failed to load." << endl;
 	    cerr << dll_path_ << ": " << dlerror() << endl;
@@ -2159,6 +2169,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.123  2003/11/13 05:55:33  steve
+ *  Move the DLL= flag to target config files.
+ *
  * Revision 1.122  2003/11/10 20:59:04  steve
  *  Design::get_flag returns const char* instead of string.
  *

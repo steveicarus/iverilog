@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.77 2003/11/13 04:09:49 steve Exp $"
+#ident "$Id: main.cc,v 1.78 2003/11/13 05:55:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,6 +76,8 @@ extern "C" const char*optarg;
 unsigned flag_errors = 0;
 
 const char VERSION[] = "$Name:  $";
+
+const char*basedir = ".";
 
 const char*target = "null";
 
@@ -223,6 +225,9 @@ static void parm_to_flagmap(const string&flag)
  *    -t:<target>
  *        Usually, "-t:dll"
  *
+ *    basedir:<path>
+ *        Location to look for installed sub-components
+ *
  *    depfile:<path>
  *        Give the path to an output dependency file.
  *
@@ -284,7 +289,10 @@ static void read_iconfig_file(const char*ipath)
 		  }
 	    }
 
-	    if (strcmp(buf, "depfile") == 0) {
+	    if (strcmp(buf, "basedir") == 0) {
+		  basedir = strdup(cp);
+
+	    } else if (strcmp(buf, "depfile") == 0) {
 		  depfile_name = strdup(cp);
 
 	    } else if (strcmp(buf, "flag") == 0) {
@@ -707,6 +715,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.78  2003/11/13 05:55:33  steve
+ *  Move the DLL= flag to target config files.
+ *
  * Revision 1.77  2003/11/13 04:09:49  steve
  *  Pass flags through the temporary config file.
  *

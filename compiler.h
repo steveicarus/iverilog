@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.18 2003/11/08 20:06:21 steve Exp $"
+#ident "$Id: compiler.h,v 1.19 2003/11/13 05:55:33 steve Exp $"
 #endif
 
 # include  <list>
@@ -81,6 +81,9 @@ extern bool warn_portbinding;
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 
+/* Path to a directory useful for finding subcomponents. */
+extern const char*basedir;
+
 /* This is an ordered list of library suffixes to search. */
 extern list<const char*>library_suff;
 extern int build_library_index(const char*path, bool key_case_sensitive);
@@ -105,6 +108,9 @@ extern StringHeapLex lex_strings;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.19  2003/11/13 05:55:33  steve
+ *  Move the DLL= flag to target config files.
+ *
  * Revision 1.18  2003/11/08 20:06:21  steve
  *  Spelling fixes in comments.
  *
