@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.22 2001/05/09 04:23:18 steve Exp $"
+#ident "$Id: compile.h,v 1.23 2001/05/20 00:46:12 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -145,8 +145,14 @@ typedef struct comp_operands_s*comp_operands_t;
 
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_disable(char*label, struct symb_s symb);
+
 extern void compile_vpi_call(char*label, char*name,
 			     unsigned argc, vpiHandle*argv);
+
+extern void compile_vpi_func_call(char*label, char*name,
+				  unsigned vbit, unsigned vwid,
+				  unsigned argc, vpiHandle*argv);
+
 extern void compile_fork(char*label, struct symb_s targ_s,
 			 struct symb_s scope_s);
 extern void compile_codelabel(char*label);
@@ -176,6 +182,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.23  2001/05/20 00:46:12  steve
+ *  Add support for system function calls.
+ *
  * Revision 1.22  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.

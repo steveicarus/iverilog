@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.20 2001/05/08 23:59:33 steve Exp $
+ *  $Id: opcodes.txt,v 1.21 2001/05/20 00:46:12 steve Exp $
  */
 
 
@@ -283,10 +283,19 @@ See also the %add instruction.
 
 * %vpi_call <name> [, ...]
 
-This instruction makes a call to a system task or function that was
-declared using VPI. The operands are compiled down to a vpiHandle for
-the call. The instruction contains only the vpiHandle for the
-call. See the vpi.txt file for more on system task/function calls.
+This instruction makes a call to a system task that was declared using
+VPI. The operands are compiled down to a vpiHandle for the call. The
+instruction contains only the vpiHandle for the call. See the vpi.txt
+file for more on system task/function calls.
+
+
+* %vpi_func <name>, <dst>, <wid> [, ...]
+
+This instruction is similar to %vpi_call, except that it is for
+calling system functions. The difference here is the <dst> and <wid>
+parameters that specify where the return value is to go. The normal
+means that the VPI code uses to write the return value causes those
+bits to go here.
 
 
 * %wait <functor-label>

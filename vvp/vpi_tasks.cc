@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.6 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.7 2001/05/20 00:46:12 steve Exp $"
 #endif
 
 /*
@@ -25,7 +25,8 @@
  * built up before the input source file is parsed, and is used by the
  * compiler when %vpi_call statements are encountered.
  */
-# include "vpi_priv.h"
+# include  "vpi_priv.h"
+# include  "vthread.h"
 # include  <stdio.h>
 # include  <malloc.h>
 # include  <string.h>
@@ -75,14 +76,76 @@ static const struct __vpirt vpip_systask_rt = {
 /*
  * A value *can* be put to a vpiSysFuncCall object. This is how the
  * return value is set. The value that is given should be converted to
- * bits and set into the return value bit array.
+ * bits and set into the thread space bits that were selected at
+ * compile time.
  */
-static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value val,
-				   p_vpi_time t, int flag)
+static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
+				   p_vpi_time t, int flags)
 {
-      assert(0);
+      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+	/* delays are not allowed. */
+      assert(flags == vpiNoDelay);
+
+      assert(rfp->vbit >= 4);
+
+      switch (vp->format) {
+	    
+	  case vpiIntVal: {
+		long val = vp->value.integer;
+		for (unsigned idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
+		      vthread_put_bit(vpip_current_vthread,
+				      rfp->vbit+idx, val&1);
+		      val >>= 1;
+		}
+		break;
+	  }
+
+	  case vpiScalarVal:
+	    switch (vp->value.scalar) {
+		case vpi0:
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 0);
+		  break;
+		case vpi1:
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 1);
+		  break;
+		case vpiX:
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 2);
+		  break;
+		case vpiZ:
+		  vthread_put_bit(vpip_current_vthread, rfp->vbit, 3);
+		  break;
+		default:
+		  assert(0);
+	    }
+	    break;
+
+	  case vpiVectorVal: {
+		assert(rfp->vwid <= sizeof (unsigned long));
+
+		unsigned long aval = vp->value.vector->aval;
+		unsigned long bval = vp->value.vector->bval;
+		for (unsigned idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
+		      int bit = (aval&1) | (((bval^aval)<<1)&2);
+
+		      vthread_put_bit(vpip_current_vthread,
+				      rfp->vbit+idx, bit);
+
+		      aval >>= 1;
+		      bval >>= 1;
+		}
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
       return 0;
 }
+
 
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
@@ -139,25 +202,45 @@ static struct __vpiUserSystf* vpip_find_systf(const char*name)
  * describes the call, and return it. The %vpi_call instruction will
  * store this handle for when it is executed.
  */
-vpiHandle vpip_build_vpi_call(const char*name,
-			      unsigned argc,
-			      vpiHandle*argv)
+vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
+			      unsigned argc, vpiHandle*argv)
 {
-      struct __vpiSysTaskCall*obj = (struct __vpiSysTaskCall*)
-	    calloc(1, sizeof (struct __vpiSysTaskCall));
-
-      obj->base.vpi_type = &vpip_systask_rt;
-      obj->scope = vpip_peek_current_scope();
-      obj->defn  = vpip_find_systf(name);
-      obj->nargs = argc;
-      obj->args  = argv;
-
-      if (obj->defn == 0) {
+      struct __vpiUserSystf*defn = vpip_find_systf(name);
+      if (defn == 0) {
 	    fprintf(stderr, "%s: This task not defined "
 		    "by any modules. I cannot compile it.\n", name);
-	    free(obj);
 	    return 0;
       }
+
+
+      struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
+
+      switch (defn->info.type) {
+	  case vpiSysTask:
+	    obj->base.vpi_type = &vpip_systask_rt;
+	    assert(vbit == 0);
+	    assert(vwid == 0);
+	    obj->vbit = 0;
+	    obj->vwid = 0;
+	    break;
+
+	  case vpiSysFunc:
+	    obj->base.vpi_type = &vpip_sysfunc_rt;
+	    assert(vbit >= 4);
+	    assert(vwid > 0);
+	    obj->vbit = vbit;
+	    obj->vwid = vwid;
+	    break;
+
+	  default:
+	    assert(0);
+
+      }
+
+      obj->scope = vpip_peek_current_scope();
+      obj->defn  = defn;
+      obj->nargs = argc;
+      obj->args  = argv;
 
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf)
@@ -179,7 +262,8 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 {
       vpip_current_vthread = thr;
 
-      assert(ref->vpi_type->type_code == vpiSysTaskCall);
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
       vpip_cur_task = (struct __vpiSysTaskCall*)ref;
 
@@ -202,6 +286,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.7  2001/05/20 00:46:12  steve
+ *  Add support for system function calls.
+ *
  * Revision 1.6  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit

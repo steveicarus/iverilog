@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.15 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.16 2001/05/20 00:46:12 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -127,12 +127,20 @@ extern vpiHandle vpip_make_memory(vvp_memory_t mem);
 /*
  * When a loaded VPI module announces a system task/function, one
  * __vpiUserSystf object is created to hold the definition of that
- * task/function.
+ * task/function. The distinction between task and function is stored
+ * in the vpi_systf_data structure data that was supplied by the
+ * external module.
  *
  * When the compiler encounters a %vpi_call statement, it creates a
  * __vpiSysTaskCall to represent that particular call. The call refers
  * to the definition handle so that when the %vpi_call instruction is
  * encountered at run-time, the definition can be located and used.
+ *
+ * The vpiSysTaskCall handles both functions and tasks, as the two are
+ * extremely similar. The different VPI type is reflected in a
+ * different vpi_type pointer in the base structure. The only
+ * additional part is the vbit/vwid that is used by the put of the
+ * system function call to place the values in the vthread bit space.
  */
 struct __vpiUserSystf {
       struct __vpiHandle base;
@@ -145,6 +153,9 @@ struct __vpiSysTaskCall {
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
+
+	/* These represent where in the vthread to put the return value. */
+      unsigned short vbit, vwid;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -194,10 +205,15 @@ extern void vpip_load_module(const char*name, const char*path);
  * call. However, the vpiSysTaskCall that is the returned handle,
  * holds a parameter argument list that is passed in here.
  *
- * Note that the argv array is saved in the handle, should should not
- * be released by the caller.
+ * The vbit and vwid fields are used if this turns out to be a system
+ * function. In that case, the vbit and vwid are used to address the
+ * vector is thread bit space where the result is supposed to go.
+ *
+ * Note that the argv array is saved in the handle, and should should
+ * not be released by the caller.
  */
 extern vpiHandle vpip_build_vpi_call(const char*name,
+				     unsigned vbit, unsigned vwid,
 				     unsigned argc,
 				     vpiHandle*argv);
 
@@ -215,6 +231,9 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.16  2001/05/20 00:46:12  steve
+ *  Add support for system function calls.
+ *
  * Revision 1.15  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.64 2001/05/13 21:05:06 steve Exp $"
+#ident "$Id: compile.cc,v 1.65 2001/05/20 00:46:12 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -910,7 +910,37 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, argc, argv);
+      code->handle = vpip_build_vpi_call(name, 0, 0, argc, argv);
+      if (code->handle == 0)
+	    compile_errors += 1;
+
+	/* Done with the lexor-allocated name string. */
+      free(name);
+}
+
+void compile_vpi_func_call(char*label, char*name,
+			   unsigned vbit, unsigned vwid,
+			   unsigned argc, vpiHandle*argv)
+{
+      vvp_cpoint_t ptr = codespace_allocate();
+
+	/* First, I can give the label a value that is the current
+	   codespace pointer. Don't need the text of the label after
+	   this is done. */
+      if (label) {
+	    symbol_value_t val;
+	    val.num = ptr;
+	    sym_set_value(sym_codespace, label, val);
+	    free(label);
+      }
+
+	/* Create an instruction in the code space. */
+      vvp_code_t code = codespace_index(ptr);
+      code->opcode = &of_VPI_CALL;
+
+	/* Create a vpiHandle that bundles the call information, and
+	   store that handle in the instruction. */
+      code->handle = vpip_build_vpi_call(name, vbit, vwid, argc, argv);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1163,6 +1193,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.65  2001/05/20 00:46:12  steve
+ *  Add support for system function calls.
+ *
  * Revision 1.64  2001/05/13 21:05:06  steve
  *  calculate the output of resolvers.
  *

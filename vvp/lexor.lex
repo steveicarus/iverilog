@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.17 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: lexor.lex,v 1.18 2001/05/20 00:46:12 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -87,6 +87,7 @@
      exceptional parameter requirements) are listed first. */
 
 "%vpi_call" { return K_vpi_call; }
+"%vpi_func" { return K_vpi_func; }
 "%disable"  { return K_disable; }
 "%fork"     { return K_fork; }
 
@@ -139,6 +140,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.18  2001/05/20 00:46:12  steve
+ *  Add support for system function calls.
+ *
  * Revision 1.17  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit
