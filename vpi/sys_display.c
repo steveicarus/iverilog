@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.54 2003/03/05 02:58:04 steve Exp $"
+#ident "$Id: sys_display.c,v 1.55 2003/03/10 20:52:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,6 +45,16 @@ struct strobe_cb_info {
       vpiHandle*items;
       unsigned nitems;
 };
+
+static int is_constant(vpiHandle obj)
+{
+      if (vpi_get(vpiType, obj) == vpiConstant)
+	    return vpiConstant;
+      if (vpi_get(vpiType, obj) == vpiParameter)
+	    return vpiParameter;
+
+      return 0;
+}
 
 // The number of decimal digits needed to represent a
 // nr_bits binary number is floor(nr_bits*log_10(2))+1,
@@ -646,7 +656,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 			  // constant string... (hey, that's how 
 			  // the commerical guys behave...)
 
-			if (!(vpi_get(vpiType, argv[idx]) == vpiConstant 
+			if (!(is_constant(argv[idx])
 			      && vpi_get(vpiConstType, argv[idx]) == vpiStringConst)) {
 			      int i=0;
 				// Strip away all leading zeros from string
@@ -679,7 +689,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 0;
 	    }
 
-	    if ((vpi_get(vpiType, argv[idx]) == vpiConstant)
+	    if (is_constant(argv[idx])
 		&& (vpi_get(vpiConstType, argv[idx]) == vpiRealConst)) {
 
 		  value.format = vpiRealVal;
@@ -843,6 +853,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  break;
 
 		case vpiConstant:
+		case vpiParameter:
 		  if (vpi_get(vpiConstType, item) == vpiStringConst) {
 			value.format = vpiStringVal;
 			vpi_get_value(item, &value);
@@ -1175,7 +1186,7 @@ static int sys_fopen_calltf(char *name)
 	    argv = 0;
       }
 
-      if (vpi_get(vpiType, item) != vpiConstant) {
+      if (! is_constant(item)) {
 	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
 	    vpi_free_object(argv);
 	    return 0;
@@ -1190,7 +1201,7 @@ static int sys_fopen_calltf(char *name)
       if (mode == 0) {
             mode_string = "w";
       } else {
-	    if (vpi_get(vpiType, mode) != vpiConstant) {
+	    if (is_constant(mode)) {
 		vpi_printf("ERROR: %s parameter must be a constant\n", name);
 		vpi_free_object(argv);
 	        return 0;
@@ -1708,6 +1719,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.55  2003/03/10 20:52:42  steve
+ *  Account for constants being vpiParameters.
+ *
  * Revision 1.54  2003/03/05 02:58:04  steve
  *  Add support for sizes in %f format.
  *
