@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.78 2003/06/10 04:29:57 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.79 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -135,8 +135,9 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
 	    tmp->set_line(*this);
 	    break;
 
-	  case 'l':
-	  case 'r':
+	  case 'l': // <<
+	  case 'r': // >>
+	  case 'R': // >>>
 	    tmp = new NetEBShift(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
@@ -961,6 +962,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.79  2003/06/18 03:55:18  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.78  2003/06/10 04:29:57  steve
  *  PR735: bit select indices are signed constants.
  *

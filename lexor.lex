@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.81 2003/06/17 04:23:25 steve Exp $"
+#ident "$Id: lexor.lex,v 1.82 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -128,7 +128,9 @@ W [ \t\b\f\r]+
 "(*" { return K_PSTAR; }
 "*)" { return K_STARP; }
 "<<" { return K_LS; }
-">>" { return K_RS; }
+"<<<" { return K_LS; /* Note: Functionally, <<< is the same as <<. */}
+">>"  { return K_RS; }
+">>>" { return K_RSS; }
 "<=" { return K_LE; }
 ">=" { return K_GE; }
 "=>" { return K_EG; }

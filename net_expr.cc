@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.19 2003/06/15 18:53:20 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.20 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -228,6 +228,31 @@ NetExpr::TYPE NetEBMult::expr_type() const
 	    return ET_REAL;
 
       return ET_VECTOR;
+}
+
+NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      expr_width(l->expr_width());
+
+	// The >>> is signed if the left operand is signed.
+      if (op == 'R') cast_signed(l->has_sign());
+}
+
+NetEBShift::~NetEBShift()
+{
+}
+
+bool NetEBShift::has_width() const
+{
+      return left_->has_width();
+}
+
+NetEBShift* NetEBShift::dup_expr() const
+{
+      NetEBShift*result = new NetEBShift(op_, left_->dup_expr(),
+					 right_->dup_expr());
+      return result;
 }
 
 NetEConcat::NetEConcat(unsigned cnt, NetExpr* r)
@@ -491,6 +516,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.20  2003/06/18 03:55:18  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.19  2003/06/15 18:53:20  steve
  *  Operands of unsigned multiply are unsigned.
  *

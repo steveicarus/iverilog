@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.178 2003/06/13 00:27:09 steve Exp $"
+#ident "$Id: parse.y,v 1.179 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -127,7 +127,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
-%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
+%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
 %token K_PO_POS K_PO_NEG
 %token K_PSTAR K_STARP
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
@@ -222,7 +222,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %left '&' K_NAND
 %left K_EQ K_NE K_CEQ K_CNE
 %left K_GE K_LE '<' '>'
-%left K_LS K_RS
+%left K_LS K_RS K_RSS
 %left '+' '-'
 %left '*' '/' '%'
 %left UNARY_PREC
@@ -806,6 +806,12 @@ expression
 		}
 	| expression K_RS expression
 		{ PEBinary*tmp = new PEBinary('r', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| expression K_RSS expression
+		{ PEBinary*tmp = new PEBinary('R', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.215 2003/05/01 01:13:57 steve Exp $"
+#ident "$Id: netlist.cc,v 1.216 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1836,28 +1836,6 @@ NetEBLogic* NetEBLogic::dup_expr() const
       return result;
 }
 
-NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
-{
-      expr_width(l->expr_width());
-}
-
-NetEBShift::~NetEBShift()
-{
-}
-
-bool NetEBShift::has_width() const
-{
-      return left_->has_width();
-}
-
-NetEBShift* NetEBShift::dup_expr() const
-{
-      NetEBShift*result = new NetEBShift(op_, left_->dup_expr(),
-					 right_->dup_expr());
-      return result;
-}
-
 NetEConst::NetEConst(const verinum&val)
 : NetExpr(val.len()), value_(val)
 {
@@ -2198,6 +2176,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.216  2003/06/18 03:55:18  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.215  2003/05/01 01:13:57  steve
  *  More complete bit range internal error message,
  *  Better test of part select ranges on non-zero

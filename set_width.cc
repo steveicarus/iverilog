@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.30 2003/05/20 15:05:33 steve Exp $"
+#ident "$Id: set_width.cc,v 1.31 2003/06/18 03:55:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -203,6 +203,7 @@ bool NetEBShift::set_width(unsigned w)
 	    break;
 
 	  case 'r':
+	  case 'R':
 	    if (left_->expr_width() < w)
 		  left_ = pad_to_width(left_, w);
 	    break;
@@ -410,6 +411,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.31  2003/06/18 03:55:19  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.30  2003/05/20 15:05:33  steve
  *  Do not try to set constants to width 0.
  *

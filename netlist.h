@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.289 2003/06/05 04:28:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.290 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 /*
@@ -2343,6 +2343,7 @@ class NetProcTop  : public LineInfo, public Attrib {
  *   O  -- Bit-wise NOR (~|)
  *   l  -- Left shift (<<)
  *   r  -- Right shift (>>)
+ *   R  -- signed right shift (>>>)
  *   X  -- Bitwise exclusive NOR (~^)
  */
 class NetEBinary  : public NetExpr {
@@ -2535,6 +2536,7 @@ class NetEBMult : public NetEBinary {
  *
  *   l  -- left shift (<<)
  *   r  -- right shift (>>)
+ *   R  -- right shift arithmetic (>>>)
  */
 class NetEBShift : public NetEBinary {
 
@@ -3304,6 +3306,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.290  2003/06/18 03:55:18  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.289  2003/06/05 04:28:24  steve
  *  Evaluate <= with real operands.
  *

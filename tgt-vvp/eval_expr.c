@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.101 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.102 2003/06/18 03:55:19 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -773,6 +773,42 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 	    opcode = "%shiftr";
 	    break;
 
+	  case 'R': /* >>> (signed right shift) */
+
+	      /* with the right shift, there may be high bits that are
+		 shifted into the desired width of the expression, so
+		 we let the expression size itself, if it is bigger
+		 then what is requested of us. */
+	    if (wid > ivl_expr_width(le)) {
+		  lv = draw_eval_expr_wid(le, wid, 0);
+	    } else {
+		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
+	    }
+
+	      /* shifting 0 gets 0. */
+	    if (lv.base == 0)
+		  break;
+
+	      /* Sign extend any constant begets itself, if this
+		 expression is signed. */
+	    if ((lv.base < 4) && (ivl_expr_signed(exp)))
+		  break;
+
+	    if (lv.base < 4) {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(lv.wid);
+		  tmp.wid = lv.wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, lv.base, lv.wid);
+		  lv = tmp;
+	    }
+
+	    if (ivl_expr_signed(exp))
+		  opcode = "%shiftr/s";
+	    else
+		  opcode = "%shiftr";
+	    break;
+
 	  default:
 	    assert(0);
       }
@@ -1029,6 +1065,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 
 	  case 'l': /* << */
 	  case 'r': /* >> */
+	  case 'R': /* >>> */
 	    rv = draw_binary_expr_lrs(exp, wid);
 	    break;
 
@@ -2036,6 +2073,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.102  2003/06/18 03:55:19  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.101  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *

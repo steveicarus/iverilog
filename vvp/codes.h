@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.62 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: codes.h,v 1.63 2003/06/18 03:55:19 steve Exp $"
 #endif
 
 
@@ -106,6 +106,7 @@ extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X0_X(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
+extern bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_SUB_WR(vthread_t thr, vvp_code_t code);
 extern bool of_SUBI(vthread_t thr, vvp_code_t code);
@@ -173,6 +174,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.63  2003/06/18 03:55:19  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.62  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *

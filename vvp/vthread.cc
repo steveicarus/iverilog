@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.110 2003/06/17 21:28:59 steve Exp $"
+#ident "$Id: vthread.cc,v 1.111 2003/06/18 03:55:19 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2459,6 +2459,29 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned base = cp->bit_idx[0];
+      unsigned wid = cp->number;
+      unsigned long shift = thr->words[0].w_int;
+      unsigned sign = thr_get_bit(thr, base+wid-1);
+
+      if (shift >= wid) {
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, sign);
+
+      } else if (shift > 0) {
+	    for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1) {
+		  unsigned src = base + idx + shift;
+		  unsigned dst = base + idx;
+		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
+	    }
+	    for (unsigned idx = (wid-shift) ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, sign);
+      }
+      return true;
+}
+
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -2722,6 +2745,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.111  2003/06/18 03:55:19  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.110  2003/06/17 21:28:59  steve
  *  Remove short int restrictions from vvp opcodes. (part 2)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.140 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.141 2003/06/18 03:55:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -863,6 +863,9 @@ void NetEBinary::dump(ostream&o) const
 	  case 'r':
 	    o << ">>";
 	    break;
+	  case 'R':
+	    o << ">>>";
+	    break;
 	  case 'X':
 	    o << "~^";
 	    break;
@@ -1040,6 +1043,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.141  2003/06/18 03:55:18  steve
+ *  Add arithmetic shift operators.
+ *
  * Revision 1.140  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and
