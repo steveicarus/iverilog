@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.27 2002/01/31 04:28:17 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.28 2002/02/03 01:01:51 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -256,7 +256,21 @@ extern vpiHandle ipoint_get_scope(vvp_ipoint_t ipt);
 extern void functor_set_scope(vpiHandle scope);
 
 /*
+ * This function is used to make decimal string versions of various
+ * vectors. The input format is an array of bit values (0, 1, 2, 3)
+ * lsb first, and the result is written into buf, without overflowing
+ * nbuf.
+ */
+extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
+				     unsigned int nbits,
+				     char *buf, unsigned int nbuf,
+				     int signed_flag);
+
+/*
  * $Log: vpi_priv.h,v $
+ * Revision 1.28  2002/02/03 01:01:51  steve
+ *  Use Larrys bits-to-decimal-string code.
+ *
  * Revision 1.27  2002/01/31 04:28:17  steve
  *  Full support for $readmem ranges (Tom Verbeure)
  *

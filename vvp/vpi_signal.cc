@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.32 2002/01/09 03:29:12 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.33 2002/02/03 01:01:51 steve Exp $"
 #endif
 
 /*
@@ -146,75 +146,20 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
-      unsigned long val = 0;
-      unsigned count_x = 0, count_z = 0;
-
+      unsigned char*bits = new unsigned char[wid];
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, wid-idx-1);
-	    val *= 2;
-	    switch (functor_get(fptr)) {
-		case 0:
-		  break;
-		case 1:
-		  val += 1;
-		  break;
-		case 2:
-		  count_x += 1;
-		  break;
-		case 3:
-		  count_z += 1;
-		  break;
-	    }
-      }
-
-      if (count_x == wid) {
-	    need_result_buf(2);
-	    result_buf[0] = 'x';
-	    result_buf[1] = 0;
-	    return;
-      }
-
-      if (count_x > 0) {
-	    need_result_buf(2);
-	    result_buf[0] = 'X';
-	    result_buf[1] = 0;
-	    return;
-      }
-
-      if (count_z == wid) {
-	    need_result_buf(2);
-	    result_buf[0] = 'z';
-	    result_buf[1] = 0;
-	    return;
-      }
-
-      if (count_z > 0) {
-	    need_result_buf(2);
-	    result_buf[0] = 'Z';
-	    result_buf[1] = 0;
-	    return;
+	    vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
+	    bits[idx] = functor_get(fptr);
       }
 
       need_result_buf((wid+2) / 3 + 1);
 
-      if (rfp->signed_flag) {
-	    long tmp;
-            assert(sizeof(tmp) == sizeof(val));
-	    if (val & (1<<(wid-1))  &&  wid < 8*sizeof(tmp)) {
-		  tmp = -1;
-		  tmp <<= wid;
-		  tmp |= val;
-	    } else {
-		  tmp = val;
-	    }
-            sprintf(result_buf, "%ld", tmp);
-	    assert(strlen(result_buf) < result_buf_size);
+      vpip_bits_to_dec_str(bits, wid, result_buf, result_buf_size,
+			   rfp->signed_flag);
 
-      } else {
-	    sprintf(result_buf, "%lu", val);
-	    assert(strlen(result_buf) < result_buf_size);
-      }
+      delete[]bits;
 }
+
 
 static void signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 {
@@ -587,6 +532,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.33  2002/02/03 01:01:51  steve
+ *  Use Larrys bits-to-decimal-string code.
+ *
  * Revision 1.32  2002/01/09 03:29:12  steve
  *  String prints of non-round vectors (PR378)
  *
