@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.131 2002/08/04 19:13:16 steve Exp $"
+#ident "$Id: Makefile.in,v 1.132 2002/08/10 22:27:13 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -67,12 +67,8 @@ ifeq ('@HAVE_IPAL@','yes')
 TARGETS += tgt-pal
 endif
 
-ifeq (@ENABLE_VVM@,yes)
-SUB_VVM = vvm
-endif
-
 all: ivl@EXEEXT@ libvpi.a
-	for dir in $(SUBDIRS) $(SUB_VVM); do (cd $$dir ; $(MAKE) all); done
+	for dir in $(SUBDIRS) ; do (cd $$dir ; $(MAKE) all); done
 	cd vpi ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
 	cd driver ; $(MAKE) VERSION=$(VERSION) all
@@ -105,13 +101,12 @@ clean:
 	cd ivlpp ; $(MAKE) clean
 	cd tgt-verilog ; $(MAKE) clean
 	cd tgt-stub ; $(MAKE) clean
-	for dir in $(SUBDIRS) $(SUB_VVM); do (cd $$dir ; $(MAKE) clean); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) clean); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) clean); done
 
 distclean: clean
-	for dir in $(SUBDIRS) $(SUB_VVM); do (cd $$dir ; $(MAKE) distclean); done
+	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) distclean); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) distclean); done
-	rm -f vvm/Makefile
 	rm -f vpi/Makefile
 	rm -f ivlpp/Makefile
 	rm -f driver/Makefile
@@ -119,11 +114,7 @@ distclean: clean
 	rm -f Makefile
 	rm -f tgt-pal/Makefile tgt-stub/Makefile tgt-verilog/Makefile
 
-ifeq (@ENABLE_VVM@,yes)
-TT_VVM = mangle.o t-vvm.o
-endif
-
-TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o $(TT_VVM) t-xnf.o
+TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-xnf.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o xnfio.o
 
 O = main.o async.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
@@ -234,7 +225,7 @@ install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $
 	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 	cd driver ; $(MAKE) install
-	for tgt in $(SUBDIRS) $(SUB_VVM); do (cd $$tgt ; $(MAKE) install); done
+	for tgt in $(SUBDIRS); do (cd $$tgt ; $(MAKE) install); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) install); done
 
 $(bindir)/iverilog-vpi: ./iverilog-vpi
@@ -304,7 +295,7 @@ uninstall:
 	cd driver ; $(MAKE) uninstall
 	cd vpi ; $(MAKE) uninstall
 	cd ivlpp ; $(MAKE) uninstall
-	for tgt in $(SUBDIRS) $(SUB_VVM); do (cd $$tgt ; $(MAKE) uninstall); done
+	for tgt in $(SUBDIRS); do (cd $$tgt ; $(MAKE) uninstall); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) uninstall); done
 
 
