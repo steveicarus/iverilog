@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.134 1999/12/11 05:45:41 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.135 1999/12/14 23:42:16 steve Exp $"
 #endif
 
 /*
@@ -376,7 +376,17 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
  */
 void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
+	// Missing module instance names have already been rejected.
       assert(get_name() != "");
+	// Check for duplicate scopes.
+      if (NetScope*tmp = des->find_scope(path + "." + get_name())) {
+	    cerr << get_line() << ": error: Instance/Scope name " <<
+		  get_name() << " already used in this context." <<
+		  endl;
+	    des->errors += 1;
+	    return;
+      }
+
       NetScope*my_scope = des->make_scope(path, NetScope::MODULE, get_name());
       const string my_name = my_scope -> name();
 
@@ -1263,9 +1273,22 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetBlock*cur = new NetBlock(type);
       bool fail_flag = false;
 
-      string npath = name_.length()
-	    ? des->make_scope(path, NetScope::BEGIN_END, name_) -> name()
-	    : path;
+      string npath;
+      if (name_.length()) {
+	      // Check for duplicate scopes.
+	    if (NetScope*tmp = des->find_scope(path + "." + name_)) {
+		  cerr << get_line() << ": error: Instance/Scope name " <<
+			name_ << " already used in this context." <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	      // Make this new scope.
+	    npath = des->make_scope(path, NetScope::BEGIN_END, name_)->name();
+
+      } else {
+	    npath = path;
+      }
 
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
@@ -2090,6 +2113,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.135  1999/12/14 23:42:16  steve
+ *  Detect duplicate scopes.
+ *
  * Revision 1.134  1999/12/11 05:45:41  steve
  *  Fix support for attaching attributes to primitive gates.
  *
