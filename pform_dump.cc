@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.8 1999/02/01 00:26:49 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.9 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 /*
@@ -224,6 +224,28 @@ void PCallTask::dump(ostream&out, unsigned ind) const
       out << ";" << endl;
 }
 
+void PCase::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "case (" << *expr_ << ") /* " <<
+	    get_line() << " */" << endl;
+
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    if (items_[idx].expr)
+		  out << setw(ind+2) << "" << *items_[idx].expr << ":";
+	    else
+		  out << setw(ind+2) << "" << "default:";
+
+	    if (items_[idx].stat) {
+		  out << endl;
+		  items_[idx].stat->dump(out, ind+6);
+	    } else {
+		  out << " ;" << endl;
+	    }
+      }
+
+      out << setw(ind) << "" << "endcase" << endl;
+}
+
 void PCondit::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "if (" << *expr_ << ")" << endl;
@@ -373,6 +395,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.9  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.8  1999/02/01 00:26:49  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.

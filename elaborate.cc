@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.12 1999/02/01 00:26:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.13 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 /*
@@ -650,11 +650,31 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       return cur;
 }
 
+NetProc* PCase::elaborate(Design*des, const string&path) const
+{
+      NetExpr*expr = expr_->elaborate_expr(des, path);
+      NetCase*res = new NetCase(expr, nitems_);
+
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    NetExpr*gu = 0;
+	    NetProc*st = 0;
+	    if (items_[idx].expr)
+		  gu = items_[idx].expr->elaborate_expr(des, path);
+
+	    if (items_[idx].stat)
+		  st = items_[idx].stat->elaborate(des, path);
+
+	    res->set_case(idx, gu, st);
+      }
+
+      return res;
+}
+
 NetProc* PCondit::elaborate(Design*des, const string&path) const
 {
       NetExpr*expr = expr_->elaborate_expr(des, path);
       NetProc*i = if_->elaborate(des, path);
-      NetProc*e = else_->elaborate(des, path);
+      NetProc*e = else_? else_->elaborate(des, path) : 0;
 
       NetCondit*res = new NetCondit(expr, i, e);
       return res;
@@ -851,6 +871,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.13  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.12  1999/02/01 00:26:49  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.

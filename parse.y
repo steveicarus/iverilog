@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.11 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: parse.y,v 1.12 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -33,6 +33,9 @@ extern void lex_end_table();
       char letter;
       string*text;
       list<string>*strings;
+
+      PCase::Item*citem;
+      list<PCase::Item*>*citems;
 
       lgate*gate;
       list<lgate>*gates;
@@ -89,6 +92,9 @@ extern void lex_end_table();
 %type <wire> port
 %type <wires> list_of_ports list_of_ports_opt
 
+%type <citem>  case_item
+%type <citems> case_items
+
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
@@ -121,6 +127,40 @@ source_file
 bitsel
 	: '[' const_expression ']'
 		{ $$ = $2; }
+	;
+
+case_item
+	: expression ':' statement_opt
+		{ PCase::Item*tmp = new PCase::Item;
+		  tmp->expr = $1;
+		  tmp->stat = $3;
+		  $$ = tmp;
+		}
+	| K_default ':' statement_opt
+		{ PCase::Item*tmp = new PCase::Item;
+		  tmp->expr = 0;
+		  tmp->stat = $3;
+		  $$ = tmp;
+		}
+	| K_default  statement_opt
+		{ PCase::Item*tmp = new PCase::Item;
+		  tmp->expr = 0;
+		  tmp->stat = $2;
+		  $$ = tmp;
+		}
+	;
+
+case_items
+	: case_items case_item
+		{ list<PCase::Item*>*tmp = $1;
+		  tmp->push_back($2);
+		  $$ = tmp;
+		}
+	| case_item
+		{ list<PCase::Item*>*tmp = new list<PCase::Item*>;
+		  tmp->push_back($1);
+		  $$ = tmp;
+		}
 	;
 
 const_expression
@@ -546,6 +586,12 @@ statement
 		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
 	| K_fork K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, 0); }
+	| K_case '(' expression ')' case_items K_endcase
+		{ PCase*tmp = new PCase($3, $5);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
 	| K_if '(' expression ')' statement_opt
 		{ PCondit*tmp = new PCondit($3, $5, 0);
 		  $$ = tmp;

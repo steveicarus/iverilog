@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.14 1998/12/18 05:16:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.15 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -318,6 +318,34 @@ void NetBlock::append(NetProc*cur)
 	    last_->next_ = cur;
 	    last_ = cur;
       }
+}
+
+NetCase::NetCase(NetExpr*ex, unsigned cnt)
+: expr_(ex), nitems_(cnt)
+{
+      assert(expr_);
+      items_ = new Item[nitems_];
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    items_[idx].guard = 0;
+	    items_[idx].statement = 0;
+      }
+}
+
+NetCase::~NetCase()
+{
+      delete expr_;
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    if (items_[idx].guard) delete items_[idx].guard;
+	    if (items_[idx].statement) delete items_[idx].statement;
+      }
+      delete[]items_;
+}
+
+void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
+{
+      assert(idx < nitems_);
+      items_[idx].guard = e;
+      items_[idx].statement = p;
 }
 
 NetTask::~NetTask()
@@ -845,6 +873,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.15  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.14  1998/12/18 05:16:25  steve
  *  Parse more UDP input edge descriptions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.4 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: Statement.cc,v 1.5 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -57,6 +57,33 @@ PCallTask::PCallTask(const string&n, const list<PExpr*>&p)
 
 }
 
+PCase::PCase(PExpr*ex, list<PCase::Item*>*l)
+: expr_(ex)
+{
+      nitems_ = l->size();
+      items_ = new Item[nitems_];
+
+      list<PCase::Item*>::const_iterator cur;
+      unsigned idx;
+      for (cur = l->begin(), idx = 0  ; cur != l->end() ;  cur ++, idx += 1) {
+	    items_[idx] = *(*cur);
+	    delete (*cur);
+      }
+
+      delete l;
+}
+
+PCase::~PCase()
+{
+      delete expr_;
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    if (items_[idx].expr) delete items_[idx].expr;
+	    if (items_[idx].stat) delete items_[idx].stat;
+      }
+
+      delete[]items_;
+}
+
 PCondit::~PCondit()
 {
       delete expr_;
@@ -77,6 +104,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.5  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.4  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

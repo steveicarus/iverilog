@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.16 1999/02/01 00:26:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.17 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 /*
@@ -531,6 +531,34 @@ class NetBlock  : public NetProc {
       NetProc*last_;
 };
 
+/* A CASE statement in the verilog source leads, eventually, to one of
+   these. This is different from a simple conditional because of the
+   way the comparisons are performed. Also, it is likely that the
+   target may be able to optimize differently. */
+class NetCase  : public NetProc {
+
+    public:
+      NetCase(NetExpr*ex, unsigned cnt);
+      ~NetCase();
+
+      void set_case(unsigned idx, NetExpr*ex, NetProc*st);
+
+	//virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+
+      struct Item {
+	    NetExpr*guard;
+	    NetProc*statement;
+      };
+
+      NetExpr*expr_;
+      unsigned nitems_;
+      Item*items_;
+};
+
+
 /* A condit represents a conditional. It has an expression to test,
    and a pair of statements to select from. */
 class NetCondit  : public NetProc {
@@ -925,6 +953,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.17  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.16  1999/02/01 00:26:49  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.5 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: Statement.h,v 1.6 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 # include  <string>
@@ -149,6 +149,31 @@ class PCallTask  : public Statement {
       PExpr**const parms_;
 };
 
+class PCase  : public Statement {
+
+    public:
+      struct Item {
+	    PExpr*expr;
+	    Statement*stat;
+      };
+
+      PCase(PExpr*ex, list<Item*>*);
+      ~PCase();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*expr_;
+
+      Item*items_;
+      unsigned nitems_;
+
+    private: // not implemented
+      PCase(const PCase&);
+      PCase& operator= (const PCase&);
+};
+
 class PCondit  : public Statement {
 
     public:
@@ -248,6 +273,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.6  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.5  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.10 1999/02/01 00:26:48 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.11 1999/02/03 04:20:11 steve Exp $"
 #endif
 
 /*
@@ -303,6 +303,28 @@ void NetBlock::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "end" << endl;
 }
 
+void NetCase::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
+
+      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+	    o << setw(ind+2) << "";
+	    if (items_[idx].guard)
+		  o << *items_[idx].guard << ":";
+	    else
+		  o << "default:";
+
+	    if (items_[idx].statement) {
+		  o << endl;
+		  items_[idx].statement->dump(o, ind+6);
+	    } else {
+		  o << " ;" << endl;
+	    }
+      }
+
+      o << setw(ind) << "" << "endcase" << endl;
+}
+
 void NetCondit::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "if (";
@@ -468,6 +490,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.11  1999/02/03 04:20:11  steve
+ *  Parse and elaborate the Verilog CASE statement.
+ *
  * Revision 1.10  1999/02/01 00:26:48  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.
