@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.98 2002/08/31 03:48:50 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.99 2002/09/08 01:37:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2091,8 +2091,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 	  case '-': // Unary 2's complement.
 	    sig = new NetNet(scope, scope->local_hsymbol(),
-			     NetNet::WIRE, sub_sig->pin_count());
+			     NetNet::WIRE, owidth);
 	    sig->local_flag(true);
+
+	    if (sub_sig->pin_count() < owidth)
+		  sub_sig = pad_to_width(des, sub_sig, owidth);
 
 	    switch (sub_sig->pin_count()) {
 		case 0:
@@ -2174,6 +2177,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.99  2002/09/08 01:37:13  steve
+ *  Fix padding of operand of unary minus.
+ *
  * Revision 1.98  2002/08/31 03:48:50  steve
  *  Fix reverse bit ordered bit select in continuous assignment.
  *
