@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.141 2000/06/13 03:24:48 steve Exp $"
+#ident "$Id: netlist.h,v 1.142 2000/06/24 22:55:20 steve Exp $"
 #endif
 
 /*
@@ -140,9 +140,7 @@ class Link {
       strength_t drive1() const;
 
       void cur_link(NetObj*&net, unsigned &pin);
-
-      void next_link(NetObj*&net, unsigned&pin);
-      void next_link(const NetObj*&net, unsigned&pin) const;
+      void cur_link(const NetObj*&net, unsigned &pin) const;
 
       Link* next_link();
       const Link* next_link() const;
@@ -156,9 +154,6 @@ class Link {
 
 	// Return true if these pins are connected.
       bool is_linked(const Link&that) const;
-
-	// Return true if this link is connected to any pin of r.
-      bool is_linked(const NetObj&r) const;
 
 	// Return true if this is the same pin of the same object of
 	// that link.
@@ -2568,11 +2563,6 @@ extern void connect(Link&, Link&);
 inline bool connected(const Link&l, const Link&r)
 { return l.is_linked(r); }
 
-/* Return true if l is fully connected to r. This means, every pin in
-   l is connected to a pin in r. This is expecially useful for
-   checking signal vectors. */
-extern bool connected(const NetObj&l, const NetObj&r);
-
 /* return the number of links in the ring that are of the specified
    type. */
 extern unsigned count_inputs(const Link&pin);
@@ -2595,6 +2585,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.142  2000/06/24 22:55:20  steve
+ *  Get rid of useless next_link method.
+ *
  * Revision 1.141  2000/06/13 03:24:48  steve
  *  Index in memory assign should be a NetExpr.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.10 2000/05/14 17:55:04 steve Exp $"
+#ident "$Id: cprop.cc,v 1.11 2000/06/24 22:55:19 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -249,15 +249,17 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	// them. If I find any, this this constant is used by a
 	// behavioral expression somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
-	    NetObj*cur;
-	    unsigned pin;
-	    obj->pin(idx).next_link(cur, pin);
-	    while (cur != obj) {
+	    Link*clnk = obj->pin(idx).next_link();
+	    while (clnk != &obj->pin(idx)) {
+		  NetObj*cur;
+		  unsigned pin;
+		  clnk->cur_link(cur, pin);
+
 		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
 		  if (tmp && tmp->get_eref() > 0)
 			return;
 
-		  cur->pin(pin).next_link(cur, pin);
+		  clnk = clnk->next_link();
 	    }
       }
 
@@ -283,6 +285,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.11  2000/06/24 22:55:19  steve
+ *  Get rid of useless next_link method.
+ *
  * Revision 1.10  2000/05/14 17:55:04  steve
  *  Support initialization of FF Q value.
  *

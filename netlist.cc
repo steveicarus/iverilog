@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.129 2000/06/13 03:24:48 steve Exp $"
+#ident "$Id: netlist.cc,v 1.130 2000/06/24 22:55:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -158,6 +158,12 @@ void Link::cur_link(NetObj*&net, unsigned &pin)
       pin = pin_;
 }
 
+void Link::cur_link(const NetObj*&net, unsigned &pin) const
+{
+      net = node_;
+      pin = pin_;
+}
+
 void Link::unlink()
 {
       next_->prev_ = prev_;
@@ -175,15 +181,6 @@ bool Link::is_linked() const
       return next_ != this;
 }
 
-bool Link::is_linked(const NetObj&that) const
-{
-      for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
-	    if (idx->node_ == &that)
-		  return true;
-
-      return false;
-}
-
 bool Link::is_linked(const Link&that) const
 {
       for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
@@ -191,22 +188,6 @@ bool Link::is_linked(const Link&that) const
 		  return true;
 
       return false;
-}
-
-void Link::next_link(NetObj*&net, unsigned&pin)
-{
-      assert(next_->prev_ == this);
-      assert(prev_->next_ == this);
-      net = next_->node_;
-      pin = next_->pin_;
-}
-
-void Link::next_link(const NetObj*&net, unsigned&pin) const
-{
-      assert(next_->prev_ == this);
-      assert(prev_->next_ == this);
-      net = next_->node_;
-      pin = next_->pin_;
 }
 
 Link* Link::next_link()
@@ -254,25 +235,18 @@ unsigned Link::get_inst() const
       return inst_;
 }
 
-bool connected(const NetObj&l, const NetObj&r)
-{
-      for (unsigned idx = 0 ;  idx < l.pin_count() ;  idx += 1)
-	    if (! l.pin(idx).is_linked(r))
-		  return false;
-
-      return true;
-}
-
 unsigned count_inputs(const Link&pin)
 {
       unsigned count = (pin.get_dir() == Link::INPUT)? 1 : 0;
-      const NetObj*cur;
-      unsigned cpin;
-      pin.next_link(cur, cpin);
-      while (cur->pin(cpin) != pin) {
+
+      for (const Link*clnk = pin.next_link()
+		 ; clnk != &pin
+		 ; clnk = clnk->next_link()) {
+	    const NetObj*cur;
+	    unsigned cpin;
+	    clnk->cur_link(cur, cpin);
 	    if (cur->pin(cpin).get_dir() == Link::INPUT)
 		  count += 1;
-	    cur->pin(cpin).next_link(cur, cpin);
       }
 
       return count;
@@ -281,13 +255,15 @@ unsigned count_inputs(const Link&pin)
 unsigned count_outputs(const Link&pin)
 {
       unsigned count = (pin.get_dir() == Link::OUTPUT)? 1 : 0;
-      const NetObj*cur;
-      unsigned cpin;
-      pin.next_link(cur, cpin);
-      while (cur->pin(cpin) != pin) {
+
+      for (const Link*clnk = pin.next_link()
+		 ; clnk != &pin
+		 ; clnk = clnk->next_link()) {
+	    const NetObj*cur;
+	    unsigned cpin;
+	    clnk->cur_link(cur, cpin);
 	    if (cur->pin(cpin).get_dir() == Link::OUTPUT)
 		  count += 1;
-	    cur->pin(cpin).next_link(cur, cpin);
       }
 
       return count;
@@ -299,14 +275,14 @@ unsigned count_signals(const Link&pin)
       if (dynamic_cast<const NetNet*>(pin.get_obj()))
 	    count += 1;
 
-      const NetObj*cur;
-      unsigned cpin;
-      pin.next_link(cur, cpin);
-      while (cur->pin(cpin) != pin) {
+      for (const Link*clnk = pin.next_link()
+		 ; clnk != &pin
+		 ; clnk = clnk->next_link()) {
+	    const NetObj*cur;
+	    unsigned cpin;
+	    clnk->cur_link(cur, cpin);
 	    if (dynamic_cast<const NetNet*>(cur))
 		  count += 1;
-
-	    cur->pin(cpin).next_link(cur, cpin);
       }
 
       return count;
@@ -314,17 +290,19 @@ unsigned count_signals(const Link&pin)
 
 const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 {
-      const NetObj*cur;
-      unsigned cpin;
-      net->pin(pin).next_link(cur, cpin);
+      for (const Link*clnk = net->pin(pin).next_link()
+		 ; clnk->get_obj() != net
+		 ; clnk = clnk->next_link()) {
 
-      while (cur != net) {
+	    const NetObj*cur;
+	    unsigned cpin;
+	    clnk->cur_link(cur, cpin);
+
 	    const NetNet*sig = dynamic_cast<const NetNet*>(cur);
 	    if (sig) {
 		  bidx = cpin;
 		  return sig;
 	    }
-	    cur->pin(cpin).next_link(cur, cpin);
       }
 
       return 0;
@@ -2634,6 +2612,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.130  2000/06/24 22:55:19  steve
+ *  Get rid of useless next_link method.
+ *
  * Revision 1.129  2000/06/13 03:24:48  steve
  *  Index in memory assign should be a NetExpr.
  *
