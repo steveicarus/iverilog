@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.63 2001/05/12 20:38:06 steve Exp $"
+#ident "$Id: compile.cc,v 1.64 2001/05/13 21:05:06 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -413,6 +413,11 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 	/* Connect the inputs of this functor to the given symbols. If
 	   there are C<X> inputs, set the ival appropriately. */
       inputs_connect(fdx, argc, argv);
+
+	/* This causes the output value to be set from the existing
+	   inputs, and if the output is not x, a propagation event is
+	   created. */
+      obj->obj->set(fdx, obj, false);
 
       free(label);
       free(type);
@@ -1158,6 +1163,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.64  2001/05/13 21:05:06  steve
+ *  calculate the output of resolvers.
+ *
  * Revision 1.63  2001/05/12 20:38:06  steve
  *  A resolver that understands some simple strengths.
  *
