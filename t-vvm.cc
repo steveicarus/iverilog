@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.118 2000/03/18 23:22:37 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.119 2000/03/20 17:40:33 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -968,6 +968,9 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	/* Connect the DataA inputs. */
 
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    if (! gate->pin_DataA(idx).is_linked())
+		  continue;
+
 	    string nexus = nexus_from_link(&gate->pin_DataA(idx));
 	    unsigned ncode = nexus_wire_map[nexus];
 	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
@@ -979,6 +982,9 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	/* Connect the DataB inputs. */
 
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    if (! gate->pin_DataB(idx).is_linked())
+		  continue;
+
 	    string nexus = nexus_from_link(&gate->pin_DataB(idx));
 	    unsigned ncode = nexus_wire_map[nexus];
 
@@ -991,6 +997,9 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	/* Connect the outputs of the adder. */
 
       for (unsigned idx = 0 ; idx < gate->width() ;  idx += 1) {
+	    if (! gate->pin_Result(idx).is_linked())
+		  continue;
+
 	    string nexus = nexus_from_link(&gate->pin_Result(idx));
 	    unsigned ncode = nexus_wire_map[nexus];
 
@@ -2259,6 +2268,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.119  2000/03/20 17:40:33  steve
+ *  Do not link adder pins that ar unconnected.
+ *
  * Revision 1.118  2000/03/18 23:22:37  steve
  *  Update the FF device to nexus style.
  *
