@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.29 2003/05/04 20:04:09 steve Exp $"
+#ident "$Id: set_width.cc,v 1.30 2003/05/20 15:05:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -247,6 +247,8 @@ bool NetEConst::set_width(unsigned w)
 	    return true;
       }
 
+      assert(w != 0);
+
       if (w > value_.len()) {
 	    verinum::V pad = verinum::V0;
 	    if (value_.has_sign()) {
@@ -408,6 +410,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.30  2003/05/20 15:05:33  steve
+ *  Do not try to set constants to width 0.
+ *
  * Revision 1.29  2003/05/04 20:04:09  steve
  *  Fix truncation of signed constant in constant addition.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.16 2003/03/15 18:08:43 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.17 2003/05/20 15:05:33 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -123,6 +123,9 @@ NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 	    if (tmp->has_width())
 		  break;
 
+	    if (l->expr_width() == 0)
+		  break;
+
 	    if (tmp->expr_width() == l->expr_width())
 		  break;
 
@@ -133,6 +136,9 @@ NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(l)) do {
 
 	    if (tmp->has_width())
+		  break;
+
+	    if (r->expr_width() == 0)
 		  break;
 
 	    if (tmp->expr_width() == r->expr_width())
@@ -456,6 +462,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.17  2003/05/20 15:05:33  steve
+ *  Do not try to set constants to width 0.
+ *
  * Revision 1.16  2003/03/15 18:08:43  steve
  *  Comparison operators do have defined width.
  *
