@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.40 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.41 1999/09/19 01:06:36 steve Exp $"
 #endif
 
 /*
@@ -602,6 +602,9 @@ void NetEBinary::dump(ostream&o) const
 
 void NetEConcat::dump(ostream&o) const
 {
+      if (repeat_ != 1)
+	    o << repeat_;
+
       o << "{" << *parms_[0];
       for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1)
 	    o << ", " << *parms_[idx];
@@ -745,6 +748,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.41  1999/09/19 01:06:36  steve
+ *  dump the repeat count, if applicable.
+ *
  * Revision 1.40  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *
