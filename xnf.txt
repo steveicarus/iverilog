@@ -10,7 +10,75 @@ may be useful even independent of Xilinx parts.
 Icarus Verilog supports XNF as specified by the Xilinx Netlist Format
 Specification, Version 6.1.
 
-IVL SUPPORT FOR XNF
+GENERATE XNF OUTPUT -- THE SHORT STORY
+
+The easiest way to compile for XNF output is with the "verilog"
+command (man verilog) and the -X switch:
+
+	% verilog -fpart=4010e -X prog.v
+
+This generates from the prog.v Verilog source file the prog.xnf
+output. The verilog program arranges to call the preprocessor and the
+ivl compiler with all the correct switches for generating XNF.
+
+XNF PADS IN VERILOG SOURCE
+
+You can assign wires to pads using the Icarus Verilog $attribute
+extension. Attach to a scaler signal (wire or register) the PAD
+attribute with the value that specifies the direction and pin
+number. For example:
+
+	wire foo, bar, bid;
+	$attribute(foo, "PAD", "i1"); // Input pad on pin 1
+	$attribute(bar, "PAD", "o2"); // Output pad on pin 2
+	$attribute(bid, "PAD", "b3"); // Bi-directional pad on pin 3
+
+The XNFIO function uses these attributes to locate signals that are
+connected to pads, and generates XNF I/O block devices to connect to
+the pad to do the FPGA pin buffering that is needed. So the Verilog
+programmer need not in general specify the IBUF/OBUF buffers.
+
+If the programmer does connect buffers to pads, the compiler will
+notice them and convert them to I/OBUFs automatically. For example:
+
+	buf b1 (sig, foo);
+
+connects to pad foo, so will be converted into an XNF IBUF
+device. Also:
+
+	bufif1 bt (bar, value, en);
+
+connects to pad bar so will automaticall be converted into an OBUFT
+device. Icarus Verilog understands OBUF, IBUF and OBUFT (with optionally
+inverted enable) devices and will convert Verilog devices from the
+source, or generate missing devices.
+
+XNF SPECIAL DEVICES
+
+There are certain special devices in XNF that Verilog does not
+naturally represent, although there are similar more generic Verilog
+devices. The most obvious and useful example is the clock driver,
+otherwise known as the global buffer BUFG. As with pads, Icarus
+Verilog uses the $attribute extension to allow you to specify special
+devices.
+
+The $attribute statement can be applied to devices much the same way
+one applies them to wires. For example, to turn a buffer into a clock
+buffer:
+
+	wire iclk, clk;
+	buf BUFG (clk, iclk);
+	$attribute(iclk, "PAD", "i1");
+	$attribute(BUFG, "XNF-LCA", "BUFG:O,I");
+
+The above statements cause the buffer BUFG to be emitted in the XNF
+output as a BUFG device with the first signal called "O" and the
+second called "O". The rest of this example connects the input of the
+BUFG to a signal from the input pin #1 and connects the output to the
+internal wire "clk". Incidentally, this example will cause an IBUF to
+be generated to connect the iclk signal to input pin #1.
+
+SUMMARY OF IVL SUPPORT FOR XNF
 
 Icarus Verilog has a code generator and synthesis functions that
 support generation of XNF netlists. The XNF modules also allow the
@@ -83,6 +151,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.5  1999/10/09 17:52:27  steve
+  support XNF OBUFT devices.
+
  Revision 1.4  1999/08/14 22:48:21  steve
   Mention the sigfold function.
 

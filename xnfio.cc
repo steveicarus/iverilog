@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.2 1999/07/17 22:01:14 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.3 1999/10/09 17:52:27 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -84,6 +84,24 @@ static void make_obuf(Design*des, NetNet*net)
 		(count_inputs(tmp->pin(0)) == 0) &&
 		(count_outputs(tmp->pin(0)) == 1)) {
 		  tmp->attribute("XNF-LCA", "OBUF:O,~I");
+		  return;
+	    }
+
+	      // Try to use an existing bufif1 as an OBUFT. Of course
+	      // this will only work if the output of the bufif1 is
+	      // connected only to the pad. Handle bufif0 the same
+	      // way, but the T input is inverted.
+	    if ((tmp->type() == NetLogic::BUFIF1)
+		&& (count_inputs(tmp->pin(0)) == 0)
+		&& (count_outputs(tmp->pin(0)) == 1)) {
+		  tmp->attribute("XNF-LCA", "OBUFT:O,I,T");
+		  return;
+	    }
+
+	    if ((tmp->type() == NetLogic::BUFIF1)
+		&& (count_inputs(tmp->pin(0)) == 0)
+		&& (count_outputs(tmp->pin(0)) == 1)) {
+		  tmp->attribute("XNF-LCA", "OBUFT:O,I,~T");
 		  return;
 	    }
       }
@@ -195,6 +213,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.3  1999/10/09 17:52:27  steve
+ *  support XNF OBUFT devices.
+ *
  * Revision 1.2  1999/07/17 22:01:14  steve
  *  Add the functor interface for functor transforms.
  *
