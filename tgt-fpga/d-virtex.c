@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.10 2001/09/16 22:26:47 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.11 2001/10/11 00:12:28 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -419,6 +419,7 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_BUF:
+	  case IVL_LO_BUFZ:
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
 		    edif_uref, ivl_logic_name(net));
@@ -1061,6 +1062,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.11  2001/10/11 00:12:28  steve
+ *  Generate BUF devices for bufz logic.
+ *
  * Revision 1.10  2001/09/16 22:26:47  steve
  *  Support the cellref attribute.
  *
