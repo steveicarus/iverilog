@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.cc,v 1.3 1999/08/01 21:18:55 steve Exp $"
+#ident "$Id: PGate.cc,v 1.4 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 # include  "PGate.h"
@@ -30,14 +30,7 @@ PGate::PGate(const string&name,
 	     const svector<PExpr*>*del)
 : name_(name), pins_(pins)
 {
-      for (unsigned idx = 0 ;  idx < 3 ;  idx += 1)
-	    delay_[idx] = 0;
-
-      if (del) {
-	    assert(del->count() <= 3);
-	    for (unsigned idx = 0 ;  idx < del->count() ;  idx += 1)
-		  delay_[idx] = (*del)[idx];
-      }
+      delay_.set_delays(del);
 }
 
 PGate::PGate(const string&name,
@@ -45,23 +38,16 @@ PGate::PGate(const string&name,
 	     PExpr*del)
 : name_(name), pins_(pins)
 {
-      delay_[0] = del;
-      delay_[1] = 0;
-      delay_[2] = 0;
+      delay_.set_delay(del);
 }
 
 PGate::PGate(const string&name, svector<PExpr*>*pins)
 : name_(name), pins_(pins)
 {
-      delay_[0] = 0;
-      delay_[1] = 0;
-      delay_[2] = 0;
 }
 
 PGate::~PGate()
 {
-      for (unsigned idx = 0 ;  idx < 3 ;  idx += 1)
-	    delete delay_[idx];
 }
 
 /*
@@ -77,41 +63,7 @@ void PGate::eval_delays(Design*des, const string&path,
 			unsigned long&fall_time,
 			unsigned long&decay_time) const
 {
-      verinum*dv;
-
-      if (delay_[0]) {
-	    dv = delay_[0]->eval_const(des, path);
-	    assert(dv);
-	    rise_time = dv->as_ulong();
-	    delete dv;
-
-	    if (delay_[1]) {
-		  dv = delay_[1]->eval_const(des, path);
-		  assert(dv);
-		  fall_time = dv->as_ulong();
-		  delete dv;
-
-		  if (delay_[2]) {
-			dv = delay_[2]->eval_const(des, path);
-			assert(dv);
-			decay_time = dv->as_ulong();
-			delete dv;
-		  } else {
-			if (rise_time < fall_time)
-			      decay_time = rise_time;
-			else
-			      decay_time = fall_time;
-		  }
-	    } else {
-		  assert(delay_[2] == 0);
-		  fall_time = rise_time;
-		  decay_time = rise_time;
-	    }
-      } else {
-	    rise_time = 0;
-	    fall_time = 0;
-	    decay_time = 0;
-      }
+      delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
 }
 
 PGAssign::PGAssign(svector<PExpr*>*pins)
@@ -160,6 +112,9 @@ void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.4  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.3  1999/08/01 21:18:55  steve
  *  elaborate rise/fall/decay for continuous assign.
  *

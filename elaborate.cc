@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.77 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.78 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 /*
@@ -1343,7 +1343,8 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       if (reg == 0) return 0;
 
 	/* If there is a delay expression, elaborate it. */
-      verinum*dex = delay() ? delay()->eval_const(des, path) : 0;
+      unsigned long rise_time, fall_time, decay_time;
+      delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
 
 
 	/* Elaborate the r-value expression. */
@@ -1370,7 +1371,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	   actually and literally represent the delayed assign in the
 	   netlist. The compound statement is exactly equivalent. */
 
-      if (dex) {
+      if (rise_time) {
 	    string n = des->local_symbol(path);
 	    unsigned wid = msb - lsb + 1;
 
@@ -1404,13 +1405,12 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(a2->pin(idx), reg->pin(idx+lsb));
 
-	    NetPDelay*de = new NetPDelay(dex->as_ulong(), a2);
+	    NetPDelay*de = new NetPDelay(rise_time, a2);
 
 	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
 	    bl->append(a1);
 	    bl->append(de);
 
-	    delete dex;
 	    return bl;
       }
 
@@ -1462,12 +1462,6 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
       assert(rval());
 
-      if (delay()) {
-	    cerr << get_line() << ": sorry, cannot elaborate delays"
-		  " is non-blocking assignments." << endl;
-	    return 0;
-      }
-
 	/* Elaborate the r-value expression. This generates a
 	   procedural expression that I attach to the assignment. */
       NetExpr*rv = rval()->elaborate_expr(des, path);
@@ -1477,12 +1471,6 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(rv);
-
-      if (delay()) {
-	    cerr << delay()->get_line() << ": Sorry, I cannot elaborate "
-		  "assignment delay expressions." << endl;
-	    des->errors += 1;
-      }
 
       NetAssignNB*cur;
       if (mux == 0) {
@@ -1496,6 +1484,12 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    cur = new NetAssignNB(des->local_symbol(path), des, 1, mux, rv);
 	    connect(cur->pin(0), reg->pin(0));
       }
+
+      unsigned long rise_time, fall_time, decay_time;
+      delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
+      cur->rise_time(rise_time);
+      cur->fall_time(fall_time);
+      cur->decay_time(decay_time);
 
 
 	/* All done with this node. mark its line number and check it in. */
@@ -2192,6 +2186,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.78  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.77  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *

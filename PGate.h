@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.9 1999/08/23 16:48:39 steve Exp $"
+#ident "$Id: PGate.h,v 1.10 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 # include  "svector.h"
 # include  "LineInfo.h"
+# include  "PDelays.h"
 class PExpr;
 class PUdp;
 class Design;
@@ -72,7 +73,7 @@ class PGate : public LineInfo {
 
     private:
       const string name_;
-      PExpr* delay_[3];
+      PDelays delay_;
       svector<PExpr*>*pins_;
 
     private: // not implemented
@@ -179,6 +180,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.10  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.9  1999/08/23 16:48:39  steve
  *  Parameter overrides support from Peter Monta
  *  AND and XOR support wide expressions.

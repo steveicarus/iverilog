@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.38 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.39 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 /*
@@ -351,11 +351,16 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
 
       if (bmux_) {
-	    o << name() << "[" << *bmux_ << "] <= " << *rval_ << ";" <<
-		  endl;
+	    o << name() << "[" << *bmux_ << "] <= ";
+	    if (rise_time())
+		  o << "#" << rise_time() << " ";
+	    o << *rval_ << ";" << endl;
 
       } else {
-	    o << name() << " <= " << *rval_ << ";" << endl;
+	    o << name() << " <= ";
+	    if (rise_time())
+		  o << "#" << rise_time() << " ";
+	    o << *rval_ << ";" << endl;
       }
 }
 
@@ -728,6 +733,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.39  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.38  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.38 1999/09/04 01:57:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.39 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -285,6 +285,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
 	    expr->expr_width() << ">" << result << ";" << endl;
       switch (expr->op()) {
+	  case 'a': // logical and (&&)
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_land("
+		<< lres << "," << rres << ");" << endl;
+	    break;
 	  case 'E': // ===
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_eeq("
 		<< lres << "," << rres << ");" << endl;
@@ -305,7 +309,7 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_lt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
-	  case 'o':
+	  case 'o': // logical or (||)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_lor("
 		<< lres << "," << rres << ");" << endl;
 	    break;
@@ -1036,13 +1040,14 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 
       if (net->bmux()) {
 	    string bval = emit_proc_rval(os, 8, net->bmux());
-	    os << "        sim_->insert_event(0, new " <<
-		  mangle(net->name()) << "(sim_, " << rval << ", " << bval
-	       << ".as_unsigned()));" << endl;
+	    os << "        sim_->insert_event(" << net->rise_time()
+	       << ", new " << mangle(net->name()) << "(sim_, " << rval
+	       << ", " << bval << ".as_unsigned()));" << endl;
 
       } else {
-	    os << "        sim_->insert_event(0, new " <<
-		  mangle(net->name()) << "(sim_, " << rval << "));" << endl;
+	    os << "        sim_->insert_event(" << net->rise_time()
+	       << ", new " << mangle(net->name()) << "(sim_, " << rval
+	       << "));" << endl;
       }
 }
 
@@ -1411,6 +1416,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.39  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.38  1999/09/04 01:57:15  steve
  *  Generate fake adder code in vvm.
  *

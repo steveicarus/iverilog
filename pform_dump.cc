@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.36 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.37 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 /*
@@ -35,6 +35,12 @@ ostream& operator << (ostream&out, const PExpr&obj)
 {
       obj.dump(out);
       return out;
+}
+
+ostream& operator << (ostream&o, const PDelays&d)
+{
+      d.dump_delays(o);
+      return o;
 }
 
 void PExpr::dump(ostream&out) const
@@ -209,7 +215,7 @@ void PGate::dump_pins(ostream&out) const
       }
 }
 
-void PGate::dump_delays(ostream&out) const
+void PDelays::dump_delays(ostream&out) const
 {
       if (delay_[0] && delay_[1] && delay_[2])
 	    out << "#(" << *delay_[0] << "," << *delay_[1] << "," <<
@@ -221,10 +227,15 @@ void PGate::dump_delays(ostream&out) const
 
 }
 
+void PGate::dump_delays(ostream&out) const
+{
+      delay_.dump_delays(out);
+}
+
 void PGate::dump(ostream&out) const
 {
       out << "    " << typeid(*this).name() << " ";
-      dump_delays(out);
+      delay_.dump_delays(out);
       out << " " << get_name() << "(";
       dump_pins(out);
       out << ");" << endl;
@@ -303,18 +314,14 @@ void Statement::dump(ostream&out, unsigned ind) const
 void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << *lval() << " = ";
-      if (delay()) out << "#" << *delay() << " ";
-      out << *rval() << ";";
+      out << *lval() << " = " << delay_ << " " << *rval() << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << *lval() << " <= ";
-      if (delay()) out << "#" << *delay() << " ";
-      out << *rval() << ";";
+      out << *lval() << " <= " << delay_ << " " << *rval() << ";";
       out << "  /* " << get_line() << " */" << endl;
 }
 
@@ -629,6 +636,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.37  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.36  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

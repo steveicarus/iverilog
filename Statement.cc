@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.13 1999/09/02 01:59:27 steve Exp $"
+#ident "$Id: Statement.cc,v 1.14 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -28,14 +28,14 @@ Statement::~Statement()
 }
 
 PAssign_::PAssign_(PExpr*lval, PExpr*de, PExpr*ex)
-: lval_(lval), delay_(de), rval_(ex)
+: lval_(lval), rval_(ex)
 {
+      if (de) delay_.set_delay(de);
 }
 
 PAssign_::~PAssign_()
 {
       delete lval_;
-      delete delay_;
       delete rval_;
 }
 
@@ -148,6 +148,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.14  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.13  1999/09/02 01:59:27  steve
  *  Parse non-blocking assignment delays.
  *

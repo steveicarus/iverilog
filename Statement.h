@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.16 1999/09/02 01:59:27 steve Exp $"
+#ident "$Id: Statement.h,v 1.17 1999/09/04 19:11:46 steve Exp $"
 #endif
 
 # include  <string>
 # include  "svector.h"
+# include  "PDelays.h"
 # include  "PExpr.h"
 # include  "LineInfo.h"
 class PExpr;
@@ -81,7 +82,6 @@ class PAssign_  : public Statement {
       virtual ~PAssign_() =0;
 
       const PExpr* lval() const  { return lval_; }
-      const PExpr* delay() const { return delay_; }
       const PExpr* rval() const  { return rval_; }
 
     protected:
@@ -89,9 +89,10 @@ class PAssign_  : public Statement {
 			    unsigned&lsb, unsigned&msb,
 			    NetExpr*&mux) const;
 
+      PDelays delay_;
+
     private:
       PExpr* lval_;
-      PExpr* delay_;
       PExpr* rval_;
 };
 
@@ -119,8 +120,6 @@ class PAssignNB  : public PAssign_ {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
-
-    private:
 };
 
 /*
@@ -334,6 +333,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.17  1999/09/04 19:11:46  steve
+ *  Add support for delayed non-blocking assignments.
+ *
  * Revision 1.16  1999/09/02 01:59:27  steve
  *  Parse non-blocking assignment delays.
  *
