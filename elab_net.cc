@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.71 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.72 2001/07/07 04:37:18 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -53,9 +53,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	  case '^':
 	  case 'X': // Exclusing NOR
 	    return elaborate_net_bit_(des, path, width, rise, fall, decay);
-	  case 'E':
-	  case 'e':
-	  case 'n':
+	  case 'E': // === (case equals)
+	  case 'e': // ==
+	  case 'N': // !== (case not-equals)
+	  case 'n': // !=
 	  case '<':
 	  case '>':
 	  case 'L': // <=
@@ -427,11 +428,13 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	  }
 
 	  case 'E': // Case equals (===)
+	  case 'N': // Case equals (!==)
 	      // The comparison generates gates to bitwise compare
 	      // each pair, and AND all the comparison results.
+
 	    gate = new NetLogic(scope, des->local_symbol(path),
 				1+dwidth,
-				NetLogic::AND);
+				(op_ == 'E')? NetLogic::AND : NetLogic::NAND);
 	    connect(gate->pin(0), osig->pin(0));
 	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 		  NetCaseCmp*cmp = new NetCaseCmp(des->local_symbol(path));
@@ -1902,6 +1905,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.72  2001/07/07 04:37:18  steve
+ *  Generate !== an an inverted ===
+ *
  * Revision 1.71  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *
