@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.8 2000/05/01 23:55:22 steve Exp $"
+#ident "$Id: iverilog.c,v 1.9 2000/05/03 22:14:31 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -34,8 +34,11 @@ const char*opath = "a.out";
 const char*targ  = "vvm";
 const char*start = 0;
 
+char warning_flags[16] = "";
+
 char*f_list = 0;
 
+int synth_flag = 0;
 int verbose_flag = 0;
 
 char tmp[4096];
@@ -44,7 +47,7 @@ static int t_null(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s/ivl ", base);
+      sprintf(tmp, " | %s/ivl %s", base, warning_flags);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
       strcpy(cmd+ncmd, tmp);
@@ -88,7 +91,9 @@ static int t_vvm(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s/ivl -o %s.cc -tvvm -Fcprop -Fnodangle -fVPI_MODULE_PATH=%s", base, opath, base);
+      sprintf(tmp, " | %s/ivl %s -o %s.cc -tvvm -Fcprop %s -Fnodangle"
+	      " -fVPI_MODULE_PATH=%s", base, warning_flags, opath,
+	      synth_flag?"-Fsynth":"", base);
 
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
@@ -147,7 +152,8 @@ static int t_xnf(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s/ivl -o %s -txnf -Fcprop -Fsynth -Fnodangle -Fxnfio", base, opath);
+      sprintf(tmp, " | %s/ivl %s -o %s -txnf -Fcprop -Fsynth "
+	      "-Fnodangle -Fxnfio", base, warning_flags, opath);
 
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
@@ -182,6 +188,20 @@ static int t_xnf(char*cmd, unsigned ncmd)
       return rc;
 }
 
+static void process_warning_switch(const char*name)
+{
+      if (warning_flags[0] == 0)
+	    strcpy(warning_flags, "-W");
+
+      if (strcmp(name,"all") == 0) {
+	    strcat(warning_flags, "i");
+
+      } else if (strcmp(name,"implicit") == 0) {
+	    if (! strchr(warning_flags+2, 'i'))
+		  strcat(warning_flags, "i");
+      }
+}
+
 int main(int argc, char **argv)
 {
       char*cmd;
@@ -190,7 +210,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:Ef:o:s:t:v")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:Ef:o:Ss:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -215,6 +235,9 @@ int main(int argc, char **argv)
 		case 'o':
 		  opath = optarg;
 		  break;
+		case 'S':
+		  synth_flag = 1;
+		  break;
 		case 's':
 		  start = optarg;
 		  break;
@@ -223,6 +246,9 @@ int main(int argc, char **argv)
 		  break;
 		case 'v':
 		  verbose_flag = 1;
+		  break;
+		case 'W':
+		  process_warning_switch(optarg);
 		  break;
 		case '?':
 		default:
@@ -288,6 +314,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.9  2000/05/03 22:14:31  steve
+ *  More features of ivl available through iverilog.
+ *
  * Revision 1.8  2000/05/01 23:55:22  steve
  *  Better inc and lib paths for iverilog.
  *

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.50 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: Makefile.in,v 1.51 2000/05/03 22:14:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -138,6 +138,7 @@ $(bindir)/verilog: ./verilog
 
 $(bindir)/iverilog: ./iverilog
 	$(INSTALL_PROGRAM) ./iverilog $(bindir)/iverilog
+	$(STRIP) $(bindir)/iverilog
 
 $(libdir)/ivl/ivl: ./ivl
 	$(INSTALL_PROGRAM) ./ivl $(libdir)/ivl/ivl

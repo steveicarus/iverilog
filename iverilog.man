@@ -4,7 +4,7 @@ iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-Dmacro[=defn]] [-E] [-fflag=value] [-Iincludepath] [-mmodule] [-ooutputfilename] [-stopmodule] [-ttype] [-v] sourcefile[s]
+[-ESv] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-ooutputfilename] [-s topmodule] [-ttype] [-Wclass] sourcefile[s]
 
 .SH DESCRIPTION
 .PP
@@ -17,6 +17,13 @@ types are added as code generators are implemented.
 .SH OPTIONS
 .l
 \fIiverilog\fP accepts the following options:
+.TP 8
+.B -B\fIbase\fP
+The \fIiverilog\fP program uses external programs to preprocess and
+compile the verilog source. Normally, the path used to locate these
+tools is built into the \fIiverilog\fP program. However, the \fB-B\fP
+switch allows the user to select a different set of programs. The path
+given is used to locate \fIivlpp\fP, \fIivl\fP and the VPI modules.
 .TP 8
 .B -D\fImacro\fP
 Defines macro \fImacro\fP with the string `1' as its definition. (NOT IMPLEMENTED)
@@ -48,16 +55,33 @@ simulation. (NOT IMPLEMENTED)
 Place output in the file \fIfilename\fP. If no output file name is
 specified, \fIiverilog\fP uses the default name \fBa.out\fP.
 .TP 8
+.B -S
+Synthesize. Normally, if the target can accept behavioral
+descriptions, the compiler will leave processes in behavioral
+form. The \fB-S\fP switch causes the compiler to perform synthesis
+even if it is not necessary for the target. If the target type is a
+netlist format, the \fB-S\fP switch is unnecessary and has no effect.
+.TP 8
 .B -s \fItopmodule\fP
 Specify the top level module to elaborate. Icarus Verilog will by default
 choose the only module that has no ports. However, this simplistic
 heuristic is often not sufficient, and sometimes not what is wanted
 anyhow.
 .TP 8
+.B -t\fItarget\fP
+Use this switch to specify the target output format. See the
+\fBTARGETS\fP section below for a list of valid output formats.
+.TP 8
 .B -v
 Turn on verbose messages. This will print the command lines that are
 executed to perform the actual compilation, along with version
 information from the various components.
+.TP 8
+.B -W\fIclass\fP
+Turn on different classes of warnings. See the \fBWARNING TYPES\fP
+section below for desctriptions of the different warning groups. If
+multiple \fB-W\fP switches are used, the warning set is the union of
+all the requested classes.
 
 .SH TARGETS
 
@@ -80,6 +104,20 @@ This is the Xilinx Netlist Format used by many tools for placing
 devices in FPGAs or other programmable devices. The Icarus Verilog XNF
 code generator can generate complete designs or XNF macros that can be
 imported into larger designs by other tools.
+
+.SH "WARNING TYPES"
+These are the types of warnings that can be selected by the \fB-W\fP
+switch.
+
+.TP 8
+.B all
+This enables all supported warning categories.
+
+.TP 8
+.B implicit
+This enables warnings for creation of implicit declarations. For
+example, if a scaler wire X is used but not declared in the Verilog
+source, this will print a warning at its first use.
 
 .SH EXAMPLES 
 These examples assume that you have a Verilog source file called hello.v in
