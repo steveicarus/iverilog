@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.91 1999/11/21 17:35:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.92 1999/11/21 18:03:35 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1716,7 +1716,7 @@ NetEIdent* NetEIdent::dup_expr() const
 }
 
 NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
-: mem_(m), idx_(i)
+: NetExpr(m->width()), mem_(m), idx_(i)
 {
 }
 
@@ -2531,6 +2531,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.92  1999/11/21 18:03:35  steve
+ *  Fix expression width of memory references.
+ *
  * Revision 1.91  1999/11/21 17:35:37  steve
  *  Memory name lookup handles scopes.
  *
