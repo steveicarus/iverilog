@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.196 2000/12/16 23:55:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.197 2000/12/17 05:33:11 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2484,19 +2484,44 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	    if ((wid-off) < min_count)
 		  min_count = wid - off;
 
-	    for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
+	      /* First, make a map of the nexa that are connected to
+		 the l-value. */
+
+	    bool sequential_flag = true;
+	    unsigned*nexus_map = new unsigned[lv->pin_count()];
+	    for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
 		  string nexus = lv->pin(idx).nexus()->name();
-		  unsigned ncode = nexus_wire_map[nexus];
-		  defn << "      nexus_wire_table["<<ncode<<"].reg_assign("
-		       << rval << "[" << (idx+off) << "]);" << endl;
+		  nexus_map[idx] = nexus_wire_map[nexus];
+
+		  if ((idx >= 1) && (nexus_map[idx] != (nexus_map[idx-1]+1)))
+			sequential_flag = false;
+	    }
+
+	    if (sequential_flag && (min_count > 1)) {
+		  unsigned base = nexus_map[0];
+
+		  defn << "      for (unsigned idx = 0 ;  idx < "
+		       << min_count << "; idx += 1)" << endl;
+
+		  defn << "        nexus_wire_table[idx+"<<base<<"]"
+		       << ".reg_assign(" << rval << "[idx]);" << endl;
+
+	    } else {
+		  for (unsigned idx = 0 ;  idx < min_count ;  idx += 1) {
+			unsigned ncode = nexus_map[idx];
+			defn << "      nexus_wire_table["<<ncode
+			     <<"].reg_assign(" << rval << "["
+			     << (idx+off) << "]);" << endl;
+		  }
 	    }
 
 	    for (unsigned idx = min_count; idx < lv->pin_count(); idx += 1) {
-		  string nexus = lv->pin(idx).nexus()->name();
-		  unsigned ncode = nexus_wire_map[nexus];
+		  unsigned ncode = nexus_map[idx];
 		  defn << "      nexus_wire_table["<<ncode<<"]"
 		       << ".reg_assign(St0);" << endl;
 	    }
+
+	    delete[] nexus_map;
       }
 }
 
@@ -3583,6 +3608,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.197  2000/12/17 05:33:11  steve
+ *  Generate smaller code for reg assigns.
+ *
  * Revision 1.196  2000/12/16 23:55:24  steve
  *  Generate loops to initialize vectors or constants.
  *
