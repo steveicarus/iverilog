@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.129 2002/06/30 02:21:31 steve Exp $"
+#ident "$Id: Makefile.in,v 1.130 2002/07/03 23:20:12 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -179,7 +179,8 @@ ifeq (@WIN32@,yes)
 
 else
 iverilog-vpi: iverilog-vpi.sh
-	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' $< > $@
+	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
+	    -e 's;@INCLUDEDIR@;@includedir@;' -e 's;@LIBDIR@;@libdir@;' $< > $@
 	chmod +x $@
 endif
 
