@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.50 2000/10/14 16:48:59 steve Exp $"
+#ident "$Id: lexor.lex,v 1.51 2000/10/22 22:27:59 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -801,15 +801,20 @@ static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
       ptr += 1;
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
-      
-      if ((strlen(ptr) * 4) > size)
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric decimal constant ``" << ptr <<
-           "'' truncated to " << size << " bits." << endl;
+
+      const char*digits = ptr;
+
+	/* Convert the decimal number to a binary value, one digit at
+	   a time. Watch out for overflow. */
 
       unsigned long value = 0;
       for ( ; *ptr ; ptr += 1)
 	    if (isdigit(*ptr)) {
+		  unsigned long tmp = value * 10 + (*ptr - '0');
+		  if (tmp < value)
+			cerr << yylloc.text << ":" << yylloc.first_line <<
+			      ": warning: Numeric decimal constant ``"
+			     << digits << "'' is too large." << endl;
 		  value *= 10;
 		  value += *ptr - '0';
 	    } else  {
@@ -823,6 +828,14 @@ static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
 	    bits[idx] = (value&1)? verinum::V1 : verinum::V0;
 	    value /= 2;
       }
+
+	/* If we run out of bits to hold the value, but there are
+	   still valueable bits in the number, print a warning. */
+
+      if (value != 0)
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric decimal constant ``" << digits <<
+           "'' truncated to " << size << " bits." << endl;
 
       verinum*out = new verinum(bits, size, fixed);
       out->has_sign(signed_flag);
