@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.29 2004/02/19 07:06:57 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.30 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -57,7 +57,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// the pform and just place a NetEParam placeholder in the
 	// place of the elaborated expression.
 
-      typedef map<string,param_expr_t>::const_iterator mparm_it_t;
+      typedef map<perm_string,param_expr_t>::const_iterator mparm_it_t;
       typedef map<hname_t,PExpr*>::const_iterator hparm_it_t;
 
 
@@ -308,8 +308,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// passed. It is built up by the ordered overrides or named
 	// overrides.
 
-      typedef map<string,PExpr*>::const_iterator mparm_it_t;
-      map<string,PExpr*> replace;
+      typedef map<perm_string,PExpr*>::const_iterator mparm_it_t;
+      map<perm_string,PExpr*> replace;
 
 
 	// Positional parameter overrides are matched to parameter
@@ -319,7 +319,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
       if (overrides_) {
 	    assert(parms_ == 0);
-	    list<string>::const_iterator cur = mod->param_names.begin();
+	    list<perm_string>::const_iterator cur = mod->param_names.begin();
 	    unsigned idx = 0;
 	    for (;;) {
 		  if (idx >= overrides_->count())
@@ -549,6 +549,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.30  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.29  2004/02/19 07:06:57  steve
  *  LPM, logic and Variables have perm_string names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.22 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: Module.cc,v 1.23 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -88,7 +88,7 @@ const svector<PEIdent*>& Module::get_port(unsigned idx) const
 	    return zero;
 }
 
-unsigned Module::find_port(const string&name) const
+unsigned Module::find_port(const char*name) const
 {
       assert(name != "");
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
@@ -149,6 +149,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.23  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.22  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

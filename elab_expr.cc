@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.83 2004/01/21 04:57:40 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.84 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -605,8 +605,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       NetEConstParam if possible. */
 		  NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
 		  if (ctmp != 0) {
-			const char*name
-			     = lex_strings.add(path_.peek_tail_name());
+			perm_string name
+			     = lex_strings.make(path_.peek_tail_name());
 			NetEConstParam*ptmp
 			     = new NetEConstParam(found_in, name, ctmp->value());
 			delete tmp;
@@ -977,6 +977,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.84  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.83  2004/01/21 04:57:40  steve
  *  Generate error when missing concatenation operands.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.111 2004/02/19 07:06:57 steve Exp $"
+#ident "$Id: t-dll.h,v 1.112 2004/02/20 06:22:58 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -488,7 +488,7 @@ struct ivl_memory_s {
  * these.
  */
 struct ivl_parameter_s {
-      const char*basename;
+      perm_string basename;
       ivl_scope_t scope;
       ivl_expr_t  value;
 };
@@ -683,6 +683,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.112  2004/02/20 06:22:58  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.111  2004/02/19 07:06:57  steve
  *  LPM, logic and Variables have perm_string names.
  *
@@ -725,26 +728,5 @@ struct ivl_variable_s {
  *  scope names and system task/function names
  *  into this table. Also, permallocate event
  *  names from the beginning.
- *
- * Revision 1.98  2003/02/06 16:43:20  steve
- *  Satisfy declaration requirements of some picky compilers.
- *
- * Revision 1.97  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.96  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.95  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.94  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
  */
 #endif

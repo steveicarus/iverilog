@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.33 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: Module.h,v 1.34 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include  <list>
@@ -57,7 +57,7 @@ class Module : public LineInfo {
 	   the port. */
     public:
       struct port_t {
-	    string name;
+	    perm_string name;
 	    svector<PEIdent*> expr;
       };
 
@@ -77,8 +77,8 @@ class Module : public LineInfo {
 	    PExpr*lsb;
 	    bool signed_flag;
       };
-      map<string,param_expr_t>parameters;
-      map<string,param_expr_t>localparams;
+      map<perm_string,param_expr_t>parameters;
+      map<perm_string,param_expr_t>localparams;
 
 
 	/* specparams are simpler then other params, in that they have
@@ -98,7 +98,7 @@ class Module : public LineInfo {
            appear in the instantiated module.  Therefore a
            list of names in module-order is needed to pass from
            a parameter-index to its name. */
-      list<string> param_names;
+      list<perm_string> param_names;
 
 	/* This is an array of port descriptors, which is in turn a
 	   named array of PEident pointers. */
@@ -131,7 +131,7 @@ class Module : public LineInfo {
 
       unsigned port_count() const;
       const svector<PEIdent*>& get_port(unsigned idx) const;
-      unsigned find_port(const string&) const;
+      unsigned find_port(const char*name) const;
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
@@ -166,6 +166,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.34  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.33  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

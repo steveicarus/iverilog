@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.30 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.31 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -80,7 +80,7 @@ NetScope::~NetScope()
 	/* name_ and module_name_ are perm-allocated. */
 }
 
-NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr,
+NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
 				 NetExpr*msb, NetExpr*lsb, bool signed_flag)
 {
       param_expr_t&ref = parameters[key];
@@ -95,7 +95,7 @@ NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr,
 /*
  * Return false if this creates a new parameter.
  */
-bool NetScope::replace_parameter(const string&key, NetExpr*expr)
+bool NetScope::replace_parameter(perm_string key, NetExpr*expr)
 {
       bool flag = true;
       param_expr_t&ref = parameters[key];
@@ -115,7 +115,7 @@ bool NetScope::replace_parameter(const string&key, NetExpr*expr)
       return flag;
 }
 
-NetExpr* NetScope::set_localparam(const string&key, NetExpr*expr)
+NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr)
 {
       param_expr_t&ref = localparams[key];
       NetExpr* res = ref.expr;
@@ -126,15 +126,22 @@ NetExpr* NetScope::set_localparam(const string&key, NetExpr*expr)
       return res;
 }
 
-const NetExpr* NetScope::get_parameter(const string&key) const
+/*
+ * NOTE: This method takes a const char* as a key to lookup a
+ * parameter, because we don't save that pointer. However, due to the
+ * way the map<> template works, we need to *cheat* and use the
+ * perm_string::literal method to fake the compiler into doing the
+ * compare without actually creating a perm_string.
+ */
+const NetExpr* NetScope::get_parameter(const char* key) const
 {
-      map<string,param_expr_t>::const_iterator idx;
+      map<perm_string,param_expr_t>::const_iterator idx;
 
-      idx = parameters.find(key);
+      idx = parameters.find(perm_string::literal(key));
       if (idx != parameters.end())
 	    return (*idx).second.expr;
 
-      idx = localparams.find(key);
+      idx = localparams.find(perm_string::literal(key));
       if (idx != localparams.end())
 	    return (*idx).second.expr;
 
@@ -450,6 +457,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.31  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.30  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

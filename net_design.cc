@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.43 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_design.cc,v 1.44 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,7 @@
 
 # include  "netlist.h"
 # include  "util.h"
+# include  "compiler.h"
 # include  <sstream>
 
 Design:: Design()
@@ -265,26 +266,26 @@ void NetScope::run_defparams(Design*des)
 	    NetExpr*val = (*pp).second;
 	    hname_t path = (*pp).first;
 
-	    char*name = path.remove_tail_name();
+	    char*tmp = path.remove_tail_name();
+	    perm_string perm_name = lex_strings.make(tmp);
+	    delete[]tmp;
 
 	      /* If there is no path on the name, then the targ_scope
 		 is the current scope. */
 	    NetScope*targ_scope = des->find_scope(this, path);
 	    if (targ_scope == 0) {
 		  cerr << val->get_line() << ": warning: scope of " <<
-			path << "." << name << " not found." << endl;
-		  delete[]name;
+			path << "." << perm_name << " not found." << endl;
 		  continue;
 	    }
 
-	    bool flag = targ_scope->replace_parameter(name, val);
+	    bool flag = targ_scope->replace_parameter(perm_name, val);
 	    if (! flag) {
 		  cerr << val->get_line() << ": warning: parameter "
-		       << name << " not found in "
+		       << perm_name << " not found in "
 		       << targ_scope->name() << "." << endl;
 	    }
 
-	    delete[]name;
       }
 }
 
@@ -309,7 +310,7 @@ void NetScope::evaluate_parameters(Design*des)
 	// scanning code. Now the parameter expression can be fully
 	// evaluated, or it cannot be evaluated at all.
 
-      typedef map<string,param_expr_t>::iterator mparm_it_t;
+      typedef map<perm_string,param_expr_t>::iterator mparm_it_t;
 
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
@@ -617,6 +618,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.44  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.43  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

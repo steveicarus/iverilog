@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.190 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: parse.y,v 1.191 2004/02/20 06:22:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -278,7 +278,7 @@ attribute_list
 attribute
 	: IDENTIFIER
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = string($1);
+		  tmp->name = lex_strings.make($1);
 		  tmp->parm = 0;
 		  delete $1;
 		  $$ = tmp;
@@ -292,7 +292,7 @@ attribute
 			tmp = 0;
 		  }
 		  named_pexpr_t*tmp2 = new named_pexpr_t;
-		  tmp2->name = string($1);
+		  tmp2->name = lex_strings.make($1);
 		  tmp2->parm = tmp;
 		  delete $1;
 		  $$ = tmp2;
@@ -1799,7 +1799,8 @@ parameter_assign
 			delete tmp;
 			tmp = 0;
 		  } else {
-			pform_set_parameter($1, active_signed,
+			pform_set_parameter(lex_strings.make($1),
+					    active_signed,
 					    active_range, tmp);
 		  }
 		  delete $1;
@@ -1840,7 +1841,7 @@ localparam_assign
 			delete tmp;
 			tmp = 0;
 		  }
-		  pform_set_localparam($1, tmp);
+		  pform_set_localparam(lex_strings.make($1), tmp);
 		  delete $1;
 		}
 	;
@@ -1907,14 +1908,14 @@ parameter_value_opt
 parameter_value_byname
 	: '.' IDENTIFIER '(' expression ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  tmp->parm = $4;
 		  free($2);
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
 		  free($2);
 		  $$ = tmp;
@@ -1960,7 +1961,7 @@ port
 
 	| '.' IDENTIFIER '(' port_reference ')'
 		{ Module::port_t*tmp = $4;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -1971,7 +1972,7 @@ port
 
 	| '{' port_reference_list '}'
 		{ Module::port_t*tmp = $2;
-		  tmp->name = "";
+		  tmp->name = perm_string();
 		  $$ = tmp;
 		}
 
@@ -1980,7 +1981,7 @@ port
 
 	| '.' IDENTIFIER '(' '{' port_reference_list '}' ')'
 		{ Module::port_t*tmp = $5;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -2027,7 +2028,7 @@ port_reference
 		  wtmp->msb_ = $3;
 		  wtmp->lsb_ = $5;
 		  Module::port_t*ptmp = new Module::port_t;
-		  ptmp->name = "";
+		  ptmp->name = perm_string();
 		  ptmp->expr = svector<PEIdent*>(1);
 		  ptmp->expr[0] = wtmp;
 		  delete $1;
@@ -2044,7 +2045,7 @@ port_reference
 		  }
 		  tmp->msb_ = $3;
 		  Module::port_t*ptmp = new Module::port_t;
-		  ptmp->name = "";
+		  ptmp->name = perm_string();
 		  ptmp->expr = svector<PEIdent*>(1);
 		  ptmp->expr[0] = tmp;
 		  delete $1;
@@ -2057,7 +2058,7 @@ port_reference
 		  PEIdent*wtmp = new PEIdent(hname_t($1));
 		  wtmp->set_file(@1.text);
 		  wtmp->set_lineno(@1.first_line);
-		  ptmp->name = $1;
+		  ptmp->name = lex_strings.make($1);
 		  ptmp->expr = svector<PEIdent*>(1);
 		  ptmp->expr[0] = wtmp;
 		  delete $1;
@@ -2084,7 +2085,7 @@ port_reference_list
 port_name
 	: '.' IDENTIFIER '(' expression ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  tmp->parm = $4;
 		  delete $2;
 		  $$ = tmp;
@@ -2092,14 +2093,14 @@ port_name
 	| '.' IDENTIFIER '(' error ')'
 		{ yyerror(@4, "error: invalid port connection expression.");
 		  named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
 		  delete $2;
 		  $$ = tmp;
 		}
 	| '.' IDENTIFIER '(' ')'
 		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = $2;
+		  tmp->name = lex_strings.make($2);
 		  tmp->parm = 0;
 		  delete $2;
 		  $$ = tmp;

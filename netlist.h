@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.310 2004/02/19 07:06:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.311 2004/02/20 06:22:57 steve Exp $"
 #endif
 
 /*
@@ -1042,11 +1042,11 @@ class NetEConst  : public NetExpr {
 class NetEConstParam  : public NetEConst {
 
     public:
-      explicit NetEConstParam(NetScope*scope, const char*name,
+      explicit NetEConstParam(NetScope*scope, perm_string name,
 			      const verinum&val);
       ~NetEConstParam();
 
-      const char* name() const;
+      perm_string name() const;
       const NetScope*scope() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1056,7 +1056,7 @@ class NetEConstParam  : public NetEConst {
 
     private:
       NetScope*scope_;
-      const char*name_;
+      perm_string name_;
 };
 
 /*
@@ -1094,11 +1094,11 @@ class NetECReal  : public NetExpr {
 class NetECRealParam  : public NetECReal {
 
     public:
-      explicit NetECRealParam(NetScope*scope, const char*name,
+      explicit NetECRealParam(NetScope*scope, perm_string name,
 			      const verireal&val);
       ~NetECRealParam();
 
-      const char* name() const;
+      perm_string name() const;
       const NetScope*scope() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1108,7 +1108,7 @@ class NetECRealParam  : public NetECReal {
 
     private:
       NetScope*scope_;
-      const char*name_;
+      perm_string name_;
 };
 
 /*
@@ -2646,7 +2646,7 @@ class NetEVariable  : public NetExpr {
 class NetEParam  : public NetExpr {
     public:
       NetEParam();
-      NetEParam(class Design*des, NetScope*scope, const hname_t&name);
+      NetEParam(class Design*des, NetScope*scope, perm_string name);
       ~NetEParam();
 
       virtual NexusSet* nex_input();
@@ -2661,7 +2661,7 @@ class NetEParam  : public NetExpr {
     private:
       Design*des_;
       NetScope*scope_;
-      hname_t name_;
+      perm_string name_;
 };
 
 
@@ -3004,16 +3004,16 @@ class NetScope : public Attrib {
 	   the scope. The return value from set_parameter is the
 	   previous expression, if there was one. */
 
-      NetExpr* set_parameter(const string&name, NetExpr*val,
+      NetExpr* set_parameter(perm_string name, NetExpr*val,
 			     NetExpr*msb, NetExpr*lsb, bool signed_flag);
-      NetExpr* set_localparam(const string&name, NetExpr*val);
-      const NetExpr*get_parameter(const string&name) const;
+      NetExpr* set_localparam(perm_string name, NetExpr*val);
+      const NetExpr*get_parameter(const char* name) const;
 
 	/* These are used by defparam elaboration to replace the
 	   expression with a new expression, without affecting the
 	   range or signed_flag. Return false if the name does not
 	   exist. */
-      bool replace_parameter(const string&name, NetExpr*val);
+      bool replace_parameter(perm_string name, NetExpr*val);
 
 	/* These methods set or access events that live in this
 	   scope. */
@@ -3125,8 +3125,8 @@ class NetScope : public Attrib {
 	    NetExpr*lsb;
 	    bool signed_flag;
       };
-      map<string,param_expr_t>parameters;
-      map<string,param_expr_t>localparams;
+      map<perm_string,param_expr_t>parameters;
+      map<perm_string,param_expr_t>localparams;
 
     private:
       TYPE type_;
@@ -3315,6 +3315,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.311  2004/02/20 06:22:57  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.310  2004/02/19 07:06:57  steve
  *  LPM, logic and Variables have perm_string names.
  *

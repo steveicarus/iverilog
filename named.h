@@ -1,7 +1,7 @@
 #ifndef __named_H
 #define __named_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,10 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: named.h,v 1.3 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: named.h,v 1.4 2004/02/20 06:22:56 steve Exp $"
 #endif
 
-# include  <string>
+# include  "StringHeap.h"
 
 /*
  * There are lots of places where names are attached to objects. This
@@ -30,12 +30,15 @@
  */
 
 template <class T> struct named {
-      string name;
+      perm_string name;
       T parm;
 };
 
 /*
  * $Log: named.h,v $
+ * Revision 1.4  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.3  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

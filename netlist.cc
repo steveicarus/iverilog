@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.221 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: netlist.cc,v 1.222 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1897,7 +1897,7 @@ bool NetEConst::has_width() const
       return value_.has_len();
 }
 
-NetEConstParam::NetEConstParam(NetScope*s, const char*n, const verinum&v)
+NetEConstParam::NetEConstParam(NetScope*s, perm_string n, const verinum&v)
 : NetEConst(v), scope_(s), name_(n)
 {
 }
@@ -1906,7 +1906,7 @@ NetEConstParam::~NetEConstParam()
 {
 }
 
-const char* NetEConstParam::name() const
+perm_string NetEConstParam::name() const
 {
       return name_;
 }
@@ -2218,6 +2218,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.222  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.221  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.21 2003/08/28 04:11:19 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.22 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -377,7 +377,7 @@ NetExpr::TYPE NetECReal::expr_type() const
       return ET_REAL;
 }
 
-NetECRealParam::NetECRealParam(NetScope*s, const char*n, const verireal&v)
+NetECRealParam::NetECRealParam(NetScope*s, perm_string n, const verireal&v)
 : NetECReal(v), scope_(s), name_(n)
 {
 }
@@ -386,7 +386,7 @@ NetECRealParam::~NetECRealParam()
 {
 }
 
-const char* NetECRealParam::name() const
+perm_string NetECRealParam::name() const
 {
       return name_;
 }
@@ -402,7 +402,7 @@ NetEParam::NetEParam()
 {
 }
 
-NetEParam::NetEParam(Design*d, NetScope*s, const hname_t&n)
+NetEParam::NetEParam(Design*d, NetScope*s, perm_string n)
 : des_(d), scope_(s), name_(n)
 {
 }
@@ -516,6 +516,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.22  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.21  2003/08/28 04:11:19  steve
  *  Spelling patch.
  *

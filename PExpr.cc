@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.33 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.34 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -161,13 +161,19 @@ bool PEIdent::is_constant(Module*mod) const
 {
       if (mod == 0) return false;
 
-      { map<string,Module::param_expr_t>::const_iterator cur;
-        cur = mod->parameters.find(path_.peek_name(0));
+	/* This is a work-around for map not matching < even when
+	   there is a perm_string operator that can do the comprare.
+
+	   The real fix is to make the path_ carry perm_strings. */
+      perm_string tmp = perm_string::literal(path_.peek_name(0));
+
+      { map<perm_string,Module::param_expr_t>::const_iterator cur;
+        cur = mod->parameters.find(tmp);
 	if (cur != mod->parameters.end()) return true;
       }
 
-      { map<string,Module::param_expr_t>::const_iterator cur;
-        cur = mod->localparams.find(path_.peek_name(0));
+      { map<perm_string,Module::param_expr_t>::const_iterator cur;
+        cur = mod->localparams.find(tmp);
 	if (cur != mod->localparams.end()) return true;
       }
 
@@ -256,6 +262,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.34  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.33  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

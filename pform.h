@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.74 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: pform.h,v 1.75 2004/02/20 06:22:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -207,11 +207,11 @@ extern void pform_set_attrib(perm_string name, const string&key,
 extern void pform_set_type_attrib(perm_string name, const string&key,
 				  char*value);
 
-extern void pform_set_parameter(const string&name,
+extern void pform_set_parameter(perm_string name,
 				bool signed_flag,
 				svector<PExpr*>*range,
 				PExpr*expr);
-extern void pform_set_localparam(const string&name, PExpr*expr);
+extern void pform_set_localparam(perm_string name, PExpr*expr);
 extern void pform_set_defparam(const hname_t&name, PExpr*expr);
 
 /*
@@ -283,6 +283,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.75  2004/02/20 06:22:58  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.74  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *

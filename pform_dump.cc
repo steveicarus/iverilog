@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.83 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.84 2004/02/20 06:22:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -726,7 +726,7 @@ void Module::dump(ostream&out) const
 	    out << ")" << endl;
       }
 
-      typedef map<string,param_expr_t>::const_iterator parm_iter_t;
+      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
       typedef map<hname_t,PExpr*>::const_iterator parm_hiter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
@@ -881,6 +881,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.84  2004/02/20 06:22:58  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.83  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *

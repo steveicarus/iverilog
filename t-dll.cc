@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.127 2004/02/19 06:57:10 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.128 2004/02/20 06:22:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -487,14 +487,14 @@ void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
       scope->param_ = new struct ivl_parameter_s [scope->nparam_];
 
       unsigned idx = 0;
-      typedef map<string,NetScope::param_expr_t>::const_iterator pit_t;
+      typedef map<perm_string,NetScope::param_expr_t>::const_iterator pit_t;
 
       for (pit_t cur_pit = net->parameters.begin()
 		 ; cur_pit != net->parameters.end() ;  cur_pit ++) {
 
 	    assert(idx < scope->nparam_);
 	    ivl_parameter_t cur_par = scope->param_ + idx;
-	    cur_par->basename = lex_strings.add( (*cur_pit).first.c_str() );
+	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scope;
 
 	    NetExpr*etmp = (*cur_pit).second.expr;
@@ -2176,6 +2176,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.128  2004/02/20 06:22:58  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.127  2004/02/19 06:57:10  steve
  *  Memory and Event names use perm_string.
  *

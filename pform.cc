@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.121 2004/02/19 06:57:10 steve Exp $"
+#ident "$Id: pform.cc,v 1.122 2004/02/20 06:22:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -208,7 +208,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       if (attr) {
 	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		      named_pexpr_t*tmp = (*attr)[idx];
-		      pform_cur_module->attributes[tmp->name] = tmp->parm;
+		      pform_cur_module->attributes[string(tmp->name)] = tmp->parm;
 	      }
       }
 }
@@ -226,7 +226,7 @@ Module::port_t* pform_module_port_reference(char*name,
       PEIdent*tmp = new PEIdent(hname_t(name));
       tmp->set_file(file);
       tmp->set_lineno(lineno);
-      ptmp->name = name;
+      ptmp->name = lex_strings.make(name);
       ptmp->expr = svector<PEIdent*>(1);
       ptmp->expr[0] = tmp;
 
@@ -697,7 +697,7 @@ void pform_makegate(PGBuiltin::Type type,
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		  named_pexpr_t*tmp = (*attr)[idx];
-		  cur->attributes[tmp->name] = tmp->parm;
+		  cur->attributes[string(tmp->name)] = tmp->parm;
 	    }
       }
 
@@ -975,7 +975,7 @@ void pform_module_define_port(const struct vlltype&li,
       if (attr) {
 	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		      named_pexpr_t*tmp = (*attr)[idx];
-		      cur->attributes[tmp->name] = tmp->parm;
+		      cur->attributes[string(tmp->name)] = tmp->parm;
 	      }
       }
       pform_cur_module->add_wire(cur);
@@ -1035,7 +1035,7 @@ void pform_makewire(const vlltype&li, const char*nm,
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		  named_pexpr_t*tmp = (*attr)[idx];
-		  cur->attributes[tmp->name] = tmp->parm;
+		  cur->attributes[string(tmp->name)] = tmp->parm;
 	    }
       }
 
@@ -1308,7 +1308,7 @@ void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r)
       cur->set_memory_idx(l, r);
 }
 
-void pform_set_parameter(const string&name, bool signed_flag,
+void pform_set_parameter(perm_string name, bool signed_flag,
 			 svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
@@ -1329,7 +1329,7 @@ void pform_set_parameter(const string&name, bool signed_flag,
       pform_cur_module->param_names.push_back(name);
 }
 
-void pform_set_localparam(const string&name, PExpr*expr)
+void pform_set_localparam(perm_string name, PExpr*expr)
 {
       assert(expr);
       pform_cur_module->localparams[name].expr = expr;
@@ -1469,7 +1469,7 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		  named_pexpr_t*tmp = (*attr)[idx];
-		  pp->attributes[tmp->name] = tmp->parm;
+		  pp->attributes[string(tmp->name)] = tmp->parm;
 	    }
 	    delete attr;
       }
@@ -1519,6 +1519,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.122  2004/02/20 06:22:58  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.121  2004/02/19 06:57:10  steve
  *  Memory and Event names use perm_string.
  *

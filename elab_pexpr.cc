@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.20 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.21 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "PExpr.h"
+# include  "compiler.h"
 # include  "util.h"
 
 # include  <iostream>
@@ -136,19 +137,20 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       if (path.peek_name(0))
 	    pscope = des->find_scope(scope, path);
 
-      const NetExpr*ex = pscope->get_parameter(name);
+      perm_string perm_name = lex_strings.make(name);
+      delete name;
+
+      const NetExpr*ex = pscope->get_parameter(perm_name);
       if (ex == 0) {
 	    cerr << get_line() << ": error: identifier ``" << path_ <<
 		  "'' is not a parameter in " << scope->name() << "." << endl;
 	    des->errors += 1;
-	    delete name;
 	    return 0;
       }
 
-      NetExpr*res = new NetEParam(des, pscope, hname_t(name));
+      NetExpr*res = new NetEParam(des, pscope, perm_name);
       res->set_line(*this);
       assert(res);
-      delete name;
 
       assert(idx_ == 0);
       if (msb_ && lsb_) {
@@ -229,6 +231,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.21  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.20  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.146 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.147 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -717,7 +717,7 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump the parameters for this scope. */
       {
-	    map<string,param_expr_t>::const_iterator pp;
+	    map<perm_string,param_expr_t>::const_iterator pp;
 	    for (pp = parameters.begin()
 		       ; pp != parameters.end() ;  pp ++) {
 		  o << "    parameter ";
@@ -1079,6 +1079,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.147  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.146  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.59 2003/10/31 02:47:11 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.60 2004/02/20 06:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1124,8 +1124,7 @@ NetExpr* NetEParam::eval_tree()
 	    return 0;
 
       assert(scope_);
-      assert(name_.peek_name(1) == 0);
-      const NetExpr*expr = scope_->get_parameter(name_.peek_name(0));
+      const NetExpr*expr = scope_->get_parameter(name_);
       if (expr == 0) {
 	    cerr << get_line() << ": internal error: Unable to match "
 		 << "parameter " << name_ << " in scope "
@@ -1142,8 +1141,7 @@ NetExpr* NetEParam::eval_tree()
 	// return the constant value.
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(nexpr)) {
 	    verinum val = tmp->value();
-	    const char*name = lex_strings.add(name_.peek_name(0));
-	    NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
+	    NetEConstParam*ptmp = new NetEConstParam(scope_, name_, val);
 	    ptmp->set_line(*this);
 	    delete nexpr;
 	    return ptmp;
@@ -1151,8 +1149,7 @@ NetExpr* NetEParam::eval_tree()
 
       if (NetECReal*tmp = dynamic_cast<NetECReal*>(nexpr)) {
 	    verireal val = tmp->value();
-	    const char*name = lex_strings.add(name_.peek_name(0));
-	    NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
+	    NetECRealParam*ptmp = new NetECRealParam(scope_, name_, val);
 	    ptmp->set_line(*this);
 	    delete nexpr;
 	    return ptmp;
@@ -1171,7 +1168,7 @@ NetExpr* NetEParam::eval_tree()
 
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
-      scope_->replace_parameter(name_.peek_name(0), res);
+      scope_->replace_parameter(name_, res);
 
 	/* Return as a result a NetEConstParam or NetECRealParam
 	   object, depending on the type of the expression. */
@@ -1190,8 +1187,7 @@ NetExpr* NetEParam::eval_tree()
 	      assert(tmp);
 
 	      verinum val = tmp->value();
-	      const char*name = lex_strings.add(name_.peek_name(0));
-	      NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
+	      NetEConstParam*ptmp = new NetEConstParam(scope_, name_, val);
 
 	      return ptmp;
 	    }
@@ -1208,8 +1204,7 @@ NetExpr* NetEParam::eval_tree()
 	      assert(tmp);
 
 	      verireal val = tmp->value();
-	      const char*name = lex_strings.add(name_.peek_name(0));
-	      NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
+	      NetECRealParam*ptmp = new NetECRealParam(scope_, name_, val);
 
 	      return ptmp;
 	    }
@@ -1515,6 +1510,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.60  2004/02/20 06:22:56  steve
+ *  parameter keys are per_strings.
+ *
  * Revision 1.59  2003/10/31 02:47:11  steve
  *  NetEUReduce has its own dup_expr method.
  *
