@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.35 2002/04/24 02:47:02 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.36 2002/04/27 03:17:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -210,14 +210,16 @@ NetEConst* NetEBComp::eval_less_()
 	    return new NetEConst(result);
       }
 
-      if (lv.has_sign() && rv.has_sign() && (lv.as_long() < rv.as_long())) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
-      }
-
-      if (lv.as_ulong() < rv.as_ulong()) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
+      if (lv.has_sign() && rv.has_sign()) {
+	    if (lv.as_long() < rv.as_long()) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
+      } else {
+	    if (lv.as_ulong() < rv.as_ulong()) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
       }
 
       verinum result(verinum::V0, 1);
@@ -1068,6 +1070,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.36  2002/04/27 03:17:15  steve
+ *  Fixup eval of signed constants.
+ *
  * Revision 1.35  2002/04/24 02:47:02  steve
  *  Fix compile time eval of signed <= signed.
  *
