@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.50 2003/09/26 02:44:27 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.51 2003/10/27 06:04:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,7 +44,13 @@ NetNet* NetEBAdd::synthesize(Design*des)
 
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
-      
+
+      assert(expr_width() >= lsig->pin_count());
+      assert(expr_width() >= rsig->pin_count());
+
+      lsig = pad_to_width(des, lsig, expr_width());
+      rsig = pad_to_width(des, rsig, expr_width());
+
       assert(lsig->pin_count() == rsig->pin_count());
       unsigned width=lsig->pin_count();
 
@@ -821,6 +827,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.51  2003/10/27 06:04:21  steve
+ *  More flexible width handling for synthesized add.
+ *
  * Revision 1.50  2003/09/26 02:44:27  steve
  *  Assure ternary arguments are wide enough.
  *
