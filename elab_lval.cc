@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.5 2000/10/26 17:09:46 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.6 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -171,9 +171,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       }
       assert(reg);
 
-      if ((reg->type() != NetNet::REG) && (reg->type() != NetNet::INTEGER)) {
+      if ((reg->type() != NetNet::REG)
+	  && (reg->type() != NetNet::INTEGER)
+	  && (reg->type() != NetNet::TIME)) {
 	    cerr << get_line() << ": error: " << name() <<
-		  " is not a reg in " << scope->name() << "." << endl;
+		  " is not a reg/integer/time in " << scope->name() <<
+		  "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -281,6 +284,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.6  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.5  2000/10/26 17:09:46  steve
  *  Fix handling of errors in behavioral lvalues. (PR#28)
  *

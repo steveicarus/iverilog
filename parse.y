@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.108 2000/10/31 17:00:04 steve Exp $"
+#ident "$Id: parse.y,v 1.109 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -209,6 +209,9 @@ block_item_decl
 		}
 	| K_integer list_of_variables ';'
 		{ pform_set_reg_integer($2);
+		}
+	| K_time list_of_variables ';'
+		{ pform_set_reg_time($2);
 		}
 	;
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.143 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: netlist.cc,v 1.144 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -45,6 +45,9 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	    break;
 	  case NetNet::SUPPLY1:
 	    o << "supply1";
+	    break;
+	  case NetNet::TIME:
+	    o << "time";
 	    break;
 	  case NetNet::TRI:
 	    o << "tri";
@@ -2446,6 +2449,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.144  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.143  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

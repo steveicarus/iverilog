@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.4 2000/08/20 04:13:56 steve Exp $"
+#ident "$Id: compiler.h,v 1.5 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,11 @@
    the presumed width of unsigned literal numbers. */
 #ifndef INTEGER_WIDTH
 # define INTEGER_WIDTH 32
+#endif
+
+/* The TIME_WIDTH is the width of time variables. */
+#ifndef TIME_WIDTH
+# define TIME_WIDTH 64
 #endif
 
 /*
@@ -63,6 +68,9 @@ extern bool warn_implicit;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.5  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.4  2000/08/20 04:13:56  steve
  *  Add ivl_target support for logic gates, and
  *  make the interface more accessible.

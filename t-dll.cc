@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.16 2000/10/21 16:49:45 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.17 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -407,6 +407,10 @@ void dll_target::signal(const NetNet*net)
 	    obj->type_ = IVL_SIT_SUPPLY1;
 	    break;
 
+	  case NetNet::TIME:
+	    obj->type_ = IVL_SIT_TIME;
+	    break;
+
 	  case NetNet::TRI:
 	    obj->type_ = IVL_SIT_TRI;
 	    break;
@@ -494,6 +498,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.17  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.16  2000/10/21 16:49:45  steve
  *  Reduce the target entry points to the target_design.
  *

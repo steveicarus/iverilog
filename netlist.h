@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.175 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.176 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 /*
@@ -313,7 +313,8 @@ class NetNet  : public NetObj, public LineInfo {
 
     public:
       enum Type { IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1, SUPPLY0,
-		  WAND, TRIAND, TRI0, SUPPLY1, WOR, TRIOR, REG, INTEGER };
+		  WAND, TRIAND, TRI0, SUPPLY1, WOR, TRIOR, REG,
+		  INTEGER, TIME };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -2810,6 +2811,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.176  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.175  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

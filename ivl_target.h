@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.25 2000/10/28 22:32:34 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.26 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -185,6 +185,7 @@ typedef enum ivl_signal_type_e {
       IVL_SIT_REG,
       IVL_SIT_SUPPLY0,
       IVL_SIT_SUPPLY1,
+      IVL_SIT_TIME,
       IVL_SIT_TRI,
       IVL_SIT_TRI0,
       IVL_SIT_TRI1,
@@ -548,6 +549,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.26  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.25  2000/10/28 22:32:34  steve
  *  API for concatenation expressions.
  *

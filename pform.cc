@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.65 2000/10/31 17:00:04 steve Exp $"
+#ident "$Id: pform.cc,v 1.66 2000/10/31 17:49:02 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -916,6 +916,35 @@ void pform_set_reg_integer(list<char*>*names)
       delete names;
 }
 
+static void pform_set_reg_time(const char*nm)
+{
+      string name = scoped_name(nm);
+      PWire*cur = pform_cur_module->get_wire(name);
+      if (cur == 0) {
+	    cur = new PWire(name, NetNet::TIME, NetNet::NOT_A_PORT);
+	    pform_cur_module->add_wire(cur);
+      } else {
+	    bool rc = cur->set_wire_type(NetNet::TIME);
+	    assert(rc);
+      }
+      assert(cur);
+
+      cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, INTEGER_WIDTH)),
+		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
+}
+
+void pform_set_reg_time(list<char*>*names)
+{
+      for (list<char*>::iterator cur = names->begin()
+		 ; cur != names->end()
+		 ; cur ++ ) {
+	    char*txt = *cur;
+	    pform_set_reg_time(txt);
+	    free(txt);
+      }
+      delete names;
+}
+
 svector<PWire*>* pform_make_udp_input_ports(list<char*>*names)
 {
       svector<PWire*>*out = new svector<PWire*>(names->size());
@@ -973,6 +1002,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.66  2000/10/31 17:49:02  steve
+ *  Support time variables.
+ *
  * Revision 1.65  2000/10/31 17:00:04  steve
  *  Remove C++ string from variable lists.
  *
