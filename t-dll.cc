@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.43 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.44 2001/06/07 03:09:37 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -609,7 +609,10 @@ void dll_target::memory(const NetMemory*net)
 void dll_target::lpm_add_sub(const NetAddSub*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->type = IVL_LPM_ADD;
+      if (net->attribute("LPM_Direction") == "SUB")
+	    obj->type = IVL_LPM_SUB;
+      else
+	    obj->type = IVL_LPM_ADD;
       obj->name = strdup(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_.root_, net->scope());
@@ -1063,6 +1066,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.44  2001/06/07 03:09:37  steve
+ *  support subtraction in tgt-vvp.
+ *
  * Revision 1.43  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.29 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.30 2001/06/07 03:09:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -115,6 +115,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  }
 
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_SUB:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 			sprintf(result, "L_%s[%u]",
@@ -609,10 +610,22 @@ static void draw_event_in_scope(ivl_event_t obj)
 static void draw_lpm_add(ivl_lpm_t net)
 {
       unsigned idx, width;
+      const char*type = "";
 
       width = ivl_lpm_width(net);
 
-      fprintf(vvp_out, "L_%s .arith/sum %u", ivl_lpm_name(net), width);
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_ADD:
+	    type = "sum";
+	    break;
+	  case IVL_LPM_SUB:
+	    type = "sub";
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      fprintf(vvp_out, "L_%s .arith/%s %u", ivl_lpm_name(net), type, width);
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t a = ivl_lpm_data(net, idx);
@@ -660,6 +673,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_SUB:
 	    draw_lpm_add(net);
 	    return;
 
@@ -752,6 +766,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.30  2001/06/07 03:09:37  steve
+ *  support subtraction in tgt-vvp.
+ *
  * Revision 1.29  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

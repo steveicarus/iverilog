@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.64 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.65 2001/06/07 03:09:37 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -203,7 +203,8 @@ typedef enum ivl_logic_e {
 typedef enum ivl_lpm_type_e {
       IVL_LPM_ADD,
       IVL_LPM_FF,
-      IVL_LPM_MUX
+      IVL_LPM_MUX,
+      IVL_LPM_SUB
 } ivl_lpm_type_t;
 
 /* Processes are initial or always blocks with a statement. This is
@@ -510,13 +511,13 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
-  /* IVL_LPM_ADD IVL_LPM_FF */
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD */
+  /* IVL_LPM_ADD IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_FF */
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
@@ -872,6 +873,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.65  2001/06/07 03:09:37  steve
+ *  support subtraction in tgt-vvp.
+ *
  * Revision 1.64  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *
