@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.25 1999/04/25 00:44:10 steve Exp $"
+#ident "$Id: netlist.h,v 1.26 1999/04/25 22:52:32 steve Exp $"
 #endif
 
 /*
@@ -986,6 +986,9 @@ class NetESubSignal  : public NetExpr {
       NetESubSignal(NetESignal*sig, NetExpr*ex);
       ~NetESubSignal();
 
+      const string&name() const { return sig_->name(); }
+      const NetExpr*index() const { return idx_.ref(); }
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -1126,6 +1129,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.26  1999/04/25 22:52:32  steve
+ *  Generate SubSignal refrences in vvm.
+ *
  * Revision 1.25  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
  *

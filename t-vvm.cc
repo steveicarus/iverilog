@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.16 1999/04/22 04:56:58 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.17 1999/04/25 22:52:32 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -101,6 +101,7 @@ class vvm_proc_rval  : public expr_scan_t {
 		  result = mangle(mem->name()) + "[" + idx + "]";
 	    }
       virtual void expr_signal(const NetESignal*);
+      virtual void expr_subsignal(const NetESubSignal*sig);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
 };
@@ -140,6 +141,27 @@ void vvm_proc_rval::expr_ident(const NetEIdent*expr)
 void vvm_proc_rval::expr_signal(const NetESignal*expr)
 {
       result = mangle(expr->name()) + "_bits";
+}
+
+void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
+{
+      string idx = make_temp();
+      string val = make_temp();
+      if (const NetEConst*cp = dynamic_cast<const NetEConst*>(sig->index())) {
+	    os_ << setw(indent_) << "" << "const unsigned " << idx <<
+		  " = " << cp->value().as_ulong() << ";" << endl;
+
+      } else {
+	    sig->index()->expr_scan(this);
+	    os_ << setw(indent_) << "" << "const unsigned " <<
+		  idx << " = " << result << ".as_unsigned();" <<
+		  endl;
+      }
+
+      os_ << setw(indent_) << "" << "vvm_bitset_t<1>" << val << ";" << endl;
+      os_ << setw(indent_) << "" << val << "[0] = " <<
+	    mangle(sig->name()) << "_bits[" << idx << "];" << endl;
+      result = val;
 }
 
 void vvm_proc_rval::expr_unary(const NetEUnary*expr)
@@ -901,6 +923,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.17  1999/04/25 22:52:32  steve
+ *  Generate SubSignal refrences in vvm.
+ *
  * Revision 1.16  1999/04/22 04:56:58  steve
  *  Add to vvm proceedural memory references.
  *
