@@ -19,12 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.91 2002/08/07 00:54:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.92 2002/08/07 02:36:10 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
-# include  <StringHeap.h>
+# include  "StringHeap.h"
 
 #if defined(__MINGW32__)
 #include <windows.h>
@@ -617,6 +617,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.92  2002/08/07 02:36:10  steve
+ *  Get local StringHeap.h
+ *
  * Revision 1.91  2002/08/07 00:54:39  steve
  *  Add force to nets.
  *
