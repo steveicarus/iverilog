@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.78 1999/11/21 01:16:51 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.79 1999/11/24 04:38:49 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -891,12 +891,28 @@ void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
       os << "static vvm_compare<" << gate->width() << "> " <<
 	    mangle(gate->name()) << ";" << endl;
 
+      if (gate->pin_ALB().is_linked()) {
+	unsigned pin = gate->pin_ALB().get_pin();
+	string outfun = defn_gate_outputfun_(os,gate,pin);
+	init_code << "      " << mangle(gate->name()) <<
+	  ".config_ALB_out(&" << outfun << ");" << endl;
+	emit_gate_outputfun_(gate,pin);
+      }
+
       if (gate->pin_ALEB().is_linked()) {
 	    unsigned pin = gate->pin_ALEB().get_pin();
 	    string outfun = defn_gate_outputfun_(os, gate, pin);
 	    init_code << "      " << mangle(gate->name()) <<
 		  ".config_ALEB_out(&" << outfun << ");" << endl;
 	    emit_gate_outputfun_(gate, pin);
+      }
+
+      if (gate->pin_AGB().is_linked()) {
+	unsigned pin = gate->pin_AGB().get_pin();
+	string outfun = defn_gate_outputfun_(os,gate,pin);
+	init_code << "      " << mangle(gate->name()) <<
+	  ".config_AGB_out(&" << outfun << ");" << endl;
+	emit_gate_outputfun_(gate,pin);
       }
 
       if (gate->pin_AGEB().is_linked()) {
@@ -1926,6 +1942,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.79  1999/11/24 04:38:49  steve
+ *  LT and GT fixes from Eric Aardoom.
+ *
  * Revision 1.78  1999/11/21 01:16:51  steve
  *  Fix coding errors handling names of logic devices,
  *  and add support for buf device in vvm.

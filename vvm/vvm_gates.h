@@ -19,15 +19,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.26 1999/11/22 00:30:52 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.27 1999/11/24 04:38:49 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  <assert.h>
 
+extern vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_and(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count);
 extern vpip_bit_t compute_or(const vpip_bit_t*inp, unsigned count);
+extern vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count);
+extern vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count);
 
 /*
  * A vvm gate is constructed with an input width and an output
@@ -318,7 +321,7 @@ template <unsigned WIDTH> class vvm_compare {
 		    lt = less_with_cascade(a_[idx], b_[idx], lt);
 	      }
 
-	      if ((gt_ == gt) || (lt_ == lt)) return;
+	      if ((gt_ == gt) && (lt_ == lt)) return;
 	      gt_ = gt;
 	      lt_ = lt;
 	      if (out_lt_) {
@@ -979,6 +982,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.27  1999/11/24 04:38:49  steve
+ *  LT and GT fixes from Eric Aardoom.
+ *
  * Revision 1.26  1999/11/22 00:30:52  steve
  *  Detemplate some and, or and nor methods.
  *
@@ -1008,69 +1014,5 @@ template <unsigned WIDTH> class vvm_pevent {
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of
  *  flip-flops.
- *
- * Revision 1.17  1999/10/31 20:08:24  steve
- *  Include subtraction in LPM_ADD_SUB device.
- *
- * Revision 1.16  1999/10/31 04:11:28  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.15  1999/10/28 00:47:25  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
- *
- * Revision 1.14  1999/10/10 01:59:55  steve
- *  Structural case equals device.
- *
- * Revision 1.13  1999/10/09 19:24:36  steve
- *  NOR device.
- *
- * Revision 1.12  1999/07/17 03:07:27  steve
- *  pevent objects have initial values.
- *
- * Revision 1.11  1999/06/09 00:58:29  steve
- *  Support for binary | (Stephen Tell)
- *
- * Revision 1.10  1999/05/03 01:51:29  steve
- *  Restore support for wait event control.
- *
- * Revision 1.9  1999/05/01 20:43:55  steve
- *  Handle wide events, such as @(a) where a has
- *  many bits in it.
- *
- *  Add to vvm the binary ^ and unary & operators.
- *
- *  Dump events a bit more completely.
- *
- * Revision 1.8  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.7  1999/02/15 05:52:50  steve
- *  Mangle that handles device instance numbers.
- *
- * Revision 1.6  1999/01/31 18:15:55  steve
- *  Missing start methods.
- *
- * Revision 1.5  1999/01/01 01:44:56  steve
- *  Support the start() method.
- *
- * Revision 1.4  1998/12/20 02:05:41  steve
- *  Function to calculate wire initial value.
- *
- * Revision 1.3  1998/12/17 23:54:58  steve
- *  VVM support for small sequential UDP objects.
- *
- * Revision 1.2  1998/11/10 00:48:31  steve
- *  Add support it vvm target for level-sensitive
- *  triggers (i.e. the Verilog wait).
- *  Fix display of $time is format strings.
- *
- * Revision 1.1  1998/11/09 23:44:11  steve
- *  Add vvm library.
- *
  */
 #endif

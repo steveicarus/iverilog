@@ -23,7 +23,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.cc,v 1.1 1999/11/22 00:30:52 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.2 1999/11/24 04:38:49 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -85,9 +85,30 @@ vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count)
       return not(outval);
 }
 
+vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count)
+{
+      vpip_bit_t outval = inp[0];
+      for (unsigned i = 1; i < count; i++)
+	    outval = outval ^ inp[i];
+      return outval;
+}
+
+vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count)
+{
+      return not(compute_and(inp,count));
+}
+
+vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count)
+{
+      return not(compute_xor(inp,count));
+}
+
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.2  1999/11/24 04:38:49  steve
+ *  LT and GT fixes from Eric Aardoom.
+ *
  * Revision 1.1  1999/11/22 00:30:52  steve
  *  Detemplate some and, or and nor methods.
  *
