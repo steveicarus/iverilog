@@ -76,12 +76,17 @@ without white space.
 Now, configure the source to make the makefiles and configuration
 details. Run this command:
 
-	$ ./configure --prefix=/cygdrive/d/iverilog
+	$ ./configure --prefix=d:/iverilog
 
 Substitute your chosen directory for the prefix. This will cause the
 makefiles to build and the source code to configure. The configure
 program will detect that this is a mingw environment and set things up
 to build properly.
+
+(For a prefix, use the drive letter notation, the mingw compiled parts
+require it, and the Cygwin tools should be able to handle it. You may
+need to check or upgrade your Cygwin installation if this causes
+problems for you.)
 
 
 * Compile Icarus Verilog
@@ -108,7 +113,7 @@ window.
 
 When you are ready, install like this:
 
-	$ /usr/bin/make STRIP=/usr/bin/strip.exe install
+	$ /usr/bin/make install
 
 This is part of what the configure program did for you. The Makefiles
 now know to put the files under the D:\iverilog (or whatever directory
