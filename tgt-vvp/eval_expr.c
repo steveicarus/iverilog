@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.97 2003/06/13 19:10:20 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.98 2003/06/14 22:18:54 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1385,9 +1385,18 @@ static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 
 
 	/* Pad the signal value with zeros. */
-      if (swid < res.wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+swid, res.wid-swid);
+      if (swid < res.wid) {
+
+	    if (ivl_expr_signed(exp)) {
+		  for (idx = swid ;  idx < res.wid ;  idx += 1)
+			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
+				res.base+idx, res.base+swid-1);
+
+	    } else {
+		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+			  res.base+swid, res.wid-swid);
+	    }
+      }
 }
 
 static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
@@ -2017,6 +2026,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.98  2003/06/14 22:18:54  steve
+ *  Sign extend signed vectors.
+ *
  * Revision 1.97  2003/06/13 19:10:20  steve
  *  Handle assign of real to vector.
  *
