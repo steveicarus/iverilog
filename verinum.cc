@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.1 1998/11/03 23:29:07 steve Exp $"
+#ident "$Id: verinum.cc,v 1.2 1998/11/07 17:04:48 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -166,6 +166,10 @@ ostream& operator<< (ostream&o, const verinum&v)
 {
       o << v.len() << "'b";
 
+      if (v.len() == 0) {
+	    o << "0";
+	    return o;
+      }
 
       verinum::V trim_left = v.get(v.len()-1);
       unsigned idx;
@@ -212,6 +216,9 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.2  1998/11/07 17:04:48  steve
+ *  Properly dump 0 length numbers.
+ *
  * Revision 1.1  1998/11/03 23:29:07  steve
  *  Introduce verilog to CVS.
  *
