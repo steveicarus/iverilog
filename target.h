@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.70 2005/02/03 04:56:21 steve Exp $"
+#ident "$Id: target.h,v 1.71 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -88,6 +88,7 @@ struct target_t {
 
       virtual bool concat(const NetConcat*);
       virtual bool part_select(const NetPartSelect*);
+      virtual bool replicate(const NetReplicate*);
 
 	/* Output a gate (called for each gate) */
       virtual void logic(const NetLogic*);
@@ -171,6 +172,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.71  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.70  2005/02/03 04:56:21  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

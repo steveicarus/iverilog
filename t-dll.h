@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.119 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: t-dll.h,v 1.120 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -85,6 +85,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_ram_dq(const NetRamDq*);
       bool concat(const NetConcat*);
       bool part_select(const NetPartSelect*);
+      bool replicate(const NetReplicate*);
       void net_assign(const NetAssign_*);
       bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);
@@ -355,10 +356,17 @@ struct ivl_lpm_s {
 		  ivl_nexus_t q, a;
 	    } part;
 
+	      // IVL_LPM_RE_* and IVL_LPM_REPEAT use this.
 	    struct ivl_lpm_reduce_s {
 		  unsigned width;
 		  ivl_nexus_t q,  a;
 	    } reduce;
+
+	    struct ivl_lpm_repeat_s {
+		  unsigned width;
+		  unsigned count;
+		  ivl_nexus_t q, a;
+	    } repeat;
 
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
@@ -686,6 +694,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.120  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.119  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

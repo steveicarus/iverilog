@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.316 2005/01/30 01:42:05 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.317 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -471,6 +471,26 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    if (count == 1) {
 		    /* Handle the case where there is one gate that
 		       carries the whole vector width. */
+
+		  if (instance_width != sig->vector_width()) {
+
+			assert(sig->vector_width() == 1);
+			NetReplicate*rep
+			      = new NetReplicate(scope,
+						 scope->local_symbol(),
+						 instance_width,
+						 instance_width);
+			rep->set_line(*this);
+			des->add_node(rep);
+			connect(rep->pin(1), sig->pin(0));
+
+			sig = new NetNet(scope, scope->local_symbol(),
+					 NetNet::WIRE, instance_width);
+			sig->local_flag(true);
+			sig->set_line(*this);
+			connect(rep->pin(0), sig->pin(0));
+		  }
+
 		  connect(cur[0]->pin(idx), sig->pin(0));
 
 	    } else if (sig->vector_width() == 1) {
@@ -2885,6 +2905,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.317  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.316  2005/01/30 01:42:05  steve
  *  Debug messages for PGAssign elaboration.
  *

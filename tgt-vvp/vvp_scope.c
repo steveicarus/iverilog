@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.114 2005/02/04 05:13:57 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.115 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -124,6 +124,17 @@ const char *vvp_mangle_name(const char *id)
 
       strcpy(out+iout, inp);
       return out;
+}
+
+static void draw_C4_repeated_constant(char bit_char, unsigned width)
+{
+      unsigned idx;
+
+      fprintf(vvp_out, "C4<");
+      for (idx = 0 ;  idx < width ;  idx += 1)
+	    fprintf(vvp_out, "%c", bit_char);
+
+      fprintf(vvp_out, ">");
 }
 
 /*
@@ -453,6 +464,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_UFUNC:
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV: /* NOTE: This is only a partial driver. */
+	  case IVL_LPM_REPEAT:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
 		  sprintf(result, "L_%p", lpm);
 		  return result;
@@ -601,8 +613,10 @@ const char* draw_net_input(ivl_nexus_t nex)
 				      draw_net_input_drive(nex, drivers[idx]));
 			}
 		  }
-		  for ( ;  idx < inst+4 ;  idx += 1)
-			fprintf(vvp_out, ", C4<z>");
+		  for ( ;  idx < inst+4 ;  idx += 1) {
+			fprintf(vvp_out, ", ");
+			draw_C4_repeated_constant('z',width_of_nexus(nex));
+		  }
 
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -1689,6 +1703,14 @@ static void draw_lpm_re(ivl_lpm_t net, const char*type)
       fprintf(vvp_out, ";\n");
 }
 
+static void draw_lpm_repeat(ivl_lpm_t net)
+{
+      fprintf(vvp_out, "L_%p .repeat %u, %u, ", net,
+	      ivl_lpm_width(net), ivl_lpm_size(net));
+      draw_input_from_net(ivl_lpm_data(net,0));
+      fprintf(vvp_out, ";\n");
+}
+
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
@@ -1750,6 +1772,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    return;
 	  case IVL_LPM_RE_XNOR:
 	    draw_lpm_re(net, "xnor");
+	    return;
+
+	  case IVL_LPM_REPEAT:
+	    draw_lpm_repeat(net);
 	    return;
 
 	  case IVL_LPM_SHIFTL:
@@ -1884,6 +1910,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.115  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.114  2005/02/04 05:13:57  steve
  *  Support .concat with arbitrary input counts.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.138 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.139 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -244,6 +244,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_RE_OR  = 23,
       IVL_LPM_RE_XNOR= 24,
       IVL_LPM_RE_XOR = 25,
+      IVL_LPM_REPEAT = 26,
       IVL_LPM_SHIFTL =  6,
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SUB    =  8,
@@ -810,6 +811,13 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * These devices have one input, a vector, and generate a single bit
  * result. The width from the ivl_lpm_width is the width of the input
  * vector.
+ *
+ * - Repeat Node (IVL_LPM_REPEAT)
+ * This node takes as input a single vector, and outputs a single
+ * vector. The ivl_lpm_width if this node is the width of the *output*
+ * vector. The ivl_lpm_size() returns the number of times the input is
+ * repeated to get the desired width. The ivl core assures that the
+ * input vector is exactly ivl_lpm_width() / ivl_lpm_size() bits.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -850,7 +858,7 @@ extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_CONCAT IVL_LPM_MUX */
+  /* IVL_LPM_CONCAT IVL_LPM_MUX IVL_LPM_REPEAT */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
@@ -1481,6 +1489,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.139  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.138  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.138 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.139 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1950,6 +1950,37 @@ bool dll_target::part_select(const NetPartSelect*net)
       return true;
 }
 
+bool dll_target::replicate(const NetReplicate*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_REPEAT;
+      obj->name = net->name();
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.repeat.width = net->width();
+      obj->u_.repeat.count = net->repeat();
+
+      ivl_drive_t dr = IVL_DR_STRONG;
+      const Nexus*nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.repeat.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.repeat.q, obj, 0, dr, dr);
+
+      dr = IVL_DR_HiZ;
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.repeat.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.repeat.a, obj, 0, dr, dr);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 /*
  * The assignment l-values are captured by the assignment statements
  * themselves in the process handling.
@@ -2226,6 +2257,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.139  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.138  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.82 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: emit.cc,v 1.83 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -124,6 +124,11 @@ bool NetRamDq::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_ram_dq(this);
       return true;
+}
+
+bool NetReplicate::emit_node(struct target_t*tgt) const
+{
+      return tgt->replicate(this);
 }
 
 bool NetUReduce::emit_node(struct target_t*tgt) const
@@ -518,6 +523,9 @@ int emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.83  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.82  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

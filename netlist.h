@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.332 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: netlist.h,v 1.333 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 /*
@@ -938,6 +938,36 @@ class NetRamDq  : public NetNode {
       NetRamDq*next_;
       unsigned awidth_;
 
+};
+
+/*
+ * The NetReplicate node takes a vector input and makes it into a larger
+ * vector by repeating the input vector some number of times. The
+ * repeat count is a fixed value. This is just like the repeat
+ * concatenation of Verilog: {<repeat>{<vector>}}.
+ *
+ * When construction this node, the wid is the vector width of the
+ * output, and the rpt is the repeat count. The wid must be an even
+ * multiple of the cnt, and wid/cnt is the expected input width.
+ *
+ * The device has exacly 2 pins: pin(0) is the output and pin(1) the
+ * input.
+ */
+class NetReplicate  : public NetNode {
+
+    public:
+      NetReplicate(NetScope*scope, perm_string n, unsigned wid, unsigned rpt);
+      ~NetReplicate();
+
+      unsigned width() const;
+      unsigned repeat() const;
+
+      void dump_node(ostream&, unsigned ind) const;
+      bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
+      unsigned repeat_;
 };
 
 /*
@@ -3396,6 +3426,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.333  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.332  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

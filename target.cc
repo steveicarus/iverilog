@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.73 2005/02/03 04:56:21 steve Exp $"
+#ident "$Id: target.cc,v 1.74 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -157,6 +157,13 @@ bool target_t::part_select(const NetPartSelect*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetPartSelect." << endl;
+      return false;
+}
+
+bool target_t::replicate(const NetReplicate*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetReplicate." << endl;
       return false;
 }
 
@@ -422,6 +429,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.74  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.73  2005/02/03 04:56:21  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

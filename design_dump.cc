@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.155 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.156 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -366,10 +366,20 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
+
 void NetRamDq::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_RAM_DQ (" << mem_->name() << "): "
 	<< name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetReplicate::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NetReplicate: "
+	<< name() << " wid=" << width_ << ", repeat_=" << repeat_
+	<< ", input wid=" << width_/repeat_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1129,6 +1139,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.156  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.155  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

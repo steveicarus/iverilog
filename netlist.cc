@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.235 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: netlist.cc,v 1.236 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -557,6 +557,30 @@ NetConcat::~NetConcat()
 unsigned NetConcat::width() const
 {
       return width_;
+}
+
+NetReplicate::NetReplicate(NetScope*scope, perm_string n,
+			   unsigned wid, unsigned rpt)
+: NetNode(scope, n, 2), width_(wid), repeat_(rpt)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("I"), 0);
+}
+
+NetReplicate::~NetReplicate()
+{
+}
+
+unsigned NetReplicate::width() const
+{
+      return width_;
+}
+
+unsigned NetReplicate::repeat() const
+{
+      return repeat_;
 }
 
 /*
@@ -2269,6 +2293,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.236  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.235  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

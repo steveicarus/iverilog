@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.106 2005/02/03 04:56:21 steve Exp $"
+#ident "$Id: stub.c,v 1.107 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -422,6 +422,36 @@ static void show_lpm_re(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_repeat(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned count = ivl_lpm_size(net);
+      ivl_nexus_t nex_q = ivl_lpm_q(net,0);
+      ivl_nexus_t nex_a = ivl_lpm_data(net,0);
+
+      fprintf(out, "  LPM_REPEAT %s: <width=%u, count=%u>\n",
+	      ivl_lpm_basename(net), width, count);
+
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex_q));
+      fprintf(out, "    D: %s\n", ivl_nexus_name(nex_a));
+
+      if (width != width_of_nexus(nex_q)) {
+	    fprintf(out, "    ERROR: Width of Q is %u, expecting %u\n",
+		    width_of_nexus(nex_q), width);
+	    stub_errors += 1;
+      }
+
+      if (count == 0 || count > width || (width%count != 0)) {
+	    fprintf(out, "    ERROR: Repeat count not reasonable\n");
+	    stub_errors += 1;
+
+      } else if (width/count != width_of_nexus(nex_a)) {
+	    fprintf(out, "    ERROR: Windth of D is %u, expecting %u\n",
+		    width_of_nexus(nex_a), width/count);
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_sub(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -597,6 +627,10 @@ static void show_lpm(ivl_lpm_t net)
 		fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
 		break;
 	  }
+
+	  case IVL_LPM_REPEAT:
+	    show_lpm_repeat(net);
+	    break;
 
 	  default:
 	    fprintf(out, "  LPM(%d) %s: <width=%u, signed=%d>\n",
@@ -1058,6 +1092,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.107  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.106  2005/02/03 04:56:21  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *

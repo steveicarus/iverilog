@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.116 2005/02/03 04:56:20 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.117 2005/02/08 00:12:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -786,6 +786,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.part.a;
 
+	  case IVL_LPM_REPEAT:
+	    assert(idx == 0);
+	    return net->u_.repeat.a;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -947,6 +951,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.part.q;
 
+	  case IVL_LPM_REPEAT:
+	    assert(idx == 0);
+	    return net->u_.repeat.q;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -1041,6 +1049,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
 	    return net->u_.part.signed_flag;
+	  case IVL_LPM_REPEAT:
+	    return 0;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1054,6 +1064,8 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 	    return net->u_.mux.size;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.ports - 1;
+	  case IVL_LPM_REPEAT:
+	    return net->u_.repeat.count;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1102,6 +1114,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
 	    return net->u_.part.width;
+	  case IVL_LPM_REPEAT:
+	    return net->u_.repeat.width;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1984,6 +1998,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.117  2005/02/08 00:12:36  steve
+ *  Add the NetRepeat node, and code generator support.
+ *
  * Revision 1.116  2005/02/03 04:56:20  steve
  *  laborate reduction gates into LPM_RED_ nodes.
  *
