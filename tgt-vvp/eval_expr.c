@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.82 2002/10/20 02:55:37 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.83 2002/11/06 05:41:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -28,6 +28,8 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
+				int ok_flags);
 
 int number_is_unknown(ivl_expr_t ex)
 {
@@ -990,22 +992,26 @@ static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 		  avec.base = allocate_vector_exp(arg, awid);
 		  avec.wid = awid;
 
-		    /* If it's not in the lookaside map, then
-		       evaluate the expression here. */
-		  if (avec.base == 0) {
-			  /* Evaluate this sub expression. */
-			avec = draw_eval_expr_wid(arg, awid, 0);
-		  }
-
 		  trans = awid;
 		  if ((off + awid) > wid)
 			trans = wid - off;
 
-		  assert(awid == avec.wid);
+		  if (avec.base != 0) {
+			assert(awid == avec.wid);
 
-		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base+off,
-			  avec.base, trans);
-		  clr_vector(avec);
+			fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+				res.base+off,
+				avec.base, trans);
+			clr_vector(avec);
+
+		  } else {
+			struct vector_info dest;
+
+			dest.base = res.base+off;
+			dest.wid  = trans;
+			draw_eval_expr_dest(arg, dest, 0);
+		  }
+
 
 		  idx -= 1;
 		  off += trans;
@@ -1171,36 +1177,41 @@ static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
  * offsetting the read from the lsi (least significant index) of the
  * signal.
  */
-static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
+static void draw_signal_dest(ivl_expr_t exp, struct vector_info res)
 {
       unsigned idx;
       unsigned lsi = ivl_expr_lsi(exp);
       unsigned swid = ivl_expr_width(exp);
       ivl_signal_t sig = ivl_expr_signal(exp);
-      struct vector_info res;
 
-      if (swid > wid)
-	    swid = wid;
-
-      res.base = allocate_vector_exp(exp, wid);
-      res.wid = wid;
-      if (res.base != 0)
-	    return res;
-
-      if (res.base == 0) {
-	    res.base = allocate_vector(wid);
-	    res.wid  = wid;
-	    save_expression_lookaside(res.base, exp, wid);
-      }
+      if (swid > res.wid)
+	    swid = res.wid;
 
       for (idx = 0 ;  idx < swid ;  idx += 1)
 	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
 		    res.base+idx, vvp_signal_label(sig), idx+lsi);
 
 	/* Pad the signal value with zeros. */
-      if (swid < wid)
+      if (swid < res.wid)
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    res.base+swid, wid-swid);
+		    res.base+swid, res.wid-swid);
+}
+
+static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+
+	/* Already in the vector lookaside? */
+      res.base = allocate_vector_exp(exp, wid);
+      res.wid = wid;
+      if (res.base != 0)
+	    return res;
+
+      res.base = allocate_vector(wid);
+      res.wid  = wid;
+      save_expression_lookaside(res.base, exp, wid);
+
+      draw_signal_dest(exp, res);
       return res;
 }
 
@@ -1794,6 +1805,41 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+/*
+ * Sometimes we know ahead of time where we want the expression value
+ * to go. In that case, call this function. It will check to see if
+ * the expression can be preplaced, and if so it will evaluate it in
+ * place.
+ */
+static void draw_eval_expr_dest(ivl_expr_t exp, struct vector_info dest,
+				int stuff_ok_flag)
+{
+      struct vector_info tmp;
+
+      switch (ivl_expr_type(exp)) {
+
+	  case IVL_EX_SIGNAL:
+	    draw_signal_dest(exp, dest);
+	    return;
+
+	  default:
+	    break;
+      }
+
+	/* Fallback, is to draw the expression by width, and mov it to
+	   the required dest. */
+      tmp = draw_eval_expr_wid(exp, dest.wid, stuff_ok_flag);
+      assert(tmp.wid == dest.wid);
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+	      dest.base, tmp.base, dest.wid);
+
+      if (tmp.base >= 8)
+	    save_expression_lookaside(tmp.base, exp, tmp.wid);
+
+      clr_vector(tmp);
+}
+
 struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 				      int stuff_ok_flag)
 {
@@ -1868,6 +1914,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.83  2002/11/06 05:41:37  steve
+ *  Concatenation can evaluate sub-expressions in place.
+ *
  * Revision 1.82  2002/10/20 02:55:37  steve
  *  Properly set or clear expression lookaside for binary expressions.
  *
