@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.319 2005/02/19 02:43:38 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.320 2005/03/05 05:38:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1789,8 +1789,12 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
 
-	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx]);
 	    NetAssign_*lv = new NetAssign_(port);
+	    unsigned wid = count_lval_width(lv);
+
+	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx]);
+	    rv->set_width(wid);
+	    rv = pad_to_width(rv, wid);
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
       }
@@ -2938,6 +2942,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.320  2005/03/05 05:38:33  steve
+ *  Get rval width right for arguments into task calls.
+ *
  * Revision 1.319  2005/02/19 02:43:38  steve
  *  Support shifts and divide.
  *
