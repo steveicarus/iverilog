@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.33 2001/10/12 03:00:09 steve Exp $"
+#ident "$Id: functor.h,v 1.34 2001/10/27 03:43:56 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -260,7 +260,7 @@ extern unsigned functor_get(vvp_ipoint_t ptr);
  * the inputs it is connected to, creating new propagation event on
  * the way.
  */
-extern void functor_propagate(vvp_ipoint_t ptr);
+extern void functor_propagate(vvp_ipoint_t ptr, bool push = true);
 /*
  * Given an ipoint_t pointer, return a C pointer to the functor. This
  * is like a pointer dereference. The point parameter must have been
@@ -320,6 +320,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.34  2001/10/27 03:43:56  steve
+ *  Propagate functor push, to make assign better.
+ *
  * Revision 1.33  2001/10/12 03:00:09  steve
  *  M42 implementation of mode 2 (Stephan Boettcher)
  *

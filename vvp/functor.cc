@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.27 2001/10/12 03:00:09 steve Exp $"
+#ident "$Id: functor.cc,v 1.28 2001/10/27 03:43:56 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -314,7 +314,7 @@ unsigned vvp_fobj_s::get(vvp_ipoint_t, functor_t fp)
  * be propagated. Pass the output to the inputs of all the connected
  * functors.
  */
-void functor_propagate(vvp_ipoint_t ptr)
+void functor_propagate(vvp_ipoint_t ptr, bool push)
 {
       functor_t fp = functor_index(ptr);
       unsigned char oval = fp->oval;
@@ -325,7 +325,7 @@ void functor_propagate(vvp_ipoint_t ptr)
 	    functor_t idxp = functor_index(idx);
 	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
 
-	    functor_set(idx, oval, ostr, false);
+	    functor_set(idx, oval, ostr, push);
 	    idx = next;
       }
 }
@@ -356,6 +356,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.28  2001/10/27 03:43:56  steve
+ *  Propagate functor push, to make assign better.
+ *
  * Revision 1.27  2001/10/12 03:00:09  steve
  *  M42 implementation of mode 2 (Stephan Boettcher)
  *
