@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.7 2004/02/18 17:11:57 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.8 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -62,9 +62,9 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 	    connect(res->pin(idx), add->pin_Result(idx));
 
       if (val < 0)
-	    add->attribute("LPM_Direction", verinum("SUB"));
+	    add->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
       else
-	    add->attribute("LPM_Direction", verinum("ADD"));
+	    add->attribute(perm_string::literal("LPM_Direction"), verinum("ADD"));
 
       des->add_node(add);
       des->add_node(val_c);
@@ -90,6 +90,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.8  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.7  2004/02/18 17:11:57  steve
  *  Use perm_strings for named langiage items.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_attrib.cc,v 1.6 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: eval_attrib.cc,v 1.7 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -33,7 +33,7 @@
  * for passing to netlist devices.
  */
 
-attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
+attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 				   unsigned&natt,
 				   const Design*des,
 				   const NetScope*scope)
@@ -46,7 +46,7 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 
       unsigned idx = 0;
 
-      typedef map<string,PExpr*>::const_iterator iter_t;
+      typedef map<perm_string,PExpr*>::const_iterator iter_t;
       for (iter_t cur = att.begin() ;  cur != att.end() ;  cur ++, idx++) {
 	    table[idx].key = (*cur).first;
 	    PExpr*exp = (*cur).second;
@@ -74,6 +74,9 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 
 /*
  * $Log: eval_attrib.cc,v $
+ * Revision 1.7  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.6  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

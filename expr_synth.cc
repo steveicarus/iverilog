@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.54 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.55 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,10 +69,10 @@ NetNet* NetEBAdd::synthesize(Design*des)
 
       switch (op()) {
 	  case '+':
-	    adder->attribute("LPM_Direction", verinum("ADD"));
+	    adder->attribute(perm_string::literal("LPM_Direction"), verinum("ADD"));
 	    break;
 	  case '-':
-	    adder->attribute("LPM_Direction", verinum("SUB"));
+	    adder->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
 	    break;
       }
 
@@ -828,6 +828,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.55  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.54  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

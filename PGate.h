@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.26 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: PGate.h,v 1.27 2004/02/20 18:53:33 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -80,7 +80,7 @@ class PGate : public LineInfo {
       void strength0(strength_t);
       void strength1(strength_t);
 
-      map<string,PExpr*> attributes;
+      map<perm_string,PExpr*> attributes;
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*des, NetScope*scope) const;
@@ -227,6 +227,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.27  2004/02/20 18:53:33  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.26  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

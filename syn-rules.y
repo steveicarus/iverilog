@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.28 2003/12/20 00:59:31 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.29 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -127,9 +127,9 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
       connect(ff->pin_Clock(), pclk->pin(0));
       if (ce) connect(ff->pin_Enable(), ce->pin(0));
 
-      ff->attribute("LPM_FFType", verinum("DFF"));
+      ff->attribute(perm_string::literal("LPM_FFType"), verinum("DFF"));
       if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute("Clock:LPM_Polarity", verinum("INVERT"));
+	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
 
 }
 
@@ -406,7 +406,7 @@ struct syn_rules_f  : public functor_t {
       {
 	      /* If the scope that contains this process as a cell
 		 attribute attached to it, then skip synthesis. */
-	    if (top->scope()->attribute("ivl_synthesis_cell").len() > 0)
+	    if (top->scope()->attribute(perm_string::literal("ivl_synthesis_cell")).len() > 0)
 		  return;
 
 	    syn_start_process(top);

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.16 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: PWire.h,v 1.17 2004/02/20 18:53:33 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -69,7 +69,7 @@ class PWire : public LineInfo {
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
-      map<string,PExpr*> attributes;
+      map<perm_string,PExpr*> attributes;
 
 	// Write myself to the specified stream.
       void dump(ostream&out) const;
@@ -100,6 +100,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.17  2004/02/20 18:53:33  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.16  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.35 2004/02/18 17:11:58 steve Exp $"
+#ident "$Id: synth2.cc,v 1.36 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -839,7 +839,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       connect(ff->pin_Clock(), pclk->pin(0));
       if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute("Clock:LPM_Polarity", verinum("INVERT"));
+	    ff->attribute(perm_string::literal("Clock:LPM_Polarity"), verinum("INVERT"));
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, ff,
@@ -858,7 +858,7 @@ bool NetProcTop::synth_sync(Design*des)
       NetFF*ff = new NetFF(scope(), scope()->local_symbol(),
 			   nex_set.count());
       des->add_node(ff);
-      ff->attribute("LPM_FFType", verinum("DFF"));
+      ff->attribute(perm_string::literal("LPM_FFType"), verinum("DFF"));
 
 	/* The D inputs to the DFF device will receive the output from
 	   the statements of the process. */
@@ -906,12 +906,12 @@ class synth2_f  : public functor_t {
  */
 void synth2_f::process(class Design*des, class NetProcTop*top)
 {
-      if (top->attribute("ivl_synthesis_off").as_ulong() != 0)
+      if (top->attribute(perm_string::literal("ivl_synthesis_off")).as_ulong() != 0)
 	    return;
 
 	/* If the scope that contains this process as a cell attribute
 	   attached to it, then skip synthesis. */
-      if (top->scope()->attribute("ivl_synthesis_cell").len() > 0)
+      if (top->scope()->attribute(perm_string::literal("ivl_synthesis_cell")).len() > 0)
 	    return;
 
       if (top->is_synchronous()) do {
@@ -928,7 +928,7 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 
       if (! top->is_asynchronous()) {
 	    bool synth_error_flag = false;
-	    if (top->attribute("ivl_combinational").as_ulong() != 0) {
+	    if (top->attribute(perm_string::literal("ivl_combinational")).as_ulong() != 0) {
 		  cerr << top->get_line() << ": error: "
 		       << "Process is marked combinational,"
 		       << " but isn't really." << endl;
@@ -936,7 +936,7 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 		  synth_error_flag = true;
 	    }
 
-	    if (top->attribute("ivl_synthesis_on").as_ulong() != 0) {
+	    if (top->attribute(perm_string::literal("ivl_synthesis_on")).as_ulong() != 0) {
 		  cerr << top->get_line() << ": error: "
 		       << "Process is marked for synthesis,"
 		       << " but I can't do it." << endl;
@@ -970,6 +970,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.36  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.35  2004/02/18 17:11:58  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.122 2004/02/20 06:22:58 steve Exp $"
+#ident "$Id: pform.cc,v 1.123 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -208,7 +208,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       if (attr) {
 	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		      named_pexpr_t*tmp = (*attr)[idx];
-		      pform_cur_module->attributes[string(tmp->name)] = tmp->parm;
+		      pform_cur_module->attributes[tmp->name] = tmp->parm;
 	      }
       }
 }
@@ -697,7 +697,7 @@ void pform_makegate(PGBuiltin::Type type,
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		  named_pexpr_t*tmp = (*attr)[idx];
-		  cur->attributes[string(tmp->name)] = tmp->parm;
+		  cur->attributes[tmp->name] = tmp->parm;
 	    }
       }
 
@@ -975,7 +975,7 @@ void pform_module_define_port(const struct vlltype&li,
       if (attr) {
 	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		      named_pexpr_t*tmp = (*attr)[idx];
-		      cur->attributes[string(tmp->name)] = tmp->parm;
+		      cur->attributes[tmp->name] = tmp->parm;
 	      }
       }
       pform_cur_module->add_wire(cur);
@@ -1035,7 +1035,7 @@ void pform_makewire(const vlltype&li, const char*nm,
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		  named_pexpr_t*tmp = (*attr)[idx];
-		  cur->attributes[string(tmp->name)] = tmp->parm;
+		  cur->attributes[tmp->name] = tmp->parm;
 	    }
       }
 
@@ -1259,7 +1259,7 @@ void pform_set_function(const char*name, NetNet::Type ntype,
       pform_cur_module->add_function(lex_strings.make(name), func);
 }
 
-void pform_set_attrib(perm_string name, const string&key, char*value)
+void pform_set_attrib(perm_string name, perm_string key, char*value)
 {
       hname_t path (name);
 
@@ -1469,7 +1469,7 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
       if (attr) {
 	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
 		  named_pexpr_t*tmp = (*attr)[idx];
-		  pp->attributes[string(tmp->name)] = tmp->parm;
+		  pp->attributes[tmp->name] = tmp->parm;
 	    }
 	    delete attr;
       }
@@ -1519,6 +1519,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.123  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.122  2004/02/20 06:22:58  steve
  *  parameter keys are per_strings.
  *

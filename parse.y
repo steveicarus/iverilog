@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.191 2004/02/20 06:22:57 steve Exp $"
+#ident "$Id: parse.y,v 1.192 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1724,7 +1724,8 @@ module_item
 
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
 		{ perm_string tmp3 = lex_strings.make($3);
-		  pform_set_attrib(tmp3, $5, $7);
+		  perm_string tmp5 = lex_strings.make($5);
+		  pform_set_attrib(tmp3, tmp5, $7);
 		  delete $3;
 		  delete $5;
 		}

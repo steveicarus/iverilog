@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.296 2004/02/18 17:11:55 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.297 2004/02/20 18:53:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2516,7 +2516,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		  if (! anyedge_test)
 			break;
 
-		  top->attribute("_ivl_schedule_push", verinum(1));
+		  top->attribute(perm_string::literal("_ivl_schedule_push"),
+				 verinum(1));
 	    } while (0);
 
       }
@@ -2626,6 +2627,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.297  2004/02/20 18:53:34  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.296  2004/02/18 17:11:55  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.28 2004/02/18 17:11:58 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.29 2004/02/20 18:53:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,7 +40,7 @@ class xnfio_f  : public functor_t {
 
 static bool is_a_pad(const NetNet*net)
 {
-      if (net->attribute("PAD") == verinum())
+      if (net->attribute(perm_string::literal("PAD")) == verinum())
 	    return false;
 
       return true;
@@ -89,7 +89,8 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", verinum("OBUF:O,I"));
+		  tmp->attribute(perm_string::literal("XNF-LCA"),
+				 verinum("OBUF:O,I"));
 		  return tmp;
 	    }
 
@@ -102,7 +103,8 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", verinum("OBUF:O,~I"));
+		  tmp->attribute(perm_string::literal("XNF-LCA"),
+				 verinum("OBUF:O,~I"));
 		  return tmp;
 	    }
 
@@ -114,7 +116,8 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", verinum("OBUFT:O,I,~T"));
+		  tmp->attribute(perm_string::literal("XNF-LCA"),
+				 verinum("OBUFT:O,I,~T"));
 		  return tmp;
 	    }
 
@@ -122,7 +125,8 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", verinum("OBUFT:O,I,T"));
+		  tmp->attribute(perm_string::literal("XNF-LCA"),
+				 verinum("OBUFT:O,I,T"));
 		  return tmp;
 	    }
       }
@@ -133,7 +137,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 				  2, NetLogic::BUF);
       des->add_node(buf);
 
-      buf->attribute("XNF-LCA", verinum("OBUF:O,I"));
+      buf->attribute(perm_string::literal("XNF-LCA"), verinum("OBUF:O,I"));
 
 	// Put the buffer between this signal and the rest of the
 	// netlist.
@@ -175,7 +179,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
 	    return;
       if (ff->width() != 1)
 	    return;
-      if (ff->attribute("LPM_FFType") != verinum("DFF"))
+      if (ff->attribute(perm_string::literal("LPM_FFType")) != verinum("DFF"))
 	    return;
 
 	/* Connect the flip-flop output to the buffer output and
@@ -189,7 +193,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
       for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
 	    names[idx] = "";
 
-      if (ff->attribute("Clock:LPM_Polarity") == verinum("INVERT"))
+      if (ff->attribute(perm_string::literal("Clock:LPM_Polarity")) == verinum("INVERT"))
 	    names[ff->pin_Clock().get_pin()] = "~C";
       else
 	    names[ff->pin_Clock().get_pin()] = "C";
@@ -202,7 +206,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
 	    lname = lname + "," + names[idx];
       delete[]names;
 
-      ff->attribute("XNF-LCA", lname);
+      ff->attribute(perm_string::literal("XNF-LCA"), lname);
 }
 
 static void make_ibuf(Design*des, NetNet*net)
@@ -224,7 +228,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
 		  continue;
 
-	    if (tmp->attribute("XNF-LCA") != verinum())
+	    if (tmp->attribute(perm_string::literal("XNF-LCA")) != verinum())
 		  continue;
 
 	      // Found a BUF, it is only usable if the only input is
@@ -232,7 +236,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	    if ((tmp->type() == NetLogic::BUF) &&
 		(count_inputs(tmp->pin(1)) == 1) &&
 		(count_outputs(tmp->pin(1)) == 0)) {
-		  tmp->attribute("XNF-LCA", verinum("IBUF:O,I"));
+		  tmp->attribute(perm_string::literal("XNF-LCA"), verinum("IBUF:O,I"));
 		  return;
 	    }
 
@@ -243,7 +247,7 @@ static void make_ibuf(Design*des, NetNet*net)
 				  2, NetLogic::BUF);
       des->add_node(buf);
 
-      buf->attribute("XNF-LCA", verinum("IBUF:O,I"));
+      buf->attribute(perm_string::literal("XNF-LCA"), verinum("IBUF:O,I"));
 
 	// Put the buffer between this signal and the rest of the
 	// netlist.
@@ -268,7 +272,7 @@ void xnfio_f::signal(Design*des, NetNet*net)
 	    return;
 
       assert(net->pin_count() == 1);
-      string pattr = net->attribute("PAD").as_string();
+      string pattr = net->attribute(perm_string::literal("PAD")).as_string();
 
       switch (pattr[0]) {
 	  case 'i':
@@ -361,6 +365,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.29  2004/02/20 18:53:36  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.28  2004/02/18 17:11:58  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.124 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.125 2004/02/20 18:53:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -246,10 +246,10 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
       switch (op_) {
 	  case '+':
-	    gate->attribute("LPM_Direction", verinum("ADD"));
+	    gate->attribute(perm_string::literal("LPM_Direction"), verinum("ADD"));
 	    break;
 	  case '-':
-	    gate->attribute("LPM_Direction", verinum("SUB"));
+	    gate->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
 	    break;
       }
 
@@ -2386,7 +2386,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		default:
 		  NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(),
 						sig->pin_count());
-		  sub->attribute("LPM_Direction", verinum("SUB"));
+		  sub->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
 
 		  des->add_node(sub);
 
@@ -2426,6 +2426,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.125  2004/02/20 18:53:34  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.124  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

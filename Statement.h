@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.39 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: Statement.h,v 1.40 2004/02/20 18:53:33 steve Exp $"
 #endif
 
 # include  <string>
 # include  "svector.h"
+# include  "StringHeap.h"
 # include  "PDelays.h"
 # include  "PExpr.h"
 # include  "HName.h"
@@ -56,7 +57,7 @@ class PProcess : public LineInfo {
       Type type() const { return type_; }
       Statement*statement() { return statement_; }
 
-      map<string,PExpr*> attributes;
+      map<perm_string,PExpr*> attributes;
 
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -455,6 +456,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.40  2004/02/20 18:53:33  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.39  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

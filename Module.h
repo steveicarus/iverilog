@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.34 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: Module.h,v 1.35 2004/02/20 18:53:33 steve Exp $"
 #endif
 
 # include  <list>
@@ -110,7 +110,7 @@ class Module : public LineInfo {
 	/* Keep a table of datum variables declared in the module. */
       map<hname_t,PData*>datum;
 
-      map<string,PExpr*> attributes;
+      map<perm_string,PExpr*> attributes;
 
 	/* These are the timescale for this module. The default is
 	   set by the `timescale directive. */
@@ -166,6 +166,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.35  2004/02/20 18:53:33  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.34  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

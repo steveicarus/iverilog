@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.46 2003/11/08 17:53:34 steve Exp $"
+#ident "$Id: cprop.cc,v 1.47 2004/02/20 18:53:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -56,7 +56,7 @@ void cprop_functor::signal(Design*des, NetNet*obj)
 void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 {
 	// For now, only additions are handled.
-      if (obj->attribute("LPM_Direction") != verinum("ADD"))
+      if (obj->attribute(perm_string::literal("LPM_Direction")) != verinum("ADD"))
 	    return;
 
 	// If the low bit on the A side is 0, then eliminate it from
@@ -1038,6 +1038,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.47  2004/02/20 18:53:34  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.46  2003/11/08 17:53:34  steve
  *  Do not remove constants accessible to VPI.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.128 2004/02/20 06:22:58 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.129 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -162,7 +162,7 @@ ivl_attribute_s* dll_target::fill_in_attributes(const Attrib*net)
 
       for (unsigned idx = 0 ;  idx < nattr ;  idx += 1) {
 	    verinum tmp = net->attr_value(idx);
-	    attr[idx].key = strings_.add(net->attr_key(idx));
+	    attr[idx].key = net->attr_key(idx);
 	    if (tmp.is_string()) {
 		  attr[idx].type = IVL_ATT_STR;
 		  attr[idx].val.str = strings_.add(tmp.as_string().c_str());
@@ -1100,7 +1100,7 @@ void dll_target::memory(const NetMemory*net)
 void dll_target::lpm_add_sub(const NetAddSub*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      if (net->attribute("LPM_Direction") == verinum("SUB"))
+      if (net->attribute(perm_string::literal("LPM_Direction")) == verinum("SUB"))
 	    obj->type = IVL_LPM_SUB;
       else
 	    obj->type = IVL_LPM_ADD;
@@ -2176,6 +2176,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.129  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.128  2004/02/20 06:22:58  steve
  *  parameter keys are per_strings.
  *

@@ -19,10 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Attrib.h,v 1.4 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: Attrib.h,v 1.5 2004/02/20 18:53:33 steve Exp $"
 #endif
 
-# include  <string>
+# include  "StringHeap.h"
 # include  "verinum.h"
 
 /*
@@ -35,20 +35,20 @@ class Attrib {
       Attrib();
       ~Attrib();
 
-      const verinum&attribute(const string&key) const;
-      void attribute(const string&key, const verinum&value);
+      const verinum&attribute(perm_string key) const;
+      void attribute(perm_string key, const verinum&value);
       bool has_compat_attributes(const Attrib&that) const;
 
 
 	/* Provide a means of iterating over the entries in the map. */
       unsigned       attr_cnt() const;
-      const char*    attr_key(unsigned idx) const;
+      perm_string    attr_key(unsigned idx) const;
       const verinum& attr_value(unsigned idx) const;
 
 
     private:
       struct cell_ {
-	    string  key;
+	    perm_string  key;
 	    verinum val;
       };
 
@@ -62,6 +62,9 @@ class Attrib {
 
 /*
  * $Log: Attrib.h,v $
+ * Revision 1.5  2004/02/20 18:53:33  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.4  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

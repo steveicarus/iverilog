@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Attrib.cc,v 1.5 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: Attrib.cc,v 1.6 2004/02/20 18:53:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,25 +36,8 @@ Attrib::~Attrib()
       delete[] list_;
 }
 
-#if 0
-void Attrib::copy_attributes(const map<string,verinum>&attr)
-{
-      assert(list_ == 0);
 
-      nlist_ = attr.size();
-      list_ = new cell_[nlist_];
-
-      map<string,verinum>::const_iterator idx;
-      unsigned jdx;
-      for (idx = attr.begin(), jdx = 0 ;  idx != attr.end() ;  idx ++, jdx++) {
-	    struct cell_*tmp = list_ + jdx;
-	    tmp->key = (*idx).first;
-	    tmp->val = (*idx).second;
-      }
-}
-#endif
-
-const verinum& Attrib::attribute(const string&key) const
+const verinum& Attrib::attribute(perm_string key) const
 {
       for (unsigned idx = 0 ;  idx < nlist_ ;  idx += 1) {
 
@@ -66,7 +49,7 @@ const verinum& Attrib::attribute(const string&key) const
       return null;
 }
 
-void Attrib::attribute(const string&key, const verinum&value)
+void Attrib::attribute(perm_string key, const verinum&value)
 {
       unsigned idx;
 
@@ -108,10 +91,10 @@ unsigned Attrib::attr_cnt() const
       return nlist_;
 }
 
-const char* Attrib::attr_key(unsigned idx) const
+perm_string Attrib::attr_key(unsigned idx) const
 {
       assert(idx < nlist_);
-      return list_[idx].key.c_str();
+      return list_[idx].key;
 }
 
 const verinum& Attrib::attr_value(unsigned idx) const
@@ -123,6 +106,9 @@ const verinum& Attrib::attr_value(unsigned idx) const
 
 /*
  * $Log: Attrib.cc,v $
+ * Revision 1.6  2004/02/20 18:53:33  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.5  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

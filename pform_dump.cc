@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.84 2004/02/20 06:22:58 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.85 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -252,7 +252,7 @@ void PWire::dump(ostream&out) const
       }
 
       out << ";" << endl;
-      for (map<string,PExpr*>::const_iterator idx = attributes.begin()
+      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
 	    out << "        " << (*idx).first;
@@ -678,7 +678,7 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
       out << " /* " << get_line() << " */" << endl;
 
-      for (map<string,PExpr*>::const_iterator idx = attributes.begin()
+      for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end() ; idx++ ) {
 
 	    out << setw(ind+2) << "" << "(* " << (*idx).first;
@@ -695,7 +695,7 @@ void Module::dump(ostream&out) const
 {
       if (attributes.begin() != attributes.end()) {
 	    out << "(* ";
-	    for (map<string,PExpr*>::const_iterator idx = attributes.begin()
+	    for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end() ; idx++ ) {
 		    if (idx != attributes.begin()) {
 			out << " , ";
@@ -881,6 +881,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.85  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.84  2004/02/20 06:22:58  steve
  *  parameter keys are per_strings.
  *

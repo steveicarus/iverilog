@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: nodangle.cc,v 1.20 2004/01/15 06:04:19 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.21 2004/02/20 18:53:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -121,7 +121,7 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 
 	/* Can't delete ports of cells. */
       if ((sig->port_type() != NetNet::NOT_A_PORT)
-	  && (sig->scope()->attribute("ivl_synthesis_cell") != verinum()))
+	  && (sig->scope()->attribute(perm_string::literal("ivl_synthesis_cell")) != verinum()))
 	    return;
 
 	/* Check to see if the signal is completely unconnected. If
@@ -205,6 +205,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.21  2004/02/20 18:53:35  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.20  2004/01/15 06:04:19  steve
  *  Remove duplicate NetEvProbe objects in nodangle.
  *

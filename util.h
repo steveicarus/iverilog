@@ -1,7 +1,7 @@
 #ifndef __util_H
 #define __util_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,11 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: util.h,v 1.6 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: util.h,v 1.7 2004/02/20 18:53:36 steve Exp $"
 #endif
 
 # include  <map>
-# include  <string>
+# include  "StringHeap.h"
 # include  "verinum.h"
 
 class PExpr;
@@ -40,17 +40,20 @@ extern bool load_module(const char*type);
 
 
 struct attrib_list_t {
-      string key;
+      perm_string key;
       verinum val;
 };
 
-extern attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
+extern attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
 					  unsigned&natt,
 					  const Design*des,
 					  const NetScope*scope);
 
 /*
  * $Log: util.h,v $
+ * Revision 1.7  2004/02/20 18:53:36  steve
+ *  Addtrbute keys are perm_strings.
+ *
  * Revision 1.6  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *
