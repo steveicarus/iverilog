@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.36 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: verinum.cc,v 1.37 2003/02/02 00:43:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -220,9 +220,12 @@ signed long verinum::as_long() const
 
 	    val = -1;
 	    signed long mask = ~1L;
-	    for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
+	    for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
 		  if (bits_[idx] == V0)
 			val &= mask;
+
+		  mask = (mask << 1) | 1L;
+	    }
 
       } else {
 	    unsigned top = nbits_;
@@ -815,6 +818,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.37  2003/02/02 00:43:16  steve
+ *  Fix conversion of signed numbes to long
+ *
  * Revision 1.36  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *
