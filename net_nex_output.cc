@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.10 2004/08/28 16:23:05 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.11 2004/09/16 03:17:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,23 +39,28 @@ void NetProc::nex_output(NexusSet&out)
 	   << endl;
 }
 
+/*
+ * Assignments have as output all the bits of the concatenated signals
+ * of the l-value.
+ */
 void NetAssignBase::nex_output(NexusSet&out)
 {
-      if (NetNet*lsig = lval_->sig()) {
-	    assert(lval_->more == 0);
-	    for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
-		  unsigned off = lval_->get_loff() + idx;
-		  out.add(lsig->pin(off).nexus());
+      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
+	    if (NetNet*lsig = cur->sig()) {
+		  for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
+			unsigned off = cur->get_loff() + idx;
+			out.add(lsig->pin(off).nexus());
+		  }
+	    } else {
+		    /* Quoting from netlist.h comments for class NetMemory:
+		     * "This is not a node because memory objects can only be
+		     * accessed by behavioral code."
+		     */
+		  cerr << get_line() << ": internal error: "
+		       << "NetAssignBase::nex_output on unsupported lval ";
+		  dump_lval(cerr);
+		  cerr << endl;
 	    }
-      } else {
-	    /* Quoting from netlist.h comments for class NetMemory:
-	     * "This is not a node because memory objects can only be
-	     * accessed by behavioral code."
-	     */
-	    cerr << get_line() << ": internal error: "
-		 << "NetAssignBase::nex_output on unsupported lval ";
-	    dump_lval(cerr);
-	    cerr << endl;
       }
 }
 
@@ -117,6 +122,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.11  2004/09/16 03:17:33  steve
+ *  net_output handles l-value concatenations.
+ *
  * Revision 1.10  2004/08/28 16:23:05  steve
  *  Fix use of system tasks in AT_STAR statements.
  *
