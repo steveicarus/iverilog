@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: priv.h,v 1.2 2000/12/09 03:42:52 steve Exp $"
+#ident "$Id: priv.h,v 1.3 2000/12/14 23:37:47 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -33,7 +33,19 @@ extern unsigned error_count;
  * A device has an array of pins, that are bound to the netlist either
  * by attribute or by random lookup. The bind_pin table keeps track of
  * pin allocations.
+ *
+ * Each cell also has attached to it an expression that calculates
+ * results from an input. That expression is represented by a sum of
+ * product terms. A product term is an array of term_t objects,
+ * terminated by a term will a null nex pointers. A sum, then, is an
+ * array of pointers to term_t arrays, terminated by a null pointer.
  */
+
+typedef struct term_s {
+      int inv;
+      ivl_nexus_t nex;
+} term_t;
+
 struct pal_bind_s {
 	/* This is the netlist connection for the pin. */
       ivl_nexus_t nexus;
@@ -41,9 +53,12 @@ struct pal_bind_s {
       pal_sop_t sop;
 	/* If the output has an enable, this is it. */
       ivl_net_logic_t enable;
+      term_t **enable_ex;
 	/* If there is a register here, this is it. */
       ivl_lpm_ff_t reg;
       unsigned reg_q;
+	/* The input to the cell is this expression. */
+      term_t **sop_ex;
 };
 
 extern unsigned pins;
@@ -55,8 +70,13 @@ extern void absorb_pad_enables(void);
 
 extern int fit_registers(ivl_scope_t scope);
 
+extern int fit_logic(void);
+
 /*
  * $Log: priv.h,v $
+ * Revision 1.3  2000/12/14 23:37:47  steve
+ *  Start support for fitting the logic.
+ *
  * Revision 1.2  2000/12/09 03:42:52  steve
  *  Stuff registers into macrocells.
  *

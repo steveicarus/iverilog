@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.3 2000/12/09 05:40:42 steve Exp $"
+#ident "$Id: imain.c,v 1.4 2000/12/14 23:37:47 steve Exp $"
 #endif
 
 /*
@@ -128,6 +128,12 @@ int target_design(ivl_design_t des)
 	    return -1;
       }
 
+      fit_logic();
+      if (pal_errors) {
+	    fprintf(stderr, "Logic fitting failed.\n");
+	    pal_free(pal);
+	    return -1;
+      }
 
       dump_final_design(stdout);
 
@@ -142,6 +148,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.4  2000/12/14 23:37:47  steve
+ *  Start support for fitting the logic.
+ *
  * Revision 1.3  2000/12/09 05:40:42  steve
  *  documentation...
  *
