@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.39 1999/06/12 23:16:37 steve Exp $"
+#ident "$Id: parse.y,v 1.40 1999/06/13 17:30:23 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -65,7 +65,7 @@ extern void lex_end_table();
 %token <text>   IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
 %token K_LE K_GE K_EQ K_NE K_CEQ K_CNE K_LS K_RS
-%token K_LOR K_LAND
+%token K_LOR K_LAND K_NAND K_NOR K_NXOR
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
@@ -297,11 +297,7 @@ expression
 	: expr_primary
 		{ $$ = $1; }
 	| '+' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('+', $2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
-		  $$ = tmp;
-		}
+		{ $$ = $2; }
 	| '-' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('-', $2);
 		  tmp->set_file(@2.text);
@@ -334,6 +330,24 @@ expression
 		}
 	| '^' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('^', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| K_NAND expr_primary %prec UNARY_PREC
+		{ PEUnary*tmp = new PEUnary('A', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| K_NOR expr_primary %prec UNARY_PREC
+		{ PEUnary*tmp = new PEUnary('N', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| K_NXOR expr_primary %prec UNARY_PREC
+		{ PEUnary*tmp = new PEUnary('X', $2);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.20 1999/06/12 23:16:08 steve Exp $"
+#ident "$Id: lexor.lex,v 1.21 1999/06/13 17:30:23 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -81,6 +81,11 @@ static verinum*make_unsized_hex(const char*txt);
 "!==" { return K_CNE; }
 "||" { return K_LOR; }
 "&&" { return K_LAND; }
+"~|" { return K_NOR; }
+"~^" { return K_NXOR; }
+"^~" { return K_NXOR; }
+"~&" { return K_NAND; }
+
 
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
 
@@ -453,7 +458,43 @@ static verinum*make_sized_octal(const char*txt)
 
 static verinum*make_unsized_octal(const char*txt)
 {
-      assert(0);
+      const char*ptr = txt;
+      assert(*ptr == '\'');
+      ptr += 1;
+      assert(tolower(*ptr) == 'o');
+      ptr += 1;
+
+      unsigned size = 3 * strlen(ptr);
+      verinum::V*bits = new verinum::V[size];
+
+      unsigned idx = size;
+      while (*ptr) {
+	    unsigned val;
+	    switch (ptr[0]) {
+		case '0': case '1': case '2': case '3':
+		case '4': case '5': case '6': case '7':
+		  val = *ptr - '0';
+		  bits[--idx] = (val&4) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&2) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&1) ? verinum::V1 : verinum::V0;
+		  break;
+		case 'x':
+		  bits[--idx] = verinum::Vx;
+		  bits[--idx] = verinum::Vx;
+		  bits[--idx] = verinum::Vx;
+		  break;
+		case 'z':
+		  bits[--idx] = verinum::Vz;
+		  bits[--idx] = verinum::Vz;
+		  bits[--idx] = verinum::Vz;
+		  break;
+		default:
+		  assert(0);
+	    }
+	    ptr += 1;
+      }
+
+      return new verinum(bits, size);
 }
 
 static verinum*make_sized_hex(const char*txt)
@@ -527,7 +568,54 @@ static verinum*make_sized_hex(const char*txt)
 
 static verinum*make_unsized_hex(const char*txt)
 {
-      assert(0);
+      const char*ptr = txt;
+      assert(*ptr == '\'');
+      ptr += 1;
+      assert(tolower(*ptr) == 'h');
+      ptr += 1;
+
+      unsigned size = 4 * strlen(ptr);
+      verinum::V*bits = new verinum::V[size];
+
+      unsigned idx = size;
+      while (*ptr) {
+	    unsigned val;
+	    switch (ptr[0]) {
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+		  val = *ptr - '0';
+		  bits[--idx] = (val&8) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&4) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&2) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&1) ? verinum::V1 : verinum::V0;
+		  break;
+		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
+		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
+		  val = tolower(*ptr) - 'a' + 10;
+		  bits[--idx] = (val&8) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&4) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&2) ? verinum::V1 : verinum::V0;
+		  bits[--idx] = (val&1) ? verinum::V1 : verinum::V0;
+		  break;
+		case 'x':
+		  bits[--idx] = verinum::Vx;
+		  bits[--idx] = verinum::Vx;
+		  bits[--idx] = verinum::Vx;
+		  bits[--idx] = verinum::Vx;
+		  break;
+		case 'z':
+		  bits[--idx] = verinum::Vz;
+		  bits[--idx] = verinum::Vz;
+		  bits[--idx] = verinum::Vz;
+		  bits[--idx] = verinum::Vz;
+		  break;
+		default:
+		  assert(0);
+	    }
+	    ptr += 1;
+      }
+
+      return new verinum(bits, size);
 }
 
 /*

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.38 1999/06/13 16:30:06 steve Exp $"
+#ident "$Id: netlist.h,v 1.39 1999/06/13 17:30:23 steve Exp $"
 #endif
 
 /*
@@ -993,6 +993,13 @@ class NetEConst  : public NetExpr {
  *   ~  -- Bit-wise negation
  *   !  -- Logical negation
  *   &  -- Reduction AND
+ *   |  -- Reduction OR
+ *   ^  -- Reduction XOR
+ *   +  --
+ *   -  --
+ *   A  -- Reduciton NAND (~&)
+ *   N  -- Reduciton NOR (~|)
+ *   X  -- Reduciton NXOR (~^ or ^~)
  */
 class NetEUnary  : public NetExpr {
 
@@ -1245,6 +1252,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.39  1999/06/13 17:30:23  steve
+ *  More unary operators.
+ *
  * Revision 1.38  1999/06/13 16:30:06  steve
  *  Unify the NetAssign constructors a bit.
  *
