@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.44 2003/02/22 04:39:32 steve Exp $"
+#ident "$Id: Makefile.in,v 1.45 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -51,13 +51,14 @@ LIBS = @LIBS@ @EXTRALIBS@
 dllib=@DLLIB@
 rdynamic=@rdynamic@
 
-all: vvp@EXEEXT@ libvpi.a
+all: dep vvp@EXEEXT@ libvpi.a
 
 clean:
-	rm -rf vvp@EXEEXT@ *.o *~ parse.cc parse.cc.output parse.h lexor.cc dep
+	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
+	rm -rf dep vvp@EXEEXT@ libvpi.a libvpi.a
 
 distclean: clean
-	rm -f config.h Makefile config.cache config.log config.status
+	rm -f Makefile config.status config.log config.cache config.h
 
 check: all
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
@@ -93,8 +94,10 @@ vvp: $O
 	$(CXX) $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
 endif
 
+dep:
+	mkdir dep
+
 %.o: %.cc
-	@[ -d dep ] || mkdir dep
 	$(CXX) @ident_support@ $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
@@ -109,8 +112,10 @@ parse.o: parse.cc
 
 tables.o: tables.cc
 
-parse.h parse.cc: $(srcdir)/parse.y
+parse.cc: $(srcdir)/parse.y
 	$(YACC) --verbose -t -d -o parse.cc $(srcdir)/parse.y
+
+parse.h: parse.cc
 	mv parse.cc.h parse.h || mv parse.hh parse.h
 
 lexor.cc: $(srcdir)/lexor.lex

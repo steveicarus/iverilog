@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 2001/06/12 03:53:10 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -53,7 +53,7 @@ vpi_mcd.o vpi_vlog_info.o
 
 
 
-all: libvpip.a
+all: dep libvpip.a
 
 check: all
 
@@ -69,14 +69,16 @@ libvvm.a: $O
 	rm -f $@
 	ar cvq $@ $O
 
+dep:
+	mkdir dep
+
 %.o: %.c
-	@[ -d dep ] || mkdir dep
 	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 
 clean:
-	rm -f *.o dep/*.d libvpip.a
+	rm -rf *.o dep libvpip.a
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache

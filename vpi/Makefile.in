@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.35 2003/02/20 00:50:06 steve Exp $"
+#ident "$Id: Makefile.in,v 1.36 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -48,10 +48,12 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
-all: system.vpi
+all: dep system.vpi
+
+dep:
+	mkdir dep
 
 %.o: %.c
-	@[ -d dep ] || mkdir dep
 	$(CC) -Wall -I$(srcdir) -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
@@ -73,7 +75,10 @@ sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
 
 clean:
-	rm -f *.o dep/*.d
+	rm -rf *.o sys_readmem_lex.c dep system.vpi
+
+distclean: clean
+	rm -f Makefile
 
 install: all installdirs $(libdir)/ivl/system.vpi
 

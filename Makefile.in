@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.145 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.146 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -67,19 +67,17 @@ ifeq ('@HAVE_IPAL@','yes')
 TARGETS += tgt-pal
 endif
 
-all: ivl@EXEEXT@
+all: dep ivl@EXEEXT@
 	for dir in $(SUBDIRS) ; do (cd $$dir ; $(MAKE) all); done
-	cd vpi ; $(MAKE) all
-	cd ivlpp ; $(MAKE) all
-	cd driver ; $(MAKE) VERSION=$(VERSION) all
-	cd tgt-verilog ; $(MAKE) all
-	cd tgt-stub ; $(MAKE) all
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) all); done
+	for dir in vpi ivlpp tgt-verilog tgt-stub; \
+	    do (cd $$dir ; $(MAKE) all); done
+	cd driver ; $(MAKE) VERSION=$(VERSION) all
 
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
 ifeq (@WIN32@,yes)
-all: dosify.exe
+all: dep dosify.exe
 dosify.exe: dosify.c
 	$(CC) -o dosify.exe dosify.c
 
@@ -88,7 +86,7 @@ SUBDIRS += driver-vpi
 endif
 
 else
-all: iverilog-vpi
+all: dep iverilog-vpi
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
@@ -99,24 +97,20 @@ check: all
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
 
 clean:
-	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc ivl@EXEEXT@ libivl.a libvpi.a iverilog-vpi
-	cd vpi ; $(MAKE) clean
-	cd driver ; $(MAKE) clean
-	cd ivlpp ; $(MAKE) clean
-	cd tgt-verilog ; $(MAKE) clean
-	cd tgt-stub ; $(MAKE) clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) clean); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) clean); done
+	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
+	    do (cd $$dir ; $(MAKE) clean); done
+	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc 
+	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
+	rm -rf dep ivl@EXEEXT@
 
 distclean: clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) distclean); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) distclean); done
-	rm -f vpi/Makefile
-	rm -f ivlpp/Makefile
-	rm -f driver/Makefile
-	rm -f config.status config.cache config.log
-	rm -f Makefile
-	rm -f tgt-pal/Makefile tgt-stub/Makefile tgt-verilog/Makefile
+	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
+	    do (cd $$dir ; $(MAKE) distclean); done
+	rm -f Makefile config.status config.log config.cache config.h
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-xnf.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o xnfio.o
@@ -166,8 +160,10 @@ iverilog-vpi: iverilog-vpi.sh
 	chmod +x $@
 endif
 
+dep:
+	mkdir dep
+
 %.o: %.cc
-	@[ -d dep ] || mkdir dep
 	$(CXX) @ident_support@ $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
@@ -176,8 +172,10 @@ lexor.o: lexor.cc parse.h
 
 parse.o: parse.cc
 
-parse.h parse.cc: $(srcdir)/parse.y
+parse.cc: $(srcdir)/parse.y
 	$(YACC) --verbose -t -p VL -d -o parse.cc $(srcdir)/parse.y
+
+parse.h: parse.cc
 	mv parse.cc.h parse.h || mv parse.hh parse.h
 
 syn-rules.cc: $(srcdir)/syn-rules.y
@@ -200,7 +198,7 @@ iverilog-vpi.pdf: iverilog-vpi.ps
 ifeq (@WIN32@,yes)
 INSTALL_DOC = $(prefix)/iverilog-vpi.pdf
 INSTALL_DOCDIR =
-all: iverilog-vpi.pdf
+all: dep iverilog-vpi.pdf
 else
 INSTALL_DOC = $(mandir)/man1/iverilog-vpi.1
 INSTALL_DOCDIR = $(mandir)/man1

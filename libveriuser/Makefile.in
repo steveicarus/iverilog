@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.17 2003/02/22 04:39:32 steve Exp $"
+#ident "$Id: Makefile.in,v 1.18 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -54,7 +54,7 @@ O = asynch.o finish.o getcstringp.o getinstance.o getlongp.o \
 getp.o getsimtime.o io_print.o mc_scan_plusargs.o nump.o putlongp.o \
 putp.o typep.o workarea.o veriusertfs.o priv.o $A
 
-all: libveriuser.a
+all: dep libveriuser.a
 
 check: all
 
@@ -66,14 +66,16 @@ libveriuser.a: $O
 	ar cvq $@ $O
 	$(RANLIB) $@
 
+dep:
+	mkdir dep
+
 %.o: %.c
-	@[ -d dep ] || mkdir dep
 	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 
 clean:
-	rm -f *.o dep/*.d libveriuser.a
+	rm -rf *.o dep libveriuser.a
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache

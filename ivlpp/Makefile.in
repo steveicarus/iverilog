@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.12 2001/08/10 00:39:22 steve Exp $"
+#ident "$Id: Makefile.in,v 1.13 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -47,7 +47,10 @@ LDFLAGS = @LDFLAGS@
 all: ivlpp
 
 clean:
-	rm -f *.o lexor.c parse.c parse.h parse.output
+	rm -f *.o lexor.c parse.c parse.h parse.output ivlpp
+
+distclean: clean
+	rm -f Makefile
 
 O = main.o lexor.o parse.o
 

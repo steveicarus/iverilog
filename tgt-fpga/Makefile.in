@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 2002/11/05 02:14:41 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,10 +43,12 @@ CXXFLAGS = @CXXFLAGS@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: fpga.tgt
+all: dep fpga.tgt
+
+dep:
+	mkdir dep
 
 %.o: %.c
-	@[ -d dep ] || mkdir dep
 	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
@@ -69,10 +71,10 @@ Makefile: Makefile.in config.status
 	./config.status
 
 clean:
-	rm -f *.o dep/*.d
+	rm -rf *.o dep fpga.tgt
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache fpga.tgt
+	rm -f Makefile config.status config.log config.cache
 
 check: all
 

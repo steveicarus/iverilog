@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.13 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: Makefile.in,v 1.14 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,10 +43,12 @@ CXXFLAGS = @CXXFLAGS@
 CFLAGS  = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: vvp.tgt
+all: dep vvp.tgt
+
+dep:
+	mkdir dep
 
 %.o: %.c
-	@[ -d dep ] || mkdir dep
 	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
@@ -68,10 +70,10 @@ Makefile: Makefile.in config.status
 	./config.status
 
 clean:
-	rm -f *.o dep/*.d
+	rm -rf *.o dep vvp.tgt
 
 distclean: clean
-	rm -f Makefile config.status config.log config.cache vvp.tgt
+	rm -f Makefile config.status config.log config.cache
 
 check: all
 

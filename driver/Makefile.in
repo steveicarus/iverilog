@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2002/12/08 03:06:30 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2003/02/27 22:13:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,6 +52,10 @@ all: iverilog@EXEEXT@
 clean:
 	rm -f *.o lexor.c parse.c parse.h parse.output
 	rm -f cflexor.c cfparse.c cfparse.h cfparse.output
+	rm -f iverilog@EXEEXT@
+
+distclean: clean
+	rm -f Makefile
 
 O = main.o build_string.o lexor.o parse.o substit.o cflexor.o cfparse.o
 
