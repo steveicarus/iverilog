@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.11 2003/10/13 20:57:34 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.12 2003/10/14 00:31:32 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -30,6 +30,15 @@ LDFLAGS32="@SHARED@ -L@LIBDIR@"
 LDFLAGS64="@SHARED@ -L@LIBDIR64@"
 LDFLAGS="$LDFLAGS64"
 LDLIBS="-lveriuser -lvpi"
+
+INSTDIR64="@VPIDIR1@"
+INSTDIR32="@VPIDIR2@"
+if test x$INSTDIR32 = x
+then
+    $INSTDIR32=$INSTDIR64
+fi
+
+INSTDIR="$INSTDIR64"
 
 CCSRC=
 CXSRC=
@@ -73,6 +82,7 @@ do
 
     -m32) LDFLAGS="-m32 $LDFLAGS32"
 	  CFLAGS="-m32 $CFLAGS"
+	  INSTDIR="$INSTDIR32"
 	  ;;
 
     --cflags)
@@ -89,12 +99,17 @@ do
 	 echo "$LDLIBS"
 	 exit;
 	 ;;
+
+    --install-dir)
+	 echo "@LIBDIR@/ivl/$INSTDIR"
+	 exit
+	 ;;
     esac
 
 done
 
 if [ x$OUT = x ]; then
-    echo "Usage: $0 [src and obj files]..."
+    echo "Usage: $0 [src and obj files]..." 1>&2
     exit 0
 fi
 
