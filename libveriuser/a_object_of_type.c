@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_object_of_type.c,v 1.5 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: a_object_of_type.c,v 1.6 2004/02/18 02:51:59 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -28,7 +28,7 @@
 /*
  * acc_object_of_type implemented using VPI interface
  */
-PLI_INT32 acc_object_of_type(handle object, PLI_INT32 type)
+int acc_object_of_type(handle object, PLI_INT32 type)
 {
       int vtype;
       int rtn = 0;	/* false */
@@ -86,7 +86,7 @@ PLI_INT32 acc_object_of_type(handle object, PLI_INT32 type)
       return rtn;
 }
 
-PLI_INT32 acc_object_in_typelist(handle object, PLI_INT32*typelist)
+int acc_object_in_typelist(handle object, PLI_INT32*typelist)
 {
       while (typelist[0] != 0) {
 	    int rtn = acc_object_of_type(object, typelist[0]);
@@ -101,6 +101,9 @@ PLI_INT32 acc_object_in_typelist(handle object, PLI_INT32*typelist)
 
 /*
  * $Log: a_object_of_type.c,v $
+ * Revision 1.6  2004/02/18 02:51:59  steve
+ *  Fix type mismatches of various VPI functions.
+ *
  * Revision 1.5  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

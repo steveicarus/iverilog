@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.25 2003/12/07 20:05:56 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.26 2004/02/18 02:51:59 steve Exp $"
 #endif
 
 /*
@@ -69,7 +69,7 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
       };
 }
 
-static PLI_INT32 systask_get(int type, vpiHandle ref)
+static int systask_get(int type, vpiHandle ref)
 {
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
 
@@ -465,7 +465,7 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
       cur->info.tfname = strdup(ss->tfname);
 }
 
-int vpi_put_userdata(vpiHandle ref, void*data)
+PLI_INT32 vpi_put_userdata(vpiHandle ref, void*data)
 {
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
       assert((ref->vpi_type->type_code == vpiSysTaskCall)
@@ -487,6 +487,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.26  2004/02/18 02:51:59  steve
+ *  Fix type mismatches of various VPI functions.
+ *
  * Revision 1.25  2003/12/07 20:05:56  steve
  *  Ducument lxt2 access.
  *

@@ -17,19 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_compare_handles.c,v 1.2 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: a_compare_handles.c,v 1.3 2004/02/18 02:51:59 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
 # include  <acc_user.h>
 
-int acc_compare_handles(handle handle1, handle handle2)
+PLI_INT32 acc_compare_handles(handle handle1, handle handle2)
 {
       return handle1 == handle2;
 }
 
 /*
  * $Log: a_compare_handles.c,v $
+ * Revision 1.3  2004/02/18 02:51:59  steve
+ *  Fix type mismatches of various VPI functions.
+ *
  * Revision 1.2  2003/08/26 16:26:02  steve
  *  ifdef idents correctly.
  *

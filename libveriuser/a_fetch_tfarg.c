@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_tfarg.c,v 1.8 2003/06/14 01:16:17 steve Exp $"
+#ident "$Id: a_fetch_tfarg.c,v 1.9 2004/02/18 02:51:59 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -56,7 +56,7 @@ double acc_fetch_itfarg(PLI_INT32 n, handle obj)
       return rtn;
 }
 
-double acc_fetch_tfarg(int n)
+double acc_fetch_tfarg(PLI_INT32 n)
 {
       return acc_fetch_itfarg_int(n, vpi_handle(vpiSysTfCall,0));
 }
@@ -134,6 +134,9 @@ char *acc_fetch_tfarg_str(PLI_INT32 n)
 
 /*
  * $Log: a_fetch_tfarg.c,v $
+ * Revision 1.9  2004/02/18 02:51:59  steve
+ *  Fix type mismatches of various VPI functions.
+ *
  * Revision 1.8  2003/06/14 01:16:17  steve
  *  ihand is system task, not scope.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.43 2003/06/25 04:04:19 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.44 2004/02/18 02:51:59 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -104,7 +104,7 @@ const char* vpip_name_string(const char*text)
 
       return res;
 }
-int vpi_chk_error(p_vpi_error_info info)
+PLI_INT32 vpi_chk_error(p_vpi_error_info info)
 {
       if (vpip_last_error.state == 0)
 	    return 0;
@@ -126,7 +126,7 @@ int vpi_chk_error(p_vpi_error_info info)
  */
 struct __vpiSysTaskCall*vpip_cur_task = 0;
 
-int vpi_free_object(vpiHandle ref)
+PLI_INT32 vpi_free_object(vpiHandle ref)
 {
       int rtn;
 
@@ -197,7 +197,7 @@ static const char* vpi_type_values(PLI_INT32 code)
       return buf;
 }
 
-int vpi_get(int property, vpiHandle ref)
+PLI_INT32 vpi_get(int property, vpiHandle ref)
 {
       if (ref == 0)
 	    return vpip_get_global(property);
@@ -320,7 +320,7 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
       }
 }
 
-int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
+PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 {
     if (vlog_info_p != 0) {
 	  *vlog_info_p = vpi_vlog_info;
@@ -628,7 +628,7 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
       }
 }
 
-extern "C" void vpi_sim_control(int operation, ...)
+extern "C" void vpi_sim_control(PLI_INT32 operation, ...)
 {
       va_list ap;
       va_start(ap, operation);
@@ -636,7 +636,7 @@ extern "C" void vpi_sim_control(int operation, ...)
       va_end(ap);
 }
 
-extern "C" void vpi_control(int operation, ...)
+extern "C" void vpi_control(PLI_INT32 operation, ...)
 {
       va_list ap;
       va_start(ap, operation);
@@ -646,6 +646,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.44  2004/02/18 02:51:59  steve
+ *  Fix type mismatches of various VPI functions.
+ *
  * Revision 1.43  2003/06/25 04:04:19  steve
  *  Fix mingw portability problems.
  *

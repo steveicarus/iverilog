@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.32 2003/09/09 00:56:45 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.33 2004/02/18 02:51:59 steve Exp $"
 #endif
 
 /*
@@ -486,7 +486,7 @@ vpiHandle vpi_register_cb(p_cb_data data)
  * it clears the reference to the user callback function. This causes
  * the callback to quietly reap itself.
  */
-int vpi_remove_cb(vpiHandle ref)
+PLI_INT32 vpi_remove_cb(vpiHandle ref)
 {
       assert(ref);
       assert(ref->vpi_type);
@@ -564,6 +564,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.33  2004/02/18 02:51:59  steve
+ *  Fix type mismatches of various VPI functions.
+ *
  * Revision 1.32  2003/09/09 00:56:45  steve
  *  Reimpelement scheduler to divide nonblocking assign queue out.
  *
