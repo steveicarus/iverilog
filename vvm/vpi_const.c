@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.10 2000/07/08 22:40:07 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.11 2000/08/08 01:47:40 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -33,12 +33,13 @@
 void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 {
       static char buff[1024];
-      char*cp;
+      static s_vpi_vecval vect[64];
+      char* cp = buff;
       unsigned val;
       unsigned idx;
       int isx;
 
-      cp = buff;
+      vp->value.str = buff;
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -55,7 +56,6 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  }
 	    vp->format = vpiBinStrVal;
 	    *cp++ = 0;
-	    vp->value.str = buff;
 	    break;
 
 	  case vpiDecStrVal:
@@ -68,7 +68,6 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 	    sprintf(cp, "%u", val);
 	    cp += strlen(cp);
 	    *cp++ = 0;
-	    vp->value.str = buff;
 	    break;
 
 	  case vpiOctStrVal:
@@ -129,7 +128,6 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 			*cp++ = "01234567"[v];
 	    }
 	    *cp++ = 0;
-	    vp->value.str = buff;
 	    break;
 
 	  case vpiHexStrVal:
@@ -192,7 +190,6 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 			*cp++ = "0123456789abcdef"[v];
 	    }
 	    *cp++ = 0;
-	    vp->value.str = buff;
 	    break;
 
 	  case vpiIntVal:
@@ -211,14 +208,28 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		    vp->value.integer = val;
 	    break;
 
+	  case vpiVectorVal:
+	    vp->value.vector = vect;
+	    for (idx = 0 ;  idx < nbits ;  idx += 1) {
+		  int major = idx/32;
+		  int minor = idx%32;
+
+		  vect[major].aval &= (1<<minor) - 1;
+		  vect[major].bval &= (1<<minor) - 1;
+
+		  if (B_IS1(bits[idx]) || B_ISX(bits[idx]))
+			vect[major].aval |= 1<<minor;
+		  if (B_ISXZ(bits[idx]))
+			vect[major].bval |= 1<<minor;
+	    }
+	    break;
+
 	  default:
 	    *cp++ = '(';
 	    *cp++ = '?';
 	    *cp++ = ')';
 	    *cp++ = 0;
 	    vp->format = vpiStringVal;
-	    vp->value.str = buff;
-
 	    break;
       }
 }
@@ -382,6 +393,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.11  2000/08/08 01:47:40  steve
+ *  Add vpi_vlog_info support from Adrian
+ *
  * Revision 1.10  2000/07/08 22:40:07  steve
  *  Allow set vpiIntVal on bitset type objects.
  *

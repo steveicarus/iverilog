@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.19 2000/07/26 03:53:12 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.20 2000/08/08 01:47:52 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -46,6 +46,14 @@ typedef struct t_vpi_systf_data {
    values: */
 #define vpiSysTask  1
 #define vpiSysFunc  2
+
+typedef struct t_vpi_vlog_info
+{
+      int argc;
+      char **argv;
+      char *product;
+      char *version;
+} s_vpi_vlog_info, *p_vpi_vlog_info;
 
 
 typedef struct t_vpi_time {
@@ -237,6 +245,7 @@ extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 			       p_vpi_time when, int flags);
 
 extern int vpi_free_object(vpiHandle ref);
+extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
 
 /* This is the table of startup routines included in each module. */
@@ -248,6 +257,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.20  2000/08/08 01:47:52  steve
+ *  Add vpi_vlog_info support from Adrian
+ *
  * Revision 1.19  2000/07/26 03:53:12  steve
  *  Make simulation precision available to VPI.
  *
