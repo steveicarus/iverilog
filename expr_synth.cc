@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.48 2003/08/28 04:11:18 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.49 2003/09/03 23:31:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -463,10 +463,8 @@ NetNet* NetEBShift::synthesize(Design*des)
 	    if (op() == 'r')
 		  shift = 0-shift;
 
-	    assert(shift >= 0);
 	    if (shift == 0)
 		  return lsig;
-	    unsigned long ushift=shift;
 
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, expr_width());
@@ -479,13 +477,23 @@ NetNet* NetEBShift::synthesize(Design*des)
 				     NetNet::WIRE, 1);
 	    connect(zcon->pin(0), zsig->pin(0));
 
-	    for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-		  if (idx < ushift) {
-			connect(osig->pin(idx), zsig->pin(0));
-		  } else {
-			connect(osig->pin(idx), lsig->pin(idx-ushift));
-		  }
+	    if (shift > 0) {
+		  unsigned long ushift = shift;
+		  for (unsigned idx = 0; idx < osig->pin_count(); idx += 1)
+			if (idx < ushift) {
+			      connect(osig->pin(idx), zsig->pin(0));
+			} else {
+			      connect(osig->pin(idx), lsig->pin(idx-ushift));
+			}
+	    } else {
+		  unsigned long dshift = 0-shift;
+		  for (unsigned idx = 0; idx < osig->pin_count() ;  idx += 1)
+			if (idx+dshift < lsig->pin_count())
+			      connect(osig->pin(idx), lsig->pin(idx+dshift));
+			else
+			      connect(osig->pin(idx), zsig->pin(0));
 	    }
+
 
 	    return osig;
       }
@@ -809,6 +817,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.49  2003/09/03 23:31:36  steve
+ *  Support synthesis of constant downshifts.
+ *
  * Revision 1.48  2003/08/28 04:11:18  steve
  *  Spelling patch.
  *
