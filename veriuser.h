@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.28 2003/05/29 03:46:21 steve Exp $"
+#ident "$Id: veriuser.h,v 1.29 2003/05/30 04:01:55 steve Exp $"
 #endif
 
 /*
@@ -261,6 +261,8 @@ extern PLI_INT32 tf_gettime(void);
 extern PLI_INT32 tf_getlongtime(PLI_INT32*);
 extern PLI_INT32 tf_igetlongtime(PLI_INT32*, void*);
 
+extern void tf_scale_longdelay(void*,PLI_INT32,PLI_INT32,PLI_INT32*,PLI_INT32*);
+
 extern PLI_INT32 tf_gettimeprecision(void);
 extern PLI_INT32 tf_igettimeprecision(void*);
 
@@ -322,6 +324,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.29  2003/05/30 04:01:55  steve
+ *  Add tf_scale_longdelay.
+ *
  * Revision 1.28  2003/05/29 03:46:21  steve
  *  Add tf_getp/putp support for integers
  *  and real valued arguments.

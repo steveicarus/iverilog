@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.7 2003/05/28 03:14:20 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.8 2003/05/30 04:01:55 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -93,6 +93,14 @@ PLI_INT32 tf_igetlongtime(PLI_INT32 *high, void*obj)
 PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) \
       __attribute__ ((weak, alias ("tf_getlongtime")));
 
+void tf_scale_longdelay(void*obj, PLI_INT32 lo, PLI_INT32 hi,
+			PLI_INT32 *low, PLI_INT32 *high)
+{
+      long long scaled = scale(hi, lo, obj);
+      *high = (scaled >> 32) & 0xffffffff;
+      *low = scaled & 0xffffffff;
+}
+
 
 PLI_INT32 tf_gettimeprecision(void)
 {
@@ -121,6 +129,9 @@ PLI_INT32 tf_igettimeunit(void*obj)
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.8  2003/05/30 04:01:55  steve
+ *  Add tf_scale_longdelay.
+ *
  * Revision 1.7  2003/05/28 03:14:20  steve
  *  Missing time related declarations.
  *
