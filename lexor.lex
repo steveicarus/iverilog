@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.80 2003/06/11 01:58:21 steve Exp $"
+#ident "$Id: lexor.lex,v 1.81 2003/06/17 04:23:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -147,6 +147,11 @@ W [ \t\b\f\r]+
 "->" { return K_TRIGGER; }
 "+:" { return K_PO_POS; }
 "-:" { return K_PO_NEG; }
+
+  /* Watch out for the tricky case of (*). Cannot parse this as "(*"
+     and ")", but since I know that this is really ( * ), replace it
+     with "*" and return that. */
+"(*"{W}*")" { return '*'; }
 
 
 [}{;:\[\],()#=.@&!?<>%|^~+*/-] { return yytext[0]; }
