@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.c,v 1.1 2003/10/02 21:16:11 steve Exp $"
+#ident "$Id: priv.c,v 1.2 2003/10/06 21:26:27 steve Exp $"
 #endif
 
-# include  "priv.h"
+# include  "sys_priv.h"
 
 PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
 {
@@ -34,6 +34,9 @@ PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time)
 
 /*
  * $Log: priv.c,v $
+ * Revision 1.2  2003/10/06 21:26:27  steve
+ *  Include sys_priv.h instead of priv.h
+ *
  * Revision 1.1  2003/10/02 21:16:11  steve
  *  Include timerec_to_time64 implementation.
  *
