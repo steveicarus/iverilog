@@ -21,7 +21,7 @@
 # Added support for functors, especially for the XNF target. <steve@icarus.com>
 
 # Setup variables
-execPath=@bindir@
+execPath=@libdir@/ivl
 execIVLPP=${execPath}/ivlpp
 execIVL=${execPath}/ivl
 execCpp=@CXX@
@@ -40,10 +40,11 @@ functors=""
 flags=""
 
 # If VPI module path aren't set up, warn at least
-#if test -z "${VPI_MODULE_PATH}" ; then
-#    echo "Missing environment variable VPI_MODULE_PATH.";
-#    echo "To be able to execute, set VPI_MODULE_PATH to ${VPIModulePath}";
-#fi
+if test -z "${VPI_MODULE_PATH}" ; then
+    echo "Warning: Missing environment variable VPI_MODULE_PATH.";
+    echo "To be able to execute, set VPI_MODULE_PATH to ${VPIModulePath}";
+    export VPI_MODULE_PATH=${VPIModulePath}
+fi
 
 # Try to extract given parameters
 parameter=`getopt D:I:Xxf:o:s:t: "$@"` 
@@ -68,8 +69,6 @@ done
 # The rest is filenames
 verilogFile=$@;
 
-flags="$flags -fVPI_MODULE_PATH=${VPIModulePath}"
-
 if test -z "${verilogFile}" ; then
     echo "Missing infile";
     echo "verilog [-Dmacro[=defn]] [-Iincludepath] [-X] [-x] [-o outputfilename] [-s topmodule] sourcefile[s]" ;
@@ -80,7 +79,7 @@ fi
 case "$target" in
  vvm) targetSuffix="" ;;
  xnf) targetSuffix=".xnf"
-      functors="-Fsynth -Fnodangle -Fxnfio" ;;
+      functors="-Fxnfsyn -Fsigfold -Fxnfio" ;;
    *) targetSuffix=".$target" ;;
 esac
 

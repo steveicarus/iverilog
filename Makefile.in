@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.30 1999/11/29 17:02:21 steve Exp $"
+#ident "$Id: Makefile.in,v 1.24.2.1 1999/12/03 17:43:49 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -66,10 +66,10 @@ distclean: clean
 	rm -f Makefile
 
 TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
-FF = nobufz.o nodangle.o propinit.o sigfold.o synth.o xnfio.o xnfsyn.o
+FF = nobufz.o propinit.o sigfold.o xnfio.o xnfsyn.o
 
-O = main.o cprop.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
-elab_net.o emit.o eval.o eval_tree.o expr_synth.o functor.o \
+O = main.o cprop.o design_dump.o elaborate.o elab_expr.o emit.o eval.o \
+eval_tree.o functor.o \
 lexor.o lexor_keyword.o mangle.o netlist.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_dump.o \
 set_width.o \
@@ -98,7 +98,7 @@ ivl: $O
 
 %.o dep/%.d: %.cc
 	@[ -d dep ] || mkdir dep
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 
@@ -113,7 +113,7 @@ parse.h parse.cc: $(srcdir)/parse.y
 lexor.cc: $(srcdir)/lexor.lex
 	flex -PVL -s -olexor.cc $(srcdir)/lexor.lex
 
-install: all installdirs $(bindir)/verilog $(bindir)/ivl $(mandir)/man1/verilog.1
+install: all installdirs $(bindir)/verilog $(libdir)/ivl/ivl $(mandir)/man1/verilog.1
 	cd vpi ; $(MAKE) install
 	cd vvm ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
@@ -121,9 +121,9 @@ install: all installdirs $(bindir)/verilog $(bindir)/ivl $(mandir)/man1/verilog.
 $(bindir)/verilog: ./verilog
 	$(INSTALL_PROGRAM) ./verilog $(bindir)/verilog
 
-$(bindir)/ivl: ivl
-	$(INSTALL_PROGRAM) ./ivl $(bindir)/ivl
-	$(STRIP) $(bindir)/ivl
+$(libdir)/ivl/ivl: ivl
+	$(INSTALL_PROGRAM) ./ivl $(libdir)/ivl/ivl
+	$(STRIP) $(libdir)/ivl/ivl
 
 $(mandir)/man1/verilog.1: $(srcdir)/verilog.1
 	$(INSTALL_DATA) $(srcdir)/verilog.1 $(mandir)/man1/verilog.1
