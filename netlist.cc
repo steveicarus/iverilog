@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.87 1999/11/18 03:52:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.88 1999/11/19 03:02:25 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -77,6 +77,7 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 
 void connect(NetObj::Link&l, NetObj::Link&r)
 {
+      assert(&l != &r);
       NetObj::Link* cur = &l;
       do {
 	    NetObj::Link*tmp = cur->next_;
@@ -238,6 +239,16 @@ const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 	    }
 	    cur->pin(cpin).next_link(cur, cpin);
       }
+
+      return 0;
+}
+
+NetObj::Link* find_next_output(NetObj::Link*lnk)
+{
+      for (NetObj::Link*cur = lnk->next_link()
+		 ;  cur != lnk ;  cur = cur->next_link())
+	    if (cur->get_dir() == NetObj::Link::OUTPUT)
+		  return cur;
 
       return 0;
 }
@@ -2348,6 +2359,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.88  1999/11/19 03:02:25  steve
+ *  Detect flip-flops connected to opads and turn
+ *  them into OUTFF devices. Inprove support for
+ *  the XNF-LCA attribute in the process.
+ *
  * Revision 1.87  1999/11/18 03:52:19  steve
  *  Turn NetTmp objects into normal local NetNet objects,
  *  and add the nodangle functor to clean up the local

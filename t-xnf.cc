@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.17 1999/11/17 18:52:09 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.18 1999/11/19 03:02:25 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -149,6 +149,12 @@ string target_xnf::choose_sig_name(const NetObj::Link*lnk)
 	    if ((cursig->pin_count() == 1) && (sig->pin_count() > 1))
 		  continue;
 
+	    if ((cursig->pin_count() > 1) && (sig->pin_count() == 1)) {
+		  sig = cursig;
+		  pin = cur->get_pin();
+		  continue;
+	    }
+
 	    if (cursig->local_flag() && !sig->local_flag())
 		  continue;
 
@@ -219,8 +225,11 @@ void target_xnf::draw_sym_with_lcaname(ostream&os, string lca,
       os << "SYM, " << mangle(net->name()) << ", " << lcaname
 	 << ", LIBVER=2.0.0" << endl;
 
-      for (idx = 0 ;  idx < net->pin_count() ;  idx += 1)
-	    draw_pin(os, scrape_pin_name(lca), net->pin(idx));
+      for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    string usename = scrape_pin_name(lca);
+	    if (usename == "") continue;
+	    draw_pin(os, usename, net->pin(idx));
+      }
 
       os << "END" << endl;
 }
@@ -481,7 +490,13 @@ void target_xnf::lpm_ff(ostream&os, const NetFF*net)
 
 	// XXXX For now, only support DFF
       assert(type == "DFF");
-	// XXXX For now, I do not now how to deal with XNF-LCA attributes.
+
+      string lcaname = net->attribute("XNF-LCA");
+      if (lcaname != "") {
+	    draw_sym_with_lcaname(os, lcaname, net);
+	    return;
+      }
+
       assert(net->attribute("XNF-LCA") == "");
 
       for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
@@ -638,6 +653,11 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.18  1999/11/19 03:02:25  steve
+ *  Detect flip-flops connected to opads and turn
+ *  them into OUTFF devices. Inprove support for
+ *  the XNF-LCA attribute in the process.
+ *
  * Revision 1.17  1999/11/17 18:52:09  steve
  *  Add algorithm for choosing nexus name from attached signals.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.89 1999/11/18 03:52:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.90 1999/11/19 03:02:25 steve Exp $"
 #endif
 
 /*
@@ -1924,6 +1924,9 @@ extern unsigned count_inputs(const NetObj::Link&pin);
 extern unsigned count_outputs(const NetObj::Link&pin);
 extern unsigned count_signals(const NetObj::Link&pin);
 
+/* Find the next link that is an output into the nexus. */
+extern NetObj::Link* find_next_output(NetObj::Link*lnk);
+
 /* Find the signal connected to the given node pin. There should
    always be exactly one signal. The bidx parameter get filled with
    the signal index of the Net, in case it is a vector. */
@@ -1937,6 +1940,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.90  1999/11/19 03:02:25  steve
+ *  Detect flip-flops connected to opads and turn
+ *  them into OUTFF devices. Inprove support for
+ *  the XNF-LCA attribute in the process.
+ *
  * Revision 1.89  1999/11/18 03:52:19  steve
  *  Turn NetTmp objects into normal local NetNet objects,
  *  and add the nodangle functor to clean up the local

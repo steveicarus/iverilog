@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.6 1999/11/18 02:58:37 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.7 1999/11/19 03:02:25 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -49,7 +49,7 @@ static bool is_a_pad(const NetNet*net)
  *        really lame to not do the obvious optimization.
  */
 
-static void make_obuf(Design*des, NetNet*net)
+static NetLogic* make_obuf(Design*des, NetNet*net)
 {
       assert(net->pin_count() == 1);
 
@@ -59,7 +59,7 @@ static void make_obuf(Design*des, NetNet*net)
       if (count_outputs(net->pin(0)) <= 0) {
 	    cerr << net->get_line() << ":warning: No outputs to OPAD: "
 		 << net->name() << endl;
-	    return;
+	    return 0;
       }
 
       assert(count_outputs(net->pin(0)) > 0);
@@ -79,7 +79,7 @@ static void make_obuf(Design*des, NetNet*net)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUF:O,I");
-		  return;
+		  return tmp;
 	    }
 
 	      // Try to use an existing INV as an OBUF. Certain
@@ -92,7 +92,7 @@ static void make_obuf(Design*des, NetNet*net)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUF:O,~I");
-		  return;
+		  return tmp;
 	    }
 
 	      // Try to use an existing bufif1 as an OBUFT. Of course
@@ -104,7 +104,7 @@ static void make_obuf(Design*des, NetNet*net)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUFT:O,I,~T");
-		  return;
+		  return tmp;
 	    }
 
 	    if ((tmp->type() == NetLogic::BUFIF0)
@@ -112,7 +112,7 @@ static void make_obuf(Design*des, NetNet*net)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
 		  tmp->attribute("XNF-LCA", "OBUFT:O,I,T");
-		  return;
+		  return tmp;
 	    }
       }
 
@@ -136,9 +136,53 @@ static void make_obuf(Design*des, NetNet*net)
 	// this case and create a new signal.
       if (count_signals(buf->pin(1)) == 0) {
 	    NetNet*tmp = new NetNet(des->local_symbol("$"), NetNet::WIRE);
+	    tmp->local_flag(true);
 	    connect(buf->pin(1), tmp->pin(0));
 	    des->add_signal(tmp);
       }
+
+      return buf;
+}
+
+static void absorb_OFF(Design*des, NetLogic*buf)
+{
+	/* If the nexus connects is not a simple point-to-point link,
+	   then I can't drag it into the IOB. Give up. */
+      if (count_outputs(buf->pin(1)) != 1)
+	    return;
+      if (count_inputs(buf->pin(1)) != 1)
+	    return;
+
+      NetObj::Link*drv = find_next_output(&buf->pin(1));
+      assert(drv);
+
+      NetFF*ff = dynamic_cast<NetFF*>(drv->get_obj());
+      if (ff == 0)
+	    return;
+      if (ff->width() != 1)
+	    return;
+      if (ff->attribute("LPM_FFType") != "DFF")
+	    return;
+
+	/* Connect the flip-flop output to the buffer output and
+	   delete the buffer. The XNF OUTFF can buffer the pin. */
+      connect(ff->pin_Q(0), buf->pin(0));
+      delete buf;
+
+	/* Finally, build up an XNF-LCA value that defines this
+	   devices as an OUTFF and gives each pin an XNF name. */
+      char**names = new char*[ff->pin_count()];
+      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
+	    names[idx] = "";
+
+      names[ff->pin_Clock().get_pin()] = "C";
+      names[ff->pin_Data(0).get_pin()] = "D";
+      names[ff->pin_Q(0).get_pin()] = "Q";
+      string lname = string("OUTFF:") + names[0];
+      for (unsigned idx = 1 ;  idx < ff->pin_count() ;  idx += 1)
+	    lname = lname + "," + names[idx];
+      delete[]names;
+      ff->attribute("XNF-LCA", lname);
 }
 
 static void make_ibuf(Design*des, NetNet*net)
@@ -192,6 +236,7 @@ static void make_ibuf(Design*des, NetNet*net)
 
 void xnfio_f::signal(Design*des, NetNet*net)
 {
+      NetNode*buf;
       if (! is_a_pad(net))
 	    return;
 
@@ -204,9 +249,13 @@ void xnfio_f::signal(Design*des, NetNet*net)
 	    make_ibuf(des, net);
 	    break;
 	  case 'o':
-	  case 'O':
-	    make_obuf(des, net);
-	    break;
+	  case 'O': {
+		NetLogic*buf = make_obuf(des, net);
+		if (buf == 0) break;
+		absorb_OFF(des, buf);
+		break;
+	  }
+
 	      // FIXME: Only IPAD and OPAD supported. Need to
 	      // add support for IOPAD.
 	  default:
@@ -223,6 +272,11 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.7  1999/11/19 03:02:25  steve
+ *  Detect flip-flops connected to opads and turn
+ *  them into OUTFF devices. Inprove support for
+ *  the XNF-LCA attribute in the process.
+ *
  * Revision 1.6  1999/11/18 02:58:37  steve
  *  Handle (with a warning) unconnected opads.
  *
