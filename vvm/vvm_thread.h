@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.h,v 1.5 2000/02/23 02:56:57 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.6 2000/04/12 01:53:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -33,6 +33,7 @@
  * future.
  */
 
+class vvm_sync;
 class vvm_thread {
 
     public:
@@ -46,10 +47,16 @@ class vvm_thread {
 	// will return false if it is ready to give up the CPU.
       virtual bool go() =0;
 
+	// The sync class uses this to list all the threads blocked on it.
+      vvm_sync*sync_back_;
+      vvm_thread*sync_next_;
 };
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.6  2000/04/12 01:53:07  steve
+ *  Multiple thread can block on an event.
+ *
  * Revision 1.5  2000/02/23 02:56:57  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.cc,v 1.4 2000/02/23 02:56:57 steve Exp $"
+#ident "$Id: vvm_thread.cc,v 1.5 2000/04/12 01:53:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -39,6 +39,8 @@ class delay_event : public vvm_event {
 
 vvm_thread::vvm_thread()
 {
+      sync_next_ = 0;
+      sync_back_ = 0;
       thread_yield();
 }
 
@@ -54,6 +56,9 @@ void vvm_thread::thread_yield(unsigned long delay)
 
 /*
  * $Log: vvm_thread.cc,v $
+ * Revision 1.5  2000/04/12 01:53:07  steve
+ *  Multiple thread can block on an event.
+ *
  * Revision 1.4  2000/02/23 02:56:57  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_pevent.cc,v 1.6 2000/04/10 05:26:07 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.7 2000/04/12 01:53:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -31,15 +31,21 @@ vvm_sync::vvm_sync()
 
 void vvm_sync::wait(vvm_thread*thr)
 {
-      assert(hold_ == 0);
+      assert(thr->sync_back_ == 0);
+      thr->sync_next_ = hold_;
+      thr->sync_back_ = this;
       hold_ = thr;
 }
 
 void vvm_sync::wakeup()
 {
-      vvm_thread*tmp = hold_;
-      hold_ = 0;
-      if (tmp) tmp->thread_yield();
+      while (hold_) {
+	    vvm_thread*tmp = hold_;
+	    hold_ = tmp->sync_next_;
+	    assert(tmp->sync_back_ == 0);
+	    tmp->sync_back_ = 0;
+	    tmp->thread_yield();
+      }
 }
 
 
@@ -130,6 +136,9 @@ void vvm_anyedge::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.7  2000/04/12 01:53:07  steve
+ *  Multiple thread can block on an event.
+ *
  * Revision 1.6  2000/04/10 05:26:07  steve
  *  All events now use the NetEvent class.
  *
