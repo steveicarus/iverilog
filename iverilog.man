@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2000/07/29 17:58:20 $" Version "$Date: 2000/07/29 17:58:20 $"
+.TH iverilog 1 "$Date: 2000/08/09 01:34:00 $" Version "$Date: 2000/08/09 01:34:00 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-ooutputfilename] [-s topmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile[s]
+[-ESv] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-Nfile] [-ooutputfilename] [-s topmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile[s]
 
 .SH DESCRIPTION
 .PP
@@ -55,6 +55,12 @@ in the order they appear on the command line.
 Add this module to the list of VPI modules to be loaded by the
 simulation. Many modules can be specified, and all will be loaded, in
 the order specified.
+.TP 8
+.B -N\fIpath\fP
+This is used for debugging the compiler proper. Dump the final netlist
+form of the design to the specified file. It otherwise does not affect
+operation of the compiler. The dump happens after the design is
+elaborated and optimized.
 .TP 8
 .B -o \fIfilename\fP
 Place output in the file \fIfilename\fP. If no output file name is

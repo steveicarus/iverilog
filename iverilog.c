@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.19 2000/07/29 17:58:20 steve Exp $"
+#ident "$Id: iverilog.c,v 1.20 2000/08/09 01:34:00 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -39,6 +39,7 @@
 const char*base = IVL_ROOT;
 const char*mtm  = 0;
 const char*opath = "a.out";
+const char*npath = 0;
 const char*targ  = "vvm";
 const char*start = 0;
 
@@ -67,6 +68,14 @@ static int t_null(char*cmd, unsigned ncmd)
 
       if (start) {
 	    sprintf(tmp, " -s%s", start);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
+      if (npath) {
+	    sprintf(tmp, " -N%s", npath);
 	    rc = strlen(tmp);
 	    cmd = realloc(cmd, ncmd+rc+1);
 	    strcpy(cmd+ncmd, tmp);
@@ -144,6 +153,14 @@ static int t_vvm(char*cmd, unsigned ncmd)
 
       if (mtm) {
 	    sprintf(tmp, " -T%s", mtm);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
+      if (npath) {
+	    sprintf(tmp, " -N%s", npath);
 	    rc = strlen(tmp);
 	    cmd = realloc(cmd, ncmd+rc+1);
 	    strcpy(cmd+ncmd, tmp);
@@ -228,6 +245,14 @@ static int t_xnf(char*cmd, unsigned ncmd)
 	    ncmd += rc;
       }
 
+      if (npath) {
+	    sprintf(tmp, " -N%s", npath);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
       if (start) {
 	    sprintf(tmp, " -s%s", start);
 	    rc = strlen(tmp);
@@ -280,7 +305,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:D:Ef:I:m:o:Ss:T:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:D:Ef:I:mN::o:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -341,9 +366,15 @@ int main(int argc, char **argv)
 			strcat(mod_list, optarg);
 		  }
 		  break;
+
+		case 'N':
+		  npath = optarg;
+		  break;
+
 		case 'o':
 		  opath = optarg;
 		  break;
+
 		case 'S':
 		  synth_flag = 1;
 		  break;
@@ -460,6 +491,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.20  2000/08/09 01:34:00  steve
+ *  Add the -N switch to the iverilog command.
+ *
  * Revision 1.19  2000/07/29 17:58:20  steve
  *  Introduce min:typ:max support.
  *
