@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.11 2000/09/24 02:21:53 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.12 2000/09/24 15:46:00 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -64,10 +64,10 @@ typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
-typedef struct ivl_net_signal_s*ivl_net_signal_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
+typedef struct ivl_signal_s   *ivl_signal_t;
 typedef struct ivl_statement_s*ivl_statement_t;
 
 /*
@@ -76,6 +76,7 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * changes and additions to the enumerations.
  */
 
+/* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
       IVL_EX_NONE = 0,
       IVL_EX_NUMBER,
@@ -84,6 +85,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SUBSIG,
 } ivl_expr_type_t;
 
+/* This is the type code for an ivl_net_logic_t object. */
 typedef enum ivl_logic_e {
       IVL_LO_NONE = 0,
       IVL_LO_AND,
@@ -100,11 +102,41 @@ typedef enum ivl_logic_e {
       IVL_LO_XOR
 } ivl_logic_t;
 
+/* Processes are initial or always blocks with a statement. This is
+   the type of the ivl_process_t object. */
 typedef enum ivl_process_type_e {
       IVL_PR_INITIAL = 0,
       IVL_PR_ALWAYS  = 1
 } ivl_process_type_t;
 
+/* Signals (ivl_signal_t) that are ports into the scope that contains
+   them have a port type. Otherwise, they are port IVL_SIP_NONE. */
+typedef enum ivl_signal_port_e {
+      IVL_SIP_NONE  = 0,
+      IVL_SIP_INPUT = 1,
+      IVL_SIP_OUTPUT= 2,
+      IVL_SIP_INOUT = 3
+} ivl_signal_port_t;
+
+/* This is the type code for an ivl_signal_t object. Implicit types
+   are resolved by the core compiler, and integers are converted into
+   signed registers. */
+typedef enum ivl_signal_type_e {
+      IVL_SIT_NONE  = 0,
+      IVL_SIT_REG,
+      IVL_SIT_SUPPLY0,
+      IVL_SIT_SUPPLY1,
+      IVL_SIT_TRI,
+      IVL_SIT_TRI0,
+      IVL_SIT_TRI1,
+      IVL_SIT_TRIAND,
+      IVL_SIT_TRIOR,
+      IVL_SIT_WAND,
+      IVL_SIT_WIRE,
+      IVL_SIT_WOR
+} ivl_signal_type_t;
+
+/* This is the type code for ivl_statement_t objects. */
 typedef enum ivl_statement_type_e {
       IVL_ST_NONE   = 0,
       IVL_ST_NOOP   = 1,
@@ -164,8 +196,18 @@ extern unsigned    ivl_get_logic_pins(ivl_net_logic_t net);
 
 extern const char* ivl_get_nexus_name(ivl_nexus_t net);
 
-extern unsigned  ivl_get_signal_pins(ivl_net_signal_t net);
-
+/* SIGNALS
+ * Signals are named things in the Verilog source, like wires and
+ * regs, and also named things that are preated as temporaries during
+ * certain elaboration or optimization steps. A signal may also be a
+ * port of a module or task.
+ *
+ * Signals have a name (obviously) and types. A signal may also be
+ * signed or unsigned.
+ */
+extern unsigned  ivl_signal_pins(ivl_signal_t net);
+extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
+extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 
 /*
  * These functions get information about a process. A process is
@@ -297,7 +339,7 @@ typedef int (*net_probe_f)(const char*name, ivl_net_probe_t net);
    Signals are things like "wire foo" or "reg bar;" that is, declared
    signals in the verilog source. These are not memories, which are
    handled elsewhere. */
-typedef int (*net_signal_f)(const char*name, ivl_net_signal_t net);
+typedef int (*net_signal_f)(const char*name, ivl_signal_t net);
 
 
 /* target_process
@@ -327,6 +369,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.12  2000/09/24 15:46:00  steve
+ *  API access to signal type and port type.
+ *
  * Revision 1.11  2000/09/24 02:21:53  steve
  *  Add support for signal expressions.
  *

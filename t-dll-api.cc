@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.5 2000/09/24 02:21:53 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.6 2000/09/24 15:46:00 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -97,10 +97,73 @@ extern "C" ivl_statement_t ivl_get_process_stmt(ivl_process_t net)
       return net->stmt_;
 }
 
-extern "C" unsigned ivl_get_signal_pins(ivl_net_signal_t net)
+extern "C" unsigned ivl_signal_pins(ivl_signal_t net)
 {
       const NetNet*sig = (const NetNet*)net;
       return sig->pin_count();
+}
+
+extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
+{
+      const NetNet*sig = (const NetNet*)net;
+
+      switch (sig->port_type()) {
+
+	  case NetNet::PINPUT:
+	    return IVL_SIP_INPUT;
+
+	  case NetNet::POUTPUT:
+	    return IVL_SIP_OUTPUT;
+
+	  case NetNet::PINOUT:
+	    return IVL_SIP_INOUT;
+      }
+
+      return IVL_SIP_NONE;
+}
+
+extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
+{
+      const NetNet*sig = (const NetNet*)net;
+      switch (sig->type()) {
+
+	  case NetNet::REG:
+	  case NetNet::INTEGER:
+	    return IVL_SIT_REG;
+
+	  case NetNet::SUPPLY0:
+	    return IVL_SIT_SUPPLY0;
+
+	  case NetNet::SUPPLY1:
+	    return IVL_SIT_SUPPLY1;
+
+	  case NetNet::TRI:
+	    return IVL_SIT_TRI;
+
+	  case NetNet::TRI0:
+	    return IVL_SIT_TRI0;
+
+	  case NetNet::TRI1:
+	    return IVL_SIT_TRI1;
+
+	  case NetNet::TRIAND:
+	    return IVL_SIT_TRIAND;
+
+	  case NetNet::TRIOR:
+	    return IVL_SIT_TRIOR;
+
+	  case NetNet::WAND:
+	    return IVL_SIT_WAND;
+
+	  case NetNet::WIRE:
+	  case NetNet::IMPLICIT:
+	    return IVL_SIT_WIRE;
+
+	  case NetNet::WOR:
+	    return IVL_SIT_WOR;
+      }
+
+      return IVL_SIT_NONE;
 }
 
 extern "C" ivl_statement_type_t ivl_statement_type(ivl_statement_t net)
@@ -200,6 +263,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.6  2000/09/24 15:46:00  steve
+ *  API access to signal type and port type.
+ *
  * Revision 1.5  2000/09/24 02:21:53  steve
  *  Add support for signal expressions.
  *

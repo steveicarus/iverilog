@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.7 2000/09/18 01:24:32 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.8 2000/09/24 15:46:00 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -148,7 +148,7 @@ void dll_target::scope(const NetScope*net)
 void dll_target::signal(const NetNet*net)
 {
       if (net_signal_) {
-	    int rc = (net_signal_)(net->name(), (ivl_net_signal_t)net);
+	    int rc = (net_signal_)(net->name(), (ivl_signal_t)net);
 	    return;
 
       } else {
@@ -163,6 +163,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.8  2000/09/24 15:46:00  steve
+ *  API access to signal type and port type.
+ *
  * Revision 1.7  2000/09/18 01:24:32  steve
  *  Get the structure for ivl_statement_t worked out.
  *

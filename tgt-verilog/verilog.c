@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.2 2000/09/24 02:21:54 steve Exp $"
+#ident "$Id: verilog.c,v 1.3 2000/09/24 15:46:00 steve Exp $"
 #endif
 
 /*
@@ -107,9 +107,9 @@ int target_net_probe(const char*name, ivl_net_probe_t net)
       return 0;
 }
 
-int target_net_signal(const char*name, ivl_net_signal_t net)
+int target_net_signal(const char*name, ivl_signal_t net)
 {
-      fprintf(out, "STUB: %s: signal [%u]\n", name, ivl_get_signal_pins(net));
+      fprintf(out, "STUB: %s: signal [%u]\n", name, ivl_signal_pins(net));
       return 0;
 }
 
@@ -230,6 +230,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.3  2000/09/24 15:46:00  steve
+ *  API access to signal type and port type.
+ *
  * Revision 1.2  2000/09/24 02:21:54  steve
  *  Add support for signal expressions.
  *

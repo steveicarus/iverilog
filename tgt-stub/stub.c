@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.10 2000/09/24 02:21:53 steve Exp $"
+#ident "$Id: stub.c,v 1.11 2000/09/24 15:46:00 steve Exp $"
 #endif
 
 /*
@@ -45,13 +45,12 @@ int target_start_design(ivl_design_t des)
 	    return -2;
       }
 
-      fprintf(out, "module %s;\n", ivl_get_root_name(des));
+      fprintf(out, "STUB: root module = %s;\n", ivl_get_root_name(des));
       return 0;
 }
 
 void target_end_design(ivl_design_t des)
 {
-      fprintf(out, "endmodule\n");
       fclose(out);
 }
 
@@ -107,9 +106,38 @@ int target_net_probe(const char*name, ivl_net_probe_t net)
       return 0;
 }
 
-int target_net_signal(const char*name, ivl_net_signal_t net)
+int target_net_signal(const char*name, ivl_signal_t net)
 {
-      fprintf(out, "STUB: %s: signal [%u]\n", name, ivl_get_signal_pins(net));
+      const char*type = "?";
+      const char*port = "";
+
+      switch (ivl_signal_type(net)) {
+	  case IVL_SIT_REG:
+	    type = "reg";
+	    break;
+	  case IVL_SIT_WIRE:
+	    type = "wire";
+	    break;
+      }
+
+      switch (ivl_signal_port(net)) {
+
+	  case IVL_SIP_INPUT:
+	    port = "input ";
+	    break;
+
+	  case IVL_SIP_OUTPUT:
+	    port = "output ";
+	    break;
+
+	  case IVL_SIP_INOUT:
+	    port = "inout ";
+	    break;
+      }
+
+      fprintf(out, "STUB: %s %s[%u] %s\n", type, port,
+	      ivl_signal_pins(net), name);
+
       return 0;
 }
 
@@ -219,6 +247,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.11  2000/09/24 15:46:00  steve
+ *  API access to signal type and port type.
+ *
  * Revision 1.10  2000/09/24 02:21:53  steve
  *  Add support for signal expressions.
  *
