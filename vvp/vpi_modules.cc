@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.1 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.2 2001/03/22 05:39:34 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -32,7 +32,7 @@ void vpip_load_modules(unsigned cnt, const char*mod[], const char*path)
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
 	    char buf[4096];
 	    sprintf(buf, "%s/%s.vpi", path, mod[idx]);
-	    printf("Load %s...\n", buf);
+	      //printf("Load %s...\n", buf);
 
 	    ivl_dll_t dll = ivl_dlopen(buf);
 	    if (dll == 0) {
@@ -56,6 +56,9 @@ void vpip_load_modules(unsigned cnt, const char*mod[], const char*path)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.2  2001/03/22 05:39:34  steve
+ *  Test print that interferes with output.
+ *
  * Revision 1.1  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.
