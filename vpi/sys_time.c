@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_time.c,v 1.2 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: sys_time.c,v 1.3 2002/01/11 05:20:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,11 @@
 static int sys_time_sizetf(char*x)
 {
       return 64;
+}
+
+static int sys_stime_sizetf(char*x)
+{
+      return 32;
 }
 
 static int sys_time_calltf(char*name)
@@ -60,10 +65,20 @@ void sys_time_register()
       tf_data.compiletf = 0;
       tf_data.sizetf    = sys_time_sizetf;
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.tfname    = "$stime";
+      tf_data.calltf    = sys_time_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = sys_stime_sizetf;
+      vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.3  2002/01/11 05:20:59  steve
+ *  Add the stime system function.
+ *
  * Revision 1.2  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
