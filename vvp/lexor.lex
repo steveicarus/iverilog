@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.9 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: lexor.lex,v 1.10 2001/04/04 04:33:08 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -45,6 +45,23 @@
       yytext[strlen(yytext)-1] = 0;
       yylval.text = strdup(yytext+1);
       return T_STRING; }
+
+[1-9][0-9]*"'b"[01xz]+ {
+      yylval.vect.idx = strtoul(yytext, 0, 10);
+      yylval.vect.text = (char*)malloc(yylval.vect.idx + 1);
+
+      const char*bits = strchr(yytext, 'b');
+      bits += 1;
+      unsigned pad = 0;
+      if (strlen(bits) < yylval.vect.idx)
+	    pad = yylval.vect.idx - strlen(bits);
+
+      memset(yylval.vect.text, '0', pad);
+      for (unsigned idx = pad ;  idx < yylval.vect.idx ;  idx += 1)
+	    yylval.vect.text[idx] = bits[idx-pad];
+
+      yylval.vect.text[yylval.vect.idx] = 0;
+      return T_VECTOR; }
 
 
   /* These are some keywords that are recognized. */
@@ -76,6 +93,7 @@
       return T_NUMBER; }
 
 
+
   /* Symbols are pretty much what is left. They are used to refer to
      labels so the rule must match a string that a label would match. */
 [.$_a-zA-Z][.$_a-zA-Z0-9<>]* {
@@ -105,6 +123,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.10  2001/04/04 04:33:08  steve
+ *  Take vector form as parameters to vpi_call.
+ *
  * Revision 1.9  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

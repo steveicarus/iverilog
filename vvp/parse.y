@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.16 2001/04/02 00:24:30 steve Exp $"
+#ident "$Id: parse.y,v 1.17 2001/04/04 04:33:08 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -44,6 +44,8 @@ extern FILE*yyin;
       struct symb_s  symb;
       struct symbv_s symbv;
 
+      struct symb_s vect;
+
       struct argv_s argv;
       vpiHandle vpi;
 };
@@ -57,6 +59,7 @@ extern FILE*yyin;
 %token <numb> T_NUMBER
 %token <text> T_STRING
 %token <text> T_SYMBOL
+%token <vect> T_VECTOR
 
 %type <symb>  symbol
 %type <symbv> symbols
@@ -256,10 +259,10 @@ argument_list
 argument
 	: T_STRING
 		{ $$ = vpip_make_string_const($1); }
-	| T_NUMBER
-		{ $$ = vpip_make_binary_const($1); }
 	| T_SYMBOL
 		{ $$ = compile_vpi_lookup($1); free($1); }
+	| T_VECTOR
+		{ $$ = vpip_make_binary_const($1.idx, $1.text); }
 	;
 
 
@@ -301,6 +304,11 @@ int compile_design(const char*path)
       yypath = path;
       yyline = 1;
       yyin = fopen(path, "r");
+      if (yyin == 0) {
+	    fprintf(stderr, "%s: Unable to open input file.\n", path);
+	    return -1;
+      }
+
       int rc = yyparse();
       return rc;
 }
@@ -308,6 +316,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.17  2001/04/04 04:33:08  steve
+ *  Take vector form as parameters to vpi_call.
+ *
  * Revision 1.16  2001/04/02 00:24:30  steve
  *  Take numbers as system task parameters.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.7 2001/03/23 02:40:22 steve Exp $"
+#ident "$Id: main.cc,v 1.8 2001/04/04 04:33:08 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -77,7 +77,8 @@ int main(int argc, char*argv[])
       for (unsigned idx = 0 ;  idx < module_cnt ;  idx += 1)
 	    vpip_load_module(module_tab[idx], module_path);
 #endif
-      compile_design(design_path);
+      if (int rc = compile_design(design_path))
+	    return rc;
       compile_cleanup();
 
       if (dump_path) {
@@ -99,6 +100,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.8  2001/04/04 04:33:08  steve
+ *  Take vector form as parameters to vpi_call.
+ *
  * Revision 1.7  2001/03/23 02:40:22  steve
  *  Add the :module header statement.
  *

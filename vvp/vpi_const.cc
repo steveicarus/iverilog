@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.2 2001/04/02 00:24:31 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.3 2001/04/04 04:33:08 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
+# include  <stdio.h>
 # include  <malloc.h>
 # include  <string.h>
 # include  <assert.h>
@@ -98,14 +99,32 @@ static int binary_get(int code, vpiHandle ref)
       }
 }
 
+static char buf[4096];
+
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
-      struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
+      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
       assert(ref->vpi_type->type_code == vpiConstant);
 
       switch (vp->format) {
 
+	  case vpiObjTypeVal:
+	  case vpiBinStrVal:
+	    for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
+		  unsigned nibble = idx/4;
+		  unsigned shift  = 2 * (idx%4);
+		  unsigned val = (rfp->bits[nibble] >> shift) & 3;
+
+		  buf[rfp->nbits-idx-1] = "01xz"[val];
+	    }
+	    buf[rfp->nbits] = 0;
+	    vp->value.str = buf;
+	    vp->format = vpiBinStrVal;
+	    break;
+
 	  default:
+	    fprintf(stderr, "vvp error: format %d not supported "
+		    "by vpiBinaryConst\n", vp->format);
 	    vp->format = vpiSuppressVal;
 	    break;
       }
@@ -121,7 +140,7 @@ static const struct __vpirt vpip_binary_rt = {
       0
 };
 
-vpiHandle vpip_make_binary_const(long val)
+vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 {
       struct __vpiBinaryConst*obj;
 
@@ -129,25 +148,41 @@ vpiHandle vpip_make_binary_const(long val)
 	    malloc(sizeof (struct __vpiBinaryConst));
       obj->base.vpi_type = &vpip_binary_rt;
 
-      obj->nbits = 8*sizeof(long);
-      obj->bits = (unsigned char*)malloc(obj->nbits / 4);
-      memset(obj->bits, 0, obj->nbits / 4);
+      obj->nbits = wid;
+      obj->bits = (unsigned char*)malloc((obj->nbits + 3) / 4);
+      memset(obj->bits, 0, (obj->nbits + 3) / 4);
 
       for (unsigned idx = 0 ;  idx < obj->nbits ;  idx += 1) {
 	    unsigned nibble = idx / 4;
+	    unsigned val = 0;
+	    switch (bits[wid-idx-1]) {
+		case '0':
+		  val = 0;
+		  break;
+		case '1':
+		  val = 1;
+		  break;
+		case 'x':
+		  val = 2;
+		  break;
+		case 'z':
+		  val = 3;
+		  break;
+	    }
 
-	    if (val & 1)
-		  obj->bits[nibble] |= 1 << 2 * (idx%4);
-
-	    val >>= 1;
+	    obj->bits[nibble] |= val << (2 * (idx%4));
       }
 
+      free(bits);
       return &(obj->base);
 }
 
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.3  2001/04/04 04:33:08  steve
+ *  Take vector form as parameters to vpi_call.
+ *
  * Revision 1.2  2001/04/02 00:24:31  steve
  *  Take numbers as system task parameters.
  *
