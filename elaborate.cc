@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.201 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.202 2000/12/15 01:24:17 steve Exp $"
 #endif
 
 /*
@@ -606,7 +606,11 @@ void PGModule::elaborate_cudp_(Design*des, PUdp*udp, const string&path) const
       for (unsigned idx = 0 ;  idx < udp->tinput.count() ;  idx += 1) {
 	    string input = udp->tinput[idx];
 
-	    net->set_table(input, udp->toutput[idx]);
+	    bool flag = net->set_table(input, udp->toutput[idx]);
+	    if (flag == false) {
+		  cerr << get_line()<<": error: invalid table format." << endl;
+		  des->errors += 1;
+	    }
       }
 
       net->cleanup_table();
@@ -2354,6 +2358,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.202  2000/12/15 01:24:17  steve
+ *  Accept x in outputs of primitive. (PR#84)
+ *
  * Revision 1.201  2000/12/10 22:01:36  steve
  *  Support decimal constants in behavioral delays.
  *

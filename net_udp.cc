@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_udp.cc,v 1.2 2000/11/04 06:36:24 steve Exp $"
+#ident "$Id: net_udp.cc,v 1.3 2000/12/15 01:24:17 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -150,9 +150,12 @@ NetUDP_COMB::NetUDP_COMB(const string&n, unsigned pins, bool sequ)
 
 bool NetUDP_COMB::set_table(const string&input, char output)
 {
-      assert((output == '0') || (output == '1'));
+      if ((output != '0') && (output != '1') && (output != 'x'))
+	    return false;
 
+      assert((output == '0') || (output == '1') || (output == 'x'));
       assert(input.length() == (pin_count()-1));
+
 	/* XXXX Need to check to make sure that the input vector
 	   contains a legal combination of characters. In
 	   combinational UDPs, only 0, 1, x, and ? are allowed. */
@@ -191,6 +194,9 @@ bool NetUDP_COMB::next(string&inp, char&out) const
 
 /*
  * $Log: net_udp.cc,v $
+ * Revision 1.3  2000/12/15 01:24:17  steve
+ *  Accept x in outputs of primitive. (PR#84)
+ *
  * Revision 1.2  2000/11/04 06:36:24  steve
  *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
  *
