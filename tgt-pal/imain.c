@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.9 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: imain.c,v 1.10 2001/09/30 16:45:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -147,13 +147,11 @@ int target_design(ivl_design_t des)
       return 0;
 }
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
-#include <cygwin/cygwin_dll.h>
-DECLARE_CYGWIN_DLL(DllMain);
-#endif
-
 /*
  * $Log: imain.c,v $
+ * Revision 1.10  2001/09/30 16:45:10  steve
+ *  Fix some Cygwin DLL handling. (Venkat Iyer)
+ *
  * Revision 1.9  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

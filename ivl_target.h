@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.82 2001/09/16 22:19:42 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.83 2001/09/30 16:45:10 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -938,6 +938,14 @@ extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
 
+#if defined(__MINGW32__) || defined (__CYGWIN32__)
+#  define DLLEXPORT __declspec(dllexport)
+#else
+#  define DLLEXPORT
+#endif
+
+extern DLLEXPORT int target_design(ivl_design_t des);
+
 
 /* target_design
 
@@ -955,6 +963,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.83  2001/09/30 16:45:10  steve
+ *  Fix some Cygwin DLL handling. (Venkat Iyer)
+ *
  * Revision 1.82  2001/09/16 22:19:42  steve
  *  Support attributes to logic gates.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.3 2001/05/22 02:14:47 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.4 2001/09/30 16:45:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -118,13 +118,11 @@ const struct __vpirt *vpip_get_sysfunc_rt(void)
     return &vpip_sysfunc_rt;
 }
 
-#if defined (__CYGWIN32__)
-#include <cygwin/cygwin_dll.h>
-DECLARE_CYGWIN_DLL(DllMain);
-#endif
-
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.4  2001/09/30 16:45:10  steve
+ *  Fix some Cygwin DLL handling. (Venkat Iyer)
+ *
  * Revision 1.3  2001/05/22 02:14:47  steve
  *  Update the mingw build to not require cygwin files.
  *

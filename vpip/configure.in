@@ -15,10 +15,7 @@ shared=-shared
 EXTRALIBS=
 case "${host}" in
      *-*-cygwin*)
-        shared="-mdll -Wl,--enable-auto-image-base"
-	if test $ac_cv_mingw32 = yes; then
-	    shared="-shared -Wl,--enable-auto-image-base"
-	fi
+        shared="-shared -Wl,--enable-auto-image-base"
 	WIN32=yes
 	;;
      *-*-hpux*)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.24 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: verilog.c,v 1.25 2001/09/30 16:45:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -436,13 +436,12 @@ int target_design(ivl_design_t des)
 }
 
 
-#if defined (__CYGWIN32__)
-#include <cygwin/cygwin_dll.h>
-DECLARE_CYGWIN_DLL(DllMain);
-#endif
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.25  2001/09/30 16:45:10  steve
+ *  Fix some Cygwin DLL handling. (Venkat Iyer)
+ *
  * Revision 1.24  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
