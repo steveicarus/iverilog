@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.108 2004/06/30 03:07:32 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.109 2004/09/10 00:14:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1355,10 +1355,12 @@ static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
       struct vector_info res;
 
       subv = draw_eval_expr(ivl_expr_oper1(exp), 0);
-      if (wid == subv.wid) {
+      if (wid <= subv.wid) {
 	    if (subv.base >= 8)
-		  save_expression_lookaside(subv.base, exp, wid);
-	    return subv;
+		  save_expression_lookaside(subv.base, exp, subv.wid);
+	    res.base = subv.base;
+	    res.wid = wid;
+	    return res;
       }
 
       res.base = allocate_vector(wid);
@@ -2137,6 +2139,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.109  2004/09/10 00:14:31  steve
+ *  Relaxed width constraint on pad_expression output.
+ *
  * Revision 1.108  2004/06/30 03:07:32  steve
  *  Watch out for real compared to constant. Handle as real.
  *
