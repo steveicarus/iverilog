@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.86 2003/03/03 23:05:49 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.87 2003/03/06 00:27:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -298,7 +298,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       }
 
       if (lptr && (nptr_pin == 0)) {
-	    sprintf(result, "L_%s", vvp_mangle_id(ivl_logic_name(lptr)));
+	    sprintf(result, "L_%p", lptr);
 	    return result;
       }
 
@@ -681,8 +681,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       draw_udp_def(udp);
     }
 
-  fprintf(vvp_out, "L_%s .udp",
-	  vvp_mangle_id(ivl_logic_name(lptr)));
+  fprintf(vvp_out, "L_%p .udp", lptr);
   fprintf(vvp_out, " UDP_%s", 
 	  vvp_mangle_id(ivl_udp_name(udp)));
   draw_delay(lptr);
@@ -862,14 +861,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    int inst;
 	    for (inst = 0; inst < ninp; inst += 4) {
 		  if (ninp > 4)
-			fprintf(vvp_out, "L_%s/%d/%d .functor %s", 
-				vvp_mangle_id(ivl_logic_name(lptr)),
-				level, inst,
-				lcasc);
+			fprintf(vvp_out, "L_%p/%d/%d .functor %s", 
+				lptr, level, inst, lcasc);
 		  else {
-			fprintf(vvp_out, "L_%s .functor %s", 
-				vvp_mangle_id(ivl_logic_name(lptr)),
-				ltype);
+			fprintf(vvp_out, "L_%p .functor %s", 
+				lptr, ltype);
 
 			draw_delay(lptr);
 
@@ -879,10 +875,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  }
 		  for (pdx = inst; pdx < ninp && pdx < inst+4 ; pdx += 1) {
 			if (level) {
-			      fprintf(vvp_out, ", L_%s/%d/%d",
-				      vvp_mangle_id(ivl_logic_name(lptr)),
-				      level - 1,
-				      pdx*4 );
+			      fprintf(vvp_out, ", L_%p/%d/%d",
+				      lptr, level - 1, pdx*4);
 			} else {
 			      fprintf(vvp_out, ", %s", input_strings[pdx]);
 			}
@@ -1648,6 +1642,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.87  2003/03/06 00:27:09  steve
+ *  Use numbers for functor labels.
+ *
  * Revision 1.86  2003/03/03 23:05:49  steve
  *  Printed nexus names need not use ivl_nexus_name.
  *
