@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: cprop.cc,v 1.5 1999/12/30 04:19:12 steve Exp $"
+#ident "$Id: cprop.cc,v 1.6 2000/01/02 17:56:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -275,27 +275,46 @@ struct cprop_dc_functor  : public functor_t {
 
 void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 {
-	// If there are any links that take input, abort this
-	// operation.
+	// If there are any links that take input, the constant is
+	// used structurally somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
 	    if (count_inputs(obj->pin(idx)) > 0)
 		  return;
 
+	// Look for signals that have NetESignal nodes attached to
+	// them. If I find any, this this constant is used by a
+	// behavioral expression somewhere.
+      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
+	    NetObj*cur;
+	    unsigned pin;
+	    obj->pin(idx).next_link(cur, pin);
+	    while (cur != obj) {
+		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
+		  if (tmp && tmp->get_eref() > 0)
+			return;
+
+		  cur->pin(pin).next_link(cur, pin);
+	    }
+      }
+
 	// If there are no other drivers, delete all the signals that
 	// are also dangling.
-      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
-	    if (count_outputs(obj->pin(idx)) == 1) {
+      for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
+	    if (count_outputs(obj->pin(idx)) != 1)
+		  continue;
 
-		  NetObj*cur;
-		  unsigned pin;
-		  obj->pin(idx).next_link(cur, pin);
-		  while (cur != obj) {
-			cerr << "cprop: delete dangling signal " <<
-			      cur->name() << "." << endl;
-			delete cur;
-			obj->pin(idx).next_link(cur, pin);
-		  }
+	    NetObj*cur;
+	    unsigned pin;
+	    obj->pin(idx).next_link(cur, pin);
+	    while (cur != obj) {
+		  NetNet*tmp = dynamic_cast<NetNet*>(cur);
+		  cur->pin(pin).next_link(cur, pin);
+		  assert(tmp->get_eref() == 0);
+		  cerr << "cprop: delete dangling signal " <<
+			tmp->name() << "." << endl;
+		  delete tmp;
 	    }
+      }
 
 	// Done. Delete me.
       delete obj;
@@ -318,6 +337,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.6  2000/01/02 17:56:42  steve
+ *  Do not delete constants that input to exressions.
+ *
  * Revision 1.5  1999/12/30 04:19:12  steve
  *  Propogate constant 0 in low bits of adders.
  *
