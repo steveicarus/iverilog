@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.41 2001/12/06 03:31:25 steve Exp $"
+#ident "$Id: parse.y,v 1.42 2001/12/14 02:04:49 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -119,13 +119,18 @@ program
 statement
 
   /* Functor statements define functors. The functor must have a
-     label and a type name, and may have operands. */
+     label and a type name, and may have operands. The functor may
+     also have a delay specification and output strengths. */
 
 	: T_LABEL K_FUNCTOR T_SYMBOL delay ',' symbols ';'
-		{ compile_functor($1, $3, $4, $6.cnt, $6.vect); }
+		{ compile_functor($1, $3, $4, 6, 6, $6.cnt, $6.vect); }
 
-	| T_LABEL K_FUNCTOR T_SYMBOL delay ','  T_NUMBER ';'
-		{ compile_functor($1, $3, $4, 0, 0); }
+	| T_LABEL K_FUNCTOR T_SYMBOL delay
+	          '[' T_NUMBER T_NUMBER ']' ',' symbols ';'
+		{ unsigned str0 = $6;
+		  unsigned str1 = $7;
+		  compile_functor($1, $3, $4, str0, str1, $10.cnt, $10.vect);
+		}
 
 
   /* UDP statements define or instantiate UDPs.  Definitions take a 
@@ -527,6 +532,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.42  2001/12/14 02:04:49  steve
+ *  Support strength syntax on functors.
+ *
  * Revision 1.41  2001/12/06 03:31:25  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

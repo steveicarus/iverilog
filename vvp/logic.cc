@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.4 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: logic.cc,v 1.5 2001/12/14 02:04:49 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -37,9 +37,14 @@
  *   to 4 inputs.
  */
 
-inline table_functor_s::table_functor_s(truth_t t) 
-  : table(t) 
-{}
+table_functor_s::table_functor_s(truth_t t, unsigned str0, unsigned str1) 
+: table(t) 
+{
+      assert(str0 <= 7);
+      assert(str1 <= 7);
+      odrive0 = str0;
+      odrive1 = str1;
+}
 
 table_functor_s::~table_functor_s() 
 {}
@@ -63,19 +68,19 @@ void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
  */
 
 void compile_functor(char*label, char*type,
-		     vvp_delay_t delay,
+		     vvp_delay_t delay, unsigned ostr0, unsigned ostr1,
 		     unsigned argc, struct symb_s*argv)
 {
       functor_t obj;
 
       if (strcmp(type, "OR") == 0) {
-	    obj = new table_functor_s(ft_OR);
+	    obj = new table_functor_s(ft_OR, ostr0, ostr1);
 
       } else if (strcmp(type, "AND") == 0) {
-	    obj = new table_functor_s(ft_AND);
+	    obj = new table_functor_s(ft_AND, ostr0, ostr1);
 
       } else if (strcmp(type, "BUF") == 0) {
-	    obj = new table_functor_s(ft_BUF);
+	    obj = new table_functor_s(ft_BUF, ostr0, ostr1);
 
       } else if (strcmp(type, "BUFIF0") == 0) {
 	    obj = new vvp_bufif0_s;
@@ -102,19 +107,19 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_EEQ);
 
       } else if (strcmp(type, "NAND") == 0) {
-	    obj = new table_functor_s(ft_NAND);
+	    obj = new table_functor_s(ft_NAND, ostr0, ostr1);
 
       } else if (strcmp(type, "NOR") == 0) {
-	    obj = new table_functor_s(ft_NOR);
+	    obj = new table_functor_s(ft_NOR, ostr0, ostr1);
 
       } else if (strcmp(type, "NOT") == 0) {
-	    obj = new table_functor_s(ft_NOT);
+	    obj = new table_functor_s(ft_NOT, ostr0, ostr1);
 
       } else if (strcmp(type, "XNOR") == 0) {
-	    obj = new table_functor_s(ft_XNOR);
+	    obj = new table_functor_s(ft_XNOR, ostr0, ostr1);
 
       } else if (strcmp(type, "XOR") == 0) {
-	    obj = new table_functor_s(ft_XOR);
+	    obj = new table_functor_s(ft_XOR, ostr0, ostr1);
 
       } else {
 	    yyerror("invalid functor type.");
@@ -141,6 +146,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.5  2001/12/14 02:04:49  steve
+ *  Support strength syntax on functors.
+ *
  * Revision 1.4  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

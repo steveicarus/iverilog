@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.h,v 1.1 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: logic.h,v 1.2 2001/12/14 02:04:49 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -28,11 +28,16 @@
  *  Table driven functor.  oval = table[ival];
  */
 
-struct table_functor_s: public functor_s {
+class table_functor_s: public functor_s {
+
+    public:
       typedef const unsigned char *truth_t;
-      explicit table_functor_s(truth_t t);
+      explicit table_functor_s(truth_t t, unsigned str0 =6, unsigned str1 =6);
       virtual ~table_functor_s();
+
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+    private:
       truth_t table;
 };
 
@@ -56,6 +61,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.2  2001/12/14 02:04:49  steve
+ *  Support strength syntax on functors.
+ *
  * Revision 1.1  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *
