@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.29 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: functor.cc,v 1.30 2001/11/01 03:00:19 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -158,21 +158,6 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
       }
 }
 
-/* 
- *  Variable functors receive %assign-ed values at port[0].
- *  Continuous assignments are connected to port[1].
- */
-
-void var_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned val, unsigned)
-{
-      unsigned pp = ipoint_port(ptr);
-      
-      if (assigned && pp==1  ||  !assigned && pp==0) {
-	    put_oval(ptr, push, val);
-      }
-}
-
-
 void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push, 
 				  unsigned val, unsigned)
 {
@@ -201,6 +186,9 @@ void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.30  2001/11/01 03:00:19  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.29  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

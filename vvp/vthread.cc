@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.62 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: vthread.cc,v 1.63 2001/11/01 03:00:20 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -305,10 +305,10 @@ void vthread_schedule_list(vthread_t thr)
 
 bool of_AND(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -336,10 +336,10 @@ bool of_AND(vthread_t thr, vvp_code_t cp)
 
 bool of_ADD(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      unsigned long*lva = vector_to_array(thr, cp->bit_idx1, cp->number);
-      unsigned long*lvb = vector_to_array(thr, cp->bit_idx2, cp->number);
+      unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
+      unsigned long*lvb = vector_to_array(thr, cp->bit_idx[1], cp->number);
       if (lva == 0 || lvb == 0)
 	    goto x_out;
 
@@ -362,7 +362,7 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
-	    thr_put_bit(thr, cp->bit_idx1+idx, (bit&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
       }
 
       delete[]lva;
@@ -375,30 +375,30 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       delete[]lvb;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
 
       return true;
 }
 
 bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
-      schedule_assign(cp->iptr, bit_val, cp->bit_idx1);
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
+      schedule_assign(cp->iptr, bit_val, cp->bit_idx[0]);
       return true;
 }
 
 bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[0]);
-      schedule_assign(itmp, bit_val, cp->bit_idx1);
+      schedule_assign(itmp, bit_val, cp->bit_idx[0]);
       return true;
 }
 
 bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
-      schedule_memory(cp->mem, thr->index[3], bit_val, cp->bit_idx1);
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
+      schedule_memory(cp->mem, thr->index[3], bit_val, cp->bit_idx[0]);
       return true;
 }
 
@@ -416,8 +416,8 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
       unsigned eeq = 1;
       unsigned lt = 0;
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       unsigned sig1 = thr_get_bit(thr, idx1 + cp->number - 1);
       unsigned sig2 = thr_get_bit(thr, idx2 + cp->number - 1);
@@ -466,8 +466,8 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       unsigned eeq = 1;
       unsigned lt = 0;
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lv = thr_get_bit(thr, idx1);
@@ -507,8 +507,8 @@ bool of_CMPX(vthread_t thr, vvp_code_t cp)
 {
       unsigned eq = 1;
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lv = thr_get_bit(thr, idx1);
@@ -532,8 +532,8 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 {
       unsigned eq = 1;
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lv = thr_get_bit(thr, idx1);
@@ -625,11 +625,11 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 
 bool of_DIV(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       if(cp->number <= 8*sizeof(unsigned long)) {
-	    unsigned idx1 = cp->bit_idx1;
-	    unsigned idx2 = cp->bit_idx2;
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned idx2 = cp->bit_idx[1];
 	    unsigned long lv = 0, rv = 0;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
@@ -653,7 +653,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	    lv /= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
 		  lv >>= 1;
 	    }
 
@@ -675,8 +675,8 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	    int i;
 	    int current, copylen;
 
-	    unsigned idx1 = cp->bit_idx1;
-	    unsigned idx2 = cp->bit_idx2;
+	    unsigned idx1 = cp->bit_idx[0];
+	    unsigned idx2 = cp->bit_idx[1];
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 		  unsigned lb = thr_get_bit(thr, idx1);
@@ -751,7 +751,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
       tally:
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 		    // n.b., z[] has the remainder...
-		  thr_put_bit(thr, cp->bit_idx1+idx, b[idx]);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, b[idx]);
 	    }
 
 	    delete []t;
@@ -763,7 +763,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
 
       return true;
 }
@@ -850,7 +850,7 @@ bool of_END(vthread_t thr, vvp_code_t)
  */
 bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
-      vthread_t child = vthread_new(cp->fork->cptr, cp->fork->scope);
+      vthread_t child = vthread_new(cp->cptr2, cp->scope);
 
       child->child  = thr->child;
       child->parent = thr;
@@ -865,9 +865,9 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
 bool of_INV(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
-      for (unsigned idx = 0 ;  idx < cp->bit_idx2 ;  idx += 1) {
-	    unsigned val = thr_get_bit(thr, cp->bit_idx1+idx);
+      assert(cp->bit_idx[0] >= 4);
+      for (unsigned idx = 0 ;  idx < cp->bit_idx[1] ;  idx += 1) {
+	    unsigned val = thr_get_bit(thr, cp->bit_idx[0]+idx);
 	    switch (val) {
 		case 0:
 		  val = 1;
@@ -879,7 +879,7 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
 		  val = 2;
 		  break;
 	    }
-	    thr_put_bit(thr, cp->bit_idx1+idx, val);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, val);
       }
       return true;
 }
@@ -891,25 +891,25 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
 
 bool of_IX_ADD(vthread_t thr, vvp_code_t cp)
 {
-  thr->index[cp->bit_idx1 & 3] += cp->number;
+  thr->index[cp->bit_idx[0] & 3] += cp->number;
   return true;
 }
 
 bool of_IX_SUB(vthread_t thr, vvp_code_t cp)
 {
-  thr->index[cp->bit_idx1 & 3] -= cp->number;
+  thr->index[cp->bit_idx[0] & 3] -= cp->number;
   return true;
 }
 
 bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
 {
-  thr->index[cp->bit_idx1 & 3] *= cp->number;
+  thr->index[cp->bit_idx[0] & 3] *= cp->number;
   return true;
 }
 
 bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 {
-      thr->index[cp->bit_idx1 & 3] = cp->number;
+      thr->index[cp->bit_idx[0] & 3] = cp->number;
       return true;
 }
 
@@ -917,14 +917,14 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 {
       unsigned long v = 0;
       for (unsigned i = 0; i<cp->number; i++) {
-	    unsigned char vv = thr_get_bit(thr, cp->bit_idx2 + i);
+	    unsigned char vv = thr_get_bit(thr, cp->bit_idx[1] + i);
 	    if (vv&2) {
 		  v = ~0UL;
 		  break;
 	    }
 	    v |= vv << i;
       }
-      thr->index[cp->bit_idx1 & 3] = v;
+      thr->index[cp->bit_idx[0] & 3] = v;
       return true;
 }
 
@@ -942,21 +942,21 @@ bool of_JMP(vthread_t thr, vvp_code_t cp)
 
 bool of_JMP0(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx1) == 0)
+      if (thr_get_bit(thr, cp->bit_idx[0]) == 0)
 	    thr->pc = cp->cptr;
       return true;
 }
 
 bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx1) != 1)
+      if (thr_get_bit(thr, cp->bit_idx[0]) != 1)
 	    thr->pc = cp->cptr;
       return true;
 }
 
 bool of_JMP1(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx1) == 1)
+      if (thr_get_bit(thr, cp->bit_idx[0]) == 1)
 	    thr->pc = cp->cptr;
       return true;
 }
@@ -985,36 +985,36 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 
 bool of_LOAD(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
-      thr_put_bit(thr, cp->bit_idx1, functor_get(cp->iptr));
+      assert(cp->bit_idx[0] >= 4);
+      thr_put_bit(thr, cp->bit_idx[0], functor_get(cp->iptr));
       return true;
 }
 
 bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
       unsigned char val = memory_get(cp->mem, thr->index[3]);
-      thr_put_bit(thr, cp->bit_idx1, val);
+      thr_put_bit(thr, cp->bit_idx[0], val);
       return true;
 }
 
 bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
-      assert(cp->bit_idx2 <  4);
+      assert(cp->bit_idx[0] >= 4);
+      assert(cp->bit_idx[1] <  4);
 
-      vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->index[cp->bit_idx2]);
-      thr_put_bit(thr, cp->bit_idx1, functor_get(ptr));
+      vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->index[cp->bit_idx[1]]);
+      thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
       return true;
 }
 
 bool of_MOD(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
 if(cp->number <= 8*sizeof(unsigned long)) {
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
       unsigned long lv = 0, rv = 0;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
@@ -1038,7 +1038,7 @@ if(cp->number <= 8*sizeof(unsigned long)) {
       lv %= rv;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
 	    lv >>= 1;
       }
 
@@ -1059,8 +1059,8 @@ if(cp->number <= 8*sizeof(unsigned long)) {
 	int i;
 	int current, copylen;
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 	    unsigned lb = thr_get_bit(thr, idx1);
@@ -1136,7 +1136,7 @@ if(cp->number <= 8*sizeof(unsigned long)) {
 
 tally:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx1+idx, z[idx]);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, z[idx]);
       }
 
       delete []t;
@@ -1147,24 +1147,24 @@ tally:
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
 
       return true;
 }
 
 bool of_MOV(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      if (cp->bit_idx2 >= 4) {
+      if (cp->bit_idx[1] >= 4) {
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 		  thr_put_bit(thr,
-			      cp->bit_idx1+idx,
-			      thr_get_bit(thr, cp->bit_idx2+idx));
+			      cp->bit_idx[0]+idx,
+			      thr_get_bit(thr, cp->bit_idx[1]+idx));
 
       } else {
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-		  thr_put_bit(thr, cp->bit_idx1+idx, cp->bit_idx2);
+		  thr_put_bit(thr, cp->bit_idx[0]+idx, cp->bit_idx[1]);
       }
 
       return true;
@@ -1172,11 +1172,11 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
 
 bool of_MUL(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
       if(cp->number <= 8*sizeof(unsigned long)) {
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
       unsigned long lv = 0, rv = 0;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
@@ -1197,14 +1197,14 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       lv *= rv;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1) ? 1 : 0);
 	    lv >>= 1;
       }
 
       return true;
       } else {
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       unsigned char *a, *b, *sum;
       a = new unsigned char[cp->number];
@@ -1254,7 +1254,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
                 }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx1+idx, sum[idx]);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, sum[idx]);
       }
 
       delete[]sum;
@@ -1265,7 +1265,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
 
       return true;
 }
@@ -1277,10 +1277,10 @@ bool of_NOOP(vthread_t thr, vvp_code_t cp)
 
 bool of_NORR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       unsigned lb = 1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1294,17 +1294,17 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
 		  lb = 2;
       }
 
-      thr_put_bit(thr, cp->bit_idx1, lb);
+      thr_put_bit(thr, cp->bit_idx[0], lb);
 
       return true;
 }
 
 bool of_ANDR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       unsigned lb = 1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1318,17 +1318,17 @@ bool of_ANDR(vthread_t thr, vvp_code_t cp)
 		  lb = 2;
       }
 
-      thr_put_bit(thr, cp->bit_idx1, lb);
+      thr_put_bit(thr, cp->bit_idx[0], lb);
 
       return true;
 }
 
 bool of_NANDR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       unsigned lb = 0;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1342,17 +1342,17 @@ bool of_NANDR(vthread_t thr, vvp_code_t cp)
 		  lb = 2;
       }
 
-      thr_put_bit(thr, cp->bit_idx1, lb);
+      thr_put_bit(thr, cp->bit_idx[0], lb);
 
       return true;
 }
 
 bool of_ORR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       unsigned lb = 0;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1366,17 +1366,17 @@ bool of_ORR(vthread_t thr, vvp_code_t cp)
 		  lb = 2;
       }
 
-      thr_put_bit(thr, cp->bit_idx1, lb);
+      thr_put_bit(thr, cp->bit_idx[0], lb);
 
       return true;
 }
 
 bool of_XORR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       unsigned lb = 0;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1389,17 +1389,17 @@ bool of_XORR(vthread_t thr, vvp_code_t cp)
 	    }
       }
       
-      thr_put_bit(thr, cp->bit_idx1, lb);
+      thr_put_bit(thr, cp->bit_idx[0], lb);
       
       return true;
 }
 
 bool of_XNORR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
       unsigned lb = 1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1412,17 +1412,17 @@ bool of_XNORR(vthread_t thr, vvp_code_t cp)
 	    }
       }
       
-      thr_put_bit(thr, cp->bit_idx1, lb);
+      thr_put_bit(thr, cp->bit_idx[0], lb);
       
       return true;
 }
 
 bool of_OR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1451,7 +1451,7 @@ static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
 
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
       functor_set(cp->iptr, bit_val, strong_values[bit_val], true);
 
       return true;
@@ -1459,7 +1459,7 @@ bool of_SET(vthread_t thr, vvp_code_t cp)
 
 bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char val = thr_get_bit(thr, cp->bit_idx1);
+      unsigned char val = thr_get_bit(thr, cp->bit_idx[0]);
       memory_set(cp->mem, thr->index[3], val);
 
       return true;
@@ -1467,8 +1467,8 @@ bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
 
 bool of_SET_X(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
-      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[cp->bit_idx2&3]);
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
+      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[cp->bit_idx[1]&3]);
       functor_set(itmp, bit_val, strong_values[bit_val], true);
 
       return true;
@@ -1476,7 +1476,7 @@ bool of_SET_X(vthread_t thr, vvp_code_t cp)
 
 bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned base = cp->bit_idx1;
+      unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
       unsigned long shift = thr->index[0];
 
@@ -1501,7 +1501,7 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
  */
 bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned base = cp->bit_idx1;
+      unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
       unsigned long shift = thr->index[0];
 
@@ -1523,10 +1523,10 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      unsigned long*lva = vector_to_array(thr, cp->bit_idx1, cp->number);
-      unsigned long*lvb = vector_to_array(thr, cp->bit_idx2, cp->number);
+      unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
+      unsigned long*lvb = vector_to_array(thr, cp->bit_idx[1], cp->number);
       if (lva == 0 || lvb == 0)
 	    goto x_out;
 
@@ -1544,7 +1544,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
 	    sum += 1 & ~(tmp >> (idx%CPU_BITS));
 
 	    carry = sum / 2;
-	    thr_put_bit(thr, cp->bit_idx1+idx, (sum&1) ? 1 : 0);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (sum&1) ? 1 : 0);
       }
 
       delete[]lva;
@@ -1557,7 +1557,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       delete[]lvb;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
 
       return true;
 }
@@ -1588,10 +1588,10 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 bool of_XNOR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1625,10 +1625,10 @@ bool of_XNOR(vthread_t thr, vvp_code_t cp)
 
 bool of_XOR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx[0] >= 4);
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
@@ -1671,6 +1671,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.63  2001/11/01 03:00:20  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.62  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

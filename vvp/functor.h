@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.35 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: functor.h,v 1.36 2001/11/01 03:00:19 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -197,12 +197,14 @@ struct functor_s {
 		       unsigned val, unsigned str = 0) = 0;
 
       inline unsigned char get() { return oval; }
+      inline unsigned char get_ostr() { return ostr; }
       void put(vvp_ipoint_t ipt, unsigned val);
       void put_oval(vvp_ipoint_t ptr, bool push, unsigned val);
       void put_ostr(vvp_ipoint_t ptr, bool push, unsigned val, unsigned str);
       bool disable(vvp_ipoint_t ptr);
       bool enable(vvp_ipoint_t ptr);
       void propagate(bool push);
+      void force(unsigned val, unsigned str);
 };
 
 inline functor_s::functor_s()
@@ -290,31 +292,6 @@ inline void functor_s::put_ostr(vvp_ipoint_t ptr, bool push,
 	    else
 		  schedule_functor(ptr, 0);
       }
-}
-
-inline bool functor_s::disable(vvp_ipoint_t ptr)
-{
-      bool r = inhibit;
-      inhibit = 1;
-      return r;
-}
-
-inline bool functor_s::enable(vvp_ipoint_t ptr)
-{
-      unsigned val;
-      if (ostr == 0)
-	    val = 3;
-      else switch (ostr & 0x88) {
-	  case 0x00: val = 0; break;
-	  case 0x88: val = 1; break;
-	  default:   val = 2;
-      }
-      if (val != oval) {
-	    schedule_functor(ptr, 0);
-      }
-      bool r = inhibit;
-      inhibit = 0;
-      return r;
 }
 
 /*
@@ -473,17 +450,6 @@ const event_functor_s::edge_t vvp_edge_anyedge = 0x7bde;
 const event_functor_s::edge_t vvp_edge_none = 0;
 
 /*
- *   Variable functors
- */
-
-struct var_functor_s: public functor_s {
-      var_functor_s() : assigned(0) {};
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      unsigned assigned : 1;
-};
-
-
-/*
  * Callback functors.
  */
 struct callback_functor_s *vvp_fvector_make_callback
@@ -502,6 +468,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.36  2001/11/01 03:00:19  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.35  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

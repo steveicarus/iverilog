@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.30 2001/10/16 01:26:55 steve Exp $
+ *  $Id: opcodes.txt,v 1.31 2001/11/01 03:00:19 steve Exp $
  */
 
 
@@ -82,6 +82,21 @@ This may not work on all platforms. If run-time debugging is compiled
 out, then this function is a no-op.
 
 
+* %cassign <var-label>, <expr-label>
+
+Connect and active a procedural continuous assignment to a
+variable. The <var-label> identifies the affected variable, and the
+<expr-label> is the functor that drives the expression to the
+variable.  This opcode affects only a single bit.
+
+
+* %deassign <var-label>, <wid>
+
+Deactive and disconnect a procedural continuous assignment to a
+variable. The <var-label> identifies the affected variable.  <wid>
+specifies the how many bits to deassign.
+
+
 * %cmp/u <bit-l>, <bit-r>, <wid>
 * %cmp/s <bit-l>, <bit-r>, <wid>
 
@@ -149,6 +164,14 @@ the threads that are currently within that scope.
 This instruction arithmetically divides the <bit-l> vector by the
 <bit-r> vector, and leaves the result in the <bit-l> vector. IF any of
 the bits in either vector are x or z, the entire result is x.
+
+
+* %force <fofu-label>, <width>
+
+Activate a force represented by the force functors <fofu-label>, which
+were created with a .force directive.  If any force was active on the
+signal, that force is released first.  A vector of force functors may
+be specified with <width> greater than 1.
 
 
 * %fork <code-label>, <scope-label>
@@ -309,11 +332,28 @@ truth table:
 	0 or 0 --> 0
 	otherwise  x
 
+
 * %or/r <dst>, <src>, <wid>
 
 This is a reduction version of the %or opcode. The <src> is a vector,
 and the <dst> is a writeable scaler. The <dst> gets the value of the
 or of all the bits of the src vector.
+
+
+* %release <functor-label>
+
+Release the force on the signal that is represented by the functor
+<functor-label>.  The force was previously activated with a %force
+statement.  If no force was active on this functor the statement does
+nothing.  %release restores and propagates the normal value of the
+previously forced functor.  In case of a forced Verilog register, the
+current value of the force expression should be %set to the .var
+functor before the force is released, to comply with Verilog release
+semantics.  Like:
+
+	%load	 <bit>, <functor-label> ; get the forced value
+	%set	 <functor-label>, <bit> ; set the .var value
+	%release <functor-label>	; remove the force
 
 
 * %set <var-label>, <bit>

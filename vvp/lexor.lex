@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.27 2001/10/16 02:47:37 steve Exp $"
+#ident "$Id: lexor.lex,v 1.28 2001/11/01 03:00:19 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -90,6 +90,7 @@
 ".mem" 	       { return K_MEM; }
 ".mem/p"(ort)? { return K_MEM_P; }
 ".mem/i"(nit)? { return K_MEM_I; }
+".force"     { return K_FORCE; }
 
   /* instructions start with a % character. The compiler decides what
      kind of instruction this really is. The few exceptions (that have
@@ -149,6 +150,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.28  2001/11/01 03:00:19  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.27  2001/10/16 02:47:37  steve
  *  Add arith/div object.
  *

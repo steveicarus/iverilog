@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.37 2001/10/16 02:47:37 steve Exp $
+ *  $Id: README.txt,v 1.38 2001/11/01 03:00:19 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -218,12 +218,13 @@ read by behavioral code. If the .var represents a vector of .functors,
 the index of the LSB is always, from the perspective of vvp, ZERO. The
 <msb>,<lsb> details are there only for the benefit of VPI support.
 
-The variable .functor implicitly has three inputs. The first is the
-value that gets set by assignments or procedural continuous
-assignments. The second is a forced value that can be connected to a
-force expression (as a functor) when a value is being forced. And the
-third input selects the source to use. The default is to select the
-assignment input.
+The variable .functor implicitly has two inputs. The first is the
+value that gets set by assignments.  The second input is connected to
+the driving expression of a procedural continuous assignments.
+Variable functors have an extra internal bit that tells if a
+procedural continuous assignment is active.  The %cassign opcode
+connects and activates the procedural continuous assignment.  The
+%deassign opcode disconnects and deactivates it.
 
 The variable statement also creates a VPI object of the appropriate
 type. See the vpi.txt file for details about that object. The msb and
@@ -395,6 +396,29 @@ resolution function.
 	<label> .resolv tri,  <symbols_list>;
 	<label> .resolv tri0, <symbols_list>;
 	<label> .resolv tri1, <symbols_list>;
+
+
+FORCE STATEMENTS:
+
+A force statement creates functors that represent a Verilog force
+statement.
+
+	<label>	.force <signal>, <symbol_list>;
+
+The symbol <signal> represents the signal which is to be forced.  The
+<symbol_list> specifies the bits of the expression that is to be
+forced on the <signal>.  The <label> identifies the force functors.
+There will be as many force functors as there are symbols in the
+<symbol_list>.
+
+To activate and deactivate a force on a single bit, use:
+
+	%force	<label>, <width>;
+	%release <signal>;
+
+<label>/<width> is the label/width of a vector of force functors.
+<signal> is the label of the functor that drives the signal that is
+being forced.
 
 
 STRUCTURAL ARITHMETIC STATEMENTS:

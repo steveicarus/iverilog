@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.35 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: compile.h,v 1.36 2001/11/01 03:00:19 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -70,6 +70,12 @@ extern void compile_functor(char*label, char*type,
  */
 extern void compile_resolver(char*label, char*type,
 			     unsigned argc, struct symb_s*argv);
+
+/*
+ * This is called by the parser to make force functors.
+ */
+extern void compile_force(char*label, struct symb_s signal,
+			  unsigned argc, struct symb_s*argv);
 
 /*
  * This is called by the parser to make the various arithmetic and
@@ -202,6 +208,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.36  2001/11/01 03:00:19  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.35  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.35 2001/10/16 01:26:54 steve Exp $"
+#ident "$Id: codes.h,v 1.36 2001/11/01 03:00:19 steve Exp $"
 #endif
 
 
@@ -42,15 +42,18 @@ extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
+extern bool of_CASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
+extern bool of_DEASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_DIV(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
+extern bool of_FORCE(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
@@ -74,6 +77,7 @@ extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
+extern bool of_RELEASE(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X(vthread_t thr, vvp_code_t code);
@@ -101,24 +105,26 @@ struct vvp_code_s {
 	    vvp_cpoint_t cptr;
 	    vvp_memory_t mem;
 	    struct __vpiHandle*handle;
-	    struct fork_extend*fork;
+	    struct __vpiScope*scope;
       };
 
-      unsigned short bit_idx1;
-      unsigned short bit_idx2;
+      union {
+	    unsigned short bit_idx[2];
+	    vvp_ipoint_t iptr2;
+	    vvp_cpoint_t cptr2;
+      };
 };
-
-struct fork_extend {
-      vvp_cpoint_t cptr;
-      struct __vpiScope*scope;
-};
-
 
 /*
  * This function clears the code space, ready for initialization. This
  * needs to be done exactly once before any instructions are created.
  */
 extern void codespace_init(void);
+
+/*
+**  Return the number of codes 
+*/
+extern unsigned code_limit();
 
 /*
  * This function returns a pointer to the next free instruction in the
@@ -141,6 +147,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.36  2001/11/01 03:00:19  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.35  2001/10/16 01:26:54  steve
  *  Add %div support (Anthony Bybell)
  *

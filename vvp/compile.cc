@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.110 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: compile.cc,v 1.111 2001/11/01 03:00:19 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -27,7 +27,8 @@
 # include  "functor.h"
 # include  "resolv.h"
 # include  "udp.h" 
-# include  "memory.h" 
+# include  "memory.h"
+# include  "force.h" 
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -59,14 +60,16 @@ enum operand_e {
       OA_NONE,
 	/* The operand is a number, an immediate unsigned integer */
       OA_NUMBER,
-	/* The operand is a thread bit index */
+	/* The operand is a thread bit index or short integer */
       OA_BIT1,
       OA_BIT2,
 	/* The operand is a pointer to code space */
       OA_CODE_PTR,
 	/* The operand is a variable or net pointer */
       OA_FUNC_PTR,
-        /* The operand is a pointer to a memory */
+ 	/* The operand is a second functor pointer */
+      OA_FUNC_PTR2,
+       /* The operand is a pointer to a memory */
       OA_MEM_PTR,
 };
 
@@ -86,14 +89,17 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
+      { "%cassign",of_CASSIGN,2,  {OA_FUNC_PTR, OA_FUNC_PTR2,OA_NONE} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%deassign",of_DEASSIGN,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%div",    of_DIV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%force",  of_FORCE,  2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -116,6 +122,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%release",of_RELEASE,1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/x",  of_SET_X,  3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
@@ -399,7 +406,7 @@ bool code_label_resolv_list_s::resolve(bool mes)
       symbol_value_t val = sym_get_value(sym_codespace, label);
       if (val.num) {
 	    if (code->opcode == of_FORK)
-		  code->fork->cptr = val.num;
+		  code->cptr2 = val.num;
 	    else
 		  code->cptr = val.num;
 	    free(label);
@@ -954,6 +961,28 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       free(argv);
 }
 
+void compile_force(char*label, struct symb_s signal,
+		   unsigned argc, struct symb_s*argv)
+{
+      vvp_ipoint_t ifofu = functor_allocate(argc);
+      define_functor_symbol(label, ifofu);
+
+      for (unsigned i=0; i<argc; i++) {
+	    functor_t obj = new force_functor_s;
+	    vvp_ipoint_t iobj = ipoint_index(ifofu, i);
+	    functor_define(iobj, obj);
+
+	    functor_ref_lookup(&obj->out, strdup(signal.text), signal.idx + i);
+
+	    // connect the force expression, one bit.
+	    inputs_connect(iobj, 1, &argv[i]);
+      }
+
+      free(argv);
+      free(signal.text);
+      free(label);
+}
+
 void compile_udp_def(int sequ, char *label, char *name,
 		     unsigned nin, unsigned init, char **table)
 {
@@ -1176,7 +1205,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  code->bit_idx1 = opa->argv[idx].numb;
+		  code->bit_idx[0] = opa->argv[idx].numb;
 		  break;
 
 		case OA_BIT2:
@@ -1185,7 +1214,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  code->bit_idx2 = opa->argv[idx].numb;
+		  code->bit_idx[1] = opa->argv[idx].numb;
 		  break;
 
 		case OA_CODE_PTR:
@@ -1208,6 +1237,20 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  functor_ref_lookup(&code->iptr, 
+				     opa->argv[idx].symb.text,
+				     opa->argv[idx].symb.idx);
+		  break;
+
+		case OA_FUNC_PTR2:
+		    /* The operand is a functor. Resolve the label to
+		       a functor pointer, or postpone the resolution
+		       if it is not defined yet. */
+		  if (opa->argv[idx].ltype != L_SYMB) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  functor_ref_lookup(&code->iptr2, 
 				     opa->argv[idx].symb.text,
 				     opa->argv[idx].symb.idx);
 		  break;
@@ -1285,13 +1328,12 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 	/* Fill in the basics of the %fork in the instruction. */
       vvp_code_t code = codespace_index(ptr);
       code->opcode = of_FORK;
-      code->fork = new struct fork_extend;
 
 	/* Figure out the target PC. */
       code_label_lookup(code, dest.text);
 
 	/* Figure out the target SCOPE. */
-      compile_vpi_lookup((vpiHandle*)&code->fork->scope, scope.text);
+      compile_vpi_lookup((vpiHandle*)&code->scope, scope.text);
 }
 
 void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
@@ -1422,6 +1464,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.111  2001/11/01 03:00:19  steve
+ *  Add force/cassign/release/deassign support. (Stephan Boettcher)
+ *
  * Revision 1.110  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.
