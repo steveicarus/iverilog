@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.194 2002/07/24 16:24:45 steve Exp $"
+#ident "$Id: netlist.cc,v 1.195 2002/07/28 23:58:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1468,43 +1468,6 @@ const Link& NetRamDq::pin_Q(unsigned idx) const
       return pin(3+awidth_+width()+idx);
 }
 
-NetBlock::NetBlock(Type t, NetScope*ss)
-: type_(t), subscope_(ss), last_(0)
-{
-}
-
-NetBlock::~NetBlock()
-{
-}
-
-void NetBlock::append(NetProc*cur)
-{
-      if (last_ == 0) {
-	    last_ = cur;
-	    cur->next_ = cur;
-      } else {
-	    cur->next_ = last_->next_;
-	    last_->next_ = cur;
-	    last_ = cur;
-      }
-}
-
-const NetProc* NetBlock::proc_first() const
-{
-      if (last_ == 0)
-	    return 0;
-
-      return last_->next_;
-}
-
-const NetProc* NetBlock::proc_next(const NetProc*cur) const
-{
-      if (cur == last_)
-	    return 0;
-
-      return cur->next_;
-}
-
 NetBUFZ::NetBUFZ(NetScope*s, const string&n)
 : NetNode(s, n, 2)
 {
@@ -2341,6 +2304,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.195  2002/07/28 23:58:44  steve
+ *  Fix NetBlock destructor to delete substatements.
+ *
  * Revision 1.194  2002/07/24 16:24:45  steve
  *  Rewrite find_similar_event to support doing
  *  all event matching and replacement in one

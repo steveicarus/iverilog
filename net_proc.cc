@@ -17,13 +17,61 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_proc.cc,v 1.4 2002/04/21 04:59:08 steve Exp $"
+#ident "$Id: net_proc.cc,v 1.5 2002/07/28 23:58:45 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "netlist.h"
 # include  <assert.h>
+
+NetBlock::NetBlock(Type t, NetScope*ss)
+: type_(t), subscope_(ss), last_(0)
+{
+}
+
+NetBlock::~NetBlock()
+{
+      while (last_ != 0) {
+	    if (last_->next_ == last_) {
+		  delete last_;
+		  last_ = 0;
+	    } else {
+		  NetProc*cur = last_->next_;
+		  last_->next_ = cur->next_;
+		  cur->next_ = cur;
+		  delete cur;
+	    }
+      }
+}
+
+void NetBlock::append(NetProc*cur)
+{
+      if (last_ == 0) {
+	    last_ = cur;
+	    cur->next_ = cur;
+      } else {
+	    cur->next_ = last_->next_;
+	    last_->next_ = cur;
+	    last_ = cur;
+      }
+}
+
+const NetProc* NetBlock::proc_first() const
+{
+      if (last_ == 0)
+	    return 0;
+
+      return last_->next_;
+}
+
+const NetProc* NetBlock::proc_next(const NetProc*cur) const
+{
+      if (cur == last_)
+	    return 0;
+
+      return cur->next_;
+}
 
 NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
 : type_(c), expr_(ex), nitems_(cnt)
@@ -129,6 +177,9 @@ const NetExpr* NetRepeat::expr() const
 
 /*
  * $Log: net_proc.cc,v $
+ * Revision 1.5  2002/07/28 23:58:45  steve
+ *  Fix NetBlock destructor to delete substatements.
+ *
  * Revision 1.4  2002/04/21 04:59:08  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.
