@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.21 2003/09/01 04:04:03 steve Exp $"
+#ident "$Id: sys_table.c,v 1.22 2003/09/13 01:28:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,9 +35,15 @@ extern void sys_random_register();
 extern void sys_readmem_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
+extern void sys_vcdoff_register();
+
+#ifdef HAVE_LIBZ
 extern void sys_lxt_register();
 extern void sys_lxt2_register();
-extern void sys_vcdoff_register();
+#else
+static void sys_lxt_register() { fputs("LXT support disabled since zlib not available\n",stderr); exit(1); }
+static void sys_lxt2_register() { fputs("LXT2 support disabled since zlib not available\n",stderr); exit(1); }
+#endif
 
 static void sys_lxt_or_vcd_register()
 {
@@ -148,6 +154,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.22  2003/09/13 01:28:47  steve
+ *  Disable lxt when zlib is missing.
+ *
  * Revision 1.21  2003/09/01 04:04:03  steve
  *  Add lxt2 support.
  *
