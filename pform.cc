@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.90 2002/01/31 04:10:15 steve Exp $"
+#ident "$Id: pform.cc,v 1.91 2002/04/12 02:57:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -426,7 +426,7 @@ void pform_set_net_range(list<char*>*names,
 			 svector<PExpr*>*range,
 			 bool signed_flag)
 {
-      assert(range->count() == 2);
+      assert((range == 0) || (range->count() == 2));
 
       for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
@@ -437,7 +437,8 @@ void pform_set_net_range(list<char*>*names,
       }
 
       delete names;
-      delete range;
+      if (range)
+	    delete range;
 }
 
 /*
@@ -785,8 +786,7 @@ void pform_makewire(const vlltype&li,
 	    net_decl_assign_t*next = first->next;
 
 	    pform_makewire(li, first->name, type);
-	    if (range)
-		  pform_set_net_range(first->name, range, false);
+	    pform_set_net_range(first->name, range, false);
 
 	    hname_t name = hier_name(first->name);
 	    PWire*cur = pform_cur_module->get_wire(name);
@@ -1179,6 +1179,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.91  2002/04/12 02:57:08  steve
+ *  Detect mismatches in reg as module items and ports.
+ *
  * Revision 1.90  2002/01/31 04:10:15  steve
  *  Detect duplicate port declarations.
  *

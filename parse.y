@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.146 2002/03/31 04:07:26 steve Exp $"
+#ident "$Id: parse.y,v 1.147 2002/04/12 02:57:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -208,13 +208,13 @@ block_item_decl
 		{ pform_set_net_range($3, $2, false);
 		}
 	| K_reg register_variable_list ';'
-		{ delete $2; }
+		{ pform_set_net_range($2, 0, false);
+		}
 	| K_reg K_signed range register_variable_list ';'
 		{ pform_set_net_range($4, $3, true);
 		}
 	| K_reg K_signed register_variable_list ';'
-		{ delete $3;
-		  yyerror(@2, "sorry: signed reg not supported.");
+		{ pform_set_net_range($3, 0, true);
 		}
 	| K_integer register_variable_list ';'
 		{ pform_set_reg_integer($2);
