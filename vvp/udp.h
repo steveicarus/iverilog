@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.12 2003/06/17 21:28:59 steve Exp $"
+#ident "$Id: udp.h,v 1.13 2003/09/17 03:39:55 steve Exp $"
 #endif
 
 #include "functor.h"
@@ -50,10 +50,48 @@ struct vvp_udp_s *udp_find(char *label);
 
 
 // UDP instances:
-
+/*
+ * A complete UDP instance includes one udp_functor_s functor that
+ * holds the output of the UDP, as well as the first 4 inputs. This
+ * also points to the vvp_udp_s table that is the behavior for the
+ * device.
+ *
+ * If there are more then 4 inputs to the device, then enough
+ * edge_inputs_functor_s functors is created to receive all the
+ * inputs. All the edge_inputs_functors_s ::out members point to the
+ * leading udp_functor_s object, so the ::set methods all invoke the
+ * ::set method of this functor.
+ *
+ *        +---+     First object is a udp_functor_s object
+ *   <----+   +--
+ *        |   +--
+ *        |   +--
+ *        |   +--
+ *        +---+
+ *          ^
+ *          | +---+    Subsequent objects are edge_inputs_functor_s
+ *          \-+   +--     that point their outputs to the leading
+ *          ^ |   +--     udp_functor_s object. There are as many
+ *          | |   +--     edge_inputs_functor_s objects as needed
+ *          | |   +--     to accommodate all the inputs of the user
+ *          | +---+       defined primitive.
+ *          |
+ *          | +---+
+ *          \-+   +--
+ *            |   +--
+ *            |   +--
+ *            |   +--
+ *            +---+
+ *              .
+ *              .
+ *              .
+ * (The propagate method of the vvp_udp_s object relies on the fact
+ * that the initial udp_functor_s and the subsequend
+ * edge_inputs_functor_s objects are consecutive in functor space.)
+ */
 class udp_functor_s : public edge_inputs_functor_s
 {
-public:
+    public:
       explicit udp_functor_s(vvp_udp_s *u) : udp(u) {}
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
       vvp_udp_s *udp;
@@ -62,6 +100,9 @@ public:
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.13  2003/09/17 03:39:55  steve
+ *  Internal documentation of UDP devices.
+ *
  * Revision 1.12  2003/06/17 21:28:59  steve
  *  Remove short int restrictions from vvp opcodes. (part 2)
  *
@@ -77,27 +118,5 @@ public:
  *  Nets (wires) do not use their own functors.
  *  Modifications to propagation of values.
  *  (Stephan Boettcher)
- *
- * Revision 1.8  2001/07/24 01:44:50  steve
- *  Fast UDP tables (Stephan Boettcher)
- *
- * Revision 1.6  2001/05/06 03:51:37  steve
- *  Regularize the mode-42 functor handling.
- *
- * Revision 1.5  2001/04/28 20:09:05  steve
- *  Excessive header include.
- *
- * Revision 1.4  2001/04/26 15:52:22  steve
- *  Add the mode-42 functor concept to UDPs.
- *
- * Revision 1.3  2001/04/26 03:10:55  steve
- *  Redo and simplify UDP behavior.
- *
- * Revision 1.2  2001/04/24 03:48:53  steve
- *  Fix underflow when UDP has 1 input.
- *
- * Revision 1.1  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
  */
 #endif
