@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.20 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.21 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 /*
@@ -441,7 +441,7 @@ void pform_dump(ostream&out, Module*mod)
 void PUdp::dump(ostream&out) const
 {
       out << "primitive " << name_ << "(" << ports[0];
-      for (unsigned idx = 1 ;  idx < ports.size() ;  idx += 1)
+      for (unsigned idx = 1 ;  idx < ports.count() ;  idx += 1)
 	    out << ", " << ports[idx];
       out << ");" << endl;
 
@@ -449,7 +449,7 @@ void PUdp::dump(ostream&out) const
 	    out << "    reg " << ports[0] << ";" << endl;
 
       out << "    table" << endl;
-      for (unsigned idx = 0 ;  idx < tinput.size() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < tinput.count() ;  idx += 1) {
 	    out << "     ";
 	    for (unsigned chr = 0 ;  chr < tinput[idx].length() ;  chr += 1)
 		  out << " " << tinput[idx][chr];
@@ -480,6 +480,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.21  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.20  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.15 1999/05/05 03:27:15 steve Exp $"
+#ident "$Id: main.cc,v 1.16 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -186,7 +186,7 @@ int main(int argc, char*argv[])
 		       ; mod != modules.end()
 		       ; mod ++ ) {
 		  Module*cur = (*mod).second;
-		  if (cur->ports.size() == 0)
+		  if (cur->ports.count() == 0)
 			if (start_module == "") {
 			      start_module = cur->get_name();
 		        } else {
@@ -249,6 +249,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.16  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.15  1999/05/05 03:27:15  steve
  *  More intelligent selection of module to elaborate.
  *

@@ -19,13 +19,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PUdp.h,v 1.2 1998/12/01 00:42:13 steve Exp $"
+#ident "$Id: PUdp.h,v 1.3 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 # include  <map>
-# include  <vector>
+# include  "svector.h"
 # include  <string>
 # include  "verinum.h"
+
+svector<string>::svector<string>(unsigned size)
+: nitems_(size), items_(new string[size])
+{
+}
 
 /*
  * This class represents a parsed UDP. This is a much simpler object
@@ -54,12 +59,12 @@ class PUdp {
       explicit PUdp(const string&n, unsigned nports)
       : ports(nports), sequential(false), initial(verinum::Vx), name_(n) { }
 
-      vector<string>ports;
+      svector<string>ports;
       bool sequential;
 
-      vector<string>tinput;
-      vector<char>  tcurrent;
-      vector<char>  toutput;
+      svector<string>tinput;
+      svector<char>  tcurrent;
+      svector<char>  toutput;
 
       verinum::V initial;
 
@@ -77,6 +82,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.3  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.2  1998/12/01 00:42:13  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

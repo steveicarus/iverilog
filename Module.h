@@ -19,12 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.3 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: Module.h,v 1.4 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 # include  <list>
 # include  <map>
-# include  <vector>
+# include  "svector.h"
 # include  <string>
 class PExpr;
 class PGate;
@@ -43,7 +43,7 @@ class Module {
       explicit Module(const string&name, unsigned nports)
       : ports(nports), name_(name) { }
 
-      vector<PWire*> ports;
+      svector<PWire*> ports;
 
 	/* The module has parameters that are evaluated when the
 	   module is elaborated. During parsing, I put the parameters
@@ -81,6 +81,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.4  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.3  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

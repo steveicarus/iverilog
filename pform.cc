@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.26 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: pform.cc,v 1.27 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -123,7 +123,7 @@ void pform_make_udp(string*name, list<string>*parms,
 
 	/* Put the parameters into a vector of wire descriptions. Look
 	   in the map for the definitions of the name. */
-      vector<PWire*> pins (parms->size());
+      svector<PWire*> pins (parms->size());
       { list<string>::iterator cur;
         unsigned idx;
         for (cur = parms->begin(), idx = 0
@@ -136,10 +136,10 @@ void pform_make_udp(string*name, list<string>*parms,
 	/* Check that the output is an output and the inputs are
 	   inputs. I can also make sure that only the single output is
 	   declared a register, if anything. */
-      assert(pins.size() > 0);
+      assert(pins.count() > 0);
       assert(pins[0]);
       assert(pins[0]->port_type == NetNet::POUTPUT);
-      for (unsigned idx = 1 ;  idx < pins.size() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < pins.count() ;  idx += 1) {
 	    assert(pins[idx]);
 	    assert(pins[idx]->port_type == NetNet::PINPUT);
 	    assert(pins[idx]->type != NetNet::REG);
@@ -149,18 +149,18 @@ void pform_make_udp(string*name, list<string>*parms,
 	   they correspond to the inputs, output and output type. Make
 	   up vectors for the fully interpreted result that can be
 	   placed in the PUdp object. */
-      vector<string> input   (table->size());
-      vector<char>   current (table->size());
-      vector<char>   output  (table->size());
+      svector<string> input   (table->size());
+      svector<char>   current (table->size());
+      svector<char>   output  (table->size());
       { unsigned idx = 0;
         for (list<string>::iterator cur = table->begin()
 		   ; cur != table->end()
 		   ; cur ++, idx += 1) {
 	      string tmp = *cur;
-	      assert(tmp.find(':') == (pins.size() - 1));
+	      assert(tmp.find(':') == (pins.count() - 1));
 
-	      input[idx] = tmp.substr(0, pins.size()-1);
-	      tmp = tmp.substr(pins.size()-1);
+	      input[idx] = tmp.substr(0, pins.count()-1);
+	      tmp = tmp.substr(pins.count()-1);
 
 	      if (pins[0]->type == NetNet::REG) {
 		    assert(tmp[0] == ':');
@@ -210,7 +210,7 @@ void pform_make_udp(string*name, list<string>*parms,
 		  udp->sequential = true;
 
 	      // Make the port list for the UDP
-	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
+	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
 		  udp->ports[idx] = pins[idx]->name;
 
 	    udp->tinput   = input;
@@ -590,6 +590,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.27  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.26  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *

@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: svector.h,v 1.3 1999/05/06 04:37:17 steve Exp $"
+#ident "$Id: svector.h,v 1.4 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -35,6 +35,8 @@
 template <class TYPE> class svector {
 
     public:
+      explicit svector() : nitems_(0), items_(0) { }
+
       explicit svector(unsigned size) : nitems_(size), items_(new TYPE[size])
 	    { for (unsigned idx = 0 ;  idx < size ;  idx += 1)
 		  items_[idx] = 0;
@@ -64,6 +66,17 @@ template <class TYPE> class svector {
 
       ~svector() { delete[]items_; }
 
+      svector<TYPE>& operator= (const svector<TYPE>&that)
+	    { if (&that == this) return *this;
+	      delete[]items_;
+	      nitems_ = that.nitems_;
+	      items_ = new TYPE[nitems_];
+	      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+		    items_[idx] = that.items_[idx];
+	      }
+	      return *this;
+	    }
+
       unsigned count() const { return nitems_; }
 
       TYPE&operator[] (unsigned idx)
@@ -80,13 +93,13 @@ template <class TYPE> class svector {
       unsigned nitems_;
       TYPE* items_;
 
-    private: // not implemented
-      svector<TYPE>& operator= (const svector<TYPE>&);
-
 };
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.4  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.3  1999/05/06 04:37:17  steve
  *  Get rid of list<lgate> types.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.19 1999/06/12 20:35:27 steve Exp $"
+#ident "$Id: pform.h,v 1.20 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -33,7 +33,6 @@
 # include  <iostream.h>
 # include  <string>
 # include  <list>
-# include  <vector>
 # include  <stdio.h>
 
 /*
@@ -152,6 +151,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.20  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.19  1999/06/12 20:35:27  steve
  *  parse more verilog.
  *

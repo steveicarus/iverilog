@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.43 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.44 1999/06/15 03:44:53 steve Exp $"
 #endif
 
 /*
@@ -360,7 +360,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// ports. If this is simply positional binding in the first
 	// place, then get the binding from the base class.
       if (pins_) {
-	    unsigned nexp = rmod->ports.size();
+	    unsigned nexp = rmod->ports.count();
 	    svector<PExpr*>*exp = new svector<PExpr*>(nexp);
 
 	      // Scan the bindings, matching them with port names.
@@ -401,9 +401,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
       } else {
 
-	    if (pin_count() != rmod->ports.size()) {
+	    if (pin_count() != rmod->ports.count()) {
 		  cerr << get_line() << ": Wrong number "
-			"of parameters. Expecting " << rmod->ports.size() <<
+			"of parameters. Expecting " << rmod->ports.count() <<
 			", got " << pin_count() << "."
 		       << endl;
 		  des->errors += 1;
@@ -412,7 +412,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 	      // No named bindings, just use the positional list I
 	      // already have.
-	    assert(pin_count() == rmod->ports.size());
+	    assert(pin_count() == rmod->ports.count());
 	    pins = get_pins();
       }
 
@@ -488,7 +488,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 {
       const string my_name = path+"."+get_name();
-      NetUDP*net = new NetUDP(my_name, udp->ports.size(), udp->sequential);
+      NetUDP*net = new NetUDP(my_name, udp->ports.count(), udp->sequential);
       net->set_attributes(udp->attributes);
 
 	/* Run through the pins, making netlists for the pin
@@ -514,7 +514,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 
 	/* Build up the truth table for the netlist from the input
 	   strings. */
-      for (unsigned idx = 0 ;  idx < udp->tinput.size() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < udp->tinput.count() ;  idx += 1) {
 	    string input = udp->sequential
 		  ? (string("") + udp->tcurrent[idx] + udp->tinput[idx])
 		  : udp->tinput[idx];
@@ -1527,6 +1527,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.44  1999/06/15 03:44:53  steve
+ *  Get rid of the STL vector template.
+ *
  * Revision 1.43  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *
