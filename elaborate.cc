@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.257 2002/07/18 02:06:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.258 2002/07/24 16:22:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1971,15 +1971,13 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	   expression (and not a named event) then add this
 	   event. Otherwise, we didn't use it so delete it. */
       if (expr_count > 0) {
-	    if (NetEvent*match = ev->find_similar_event()) {
-		  delete ev;
-		  wa->add_event(match);
-
-	    } else {
-
-		  scope->add_event(ev);
-		  wa->add_event(ev);
-	    }
+	    scope->add_event(ev);
+	    wa->add_event(ev);
+	      /* NOTE: This event that I am adding to the wait may be
+		 a duplicate of another event somewhere else. However,
+		 I don't know that until all the modules are hooked
+		 up, so it is best to leave find_similar_event to
+		 after elaboration. */
       } else {
 	    delete ev;
       }
@@ -2503,6 +2501,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.258  2002/07/24 16:22:59  steve
+ *  Save event matching for nodangle.
+ *
  * Revision 1.257  2002/07/18 02:06:37  steve
  *  Need driver for sure in assign feedback and other cases.
  *
