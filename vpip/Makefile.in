@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.4 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.5 2001/05/20 17:13:27 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -87,6 +87,9 @@ libvvm.a: $O
 
 clean:
 	rm -f *.o dep/*.d libvpip.a vpip.dll
+
+distclean: clean
+	rm -f Makefile config.status config.log config.cache
 
 install:: all installdirs \
 	$(libdir)/libvpip.a \
