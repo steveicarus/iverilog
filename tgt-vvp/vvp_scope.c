@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.79 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.80 2002/10/23 04:39:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1284,19 +1284,33 @@ static void draw_lpm_eq(ivl_lpm_t net)
  */
 static void draw_lpm_ff(ivl_lpm_t net)
 {
+      ivl_expr_t aset_expr = 0;
+      const char*aset_bits = 0;
+
       unsigned width, idx;
 
       width = ivl_lpm_width(net);
 
+	/*        Q   C   CE  D   RS  --> Q+ */
       fprintf(vvp_out, "L_%s/def .udp/sequ \"DFF\", 5, 2,"
-	      " \"?r10000\","
-	      " \"?r11001\","
-	      " \"?f1?00-\","
-	      " \"?\?1?00-\","
-	      " \"?*0\?00-\","
-	      " \"????1?0\","
-	      " \"????011\""
+	      " \"?" "r" "1" "0" "00"    "0\","
+	      " \"?" "r" "1" "1" "00"    "1\","
+	      " \"?" "r" "1" "x" "00"    "x\","
+	      " \"0" "r" "x" "0" "00"    "0\","
+	      " \"1" "r" "x" "1" "00"    "1\","
+	      " \"?" "*" "0" "?" "00"    "-\","
+	      " \"?" "_" "?" "?" "00"    "-\","
+	      " \"?" "?" "?" "?" "01"    "1\","
+	      " \"?" "?" "?" "?" "1?"    "0\","
+	      " \"?" "?" "1" "?" "00"    "-\","
+	      " \"?" "?" "?" "?" "00"    "-\""
 	      ";\n", vvp_mangle_id(ivl_lpm_name(net)));
+
+      aset_expr = ivl_lpm_aset_value(net);
+      if (aset_expr) {
+	    assert(ivl_expr_width(aset_expr) == width);
+	    aset_bits = ivl_expr_bits(aset_expr);
+      }
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t tmp;
@@ -1321,17 +1335,26 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(tmp);
 
-	      /* Connect reset input */
+	      /* Connect reset input. This may be the Aclr input, or
+		 an Aset to zero. */
 	    fprintf(vvp_out, ", ");
 	    tmp = ivl_lpm_async_clr(net);
-	    if (tmp)
+	    if (tmp) {
 		  draw_input_from_net(tmp);
-	    else
-		  fprintf(vvp_out, "C<0>");
+	    } else {
+		  tmp = ivl_lpm_async_set(net);
+		  if (aset_bits && (aset_bits[idx] == '0'))
+			draw_input_from_net(tmp);
+		  else
+			fprintf(vvp_out, "C<0>");
+	    }
 
 	      /* Connect set input */
 	    fprintf(vvp_out, ", ");
 	    tmp = ivl_lpm_async_set(net);
+	    if (aset_bits && (aset_bits[idx] != '1'))
+		  tmp = 0;
+
 	    if (tmp)
 		  draw_input_from_net(tmp);
 	    else
@@ -1569,6 +1592,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.80  2002/10/23 04:39:35  steve
+ *  draw lpm ff with aset_expr taken into account.
+ *
  * Revision 1.79  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *
