@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.28 2003/08/10 17:04:23 steve Exp $"
+#ident "$Id: synth2.cc,v 1.29 2003/08/14 02:41:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -374,12 +374,17 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
 		  connect(tmp_set[idx], tmp_map->pin(idx));
 
+	      /* NOTE: After this point, tmp_set should not be used as
+		 the various functions I call do a lot of connecting,
+		 and the nexa in the tmp_set may get realloced. Use
+		 the tmp_map instead. */
+
 	      /* Create also a temporary net_out to collect the
 		 output. The tmp1 and tmp2 map and out sets together
 		 are used to collect the outputs from the substatement
 		 for the inputs of the FF bank. */
 	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
-					tmp_set.count());
+					tmp_map->pin_count());
 
 	    verinum tmp_aset = ff->aset_value();
 
@@ -393,7 +398,8 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    verinum aset_value2 (verinum::V1, ff2->width());
 	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  unsigned ptr = find_nexus_in_set(nex_map,
+						   tmp_map->pin(idx).nexus());
 		  connect(ff->pin_Data(ptr), ff2->pin_Data(idx));
 		  connect(ff->pin_Q(ptr), ff2->pin_Q(idx));
 
@@ -438,7 +444,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    }
 
 	      /* Now go on with the synchronous synthesis for this
-		 subset of the statement. */
+		 subset of the statement. The tmp_map is the output
+		 nexa that we expect, and the tmp_out is where we want
+		 those outputs connected. */
 	    bool ok_flag = cur->synth_sync(des, scope, ff2, tmp_map,
 					   tmp_out, events_in);
 	    flag = flag && ok_flag;
@@ -452,7 +460,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 beyond the input set, for example when the l-value of
 		 an assignment is smaller then the r-value. */
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  unsigned ptr = find_nexus_in_set(nex_map,
+						   tmp_map->pin(idx).nexus());
+
 		  if (ptr < nex_out->pin_count())
 			connect(nex_out->pin(ptr), tmp_out->pin(idx));
 	    }
@@ -558,10 +568,6 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    des->errors += 1;
       }
 
-	/* Synthesize the enable expression. */
-      NetNet*ce = expr_->synthesize(des);
-      assert(ce->pin_count() == 1);
-
 
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
@@ -571,6 +577,10 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       assert(if_);
       assert(!else_);
+
+	/* Synthesize the enable expression. */
+      NetNet*ce = expr_->synthesize(des);
+      assert(ce->pin_count() == 1);
 
 	/* What's left, is a synchronous CE statement like this:
 
@@ -803,6 +813,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.29  2003/08/14 02:41:05  steve
+ *  Fix dangling pointer in NexusSet handling blocks.
+ *
  * Revision 1.28  2003/08/10 17:04:23  steve
  *  Detect asynchronous FF inputs that are expressions.
  *
