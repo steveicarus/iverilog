@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.10 1998/12/09 04:02:47 steve Exp $"
+#ident "$Id: main.cc,v 1.11 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -60,6 +60,7 @@ extern Design* elaborate(const map<string,Module*>&modules,
 extern void emit(ostream&o, const Design*, const char*);
 
 extern void cprop(Design*des);
+extern void propinit(Design*des);
 extern void sigfold(Design*des);
 extern void stupid(Design*des);
 extern void nobufz(Design*des);
@@ -72,6 +73,7 @@ static struct net_func_map {
 } func_table[] = {
       { "cprop",   &cprop },
       { "nobufz",  &nobufz },
+      { "propinit", &propinit },
       { "sigfold", &sigfold },
       { "stupid",  &stupid },
       { "xnfio",   &xnfio },
@@ -222,6 +224,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.11  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.10  1998/12/09 04:02:47  steve
  *  Support the include directive.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.3 1998/11/11 00:01:51 steve Exp $"
+#ident "$Id: verinum.h,v 1.4 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 # include  <string>
@@ -38,6 +38,7 @@ class verinum {
       verinum();
       verinum(const string&str);
       verinum(const V*v, unsigned nbits);
+      verinum(V, unsigned nbits =1);
       verinum(unsigned long val, unsigned bits);
       verinum(const verinum&);
       ~verinum();
@@ -80,6 +81,9 @@ extern bool operator == (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.4  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.3  1998/11/11 00:01:51  steve
  *  Check net ranges in declarations.
  *

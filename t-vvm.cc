@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.7 1998/12/17 23:54:58 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.8 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -261,6 +261,9 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       os << "# include \"vvm_calltf.h\"" << endl;
       os << "# include \"vvm_thread.h\"" << endl;
       process_counter = 0;
+
+      init_code << "static void design_init(vvm_simulation&sim)" << endl;
+      init_code << "{" << endl;
 }
 
 void target_vvm::end_design(ostream&os, const Design*mod)
@@ -268,11 +271,12 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       delayed << ends;
       os << delayed.str();
 
+      init_code << "}" << endl << ends;
+      os << init_code.str();
+
       os << "main()" << endl << "{" << endl;
       os << "      vvm_simulation sim;" << endl;
-
-      init_code << ends;
-      os << init_code.str();
+      os << "      design_init(sim);" << endl;
 
       for (unsigned idx = 0 ;  idx < process_counter ;  idx += 1)
 	    os << "      thread" << (idx+1) << "_t thread_" <<
@@ -288,6 +292,24 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    mangle(sig->name()) << "; /* " << sig->name() << " */" << endl;
       os << "static vvm_monitor_t " << mangle(sig->name()) << "_mon(\""
 	 << sig->name() << "\");" << endl;
+
+	/* Scan the signals of the vector, passing the initial value
+	   to the inputs of all the connected devices. */
+      for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
+	    if (sig->get_ival(idx) == verinum::Vz)
+		  continue;
+
+	    for (NetObj::Link*lnk = sig->pin(0).next_link()
+		       ; (*lnk) != sig->pin(0) ;  lnk = lnk->next_link()) {
+		  const NetNode*net;
+		  if (net = dynamic_cast<const NetNode*>(lnk->get_obj())) {
+			init_code << "      " <<
+			      mangle(lnk->get_obj()->name()) <<
+			      ".init(" << lnk->get_pin() << ", V" <<
+			      sig->get_ival(idx) << ");" << endl;
+		  }
+	    }
+      }
 }
 
 /*
@@ -446,7 +468,10 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
 	    "_output_fun, V" << gate->get_initial() << ", " <<
 	    mangle(gate->name()) << "_table);" << endl;
 
+	/* The UDP output function is much like other logic gates. Use
+	   this general method to output the output function. */
       emit_gate_outputfun_(gate);
+
 }
 
 /*
@@ -742,6 +767,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.8  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.7  1998/12/17 23:54:58  steve
  *  VVM support for small sequential UDP objects.
  *

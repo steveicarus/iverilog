@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.8 1998/12/14 02:01:34 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.9 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 /*
@@ -50,7 +50,10 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (local_flag_)
 	    o << " (local)";
       o << " #(" << delay1() << "," << delay2() << "," << delay3() <<
-	    ")"  << endl;
+	    ") init=";
+      for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
+	    o << ivalue_[idx-1];
+      o << endl;
       dump_obj_attr(o, ind+4);
 }
 
@@ -461,6 +464,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.9  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.8  1998/12/14 02:01:34  steve
  *  Fully elaborate Sequential UDP behavior.
  *

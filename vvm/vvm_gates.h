@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.3 1998/12/17 23:54:58 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.4 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -55,6 +55,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
       explicit vvm_and(vvm_out_event::action_t o)
       : output_(o) { }
 
+      void init(unsigned idx, vvm_bit_t val) { input_[idx-1] = val; }
+
       void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
 	    { if (input_[idx-1] == val)
 		  return;
@@ -84,6 +86,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
 		  input_[idx] = V0;
 	    }
 
+      void init(unsigned idx, vvm_bit_t val) { input_[idx-1] = val; }
+
 	// Set an input of the NAND gate causes a new output value to
 	// be calculated and an event generated to make the output
 	// happen. The input pins are numbered from 1 - WIDTH.
@@ -109,7 +113,6 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
 
 /*
  * Simple inverter buffer.
- * XXXX The WIDTH parameter is useless?
  */
 template <unsigned long DELAY> class vvm_not {
 
@@ -117,6 +120,8 @@ template <unsigned long DELAY> class vvm_not {
       explicit vvm_not(vvm_out_event::action_t o)
       : output_(o)
       { }
+
+      void init(unsigned, vvm_bit_t) { }
 
       void set(vvm_simulation*sim, unsigned, vvm_bit_t val)
 	    { vvm_bit_t outval = not(val);
@@ -136,6 +141,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xnor {
     public:
       explicit vvm_xnor(vvm_out_event::action_t o)
       : output_(o) { }
+
+      void init(unsigned idx, vvm_bit_t val) { input_[idx-1] = val; }
 
       void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
 	    { if (input_[idx-1] == val)
@@ -163,6 +170,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
     public:
       explicit vvm_xor(vvm_out_event::action_t o)
       : output_(o) { }
+
+      void init(unsigned idx, vvm_bit_t val) { input_[idx-1] = val; }
 
       void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
 	    { if (input_[idx-1] == val)
@@ -201,6 +210,9 @@ template <unsigned WIDTH> class vvm_udp_ssequ {
         for (unsigned idx = 1; idx < WIDTH+1 ;  idx += 1)
 	      state_[idx] = Vx;
       }
+
+      void init(unsigned pin, vvm_bit_t val)
+	    { state_[pin] = val; }
 
       void set(vvm_simulation*sim, unsigned pin, vvm_bit_t val)
 	    { assert(pin > 0);
@@ -249,6 +261,8 @@ class vvm_bufz {
       : output_(o)
       { }
 
+      void init(unsigned idx, vvm_bit_t val) { }
+
       void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
 	    { output_(sim, val); }
 
@@ -278,6 +292,9 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.4  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.3  1998/12/17 23:54:58  steve
  *  VVM support for small sequential UDP objects.
  *

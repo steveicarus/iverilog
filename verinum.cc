@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.5 1998/11/11 00:01:51 steve Exp $"
+#ident "$Id: verinum.cc,v 1.6 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -58,6 +58,15 @@ verinum::verinum(const string&str)
 	    *(--bp) = (ch&0x02) ? V1 : V0;
 	    *(--bp) = (ch&0x01) ? V1 : V0;
       }
+}
+
+verinum::verinum(verinum::V val, unsigned n)
+: string_flag_(false)
+{
+      nbits_ = n;
+      bits_ = new V[nbits_];
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+	    bits_[idx] = val;
 }
 
 verinum::verinum(const verinum&that)
@@ -221,6 +230,9 @@ bool operator == (const verinum&left, const verinum&right)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.6  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.5  1998/11/11 00:01:51  steve
  *  Check net ranges in declarations.
  *

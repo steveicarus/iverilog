@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.14 1998/12/18 05:16:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.15 1998/12/20 02:05:41 steve Exp $"
 #endif
 
 /*
@@ -220,12 +220,20 @@ class NetNet  : public NetObj {
       explicit NetNet(const string&n, Type t, unsigned npins =1)
       : NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0),
 	type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
-	local_flag_(false) { }
+	local_flag_(false)
+	    { ivalue_ = new verinum::V[npins];
+	      for (unsigned idx = 0 ;  idx < npins ;  idx += 1)
+		    ivalue_[idx] = verinum::Vz;
+	    }
 
       explicit NetNet(const string&n, Type t, long ms, long ls)
       : NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
 	sig_prev_(0), design_(0), type_(t), port_type_(NOT_A_PORT),
-	msb_(ms), lsb_(ls), local_flag_(false) { }
+	msb_(ms), lsb_(ls), local_flag_(false)
+	    { ivalue_ = new verinum::V[pin_count()];
+	      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
+		    ivalue_[idx] = verinum::Vz;
+	    }
 
       virtual ~NetNet();
 
@@ -249,6 +257,11 @@ class NetNet  : public NetObj {
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
 
+      verinum::V get_ival(unsigned pin) const
+	    { return ivalue_[pin]; }
+      void set_ival(unsigned pin, verinum::V val)
+	    { ivalue_[pin] = val; }
+
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
@@ -264,6 +277,8 @@ class NetNet  : public NetObj {
       long msb_, lsb_;
 
       bool local_flag_;
+
+      verinum::V*ivalue_;
 };
 
 /*
@@ -906,6 +921,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.15  1998/12/20 02:05:41  steve
+ *  Function to calculate wire initial value.
+ *
  * Revision 1.14  1998/12/18 05:16:25  steve
  *  Parse more UDP input edge descriptions.
  *
