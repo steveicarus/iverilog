@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.20 2001/04/26 05:12:02 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.21 2001/04/29 23:16:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -39,10 +39,13 @@
  */
 void draw_nexus_input(ivl_nexus_t nex)
 {
+      ivl_net_const_t cptr;
       ivl_net_logic_t lptr;
       ivl_signal_t sptr;
       ivl_lpm_t lpm;
       unsigned idx, ndx;
+
+      ivl_nexus_ptr_t driver = 0;
 
       for (ndx = 0 ;  ndx < ivl_nexus_ptrs(nex) ;  ndx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, ndx);
@@ -50,19 +53,51 @@ void draw_nexus_input(ivl_nexus_t nex)
 	    lptr = ivl_nexus_ptr_log(nptr);
 	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ)) {
 		  draw_nexus_input(ivl_logic_pin(lptr, 1));
-		  return;
+
+		  assert(driver == 0);
+		  driver = nptr;
+		  return; /* XXXX */
+	    }
+
+	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
+		  fprintf(vvp_out, "C<0>");
+		  assert(driver == 0);
+		  driver = nptr;
+		  return; /* XXXX */
+	    }
+
+	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
+		  fprintf(vvp_out, "C<1>");
+		  assert(driver == 0);
+		  driver = nptr;
+		  return; /* XXXX */
 	    }
 
 	    if (lptr && (ivl_nexus_ptr_pin(nptr) == 0)) {
 		  fprintf(vvp_out, "L_%s", ivl_logic_name(lptr));
-		  return;
+
+		  assert(driver == 0);
+		  driver = nptr;
+		  return; /* XXXX */
 	    }
 
 	    sptr = ivl_nexus_ptr_sig(nptr);
 	    if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
 		  fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sptr),
 			  ivl_nexus_ptr_pin(nptr));
-		  return;
+
+		  assert(driver == 0);
+		  driver = nptr;
+		  return; /* XXXX */
+	    }
+
+	    cptr = ivl_nexus_ptr_con(nptr);
+	    if (cptr) {
+		  const char*bits = ivl_const_bits(cptr);
+		  unsigned pin = ivl_nexus_ptr_pin(nptr);
+		  fprintf(vvp_out, "C<%c>", bits[pin]);
+		  driver = nptr;
+		  return; /* XXXX */
 	    }
 
 	    lpm = ivl_nexus_ptr_lpm(nptr);
@@ -73,10 +108,16 @@ void draw_nexus_input(ivl_nexus_t nex)
 			if (ivl_lpm_q(lpm, idx) == nex) {
 			      fprintf(vvp_out, "L_%s/%u",
 				      ivl_lpm_name(lpm), idx);
-			      return;
+
+			      assert(driver == 0);
+			      driver = nptr;
+			      return; /* XXXX */
 			}
 
 	    }
+
+	    assert(ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ);
+	    assert(ivl_nexus_ptr_drive1(nptr) == IVL_DR_HiZ);
       }
 }
 
@@ -213,6 +254,13 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	   will use the input to bufz instead. */
 	    return;
 
+	  case IVL_LO_PULLDOWN:
+	  case IVL_LO_PULLUP:
+	      /* Skip pullup and pulldown objects. Things that have
+		 pull objects as inputs will instead generate the
+		 appropriate C<?> symbol. */
+	    return;
+
 	  case IVL_LO_AND:
 	    ltype = "AND";
 	    init_val = 0x55;
@@ -220,6 +268,14 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_BUF:
 	    ltype = "BUF";
+	    break;
+
+	  case IVL_LO_BUFIF0:
+	    ltype = "BUFIF0";
+	    break;
+
+	  case IVL_LO_BUFIF1:
+	    ltype = "BUFIF1";
 	    break;
 
 	  case IVL_LO_NAND:
@@ -247,6 +303,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
 
 	  default:
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %u\n",
+		    ivl_logic_type(lptr));
 	    ltype = "?";
 	    break;
       }
@@ -452,6 +510,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.21  2001/04/29 23:16:31  steve
+ *  Add bufif and pull devices.
+ *
  * Revision 1.20  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
  *
