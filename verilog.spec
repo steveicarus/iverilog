@@ -38,8 +38,10 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/ivl
 %attr(-,root,root) /usr/lib/ivl/ivlpp
 %attr(-,root,root) /usr/lib/ivl/system.vpi
+%attr(-,root,root) /usr/lib/ivl/null.tgt
 %attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %attr(-,root,root) /usr/lib/libvvm.a
+%attr(-,root,root) /usr/lib/libvpip.a
 %attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_priv.h
 %attr(-,root,root) /usr/include/vpi_user.h
