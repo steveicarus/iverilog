@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.22 1999/05/06 04:37:17 steve Exp $"
+#ident "$Id: parse.y,v 1.23 1999/05/07 04:26:49 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -88,7 +88,7 @@ extern void lex_end_table();
 %type <wires>   udp_port_decl udp_port_decls
 %type <statement> udp_initial udp_init_opt
 
-%type <text> identifier lvalue register_variable
+%type <text> identifier lpvalue register_variable
 %type <strings> register_variable_list
 %type <strings> list_of_variables
 
@@ -102,6 +102,7 @@ extern void lex_end_table();
 %type <gates> gate_instance_list
 
 %type <expr>  bitsel delay delay_opt expression expr_primary const_expression
+%type <expr>  lavalue
 %type <exprs> expression_list
 
 %type <exprs> range range_opt
@@ -534,15 +535,51 @@ list_of_variables
 		}
 	;
 
-  /* An lvalue is the expression that can go on the left side of an
-     assignment. This rule handles only procedural assignments. */
-lvalue
+  /* An lavalue is the expression that can go on the left side of a
+     continuous assign statement. This checks (where it can) that the
+     expression meets the constraints of continuous assignments. */
+lavalue
+	: IDENTIFIER
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| IDENTIFIER bitsel
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->msb_ = $2;
+		  delete $1;
+		  $$ = tmp;
+		}
+	| IDENTIFIER range
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  yyerror(@3, "Sorry, lvalue bit range not supported.");
+		  delete $1;
+		  delete $2;
+		  $$ = tmp;
+		}
+	| '{' expression_list '}'
+		{ yyerror(@1, "Sorry, concatenation expressions"
+		          " not supported in lvalue.");
+		  $$ = 0;
+		  delete $2;
+		}
+	;
+
+  /* An lpvalue is the expression that can go on the left side of a
+     procedural assignment. This rule handles only procedural assignments. */
+lpvalue
 	: identifier { $$ = $1; }
 	| identifier '[' expression ']'
 		{ yyerror(@2, "Sorry, bit/memory selects "
 		          "not supported in lvalue.");
 		  $$ = $1;
 		  delete $3;
+		}
+	| '{' expression_list '}'
+		{ yyerror(@1, "Sorry, concatenation expressions"
+		          " not supported in lvalue.");
+		  $$ = 0;
+		  delete $2;
 		}
 	;
 
@@ -581,6 +618,8 @@ module_item
 		}
 	| K_reg register_variable_list ';'
 		{ delete $2; }
+	| K_integer list_of_variables ';'
+		{ yyerror(@1, "Sorry, integer types not supported."); }
 	| K_parameter parameter_assign_list ';'
 	| gatetype delay_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
@@ -589,20 +628,9 @@ module_item
 		{ pform_make_modgates(*$1, $2);
 		  delete $1;
 		}
-	| K_assign IDENTIFIER '=' expression ';'
-		{ pform_make_pgassign(*$2, $4);
-		  delete $2;
-		}
-	| K_assign IDENTIFIER bitsel '=' expression ';'
-		{ pform_make_pgassign(*$2, $3, $5);
-		  delete $2;
-		}
-	| K_assign IDENTIFIER range '=' expression ';'
-		{ pform_make_pgassign(*$2, $5);
-		  yyerror(@3, "Sorry, lvalue bit range not supported.");
-		  delete $2;
-		  delete $3;
-		}
+	| K_assign lavalue '=' expression ';'
+		{ pform_make_pgassign($2, $4); }
+	| K_assign error '=' expression ';'
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
 		  tmp->set_file(@1.text);
@@ -757,19 +785,19 @@ statement
 		{ yyerror(@1, "Malformed conditional expression.");
 		  $$ = $5;
 		}
-	| K_for '(' lvalue '=' expression ';' expression ';'
-	  lvalue '=' expression ')' statement
+	| K_for '(' lpvalue '=' expression ';' expression ';'
+	  lpvalue '=' expression ')' statement
 		{ $$ = new PForStatement(*$3, $5, $7, *$9, $11, $13);
 		  delete $3;
 		  delete $9;
 		}
-	| K_for '(' lvalue '=' expression ';' expression ';'
+	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement
 		{ $$ = 0;
 		  yyerror(@9, "Error in for loop step assigment.");
 		}
-	| K_for '(' lvalue '=' expression ';' error ';'
-	  lvalue '=' expression ')' statement
+	| K_for '(' lpvalue '=' expression ';' error ';'
+	  lpvalue '=' expression ')' statement
 		{ $$ = 0;
 		  yyerror(@7, "Error in for loop condition expression.");
 		}
@@ -801,13 +829,13 @@ statement
 			$$ = tmp;
 		  }
 		}
-	| lvalue '=' expression ';'
+	| lpvalue '=' expression ';'
 		{ Statement*tmp = pform_make_assignment($1, $3);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| lvalue K_LE expression ';'
+	| lpvalue K_LE expression ';'
 		{ $$ = pform_make_assignment($1, $3);
 		  yyerror(@1, "Sorry, non-blocking assignment not implemented.");
 		}

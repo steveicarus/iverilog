@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.11 1999/05/06 04:37:17 steve Exp $"
+#ident "$Id: pform.h,v 1.12 1999/05/07 04:26:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -126,8 +126,7 @@ extern void pform_makegates(PGBuiltin::Type type,
 extern void pform_make_modgates(const string&type, svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
-extern void pform_make_pgassign(const string&lval, PExpr*rval);
-extern void pform_make_pgassign(const string&lval, PExpr*sel, PExpr*rval);
+extern void pform_make_pgassign(PExpr*lval, PExpr*rval);
 
 /*
  * These are functions that the outside-the-parser code uses the do
@@ -141,6 +140,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.12  1999/05/07 04:26:49  steve
+ *  Parse more complex continuous assign lvalues.
+ *
  * Revision 1.11  1999/05/06 04:37:17  steve
  *  Get rid of list<lgate> types.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.14 1999/05/06 04:37:17 steve Exp $"
+#ident "$Id: pform.cc,v 1.15 1999/05/07 04:26:49 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -303,21 +303,10 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
       delete gates;
 }
 
-void pform_make_pgassign(const string&lval, PExpr*rval)
+void pform_make_pgassign(PExpr*lval, PExpr*rval)
 {
       vector<PExpr*> wires (2);
-      wires[0] = new PEIdent(lval);
-      wires[1] = rval;
-      PGAssign*cur = new PGAssign(wires);
-      cur_module->add_gate(cur);
-}
-
-void pform_make_pgassign(const string&lval, PExpr*sel, PExpr*rval)
-{
-      vector<PExpr*> wires (2);
-      PEIdent*tmp = new PEIdent(lval);
-      tmp->msb_ = sel;
-      wires[0] = tmp;
+      wires[0] = lval;
       wires[1] = rval;
       PGAssign*cur = new PGAssign(wires);
       cur_module->add_gate(cur);
@@ -544,6 +533,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.15  1999/05/07 04:26:49  steve
+ *  Parse more complex continuous assign lvalues.
+ *
  * Revision 1.14  1999/05/06 04:37:17  steve
  *  Get rid of list<lgate> types.
  *
