@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.7 2001/03/21 05:13:03 steve Exp $"
+#ident "$Id: compile.h,v 1.8 2001/03/22 22:38:14 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -38,6 +38,12 @@
 extern void compile_init(void);
 
 extern void compile_cleanup(void);
+
+/*
+ * This is a count of errors encountered during compilation. If this
+ * is non-zero, then simulation is not recommended.
+ */
+extern unsigned compile_errors;
 
 /*
  * This function is called by the parser to compile a functor
@@ -111,6 +117,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.8  2001/03/22 22:38:14  steve
+ *  Detect undefined system tasks at compile time.
+ *
  * Revision 1.7  2001/03/21 05:13:03  steve
  *  Allow var objects as vpiHandle arguments to %vpi_call.
  *

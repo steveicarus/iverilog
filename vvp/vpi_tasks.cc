@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.3 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.4 2001/03/22 22:38:14 steve Exp $"
 #endif
 
 /*
@@ -152,6 +152,13 @@ vpiHandle vpip_build_vpi_call(const char*name,
       obj->nargs = argc;
       obj->args  = argv;
 
+      if (obj->defn == 0) {
+	    fprintf(stderr, "%s: This task not defined "
+		    "by any modules. I cannot compile it.\n", name);
+	    free(obj);
+	    return 0;
+      }
+
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf)
 	    obj->defn->info.compiletf (obj->defn->info.user_data);
@@ -190,6 +197,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.4  2001/03/22 22:38:14  steve
+ *  Detect undefined system tasks at compile time.
+ *
  * Revision 1.3  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.10 2001/03/22 05:28:41 steve Exp $"
+#ident "$Id: compile.cc,v 1.11 2001/03/22 22:38:13 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -32,6 +32,7 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+unsigned compile_errors = 0;
 
 /*
  * The opcode table lists all the code mnemonics, along with their
@@ -367,6 +368,8 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
       code->handle = vpip_build_vpi_call(name, argc, argv);
+      if (code->handle == 0)
+	    compile_errors += 1;
 
 	/* Done with the lexor-allocated name string. */
       free(name);
@@ -515,6 +518,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.11  2001/03/22 22:38:13  steve
+ *  Detect undefined system tasks at compile time.
+ *
  * Revision 1.10  2001/03/22 05:28:41  steve
  *  Add code label forward references.
  *

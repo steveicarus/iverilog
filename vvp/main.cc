@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.5 2001/03/22 21:26:54 steve Exp $"
+#ident "$Id: main.cc,v 1.6 2001/03/22 22:38:14 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -83,6 +83,12 @@ int main(int argc, char*argv[])
 	    fclose(fd);
       }
 
+      if (compile_errors > 0) {
+	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
+		    design_path, compile_errors);
+	    return compile_errors;
+      }
+
       schedule_simulate();
 
       return 0;
@@ -90,6 +96,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.6  2001/03/22 22:38:14  steve
+ *  Detect undefined system tasks at compile time.
+ *
  * Revision 1.5  2001/03/22 21:26:54  steve
  *  Compile in a default VPI module dir.
  *
