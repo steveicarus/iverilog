@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.111 2000/03/17 02:22:03 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.112 2000/03/17 03:05:13 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1161,13 +1161,28 @@ void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
 	    "," << mul->width_a() << "," << mul->width_b() << "," <<
 	    mul->width_s() << ");" << endl;
 
-	// Write the output functions for the multiplier device.
+
+	/* Connect the DataA inputs... */
+      for (unsigned idx = 0 ;  idx < mul->width_a() ;  idx += 1) {
+	    string nexus = nexus_from_link(&mul->pin_DataA(idx));
+	    init_code << "      " << mangle(nexus) << "_nex.connect(&"
+		      << mname << ", " << mname << ".key_DataA("
+		      << idx << "));" << endl;
+      }
+
+	/* Connect the Datab inputs... */
+      for (unsigned idx = 0 ;  idx < mul->width_b() ;  idx += 1) {
+	    string nexus = nexus_from_link(&mul->pin_DataB(idx));
+	    init_code << "      " << mangle(nexus) << "_nex.connect(&"
+		      << mname << ", " << mname << ".key_DataB("
+		      << idx << "));" << endl;
+      }
+
+	/* Connect the output pins... */
       for (unsigned idx = 0 ;  idx < mul->width_r() ;  idx += 1) {
-	    unsigned pin = mul->pin_Result(idx).get_pin();
-	    string outfun = defn_gate_outputfun_(os, mul, pin);
-	    init_code << "      " << mangle(mul->name()) <<
-		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
-	    emit_gate_outputfun_(mul, pin);
+	    string nexus = nexus_from_link(&mul->pin_Result(idx));
+	    init_code << "      " << mangle(nexus) << "_nex.connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
       }
 }
 
@@ -2181,6 +2196,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.112  2000/03/17 03:05:13  steve
+ *  Update vvm_mult to nexus style.
+ *
  * Revision 1.111  2000/03/17 02:22:03  steve
  *  vvm_clshift implementation without templates.
  *

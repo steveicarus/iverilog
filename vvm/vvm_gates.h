@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.41 2000/03/17 02:22:03 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.42 2000/03/17 03:05:13 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -359,7 +359,7 @@ template <unsigned WIDTH> class vvm_ff {
  * This class behaves like a combinational multiplier. The device
  * behaves like the LPM_MULT device.
  */
-class vvm_mult {
+class vvm_mult  : public vvm_nexus::recvr_t {
 
     public:
       explicit vvm_mult(unsigned rwid, unsigned awid,
@@ -370,19 +370,20 @@ class vvm_mult {
       void init_DataB(unsigned idx, vpip_bit_t val);
       void init_Sum(unsigned idx, vpip_bit_t val);
 
-      void set_DataA(unsigned idx, vpip_bit_t val);
-      void set_DataB(unsigned idx, vpip_bit_t val);
-      void set_Sum(unsigned idx, vpip_bit_t val);
-
-      void config_rout(unsigned idx, vvm_out_event::action_t o);
+      vvm_nexus::drive_t* config_rout(unsigned idx);
+      unsigned key_DataA(unsigned idx) const;
+      unsigned key_DataB(unsigned idx) const;
+      unsigned key_Sum(unsigned idx) const;
 
     private:
+      void take_value(unsigned key, vpip_bit_t val);
+
       unsigned rwid_;
       unsigned awid_;
       unsigned bwid_;
       unsigned swid_;
       vpip_bit_t*bits_;
-      vvm_out_event::action_t*out_;
+      vvm_nexus::drive_t*out_;
 };
 
 /*
@@ -926,6 +927,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.42  2000/03/17 03:05:13  steve
+ *  Update vvm_mult to nexus style.
+ *
  * Revision 1.41  2000/03/17 02:22:03  steve
  *  vvm_clshift implementation without templates.
  *
