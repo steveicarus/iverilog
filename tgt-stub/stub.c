@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.51 2001/12/15 02:13:17 steve Exp $"
+#ident "$Id: stub.c,v 1.52 2002/04/14 02:44:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,6 +87,7 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  case IVL_EX_UNARY:
 	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
 		    ivl_expr_opcode(net), width, sign);
+	    show_expression(ivl_expr_oper1(net), ind+4);
 	    break;
 
 	  default:
@@ -606,6 +607,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.52  2002/04/14 02:44:53  steve
+ *  Show unary subexpressions.
+ *
  * Revision 1.51  2001/12/15 02:13:17  steve
  *  The IVL_SIT_WIRE type does not exist, it is a
  *  synonym for IVL_SIT_TRI.
