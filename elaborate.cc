@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.189 2000/09/09 15:21:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.190 2000/09/20 02:53:14 steve Exp $"
 #endif
 
 /*
@@ -903,7 +903,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    return bl;
       }
 
-      { unsigned wid = lv->lwidth();
+      { unsigned wid = count_lval_width(lv);
         rv->set_width(wid);
 	rv = pad_to_width(rv, wid);
 	assert(rv->expr_width() >= wid);
@@ -984,7 +984,7 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
       assert(rv);
 
-      { unsigned wid = lv->lwidth();
+      { unsigned wid = count_lval_width(lv);
         rv->set_width(wid);
 	rv = pad_to_width(rv, wid);
       }
@@ -2257,6 +2257,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.190  2000/09/20 02:53:14  steve
+ *  Correctly measure comples l-values of assignments.
+ *
  * Revision 1.189  2000/09/09 15:21:26  steve
  *  move lval elaboration to PExpr virtual methods.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.8 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: netmisc.h,v 1.9 2000/09/20 02:53:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -56,7 +56,18 @@ extern bool link_drivers_constant(const Link&lnk);
 extern verinum::V driven_value(const Link&lnk);
 
 /*
+ * In some cases the lval is accessible as a pointer to the head of
+ * a list of NetAssign_ objects. This function returns the width of
+ * the l-value represented by this list.
+ */
+extern unsigned count_lval_width(const class NetAssign_*first);
+
+
+/*
  * $Log: netmisc.h,v $
+ * Revision 1.9  2000/09/20 02:53:15  steve
+ *  Correctly measure comples l-values of assignments.
+ *
  * Revision 1.8  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

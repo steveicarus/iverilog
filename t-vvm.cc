@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.175 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.176 2000/09/20 02:53:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2582,8 +2582,14 @@ void target_vvm::proc_assign_nb(const NetAssignNB*net)
       }
 
 
-
       string rval;
+      if (net->lwidth() > net->rval()->expr_width()) {
+	    cerr << net->get_line() << ": internal error: "
+		 << "lvalue width is " << net->lwidth() << ", "
+		 << "rvalue width is " << net->rval()->expr_width()
+		 << "." << endl;
+      }
+      assert(net->lwidth() <= net->rval()->expr_width());
 
 
 	/* Handle another special case, that of an r-value that is a
@@ -3385,6 +3391,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.176  2000/09/20 02:53:15  steve
+ *  Correctly measure comples l-values of assignments.
+ *
  * Revision 1.175  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *

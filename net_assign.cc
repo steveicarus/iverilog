@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.4 2000/09/10 02:18:16 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.5 2000/09/20 02:53:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -25,6 +25,16 @@
 /*
  * NetAssign
  */
+
+unsigned count_lval_width(const NetAssign_*idx)
+{
+      unsigned wid = 0;
+      while (idx) {
+	    wid += idx->lwidth();
+	    idx = idx->more;
+      }
+      return wid;
+}
 
 NetAssign_::NetAssign_(const string&n, unsigned w)
 : NetNode(n, w), bmux_(0)
@@ -151,6 +161,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.5  2000/09/20 02:53:15  steve
+ *  Correctly measure comples l-values of assignments.
+ *
  * Revision 1.4  2000/09/10 02:18:16  steve
  *  elaborate complex l-values
  *
