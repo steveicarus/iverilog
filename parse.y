@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.49 1999/07/10 01:03:18 steve Exp $"
+#ident "$Id: parse.y,v 1.50 1999/07/10 02:19:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -842,10 +842,11 @@ lavalue
 		  $$ = tmp;
 		}
 	| '{' expression_list '}'
-		{ yyerror(@1, "Sorry, concatenation expressions"
-		          " not supported in lvalue.");
-		  $$ = 0;
+		{ PEConcat*tmp = new PEConcat(*$2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $2;
+		  $$ = tmp;
 		}
 	;
 
@@ -878,10 +879,11 @@ lpvalue
 		  $$ = tmp;
 		}
 	| '{' expression_list '}'
-		{ yyerror(@1, "Sorry, concatenation expressions"
-		          " not supported in lvalue.");
-		  $$ = 0;
+		{ PEConcat*tmp = new PEConcat(*$2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $2;
+		  $$ = tmp;
 		}
 	;
 

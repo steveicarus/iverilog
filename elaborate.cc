@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.50 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.51 1999/07/10 02:19:26 steve Exp $"
 #endif
 
 /*
@@ -1032,6 +1032,21 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 {
 	/* Get the l-value, and assume that it is an identifier. */
       const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
+
+      if (id == 0) {
+	    NetNet*ll = lval_->elaborate_net(des, path);
+	    if (ll == 0) {
+		  cerr << get_line() << ": Assignment l-value too complex."
+		       << endl;
+		  return 0;
+	    }
+
+	    lsb = 0;
+	    msb = ll->pin_count()-1;
+	    mux = 0;
+	    return ll;
+      }
+
       assert(id);
 
 	/* Get the signal referenced by the identifier, and make sure
@@ -1142,10 +1157,6 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    delete reg;
 	    delete rv;
 	    return 0;
-#if 0
-	    cur = new NetAssign(des->local_symbol(path), des, 1, mux, rv);
-	    connect(cur->pin(0), reg->pin(0));
-#endif
       }
 
 
@@ -1704,6 +1715,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.51  1999/07/10 02:19:26  steve
+ *  Support concatenate in l-values.
+ *
  * Revision 1.50  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *
