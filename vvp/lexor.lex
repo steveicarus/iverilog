@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.16 2001/05/09 02:53:25 steve Exp $"
+#ident "$Id: lexor.lex,v 1.17 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -110,6 +110,12 @@
       yylval.text = strdup(yytext);
       return T_SYMBOL; }
 
+  /* Symbols may include komma `,' in certain constructs */
+
+[A-Z]"<"[.$_a-zA-Z0-9/,]*">" {
+      yylval.text = strdup(yytext);
+      return T_SYMBOL; }
+
 
   /* Accept the common assembler style comments, treat them as white
      space. Of course, also skip white space. The semi-colon is
@@ -133,6 +139,12 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.17  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.16  2001/05/09 02:53:25  steve
  *  Implement the .resolv syntax.
  *

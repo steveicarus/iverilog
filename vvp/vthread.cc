@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.38 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: vthread.cc,v 1.39 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -130,6 +130,18 @@ static inline void thr_put_bit(struct vthread_s*thr,
 
       thr->bits[addr] = (thr->bits[addr] & ~mask) | (val << (idx*2));
 }
+
+unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr)
+{
+      return thr_get_bit(thr, addr);
+}
+
+void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
+{
+      assert(addr < thr->nbits);
+      thr_put_bit(thr, addr, bit);
+}
+
 
 /*
  * Create a new thread with the given start address.
@@ -886,7 +898,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
 bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 {
 	// printf("thread %p: %%vpi_call\n", thr);
-      vpip_execute_vpi_call(cp->handle);
+      vpip_execute_vpi_call(thr, cp->handle);
       return schedule_finished()? false : true;
 }
 
@@ -993,6 +1005,12 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.39  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.38  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

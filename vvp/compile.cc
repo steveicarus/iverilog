@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.61 2001/05/09 04:23:18 steve Exp $"
+#ident "$Id: compile.cc,v 1.62 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -83,7 +83,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
-      { "%ix/get", of_IX_GET, 2,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/load",of_IX_LOAD,2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/sub", of_IX_SUB, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -922,6 +922,21 @@ vpiHandle compile_vpi_lookup(const char*label)
       symbol_value_t val;
 
       val = sym_get_value(sym_vpi, label);
+      if (!val.ptr) {
+	    // check for thread vector  T<base,wid>
+	    unsigned base, wid;
+	    unsigned n;
+	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n) 
+		&& n == strlen(label)) {
+		  val.ptr = vpip_make_vthr_vector(base, wid);
+		  sym_set_value(sym_vpi, label, val);
+	    }
+      }
+
+      if (!val.ptr) {
+	    // check for memory word  M<mem,base,wid>
+      }
+
       return (vpiHandle) val.ptr;
 }
 
@@ -1126,6 +1141,12 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.62  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.61  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.

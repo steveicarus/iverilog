@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.32 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.33 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
 # include  <assert.h>
+# include  <malloc.h>
 
 static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
@@ -585,18 +586,45 @@ static int show_system_task_call(ivl_statement_t net)
 {
       unsigned idx;
       unsigned parm_count = ivl_stmt_parm_count(net);
-
+      struct vector_info *vec = 0x0;
+      unsigned int vecs= 0;
+      unsigned int veci= 0;
+      
       if (parm_count == 0) {
 	    fprintf(vvp_out, "    %%vpi_call \"%s\";\n", ivl_stmt_name(net));
 	    return 0;
       }
 
+      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
+	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
+	    
+	    switch (ivl_expr_type(expr)) {
+		case IVL_EX_NUMBER:
+		case IVL_EX_SIGNAL:
+		case IVL_EX_STRING:
+		case IVL_EX_SCOPE:
+		case IVL_EX_SFUNC:
+		  continue;
+		case IVL_EX_MEMORY:
+		  if (!ivl_expr_oper1(expr)) {
+			continue;
+		  }
+		default:
+		  break;
+	    }
+
+	    vec = (struct vector_info *)
+		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
+	    vec[vecs] = draw_eval_expr(expr);
+	    vecs++;
+      }
+      
       fprintf(vvp_out, "    %%vpi_call \"%s\"", ivl_stmt_name(net));
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
 
 	    switch (ivl_expr_type(expr)) {
-
+		  
 		case IVL_EX_NUMBER: {
 		      unsigned bit, wid = ivl_expr_width(expr);
 		      const char*bits = ivl_expr_bits(expr);
@@ -604,43 +632,56 @@ static int show_system_task_call(ivl_statement_t net)
 		      fprintf(vvp_out, ", %u'b", wid);
 		      for (bit = wid ;  bit > 0 ;  bit -= 1)
 			    fputc(bits[bit-1], vvp_out);
-		      break;
+		      continue;
 		}
 
 		case IVL_EX_SIGNAL:
 		  fprintf(vvp_out, ", V_%s", ivl_expr_name(expr));
-		  break;
-
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr))
-			fprintf(vvp_out, ", M_%s", ivl_expr_name(expr));
-		  else
-			fprintf(vvp_out, ", M_%s[?]", ivl_expr_name(expr));
-		  break;
+		  continue;
 
 		case IVL_EX_STRING:
 		  fprintf(vvp_out, ", \"%s\"", ivl_expr_string(expr));
-		  break;
+		  continue;
 
 		case IVL_EX_SCOPE:
 		  fprintf(vvp_out, ", S_%s",
 			  ivl_scope_name(ivl_expr_scope(expr)));
-		  break;
+		  continue;
 
 		case IVL_EX_SFUNC:
 		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
 			fprintf(vvp_out, ", $time");
 		  else
 			fprintf(vvp_out, ", ?");
+		  continue;
+		  
+		case IVL_EX_MEMORY:
+		  if (!ivl_expr_oper1(expr)) {
+			fprintf(vvp_out, ", M_%s", ivl_expr_name(expr));
+			continue;
+		  }
 		  break;
 
 		default:
-		  fprintf(vvp_out, ", ?");
 		  break;
 	    }
+	    
+	    fprintf(vvp_out, ", T<%u,%u>", 
+		    vec[veci].base, 
+		    vec[veci].wid);
+	    veci++;
+      }
+      
+      assert(veci == vecs);
+
+      if (vecs) {
+	    for (idx = 0; idx < vecs; idx++)
+		  clr_vector(vec[idx]);
+	    free(vec);
       }
 
       fprintf(vvp_out, ";\n");
+
       return 0;
 }
 
@@ -813,6 +854,12 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.33  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.32  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.14 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.15 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -169,6 +169,13 @@ struct __vpiBinaryConst {
 vpiHandle vpip_make_binary_const(unsigned wid, char*bits);
 
 /*
+ *  This one looks like a constant, but really is a vector in the current 
+ *  thread. 
+ */
+
+vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid);
+
+/*
  * This function is called before any compilation to load VPI
  * modules. This gives the modules a chance to announce their
  * contained functions before compilation commences. It is called only
@@ -194,7 +201,9 @@ extern vpiHandle vpip_build_vpi_call(const char*name,
 				     unsigned argc,
 				     vpiHandle*argv);
 
-extern void vpip_execute_vpi_call(vpiHandle obj);
+extern vthread_t vpip_current_vthread;
+
+extern void vpip_execute_vpi_call(vthread_t thr, vpiHandle obj);
 
 
 /*
@@ -206,6 +215,12 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.15  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.14  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

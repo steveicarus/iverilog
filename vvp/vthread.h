@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.h,v 1.5 2001/04/21 00:34:39 steve Exp $"
+#ident "$Id: vthread.h,v 1.6 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 /*
@@ -64,7 +64,19 @@ extern void vthread_schedule_list(vthread_t thr);
 
 
 /*
+** Return a bit from the thread's bit space;
+*/
+unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr);
+void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit);
+
+/*
  * $Log: vthread.h,v $
+ * Revision 1.6  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.5  2001/04/21 00:34:39  steve
  *  Working %disable and reap handling references from scheduler.
  *

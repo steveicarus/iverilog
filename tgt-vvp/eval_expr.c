@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.24 2001/05/06 17:54:33 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.25 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -738,7 +738,7 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 {
       int root = ivl_memory_root(mem);
       unsigned width = ivl_memory_width(mem);
-      width = (width+7) & ~7;
+      width = (width+3) & ~3;
 
       switch (ivl_expr_type(ae)) {
 	  case IVL_EX_NUMBER: {
@@ -772,9 +772,9 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 			addr.base, addr.wid);
 		clr_vector(addr);
 		if (root>0)
-		      fprintf(vvp_out, "    %%ix/sub 3, %u\n", root);
+		      fprintf(vvp_out, "    %%ix/sub 3, %u;\n", root);
 		if (width>1)
-		      fprintf(vvp_out, "    %%ix/mul 3, %u\n", width);
+		      fprintf(vvp_out, "    %%ix/mul 3, %u;\n", width);
 		break;
 	  }
       }
@@ -967,6 +967,12 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.25  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.24  2001/05/06 17:54:33  steve
  *  Behavioral code to read memories. (Stephan Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.5 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.6 2001/05/10 00:26:53 steve Exp $"
 #endif
 
 /*
@@ -172,8 +172,13 @@ vpiHandle vpip_build_vpi_call(const char*name,
  * place the call to the system task/function. For now, only support
  * calls to system tasks.
  */
-void vpip_execute_vpi_call(vpiHandle ref)
+
+vthread_t vpip_current_vthread;
+
+void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 {
+      vpip_current_vthread = thr;
+
       assert(ref->vpi_type->type_code == vpiSysTaskCall);
 
       vpip_cur_task = (struct __vpiSysTaskCall*)ref;
@@ -197,6 +202,12 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.6  2001/05/10 00:26:53  steve
+ *  VVP support for memories in expressions,
+ *  including general support for thread bit
+ *  vectors as system task parameters.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.5  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
