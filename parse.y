@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.131 2001/10/21 01:55:24 steve Exp $"
+#ident "$Id: parse.y,v 1.132 2001/10/26 03:22:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -120,6 +120,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <statement> udp_initial udp_init_opt
 
 %type <text> identifier register_variable
+%type <text> spec_notifier spec_notifier_opt
 %type <texts> register_variable_list list_of_variables
 
 %type <text> net_decl_assign
@@ -1839,66 +1840,39 @@ specify_item
 		{
 		}
 	| K_Shold '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ')' ';'
+	  ',' expression spec_notifier_opt ')' ';'
 		{ delete $7;
+		  if ($8) delete $8;
 		}
-	| K_Shold '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ',' identifier ')' ';'
-		{ delete $7;
-		  delete $9;
-		}
-	| K_Speriod '(' spec_reference_event ',' expression ')' ';'
+	| K_Speriod '(' spec_reference_event ',' expression 
+	  spec_notifier_opt ')' ';'
 		{ delete $5;
-		}
-	| K_Speriod '(' spec_reference_event ',' expression ','
-	  identifier ')' ';'
-		{ delete $5;
-		  delete $7;
+		  if ($6) delete $6;
 		}
 	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ')' ';'
+	  ',' expression spec_notifier_opt ')' ';'
 		{ delete $7;
-		}
-	| K_Srecovery '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ',' identifier ')' ';'
-		{ delete $7;
-		  delete $9;
+		  if ($8) delete $8;
 		}
 	| K_Ssetup '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ')' ';'
+	  ',' expression spec_notifier_opt ')' ';'
 		{ delete $7;
+		  if ($8) delete $8;
 		}
-	| K_Ssetup '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ',' identifier ')' ';'
+	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
+	  ',' expression ',' expression spec_notifier_opt ')' ';'
 		{ delete $7;
 		  delete $9;
+		  if ($10) delete $10;
 		}
 	| K_Swidth '(' spec_reference_event ',' expression ',' expression
-	  ',' identifier ')' ';'
+	  spec_notifier_opt ')' ';'
 		{ delete $5;
 		  delete $7;
-		  delete $9;
-		}
-	| K_Swidth '(' spec_reference_event ',' expression
-	  ',' expression ')' ';'
-		{ delete $5;
-		  delete $7;
+		  if ($8) delete $8;
 		}
 	| K_Swidth '(' spec_reference_event ',' expression ')' ';'
 		{ delete $5;
-		}
-	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ',' expression ')' ';'
-		{ 
-		    delete $7;
-		    delete $9;
-		}
-	| K_Ssetuphold '(' spec_reference_event ',' spec_reference_event
-	  ',' expression ',' expression ',' identifier ')' ';'
-		{ 
-		    delete $7;
-		    delete $9;
-		    delete $11;
 		}
 	;
 
@@ -1981,9 +1955,29 @@ spec_reference_event
 		{ delete $2;
 		  delete $4;
 		}
+	;
+
+spec_notifier_opt
+	: /* empty */
+		{ $$=0x0; }
+	| spec_notifier
+		{ $$=$1; }
+	;
+spec_notifier
+	: ','
+		{ $$ = 0x0; }
+	| ','  identifier
+		{ $$ = $2; }
+	| spec_notifier ',' 
+		{ $$ = $1; }
+	| spec_notifier ',' identifier
+		{ $$ = $1; 
+		  delete $3;
+		}
 	| IDENTIFIER
 		{ delete $1; }
 	;
+
 
 statement
 
