@@ -17,17 +17,33 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.1 1999/01/24 01:35:08 steve Exp $"
+#ident "$Id: t-null.cc,v 1.2 1999/06/06 20:33:30 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "target.h"
 
-static target_t target_null_obj;
+/*
+ * This target type simply drops the netlist. It is useful for
+ * skipping the code generation phase.
+ */
+static class target_null_t  : public target_t {
+
+    public:
+      void bufz(ostream&os, const NetBUFZ*) { }
+      void net_esignal(ostream&, const NetESignal*) { }
+      void net_event(ostream&, const NetNEvent*) { }
+      void proc_delay(ostream&, const NetPDelay*) { }
+      void proc_event(ostream&, const NetPEvent*) { }
+
+} target_null_obj;
 
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.2  1999/06/06 20:33:30  steve
+ *  implement some null-target code generation.
+ *
  * Revision 1.1  1999/01/24 01:35:08  steve
  *  Support null target for generating no output.
  *
