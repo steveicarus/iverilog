@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.224 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.225 2001/11/19 04:26:46 steve Exp $"
 #endif
 
 /*
@@ -2445,6 +2445,7 @@ class NetEUReduce : public NetEUnary {
       NetEUReduce(char op, NetExpr*ex);
       ~NetEUReduce();
 
+      virtual bool set_width(unsigned w);
       virtual NetNet* synthesize(Design*);
       virtual NetEConst* eval_tree();
 
@@ -2861,6 +2862,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.225  2001/11/19 04:26:46  steve
+ *  Unary reduction operators are all 1-bit results.
+ *
  * Revision 1.224  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.19 2001/07/27 04:51:44 steve Exp $"
+#ident "$Id: set_width.cc,v 1.20 2001/11/19 04:26:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -330,6 +330,8 @@ bool NetEUnary::set_width(unsigned w)
 	    flag = expr_->set_width(w);
 	    expr_width(w);
 	    break;
+	  case '!':
+	    return w == 1;
 	  default:
 	    flag = expr_width() == w;
 	    break;
@@ -338,9 +340,21 @@ bool NetEUnary::set_width(unsigned w)
       return flag;
 }
 
+/*
+ * Unary reduction operators allow its operand to have any width. The
+ * result is defined to be 1.
+ */
+bool NetEUReduce::set_width(unsigned w)
+{
+      return w == 1;
+}
+
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.20  2001/11/19 04:26:46  steve
+ *  Unary reduction operators are all 1-bit results.
+ *
  * Revision 1.19  2001/07/27 04:51:44  steve
  *  Handle part select expressions as variants of
  *  NetESignal/IVL_EX_SIGNAL objects, instead of

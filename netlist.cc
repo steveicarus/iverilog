@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.176 2001/11/19 01:54:14 steve Exp $"
+#ident "$Id: netlist.cc,v 1.177 2001/11/19 04:26:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2326,6 +2326,11 @@ const NetExpr* NetETernary::false_expr() const
 NetEUnary::NetEUnary(char op, NetExpr*ex)
 : NetExpr(ex->expr_width()), op_(op), expr_(ex)
 {
+      switch (op_) {
+	  case '!':
+	    expr_width(1);
+	    break;
+      }
 }
 
 NetEUnary::~NetEUnary()
@@ -2402,6 +2407,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.177  2001/11/19 04:26:46  steve
+ *  Unary reduction operators are all 1-bit results.
+ *
  * Revision 1.176  2001/11/19 01:54:14  steve
  *  Port close cropping behavior from mcrgb
  *  Move window array reset to libmc.
