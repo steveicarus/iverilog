@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.194 2000/10/26 17:09:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.195 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 /*
@@ -2198,10 +2198,10 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    NetProcTop*top;
 	    switch ((*st)->type()) {
 		case PProcess::PR_INITIAL:
-		  top = new NetProcTop(NetProcTop::KINITIAL, cur);
+		  top = new NetProcTop(scope, NetProcTop::KINITIAL, cur);
 		  break;
 		case PProcess::PR_ALWAYS:
-		  top = new NetProcTop(NetProcTop::KALWAYS, cur);
+		  top = new NetProcTop(scope, NetProcTop::KALWAYS, cur);
 		  break;
 	    }
 
@@ -2283,6 +2283,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.195  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.194  2000/10/26 17:09:46  steve
  *  Fix handling of errors in behavioral lvalues. (PR#28)
  *

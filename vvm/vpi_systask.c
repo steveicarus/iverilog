@@ -17,12 +17,27 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.7 2000/10/06 23:11:39 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.8 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdlib.h>
 # include  <assert.h>
+
+static vpiHandle systask_handle(int type, vpiHandle ref)
+{
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      switch (type) {
+	  case vpiScope:
+	    return &rfp->scope->base;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
 
 /*
  * the iter function only supports getting an iterator of the
@@ -46,7 +61,7 @@ static const struct __vpirt vpip_systask_rt = {
       0,
       0,
       0,
-      0,
+      systask_handle,
       systask_iter
 };
 
@@ -108,6 +123,13 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.8  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.7  2000/10/06 23:11:39  steve
  *  Replace data references with function calls. (Venkat)
  *

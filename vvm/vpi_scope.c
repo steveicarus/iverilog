@@ -17,12 +17,29 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_scope.c,v 1.7 2000/05/03 05:03:26 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.8 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdlib.h>
 # include  <assert.h>
+
+static char* scope_get_str(int code, vpiHandle obj)
+{
+      struct __vpiScope*ref = (struct __vpiScope*)obj;
+
+
+      assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiNamedBegin));
+
+      switch (code) {
+	  case vpiFullName:
+	    return ref->name;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
 
 static vpiHandle module_iter(int code, vpiHandle obj)
 {
@@ -40,7 +57,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 static const struct __vpirt vpip_module_rt = {
       vpiModule,
       0,
-      0,
+      scope_get_str,
       0,
       0,
       0,
@@ -50,7 +67,7 @@ static const struct __vpirt vpip_module_rt = {
 static const struct __vpirt vpip_task_rt = {
       vpiTask,
       0,
-      0,
+      scope_get_str,
       0,
       0,
       0,
@@ -60,7 +77,7 @@ static const struct __vpirt vpip_task_rt = {
 static const struct __vpirt vpip_function_rt = {
       vpiFunction,
       0,
-      0,
+      scope_get_str,
       0,
       0,
       0,
@@ -70,7 +87,7 @@ static const struct __vpirt vpip_function_rt = {
 static const struct __vpirt vpip_named_begin_rt = {
       vpiNamedBegin,
       0,
-      0,
+      scope_get_str,
       0,
       0,
       0,
@@ -91,6 +108,7 @@ vpiHandle vpip_make_scope(struct __vpiScope*ref, int type, const char*name)
 {
       ref->intern = 0;
       ref->nintern = 0;
+      ref->name = name;
 
       switch (type) {
 	  case vpiModule:
@@ -129,6 +147,13 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.8  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.7  2000/05/03 05:03:26  steve
  *  Support named for in VPI.
  *

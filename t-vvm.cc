@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.180 2000/10/26 00:29:10 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.181 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2180,7 +2180,8 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
 
       init_code << "      " << thread_class_ << ".step_ = &"
 		<< thread_class_ << "_step_0_;" << endl;
-
+      init_code << "      " << thread_class_ << ".scope = &"
+		<< mangle(proc->scope()->name()) << "_scope;" << endl;
       init_code << "      " << thread_class_ << ".thread_yield();" << endl;
 
 
@@ -3162,7 +3163,7 @@ void target_vvm::proc_stask(const NetSTask*net)
 	   parameters. we don't need a parameter array for this. */
 
       if (net->nparms() == 0) {
-	    defn << "      vpip_calltask(\"" << net->name()
+	    defn << "      vpip_calltask(thr->scope, \"" << net->name()
 		 << "\", 0, 0);" << endl;
 	    defn << "      if (vpip_finished()) return false;" << endl;
 	    return;
@@ -3185,8 +3186,8 @@ void target_vvm::proc_stask(const NetSTask*net)
 	       << endl;
       }
 
-      defn << "      vpip_calltask(\"" << net->name() << "\", " <<
-	    net->nparms() << ", " << ptmp << ");" << endl;
+      defn << "      vpip_calltask(thr->scope, \"" << net->name() << "\", "
+	   << net->nparms() << ", " << ptmp << ");" << endl;
       defn << "      if (vpip_finished()) return false;" << endl;
 }
 
@@ -3393,6 +3394,13 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.181  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.180  2000/10/26 00:29:10  steve
  *  Put signals into a signal_table
  *

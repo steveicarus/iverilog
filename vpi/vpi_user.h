@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.23 2000/10/04 02:37:44 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.24 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 
@@ -137,6 +137,7 @@ typedef struct t_vpi_value {
 #define vpiSysTaskCall 57
 #define vpiTask        59
 #define vpiTimeVar     63
+#define vpiScope       84
 #define vpiSysTfCall   85
 #define vpiArgument    89
 #define vpiInternalScope 92
@@ -264,6 +265,13 @@ extern DLLEXPORT void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.24  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.23  2000/10/04 02:37:44  steve
  *  Use .def file instead of _dllexport.
  *

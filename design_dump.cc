@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.100 2000/10/07 19:45:42 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.101 2000/10/28 00:51:41 steve Exp $"
 #endif
 
 /*
@@ -421,10 +421,12 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 {
       switch (type_) {
 	  case NetProcTop::KINITIAL:
-	    o << "initial  /* " << get_line() << " */" << endl;
+	    o << "initial  /* " << get_line() << " in "
+	      << scope_->name() << " */" << endl;
 	    break;
 	  case NetProcTop::KALWAYS:
-	    o << "always  /* " << get_line() << " */" << endl;
+	    o << "always  /* " << get_line() << " in "
+	      << scope_->name() << " */" << endl;
 	    break;
       }
 
@@ -973,6 +975,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.101  2000/10/28 00:51:41  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.100  2000/10/07 19:45:42  steve
  *  Put logic devices into scopes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.h,v 1.9 2000/04/15 19:51:30 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.10 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -80,7 +80,6 @@ class vvm_thread {
 	// This method executes a setp of the thread. The engine will
 	// continue to call go as long as it returns true. The thread
 	// will return false if it is ready to give up the CPU.
-      bool go();
       bool (*step_)(vvm_thread*);
 
 	// These members are used to handle task invocations.
@@ -91,10 +90,19 @@ class vvm_thread {
 	// The sync class uses this to list all the threads blocked on it.
       vvm_sync*sync_back_;
       vvm_thread*sync_next_;
+
+      struct __vpiScope*scope;
 };
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.10  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.9  2000/04/15 19:51:30  steve
  *  fork-join support in vvm.
  *

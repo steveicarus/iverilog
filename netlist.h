@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.174 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: netlist.h,v 1.175 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 /*
@@ -1999,12 +1999,14 @@ class NetProcTop  : public LineInfo {
     public:
       enum Type { KINITIAL, KALWAYS };
 
-      NetProcTop(Type t, class NetProc*st);
+      NetProcTop(NetScope*s, Type t, class NetProc*st);
       ~NetProcTop();
 
       Type type() const { return type_; }
       NetProc*statement();
       const NetProc*statement() const;
+
+      const NetScope*scope() const;
 
       void dump(ostream&, unsigned ind) const;
       bool emit(struct target_t*tgt) const;
@@ -2013,6 +2015,7 @@ class NetProcTop  : public LineInfo {
       const Type type_;
       NetProc*const statement_;
 
+      NetScope*scope_;
       friend class Design;
       NetProcTop*next_;
 };
@@ -2807,6 +2810,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.175  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.174  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *

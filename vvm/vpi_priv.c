@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.10 2000/10/06 23:11:39 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.11 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -44,11 +44,13 @@ static struct systf_entry*systf_task_list = 0;
 /* This is the handle of the task currently being called. */
 static struct __vpiSysTaskCall*vpip_cur_task;
 
-void vpip_calltask(const char*fname, unsigned nparms, vpiHandle*parms)
+void vpip_calltask(struct __vpiScope*scope, const char*fname,
+		   unsigned nparms, vpiHandle*parms)
 {
       struct systf_entry*idx;
       struct __vpiSysTaskCall cur_task;
       cur_task.base.vpi_type = vpip_get_systask_rt();
+      cur_task.scope = scope;
       cur_task.args  = parms;
       cur_task.nargs = nparms;
       cur_task.res   = 0;
@@ -233,6 +235,13 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.11  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.10  2000/10/06 23:11:39  steve
  *  Replace data references with function calls. (Venkat)
  *

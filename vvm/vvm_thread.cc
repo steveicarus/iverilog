@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.cc,v 1.6 2000/04/14 23:31:53 steve Exp $"
+#ident "$Id: vvm_thread.cc,v 1.7 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -30,7 +30,7 @@ class delay_event : public vvm_event {
       delay_event(vvm_thread*thr) : thr_(thr) { }
       void event_function()
       {
-	    while (thr_->go())
+	    while (thr_->step_(thr_))
 		  /* empty */;
       }
     private:
@@ -55,14 +55,16 @@ void vvm_thread::thread_yield(unsigned long delay)
       ev -> schedule(delay);
 }
 
-bool vvm_thread::go()
-{
-      return (step_)(this);
-}
-
 
 /*
  * $Log: vvm_thread.cc,v $
+ * Revision 1.7  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.6  2000/04/14 23:31:53  steve
  *  No more class derivation from vvm_thread.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.142 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: netlist.cc,v 1.143 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -423,8 +423,8 @@ NetProc::~NetProc()
 {
 }
 
-NetProcTop::NetProcTop(Type t, NetProc*st)
-: type_(t), statement_(st)
+NetProcTop::NetProcTop(NetScope*s, Type t, NetProc*st)
+: type_(t), statement_(st), scope_(s)
 {
 }
 
@@ -441,6 +441,11 @@ NetProc* NetProcTop::statement()
 const NetProc* NetProcTop::statement() const
 {
       return statement_;
+}
+
+const NetScope* NetProcTop::scope() const
+{
+      return scope_;
 }
 
 /*
@@ -2441,6 +2446,13 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.143  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.142  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.17 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: sys_display.c,v 1.18 2000/10/28 00:51:42 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -55,7 +55,8 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
  * well so that I can look for arguments as I move forward through the
  * string.
  */
-static int format_str(unsigned int mcd, char*fmt, int argc, vpiHandle*argv)
+static int format_str(vpiHandle scope, unsigned int mcd,
+		      char*fmt, int argc, vpiHandle*argv)
 {
       s_vpi_value value;
       char buf[256];
@@ -114,8 +115,8 @@ static int format_str(unsigned int mcd, char*fmt, int argc, vpiHandle*argv)
 			cp += 1;
 			break;
 		      case 'm':
-			vpi_mcd_printf(mcd, "%s", vpi_get_str(vpiFullName, argv[idx]));
-			idx += 1;
+			assert(scope);
+			vpi_mcd_printf(mcd, "%s", vpi_get_str(vpiFullName, scope));
 			cp += 1;
 			break;
 		      case 'o':
@@ -162,7 +163,8 @@ static int format_str(unsigned int mcd, char*fmt, int argc, vpiHandle*argv)
       return idx;
 }
 
-static void do_display(unsigned int mcd, struct strobe_cb_info*info)
+static void do_display(vpiHandle scope, unsigned int mcd,
+		       struct strobe_cb_info*info)
 {
       s_vpi_value value;
       int idx;
@@ -180,7 +182,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  if (vpi_get(vpiConstType, item) == vpiStringConst) {
 			value.format = vpiStringVal;
 			vpi_get_value(item, &value);
-			idx += format_str(mcd, value.value.str,
+			idx += format_str(scope, mcd, value.value.str,
 					  info->nitems-idx-1,
 					  info->items+idx+1);
 		  } else {
@@ -215,12 +217,15 @@ static int sys_display_calltf(char *name)
 {
       struct strobe_cb_info info;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle scope = vpi_handle(vpiScope, sys);
 
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
+      assert(scope);
+
       array_from_iterator(&info, argv);
 
-      do_display(1, &info);
+      do_display(scope, 1, &info);
 
       free(info.items);
 
@@ -242,7 +247,7 @@ static int strobe_cb(p_cb_data cb)
 {
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
-      do_display(1, info);
+      do_display(0, 1, info);
 
       vpi_printf("\n");
 
@@ -294,7 +299,7 @@ static vpiHandle *monitor_callbacks = 0;
 
 static int monitor_cb_2(p_cb_data cb)
 {
-      do_display(1, &monitor_info);
+      do_display(0, 1, &monitor_info);
       vpi_printf("\n");
       monitor_scheduled = 0;
       return 0;
@@ -460,7 +465,7 @@ static int sys_fdisplay_calltf(char *name)
       mcd = value.value.integer;
 
       array_from_iterator(&info, argv);
-      do_display(mcd, &info);
+      do_display(0, mcd, &info);
       free(info.items);
 
       if (strcmp(name,"$fdisplay") == 0)
@@ -576,6 +581,13 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.18  2000/10/28 00:51:42  steve
+ *  Add scope to threads in vvm, pass that scope
+ *  to vpi sysTaskFunc objects, and add vpi calls
+ *  to access that information.
+ *
+ *  $display displays scope in %m (PR#1)
+ *
  * Revision 1.17  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *
