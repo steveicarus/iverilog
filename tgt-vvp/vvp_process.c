@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.37 2001/06/23 00:30:42 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.38 2001/06/29 02:41:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -624,6 +624,7 @@ static int show_system_task_call(ivl_statement_t net)
 	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
 	    
 	    switch (ivl_expr_type(expr)) {
+		case IVL_EX_NONE:
 		case IVL_EX_NUMBER:
 		case IVL_EX_SIGNAL:
 		case IVL_EX_STRING:
@@ -649,7 +650,10 @@ static int show_system_task_call(ivl_statement_t net)
 	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
 
 	    switch (ivl_expr_type(expr)) {
-		  
+		case IVL_EX_NONE:
+		  fprintf(vvp_out, ", \" \"");
+		  continue;
+
 		case IVL_EX_NUMBER: {
 		      unsigned bit, wid = ivl_expr_width(expr);
 		      const char*bits = ivl_expr_bits(expr);
@@ -883,6 +887,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.38  2001/06/29 02:41:05  steve
+ *  Handle null parameters to system tasks.
+ *
  * Revision 1.37  2001/06/23 00:30:42  steve
  *  Handle short inputs to tasks. (Stephan Boettcher)
  *
