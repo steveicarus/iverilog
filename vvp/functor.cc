@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.38 2002/01/06 17:50:50 steve Exp $"
+#ident "$Id: functor.cc,v 1.39 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 # include  "functor.h"
+# include  "statistics.h"
 # include  "debug.h"
 # include  <assert.h>
 # include  <string.h>
@@ -75,6 +76,7 @@ vvp_ipoint_t functor_allocate(unsigned wid)
 {
       vvp_ipoint_t idx = functor_count*4;
       functor_count += wid;
+      count_functors += wid;
 
       if (functor_count > functor_chunk_count*functor_chunk_size) {
 
@@ -201,6 +203,9 @@ void functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.39  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.38  2002/01/06 17:50:50  steve
  *  Support scope for functors. (Stephan Boettcher)
  *

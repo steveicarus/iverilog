@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.24 2002/04/12 02:44:02 steve Exp $"
+#ident "$Id: main.cc,v 1.25 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -26,6 +26,7 @@
 # include  "compile.h"
 # include  "schedule.h"
 # include  "vpi_priv.h"
+# include  "statistics.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -237,6 +238,12 @@ int main(int argc, char*argv[])
       }
 
       if (verbose_flag) {
+	    fprintf(stderr, " ... %8lu functors\n", count_functors);
+	    fprintf(stderr, " ... %8lu opcodes\n",  count_opcodes);
+	    fprintf(stderr, " ... %8lu nets\n",     count_vpi_nets);
+      }
+
+      if (verbose_flag) {
 	    my_getrusage(cycles+1);
 	    print_rusage(stderr, cycles+1, cycles+0);
 	    fprintf(stderr, "Running ...\n");
@@ -265,6 +272,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.25  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.24  2002/04/12 02:44:02  steve
  *  Formally define extended arguments to vvp.
  *
@@ -276,76 +286,5 @@ int main(int argc, char*argv[])
  *
  * Revision 1.21  2001/10/20 01:03:42  steve
  *  Print memory usage information if requested (Stephan Boettcher)
- *
- * Revision 1.20  2001/07/30 02:44:05  steve
- *  Cleanup defines and types for mingw compile.
- *
- * Revision 1.19  2001/07/26 03:13:51  steve
- *  Make the -M flag add module search paths.
- *
- * Revision 1.18  2001/07/21 21:18:55  steve
- *  Add the -h flag for help. (Stephan Boettcher)
- *
- * Revision 1.17  2001/07/16 18:40:19  steve
- *  Add a stdlog output for vvp, and vvp options
- *  to direct them around. (Stephan Boettcher.)
- *
- * Revision 1.16  2001/06/23 18:26:26  steve
- *  Add the %shiftl/i0 instruction.
- *
- * Revision 1.15  2001/06/12 03:53:11  steve
- *  Change the VPI call process so that loaded .vpi modules
- *  use a function table instead of implicit binding.
- *
- * Revision 1.14  2001/05/20 17:34:53  steve
- *  declare getopt by hand in mingw32 compile.
- *
- * Revision 1.13  2001/05/12 20:38:06  steve
- *  A resolver that understands some simple strengths.
- *
- * Revision 1.12  2001/05/11 03:26:31  steve
- *  No entry breakpoint if debug is compiled out.
- *
- * Revision 1.11  2001/05/11 02:06:14  steve
- *  Add the --enable-vvp-debug option to the configure
- *  script of vvp, and detect getopt.h.
- *
- * Revision 1.10  2001/05/09 04:23:19  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.9  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
- *
- * Revision 1.8  2001/04/04 04:33:08  steve
- *  Take vector form as parameters to vpi_call.
- *
- * Revision 1.7  2001/03/23 02:40:22  steve
- *  Add the :module header statement.
- *
- * Revision 1.6  2001/03/22 22:38:14  steve
- *  Detect undefined system tasks at compile time.
- *
- * Revision 1.5  2001/03/22 21:26:54  steve
- *  Compile in a default VPI module dir.
- *
- * Revision 1.4  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.3  2001/03/18 04:35:18  steve
- *  Add support for string constants to VPI.
- *
- * Revision 1.2  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.39 2002/07/03 23:39:57 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.40 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 /*
@@ -27,6 +27,7 @@
 
 # include  "vpi_priv.h"
 # include  "functor.h"
+# include  "statistics.h"
 # include  <stdio.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -667,12 +668,17 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
       obj->scope = vpip_peek_current_scope();
 
+      count_vpi_nets += 1;
+
       return &obj->base;
 }
 
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.40  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.39  2002/07/03 23:39:57  steve
  *  Dynamic size result buffer for _str and _get_value functions.
  *

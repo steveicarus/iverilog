@@ -17,11 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.5 2002/05/29 05:37:35 steve Exp $"
+#ident "$Id: symbols.cc,v 1.6 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 # include  "symbols.h"
 # include  <string.h>
+# include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
+# include  <malloc.h>
+#endif
 # include  <assert.h>
 
 struct symbol_table_s {
@@ -81,6 +85,28 @@ symbol_table_t new_symbol_table(void)
       tbl->root->count = 0;
       tbl->root->parent = 0;
       return tbl;
+}
+
+static void delete_symbol_node(struct tree_node_*cur)
+{
+      if (cur->leaf_flag) {
+	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1)
+		  free(cur->leaf[idx].key);
+
+	    delete cur;
+
+      } else {
+	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1)
+		  delete cur->child[idx];
+
+	    delete cur;
+      }
+}
+
+void delete_symbol_table(symbol_table_t tab)
+{
+      delete_symbol_node(tab->root);
+      delete tab;
 }
 
 /* Do as split_leaf_ do, but for nodes. */
@@ -360,6 +386,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.6  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.5  2002/05/29 05:37:35  steve
  *  Use binary search to speed up deep lookups.
  *

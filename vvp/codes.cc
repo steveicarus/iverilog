@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.9 2002/03/01 05:43:59 steve Exp $"
+#ident "$Id: codes.cc,v 1.10 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 # include  "codes.h"
+# include  "statistics.h"
 # include  <string.h>
 # include  <assert.h>
 
@@ -81,10 +82,16 @@ vvp_cpoint_t codespace_allocate(void)
 
       vvp_cpoint_t res = code_count;
       code_count += 1;
+      count_opcodes += 1;
       return res;
 }
 
 vvp_cpoint_t codespace_next(void)
+{
+      return code_count;
+}
+
+unsigned code_limit(void)
 {
       return code_count;
 }
@@ -105,6 +112,9 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.10  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.9  2002/03/01 05:43:59  steve
  *  Initialize all the codes tables.
  *

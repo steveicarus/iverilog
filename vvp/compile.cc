@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.131 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: compile.cc,v 1.132 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -490,6 +490,9 @@ void compile_cleanup(void)
       } while (nerrs && !last);
 
       compile_errors += nerrs;
+
+      delete_symbol_table(sym_vpi);
+      sym_vpi = 0;
 }
 
 void compile_vpi_symbol(const char*label, vpiHandle obj)
@@ -1417,6 +1420,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.132  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.131  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *

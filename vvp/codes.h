@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.44 2002/06/02 18:55:58 steve Exp $"
+#ident "$Id: codes.h,v 1.45 2002/07/05 02:50:58 steve Exp $"
 #endif
 
 
@@ -130,10 +130,6 @@ struct vvp_code_s {
  */
 extern void codespace_init(void);
 
-/*
-**  Return the number of codes 
-*/
-extern unsigned code_limit();
 
 /*
  * This function returns a pointer to the next free instruction in the
@@ -156,6 +152,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.45  2002/07/05 02:50:58  steve
+ *  Remove the vpi object symbol table after compile.
+ *
  * Revision 1.44  2002/06/02 18:55:58  steve
  *  Add %cmpi/u instruction.
  *
