@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.10 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: schedule.cc,v 1.11 2001/07/11 02:27:21 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -27,6 +27,7 @@
 # include  <malloc.h>
 # include  <assert.h>
 
+# include  <stdio.h>
 /*
  * The event queue is arranged as a skip list, with the simulation
  * time the key to the list. The simulation time is stored in each
@@ -90,9 +91,20 @@ inline static void e_free(struct event_s* cur)
 }
 
 /*
- * This is the head of the list of pending events.
+ * This is the head of the list of pending events. This includes all
+ * the events that have not been executed yet, and reaches into the
+ * future.
  */
-static struct event_s* list = 0;
+static struct event_s* sched_list = 0;
+
+/*
+ * At the current time, events that are marked as synch events are put
+ * into this list and held off until the time step is about to
+ * advance. Then the events in this list are run and the clock is
+ * allowed to advance.
+ */
+static struct event_s* synch_list = 0;
+
 
 /*
  * This flag is true until a VPI task or function finishes the
@@ -122,20 +134,20 @@ static void schedule_event_(struct event_s*cur)
 
 	/* If the list is completely empty, then start the list with
 	   this the only event. */
-      if (list == 0) {
-	    list = cur;
+      if (sched_list == 0) {
+	    sched_list = cur;
 	    cur->next = 0;
 	    return;
       }
 
-      struct event_s*idx = list;
+      struct event_s*idx = sched_list;
       if (cur->delay < idx->delay) {
 	      /* If this new event is earlier then even the first
 		 event, then insert it in front. Adjust the delay of
 		 the next event, and set the start to me. */
 	    idx->delay -= cur->delay;
 	    cur->next = idx;
-	    list = cur;
+	    sched_list = cur;
 
       } else {
 
@@ -171,6 +183,43 @@ static void schedule_event_(struct event_s*cur)
 		  idx->last = cur;
 	    }
       }
+}
+
+/*
+ * The synch_list is managed as a doubly-linked circular list. There is
+ * no need for the skip capabilities, so use the "last" member as a
+ * prev pointer. This function appends the event to the synch_list.
+ */
+static void postpone_sync_event(struct event_s*cur)
+{
+      if (synch_list == 0) {
+	    synch_list = cur;
+	    cur->next = cur;
+	    cur->last = cur;
+	    return;
+      }
+
+      cur->next = synch_list;
+      cur->last = synch_list->last;
+      cur->next->last = cur;
+      cur->last->next = cur;
+}
+
+static struct event_s* pull_sync_event(void)
+{
+      if (synch_list == 0)
+	    return 0;
+
+      struct event_s*cur = synch_list;
+      synch_list = cur->next;
+      if (cur == synch_list) {
+	    synch_list = 0;
+      } else {
+	    cur->next->last = cur->last;
+	    cur->last->next = cur->next;
+      }
+
+      return cur;
 }
 
 void schedule_vthread(vthread_t thr, unsigned delay)
@@ -228,30 +277,47 @@ void schedule_simulate(void)
 {
       schedule_time = 0;
 
-      while (schedule_runnable && list) {
+      while (schedule_runnable && sched_list) {
 
 	      /* Pull the first item off the list. Fixup the last
 		 pointer in the next cell, if necessary. */
-	    struct event_s*cur = list;
-	    list = cur->next;
+	    struct event_s*cur = sched_list;
+	    sched_list = cur->next;
 	    if (cur->last != cur) {
-		  assert(list);
-		  assert(list->delay == 0);
-		  list->last = cur->last;
+		  assert(sched_list);
+		  assert(sched_list->delay == 0);
+		  sched_list->last = cur->last;
 
 	    }
 
-	    schedule_time += cur->delay;
-	      //printf("TIME: %u\n", schedule_time);
+	      /* If the time is advancing, then first run the
+		 postponed sync events. Run them all. */
+	    if (cur->delay > 0) {
+		  struct event_s*sync_cur;
+		  while ( (sync_cur = pull_sync_event()) ) {
+			assert(sync_cur->type == TYPE_GEN);
+			if (sync_cur->obj && sync_cur->obj->run) {
+			      assert(sync_cur->obj->sync_flag);
+			      sync_cur->obj->run(sync_cur->obj, sync_cur->val);
+			}
+			e_free(sync_cur);
+		  }
+
+
+		  schedule_time += cur->delay;
+		    //printf("TIME: %u\n", schedule_time);
+	    }
 
 	    switch (cur->type) {
 		case TYPE_THREAD:
 		  vthread_run(cur->thr);
+		  e_free(cur);
 		  break;
 
 		case TYPE_PROP:
 		    //printf("Propagate %p\n", cur->fun);
 		  functor_propagate(cur->fun);
+		  e_free(cur);
 		  break;
 
 		case TYPE_ASSIGN:
@@ -269,21 +335,31 @@ void schedule_simulate(void)
 			functor_set(cur->fun, cur->val, HiZ, false);
 			break;
 		  }
+		  e_free(cur);
 		  break;
 
 		case TYPE_GEN:
-		  if (cur->obj && cur->obj->run)
-		    cur->obj->run(cur->obj, cur->val);
+		  if (cur->obj && cur->obj->run) {
+			if (cur->obj->sync_flag == false) {
+			      cur->obj->run(cur->obj, cur->val);
+			      e_free(cur);
+
+			} else {
+			      postpone_sync_event(cur);
+			}
+		  }
 		  break;
 
 	    }
 
-	    e_free(cur);
       }
 }
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.11  2001/07/11 02:27:21  steve
+ *  Add support for REadOnlySync and monitors.
+ *
  * Revision 1.10  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

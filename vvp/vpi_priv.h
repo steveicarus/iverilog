@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.18 2001/06/30 23:03:17 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.19 2001/07/11 02:27:21 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -125,10 +125,15 @@ extern struct __vpiSignal*vpip_sig_from_ptr(vvp_ipoint_t ptr);
  * callback. The handle is stored by the run time, and it triggered
  * when the run-time thing that it is waiting for happens.
  */
+
+struct sync_cb;
 struct __vpiCallback {
       struct __vpiHandle base;
 
       struct t_cb_data cb_data;
+      struct t_vpi_time cb_time;
+
+      struct sync_cb* cb_sync;
 
       struct __vpiCallback*next;
 };
@@ -254,6 +259,9 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.19  2001/07/11 02:27:21  steve
+ *  Add support for REadOnlySync and monitors.
+ *
  * Revision 1.18  2001/06/30 23:03:17  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

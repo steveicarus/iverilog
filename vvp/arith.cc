@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.9 2001/07/07 02:57:33 steve Exp $"
+#ident "$Id: arith.cc,v 1.10 2001/07/11 02:27:21 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -110,8 +110,6 @@ vvp_arith_sum::~vvp_arith_sum()
 
 void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-      assert(wid_ <= 8*sizeof(unsigned long));
-
       unsigned page = 0;
       unsigned pbit = 0;
       unsigned long carry = 0;
@@ -468,6 +466,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.10  2001/07/11 02:27:21  steve
+ *  Add support for REadOnlySync and monitors.
+ *
  * Revision 1.9  2001/07/07 02:57:33  steve
  *  Add the .shift/r functor.
  *

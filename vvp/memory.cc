@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.4 2001/06/15 03:28:31 steve Exp $"
+#ident "$Id: memory.cc,v 1.5 2001/07/11 02:27:21 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -437,6 +437,8 @@ inline static struct mem_assign_s* ma_alloc()
     cur = (struct mem_assign_s*) malloc(sizeof(struct mem_assign_s));
   else
     ma_free_list = cur->next;
+
+  cur->sync_flag = false;
   return cur;
 }
 

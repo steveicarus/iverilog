@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.6 2001/05/02 01:38:13 steve Exp $"
+#ident "$Id: schedule.h,v 1.7 2001/07/11 02:27:21 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -63,7 +63,8 @@ extern void schedule_generic(vvp_gen_event_t obj, unsigned char val,
 
 struct vvp_gen_event_s
 {
-  void (*run)(vvp_gen_event_t obj, unsigned char val);
+      void (*run)(vvp_gen_event_t obj, unsigned char val);
+      bool sync_flag;
 };
 
 /*
@@ -94,6 +95,9 @@ extern bool schedule_finished(void);
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.7  2001/07/11 02:27:21  steve
+ *  Add support for REadOnlySync and monitors.
+ *
  * Revision 1.6  2001/05/02 01:38:13  steve
  *  Describe a generic event a bit.
  *

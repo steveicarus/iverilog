@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.2 2001/06/21 23:05:08 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.3 2001/07/11 02:27:21 steve Exp $"
 #endif
 
 /*
@@ -58,7 +58,11 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
       struct __vpiCallback*obj = new __vpiCallback;
       obj->base.vpi_type = &callback_rt;
       obj->cb_data = *data;
+      obj->cb_time = *(data->time);
+      obj->cb_data.time = &obj->cb_time;
 
+      assert(data->obj);
+      assert(data->obj->vpi_type);
       assert((data->obj->vpi_type->type_code == vpiReg)
 	     || (data->obj->vpi_type->type_code == vpiNet));
       struct __vpiSignal*sig = reinterpret_cast<__vpiSignal*>(data->obj);
@@ -81,6 +85,45 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
       return obj;
 }
 
+struct sync_cb  : public vvp_gen_event_s {
+      struct __vpiCallback*handle;
+};
+
+static void make_sync_run(vvp_gen_event_t obj, unsigned char)
+{
+      struct sync_cb*cb = (struct sync_cb*)obj;
+      if (cb->handle == 0)
+	    return;
+
+      struct __vpiCallback*cur = cb->handle;
+      cur->cb_data.time->type = vpiSimTime;
+      cur->cb_data.time->low = schedule_simtime();
+      cur->cb_data.time->high = 0;
+      (cur->cb_data.cb_rtn)(&cur->cb_data);
+
+      delete cur;
+}
+
+static struct __vpiCallback* make_sync(p_cb_data data)
+{
+      struct __vpiCallback*obj = new __vpiCallback;
+      obj->base.vpi_type = &callback_rt;
+      obj->cb_data = *data;
+      obj->cb_time = *(data->time);
+      obj->cb_data.time = &obj->cb_time;
+
+      obj->next = 0;
+
+      struct sync_cb*cb = new sync_cb;
+      cb->sync_flag = true;
+      cb->run = &make_sync_run;
+      cb->handle = obj;
+      obj->cb_sync = cb;
+
+      schedule_generic(cb, 0, 0);
+      return obj;
+}
+
 vpiHandle vpi_register_cb(p_cb_data data)
 {
       struct __vpiCallback*obj = 0;
@@ -89,6 +132,10 @@ vpiHandle vpi_register_cb(p_cb_data data)
 
 	  case cbValueChange:
 	    obj = make_value_change(data);
+	    break;
+
+	  case cbReadOnlySynch:
+	    obj = make_sync(data);
 	    break;
 
 	  default:
@@ -104,6 +151,8 @@ vpiHandle vpi_register_cb(p_cb_data data)
 
 int vpi_remove_cb(vpiHandle ref)
 {
+      assert(ref);
+      assert(ref->vpi_type);
       assert(ref->vpi_type->type_code == vpiCallback);
 
       struct __vpiCallback*obj = reinterpret_cast<__vpiCallback*>(ref);
@@ -150,6 +199,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.3  2001/07/11 02:27:21  steve
+ *  Add support for REadOnlySync and monitors.
+ *
  * Revision 1.2  2001/06/21 23:05:08  steve
  *  Some documentation of callback behavior.
  *
