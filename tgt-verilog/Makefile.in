@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.1 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: Makefile.in,v 1.2 2000/10/04 17:08:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -45,7 +45,7 @@ LDFLAGS = @LDFLAGS@
 
 all: verilog.tgt
 
-%.o dep/%.d: %.c
+%.o: %.c
 	@[ -d dep ] || mkdir dep
 	$(CC) -Wall $(CPPFLAGS) -I$(srcdir)/.. -MD -c $< -o $*.o
 	mv $*.d dep

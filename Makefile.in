@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.70 2000/09/30 03:20:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.71 2000/10/04 17:08:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -51,7 +51,7 @@ CPPFLAGS = @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@ -I$(srcdir)
 LDFLAGS = @LDFLAGS@
 
-all: ivl@EXEEXT@ verilog iverilog@EXEEXT@
+all: ivl@EXEEXT@ iverilog@EXEEXT@
 	cd vvm ; $(MAKE) all
 	cd vpi ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
@@ -110,7 +110,7 @@ ivl@EXEEXT@: $O
 iverilog@EXEEXT@: iverilog.c
 	$(CC) $(CPPFLAGS) -o iverilog@EXEEXT@ -DCXX='"@CXX@"' -DIVL_ROOT='"@libdir@/ivl"'  -DIVL_INC='"@includedir@"' -DIVL_LIB='"@libdir@"' -DRDYNAMIC=\"$(rdynamic)\" -DDLLIB='"@DLLIB@"' iverilog.c
 
-%.o dep/%.d: %.cc
+%.o: %.cc
 	@[ -d dep ] || mkdir dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d

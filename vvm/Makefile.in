@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.35 2000/10/04 02:37:44 steve Exp $"
+#ident "$Id: Makefile.in,v 1.36 2000/10/04 17:08:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -82,12 +82,12 @@ vpip.o : $P
 	ld -r -o $@ $P	
 endif
 
-%.o dep/%.d: %.cc
+%.o: %.cc
 	@[ -d dep ] || mkdir dep
 	$(CXX) -Wall -fno-exceptions $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-%.o dep/%.d: %.c
+%.o: %.c
 	@[ -d dep ] || mkdir dep
 	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
