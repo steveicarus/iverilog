@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.235 2001/12/06 04:44:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.236 2001/12/06 05:04:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -670,6 +670,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       if (overrides_) {
 	    PDelays tmp_del;
 	    tmp_del.set_delays(overrides_);
+	    tmp_del.eval_delays(des, scope, rise_time, fall_time, decay_time);
 	    delete overrides_;
       }
 
@@ -2393,6 +2394,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.236  2001/12/06 05:04:49  steve
+ *  Forgot to evaluate UDP delays.
+ *
  * Revision 1.235  2001/12/06 04:44:11  steve
  *  Support delays on UDP instances.
  *
