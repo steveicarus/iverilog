@@ -19,36 +19,63 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.1 2001/06/05 03:05:41 steve Exp $"
+#ident "$Id: arith.h,v 1.2 2001/06/07 03:09:03 steve Exp $"
 #endif
 
 # include  "functor.h"
+
+class vvp_arith_  : public vvp_fobj_s {
+
+    public:
+      explicit vvp_arith_(vvp_ipoint_t b, unsigned wid);
+
+    protected:
+      vvp_ipoint_t base_;
+      unsigned wid_;
+
+    protected:
+      void output_x_(bool push);
+
+    private: // not implemented
+      vvp_arith_(const vvp_arith_&);
+      vvp_arith_& operator= (const vvp_arith_&);
+};
+
 
 /*
  * This class is a mode-42 object for arithmetic sum. Inputs that come
  * in cause the 4-input summation to be calculated, and output
  * functors that are affected cause propagations.
  */
-class vvp_arith_sum  : public vvp_fobj_s {
+class vvp_arith_sum  : public vvp_arith_ {
 
     public:
       explicit vvp_arith_sum(vvp_ipoint_t b, unsigned wid);
 
       void set(vvp_ipoint_t i, functor_t f, bool push);
 
-    private:
-      vvp_ipoint_t base_;
-      unsigned wid_;
-
-      void output_x_(bool push);
-
     private: // not implemented
       vvp_arith_sum(const vvp_arith_sum&);
       vvp_arith_sum& operator= (const vvp_arith_sum&);
 };
 
+class vvp_arith_sub  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_sub(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private: // not implemented
+      vvp_arith_sub(const vvp_arith_sub&);
+      vvp_arith_sub& operator= (const vvp_arith_sub&);
+};
+
 /*
  * $Log: arith.h,v $
+ * Revision 1.2  2001/06/07 03:09:03  steve
+ *  Implement .arith/sub subtraction.
+ *
  * Revision 1.1  2001/06/05 03:05:41  steve
  *  Add structural addition.
  *

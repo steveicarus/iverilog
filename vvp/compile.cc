@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.71 2001/06/05 03:05:41 steve Exp $"
+#ident "$Id: compile.cc,v 1.72 2001/06/07 03:09:03 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -401,6 +401,63 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
       free(type);
 }
 
+static void connect_arith_inputs(vvp_ipoint_t fdx, long wid,
+				 vvp_arith_* arith,
+				 unsigned argc, struct symb_s*argv)
+{
+      unsigned opcount = argc / wid;
+
+      struct symb_s tmp_argv[4];
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    obj->ival = 0xaa >> 2*(4 - opcount);
+	    obj->oval = 2;
+	    obj->odrive0 = 6;
+	    obj->odrive1 = 6;
+	    obj->mode = M42;
+	    obj->obj  = arith;
+#if defined(WITH_DEBUG)
+	    obj->breakpoint = 0;
+#endif
+
+	    for (unsigned cdx = 0 ;  cdx < opcount ;  cdx += 1)
+		  tmp_argv[cdx] = argv[idx + wid*cdx];
+
+	    inputs_connect(ptr, opcount, tmp_argv);
+      }
+
+      free(argv);
+}
+
+void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if ((argc % wid) != 0) {
+	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      unsigned opcount = argc / wid;
+      if (opcount > 4) {
+	    fprintf(stderr, "%s; .arith has too many operands.\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_arith_sub*arith = new vvp_arith_sub(fdx, wid);
+
+      connect_arith_inputs(fdx, wid, arith, argc, argv);
+}
+
 void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -425,28 +482,8 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
 
       vvp_arith_sum*arith = new vvp_arith_sum(fdx, wid);
 
-      struct symb_s tmp_argv[4];
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
-	    functor_t obj = functor_index(ptr);
+      connect_arith_inputs(fdx, wid, arith, argc, argv);
 
-	    obj->ival = 0xaa >> 2*(4 - opcount);
-	    obj->oval = 2;
-	    obj->odrive0 = 6;
-	    obj->odrive1 = 6;
-	    obj->mode = M42;
-	    obj->obj  = arith;
-#if defined(WITH_DEBUG)
-	    obj->breakpoint = 0;
-#endif
-
-	    for (unsigned cdx = 0 ;  cdx < opcount ;  cdx += 1)
-		  tmp_argv[cdx] = argv[idx + wid*cdx];
-
-	    inputs_connect(ptr, opcount, tmp_argv);
-      }
-
-      free(argv);
 }
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
@@ -1262,6 +1299,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.72  2001/06/07 03:09:03  steve
+ *  Implement .arith/sub subtraction.
+ *
  * Revision 1.71  2001/06/05 03:05:41  steve
  *  Add structural addition.
  *

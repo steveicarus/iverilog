@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.19 2001/06/05 03:05:41 steve Exp $"
+#ident "$Id: lexor.lex,v 1.20 2001/06/07 03:09:03 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -65,6 +65,7 @@
 
 
   /* These are some keywords that are recognized. */
+".arith/sub" { return K_ARITH_SUB; }
 ".arith/sum" { return K_ARITH_SUM; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
@@ -141,6 +142,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.20  2001/06/07 03:09:03  steve
+ *  Implement .arith/sub subtraction.
+ *
  * Revision 1.19  2001/06/05 03:05:41  steve
  *  Add structural addition.
  *

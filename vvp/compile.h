@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.24 2001/06/05 03:05:41 steve Exp $"
+#ident "$Id: compile.h,v 1.25 2001/06/07 03:09:03 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -73,6 +73,8 @@ extern void compile_resolver(char*label, char*type,
  * This is called by the parser to make an adder.
  */
 extern void compile_arith_sum(char*label, long width,
+			      unsigned argc, struct symb_s*argv);
+extern void compile_arith_sub(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 
 
@@ -188,6 +190,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.25  2001/06/07 03:09:03  steve
+ *  Implement .arith/sub subtraction.
+ *
  * Revision 1.24  2001/06/05 03:05:41  steve
  *  Add structural addition.
  *

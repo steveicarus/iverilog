@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.26 2001/06/05 03:05:41 steve Exp $
+ *  $Id: README.txt,v 1.27 2001/06/07 03:09:03 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -405,6 +405,7 @@ functors. These operators are not in general bitwise, so special
 measures are needed to make them work in a functor environment. We
 create special statement types for the various arithmetic operators.
 
+	<label> .arith/sub  <wid>, <symbols_list>;
 	<label> .arith/sum  <wid>, <symbols_list>;
 
 Addition is represented by the .arith/sum statement. This creates an
@@ -416,6 +417,8 @@ The sum can add together up to 4 operands, specified in the
 (lsb first) are listed, then the bits of the second, and so on. The
 number of symbols must be an even multiple of the width of the operator.
 
+Subtraction is similar to addition, except that the 2nd, 3rd and 4th
+vectors are subtracted from the first.
 
 THREAD STATEMENTS:
 
