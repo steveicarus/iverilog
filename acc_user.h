@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.18 2003/06/13 19:23:41 steve Exp $"
+#ident "$Id: acc_user.h,v 1.19 2003/10/10 02:57:45 steve Exp $"
 #endif
 
 /*
@@ -200,6 +200,10 @@ extern int   acc_configure(PLI_INT32 config_param, const char*value);
 extern int   acc_fetch_argc(void);
 extern char**acc_fetch_argv(void);
 
+extern PLI_INT32 acc_fetch_direction(handle obj);
+/* XXXX FIXME: Values returned by acc_fetch_direction */
+# define accInout 2
+
 extern char* acc_fetch_fullname(handle obj);
 
 extern int   acc_fetch_location(p_location loc, handle obj);
@@ -232,9 +236,11 @@ extern char*     acc_fetch_type_str(PLI_INT32 type);
 extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
 
 extern handle acc_handle_by_name(const char*name, handle scope);
+extern handle acc_handle_hiconn(handle port_ref_handle);
 extern handle acc_handle_object(const char*name);
 extern handle acc_handle_parent(handle obj);
 extern handle acc_handle_scope(handle obj);
+extern handle acc_handle_simulated_net(handle net);
 
 extern handle acc_handle_tfarg(int n);
 extern handle acc_handle_tfinst(void);
@@ -242,6 +248,8 @@ extern handle acc_handle_tfinst(void);
 extern PLI_INT32 acc_compare_handles(handle, handle);
 
 extern handle acc_next(PLI_INT32 *, handle, handle);
+extern handle acc_next_bit(handle ref, handle bit);
+extern handle acc_next_port(handle ref, handle bit);
 extern handle acc_next_scope(handle, handle);
 extern handle acc_next_topmod(handle prev_topmod);
 
@@ -264,6 +272,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.19  2003/10/10 02:57:45  steve
+ *  Some PLI1 stubs.
+ *
  * Revision 1.18  2003/06/13 19:23:41  steve
  *  Add a bunch more PLI1 routines.
  *

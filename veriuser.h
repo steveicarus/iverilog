@@ -1,7 +1,7 @@
 #ifndef __veriuser_H
 #define __veriuser_H
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.33 2003/06/13 19:23:41 steve Exp $"
+#ident "$Id: veriuser.h,v 1.34 2003/10/10 02:57:45 steve Exp $"
 #endif
 
 /*
@@ -232,6 +232,21 @@ typedef struct t_tfnodeinfo {
 #define tf_real_node      107
 #define TF_REAL_NODE      tf_real_node
 
+/* Structure used by the tf_exprinfo function. */
+typedef struct t_tfexprinfo {
+      PLI_INT16 expr_type;
+      PLI_INT16 padding;
+      struct t_vecval*expr_value_p;
+      double real_value;
+      char*expr_string;
+      PLI_INT32 expr_ngroups;
+      PLI_INT32 expr_vec_size;
+      PLI_INT32 expr_sign;
+      PLI_INT32 expr_lhs_select;
+      PLI_INT32 expr_rhs_select;
+} s_tfexprinfo, *p_tfexprinfo;
+
+
 /* Extern functions from the library. */
 extern void io_printf (const char *, ...)
       __attribute__((format (printf,1,2)));
@@ -246,6 +261,8 @@ extern int tf_dostop(void);
 
 extern void tf_error(const char*, ...)
       __attribute__((format (printf,1,2)));
+
+extern struct t_tfexprinfo* tf_exprinfo(PLI_INT32 a, struct t_tfexprinfo*ip);
 
 extern char* tf_getcstringp(int nparam);
 
@@ -342,6 +359,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.34  2003/10/10 02:57:45  steve
+ *  Some PLI1 stubs.
+ *
  * Revision 1.33  2003/06/13 19:23:41  steve
  *  Add a bunch more PLI1 routines.
  *
