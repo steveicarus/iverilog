@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pad_to_width.cc,v 1.9 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.10 2002/05/25 16:43:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,17 +33,36 @@
  */
 NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
 {
-      if (wid > expr->expr_width()) {
-	    verinum pad(verinum::V0, wid - expr->expr_width());
-	    NetEConst*co = new NetEConst(pad);
-	    co->set_line(*expr);
-	    NetEConcat*cc = new NetEConcat(2);
-	    cc->set_line(*expr);
-	    cc->set(0, co);
-	    cc->set(1, expr);
-	    cc->set_width(wid);
-	    expr = cc;
+      if (wid <= expr->expr_width())
+	    return expr;
+
+	/* If the expression is a const, then replace it with a wider
+	   const. This is a more efficient result. */
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
+	    verinum eval = tmp->value();
+
+	    verinum::V pad = verinum::V0;
+	    verinum oval (pad, wid, eval.has_len());
+
+	    for (unsigned idx = 0 ;  idx < eval.len() ;  idx += 1)
+		  oval.set(idx, eval.get(idx));
+
+	    tmp = new NetEConst(oval);
+	    delete expr;
+	    return tmp;
       }
+
+	/* Do it the hard way, with a concatenation. */
+      verinum pad(verinum::V0, wid - expr->expr_width());
+      NetEConst*co = new NetEConst(pad);
+      co->set_line(*expr);
+      NetEConcat*cc = new NetEConcat(2);
+      cc->set_line(*expr);
+      cc->set(0, co);
+      cc->set(1, expr);
+      cc->set_width(wid);
+      expr = cc;
+
       return expr;
 }
 
@@ -76,6 +95,9 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.10  2002/05/25 16:43:22  steve
+ *  Better padding of constants.
+ *
  * Revision 1.9  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *
