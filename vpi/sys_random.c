@@ -17,10 +17,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.8 2003/11/10 20:15:33 steve Exp $"
+#ident "$Id: sys_random.c,v 1.9 2004/01/21 01:22:53 steve Exp $"
 #endif
 
-# include "config.h"
 # include "sys_priv.h"
 
 # include  <vpi_user.h>
@@ -203,6 +202,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.9  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.8  2003/11/10 20:15:33  steve
  *  Simply MSVC compatibility patch.
  *

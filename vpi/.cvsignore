@@ -1,3 +1,8 @@
+configure
+config.status
+config.log
+autom4te.cache
+vpi_config.h
 Makefile
 sys_readmem_lex.c
 system.vpi

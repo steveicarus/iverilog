@@ -17,10 +17,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt2.c,v 1.4 2003/09/30 01:33:39 steve Exp $"
+#ident "$Id: sys_lxt2.c,v 1.5 2004/01/21 01:22:53 steve Exp $"
 #endif
 
-# include "config.h"
 # include "sys_priv.h"
 # include "lxt2_write.h"
 # include "vcd_priv.h"
@@ -816,6 +815,9 @@ void sys_lxt2_register()
 
 /*
  * $Log: sys_lxt2.c,v $
+ * Revision 1.5  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.4  2003/09/30 01:33:39  steve
  *  dumpers must be aware of 64bit time.
  *

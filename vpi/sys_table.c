@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.23 2003/10/30 04:52:54 steve Exp $"
+#ident "$Id: sys_table.c,v 1.24 2004/01/21 01:22:53 steve Exp $"
 #endif
 
-# include "config.h"
+# include "vpi_config.h"
 # include "vpi_user.h"
 # include <stdio.h>
 # include <stdlib.h>
@@ -156,6 +156,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.24  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.23  2003/10/30 04:52:54  steve
  *  Call register for fileio functions.
  *

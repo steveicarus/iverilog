@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.9 2003/06/18 00:54:28 steve Exp $"
+#ident "$Id: sys_time.c,v 1.10 2004/01/21 01:22:53 steve Exp $"
 #endif
 
-# include "config.h"
+# include "vpi_config.h"
 
 # include  "vpi_user.h"
 # include  <string.h>
@@ -169,6 +169,9 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.10  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.9  2003/06/18 00:54:28  steve
  *  Account for all 64 bits in results of $time.
  *

@@ -17,11 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.c,v 1.4 2003/11/10 20:18:02 steve Exp $"
+#ident "$Id: vcd_priv.c,v 1.5 2004/01/21 01:22:53 steve Exp $"
 #endif
 
+# include  "vpi_config.h"
 # include  "vcd_priv.h"
-# include  "config.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -170,6 +170,9 @@ void set_nexus_ident(int nex, const char *id)
 
 /*
  * $Log: vcd_priv.c,v $
+ * Revision 1.5  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.4  2003/11/10 20:18:02  steve
  *  Missing config.h.
  *

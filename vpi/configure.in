@@ -1,37 +1,16 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(netlist.h)
-AC_CONFIG_HEADER(config.h)
-AC_CONFIG_HEADER(_pli_types.h)
+AC_INIT(vpi_config.h.in)
+AC_CONFIG_HEADER(vpi_config.h)
 
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
-AC_CHECK_PROGS(XGPERF,gperf,none)
-if test "$XGPERF" = "none"
-then
-	echo ""
-        echo "*** Warning: No suitable gperf found. ***"
-	echo "    The gperf package is essential for building ivl from"
-	echo "    CVS sources, or modifying the parse engine of ivl itself."
-	echo "    You can get away without it when simply building from"
-	echo "    snapshots or major releases."
-	echo ""
-fi
-
 AC_CHECK_PROGS(LEX,flex,none)
 if test "$LEX" = "none"
 then
 	echo "*** Error: No suitable flex found. ***"
         echo "    Please install the 'flex' package."
-        exit 1
-fi
-
-AC_CHECK_PROGS(YACC,bison,none)
-if test "$YACC" = "none"
-then
-	echo "*** Error: No suitable bison found. ***"
-        echo "    Please install the 'bison' package."
         exit 1
 fi
 
@@ -51,14 +30,14 @@ AC_SUBST(WIN32)
 AC_MSG_RESULT($WIN32)
 AC_SUBST(EXEEXT)
 
+AX_CPP_IDENT
+
 # vvp32 is by default disabled
 #enable_vvp32=no
 AC_SUBST(enable_vvp32)
 
 
-AC_LANG_CPLUSPLUS
-
-AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h libiberty.h iosfwd sys/wait.h)
+AC_CHECK_HEADERS(malloc.h inttypes.h)
 
 AC_CHECK_LIB(z, gzwrite)
 AC_CHECK_LIB(z, gzwrite, HAVE_LIBZ=yes, HAVE_LIBZ=no)
@@ -68,27 +47,6 @@ AC_CHECK_LIB(bz2, main)
 else
 AC_CHECK_LIB(bz2, BZ2_bzdopen)
 fi
-
-AC_MSG_CHECKING(for sys/times)
-AC_TRY_LINK(
-#include <unistd.h>
-#include <sys/times.h>
-,{clock_t a = times(0)/sysconf(_SC_CLK_TCK);},
-do_times=yes
-AC_DEFINE(HAVE_TIMES,1),
-do_times=no
-)
-AC_MSG_RESULT($do_times)
-
-AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
-AC_ARG_WITH(ipal,
-    [  --with-ipal             enable PAL target],
-if test "$with_ipal" = no; then
-       echo Disabling ipal support
-       HAVE_IPAL=
-fi
-)
-AC_SUBST(HAVE_IPAL)
 
 # --
 # Look for a dl library to use. First look for the standard dlopen
@@ -109,6 +67,19 @@ AC_LANG_C
 AC_C_BIGENDIAN
 
 AC_CANONICAL_HOST
+# Do some operating system specific setup.
+case "${host}" in
+    *-*-darwin*)
+	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
+	CFLAGS="-no-cpp-precomp $CFLAGS"
+	;;
+
+    *-*-linux*)
+	AC_DEFINE(_LARGEFILE_SOURCE)
+	AC_DEFINE(_LARGEFILE64_SOURCE)
+	;;
+esac
+
 # $host
 
 # The -fPIC flag is used to tell the compiler to make position
@@ -210,18 +181,6 @@ esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)
 
-#######################
-## test for underscores. The vpi module loader needs to know this
-## in order to know the name of the start symbol for the .vpi module.
-#######################
-
-AX_C_UNDERSCORES_LEADING
-AX_C_UNDERSCORES_TRAILING
-
-#######################
-## end of test for underscores
-#######################
-
 AX_CPP_IDENT
 
 # If not otherwise specified, set the libdir64 variable
@@ -245,6 +204,4 @@ AC_SUBST(vpidir1)
 AC_SUBST(vpidir2)
 AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
-AC_CONFIG_SUBDIRS(vpi vvp tgt-vvp tgt-fpga libveriuser cadpli)
-
-AC_OUTPUT(Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
+AC_OUTPUT(Makefile)

@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stringheap.c,v 1.2 2003/04/28 01:03:11 steve Exp $"
+#ident "$Id: stringheap.c,v 1.3 2004/01/21 01:22:53 steve Exp $"
 #endif
 
+# include  "sys_priv.h"
 # include  "stringheap.h"
 # include  <string.h>
 # include  <stdlib.h>
@@ -64,6 +65,9 @@ const char*strdup_sh(struct stringheap_s*hp, const char*txt)
 
 /*
  * $Log: stringheap.c,v $
+ * Revision 1.3  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.2  2003/04/28 01:03:11  steve
  *  Fix stringheap list management failure.
  *

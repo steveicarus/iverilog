@@ -17,10 +17,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.52 2003/12/19 01:27:10 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.53 2004/01/21 01:22:53 steve Exp $"
 #endif
 
-# include "config.h"
 # include "sys_priv.h"
 
 /*
@@ -811,6 +810,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.53  2004/01/21 01:22:53  steve
+ *  Give the vip directory its own configure and vpi_config.h
+ *
  * Revision 1.52  2003/12/19 01:27:10  steve
  *  Fix various unsigned compare warnings.
  *
