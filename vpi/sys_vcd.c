@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.21 2001/09/30 05:18:46 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.22 2001/10/08 23:33:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -188,6 +188,14 @@ void vcd_names_sort(void)
       }
 }
 
+
+static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
+static unsigned long dumpvars_time;
+inline static int dump_header_pending(void)
+{
+      return dumpvars_status != 2;
+}
+
 /*
  * This function writes out all the traced variables, whether they
  * changed or not.
@@ -214,6 +222,9 @@ static int variable_cb(p_cb_data cause)
       if (dump_is_off)
 	    return 0;
 
+      if (dump_header_pending())
+	    return 0;
+
       if (now != vcd_cur_time) {
 	    fprintf(dump_file, "#%lu\n", now);
 	    vcd_cur_time = now;
@@ -224,11 +235,13 @@ static int variable_cb(p_cb_data cause)
       return 0;
 }
 
-static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
-static unsigned long dumpvars_time;
-
 static int dumpvars_cb(p_cb_data cause)
 {
+      if (dumpvars_status != 1)
+	    return 0;
+
+      dumpvars_status = 2;
+
       dumpvars_time = cause->time->low;
       vcd_cur_time = dumpvars_time;
 
@@ -240,8 +253,6 @@ static int dumpvars_cb(p_cb_data cause)
 	    vcd_checkpoint();
 	    fprintf(dump_file, "$end\n");
       }
-
-      dumpvars_status = 2;
 
       return 0;
 }
@@ -291,6 +302,9 @@ static int sys_dumpon_calltf(char*name)
       if (dump_file == 0)
 	    return 0;
 
+      if (dump_header_pending())
+	    return 0;
+
       vpi_get_time(0, &now);
       if (now.low > vcd_cur_time) {
 	    fprintf(dump_file, "#%u\n", now.low);
@@ -306,6 +320,9 @@ static int sys_dumpall_calltf(char*name)
       s_vpi_time now;
 
       if (dump_file == 0)
+	    return 0;
+
+      if (dump_header_pending())
 	    return 0;
 
       vpi_get_time(0, &now);
@@ -666,6 +683,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.22  2001/10/08 23:33:00  steve
+ *  Fix pr283: signal values before enddefinitions in vcd. (Stephan Boettcher)
+ *
  * Revision 1.21  2001/09/30 05:18:46  steve
  *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
  *
