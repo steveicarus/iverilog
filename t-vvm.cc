@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.101 2000/02/14 00:12:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.102 2000/02/14 01:20:50 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -83,6 +83,7 @@ class target_vvm : public target_t {
       virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
+              void proc_case_fun(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
               void proc_condit_fun(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
@@ -1662,6 +1663,11 @@ bool target_vvm::proc_block(ostream&os, const NetBlock*net)
  */
 void target_vvm::proc_case(ostream&os, const NetCase*net)
 {
+      if (function_def_flag_) {
+	    proc_case_fun(os, net);
+	    return;
+      }
+
       string test_func = "";
       switch (net->type()) {
 	  case NetCase::EQ:
@@ -1770,6 +1776,64 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
       defn << "bool " << thread_class_ << "::step_" << exit_step <<
 	    "_() {" << endl;
+}
+
+/*
+ * Within a function definition, the case statement is implemented
+ * differently. Since statements in this context cannot block, we can
+ * use open coded if statements to do all the comparisons.
+ */
+void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
+{
+      string test_func = "";
+      switch (net->type()) {
+	  case NetCase::EQ:
+	    test_func = "vvm_binop_eeq";
+	    break;
+	  case NetCase::EQX:
+	    test_func = "vvm_binop_xeq";
+	    break;
+	  case NetCase::EQZ:
+	    test_func = "vvm_binop_zeq";
+	    break;
+      }
+
+      defn << "      /* " << net->get_line() << ": case (" <<
+	    *net->expr() << ") */" << endl;
+
+      string expr = emit_proc_rval(defn, 6, net->expr());
+
+      unsigned default_idx = net->nitems();
+      bool prev_flag = false;
+      for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
+
+	      // don't emit the default case here. Save it for the
+	      // last else clause.
+	    if (net->expr(idx) == 0) {
+		  default_idx = idx;
+		  continue;
+	    }
+
+	    string guard = emit_proc_rval(defn, 6, net->expr(idx));
+
+	    if (prev_flag)
+		  defn << "      } else";
+	    else
+		  defn << "      ";
+	    defn << "if (V1 == " << test_func << "(" <<
+		  guard << "," << expr << ")[0]) {" << endl;
+	    if (net->stat(idx))
+		  net->stat(idx)->emit_proc(os, this);
+
+	    prev_flag = true;
+      }
+
+      if ((default_idx < net->nitems()) && net->stat(default_idx)) {
+	    defn << "      } else {" << endl;
+	    net->stat(default_idx)->emit_proc(os, this);
+      }
+
+      defn << "      }" << endl;
 }
 
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
@@ -2105,6 +2169,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.102  2000/02/14 01:20:50  steve
+ *  Support case in functions.
+ *
  * Revision 1.101  2000/02/14 00:12:09  steve
  *  support if-else in function definitions.
  *
