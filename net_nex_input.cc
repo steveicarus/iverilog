@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.11 2003/10/26 04:50:46 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.12 2004/09/04 04:24:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -182,9 +182,27 @@ NexusSet* NetEVariable::nex_input()
       return new NexusSet;
 }
 
+NexusSet* NetAssign_::nex_input()
+{
+      if (bmux_ == 0)
+	    return new NexusSet;
+      else
+	    return bmux_->nex_input();
+}
+
 NexusSet* NetAssignBase::nex_input()
 {
       NexusSet*result = rval_->nex_input();
+
+	/* It is possible that the lval_ can hav nex_input values. In
+	   particular, index expressions are statement inputs as well,
+	   so should be addressed here. */
+      for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
+	    NexusSet*tmp = cur->nex_input();
+	    result->add(*tmp);
+	    delete tmp;
+      }
+
       return result;
 }
 
@@ -380,6 +398,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.12  2004/09/04 04:24:15  steve
+ *  PR1026: assignment statements can have sensitivities in the l-values.
+ *
  * Revision 1.11  2003/10/26 04:50:46  steve
  *  Case with empty statements has no inputs.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.317 2004/08/28 16:23:05 steve Exp $"
+#ident "$Id: netlist.h,v 1.318 2004/09/04 04:24:15 steve Exp $"
 #endif
 
 /*
@@ -1431,6 +1431,12 @@ class NetAssign_ {
 	// when it is released, the l-value signal should be turned
 	// into a wire.
       void turn_sig_to_wire_on_release();
+
+	// It is possible that l-values can have *inputs*, as well as
+	// being outputs. For example foo[idx] = ... is the l-value
+	// (NetAssign_ object) with a foo l-value and the input
+	// expression idx.
+      NexusSet* nex_input();
 
 	// This pointer is for keeping simple lists.
       NetAssign_* more;
@@ -3350,6 +3356,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.318  2004/09/04 04:24:15  steve
+ *  PR1026: assignment statements can have sensitivities in the l-values.
+ *
  * Revision 1.317  2004/08/28 16:23:05  steve
  *  Fix use of system tasks in AT_STAR statements.
  *
