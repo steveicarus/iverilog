@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.33 2002/04/14 03:53:20 steve Exp $"
+#ident "$Id: lexor.lex,v 1.34 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -103,6 +103,7 @@
 ".ufunc"    { return K_UFUNC; }
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
+".var/i"    { return K_VAR_I; /* integer */ }
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }
@@ -172,6 +173,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.34  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.33  2002/04/14 03:53:20  steve
  *  Allow signed constant vectors for call_vpi parameters.
  *

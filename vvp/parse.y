@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.46 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: parse.y,v 1.47 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -64,7 +64,7 @@ extern FILE*yyin;
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_FORCE 
-%token K_VAR K_VAR_S K_vpi_call K_vpi_func K_disable K_fork
+%token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_disable K_fork
 %token K_vpi_module K_vpi_time_precision
 
 %token <text> T_INSTR
@@ -306,10 +306,13 @@ statement
      the variable in the netlist. */
 
 	| T_LABEL K_VAR T_STRING ',' T_NUMBER ',' T_NUMBER ';'
-		{ compile_variable($1, $3, $5, $7, false); }
+		{ compile_variable($1, $3, $5, $7, 0 /* unsigned */ ); }
 
 	| T_LABEL K_VAR_S T_STRING ',' T_NUMBER ',' T_NUMBER ';'
-		{ compile_variable($1, $3, $5, $7, true); }
+		{ compile_variable($1, $3, $5, $7, 1 /* signed */ ); }
+
+	| T_LABEL K_VAR_I T_STRING ',' T_NUMBER ',' T_NUMBER ';'
+		{ compile_variable($1, $3, $5, $7, 2 /* integer */); }
 
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
@@ -550,6 +553,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.47  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.46  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

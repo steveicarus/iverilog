@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.130 2002/06/02 18:55:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.131 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -207,7 +207,8 @@ static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
       if (val.ptr) {
 	    vpiHandle vpi = (vpiHandle) val.ptr;
 	    assert((vpi->vpi_type->type_code == vpiNet)
-		   || (vpi->vpi_type->type_code == vpiReg));
+		   || (vpi->vpi_type->type_code == vpiReg)
+		   || (vpi->vpi_type->type_code == vpiIntegerVar));
 
 	    __vpiSignal*sig = (__vpiSignal*)vpi;
 	    return vvp_fvector_get(sig->bits, idx);
@@ -1354,7 +1355,7 @@ void compile_thread(char*start_sym)
  * write the label into the symbol table.
  */
 void compile_variable(char*label, char*name, int msb, int lsb,
-		      bool signed_flag)
+		      char signed_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
@@ -1368,7 +1369,9 @@ void compile_variable(char*label, char*name, int msb, int lsb,
 
 	/* Make the vpiHandle for the reg. */
       vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
-      vpiHandle obj = vpip_make_reg(name, msb, lsb, signed_flag, vec);
+      vpiHandle obj = (signed_flag > 1) ?
+			vpip_make_int(name, msb, lsb, vec) :
+			vpip_make_reg(name, msb, lsb, signed_flag!=0, vec);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1414,6 +1417,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.131  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.130  2002/06/02 18:55:58  steve
  *  Add %cmpi/u instruction.
  *

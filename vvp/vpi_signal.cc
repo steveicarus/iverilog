@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.34 2002/05/15 04:48:46 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.35 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 /*
@@ -610,6 +610,20 @@ static const struct __vpirt vpip_net_rt = {
 };
 
 /*
+ * Construct a vpiIntegetVar object. Indicate the type using a flag
+ * to minimize the code modifications. Icarus implements integers
+ * as 'reg signed [31:0]'.
+ */
+vpiHandle vpip_make_int(char*name, int msb, int lsb, vvp_fvector_t vec)
+{
+      vpiHandle obj = vpip_make_net(name, msb,lsb, true, vec);
+      struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
+      obj->vpi_type = &vpip_reg_rt;
+      rfp->isint_ = true;
+      return obj;
+}
+
+/*
  * Construct a vpiReg object. It's like a net, except for the type.
  */
 vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
@@ -634,6 +648,7 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
+      obj->isint_ = false;
       obj->bits = vec;
       obj->callback = 0;
 
@@ -645,6 +660,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.35  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.34  2002/05/15 04:48:46  steve
  *  Support set by string for reg objects.
  *

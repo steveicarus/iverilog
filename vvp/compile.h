@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.42 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: compile.h,v 1.43 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -241,7 +241,7 @@ extern void compile_thread(char*start_sym);
  * This function is called to create a var vector with the given name.
  */
 extern void compile_variable(char*label, char*name,
-			     int msb, int lsb, bool signed_flag);
+			     int msb, int lsb, char signed_flag);
 
 extern void compile_net(char*label, char*name,
 			int msb, int lsb, bool signed_flag,
@@ -249,6 +249,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.43  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.42  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *

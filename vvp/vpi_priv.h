@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.36 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.37 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -161,11 +161,13 @@ struct __vpiSignal {
       int msb, lsb;
 	/* Flags */
       unsigned signed_flag  : 1;
+      unsigned isint_ : 1;	// origial type was integer
 	/* The represented value is here. */
       vvp_fvector_t bits;
         /* This is the callback event functor */
       struct callback_functor_s *callback;
 };
+extern vpiHandle vpip_make_int(char*name, int msb, int lsb, vvp_fvector_t vec);
 extern vpiHandle vpip_make_reg(char*name, int msb, int lsb, bool signed_flag,
 			       vvp_fvector_t vec);
 extern vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
@@ -358,6 +360,9 @@ extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.37  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.36  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *

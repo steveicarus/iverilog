@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.16 2002/06/02 19:05:50 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.17 2002/06/21 04:58:55 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -64,8 +64,13 @@ int vpi_get(int property, vpiHandle ref)
       if (ref == 0)
 	    return vpip_get_global(property);
 
-      if (property == vpiType)
-	    return ref->vpi_type->type_code;
+      if (property == vpiType) {
+	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
+		  return vpiIntegerVar;
+	    else
+		  return ref->vpi_type->type_code;
+      }
 
       if (ref->vpi_type->vpi_get_ == 0)
 	    return -1;
@@ -207,6 +212,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.17  2002/06/21 04:58:55  steve
+ *  Add support for special integer vectors.
+ *
  * Revision 1.16  2002/06/02 19:05:50  steve
  *  Check for null pointers from users.
  *
