@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.7 2001/04/05 01:34:26 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.8 2001/04/25 04:45:52 steve Exp $"
 #endif
 
 /*
@@ -246,15 +246,72 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
  * equivilent instruction would cause.
  */
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
-			     p_vpi_time when, int flags)
+				  p_vpi_time when, int flags)
 {
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
-	/* XXXX Not implemented yet. */
-      assert(0);
+	/* XXXX delays are not yet supported. */
+      assert(flags == vpiNoDelay);
+
+      unsigned wid = (rfp->msb >= rfp->lsb)
+	    ? (rfp->msb - rfp->lsb + 1)
+	    : (rfp->lsb - rfp->msb + 1);
+
+      switch (vp->format) {
+
+	  case vpiScalarVal:
+	    switch (vp->value.scalar) {
+		case vpi0:
+		  functor_set(rfp->bits, 0, true);
+		  break;
+		case vpi1:
+		  functor_set(rfp->bits, 1, true);
+		  break;
+		case vpiX:
+		  functor_set(rfp->bits, 2, true);
+		  break;
+		case vpiZ:
+		  functor_set(rfp->bits, 3, true);
+		  break;
+		default:
+		  assert(0);
+	    }
+	    break;
+
+	  case vpiVectorVal: {
+		assert(wid <= sizeof (unsigned long));
+
+		unsigned long aval = vp->value.vector->aval;
+		unsigned long bval = vp->value.vector->bval;
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		      int bit = (aval&1) | ((bval<<1)&2);
+		      switch (bit) {
+			  case 0: /* zero */
+			    functor_set(ipoint_index(rfp->bits,idx), 0, true);
+			    break;
+			  case 1: /* one */
+			    functor_set(ipoint_index(rfp->bits,idx), 1, true);
+			    break;
+			  case 2: /* z */
+			    functor_set(ipoint_index(rfp->bits,idx), 3, true);
+			    break;
+			  case 3: /* x */
+			    functor_set(ipoint_index(rfp->bits,idx), 2, true);
+			    break;
+		      }
+		      aval >>= 1;
+		      bval >>= 1;
+		}
+		break;
+	  }
+
+	  default:
+	    assert(0);
+
+      }
 
       return ref;
 }
@@ -326,6 +383,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.8  2001/04/25 04:45:52  steve
+ *  Implement vpi_put_value for signals.
+ *
  * Revision 1.7  2001/04/05 01:34:26  steve
  *  Add the .var/s and .net/s statements for VPI support.
  *

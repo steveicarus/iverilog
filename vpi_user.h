@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.2 2001/03/22 02:23:17 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.3 2001/04/25 04:45:52 steve Exp $"
 #endif
 
 
@@ -30,8 +30,14 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+# define EXTERN_C_START extern "C" {
+# define EXTERN_C_END }
+#else
+# define EXTERN_C_START
+# define EXTERN_C_END
 #endif
+
+EXTERN_C_START
 
 typedef struct __vpiHandle *vpiHandle;
 
@@ -253,6 +259,26 @@ extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern int   vpi_get(int property, vpiHandle ref);
 extern char* vpi_get_str(int property, vpiHandle ref);
 extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
+
+/*
+ * This function puts a value into the object referenced by the
+ * handle. This assumes that the value supports having its value
+ * written to. The time parameter specifies when the assignment is to
+ * take place. This allows you to schedule an assignment to happen in
+ * the future.
+ *
+ * The flags value specifies the delay model to use in assigning the
+ * value. This specifies how the time value is to be used.
+ *
+ *  vpiNoDelay -- Set the value immediately. The p_vpi_time parameter
+ *      may be NULL, in this case. This is like a blocking assignment
+ *      in behavioral code.
+ *
+ *  vpiInertialDelay -- Set the value using the transport delay. The
+ *      p_vpi_time parameter is required and specifies when the
+ *      assignment is to take place. This is like a non-blocking
+ *      assignment in behavioral code.
+ */
 extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 			       p_vpi_time when, int flags);
 
@@ -263,12 +289,13 @@ extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 /* This is the table of startup routines included in each module. */
 extern DLLEXPORT void (*vlog_startup_routines[])();
 
-#ifdef __cplusplus
-}
-#endif
+EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.3  2001/04/25 04:45:52  steve
+ *  Implement vpi_put_value for signals.
+ *
  * Revision 1.2  2001/03/22 02:23:17  steve
  *  fgetc patch from Peter Monta.
  *
