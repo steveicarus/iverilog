@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.236 2001/12/06 05:04:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.237 2001/12/29 20:19:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -668,11 +668,12 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	   overrides. Correct that misconception here. */
       unsigned long rise_time = 0, fall_time = 0, decay_time = 0;
       if (overrides_) {
+	    cerr << my_name << ": overrides_ = " << overrides_ << endl;
 	    PDelays tmp_del;
-	    tmp_del.set_delays(overrides_);
+	    tmp_del.set_delays(overrides_, false);
 	    tmp_del.eval_delays(des, scope, rise_time, fall_time, decay_time);
-	    delete overrides_;
       }
+
 
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
       net->set_attributes(udp->attributes);
@@ -2394,6 +2395,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.237  2001/12/29 20:19:31  steve
+ *  Do not delete delay expressions of UDP instances.
+ *
  * Revision 1.236  2001/12/06 05:04:49  steve
  *  Forgot to evaluate UDP delays.
  *

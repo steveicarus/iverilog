@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.h,v 1.4 2001/11/22 06:20:59 steve Exp $"
+#ident "$Id: PDelays.h,v 1.5 2001/12/29 20:19:31 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -45,8 +45,11 @@ class PDelays {
       PDelays();
       ~PDelays();
 
+	/* Set the delay expressions. If the delete_flag is true, then
+	   this object takes ownership of the expressions, and will
+	   delete it in the destructor. */
       void set_delay(PExpr*);
-      void set_delays(const svector<PExpr*>*del);
+      void set_delays(const svector<PExpr*>*del, bool delete_flag=true);
 
       void eval_delays(Design*des, NetScope*scope,
 		       unsigned long&rise_time,
@@ -57,6 +60,7 @@ class PDelays {
 
     private:
       PExpr* delay_[3];
+      bool delete_flag_;
 
     private: // not implemented
       PDelays(const PDelays&);
@@ -67,6 +71,9 @@ ostream& operator << (ostream&o, const PDelays&);
 
 /*
  * $Log: PDelays.h,v $
+ * Revision 1.5  2001/12/29 20:19:31  steve
+ *  Do not delete delay expressions of UDP instances.
+ *
  * Revision 1.4  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.7 2001/11/22 06:20:59 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.8 2001/12/29 20:19:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,14 +30,17 @@
 
 PDelays::PDelays()
 {
+      delete_flag_ = true;
       for (unsigned idx = 0 ;  idx < 3 ;  idx += 1)
 	    delay_[idx] = 0;
 }
 
 PDelays::~PDelays()
 {
-      for (unsigned idx = 0 ;  idx < 3 ;  idx += 1)
-	    delete delay_[idx];
+      if (delete_flag_) {
+	    for (unsigned idx = 0 ;  idx < 3 ;  idx += 1)
+		  delete delay_[idx];
+      }
 }
 
 void PDelays::set_delay(PExpr*del)
@@ -45,15 +48,18 @@ void PDelays::set_delay(PExpr*del)
       assert(del);
       assert(delay_[0] == 0);
       delay_[0] = del;
+      delete_flag_ = true;
 }
 
 
-void PDelays::set_delays(const svector<PExpr*>*del)
+void PDelays::set_delays(const svector<PExpr*>*del, bool df)
 {
       assert(del);
       assert(del->count() <= 3);
       for (unsigned idx = 0 ;  idx < del->count() ;  idx += 1)
 	    delay_[idx] = (*del)[idx];
+
+      delete_flag_ = df;
 }
 
 static unsigned long calculate_val(Design*des, const NetScope*scope,
@@ -125,6 +131,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.8  2001/12/29 20:19:31  steve
+ *  Do not delete delay expressions of UDP instances.
+ *
  * Revision 1.7  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *
