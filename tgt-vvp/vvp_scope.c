@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.27 2001/05/12 03:31:01 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.28 2001/05/12 16:34:47 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -77,11 +77,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       }
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
-	    return "C<0>";
+	    return "C<pu0>";
       }
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
-	    return "C<1>";
+	    return "C<pu1>";
       }
 
       if (lptr && (nptr_pin == 0)) {
@@ -153,11 +153,15 @@ static const char* draw_net_input(ivl_nexus_t nex)
       assert(ndrivers <= 4);
 
 	/* Draw a resolver to combine the inputs. */
-      fprintf(vvp_out, "RS_%s .resolv %s", ivl_nexus_name(nex),
+      fprintf(vvp_out, "RS_%s .resolv tri, %s", ivl_nexus_name(nex),
 	      draw_net_input_drive(nex, drivers[0]));
-      for (idx = 1 ;  idx < ndrivers ;  idx += 1) {
+
+      for (idx = 1 ;  idx < ndrivers ;  idx += 1)
 	    fprintf(vvp_out, ", %s", draw_net_input_drive(nex, drivers[idx]));
-      }
+
+      for ( ;  idx < 4 ;  idx += 1)
+	    fprintf(vvp_out, ", C<z>");
+
       fprintf(vvp_out, ";\n");
 
       sprintf(result, "RS_%s", ivl_nexus_name(nex));
@@ -713,6 +717,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.28  2001/05/12 16:34:47  steve
+ *  Fixup the resolver syntax.
+ *
  * Revision 1.27  2001/05/12 03:31:01  steve
  *  Generate resolvers for multiple drivers.
  *
