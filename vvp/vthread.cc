@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.99 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: vthread.cc,v 1.100 2003/02/06 17:41:47 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2417,6 +2417,14 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SUB_WR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = l - r;
+      return true;
+}
+
 bool of_SUBI(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -2608,6 +2616,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.100  2003/02/06 17:41:47  steve
+ *  Add the %sub/wr instruction.
+ *
  * Revision 1.99  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.56 2003/01/26 18:16:22 steve Exp $"
+#ident "$Id: codes.h,v 1.57 2003/02/06 17:41:47 steve Exp $"
 #endif
 
 
@@ -104,6 +104,7 @@ extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
+extern bool of_SUB_WR(vthread_t thr, vvp_code_t code);
 extern bool of_SUBI(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
@@ -168,6 +169,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.57  2003/02/06 17:41:47  steve
+ *  Add the %sub/wr instruction.
+ *
  * Revision 1.56  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.47 2003/01/26 18:16:22 steve Exp $
+ *  $Id: opcodes.txt,v 1.48 2003/02/06 17:41:47 steve Exp $
  */
 
 
@@ -32,6 +32,12 @@ See also the %sub instruction.
 
 
 * %add/wr <bit-l>, <bit-r>
+
+This is the real valued version of hte %add instruction. The arguments
+are word indices of the operands. The right operand is added into the
+left operand.
+
+See also the %sub/wr instruction.
 
 
 * %addi <bit-l>, <imm>, <wid>
@@ -548,6 +554,14 @@ the <wid> of the left vector. The result replaces the left vector.
 
 See also the %addi instruction.
 
+
+* %sub/wr <bit-l>, <bit-r>
+
+This instruction operates on real values in word registers. The right
+indexed value is subtracted from the left indexed value, and the
+result placed in the left index.
+
+
 * %vpi_call <name> [, ...]
 
 This instruction makes a call to a system task that was declared using
@@ -598,7 +612,7 @@ and leaves the result in the <dst> vector. xor is this:
 
 
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
