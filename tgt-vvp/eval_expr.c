@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.4 2001/03/29 02:52:39 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.5 2001/03/29 05:16:25 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -172,23 +172,26 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 {
       unsigned idx;
+      unsigned nwid;
       struct vector_info res;
       const char*bits = ivl_expr_bits(exp);
 
       res.wid  = wid;
 
-      assert(ivl_expr_width(exp) >= wid);
+      nwid = wid;
+      if (ivl_expr_width(exp) < nwid)
+	    nwid = ivl_expr_width(exp);
 
 	/* If all the bits of the number have the same value, then we
 	   can use a constant bit. There is no need to allocate wr
 	   bits, and there is no need to generate any code. */
 
-      for (idx = 1 ;  idx < res.wid ;  idx += 1) {
+      for (idx = 1 ;  idx < nwid ;  idx += 1) {
 	    if (bits[idx] != bits[0])
 		  break;
       }
 
-      if (idx == res.wid) {
+      if (idx >= res.wid) {
 	    switch (bits[0]) {
 		case '0':
 		  res.base = 0;
@@ -212,7 +215,7 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
 
       idx = 0;
-      while (idx < wid) {
+      while (idx < nwid) {
 	    unsigned cnt;
 	    char src = '?';
 	    switch (bits[idx]) {
@@ -239,6 +242,10 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 
 	    idx += cnt;
       }
+
+	/* Pad the number up to the expression width. */
+      if (idx < wid)
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
 
       return res;
 }
@@ -326,6 +333,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.5  2001/03/29 05:16:25  steve
+ *  Handle truncation/padding of numbers.
+ *
  * Revision 1.4  2001/03/29 02:52:39  steve
  *  Add unary ~ operator to tgt-vvp.
  *
