@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.130 2004/06/18 16:38:22 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.131 2004/06/22 18:41:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -455,6 +455,13 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 		  ones += 1;
       }
 
+	/* Now make reduction logic to test that all the 1 bits are 1,
+	   and all the 0 bits are 0. The results will be ANDed
+	   together later, if needed. NOTE that if the compare is !=,
+	   and we know that we will not need an AND later, then fold
+	   the final invert into the reduction gate to get the right
+	   sense of the output. If we do need the AND later, then we
+	   will put the invert on that instead. */
       NetLogic*zero_gate = 0;
       NetLogic*ones_gate = 0;
       if (zeros > 0 && op_code == 'e')
@@ -462,13 +469,15 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 				     zeros + 1, NetLogic::NOR);
       if (zeros > 0 && op_code == 'n')
 	    zero_gate = new NetLogic(scope, scope->local_symbol(),
-				     zeros + 1, NetLogic::OR);
+				     zeros + 1,
+				     ones > 0? NetLogic::NOR : NetLogic::OR);
       if (ones > 0 && op_code == 'e')
 	    ones_gate = new NetLogic(scope, scope->local_symbol(),
 				     ones + 1, NetLogic::AND);
       if (ones > 0 && op_code == 'n')
 	    ones_gate = new NetLogic(scope, scope->local_symbol(),
-				     ones + 1, NetLogic::NAND);
+				     ones + 1,
+				     zeros > 0? NetLogic::AND : NetLogic::NAND);
 
       unsigned zidx = 0;
       unsigned oidx = 0;
@@ -494,8 +503,8 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 	    connect(and_sig->pin(0), zero_gate->pin(0));
 	    connect(and_sig->pin(1), ones_gate->pin(0));
 	    NetLogic*and_gate = new NetLogic(scope,
-					     scope->local_symbol(),
-					     3, NetLogic::AND);
+			       scope->local_symbol(), 3,
+			       op_code == 'n'? NetLogic::NAND : NetLogic::AND);
 	    connect(and_gate->pin(0), osig->pin(0));
 	    connect(and_gate->pin(1), and_sig->pin(0));
 	    connect(and_gate->pin(2), and_sig->pin(1));
@@ -2595,6 +2604,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.131  2004/06/22 18:41:48  steve
+ *  Fix broken calcuation of NE for constant.
+ *
  * Revision 1.130  2004/06/18 16:38:22  steve
  *  compare-to-constant uses sig len, not val len.
  *
