@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.3 1999/11/05 21:45:19 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.4 1999/11/05 23:36:31 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -434,10 +434,18 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
 	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
       }
+
+      des->add_signal(sig);
+      des->add_node(mux);
+
+      return sig;
 }
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.4  1999/11/05 23:36:31  steve
+ *  Forgot to return the mux for use after elaboration.
+ *
  * Revision 1.3  1999/11/05 21:45:19  steve
  *  Fix NetConst being set to zero width, and clean
  *  up elaborate_set_cmp_ for NetEBinary.
