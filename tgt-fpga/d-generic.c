@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic.c,v 1.11 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: d-generic.c,v 1.12 2002/10/28 02:05:56 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -503,13 +503,21 @@ const struct device_s d_generic = {
       generic_show_dff,
       generic_show_cmp_eq,
       generic_show_cmp_eq,
+      0, /* ge not implemented */
       generic_show_mux,
-      generic_show_add
+      generic_show_add,
+      0, /* subtract not implemented */
+      0,
+      0
 };
 
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.12  2002/10/28 02:05:56  steve
+ *  Add Virtex code generators for left shift,
+ *  subtraction, and GE comparators.
+ *
  * Revision 1.11  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *

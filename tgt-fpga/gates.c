@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.9 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: gates.c,v 1.10 2002/10/28 02:05:56 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -42,6 +42,15 @@ static void show_gate_lpm(ivl_lpm_t net)
 	    device->show_add(net);
 	    break;
 
+	  case IVL_LPM_SUB:
+	    if (device->show_sub == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_SUB not supported"
+			  " by this target.\n");
+		  return;
+	    }
+	    device->show_sub(net);
+	    break;
+
 	  case IVL_LPM_CMP_EQ:
 	    if (device->show_cmp_eq == 0) {
 		  fprintf(stderr, "fpga.tgt: IVL_LPM_CMP_EQ not supported"
@@ -60,6 +69,15 @@ static void show_gate_lpm(ivl_lpm_t net)
 	    device->show_cmp_ne(net);
 	    break;
 
+	  case IVL_LPM_CMP_GE:
+	    if (device->show_cmp_ge == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_CMP_GE not supported"
+			  " by this target.\n");
+		  return;
+	    }
+	    device->show_cmp_ge(net);
+	    break;
+
 	  case IVL_LPM_FF:
 	    if (device->show_dff == 0) {
 		  fprintf(stderr, "fpga.tgt: IVL_LPM_FF not supported"
@@ -76,6 +94,24 @@ static void show_gate_lpm(ivl_lpm_t net)
 		  return;
 	    }
 	    device->show_mux(net);
+	    break;
+
+	  case IVL_LPM_SHIFTL:
+	    if (device->show_shiftl == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_SHIFTL not supported"
+			  " by this target.\n");
+		  return;
+	    }
+	    device->show_shiftl(net);
+	    break;
+
+	  case IVL_LPM_SHIFTR:
+	    if (device->show_shiftr == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_SHIFTR not supported"
+			  " by this target.\n");
+		  return;
+	    }
+	    device->show_shiftr(net);
 	    break;
 
 	  default:
@@ -100,6 +136,10 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.10  2002/10/28 02:05:56  steve
+ *  Add Virtex code generators for left shift,
+ *  subtraction, and GE comparators.
+ *
  * Revision 1.9  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

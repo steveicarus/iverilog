@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: device.h,v 1.9 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: device.h,v 1.10 2002/10/28 02:05:56 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -50,10 +50,15 @@ struct device_s {
 	/* These methods show various comparators */
       void (*show_cmp_eq)(ivl_lpm_t net);
       void (*show_cmp_ne)(ivl_lpm_t net);
+      void (*show_cmp_ge)(ivl_lpm_t net);
 	/* This method draws MUX devices */
       void (*show_mux)(ivl_lpm_t net);
 	/* This method draws ADD devices */
       void (*show_add)(ivl_lpm_t net);
+      void (*show_sub)(ivl_lpm_t net);
+	/* These methods draw SHIFT devices */
+      void (*show_shiftl)(ivl_lpm_t net);
+      void (*show_shiftr)(ivl_lpm_t net);
 };
 
 /*
@@ -68,6 +73,10 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.10  2002/10/28 02:05:56  steve
+ *  Add Virtex code generators for left shift,
+ *  subtraction, and GE comparators.
+ *
  * Revision 1.9  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
