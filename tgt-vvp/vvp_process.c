@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.27 2001/04/15 02:58:11 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.28 2001/04/18 05:12:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
+# include  <string.h>
 # include  <assert.h>
 
-static int show_statement(ivl_statement_t net);
+static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
 static unsigned local_count = 0;
 static unsigned thread_count = 0;
@@ -214,7 +215,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       return 0;
 }
 
-static int show_stmt_case(ivl_statement_t net)
+static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
       struct vector_info cond = draw_eval_expr(exp);
@@ -280,7 +281,7 @@ static int show_stmt_case(ivl_statement_t net)
 	/* Emit code for the default case. */
       if (default_case < count) {
 	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
-	    show_statement(cst);
+	    show_statement(cst, sscope);
       }
 
 	/* Jump to the out of the case. */
@@ -294,7 +295,7 @@ static int show_stmt_case(ivl_statement_t net)
 		  continue;
 
 	    fprintf(vvp_out, "T_%d.%d\n", thread_count, local_base+idx);
-	    show_statement(cst);
+	    show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
 		    local_base+count);
@@ -307,7 +308,7 @@ static int show_stmt_case(ivl_statement_t net)
       return 0;
 }
 
-static int show_stmt_condit(ivl_statement_t net)
+static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       unsigned lab_false, lab_out;
@@ -325,13 +326,13 @@ static int show_stmt_condit(ivl_statement_t net)
 	/* Done with the condition expression. */
       clr_vector(cond);
 
-      rc += show_statement(ivl_stmt_cond_true(net));
+      rc += show_statement(ivl_stmt_cond_true(net), sscope);
 
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
 	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_false);
 
-	    rc += show_statement(ivl_stmt_cond_false(net));
+	    rc += show_statement(ivl_stmt_cond_false(net), sscope);
 
 	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_out);
 
@@ -350,32 +351,32 @@ static int show_stmt_condit(ivl_statement_t net)
  *        ...
  *        #<delay> <stmt>;
  */
-static int show_stmt_delay(ivl_statement_t net)
+static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       unsigned long delay = ivl_stmt_delay_val(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
       fprintf(vvp_out, "    %%delay %lu;\n", delay);
-      rc += show_statement(stmt);
+      rc += show_statement(stmt, sscope);
 
       return rc;
 }
 
-static int show_stmt_forever(ivl_statement_t net)
+static int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
       unsigned lab_top = local_count++;
 
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_top);
-      rc += show_statement(stmt);
+      rc += show_statement(stmt, sscope);
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
 
       return rc;
 }
 
-static int show_stmt_fork(ivl_statement_t net)
+static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 {
       unsigned idx;
       int rc = 0;
@@ -388,12 +389,13 @@ static int show_stmt_fork(ivl_statement_t net)
 	   fork/join. Send the threads off to a bit of code where they
 	   are implemented. */
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
-	    fprintf(vvp_out, "    %%fork t_%u;\n", transient_id+idx);
+	    fprintf(vvp_out, "    %%fork t_%u, S_%s;\n",
+		    transient_id+idx, ivl_scope_name(sscope));
       }
 
 	/* Draw code to execute the remaining thread in the current
 	   thread, then generate enough joins to merge back together. */
-      rc += show_statement(ivl_stmt_block_stmt(net, cnt-1));
+      rc += show_statement(ivl_stmt_block_stmt(net, cnt-1), sscope);
 
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "    %%join;\n");
@@ -402,11 +404,11 @@ static int show_stmt_fork(ivl_statement_t net)
 
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u\n", transient_id+idx);
-	    rc += show_statement(ivl_stmt_block_stmt(net, idx));
+	    rc += show_statement(ivl_stmt_block_stmt(net, idx), sscope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
 
-	/* This is the label for the out. Use this to branck around
+	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
       fprintf(vvp_out, "t_%u\n", out);
 
@@ -421,7 +423,7 @@ static int show_stmt_noop(ivl_statement_t net)
       return 0;
 }
 
-static int show_stmt_repeat(ivl_statement_t net)
+static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       unsigned lab_top = local_count++, lab_out = local_count++;
@@ -435,7 +437,7 @@ static int show_stmt_repeat(ivl_statement_t net)
 	/* This adds -1 (all ones in 2's complement) to the count. */
       fprintf(vvp_out, "    %%add %u, 1, %u;\n", cnt.base, cnt.wid);
 
-      rc += show_statement(ivl_stmt_sub_stmt(net));
+      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
@@ -457,20 +459,21 @@ static int show_stmt_utask(ivl_statement_t net)
 {
       ivl_scope_t task = ivl_stmt_call(net);
 
-      fprintf(vvp_out, "    %%fork TD_%s;\n", ivl_scope_name(task));
+      fprintf(vvp_out, "    %%fork TD_%s, S_%s;\n",
+	      ivl_scope_name(task), ivl_scope_name(task));
       fprintf(vvp_out, "    %%join;\n");
       return 0;
 }
 
-static int show_stmt_wait(ivl_statement_t net)
+static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_event_t ev = ivl_stmt_event(net);
       fprintf(vvp_out, "    %%wait E_%s;\n", ivl_event_name(ev));
 
-      return show_statement(ivl_stmt_sub_stmt(net));
+      return show_statement(ivl_stmt_sub_stmt(net), sscope);
 }
 
-static int show_stmt_while(ivl_statement_t net)
+static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       struct vector_info cvec;
@@ -489,7 +492,7 @@ static int show_stmt_while(ivl_statement_t net)
       clr_vector(cvec);
 
 	/* Draw the body of the loop. */
-      rc += show_statement(ivl_stmt_sub_stmt(net));
+      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
 	/* This is the bottom of the loop. branch to the top where the
 	   test is repeased, and also draw the out label. */
@@ -559,7 +562,7 @@ static int show_system_task_call(ivl_statement_t net)
  * switches on the statement type and draws code based on the type and
  * further specifics.
  */
-static int show_statement(ivl_statement_t net)
+static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
       int rc = 0;
@@ -579,7 +582,8 @@ static int show_statement(ivl_statement_t net)
 		unsigned idx;
 		unsigned cnt = ivl_stmt_block_count(net);
 		for (idx = 0 ;  idx < cnt ;  idx += 1) {
-		      rc += show_statement(ivl_stmt_block_stmt(net, idx));
+		      rc += show_statement(ivl_stmt_block_stmt(net, idx),
+					   sscope);
 		}
 		break;
 	  }
@@ -587,23 +591,23 @@ static int show_statement(ivl_statement_t net)
 	  case IVL_ST_CASE:
 	  case IVL_ST_CASEX:
 	  case IVL_ST_CASEZ:
-	    rc += show_stmt_case(net);
+	    rc += show_stmt_case(net, sscope);
 	    break;
 
 	  case IVL_ST_CONDIT:
-	    rc += show_stmt_condit(net);
+	    rc += show_stmt_condit(net, sscope);
 	    break;
 
 	  case IVL_ST_DELAY:
-	    rc += show_stmt_delay(net);
+	    rc += show_stmt_delay(net, sscope);
 	    break;
 
 	  case IVL_ST_FOREVER:
-	    rc += show_stmt_forever(net);
+	    rc += show_stmt_forever(net, sscope);
 	    break;
 
 	  case IVL_ST_FORK:
-	    rc += show_stmt_fork(net);
+	    rc += show_stmt_fork(net, sscope);
 	    break;
 
 	  case IVL_ST_NOOP:
@@ -611,7 +615,7 @@ static int show_statement(ivl_statement_t net)
 	    break;
 
 	  case IVL_ST_REPEAT:
-	    rc += show_stmt_repeat(net);
+	    rc += show_stmt_repeat(net, sscope);
 	    break;
 
 	  case IVL_ST_STASK:
@@ -627,11 +631,11 @@ static int show_statement(ivl_statement_t net)
 	    break;
 
 	  case IVL_ST_WAIT:
-	    rc += show_stmt_wait(net);
+	    rc += show_stmt_wait(net, sscope);
 	    break;
 
 	  case IVL_ST_WHILE:
-	    rc += show_stmt_while(net);
+	    rc += show_stmt_while(net, sscope);
 	    break;
 
 	  default:
@@ -665,7 +669,7 @@ int draw_process(ivl_process_t net, void*x)
       fprintf(vvp_out, "T_%d ;\n", thread_count);
 
 	/* Draw the contents of the thread. */
-      rc += show_statement(stmt);
+      rc += show_statement(stmt, scope);
 
 
 	/* Terminate the thread with either an %end instruction (initial
@@ -699,7 +703,7 @@ int draw_task_definition(ivl_scope_t scope)
       fprintf(vvp_out, "TD_%s ;\n", ivl_scope_name(scope));
 
       assert(def);
-      rc += show_statement(def);
+      rc += show_statement(def, scope);
 
       fprintf(vvp_out, "    %%end;\n");
 
@@ -715,7 +719,7 @@ int draw_func_definition(ivl_scope_t scope)
       fprintf(vvp_out, "TD_%s ;\n", ivl_scope_name(scope));
 
       assert(def);
-      rc += show_statement(def);
+      rc += show_statement(def, scope);
 
       fprintf(vvp_out, "    %%end;\n");
 
@@ -725,6 +729,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.28  2001/04/18 05:12:03  steve
+ *  Use the new %fork syntax.
+ *
  * Revision 1.27  2001/04/15 02:58:11  steve
  *  vvp support for <= with internal delay.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.16 2001/04/15 16:37:48 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.17 2001/04/18 05:12:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -558,7 +558,8 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
 
 	/* Call the function */
-      fprintf(vvp_out, "    %%fork TD_%s;\n", ivl_scope_name(def));
+      fprintf(vvp_out, "    %%fork TD_%s, S_%s;\n", ivl_scope_name(def),
+	      ivl_scope_name(def));
       fprintf(vvp_out, "    %%join;\n");
 
 	/* The return value is in a signal that has the name of the
@@ -669,6 +670,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.17  2001/04/18 05:12:03  steve
+ *  Use the new %fork syntax.
+ *
  * Revision 1.16  2001/04/15 16:37:48  steve
  *  add XOR support.
  *
