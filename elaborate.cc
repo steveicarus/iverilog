@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.105 1999/09/30 02:43:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.106 1999/09/30 17:22:33 steve Exp $"
 #endif
 
 /*
@@ -2024,6 +2024,11 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 {
       verinum*num = delay_->eval_const(des, path);
+      if (num == 0) {
+	    cerr << get_line() << ": sorry: delay expression "
+		  "must be constant." << endl;
+	    return 0;
+      }
       assert(num);
 
       unsigned long val = num->as_ulong();
@@ -2508,6 +2513,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.106  1999/09/30 17:22:33  steve
+ *  catch non-constant delays as unsupported.
+ *
  * Revision 1.105  1999/09/30 02:43:02  steve
  *  Elaborate ~^ and ~| operators.
  *
