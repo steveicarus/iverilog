@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.185 2003/09/21 21:16:05 steve Exp $"
+#ident "$Id: parse.y,v 1.186 2003/12/19 05:15:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,9 +227,10 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %left '*' '/' '%'
 %left UNARY_PREC
 
-/* to resolve dangling else ambiguity: */
+/* to resolve dangling else ambiguity. */
 %nonassoc less_than_K_else
 %nonassoc K_else
+
 
 %%
 
@@ -1429,8 +1430,9 @@ assign_list
 
 module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
+          module_parameter_port_list_opt
 	  list_of_ports_opt ';'
-		{ pform_module_set_ports($5); }
+		{ pform_module_set_ports($6); }
 	  module_item_list_opt
 	  K_endmodule
 		{ pform_endmodule($3);
@@ -1445,6 +1447,19 @@ range_delay : range_opt delay3_opt
 		{ $$.range = $1; $$.delay = $2; }
 	;
 
+  /* Module declarations include optional ANSII style module parameter
+     ports. These are simply advance ways to declare parameters, so
+     that the port declarations may use them. */
+module_parameter_port_list_opt
+	:
+        | '#' '(' module_parameter_port_list ')'
+	;
+
+module_parameter_port_list
+	: K_parameter parameter_assign
+	| module_parameter_port_list ',' parameter_assign
+	| module_parameter_port_list ',' K_parameter parameter_assign
+	;
 
 module_item
 	: attribute_list_opt net_type signed_opt range_delay list_of_identifiers ';'
