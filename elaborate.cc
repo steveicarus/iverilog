@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.102 1999/09/29 18:36:03 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.103 1999/09/29 22:57:10 steve Exp $"
 #endif
 
 /*
@@ -1279,71 +1279,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
       return sig;
 }
 
-NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
-{
-      bool flag;
-      NetExpr*lp = left_->elaborate_expr(des, path);
-      NetExpr*rp = right_->elaborate_expr(des, path);
-      if ((lp == 0) || (rp == 0)) {
-	    delete lp;
-	    delete rp;
-	    return 0;
-      }
-
-      NetEBinary*tmp;
-      switch (op_) {
-	  default:
-	    tmp = new NetEBinary(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
-
-	  case 'a':
-	  case 'o':
-	    tmp = new NetEBLogic(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
-
-	  case 'l':
-	  case 'r':
-	    tmp = new NetEBShift(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
-
-	  case '^':
-	  case '&':
-	  case '|':
-	    tmp = new NetEBBits(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
-
-	  case '+':
-	  case '-':
-	    tmp = new NetEBAdd(op_, lp, rp);
-	    tmp->set_line(*this);
-	    break;
-
-	  case 'e': /* == */
-	  case 'E': /* === */
-	  case 'n': /* != */
-	  case 'N': /* !== */
-	  case 'L': /* <= */
-	  case 'G': /* >= */
-	  case '<':
-	  case '>':
-	    tmp = new NetEBComp(op_, lp, rp);
-	    tmp->set_line(*this);
-	    flag = tmp->set_width(1);
-	    if (flag == false) {
-		  cerr << get_line() << ": internal error: "
-			"expression bit width of comparison != 1." << endl;
-		  des->errors += 1;
-	    }
-	    break;
-      }
-
-      return tmp;
-}
-
 NetExpr* PEConcat::elaborate_expr(Design*des, const string&path) const
 {
       unsigned repeat = 1;
@@ -1891,7 +1826,7 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = expr_->elaborate_expr(des, path);
       if (expr == 0) {
-	    cerr << get_line() << ": Unable to elaborate"
+	    cerr << get_line() << ": error: Unable to elaborate"
 		  " condition expression." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2573,6 +2508,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.103  1999/09/29 22:57:10  steve
+ *  Move code to elab_expr.cc
+ *
  * Revision 1.102  1999/09/29 18:36:03  steve
  *  Full case support
  *

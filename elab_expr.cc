@@ -17,12 +17,97 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.3 1999/09/25 02:57:30 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.4 1999/09/29 22:57:10 steve Exp $"
 #endif
 
 
 # include  "pform.h"
 # include  "netlist.h"
+
+/*
+ * Elaborate binary expressions. This involves elaborating the left
+ * and right sides, and creating one of a variety of different NetExpr
+ * types. 
+ */
+NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
+{
+      bool flag;
+      NetExpr*lp = left_->elaborate_expr(des, path);
+      NetExpr*rp = right_->elaborate_expr(des, path);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+	/* If either expression can be evaluated ahead of time, then
+	   do so. This can prove helpful later. */
+      { NetExpr*tmp;
+        tmp = lp->eval_tree();
+	if (tmp) {
+	      delete lp;
+	      lp = tmp;
+	}
+	tmp = rp->eval_tree();
+	if (tmp) {
+	      delete rp;
+	      rp = tmp;
+	}
+      }
+
+      NetEBinary*tmp;
+      switch (op_) {
+	  default:
+	    tmp = new NetEBinary(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case 'a':
+	  case 'o':
+	    tmp = new NetEBLogic(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case 'l':
+	  case 'r':
+	    tmp = new NetEBShift(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case '^':
+	  case '&':
+	  case '|':
+	    tmp = new NetEBBits(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case '+':
+	  case '-':
+	    tmp = new NetEBAdd(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case 'e': /* == */
+	  case 'E': /* === */
+	  case 'n': /* != */
+	  case 'N': /* !== */
+	  case 'L': /* <= */
+	  case 'G': /* >= */
+	  case '<':
+	  case '>':
+	    tmp = new NetEBComp(op_, lp, rp);
+	    tmp->set_line(*this);
+	    flag = tmp->set_width(1);
+	    if (flag == false) {
+		  cerr << get_line() << ": internal error: "
+			"expression bit width of comparison != 1." << endl;
+		  des->errors += 1;
+	    }
+	    break;
+      }
+
+      return tmp;
+}
 
 NetESFunc* PECallFunction::elaborate_sfunc_(Design*des, const string&path) const
 {
@@ -199,6 +284,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.4  1999/09/29 22:57:10  steve
+ *  Move code to elab_expr.cc
+ *
  * Revision 1.3  1999/09/25 02:57:30  steve
  *  Parse system function calls.
  *
