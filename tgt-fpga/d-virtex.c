@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.3 2001/09/10 03:48:34 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.4 2001/09/11 05:52:31 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -103,6 +103,14 @@ static const char*virtex_library_text =
 "                 (port I1 (direction INPUT))\n"
 "                 (port I2 (direction INPUT))\n"
 "                 (port I3 (direction INPUT)))))\n"
+"      (cell MUXCY (cellType GENERIC)\n"
+"            (view Netlist_representation\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O (direction OUTPUT))\n"
+"                 (port S (direction INPUT))\n"
+"                 (port DI (direction INPUT))\n"
+"                 (port CI (direction INPUT)))))\n"
 "      (cell MUXCY_L (cellType GENERIC)\n"
 "            (view Netlist_representation\n"
 "              (viewType NETLIST)\n"
@@ -136,12 +144,12 @@ static void edif_show_lut2(const char*name, unsigned uref,
 			   const char*truth_table)
 {
       char jbuf[1024];
-      fprintf(xnf, "(instance (rename U%u \"%s\")"
-	      " (property INIT (string \"%s\"))",
-	      uref, name, truth_table);
 
-      fprintf(xnf, " (viewRef Netlist_representation"
-	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
+      fprintf(xnf, "(instance (rename U%u \"%s\")"
+	      " (viewRef Netlist_representation"
+	      " (cellRef LUT2 (libraryRef VIRTEX)))"
+	      " (property INIT (string \"%s\")))\n",
+	      uref, name, truth_table);
 
       sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
       edif_set_nexus_joint(O, jbuf);
@@ -161,12 +169,12 @@ static void edif_show_lut3(const char*name, unsigned uref,
 			   const char*truth_table)
 {
       char jbuf[1024];
-      fprintf(xnf, "(instance (rename U%u \"%s\")"
-	      " (property INIT (string \"%s\"))",
-	      uref, name, truth_table);
 
-      fprintf(xnf, " (viewRef Netlist_representation"
-	      " (cellRef LUT3 (libraryRef VIRTEX))))\n");
+      fprintf(xnf, "(instance (rename U%u \"%s\")"
+	      " (viewRef Netlist_representation"
+	      " (cellRef LUT3 (libraryRef VIRTEX)))"
+	      " (property INIT (string \"%s\")))\n",
+	      uref, name, truth_table);
 
       sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
       edif_set_nexus_joint(O, jbuf);
@@ -188,12 +196,12 @@ static void edif_show_lut4(const char*name, unsigned uref,
 			   const char*truth_table)
 {
       char jbuf[1024];
-      fprintf(xnf, "(instance (rename U%u \"%s\")"
-	      " (property INIT (string \"%s\"))",
-	      uref, name, truth_table);
 
-      fprintf(xnf, " (viewRef Netlist_representation"
-	      " (cellRef LUT4 (libraryRef VIRTEX))))\n");
+      fprintf(xnf, "(instance (rename U%u \"%s\")"
+	      " (viewRef Netlist_representation"
+	      " (cellRef LUT4 (libraryRef VIRTEX)))"
+	      " (property INIT (string \"%s\")))\n",
+	      uref, name, truth_table);
 
       sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
       edif_set_nexus_joint(O, jbuf);
@@ -362,71 +370,206 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			   "9009");
 	    break;
 
-	  case 4: {
+	  default: {
 		char jbuf[1024];
+		unsigned idx;
+		unsigned pairs = ivl_lpm_width(net) / 2;
+		unsigned tail  = ivl_lpm_width(net) % 2;
 
-		fprintf(xnf, "(instance (rename U%u \"%s\")"
-			" (property INIT (string \"8\"))",
-			edif_uref, ivl_lpm_name(net));
-		fprintf(xnf, " (viewRef Netlist_representation"
-			" (cellRef LUT2 (libraryRef VIRTEX))))\n");
+		if (tail == 0) {
+		      tail = 2;
+		      pairs -= 1;
+		}
 
-		sprintf(jbuf, "(portRef O (instanceRef U%u))",
+		fprintf(xnf, "(instance U%uL0"
+			" (viewRef Netlist_representation"
+			" (cellRef LUT4 (libraryRef VIRTEX)))"
+			" (property INIT (string \"9009\")))\n",
 			edif_uref);
-		edif_set_nexus_joint(ivl_lpm_q(net, 0), jbuf);
+		fprintf(xnf, "(instance U%uM0"
+			" (viewRef Netlist_representation"
+			" (cellRef MUXCY_L (libraryRef VIRTEX))))\n",
+			edif_uref);
+		fprintf(xnf, "(instance U%uG0"
+			" (viewRef Netlist_representation"
+			" (cellRef GND (libraryRef VIRTEX))))\n",
+			edif_uref);
+		fprintf(xnf, "(instance U%uV0"
+			" (viewRef Netlist_representation"
+			" (cellRef VCC (libraryRef VIRTEX))))\n",
+			edif_uref);
 
-		fprintf(xnf, "(instance U%uA"
-			" (property INIT (string \"9009\"))", edif_uref);
-		fprintf(xnf, " (viewRef Netlist_representation"
-			" (cellRef LUT4 (libraryRef VIRTEX))))\n");
-
-		fprintf(xnf, "(instance U%uB"
-			" (property INIT (string \"9009\"))", edif_uref);
-		fprintf(xnf, " (viewRef Netlist_representation"
-			" (cellRef LUT4 (libraryRef VIRTEX))))\n");
-
-		fprintf(xnf, "(net U%uNA (joined"
-			" (portRef O (instanceRef U%uA))"
-			" (portRef I0 (instanceRef U%u))))\n",
+		fprintf(xnf, "(net U%uVM0 (joined"
+			" (portRef P (instanceRef U%uV0))"
+			" (portRef CI (instanceRef U%uM0))))\n",
+			edif_uref, edif_uref, edif_uref);
+		fprintf(xnf, "(net U%uGM0 (joined"
+			" (portRef G (instanceRef U%uG0))"
+			" (portRef DI (instanceRef U%uM0))))\n",
+			edif_uref, edif_uref, edif_uref);
+		fprintf(xnf, "(net U%uLM0 (joined"
+			" (portRef O (instanceRef U%uL0))"
+			" (portRef S (instanceRef U%uM0))))\n",
 			edif_uref, edif_uref, edif_uref);
 
-		fprintf(xnf, "(net U%uNB (joined"
-			" (portRef O (instanceRef U%uB))"
-			" (portRef I1 (instanceRef U%u))))\n",
-			edif_uref, edif_uref, edif_uref);
-
-		sprintf(jbuf, "(portRef I0 (instanceRef U%uA))", edif_uref);
+		sprintf(jbuf, "(portRef I0 (instanceRef U%uL0))", edif_uref);
 		edif_set_nexus_joint(ivl_lpm_data(net, 0), jbuf);
 
-		sprintf(jbuf, "(portRef I1 (instanceRef U%uA))", edif_uref);
+		sprintf(jbuf, "(portRef I1 (instanceRef U%uL0))", edif_uref);
 		edif_set_nexus_joint(ivl_lpm_datab(net, 0), jbuf);
 
-		sprintf(jbuf, "(portRef I2 (instanceRef U%uA))", edif_uref);
+		sprintf(jbuf, "(portRef I2 (instanceRef U%uL0))", edif_uref);
 		edif_set_nexus_joint(ivl_lpm_data(net, 1), jbuf);
 
-		sprintf(jbuf, "(portRef I3 (instanceRef U%uA))", edif_uref);
+		sprintf(jbuf, "(portRef I3 (instanceRef U%uL0))", edif_uref);
 		edif_set_nexus_joint(ivl_lpm_datab(net, 1), jbuf);
 
 
-		sprintf(jbuf, "(portRef I0 (instanceRef U%uB))", edif_uref);
-		edif_set_nexus_joint(ivl_lpm_data(net, 2), jbuf);
+		for (idx = 1 ;  idx < pairs ;  idx += 1) {
+		      fprintf(xnf, "(instance U%uL%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef LUT4 (libraryRef VIRTEX)))"
+			      " (property INIT (string \"9009\")))\n",
+			      edif_uref, idx);
+		      fprintf(xnf, "(instance U%uM%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef MUXCY_L (libraryRef VIRTEX))))\n",
+			      edif_uref, idx);
+		      fprintf(xnf, "(instance U%uG%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef GND (libraryRef VIRTEX))))\n",
+			      edif_uref, idx);
 
-		sprintf(jbuf, "(portRef I1 (instanceRef U%uB))", edif_uref);
-		edif_set_nexus_joint(ivl_lpm_datab(net, 2), jbuf);
+		      fprintf(xnf, "(net U%uVM%u (joined"
+			      " (portRef LO (instanceRef U%uM%u))"
+			      " (portRef CI (instanceRef U%uM%u))))\n",
+			      edif_uref, idx, edif_uref, idx-1,
+			      edif_uref, idx);
+		      fprintf(xnf, "(net U%uGM%u (joined"
+			      " (portRef G (instanceRef U%uG%u))"
+			      " (portRef DI (instanceRef U%uM%u))))\n",
+			      edif_uref, idx, edif_uref, idx,
+			      edif_uref, idx);
+		      fprintf(xnf, "(net U%uLM%u (joined"
+			      " (portRef O (instanceRef U%uL%u))"
+			      " (portRef S (instanceRef U%uM%u))))\n",
+			      edif_uref, idx, edif_uref, idx,
+			      edif_uref, idx);
 
-		sprintf(jbuf, "(portRef I2 (instanceRef U%uB))", edif_uref);
-		edif_set_nexus_joint(ivl_lpm_data(net, 3), jbuf);
+		      sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+			      edif_uref, idx);
+		      edif_set_nexus_joint(ivl_lpm_data(net, idx*2), jbuf);
 
-		sprintf(jbuf, "(portRef I3 (instanceRef U%uB))", edif_uref);
-		edif_set_nexus_joint(ivl_lpm_datab(net, 3), jbuf);
+		      sprintf(jbuf, "(portRef I1 (instanceRef U%uL%u))",
+			      edif_uref, idx);
+		      edif_set_nexus_joint(ivl_lpm_datab(net, idx*2), jbuf);
+
+		      sprintf(jbuf, "(portRef I2 (instanceRef U%uL%u))",
+			      edif_uref, idx);
+		      edif_set_nexus_joint(ivl_lpm_data(net, idx*2+1), jbuf);
+
+		      sprintf(jbuf, "(portRef I3 (instanceRef U%uL%u))",
+			      edif_uref, idx);
+		      edif_set_nexus_joint(ivl_lpm_datab(net, idx*2+1), jbuf);
+
+		}
+
+		if (tail == 2) {
+		      fprintf(xnf, "(instance U%uL%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef LUT4 (libraryRef VIRTEX)))"
+			      " (property INIT (string \"9009\")))\n",
+			      edif_uref, pairs);
+		      fprintf(xnf, "(instance (rename U%uM%u \"%s\")"
+			      " (viewRef Netlist_representation"
+			      " (cellRef MUXCY (libraryRef VIRTEX))))\n",
+			      edif_uref, pairs, ivl_lpm_name(net));
+		      fprintf(xnf, "(instance U%uG%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef GND (libraryRef VIRTEX))))\n",
+			      edif_uref, pairs);
+
+		      fprintf(xnf, "(net U%uVM%u (joined"
+			      " (portRef LO (instanceRef U%uM%u))"
+			      " (portRef CI (instanceRef U%uM%u))))\n",
+			      edif_uref, pairs, edif_uref, pairs-1,
+			      edif_uref, pairs);
+		      fprintf(xnf, "(net U%uGM%u (joined"
+			      " (portRef G (instanceRef U%uG%u))"
+			      " (portRef DI (instanceRef U%uM%u))))\n",
+			      edif_uref, pairs, edif_uref, pairs,
+			      edif_uref, pairs);
+		      fprintf(xnf, "(net U%uLM%u (joined"
+			      " (portRef O (instanceRef U%uL%u))"
+			      " (portRef S (instanceRef U%uM%u))))\n",
+			      edif_uref, pairs, edif_uref, pairs,
+			      edif_uref, pairs);
+
+		      sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+			      edif_uref, pairs);
+		      edif_set_nexus_joint(ivl_lpm_data(net, pairs*2), jbuf);
+
+		      sprintf(jbuf, "(portRef I1 (instanceRef U%uL%u))",
+			      edif_uref, pairs);
+		      edif_set_nexus_joint(ivl_lpm_datab(net, pairs*2), jbuf);
+
+		      sprintf(jbuf, "(portRef I2 (instanceRef U%uL%u))",
+			      edif_uref, pairs);
+		      edif_set_nexus_joint(ivl_lpm_data(net, pairs*2+1), jbuf);
+
+		      sprintf(jbuf, "(portRef I3 (instanceRef U%uL%u))",
+			      edif_uref, pairs);
+		      edif_set_nexus_joint(ivl_lpm_datab(net, pairs*2+1), jbuf);
+
+		} else {
+		      assert(tail == 1);
+
+		      fprintf(xnf, "(instance (rename U%uL%u \"%s\")"
+			      " (viewRef Netlist_representation"
+			      " (cellRef LUT2 (libraryRef VIRTEX)))"
+			      " (property INIT (string \"9\")))\n",
+			      edif_uref, pairs, ivl_lpm_name(net));
+		      fprintf(xnf, "(instance U%uM%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef MUXCY (libraryRef VIRTEX))))\n",
+			      edif_uref, pairs);
+		      fprintf(xnf, "(instance U%uG%u"
+			      " (viewRef Netlist_representation"
+			      " (cellRef GND (libraryRef VIRTEX))))\n",
+			      edif_uref, pairs);
+
+		      fprintf(xnf, "(net U%uVM%u (joined"
+			      " (portRef LO (instanceRef U%uM%u))"
+			      " (portRef CI (instanceRef U%uM%u))))\n",
+			      edif_uref, pairs, edif_uref, pairs-1,
+			      edif_uref, pairs);
+		      fprintf(xnf, "(net U%uGM%u (joined"
+			      " (portRef G (instanceRef U%uG%u))"
+			      " (portRef DI (instanceRef U%uM%u))))\n",
+			      edif_uref, pairs, edif_uref, pairs,
+			      edif_uref, pairs);
+		      fprintf(xnf, "(net U%uLM%u (joined"
+			      " (portRef O (instanceRef U%uL%u))"
+			      " (portRef S (instanceRef U%uM%u))))\n",
+			      edif_uref, pairs, edif_uref, pairs,
+			      edif_uref, pairs);
+
+		      sprintf(jbuf, "(portRef I0 (instanceRef U%uL%u))",
+			      edif_uref, pairs);
+		      edif_set_nexus_joint(ivl_lpm_data(net, pairs*2), jbuf);
+
+		      sprintf(jbuf, "(portRef I1 (instanceRef U%uL%u))",
+			      edif_uref, pairs);
+		      edif_set_nexus_joint(ivl_lpm_datab(net, pairs*2), jbuf);
+
+		}
+
+		sprintf(jbuf, "(portRef O (instanceRef U%uL%u))",
+			edif_uref, pairs);
+		edif_set_nexus_joint(ivl_lpm_q(net, 0), jbuf);
 
 		break;
 	  }
-
-	  default:
-	    fprintf(stderr, "internal error: IVL_LPM_CMP_EQ: "
-		    "Unsupported width (%u)\n", ivl_lpm_width(net));
-	    assert(0);
       }
 }
 
@@ -605,6 +748,10 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.4  2001/09/11 05:52:31  steve
+ *  Use carry mux to implement wide identity compare,
+ *  Place property item in correct place in LUT cell list.
+ *
  * Revision 1.3  2001/09/10 03:48:34  steve
  *  Add 4 wide identity compare.
  *
