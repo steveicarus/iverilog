@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.7 2001/03/22 05:08:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.8 2001/03/23 01:11:06 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -26,6 +26,7 @@
 # include  "functor.h"
 # include  "vpi_priv.h"
 # include  <malloc.h>
+# include  <string.h>
 # include  <assert.h>
 
 struct vthread_s {
@@ -34,6 +35,18 @@ struct vthread_s {
       unsigned char *bits;
       unsigned short nbits;
 };
+
+static void thr_check_addr(struct vthread_s*thr, unsigned addr)
+{
+      if (addr < thr->nbits)
+	    return;
+      assert(addr < 0x10000);
+      while (thr->nbits <= addr) {
+	    thr->bits = (unsigned char*)realloc(thr->bits, thr->nbits/4 + 16);
+	    memset(thr->bits + thr->nbits/4, 0xaa, 16);
+	    thr->nbits += 16*4;
+      }
+}
 
 static inline unsigned thr_get_bit(struct vthread_s*thr, unsigned addr)
 {
@@ -46,7 +59,7 @@ static inline unsigned thr_get_bit(struct vthread_s*thr, unsigned addr)
 static inline void thr_put_bit(struct vthread_s*thr,
 			       unsigned addr, unsigned val)
 {
-      assert(addr < thr->nbits);
+      thr_check_addr(thr, addr);
       unsigned idx = addr % 4;
       addr /= 4;
       unsigned mask = 3 << (idx*2);
@@ -115,9 +128,12 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       unsigned eeq = 1;
       unsigned lt = 2;
 
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lv = thr_get_bit(thr, cp->bit_idx1+idx);
-	    unsigned rv = thr_get_bit(thr, cp->bit_idx2+idx);
+	    unsigned lv = thr_get_bit(thr, idx1);
+	    unsigned rv = thr_get_bit(thr, idx2);
 
 	    if (lv != rv)
 		  eeq = 0;
@@ -125,6 +141,9 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 		  eq = 0;
 	    if ((lv == 1) && (rv != 1))
 		  eq = 0;
+
+	    if (idx1 >= 4) idx1 += 1;
+	    if (idx2 >= 4) idx2 += 1;
       }
 
       thr_put_bit(thr, 4, eq);
@@ -239,6 +258,9 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.8  2001/03/23 01:11:06  steve
+ *  Handle vectors pulled out of a constant bit.
+ *
  * Revision 1.7  2001/03/22 05:08:00  steve
  *  implement %load, %inv, %jum/0 and %cmp/u
  *
