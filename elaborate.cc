@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.116 1999/10/10 01:59:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.117 1999/10/13 03:16:36 steve Exp $"
 #endif
 
 /*
@@ -40,50 +40,6 @@ string Design::local_symbol(const string&path)
       return path + "." + res.str();
 }
 
-#if 0
-static void do_assign(Design*des, const string&path,
-		      NetNet*lval, NetNet*rval)
-{
-      assert(lval->pin_count() == rval->pin_count());
-      const unsigned pin_count = lval->pin_count();
-
-      if (NetTmp* tmp = dynamic_cast<NetTmp*>(rval)) {
-
-	    for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1)
-		  connect(lval->pin(idx), tmp->pin(idx));
-	    delete tmp;
-
-	    if ((tmp = dynamic_cast<NetTmp*>(lval)))
-		  delete tmp;
-
-      } else if (NetTmp* tmp = dynamic_cast<NetTmp*>(lval)) {
-
-	    for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1)
-		  connect(tmp->pin(idx), rval->pin(idx));
-	    delete tmp;
-
-      } else if (rval->local_flag()) {
-
-	    for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1)
-		  connect(lval->pin(idx), rval->pin(idx));
-	    delete rval;
-
-      } else if (lval->local_flag()) {
-
-	    for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1)
-		  connect(lval->pin(idx), rval->pin(idx));
-	    delete lval;
-
-      } else for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1) {
-	    NetBUFZ*cur = new NetBUFZ(des->local_symbol(path));
-
-	    connect(cur->pin(0), lval->pin(idx));
-	    connect(cur->pin(1), rval->pin(idx));
-
-	    des->add_node(cur);
-      }
-}
-#endif
 
   // Urff, I don't like this global variable. I *will* figure out a
   // way to get rid of it. But, for now the PGModule::elaborate method
@@ -256,8 +212,6 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
       if (lval->local_flag())
 	    delete lval;
-
-	//do_assign(des, path, lval, rval);
 
 }
 
@@ -2684,6 +2638,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.117  1999/10/13 03:16:36  steve
+ *  Remove commented out do_assign.
+ *
  * Revision 1.116  1999/10/10 01:59:54  steve
  *  Structural case equals device.
  *
