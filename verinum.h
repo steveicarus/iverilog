@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.18 2001/02/10 20:29:39 steve Exp $"
+#ident "$Id: verinum.h,v 1.19 2002/06/03 04:04:24 steve Exp $"
 #endif
 
 # include  <string>
@@ -39,7 +39,7 @@ class ostream;
 class verinum {
 
     public:
-      enum V { V0, V1, Vx, Vz };
+      enum V { V0 = 0, V1, Vx, Vz };
 
       verinum();
       verinum(const string&str);
@@ -123,10 +123,16 @@ inline verinum::V operator > (const verinum&left, const verinum&right)
 inline verinum::V operator >= (const verinum&left, const verinum&right)
 { return right <= left; }
 
+inline verinum::V operator != (const verinum&left, const verinum&right)
+{ return (left == right)? verinum::V0 : verinum::V1; }
+
 extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.19  2002/06/03 04:04:24  steve
+ *  Add verinum != operator.
+ *
  * Revision 1.18  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.
