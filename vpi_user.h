@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.30 2003/10/30 03:42:51 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.31 2003/12/07 20:06:24 steve Exp $"
 #endif
 
 
@@ -57,7 +57,7 @@ typedef struct __vpiHandle *vpiHandle;
 typedef struct t_vpi_systf_data {
       PLI_INT32 type;
       PLI_INT32 subtype;
-      char      *tfname;
+      const char *tfname;
       PLI_INT32 (*calltf)(char*);
       PLI_INT32 (*compiletf)(char*);
       PLI_INT32 (*sizetf)();
@@ -412,6 +412,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.31  2003/12/07 20:06:24  steve
+ *  tfname can be constant.
+ *
  * Revision 1.30  2003/10/30 03:42:51  steve
  *  Details on the vpi_get_file function.
  *
