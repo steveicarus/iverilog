@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.6 1999/06/07 03:40:22 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.7 1999/06/24 04:20:47 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -240,10 +240,57 @@ vvm_bitset_t<1> vvm_binop_eq(const vvm_bitset_t<LW>&l,
 }
 
 template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_eeq(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> result;
+      result[0] = V1;
+
+      if (LW <= RW) {
+	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
+		  if (l[idx] != r[idx]) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
+		  if (r[idx] != V0) {
+			result[0] = V0;
+			return result;
+		  }
+		  
+      } else {
+	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
+		  if (l[idx] != r[idx]) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
+		  if (l[idx] != V0) {
+			result[0] = V0;
+			return result;
+		  }
+		  
+      }
+
+      return result;
+}
+
+template <unsigned LW, unsigned RW>
 vvm_bitset_t<1> vvm_binop_ne(const vvm_bitset_t<LW>&l,
 			     const vvm_bitset_t<RW>&r)
 {
       vvm_bitset_t<1> result = vvm_binop_eq(l,r);
+      result[0] = not(result[0]);
+      return result;
+}
+
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_nee(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> result = vvm_binop_eeq(l,r);
       result[0] = not(result[0]);
       return result;
 }
@@ -283,6 +330,9 @@ vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.7  1999/06/24 04:20:47  steve
+ *  Add !== and === operators.
+ *
  * Revision 1.6  1999/06/07 03:40:22  steve
  *  Implement the < binary operator.
  *
