@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.74 1999/09/29 18:36:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.75 1999/09/30 02:43:02 steve Exp $"
 #endif
 
 /*
@@ -1146,8 +1146,10 @@ class NetProcTop  : public LineInfo {
  *   N  -- Case inequality (!==)
  *   a  -- Logical AND (&&)
  *   o  -- Logical OR (||)
+ *   O  -- Bit-wise NOR
  *   l  -- Left shift (<<)
  *   r  -- Right shift (>>)
+ *   X  -- Bitwise exclusive NOR (~^)
  */
 class NetEBinary  : public NetExpr {
 
@@ -1202,6 +1204,8 @@ class NetEBAdd : public NetEBinary {
  *   ^  -- Bit-wise exclusive OR
  *   &  -- Bit-wise AND
  *   |  -- Bit-wise OR
+ *   O  -- Bit-wise NOR
+ *   X  -- Bit-wise XNOR (~^)
  */
 class NetEBBits : public NetEBinary {
 
@@ -1700,6 +1704,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.75  1999/09/30 02:43:02  steve
+ *  Elaborate ~^ and ~| operators.
+ *
  * Revision 1.74  1999/09/29 18:36:03  steve
  *  Full case support
  *

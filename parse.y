@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.72 1999/09/30 01:22:37 steve Exp $"
+#ident "$Id: parse.y,v 1.73 1999/09/30 02:43:02 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -149,8 +149,8 @@ extern void lex_end_table();
 %left K_LOR
 %left K_LAND
 %left '|'
-%left '^'
-%left '&'
+%left '^' K_NXOR K_NOR
+%left '&' K_NAND
 %left K_EQ K_NE K_CEQ K_CNE
 %left K_GE K_LE '<' '>'
 %left K_LS K_RS
@@ -492,6 +492,18 @@ expression
 		}
 	| expression '|' expression
 		{ PEBinary*tmp = new PEBinary('|', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| expression K_NOR expression
+		{ PEBinary*tmp = new PEBinary('O', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| expression K_NXOR expression
+		{ PEBinary*tmp = new PEBinary('X', $1, $3);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = tmp;

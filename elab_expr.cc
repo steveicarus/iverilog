@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.5 1999/09/30 00:48:49 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.6 1999/09/30 02:43:02 steve Exp $"
 #endif
 
 
@@ -77,6 +77,8 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 	  case '^':
 	  case '&':
 	  case '|':
+	  case 'O':
+	  case 'X':
 	    tmp = new NetEBBits(op_, lp, rp);
 	    tmp->set_line(*this);
 	    break;
@@ -316,6 +318,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.6  1999/09/30 02:43:02  steve
+ *  Elaborate ~^ and ~| operators.
+ *
  * Revision 1.5  1999/09/30 00:48:49  steve
  *  Cope with errors during ternary operator elaboration.
  *

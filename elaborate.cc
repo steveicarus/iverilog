@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.104 1999/09/30 00:48:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.105 1999/09/30 02:43:02 steve Exp $"
 #endif
 
 /*
@@ -2277,12 +2277,20 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  */
 void PTask::elaborate(Design*des, const string&path) const
 {
-      NetProc*st = statement_->elaborate(des, path);
-      if (st == 0) {
-	    cerr << statement_->get_line() << ": Unable to elaborate "
-		  "statement in task " << path << " at " << get_line()
-		 << "." << endl;
-	    return;
+      NetProc*st;
+      if (statement_ == 0) {
+	    cerr << get_line() << ": warning: task has no statement." << endl;
+	    st = new NetBlock(NetBlock::SEQU);
+
+      } else {
+
+	    st = statement_->elaborate(des, path);
+	    if (st == 0) {
+		  cerr << statement_->get_line() << ": Unable to elaborate "
+			"statement in task " << path << " at " << get_line()
+		       << "." << endl;
+		  return;
+	    }
       }
 
 	/* Translate the wires that are ports to NetNet pointers by
@@ -2500,6 +2508,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.105  1999/09/30 02:43:02  steve
+ *  Elaborate ~^ and ~| operators.
+ *
  * Revision 1.104  1999/09/30 00:48:50  steve
  *  Cope with errors during ternary operator elaboration.
  *

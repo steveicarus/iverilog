@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.44 1999/09/29 18:36:03 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.45 1999/09/30 02:43:01 steve Exp $"
 #endif
 
 /*
@@ -598,8 +598,14 @@ void NetEBinary::dump(ostream&o) const
 	  case 'o':
 	    o << "||";
 	    break;
+	  case 'O':
+	    o << "~|";
+	    break;
 	  case 'r':
 	    o << ">>";
+	    break;
+	  case 'X':
+	    o << "~^";
 	    break;
       }
       o << "(";
@@ -768,6 +774,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.45  1999/09/30 02:43:01  steve
+ *  Elaborate ~^ and ~| operators.
+ *
  * Revision 1.44  1999/09/29 18:36:03  steve
  *  Full case support
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.43 1999/09/30 00:48:50 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.44 1999/09/30 02:43:02 steve Exp $"
 #endif
 
 /*
@@ -505,7 +505,10 @@ void PTask::dump(ostream&out, unsigned ind) const
 		  out << (*ports_)[idx]->name() << ";" << endl;
 	    }
 
-      statement_->dump(out, ind);
+      if (statement_)
+	    statement_->dump(out, ind);
+      else
+	    out << setw(ind) << "" << "/* NOOP */" << endl;
 }
 
 
@@ -569,8 +572,11 @@ void Module::dump(ostream&out) const
       typedef map<string,PExpr*>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
-	    out << "    parameter " << (*cur).first << " = " <<
-		  *(*cur).second << ";" << endl;
+	    out << "    parameter " << (*cur).first << " = ";
+	    if ((*cur).second)
+		  out << *(*cur).second << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
       }
 
 	// Iterate through and display all the wires.
@@ -666,6 +672,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.44  1999/09/30 02:43:02  steve
+ *  Elaborate ~^ and ~| operators.
+ *
  * Revision 1.43  1999/09/30 00:48:50  steve
  *  Cope with errors during ternary operator elaboration.
  *
