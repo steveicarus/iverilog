@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.10 1999/10/10 23:29:37 steve Exp $"
+#ident "$Id: verinum.cc,v 1.11 1999/10/22 23:57:53 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -296,16 +296,39 @@ ostream& operator<< (ostream&o, const verinum&v)
       return o;
 }
 
-bool operator == (const verinum&left, const verinum&right)
+verinum::V operator == (const verinum&left, const verinum&right)
 {
       if (left.len() != right.len())
-	    return false;
+	    return verinum::V0;
 
       for (unsigned idx = 0 ;  idx < left.len() ;  idx += 1)
 	    if (left[idx] != right[idx])
-		  return false;
+		  return verinum::V0;
 
-      return true;
+      return verinum::V1;
+}
+
+verinum::V operator <= (const verinum&left, const verinum&right)
+{
+      unsigned idx;
+      for (idx = left.len() ; idx > right.len() ;  idx -= 1) {
+	    if (left[idx-1] != verinum::V0) return verinum::V0;
+      }
+
+      for (idx = right.len() ; idx > left.len() ;  idx -= 1) {
+	    if (right[idx-1] != verinum::V0) return verinum::V0;
+      }
+
+      while (idx > 0) {
+	    if (left[idx-1] == verinum::Vx) return verinum::Vx;
+	    if (left[idx-1] == verinum::Vz) return verinum::Vx;
+	    if (right[idx-1] == verinum::Vx) return verinum::Vx;
+	    if (right[idx-1] == verinum::Vz) return verinum::Vx;
+	    if (left[idx-1] > right[idx-1]) return verinum::V0;
+	    idx -= 1;
+      }
+
+      return verinum::V1;
 }
 
 static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c)
@@ -432,6 +455,9 @@ verinum operator - (const verinum&left, const verinum&r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.11  1999/10/22 23:57:53  steve
+ *  do the <= in bits, not numbers.
+ *
  * Revision 1.10  1999/10/10 23:29:37  steve
  *  Support evaluating + operator at compile time.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_tree.cc,v 1.5 1999/10/10 23:29:37 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.6 1999/10/22 23:57:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -105,8 +105,9 @@ NetEConst* NetEBComp::eval_leeq_()
 	/* Detect the case where the right side is greater that or
 	   equal to the largest value the left side can possibly
 	   have. */
-      unsigned long lv = (1 << left_->expr_width()) - 1;
-      if (lv <= rv.as_ulong()) {
+      assert(left_->expr_width() > 0);
+      verinum lv (verinum::V1, left_->expr_width());
+      if (lv <= rv) {
 	    verinum result(verinum::V1, 1);
 	    return new NetEConst(result);
       }
@@ -261,6 +262,9 @@ NetExpr* NetEParam::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.6  1999/10/22 23:57:53  steve
+ *  do the <= in bits, not numbers.
+ *
  * Revision 1.5  1999/10/10 23:29:37  steve
  *  Support evaluating + operator at compile time.
  *
