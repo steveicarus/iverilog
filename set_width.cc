@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.24 2002/11/06 02:25:13 steve Exp $"
+#ident "$Id: set_width.cc,v 1.25 2002/11/13 03:03:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -193,9 +193,22 @@ bool NetEBShift::set_width(unsigned w)
 {
       bool flag = true;
 
-      left_->set_width(w);
-      if (left_->expr_width() < w)
-	    left_ = pad_to_width(left_, w);
+      switch (op()) {
+
+	  case 'l':
+	    left_->set_width(w);
+	    if (left_->expr_width() < w)
+		  left_ = pad_to_width(left_, w);
+	    break;
+
+	  case 'r':
+	    if (left_->expr_width() < w)
+		  left_ = pad_to_width(left_, w);
+	    break;
+
+	  default:
+	    assert(0);
+      }
 
       expr_width(left_->expr_width());
       flag = expr_width() == w;
@@ -357,6 +370,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.25  2002/11/13 03:03:08  steve
+ *  Do not truncate high bits of right shift.
+ *
  * Revision 1.24  2002/11/06 02:25:13  steve
  *  No need to keep excess width from an
  *  unsigned constant value, if it can
