@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.250 2002/07/02 03:02:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.251 2002/07/03 05:35:00 steve Exp $"
 #endif
 
 /*
@@ -2911,6 +2911,9 @@ class Design {
       NetScope* find_task(NetScope*scope, const hname_t&name);
       NetScope* find_task(const hname_t&key);
 
+        // Events
+      NetEvent* find_event(NetScope*scope, const hname_t path);
+
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);
@@ -2994,6 +2997,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.251  2002/07/03 05:35:00  steve
+ *  Fix scope search for events.
+ *
  * Revision 1.250  2002/07/02 03:02:57  steve
  *  Change the signal to a net when assignments go away.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.24 2002/06/25 02:39:34 steve Exp $"
+#ident "$Id: net_design.cc,v 1.25 2002/07/03 05:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -406,6 +406,23 @@ NetScope* Design::find_task(const hname_t&key)
       return 0;
 }
 
+NetEvent* Design::find_event(NetScope*scope, hname_t path)
+{
+      assert(scope);
+
+      while (scope) {
+	    if (NetEvent*ev = scope->find_event(path)) {
+		  return ev;
+	    }
+
+	    if (scope->type() == NetScope::MODULE)
+		  break;
+	    scope = scope->parent();
+      }
+
+      return 0;
+}
+
 void Design::add_node(NetNode*net)
 {
       assert(net->design_ == 0);
@@ -468,6 +485,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.25  2002/07/03 05:34:59  steve
+ *  Fix scope search for events.
+ *
  * Revision 1.24  2002/06/25 02:39:34  steve
  *  Fix mishandling of incorect defparam error message.
  *

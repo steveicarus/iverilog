@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.254 2002/06/19 04:20:03 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.255 2002/07/03 05:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1813,7 +1813,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    assert(expr_[0]->expr());
 	    PEIdent*id = dynamic_cast<PEIdent*>(expr_[0]->expr());
 	    NetEvent*ev;
-	    if (id && (ev = scope->find_event(id->path()))) {
+	    if (id && (ev = des->find_event(scope, id->path()))) {
 		  NetEvWait*pr = new NetEvWait(enet);
 		  pr->add_event(ev);
 		  pr->set_line(*this);
@@ -1873,7 +1873,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
-		  NetEvent*tmp = scope->find_event(id->path());
+		  NetEvent*tmp = des->find_event(scope, id->path());
 		  if (tmp) {
 			wa->add_event(tmp);
 			continue;
@@ -2247,7 +2247,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetEvent*ev = scope->find_event(event_);
+      NetEvent*ev = des->find_event(scope, event_);
       if (ev == 0) {
 	    cerr << get_line() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
@@ -2464,6 +2464,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.255  2002/07/03 05:34:59  steve
+ *  Fix scope search for events.
+ *
  * Revision 1.254  2002/06/19 04:20:03  steve
  *  Remove NetTmp and add NetSubnet class.
  *
