@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: putp.c,v 1.5 2003/06/17 16:55:08 steve Exp $"
+#ident "$Id: putp.c,v 1.6 2003/06/26 03:20:24 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -36,31 +36,50 @@ PLI_INT32 tf_iputp(PLI_INT32 n, PLI_INT32 value, void *obj)
 
       assert(n >= 0);
 
-      /* get task/func handle */
+	/* get task/func handle */
       sys_h = (vpiHandle)obj;
+      type  = vpi_get(vpiType, sys_h);
+
+	/* Special case, we are putting the return value. */
+      if ((type == vpiSysFuncCall) && (n == 0)) {
+	    val.format = vpiIntVal;
+	    val.value.integer = value;
+	    vpi_put_value(sys_h, &val, 0, vpiNoDelay);
+
+	    if (pli_trace) {
+		  fprintf(pli_trace, "tf_iputp(<return>, value=%d, func=%s) "
+			  "--> %d\n", value, vpi_get_str(vpiName, obj), 0);
+	    }
+
+	    return 0;
+      }
+
+      if ((n == 0) && (type != vpiSysFuncCall)) {
+	    if (pli_trace) {
+		  fprintf(pli_trace, "tf_iputp(<ERROR>, value=%d, func=%s) "
+			  "--> %d\n", value, vpi_get_str(vpiName, obj), 1);
+	    }
+
+	    return 1;
+      }
+
       sys_i = vpi_iterate(vpiArgument, sys_h);
-
-      type = vpi_get(vpiType, sys_h);
-
-      /* verify function */
-      if (n == 0 && type != vpiSysFuncCall) { rtn = 1; goto free; }
 
       /* find nth arg */
       while (n > 0) {
 	    if (!(arg_h = vpi_scan(sys_i))) { rtn = 1; goto out; }
 	    n--;
       }
-      if (!arg_h) arg_h = sys_h;
 
       /* fill in vpi_value */
       val.format = vpiIntVal;
       val.value.integer = value;
       (void)vpi_put_value(arg_h, &val, 0, vpiNoDelay);
 
-free:
-      vpi_free_object(sys_i);
+      if (arg_h)
+	    vpi_free_object(sys_i);
 
-out:
+ out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_iputp(n=%d, value=%d, obj=%p) --> %d\n",
 		  n, value, obj, rtn);
@@ -126,6 +145,9 @@ PLI_INT32 tf_putrealp(PLI_INT32 n, double value)
 }
 /*
  * $Log: putp.c,v $
+ * Revision 1.6  2003/06/26 03:20:24  steve
+ *  Correct handle of put to function return value.
+ *
  * Revision 1.5  2003/06/17 16:55:08  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens
