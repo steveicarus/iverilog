@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.77 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: t-dll.h,v 1.78 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -506,9 +506,8 @@ struct ivl_signal_s {
 	    ivl_nexus_t*pins_;
       } n;
 
-      char**akey_;
-      char**aval_;
-      unsigned nattr_;
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
 };
 
 /*
@@ -598,6 +597,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.78  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.77  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

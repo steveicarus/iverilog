@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.72 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.73 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -254,8 +254,10 @@ void PWire::dump(ostream&out) const
       for (map<string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
-	    out << "        " << (*idx).first << " = \"" <<
-		  *(*idx).second << "\"" << endl;
+	    out << "        " << (*idx).first;
+	    if ((*idx).second)
+		  out << " = " << *(*idx).second;
+	    out << endl;
       }
 }
 
@@ -809,21 +811,26 @@ void PUdp::dump(ostream&out) const
 	    out << "    initial " << ports[0] << " = 1'b" << initial
 		<< ";" << endl;
 
-      out << "endprimitive" << endl;
-
 	// Dump the attributes for the primitive as attribute
 	// statements.
       for (map<string,PExpr*>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
-	    out << "$attribute(" << name_ << ", \"" << (*idx).first <<
-		  "\", \"" << *(*idx).second << "\")" << endl;
+	    out << "    attribute " << (*idx).first;
+	    if ((*idx).second)
+		  out << " = " << *(*idx).second;
+	    out << endl;
       }
+
+      out << "endprimitive" << endl;
 }
 
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.73  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.72  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

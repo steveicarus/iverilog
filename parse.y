@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.152 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: parse.y,v 1.153 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1342,19 +1342,30 @@ range_delay : range_opt delay3_opt
 
 
 module_item
-	: net_type range_delay list_of_identifiers ';'
-		{ pform_makewire(@1, $2.range, $3, $1);
-		  if ($2.delay != 0) {
-			yyerror(@2, "sorry: net delays not supported.");
-			delete $2.delay;
+	: attribute_list_opt net_type range_delay list_of_identifiers ';'
+		{ pform_makewire(@2, $3.range, $4, $2, $1);
+		  if ($3.delay != 0) {
+			yyerror(@3, "sorry: net delays not supported.");
+			delete $3.delay;
+		  }
+		  if ($1) delete $1;
+		}
+	| attribute_list_opt net_type range_delay net_decl_assigns ';'
+		{ pform_makewire(@2, $3.range, $3.delay, str_strength,
+				 $4, $2);
+		  if ($1) {
+			yyerror(@3, "sorry: Attributes not supported "
+				"on net declaration assignments.");
+			delete $1;
 		  }
 		}
-	| net_type range_delay net_decl_assigns ';'
-		{ pform_makewire(@1, $2.range, $2.delay, str_strength,
-				 $3, $1);
-		}
-	| net_type drive_strength net_decl_assigns ';'
-		{ pform_makewire(@1, 0, 0, $2, $3, $1);
+	| attribute_list_opt net_type drive_strength net_decl_assigns ';'
+		{ pform_makewire(@2, 0, 0, $3, $4, $2);
+		  if ($1) {
+			yyerror(@3, "sorry: Attributes not supported "
+				"on net declaration assignments.");
+			delete $1;
+		  }
 		}
 	| K_trireg charge_strength_opt range_delay list_of_identifiers ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
@@ -1958,11 +1969,11 @@ range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
 	: IDENTIFIER
-		{ pform_makewire(@1, $1, NetNet::REG);
+		{ pform_makewire(@1, $1, NetNet::REG, 0);
 		  $$ = $1;
 		}
 	| IDENTIFIER '=' expression
-		{ pform_makewire(@1, $1, NetNet::REG);
+		{ pform_makewire(@1, $1, NetNet::REG, 0);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "error: register declaration assignment"
 				" value must be a constant expression.");
@@ -1970,7 +1981,7 @@ register_variable
 		  $$ = $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ pform_makewire(@1, $1, NetNet::REG);
+		{ pform_makewire(@1, $1, NetNet::REG, 0);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "error: msb of register range must be constant.");
 		  if (! pform_expression_is_constant($5))

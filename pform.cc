@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.96 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: pform.cc,v 1.97 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -866,7 +866,8 @@ void pform_module_define_port(const struct vlltype&li,
  * do check to see if the name has already been declared, as this
  * function is called for every declaration.
  */
-void pform_makewire(const vlltype&li, const char*nm, NetNet::Type type)
+void pform_makewire(const vlltype&li, const char*nm,
+		    NetNet::Type type, svector<named_pexpr_t*>*attr)
 {
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
@@ -896,19 +897,28 @@ void pform_makewire(const vlltype&li, const char*nm, NetNet::Type type)
       cur = new PWire(name, type, NetNet::NOT_A_PORT);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
+
+      if (attr) {
+	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		  named_pexpr_t*tmp = (*attr)[idx];
+		  cur->attributes[tmp->name] = tmp->parm;
+	    }
+      }
+
       pform_cur_module->add_wire(cur);
 }
 
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
 		    list<char*>*names,
-		    NetNet::Type type)
+		    NetNet::Type type,
+		    svector<named_pexpr_t*>*attr)
 {
       for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    char*txt = *cur;
-	    pform_makewire(li, txt, type);
+	    pform_makewire(li, txt, type, attr);
 	    pform_set_net_range(txt, range, false);
 	    free(txt);
       }
@@ -931,7 +941,7 @@ void pform_makewire(const vlltype&li,
       while (first) {
 	    net_decl_assign_t*next = first->next;
 
-	    pform_makewire(li, first->name, type);
+	    pform_makewire(li, first->name, type, 0);
 	    pform_set_net_range(first->name, range, false);
 
 	    hname_t name = hier_name(first->name);
@@ -1327,6 +1337,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.97  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.96  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

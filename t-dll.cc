@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.82 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.83 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -133,6 +133,35 @@ static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
 	    drv1 = IVL_DR_SUPPLY;
 	    break;
       }
+}
+
+static ivl_attribute_s* fill_in_attributes(const NetObj*net)
+{
+      ivl_attribute_s*attr;
+      unsigned nattr = net->nattr();
+
+      if (nattr == 0)
+	    return 0;
+
+      attr = new struct ivl_attribute_s[nattr];
+
+      for (unsigned idx = 0 ;  idx < nattr ;  idx += 1) {
+	    verinum tmp = net->attr_value(idx);
+	    attr[idx].key = strdup(net->attr_key(idx));
+	    if (tmp.is_string()) {
+		  attr[idx].type = IVL_ATT_STR;
+		  attr[idx].val.str = strdup(tmp.as_string().c_str());
+
+	    } else if (tmp == verinum()) {
+		  attr[idx].type = IVL_ATT_VOID;
+
+	    } else {
+		  attr[idx].type = IVL_ATT_NUM;
+		  attr[idx].val.num = tmp.as_long();
+	    }
+      }
+
+      return attr;
 }
 
 /*
@@ -476,29 +505,7 @@ static void logic_attributes(struct ivl_net_logic_s *obj,
 			     const NetNode*net)
 {
       obj->nattr = net->nattr();
-      if (obj->nattr > 0) {
-	    obj->attr = new struct ivl_attribute_s[obj->nattr];
-	    for (unsigned idx = 0 ;  idx < obj->nattr ;  idx += 1) {
-		  verinum tmp = net->attr_value(idx);
-		  obj->attr[idx].key = strdup(net->attr_key(idx));
-		  if (tmp.is_string()) {
-			obj->attr[idx].type = IVL_ATT_STR;
-			obj->attr[idx].val.str =
-			      strdup(tmp.as_string().c_str());
-
-		  } else if (tmp == verinum()) {
-			obj->attr[idx].type = IVL_ATT_VOID;
-
-		  } else {
-			obj->attr[idx].type = IVL_ATT_NUM;
-			obj->attr[idx].val.num = tmp.as_long();
-		  }
-	    }
-
-
-      } else {
-	    obj->attr = 0;
-      }
+      obj->attr = fill_in_attributes(net);
 }
 
 /*
@@ -1886,13 +1893,9 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
-      obj->nattr_ = net->nattr();
-      obj->akey_  = new char*[obj->nattr_];
-      obj->aval_  = new char*[obj->nattr_];
-      for (unsigned idx = 0 ;  idx < obj->nattr_ ;  idx += 1) {
-	    obj->akey_[idx] = strdup(net->attr_key(idx));
-	    obj->aval_[idx] = strdup(net->attr_value(idx).as_string().c_str());
-      }
+      obj->nattr = net->nattr();
+      obj->attr = fill_in_attributes(net);
+
 
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single
@@ -1943,6 +1946,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.83  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.82  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

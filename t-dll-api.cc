@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.78 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.79 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1127,18 +1127,28 @@ extern "C" const char* ivl_scope_tname(ivl_scope_t net)
 
 extern "C" const char* ivl_signal_attr(ivl_signal_t net, const char*key)
 {
-      if (net->nattr_ == 0)
+      if (net->nattr == 0)
 	    return 0;
 
-      assert(net->akey_);
-      assert(net->aval_);
+      for (unsigned idx = 0 ;  idx < net->nattr ;  idx += 1)
 
-      for (unsigned idx = 0 ;  idx < net->nattr_ ;  idx += 1)
-
-	    if (strcmp(key, net->akey_[idx]) == 0)
-		  return net->aval_[idx];
+	    if (strcmp(key, net->attr[idx].key) == 0)
+		  return net->attr[idx].type == IVL_ATT_STR
+			? net->attr[idx].val.str
+			: 0;
 
       return 0;
+}
+
+extern "C" unsigned ivl_signal_attr_cnt(ivl_signal_t net)
+{
+      return net->nattr;
+}
+
+extern "C" ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx)
+{
+      assert(idx < net->nattr);
+      return net->attr + idx;
 }
 
 extern "C" const char* ivl_signal_basename(ivl_signal_t net)
@@ -1509,6 +1519,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.79  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.78  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

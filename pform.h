@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.58 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: pform.h,v 1.59 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -153,12 +153,14 @@ extern void pform_pop_scope();
  * go into a module that is currently opened.
  */
 extern void pform_makewire(const struct vlltype&li, const char*name,
-			   NetNet::Type type = NetNet::IMPLICIT);
+			   NetNet::Type type,
+			   svector<named_pexpr_t*>*attr);
 
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   list<char*>*names,
-			   NetNet::Type type);
+			   NetNet::Type type,
+			   svector<named_pexpr_t*>*attr);
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   svector<PExpr*>*delay,
@@ -248,6 +250,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.59  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.58  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.58 2002/05/23 03:08:52 steve Exp $"
+#ident "$Id: stub.c,v 1.59 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -507,6 +507,23 @@ static void show_signal(ivl_signal_t net)
 		  }
 	    }
       }
+
+      for (pin = 0 ;  pin < ivl_signal_attr_cnt(net) ;  pin += 1) {
+	    ivl_attribute_t atr = ivl_signal_attr_val(net, pin);
+
+	    switch (atr->type) {
+		case IVL_ATT_STR:
+		  fprintf(out, "    %s = %s\n", atr->key, atr->val.str);
+		  break;
+		case IVL_ATT_NUM:
+		  fprintf(out, "    %s = %ld\n", atr->key, atr->val.num);
+		  break;
+		case IVL_ATT_VOID:
+		  fprintf(out, "    %s\n", atr->key);
+		  break;
+	    }
+      }
+
 }
 
 static void show_logic(ivl_net_logic_t net)
@@ -646,6 +663,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.59  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.58  2002/05/23 03:08:52  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.95 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.96 2002/05/24 04:36:23 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -918,6 +918,9 @@ extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
 extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
 
+extern unsigned        ivl_signal_attr_cnt(ivl_signal_t net);
+extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);
+
 
 /*
  * These functions get information about a process. A process is
@@ -1034,6 +1037,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.96  2002/05/24 04:36:23  steve
+ *  Verilog 2001 attriubtes on nets/wires.
+ *
  * Revision 1.95  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute
