@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.14 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: logic.cc,v 1.15 2004/12/29 23:45:13 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -49,6 +49,53 @@ table_functor_s::~table_functor_s()
 }
 
 /*
+ * WARNING: This function assumes that the table generator encodes the
+ * values 0/1/x/z the same as the vvp_bit4_t enumeration values.
+ */
+void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
+{
+      input_[ptr.port()] = val;
+
+      vvp_vector4_t result (val.size());
+
+      for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
+
+	    unsigned lookup = 0;
+	    for (unsigned pdx = 4 ;  pdx > 0 ;  pdx -= 1) {
+		  lookup <<= 2;
+		  if (idx < input_[pdx-1].size())
+			lookup |= input_[pdx-1].value(idx);
+	    }
+
+	    unsigned off = lookup / 4;
+	    unsigned shift = lookup % 4 * 2;
+
+	    unsigned bit_val = table[off] >> shift;
+	    bit_val &= 3;
+	    result.set_bit(idx, (vvp_bit4_t)bit_val);
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, result);
+}
+
+vvp_fun_buf::vvp_fun_buf()
+{
+      count_functors_table += 1;
+}
+
+vvp_fun_buf::~vvp_fun_buf()
+{
+}
+
+void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      if (ptr.port() != 0)
+	    return;
+
+      vvp_send_vec4(ptr.ptr()->out, bit);
+}
+
+/*
  * The parser calls this function to create a logic functor. I allocate a
  * functor, and map the name to the vvp_ipoint_t address for the
  * functor. Also resolve the inputs to the functor.
@@ -58,7 +105,7 @@ void compile_functor(char*label, char*type,
 		     vvp_delay_t delay, unsigned ostr0, unsigned ostr1,
 		     unsigned argc, struct symb_s*argv)
 {
-      table_functor_s* obj = 0;
+      vvp_net_fun_t* obj = 0;
 
       if (strcmp(type, "OR") == 0) {
 	    obj = new table_functor_s(ft_OR);
@@ -67,7 +114,7 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_AND);
 
       } else if (strcmp(type, "BUF") == 0) {
-	    obj = new table_functor_s(ft_BUF);
+	    obj = new vvp_fun_buf();
 #if 0
       } else if (strcmp(type, "BUFIF0") == 0) {
 	    obj = new vvp_bufif_s(true,false, ostr0, ostr1);
@@ -132,6 +179,7 @@ void compile_functor(char*label, char*type,
 
       assert(argc <= 4);
       vvp_net_t*net = new vvp_net_t;
+      net->fun = obj;
 
       define_functor_symbol(label, net);
       free(label);
@@ -143,6 +191,16 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.15  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.14  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

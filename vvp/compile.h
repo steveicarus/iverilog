@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.57 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: compile.h,v 1.58 2004/12/29 23:45:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -83,11 +83,21 @@ extern void compile_functor(char*label, char*type,
 
 /*
  * This is called by the parser to make a resolver. This is a special
- * kind of functor; a strength aware functor.
+ * kind of functor; a strength aware functor. It has up to 4 inputs
+ * that are blended to make a resolved output. The type string selects
+ * a resolution algorithm.
  */
 extern void compile_resolver(char*label, char*type,
 			     unsigned argc, struct symb_s*argv);
 
+extern void compile_concat(char*label, unsigned w0, unsigned w1,
+			   unsigned w2, unsigned w3,
+			   unsigned argc, struct symb_s*argv);
+
+/*
+ * This is called by the parser to create a part select node.
+ * See the PART SELECT STATEMENT section in the README.txt
+ */
 extern void compile_part_select(char*label, char*src,
 				unsigned base, unsigned wid);
 
@@ -272,6 +282,16 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.58  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.57  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
@@ -282,44 +302,5 @@ extern void compile_net(char*label, char*name,
  *
  * Revision 1.55  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
- *
- * Revision 1.54  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.53  2003/09/04 20:26:31  steve
- *  Add $push flag for threads.
- *
- * Revision 1.52  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.51  2003/04/11 05:15:39  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.50  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.49  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.48  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.47  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.46  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.45  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.44  2002/07/15 00:21:42  steve
- *  Fix initialization of symbol table string heap.
  */
 #endif

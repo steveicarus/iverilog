@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.16 2004/12/18 18:52:44 steve Exp $"
+#ident "$Id: event.cc,v 1.17 2004/12/29 23:45:13 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -64,13 +64,16 @@ const vvp_fun_edge::edge_t vvp_edge_negedge
       | VVP_EDGE(BIT4_Z,BIT4_0)
       ;
 
-const vvp_fun_edge::edge_t vvp_edge_anyedge = 0x7bde;
 const vvp_fun_edge::edge_t vvp_edge_none    = 0;
 
 vvp_fun_edge::vvp_fun_edge(edge_t e)
 : edge_(e)
 {
       threads = 0;
+      bits_[0] = BIT4_X;
+      bits_[1] = BIT4_X;
+      bits_[2] = BIT4_X;
+      bits_[3] = BIT4_X;
 }
 
 vvp_fun_edge::~vvp_fun_edge()
@@ -80,14 +83,48 @@ vvp_fun_edge::~vvp_fun_edge()
 void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 {
 	/* See what kind of edge this represents. */
-      edge_t mask = VVP_EDGE(bits_.value(0), bit.value(0));
+      edge_t mask = VVP_EDGE(bits_[port.port()], bit.value(0));
 
 	/* Save the current input for the next time around. */
-      bits_ = bit;
+      bits_[port.port()] = bit.value(0);
 
       if ((edge_ == vvp_edge_none) || (edge_ & mask)) {
 	    run_waiting_threads_();
 
+	    vvp_net_t*net = port.ptr();
+	    vvp_send_vec4(net->out, bit);
+      }
+}
+
+
+vvp_fun_anyedge::vvp_fun_anyedge()
+{
+}
+
+vvp_fun_anyedge::~vvp_fun_anyedge()
+{
+}
+
+void vvp_fun_anyedge::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      unsigned pdx = port.port();
+      bool flag = false;
+
+      if (bits_[pdx].size() != bit.size()) {
+	    flag = true;
+
+      } else {
+	    for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
+		  if (bits_[pdx].value(idx) != bit.value(idx)) {
+			flag = true;
+			break;
+		  }
+	    }
+      }
+
+      if (flag) {
+	    bits_[pdx] = bit;
+	    run_waiting_threads_();
 	    vvp_net_t*net = port.ptr();
 	    vvp_send_vec4(net->out, bit);
       }
@@ -120,21 +157,29 @@ void vvp_named_event::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 void compile_event(char*label, char*type,
 		   unsigned argc, struct symb_s*argv)
 {
-      vvp_fun_edge::edge_t edge = vvp_edge_none;
+      vvp_net_fun_t*fun = 0;
 
-      if (type) {
-	    if (strcmp(type,"posedge") == 0)
-		  edge = vvp_edge_posedge;
-	    else if (strcmp(type,"negedge") == 0)
-		  edge = vvp_edge_negedge;
-	    else if (strcmp(type,"edge") == 0)
-		  edge = vvp_edge_anyedge;
+      if (type && (strcmp(type,"edge") == 0) ) {
 
-	    assert(argc <= 4);
 	    free(type);
-      }
+	    fun = new vvp_fun_anyedge;
 
-      vvp_fun_edge*fun = new vvp_fun_edge(edge);
+      } else {
+
+	    vvp_fun_edge::edge_t edge = vvp_edge_none;
+
+	    if (type) {
+		  if (strcmp(type,"posedge") == 0)
+			edge = vvp_edge_posedge;
+		  else if (strcmp(type,"negedge") == 0)
+			edge = vvp_edge_negedge;
+
+		  assert(argc <= 4);
+		  free(type);
+	    }
+
+	    fun = new vvp_fun_edge(edge);
+      }
 
       vvp_net_t* ptr = new vvp_net_t;
       ptr->fun = fun;
@@ -167,6 +212,16 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.17  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.16  2004/12/18 18:52:44  steve
  *  Rework named events and event/or.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.44 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: lexor.lex,v 1.45 2004/12/29 23:45:13 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -95,6 +95,7 @@
 ".cmp/ge.s" { return K_CMP_GE_S; }
 ".cmp/gt"   { return K_CMP_GT; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
+".concat"   { return K_CONCAT; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
 ".functor"  { return K_FUNCTOR; }
@@ -183,6 +184,16 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.45  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.44  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

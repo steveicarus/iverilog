@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.8 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: logic.h,v 1.9 2004/12/29 23:45:13 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -38,8 +38,28 @@ class table_functor_s: public vvp_net_fun_t {
       explicit table_functor_s(truth_t t);
       virtual ~table_functor_s();
 
+      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+
     private:
       truth_t table;
+      vvp_vector4_t input_[4];
+};
+
+/*
+ * The buffer functor is a very primitive functor that takes the input
+ * from port-0 (and only port-0) and retransmits it as a vvp_vector4_t.
+ * This is intended to model the Verilog buf(Q,D) statement. This
+ * device should be useful for removing strength from vectors.
+ */
+class vvp_fun_buf: public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_buf();
+      virtual ~vvp_fun_buf();
+
+      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+
+    private:
 };
 
 // table functor types
@@ -66,6 +86,16 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.9  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.8  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.2 2004/12/15 17:16:08 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.3 2004/12/29 23:45:13 steve Exp $"
 
 # include  <assert.h>
 
@@ -295,14 +295,24 @@ class vvp_net_fun_t {
  * concatenation of the inputs. The inputs (4) may be scalers or other
  * vectors. Scalers are turned into vectors of size==1 before
  * concatenating.
+ *
+ * The expected widths of the input vectors must be given up front so
+ * that the positions in the output vector (and also the size of the
+ * output vector) can be worked out. The input vectors must match the
+ * expected width.
  */
 class vvp_fun_concat  : public vvp_net_fun_t {
 
     public:
-      vvp_fun_concat();
+      vvp_fun_concat(unsigned w0, unsigned w1,
+		     unsigned w2, unsigned w3);
+      ~vvp_fun_concat();
 
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
-      
+
+    private:
+      unsigned wid_[4];
+      vvp_vector4_t val_;
 };
 
 /* vvp_fun_drive
@@ -428,6 +438,16 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.3  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.2  2004/12/15 17:16:08  steve
  *  Add basic force/release capabilities.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.7 2004/12/18 18:52:44 steve Exp $"
+#ident "$Id: event.h,v 1.8 2004/12/29 23:45:13 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -57,14 +57,31 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
       void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
 
     private:
-      vvp_vector4_t bits_;
+      vvp_bit4_t bits_[4];
       edge_t edge_;
 };
 
 extern const vvp_fun_edge::edge_t vvp_edge_posedge;
 extern const vvp_fun_edge::edge_t vvp_edge_negedge;
-extern const vvp_fun_edge::edge_t vvp_edge_anyedge;
 extern const vvp_fun_edge::edge_t vvp_edge_none;
+
+/*
+ * The vvp_fun_anyedge functor checks to see if any value in an input
+ * vector changes. Unlike the vvp_fun_edge, which watches for the LSB
+ * of its inputs to change in a particular direction, the anyedge
+ * functor looks at the entire input vector for any change.
+ */
+class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
+
+    public:
+      explicit vvp_fun_anyedge();
+      virtual ~vvp_fun_anyedge();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      vvp_vector4_t bits_[4];
+};
 
 /*
  * A named event is simpler then a vvp_fun_edge in that it triggers on
@@ -86,6 +103,16 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
 /*
  * $Log: event.h,v $
+ * Revision 1.8  2004/12/29 23:45:13  steve
+ *  Add the part concatenation node (.concat).
+ *
+ *  Add a vvp_event_anyedge class to handle the special
+ *  case of .event statements of edge type. This also
+ *  frees the posedge/negedge types to handle all 4 inputs.
+ *
+ *  Implement table functor recv_vec4 method to receive
+ *  and process vectors.
+ *
  * Revision 1.7  2004/12/18 18:52:44  steve
  *  Rework named events and event/or.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.49 2004/12/18 18:52:44 steve Exp $
+ *  $Id: README.txt,v 1.50 2004/12/29 23:45:13 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -449,6 +449,26 @@ bit number, and a width. Normally, those bits are constant values.
 
 The input is typically a .reg or .net, but can be any vector node in
 the netlist.
+
+PART CONCATENATION STATEMENTS:
+
+The opposite of the part select statement is the part concatenation
+statement. The .concat statment is a functor node that takes at input
+vector values and produces a single vector output that is the
+concatenation of all the inputs.
+
+        <label> .concat [W X Y Z], <symbols_list> ;
+
+The "[" and "]" tokens surround a set of 4 numbers that are the
+expected widths of all the inputs. These widths are needed to figure
+the positions of the input vectors in the generated output, and are
+listed in order LSB to MSB. The inputs themselves are also listed LSB
+to MSB, with the LSB vector input coming through port-0 of the real
+functor.
+
+The initial output value is (W+X+Y+Z) bits of 'bx. As input values are
+propagated, the bits are placed in the correct place in the output
+vector value, and a new output value is propagated.
 
 FORCE STATEMENTS (old method - remove me):
 
