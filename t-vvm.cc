@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.199 2001/01/06 22:22:17 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.200 2001/01/12 04:20:18 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1395,7 +1395,7 @@ void target_vvm::func_def(const NetFuncDef*def)
       function_def_flag_ = true;
 
       out << "// Function " << def->name() << endl;
-      out << "static void " << name << "();" << endl;
+      out << "static bool " << name << "(vvm_thread*thr);" << endl;
 
       defn << "// Function " << def->name() << endl;
       defn << "static bool " << name << "(vvm_thread*thr)" << endl;
@@ -3621,6 +3621,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.200  2001/01/12 04:20:18  steve
+ *  Generated function prototype. (PR#107)
+ *
  * Revision 1.199  2001/01/06 22:22:17  steve
  *  Support signed decimal display of variables.
  *
