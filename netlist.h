@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.105 1999/12/30 04:19:12 steve Exp $"
+#ident "$Id: netlist.h,v 1.106 2000/01/01 06:18:00 steve Exp $"
 #endif
 
 /*
@@ -1629,6 +1629,7 @@ class NetEConcat  : public NetExpr {
       virtual bool set_width(unsigned w);
       virtual NetEConcat* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetNet*synthesize(Design*);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -2081,6 +2082,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.106  2000/01/01 06:18:00  steve
+ *  Handle synthesis of concatenation.
+ *
  * Revision 1.105  1999/12/30 04:19:12  steve
  *  Propogate constant 0 in low bits of adders.
  *

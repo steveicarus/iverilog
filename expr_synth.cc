@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.8 1999/12/17 06:18:15 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.9 2000/01/01 06:18:00 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -120,6 +120,31 @@ NetNet* NetEBBits::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetEConcat::synthesize(Design*des)
+{
+      assert(repeat_ == 1);
+
+      string path = des->local_symbol("SYNTH");
+      NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, expr_width());
+      osig->local_flag(true);
+
+      unsigned obit = 0;
+      for (unsigned idx = parms_.count() ;  idx > 0 ;  idx -= 1) {
+	    NetNet*tmp = parms_[idx-1]->synthesize(des);
+
+	    for (unsigned bit = 0 ;  bit < tmp->pin_count() ;  bit += 1) {
+		  connect(osig->pin(obit), tmp->pin(bit));
+		  obit += 1;
+	    }
+
+	    if (tmp->local_flag())
+		  delete tmp;
+      }
+
+      des->add_signal(osig);
+      return osig;
+}
+
 NetNet* NetEConst::synthesize(Design*des)
 {
       string path = des->local_symbol("SYNTH");
@@ -203,6 +228,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.9  2000/01/01 06:18:00  steve
+ *  Handle synthesis of concatenation.
+ *
  * Revision 1.8  1999/12/17 06:18:15  steve
  *  Rewrite the cprop functor to use the functor_t interface.
  *

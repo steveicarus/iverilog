@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.13 1999/12/12 06:03:14 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.14 2000/01/01 06:18:00 steve Exp $"
 #endif
 
 
@@ -158,6 +158,42 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, const string&path) const
       return func;
 }
 
+
+NetExpr* PEConcat::elaborate_expr(Design*des, const string&path) const
+{
+      unsigned repeat = 1;
+
+	/* If there is a repeat expression, then evaluate the constant
+	   value and set the repeat count. */
+      if (repeat_) {
+	    verinum*vrep = repeat_->eval_const(des, path);
+	    if (vrep == 0) {
+		  cerr << get_line() << ": error: "
+			"concatenation repeat expression cannot be evaluated."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    repeat = vrep->as_ulong();
+	    delete vrep;
+      }
+
+	/* Make the empty concat expression. */
+      NetEConcat*tmp = new NetEConcat(parms_.count(), repeat);
+      tmp->set_line(*this);
+
+	/* Elaborate all the parameters and attach them to the concat node. */
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    assert(parms_[idx]);
+	    NetExpr*ex = parms_[idx]->elaborate_expr(des, path);
+	    if (ex == 0) continue;
+	    ex->set_line(*parms_[idx]);
+	    tmp->set(idx, ex);
+      }
+
+      return tmp;
+}
 
 NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 {
@@ -337,6 +373,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.14  2000/01/01 06:18:00  steve
+ *  Handle synthesis of concatenation.
+ *
  * Revision 1.13  1999/12/12 06:03:14  steve
  *  Allow memories without indices in expressions.
  *
