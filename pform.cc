@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.76 2001/05/20 15:03:25 steve Exp $"
+#ident "$Id: pform.cc,v 1.77 2001/05/25 02:21:34 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -625,6 +625,24 @@ void pform_make_reginit(const struct vlltype&li,
       pform_cur_module->add_behavior(top);
 }
 
+/*
+ * This function makes a single signal (a wire, a reg, etc) as
+ * requested by the parser. The name is unscoped, so I attach the
+ * current scope to it (with the scoped_name function) and I try to
+ * resolve it with an existing PWire in the scope.
+ *
+ * The wire might already exist because of an implicit declaration in
+ * a module port, i.e.:
+ *
+ *     module foo (bar...
+ *
+ *         reg bar;
+ *
+ * The output (or other port direction indicator) may or may not have
+ * been seen already, so I do not do any cheching with it yet. But I
+ * do check to see if the name has already been declared, as this
+ * function is called for every declaration.
+ */
 void pform_makewire(const vlltype&li, const string&nm,
 		    NetNet::Type type)
 {
@@ -647,6 +665,9 @@ void pform_makewire(const vlltype&li, const string&nm,
 			VLerror(msg.str());
 		  }
 	    }
+
+	    cur->set_file(li.text);
+	    cur->set_lineno(li.first_line);
 	    return;
       }
 
@@ -996,6 +1017,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.77  2001/05/25 02:21:34  steve
+ *  Detect input and input ports declared as reg.
+ *
  * Revision 1.76  2001/05/20 15:03:25  steve
  *  Deleted wrong time when -Tmax is selected.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.12 2001/02/17 05:15:33 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.13 2001/05/25 02:21:34 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -88,6 +88,32 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 	    }
+
+	      /* If the signal is an input and is also declared as a
+		 reg, then report an error. */
+
+	    if (sig && (sig->scope() == scope)
+		&& (sig->port_type() == NetNet::PINPUT)
+		&& (sig->type() == NetNet::REG)) {
+
+		  cerr << cur->get_line() << ": error: "
+		       << cur->name() << " in module "
+		       << scope->module_name()
+		       << " declared as input and as a reg type." << endl;
+		  des->errors += 1;
+	    }
+
+	    if (sig && (sig->scope() == scope)
+		&& (sig->port_type() == NetNet::PINOUT)
+		&& (sig->type() == NetNet::REG)) {
+
+		  cerr << cur->get_line() << ": error: "
+		       << cur->name() << " in  module "
+		       << scope->module_name()
+		       << " declared as inout and as a reg type." << endl;
+		  des->errors += 1;
+	    }
+
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -414,6 +440,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.13  2001/05/25 02:21:34  steve
+ *  Detect input and input ports declared as reg.
+ *
  * Revision 1.12  2001/02/17 05:15:33  steve
  *  Allow task ports to be given real types.
  *
