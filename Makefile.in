@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.14 1999/08/17 15:57:43 steve Exp $"
+#ident "$Id: Makefile.in,v 1.15 1999/08/31 22:34:25 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -33,6 +33,7 @@ VPATH = $(srcdir)
 
 bindir = $(exec_prefix)/bin
 libdir = $(exec_prefix)/lib
+mandir = @mandir@
 includedir = $(prefix)/include
 
 CC = @CC@
@@ -96,7 +97,7 @@ parse.h parse.cc: parse.y
 lexor.cc: lexor.lex
 	flex -PVL -s -olexor.cc lexor.lex
 
-install: all installdirs $(bindir)/verilog $(bindir)/ivl
+install: all installdirs $(bindir)/verilog $(bindir)/ivl $(mandir)/man1/verilog.1
 	cd vpi ; make install
 	cd vvm ; make install
 	cd ivlpp ; make install
@@ -107,12 +108,16 @@ $(bindir)/verilog: ./verilog
 $(bindir)/ivl: ivl
 	$(INSTALL_PROGRAM) ./ivl $(bindir)/ivl
 
+$(mandir)/man1/verilog.1: $(srcdir)/verilog.1
+	$(INSTALL_DATA) $(srcdir)/verilog.1 $(mandir)/man1/verilog.1
+
 installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(includedir) $(bindir)
 
 uninstall:
 	rm -f $(bindir)/ivl
 	rm -f $(bindir)/verilog
+	rm -f $(mandir)/man1/verilog.1
 	cd vpi ; make uninstall
 	cd vvm ; make uninstall
 	cd ivlpp ; make uninstall
