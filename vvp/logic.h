@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.9 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: logic.h,v 1.10 2004/12/31 05:56:36 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -48,14 +48,29 @@ class table_functor_s: public vvp_net_fun_t {
 /*
  * The buffer functor is a very primitive functor that takes the input
  * from port-0 (and only port-0) and retransmits it as a vvp_vector4_t.
- * This is intended to model the Verilog buf(Q,D) statement. This
- * device should be useful for removing strength from vectors.
+ * The retransmitted vector has all Z values changed to X, just like
+ * the buf(Q,D) gate in Verilog.
  */
 class vvp_fun_buf: public vvp_net_fun_t {
 
     public:
       explicit vvp_fun_buf();
       virtual ~vvp_fun_buf();
+
+      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
+
+    private:
+};
+
+/*
+ * The vvp_fun_bufz is like the vvp_fun_buf, but it does not change
+ * Z values to X -- it passes Z values unchanged.
+ */
+class vvp_fun_bufz: public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_bufz();
+      virtual ~vvp_fun_bufz();
 
       void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
 
@@ -86,6 +101,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.10  2004/12/31 05:56:36  steve
+ *  Add specific BUFZ functor.
+ *
  * Revision 1.9  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *

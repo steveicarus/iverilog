@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.15 2004/12/29 23:45:13 steve Exp $"
+#ident "$Id: logic.cc,v 1.16 2004/12/31 05:56:36 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -92,6 +92,28 @@ void vvp_fun_buf::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       if (ptr.port() != 0)
 	    return;
 
+      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
+	    if (bit.value(idx) == BIT4_Z)
+		  bit.set_bit(idx, BIT4_X);
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, bit);
+}
+
+vvp_fun_bufz::vvp_fun_bufz()
+{
+      count_functors_table += 1;
+}
+
+vvp_fun_bufz::~vvp_fun_bufz()
+{
+}
+
+void vvp_fun_bufz::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      if (ptr.port() != 0)
+	    return;
+
       vvp_send_vec4(ptr.ptr()->out, bit);
 }
 
@@ -123,7 +145,7 @@ void compile_functor(char*label, char*type,
 	    obj = new vvp_bufif_s(false,false, ostr0, ostr1);
 #endif
       } else if (strcmp(type, "BUFZ") == 0) {
-	    obj = new table_functor_s(ft_BUFZ);
+	    obj = new vvp_fun_bufz();
 #if 0
       } else if (strcmp(type, "PMOS") == 0) {
 	    obj = new vvp_pmos_s;
@@ -191,6 +213,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.16  2004/12/31 05:56:36  steve
+ *  Add specific BUFZ functor.
+ *
  * Revision 1.15  2004/12/29 23:45:13  steve
  *  Add the part concatenation node (.concat).
  *
