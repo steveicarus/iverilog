@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.30 2003/05/30 04:22:13 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.31 2004/05/18 18:43:38 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -36,7 +36,9 @@ static int string_get(int code, vpiHandle ref)
       switch (code) {
           case vpiSize:
 	      rfp = (struct __vpiStringConst*)ref;
-	      assert(ref->vpi_type->type_code == vpiConstant);
+
+	      assert((ref->vpi_type->type_code == vpiConstant)
+		     || ((ref->vpi_type->type_code == vpiParameter)));
 
 	      //fprintf(stderr, "String:|%s|, Length: %d\n", rfp->value, strlen(rfp->value));
 	      return strlen(rfp->value)*8;
@@ -650,6 +652,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.31  2004/05/18 18:43:38  steve
+ *  Allow vpiParamter as a string type.
+ *
  * Revision 1.30  2003/05/30 04:22:13  steve
  *  Add tf_strgetp functions.
  *
