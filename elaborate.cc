@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.8 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.9 1998/12/07 04:53:17 steve Exp $"
 #endif
 
 /*
@@ -32,13 +32,12 @@
 # include  "pform.h"
 # include  "netlist.h"
 
-static string local_symbol(const string&path)
+string Design::local_symbol(const string&path)
 {
-      static unsigned counter = 0;
       string result = "_L";
 
       strstream res;
-      res << "_L" << (counter++) << ends;
+      res << "_L" << (lcounter_++) << ends;
       return path + "." + res.str();
 }
 
@@ -76,7 +75,7 @@ static void do_assign(Design*des, const string&path,
 	    delete lval;
 
       } else for (unsigned idx = 0 ;  idx < pin_count ;  idx += 1) {
-	    NetBUFZ*cur = new NetBUFZ(local_symbol(path));
+	    NetBUFZ*cur = new NetBUFZ(des->local_symbol(path));
 
 	    connect(cur->pin(0), lval->pin(idx));
 	    connect(cur->pin(1), rval->pin(idx));
@@ -153,11 +152,14 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
       NetLogic*cur = 0;
       string name = get_name();
       if (name == "")
-	    name = local_symbol(path);
+	    name = des->local_symbol(path);
 
       switch (type()) {
 	  case AND:
 	    cur = new NetLogic(name, pin_count(), NetLogic::AND);
+	    break;
+	  case BUF:
+	    cur = new NetLogic(name, pin_count(), NetLogic::BUF);
 	    break;
 	  case NAND:
 	    cur = new NetLogic(name, pin_count(), NetLogic::NAND);
@@ -206,7 +208,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
       string my_name;
       if (get_name() == "")
-	    my_name = local_symbol(path);
+	    my_name = des->local_symbol(path);
       else
 	    my_name = path + "." + get_name();
 
@@ -333,10 +335,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	  case '^': // XOR
 	    assert(lsig->pin_count() == 1);
 	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(local_symbol(path), 3, NetLogic::XOR);
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::XOR);
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
-	    osig = new NetNet(local_symbol(path), NetNet::WIRE);
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    osig->local_flag(true);
 	    connect(gate->pin(0), osig->pin(0));
 	    des->add_signal(osig);
@@ -346,10 +348,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	  case '&': // AND
 	    assert(lsig->pin_count() == 1);
 	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(local_symbol(path), 3, NetLogic::AND);
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
-	    osig = new NetNet(local_symbol(path), NetNet::WIRE);
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    osig->local_flag(true);
 	    connect(gate->pin(0), osig->pin(0));
 	    des->add_signal(osig);
@@ -359,10 +361,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	  case 'e': // ==
 	    assert(lsig->pin_count() == 1);
 	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(local_symbol(path), 3, NetLogic::XNOR);
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::XNOR);
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
-	    osig = new NetNet(local_symbol(path), NetNet::WIRE);
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    osig->local_flag(true);
 	    connect(gate->pin(0), osig->pin(0));
 	    des->add_signal(osig);
@@ -427,9 +429,9 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
  */
 NetNet* PENumber::elaborate_net(Design*des, const string&path) const
 {
-      NetNet*net = new NetNet(local_symbol(path), NetNet::IMPLICIT);
+      NetNet*net = new NetNet(des->local_symbol(path), NetNet::IMPLICIT);
       net->local_flag(true);
-      NetConst*tmp = new NetConst(local_symbol(path), value_->get(0));
+      NetConst*tmp = new NetConst(des->local_symbol(path), value_->get(0));
       des->add_node(tmp);
       des->add_signal(net);
       connect(net->pin(0), tmp->pin(0));
@@ -446,9 +448,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
       switch (op_) {
 	  case '~': // Bitwise NOT
 	    assert(sub_sig->pin_count() == 1);
-	    sig = new NetNet(local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(local_symbol(path), 2, NetLogic::NOT);
+	    gate = new NetLogic(des->local_symbol(path), 2, NetLogic::NOT);
 	    connect(gate->pin(0), sig->pin(0));
 	    connect(gate->pin(1), sub_sig->pin(0));
 	    des->add_signal(sig);
@@ -456,9 +458,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
 	    break;
 
 	  case '&': // Reduction AND
-	    sig = new NetNet(local_symbol(path), NetNet::WIRE);
+	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(local_symbol(path),
+	    gate = new NetLogic(des->local_symbol(path),
 				1+sub_sig->pin_count(),
 				NetLogic::AND);
 	    connect(gate->pin(0), sig->pin(0));
@@ -598,7 +600,7 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 {
       NetProc*enet = statement_->elaborate(des, path);
-      NetPEvent*ev = new NetPEvent(local_symbol(path), type_, enet);
+      NetPEvent*ev = new NetPEvent(des->local_symbol(path), type_, enet);
 
       NetNet*expr = expr_->elaborate_net(des, path);
       if (expr == 0) {
@@ -732,6 +734,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.9  1998/12/07 04:53:17  steve
+ *  Generate OBUF or IBUF attributes (and the gates
+ *  to garry them) where a wire is a pad. This involved
+ *  figuring out enough of the netlist to know when such
+ *  was needed, and to generate new gates and signales
+ *  to handle what's missing.
+ *
  * Revision 1.8  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.8 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: main.cc,v 1.9 1998/12/07 04:53:17 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -64,6 +64,7 @@ extern void cprop(Design*des);
 extern void sigfold(Design*des);
 extern void stupid(Design*des);
 extern void nobufz(Design*des);
+extern void xnfio(Design*des);
 
 typedef void (*net_func)(Design*);
 static struct net_func_map {
@@ -74,6 +75,7 @@ static struct net_func_map {
       { "nobufz",  &nobufz },
       { "sigfold", &sigfold },
       { "stupid",  &stupid },
+      { "xnfio",   &xnfio },
       { 0, 0 }
 };
 
@@ -229,6 +231,13 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.9  1998/12/07 04:53:17  steve
+ *  Generate OBUF or IBUF attributes (and the gates
+ *  to garry them) where a wire is a pad. This involved
+ *  figuring out enough of the netlist to know when such
+ *  was needed, and to generate new gates and signales
+ *  to handle what's missing.
+ *
  * Revision 1.8  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

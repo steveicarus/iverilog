@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.6 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.7 1998/12/07 04:53:17 steve Exp $"
 #endif
 
 /*
@@ -136,6 +136,9 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
       switch (type_) {
 	  case AND:
 	    o << "and";
+	    break;
+	  case BUF:
+	    o << "buf";
 	    break;
 	  case NAND:
 	    o << "nand";
@@ -404,6 +407,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.7  1998/12/07 04:53:17  steve
+ *  Generate OBUF or IBUF attributes (and the gates
+ *  to garry them) where a wire is a pad. This involved
+ *  figuring out enough of the netlist to know when such
+ *  was needed, and to generate new gates and signales
+ *  to handle what's missing.
+ *
  * Revision 1.6  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

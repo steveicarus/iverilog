@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.4 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.5 1998/12/07 04:53:17 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -45,10 +45,20 @@
  * NODE ATTRIBUTES
  *
  *   XNF-LCA = <lname>:<pin>,<pin>...
- *      Specify the LCA library part type for the UDP node. The lname
+ *      Specify the LCA library part type for the gate. The lname
  *      is the name of the symbol to use (i.e. DFF) and the comma
- *      seperated list is the names of the pins, in the order they
- *      appear in the verilog source.
+ *      separated list is the names of the pins, in the order they
+ *      appear in the verilog source. If the name is prefixed with a
+ *      tilde (~) then the pin is inverted, and the proper "INV" token
+ *      will be added to the PIN record.
+ *
+ *      This attribute can override even the typical generation of
+ *      gates that one might naturally expect of the code generator,
+ *      but may be used by the optimizers for placing parts.
+ *
+ *      An example is "XNF-LCA=OBUF:O,~I". This attribute means that
+ *      the object is an OBUF. Pin 0 is called "O", and pin 1 is
+ *      called "I". In addition, pin 1 is inverted.
  */
 
 # include  "netlist.h"
@@ -65,8 +75,10 @@ class target_xnf  : public target_t {
 
     private:
       static string mangle(const string&);
-      static void draw_pin(ostream&os, const string&name, char type,
+      static void draw_pin(ostream&os, const string&name,
 			   const NetObj::Link&lnk);
+      static void draw_sym_with_lcaname(ostream&os, string lca,
+					const NetNode*net);
 };
 
 /*
@@ -89,9 +101,27 @@ string target_xnf::mangle(const string&name)
       return result;
 }
 
-void target_xnf::draw_pin(ostream&os, const string&name, char type,
-			   const NetObj::Link&lnk)
+void target_xnf::draw_pin(ostream&os, const string&name,
+			  const NetObj::Link&lnk)
 {
+      bool inv = false;
+      string use_name = name;
+      if (use_name[0] == '~') {
+	    inv = true;
+	    use_name = use_name.substr(1);
+      }
+
+      char type;
+      switch (lnk.get_dir()) {
+	  case NetObj::Link::INPUT:
+	  case NetObj::Link::PASSIVE:
+	    type = 'I';
+	    break;
+	  case NetObj::Link::OUTPUT:
+	    type = 'O';
+	    break;
+      }
+	    
       unsigned cpin;
       const NetObj*cur;
       for (lnk.next_link(cur, cpin)
@@ -100,16 +130,47 @@ void target_xnf::draw_pin(ostream&os, const string&name, char type,
 
 	    const NetNet*sig = dynamic_cast<const NetNet*>(cur);
 	    if (sig) {
-		  os << "    PIN, " << name << ", " << type << ", "
+		  os << "    PIN, " << use_name << ", " << type << ", "
 		     << mangle(sig->name());
 		  if (sig->pin_count() > 1)
 			os << "<" << cpin << ">";
+
+		  if (inv)
+			os << ",,INV";
 
 		  os << endl;
 	    }
       }
 }
 
+static string scrape_pin_name(string&list)
+{
+      unsigned idx = list.find(',');
+      string name = list.substr(0, idx);
+      list = list.substr(idx+1);
+      return name;
+}
+
+/*
+ * This method draws an LCA item based on the XNF-LCA attribute
+ * given. The LCA attribute gives enough information to completely
+ * draw the node in XNF, which is pretty handy at this point.
+ */
+void target_xnf::draw_sym_with_lcaname(ostream&os, string lca,
+				       const NetNode*net)
+{
+      unsigned idx = lca.find(':');
+      string lcaname = lca.substr(0, idx);
+      lca = lca.substr(idx+1);
+
+      os << "SYM, " << mangle(net->name()) << ", " << lcaname
+	 << ", LIBVER=2.0.0" << endl;
+
+      for (idx = 0 ;  idx < net->pin_count() ;  idx += 1)
+	    draw_pin(os, scrape_pin_name(lca), net->pin(idx));
+
+      os << "END" << endl;
+}
 
 void target_xnf::start_design(ostream&os, const Design*des)
 {
@@ -198,10 +259,21 @@ void target_xnf::signal(ostream&os, const NetNet*net)
  */
 void target_xnf::logic(ostream&os, const NetLogic*net)
 {
+	// The XNF-LCA attribute overrides anything I might guess
+	// about this object.
+      string lca = net->attribute("XNF-LCA");
+      if (lca != "") {
+	    draw_sym_with_lcaname(os, lca, net);
+	    return;
+      }
+
       os << "SYM, " << mangle(net->name()) << ", ";
       switch (net->type()) {
 	  case NetLogic::AND:
 	    os << "AND";
+	    break;
+	  case NetLogic::BUF:
+	    os << "BUF";
 	    break;
 	  case NetLogic::NAND:
 	    os << "NAND";
@@ -227,44 +299,29 @@ void target_xnf::logic(ostream&os, const NetLogic*net)
       }
       os << ", LIBVER=2.0.0" << endl;
 
-      draw_pin(os, "O", 'O', net->pin(0));
+      draw_pin(os, "O", net->pin(0));
       for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
 	    string name = "I";
 	    assert(net->pin_count() <= 11);
 	    name += (char)('0'+idx-1);
-	    draw_pin(os, name, 'I', net->pin(idx));
+	    draw_pin(os, name, net->pin(idx));
       }
 
       os << "END" << endl;
-}
-
-static string scrape_pin_name(string&list)
-{
-      unsigned idx = list.find(',');
-      string name = list.substr(0, idx);
-      list = list.substr(idx+1);
-      return name;
 }
 
 void target_xnf::udp(ostream&os, const NetUDP*net)
 {
       string lca = net->attribute("XNF-LCA");
+
+	// I only know how to draw a UDP if it has the XNF-LCA
+	// attribute attached to it.
       if (lca == "") {
 	    cerr << "I don't understand this UDP." << endl;
 	    return;
       }
 
-      unsigned idx = lca.find(':');
-      string lcaname = lca.substr(0, idx);
-      lca = lca.substr(idx+1);
-
-      os << "SYM, " << mangle(net->name()) << ", " << lcaname
-	 << ", LIBVER=2.0.0" << endl;
-      draw_pin(os, scrape_pin_name(lca), 'O', net->pin(0));
-      for (idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
-	    draw_pin(os, scrape_pin_name(lca), 'I', net->pin(idx));
-      }
-      os << "END" << endl;
+      draw_sym_with_lcaname(os, lca, net);
 }
 
 static target_xnf target_xnf_obj;
@@ -273,6 +330,13 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.5  1998/12/07 04:53:17  steve
+ *  Generate OBUF or IBUF attributes (and the gates
+ *  to garry them) where a wire is a pad. This involved
+ *  figuring out enough of the netlist to know when such
+ *  was needed, and to generate new gates and signales
+ *  to handle what's missing.
+ *
  * Revision 1.4  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

@@ -78,6 +78,10 @@ not part of a type attribute.
 
 Currently, type attributes are only supported for UDP types.
 
+Note that attributes are also occasionally used for communication
+between processing steps. Processing steps that are aware of others
+may place attributes on netlist objects to communicate information to
+later steps.
 
 HOW IT WORKS -- STAGES OF PROCESSING
 

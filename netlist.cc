@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.10 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: netlist.cc,v 1.11 1998/12/07 04:53:17 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -145,6 +145,25 @@ unsigned count_outputs(const NetObj::Link&pin)
       return count;
 }
 
+unsigned count_signals(const NetObj::Link&pin)
+{
+      unsigned count = 0;
+      if (dynamic_cast<const NetNet*>(pin.get_obj()))
+	    count += 1;
+
+      const NetObj*cur;
+      unsigned cpin;
+      pin.next_link(cur, cpin);
+      while (cur->pin(cpin) != pin) {
+	    if (dynamic_cast<const NetNet*>(cur))
+		  count += 1;
+
+	    cur->pin(cpin).next_link(cur, cpin);
+      }
+
+      return count;
+}
+
 const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 {
       const NetObj*cur;
@@ -191,6 +210,11 @@ string NetObj::attribute(const string&key) const
 	    return "";
 
       return (*idx).second;
+}
+
+void NetObj::attribute(const string&key, const string&value)
+{
+      attributes_[key] = value;
 }
 
 bool NetObj::has_compat_attributes(const NetObj&that) const
@@ -559,6 +583,13 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.11  1998/12/07 04:53:17  steve
+ *  Generate OBUF or IBUF attributes (and the gates
+ *  to garry them) where a wire is a pad. This involved
+ *  figuring out enough of the netlist to know when such
+ *  was needed, and to generate new gates and signales
+ *  to handle what's missing.
+ *
  * Revision 1.10  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.10 1998/12/02 04:37:13 steve Exp $"
+#ident "$Id: netlist.h,v 1.11 1998/12/07 04:53:17 steve Exp $"
 #endif
 
 /*
@@ -85,6 +85,9 @@ class NetObj {
 		    pin = next_->pin_;
 		  }
 
+	    Link* next_link() { return next_; }
+	    const Link* next_link() const { return next_; }
+
 	      // Remove this link from the set of connected pins. The
 	      // destructor will automatically do this if needed.
 	    void unlink()
@@ -104,6 +107,12 @@ class NetObj {
 
 	    bool is_equal(const NetObj::Link&that) const
 		  { return (node_ == that.node_) && (pin_ == that.pin_); }
+
+	      // Return information about the object that this link is
+	      // a part of.
+	    const NetObj*get_obj() const { return node_; }
+	    NetObj*get_obj() { return node_; }
+	    unsigned get_pin() const { return pin_; }
 
 	  private:
 	      // The NetNode manages these. They point back to the
@@ -139,6 +148,7 @@ class NetObj {
 
       void set_attributes(const map<string,string>&);
       string attribute(const string&key) const;
+      void attribute(const string&key, const string&value);
 
 	// Return true if this has all the attributes in that and they
 	// all have the same values.
@@ -311,7 +321,7 @@ class NetConst  : public NetNode {
 class NetLogic  : public NetNode {
 
     public:
-      enum TYPE { AND, NAND, NOR, NOT, OR, XNOR, XOR };
+      enum TYPE { AND, BUF, NAND, NOR, NOT, OR, XNOR, XOR };
 
       explicit NetLogic(const string&n, unsigned pins, TYPE t);
 
@@ -699,7 +709,7 @@ class NetESignal  : public NetExpr {
 class Design {
 
     public:
-      Design() : signals_(0), nodes_(0), procs_(0) { }
+      Design() : signals_(0), nodes_(0), procs_(0), lcounter_(0) { }
 
 	/* The flags are a generic way of accepting command line
 	   parameters/flags and passing them to the processing steps
@@ -736,6 +746,10 @@ class Design {
       void clear_signal_marks();
       NetNet*find_signal(bool (*test)(const NetNet*));
 
+
+    public:
+      string local_symbol(const string&path);
+
     private:
 	// List all the signals in the design.
       NetNet*signals_;
@@ -747,6 +761,8 @@ class Design {
       NetProcTop*procs_;
 
       map<string,string> flags_;
+
+      unsigned lcounter_;
 
     private: // not implemented
       Design(const Design&);
@@ -776,8 +792,11 @@ inline bool connected(const NetObj::Link&l, const NetObj::Link&r)
    checking signal vectors. */
 extern bool connected(const NetObj&l, const NetObj&r);
 
+/* return the number of links in the ring that are of the specified
+   type. */
 extern unsigned count_inputs(const NetObj::Link&pin);
 extern unsigned count_outputs(const NetObj::Link&pin);
+extern unsigned count_signals(const NetObj::Link&pin);
 
 /* Find the signal connected to the given node pin. There should
    always be exactly one signal. The bidx parameter get filled with
@@ -792,6 +811,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.11  1998/12/07 04:53:17  steve
+ *  Generate OBUF or IBUF attributes (and the gates
+ *  to garry them) where a wire is a pad. This involved
+ *  figuring out enough of the netlist to know when such
+ *  was needed, and to generate new gates and signales
+ *  to handle what's missing.
+ *
  * Revision 1.10  1998/12/02 04:37:13  steve
  *  Add the nobufz function to eliminate bufz objects,
  *  Object links are marked with direction,
