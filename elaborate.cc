@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.22 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.23 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 /*
@@ -883,7 +883,9 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
       }
 
 	/* Create a single NetPEvent, and a unique NetNEvent for each
-	   conjuctive event. */
+	   conjuctive event. An NetNEvent can have many pins only if
+	   it is an ANYEDGE detector. Otherwise, only connect to the
+	   least significant bit of the expression. */
 
       NetPEvent*pe = new NetPEvent(des->local_symbol(path), enet);
       for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
@@ -896,10 +898,15 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 		  return 0;
 	    }
 	    assert(expr);
-	    NetNEvent*ne = new NetNEvent(des->local_symbol(path),
-					 expr_[idx]->type(), pe);
 
-	    connect(ne->pin(0), expr->pin(0));
+	    unsigned pins = (expr_[idx]->type() == NetNEvent::ANYEDGE)
+		  ? expr->pin_count() : 1;
+	    NetNEvent*ne = new NetNEvent(des->local_symbol(path),
+					 pins, expr_[idx]->type(), pe);
+
+	    for (unsigned p = 0 ;  p < pins ;  p += 1)
+		  connect(ne->pin(p), expr->pin(p));
+
 	    des->add_node(ne);
       }
 
@@ -1050,6 +1057,14 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.23  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.22  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.18 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.19 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -176,6 +176,10 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	    os_ << "vvm_unop_not(" << result << ");"
 		<< endl;
 	    break;
+	  case '&':
+	    os_ << "vvm_unop_and(" << result << ");"
+		<< endl;
+	    break;
 	  case '!':
 	    os_ << "vvm_unop_lnot(" << result << ");"
 		<< endl;
@@ -228,6 +232,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case '|':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_or("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '^':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_xor("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  default:
@@ -603,17 +611,17 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
       os << "static vvm_sync " << pevent << ";" << endl;
       os << "#endif" << endl;
 
-      os << "static vvm_pevent " << mangle(gate->name()) << "(&" <<
-	    pevent << ", ";
+      os << "static vvm_pevent<" << gate->pin_count() << "> " <<
+	    mangle(gate->name()) << "(&" << pevent << ", ";
       switch (gate->type()) {
 	  case NetNEvent::POSEDGE:
-	    os << "vvm_pevent::POSEDGE";
+	    os << "vvm_pevent<" << gate->pin_count() << ">::POSEDGE";
 	    break;
 	  case NetNEvent::NEGEDGE:
-	    os << "vvm_pevent::NEGEDGE";
+	    os << "vvm_pevent<"<<  gate->pin_count() << ">::NEGEDGE";
 	    break;
 	  case NetNEvent::ANYEDGE:
-	    os << "vvm_pevent::ANYEDGE";
+	    os << "vvm_pevent<" << gate->pin_count() << ">::ANYEDGE";
 	    break;
 	  default:
 	    assert(0);
@@ -957,6 +965,14 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.19  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.18  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

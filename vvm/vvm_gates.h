@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.8 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.9 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -367,18 +367,39 @@ class vvm_sync {
       vvm_sync& operator= (const vvm_sync&);
 };
 
-class vvm_pevent {
+template <unsigned WIDTH> class vvm_pevent {
     public:
       enum EDGE { ANYEDGE, POSEDGE, NEGEDGE };
 
-      explicit vvm_pevent(vvm_sync*tgt, EDGE e);
+      explicit vvm_pevent(vvm_sync*tgt, EDGE e)
+      : target_(tgt), edge_(e)
+	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		  value_[idx] = Vz;
+	    }
 
-      void set(vvm_simulation*sim, unsigned, vvm_bit_t val);
-      vvm_bit_t get() const { return value_; }
+      vvm_bitset_t<WIDTH> get() const { return value_; }
+
+      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
+	    { if (value_[idx] == val) return;
+	      switch (edge_) {
+		  case ANYEDGE:
+		    target_->wakeup(sim);
+		    break;
+		  case POSEDGE:
+		    if (val == V1)
+			  target_->wakeup(sim);
+		    break;
+		  case NEGEDGE:
+		    if (val == V0)
+			  target_->wakeup(sim);
+		    break;
+	      }
+	      value_[idx] = val;
+	    }
 
     private:
       vvm_sync*target_;
-      vvm_bit_t value_;
+      vvm_bit_t value_[WIDTH];
       EDGE edge_;
 
     private: // not implemented
@@ -388,6 +409,14 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.9  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.8  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

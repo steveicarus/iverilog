@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.3 1999/03/16 04:43:46 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.4 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -43,6 +43,21 @@ vvm_bitset_t<WIDTH> vvm_unop_not(const vvm_bitset_t<WIDTH>&p)
 	    result[idx] = Vx;
       }
       return result;
+}
+
+/*
+ * The unary AND is the reduction AND. It returns a single bit.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<1> vvm_unop_and(const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<1> res;
+      res[0] = r[0];
+
+      for (unsigned idx = 1 ;  idx < WIDTH ;  idx += 1) {
+	    res[0] = res[0] & r[idx];
+      }
+      return res;
 }
 
 /*
@@ -124,7 +139,7 @@ vvm_bitset_t<WIDTH> vvm_binop_plus(const vvm_bitset_t<WIDTH>&l,
  */
 template <unsigned WIDTH>
 vvm_bitset_t<WIDTH> vvm_binop_minus(const vvm_bitset_t<WIDTH>&l,
-				   const vvm_bitset_t<WIDTH>&r)
+				    const vvm_bitset_t<WIDTH>&r)
 {
       vvm_bitset_t<WIDTH> res;
       res = vvm_unop_not(r);
@@ -133,6 +148,21 @@ vvm_bitset_t<WIDTH> vvm_binop_minus(const vvm_bitset_t<WIDTH>&l,
 	    res[idx] = add_with_carry(l[idx], res[idx], carry);
 
       return res;
+}
+
+/*
+ * The binary ^ (xor) operator is a bitwise XOR of equal width inputs
+ * to generate the corresponsing output.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<WIDTH> vvm_binop_xor(const vvm_bitset_t<WIDTH>&l,
+				  const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<WIDTH> result;
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+	    result[idx] = l[idx] ^ r[idx];
+
+      return result;
 }
 
 /*
@@ -240,6 +270,14 @@ vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.4  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.3  1999/03/16 04:43:46  steve
  *  Add some logical operators.
  *

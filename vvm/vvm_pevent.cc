@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_pevent.cc,v 1.2 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.3 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -41,33 +41,17 @@ void vvm_sync::wakeup(vvm_simulation*sim)
       if (tmp) sim->thread_active(tmp);
 }
 
-vvm_pevent::vvm_pevent(vvm_sync*tgt, EDGE e)
-: target_(tgt), value_(V0), edge_(e)
-{
-}
-
-void vvm_pevent::set(vvm_simulation*sim, unsigned, vvm_bit_t val)
-{
-      if (value_ != val) {
-	    switch (edge_) {
-		case ANYEDGE:
-		  target_->wakeup(sim);
-		  break;
-		case POSEDGE:
-		  if (val == V1)
-			target_->wakeup(sim);
-		  break;
-		case NEGEDGE:
-		  if (val == V0)
-			target_->wakeup(sim);
-		  break;
-	    }
-	    value_ = val;
-      }
-}
 
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.3  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.2  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

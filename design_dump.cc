@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.19 1999/05/01 02:57:52 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.20 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 /*
@@ -251,6 +251,7 @@ void NetNEvent::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "event: ";
       switch (edge_) {
 	  case ANYEDGE:
+	    o << "anyedge ";
 	      break;
 	  case POSEDGE:
 	    o << "posedge ";
@@ -263,7 +264,7 @@ void NetNEvent::dump_node(ostream&o, unsigned ind) const
 	    break;
       }
 
-      o << name() << endl;
+      o << name() << " --> " << fore_ptr()->name() << endl;
 
       dump_node_pins(o, ind+4);
 }
@@ -562,6 +563,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.20  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.19  1999/05/01 02:57:52  steve
  *  Handle much more complex event expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.27 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.28 1999/05/01 20:43:55 steve Exp $"
 #endif
 
 /*
@@ -745,14 +745,17 @@ class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
  * The NetNEvent is a NetNode that connects to the structural part of
  * the design. It has only inputs, which cause the side effect of
  * triggering an event that the procedural part of the design can use.
+ *
+ * The NetNEvent may have wide input if is is an ANYEDGE type
+ * device. This allows detecting changes in wide expressions.
  */
 class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
 
     public:
       enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
 
-      NetNEvent(const string&ev, Type e, NetPEvent*pe)
-      : NetNode(ev, 1), sref<NetPEvent,NetNEvent>(pe), edge_(e) { }
+      NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
+      : NetNode(ev, wid), sref<NetPEvent,NetNEvent>(pe), edge_(e) { }
 
       Type type() const { return edge_; }
 
@@ -1152,6 +1155,14 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.28  1999/05/01 20:43:55  steve
+ *  Handle wide events, such as @(a) where a has
+ *  many bits in it.
+ *
+ *  Add to vvm the binary ^ and unary & operators.
+ *
+ *  Dump events a bit more completely.
+ *
  * Revision 1.27  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *
