@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.10 2000/10/18 20:04:39 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.11 2001/03/20 01:44:14 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -43,6 +43,10 @@ bool dll_target::process(const NetProcTop*net)
 	  default:
 	    assert(0);
       }
+
+	/* Save the scope of the process. */
+      obj->scope_ = lookup_scope_(net->scope());
+
 
 	/* This little bit causes the process to be completely
 	   generated so that it can be passed to the DLL. The
@@ -301,6 +305,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.11  2001/03/20 01:44:14  steve
+ *  Put processes in the proper scope.
+ *
  * Revision 1.10  2000/10/18 20:04:39  steve
  *  Add ivl_lval_t and support for assignment l-values.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.34 2001/01/15 22:05:14 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.35 2001/03/20 01:44:13 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -593,11 +593,17 @@ extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
  * The ivl_process_type function gets the type of the process,
  * an "inital" or "always" statement.
  *
+ * A process is placed in a scope. The statement within the process
+ * operates within the scope of the process unless there are calls
+ * outside the scope.
+ *
  * The ivl_process_stmt function gets the statement that forms the
  * process. See the statement related functions for how to manipulate
  * statements.
  */
 extern ivl_process_type_t ivl_process_type(ivl_process_t net);
+
+extern ivl_scope_t ivl_process_scope(ivl_process_t net);
 
 extern ivl_statement_t ivl_process_stmt(ivl_process_t net);
 
@@ -667,6 +673,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.35  2001/03/20 01:44:13  steve
+ *  Put processes in the proper scope.
+ *
  * Revision 1.34  2001/01/15 22:05:14  steve
  *  Declare ivl_scope_type functions.
  *

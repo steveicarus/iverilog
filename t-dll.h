@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.21 2001/01/15 00:47:02 steve Exp $"
+#ident "$Id: t-dll.h,v 1.22 2001/03/20 01:44:14 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -92,6 +92,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_const(const NetEConst*);
       void expr_sfunc(const NetESFunc*);
       void expr_signal(const NetESignal*);
+
+      ivl_scope_t lookup_scope_(const NetScope*scope);
 };
 
 /*
@@ -247,10 +249,12 @@ struct ivl_nexus_s {
 
 /*
  * All we know about a process it its type (initial or always) and the
- * single statement that is it.
+ * single statement that is it. A process also has a scope, although
+ * that generally only matters for VPI calls.
  */
 struct ivl_process_s {
       ivl_process_type_t type_;
+      ivl_scope_t scope_;
       ivl_statement_t stmt_;
 
       ivl_process_t next_;
@@ -365,6 +369,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.22  2001/03/20 01:44:14  steve
+ *  Put processes in the proper scope.
+ *
  * Revision 1.21  2001/01/15 00:47:02  steve
  *  Pass scope type information to the target module.
  *

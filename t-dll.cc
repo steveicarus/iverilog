@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.27 2001/01/15 22:08:32 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.28 2001/03/20 01:44:14 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -76,6 +76,11 @@ static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
 		  return tmp;
 
       return 0;
+}
+
+ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
+{
+      return find_scope(des_.root_, cur);
 }
 
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
@@ -685,6 +690,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.28  2001/03/20 01:44:14  steve
+ *  Put processes in the proper scope.
+ *
  * Revision 1.27  2001/01/15 22:08:32  steve
  *  Add missing NetLogic gate types to ::logic method.
  *

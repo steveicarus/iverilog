@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.21 2001/01/15 00:47:02 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.22 2001/03/20 01:44:13 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -362,6 +362,11 @@ extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
       return net->type_;
 }
 
+extern "C" ivl_scope_t ivl_process_scope(ivl_process_t net)
+{
+      return net->scope_;
+}
+
 extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
 {
       return net->stmt_;
@@ -646,6 +651,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.22  2001/03/20 01:44:13  steve
+ *  Put processes in the proper scope.
+ *
  * Revision 1.21  2001/01/15 00:47:02  steve
  *  Pass scope type information to the target module.
  *

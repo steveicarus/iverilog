@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.1 2001/03/19 01:20:46 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.2 2001/03/20 01:44:14 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -98,9 +98,13 @@ static void show_statement(ivl_statement_t net)
 
 int draw_process(ivl_process_t net, void*x)
 {
+      static unsigned thread_count = 0;
+      ivl_scope_t scope = ivl_process_scope(net);
+
+      fprintf(vvp_out, "    .scope S_%s;\n", ivl_scope_name(scope));
+
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
-      static unsigned thread_count = 0;
       fprintf(vvp_out, "T_%05d\n", thread_count);
 
 	/* Draw the contents of the thread. */
@@ -132,6 +136,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.2  2001/03/20 01:44:14  steve
+ *  Put processes in the proper scope.
+ *
  * Revision 1.1  2001/03/19 01:20:46  steve
  *  Add the tgt-vvp code generator target.
  *
