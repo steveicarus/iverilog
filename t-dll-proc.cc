@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.48 2002/06/16 19:19:16 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.49 2002/06/16 20:39:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -153,8 +153,10 @@ void dll_target::proc_assign(const NetAssign*net)
 			assert(expr_ == 0);
 			asn->bmux()->expr_scan(this);
 
-			if (asn->sig()->lsb() != 0)
+			if (cur->n.sig->lsb_index != 0)
 			      sub_off_from_expr_(asn->sig()->lsb());
+			if (cur->n.sig->lsb_dist != 1)
+			      mul_expr_by_const_(cur->n.sig->lsb_dist);
 
 			cur->type_ = IVL_LVAL_MUX;
 			cur->idx = expr_;
@@ -218,8 +220,10 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 			assert(expr_ == 0);
 			asn->bmux()->expr_scan(this);
 
-			if (asn->sig()->lsb() != 0)
+			if (cur->n.sig->lsb_index != 0)
 			      sub_off_from_expr_(asn->sig()->lsb());
+			if (cur->n.sig->lsb_dist != 1)
+			      mul_expr_by_const_(cur->n.sig->lsb_dist);
 
 			cur->type_ = IVL_LVAL_MUX;
 			cur->idx = expr_;
@@ -782,6 +786,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.49  2002/06/16 20:39:12  steve
+ *  Normalize run-time index expressions for bit selects
+ *
  * Revision 1.48  2002/06/16 19:19:16  steve
  *  Generate runtime code to normalize indices.
  *

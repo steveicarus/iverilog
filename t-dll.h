@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.84 2002/06/16 19:19:16 steve Exp $"
+#ident "$Id: t-dll.h,v 1.85 2002/06/16 20:39:12 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -149,6 +149,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void add_root(ivl_design_s &des_, const NetScope *s);
 
       void sub_off_from_expr_(long);
+      void mul_expr_by_const_(long);
 };
 
 /*
@@ -608,6 +609,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.85  2002/06/16 20:39:12  steve
+ *  Normalize run-time index expressions for bit selects
+ *
  * Revision 1.84  2002/06/16 19:19:16  steve
  *  Generate runtime code to normalize indices.
  *

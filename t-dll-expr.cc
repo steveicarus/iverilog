@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.25 2002/06/16 19:19:16 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.26 2002/06/16 20:39:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -73,6 +73,35 @@ void dll_target::sub_off_from_expr_(long off)
       expr_ = tmps;
 }
 
+void dll_target::mul_expr_by_const_(long val)
+{
+      assert(expr_ != 0);
+
+      char*bits;
+      ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      tmpc->type_   = IVL_EX_NUMBER;
+      tmpc->width_  = expr_->width_;
+      tmpc->signed_ = expr_->signed_;
+      tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
+      for (unsigned idx = 0 ;  idx < tmpc->width_ ;  idx += 1) {
+	    bits[idx] = (val & 1)? '1' : '0';
+	    val >>= 1;
+      }
+
+	/* Now make the subtractor (x-4 in the above example)
+	   that has as input A the index expression and input B
+	   the constant to subtract. */
+      ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      tmps->type_  = IVL_EX_BINARY;
+      tmps->width_ = tmpc->width_;
+      tmps->signed_ = tmpc->signed_;
+      tmps->u_.binary_.op_  = '*';
+      tmps->u_.binary_.lef_ = expr_;
+      tmps->u_.binary_.rig_ = tmpc;
+
+	/* Replace (x) with (x*valf) */
+      expr_ = tmps;
+}
 
 void dll_target::expr_binary(const NetEBinary*net)
 {
@@ -429,6 +458,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.26  2002/06/16 20:39:12  steve
+ *  Normalize run-time index expressions for bit selects
+ *
  * Revision 1.25  2002/06/16 19:19:16  steve
  *  Generate runtime code to normalize indices.
  *
