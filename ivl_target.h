@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.79 2001/08/31 22:58:39 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.80 2001/09/01 01:57:31 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -203,16 +203,18 @@ typedef enum ivl_logic_e {
 
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
-      IVL_LPM_ADD,
-      IVL_LPM_CMP_GE,
-      IVL_LPM_CMP_GT,
-      IVL_LPM_FF,
-      IVL_LPM_MULT,
-      IVL_LPM_MUX,
-      IVL_LPM_SHIFTL,
-      IVL_LPM_SHIFTR,
-      IVL_LPM_SUB,
-      IVL_LPM_RAM
+      IVL_LPM_ADD    =  0,
+      IVL_LPM_CMP_EQ = 10,
+      IVL_LPM_CMP_GE =  1,
+      IVL_LPM_CMP_GT =  2,
+      IVL_LPM_CMP_NE = 11,
+      IVL_LPM_FF     =  3,
+      IVL_LPM_MULT   =  4,
+      IVL_LPM_MUX    =  5,
+      IVL_LPM_SHIFTL =  6,
+      IVL_LPM_SHIFTR =  7,
+      IVL_LPM_SUB    =  8,
+      IVL_LPM_RAM    =  9
 } ivl_lpm_type_t;
 
 /* Processes are initial or always blocks with a statement. This is
@@ -330,6 +332,9 @@ extern int         ivl_design_process(ivl_design_t des,
 				      ivl_process_f fun, void*cd);
 extern ivl_scope_t ivl_design_root(ivl_design_t des);
 extern int         ivl_design_time_precision(ivl_design_t des);
+
+extern unsigned        ivl_design_consts(ivl_design_t des);
+extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
 
 /*
  * These methods apply to ivl_net_const_t objects.
@@ -944,6 +949,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.80  2001/09/01 01:57:31  steve
+ *  Make constants available through the design root
+ *
  * Revision 1.79  2001/08/31 22:58:39  steve
  *  Support DFF CE inputs.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.59 2001/08/31 22:58:39 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.60 2001/09/01 01:57:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -362,6 +362,10 @@ bool dll_target::start_design(const Design*des)
       des_.root_->mem_ = 0;
       des_.root_->type_ = IVL_SCT_MODULE;
       des_.root_->tname_ = des_.root_->name_;
+
+      des_.consts  = (ivl_net_const_t*)
+	    malloc(sizeof(ivl_net_const_t));
+      des_.nconsts = 0;
 
       target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
@@ -868,6 +872,24 @@ void dll_target::lpm_compare(const NetCompare*net)
 
 	    swap_operands = true;
 
+      } else if (net->pin_AEB().is_linked()) {
+	    const Nexus*nex = net->pin_AEB().nexus();
+	    obj->type = IVL_LPM_CMP_EQ;
+
+	    assert(nex->t_cookie());
+	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+      } else if (net->pin_ANEB().is_linked()) {
+	    const Nexus*nex = net->pin_AEB().nexus();
+	    obj->type = IVL_LPM_CMP_NE;
+
+	    assert(nex->t_cookie());
+	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
       } else {
 	    assert(0);
       }
@@ -1268,6 +1290,11 @@ bool dll_target::net_const(const NetConst*net)
 	    }
       }
 
+      des_.nconsts += 1;
+      des_.consts = (ivl_net_const_t*)
+	    realloc(des_.consts, des_.nconsts * sizeof(ivl_net_const_t));
+      des_.consts[des_.nconsts-1] = obj;
+
       return true;
 }
 
@@ -1498,6 +1525,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.60  2001/09/01 01:57:31  steve
+ *  Make constants available through the design root
+ *
  * Revision 1.59  2001/08/31 22:58:39  steve
  *  Support DFF CE inputs.
  *

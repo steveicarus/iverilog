@@ -1,5 +1,7 @@
 EXPORTS
 
+ivl_design_const
+ivl_design_consts
 ivl_design_flag
 ivl_design_process
 ivl_design_root

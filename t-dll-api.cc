@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.65 2001/08/31 22:58:40 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.66 2001/09/01 01:57:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -52,6 +52,17 @@ extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
 extern "C" int ivl_design_time_precision(ivl_design_t des)
 {
       return des->time_precision;
+}
+
+extern "C" unsigned ivl_design_consts(ivl_design_t des)
+{
+      return des->nconsts;
+}
+
+extern "C" ivl_net_const_t ivl_design_const(ivl_design_t des, unsigned idx)
+{
+      assert(idx < des->nconsts);
+      return des->consts[idx];
 }
 
 extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
@@ -519,8 +530,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -551,8 +564,10 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
       switch (net->type) {
 
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -597,6 +612,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_NE:
 	    assert(idx == 0);
 	    return net->u_.arith.q[0];
 
@@ -702,8 +719,10 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
@@ -1352,6 +1371,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.66  2001/09/01 01:57:31  steve
+ *  Make constants available through the design root
+ *
  * Revision 1.65  2001/08/31 22:58:40  steve
  *  Support DFF CE inputs.
  *
