@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *  $Id: README.txt,v 1.4 2001/03/14 19:26:15 steve Exp $
+ */
 
 VVP SIMULATION ENGINE
 
@@ -162,6 +167,9 @@ space. Labels attached to executable instructions get assigned the
 address of the instruction, and can be the target of %jmp instructions
 and starting points for threads.
 
+The opcodes.txt file has a more detailed description of all the
+various instructions.
+
 
 THE RELATIONSHIP BETWEEN FUNCTORS, THREADS AND EVENTS
 
@@ -205,7 +213,7 @@ use %load to read the output of functors.
 The core event scheduler takes these three kinds of events and calls
 the right kind of code to cause things to happen in the design. If the
 event is a propagate or assignment event, the network of functors is
-tickled, if the event is a thread schedule, then a thread is run. The
+tickled; if the event is a thread schedule, then a thread is run. The
 implementation of the event queue is not important, but currently is
 implemented as a ``skip list''. That is, it is a sorted singly linked
 list with skip pointers that skip over delta-time events.
@@ -263,3 +271,22 @@ Each bit of a variable is created by a ``.var'' statement. For example:
 becomes:
 
 	a	.var;
+
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
