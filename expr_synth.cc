@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.57 2004/06/12 15:00:02 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.58 2004/06/16 16:21:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -349,7 +349,7 @@ NetNet* NetEBMult::synthesize(Design*des)
 	    connect(mult->pin_DataA(idx), lsig->pin(idx));
 
       for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-	    connect(mult->pin_DataB(idx), lsig->pin(idx));
+	    connect(mult->pin_DataB(idx), rsig->pin(idx));
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
@@ -879,6 +879,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.58  2004/06/16 16:21:34  steve
+ *  Connect rsif of multiply to DataB.
+ *
  * Revision 1.57  2004/06/12 15:00:02  steve
  *  Support / and % in synthesized contexts.
  *
