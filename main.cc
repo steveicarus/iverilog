@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.19 1999/07/10 23:29:21 steve Exp $"
+#ident "$Id: main.cc,v 1.20 1999/07/17 22:01:13 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -80,7 +80,6 @@ extern void emit(ostream&o, const Design*, const char*);
 extern void cprop(Design*des);
 extern void propinit(Design*des);
 extern void sigfold(Design*des);
-extern void stupid(Design*des);
 extern void nobufz(Design*des);
 extern void xnfio(Design*des);
 
@@ -93,7 +92,6 @@ static struct net_func_map {
       { "nobufz",  &nobufz },
       { "propinit", &propinit },
       { "sigfold", &sigfold },
-      { "stupid",  &stupid },
       { "xnfio",   &xnfio },
       { 0, 0 }
 };
@@ -272,6 +270,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.20  1999/07/17 22:01:13  steve
+ *  Add the functor interface for functor transforms.
+ *
  * Revision 1.19  1999/07/10 23:29:21  steve
  *  pform even on parse errors.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.47 1999/07/17 19:51:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.48 1999/07/17 22:01:13 steve Exp $"
 #endif
 
 /*
@@ -44,6 +44,7 @@ class ostream;
 
 
 struct target;
+struct functor_t;
 
 /* =========
  * A NetObj is anything that has any kind of behavior in the
@@ -1278,6 +1279,7 @@ class Design {
 
 	// Iterate over the design...
       void dump(ostream&) const;
+      void functor(struct functor_t*);
       void emit(ostream&, struct target_t*) const;
 
       void clear_node_marks();
@@ -1366,6 +1368,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.48  1999/07/17 22:01:13  steve
+ *  Add the functor interface for functor transforms.
+ *
  * Revision 1.47  1999/07/17 19:51:00  steve
  *  netlist support for ternary operator.
  *

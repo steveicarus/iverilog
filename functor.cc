@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,24 +17,44 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: stupid.cc,v 1.2 1998/11/13 06:23:17 steve Exp $"
+#ident "$Id: functor.cc,v 1.1 1999/07/17 22:01:13 steve Exp $"
 #endif
 
+# include  "functor.h"
 # include  "netlist.h"
 
-
-void stupid(Design*des)
+functor_t::~functor_t()
 {
 }
 
+void functor_t::signal(class Design*, class NetNet*)
+{
+}
+
+void functor_t::process(class Design*, class NetProcTop*)
+{
+}
+
+void Design::functor(functor_t*fun)
+{
+	// apply to signals
+      if (signals_) {
+	    NetNet*cur = signals_->sig_next_;
+	    do {
+		  fun->signal(this, cur);
+		  cur = cur->sig_next_;
+	    } while (cur != signals_->sig_next_);
+      }
+
+	// apply to processes
+      for (NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
+	    fun->process(this, idx);
+}
+
 /*
- * $Log: stupid.cc,v $
- * Revision 1.2  1998/11/13 06:23:17  steve
- *  Introduce netlist optimizations with the
- *  cprop function to do constant propogation.
- *
- * Revision 1.1  1998/11/03 23:29:05  steve
- *  Introduce verilog to CVS.
+ * $Log: functor.cc,v $
+ * Revision 1.1  1999/07/17 22:01:13  steve
+ *  Add the functor interface for functor transforms.
  *
  */
 

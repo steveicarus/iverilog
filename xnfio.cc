@@ -17,10 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.1 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.2 1999/07/17 22:01:14 steve Exp $"
 #endif
 
+# include  "functor.h"
 # include  "netlist.h"
+
+class xnfio_f  : public functor_t {
+
+    public:
+      void signal(Design*des, NetNet*sig);
+
+    private:
+};
 
 static bool is_a_pad(const NetNet*net)
 {
@@ -153,35 +162,42 @@ static void make_ibuf(Design*des, NetNet*net)
       }
 }
 
+void xnfio_f::signal(Design*des, NetNet*net)
+{
+      if (! is_a_pad(net))
+	    return;
+
+      assert(net->pin_count() == 1);
+      string pattr = net->attribute("PAD");
+
+      switch (pattr[0]) {
+	  case 'i':
+	  case 'I':
+	    make_ibuf(des, net);
+	    break;
+	  case 'o':
+	  case 'O':
+	    make_obuf(des, net);
+	    break;
+	      // FIXME: Only IPAD and OPAD supported. Need to
+	      // add support for IOPAD.
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
 void xnfio(Design*des)
 {
-      des->clear_signal_marks();
-      while (NetNet*net = des->find_signal(&is_a_pad)) {
-
-	    assert(net->pin_count() == 1);
-	    string pattr = net->attribute("PAD");
-
-	    switch (pattr[0]) {
-		case 'i':
-		case 'I':
-		  make_ibuf(des, net);
-		  break;
-		case 'o':
-		case 'O':
-		  make_obuf(des, net);
-		  break;
-		    // FIXME: Only IPAD and OPAD supported. Need to
-		    // add support for IOPAD.
-		default:
-		  assert(0);
-		  break;
-	    }
-	    net->set_mark();
-      }
+      xnfio_f xnfio_obj;
+      des->functor(&xnfio_obj);
 }
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.2  1999/07/17 22:01:14  steve
+ *  Add the functor interface for functor transforms.
+ *
  * Revision 1.1  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved
