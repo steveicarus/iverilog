@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.60 2001/09/01 01:57:31 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.61 2001/09/08 01:23:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1283,6 +1283,8 @@ bool dll_target::net_const(const NetConst*net)
       } else {
 	    obj->n.pins_ = new ivl_nexus_t[obj->width_];
 	    for (unsigned idx = 0 ;  idx < obj->width_ ;  idx += 1) {
+		  if (! net->pin(idx).is_linked())
+			continue;
 		  const Nexus*nex = net->pin(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->n.pins_[idx] = (ivl_nexus_t) nex->t_cookie();
@@ -1525,6 +1527,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.61  2001/09/08 01:23:21  steve
+ *  No code for unlinked constants.
+ *
  * Revision 1.60  2001/09/01 01:57:31  steve
  *  Make constants available through the design root
  *
