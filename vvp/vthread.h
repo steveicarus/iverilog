@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.h,v 1.6 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: vthread.h,v 1.7 2001/05/20 00:45:43 steve Exp $"
 #endif
 
 /*
@@ -64,13 +64,18 @@ extern void vthread_schedule_list(vthread_t thr);
 
 
 /*
-** Return a bit from the thread's bit space;
-*/
-unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr);
-void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit);
+ * Return a bit from the thread's bit space. These are used, for
+ * example, when a VPI implementation function needs to access the bit
+ * space of the thread.
+ */
+extern unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr);
+extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit);
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.7  2001/05/20 00:45:43  steve
+ *  include missing externs on vthread_put_bit.
+ *
  * Revision 1.6  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit
