@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.90 2002/07/22 21:07:40 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.91 2002/07/24 16:21:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -496,6 +496,10 @@ bool dll_target::start_design(const Design*des)
  */
 int dll_target::end_design(const Design*)
 {
+      if (verbose_flag) {
+	    cout << " ... invoking target_design" << endl;
+      }
+
       int rc = (target_)(&des_);
       ivl_dlclose(dll_);
       return rc;
@@ -1955,6 +1959,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.91  2002/07/24 16:21:52  steve
+ *  Verbose messages.
+ *
  * Revision 1.90  2002/07/22 21:07:40  steve
  *  Set ivl_target delays for case compare logic.
  *

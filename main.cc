@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.61 2002/06/30 02:21:31 steve Exp $"
+#ident "$Id: main.cc,v 1.62 2002/07/24 16:22:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -445,7 +445,7 @@ int main(int argc, char*argv[])
 		  break;
 	    }
 
-	    cout << endl << "PARSING INPUT ..." << endl;
+	    cout << endl << "PARSING INPUT" << endl;
       }
 
 	/* Parse the input. Make the pform. */
@@ -479,7 +479,7 @@ int main(int argc, char*argv[])
 	    map<string,bool> mentioned_p;
 	    map<string,Module*>::iterator mod;
 	    if (verbose_flag)
-		  cout << "LOCATING TOP-LEVEL MODULES..." << endl << "  ";
+		  cout << "LOCATING TOP-LEVEL MODULES" << endl << "  ";
 	    for (mod = pform_modules.begin()
 		       ; mod != pform_modules.end()
 		       ; mod++) {
@@ -547,14 +547,14 @@ int main(int argc, char*argv[])
 		  cerr<<" ... done, "
 		      <<cycles_diff(cycles+2, cycles+1)<<" seconds."<<endl;
 	    }
-	    cout << "RUNNING FUNCTORS ..." << endl;
+	    cout << "RUNNING FUNCTORS" << endl;
       }
 
       while (!net_func_queue.empty()) {
 	    net_func func = net_func_queue.front();
 	    net_func_queue.pop();
 	    if (verbose_flag)
-		  cerr<<" -F "<<net_func_to_name(func)<<endl;
+		  cerr<<" -F "<<net_func_to_name(func)<< " ..." <<endl;
 	    func(des);
       }
 
@@ -573,7 +573,7 @@ int main(int argc, char*argv[])
 		  cerr<<" ... done, "
 		      <<cycles_diff(cycles+3, cycles+2)<<" seconds."<<endl;
 	    }
-	    cout << "CODE GENERATION -t "<<target<<" ..." << endl;
+	    cout << "CODE GENERATION -t "<<target<< endl;
       }
 
       bool emit_rc = emit(des, target);
@@ -596,6 +596,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.62  2002/07/24 16:22:19  steve
+ *  Verbose messages.
+ *
  * Revision 1.61  2002/06/30 02:21:31  steve
  *  Add structure for asynchronous logic synthesis.
  *
