@@ -17,17 +17,65 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_vcl.c,v 1.1 2003/04/12 18:57:14 steve Exp $"
+#ident "$Id: a_vcl.c,v 1.2 2003/04/20 02:48:39 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
 #include  <acc_user.h>
+#include  <malloc.h>
 #include  "priv.h"
+
+struct vcl_record {
+      vpiHandle obj;
+      PLI_INT32(*consumer)(p_vc_record);
+      void*user_data;
+      PLI_INT32 vcl_flag;
+
+      vpiHandle callback;
+      struct vcl_record*next;
+};
+
+static struct vcl_record*vcl_list = 0;
+
+static PLI_INT32 vcl_value_callback(struct t_cb_data*cb)
+{
+      struct vcl_record*cur = cb->user_data;
+
+      vpi_printf("XXXX Call vcl_callback(<type=%d>);\n",
+		 vpi_get(vpiType, cur->obj));
+
+      return 0;
+}
 
 void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
 		 void*data, PLI_INT32 vcl_flag)
 {
-      vpi_printf("XXXX Call acc_vcl_add\n");
+      struct vcl_record*cur;
+      struct t_cb_data cb;
+
+      switch (vpi_get(vpiType, obj)) {
+	  case vpiNet:
+	    cur = malloc(sizeof (struct vcl_record));
+	    cur->obj = obj;
+	    cur->consumer = consumer;
+	    cur->user_data = data;
+	    cur->vcl_flag = vcl_flag;
+	    cur->next = vcl_list;
+	    vcl_list = cur;
+
+	    cb.reason = cbValueChange;
+	    cb.cb_rtn = vcl_value_callback;
+	    cb.obj = obj;
+	    cb.user_data = (void*)cur;
+	    cur->callback = vpi_register_cb(&cb);
+	    break;
+
+	  default:
+	    vpi_printf("XXXX Call acc_vcl_add(<type=%d>, ..., %d);\n",
+		       vpi_get(vpiType, obj), vcl_flag);
+	    break;
+      }
+
 }
 
 void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
@@ -39,6 +87,9 @@ void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
 /*
  * $Log: a_vcl.c,v $
+ * Revision 1.2  2003/04/20 02:48:39  steve
+ *  Support value change callbacks.
+ *
  * Revision 1.1  2003/04/12 18:57:14  steve
  *  More acc_ function stubs.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.9 2003/04/12 18:57:13 steve Exp $"
+#ident "$Id: acc_user.h,v 1.10 2003/04/20 02:48:39 steve Exp $"
 #endif
 
 /*
@@ -86,6 +86,11 @@ typedef struct __vpiHandle *handle;
 #define accSimTime 2
 #define accRealTime 3
 
+/* Constants used by acc_vcl_add */
+#define vcl_verilog_logic 2
+#define VCL_VERILOG_LOGIC vcl_verilog_logic
+#define vcl_verilog_strength 3
+#define VCL_VERILOG_STRENGTH vcl_verilog_strength
 
 typedef struct t_acc_time {
       int type;
@@ -205,6 +210,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.10  2003/04/20 02:48:39  steve
+ *  Support value change callbacks.
+ *
  * Revision 1.9  2003/04/12 18:57:13  steve
  *  More acc_ function stubs.
  *
