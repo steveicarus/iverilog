@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.49 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.50 2001/06/18 03:25:20 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -872,7 +872,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 	    assert(nex->t_cookie());
 	    obj->u_.ff.s.pin = (ivl_nexus_t) nex->t_cookie();
 	    nexus_lpm_add(obj->u_.ff.s.pin, obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
+			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
       else {
 	    obj->u_.ff.s.pins = new ivl_nexus_t [obj->u_.ff.swid];
@@ -882,7 +882,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 		  assert(nex->t_cookie());
 		  obj->u_.ff.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
 		  nexus_lpm_add(obj->u_.ff.s.pins[idx], obj, 0,
-				IVL_DR_STRONG, IVL_DR_STRONG);
+				IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
       }
       
@@ -1352,6 +1352,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.50  2001/06/18 03:25:20  steve
+ *  RAM_DQ pins are inputs, so connect HiZ to the nexus.
+ *
  * Revision 1.49  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
