@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.87 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: t-dll.h,v 1.88 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -139,13 +139,13 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_signal(const NetESignal*);
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
-      ivl_memory_t lookup_memory_(const NetMemory*mem);
 
       static ivl_attribute_s* fill_in_attributes(const Attrib*net);
 
     private:
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
+      static ivl_memory_t find_memory(ivl_design_s &des, const NetMemory*net);
       void add_root(ivl_design_s &des_, const NetScope *s);
 
       void sub_off_from_expr_(long);
@@ -611,6 +611,12 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.88  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.87  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *

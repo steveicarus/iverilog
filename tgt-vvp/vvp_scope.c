@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.75 2002/08/03 22:30:48 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.76 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -136,6 +136,16 @@ const char* vvp_signal_label(ivl_signal_t sig)
 {
       static char buf[32];
       sprintf(buf, "$%p", sig);
+      return buf;
+}
+
+/*
+ * This makes a string suitable for use as a label for memories.
+ */
+const char* vvp_memory_label(ivl_memory_t mem)
+{
+      static char buf[32];
+      sprintf(buf, "$%p", mem);
       return buf;
 }
 
@@ -1045,7 +1055,7 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
 	      vvp_mangle_id(ivl_lpm_name(net)));
       fprintf(vvp_out, 
 	      " M_%s, %d,0, %d,\n  ", 
-	      vvp_mangle_id(ivl_memory_name(mem)),
+	      vvp_memory_label(mem),
 	      width-1,
 	      awidth);
 
@@ -1395,7 +1405,7 @@ static void draw_mem_in_scope(ivl_memory_t net)
       int msb = ivl_memory_width(net) - 1;
       int lsb = 0;
       fprintf(vvp_out, "M_%s .mem \"%s\", %u,%u, %u,%u;\n",
-	      vvp_mangle_id(ivl_memory_name(net)), 
+	      vvp_memory_label(net), 
 	      vvp_mangle_name(ivl_memory_basename(net)),
 	      msb, lsb, root, last);
 }
@@ -1478,6 +1488,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.76  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.75  2002/08/03 22:30:48  steve
  *  Eliminate use of ivl_signal_name for signal labels.
  *

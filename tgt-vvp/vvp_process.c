@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.60 2002/08/03 22:30:48 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.61 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -89,7 +89,7 @@ static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
       if (idx)
 	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
       fprintf(vvp_out, "    %%set/m M_%s, %u;\n",
-	      vvp_mangle_id(ivl_memory_name(mem)), bit);
+	      vvp_memory_label(mem), bit);
 }
 
 /*
@@ -122,7 +122,7 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
       if (idx)
 	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
       fprintf(vvp_out, "    %%assign/m M_%s, %u, %u;\n",
-	      vvp_mangle_id(ivl_memory_name(mem)), delay, bit);
+	      vvp_memory_label(mem), delay, bit);
 }
 
 static void calculate_into_x0(ivl_expr_t expr)
@@ -1001,7 +1001,7 @@ static int show_system_task_call(ivl_statement_t net)
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
 			fprintf(vvp_out, ", M_%s", 
-				vvp_mangle_id(ivl_expr_name(expr)));
+				vvp_memory_label(ivl_expr_memory(expr)));
 			continue;
 		  }
 		  break;
@@ -1221,6 +1221,12 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.61  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.60  2002/08/03 22:30:48  steve
  *  Eliminate use of ivl_signal_name for signal labels.
  *

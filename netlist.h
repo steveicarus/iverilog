@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.254 2002/07/29 00:00:28 steve Exp $"
+#ident "$Id: netlist.h,v 1.255 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 /*
@@ -672,7 +672,7 @@ class NetMemory  {
       NetMemory(NetScope*sc, const string&n, long w, long s, long e);
       ~NetMemory();
 
-      const string&name() const { return name_; }
+      const char*name() const;
 
 	// This is the width (in bits) of a single memory position.
       unsigned width() const { return width_; }
@@ -691,7 +691,7 @@ class NetMemory  {
       void dump(ostream&o, unsigned lm) const;
 
     private:
-      string name_;
+      char* name_;
       unsigned width_;
       long idxh_;
       long idxl_;
@@ -2602,7 +2602,7 @@ class NetEMemory  : public NetExpr {
       NetEMemory(NetMemory*mem, NetExpr*idx =0);
       virtual ~NetEMemory();
 
-      const string& name () const;
+      const string name () const;
       const NetExpr* index() const;
 
       virtual bool set_width(unsigned);
@@ -3006,6 +3006,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.255  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.254  2002/07/29 00:00:28  steve
  *  Asynchronous synthesis of sequential blocks.
  *

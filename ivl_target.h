@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.101 2002/07/05 21:26:17 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.102 2002/08/04 18:28:14 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -461,6 +461,14 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
 /*
  * Memory.
  *
+ * ivl_memory_name (DEPRECATED)
+ *
+ * ivl_memory_basename
+ *    This returns the base name of the memory object. The base name
+ *    does not include the name of the scopes that contains the object.
+ *
+ * ivl_memory_size
+ * ivl_memory_width
  */
 
 extern const char*ivl_memory_name(ivl_memory_t net);
@@ -898,13 +906,21 @@ extern const char*  ivl_scope_tname(ivl_scope_t net);
  * ivl_signal_type
  *    Return the type of the signal, i.e., reg, wire, tri0, etc.
  *
- * ivl_signal_name
+ * ivl_signal_name (DEPRECATED)
  *    This function returns the fully scoped hierarchical name for the
  *    signal. The name refers to the entire vector that is the signal.
  *
+ *    NOTE: This function is deprecated. The heirarchical name is too
+ *    vague a construct when escaped names can have . characters in
+ *    them. Do no use this function in new code, it will disappear.
+ *
  * ivl_signal_basename
  *    This function returns the name of the signal, without the scope
- *    information. This is the tail of the signal name.
+ *    information. This is the tail of the signal name. Since Verilog
+ *    has an escape syntax, this name can contain any ASCII
+ *    characters, except NULL or white space. The leading \ and
+ *    trailing ' ' of escaped names in Verilog source are not part of
+ *    the name, so not included here.
  *
  * ivl_signal_attr
  *    Icarus Verilog supports attaching attributes to signals, with
@@ -1056,6 +1072,12 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.102  2002/08/04 18:28:14  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.101  2002/07/05 21:26:17  steve
  *  Avoid emitting to vvp local net symbols.
  *

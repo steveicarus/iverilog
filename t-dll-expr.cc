@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.26 2002/06/16 20:39:12 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.27 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -164,7 +164,7 @@ void dll_target::expr_memory(const NetEMemory*net)
       cur->type_ = IVL_EX_MEMORY;
       cur->width_= net->expr_width();
       cur->signed_ = net->has_sign()? 1 : 0;
-      cur->u_.memory_.mem_ = lookup_memory_(net->memory());
+      cur->u_.memory_.mem_ = find_memory(des_, net->memory());
       cur->u_.memory_.idx_ = expr_;
 
       expr_ = cur;
@@ -458,6 +458,12 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.27  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.26  2002/06/16 20:39:12  steve
  *  Normalize run-time index expressions for bit selects
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.66 2002/08/03 22:30:48 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.67 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1162,10 +1162,11 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 {
       unsigned swid = ivl_expr_width(exp);
       const char*name = ivl_expr_name(exp);
+      ivl_memory_t mem = ivl_expr_memory(exp);
       struct vector_info res;
       unsigned idx;
 
-      draw_memory_index_expr(ivl_expr_memory(exp), ivl_expr_oper1(exp));
+      draw_memory_index_expr(mem, ivl_expr_oper1(exp));
 
       if (swid > wid)
 	    swid = wid;
@@ -1177,7 +1178,7 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 	    if (idx)
 		  fprintf(vvp_out, "    %%ix/add 3, 1;\n");
 	    fprintf(vvp_out, "    %%load/m  %u, M_%s;\n",
-		    res.base+idx, vvp_mangle_id(name));
+		    res.base+idx, vvp_memory_label(mem));
       }
 
 	/* Pad the signal value with zeros. */
@@ -1384,7 +1385,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
 			fprintf(vvp_out, ", M_%s", 
-				vvp_mangle_id(ivl_expr_name(expr)));
+				vvp_memory_label(ivl_expr_memory(expr)));
 			continue;
 		  }
 		  break;
@@ -1726,6 +1727,12 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.67  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.66  2002/08/03 22:30:48  steve
  *  Eliminate use of ivl_signal_name for signal labels.
  *

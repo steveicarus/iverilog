@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.91 2002/07/24 16:21:52 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.92 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -232,38 +232,20 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
  * NetMemory object. The search works by looking for the parent scope,
  * then scanning the parent scope for the NetMemory object.
  */
-static ivl_memory_t find_memory(ivl_scope_t root, const NetMemory*cur)
+ivl_memory_t dll_target::find_memory(ivl_design_s &des, const NetMemory*net)
 {
-      ivl_scope_t tmp;
-      ivl_memory_t mem ;
+      ivl_scope_t scope = find_scope(des, net->scope());
+      assert(scope);
 
-      if (!root)
-	    return 0;
+      const char*nname = net->name();
 
-      for (unsigned i = 0; i < ivl_scope_mems(root); i++) {
-	    mem = ivl_scope_mem(root, i);
-	    if (!strcmp(ivl_memory_name(mem), cur->name().c_str()))
-		  return mem;
+      for (unsigned idx = 0 ;  idx < scope->nmem_ ;  idx += 1) {
+	    if (strcmp(scope->mem_[idx]->name_, nname) == 0)
+		  return scope->mem_[idx];
       }
 
-      mem = find_memory(root->child_, cur);
-      if (mem)
-	    return mem;
-      
-      mem = find_memory(root->sibling_, cur);
-      if (mem)
-	    return mem;
- 
+      assert(0);
       return 0;
-}
-
-ivl_memory_t dll_target::lookup_memory_(const NetMemory*cur)
-{
-      unsigned i;
-      ivl_memory_t mem = NULL;
-      for (i = 0; i < des_.nroots_ && mem == NULL; i++)
-	    mem = find_memory(des_.roots_[i], cur);
-      return mem;
 }
 
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
@@ -942,7 +924,7 @@ void dll_target::udp(const NetUDP*net)
 void dll_target::memory(const NetMemory*net)
 {
       ivl_memory_t obj = new struct ivl_memory_s;
-      obj->name_  = strdup(net->name().c_str());
+      obj->name_  = strdup(net->name());
       obj->scope_ = find_scope(des_, net->scope());
       obj->width_ = net->width();
       obj->signed_ = 0;
@@ -1408,7 +1390,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_RAM;
       obj->name  = strdup(net->name());
-      obj->u_.ff.mem = lookup_memory_(net->mem());
+      obj->u_.ff.mem = find_memory(des_, net->mem());
       assert(obj->u_.ff.mem);
       obj->scope = find_scope(des_, net->mem()->scope());
       assert(obj->scope);
@@ -1959,6 +1941,12 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.92  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.91  2002/07/24 16:21:52  steve
  *  Verbose messages.
  *

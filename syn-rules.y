@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.22 2002/06/25 01:33:22 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.23 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -203,7 +203,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 	    } else if (a->mem()) {
 	      NetMemory *m=a->mem();
 	      NetNet *adr = a->bmux()->synthesize(des);
-	      NetRamDq*ram = new NetRamDq(top->scope(), m->name().c_str(),
+	      NetRamDq*ram = new NetRamDq(top->scope(), m->name(),
 					  m, adr->pin_count());
 	      hookup_RAMDQ(ram, d, adr, pclk, ce, a, rval_pinoffset);
               des->add_node(ram);

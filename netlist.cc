@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.195 2002/07/28 23:58:44 steve Exp $"
+#ident "$Id: netlist.cc,v 1.196 2002/08/04 18:28:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1964,7 +1964,7 @@ NetEMemory::~NetEMemory()
 {
 }
 
-const string& NetEMemory::name() const
+const string NetEMemory::name() const
 {
       return mem_->name();
 }
@@ -1975,8 +1975,9 @@ const NetExpr* NetEMemory::index() const
 }
 
 NetMemory::NetMemory(NetScope*sc, const string&n, long w, long s, long e)
-: name_(n), width_(w), idxh_(s), idxl_(e), ram_list_(0), scope_(sc)
+: width_(w), idxh_(s), idxl_(e), ram_list_(0), scope_(sc)
 {
+      name_ = strdup(n.c_str());
       scope_->add_memory(this);
 }
 
@@ -1984,6 +1985,7 @@ NetMemory::~NetMemory()
 {
       assert(scope_);
       scope_->rem_memory(this);
+      free(name_);
 }
 
 unsigned NetMemory::count() const
@@ -1992,6 +1994,11 @@ unsigned NetMemory::count() const
 	    return idxl_ - idxh_ + 1;
       else
 	    return idxh_ - idxl_ + 1;
+}
+
+const char* NetMemory::name() const
+{
+      return name_;
 }
 
 unsigned NetMemory::index_to_address(long idx) const
@@ -2304,6 +2311,12 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.196  2002/08/04 18:28:15  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.195  2002/07/28 23:58:44  steve
  *  Fix NetBlock destructor to delete substatements.
  *

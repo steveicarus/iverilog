@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.129 2002/06/19 04:20:03 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.130 2002/08/04 18:28:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -442,7 +442,7 @@ void NetAssign_::dump_lval(ostream&o) const
 	    // Is there an obvious way to flag memories in the dump
 	    // as different from the _real_ bit mux case?
 	    // o << "**memory**";
-	    o << mem_->name().c_str() << "[";
+	    o << mem_->name() << "[";
 	    if (bmux_) o << *bmux_;
 	      else     o << "**oops**";
 	    o << "]";
@@ -984,6 +984,12 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.130  2002/08/04 18:28:14  steve
+ *  Do not use hierarchical names of memories to
+ *  generate vvp labels. -tdll target does not
+ *  used hierarchical name string to look up the
+ *  memory objects in the design.
+ *
  * Revision 1.129  2002/06/19 04:20:03  steve
  *  Remove NetTmp and add NetSubnet class.
  *
