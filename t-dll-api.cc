@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.86 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.87 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -540,6 +540,29 @@ extern "C" const char* ivl_lpm_basename(ivl_lpm_t net)
       return basename(net->scope, net->name);
 }
 
+extern "C" ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net)
+{
+      assert(net);
+      switch(net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.aclr;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net)
+{
+      assert(net);
+      switch(net->type) {
+	  case IVL_LPM_FF:
+	    return net->u_.ff.aset;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
 
 extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
 {
@@ -1550,6 +1573,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.87  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.86  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

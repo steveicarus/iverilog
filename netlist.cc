@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.199 2002/09/01 03:01:48 steve Exp $"
+#ident "$Id: netlist.cc,v 1.200 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -592,7 +592,17 @@ Link& NetFF::pin_Aset()
       return pin(3);
 }
 
+const Link& NetFF::pin_Aset() const
+{
+      return pin(3);
+}
+
 Link& NetFF::pin_Aclr()
+{
+      return pin(4);
+}
+
+const Link& NetFF::pin_Aclr() const
 {
       return pin(4);
 }
@@ -2300,6 +2310,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.200  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.199  2002/09/01 03:01:48  steve
  *  Properly cast signedness of parameters with ranges.
  *

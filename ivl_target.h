@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.106 2002/09/12 15:49:43 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.107 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -612,6 +612,9 @@ extern ivl_scope_t    ivl_lpm_scope(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
 extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
+  /* IVL_LPM_FF */
+extern ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net);
+extern ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
@@ -1087,6 +1090,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.107  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.106  2002/09/12 15:49:43  steve
  *  Add support for binary nand operator.
  *

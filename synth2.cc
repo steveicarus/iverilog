@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.12 2002/09/26 01:13:14 steve Exp $"
+#ident "$Id: synth2.cc,v 1.13 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -309,7 +309,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  asig->local_flag(true);
 		  if_->synth_async(des, scope, nex_map, asig);
 
-		  assert(asig->pin_count() == 1);
+		  assert(asig->pin_count() == ff->width());
 		  assert(asig->pin(0).nexus()->drivers_constant());
 		  switch (asig->pin(0).nexus()->driven_value()) {
 		      case verinum::V0:
@@ -552,6 +552,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.13  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.12  2002/09/26 01:13:14  steve
  *  Synthesize async set/reset is certain cases.
  *

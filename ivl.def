@@ -54,6 +54,8 @@ ivl_logic_pin
 ivl_logic_pins
 ivl_logic_udp
 
+ivl_lpm_async_clr
+ivl_lpm_async_set
 ivl_lpm_basename
 ivl_lpm_clk
 ivl_lpm_data

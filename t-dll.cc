@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.95 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.96 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1361,6 +1361,26 @@ void dll_target::lpm_ff(const NetFF*net)
 	    obj->u_.ff.we = 0;
       }
 
+      if (net->pin_Aclr().is_linked()) {
+	    nex = net->pin_Aclr().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.aclr = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.aclr);
+	    nexus_lpm_add(obj->u_.ff.aclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      } else {
+	    obj->u_.ff.aclr = 0;
+      }
+
+      if (net->pin_Aset().is_linked()) {
+	    nex = net->pin_Aset().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.aset = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.aset);
+	    nexus_lpm_add(obj->u_.ff.aclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      } else {
+	    obj->u_.ff.aset = 0;
+      }
+
       if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
@@ -1954,6 +1974,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.96  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.95  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.263 2002/09/26 01:13:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.264 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 /*
@@ -663,6 +663,8 @@ class NetFF  : public NetNode {
 
       const Link& pin_Clock() const;
       const Link& pin_Enable() const;
+      const Link& pin_Aset() const;
+      const Link& pin_Aclr() const;
       const Link& pin_Data(unsigned) const;
       const Link& pin_Q(unsigned) const;
 
@@ -3055,6 +3057,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.264  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.263  2002/09/26 01:13:14  steve
  *  Synthesize async set/reset is certain cases.
  *

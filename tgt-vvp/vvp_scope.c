@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.78 2002/09/17 05:37:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.79 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1265,18 +1265,38 @@ static void draw_lpm_eq(ivl_lpm_t net)
       }
 }
 
+/*
+ *  primitive FD (q, clk, ce, d);
+ *    output q;
+ *    reg q;
+ *    input clk, ce, d;
+ *    table
+ *    // clk ce  d r s   q   q+
+ *        r   1  0 0 0 : ? : 0;
+ *        r   1  1 0 0 : ? : 1;
+ *        f   1  ? 0 0 : ? : -;
+ *        ?   1  ? 0 0 : ? : -;
+ *        *   0  ? 0 0 : ? : -;
+ *        ?   ?  ? 1 ? : ? : 0;
+ *        ?   ?  ? 0 1 : ? : 1;
+ *    endtable
+ *  endprimitive
+ */
 static void draw_lpm_ff(ivl_lpm_t net)
 {
       unsigned width, idx;
 
       width = ivl_lpm_width(net);
 
-      fprintf(vvp_out, "L_%s/def .udp/sequ \"DFF\", 3, 2,"
-	      " \"?r100\","
-	      " \"?r111\","
-	      " \"?f1?-\","
-	      " \"?\?1?-\","
-	      " \"?*0\?-\";\n", vvp_mangle_id(ivl_lpm_name(net)));
+      fprintf(vvp_out, "L_%s/def .udp/sequ \"DFF\", 5, 2,"
+	      " \"?r10000\","
+	      " \"?r11001\","
+	      " \"?f1?00-\","
+	      " \"?\?1?00-\","
+	      " \"?*0\?00-\","
+	      " \"????1?0\","
+	      " \"????011\""
+	      ";\n", vvp_mangle_id(ivl_lpm_name(net)));
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t tmp;
@@ -1300,6 +1320,22 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    assert(tmp);
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(tmp);
+
+	      /* Connect reset input */
+	    fprintf(vvp_out, ", ");
+	    tmp = ivl_lpm_async_clr(net);
+	    if (tmp)
+		  draw_input_from_net(tmp);
+	    else
+		  fprintf(vvp_out, "C<0>");
+
+	      /* Connect set input */
+	    fprintf(vvp_out, ", ");
+	    tmp = ivl_lpm_async_set(net);
+	    if (tmp)
+		  draw_input_from_net(tmp);
+	    else
+		  fprintf(vvp_out, "C<0>");
 
 	    fprintf(vvp_out, ";\n");
       }
@@ -1533,6 +1569,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.79  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.78  2002/09/17 05:37:45  steve
  *  Generate vvp code for structural flip-flops.
  *

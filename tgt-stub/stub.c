@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.68 2002/09/18 03:33:10 steve Exp $"
+#ident "$Id: stub.c,v 1.69 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -190,6 +190,14 @@ static void show_lpm(ivl_lpm_t net)
 		else
 		      fprintf(out, "    clk: %s\n",
 			      ivl_nexus_name(ivl_lpm_clk(net)));
+
+		if (ivl_lpm_async_clr(net))
+		      fprintf(out, "    Aclr: %s\n",
+			      ivl_nexus_name(ivl_lpm_async_clr(net)));
+
+		if (ivl_lpm_async_set(net))
+		      fprintf(out, "    Aset: %s\n",
+			      ivl_nexus_name(ivl_lpm_async_set(net)));
 
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Data %u: %s\n", idx,
@@ -717,6 +725,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.69  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.68  2002/09/18 03:33:10  steve
  *  Fix switch case warnings.
  *

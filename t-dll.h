@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.93 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: t-dll.h,v 1.94 2002/09/26 03:18:04 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -267,6 +267,8 @@ struct ivl_lpm_s {
 		  unsigned short swid; // ram only
 		  ivl_nexus_t clk;
 		  ivl_nexus_t we;
+		  ivl_nexus_t aclr;
+		  ivl_nexus_t aset;
 		  union {
 			ivl_nexus_t*pins;
 			ivl_nexus_t pin;
@@ -617,6 +619,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.94  2002/09/26 03:18:04  steve
+ *  Generate vvp code for asynch set/reset of NetFF.
+ *
  * Revision 1.93  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *
