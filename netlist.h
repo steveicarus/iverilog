@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.69 1999/09/22 16:57:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.70 1999/09/23 00:21:55 steve Exp $"
 #endif
 
 /*
@@ -1231,6 +1231,25 @@ class NetEBComp : public NetEBinary {
 };
 
 /*
+ * The binary logical operators are those that return boolean
+ * results. The supported operators are:
+ *
+ *   a  -- Logical AND (&&)
+ */
+class NetEBLogic : public NetEBinary {
+
+    public:
+      NetEBLogic(char op, NetExpr*l, NetExpr*r);
+      ~NetEBLogic();
+
+      virtual bool set_width(unsigned w);
+      virtual NetExpr* eval_tree();
+
+    private:
+};
+
+
+/*
  * This expression node supports the concat expression. This is an
  * operator that just glues the results of many expressions into a
  * single value.
@@ -1618,6 +1637,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.70  1999/09/23 00:21:55  steve
+ *  Move set_width methods into a single file,
+ *  Add the NetEBLogic class for logic expressions,
+ *  Fix error setting with of && in if statements.
+ *
  * Revision 1.69  1999/09/22 16:57:23  steve
  *  Catch parallel blocks in vvm emit.
  *

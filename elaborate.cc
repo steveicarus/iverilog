@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.96 1999/09/22 21:25:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.97 1999/09/23 00:21:54 steve Exp $"
 #endif
 
 /*
@@ -1333,6 +1333,12 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 	    tmp->set_line(*this);
 	    break;
 
+	  case 'a':
+	  case 'o':
+	    tmp = new NetEBLogic(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
 	  case '^':
 	  case '&':
 	  case '|':
@@ -2625,6 +2631,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.97  1999/09/23 00:21:54  steve
+ *  Move set_width methods into a single file,
+ *  Add the NetEBLogic class for logic expressions,
+ *  Fix error setting with of && in if statements.
+ *
  * Revision 1.96  1999/09/22 21:25:42  steve
  *  Expand bits in delayed assignments.
  *

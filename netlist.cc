@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.67 1999/09/21 00:13:40 steve Exp $"
+#ident "$Id: netlist.cc,v 1.68 1999/09/23 00:21:54 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -703,17 +703,6 @@ const NetFuncDef* NetEUFunc::definition() const
       return func_;
 }
 
-/*
- * XXXX FIX ME: For now, just take whatever the caller says as my
- * width. What I really need to do is note the width of the output
- * parameter of the function definition and take that into account.
- */
-bool NetEUFunc::set_width(unsigned wid)
-{
-      expr_width(wid);
-      return true;
-}
-
 NetEUFunc* NetEUFunc::dup_expr() const
 {
       assert(0);
@@ -736,14 +725,6 @@ NetExpr::NetExpr(unsigned w)
 
 NetExpr::~NetExpr()
 {
-}
-
-bool NetExpr::set_width(unsigned w)
-{
-      cerr << typeid(*this).name() << ": set_width(unsigned) "
-	    "not implemented." << endl;
-      expr_width(w);
-      return false;
 }
 
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
@@ -771,29 +752,6 @@ NetEBAdd::~NetEBAdd()
 {
 }
 
-/*
- * The bitwise logical operators have operands the same size as the
- * result. Anything else is a mess.
- */
-bool NetEBAdd::set_width(unsigned w)
-{
-      bool flag = true;
-
-      if (left_->expr_width() > right_->expr_width())
-	    right_->set_width(left_->expr_width());
-      else
-	    left_->set_width(right_->expr_width());
-
-      if (left_->expr_width() == w)
-	    expr_width(w);
-      else if (left_->expr_width() == (w-1))
-	    expr_width(w);
-      else
-	    flag = false;
-
-      return flag;
-}
-
 NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
@@ -801,21 +759,6 @@ NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 
 NetEBBits::~NetEBBits()
 {
-}
-
-/*
- * The bitwise logical operators have operands the same size as the
- * result. Anything else is a mess.
- */
-bool NetEBBits::set_width(unsigned w)
-{
-      bool flag = true;
-
-      flag = left_->set_width(w) && flag;
-      flag = right_->set_width(w) && flag;
-      expr_width(w);
-
-      return flag;
 }
 
 NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
@@ -826,24 +769,6 @@ NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 
 NetEBComp::~NetEBComp()
 {
-}
-
-/*
- * Comparison operators allow the subexpressions to have
- * their own natural width. However, I do need to make
- * sure that the subexpressions have the same width.
- */
-bool NetEBComp::set_width(unsigned w)
-{
-      bool flag = true;
-
-      assert(w == 1);
-      expr_width(w);
-      flag = left_->set_width(right_->expr_width());
-      if (!flag)
-	    flag = right_->set_width(left_->expr_width());
-
-      return flag;
 }
 
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
@@ -879,45 +804,19 @@ NetEBinary::~NetEBinary()
       delete right_;
 }
 
-bool NetEBinary::set_width(unsigned w)
-{
-      bool flag = true;
-      switch (op_) {
-	  case 'a': // logical and (&&)
-	  case 'o': // logical or (||)
-	    expr_width(1);
-	    flag = false;
-	    break;
-
-	  case 'l': // left shift  (<<)
-	  case 'r': // right shift (>>)
-	    flag = left_->set_width(w);
-	    expr_width(w);
-	    break;
-
-	      /* The default rule is that the operands of the binary
-		 operator might as well use the same width as the
-		 output from the binary operation. */
-	  default:
-	    expr_width(left_->expr_width() > right_->expr_width()
-			  ? left_->expr_width() : right_->expr_width());
-	    cerr << "NetEBinary::set_width(): Using default for " <<
-		  op_ << "." << endl;
-	    flag = false;
-
-	  case '%':
-	  case '/':
-	    flag = left_->set_width(w) && flag;
-	    flag = right_->set_width(w) && flag;
-	    expr_width(w);
-	    break;
-      }
-      return flag;
-}
-
 NetEBinary* NetEBinary::dup_expr() const
 {
       assert(0);
+}
+
+NetEBLogic::NetEBLogic(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      expr_width(1);
+}
+
+NetEBLogic::~NetEBLogic()
+{
 }
 
 NetEConcat::NetEConcat(unsigned cnt, unsigned r)
@@ -938,29 +837,6 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       assert(parms_[idx] == 0);
       parms_[idx] = e;
       expr_width( expr_width() + repeat_*e->expr_width() );
-}
-
-/*
- * Add up the widths from all the expressions that are concatenated
- * together. This is the width of the expression, tough luck if you
- * want it otherwise.
- *
- * If during the course of elaboration one of the sub-expressions is
- * broken, then don't count it in the width. This doesn't really
- * matter because the null expression is indication of an error and
- * the compiler will not go beyond elaboration.
- */
-bool NetEConcat::set_width(unsigned w)
-{
-      unsigned sum = 0;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
-	    if (parms_[idx] != 0)
-		  sum += parms_[idx]->expr_width();
-
-      sum *= repeat_;
-      expr_width(sum);
-      if (sum != w) return false;
-      return true;
 }
 
 NetEConcat* NetEConcat::dup_expr() const
@@ -984,17 +860,6 @@ NetEConst::NetEConst(const verinum&val)
 
 NetEConst::~NetEConst()
 {
-}
-
-bool NetEConst::set_width(unsigned w)
-{
-      if (w > value_.len())
-	    return false;
-
-      assert(w <= value_.len());
-      value_ = verinum(value_, w);
-      expr_width(w);
-      return true;
 }
 
 NetEConst* NetEConst::dup_expr() const
@@ -1046,15 +911,6 @@ void NetMemory::set_attributes(const map<string,string>&attr)
       attributes_ = attr;
 }
 
-bool NetEMemory::set_width(unsigned w)
-{
-      if (w != mem_->width())
-	    return false;
-
-      expr_width(w);
-      return true;
-}
-
 NetEMemory* NetEMemory::dup_expr() const
 {
       assert(0);
@@ -1072,11 +928,6 @@ NetEParam::NetEParam(Design*d, const string&p, const string&n)
 
 NetEParam::~NetEParam()
 {
-}
-
-bool NetEParam::set_width(unsigned)
-{
-      return false;
 }
 
 NetEParam* NetEParam::dup_expr() const
@@ -1103,18 +954,6 @@ NetESignal::~NetESignal()
 {
 }
 
-/*
- * The signal should automatically pad with zeros to get to th desired
- * width. Do not allow signal bits to be truncated, however.
- */
-bool NetESignal::set_width(unsigned w)
-{
-      if (w != pin_count())
-	    return false;
-
-      return true;
-}
-
 NetESignal* NetESignal::dup_expr() const
 {
       assert(0);
@@ -1136,12 +975,6 @@ NetESubSignal::~NetESubSignal()
 NetESubSignal* NetESubSignal::dup_expr() const
 {
       assert(0);
-}
-
-bool NetESubSignal::set_width(unsigned w)
-{
-      if (w != 1) return false;
-      return true;
 }
 
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
@@ -1177,40 +1010,9 @@ NetETernary* NetETernary::dup_expr() const
       assert(0);
 }
 
-bool NetETernary::set_width(unsigned w)
-{
-      bool flag = true;
-      flag = flag && true_val_->set_width(w);
-      flag = flag && false_val_->set_width(w);
-      expr_width(true_val_->expr_width());
-      return flag;
-}
-
 NetEUnary::~NetEUnary()
 {
       delete expr_;
-}
-
-bool NetEUnary::set_width(unsigned w)
-{
-      bool flag = true;
-      switch (op_) {
-	  case '~':
-	  case '-':
-	    flag = expr_->set_width(w);
-	    break;
-	  case '&':
-	  case '!':
-	    if (w != 1) {
-		  flag = false;
-	    }
-	    break;
-	  default:
-	    flag = false;
-	    break;
-      }
-      expr_width(w);
-      return flag;
 }
 
 NetEUnary* NetEUnary::dup_expr() const
@@ -1819,6 +1621,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.68  1999/09/23 00:21:54  steve
+ *  Move set_width methods into a single file,
+ *  Add the NetEBLogic class for logic expressions,
+ *  Fix error setting with of && in if statements.
+ *
  * Revision 1.67  1999/09/21 00:13:40  steve
  *  Support parameters that reference other paramters.
  *

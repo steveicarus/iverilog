@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_tree.cc,v 1.2 1999/09/21 00:13:40 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.3 1999/09/23 00:21:54 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -106,6 +106,11 @@ NetExpr* NetEBComp::eval_tree()
       }
 }
 
+NetExpr* NetEBLogic::eval_tree()
+{
+      return 0;
+}
+
 NetExpr* NetEConcat::eval_tree()
 {
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
@@ -186,6 +191,11 @@ NetExpr* NetEParam::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.3  1999/09/23 00:21:54  steve
+ *  Move set_width methods into a single file,
+ *  Add the NetEBLogic class for logic expressions,
+ *  Fix error setting with of && in if statements.
+ *
  * Revision 1.2  1999/09/21 00:13:40  steve
  *  Support parameters that reference other paramters.
  *
