@@ -9,8 +9,18 @@ ivl_const_pin
 ivl_const_pins
 ivl_const_signed
 
+ivl_event_any
+ivl_event_basename
+ivl_event_name
+ivl_event_nany
+ivl_event_neg
+ivl_event_nneg
+ivl_event_npos
+ivl_event_pos
+
 ivl_expr_type
 ivl_expr_bits
+ivl_expr_def
 ivl_expr_name
 ivl_expr_opcode
 ivl_expr_oper1
@@ -19,6 +29,7 @@ ivl_expr_oper3
 ivl_expr_parm
 ivl_expr_parms
 ivl_expr_repeat
+ivl_expr_scope
 ivl_expr_signed
 ivl_expr_string
 ivl_expr_width
@@ -52,11 +63,16 @@ ivl_nexus_ptr_log
 ivl_nexus_ptr_sig
 
 ivl_scope_children
+ivl_scope_def
+ivl_scope_event
+ivl_scope_events
 ivl_scope_logs
 ivl_scope_log
 ivl_scope_lpms
 ivl_scope_lpm
 ivl_scope_name
+ivl_scope_port
+ivl_scope_ports
 ivl_scope_sigs
 ivl_scope_sig
 ivl_scope_type
@@ -66,21 +82,28 @@ ivl_signal_attr
 ivl_signal_pin
 ivl_signal_pins
 ivl_signal_port
+ivl_signal_signed
 ivl_signal_type
 ivl_signal_name
 ivl_signal_basename
 
-ivl_process_type
+ivl_process_scope
 ivl_process_stmt
+ivl_process_type
 
 ivl_statement_type
 
 ivl_stmt_block_count
 ivl_stmt_block_stmt
+ivl_stmt_call
+ivl_stmt_case_count
+ivl_stmt_case_expr
+ivl_stmt_case_stmt
 ivl_stmt_cond_expr
 ivl_stmt_cond_false
 ivl_stmt_cond_true
 ivl_stmt_delay_val
+ivl_stmt_event
 ivl_stmt_lval
 ivl_stmt_lvals
 ivl_stmt_lwidth
