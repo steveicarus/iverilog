@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.294 2004/01/13 03:42:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.295 2004/01/21 04:35:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2340,7 +2340,6 @@ void PTask::elaborate(Design*des, NetScope*task) const
 
       NetProc*st;
       if (statement_ == 0) {
-	    cerr << get_line() << ": warning: task has no statement." << endl;
 	    st = new NetBlock(NetBlock::SEQU, 0);
 
       } else {
@@ -2628,6 +2627,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.295  2004/01/21 04:35:03  steve
+ *  Get rid of useless warning.
+ *
  * Revision 1.294  2004/01/13 03:42:49  steve
  *  Handle wide expressions in wait condition.
  *
