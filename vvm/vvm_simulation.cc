@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_simulation.cc,v 1.2 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: vvm_simulation.cc,v 1.3 1999/06/07 03:40:03 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -67,8 +67,6 @@ vvm_simulation::~vvm_simulation()
 
 void vvm_simulation::insert_event(unsigned long delay, vvm_event*event)
 {
-      assert(delay > 0);
-
       vvm_simulation_cycle*cur = sim_->next;
 
       while ((cur != sim_) && (cur->delay < delay)) {
@@ -210,6 +208,9 @@ void vvm_simulation::thread_active(vvm_thread*thr)
 
 /*
  * $Log: vvm_simulation.cc,v $
+ * Revision 1.3  1999/06/07 03:40:03  steve
+ *  Allow 0 delays for things like thread yield.
+ *
  * Revision 1.2  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).
