@@ -84,7 +84,7 @@ case "${host}" in *linux*) AC_DEFINE(LINUX) ;; esac
 # The -rdynamic flag is used by iverilog when compiling the target,
 # to know how to export symbols of the main program to loadable modules
 # that are brought in by -ldl. VPI support requires this.
-AC_MSG_CHECKING("for -rdynamic compiler flag")
+AC_MSG_CHECKING(for -rdynamic compiler flag)
 
 rdynamic=-rdynamic
 case "${host}" in
@@ -113,7 +113,7 @@ esac
 AC_SUBST(rdynamic)
 AC_MSG_RESULT($rdynamic)
 
-AC_MSG_CHECKING("for extra libs needed")
+AC_MSG_CHECKING(for extra libs needed)
 EXTRALIBS=
 case "${host}" in
      *-*-cygwin*)

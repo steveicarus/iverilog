@@ -123,7 +123,7 @@ AC_MSG_RESULT($PICFLAG)
 
 # mingw needs to link with libiberty.a, cygwin can tolerate it
 
-AC_MSG_CHECKING("for extra libs needed")
+AC_MSG_CHECKING(for extra libs needed)
 EXTRALIBS=
 case "${host}" in
      *-*-cygwin*)
@@ -144,7 +144,7 @@ esac
 # The -rdynamic flag is used by iverilog when compiling the target,
 # to know how to export symbols of the main program to loadable modules
 # that are brought in by -ldl
-AC_MSG_CHECKING("for -rdynamic compiler flag")
+AC_MSG_CHECKING(for -rdynamic compiler flag)
 
 rdynamic=-rdynamic
 case "${host}" in
@@ -176,7 +176,7 @@ AC_MSG_RESULT($rdynamic)
 AC_SUBST(strip_dynamic)
 AC_MSG_RESULT($strip_dynamic)
 
-AC_MSG_CHECKING("for shared library link flag")
+AC_MSG_CHECKING(for shared library link flag)
 shared=-shared
 case "${host}" in
 
