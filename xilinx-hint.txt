@@ -1,0 +1,92 @@
+
+For those of you who wish to use Icarus Verilog, in combination with
+the Xilinx back end (Foundation or Alliance), it can be done.  I have
+run some admittedly simple (no arithmetic, 600 equivalent gates) designs
+through this setup, targeting a Spartan XCS10.
+
+Verilog:
+
+   As of Icarus Verilog 19990814, you still can't have logic buried
+   in procedural (flip-flop) assignment.  I use a hacked workaround
+   copy of ivl that allows 1-bit wide logic.  The other approach
+   is to use temporary wires, assign them to the logic, and assign
+   the reg to that wire.  For example, instead of
+       always @ (posedge Clk) Z = ~Q1 & ~Q2 & ~Q3 & ~Q4;
+   you can write
+       wire newZ;
+       assign newZ = ~Q1 & ~Q2 & ~Q3 & ~Q4;
+       always @ (posedge Clk) Z = newZ;
+
+   Procedural assignments have to be given one at a time, to be
+   "found" by xnfsyn.  Say
+       always @ (posedge Clk) Y = newY;
+       always @ (posedge Clk) Z = newZ;
+   rather than
+       always @ (posedge Clk) begin
+           Y = newY;
+           Z = newZ;
+       end
+
+   I had reason to use a global clock net.  I used this snippet of
+   Verilog code to make it happen:
+       primitive BUFG ( O, I );
+        output O;
+        input I;
+        table
+         0:0;
+         1:1;
+        endtable
+       endprimitive
+       $attribute(BUFG,"XNF-LCA","BUFG:O,I")
+
+   Oh, yes, you probably also want to choose I/O pins!  Try this:
+       wire d1;
+       $attribute(d1,   "PAD", "i45");    // input
+       wire vsync;
+       $attribute(vsync,  "PAD", "o67");   // output
+
+Running ivl:
+
+   The -F switches are important.  The following order seems to robustly
+   generate valid XNF files:
+      -Fxnfio -Fnobufz -Fsigfold -Fxnfsyn
+
+Generating .pcf files:
+
+   The ngdbuild step seems to lose pin placement information that ivl
+   puts in the XNF file.  Use xnf2pcf to extract this information to
+   a .pcf file, which the Xilinx place-and-route software _will_ pay
+   attention to.
+
+Running the Xilinx back end:
+
+   You can presumably use the GUI, but that doesn't fit in Makefiles :-).
+   Here is the command sequence in pseudo-shell-script:
+      ngdbuild -p $part $1.xnf $1.ngd
+      map -p $part -o map.ncd $1.ngd
+      xnf2pcf <$1.xnf >$1.pcf    # see above
+      par -w -ol 2 -d 0 map.ncd $1.ncd $1.pcf
+      bitgen_flags = -g ConfigRate:SLOW -g TdoPin:PULLNONE -g DonePin:PULLUP \
+                     -g CRC:enable -g StartUpClk:CCLK -g SyncToDone:no \
+                     -g DoneActive:C1 -g OutputsActive:C3 -g GSRInactive:C4 \
+                     -g ReadClk:CCLK -g ReadCapture:enable -g ReadAbort:disable
+      bitgen $1.ncd -l -w $bitgen_flags
+
+   The Xilinx software has diarrhea of the temp files (14, not including
+   .xnf, .pcf, .ngd, .ncd, and .bit), so this sequence is best done in a
+   dedicated directory.  Note in particular that map.ncd is a generic name.
+
+Downloading:
+
+   I use the XESS (http://www.xess.com/) XSP-10 development board, which
+   uses the PC parallel (printer) port for downloading and interaction
+   with the host.  They made an old version of their download program
+   public domain, posted it at
+      http://www.xess.com/FPGA/xstools.zip ,
+   and now there is a Linux port at
+      ftp://ftp.microux.com/pub/pilotscope/xstools.tar.gz .
+
+The above hints are based on my experience with Foundation 1.5 on NT
+(gack) and Alliance 2.1i on Solaris.  Your mileage may vary.  Good luck!
+
+     - Larry Doolittle   <LRDoolittle@lbl.gov>   August 19, 1999
