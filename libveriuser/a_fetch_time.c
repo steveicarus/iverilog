@@ -17,50 +17,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.2 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: a_fetch_time.c,v 1.1 2003/03/13 04:35:09 steve Exp $"
 #endif
 
-# include  <acc_user.h>
-# include  <vpi_user.h>
-# include  <assert.h>
 
-PLI_INT32 acc_fetch_type(handle obj)
+#include  <vpi_user.h>
+#include  <acc_user.h>
+#include  "priv.h"
+
+void acc_fetch_timescale_info(handle obj, p_timescale_info info)
 {
-      switch (vpi_get(vpiType, obj)) {
-
-	  case vpiConstant:
-	    return accConstant;
-
-	  case vpiNet:
-	    return accNet;
-
-	  case vpiParameter:
-	    return accParameter;
-
-	  case vpiReg:
-	    return accReg;
-
-	  default:
-	    vpi_printf("XXXX acc_fetch_type(%d) returns what?\n",
-		       vpi_get(vpiType, obj));
-	    return 0;
-      }
-
-      return 0;
+      info->precision = vpi_get(vpiTimePrecision, 0);
+      info->unit = vpi_get(vpiTimeUnit, obj);
 }
 
 /*
- * $Log: a_fetch_type.c,v $
- * Revision 1.2  2003/03/13 04:35:09  steve
+ * $Log: a_fetch_time.c,v $
+ * Revision 1.1  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
- *
- * Revision 1.1  2003/02/17 06:39:47  steve
- *  Add at least minimal implementations for several
- *  acc_ functions. Add support for standard ACC
- *  string handling.
- *
- *  Add the _pli_types.h header file to carry the
- *  IEEE1364-2001 standard PLI type declarations.
  *
  */
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.7 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: acc_user.h,v 1.8 2003/03/13 04:35:09 steve Exp $"
 #endif
 
 /*
@@ -141,11 +141,22 @@ extern int   acc_fetch_location(p_location loc, handle obj);
 
 extern char* acc_fetch_name(handle obj);
 
+extern double acc_fetch_paramval(handle obj);
+
 extern int   acc_fetch_tfarg_int(int n);
 extern char* acc_fetch_tfarg_str(int n);
 
+typedef struct t_timescale_info {
+      PLI_INT16 unit;
+      PLI_INT16 precision;
+} s_timescale_info, *p_timescale_info;
+extern void acc_fetch_timescale_info(handle obj, p_timescale_info info);
+
 extern PLI_INT32 acc_fetch_type(handle obj);
 extern char* acc_fetch_type_str(PLI_INT32 type);
+
+extern handle acc_handle_object(const char*name);
+extern handle acc_handle_parent(handle obj);
 
 extern handle acc_handle_tfarg(int n);
 extern handle acc_handle_tfinst(void);
@@ -166,6 +177,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.8  2003/03/13 04:35:09  steve
+ *  Add a bunch of new acc_ and tf_ functions.
+ *
  * Revision 1.7  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC

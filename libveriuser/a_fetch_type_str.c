@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type_str.c,v 1.2 2003/02/19 04:37:04 steve Exp $"
+#ident "$Id: a_fetch_type_str.c,v 1.3 2003/03/13 04:35:09 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -27,6 +27,9 @@
 char* acc_fetch_type_str(PLI_INT32 type)
 {
       switch (type) {
+	  case accReg:
+	    return "accReg";
+
 	  case accParameter:
 	    return "accParameter";
 
@@ -43,6 +46,9 @@ char* acc_fetch_type_str(PLI_INT32 type)
 
 /*
  * $Log: a_fetch_type_str.c,v $
+ * Revision 1.3  2003/03/13 04:35:09  steve
+ *  Add a bunch of new acc_ and tf_ functions.
+ *
  * Revision 1.2  2003/02/19 04:37:04  steve
  *  fullname for accConstant.
  *

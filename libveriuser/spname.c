@@ -17,50 +17,26 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.2 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: spname.c,v 1.1 2003/03/13 04:35:09 steve Exp $"
 #endif
 
-# include  <acc_user.h>
-# include  <vpi_user.h>
-# include  <assert.h>
+#include  <assert.h>
+#include  <vpi_user.h>
+#include  <veriuser.h>
+#include  "priv.h"
 
-PLI_INT32 acc_fetch_type(handle obj)
+char* tf_spname(void)
 {
-      switch (vpi_get(vpiType, obj)) {
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle scope = vpi_handle(vpiScope, sys);
 
-	  case vpiConstant:
-	    return accConstant;
-
-	  case vpiNet:
-	    return accNet;
-
-	  case vpiParameter:
-	    return accParameter;
-
-	  case vpiReg:
-	    return accReg;
-
-	  default:
-	    vpi_printf("XXXX acc_fetch_type(%d) returns what?\n",
-		       vpi_get(vpiType, obj));
-	    return 0;
-      }
-
-      return 0;
+      return __acc_newstring(vpi_get_str(vpiFullName, scope));
 }
 
 /*
- * $Log: a_fetch_type.c,v $
- * Revision 1.2  2003/03/13 04:35:09  steve
+ * $Log: spname.c,v $
+ * Revision 1.1  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
- *
- * Revision 1.1  2003/02/17 06:39:47  steve
- *  Add at least minimal implementations for several
- *  acc_ functions. Add support for standard ACC
- *  string handling.
- *
- *  Add the _pli_types.h header file to carry the
- *  IEEE1364-2001 standard PLI type declarations.
  *
  */
 

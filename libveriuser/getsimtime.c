@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.3 2003/03/06 00:27:54 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.4 2003/03/13 04:35:09 steve Exp $"
 #endif
 
+#include  <veriuser.h>
 #include  <vpi_user.h>
 
 /*
@@ -38,8 +39,16 @@ int tf_getlongtime(int *hightime)
 int tf_getlongsimtime(int *hightime) \
       __attribute__ ((weak, alias ("tf_getlongtime")));
 
+PLI_INT32 tf_igettimeprecision(void*obj)
+{
+      return vpi_get(vpiTimePrecision, 0);
+}
+
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.4  2003/03/13 04:35:09  steve
+ *  Add a bunch of new acc_ and tf_ functions.
+ *
  * Revision 1.3  2003/03/06 00:27:54  steve
  *  Fill in required fields when getting time.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.21 2003/02/26 01:25:51 steve Exp $"
+#ident "$Id: veriuser.h,v 1.22 2003/03/13 04:35:09 steve Exp $"
 #endif
 
 /*
@@ -251,6 +251,9 @@ extern int tf_getlongtime(int*high_bits);
 
 extern int tf_getp(int pnum);
 
+extern PLI_INT32 tf_gettimeprecision(void);
+extern PLI_INT32 tf_igettimeprecision(void*);
+
 extern PLI_BYTE8* tf_getworkarea(void);
 
 extern PLI_INT32 tf_message(PLI_INT32 level, char*facility,
@@ -271,6 +274,9 @@ extern void tf_putp(int pnum, int value);
    compatible with those who pass a PLI_BYTE8*. */
 extern PLI_INT32 tf_setworkarea(void*workarea);
 
+/* Return the complete, hierarchical name of the current scope. The
+   current scope is the scope containing the currently running system
+   task call. */
 extern char* tf_spname(void);
 
 extern PLI_INT32 tf_typep(PLI_INT32 narg);
@@ -282,6 +288,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.22  2003/03/13 04:35:09  steve
+ *  Add a bunch of new acc_ and tf_ functions.
+ *
  * Revision 1.21  2003/02/26 01:25:51  steve
  *  Document new PLI1 bootstrap interface.
  *
@@ -309,48 +318,5 @@ EXTERN_C_END
  *
  * Revision 1.15  2002/06/07 16:21:12  steve
  *  Add tf_putlongp and tf_putp.
- *
- * Revision 1.14  2002/06/07 02:58:58  steve
- *  Add a bunch of acc/tf functions. (mruff)
- *
- * Revision 1.13  2002/06/04 01:42:58  steve
- *  Add misctf support to libveriuser
- *
- * Revision 1.12  2002/06/03 21:52:59  steve
- *  Fix return type of tf_getinstance.
- *
- * Revision 1.11  2002/06/03 00:08:42  steve
- *  Better typing for veriusertfs table.
- *
- * Revision 1.10  2002/06/02 18:54:59  steve
- *  Add tf_getinstance function.
- *
- * Revision 1.9  2002/05/31 18:25:51  steve
- *  Add tf_getlongtime (mruff)
- *
- * Revision 1.8  2002/05/31 04:26:44  steve
- *  Call padding reserved.
- *
- * Revision 1.7  2002/05/30 02:37:26  steve
- *  Add the veriusertf_register funciton.
- *
- * Revision 1.6  2002/05/30 02:12:17  steve
- *  Add tf_nump from mruff.
- *
- * Revision 1.5  2002/05/30 02:10:08  steve
- *  Add tf_error and tf_warning from mruff
- *
- * Revision 1.4  2002/05/24 20:29:07  steve
- *  Implement mc_scan_plusargs.
- *
- * Revision 1.3  2002/05/24 19:05:30  steve
- *  support GCC __attributes__ for printf formats.
- *
- * Revision 1.2  2002/05/23 03:35:42  steve
- *  Add the io_printf function to libveriuser.
- *
- * Revision 1.1  2002/05/19 05:21:00  steve
- *  Start the libveriuser library.
- *
  */
 #endif
