@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.21 2002/11/03 20:33:43 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.22 2003/02/24 06:35:45 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -148,7 +148,6 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
       }
 }
 
-
 static const struct __vpirt vpip_string_rt = {
       vpiConstant,
       string_get,
@@ -159,14 +158,40 @@ static const struct __vpirt vpip_string_rt = {
       0
 };
 
+static int free_temp_string(vpiHandle obj)
+{
+      struct __vpiStringConst*rfp = (struct __vpiStringConst*)obj;
+      assert(obj->vpi_type->type_code == vpiConstant);
 
-vpiHandle vpip_make_string_const(char*text)
+      free(rfp->value);
+      free(rfp);
+      return 1;
+}
+
+static const struct __vpirt vpip_string_temp_rt = {
+      vpiConstant,
+      string_get,
+      0,
+      string_value,
+      0,
+
+      0,
+      0,
+      0,
+
+      free_temp_string
+};
+
+
+vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 {
       struct __vpiStringConst*obj;
 
       obj = (struct __vpiStringConst*)
 	    malloc(sizeof (struct __vpiStringConst));
-      obj->base.vpi_type = &vpip_string_rt;
+      obj->base.vpi_type = persistent_flag
+	    ? &vpip_string_rt
+	    : &vpip_string_temp_rt;
       obj->value = text;
 
       return &obj->base;
@@ -557,6 +582,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.22  2003/02/24 06:35:45  steve
+ *  Interactive task calls take string arguments.
+ *
  * Revision 1.21  2002/11/03 20:33:43  steve
  *  Compiler error wrt ptrdiff_t.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.49 2003/02/23 06:41:54 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.50 2003/02/24 06:35:45 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -262,13 +262,17 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
 /*
  * These are implemented in vpi_const.cc. These are vpiHandles for
  * constants.
+ *
+ * The persistent flag to vpip_make_string_const causes the created
+ * handle to be persistent. This is necessary for cases where the
+ * string handle may be reused, which is the normal case.
  */
 struct __vpiStringConst {
       struct __vpiHandle base;
-      const char*value;
+      char*value;
 };
 
-vpiHandle vpip_make_string_const(char*text);
+vpiHandle vpip_make_string_const(char*text, bool persistent =true);
 
 struct __vpiBinaryConst {
       struct __vpiHandle base;
@@ -399,6 +403,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.50  2003/02/24 06:35:45  steve
+ *  Interactive task calls take string arguments.
+ *
  * Revision 1.49  2003/02/23 06:41:54  steve
  *  Add to interactive stop mode support for
  *  current scope, the ability to scan/traverse

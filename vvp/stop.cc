@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.3 2003/02/23 06:41:54 steve Exp $"
+#ident "$Id: stop.cc,v 1.4 2003/02/24 06:35:45 steve Exp $"
 #endif
 
 /*
@@ -60,19 +60,35 @@ static void cmd_call(unsigned argc, char*argv[])
 	    ntable = stop_current_scope->nintern;
       }
 
+	/* This is an array of vpiHandles, for passing to the created
+	   command. */
       unsigned vpi_argc = argc - 1;
       vpiHandle*vpi_argv = (vpiHandle*)calloc(vpi_argc, sizeof(vpiHandle));
+      vpiHandle*vpi_free = (vpiHandle*)calloc(vpi_argc, sizeof(vpiHandle));
 
       unsigned errors = 0;
 
       for (unsigned idx = 0 ;  idx < vpi_argc ;  idx += 1) {
 	    vpiHandle handle = 0;
+	    bool add_to_free_list = false;
 
 	      /* Detect the special case that the argument is the
 		 .(dot) string. This represents the handle for the
 		 current scope. */
 	    if (stop_current_scope && (strcmp(argv[idx+1], ".") == 0))
 		  handle = &stop_current_scope->base;
+
+	    if (argv[idx+1][0] == '"') {
+		  char*tmp = strdup(argv[idx+1]);
+		  tmp[strlen(tmp)-1] = 0;
+
+		    /* Create a temporary vpiStringConst to pass as a
+		       handle. Make it temporary so that memory is
+		       reclaimed after the call is completed. */
+		  handle = vpip_make_string_const(strdup(tmp+1), false);
+		  add_to_free_list = true;
+		  free(tmp);
+	    }
 
 	      /* Try to find the vpiHandle within this scope that has
 		 the name in argv[idx+2]. Look in the current scope. */
@@ -110,6 +126,11 @@ static void cmd_call(unsigned argc, char*argv[])
 	    }
 
 	    vpi_argv[idx] = handle;
+	    if (add_to_free_list)
+		  vpi_free[idx] = handle;
+	    else
+		  vpi_free[idx] = 0;
+
       }
 
 	/* If there are no errors so far, then make up a call to the
@@ -118,16 +139,21 @@ static void cmd_call(unsigned argc, char*argv[])
       if (errors == 0) {
 	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0,
 							vpi_argc, vpi_argv);
-	    if (call_handle == 0) {
-		  free(vpi_argv);
-		  return;
-	    }
+	    if (call_handle == 0)
+		  goto out;
 
 	    vpip_execute_vpi_call(0, call_handle);
 	    vpi_free_object(call_handle);
       }
 
+ out:
+      for (unsigned idx = 0 ;  idx < vpi_argc ;  idx += 1) {
+	    if (vpi_free[idx])
+		  vpi_free_object(vpi_free[idx]);
+      }
+
       free(vpi_argv);
+      free(vpi_free);
 }
 
 static void cmd_cont(unsigned, char*[])
@@ -319,9 +345,21 @@ static void invoke_command(char*txt)
 		 ; *cp; cp += strspn(cp, " ")) { 
 	    argv[argc] = cp;
 
-	    cp += strcspn(cp, " ");
-	    if (*cp)
-		  *cp++ = 0;
+	    if (cp[0] == '"') {
+		  char*tmp = strchr(cp+1, '"');
+		  if (tmp == 0) {
+			printf("Missing close-quote: %s\n", cp);
+			delete[]argv;
+			return;
+		  }
+
+		  cp = tmp + 1;
+
+	    } else {
+		  cp += strcspn(cp, " ");
+	    }
+
+	    if (*cp) *cp++ = 0;
 
 	    argc += 1;
       }
@@ -341,8 +379,8 @@ static void invoke_command(char*txt)
 
 		  cmd_table[idx].proc (argc, argv);
 	    }
-      }
 
+      }
 
       delete[]argv;
 }
@@ -358,12 +396,16 @@ void stop_handler(int rc)
 	    if (input == 0)
 		  break;
 
+
 	      /* Advance to the first input character. */
 	    char*first = input;
 	    while (*first && isspace(*first))
 		  first += 1;
 
-	    invoke_command(first);
+	    if (first[0] != 0) {
+		  add_history(first);
+		  invoke_command(first);
+	    }
 
 	    free(input);
       }
@@ -373,6 +415,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.4  2003/02/24 06:35:45  steve
+ *  Interactive task calls take string arguments.
+ *
  * Revision 1.3  2003/02/23 06:41:54  steve
  *  Add to interactive stop mode support for
  *  current scope, the ability to scan/traverse
