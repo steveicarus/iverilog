@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.20 2002/09/13 03:12:50 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.21 2002/09/24 04:20:32 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -84,18 +84,27 @@ extern void draw_input_from_net(ivl_nexus_t nex);
  * the vector with clr_vector so that the code generator can reuse
  * those bits.
  *
- * The xz_ok_flag is normally false. Set it to true if the result is
- * going to be further processed so that x and z values are treated
- * identically.
+ * The stuff_ok_flag is normally empty. Bits in the bitmask are set
+ * true in cases where certain special situations are allows. This
+ * might allow deeper expressions to make assumptions about the
+ * caller.
+ *
+ *   STUFF_OK_XZ -- This bit is set if the code processing the result
+ *        doesn't distinguish between x and z values.
+ *
+ *   STUFF_OK_47 -- This bit is set if the node is allowed to leave a
+ *        result in any of the 4-7 vthread bits.
  */
 struct vector_info {
       unsigned short base;
       unsigned short wid;
 };
 
-extern struct vector_info draw_eval_expr(ivl_expr_t exp, int xz_ok_flag);
+extern struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag);
 extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
-					     int xz_ok_flag);
+					     int stuff_ok_flag);
+#define STUFF_OK_XZ 0x0001
+#define STUFF_OK_47 0x0002
 
 /*
  * This function draws code to evaluate the index expression exp for
@@ -120,6 +129,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.21  2002/09/24 04:20:32  steve
+ *  Allow results in register bits 47 in certain cases.
+ *
  * Revision 1.20  2002/09/13 03:12:50  steve
  *  Optimize ==1 when in context where x vs z doesnt matter.
  *

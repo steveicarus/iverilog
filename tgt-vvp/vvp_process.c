@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.68 2002/09/13 03:12:50 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.69 2002/09/24 04:20:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -651,7 +651,7 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_false, lab_out;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cond = draw_eval_expr(exp, 1);
+      struct vector_info cond = draw_eval_expr(exp, STUFF_OK_XZ|STUFF_OK_47);
 
       assert(cond.wid == 1);
 
@@ -662,7 +662,8 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 	      thread_count, lab_false, cond.base);
 
 	/* Done with the condition expression. */
-      clr_vector(cond);
+      if (cond.base >= 8)
+	    clr_vector(cond);
 
       if (ivl_stmt_cond_true(net))
 	    rc += show_statement(ivl_stmt_cond_true(net), sscope);
@@ -960,13 +961,14 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
-      cvec = draw_eval_expr(ivl_stmt_cond_expr(net), 1);
+      cvec = draw_eval_expr(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
       if (cvec.wid > 1)
 	    cvec = reduction_or(cvec);
 
       fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, %u;\n",
 	      thread_count, out_label, cvec.base);
-      clr_vector(cvec);
+      if (cvec.base >= 8)
+	    clr_vector(cvec);
 
 	/* Draw the body of the loop. */
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
@@ -1302,6 +1304,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.69  2002/09/24 04:20:32  steve
+ *  Allow results in register bits 47 in certain cases.
+ *
  * Revision 1.68  2002/09/13 03:12:50  steve
  *  Optimize ==1 when in context where x vs z doesnt matter.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.78 2002/09/18 04:29:55 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.79 2002/09/24 04:20:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -162,27 +162,28 @@ unsigned long get_number_immediate(ivl_expr_t ex)
 }
 
 /*
- * The xz_ok_flag is true if the output is going to be further
+ * The STUFF_OK_XZ bit is true if the output is going to be further
  * processed so that x and z values are equivilent. This may allow for
  * new optimizations.
  */
 static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 					    ivl_expr_t le,
 					    ivl_expr_t re,
-					    int xz_ok_flag)
+					    int stuff_ok_flag)
 {
       unsigned wid;
       struct vector_info lv;
       unsigned long imm = get_number_immediate(re);
 
       wid = ivl_expr_width(le);
-      lv = draw_eval_expr_wid(le, wid, xz_ok_flag);
+      lv = draw_eval_expr_wid(le, wid, stuff_ok_flag);
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'E': /* === */
 	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 		    lv.base, imm, wid);
-	    clr_vector(lv);
+	    if (lv.base >= 8)
+		  clr_vector(lv);
 	    lv.base = 6;
 	    lv.wid = 1;
 	    break;
@@ -191,12 +192,13 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	      /* If this is a single bit being compared to 1, and the
 		 output doesn't care about x vs z, then just return
 		 the value itself. */
-	    if (xz_ok_flag && (lv.wid == 1) && (imm == 1))
+	    if ((stuff_ok_flag&STUFF_OK_XZ) && (lv.wid == 1) && (imm == 1))
 		  break;
 
 	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 		    lv.base, imm, wid);
-	    clr_vector(lv);
+	    if (lv.base >= 8)
+		  clr_vector(lv);
 	    lv.base = 4;
 	    lv.wid = 1;
 	    break;
@@ -204,7 +206,8 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	  case 'N': /* !== */
 	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 		    lv.base, imm, wid);
-	    clr_vector(lv);
+	    if (lv.base >= 8)
+		  clr_vector(lv);
 	    lv.base = 6;
 	    lv.wid = 1;
 	    fprintf(vvp_out, "    %%inv 6, 1;\n");
@@ -214,12 +217,13 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	      /* If this is a single bit being compared to 0, and the
 		 output doesn't care about x vs z, then just return
 		 the value itself. */
-	    if (xz_ok_flag && (lv.wid == 1) && (imm == 0))
+	    if ((stuff_ok_flag&STUFF_OK_XZ) && (lv.wid == 1) && (imm == 0))
 		  break;
 
 	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 		    lv.base, imm, wid);
-	    clr_vector(lv);
+	    if (lv.base >= 8)
+		  clr_vector(lv);
 	    lv.base = 4;
 	    lv.wid = 1;
 	    fprintf(vvp_out, "    %%inv 4, 1;\n");
@@ -228,6 +232,11 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	  default:
 	    assert(0);
       }
+
+	/* In the special case that 47 bits are ok, and this really is
+	   a single bit value, then we are done. */
+      if ((lv.wid == 1) && (ewid == 1) && (stuff_ok_flag&STUFF_OK_47))
+	    return lv;
 
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
@@ -256,7 +265,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 
 static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 					      unsigned ewid,
-					      int xz_ok_flag)
+					      int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -268,19 +277,19 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 
       if ((ivl_expr_type(re) == IVL_EX_ULONG)
 	  && (0 == (ivl_expr_uvalue(re) & ~0xffff)))
-	    return draw_eq_immediate(exp, ewid, le, re, xz_ok_flag);
+	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
       if ((ivl_expr_type(re) == IVL_EX_NUMBER)
 	  && (! number_is_unknown(re))
 	  && number_is_immediate(re, 16))
-	    return draw_eq_immediate(exp, ewid, le, re, xz_ok_flag);
+	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
       wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
 	    wid = ivl_expr_width(re);
 
-      lv = draw_eval_expr_wid(le, wid, xz_ok_flag);
-      rv = draw_eval_expr_wid(re, wid, xz_ok_flag);
+      lv = draw_eval_expr_wid(le, wid, stuff_ok_flag&STUFF_OK_XZ);
+      rv = draw_eval_expr_wid(re, wid, stuff_ok_flag&STUFF_OK_XZ);
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'E': /* === */
@@ -346,6 +355,10 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	    assert(0);
       }
 
+      if ((stuff_ok_flag&STUFF_OK_47) && (wid == 1)) {
+	    return lv;
+      }
+
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
@@ -369,7 +382,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
       struct vector_info rv;
 
 
-      lv = draw_eval_expr(le, 1);
+      lv = draw_eval_expr(le, STUFF_OK_XZ);
 
       if ((lv.base >= 4) && (lv.wid > 1)) {
 	    struct vector_info tmp;
@@ -381,7 +394,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
 	    lv = tmp;
       }
 
-      rv = draw_eval_expr(re, 1);
+      rv = draw_eval_expr(re, STUFF_OK_XZ);
       if ((rv.base >= 4) && (rv.wid > 1)) {
 	    struct vector_info tmp;
 	    clr_vector(rv);
@@ -441,7 +454,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
-      lv = draw_eval_expr_wid(le, wid, 1);
+      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
 
 	/* if the left operand has width, then evaluate the single-bit
 	   logical equivilent. */
@@ -455,7 +468,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
 	    lv = tmp;
       }
 
-      rv = draw_eval_expr_wid(re, wid, 1);
+      rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
 
 	/* if the right operand has width, then evaluate the single-bit
 	   logical equivilent. */
@@ -511,7 +524,9 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
-static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
+static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
+					      unsigned wid,
+					      int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
@@ -525,8 +540,8 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
       if (ivl_expr_width(re) > owid)
 	    owid = ivl_expr_width(re);
 
-      lv = draw_eval_expr_wid(le, owid, 1);
-      rv = draw_eval_expr_wid(re, owid, 1);
+      lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
+      rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'G':
@@ -562,6 +577,12 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
       clr_vector(lv);
       clr_vector(rv);
 
+      if ((stuff_ok_flag&STUFF_OK_47) && (wid == 1)) {
+	    lv.base = 5;
+	    lv.wid = wid;
+	    return lv;
+      }
+
 	/* Move the result out out the 4-7 bit that the compare
 	   uses. This is because that bit may be clobbered by other
 	   expressions. */
@@ -585,8 +606,8 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       struct vector_info lv;
       struct vector_info rv;
 
-      lv = draw_eval_expr_wid(le, wid, 1);
-      rv = draw_eval_expr_wid(re, wid, 1);
+      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
+      rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
 
 	/* The result goes into the left operand, and that is returned
 	   as the result. The instructions do not allow the lv value
@@ -728,7 +749,7 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
       struct vector_info lv;
       unsigned long imm;
 
-      lv = draw_eval_expr_wid(le, wid, 1);
+      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       assert(lv.wid == wid);
 
       imm = get_number_immediate(re);
@@ -765,7 +786,7 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
       struct vector_info lv;
       unsigned long imm;
 
-      lv = draw_eval_expr_wid(le, wid, 1);
+      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       assert(lv.wid == wid);
 
       imm = get_number_immediate(re);
@@ -783,7 +804,7 @@ static struct vector_info draw_mul_immediate(ivl_expr_t le,
       struct vector_info lv;
       unsigned long imm;
 
-      lv = draw_eval_expr_wid(le, wid, 1);
+      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       assert(lv.wid == wid);
 
       imm = get_number_immediate(re);
@@ -829,8 +850,8 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	  && number_is_immediate(re, 16))
 	    return draw_mul_immediate(le, re, wid);
 
-      lv = draw_eval_expr_wid(le, wid, 1);
-      rv = draw_eval_expr_wid(re, wid, 1);
+      lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
+      rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
 
       assert(lv.wid == wid);
       assert(rv.wid == wid);
@@ -882,7 +903,7 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_binary_expr(ivl_expr_t exp,
 					   unsigned wid,
-					   int xz_ok_flag)
+					   int stuff_ok_flag)
 {
       struct vector_info rv;
 
@@ -895,14 +916,14 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case 'e': /* == */
 	  case 'N': /* !== */
 	  case 'n': /* != */
-	    rv = draw_binary_expr_eq(exp, wid, xz_ok_flag);
+	    rv = draw_binary_expr_eq(exp, wid, stuff_ok_flag);
 	    break;
 
 	  case '<':
 	  case '>':
 	  case 'L': /* <= */
 	  case 'G': /* >= */
-	    rv = draw_binary_expr_le(exp, wid);
+	    rv = draw_binary_expr_le(exp, wid, stuff_ok_flag);
 	    break;
 
 	  case '+':
@@ -1296,7 +1317,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 
 	/* Evaluate the bit select base expression and store the
 	   result into index register 0. */
-      shiv = draw_eval_expr(shift, 1);
+      shiv = draw_eval_expr(shift, STUFF_OK_XZ);
       fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       clr_vector(shiv);
 
@@ -1340,7 +1361,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       lab_false = local_count++;
       lab_out = local_count++;
 
-      tmp = draw_eval_expr(cond, 1);
+      tmp = draw_eval_expr(cond, STUFF_OK_XZ);
       clr_vector(tmp);
 
       if ((tmp.base >= 4) && (tmp.wid > 1)) {
@@ -1621,7 +1642,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 
       switch (ivl_expr_opcode(exp)) {
 	  case '~':
-	    res = draw_eval_expr_wid(sub, wid, 1);
+	    res = draw_eval_expr_wid(sub, wid, STUFF_OK_XZ);
 	    switch (res.base) {
 		case 0:
 		  res.base = 1;
@@ -1644,7 +1665,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		 complement of the number. That is the 1's complement
 		 (bitwise invert) with a 1 added in. Note that the
 		 %sub subtracts -1 (1111...) to get %add of +1. */
-	    res = draw_eval_expr_wid(sub, wid, 1);
+	    res = draw_eval_expr_wid(sub, wid, STUFF_OK_XZ);
 	    switch (res.base) {
 		case 0:
 		  res.base = 0;
@@ -1664,7 +1685,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '!':
-	    res = draw_eval_expr(sub, 1);
+	    res = draw_eval_expr(sub, STUFF_OK_XZ);
 	    if (res.wid > 1) {
 		    /* a ! on a vector is implemented with a reduction
 		       nor. Generate the result into the first bit of
@@ -1767,7 +1788,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 }
 
 struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
-				      int xz_ok_flag)
+				      int stuff_ok_flag)
 {
       struct vector_info res;
 
@@ -1786,7 +1807,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    break;
 
 	  case IVL_EX_BINARY:
-	    res = draw_binary_expr(exp, wid, xz_ok_flag);
+	    res = draw_binary_expr(exp, wid, stuff_ok_flag);
 	    break;
 
 	  case IVL_EX_BITSEL:
@@ -1833,13 +1854,16 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
       return res;
 }
 
-struct vector_info draw_eval_expr(ivl_expr_t exp, int xz_ok_flag)
+struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 {
-      return draw_eval_expr_wid(exp, ivl_expr_width(exp), xz_ok_flag);
+      return draw_eval_expr_wid(exp, ivl_expr_width(exp), stuff_ok_flag);
 }
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.79  2002/09/24 04:20:32  steve
+ *  Allow results in register bits 47 in certain cases.
+ *
  * Revision 1.78  2002/09/18 04:29:55  steve
  *  Add support for binary NOR operator.
  *
