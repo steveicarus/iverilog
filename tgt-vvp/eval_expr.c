@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.84 2002/11/07 03:12:17 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.85 2002/11/21 22:42:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -661,15 +661,25 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 	    }
       }
 
-      lv = draw_eval_expr_wid(le, wid, 0);
 
       switch (ivl_expr_opcode(exp)) {
 
 	  case 'l': /* << (left shift) */
+	    lv = draw_eval_expr_wid(le, wid, 0);
 	    fprintf(vvp_out, "    %%shiftl/i0  %u, %u;\n", lv.base, lv.wid);
 	    break;
 
 	  case 'r': /* >> (unsigned right shift) */
+
+	      /* with the right shift, there may be high bits that are
+		 shifted into the desired width of the expression, so
+		 we let the expression size itself, if it is bigger
+		 then what is requested of us. */
+	    if (wid > ivl_expr_width(le)) {
+		  lv = draw_eval_expr_wid(le, wid, 0);
+	    } else {
+		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
+	    }
 	    fprintf(vvp_out, "    %%shiftr/i0  %u, %u;\n", lv.base, lv.wid);
 	    break;
 
@@ -1927,6 +1937,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.85  2002/11/21 22:42:48  steve
+ *  Allow right values of right shift to shift in.
+ *
  * Revision 1.84  2002/11/07 03:12:17  steve
  *  Vectorize load from REG variables.
  *
