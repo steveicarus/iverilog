@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.15 1999/05/20 04:31:45 steve Exp $"
+#ident "$Id: pform.h,v 1.16 1999/05/29 02:36:17 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -62,22 +62,30 @@ class PExpr;
  * not in any way preserved once parsing is done.
  */
 
+/* This is information about port name information for named port
+   connections. */
+struct portname_t {
+      string name;
+      PExpr*parm;
+};
+
+/* The lgate is gate instantiation information. */
 struct lgate {
       lgate(int =0)
-      : parms(0), lineno(0)
+      : parms(0), parms_by_name(0), lineno(0)
       { range[0] = 0;
         range[1] = 0;
       }
 
       string name;
       svector<PExpr*>*parms;
+      svector<portname_t*>*parms_by_name;
 
       PExpr*range[2];
 
       string file;
       unsigned lineno;
 };
-
 
 /*
  * The parser uses startmodule and endmodule together to build up a
@@ -140,6 +148,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.16  1999/05/29 02:36:17  steve
+ *  module parameter bind by name.
+ *
  * Revision 1.15  1999/05/20 04:31:45  steve
  *  Much expression parsing work,
  *  mark continuous assigns with source line info,

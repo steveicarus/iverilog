@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.28 1999/05/27 04:13:08 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.29 1999/05/29 02:36:17 steve Exp $"
 #endif
 
 /*
@@ -340,6 +340,69 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
       else
 	    my_name = path + "." + get_name();
 
+      const svector<PExpr*>*pins;
+
+	// Detect binding by name. If I am binding by name, then make
+	// up a pins array that reflects the positions of the named
+	// ports. If this is simply positional binding in the first
+	// place, then get the binding from the base class.
+      if (pins_) {
+	    unsigned nexp = rmod->ports.size();
+	    svector<PExpr*>*exp = new svector<PExpr*>(nexp);
+
+	      // Scan the bindings, matching them with port names.
+	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+
+		    // Given a binding, look at the module port names
+		    // for the position that matches the binding name.
+		  unsigned pidx = 0;
+		  while (pidx < nexp) {
+			if (pins_[idx].name == rmod->ports[pidx]->name)
+			      break;
+
+			pidx += 1;
+		  }
+
+		  if (pidx == nexp) {
+			cerr << get_line() << ": port ``" <<
+			      pins_[idx].name << "'' is not a port of "
+			     << get_name() << "." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		  if ((*exp)[pidx]) {
+			cerr << get_line() << ": port ``" <<
+			      pins_[idx].name << "'' already bound." <<
+			      endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // OK, od the binding by placing the expression in
+		    // the right place.
+		  (*exp)[pidx] = pins_[idx].parm;
+	    }
+
+	    pins = exp;
+
+      } else {
+
+	    if (pin_count() != rmod->ports.size()) {
+		  cerr << get_line() << ": Wrong number "
+			"of parameters. Expecting " << rmod->ports.size() <<
+			", got " << pin_count() << "."
+		       << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	      // No named bindings, just use the positional list I
+	      // already have.
+	    assert(pin_count() == rmod->ports.size());
+	    pins = get_pins();
+      }
+
 	// Elaborate this instance of the module. The recursive
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
@@ -347,24 +410,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
       rmod->elaborate(des, my_name);
 
 	// Now connect the ports of the newly elaborated designs to
-	// the expressions that are the instantiation parameters.
+	// the expressions that are the instantiation parameters. Scan
+	// the pins, elaborate the expressions attached to them, and
+	// bind them to the port of the elaborated module.
 
-      if (pin_count() != rmod->ports.size()) {
-	    cerr << get_line() << ": Wrong number "
-		  "of parameters. Expecting " << rmod->ports.size() <<
-		  ", got " << pin_count() << "."
-		 << endl;
-	    des->errors += 1;
-	    return;
-      }
-
-      assert(pin_count() == rmod->ports.size());
-
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < pins->count() ;  idx += 1) {
 	      // Skip unconnected module ports.
-	    if (pin(idx) == 0)
+	    if ((*pins)[idx] == 0)
 		  continue;
-	    NetNet*sig = pin(idx)->elaborate_net(des, path);
+	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path);
 	    if (sig == 0) {
 		  cerr << "Expression too complicated for elaboration." << endl;
 		  continue;
@@ -1193,6 +1247,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.29  1999/05/29 02:36:17  steve
+ *  module parameter bind by name.
+ *
  * Revision 1.28  1999/05/27 04:13:08  steve
  *  Handle expression bit widths with non-fatal errors.
  *

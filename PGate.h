@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.5 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: PGate.h,v 1.6 1999/05/29 02:36:17 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -41,7 +41,7 @@ class Module;
 class PGate : public LineInfo {
       
     public:
-      explicit PGate(const string&name, const svector<PExpr*>&pins, long del)
+      explicit PGate(const string&name, svector<PExpr*>*pins, long del)
       : name_(name), delay_(del), pins_(pins) { }
 
       virtual ~PGate() { }
@@ -50,19 +50,21 @@ class PGate : public LineInfo {
 
       long get_delay() const { return delay_; }
 
-      unsigned pin_count() const { return pins_.count(); }
-      const PExpr*pin(unsigned idx) const { return pins_[idx]; }
+      unsigned pin_count() const { return pins_? pins_->count() : 0; }
+      const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
 
     protected:
+      const svector<PExpr*>* get_pins() const { return pins_; }
+
       void dump_pins(ostream&out) const;
 
     private:
       const string name_;
       const unsigned long delay_;
-      svector<PExpr*> pins_;
+      svector<PExpr*>*pins_;
 
     private: // not implemented
       PGate(const PGate&);
@@ -76,8 +78,8 @@ class PGate : public LineInfo {
 class PGAssign  : public PGate {
 
     public:
-      explicit PGAssign(const svector<PExpr*>&pins)
-      : PGate("", pins, 0) { assert(pins.count() == 2); }
+      explicit PGAssign(svector<PExpr*>*pins)
+      : PGate("", pins, 0) { assert(pins->count() == 2); }
 
       void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
@@ -106,7 +108,7 @@ class PGBuiltin  : public PGate {
 
     public:
       explicit PGBuiltin(Type t, const string&name,
-			 const svector<PExpr*>&pins, long del = 0)
+			 svector<PExpr*>*pins, long del = 0)
       : PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
       {  }
 
@@ -126,21 +128,36 @@ class PGBuiltin  : public PGate {
 /*
  * This kind of gate is an instantiation of a module. The stored type
  * is the name of a module definition somewhere in the pform. This
- * type als handles UDP devices, because it is generally not known at
+ * type also handles UDP devices, because it is generally not known at
  * parse time whether a name belongs to a module or a UDP.
  */
 class PGModule  : public PGate {
 
     public:
+	// If the binding of ports is by position, this constructor
+	// builds everything all at once.
       explicit PGModule(const string&type, const string&name,
-			const svector<PExpr*>&pins)
-      : PGate(name, pins, 0), type_(type) { }
+			svector<PExpr*>*pins)
+      : PGate(name, pins, 0), type_(type), pins_(0), npins_(0) { }
+
+	// If the binding of ports is by name, this constructor takes
+	// the bindings and stores them for later elaboration.
+      struct bind_t {
+	    string name;
+	    PExpr* parm;
+      };
+      explicit PGModule(const string&type, const string&name,
+			bind_t*pins, unsigned npins)
+      : PGate(name, 0, 0), type_(type), pins_(pins), npins_(npins) { }
+
 
       virtual void dump(ostream&out) const;
       virtual void elaborate(Design*, const string&path) const;
 
     private:
       string type_;
+      bind_t*pins_;
+      unsigned npins_;
 
       void elaborate_mod_(Design*, Module*mod, const string&path) const;
       void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
@@ -148,6 +165,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.6  1999/05/29 02:36:17  steve
+ *  module parameter bind by name.
+ *
  * Revision 1.5  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

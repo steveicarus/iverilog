@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.16 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.17 1999/05/29 02:36:17 steve Exp $"
 #endif
 
 /*
@@ -111,11 +111,17 @@ void PEBinary::dump(ostream&out) const
 	  case 'E':
 	    out << "===";
 	    break;
+	  case 'l':
+	    out << "<<";
+	    break;
 	  case 'n':
 	    out << "!=";
 	    break;
 	  case 'N':
 	    out << "!==";
+	    break;
+	  case 'r':
+	    out << ">>";
 	    break;
 	  default:
 	    out << op_;
@@ -226,7 +232,15 @@ void PGBuiltin::dump(ostream&out) const
 void PGModule::dump(ostream&out) const
 {
       out << "    " << type_ << " " << get_name() << "(";
-      dump_pins(out);
+      if (pins_) {
+	    out << "." << pins_[0].name << "(" << *pins_[0].parm << ")";
+	    for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
+		  out << ", ." << pins_[idx].name << "(" <<
+			*pins_[idx].parm << ")";
+	    }
+      } else {
+	    dump_pins(out);
+      }
       out << ");" << endl;
 }
 
@@ -454,6 +468,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.17  1999/05/29 02:36:17  steve
+ *  module parameter bind by name.
+ *
  * Revision 1.16  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

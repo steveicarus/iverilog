@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.19 1999/05/20 04:31:45 steve Exp $"
+#ident "$Id: pform.cc,v 1.20 1999/05/29 02:36:17 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -237,14 +237,20 @@ void pform_make_udp(string*name, list<string>*parms,
 /*
  * pform_makegates is called when a list of gates (with the same type)
  * are ready to be instantiated. The function runs through the list of
- * gates and makes an array of wires for the ports of the gate. It
- * then calls the pform_makegate function to make the individual gate.
+ * gates and calls the pform_makegate function to make the individual gate.
  */
 void pform_makegate(PGBuiltin::Type type,
 		    unsigned long delay_val,
 		    const lgate&info)
 {
-      PGBuiltin*cur = new PGBuiltin(type, info.name, *info.parms, delay_val);
+      if (info.parms_by_name) {
+	    cerr << info.file << ":" << info.lineno << ": Gates do not "
+		  "have port names." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      PGBuiltin*cur = new PGBuiltin(type, info.name, info.parms, delay_val);
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
@@ -267,9 +273,13 @@ void pform_makegates(PGBuiltin::Type type,
       delete gates;
 }
 
+/*
+ * A module is different from a gate in that there are different
+ * constraints, and sometimes different syntax.
+ */
 static void pform_make_modgate(const string&type,
 			       const string&name,
-			       const svector<PExpr*>&wires,
+			       svector<PExpr*>*wires,
 			       const string&fn, unsigned ln)
 {
       if (name == "") {
@@ -285,17 +295,46 @@ static void pform_make_modgate(const string&type,
       cur_module->add_gate(cur);
 }
 
+static void pform_make_modgate(const string&type,
+			       const string&name,
+			       svector<portname_t*>*bind,
+			       const string&fn, unsigned ln)
+{
+      if (name == "") {
+	    cerr << fn << ":" << ln << ": Instantiation of " << type
+		 << " module requires an instance name." << endl;
+	    error_count += 1;
+	    return;
+      }
+
+      unsigned npins = bind->count();
+      PGModule::bind_t*pins = new PGModule::bind_t[npins];
+      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
+	    portname_t*curp = (*bind)[idx];
+	    pins[idx].name = curp->name;
+	    pins[idx].parm = curp->parm;
+      }
+
+      PGate*cur = new PGModule(type, name, pins, npins);
+      cur->set_file(fn);
+      cur->set_lineno(ln);
+      cur_module->add_gate(cur);
+}
+
 void pform_make_modgates(const string&type, svector<lgate>*gates)
 {
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
 
-	    if (cur.parms) {
-		  svector<PExpr*>wires = *cur.parms;
-		  pform_make_modgate(type, cur.name, wires, cur.file,
+	    if (cur.parms_by_name) {
+		  pform_make_modgate(type, cur.name, cur.parms_by_name,
+				     cur.file, cur.lineno);
+
+	    } else if (cur.parms) {
+		  pform_make_modgate(type, cur.name, cur.parms, cur.file,
 				     cur.lineno);
 	    } else {
-		  svector<PExpr*>wires (0);
+		  svector<PExpr*>*wires = new svector<PExpr*>(0);
 		  pform_make_modgate(type, cur.name, wires, cur.file,
 				     cur.lineno);
 	    }
@@ -306,9 +345,9 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
 
 PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval)
 {
-      svector<PExpr*> wires (2);
-      wires[0] = lval;
-      wires[1] = rval;
+      svector<PExpr*>*wires = new svector<PExpr*>(2);
+      (*wires)[0] = lval;
+      (*wires)[1] = rval;
       PGAssign*cur = new PGAssign(wires);
       cur_module->add_gate(cur);
       return cur;
@@ -517,6 +556,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.20  1999/05/29 02:36:17  steve
+ *  module parameter bind by name.
+ *
  * Revision 1.19  1999/05/20 04:31:45  steve
  *  Much expression parsing work,
  *  mark continuous assigns with source line info,

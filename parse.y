@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.28 1999/05/27 03:31:29 steve Exp $"
+#ident "$Id: parse.y,v 1.29 1999/05/29 02:36:17 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -39,6 +39,9 @@ extern void lex_end_table();
 
       lgate*gate;
       svector<lgate>*gates;
+
+      portname_t*portname;
+      svector<portname_t*>*portnames;
 
       PExpr*expr;
       svector<PExpr*>*exprs;
@@ -95,6 +98,9 @@ extern void lex_end_table();
 
 %type <wire> port
 %type <wires> list_of_ports list_of_ports_opt
+
+%type <portname> port_name
+%type <portnames> port_name_list
 
 %type <citem>  case_item
 %type <citems> case_items
@@ -552,11 +558,10 @@ gate_instance
 	| IDENTIFIER '(' port_name_list ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = *$1;
-		  tmp->parms = 0;
+		  tmp->parms_by_name = $3;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete $1;
-		  yyerror(@1, "Sorry, named port connections not supported.");
 		  $$ = tmp;
 		}
 	;
@@ -883,21 +888,41 @@ port
 
 port_name
 	: PORTNAME '(' expression ')'
-		{ delete $1;
-		  delete $3;
+		{ portname_t*tmp = new portname_t;
+		  tmp->name = *$1;
+		  tmp->parm = $3;
+		  delete $1;
+		  $$ = tmp;
 		}
 	| PORTNAME '(' error ')'
 		{ yyerror(@3, "invalid port connection expression.");
+		  portname_t*tmp = new portname_t;
+		  tmp->name = *$1;
+		  tmp->parm = 0;
 		  delete $1;
+		  $$ = tmp;
 		}
 	| PORTNAME '(' ')'
-		{ delete $1;
+		{ portname_t*tmp = new portname_t;
+		  tmp->name = *$1;
+		  tmp->parm = 0;
+		  delete $1;
+		  $$ = tmp;
 		}
 	;
 
 port_name_list
 	: port_name_list ',' port_name
+		{ svector<portname_t*>*tmp;
+		  tmp = new svector<portname_t*>(*$1, $3);
+		  delete $1;
+		  $$ = tmp;
+		}
 	| port_name
+		{ svector<portname_t*>*tmp = new svector<portname_t*>(1);
+		  (*tmp)[0] = $1;
+		  $$ = tmp;
+		}
 	;
 
 port_type
