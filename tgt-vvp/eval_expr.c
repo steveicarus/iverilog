@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.98 2003/06/14 22:18:54 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.99 2003/06/15 22:49:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1555,7 +1555,7 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 {
-      struct vector_info res, tmp;
+      struct vector_info res, tru, fal, tst;
 
       unsigned lab_true, lab_false, lab_out;
       ivl_expr_t cond = ivl_expr_oper1(exp);
@@ -1566,59 +1566,69 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       lab_false = local_count++;
       lab_out = local_count++;
 
-      tmp = draw_eval_expr(cond, STUFF_OK_XZ);
-      clr_vector(tmp);
+	/* Evaluate the condition expression, and if necessary reduce
+	   it to a single bit. */
+      tst = draw_eval_expr(cond, STUFF_OK_XZ);
+      if ((tst.base >= 4) && (tst.wid > 1)) {
+	    struct vector_info tmp;
 
-      if ((tmp.base >= 4) && (tmp.wid > 1)) {
 	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n",
-		    tmp.base, tmp.base, tmp.wid);
-	    tmp.wid = 1;
+		    tst.base, tst.base, tst.wid);
+
+	    tmp = tst;
+	    tmp.base += 1;
+	    tmp.wid -= 1;
+	    clr_vector(tmp);
+
+	    tst.wid = 1;
       }
 
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
+      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
+	      thread_count, lab_true, tst.base);
+
+      tru = draw_eval_expr_wid(true_ex, wid, 0);
+
+	/* The true result must be in a writable register, because the
+	   blend might want to manipulate it. */
+      if (tru.base < 4) {
+	    struct vector_info tmp;
+	    tmp.base = allocate_vector(wid);
+	    tmp.wid = wid;
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+		    tmp.base, tru.base, wid);
+	    tru = tmp;
+      }
 
       fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
-	      thread_count, lab_true, tmp.base);
+	      thread_count, lab_out, tst.base);
+
+      fprintf(vvp_out, "T_%d.%d ; End of true expr.\n",
+	      thread_count, lab_true);
+
+      fal = draw_eval_expr_wid(false_ex, wid, 0);
+
       fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
-	      thread_count, lab_false, tmp.base);
+	      thread_count, lab_false, tst.base);
 
-	/* Ambiguous case. Evaluate both true and false expressions,
-	   and use %blend to merge them. */
+      fprintf(vvp_out, " ; End of false expr.\n");
 
-      tmp = draw_eval_expr_wid(true_ex, wid, 0);
-      fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
-      clr_vector(tmp);
+      clr_vector(tst);
+      clr_vector(fal);
 
-      tmp = draw_eval_expr_wid(false_ex, wid, 0);
-      fprintf(vvp_out, "    %%blend  %u, %u, %u;\n", res.base, tmp.base, wid);
-      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
-      if (tmp.base >= 8)
-	    clr_vector(tmp);
+      fprintf(vvp_out, "    %%blend  %u, %u, %u; Condition unknown.\n",
+	      tru.base, fal.base, wid);
+      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n",
+	      thread_count, lab_out, tst.base);
 
-	/* This is the true case. Just evaluate the true expression. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
-      clear_expression_lookaside();
-
-      tmp = draw_eval_expr_wid(true_ex, wid, 0);
-      fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
-      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
-      if (tmp.base >= 8)
-	    clr_vector(tmp);
-
-
-	/* This is the false case. Just evaluate the false expression. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
-      clear_expression_lookaside();
-
-      tmp = draw_eval_expr_wid(false_ex, wid, 0);
-      fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
-      if (tmp.base >= 8)
-	    clr_vector(tmp);
+      fprintf(vvp_out, "    %%mov %u, %u, %u; Return false value\n",
+	      tru.base, fal.base, wid);
 
 	/* This is the out label. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
       clear_expression_lookaside();
+
+      res = tru;
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
@@ -2026,6 +2036,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.99  2003/06/15 22:49:32  steve
+ *  More efficient code for ternary expressions.
+ *
  * Revision 1.98  2003/06/14 22:18:54  steve
  *  Sign extend signed vectors.
  *
