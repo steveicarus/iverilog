@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.4 2000/06/01 02:31:39 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.5 2000/06/13 05:22:16 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -48,6 +48,58 @@ NetExpr*PEBinary::elaborate_pexpr (Design*des, NetScope*scope) const
       }
 
       NetEBinary*tmp = elaborate_expr_base_(des, lp, rp);
+      return tmp;
+}
+
+/*
+ * Event though parameters are not generally sized, parameter
+ * expressions can include concatenation expressions. This requires
+ * that the subexpressions all have well-defined size (in spite of
+ * being in a parameter expression) in order to get a defined
+ * value. The sub-expressions themsilves must also be value parameter
+ * expressions.
+ */
+NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+      unsigned repeat = 1;
+
+	/* If there is a repeat expression, then evaluate the constant
+	   value and set the repeat count.
+
+	   XXXX Potential bug XXX In principle, the repeat expression
+	   can have a parameter name in it. Since where are in the
+	   working of parameters now, we will not be able to
+	   accurately evaluate such expressions. So eventually, I will
+	   need to be able to defer the evaluation of the expression. */
+      if (repeat_) {
+	    verinum*vrep = repeat_->eval_const(des, scope->name());
+	    if (vrep == 0) {
+		  cerr << get_line() << ": error: "
+			"concatenation repeat expression cannot be evaluated."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    repeat = vrep->as_ulong();
+	    delete vrep;
+      }
+
+	/* Make the empty concat expression. */
+      NetEConcat*tmp = new NetEConcat(parms_.count(), repeat);
+      tmp->set_line(*this);
+
+	/* Elaborate all the operands and attach them to the concat
+	   node. Use the elaborate_pexpr method instead of the
+	   elaborate_expr method. */
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    assert(parms_[idx]);
+	    NetExpr*ex = parms_[idx]->elaborate_pexpr(des, scope);
+	    if (ex == 0) continue;
+	    ex->set_line(*parms_[idx]);
+	    tmp->set(idx, ex);
+      }
+
       return tmp;
 }
 
@@ -111,6 +163,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.5  2000/06/13 05:22:16  steve
+ *  Support concatenation in parameter expressions.
+ *
  * Revision 1.4  2000/06/01 02:31:39  steve
  *  Parameters can be strings.
  *

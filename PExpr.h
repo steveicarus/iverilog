@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.39 2000/06/01 02:31:39 steve Exp $"
+#ident "$Id: PExpr.h,v 1.40 2000/06/13 05:22:16 steve Exp $"
 #endif
 
 # include  <string>
@@ -114,6 +114,7 @@ class PEConcat : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
       virtual bool is_constant(Module*) const;
 
     private:
@@ -380,6 +381,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.40  2000/06/13 05:22:16  steve
+ *  Support concatenation in parameter expressions.
+ *
  * Revision 1.39  2000/06/01 02:31:39  steve
  *  Parameters can be strings.
  *
