@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.8 2002/05/11 04:39:35 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.9 2002/05/17 04:12:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -35,26 +35,35 @@
 # include  <stdlib.h>
 # include  <assert.h>
 
+# include  <stdio.h>
+
 extern const char hex_digits[256];
 static char buf[4096];
+
+static void memory_make_word_handles(struct __vpiMemory*rfp);
 
 struct __vpiMemoryWord {
       struct __vpiHandle base;
       struct __vpiMemory*mem;
-      int index;
-      struct __vpiDecConst*left_range;
-      struct __vpiDecConst*right_range;
+      struct __vpiDecConst index;
 };
 
 struct __vpiMemory {
       struct __vpiHandle base;
       struct __vpiScope* scope;
-	/* The signal has a name (this points to static memory.) */
-      struct __vpiMemoryWord word;
+      struct __vpiMemoryWord*words;
       vvp_memory_t mem;
-      struct __vpiDecConst*left_range;
-      struct __vpiDecConst*right_range;
+      struct __vpiDecConst left_range;
+      struct __vpiDecConst right_range;
+      struct __vpiDecConst word_left_range;
+      struct __vpiDecConst word_right_range;
     
+};
+
+struct __vpiMemWordIterator {
+      struct __vpiHandle base;
+      struct __vpiMemory*mem;
+      unsigned next;
 };
 
 static vpiHandle memory_get_handle(int code, vpiHandle obj)
@@ -65,10 +74,10 @@ static vpiHandle memory_get_handle(int code, vpiHandle obj)
 
       switch(code){
 	  case vpiLeftRange:
-	    return &(rfp->left_range->base);
+	    return &(rfp->left_range.base);
 
 	  case vpiRightRange:
-	    return &(rfp->right_range->base);
+	    return &(rfp->right_range.base);
 
 	  case vpiScope:
 	    return &rfp->scope->base;
@@ -108,22 +117,17 @@ static char* memory_get_str(int code, vpiHandle ref)
       return 0;
 }
 
-
 static vpiHandle memory_scan(vpiHandle ref, int)
 {
-      struct __vpiIterator*hp = (struct __vpiIterator*)ref;
+      struct __vpiMemWordIterator*obj = (struct __vpiMemWordIterator*)ref;
       assert(ref->vpi_type->type_code == vpiIterator);
 
-      struct __vpiMemory*rfp = (struct __vpiMemory*)hp->args;
-      assert(rfp->base.vpi_type->type_code==vpiMemory);
-
-      if (hp->next >= hp->nargs) {
+      if (obj->next >= memory_size(obj->mem->mem)) {
 	    vpi_free_object(ref);
 	    return 0;
       }
 
-      rfp->word.index = hp->next++;
-      return &rfp->word.base;
+      return &obj->mem->words[obj->next++].base;
 }
 
 static int mem_iter_free_object(vpiHandle ref)
@@ -144,6 +148,7 @@ static const struct __vpirt vpip_mem_iter_rt = {
       &mem_iter_free_object
 };
 
+
 static vpiHandle memory_iterate(int code, vpiHandle ref)
 {
       struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
@@ -151,13 +156,15 @@ static vpiHandle memory_iterate(int code, vpiHandle ref)
 
       switch (code) {
 	  case vpiMemoryWord: {
-		struct __vpiIterator*res = (struct __vpiIterator*)
-		      calloc(1, sizeof(struct __vpiIterator));
+		memory_make_word_handles(rfp);
+
+		struct __vpiMemWordIterator*res =
+		      (struct __vpiMemWordIterator*)
+		      calloc(1, sizeof(struct __vpiMemWordIterator));
 		assert(res);
 		res->base.vpi_type = &vpip_mem_iter_rt;
-		res->args = (vpiHandle *)&rfp->base;
-		res->nargs = memory_size(rfp->mem);
-		res->next  = 0;
+		res->mem  = rfp;
+		res->next = 0;
 		return &(res->base);
 	  }
       }
@@ -173,8 +180,9 @@ static vpiHandle memory_index(vpiHandle ref, int index)
       index -= memory_root(rfp->mem);
       if (index >= (int)memory_size(rfp->mem)) return 0;
       if (index < 0) return 0;
-      rfp->word.index = index;
-      return &rfp->word.base;
+
+      memory_make_word_handles(rfp);
+      return &(rfp->words[index].base);
 }
 
 //==============================
@@ -186,13 +194,17 @@ static vpiHandle memory_word_get_handle(int code, vpiHandle obj)
       assert(obj->vpi_type->type_code==vpiMemoryWord);
 
       switch(code){
-      case vpiLeftRange:
-	  return &(rfp->left_range->base);
+	  case vpiLeftRange:
+	    return &(rfp->mem->word_left_range.base);
 
-      case vpiRightRange:
-	  return &(rfp->right_range->base);
+	  case vpiRightRange:
+	    return &(rfp->mem->word_right_range.base);
+
+	  case vpiIndex:
+	    return &(rfp->index.base);
       }
 
+      
       return 0;
 }
 
@@ -220,7 +232,8 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
 	/* Get the width of the memory, and the byte index of the
 	   first byte of the word. */
       unsigned width = memory_data_width(rfp->mem->mem);
-      unsigned bidx = rfp->index * ((width+3)&~3);
+      unsigned word_offset = memory_root(rfp->mem->mem);
+      unsigned bidx = (rfp->index.value - word_offset) * ((width+3)&~3);
 
       switch (val->format) {
 
@@ -272,8 +285,9 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
 		unsigned char*bits = new unsigned char[width];
 		vpip_dec_str_to_bits(bits, width, val->value.str, false);
 
-		for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		      memory_set(rfp->mem->mem, bidx+idx, bits[idx]);
+		}
 
 		delete[]bits;
 		break;
@@ -322,7 +336,8 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
       assert(rfp->base.vpi_type->type_code==vpiMemoryWord);
       
       unsigned width = memory_data_width(rfp->mem->mem);
-      unsigned bidx = rfp->index * ((width+3)&~3);
+      unsigned word_offset = memory_root(rfp->mem->mem);
+      unsigned bidx = (rfp->index.value - word_offset) * ((width+3)&~3);
 
       switch (vp->format) {
 	  default:
@@ -448,6 +463,25 @@ static const struct __vpirt vpip_memory_word_rt = {
       0,
 };
 
+static void memory_make_word_handles(struct __vpiMemory*rfp)
+{
+      if (rfp->words != 0)
+	    return;
+
+      unsigned word_count = memory_size(rfp->mem);
+      unsigned word_offset = memory_root(rfp->mem);
+
+      rfp->words = (struct __vpiMemoryWord*)
+	    calloc(word_count, sizeof (struct __vpiMemoryWord));
+
+      for (unsigned idx = 0 ;  idx < word_count ;  idx += 1) {
+	    struct __vpiMemoryWord*cur = rfp->words + idx;
+	    cur->base.vpi_type = &vpip_memory_word_rt;
+	    cur->mem = rfp;
+	    vpip_make_dec_const(&cur->index, idx + word_offset);
+      }
+}
+
 vpiHandle vpip_make_memory(vvp_memory_t mem)
 {
       struct __vpiMemory*obj = (struct __vpiMemory*)
@@ -456,19 +490,23 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
       obj->base.vpi_type = &vpip_memory_rt;
       obj->scope = vpip_peek_current_scope();
       obj->mem = mem;
-      obj->left_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_left_range(mem));
-      obj->right_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_right_range(mem));
+      vpip_make_dec_const(&obj->left_range, memory_left_range(mem));
+      vpip_make_dec_const(&obj->right_range, memory_right_range(mem));
+      vpip_make_dec_const(&obj->word_left_range, memory_word_left_range(mem));
+      vpip_make_dec_const(&obj->word_right_range,memory_word_right_range(mem));
 
-      obj->word.base.vpi_type = &vpip_memory_word_rt;
-      obj->word.mem = obj;
-      obj->word.left_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_word_left_range(mem));
-      obj->word.right_range = (struct __vpiDecConst*)vpip_make_dec_const(memory_word_right_range(mem));
+      obj->words = 0;
 
       return &(obj->base);
 }
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.9  2002/05/17 04:12:19  steve
+ *  Rewire vpiMemory and vpiMemoryWord handles to
+ *  support proper iteration of words, and the
+ *  vpiIndex value.
+ *
  * Revision 1.8  2002/05/11 04:39:35  steve
  *  Set and get memory words by string value.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.15 2002/04/27 23:26:24 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.16 2002/05/17 04:12:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -484,21 +484,31 @@ static const struct __vpirt vpip_dec_rt = {
       0
 };
 
-vpiHandle vpip_make_dec_const(int value)
+vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value)
 {
-      struct __vpiDecConst*obj;
-
-      obj = (struct __vpiDecConst*)
-	    malloc(sizeof (struct __vpiDecConst));
       obj->base.vpi_type = &vpip_dec_rt;
       obj->value = value;
 
       return &(obj->base);
 }
 
+vpiHandle vpip_make_dec_const(int value)
+{
+      struct __vpiDecConst*obj;
+
+      obj = (struct __vpiDecConst*)
+	    malloc(sizeof (struct __vpiDecConst));
+      return vpip_make_dec_const(obj, value);
+}
+
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.16  2002/05/17 04:12:19  steve
+ *  Rewire vpiMemory and vpiMemoryWord handles to
+ *  support proper iteration of words, and the
+ *  vpiIndex value.
+ *
  * Revision 1.15  2002/04/27 23:26:24  steve
  *  Trim leading nulls from string forms.
  *

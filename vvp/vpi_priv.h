@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.33 2002/05/11 04:39:35 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.34 2002/05/17 04:12:19 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -202,6 +202,7 @@ struct __vpiDecConst {
 };
 
 vpiHandle vpip_make_dec_const(int value);
+vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value);
 
 /*
  *  This one looks like a constant, but really is a vector in the current 
@@ -299,6 +300,11 @@ extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.34  2002/05/17 04:12:19  steve
+ *  Rewire vpiMemory and vpiMemoryWord handles to
+ *  support proper iteration of words, and the
+ *  vpiIndex value.
+ *
  * Revision 1.33  2002/05/11 04:39:35  steve
  *  Set and get memory words by string value.
  *
