@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: build_string.c,v 1.13 2003/09/23 05:57:15 steve Exp $"
+#ident "$Id: build_string.c,v 1.14 2003/11/01 04:21:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,6 +75,12 @@ int build_string(char*output, size_t olen, const char*pattern)
 			olen -= strlen(iconfig_path);
 			break;
 
+		      case 'c':
+			strcpy(output, iconfig_common_path);
+			output += strlen(iconfig_common_path);
+			olen -= strlen(iconfig_common_path);
+			break;
+
 		      case 'f':
 			if (f_list) {
 			      strcpy(output, f_list);
@@ -112,6 +118,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.14  2003/11/01 04:21:57  steve
+ *  Add support for a target static config file.
+ *
  * Revision 1.13  2003/09/23 05:57:15  steve
  *  Pass -m flag from driver via iconfig file.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: globals.h,v 1.16 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: globals.h,v 1.17 2003/11/01 04:21:57 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -29,6 +29,7 @@ extern const char*base;
 
   /* This is the path to the iconfig file sent to ivl. */
 extern char* iconfig_path;
+extern char* iconfig_common_path;
 
   /* This is a list of all the -f<key>=<value> options from the
      command line, concatenated together. */
@@ -92,6 +93,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.17  2003/11/01 04:21:57  steve
+ *  Add support for a target static config file.
+ *
  * Revision 1.16  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

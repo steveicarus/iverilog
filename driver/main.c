@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.57 2003/10/26 22:43:42 steve Exp $"
+#ident "$Id: main.c,v 1.58 2003/11/01 04:21:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -125,6 +125,9 @@ unsigned source_count = 0;
 
 char*iconfig_path = 0;
 FILE*iconfig_file = 0;
+
+static char iconfig_common_path_buf[4096] = "";
+char*iconfig_common_path = iconfig_common_path_buf;
 
 int synth_flag = 0;
 int verbose_flag = 0;
@@ -568,6 +571,10 @@ int main(int argc, char **argv)
 		  return 0;
       }
 
+	/* Make a common conf file path to reflect the target. */
+      sprintf(iconfig_common_path, "%s%c%s%s.conf",
+	      base,sep, targ, synth_flag? "-s" : "");
+
 	/* Write values to the iconfig file. */
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
@@ -708,6 +715,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.58  2003/11/01 04:21:57  steve
+ *  Add support for a target static config file.
+ *
  * Revision 1.57  2003/10/26 22:43:42  steve
  *  Improve -V messages,
  *
@@ -728,29 +738,5 @@ int main(int argc, char **argv)
  *
  * Revision 1.51  2003/02/22 04:12:49  steve
  *  Add the portbind warning.
- *
- * Revision 1.50  2003/01/10 19:01:04  steve
- *  Only use libiberty.h if available.
- *
- * Revision 1.49  2002/12/04 03:26:59  steve
- *  Mingw32 compatible temp file management.
- *
- * Revision 1.48  2002/12/04 02:29:36  steve
- *  Use O_EXCL when opening temp files.
- *
- * Revision 1.47  2002/08/12 01:27:48  steve
- *  Escape the backslash in the windows file name.
- *
- * Revision 1.46  2002/08/10 22:36:59  steve
- *  No longer any nead for -rdynamic flag
- *
- * Revision 1.45  2002/08/10 22:27:13  steve
- *  Kill links to vvm.
- *
- * Revision 1.44  2002/07/15 00:33:50  steve
- *  Improve temporary file name guess.
- *
- * Revision 1.43  2002/07/14 23:32:31  steve
- *  No longer need the .exe on generated files.
  */
 
