@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.36 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: synth2.cc,v 1.37 2004/03/15 18:40:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,10 +28,18 @@
 # include  <assert.h>
 
 static int debug_synth2=0;
+
+#ifdef __FUNCTION__
+
 #define DEBUG_SYNTH2_ENTRY(class) if (debug_synth2) { cerr << "Enter " << class << "::" \
        	<< __FUNCTION__ << endl; dump(cerr, 4); }
 #define DEBUG_SYNTH2_EXIT(class,val) if (debug_synth2) { cerr << "Exit " << class << "::" \
        	<< __FUNCTION__ << ", result " << val << endl; }
+
+#else
+#define DEBUG_SYNTH2_ENTRY(class)
+#define DEBUG_SYNTH2_EXIT(class,val)
+#endif
 
 bool NetProc::synth_async(Design*des, NetScope*scope,
 			  const NetNet*nex_map, NetNet*nex_out)
@@ -970,6 +978,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.37  2004/03/15 18:40:12  steve
+ *  Only include DEBUG_SYNTH2 if __FUNCTION__ defined.
+ *
  * Revision 1.36  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *
