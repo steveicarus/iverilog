@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.6 1999/09/16 04:18:15 steve Exp $"
+#ident "$Id: eval.cc,v 1.7 1999/09/18 01:52:48 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -56,15 +56,18 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
       return res;
 }
 
+/*
+ * Evaluate an identifier as a constant expression. This is only
+ * possible if the identifier is that of a parameter.
+ */
 verinum* PEIdent::eval_const(const Design*des, const string&path) const
 {
       assert(msb_ == 0);
       const NetExpr*expr = des->find_parameter(path, text_);
-      if (expr == 0) {
-	    cerr << get_line() << ": unable to evaluate " << text_ <<
-		  " in this context (" << path << ")." << endl;
+
+      if (expr == 0)
 	    return 0;
-      }
+
       const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       assert(eval);
       return new verinum(eval->value());
@@ -83,6 +86,9 @@ verinum* PETernary::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.7  1999/09/18 01:52:48  steve
+ *  Remove spurious message.
+ *
  * Revision 1.6  1999/09/16 04:18:15  steve
  *  elaborate concatenation repeats.
  *
