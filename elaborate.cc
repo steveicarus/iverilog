@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.291 2003/09/20 06:08:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.292 2003/09/25 00:25:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -901,6 +901,7 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 	// Not a module or primitive that I know about or can find by
 	// any means, so give up.
       cerr << get_line() << ": error: Unknown module type: " << type_ << endl;
+      missing_modules[type_] += 1;
       des->errors += 1;
 }
 
@@ -2555,10 +2556,8 @@ Design* elaborate(list<const char*>roots)
 
 	// Errors already? Probably missing root modules. Just give up
 	// now and return nothing.
-      if (des->errors > 0) {
-	    delete des;
-	    return 0;
-      }
+      if (des->errors > 0)
+	    return des;
 
 	// This method recurses through the scopes, looking for
 	// defparam assignments to apply to the parameters in the
@@ -2608,6 +2607,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.292  2003/09/25 00:25:14  steve
+ *  Summary list of missing modules.
+ *
  * Revision 1.291  2003/09/20 06:08:53  steve
  *  Evaluate nb-assign r-values using elab_and_eval.
  *

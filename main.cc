@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.70 2003/09/23 05:57:36 steve Exp $"
+#ident "$Id: main.cc,v 1.71 2003/09/25 00:25:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -82,6 +82,8 @@ const char*target = "null";
 generation_t generation_flag = GN_DEFAULT;
 
 map<string,string> flags;
+
+map<string,unsigned> missing_modules;
 
 list<const char*> library_suff;
 
@@ -565,23 +567,20 @@ int main(int argc, char*argv[])
 
 	/* On with the process of elaborating the module. */
       Design*des = elaborate(roots);
-      if (des == 0) {
-	    cerr << "Elaboration failed" << endl;
-	    if (net_path) {
-		  ofstream out (net_path);
-		  des->dump(out);
-	    }
-	    return 1;
-      }
 
-      if (des->errors) {
-	    cerr << des->errors
-		 << " error(s) during elaboration." << endl;
-	    if (net_path) {
-		  ofstream out (net_path);
-		  des->dump(out);
+      if ((des == 0) || (des->errors > 0)) {
+	    if (des != 0) {
+		  cerr << des->errors
+		       << " error(s) during elaboration." << endl;
+		  if (net_path) {
+			ofstream out (net_path);
+			des->dump(out);
+		  }
+	    } else {
+		  cerr << "Elaboration failed" << endl;
 	    }
-	    return des->errors;
+
+	    goto errors_summary;
       }
 
       des->set_flags(flags);
@@ -631,7 +630,8 @@ int main(int argc, char*argv[])
 	    cout << "CODE GENERATION -t "<<target<< endl;
       }
 
-      bool emit_rc = emit(des, target);
+      bool emit_rc;
+      emit_rc = emit(des, target);
       if (!emit_rc) {
 	    cerr << "error: Code generation had errors." << endl;
 	    return 1;
@@ -656,10 +656,30 @@ int main(int argc, char*argv[])
       }
 
       return 0;
+
+ errors_summary:
+      if (missing_modules.size() > 0) {
+	    cerr << "*** These modules were missing:" << endl;
+
+	    map<string,unsigned>::const_iterator idx;
+	    for (idx = missing_modules.begin()
+		       ; idx != missing_modules.end()
+		       ; idx ++)
+		  cerr << "        " << (*idx).first
+		       << " referenced " << (*idx).second
+		       << " times."<< endl;
+
+	    cerr << "***" << endl;
+      }
+
+      return des->errors;
 }
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.71  2003/09/25 00:25:14  steve
+ *  Summary list of missing modules.
+ *
  * Revision 1.70  2003/09/23 05:57:36  steve
  *  Pass -m flag from driver via iconfig file.
  *
@@ -678,42 +698,5 @@ int main(int argc, char*argv[])
  *  scope names and system task/function names
  *  into this table. Also, permallocate event
  *  names from the beginning.
- *
- * Revision 1.65  2003/02/22 04:12:49  steve
- *  Add the portbind warning.
- *
- * Revision 1.64  2002/08/18 22:06:29  steve
- *  Terminate if the functors signal errors.
- *
- * Revision 1.63  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.62  2002/07/24 16:22:19  steve
- *  Verbose messages.
- *
- * Revision 1.61  2002/06/30 02:21:31  steve
- *  Add structure for asynchronous logic synthesis.
- *
- * Revision 1.60  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.59  2002/06/06 18:57:18  steve
- *  Use standard name for iostream.
- *
- * Revision 1.58  2002/05/28 20:40:37  steve
- *  ivl indexes the search path for libraries, and
- *  supports case insensitive module-to-file lookup.
- *
- * Revision 1.57  2002/05/28 02:25:03  steve
- *  Pass library paths through -Cfile instead of command line.
- *
- * Revision 1.56  2002/05/28 00:50:39  steve
- *  Add the ivl -C flag for bulk configuration
- *  from the driver, and use that to run library
- *  modules through the preprocessor.
- *
- * Revision 1.55  2002/05/24 01:13:00  steve
- *  Support language generation flag -g.
  */
 
