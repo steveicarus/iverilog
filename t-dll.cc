@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.132 2004/12/11 02:31:28 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.133 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1867,6 +1867,34 @@ void dll_target::lpm_mux(const NetMux*net)
 
 }
 
+bool dll_target::concat(const NetConcat*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_CONCAT;
+      obj->name = net->name(); // NetConcat names are permallocated
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.concat.width = net->width();
+
+      obj->u_.concat.inputs = net->pin_count() - 1;
+      obj->u_.concat.pins = new ivl_nexus_t[obj->u_.concat.inputs+1];
+
+      for (unsigned idx = 0 ;  idx < obj->u_.concat.inputs+1 ; idx += 1) {
+	    ivl_drive_t dr = idx == 0? IVL_DR_STRONG : IVL_DR_HiZ;
+	    const Nexus*nex = net->pin(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.concat.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.concat.pins[idx], obj, 0, dr, dr);
+      }
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 bool dll_target::part_select(const NetPartSelect*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -2179,6 +2207,14 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.133  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.132  2004/12/11 02:31:28  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

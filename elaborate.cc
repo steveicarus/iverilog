@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.311 2004/12/15 17:09:11 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.312 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -246,6 +246,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 {
       unsigned count = 1;
+      unsigned instance_width = 1;
       long low = 0, high = 0;
       string name = string(get_name());
 
@@ -289,8 +290,33 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 	    low = lsb.as_long();
 	    high = msb.as_long();
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: PGBuiltin: Make arrray "
+		       << "[" << high << ":" << low << "]"
+		       << " of " << count << " gates for " << name << endl;
+	    }
       }
 
+	/* Now we have a gate count. Elaborate the output expression
+	   only. We do it early so that we can see if we can make a
+	   wide gate instead of an array of gates. */
+
+      NetNet*lval_sig = pin(0)->elaborate_lnet(des, scope, true);
+      assert(lval_sig);
+
+	/* Detect the special case that the l-value width exactly
+	   matches the gate count. In this case, we will make a single
+	   gate that has the desired vector width. */
+      if (lval_sig->vector_width() == (long)count) {
+	    instance_width = count;
+	    count = 1;
+
+	    if (debug_elaborate)
+		  cerr << get_line() << ": debug: PGBuiltin: "
+			"Collapsed gate array into single wide "
+			"(" << instance_width << ") instance." << endl;
+      }
 
 	/* Allocate all the netlist nodes for the gates. */
       NetLogic**cur = new NetLogic*[count];
@@ -334,75 +360,75 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    switch (type()) {
 		case AND:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::AND, 1);
+					  NetLogic::AND, instance_width);
 		  break;
 		case BUF:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUF, 1);
+					  NetLogic::BUF, instance_width);
 		  break;
 		case BUFIF0:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUFIF0, 1);
+					  NetLogic::BUFIF0, instance_width);
 		  break;
 		case BUFIF1:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUFIF1, 1);
+					  NetLogic::BUFIF1, instance_width);
 		  break;
 		case NAND:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NAND, 1);
+					  NetLogic::NAND, instance_width);
 		  break;
 		case NMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NMOS, 1);
+					  NetLogic::NMOS, instance_width);
 		  break;
 		case NOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOR, 1);
+					  NetLogic::NOR, instance_width);
 		  break;
 		case NOT:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOT, 1);
+					  NetLogic::NOT, instance_width);
 		  break;
 		case NOTIF0:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOTIF0, 1);
+					  NetLogic::NOTIF0, instance_width);
 		  break;
 		case NOTIF1:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOTIF1, 1);
+					  NetLogic::NOTIF1, instance_width);
 		  break;
 		case OR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::OR, 1);
+					  NetLogic::OR, instance_width);
 		  break;
 		case RNMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RNMOS, 1);
+					  NetLogic::RNMOS, instance_width);
 		  break;
 		case RPMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RPMOS, 1);
+					  NetLogic::RPMOS, instance_width);
 		  break;
 		case PMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PMOS, 1);
+					  NetLogic::PMOS, instance_width);
 		  break;
 		case PULLDOWN:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PULLDOWN, 1);
+					  NetLogic::PULLDOWN, instance_width);
 		  break;
 		case PULLUP:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PULLUP, 1);
+					  NetLogic::PULLUP, instance_width);
 		  break;
 		case XNOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::XNOR, 1);
+					  NetLogic::XNOR, instance_width);
 		  break;
 		case XOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::XOR, 1);
+					  NetLogic::XOR, instance_width);
 		  break;
 		default:
 		  cerr << get_line() << ": internal error: unhandled "
@@ -434,25 +460,67 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
 	    NetNet*sig = (idx == 0)
-		  ? ex->elaborate_lnet(des, scope, true)
+		  ? lval_sig
 		  : ex->elaborate_net(des, scope, 0, 0, 0, 0);
 	    if (sig == 0)
 		  continue;
 
 	    assert(sig);
 
-	    if (sig->pin_count() == 1)
+	    if (count == 1) {
+		    /* Handle the case where there is one gate that
+		       carries the whole vector width. */
+		  connect(cur[0]->pin(idx), sig->pin(0));
+
+	    } else if (sig->vector_width() == 1) {
+		    /* Handle the case where a single bit is connected
+		       repetitively to all the instances. */
 		  for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1)
 			connect(cur[gdx]->pin(idx), sig->pin(0));
 
-	    else if (sig->pin_count() == count)
-		  for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1)
-			connect(cur[gdx]->pin(idx), sig->pin(gdx));
+	    } else if (sig->vector_width() == (long)count) {
 
-	    else {
+		    /* Handle the general case that each bit of the
+		       value is connected to a different instance. In
+		       this case, the output is handled slightly
+		       different from the inputs. */
+		  if (idx == 0) {
+			NetConcat*cc = new NetConcat(scope,
+						     scope->local_symbol(),
+						     sig->vector_width(),
+						     count);
+			des->add_node(cc);
+
+			  /* Connect the concat to the signal. */
+			connect(cc->pin(0), sig->pin(0));
+
+			  /* Connect the outputs of the gates to the concat. */
+			for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1) {
+			      connect(cur[gdx]->pin(0), cc->pin(gdx+1));
+
+			      NetNet*tmp2 = new NetNet(scope,
+						       scope->local_symbol(),
+						       NetNet::WIRE, 1);
+			      connect(cc->pin(gdx+1), tmp2->pin(0));
+			}
+
+		  } else for (unsigned gdx = 0 ;  gdx < count ;  gdx += 1) {
+			  /* Use part selects to get the bits
+			     connected to the inputs of out gate. */
+			NetPartSelect*tmp1 = new NetPartSelect(sig, gdx, 1);
+			tmp1->set_line(*this);
+			des->add_node(tmp1);
+			connect(tmp1->pin(1), sig->pin(0));
+			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
+						 NetNet::WIRE, 1);
+			connect(tmp1->pin(0), tmp2->pin(0));
+			connect(cur[gdx]->pin(idx), tmp1->pin(0));
+		  }
+
+	    } else {
 		  cerr << get_line() << ": error: Gate count of " <<
 			count << " does not match net width of " <<
-			sig->pin_count() << " at pin " << idx << "."
+			sig->vector_width() << " at pin " << idx << "."
 		       << endl;
 		  des->errors += 1;
 	    }
@@ -1031,7 +1099,7 @@ NetProc* Statement::elaborate(Design*des, NetScope*) const
 NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 {
       assert(lval_);
-      return lval_->elaborate_lval(des, scope);
+      return lval_->elaborate_lval(des, scope, false);
 }
 
 /*
@@ -1667,7 +1735,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		 detailed message. */
 	    NetAssign_*lv;
 	    if (parms_[idx]) {
-		  lv = parms_[idx]->elaborate_lval(des, scope);
+		  lv = parms_[idx]->elaborate_lval(des, scope, false);
 		  if (lv == 0) {
 			cerr << parms_[idx]->get_line() << ": error: "
 			     << "I give up on task port " << (idx+1)
@@ -1702,7 +1770,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       NetCAssign*dev = 0;
       assert(scope);
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, false);
       if (lval == 0)
 	    return 0;
 
@@ -1733,7 +1801,7 @@ NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, false);
       if (lval == 0)
 	    return 0;
 
@@ -2216,12 +2284,22 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
       return proc;
 }
 
+/*
+ * Force is like a procedural assignment, most notably prodedural
+ * continuous assignment:
+ *
+ *    force <lval> = <rval>
+ *
+ * The <lval> can be anything that a normal behavioral assignment can
+ * take, plus net signals. This is a little bit more lax then the
+ * other proceedural assignments.
+ */
 NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 {
       NetForce*dev = 0;
       assert(scope);
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, true);
       if (lval == 0)
 	    return 0;
 
@@ -2396,7 +2474,7 @@ NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, true);
       if (lval == 0)
 	    return 0;
 
@@ -2767,6 +2845,14 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.312  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.311  2004/12/15 17:09:11  steve
  *  Force r-value padded to width.
  *

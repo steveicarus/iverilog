@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.111 2004/12/18 18:56:18 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.112 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -766,8 +766,11 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
-	    assert(idx == 0);
-	    return net->u_.arith.a;
+	    assert(idx <= 1);
+	    if (idx == 0)
+		  return net->u_.arith.a;
+	    else
+		  return net->u_.arith.b;
 
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
@@ -782,6 +785,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.ff.d.pins[idx];
 
+	  case IVL_LPM_CONCAT:
+	    assert(idx < net->u_.concat.inputs);
+	    return net->u_.concat.pins[idx+1];
+
 	  case IVL_LPM_PART:
 	    assert(idx == 0);
 	    return net->u_.part.a;
@@ -794,6 +801,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 {
+      cerr << "ANACHRONISM: Call to anachronistic ivl_lpm_datab." << endl;
       assert(net);
       switch (net->type) {
 
@@ -928,6 +936,9 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx < net->u_.ufunc.port_wid[0]);
 	    return net->u_.ufunc.pins[idx];
 
+	  case IVL_LPM_CONCAT:
+	    return net->u_.concat.pins[0];
+
 	  case IVL_LPM_PART:
 	    assert(idx == 0);
 	    return net->u_.part.q;
@@ -982,6 +993,8 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.select;
+	  case IVL_LPM_CONCAT:
+	    return net->u_.concat.inputs;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1011,6 +1024,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return net->u_.shift.signed_flag;
 	    return 0;
 	  case IVL_LPM_UFUNC:
+	    return 0;
+	  case IVL_LPM_CONCAT: // Concatenations are always unsigned
 	    return 0;
 	  case IVL_LPM_PART:
 	    return net->u_.part.signed_flag;
@@ -1062,6 +1077,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.shift.width;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.port_wid[0];
+	  case IVL_LPM_CONCAT:
+	    return net->u_.concat.width;
 	  case IVL_LPM_PART:
 	    return net->u_.part.width;
 	  default:
@@ -1946,6 +1963,14 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.112  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.111  2004/12/18 18:56:18  steve
  *  Add ivl_event_scope, and better document ivl_event_X methods.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.116 2004/12/11 02:31:28 steve Exp $"
+#ident "$Id: t-dll.h,v 1.117 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -82,6 +82,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
       void lpm_ram_dq(const NetRamDq*);
+      bool concat(const NetConcat*);
       bool part_select(const NetPartSelect*);
       void net_assign(const NetAssign_*);
       bool net_function(const NetUserFunc*);
@@ -346,6 +347,12 @@ struct ivl_lpm_s {
 		  unsigned signed_flag :1;
 		  ivl_nexus_t q,  a,  b;
 	    } arith;
+
+	    struct ivl_concat_s {
+		  unsigned width;
+		  unsigned inputs;
+		  ivl_nexus_t*pins;
+	    } concat;
 
 	    struct ivl_part_s {
 		  unsigned width;
@@ -680,6 +687,14 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.117  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.116  2004/12/11 02:31:28  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

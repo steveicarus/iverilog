@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.78 2004/12/11 02:31:26 steve Exp $"
+#ident "$Id: emit.cc,v 1.79 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -73,6 +73,11 @@ bool NetCompare::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_compare(this);
       return true;
+}
+
+bool NetConcat::emit_node(struct target_t*tgt) const
+{
+      return tgt->concat(this);
 }
 
 bool NetConst::emit_node(struct target_t*tgt) const
@@ -504,6 +509,14 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.79  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.78  2004/12/11 02:31:26  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

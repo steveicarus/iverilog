@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.93 2004/12/18 18:55:08 steve Exp $"
+#ident "$Id: stub.c,v 1.94 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -179,6 +179,50 @@ void show_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+
+/* IVL_LPM_CONCAT
+ * The concat device takes N inputs (N=ivl_lpm_selects) and generates
+ * a single output. The total output is known from the ivl_lpm_width
+ * function. The widths of all the inputs are inferred from the widths
+ * of the signals connected to the nexus of the inputs. The compiler
+ * makes sure the input widths add up to the output width.
+ */
+static void show_lpm_concat(ivl_lpm_t net)
+{
+      unsigned idx;
+
+      unsigned width_sum = 0;
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CONCAT %s: <width=%u, inputs=%u>\n",
+	      ivl_lpm_basename(net), width, ivl_lpm_selects(net));
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+
+      for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
+	    unsigned ndx;
+	    unsigned signal_width = 0;
+	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
+
+	    for (ndx = 0 ;  ndx < ivl_nexus_ptrs(nex) ;  ndx += 1) {
+		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, ndx);
+		  ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+		  if (sig != 0) {
+			signal_width = ivl_signal_width(sig);
+			break;
+		  }
+	    }
+
+	    fprintf(out, "    I%u: %s (width=%u)\n", idx,
+		    ivl_nexus_name(nex), signal_width);
+	    width_sum += signal_width;
+      }
+
+      if (width_sum != width) {
+	    fprintf(out, "    ERROR! Got %u bits input, expecting %u!\n",
+		    width_sum, width);
+      }
+}
+
 static void show_lpm(ivl_lpm_t net)
 {
       unsigned idx;
@@ -234,6 +278,10 @@ static void show_lpm(ivl_lpm_t net)
 		}
 		break;
 	  }
+
+	  case IVL_LPM_CONCAT:
+	    show_lpm_concat(net);
+	    break;
 
 	  case IVL_LPM_SHIFTL: {
 		fprintf(out, "  LPM_SHIFTL %s: <width=%u, selects=%u %s>\n",
@@ -762,6 +810,14 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.94  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.93  2004/12/18 18:55:08  steve
  *  Better detail on event trigger and wait statements.
  *

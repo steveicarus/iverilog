@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.150 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.151 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -209,6 +209,16 @@ void NetCLShift::dump_node(ostream&o, unsigned ind) const
 void NetCompare::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_COMPARE (NetCompare): " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetConcat::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NetConcat: "
+	<< name()
+	<< " scope=" << (scope()? scope()->name() : "")
+	<< " width=" << width_ << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -1087,6 +1097,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.151  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.150  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.227 2004/12/11 02:31:26 steve Exp $"
+#ident "$Id: netlist.cc,v 1.228 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -530,6 +530,26 @@ NetScope* NetProcTop::scope()
 const NetScope* NetProcTop::scope() const
 {
       return scope_;
+}
+
+NetConcat::NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt)
+: NetNode(scope, n, cnt+1), width_(wid)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      for (unsigned idx = 1 ;  idx < cnt+1 ;  idx += 1) {
+	    pin(idx).set_dir(Link::INPUT);
+	    pin(idx).set_name(perm_string::literal("I"), idx-1);
+      }
+}
+
+NetConcat::~NetConcat()
+{
+}
+
+unsigned NetConcat::width() const
+{
+      return width_;
 }
 
 /*
@@ -2306,6 +2326,14 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.228  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.227  2004/12/11 02:31:26  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

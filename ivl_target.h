@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.129 2004/12/18 18:56:18 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.130 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -222,6 +222,7 @@ typedef enum ivl_logic_e {
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
       IVL_LPM_ADD    =  0,
+      IVL_LPM_CONCAT = 16,
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
@@ -627,6 +628,12 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *    These support iterating over logic attributes. The _cnt method
  *    returns the number of attributes attached to the gate, and the
  *    ivl_logic_attr_val returns the value of the attribute.
+ *
+ * SEMANTIC NOTES
+ * The ivl_logic_width  and ivl_logic_pins are *not* related. A logic
+ * device has a number of pins that is the number of inputs to a logic
+ * array of identical gates, and the ivl_logic_width, is the width of
+ * the vector into each input pin and out of the output pin.
  */
 
 extern const char* ivl_logic_name(ivl_net_logic_t net);
@@ -637,6 +644,7 @@ extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 extern ivl_udp_t   ivl_logic_udp(ivl_net_logic_t net);
 extern unsigned    ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
+extern unsigned    ivl_logic_width(ivl_net_logic_t net);
 
   /* DEPRECATED */
 extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);
@@ -659,7 +667,8 @@ extern const char* ivl_udp_name(ivl_udp_t net);
 /* LPM
  * These functions support access to the properties of LPM
  * devices. LPM devices are a variety of devices that handle more
- * complex structural semantics.
+ * complex structural semantics. They are based on EIA LPM standard
+ * devices, but vary to suite the technical situation.
  *
  * These are the functions that apply to all LPM devices:
  *
@@ -689,13 +698,12 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    of the part select. The ivl_lpm_width is the size of the part.
  *
  * ivl_lpm_data
- *    Return the input data nexus for device types that have a single
- *    input vector. This is also used to the get nexa of the first
- *    vector for devices that have more inputs.
+ *    Return the input data nexus for device types that have input
+ *    vectors. The "idx" parameter selects which data input is selected.
  *
- * ivl_lpm_datab
- *    Return the input data nexus for device types that have a second
- *    input vector. For example, arithmetic devices are like this.
+ * ivl_lpm_datab (ANACHRONISM)
+ *    This is the same as ivl_lpm_data(net,1), in other words the
+ *    second data input. Use the ivl_lpm_data method instead.
  *
  * ivl_lpm_q
  *    Return the output data nexus for device types that have a single
@@ -713,6 +721,18 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    In addition to a width, some devices have a size. The size is
  *    often the number of inputs per out, i.e., the number of inputs
  *    per bit for a MUX.
+ *
+ * SEMANTIC NOTES
+ *
+ * - Concatenation (IVL_LPM_CONCAT)
+ * These devices take vectors in and combine them to form a single
+ * output the width specified by ivl_lpm_width.
+ *
+ * The ivl_lpm_q nexus is the output from the concatenation.
+ *
+ * The ivl_lpm_data function returns the connections for the inputs to
+ * the concatentation. The ivl_lpm_size function returns the number of
+ * inputs help by the device.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -737,8 +757,8 @@ extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT IVL_LPM_RAM
-     IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
+     IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
   /* IVL_LPM_MUX IVL_LPM_UFUNC */
@@ -753,7 +773,7 @@ extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_MUX */
+  /* IVL_LPM_CONCAT IVL_LPM_MUX */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
@@ -1260,7 +1280,9 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  *
  * - IVL_ST_FORCE
  * This is very much like IVL_ST_CASSIGN, but adds that l-values can
- * include nets (tri, wire, etc).
+ * include nets (tri, wire, etc). Memory words are restricted from
+ * force l-values, and also non-constant bit or part selects. The
+ * compiler will assure these constraints are met.
  *
  * - IVL_ST_TRIGGER
  * This represents the "-> name" statement that sends a trigger to a
@@ -1371,6 +1393,14 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.130  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.129  2004/12/18 18:56:18  steve
  *  Add ivl_event_scope, and better document ivl_event_X methods.
  *

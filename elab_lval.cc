@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.30 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.31 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -66,7 +66,9 @@
  * is to try to make a net elaboration, and see if the result is
  * suitable for assignment.
  */
-NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
+NetAssign_* PExpr::elaborate_lval(Design*des,
+				  NetScope*scope,
+				  bool is_force) const
 {
       NetNet*ll = 0;
       if (ll == 0) {
@@ -92,7 +94,9 @@ NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
  * a is the MSB and b the LSB. Connect the LSB to the low pins of the
  * NetAssign_ object.
  */
-NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
+NetAssign_* PEConcat::elaborate_lval(Design*des,
+				     NetScope*scope,
+				     bool is_force) const
 {
       if (repeat_) {
 	    cerr << get_line() << ": error: Repeat concatenations make "
@@ -112,7 +116,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
-	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope);
+	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope, is_force);
 
 	      /* If the l-value doesn't elaborate, the error was
 		 already detected and printed. We just skip it and let
@@ -140,7 +144,9 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
  * Handle the ident as an l-value. This includes bit and part selects
  * of that ident.
  */
-NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
+NetAssign_* PEIdent::elaborate_lval(Design*des,
+				    NetScope*scope,
+				    bool is_force) const
 {
       NetNet*       reg = 0;
       NetMemory*    mem = 0;
@@ -151,6 +157,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       symbol_search(des, scope, path_, reg, mem, var, par, eve);
 
       if (mem) {
+	    if (is_force) {
+		  cerr << get_line() << ": error: Memories "
+		       << "(" << path_ << " in this case)"
+		       << " are not allowed"
+		       << " as l-values to force statements." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    return elaborate_mem_lval_(des, scope, mem);
       }
 
@@ -171,8 +186,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       assert(reg);
 
 	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. (Wires are not allows in this context. */
-      if (reg->type() != NetNet::REG) {
+	   it is a register. Wires are not allows in this context,
+	   unless this is the l-value of a force. */
+      if ((reg->type() != NetNet::REG) && !is_force) {
 	    cerr << get_line() << ": error: " << path_ <<
 		  " is not a reg/integer/time in " << scope->name() <<
 		  "." << endl;
@@ -340,7 +356,7 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
       return lv;
 }
 
-NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
+NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
 {
       cerr << get_line() << ": error: Constant values not allowed "
 	   << "in l-value expressions." << endl;
@@ -350,6 +366,14 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.31  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.30  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
@@ -363,95 +387,5 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
  *
  * Revision 1.27  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
- *
- * Revision 1.26  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.25  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.24  2003/01/19 00:35:39  steve
- *  Detect null arguments to concatenation operator.
- *
- * Revision 1.23  2002/11/21 23:27:51  steve
- *  Precalculate indices to l-value arrays.
- *
- * Revision 1.22  2002/11/21 18:15:40  steve
- *  Fix const test of msb in assignment l-values.
- *
- * Revision 1.21  2002/11/02 01:10:49  steve
- *  Detect memories without work index in l-value.
- *
- * Revision 1.20  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.18  2002/03/09 04:02:26  steve
- *  Constant expressions are not l-values for task ports.
- *
- * Revision 1.17  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.16  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.15  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.14  2001/08/25 23:50:02  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.13  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.12  2001/02/09 03:16:48  steve
- *  Report bit/part select out of range errors. (PR#133)
- *
- * Revision 1.11  2001/01/10 03:13:23  steve
- *  Build task outputs as lval instead of nets. (PR#98)
- *
- * Revision 1.10  2001/01/06 06:31:58  steve
- *  declaration initialization for time variables.
- *
- * Revision 1.9  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.8  2000/12/12 06:14:51  steve
- *  sorry for concatenated memories in l-values. (PR#76)
- *
- * Revision 1.7  2000/12/01 02:55:37  steve
- *  Detect part select errors on l-values.
- *
- * Revision 1.6  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.5  2000/10/26 17:09:46  steve
- *  Fix handling of errors in behavioral lvalues. (PR#28)
- *
- * Revision 1.4  2000/09/10 15:43:59  steve
- *  Some error checking.
- *
- * Revision 1.3  2000/09/10 03:59:59  steve
- *  Agressively merge NetAssign_ within concatenations.
- *
- * Revision 1.2  2000/09/10 02:18:16  steve
- *  elaborate complex l-values
- *
- * Revision 1.1  2000/09/09 15:21:26  steve
- *  move lval elaboration to PExpr virtual methods.
- *
  */
 

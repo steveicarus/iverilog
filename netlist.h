@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.322 2004/12/11 02:31:27 steve Exp $"
+#ident "$Id: netlist.h,v 1.323 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 /*
@@ -581,6 +581,32 @@ class NetCompare  : public NetNode {
       unsigned width_;
       bool signed_flag_;
 };
+
+
+/*
+ * This node is a means to connect net inputs together to form a wider
+ * vector. The output (pin 0) is a concatenation of the input vectors,
+ * with pin-1 at the LSB, pin-2 next, and so on. This node is most
+ * like the NetLogic node, as it has one output at pin 0 and the
+ * remaining pins are the input that are combined to make the
+ * output. It is seperated out because it it generally a special case
+ * for the code generators.
+ */
+class NetConcat  : public NetNode {
+
+    public:
+      NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt);
+      ~NetConcat();
+
+      unsigned width() const;
+
+      void dump_node(ostream&, unsigned ind) const;
+      bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
+};
+
 
 /*
  * This class represents a theoretical (though not necessarily
@@ -1242,6 +1268,11 @@ class NetConst  : public NetNode {
  * The pullup and pulldown gates have no inputs at all, and pin0 is
  * the output 1 or 0, depending on the gate type. It is the strength
  * of that value that is important.
+ *
+ * All these devices process vectors bitwise, so each bit can be
+ * logically seperated. The exception is the CONCAT gate, which is
+ * really an abstract gate that takes the inputs and turns it into a
+ * vector of bits.
  */
 class NetLogic  : public NetNode {
 
@@ -3349,6 +3380,14 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.323  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.322  2004/12/11 02:31:27  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

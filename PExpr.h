@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.66 2004/10/04 01:10:51 steve Exp $"
+#ident "$Id: PExpr.h,v 1.67 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include  <string>
@@ -83,8 +83,13 @@ class PExpr : public LineInfo {
 				     bool implicit_net_ok =false) const;
 
 	// Expressions that can be in the l-value of procedural
-	// assignments can be elaborated with this method.
-      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
+	// assignments can be elaborated with this method. If the
+	// is_force flag is true, then the set of valid l-value types
+	// is slightly modified to accomodate the Verilog force
+	// statement
+      virtual NetAssign_* elaborate_lval(Design*des,
+					 NetScope*scope,
+					 bool is_force) const;
 
 	// This attempts to evaluate a constant expression, and return
 	// a verinum as a result. If the expression cannot be
@@ -133,7 +138,9 @@ class PEConcat : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
-      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
+      virtual NetAssign_* elaborate_lval(Design*des,
+					 NetScope*scope,
+					 bool is_force) const;
       virtual bool is_constant(Module*) const;
 
     private:
@@ -213,7 +220,9 @@ class PEIdent : public PExpr {
 				     bool implicit_net_ok =false) const;
 
 	// Identifiers are also allowed as procedural assignment l-values.
-      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
+      virtual NetAssign_* elaborate_lval(Design*des,
+					 NetScope*scope,
+					 bool is_force) const;
 
 	// Structural r-values are OK.
       virtual NetNet* elaborate_net(Design*des, NetScope*scope,
@@ -288,7 +297,9 @@ class PENumber : public PExpr {
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				     bool sys_task_arg =false) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
-      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
+      virtual NetAssign_* elaborate_lval(Design*des,
+					 NetScope*scope,
+					 bool is_force) const;
 
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
 
@@ -492,6 +503,14 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.67  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.66  2004/10/04 01:10:51  steve
  *  Clean up spurious trailing white space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.70 2004/12/11 02:31:28 steve Exp $"
+#ident "$Id: target.cc,v 1.71 2004/12/29 23:55:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -135,6 +135,13 @@ void target_t::lpm_ram_dq(const NetRamDq*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetRamDq." << endl;
+}
+
+bool target_t::concat(const NetConcat*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetConcat." << endl;
+      return false;
 }
 
 bool target_t::part_select(const NetPartSelect*)
@@ -412,6 +419,14 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.71  2004/12/29 23:55:43  steve
+ *  Unify elaboration of l-values for all proceedural assignments,
+ *  including assing, cassign and force.
+ *
+ *  Generate NetConcat devices for gate outputs that feed into a
+ *  vector results. Use this to hande gate arrays. Also let gate
+ *  arrays handle vectors of gates when the outputs allow for it.
+ *
  * Revision 1.70  2004/12/11 02:31:28  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
