@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: async.cc,v 1.6 2003/12/20 00:33:39 steve Exp $"
+#ident "$Id: async.cc,v 1.7 2004/01/18 23:26:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,8 +76,8 @@ bool NetEvWait::is_asynchronous()
       delete inputs;
 
 	/* If it passes all the other tests, then this statement is
-	   asynchronous if the sub-statement is asynchronous. */
-      return statement_->is_asynchronous();
+	   asynchronous. */
+      return true;
 }
 
 bool NetProc::is_asynchronous()
@@ -95,6 +95,9 @@ bool NetProcTop::is_asynchronous()
 
 /*
  * $Log: async.cc,v $
+ * Revision 1.7  2004/01/18 23:26:54  steve
+ *  The is_combinational function really need not recurse.
+ *
  * Revision 1.6  2003/12/20 00:33:39  steve
  *  More thorough check that NetEvWait is asynchronous.
  *
