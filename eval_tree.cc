@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.22 2001/02/07 02:46:31 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.23 2001/02/09 05:44:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -160,6 +160,50 @@ NetEConst* NetEBComp::eval_eqeq_()
       return new NetEConst(result);
 }
 
+
+NetEConst* NetEBComp::eval_less_()
+{
+      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      if (r == 0) return 0;
+
+      verinum rv = r->value();
+      if (! rv.is_defined()) {
+	    verinum result(verinum::Vx, 1);
+	    return new NetEConst(result);
+      }
+
+	/* Detect the case where the right side is greater that or
+	   equal to the largest value the left side can possibly
+	   have. */
+      assert(left_->expr_width() > 0);
+      verinum lv (verinum::V1, left_->expr_width());
+      if (lv < rv) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
+      }
+
+	/* Now go on to the normal test of the values. */
+      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      if (l == 0) return 0;
+      lv = l->value();
+      if (! lv.is_defined()) {
+	    verinum result(verinum::Vx, 1);
+	    return new NetEConst(result);
+      }
+
+      if (lv.has_sign() && rv.has_sign() && (lv.as_long() < rv.as_long())) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
+      }
+
+      if (lv.as_ulong() < rv.as_ulong()) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
+      }
+
+      verinum result(verinum::V0, 1);
+      return new NetEConst(result);
+}
 
 NetEConst* NetEBComp::eval_leeq_()
 {
@@ -357,6 +401,9 @@ NetEConst* NetEBComp::eval_tree()
 
 	  case 'n': // not-equal (!=)
 	    return eval_neeq_();
+
+	  case '<': // Less than
+	    return eval_less_();
 
 	  default:
 	    return 0;
@@ -843,6 +890,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.23  2001/02/09 05:44:23  steve
+ *  support evaluation of constant < in expressions.
+ *
  * Revision 1.22  2001/02/07 02:46:31  steve
  *  Support constant evaluation of / and % (PR#124)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.25 2001/02/08 05:38:18 steve Exp $"
+#ident "$Id: verinum.cc,v 1.26 2001/02/09 05:44:23 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -420,7 +420,7 @@ verinum::V operator <= (const verinum&left, const verinum&right)
       }
 
       for (idx = right.len() ; idx > left.len() ;  idx -= 1) {
-	    if (right[idx-1] != verinum::V0) return verinum::V0;
+	    if (right[idx-1] != verinum::V0) return verinum::V1;
       }
 
       while (idx > 0) {
@@ -433,6 +433,29 @@ verinum::V operator <= (const verinum&left, const verinum&right)
       }
 
       return verinum::V1;
+}
+
+verinum::V operator < (const verinum&left, const verinum&right)
+{
+      unsigned idx;
+      for (idx = left.len() ; idx > right.len() ;  idx -= 1) {
+	    if (left[idx-1] != verinum::V0) return verinum::V0;
+      }
+
+      for (idx = right.len() ; idx > left.len() ;  idx -= 1) {
+	    if (right[idx-1] != verinum::V0) return verinum::V1;
+      }
+
+      while (idx > 0) {
+	    if (left[idx-1] == verinum::Vx) return verinum::Vx;
+	    if (left[idx-1] == verinum::Vz) return verinum::Vx;
+	    if (right[idx-1] == verinum::Vx) return verinum::Vx;
+	    if (right[idx-1] == verinum::Vz) return verinum::Vx;
+	    if (left[idx-1] > right[idx-1]) return verinum::V0;
+	    idx -= 1;
+      }
+
+      return verinum::V0;
 }
 
 static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c)
@@ -743,6 +766,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.26  2001/02/09 05:44:23  steve
+ *  support evaluation of constant < in expressions.
+ *
  * Revision 1.25  2001/02/08 05:38:18  steve
  *  trim the length of unsized numbers.
  *

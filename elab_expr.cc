@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.34 2001/01/14 23:04:55 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.35 2001/02/09 05:44:23 steve Exp $"
 #endif
 
 
@@ -145,6 +145,12 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
       return tmp;
 }
 
+/*
+ * Given a call to a system function, generate the proper expression
+ * nodes to represent the call in the netlist. Since we don't support
+ * size_tf functions, make assumptions about widths based on some
+ * known function names.
+ */
 NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 {
       unsigned wid = 32;
@@ -152,11 +158,43 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       if (name_ == "$time")
 	    wid = 64;
 
-      NetESFunc*fun = new NetESFunc(name_, wid, parms_.count());
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+
+	/* How many parameters are there? The Verilog language allows
+	   empty parameters in certain contexts, so the parser will
+	   allow things like func(1,,3). It will also cause func() to
+	   be interpreted as a single empty parameter.
+
+	   Functions cannot really take empty parameters, but the
+	   case ``func()'' is the same as no parmaters at all. So
+	   catch that special case here. */
+      unsigned nparms = parms_.count();
+      if ((nparms == 1) && (parms_[0] == 0))
+	    nparms = 0;
+
+      NetESFunc*fun = new NetESFunc(name_, wid, nparms);
+
+	/* Now run through the expected parameters. If we find that
+	   there are missing parameters, print an error message. */
+
+      unsigned missing_parms = 0;
+      for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    PExpr*expr = parms_[idx];
-	    NetExpr*tmp = expr->elaborate_expr(des, scope);
-	    fun->parm(idx, tmp);
+	    if (expr) {
+		  NetExpr*tmp = expr->elaborate_expr(des, scope);
+		  fun->parm(idx, tmp);
+
+	    } else {
+		  missing_parms += 1;
+		  fun->parm(idx, 0);
+	    }
+      }
+
+      if (missing_parms > 0) {
+	    cerr << get_line() << ": error: The function " << name_
+		 << " has been called with empty parameters." << endl;
+	    cerr << get_line() << ":      : Verilog doesn't allow "
+		 << "passing empty parameters to functions." << endl;
+	    des->errors += 1;
       }
 
       return fun;
@@ -195,10 +233,24 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 	   of the function being called. The scope of the called
 	   function is elaborated when the definition is elaborated. */
 
+      unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
-	    assert(tmp);
-	    parms[idx] = tmp->elaborate_expr(des, scope);
+	    if (tmp) {
+		  parms[idx] = tmp->elaborate_expr(des, scope);
+
+	    } else {
+		  missing_parms += 1;
+		  parms[idx] = 0;
+	    }
+      }
+
+      if (missing_parms > 0) {
+	    cerr << get_line() << ": error: The function " << name_
+		 << " has been called with empty parameters." << endl;
+	    cerr << get_line() << ":      : Verilog doesn't allow "
+		 << "passing empty parameters to functions." << endl;
+	    des->errors += 1;
       }
 
 
@@ -545,6 +597,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.35  2001/02/09 05:44:23  steve
+ *  support evaluation of constant < in expressions.
+ *
  * Revision 1.34  2001/01/14 23:04:55  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

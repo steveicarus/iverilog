@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.16 2001/02/07 02:46:31 steve Exp $"
+#ident "$Id: verinum.h,v 1.17 2001/02/09 05:44:23 steve Exp $"
 #endif
 
 # include  <string>
@@ -110,6 +110,7 @@ extern verinum::V operator & (verinum::V l, verinum::V r);
 
 extern verinum::V operator == (const verinum&left, const verinum&right);
 extern verinum::V operator <= (const verinum&left, const verinum&right);
+extern verinum::V operator <  (const verinum&left, const verinum&right);
 extern verinum operator + (const verinum&left, const verinum&right);
 extern verinum operator - (const verinum&left, const verinum&right);
 extern verinum operator * (const verinum&left, const verinum&right);
@@ -120,6 +121,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.17  2001/02/09 05:44:23  steve
+ *  support evaluation of constant < in expressions.
+ *
  * Revision 1.16  2001/02/07 02:46:31  steve
  *  Support constant evaluation of / and % (PR#124)
  *

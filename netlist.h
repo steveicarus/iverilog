@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.195 2001/01/18 03:16:35 steve Exp $"
+#ident "$Id: netlist.h,v 1.196 2001/02/09 05:44:23 steve Exp $"
 #endif
 
 /*
@@ -2182,6 +2182,7 @@ class NetEBComp : public NetEBinary {
 
     private:
       NetEConst*eval_eqeq_();
+      NetEConst*eval_less_();
       NetEConst*eval_leeq_();
       NetEConst*eval_neeq_();
       NetEConst*eval_eqeqeq_();
@@ -2852,6 +2853,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.196  2001/02/09 05:44:23  steve
+ *  support evaluation of constant < in expressions.
+ *
  * Revision 1.195  2001/01/18 03:16:35  steve
  *  NetMux needs a scope. (PR#115)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.206 2001/02/07 21:47:13 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.207 2001/02/09 05:44:23 steve Exp $"
 #endif
 
 /*
@@ -2031,10 +2031,10 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       }
 
       if (NetExpr*tmp = ce->eval_tree()) {
-	    if (dynamic_cast<NetEConst*>(tmp))
+	    if (dynamic_cast<NetEConst*>(tmp)) {
 		  cerr << get_line() << ": warning: condition expression "
-			"is constant." << endl;
-
+			"of for-loop is constant." << endl;
+	    }
 	    ce = tmp;
       }
 
@@ -2367,6 +2367,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.207  2001/02/09 05:44:23  steve
+ *  support evaluation of constant < in expressions.
+ *
  * Revision 1.206  2001/02/07 21:47:13  steve
  *  Fix expression widths for rvalues and parameters (PR#131,132)
  *
