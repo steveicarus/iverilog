@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.239 2002/01/19 20:09:56 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.240 2002/01/23 05:56:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1534,7 +1534,7 @@ NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*lval = lval_->elaborate_anet(des, scope);
       if (lval == 0)
 	    return 0;
 
@@ -2408,6 +2408,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.240  2002/01/23 05:56:22  steve
+ *  elaborate deassign lval as done for assign.
+ *
  * Revision 1.239  2002/01/19 20:09:56  steve
  *  Evaluate case guards, if possible.
  *
