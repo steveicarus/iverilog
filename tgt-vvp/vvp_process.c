@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.5 2001/03/23 01:54:32 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.6 2001/03/25 03:24:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -201,6 +201,10 @@ static void show_system_task_call(ivl_statement_t net)
 
 	    switch (ivl_expr_type(expr)) {
 
+		case IVL_EX_SIGNAL:
+		  fprintf(vvp_out, ", V_%s", ivl_expr_name(expr));
+		  break;
+
 		case IVL_EX_STRING:
 		  fprintf(vvp_out, ", \"%s\"", ivl_expr_string(expr));
 		  break;
@@ -308,6 +312,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.6  2001/03/25 03:24:10  steve
+ *  Draw signal inputs to system tasks.
+ *
  * Revision 1.5  2001/03/23 01:54:32  steve
  *  assignments with non-trival r-values.
  *
