@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.54 2004/06/16 16:33:26 steve Exp $"
+#ident "$Id: compile.h,v 1.55 2004/06/30 02:15:57 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -97,7 +97,7 @@ extern void compile_force(char*label, struct symb_s signal,
  * This is called by the parser to make the various arithmetic and
  * comparison functors.
  */
-extern void compile_arith_div(char*label, long width,
+extern void compile_arith_div(char*label, long width, bool signed_flag,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_mod(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
@@ -268,6 +268,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.55  2004/06/30 02:15:57  steve
+ *  Add signed LPM divide.
+ *
  * Revision 1.54  2004/06/16 16:33:26  steve
  *  Add structural equality compare nodes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.42 2004/06/16 16:33:26 steve Exp $"
+#ident "$Id: lexor.lex,v 1.43 2004/06/30 02:15:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -83,7 +83,8 @@
 
 
   /* These are some keywords that are recognized. */
-".arith/div"  { return K_ARITH_DIV; }
+".arith/div"    { return K_ARITH_DIV; }
+".arith/div.s"  { return K_ARITH_DIV_S; }
 ".arith/mod"  { return K_ARITH_MOD; }
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/sub"  { return K_ARITH_SUB; }
@@ -181,6 +182,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.43  2004/06/30 02:15:57  steve
+ *  Add signed LPM divide.
+ *
  * Revision 1.42  2004/06/16 16:33:26  steve
  *  Add structural equality compare nodes.
  *

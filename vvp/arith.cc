@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.27 2004/06/16 16:33:26 steve Exp $"
+#ident "$Id: arith.cc,v 1.28 2004/06/30 02:15:57 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -103,7 +103,7 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       }
 
       unsigned long a = 0, b = 0;
-      
+
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
@@ -120,12 +120,32 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 		  b += 1UL << idx;
       }
 
+      unsigned sign_flip = 0;
+      if (signed_flag_) {
+	    if (a & (1UL << (wid_ - 1))) {
+		  a ^=  ~(-1UL << wid_);
+		  a += 1;
+		  sign_flip += 1;
+	    }
+
+	    if (b & (1UL << (wid_ - 1))) {
+		  b ^= ~(-1UL << wid_);
+		  b += 1;
+		  sign_flip += 1;
+	    }
+
+      }
+
       if (b == 0) {
 	    output_x_(base, push);
 	    return;
       }
 
-      output_val_(base, push, a/b);
+      unsigned long result = a / b;
+      if (sign_flip % 2 == 1)
+	    result = 0 - result;
+
+      output_val_(base, push, result);
 }
 
 inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
@@ -680,6 +700,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.28  2004/06/30 02:15:57  steve
+ *  Add signed LPM divide.
+ *
  * Revision 1.27  2004/06/16 16:33:26  steve
  *  Add structural equality compare nodes.
  *

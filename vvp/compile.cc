@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.173 2004/06/19 15:52:53 steve Exp $"
+#ident "$Id: compile.cc,v 1.174 2004/06/30 02:15:57 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -830,7 +830,7 @@ static void make_arith(vvp_arith_ *arith,
       free(argv);
 }
 
-void compile_arith_div(char*label, long wid,
+void compile_arith_div(char*label, long wid, bool signed_flag,
 		       unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -841,7 +841,7 @@ void compile_arith_div(char*label, long wid,
 	    return;
       }
 
-      vvp_arith_ *arith = new vvp_arith_div(wid);
+      vvp_arith_ *arith = new vvp_arith_div(wid, signed_flag);
 
       make_arith(arith, label, wid, argc, argv);
 }
@@ -1579,6 +1579,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.174  2004/06/30 02:15:57  steve
+ *  Add signed LPM divide.
+ *
  * Revision 1.173  2004/06/19 15:52:53  steve
  *  Add signed modulus operator.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.16 2004/06/16 16:33:26 steve Exp $"
+#ident "$Id: arith.h,v 1.17 2004/06/30 02:15:57 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -70,10 +70,14 @@ class vvp_arith_mult  : public vvp_arith_ {
 class vvp_arith_div : public vvp_arith_ {
 
     public:
-      explicit vvp_arith_div(unsigned wid) : vvp_arith_(wid) {}
+      explicit vvp_arith_div(unsigned wid, bool signed_flag)
+      : vvp_arith_(wid), signed_flag_(signed_flag) {}
 
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
       void wide(vvp_ipoint_t base, bool push);
+
+    private:
+      bool signed_flag_;
 };
 
 class vvp_arith_mod : public vvp_arith_ {
@@ -155,6 +159,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.17  2004/06/30 02:15:57  steve
+ *  Add signed LPM divide.
+ *
  * Revision 1.16  2004/06/16 16:33:26  steve
  *  Add structural equality compare nodes.
  *

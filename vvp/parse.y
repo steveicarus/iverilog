@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.57 2004/06/16 16:33:26 steve Exp $"
+#ident "$Id: parse.y,v 1.58 2004/06/30 02:15:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -57,7 +57,8 @@ extern FILE*yyin;
 };
 
 
-%token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
+%token K_ARITH_DIV K_ARITH_DIV_S K_ARITH_MOD K_ARITH_MULT
+%token K_ARITH_SUB K_ARITH_SUM
 %token K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
@@ -193,7 +194,12 @@ statement
 
 	| T_LABEL K_ARITH_DIV T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
-		  compile_arith_div($1, $3, obj.cnt, obj.vect);
+		  compile_arith_div($1, $3, false, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_ARITH_DIV_S T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_div($1, $3, true, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_ARITH_MOD T_NUMBER ',' symbols ';'
@@ -627,6 +633,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.58  2004/06/30 02:15:57  steve
+ *  Add signed LPM divide.
+ *
  * Revision 1.57  2004/06/16 16:33:26  steve
  *  Add structural equality compare nodes.
  *
