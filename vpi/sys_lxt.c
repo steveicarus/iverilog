@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.7 2002/07/12 17:09:21 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.8 2002/07/15 03:57:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,75 +38,92 @@
 # include  <malloc.h>
 #endif
 
+/*
+ * The lxt_scope head and current pointers are used to keep a scope
+ * stack that can be accessed from the bottom. The lxt_scope_head
+ * points to the first (bottom) item in the stack and
+ * lxt_scope_current points to the last (top) item in the stack. The
+ * push_scope and pop_scope methods manipulate the stack.
+ */
 struct lxt_scope
 {
-struct lxt_scope *next, *prev;
-char *name;
-int len;
+      struct lxt_scope *next, *prev;
+      char *name;
+      int len;
 };
 
-struct lxt_scope *lxt_scope_head=NULL,  *lxt_scope_current=NULL;
+static struct lxt_scope *lxt_scope_head=NULL,  *lxt_scope_current=NULL;
 
 static void push_scope(const char *name)
 {
-struct lxt_scope *t = (struct lxt_scope *)calloc(1, sizeof(struct lxt_scope));
+      struct lxt_scope *t = (struct lxt_scope *)
+	    calloc(1, sizeof(struct lxt_scope));
 
-t->name = strdup(name);
-t->len = strlen(name);
+      t->name = strdup(name);
+      t->len = strlen(name);
 
-if(!lxt_scope_head)
-	{
-	lxt_scope_head = lxt_scope_current = t;
-	}
-	else
-	{
-	lxt_scope_current->next = t;
-	t->prev = lxt_scope_current;
-	lxt_scope_current = t;
-	}
+      if(!lxt_scope_head) {
+	    lxt_scope_head = lxt_scope_current = t;
+      } else {
+	    lxt_scope_current->next = t;
+	    t->prev = lxt_scope_current;
+	    lxt_scope_current = t;
+      }
 }
 
 static void pop_scope(void)
 {
-struct lxt_scope *t;
+      struct lxt_scope *t;
 
-assert(lxt_scope_current);
+      assert(lxt_scope_current);
 
-t=lxt_scope_current->prev;
-free(lxt_scope_current->name);
-free(lxt_scope_current);
-lxt_scope_current = t;
-if(!t) lxt_scope_head = t;
+      t=lxt_scope_current->prev;
+      free(lxt_scope_current->name);
+      free(lxt_scope_current);
+      lxt_scope_current = t;
+      if (lxt_scope_current) {
+	    lxt_scope_current->next = 0;
+      } else {
+	    lxt_scope_head = 0;
+      }
 }
 
+/*
+ * This function uses the scope stack to generate a hierarchical
+ * name. Scan the scope stack from the bottom up to construct the
+ * name.
+ */
 static char *create_full_name(const char *name)
 {
-char *n, *n2;
-int len = 0;
-struct lxt_scope *t = lxt_scope_head;
+      char *n, *n2;
+      int len = 0;
+      struct lxt_scope *t = lxt_scope_head;
 
-while(t)
-	{
-	len+=t->len+1;
-	t=t->next;
-	}
+	/* Figure out how long the combined string will be. */
+      while(t) {
+	    len+=t->len+1;
+	    t=t->next;
+      }
 
-len += strlen(name) + 1;
-n = n2 = malloc(len);
-t = lxt_scope_head;
+      len += strlen(name) + 1;
 
-while(t)
-	{
-	strcpy(n2, t->name);
-	n2 += t->len;
-	*n2 = '.';
-	n2++;
-	t=t->next;
-	}
+	/* Allocate a string buffer. */
+      n = n2 = malloc(len);
 
-strcpy(n2, name);
+      t = lxt_scope_head;
+      while(t) {
+	    strcpy(n2, t->name);
+	    n2 += t->len;
+	    *n2 = '.';
+	    n2++;
+	    t=t->next;
+      }
 
-return(n);
+      strcpy(n2, name);
+      n2 += strlen(n2);
+      assert( (n2 - n + 1) == len );
+
+      return(n);
 }
 
 
@@ -160,7 +177,7 @@ inline static void vcd_names_add(const char *name)
       struct vcd_names_s *nl = (struct vcd_names_s *)
 	    malloc(sizeof(struct vcd_names_s));
       assert(nl);
-      nl->name = name;
+      nl->name = strdup(name);
       nl->next = vcd_names_list;
       vcd_names_list = nl;
       listed_names ++;
@@ -559,9 +576,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  break;
 	    
 	    name = vpi_get_str(vpiName, item);
-	    
 	    nexus_id = vpi_get(_vpiNexusId, item);
-
 	    if (nexus_id) {
 		  ident = find_nexus_ident(nexus_id);
 	    } else {
@@ -591,12 +606,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  vcd_list    = info;
 
 		  info->cb    = vpi_register_cb(&cb);
-	    }
-            else
-            {
-	    char *n = create_full_name(name);
-            lt_symbol_alias(dump_file, ident, n, vpi_get(vpiSize, item)-1, 0);
-	    free(n);
+
+	    } else {
+		  char *n = create_full_name(name);
+		  lt_symbol_alias(dump_file, ident, n,
+				  vpi_get(vpiSize, item)-1, 0);
+		  free(n);
             }
 	    
 	    break;
@@ -652,6 +667,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			   "LXT Error: $lxtdumpvars: Unsupported parameter "
 			   "type (%d)\n", vpi_get(vpiType, item));
       }
+
 }
 
 static int draw_scope(vpiHandle item)
@@ -796,6 +812,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.8  2002/07/15 03:57:30  steve
+ *  Fix dangling pointer in pop_scope.
+ *
  * Revision 1.7  2002/07/12 17:09:21  steve
  *  Remember to scan IntegerVars.
  *
