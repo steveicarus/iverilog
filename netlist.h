@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.123 2000/04/16 23:32:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.124 2000/04/18 01:02:54 steve Exp $"
 #endif
 
 /*
@@ -1512,6 +1512,13 @@ class NetSTask  : public NetProc {
  * This class represents an elaborated class definition. NetUTask
  * classes may refer to objects of this type to get the meaning of the
  * defined task.
+ *
+ * The task also introduces a scope, and the parameters are actually
+ * reg objects in the new scope. The task is called by the calling
+ * thread assigning (blocking assignment) to the in and inout
+ * paramters, then invoking the thread, and finally assigning out the
+ * output and inout variables. The variables accessable as ports are
+ * also elaborated and accessible as ordinary reg objects.
  */
 class NetTaskDef {
 
@@ -1521,10 +1528,10 @@ class NetTaskDef {
 
       void set_proc(NetProc*p);
 
-      const string& name() const { return name_; }
-      const NetProc*proc() const { return proc_; }
+      const string& name() const;
+      const NetProc*proc() const;
 
-      unsigned port_count() const { return ports_.count(); }
+      unsigned port_count() const;
       NetNet*port(unsigned idx);
 
       void dump(ostream&, unsigned) const;
@@ -2374,6 +2381,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.124  2000/04/18 01:02:54  steve
+ *  Minor cleanup of NetTaskDef.
+ *
  * Revision 1.123  2000/04/16 23:32:19  steve
  *  Synthesis of comparator in expressions.
  *

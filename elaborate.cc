@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.158 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.159 2000/04/18 01:02:53 steve Exp $"
 #endif
 
 /*
@@ -745,6 +745,7 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       assert(rv);
 
       rv->set_width(mem->width());
+      assert(ix);
       NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
       assert(idx);
 
@@ -2224,6 +2225,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.159  2000/04/18 01:02:53  steve
+ *  Minor cleanup of NetTaskDef.
+ *
  * Revision 1.158  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

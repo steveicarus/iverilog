@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.115 2000/04/16 23:32:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.116 2000/04/18 01:02:54 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2313,10 +2313,25 @@ void NetTaskDef::set_proc(NetProc*p)
       proc_ = p;
 }
 
+unsigned NetTaskDef::port_count() const
+{
+      return ports_.count();
+}
+
 NetNet* NetTaskDef::port(unsigned idx)
 {
       assert(idx < ports_.count());
       return ports_[idx];
+}
+
+const string& NetTaskDef::name() const
+{
+      return name_;
+}
+
+const NetProc*NetTaskDef::proc() const
+{
+      return proc_;
 }
 
 /*
@@ -2468,6 +2483,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.116  2000/04/18 01:02:54  steve
+ *  Minor cleanup of NetTaskDef.
+ *
  * Revision 1.115  2000/04/16 23:32:19  steve
  *  Synthesis of comparator in expressions.
  *
