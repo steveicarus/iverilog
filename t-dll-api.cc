@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.33 2001/04/03 04:50:37 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.34 2001/04/04 04:50:35 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -821,6 +821,8 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_DELAY:
 	    return net->u_.delay_.stmt_;
+	  case IVL_ST_FOREVER:
+	    return net->u_.forever_.stmt_;
 	  case IVL_ST_WAIT:
 	    return net->u_.wait_.stmt_;
 	  case IVL_ST_WHILE:
@@ -834,6 +836,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.34  2001/04/04 04:50:35  steve
+ *  Support forever loops in the tgt-vvp target.
+ *
  * Revision 1.33  2001/04/03 04:50:37  steve
  *  Support non-blocking assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.23 2001/04/04 04:28:41 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.24 2001/04/04 04:50:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -354,6 +354,19 @@ static int show_stmt_delay(ivl_statement_t net)
       return rc;
 }
 
+static int show_stmt_forever(ivl_statement_t net)
+{
+      int rc = 0;
+      ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
+      unsigned lab_top = local_count++;
+
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_top);
+      rc += show_statement(stmt);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
+
+      return rc;
+}
+
 static int show_stmt_fork(ivl_statement_t net)
 {
       unsigned idx;
@@ -553,6 +566,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_stmt_delay(net);
 	    break;
 
+	  case IVL_ST_FOREVER:
+	    rc += show_stmt_forever(net);
+	    break;
+
 	  case IVL_ST_FORK:
 	    rc += show_stmt_fork(net);
 	    break;
@@ -656,6 +673,9 @@ int draw_task_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.24  2001/04/04 04:50:35  steve
+ *  Support forever loops in the tgt-vvp target.
+ *
  * Revision 1.23  2001/04/04 04:28:41  steve
  *  Fix broken look scanning down bits of number.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.46 2001/04/03 04:50:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.47 2001/04/04 04:50:35 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -247,6 +247,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_CONDIT,
       IVL_ST_DELAY,
       IVL_ST_DELAYX,
+      IVL_ST_FOREVER,
       IVL_ST_FORK,
       IVL_ST_STASK,
       IVL_ST_TRIGGER,
@@ -715,7 +716,7 @@ extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
-  /* IVL_ST_DELAY, IVL_ST_WAIT, IVL_ST_WHILE */
+  /* IVL_ST_DELAY, IVL_ST_FOREVER, IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
 
@@ -736,6 +737,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.47  2001/04/04 04:50:35  steve
+ *  Support forever loops in the tgt-vvp target.
+ *
  * Revision 1.46  2001/04/03 04:50:37  steve
  *  Support non-blocking assignments.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.21 2001/04/03 04:50:37 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.22 2001/04/04 04:50:35 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -349,6 +349,25 @@ bool dll_target::proc_delay(const NetPDelay*net)
       return flag;
 }
 
+void dll_target::proc_forever(const NetForever*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_FOREVER;
+
+      ivl_statement_t tmp = (struct ivl_statement_s*)
+	    calloc(1, sizeof(struct ivl_statement_s));
+
+      ivl_statement_t save_cur_ = stmt_cur_;
+      stmt_cur_ = tmp;
+
+      net->emit_recurse(this);
+
+      save_cur_->u_.forever_.stmt_ = stmt_cur_;
+      stmt_cur_ = save_cur_;
+}
+
 void dll_target::proc_stask(const NetSTask*net)
 {
       unsigned nparms = net->nparms();
@@ -511,6 +530,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.22  2001/04/04 04:50:35  steve
+ *  Support forever loops in the tgt-vvp target.
+ *
  * Revision 1.21  2001/04/03 04:50:37  steve
  *  Support non-blocking assignments.
  *
