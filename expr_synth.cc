@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.43 2003/04/08 05:07:15 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.44 2003/04/19 04:52:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -657,10 +657,13 @@ NetNet* NetETernary::synthesize(Design *des)
       string path = csig->scope()->local_symbol();
 
       assert(csig->pin_count() == 1);
-      assert(tsig->pin_count() == fsig->pin_count());
-      unsigned width=tsig->pin_count();
+
+      unsigned width=expr_width();
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
+
+      assert(width <= tsig->pin_count());
+      assert(width <= fsig->pin_count());
 
       string oname = csig->scope()->local_symbol();
       NetMux *mux = new NetMux(csig->scope(), oname, width, 2, 1);
@@ -728,6 +731,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.44  2003/04/19 04:52:56  steve
+ *  Less picky about expression widths while synthesizing ternary.
+ *
  * Revision 1.43  2003/04/08 05:07:15  steve
  *  Detect constant shift distances in synthesis.
  *
