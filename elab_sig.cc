@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.31 2003/07/15 03:49:22 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.32 2003/09/20 05:24:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -479,15 +479,17 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
 						      des, scope);
 
+	/* If the ident has idx expressions, then this is a
+	   memory. It can only have the idx registers after the msb
+	   and lsb expressions are filled. And, if it has one index,
+	   it has both. */
       if (lidx_ || ridx_) {
 	    assert(lidx_ && ridx_);
 
-	      // If the register has indices, then this is a
-	      // memory. Create the memory object.
-	    verinum*lval = lidx_->eval_const(des, scope);
-	    verinum*rval = ridx_->eval_const(des, scope);
+	    NetExpr*lexp = elab_and_eval(des, scope, lidx_);
+	    NetExpr*rexp = elab_and_eval(des, scope, ridx_);
 
-	    if ((lval == 0) || (rval == 0)) {
+	    if ((lexp == 0) || (rexp == 0)) {
 		  cerr << get_line() << ": internal error: There is "
 		       << "a problem evaluating indices for ``"
 		       << hname_.peek_tail_name() << "''." << endl;
@@ -495,15 +497,28 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  return;
 	    }
 
-	    assert(lval);
-	    assert(rval);
+	    NetEConst*lcon = dynamic_cast<NetEConst*> (lexp);
+	    NetEConst*rcon = dynamic_cast<NetEConst*> (rexp);
+
+	    if ((lcon == 0) || (rcon == 0)) {
+		  cerr << get_line() << ": internal error: The indices "
+		       << "are not constant for memory ``"
+		       << hname_.peek_tail_name() << "''." << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	    verinum lval = lcon->value();
+	    verinum rval = rcon->value();
+
+	    delete lexp;
+	    delete rexp;
 
 	    string name = hname_.peek_tail_name();
 
-	    long lnum = lval->as_long();
-	    long rnum = rval->as_long();
-	    delete lval;
-	    delete rval;
+	    long lnum = lval.as_long();
+	    long rnum = rval.as_long();
+
 	    new NetMemory(scope, name, wid, lnum, rnum);
 	      // The constructor automatically adds the memory object
 	      // to the scope. Do I need to set line number information?
@@ -524,6 +539,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.32  2003/09/20 05:24:00  steve
+ *  Evaluate memory index constants using elab_and_eval.
+ *
  * Revision 1.31  2003/07/15 03:49:22  steve
  *  Spelling fixes.
  *
@@ -594,46 +612,5 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
  * Revision 1.11  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.
- *
- * Revision 1.10  2001/01/13 22:20:08  steve
- *  Parse parameters within nested scopes.
- *
- * Revision 1.9  2001/01/07 07:00:31  steve
- *  Detect port direction attached to non-ports.
- *
- * Revision 1.8  2001/01/04 04:47:51  steve
- *  Add support for << is signal indices.
- *
- * Revision 1.7  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.6  2000/12/04 17:37:04  steve
- *  Add Attrib class for holding NetObj attributes.
- *
- * Revision 1.5  2000/11/20 00:58:40  steve
- *  Add support for supply nets (PR#17)
- *
- * Revision 1.4  2000/09/07 22:37:48  steve
- *  ack, detect when lval fails.
- *
- * Revision 1.3  2000/07/30 18:25:43  steve
- *  Rearrange task and function elaboration so that the
- *  NetTaskDef and NetFuncDef functions are created during
- *  signal enaboration, and carry these objects in the
- *  NetScope class instead of the extra, useless map in
- *  the Design class.
- *
- * Revision 1.2  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.1  2000/05/02 16:27:38  steve
- *  Move signal elaboration to a separate pass.
- *
  */
 
