@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.158 2000/06/15 04:23:17 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.159 2000/06/24 16:40:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -140,8 +140,6 @@ static string make_temp()
 
 class target_vvm : public target_t {
 
-      friend class vvm_parm_rval;
-
     public:
       target_vvm();
       ~target_vvm();
@@ -204,6 +202,28 @@ class target_vvm : public target_t {
 
       NumberTable bits_table;
 
+	// Method definitions go into this file.
+      char*defn_name;
+      ofstream defn;
+
+      char*init_code_name;
+      ofstream init_code;
+
+      char *start_code_name;
+      ofstream start_code;
+
+      unsigned process_counter;
+      unsigned thread_step_;
+
+	// String constants that are made into vpiHandles have their
+	// handle name mapped by this.
+      map<string,unsigned>string_constants;
+      unsigned string_counter;
+
+	// Number constants accessed by vpiHandles are mapped by this.
+      map<verinum,unsigned,less_verinum>number_constants;
+      unsigned number_counter;
+
     private:
       void emit_init_value_(const Link&lnk, verinum::V val);
       void emit_gate_outputfun_(const NetNode*, unsigned);
@@ -220,19 +240,6 @@ class target_vvm : public target_t {
 	// cannot nest.
       bool function_def_flag_;
 
-	// Method definitions go into this file.
-      char*defn_name;
-      ofstream defn;
-
-      char*init_code_name;
-      ofstream init_code;
-
-      char *start_code_name;
-      ofstream start_code;
-
-      unsigned process_counter;
-      unsigned thread_step_;
-
 	// These methods are use to help prefent duplicate printouts
 	// of things that may be scanned multiple times.
       map<string,bool>esignal_printed_flag;
@@ -242,14 +249,6 @@ class target_vvm : public target_t {
 
       map<string,unsigned>nexus_wire_map;
       unsigned nexus_wire_counter;
-
-	// String constants that are made into vpiHandles have th
-	// handle name mapped by this.
-      map<string,unsigned>string_constants;
-      unsigned string_counter;
-
-      map<verinum,unsigned,less_verinum>number_constants;
-      unsigned number_counter;
 
       unsigned selector_counter;
 };
@@ -320,13 +319,12 @@ target_vvm::~target_vvm()
 class vvm_proc_rval  : public expr_scan_t {
 
     public:
-      explicit vvm_proc_rval(ostream&os, target_vvm*t)
-      : result(""), os_(os), tgt_(t) { }
+      explicit vvm_proc_rval(target_vvm*t)
+      : result(""), tgt_(t) { }
 
       string result;
 
     private:
-      ostream&os_;
       target_vvm*tgt_;
 
     private:
@@ -354,8 +352,8 @@ class vvm_proc_rval  : public expr_scan_t {
 class vvm_parm_rval  : public expr_scan_t {
 
     public:
-      explicit vvm_parm_rval(ostream&o, target_vvm*t)
-      : result(""), os_(o), tgt_(t) { }
+      explicit vvm_parm_rval(target_vvm*t)
+      : result(""), tgt_(t) { }
 
       string result;
 
@@ -368,7 +366,6 @@ class vvm_parm_rval  : public expr_scan_t {
       virtual void expr_signal(const NetESignal*);
 
     private:
-      ostream&os_;
       target_vvm*tgt_;
 };
 
@@ -383,10 +380,10 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
       assert(expr->repeat() > 0);
       string tname = make_temp();
 
-      os_ << "      vpip_bit_t " << tname << "_bits["
-	  << expr->expr_width() << "];" << endl;
-      os_ << "      vvm_bitset_t " << tname << "(" << tname << "_bits, "
-	  << expr->expr_width() << ");" << endl;
+      tgt_->defn << "      vpip_bit_t " << tname << "_bits["
+		 << expr->expr_width() << "];" << endl;
+      tgt_->defn << "      vvm_bitset_t " << tname << "(" << tname << "_bits, "
+		 << expr->expr_width() << ");" << endl;
 
       unsigned pos = 0;
       for (unsigned rep = 0 ;  rep < expr->repeat() ;  rep += 1)
@@ -396,9 +393,9 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 		  pp->expr_scan(this);
 
 		  for (unsigned bit = 0 ; bit < pp->expr_width() ; bit += 1) {
-			os_ << "      " << tname << "[" << pos <<
-			      "] = " << result << "[" << bit << "];" <<
-			      endl;
+			tgt_->defn << "      " << tname << "[" << pos
+				   <<"] = " << result << "[" << bit << "];"
+				   << endl;
 			pos+= 1;
 		  }
 		  assert(pos <= expr->expr_width());
@@ -407,9 +404,9 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 	/* Check that the positions came out to the right number of
 	   bits. */
       if (pos != expr->expr_width()) {
-	    os_ << "#error \"" << expr->get_line() << ": vvm eror: "
-		  "width is " << expr->expr_width() << ", but I count "
-		<< pos << " bits.\"" << endl;
+	    tgt_->defn << "#error \"" << expr->get_line() << ": vvm eror: "
+		       << "width is " << expr->expr_width() << ", but I count "
+		       << pos << " bits.\"" << endl;
       }
 
       result = tname;
@@ -420,8 +417,8 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
       string tname = make_temp();
 
       unsigned number_off = tgt_->bits_table.position(expr->value());
-      os_ << "      vvm_bitset_t " << tname << "(bits_table+"
-	  << number_off << ", " << expr->expr_width() << ");" << endl;
+      tgt_->defn << "      vvm_bitset_t " << tname << "(const_bits_table+"
+		 << number_off << ", " << expr->expr_width() << ");" << endl;
 
       result = tname;
 }
@@ -438,10 +435,10 @@ void vvm_proc_rval::expr_memory(const NetEMemory*mem)
 {
 	/* Make a temporary to hold the word from the memory. */
       const string tname = make_temp();
-      os_ << "      vpip_bit_t " << tname << "_bits["
-	  << mem->expr_width() << "];" << endl;
-      os_ << "      vvm_bitset_t " << tname << "(" << tname << "_bits, "
-	  << mem->expr_width() << ");" << endl;
+      tgt_->defn << "      vpip_bit_t " << tname << "_bits["
+		 << mem->expr_width() << "];" << endl;
+      tgt_->defn << "      vvm_bitset_t " << tname << "(" << tname << "_bits, "
+		 << mem->expr_width() << ");" << endl;
 
       const string mname = mangle(mem->name());
 
@@ -453,15 +450,15 @@ void vvm_proc_rval::expr_memory(const NetEMemory*mem)
 	/* Write code to use the calculated index to get the word from
 	   the memory into the temporary we created earlier. */
 
-      os_ << "      " << mname << ".get_word(" <<
-	    result << ".as_unsigned(), " << tname << ");" << endl;
+      tgt_->defn << "      " << mname << ".get_word("
+		 << result << ".as_unsigned(), " << tname << ");" << endl;
 
       result = tname;
 }
 
 void vvm_proc_rval::expr_sfunc(const NetESFunc*fun)
 {
-      os_ << "      // " << fun->get_line() << endl;
+      tgt_->defn << "      // " << fun->get_line() << endl;
 
       const string retval = make_temp();
       const unsigned retwid = fun->expr_width();
@@ -471,15 +468,15 @@ void vvm_proc_rval::expr_sfunc(const NetESFunc*fun)
 
       const string parmtab = make_temp();
       if (fun->nparms() > 0) {
-	    os_ << "      vpiHandle " << parmtab
-		<< "["<<fun->nparms()<<"];" << endl;
+	    tgt_->defn << "      vpiHandle " << parmtab
+		       << "["<<fun->nparms()<<"];" << endl;
 
 	    for (unsigned idx = 0 ;  idx < fun->nparms() ;  idx += 1) {
-		  vvm_parm_rval scan(os_, tgt_);
+		  vvm_parm_rval scan(tgt_);
 		  fun->parm(idx)->expr_scan(&scan);
 
-		  os_ << "      " << parmtab <<"["<<idx<<"] = "
-		      << scan.result << ";" << endl;
+		  tgt_->defn << "      " << parmtab <<"["<<idx<<"] = "
+			     << scan.result << ";" << endl;
 	    }
       }
 
@@ -487,20 +484,21 @@ void vvm_proc_rval::expr_sfunc(const NetESFunc*fun)
 	   receive the return value, and make it into a vvm_bitset_t
 	   when the call returns. */
 
-      os_ << "      vpip_bit_t " << retval << "_bits["<<retwid<<"];" << endl;
+      tgt_->defn << "      vpip_bit_t " << retval << "_bits["<<retwid<<"];"
+		 << endl;
 
-      os_ << "      vpip_callfunc(\"" << fun->name() << "\", "
-	  << retwid << ", " << retval<<"_bits";
+      tgt_->defn << "      vpip_callfunc(\"" << fun->name() << "\", "
+		 << retwid << ", " << retval<<"_bits";
 
       if (fun->nparms() == 0)
-	    os_ << ", 0, 0";
+	    tgt_->defn << ", 0, 0";
       else
-	    os_ << ", " << fun->nparms() << ", " << parmtab;
+	    tgt_->defn << ", " << fun->nparms() << ", " << parmtab;
 
-      os_ << ");" << endl;
+      tgt_->defn << ");" << endl;
 
-      os_ << "      vvm_bitset_t " << retval << "(" << retval<<"_bits, "
-	  << retwid << ");" << endl;
+      tgt_->defn << "      vvm_bitset_t " << retval << "(" << retval<<"_bits, "
+		 << retwid << ");" << endl;
 
       result = retval;
 }
@@ -514,9 +512,9 @@ void vvm_proc_rval::expr_signal(const NetESignal*expr)
 {
       const string tname = make_temp();
 
-      os_ << "      vvm_bitset_t " << tname << "("
-	  << mangle(expr->name()) << ".bits, "
-	  << expr->expr_width() << ");" << endl;
+      tgt_->defn << "      vvm_bitset_t " << tname << "("
+		 << mangle(expr->name()) << ".bits, "
+		 << expr->expr_width() << ");" << endl;
 
       result = tname;
 }
@@ -526,22 +524,21 @@ void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
       string idx = make_temp();
       string val = make_temp();
       if (const NetEConst*cp = dynamic_cast<const NetEConst*>(sig->index())) {
-	    os_ << "      const unsigned " << idx <<
-		  " = " << cp->value().as_ulong() << ";" << endl;
+	    tgt_->defn << "      const unsigned " << idx
+		       << " = " << cp->value().as_ulong() << ";" << endl;
 
       } else {
 	    sig->index()->expr_scan(this);
-	    os_ << "      const unsigned " <<
-		  idx << " = " << result << ".as_unsigned();" <<
-		  endl;
+	    tgt_->defn << "      const unsigned " << idx
+		       << " = " << result << ".as_unsigned();" << endl;
       }
 
 	/* Get the bit select of a signal by making a vvm_bitset_t
 	   object that refers to the single bit within the signal that
 	   is of interest. */
 
-      os_ << "      vvm_bitset_t " << val << "("
-	  << mangle(sig->name()) << ".bits+" << idx << ", 1);" << endl;
+      tgt_->defn << "      vvm_bitset_t " << val << "("
+		 << mangle(sig->name()) << ".bits+" << idx << ", 1);" << endl;
 
       result = val;
 }
@@ -557,13 +554,13 @@ void vvm_proc_rval::expr_ternary(const NetETernary*expr)
 
       result = make_temp();
 
-      os_ << "      vpip_bit_t " << result << "_bits["
-	  << expr->expr_width() << "];" << endl;
-      os_ << "      vvm_bitset_t " << result << "(" << result<<"_bits, "
-	  << expr->expr_width() << ");" << endl;
+      tgt_->defn << "      vpip_bit_t " << result << "_bits["
+		 << expr->expr_width() << "];" << endl;
+      tgt_->defn << "      vvm_bitset_t " << result << "(" << result<<"_bits, "
+		 << expr->expr_width() << ");" << endl;
 
-      os_ << "      vvm_ternary(" << result << ", " << cond_val<<"[0], "
-	  << true_val << ", " << false_val << ");" << endl;
+      tgt_->defn << "      vvm_ternary(" << result << ", " << cond_val<<"[0], "
+		 << true_val << ", " << false_val << ");" << endl;
 }
 
 /*
@@ -592,28 +589,28 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 	    for (unsigned bit = 0 ; 
 		 bit < expr->parm(idx)->expr_width() ;  bit += 1) {
 
-		  os_ << "      " << bname << ".bits["<<bit<<"] = " <<
-			result << "["<<bit<<"];" << endl;
+		  tgt_->defn << "      " << bname << ".bits["<<bit<<"] = "
+			     << result << "["<<bit<<"];" << endl;
 	    }
       }
 
 	/* Make the function call. */
-      os_ << "        " << mangle(expr->name()) << "();" << endl;
+      tgt_->defn << "        " << mangle(expr->name()) << "();" << endl;
 
 	/* rbits is the bits of the signal that hold the result. */
       string rbits = mangle(expr->result()->name()) + ".bits";
 
 	/* Make a temporary to hold the result... */
       result = make_temp();
-      os_ << "      vpip_bit_t " << result << "_bits["
-	  << expr->expr_width() << "];" << endl;
-      os_ << "      vvm_bitset_t " << result << "("
-	  << result<<"_bits, " << expr->expr_width() << ");" << endl;
+      tgt_->defn << "      vpip_bit_t " << result << "_bits["
+		 << expr->expr_width() << "];" << endl;
+      tgt_->defn << "      vvm_bitset_t " << result << "("
+		 << result<<"_bits, " << expr->expr_width() << ");" << endl;
 
 	/* Copy the result into the new temporary. */
       for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1)
-	    os_ << "      " << result << "_bits[" << idx << "] = "
-		<< rbits << "[" << idx << "];" << endl;
+	    tgt_->defn << "      " << result << "_bits[" << idx << "] = "
+		       << rbits << "[" << idx << "];" << endl;
 
 }
 
@@ -622,49 +619,49 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
       expr->expr()->expr_scan(this);
       string tname = make_temp();
 
-      os_ << "      vpip_bit_t " << tname << "_bits["
-	  << expr->expr_width() << "];" << endl;
-      os_ << "      vvm_bitset_t " << tname << "(" << tname<<"_bits, "
-	  << expr->expr_width() << ");" << endl;
+      tgt_->defn << "      vpip_bit_t " << tname << "_bits["
+		 << expr->expr_width() << "];" << endl;
+      tgt_->defn << "      vvm_bitset_t " << tname << "(" << tname<<"_bits, "
+		 << expr->expr_width() << ");" << endl;
 
       switch (expr->op()) {
 	  case '~':
-	    os_ << "      vvm_unop_not(" << tname << "," << result <<
+	    tgt_->defn << "      vvm_unop_not(" << tname << "," << result <<
 		  ");" << endl;
 	    break;
 	  case '&':
-	    os_ << "      " << tname << "[0] "
+	    tgt_->defn << "      " << tname << "[0] "
 		  "= vvm_unop_and("<<result<<");" << endl;
 	    break;
 	  case '|':
-	    os_ << "      " << tname << "[0] "
+	    tgt_->defn << "      " << tname << "[0] "
 		  "= vvm_unop_or("<<result<<");" << endl;
 	    break;
 	  case '^':
-	    os_ << "      " << tname << "[0] "
+	    tgt_->defn << "      " << tname << "[0] "
 		  "= vvm_unop_xor("<<result<<");" << endl;
 	    break;
 	  case '!':
-	    os_ << "      " << tname << "[0] "
+	    tgt_->defn << "      " << tname << "[0] "
 		  "= vvm_unop_lnot("<<result<<");" << endl;
 	    break;
 	  case '-':
-	    os_ << "vvm_unop_uminus(" <<tname<< "," << result << ");" << endl;
+	    tgt_->defn << "vvm_unop_uminus(" <<tname<< "," << result << ");" << endl;
 	    break;
 	  case 'N':
-	    os_ << "      " << tname << "[0] "
+	    tgt_->defn << "      " << tname << "[0] "
 		  "= vvm_unop_nor("<<result<<");" << endl;
 	    break;
 	  case 'X':
-	    os_ << "      " << tname << "[0] "
+	    tgt_->defn << "      " << tname << "[0] "
 		  "= vvm_unop_xnor("<<result<<");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm error: Unhandled unary op `" << expr->op() << "'"
 		 << endl;
-	    os_ << "#error \"" << expr->get_line() << ": vvm error: "
+	    tgt_->defn << "#error \"" << expr->get_line() << ": vvm error: "
 		  "Unhandled unary op: " << *expr << "\"" << endl;
-	    os_ << result << ";" << endl;
+	    tgt_->defn << result << ";" << endl;
 	    break;
       }
 
@@ -682,117 +679,117 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       assert(expr->expr_width() != 0);
 
       result = make_temp();
-      os_ << "      // " << expr->get_line() << ": expression node." << endl;
-      os_ << "      vpip_bit_t " << result<<"_bits[" << expr->expr_width()
+      tgt_->defn << "      // " << expr->get_line() << ": expression node." << endl;
+      tgt_->defn << "      vpip_bit_t " << result<<"_bits[" << expr->expr_width()
 	  << "];" << endl;
-      os_ << "      vvm_bitset_t " << result << "(" << result << "_bits, "
+      tgt_->defn << "      vvm_bitset_t " << result << "(" << result << "_bits, "
 	  << expr->expr_width() << ");" << endl;
 
       switch (expr->op()) {
 	  case 'a': // logical and (&&)
-	    os_ << "      " << result << "[0] = vvm_binop_land("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_land("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'E': // ===
-	    os_ << "      " << result << "[0] = vvm_binop_eeq("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_eeq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'e': // ==
-	    os_ << "      " << result << "[0] = vvm_binop_eq("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_eq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'G': // >=
-	    os_ << "      " << result << "[0] = vvm_binop_ge("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_ge("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'l': // left shift(<<)
-	    os_ << "      " << "vvm_binop_shiftl(" << result
+	    tgt_->defn << "      " << "vvm_binop_shiftl(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'L': // <=
-	    os_ << "      " << result << "[0] = vvm_binop_le("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_le("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'N': // !==
-	    os_ << "      " << result << "[0] = vvm_binop_nee("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_nee("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'n':
-	    os_ << "      " << result << "[0] = vvm_binop_ne("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_ne("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '<':
-	    os_ << "      " << result << "[0] = vvm_binop_lt("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_lt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '>':
-	    os_ << "      " << result << "[0] = vvm_binop_gt("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_gt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'o': // logical or (||)
-	    os_ << "      " << result << "[0] = vvm_binop_lor("
+	    tgt_->defn << "      " << result << "[0] = vvm_binop_lor("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'r': // right shift(>>)
-	    os_ << "      " << "vvm_binop_shiftr(" << result
+	    tgt_->defn << "      " << "vvm_binop_shiftr(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'X':
-	    os_ << "      " << "vvm_binop_xnor(" << result
+	    tgt_->defn << "      " << "vvm_binop_xnor(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '+':
-	    os_ << "      " << "vvm_binop_plus(" << result
+	    tgt_->defn << "      " << "vvm_binop_plus(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '-':
-	    os_ << "      " << "vvm_binop_minus(" << result
+	    tgt_->defn << "      " << "vvm_binop_minus(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '&':
-	    os_ << "      " << "vvm_binop_and(" << result
+	    tgt_->defn << "      " << "vvm_binop_and(" << result
 		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '|':
-	    os_ << "      " << "vvm_binop_or(" << result
+	    tgt_->defn << "      " << "vvm_binop_or(" << result
 		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '^':
-	    os_ << "      " << "vvm_binop_xor(" << result
+	    tgt_->defn << "      " << "vvm_binop_xor(" << result
 		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '*':
-	    os_ << "      " << "vvm_binop_mult(" << result
+	    tgt_->defn << "      " << "vvm_binop_mult(" << result
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  case '/':
-	    os_ << "      " << "vvm_binop_idiv(" << result
+	    tgt_->defn << "      " << "vvm_binop_idiv(" << result
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  case '%':
-	    os_ << "      " << "vvm_binop_imod(" << result
+	    tgt_->defn << "      " << "vvm_binop_imod(" << result
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm: Unhandled binary op `" << expr->op() << "': "
 		 << *expr << endl;
-	    os_ << "#error \"" << expr->get_line() << ": vvm error: "
+	    tgt_->defn << "#error \"" << expr->get_line() << ": vvm error: "
 		  "Unhandled binary op: " << *expr << "\"" << endl;
 	    result = lres;
 	    break;
       }
 }
 
-static string emit_proc_rval(ostream&os, target_vvm*tgt, const NetExpr*expr)
+static string emit_proc_rval(target_vvm*tgt, const NetExpr*expr)
 {
-      vvm_proc_rval scan (os, tgt);
+      vvm_proc_rval scan (tgt);
       expr->expr_scan(&scan);
       return scan.result;
 }
 
 void vvm_parm_rval::expr_binary(const NetEBinary*expr)
 {
-      string rval = emit_proc_rval(tgt_->defn, tgt_, expr);
+      string rval = emit_proc_rval(tgt_, expr);
 
       string tmp = make_temp();
       tgt_->defn << "      struct __vpiNumberConst " << tmp << ";" << endl;
@@ -827,7 +824,7 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
 	    unsigned bit_idx = tgt_->bits_table.position(expr->value());
 	    tgt_->init_code << "      vpip_make_number_const("
 			    << "&number_table[" << res << "], "
-			    << "bits_table+" << bit_idx << ", "
+			    << "const_bits_table+" << bit_idx << ", "
 			    << width << ");" << endl;
       }
 
@@ -869,7 +866,7 @@ void vvm_parm_rval::expr_memory(const NetEMemory*mem)
 
 	      /* Otherwise, evaluate the index at run time and use
 		 that to select the memory word. */
-	    string rval = emit_proc_rval(tgt_->defn, tgt_, mem->index());
+	    string rval = emit_proc_rval(tgt_, mem->index());
 	    result = "vpi_handle_by_index(&" + mangle(mem->name()) +
 		  ".base, " + rval + ".as_unsigned())";
       }
@@ -886,9 +883,9 @@ void vvm_parm_rval::expr_signal(const NetESignal*expr)
       result = res;
 }
 
-static string emit_parm_rval(ostream&os, target_vvm*tgt, const NetExpr*expr)
+static string emit_parm_rval(target_vvm*tgt, const NetExpr*expr)
 {
-      vvm_parm_rval scan (os, tgt);
+      vvm_parm_rval scan (tgt);
       expr->expr_scan(&scan);
       return scan.result;
 }
@@ -987,7 +984,7 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 		  signal_bit_counter << "];" << endl;
 
       if (bits_table.count() > 0) {
-	    os << "static vpip_bit_t bits_table[" << bits_table.count()
+	    os << "static vpip_bit_t const_bits_table[" << bits_table.count()
 	       << "] = {";
 
 	    for (unsigned idx = 0 ;  idx < bits_table.count() ;  idx += 1) {
@@ -2131,7 +2128,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 						 Link::STRONG,
 						 Link::STRONG);
 
-		  string bval = emit_proc_rval(defn, this, net->bmux());
+		  string bval = emit_proc_rval(this, net->bmux());
 
 		  defn << "      switch (" << bval
 		       << ".as_unsigned()) {" << endl;
@@ -2185,7 +2182,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
 
 	    if (net->pin_count() > rs->pin_count()) {
-		  rval = emit_proc_rval(defn, this, net->rval());
+		  rval = emit_proc_rval(this, net->rval());
 
 	    } else {
 		  assert((net->pin_count() <= rs->pin_count())
@@ -2195,7 +2192,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
       } else {
 
-	    rval = emit_proc_rval(defn, this, net->rval());
+	    rval = emit_proc_rval(this, net->rval());
       }
 
 
@@ -2211,7 +2208,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
 	      // This is a bit select. Assign the low bit of the rval
 	      // to the selected bit of the lval.
-	    string bval = emit_proc_rval(defn, this, net->bmux());
+	    string bval = emit_proc_rval(this, net->bmux());
 
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
@@ -2259,10 +2256,10 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 {
 	/* make a temporary to reference the index signal. */
-      string index = emit_proc_rval(defn, this, amem->index());
+      string index = emit_proc_rval(this, amem->index());
 
 	/* Evaluate the rval that gets written into the memory word. */
-      string rval = emit_proc_rval(defn, this, amem->rval());
+      string rval = emit_proc_rval(this, amem->rval());
 
 
       const NetMemory*mem = amem->memory();
@@ -2283,7 +2280,7 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 
 void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 {
-      string rval = emit_proc_rval(defn, this, net->rval());
+      string rval = emit_proc_rval(this, net->rval());
       const unsigned long delay = net->rise_time();
 
       if (net->bmux()) {
@@ -2295,7 +2292,7 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 		 better generating a demux device and doing the assign
 		 to the device input. Food for thought. */
 
-	    string bval = emit_proc_rval(defn, this, net->bmux());
+	    string bval = emit_proc_rval(this, net->bmux());
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
@@ -2325,11 +2322,11 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
 {
 	/* make a temporary to reference the index signal. */
-      string index = emit_proc_rval(defn, this, amem->index());
+      string index = emit_proc_rval(this, amem->index());
 
 
 	/* Evaluate the rval that gets written into the memory word. */
-      string rval = emit_proc_rval(defn, this, amem->rval());
+      string rval = emit_proc_rval(this, amem->rval());
 
       const NetMemory*mem = amem->memory();
 
@@ -2459,7 +2456,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
       }
 
       defn << "      /* case (" << *net->expr() << ") */" << endl;
-      string expr = emit_proc_rval(defn, this, net->expr());
+      string expr = emit_proc_rval(this, net->expr());
 
       unsigned exit_step = thread_step_ + 1;
       thread_step_ += 1;
@@ -2480,7 +2477,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 	    thread_step_ += 1;
 
 	    defn << "      /* " << *net->expr(idx) << " */" << endl;
-	    string guard = emit_proc_rval(defn, this, net->expr(idx));
+	    string guard = emit_proc_rval(this, net->expr(idx));
 
 	    defn << "      if (B_IS1(" << test_func << "(" << guard << ","
 	       << expr << "))) {" << endl;
@@ -2584,7 +2581,7 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 
       defn << "      do {" << endl;
 
-      string expr = emit_proc_rval(defn, this, net->expr());
+      string expr = emit_proc_rval(this, net->expr());
 
       unsigned default_idx = net->nitems();
       for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
@@ -2596,7 +2593,7 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 		  continue;
 	    }
 
-	    string guard = emit_proc_rval(defn, this, net->expr(idx));
+	    string guard = emit_proc_rval(this, net->expr(idx));
 
 	    defn << "      if (B_IS1(" << test_func << "(" <<
 		  guard << "," << expr << "))) {" << endl;
@@ -2636,7 +2633,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 	    return;
       }
 
-      string expr = emit_proc_rval(defn, this, net->expr());
+      string expr = emit_proc_rval(this, net->expr());
 
       unsigned if_step   = ++thread_step_;
       unsigned else_step = ++thread_step_;
@@ -2684,7 +2681,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 
 void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
 {
-      string expr = emit_proc_rval(defn, this, net->expr());
+      string expr = emit_proc_rval(this, net->expr());
 
       defn << "      // " << net->get_line() << ": conditional (if-else)"
 	   << endl;
@@ -2792,7 +2789,7 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 	    expr = tmp;
 
       } else {
-	    expr = emit_proc_rval(defn, this, net->expr());
+	    expr = emit_proc_rval(this, net->expr());
 	    expr = expr + ".as_unsigned()";
       }
 
@@ -2864,7 +2861,7 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
       for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1) {
 	    string val;
 	    if (net->parm(idx)) {
-		  val = emit_parm_rval(os, this, net->parm(idx));
+		  val = emit_parm_rval(this, net->parm(idx));
 
 	    } else {
 		  val = string("&vpip_null.base");
@@ -2999,7 +2996,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
       defn << "static bool " << thread_class_ << "_step_"
 	   << head_step << "_(vvm_thread*thr) {" << endl;
 
-      string expr = emit_proc_rval(defn, this, net->expr());
+      string expr = emit_proc_rval(this, net->expr());
 
       defn << "// " << net->expr()->get_line() <<
 	    ": test while condition." << endl;
@@ -3067,6 +3064,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.159  2000/06/24 16:40:46  steve
+ *  expression scan uses tgt_ to get output files.
+ *
  * Revision 1.158  2000/06/15 04:23:17  steve
  *  Binary expressions as operands to system tasks.
  *
