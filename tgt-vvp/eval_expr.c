@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.9 2001/04/01 07:22:42 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.10 2001/04/01 21:47:29 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -442,6 +442,25 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
 	    break;
 
+	  case '!':
+	    if (res.wid > 1) {
+		    /* a ! on a vector is implemented with a reduction
+		       nor. Generate the result into the first bit of
+		       the input vector and free the rest of the
+		       vector. */
+		  struct vector_info tmp;
+		  assert(res.base >= 4);
+		  tmp.base = res.base+1;
+		  tmp.wid = res.wid - 1;
+		  fprintf(vvp_out, "    %%nor/r %u, %u, %u;\n",
+			  res.base, res.base, res.wid);
+		  clr_vector(tmp);
+		  res.wid = 1;
+	    } else {
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    }
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp error: unhandled unary: %c\n",
 		    ivl_expr_opcode(exp));
@@ -496,6 +515,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.10  2001/04/01 21:47:29  steve
+ *  Implement the unary ! operator.
+ *
  * Revision 1.9  2001/04/01 07:22:42  steve
  *  Generate code for < and <=.
  *
