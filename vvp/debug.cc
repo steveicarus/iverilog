@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.8 2001/12/18 05:32:11 steve Exp $"
+#ident "$Id: debug.cc,v 1.9 2002/07/05 04:40:59 steve Exp $"
 #endif
 
 /*
@@ -45,20 +45,9 @@
 
 static bool interact_flag = false;
 
-extern vvp_ipoint_t debug_lookup_functor(const char*name);
-
 static void cmd_lookup(unsigned argc, char*argv[])
 {
-      for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
-	    vvp_ipoint_t fnc = debug_lookup_functor(argv[idx]);
-
-	    if (fnc) {
-		  printf("%s: functor 0x%x\n", argv[idx], fnc);
-		  continue;
-	    }
-
-	    printf("%s: *** unknown\n", argv[idx]);
-      }
+      printf(" **** not implemented...\n");
 }
 
 static void cmd_fbreak(unsigned argc, char*argv[])
@@ -165,6 +154,10 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.9  2002/07/05 04:40:59  steve
+ *  Symbol table uses more efficient key string allocator,
+ *  and remove all the symbol tables after compile is done.
+ *
  * Revision 1.8  2001/12/18 05:32:11  steve
  *  Improved functor debug dumps.
  *

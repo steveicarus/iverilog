@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.132 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.133 2002/07/05 04:40:59 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -195,6 +195,7 @@ void define_functor_symbol(const char*label, vvp_ipoint_t ipt)
 
 static vvp_ipoint_t lookup_functor_symbol(const char*label)
 {
+      assert(sym_functors);
       symbol_value_t val = sym_get_value(sym_functors, label);
       return val.num;
 }
@@ -491,8 +492,19 @@ void compile_cleanup(void)
 
       compile_errors += nerrs;
 
+	/* After compile is complete, the vpi symbol table is no
+	   longer needed. VPI objects are located by following
+	   scopes. */
       delete_symbol_table(sym_vpi);
       sym_vpi = 0;
+
+	/* Don't need the code labels. The instructions have numeric
+	   pointers in them, the symbol table is no longer needed. */
+      delete_symbol_table(sym_codespace);
+      sym_codespace = 0;
+
+      delete_symbol_table(sym_functors);
+      sym_functors = 0;
 }
 
 void compile_vpi_symbol(const char*label, vpiHandle obj)
@@ -1406,20 +1418,11 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 }
 
 /*
- * These functions are in support of the debugger.
- *
- * debug_lookup_functor
- *    Use a name to locate a functor address. This only gets the LSB
- *    of a vector, but it is enough to locate the object, or, is it?
- */
-vvp_ipoint_t debug_lookup_functor(const char*name)
-{
-      return lookup_functor_symbol(name);
-}
-
-
-/*
  * $Log: compile.cc,v $
+ * Revision 1.133  2002/07/05 04:40:59  steve
+ *  Symbol table uses more efficient key string allocator,
+ *  and remove all the symbol tables after compile is done.
+ *
  * Revision 1.132  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *

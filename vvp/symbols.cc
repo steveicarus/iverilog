@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.6 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: symbols.cc,v 1.7 2002/07/05 04:40:59 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -28,9 +28,43 @@
 #endif
 # include  <assert.h>
 
+/*
+ * The keys of the symbol table are null terminated strings. Keep them
+ * in a string buffer, with the strings separated by a single null,
+ * for compact use of memory. This also makes it easy to delete the
+ * entire lot of keys, simply by deleting the heaps.
+ *
+ * The key_strdup() function below allocates the strings from this
+ * buffer, possibly making a new buffer if needed.
+ */
+struct key_strings {
+      struct key_strings*next;
+      char data[64*1024 - sizeof(struct key_strings*)];
+};
+
 struct symbol_table_s {
       struct tree_node_*root;
+      struct key_strings*str_chunk;
+      unsigned str_used;
 };
+
+static char*key_strdup(struct symbol_table_s*tab, const char*str)
+{
+      unsigned len = strlen(str);
+      assert( (len+1) <= sizeof tab->str_chunk->data );
+
+      if ( (len+1) > (sizeof tab->str_chunk->data - tab->str_used) ) {
+	    key_strings*tmp = new key_strings;
+	    tmp->next = tab->str_chunk;
+	    tab->str_chunk = tmp;
+	    tab->str_used = 0;
+      }
+
+      char*res = tab->str_chunk->data + tab->str_used;
+      tab->str_used += len + 1;
+      strcpy(res, str);
+      return res;
+}
 
 /*
  * This is a B-Tree data structure, where there are nodes and
@@ -84,28 +118,32 @@ symbol_table_t new_symbol_table(void)
       tbl->root->leaf_flag = false;
       tbl->root->count = 0;
       tbl->root->parent = 0;
+
+      tbl->str_chunk = new key_strings;
+      tbl->str_used = 0;
+
       return tbl;
 }
 
 static void delete_symbol_node(struct tree_node_*cur)
 {
-      if (cur->leaf_flag) {
+      if (! cur->leaf_flag) {
 	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1)
-		  free(cur->leaf[idx].key);
-
-	    delete cur;
-
-      } else {
-	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1)
-		  delete cur->child[idx];
-
-	    delete cur;
+		  delete_symbol_node(cur->child[idx]);
       }
+
+      delete cur;
 }
 
 void delete_symbol_table(symbol_table_t tab)
 {
       delete_symbol_node(tab->root);
+      while (tab->str_chunk) {
+	    key_strings*tmp = tab->str_chunk;
+	    tab->str_chunk = tmp->next;
+	    delete tmp;
+      }
+
       delete tab;
 }
 
@@ -261,7 +299,7 @@ static symbol_value_t find_value_(symbol_table_t tbl, struct tree_node_*cur,
 		    /* If we run out of keys in the leaf, then add
 		       this at the end of the leaf. */
 		  if (idx == cur->count) {
-			cur->leaf[idx].key = strdup(key);
+			cur->leaf[idx].key = key_strdup(tbl, key);
 			cur->leaf[idx].val = val;
 			cur->count += 1;
 			if (cur->count == leaf_width)
@@ -287,7 +325,7 @@ static symbol_value_t find_value_(symbol_table_t tbl, struct tree_node_*cur,
 			for (unsigned tmp = cur->count; tmp > idx; tmp -= 1)
 			      cur->leaf[tmp] = cur->leaf[tmp-1];
 
-			cur->leaf[idx].key = strdup(key);
+			cur->leaf[idx].key = key_strdup(tbl, key);
 			cur->leaf[idx].val = val;
 			cur->count += 1;
 			if (cur->count == leaf_width)
@@ -349,7 +387,7 @@ void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val)
 	    cur->leaf_flag = true;
 	    cur->parent = tbl->root;
 	    cur->count = 1;
-	    cur->leaf[0].key = strdup(key);
+	    cur->leaf[0].key = key_strdup(tbl, key);
 	    cur->leaf[0].val = val;
 
 	    tbl->root->count = 1;
@@ -372,7 +410,7 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 	    cur->leaf_flag = true;
 	    cur->parent = tbl->root;
 	    cur->count = 1;
-	    cur->leaf[0].key = strdup(key);
+	    cur->leaf[0].key = key_strdup(tbl, key);
 	    cur->leaf[0].val = def;
 
 	    tbl->root->count = 1;
@@ -386,6 +424,10 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.7  2002/07/05 04:40:59  steve
+ *  Symbol table uses more efficient key string allocator,
+ *  and remove all the symbol tables after compile is done.
+ *
  * Revision 1.6  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *
