@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.20 2001/11/19 04:26:46 steve Exp $"
+#ident "$Id: set_width.cc,v 1.21 2002/04/27 04:49:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -228,6 +228,11 @@ bool NetEConcat::set_width(unsigned w)
 
 bool NetEConst::set_width(unsigned w)
 {
+      if (w == value_.len()) {
+	    expr_width(w);
+	    return true;
+      }
+
       if (w > value_.len()) {
 	    verinum::V pad = verinum::V0;
 	    if (value_.has_sign())
@@ -352,6 +357,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.21  2002/04/27 04:49:27  steve
+ *  If the verinum is already right, no need to reset it.
+ *
  * Revision 1.20  2001/11/19 04:26:46  steve
  *  Unary reduction operators are all 1-bit results.
  *
