@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.81 2003/02/28 20:21:13 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.82 2003/03/06 01:17:46 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1124,8 +1124,7 @@ static int show_stmt_trigger(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_event(net);
       assert(ev);
-      fprintf(vvp_out, "    %%set E_%s, 0;\n", 
-	      vvp_mangle_id(ivl_event_name(ev)));
+      fprintf(vvp_out, "    %%set E_%p, 0;\n", ev);
       return 0;
 }
 
@@ -1145,8 +1144,7 @@ static int show_stmt_utask(ivl_statement_t net)
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_event_t ev = ivl_stmt_event(net);
-      fprintf(vvp_out, "    %%wait E_%s;\n", 
-	      vvp_mangle_id(ivl_event_name(ev)));
+      fprintf(vvp_out, "    %%wait E_%p;\n", ev);
 
 	/* Always clear the expression lookaside after a
 	   %wait. Anything can happen while the thread is waiting. */
@@ -1437,6 +1435,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.82  2003/03/06 01:17:46  steve
+ *  Use number for event labels.
+ *
  * Revision 1.81  2003/02/28 20:21:13  steve
  *  Merge vpi_call and vpi_func draw functions.
  *

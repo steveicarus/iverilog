@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.87 2003/03/06 00:27:09 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.88 2003/03/06 01:17:46 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -920,8 +920,7 @@ static void draw_event_in_scope(ivl_event_t obj)
       if (cnt == 0) {
 	      /* If none are needed, then this is a named event. The
 		 code needed is easy. */
-	    fprintf(vvp_out, "E_%s .event \"%s\";\n",
-		    vvp_mangle_id(ivl_event_name(obj)), 
+	    fprintf(vvp_out, "E_%p .event \"%s\";\n", obj,
 		    vvp_mangle_name(ivl_event_basename(obj)));
 
       } else if (cnt > 1) {
@@ -931,8 +930,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    for (idx = 0 ;  idx < nany ;  idx += 4, ecnt += 1) {
 		  unsigned sub, top;
 
-		  fprintf(vvp_out, "E_%s/%u .event edge",
-			  vvp_mangle_id(ivl_event_name(obj)), ecnt);
+		  fprintf(vvp_out, "E_%p/%u .event edge", obj, ecnt);
 		  
 		  top = idx + 4;
 		  if (nany < top)
@@ -948,8 +946,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    for (idx = 0 ;  idx < nneg ;  idx += 4, ecnt += 1) {
 		  unsigned sub, top;
 
-		  fprintf(vvp_out, "E_%s/%u .event negedge",
-			  vvp_mangle_id(ivl_event_name(obj)), ecnt);
+		  fprintf(vvp_out, "E_%p/%u .event negedge", obj, ecnt);
 
 		  top = idx + 4;
 		  if (nneg < top)
@@ -965,8 +962,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    for (idx = 0 ;  idx < npos ;  idx += 4, ecnt += 1) {
 		  unsigned sub, top;
 
-		  fprintf(vvp_out, "E_%s/%u .event posedge",
-			  vvp_mangle_id(ivl_event_name(obj)), ecnt);
+		  fprintf(vvp_out, "E_%p/%u .event posedge", obj, ecnt);
 
 		  top = idx + 4;
 		  if (npos < top)
@@ -981,22 +977,18 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 	    assert(ecnt == cnt);
 
-	    fprintf(vvp_out, "E_%s .event/or",
-		    vvp_mangle_id(ivl_event_name(obj)));
-	    fprintf(vvp_out, " E_%s/0", 
-		    vvp_mangle_id(ivl_event_name(obj)));
+	    fprintf(vvp_out, "E_%p .event/or", obj);
+	    fprintf(vvp_out, " E_%p/0",  obj);
 
 	    for (idx = 1 ;  idx < cnt ;  idx += 1)
-		  fprintf(vvp_out, ", E_%s/%u", 
-			  vvp_mangle_id(ivl_event_name(obj)), idx);
+		  fprintf(vvp_out, ", E_%p/%u", obj, idx);
 	    
 	    fprintf(vvp_out, ";\n");
 	    
       } else {
 	    unsigned idx;
-	    
-	    fprintf(vvp_out, "E_%s .event ", 
-		    vvp_mangle_id(ivl_event_name(obj)));
+
+	    fprintf(vvp_out, "E_%p .event ", obj);
 
 	    if (nany > 0) {
 		  assert((nneg + npos) == 0);
@@ -1642,6 +1634,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.88  2003/03/06 01:17:46  steve
+ *  Use number for event labels.
+ *
  * Revision 1.87  2003/03/06 00:27:09  steve
  *  Use numbers for functor labels.
  *
