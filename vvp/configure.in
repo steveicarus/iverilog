@@ -7,9 +7,16 @@ AC_CHECK_TOOL(STRIP, strip, true)
 
 AC_PROG_INSTALL
 
+AC_ARG_ENABLE(vvp-debug, "interactive debugger for VVP runtime.", AC_DEFINE(ENABLE_VVP_DEBUG))
+
+AC_CHECK_HEADERS(getopt.h)
+
 AC_CHECK_SIZEOF(unsigned long)
 AC_CHECK_SIZEOF(unsigned)
 
+# For the interactive debugger to work, readline must be installed,
+# and that in turn requires termcap. check that the libs really do
+# exist.
 AC_CHECK_LIB(termcap, tputs)
 AC_CHECK_LIB(readline, readline)
 

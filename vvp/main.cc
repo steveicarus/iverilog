@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.10 2001/05/09 04:23:19 steve Exp $"
+#ident "$Id: main.cc,v 1.11 2001/05/11 02:06:14 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -27,7 +27,9 @@
 # include  "schedule.h"
 # include  "vpi_priv.h"
 # include  <stdio.h>
+#if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
+#endif
 
 
 const char*module_path = MODULE_DIR;
@@ -98,6 +100,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.11  2001/05/11 02:06:14  steve
+ *  Add the --enable-vvp-debug option to the configure
+ *  script of vvp, and detect getopt.h.
+ *
  * Revision 1.10  2001/05/09 04:23:19  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.

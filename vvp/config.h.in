@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.4 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: config.h.in,v 1.5 2001/05/11 02:06:14 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG 0
@@ -27,7 +27,10 @@
 
 # undef HAVE_DLFCN_H
 # undef HAVE_DL_H
+# undef HAVE_GETOPT_H
 # undef HAVE_LIBREADLINE
+
+# undef ENABLE_VVP_DEBUG
 
 # define LU ""
 # define TU ""
@@ -36,12 +39,16 @@
 # define MODULE_DIR "."
 #endif
 
-#if defined(HAVE_LIBREADLINE)
+#if defined(HAVE_LIBREADLINE) && defined(ENABLE_VVP_DEBUG)
 # define WITH_DEBUG 1
 #endif
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.5  2001/05/11 02:06:14  steve
+ *  Add the --enable-vvp-debug option to the configure
+ *  script of vvp, and detect getopt.h.
+ *
  * Revision 1.4  2001/05/05 23:55:46  steve
  *  Add the beginnings of an interactive debugger.
  *
