@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.14 2002/09/14 05:19:19 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.15 2002/09/15 21:52:19 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -53,6 +53,9 @@
  *     inputs. For example, to get an AND2 from LUT2, INIT=8.
  *
  *   MUXCY_L    LO, S, DI, CI
+ *
+ *   MUXF5      O, S, I0, I1
+ *   MUXF6      O, S, I0, I1
  *
  *   XORCY      O, LI, CI
  */
@@ -137,9 +140,25 @@ static const char*virtex_library_text =
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port LO (direction OUTPUT))\n"
-"                 (port S (direction INPUT))\n"
+"                 (port S  (direction INPUT))\n"
 "                 (port DI (direction INPUT))\n"
 "                 (port CI (direction INPUT)))))\n"
+"      (cell MUXF5 (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O  (direction OUTPUT))\n"
+"                 (port S  (direction INPUT))\n"
+"                 (port I0 (direction INPUT))\n"
+"                 (port I1 (direction INPUT)))))\n"
+"      (cell MUXF6 (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O  (direction OUTPUT))\n"
+"                 (port S  (direction INPUT))\n"
+"                 (port I0 (direction INPUT))\n"
+"                 (port I1 (direction INPUT)))))\n"
 "      (cell OBUF (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -952,8 +971,7 @@ static void edif_show_virtex_muxs2(ivl_lpm_t net)
 
 	    fprintf(xnf, "(instance (rename U%uF \"%s\")"
 		    " (viewRef net"
-		    " (cellRef MUXF5 (libraryRef VIRTEX)))"
-		    " (property INIT (string \"CA\")))\n",
+		    " (cellRef MUXF5 (libraryRef VIRTEX))))\n",
 		    edif_uref, tmp_name);
 
 	    fprintf(xnf, "(net U%uAF (joined"
@@ -990,6 +1008,133 @@ static void edif_show_virtex_muxs2(ivl_lpm_t net)
 	    edif_set_nexus_joint(ivl_lpm_q(net, idx), tmp_name);
       }
 }
+static void edif_show_virtex_muxs3(ivl_lpm_t net)
+{
+      unsigned idx;
+
+      assert(ivl_lpm_width(net) >= 1);
+      assert(ivl_lpm_selects(net) == 3);
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    char tmp_name[1024];
+
+	    edif_uref += 1;
+	    sprintf(tmp_name, "%s<%u>", ivl_lpm_name(net), idx);
+
+	    fprintf(xnf, "(instance U%uAA"
+		    " (viewRef net"
+		    " (cellRef LUT3 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n", edif_uref);
+
+	    fprintf(xnf, "(instance U%uBA"
+		    " (viewRef net"
+		    " (cellRef LUT3 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n", edif_uref);
+
+	    fprintf(xnf, "(instance U%uFA"
+		    " (viewRef net"
+		    " (cellRef MUXF5 (libraryRef VIRTEX))))\n",
+		    edif_uref);
+
+	    fprintf(xnf, "(net U%uAFA (joined"
+		    " (portRef O (instanceRef U%uAA))"
+		    " (portRef I0 (instanceRef U%uFA))))\n",
+		    edif_uref, edif_uref, edif_uref);
+	    fprintf(xnf, "(net U%uBFA (joined"
+		    " (portRef O (instanceRef U%uBA))"
+		    " (portRef I1 (instanceRef U%uFA))))\n",
+		    edif_uref, edif_uref, edif_uref);
+
+	    fprintf(xnf, "(instance U%uAB"
+		    " (viewRef net"
+		    " (cellRef LUT3 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n", edif_uref);
+
+	    fprintf(xnf, "(instance U%uBB"
+		    " (viewRef net"
+		    " (cellRef LUT3 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"CA\")))\n", edif_uref);
+
+	    fprintf(xnf, "(instance U%uFB"
+		    " (viewRef net"
+		    " (cellRef MUXF5 (libraryRef VIRTEX))))\n",
+		    edif_uref);
+
+	    fprintf(xnf, "(net U%uAFB (joined"
+		    " (portRef O (instanceRef U%uAB))"
+		    " (portRef I0 (instanceRef U%uFB))))\n",
+		    edif_uref, edif_uref, edif_uref);
+	    fprintf(xnf, "(net U%uBFB (joined"
+		    " (portRef O (instanceRef U%uBB))"
+		    " (portRef I1 (instanceRef U%uFB))))\n",
+		    edif_uref, edif_uref, edif_uref);
+
+
+	      /* Connect the two MUXF5 devices to the MUXF6. */
+
+	    fprintf(xnf, "(instance (rename U%uF \"%s\")"
+		    " (viewRef net"
+		    " (cellRef MUXF6 (libraryRef VIRTEX))))\n",
+		    edif_uref, tmp_name);
+
+	    fprintf(xnf, "(net U%uFA (joined"
+		    " (portRef O (instanceRef U%uFA))"
+		    " (portRef I0 (instanceRef U%uF))))\n",
+		    edif_uref, edif_uref, edif_uref);
+	    fprintf(xnf, "(net U%uFB (joined"
+		    " (portRef O (instanceRef U%uFB))"
+		    " (portRef I1 (instanceRef U%uF))))\n",
+		    edif_uref, edif_uref, edif_uref);
+
+	    sprintf(tmp_name, "(portRef I0 (instanceRef U%uAA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 0, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I1 (instanceRef U%uAA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 1, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I0 (instanceRef U%uBA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 2, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I1 (instanceRef U%uBA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 3, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I0 (instanceRef U%uAB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 4, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I1 (instanceRef U%uAB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 5, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I0 (instanceRef U%uBB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 6, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I1 (instanceRef U%uBB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_data2(net, 7, idx), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I2 (instanceRef U%uAA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 0), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I2 (instanceRef U%uBA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 0), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I2 (instanceRef U%uAB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 0), tmp_name);
+
+	    sprintf(tmp_name, "(portRef I2 (instanceRef U%uBB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 0), tmp_name);
+
+	    sprintf(tmp_name, "(portRef S (instanceRef U%uFA))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 1), tmp_name);
+
+	    sprintf(tmp_name, "(portRef S (instanceRef U%uFB))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 1), tmp_name);
+
+	    sprintf(tmp_name, "(portRef S (instanceRef U%uF))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_select(net, 2), tmp_name);
+
+	    sprintf(tmp_name, "(portRef O (instanceRef U%uF))", edif_uref);
+	    edif_set_nexus_joint(ivl_lpm_q(net, idx), tmp_name);
+      }
+}
+
 
 static void edif_show_virtex_mux(ivl_lpm_t net)
 {
@@ -999,6 +1144,9 @@ static void edif_show_virtex_mux(ivl_lpm_t net)
 	    break;
 	  case 2:
 	    edif_show_virtex_muxs2(net);
+	    break;
+	  case 3:
+	    edif_show_virtex_muxs3(net);
 	    break;
 	  default:
 	    assert(0);
@@ -1149,6 +1297,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.15  2002/09/15 21:52:19  steve
+ *  Generate code for 8:1 muxes msing F5 and F6 muxes.
+ *
  * Revision 1.14  2002/09/14 05:19:19  steve
  *  Generate Virtex code for 4:1 mux slices.
  *
