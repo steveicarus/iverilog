@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.13 2001/09/30 16:45:10 steve Exp $"
+#ident "$Id: sys_table.c,v 1.14 2002/03/09 21:54:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,6 +30,7 @@ extern void sys_random_register();
 extern void sys_readmem_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
+extern void sys_lxt_register();
 
 void (*vlog_startup_routines[])() = {
       sys_finish_register,
@@ -39,12 +40,16 @@ void (*vlog_startup_routines[])() = {
       sys_readmem_register,
       sys_time_register,
       sys_vcd_register,
+      sys_lxt_register,
       0
 };
 
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.14  2002/03/09 21:54:49  steve
+ *  Add LXT dumper support. (Anthony Bybell)
+ *
  * Revision 1.13  2001/09/30 16:45:10  steve
  *  Fix some Cygwin DLL handling. (Venkat Iyer)
  *
