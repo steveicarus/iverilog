@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.26 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_design.cc,v 1.27 2002/08/16 05:18:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,8 @@ Design:: Design()
 {
       procs_idx_ = 0;
       des_precision_ = 0;
+      nodes_functor_cur_ = 0;
+      nodes_functor_nxt_ = 0;
 }
 
 Design::~Design()
@@ -442,6 +444,19 @@ void Design::add_node(NetNode*net)
 void Design::del_node(NetNode*net)
 {
       assert(net->design_ == this);
+      assert(net != 0);
+
+	/* Interact with the Design::functor method by manipulate the
+	   cur and nxt pointers that is is using. */
+      if (net == nodes_functor_nxt_)
+	    nodes_functor_nxt_ = nodes_functor_nxt_->node_next_;
+      if (net == nodes_functor_nxt_)
+	    nodes_functor_nxt_ = 0;
+
+      if (net == nodes_functor_cur_)
+	    nodes_functor_cur_ = 0;
+
+	/* Now perform the actual delete. */
       if (nodes_ == net)
 	    nodes_ = net->node_prev_;
 
@@ -485,6 +500,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.27  2002/08/16 05:18:27  steve
+ *  Fix intermix of node functors and node delete.
+ *
  * Revision 1.26  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

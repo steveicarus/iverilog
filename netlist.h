@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.257 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: netlist.h,v 1.258 2002/08/16 05:18:27 steve Exp $"
 #endif
 
 /*
@@ -2950,8 +2950,11 @@ class Design {
 	// tree and per-hop searches for me.
       list<NetScope*>root_scopes_;
 
-	// List the nodes in the design
+	// List the nodes in the design.
       NetNode*nodes_;
+	// These are in support of the node functor iterator.
+      NetNode*nodes_functor_cur_;
+      NetNode*nodes_functor_nxt_;
 
 	// List the processes in the design.
       NetProcTop*procs_;
@@ -3008,6 +3011,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.258  2002/08/16 05:18:27  steve
+ *  Fix intermix of node functors and node delete.
+ *
  * Revision 1.257  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.30 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: functor.cc,v 1.31 2002/08/16 05:18:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -128,30 +128,31 @@ void Design::functor(functor_t*fun)
 
 	// apply to nodes
       if (nodes_) {
+	    assert(nodes_functor_cur_ == 0);
+	    assert(nodes_functor_nxt_ == 0);
+
 	      /* Scan the circular list of nodes, starting with the
-		 front of the list. (nodes_ points to the *end* of the
-		 list.) The bar is the end point. At the end of the
-		 do-while loop, I know that the bar has been
-		 processed or (if bar == 0) no undeleted node has been
-		 processed. */
-	    NetNode*cur = nodes_->node_next_;
-	    NetNode*bar = 0;
+		 front of the list.
+
+		 This loop interacts with the Design::del_node method
+		 so that the functor is free to delete any nodes it
+		 choose. The destructors of the NetNode objects call
+		 the del_node method, which checks with the
+		 nodes_functor_* members, to keep the iterator
+		 operating safely. */
+	    nodes_functor_cur_ = nodes_;
 	    do {
-		  NetNode*tmp = cur->node_next_;
-		  cur->functor_node(this, fun);
+		  nodes_functor_nxt_ = nodes_functor_cur_->node_next_;
+		  nodes_functor_cur_->functor_node(this, fun);
 
-		    /* Detect the case that cur has been deleted by
-		       noticing if tmp->node_prev_ no longer points to
-		       cur. If that's the case, clear the bar. */
-		  if (tmp->node_prev_ != cur) {
-			if (cur == bar)
-			      bar = 0;
-		  } else if (bar == 0) {
-			bar = cur;
-		  }
-		  cur = tmp;
+		  if (nodes_functor_nxt_ == 0)
+			break;
 
-	    } while (nodes_ && (cur != bar));
+		  nodes_functor_cur_ = nodes_functor_nxt_;
+	    } while (nodes_ && (nodes_functor_cur_ != nodes_));
+	    nodes_functor_cur_ = 0;
+	    nodes_functor_nxt_ = 0;
+
       }
 }
 
@@ -266,6 +267,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.31  2002/08/16 05:18:27  steve
+ *  Fix intermix of node functors and node delete.
+ *
  * Revision 1.30  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
