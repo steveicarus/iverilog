@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.51 2003/02/04 04:06:36 steve Exp $"
+#ident "$Id: sys_display.c,v 1.52 2003/02/06 17:40:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include  <string.h>
 # include  <ctype.h>
 # include  <stdlib.h>
+# include  <math.h>
 
 struct timeformat_info_s {
       int units;
@@ -266,6 +267,22 @@ static void format_time(unsigned mcd, int fsize,
 	    
 
       vpi_mcd_printf(mcd, "%s", bp);
+}
+
+static void format_time_real(unsigned mcd, int fsize,
+			     double value, int time_units)
+{
+
+	/* The time_units is the units of the current scope, and also
+	   of the value. If the scope units are different from the
+	   format specifier units, then scale the value. */
+      if (time_units != timeformat_info.units)
+	    value *= pow(10.0, time_units - timeformat_info.units);
+
+	/* The timeformat_info.prec is the number of digits after the
+	   decimal point, no matter what the units. */
+      vpi_mcd_printf(mcd, "%0.*f%s", timeformat_info.prec, value,
+		     timeformat_info.suff);
 }
 
 static const char str_char1_table[256] = {
@@ -652,15 +669,31 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  fsize = -1;
 	    }
 
-	    value.format = vpiDecStrVal;
-	    vpi_get_value(argv[idx], &value);
-	    if (value.format == vpiSuppressVal){
-		  format_error_msg("Incompatible value", leading_zero,
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
 				   fsize, ffsize, fmt);
-		  return 1;
+		  return 0;
 	    }
 
-	    format_time(mcd, fsize, value.value.str, time_units);
+	    if ((vpi_get(vpiType, argv[idx]) == vpiConstant)
+		&& (vpi_get(vpiConstType, argv[idx]) == vpiRealConst)) {
+
+		  value.format = vpiRealVal;
+		  vpi_get_value(argv[idx], &value);
+		  format_time_real(mcd, fsize, value.value.real, time_units);
+
+	    } else {
+
+		  value.format = vpiDecStrVal;
+		  vpi_get_value(argv[idx], &value);
+		  if (value.format == vpiSuppressVal){
+			format_error_msg("Incompatible value", leading_zero,
+					 fsize, ffsize, fmt);
+			return 1;
+		  }
+
+		  format_time(mcd, fsize, value.value.str, time_units);
+	    }
 
 	    use_count = 1;
 	    break;
@@ -1666,6 +1699,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.52  2003/02/06 17:40:02  steve
+ *  Format real values as time.
+ *
  * Revision 1.51  2003/02/04 04:06:36  steve
  *  Rearrange format-string formatting code.
  *
