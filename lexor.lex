@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.17 1999/06/06 23:08:00 steve Exp $"
+#ident "$Id: lexor.lex,v 1.18 1999/06/12 03:41:30 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -43,6 +43,7 @@ static void ppinclude_filename();
 static void ppdo_include();
 static verinum*make_sized_binary(const char*txt);
 static verinum*make_sized_dec(const char*txt);
+static verinum*make_unsized_dec(const char*txt);
 static verinum*make_sized_octal(const char*txt);
 static verinum*make_sized_hex(const char*txt);
 static verinum*make_unsized_binary(const char*txt);
@@ -133,14 +134,15 @@ static verinum*make_unsized_hex(const char*txt);
       return PORTNAME; }
 
 [0-9][0-9_]*\'d[0-9][0-9_]*    { yylval.number = make_sized_dec(yytext);
-				   return NUMBER; }
+				    return NUMBER; }
 [0-9][0-9_]*\'[bB][0-1xz_]+    { yylval.number = make_sized_binary(yytext);
-				   return NUMBER; }
+				    return NUMBER; }
 [0-9][0-9_]*\'[oO][0-7xz_]+    { yylval.number = make_sized_octal(yytext);
-				   return NUMBER; }
+				    return NUMBER; }
 [0-9][0-9_]*\'[hH][0-9a-fA-Fxz_]+ { yylval.number = make_sized_hex(yytext);
-				      return NUMBER; }
+				       return NUMBER; }
 
+\'d[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext); return NUMBER; }
 \'[bB][0-1xz_]+ { yylval.number = make_unsized_binary(yytext); return NUMBER; }
 \'[oO][0-7xz_]+ { yylval.number = make_unsized_octal(yytext);  return NUMBER; }
 \'[hH][0-9a-fA-Fxz_]+ { yylval.number = make_unsized_hex(yytext);
@@ -520,15 +522,11 @@ static verinum*make_unsized_hex(const char*txt)
 }
 
 /*
- * Making a deciman number is much easier then the other base numbers
+ * Making a decimal number is much easier then the other base numbers
  * because there are no z or x values to worry about.
  */
-static verinum*make_sized_dec(const char*txt)
+static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
 {
-      char*ptr;
-      unsigned size = strtoul(txt,&ptr,10);
-      assert(*ptr == '\'');
-      ptr += 1;
       assert(tolower(*ptr) == 'd');
 
       unsigned long value = 0;
@@ -548,7 +546,23 @@ static verinum*make_sized_dec(const char*txt)
 	    value /= 2;
       }
 
-      return new verinum(bits, size);
+      return new verinum(bits, size, fixed);
+}
+
+static verinum*make_sized_dec(const char*txt)
+{
+      char*ptr;
+      unsigned size = strtoul(txt,&ptr,10);
+      assert(*ptr == '\'');
+      ptr += 1;
+      assert(tolower(*ptr) == 'd');
+
+      return make_dec_with_size(size, true, ptr);
+}
+
+static verinum*make_unsized_dec(const char*txt)
+{
+      return make_dec_with_size(INTEGER_WIDTH, false, txt+1);
 }
 
 struct include_stack_t {
