@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.11 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.12 2001/01/06 22:22:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -32,6 +32,9 @@ static int signal_get(int code, vpiHandle ref)
 	     || (ref->vpi_type->type_code==vpiReg));
 
       switch (code) {
+
+	  case vpiSigned:
+	    return rfp->signed_flag;
 	  case vpiSize:
 	    return rfp->nbits;
 
@@ -62,7 +65,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
-      vpip_bits_get_value(rfp->bits, rfp->nbits, vp);
+      vpip_bits_get_value(rfp->bits, rfp->nbits, vp, rfp->signed_flag);
 }
 
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
@@ -87,12 +90,13 @@ static const struct __vpirt vpip_net_rt = {
 };
 
 vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name,
-			vpip_bit_t*b, unsigned nb)
+			vpip_bit_t*b, unsigned nb, int signed_flag)
 {
       ref->base.vpi_type = &vpip_net_rt;
       ref->name = name;
       ref->bits = b;
       ref->nbits = nb;
+      ref->signed_flag = signed_flag? 1 : 0;
       ref->mfirst = 0;
       ref->mlast  = 0;
       return &(ref->base);
@@ -109,12 +113,13 @@ static const struct __vpirt vpip_reg_rt = {
 };
 
 vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
-			vpip_bit_t*b, unsigned nb)
+			vpip_bit_t*b, unsigned nb, int signed_flag)
 {
       ref->base.vpi_type = &vpip_reg_rt;
       ref->name = name;
       ref->bits = b;
       ref->nbits = nb;
+      ref->signed_flag = signed_flag? 1 : 0;
       ref->mfirst = 0;
       ref->mlast  = 0;
       return &(ref->base);
@@ -122,6 +127,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.12  2001/01/06 22:22:17  steve
+ *  Support signed decimal display of variables.
+ *
  * Revision 1.11  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.198 2001/01/01 01:41:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.199 2001/01/06 22:22:17 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1270,7 +1270,7 @@ void target_vvm::signal(const NetNet*sig)
       init_code << "      vpip_make_reg(&" << net_name
 		<< ", \"" << sig->name() << "\", signal_bit_table+"
 		<< signal_bit_counter << ", " << sig->pin_count()
-		<< ");" << endl;
+		<< ", " << (sig->get_signed()? "1" : "0") << ");" << endl;
 
 
       signal_bit_counter += sig->pin_count();
@@ -3621,6 +3621,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.199  2001/01/06 22:22:17  steve
+ *  Support signed decimal display of variables.
+ *
  * Revision 1.198  2001/01/01 01:41:09  steve
  *  reg_assign into function ports. (PR#95)
  *

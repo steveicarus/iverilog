@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.15 2000/12/10 19:15:19 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.16 2001/01/06 22:22:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -25,12 +25,14 @@
 # include  <string.h>
 # include  <stdio.h>
 
-unsigned vpip_bits_to_dec_str(const vpip_bit_t*bits, unsigned nbits,
-			      char*buf, unsigned nbuf)
+static unsigned vpip_bits_to_dec_str(const vpip_bit_t*bits, unsigned nbits,
+				     char*buf, unsigned nbuf, int signed_flag)
 {
       unsigned idx, len;
       unsigned count_x = 0, count_z = 0;
       unsigned long val = 0;
+
+      assert( len <= 8*sizeof(val) );
 
       for (idx = 0 ;  idx < nbits ;  idx += 1) {
 	    val *= 2;
@@ -59,8 +61,17 @@ unsigned vpip_bits_to_dec_str(const vpip_bit_t*bits, unsigned nbits,
 	    buf[0] = 'Z';
 	    buf[1] = 0;
       } else {
-	    sprintf(buf, "%lu", val);
-	    len = strlen(buf);
+	    if (signed_flag && B_IS1(bits[nbits-1])) {
+		  long tmp = -1;
+		  assert(sizeof(tmp) == sizeof(val));
+		  tmp <<= nbits;
+		  tmp |= val;
+		  sprintf(buf, "%ld", tmp);
+		  len = strlen(buf);
+	    } else {
+		  sprintf(buf, "%lu", val);
+		  len = strlen(buf);
+	    }
       }
       return len;
 }
@@ -69,7 +80,8 @@ unsigned vpip_bits_to_dec_str(const vpip_bit_t*bits, unsigned nbits,
  * This function is used in a couple places to interpret a bit string
  * as a value.
  */
-void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
+void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits,
+			 s_vpi_value*vp, int signed_flag)
 {
       static char buff[1024];
       static s_vpi_vecval vect[64];
@@ -98,7 +110,8 @@ void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    cp += vpip_bits_to_dec_str(bits, nbits, cp, 1024-(cp-buff));
+	    cp += vpip_bits_to_dec_str(bits, nbits, cp,
+				       1024-(cp-buff), signed_flag);
 	    break;
 
 	  case vpiOctStrVal:
@@ -401,7 +414,7 @@ static void number_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiNumberConst*rfp = (struct __vpiNumberConst*)ref;
       assert(ref->vpi_type->type_code == vpiConstant);
-      vpip_bits_get_value(rfp->bits, rfp->nbits, vp);
+      vpip_bits_get_value(rfp->bits, rfp->nbits, vp, 0);
 }
 
 static const struct __vpirt vpip_string_rt = {
@@ -443,6 +456,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.16  2001/01/06 22:22:17  steve
+ *  Support signed decimal display of variables.
+ *
  * Revision 1.15  2000/12/10 19:15:19  steve
  *  vpiStringVal handles leding nulls as blanks. (PR#62)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.24 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.25 2001/01/06 22:22:17 steve Exp $"
 #endif
 
 
@@ -158,6 +158,7 @@ typedef struct t_vpi_value {
 #   define vpiOctConst    4
 #   define vpiHexConst    5
 #   define vpiStringConst 6
+#define vpiSigned    65
 
 /* DELAY MODES */
 #define vpiNoDelay            1
@@ -265,6 +266,9 @@ extern DLLEXPORT void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.25  2001/01/06 22:22:17  steve
+ *  Support signed decimal display of variables.
+ *
  * Revision 1.24  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

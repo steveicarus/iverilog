@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.30 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.31 2001/01/06 22:22:17 steve Exp $"
 #endif
 
 /*
@@ -127,7 +127,7 @@ extern vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
 
 
 extern void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits,
-				s_vpi_value*vp);
+				s_vpi_value*vp, int signed_flag);
 extern void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
 
@@ -250,6 +250,9 @@ struct __vpiSignal {
 	/* The signal has a value and dimension. */
       vpip_bit_t*bits;
       unsigned nbits;
+
+      unsigned signed_flag : 1;
+
 	/* monitors are added here. */
       struct __vpiCallback*mfirst;
       struct __vpiCallback*mlast;
@@ -313,7 +316,8 @@ struct __vpiNumberConst {
  */
 extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
 extern vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name,
-			       vpip_bit_t*bits, unsigned nbits);
+			       vpip_bit_t*bits, unsigned nbits,
+			       int signed_flag);
 extern vpiHandle vpip_make_scope(struct __vpiScope*ref,
 				 int type_code,
 				 const char*name);
@@ -325,7 +329,8 @@ extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 extern vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 				  unsigned width, unsigned size);
 extern vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
-			       vpip_bit_t*bits, unsigned nbits);
+			       vpip_bit_t*bits, unsigned nbits,
+			       int signed_flag);
 extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 				    const char*val);
 
@@ -407,6 +412,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.31  2001/01/06 22:22:17  steve
+ *  Support signed decimal display of variables.
+ *
  * Revision 1.30  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1

@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.c,v 1.8 2000/06/28 18:38:00 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.9 2001/01/06 22:22:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -151,7 +151,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
       assert(ref->vpi_type->type_code==vpiMemoryWord);
 
       vpip_bits_get_value(rfp->mem->bits+rfp->index*rfp->mem->width,
-			  rfp->mem->width, vp);
+			  rfp->mem->width, vp, 0);
 }
 
 static const struct __vpirt vpip_memory_rt = {
@@ -201,6 +201,9 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.9  2001/01/06 22:22:17  steve
+ *  Support signed decimal display of variables.
+ *
  * Revision 1.8  2000/06/28 18:38:00  steve
  *  Initialize memories as they are create.
  *
