@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.29 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.30 2001/06/21 23:23:14 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -349,6 +349,11 @@ bool dll_target::proc_block(const NetBlock*net)
       return flag;
 }
 
+/*
+ * A case statement is in turn an array of statements with gate
+ * expressions. This builds arrays of the right size and builds the
+ * ivl_expr_t and ivl_statement_s arrays for the substatements.
+ */
 void dll_target::proc_case(const NetCase*net)
 {
       assert(stmt_cur_);
@@ -392,6 +397,7 @@ void dll_target::proc_case(const NetCase*net)
 	    }
 
 	    stmt_cur_ = save_cur->u_.case_.case_st + idx;
+	    stmt_cur_->type_ = IVL_ST_NONE;
 	    if (net->stat(idx) == 0) {
 		  stmt_cur_->type_ = IVL_ST_NOOP;
 	    } else {
@@ -678,6 +684,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.30  2001/06/21 23:23:14  steve
+ *  Initialize stmt_cur_ substatements during dll case building.
+ *
  * Revision 1.29  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
