@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.32 2002/01/11 04:48:01 steve Exp $"
+#ident "$Id: sys_display.c,v 1.33 2002/01/15 03:23:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,10 +30,20 @@
 
 struct strobe_cb_info {
       char*name;
+      int default_format;
       vpiHandle scope;
       vpiHandle*items;
       unsigned nitems;
 };
+
+static int calc_dec_size(int nr_bits)
+{
+    // over-the-top accuracy... :-)
+    //
+    // nr of bits = floor(log10(2^nr_bits) + 1.0)
+    //            = floor(nr_bits * ln(2)/ln(10) + 1.0)
+    return (int)( ((double)nr_bits) * 0.301029996 + 1.0);
+}
 
 static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
 {
@@ -88,11 +98,13 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		  cp += cnt;
 
 	    } else if (*cp == '%') {
-		  int fsize = -1, ffsize = -1;
+		  int leading_zero = -1, fsize = -1, ffsize = -1;
 		  int do_arg = 0;
 
 		  cp += 1;
-		  if (isdigit(*cp))
+		  if (*cp == '0')
+		      leading_zero=1;
+		  if (isdigit((int)*cp))
 			fsize = strtoul(cp, &cp, 10);
 		  if (*cp == '.') {
 			cp += 1;
@@ -104,6 +116,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 		      case 'b':
 		      case 'B':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
 			format_char = 'b';
 			do_arg = 1;
 			value.format = vpiBinStrVal;
@@ -112,6 +128,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 		      case 'd':
 		      case 'D':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
 			format_char = 'd';
 			do_arg = 1;
 			value.format = vpiDecStrVal;
@@ -122,6 +142,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		      case 'H':
 		      case 'x':
 		      case 'X':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
 			format_char = 'h';
 			do_arg = 1;
 			value.format = vpiHexStrVal;
@@ -130,6 +154,11 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 		      case 'c':
 		      case 'C':
+			if (fsize != -1 && ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			     ffsize = -1;
+			}
 			format_char = 'c';
 			do_arg = 1;
 			value.format = vpiStringVal;
@@ -138,14 +167,25 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 		      case 'm':
 		      case 'M':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
+			if (fsize == -1)
+			    fsize = 0;
 			assert(scope);
-			vpi_mcd_printf(mcd, "%s",
+			vpi_mcd_printf(mcd, "%*s",
+				       fsize,
 				       vpi_get_str(vpiFullName, scope));
 			cp += 1;
 			break;
 
 		      case 'o':
 		      case 'O':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
 			format_char = 'o';
 			do_arg = 1;
 			value.format = vpiOctStrVal;
@@ -154,6 +194,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 		      case 's':
 		      case 'S':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
 			format_char = 's';
 			do_arg = 1;
 			value.format = vpiStringVal;
@@ -162,6 +206,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 
 		      case 't':
 		      case 'T':
+			if (ffsize != -1) {
+			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
+			     fsize = -1;
+			}
 			format_char = 't';
 			do_arg = 1;
 			value.format = vpiDecStrVal;
@@ -183,6 +231,13 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		      case 'e':
 		      case 'f':
 		      case 'g':
+			  // new Verilog 2001 format specifiers...
+		      case 'l':
+		      case 'L':
+		      case 'u':
+		      case 'U':
+		      case 'z':
+		      case 'Z':
 		        vpi_printf("\nERROR: Unsupported format \"%s\"\n", fmt);
 			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
@@ -203,14 +258,89 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			      vpi_printf("\ntoo few arguments for format %s\n",
 					 fmt);
 			} else {
-			      vpi_get_value(argv[idx++], &value);
+			      vpi_get_value(argv[idx], &value);
 
 			      switch(format_char){
-				  case 'c':
-				    vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
-				    break;
+			      case 'c':
+				  vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
+				  break;
 
-				  default:
+			      case 't':
+			      case 'd':
+				  if (fsize==-1){
+				      // simple %d parameter. 
+				      // Size is now determined by the width
+				      // of the vector or integer
+				      fsize = vpi_get(vpiSize, argv[idx]);
+				      fsize = calc_dec_size(fsize);
+
+				      if ( vpi_get(vpiSigned, argv[idx]) ==1){
+					  // Pure integers need one more position
+					  // for an optional '-' bit
+					  fsize++;
+				      }
+				  }
+
+				  vpi_mcd_printf(mcd, "%*s", fsize,
+						 value.value.str);
+				  break;
+
+			      case 'b':
+			      case 'h':
+			      case 'x':
+			      case 'o':
+				  if (fsize==-1){
+				      // For hex, oct and binary values, the string is already
+				      // prefixed with the correct number of zeros...
+				      vpi_mcd_printf(mcd, "%s", value.value.str);
+				  }
+				  else{ 
+				      char* value_str = value.value.str;
+
+				      if (leading_zero==1){
+					  // Strip away all leading zeros from string
+					  int i=0;
+					  while(i< (strlen(value_str)-1) && value_str[i]=='0')
+					      i++;
+					  
+					  value_str += i;
+				      }
+
+				      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
+				  }
+				  break;
+
+			      case 's':
+				  if (fsize==-1){
+				      vpi_mcd_printf(mcd, "%s", value.value.str);
+				  }
+				  else{ 
+				      char* value_str = value.value.str;
+
+				      if (leading_zero==1){
+					  // Remove leading spaces from the value 
+					  // string *except* if the argument is a 
+					  // constant string... (hey, that's how 
+					  // the commerical guys behave...)
+
+					  if (!(vpi_get(vpiType, argv[idx]) == vpiConstant 
+					      && vpi_get(vpiConstType, argv[idx]) == vpiStringConst)) {
+					      int i=0;
+					      // Strip away all leading zeros from string
+					      while(i< (strlen(value_str)-1) && value_str[i]==' ')
+						  i++;
+					  
+					      value_str += i;
+					  }
+
+				      }
+
+				      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
+				  }
+				  break;
+				  
+
+			      default:
 				    if (fsize > 0)
 					  vpi_mcd_printf(mcd, "%*s", fsize,
 							 value.value.str);
@@ -218,6 +348,8 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 					  vpi_mcd_printf(mcd, "%s",
 							 value.value.str);
 			      }
+			      
+			      idx++;
 			}
 		  }
 
@@ -258,6 +390,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 {
       s_vpi_value value;
       int idx;
+      int size;
 
       for (idx = 0 ;  idx < info->nitems ;  idx += 1) {
 	    vpiHandle item = info->items[idx];
@@ -285,15 +418,30 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		case vpiNet:
 		case vpiReg:
 		case vpiMemoryWord:
-		  value.format = vpiBinStrVal;
+		  value.format = info->default_format;
 		  vpi_get_value(item, &value);
-		  vpi_mcd_printf(mcd, "%s", value.value.str);
+
+		  switch(info->default_format){
+		  case vpiDecStrVal:
+		      size = vpi_get(vpiSize, item);
+		      size = calc_dec_size(size);
+		      if ( vpi_get(vpiSigned, item) ==1){
+			  size++;
+		      }
+		      vpi_mcd_printf(mcd, "%*s", size, value.value.str);
+		      break;
+
+		  default:
+		      vpi_mcd_printf(mcd, "%s", value.value.str);
+		  }
+		  
+
 		  break;
 
 		case vpiTimeVar:
 		  value.format = vpiTimeVal;
 		  vpi_get_value(item, &value);
-		  vpi_mcd_printf(mcd, "%u", value.value.time->low);
+		  vpi_mcd_printf(mcd, "%20u", value.value.time->low);
 		  break;
 
 		default:
@@ -301,6 +449,25 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  break;
 	    }
       }
+}
+
+static int get_default_format(char *name)
+{
+    int default_format;
+
+    switch(name[ strlen(name)-1 ]){
+	//  writE/strobE or monitoR or  displaY/fdisplaY
+    case 'e':
+    case 'r':
+    case 'y': default_format = vpiDecStrVal; break;
+    case 'h': default_format = vpiHexStrVal; break;
+    case 'o': default_format = vpiOctStrVal; break;
+    case 'b': default_format = vpiBinStrVal; break;
+    default:
+	assert(0);
+    }
+
+    return default_format;
 }
 
 static int sys_display_calltf(char *name)
@@ -312,14 +479,14 @@ static int sys_display_calltf(char *name)
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
       assert(scope);
+      info.default_format = get_default_format(name);
       info.scope = scope;
       array_from_iterator(&info, argv);
 
       do_display(5, &info);
-
       free(info.items);
 
-      if (strcmp(name,"$display") == 0)
+      if (strncmp(name,"$display",8) == 0)
 	    vpi_mcd_printf(5, "\n");
 
       return 0;
@@ -362,6 +529,7 @@ static int sys_strobe_calltf(char*name)
 
       array_from_iterator(info, argv);
       info->name = strdup(name);
+      info->default_format = get_default_format(name);
       info->scope= scope;
 
       time.type = vpiSimTime;
@@ -386,7 +554,7 @@ static int sys_strobe_calltf(char*name)
  * though that monitor may be watching many variables).
  */
 
-static struct strobe_cb_info monitor_info = { 0, 0, 0, 0 };
+static struct strobe_cb_info monitor_info = { 0, 0, 0, 0, 0 };
 static int monitor_scheduled = 0;
 static vpiHandle *monitor_callbacks = 0;
 
@@ -464,6 +632,7 @@ static int sys_monitor_calltf(char*name)
 
       array_from_iterator(&monitor_info, argv);
       monitor_info.name = strdup(name);
+      monitor_info.default_format = get_default_format(name);
       monitor_info.scope = scope;
 
       monitor_callbacks = calloc(monitor_info.nitems, sizeof(vpiHandle));
@@ -594,12 +763,13 @@ static int sys_fdisplay_calltf(char *name)
       mcd = value.value.integer;
 
       assert(scope);
+      info.default_format = get_default_format(name);
       info.scope = scope;
       array_from_iterator(&info, argv);
       do_display(mcd, &info);
       free(info.items);
 
-      if (strcmp(name,"$fdisplay") == 0)
+      if (strncmp(name,"$fdisplay",9) == 0)
 	    vpi_mcd_printf(mcd, "\n");
 
       return 0;
@@ -718,6 +888,7 @@ void sys_display_register()
 {
       s_vpi_systf_data tf_data;
 
+      //============================== display
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$display";
       tf_data.calltf    = sys_display_calltf;
@@ -727,6 +898,31 @@ void sys_display_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$displayh";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$displayh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$displayo";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$displayo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$displayb";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$displayb";
+      vpi_register_systf(&tf_data);
+
+      //============================== write
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$write";
       tf_data.calltf    = sys_display_calltf;
       tf_data.compiletf = 0;
@@ -734,6 +930,31 @@ void sys_display_register()
       tf_data.user_data = "$write";
       vpi_register_systf(&tf_data);
 
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$writeh";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$writeh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$writeo";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$writeo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$writeb";
+      tf_data.calltf    = sys_display_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$writeb";
+      vpi_register_systf(&tf_data);
+
+      //============================== strobe
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$strobe";
       tf_data.calltf    = sys_strobe_calltf;
@@ -743,6 +964,31 @@ void sys_display_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$strobeh";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$strobeh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$strobeo";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$strobeo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$strobeb";
+      tf_data.calltf    = sys_strobe_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$strobeb";
+      vpi_register_systf(&tf_data);
+
+      //============================== monitor
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$monitor";
       tf_data.calltf    = sys_monitor_calltf;
       tf_data.compiletf = 0;
@@ -750,6 +996,31 @@ void sys_display_register()
       tf_data.user_data = "$monitor";
       vpi_register_systf(&tf_data);
 
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$monitorh";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$monitorh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$monitoro";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$monitoro";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$monitorb";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$monitorb";
+      vpi_register_systf(&tf_data);
+
+      //============================== fopen
       tf_data.type      = vpiSysFunc;
       tf_data.tfname    = "$fopen";
       tf_data.calltf    = sys_fopen_calltf;
@@ -758,6 +1029,7 @@ void sys_display_register()
       tf_data.user_data = "$fopen";
       vpi_register_systf(&tf_data);
 
+      //============================== fclose
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fclose";
       tf_data.calltf    = sys_fclose_calltf;
@@ -766,6 +1038,7 @@ void sys_display_register()
       tf_data.user_data = "$fclose";
       vpi_register_systf(&tf_data);
 
+      //============================== fdisplay
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fdisplay";
       tf_data.calltf    = sys_fdisplay_calltf;
@@ -775,6 +1048,31 @@ void sys_display_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fdisplayh";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fdisplayh";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fdisplayo";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fdisplayo";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fdisplayb";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fdisplayb";
+      vpi_register_systf(&tf_data);
+
+      //============================== fwrite
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fwrite";
       tf_data.calltf    = sys_fdisplay_calltf;
       tf_data.compiletf = 0;
@@ -782,6 +1080,7 @@ void sys_display_register()
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
 
+      //============================== fputc
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$fputc";
       tf_data.calltf    = sys_fputc_calltf;
@@ -790,6 +1089,7 @@ void sys_display_register()
       tf_data.user_data = "$fputc";
       vpi_register_systf(&tf_data);
 
+      //============================== fgetc
       tf_data.type      = vpiSysFunc;
       tf_data.tfname    = "$fgetc";
       tf_data.calltf    = sys_fgetc_calltf;
@@ -802,6 +1102,11 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.33  2002/01/15 03:23:34  steve
+ *  Default widths pad out as per the standard,
+ *  add $displayb/o/h et al., and some better
+ *  error messages for incorrect formats.
+ *
  * Revision 1.32  2002/01/11 04:48:01  steve
  *  Add the %c format, and some warning messages.
  *
