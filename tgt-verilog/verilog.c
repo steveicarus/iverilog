@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.13 2000/10/21 16:49:45 steve Exp $"
+#ident "$Id: verilog.c,v 1.14 2000/10/25 05:41:55 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,7 @@
 
 # include  <ivl_target.h>
 # include  <stdio.h>
+# include  <assert.h>
 
 static FILE*out;
 
@@ -84,13 +85,68 @@ static void show_expression(ivl_expr_t net)
       }
 }
 
+static void show_assign_lval(ivl_lval_t lval)
+{
+      ivl_nexus_t nex;
+      ivl_nexus_ptr_t ptr;
+      ivl_signal_t sig;
+
+      unsigned idx;
+
+      assert(ivl_lval_pins(lval) == 1);
+      assert(ivl_lval_mux(lval) == 0);
+
+      nex = ivl_lval_pin(lval, 0);
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ptr = ivl_nexus_ptr(nex, idx);
+	    sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0)
+		  continue;
+
+	    assert(ivl_signal_type(sig) == IVL_SIT_REG);
+	    break;
+      }
+
+      assert(sig);
+
+      if (ivl_signal_pins(sig) == 1) {
+	    fprintf(out, "%s", ivl_signal_name(sig));
+
+      } else {
+	    fprintf(out, "%s[%u]", ivl_signal_name(sig),
+		    ivl_nexus_ptr_pin(ptr));
+      }
+}
+
+static void show_assign_lvals(ivl_statement_t net)
+{
+      const unsigned cnt = ivl_stmt_lvals(net);
+
+      if (cnt == 1) {
+	    show_assign_lval(ivl_stmt_lval(net, 0));
+
+      } else {
+	    unsigned idx;
+	    fprintf(out, "{");
+	    show_assign_lval(ivl_stmt_lval(net, 0));
+	    for (idx = 1 ;  idx < cnt ;  idx += 1) {
+		  fprintf(out, ", ");
+		  show_assign_lval(ivl_stmt_lval(net, idx));
+	    }
+	    fprintf(out, "}");
+      }
+}
+
 static void show_statement(ivl_statement_t net, unsigned ind)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
 
       switch (code) {
 	  case IVL_ST_ASSIGN:
-	    fprintf(out, "%*s? = ", ind, "");
+	    fprintf(out, "%*s", ind, "");
+	    show_assign_lvals(net);
+	    fprintf(out, " = ");
 	    show_expression(ivl_stmt_rval(net));
 	    fprintf(out, ";\n");
 	    break;
@@ -184,7 +240,7 @@ static int show_process(ivl_process_t net)
       return 0;
 }
 
-int target_start_design(ivl_design_t des)
+int target_design(ivl_design_t des)
 {
       const char*path = ivl_design_flag(des, "-o");
       if (path == 0) {
@@ -198,15 +254,13 @@ int target_start_design(ivl_design_t des)
       }
 
       fprintf(out, "module %s;\n", ivl_scope_name(ivl_design_root(des)));
-      return 0;
-}
 
-void target_end_design(ivl_design_t des)
-{
       ivl_design_process(des, show_process);
 
       fprintf(out, "endmodule\n");
       fclose(out);
+
+      return 0;
 }
 
 int target_net_logic(const char*name, ivl_net_logic_t net)
@@ -244,12 +298,6 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
       return 0;
 }
 
-int target_net_probe(const char*name, ivl_net_probe_t net)
-{
-      fprintf(out, "STUB: %s: probe\n", name);
-      return 0;
-}
-
 #ifdef __CYGWIN32__
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
@@ -257,6 +305,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.14  2000/10/25 05:41:55  steve
+ *  Scan the processes, and get the target signals
+ *
  * Revision 1.13  2000/10/21 16:49:45  steve
  *  Reduce the target entry points to the target_design.
  *
@@ -274,73 +325,5 @@ DECLARE_CYGWIN_DLL(DllMain);
  *
  *  Give names to methods that manipulate the ivl_design_t
  *  type more consistent names.
- *
- * Revision 1.10  2000/10/08 04:01:55  steve
- *  Back pointers in the nexus objects into the devices
- *  that point to it.
- *
- *  Collect threads into a list in the design.
- *
- * Revision 1.9  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.8  2000/10/06 23:46:51  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.7  2000/10/05 05:03:02  steve
- *  xor and constant devices.
- *
- * Revision 1.6  2000/10/04 02:24:20  steve
- *  print reg signals.
- *
- * Revision 1.5  2000/09/30 02:18:15  steve
- *  ivl_expr_t support for binary operators,
- *  Create a proper ivl_scope_t object.
- *
- * Revision 1.4  2000/09/26 00:30:07  steve
- *  Add EX_NUMBER and ST_TRIGGER to dll-api.
- *
- * Revision 1.3  2000/09/24 15:46:00  steve
- *  API access to signal type and port type.
- *
- * Revision 1.2  2000/09/24 02:21:54  steve
- *  Add support for signal expressions.
- *
- * Revision 1.1  2000/09/23 05:15:07  steve
- *  Add enough tgt-verilog code to support hello world.
- *
- * Revision 1.9  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.8  2000/09/19 04:15:27  steve
- *  Introduce the means to get statement types.
- *
- * Revision 1.7  2000/09/18 01:24:32  steve
- *  Get the structure for ivl_statement_t worked out.
- *
- * Revision 1.6  2000/08/27 15:51:51  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.5  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.4  2000/08/20 04:13:57  steve
- *  Add ivl_target support for logic gates, and
- *  make the interface more accessible.
- *
- * Revision 1.3  2000/08/19 18:12:42  steve
- *  Add target calls for scope, events and logic.
- *
- * Revision 1.2  2000/08/14 04:39:57  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.1  2000/08/12 16:34:37  steve
- *  Start stub for loadable targets.
- *
  */
 
