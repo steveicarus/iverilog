@@ -23,7 +23,7 @@
  * pin assignments locked down by design. The command to compile this
  * into a jedec file is;
  *
- *   iverilog -tpal -fpart=generic-22v10-plcc -opal_reg.jed pal_reg.v
+ *   iverilog -tpal -ppart=generic-22v10-plcc -opal_reg.jed pal_reg.v
  *
  * The output file name (passed through the -o<file> switch) can be
  * any file you desire. If the compilation and fittin all succeed, the

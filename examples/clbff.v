@@ -23,7 +23,7 @@
  *
  * To compile this for XNF, try a command like this:
  *
- *    iverilog -txnf -fpart=XC4010XLPQ160 -fncf=clbff.ncf -oclbff.xnf clbff.v
+ *    iverilog -txnf -ppart=XC4010XLPQ160 -pncf=clbff.ncf -oclbff.xnf clbff.v
  *
  * That command causes an clbff.xnf and clbff.ncf file to be created.
  * Next, make the clbff.ngd file with the command:
