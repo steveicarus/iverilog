@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.17 2000/06/12 03:56:51 steve Exp $"
+#ident "$Id: verinum.cc,v 1.18 2000/09/07 22:37:10 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -263,6 +263,10 @@ ostream& operator<< (ostream&o, verinum::V v)
  */
 ostream& operator<< (ostream&o, const verinum&v)
 {
+      if (v.has_sign()) {
+	    o << "+";
+      }
+
 	/* If the verinum number has a fixed length, dump all the bits
 	   literally. This is how we express the fixed length in the
 	   output. */
@@ -416,7 +420,8 @@ verinum v_not(const verinum&left)
 
 /*
  * Addition works a bit at a time, from the least significant up to
- * the most significant.
+ * the most significant. The result is signed only if either of the
+ * operands is signed.
  */
 verinum operator + (const verinum&left, const verinum&right)
 {
@@ -427,6 +432,7 @@ verinum operator + (const verinum&left, const verinum&right)
       if (right.len() > max) max = right.len();
 
       verinum val (verinum::V0, max);
+      val.has_sign( left.has_sign() || right.has_sign() );
 
       verinum::V carry = verinum::V0;
       for (unsigned idx = 0 ;  idx < min ;  idx += 1)
@@ -477,6 +483,9 @@ verinum operator - (const verinum&left, const verinum&r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.18  2000/09/07 22:37:10  steve
+ *  The + operator now preserves signedness.
+ *
  * Revision 1.17  2000/06/12 03:56:51  steve
  *  Fix subract of short value form long one.
  *
