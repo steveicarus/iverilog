@@ -252,6 +252,7 @@ optimization functions and the code generator, but not the preprocessor.
 
 Usage: ivl <options>... file
        ivl -h
+       ivl -V
 
 -F <name>
 	Use this flag to request an optimization function be applied
@@ -262,6 +263,9 @@ Usage: ivl <options>... file
 
 	The function is specified by name. Use the "ivl -h" command to
 	get a list of configured function names.
+
+-h
+	Print usage information, and exit.
 
 -m <module>
 	Cause a named VPI module to be included in the module
@@ -317,8 +321,11 @@ Usage: ivl <options>... file
 	Select the output format for the compiled result. Use the
 	"ivl -h" command to get a list of configured targets.
 
--v
-	Print version and copyright information for ivl.
+-v	Print progress indications, and (if supported by the system)
+	executions times in ivl precessing steps.
+
+-V
+	Print version and copyright information for ivl, and exit.
 
 4.2 EXAMPLES
 

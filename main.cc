@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.44 2001/07/03 04:09:24 steve Exp $"
+#ident "$Id: main.cc,v 1.45 2001/07/16 18:14:56 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -253,12 +253,33 @@ int main(int argc, char*argv[])
 	    return flag_errors;
 
       if (help_flag) {
+	    cout << "Icarus Verilog version " << VERSION << endl <<
+"usage: ivl <options> <file>\n"
+"options:\n"
+"\t-F <name>        Apply netlist function <name>.\n"
+"\t-h               Print usage information, and exit.\n"
+"\t-m <module>      Load vpi module <module>.\n"
+"\t-N <file>        Dump the elaborated netlist to <file>.\n"
+"\t-o <file>        Write output to <file>.\n"
+"\t-P <file>        Write the parsed input to <file>.\n"
+"\t-p <assign>      Set a parameter value.\n"
+"\t-s <module>      Select the top-level module.\n"
+"\t-T [min|typ|max] Select timing corner.\n"
+"\t-t <name>        Select target <name>.\n"
+"\t-v               Print progress indications"
+#if defined(HAVE_TIMES)
+                                           " and execution times"
+#endif
+                                           ".\n"
+"\t-V               Print version and copyright information, and exit.\n"
+
+		  ;
 	    cout << "Netlist functions:" << endl;
 	    for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
-		  cout << "    " << func_table[idx].name << endl;
+		  cout << "\t-F " << func_table[idx].name << endl;
 	    cout << "Target types:" << endl;
 	    for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1)
-		  cout << "    " << target_table[idx]->name << endl;
+		  cout << "\t-t " << target_table[idx]->name << endl;
 	    return 0;
       }
 
@@ -425,6 +446,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.45  2001/07/16 18:14:56  steve
+ *  Reshuffle -v and -V flags of ivl. (Stephan Boettcher)
+ *
  * Revision 1.44  2001/07/03 04:09:24  steve
  *  Generate verbuse status messages (Stephan Boettcher)
  *
