@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.9 2000/03/31 07:08:39 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.10 2000/05/18 03:27:32 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -65,12 +65,22 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       vpip_bits_get_value(rfp->bits, rfp->nbits, vp);
 }
 
+static void signal_put_value(vpiHandle ref, s_vpi_value*vp,
+			     p_vpi_time when, int flags)
+{
+      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      assert((ref->vpi_type->type_code==vpiNet)
+	     || (ref->vpi_type->type_code==vpiReg));
+
+      vpip_bits_set_value(rfp->bits, rfp->nbits, vp);
+}
+
 static const struct __vpirt vpip_net_rt = {
       vpiNet,
       signal_get,
       signal_get_str,
       signal_get_value,
-      0,
+      signal_put_value,
       0,
       0
 };
@@ -92,7 +102,7 @@ static const struct __vpirt vpip_reg_rt = {
       signal_get,
       signal_get_str,
       signal_get_value,
-      0,
+      signal_put_value,
       0,
       0
 };
@@ -111,6 +121,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.10  2000/05/18 03:27:32  steve
+ *  Support writing scalars and vectors to signals.
+ *
  * Revision 1.9  2000/03/31 07:08:39  steve
  *  allow cancelling of cbValueChange events.
  *

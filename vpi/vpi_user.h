@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.16 2000/05/07 18:20:08 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.17 2000/05/18 03:27:32 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -86,7 +86,7 @@ typedef struct t_vpi_value {
 #define vpiOctStrVal    2
 #define vpiDecStrVal    3
 #define vpiHexStrVal    4
-#define vpiScalerVal    5
+#define vpiScalarVal    5
 #define vpiIntVal       6
 #define vpiReadVal      7
 #define vpiStringVal    8
@@ -95,6 +95,16 @@ typedef struct t_vpi_value {
 #define vpiTimeVal     11
 #define vpiObjTypeVal  12
 #define vpiSuppressVal 13
+
+
+/* SCALAR VALUES */
+#define vpi0 0
+#define vpi1 1
+#define vpiZ 2
+#define vpiX 3
+#define vpiH 4
+#define vpiL 5
+#define vpiDontCare 6
 
 
 /* OBJECT CODES */
@@ -236,6 +246,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.17  2000/05/18 03:27:32  steve
+ *  Support writing scalars and vectors to signals.
+ *
  * Revision 1.16  2000/05/07 18:20:08  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.20 2000/05/11 01:37:33 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.21 2000/05/18 03:27:32 steve Exp $"
 #endif
 
 /*
@@ -112,6 +112,8 @@ extern vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
 
 
 extern void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits,
+				s_vpi_value*vp);
+extern void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
 
 /*
@@ -377,6 +379,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.21  2000/05/18 03:27:32  steve
+ *  Support writing scalars and vectors to signals.
+ *
  * Revision 1.20  2000/05/11 01:37:33  steve
  *  Calculate the X output value from drive0 and drive1
  *

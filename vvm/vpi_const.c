@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.8 2000/05/07 18:20:08 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.9 2000/05/18 03:27:32 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -223,6 +223,60 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
       }
 }
 
+void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
+{
+      switch (vp->format) {
+
+	  case vpiScalarVal:
+	    switch (vp->value.scalar) {
+		case vpi0:
+		  bits[0] = St0;
+		  break;
+		case vpi1:
+		  bits[0] = St1;
+		  break;
+		case vpiX:
+		  bits[1] = StX;
+		  break;
+		case vpiZ:
+		  bits[0] = HiZ;
+		  break;
+		default:
+		  assert(0);
+	    }
+	    break;
+
+	  case vpiVectorVal: {
+		unsigned long aval = vp->value.vector->aval;
+		unsigned long bval = vp->value.vector->bval;
+		int idx;
+		for (idx = 0 ;  idx < nbits ;  idx += 1) {
+		      int bit = (aval&1) | ((bval<<1)&2);
+		      switch (bit) {
+			  case 0:
+			    bits[idx] = St0;
+			    break;
+			  case 1:
+			    bits[idx] = St1;
+			    break;
+			  case 2:
+			    bits[idx] = HiZ;
+			    break;
+			  case 3:
+			    bits[idx] = StX;
+			    break;
+		      }
+		      aval >>= 1;
+		      bval >>= 1;
+		}
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+}
+
 static int string_get(int code, vpiHandle ref)
 {
       struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
@@ -317,6 +371,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.9  2000/05/18 03:27:32  steve
+ *  Support writing scalars and vectors to signals.
+ *
  * Revision 1.8  2000/05/07 18:20:08  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.
