@@ -17,14 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: HName.cc,v 1.2 2001/12/18 04:52:45 steve Exp $"
+#ident "$Id: HName.cc,v 1.3 2002/01/05 04:36:06 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "HName.h"
 # include  <iostream>
 # include  <string.h>
+# include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
 # include  <malloc.h>
+#endif
 
 hname_t::hname_t()
 {
@@ -250,6 +253,9 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.3  2002/01/05 04:36:06  steve
+ *  include malloc.h only when available.
+ *
  * Revision 1.2  2001/12/18 04:52:45  steve
  *  Include config.h for namespace declaration.
  *
