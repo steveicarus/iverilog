@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.3 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.4 2001/12/30 21:31:38 steve Exp $"
 #endif
 
 /*
@@ -162,6 +162,29 @@ static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
       sprintf(buf, "%lu", val);
 }
 
+static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
+{
+      assert(rfp->wid % 8 == 0);
+      assert(rfp->wid/8 < sizeof buf);
+
+      unsigned bytes = rfp->wid/8;
+
+      for (unsigned idx = 0 ;  idx < bytes ;  idx += 1) {
+	    unsigned base = rfp->wid - 8 - idx * 8;
+
+	    int val = 0;
+	    for (unsigned bit = 0 ;  bit < 8 ;  bit += 1) {
+		  unsigned tmp = get_bit(rfp, base+bit);
+		  if (tmp == 1)
+			val |= 1 << bit;
+	    }
+
+	    buf[idx] = val? val : ' ';
+      }
+
+      buf[bytes] = 0;
+}
+
 /*
  * The get_value method reads the values of the functors and returns
  * the vector to the caller. This causes no side-effect, and reads the
@@ -180,6 +203,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
       switch (vp->format) {
 
 	  case vpiBinStrVal:
+	    assert(wid < sizeof buf);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  buf[wid-idx-1] = "01xz"[get_bit(rfp, idx)];
 	    }
@@ -190,6 +214,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiHexStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
+		assert(hwid < sizeof buf);
 		buf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -214,6 +239,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiOctStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 2) / 3;
+		assert(hwid < sizeof buf);
 		buf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -237,6 +263,11 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	  case vpiDecStrVal:
 	    vthr_vec_DecStrVal(rfp, vp);
+	    vp->value.str = buf;
+	    break;
+
+	  case vpiStringVal:
+	    vthr_vec_StringVal(rfp, vp);
 	    vp->value.str = buf;
 	    break;
 
@@ -348,6 +379,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.4  2001/12/30 21:31:38  steve
+ *  Support vpiStringVal in vhtread vectors.
+ *
  * Revision 1.3  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *
