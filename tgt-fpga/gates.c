@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.13 2003/08/09 03:23:03 steve Exp $"
+#ident "$Id: gates.c,v 1.14 2003/11/12 03:20:14 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -96,6 +96,15 @@ static void show_gate_lpm(ivl_lpm_t net)
 	    device->show_cmp_ge(net);
 	    break;
 
+	  case IVL_LPM_CMP_GT:
+	    if (device->show_cmp_gt == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_CMP_GT not supported"
+			  " by this target.\n");
+		  return;
+	    }
+	    device->show_cmp_gt(net);
+	    break;
+
 	  case IVL_LPM_FF:
 	    if (device->show_dff == 0) {
 		  fprintf(stderr, "fpga.tgt: IVL_LPM_FF not supported"
@@ -168,6 +177,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.14  2003/11/12 03:20:14  steve
+ *  devices need show_cmp_gt
+ *
  * Revision 1.13  2003/08/09 03:23:03  steve
  *  Add support for IVL_LPM_MULT device.
  *

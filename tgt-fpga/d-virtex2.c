@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.18 2003/07/04 00:10:09 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.19 2003/11/12 03:20:14 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -84,6 +84,7 @@ const struct device_s d_virtex2_edif = {
       virtex_eq,
       virtex_eq,
       virtex_ge,
+      0, /* show_cmp_gt */
       virtex_mux,
       virtex_add,
       virtex_add,
@@ -94,6 +95,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.19  2003/11/12 03:20:14  steve
+ *  devices need show_cmp_gt
+ *
  * Revision 1.18  2003/07/04 00:10:09  steve
  *  Generate MUXF5 based 4-input N-wide muxes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: device.h,v 1.13 2003/10/27 02:18:27 steve Exp $"
+#ident "$Id: device.h,v 1.14 2003/11/12 03:20:14 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -53,6 +53,7 @@ struct device_s {
       void (*show_cmp_eq)(ivl_lpm_t net);
       void (*show_cmp_ne)(ivl_lpm_t net);
       void (*show_cmp_ge)(ivl_lpm_t net);
+      void (*show_cmp_gt)(ivl_lpm_t net);
 	/* This method draws MUX devices */
       void (*show_mux)(ivl_lpm_t net);
 	/* This method draws ADD devices */
@@ -79,6 +80,9 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.14  2003/11/12 03:20:14  steve
+ *  devices need show_cmp_gt
+ *
  * Revision 1.13  2003/10/27 02:18:27  steve
  *  Emit constants for LPM device.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.10 2003/10/31 03:45:50 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.11 2003/11/12 03:20:14 steve Exp $"
 #endif
 
 /*
@@ -864,6 +864,7 @@ const struct device_s d_lpm_edif = {
       0,
       0,
       0,
+      0, /* show_cmp_gt */
       lpm_show_mux, /* show_mux */
       lpm_show_add, /* show_add */
       lpm_show_add, /* show_sub */
@@ -875,6 +876,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.11  2003/11/12 03:20:14  steve
+ *  devices need show_cmp_gt
+ *
  * Revision 1.10  2003/10/31 03:45:50  steve
  *  Handle adders that use Cout for the top bit.
  *

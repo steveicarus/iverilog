@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.16 2003/07/02 00:48:03 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.17 2003/11/12 03:20:14 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -463,9 +463,10 @@ const struct device_s d_generic_edif = {
       0, /* draw_pad not implemented */
       edif_show_logic,
       edif_show_generic_dff,
-      0,
-      0,
-      0,
+      0, /* show_cmp_eq */
+      0, /* show_cmp_ne */
+      0, /* show_cmp_ge */
+      0, /* show_cmp_gt */
       0,
       0, /* show_add */
       0, /* show_sub */
@@ -476,6 +477,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.17  2003/11/12 03:20:14  steve
+ *  devices need show_cmp_gt
+ *
  * Revision 1.16  2003/07/02 00:48:03  steve
  *  No longer export generic-edif functions.
  *

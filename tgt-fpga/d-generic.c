@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic.c,v 1.13 2003/06/24 03:55:00 steve Exp $"
+#ident "$Id: d-generic.c,v 1.14 2003/11/12 03:20:14 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -505,6 +505,7 @@ const struct device_s d_generic = {
       generic_show_cmp_eq,
       generic_show_cmp_eq,
       0, /* ge not implemented */
+      0, /* gt not implemented */
       generic_show_mux,
       generic_show_add,
       0, /* subtract not implemented */
@@ -515,6 +516,9 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.14  2003/11/12 03:20:14  steve
+ *  devices need show_cmp_gt
+ *
  * Revision 1.13  2003/06/24 03:55:00  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *
