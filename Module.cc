@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.17 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: Module.cc,v 1.18 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,12 +27,9 @@
 # include  "PWire.h"
 # include  <assert.h>
 
-Module::Module(const char*name, const svector<Module::port_t*>*pp)
+Module::Module(const char*name)
 : name_(strdup(name))
 {
-      if (pp)
-	    ports_ = *pp;
-
 }
 
 Module::~Module()
@@ -72,7 +69,7 @@ void Module::add_behavior(PProcess*b)
 
 unsigned Module::port_count() const
 {
-      return ports_.count();
+      return ports.count();
 }
 
 /*
@@ -82,11 +79,11 @@ unsigned Module::port_count() const
  */
 const svector<PEIdent*>& Module::get_port(unsigned idx) const
 {
-      assert(idx < ports_.count());
+      assert(idx < ports.count());
       static svector<PEIdent*> zero;
 
-      if (ports_[idx])
-	    return ports_[idx]->expr;
+      if (ports[idx])
+	    return ports[idx]->expr;
       else
 	    return zero;
 }
@@ -94,11 +91,11 @@ const svector<PEIdent*>& Module::get_port(unsigned idx) const
 unsigned Module::find_port(const string&name) const
 {
       assert(name != "");
-      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1)
-	    if (ports_[idx]->name == name)
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1)
+	    if (ports[idx]->name == name)
 		  return idx;
 
-      return ports_.count();
+      return ports.count();
 }
 
 
@@ -142,6 +139,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.18  2002/05/19 23:37:28  steve
+ *  Parse port_declaration_lists from the 2001 Standard.
+ *
  * Revision 1.17  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

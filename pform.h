@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.55 2002/01/12 04:03:39 steve Exp $"
+#ident "$Id: pform.h,v 1.56 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -117,8 +117,11 @@ struct lgate {
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
  */
-extern void pform_startmodule(const char*, svector<Module::port_t*>*,
-			      const char*file, unsigned lineno);
+extern void pform_startmodule(const char*, const char*file, unsigned lineno);
+extern void pform_module_set_ports(svector<Module::port_t*>*);
+extern Module::port_t* pform_module_port_reference(char*name,
+						   const char*file,
+						   unsigned lineno);
 extern void pform_endmodule(const char*);
 
 extern void pform_make_udp(const char*name, list<string>*parms,
@@ -139,7 +142,8 @@ extern void pform_pop_scope();
  * go into a module that is currently opened.
  */
 extern void pform_makewire(const struct vlltype&li, const char*name,
-			   NetNet::Type type = NetNet::IMPLICIT);
+			   NetNet::Type type = NetNet::IMPLICIT,
+			   NetNet::PortType =NetNet::NOT_A_PORT);
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   list<char*>*names,
@@ -152,9 +156,16 @@ extern void pform_makewire(const struct vlltype&li,
 			   NetNet::Type type);
 extern void pform_make_reginit(const struct vlltype&li,
 			       const char*name, PExpr*expr);
+
+  /* Look up the names of the wires, and set the port type,
+     i.e. input, output or inout. If the wire does not exist, create
+     it. The second form takes a single name. */
 extern void pform_set_port_type(const struct vlltype&li,
 				list<char*>*names, svector<PExpr*>*,
 				NetNet::PortType);
+extern void pform_set_port_type(const char*nm, NetNet::PortType pt,
+				const char*file, unsigned lineno);
+
 extern void pform_set_net_range(list<char*>*names, svector<PExpr*>*, bool);
 extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<char*>*names);
@@ -219,6 +230,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.56  2002/05/19 23:37:28  steve
+ *  Parse port_declaration_lists from the 2001 Standard.
+ *
  * Revision 1.55  2002/01/12 04:03:39  steve
  *  Drive strengths for continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.93 2002/04/18 18:38:37 steve Exp $"
+#ident "$Id: pform.cc,v 1.94 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -147,27 +147,17 @@ static unsigned long evaluate_delay(PExpr*delay)
       return pp->value().as_ulong();
 }
 
-void pform_startmodule(const char*name, svector<Module::port_t*>*ports,
-		       const char*file, unsigned lineno)
+void pform_startmodule(const char*name, const char*file, unsigned lineno)
 {
       assert( pform_cur_module == 0 );
 
-	/* The parser parses ``module foo()'' as having one
-	   unconnected port, but it is really a module with no
-	   ports. Fix it up here. */
-      if (ports && (ports->count() == 1) && ((*ports)[0] == 0)) {
-	    delete ports;
-	    ports = 0;
-      }
 
-      pform_cur_module = new Module(name, ports);
+      pform_cur_module = new Module(name);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
 
       pform_cur_module->set_file(file);
       pform_cur_module->set_lineno(lineno);
-
-      delete ports;
 
       if (warn_timescale && pform_timescale_file
 	  && (strcmp(pform_timescale_file,file) != 0)) {
@@ -177,6 +167,44 @@ void pform_startmodule(const char*name, svector<Module::port_t*>*ports,
 		 << " inherited from another file." << endl;
 	    cerr << pform_timescale_file << ":" << pform_timescale_line
 		 << ": ...: The inherited timescale is here." << endl;
+      }
+}
+
+/*
+ * This function is called by the parser to make a simple port
+ * reference. This is a name without a .X(...), so the internal name
+ * should be generated to be the same as the X.
+ */
+Module::port_t* pform_module_port_reference(char*name,
+					    const char*file,
+					    unsigned lineno)
+{
+      Module::port_t*ptmp = new Module::port_t;
+      PEIdent*tmp = new PEIdent(hname_t(name));
+      tmp->set_file(file);
+      tmp->set_lineno(lineno);
+      ptmp->name = name;
+      ptmp->expr = svector<PEIdent*>(1);
+      ptmp->expr[0] = tmp;
+
+      return ptmp;
+}
+
+void pform_module_set_ports(svector<Module::port_t*>*ports)
+{
+      assert(pform_cur_module);
+
+	/* The parser parses ``module foo()'' as having one
+	   unconnected port, but it is really a module with no
+	   ports. Fix it up here. */
+      if (ports && (ports->count() == 1) && ((*ports)[0] == 0)) {
+	    delete ports;
+	    ports = 0;
+      }
+
+      if (ports != 0) {
+	    pform_cur_module->ports = *ports;
+	    delete ports;
       }
 }
 
@@ -774,7 +802,8 @@ void pform_make_reginit(const struct vlltype&li,
  * function is called for every declaration.
  */
 void pform_makewire(const vlltype&li, const char*nm,
-		    NetNet::Type type)
+		    NetNet::Type type,
+		    NetNet::PortType port_type)
 {
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
@@ -801,7 +830,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    return;
       }
 
-      cur = new PWire(name, type, NetNet::NOT_A_PORT);
+      cur = new PWire(name, type, port_type);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
       pform_cur_module->add_wire(cur);
@@ -1233,6 +1262,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.94  2002/05/19 23:37:28  steve
+ *  Parse port_declaration_lists from the 2001 Standard.
+ *
  * Revision 1.93  2002/04/18 18:38:37  steve
  *  Fix first_file test for timescale warning.
  *

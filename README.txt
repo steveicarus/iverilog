@@ -244,102 +244,8 @@ command. This program invokes the preprocessor (ivlpp) and the
 compiler (ivl) with the proper command line options to get the job
 done in a friendly way. See the iverilog(1) man page for usage details.
 
-4.1 Running IVL Directly (not recommended)
 
-    NOTE: The preferred method of running Icarus Verilog is the
-    iverilog command described above. The instructions below may
-    change at any time without notice.
-
-The ivl command is the compiler driver, that invokes the parser,
-optimization functions and the code generator, but not the preprocessor.
-
-Usage: ivl <options>... file
-       ivl -h
-       ivl -V
-
--F <name>
-	Use this flag to request an optimization function be applied
-	to the netlist before it is sent to the target output
-	stage. Any number of -F options may be given, to specify a
-	variety of processing steps. The steps will be applied in
-	order, with the output of one uses as the input to the next.
-
-	The function is specified by name. Use the "ivl -h" command to
-	get a list of configured function names.
-
--h
-	Print usage information, and exit.
-
--m <module>
-	Cause a named VPI module to be included in the module
-	list. This parameter appends the named module to the end of
-	the VPI_MODULE_LIST. This is an ordered list of modules to be
-	loaded into the simulation at runtime.
-
-	This list can also be set with -fVPI_MODULE_LIST=<list> which
-	sets the list completely. Then, -m after this will append
-	module names to the list specified. The default list
-	includes "system".
-
--N <file>
-	Dump the elaborated netlist to the named file. The netlist is
-	the folly elaborated netlist, after all the function modules
-	are applied and right before the output generator is
-	called. This is an aid for debugging the compiler, and the
-	output generator in particular.
-
--o <file>
-	Normally, the generated result is sent to standard
-	output. Use the -o flag to specify an output file for the
-	generated result.
-
--P <file>
-	Write the PForm of the parsed input to the specified file.
-	The pform is the compiler's understanding of the input after
-	parsing and before elaboration. This is an aid for debugging
-	the compiler.
-
--p <assign>
-	Use this flag to set a parameter value. The format of the
-	assignment is <key>=<value> where key is any string up to the
-	first '=', and <value> is the rest of the option. If the '='
-	is omitted, then the key is assigned the empty string.
-
-	The useful keys are defined by the functions and the target in
-	use. These assignments are specifically useful for passing
-	target specific information to the target back-end, or
-	options/parameters to optimization functions, if any are defined.
-
--s <module>
-        Normally, ivl will locate all the modules that are defined but
-        never instantiated, and use these as the design roots for 
-        elaboration. This flag allows the choice of root module(s) to 
-        be manually overridden. It can be used more than once on the
-        command line if multiple root modules are needed.
-        
--T [min|typ|max]
-	Normally, ivl will select typ values from min:type:max
-	expressions and print a warning. This flag tells the compiler
-	exactly which value to choose, and suppresses the warning.
-
--t <name>
-	Select the output format for the compiled result. Use the
-	"ivl -h" command to get a list of configured targets.
-
--v	Print progress indications, and (if supported by the system)
-	executions times in ivl precessing steps.
-
--V
-	Print version and copyright information for ivl, and exit.
-
--y <dir>
-	Add the specified directory to the library search path. If
-	missing modules are discovered during elaboration, ivl will
-	attempt to locate an implementation by searching the library
-	directories for a Verilog source file with the same name as
-	the module.
-
-4.2 EXAMPLES
+4.1 EXAMPLES
 
 Example: Compiling "hello.vl"
 
@@ -405,7 +311,7 @@ constructs.
   - force to nets are not supported. Force to variables, and
     assign/deassign, are supported.
 
-5.0 Nonstandard Constructs
+5.1 Nonstandard Constructs
 
 Icarus Verilog includes some features that are not part of the
 IEEE1364 standard, but have well defined meaning. These are extensions

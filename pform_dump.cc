@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.70 2002/04/21 04:59:08 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.71 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -679,8 +679,8 @@ void Module::dump(ostream&out) const
 {
       out << "module " << name_ << ";" << endl;
 
-      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
-	    port_t*cur = ports_[idx];
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+	    port_t*cur = ports[idx];
 
 	    if (cur == 0) {
 		  out << "    unconnected" << endl;
@@ -824,6 +824,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.71  2002/05/19 23:37:28  steve
+ *  Parse port_declaration_lists from the 2001 Standard.
+ *
  * Revision 1.70  2002/04/21 04:59:08  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.20 2002/01/26 05:28:28 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.21 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -71,8 +71,8 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 	// Scan all the ports of the module, and make sure that each
 	// is connected to wires that have port declarations.
-      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
-	    Module::port_t*pp = ports_[idx];
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+	    Module::port_t*pp = ports[idx];
 	    if (pp == 0)
 		  continue;
 
@@ -122,7 +122,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 		  hname_t name = (*wt).first;
 
-		  if (! signal_is_in_port(ports_, name)) {
+		  if (! signal_is_in_port(ports, name)) {
 
 			cerr << cur->get_line() << ": error: Signal "
 			     << name << " has a declared direction "
@@ -519,6 +519,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.21  2002/05/19 23:37:28  steve
+ *  Parse port_declaration_lists from the 2001 Standard.
+ *
  * Revision 1.20  2002/01/26 05:28:28  steve
  *  Detect scalar/vector declarion mismatch.
  *

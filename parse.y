@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.149 2002/04/21 17:43:13 steve Exp $"
+#ident "$Id: parse.y,v 1.150 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -129,12 +129,12 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %type <hier> identifier
 %type <text> register_variable
-%type <texts> register_variable_list list_of_variables
+%type <texts> register_variable_list list_of_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
-%type <mport> port port_opt port_reference port_reference_list
-%type <mports> list_of_ports list_of_ports_opt
+%type <mport> port port_opt port_reference port_reference_list port_declaration
+%type <mports> list_of_ports list_of_ports_opt list_of_port_declarations
 
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> function_item function_item_list
@@ -156,7 +156,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <exprs> assign assign_list
 
 %type <exprs> range range_opt
-%type <nettype>  net_type
+%type <nettype>  net_type var_type
 %type <gatetype> gatetype
 %type <porttype> port_type
 %type <parmvalue> parameter_value_opt
@@ -222,11 +222,11 @@ block_item_decl
 	| K_time register_variable_list ';'
 		{ pform_set_reg_time($2);
 		}
-	| K_real list_of_variables ';'
+	| K_real list_of_identifiers ';'
 		{ delete $2;
 		  yyerror(@1, "sorry: real variables not supported.");
 		}
-	| K_realtime list_of_variables ';'
+	| K_realtime list_of_identifiers ';'
 		{ delete $2;
 		  yyerror(@1, "sorry: reatime variables not supported.");
 		}
@@ -894,20 +894,20 @@ expr_primary
      declaration) or an input declaration. There are no output or
      inout ports. */
 function_item
-	: K_input range_opt list_of_variables ';'
+	: K_input range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output range_opt list_of_variables ';'
+	| K_output range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		  yyerror(@1, "Functions may not have output ports.");
 		}
-	| K_inout range_opt list_of_variables ';'
+	| K_inout range_opt list_of_identifiers ';'
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
 						@1.text, @1.first_line);
@@ -1034,7 +1034,7 @@ gatetype
 
   /* A general identifier is a hierarchical name, with the right most
      name the base of the identifier. This rule builds up a
-     hierarchical name from left to right. */
+     hierarchical name from left to right, forming a list of names. */
 identifier
 	: IDENTIFIER
 		{ $$ = new hname_t($1);
@@ -1047,6 +1047,39 @@ identifier
 		  $$ = tmp;
 		}
 	;
+
+  /* This is a list of identifiers. The result is a list of strings,
+     each one of the identifiers in the list. These are simple,
+     non-hierarchical names separated by ',' characters. */
+list_of_identifiers
+	: IDENTIFIER
+		{ list<char*>*tmp = new list<char*>;
+		  tmp->push_back($1);
+		  $$ = tmp;
+		}
+	| list_of_identifiers ',' IDENTIFIER
+		{ list<char*>*tmp = $1;
+		  tmp->push_back($3);
+		  $$ = tmp;
+		}
+	;
+
+
+  /* The list_of_ports and list_of_port_declarations rules are the
+     port list formats for module ports. The lost_of_ports_opt rule is
+     only used by the module start rule.
+
+     The first, the list_of_ports, is the 1364-1995 format, a list of
+     port names, including .name() syntax.
+
+     The list_of_port_declaractions the 1364-2001 format, an in-line
+     declaration of the ports.
+
+     In both cases, the lost_of_ports and lost_of_port_declarations
+     returns an array of Module::port_t* items that include the name
+     of the port internally and externally. The actual creation of the
+     nets/variables is done in the declaration, whether internal to
+     the port list or in amongst the module items. */
 
 list_of_ports
 	: port_opt
@@ -1063,23 +1096,62 @@ list_of_ports
 		}
 	;
 
+list_of_port_declarations
+	: port_declaration
+		{ svector<Module::port_t*>*tmp
+			  = new svector<Module::port_t*>(1);
+		  (*tmp)[0] = $1;
+		  $$ = tmp;
+		}
+	| list_of_port_declarations ',' port_declaration
+		{ svector<Module::port_t*>*tmp
+			= new svector<Module::port_t*>(*$1, $3);
+		  delete $1;
+		  $$ = tmp;
+		}
+        ;
+
+port_declaration
+	: K_input  net_type IDENTIFIER
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($3, @1.text,
+						     @1.first_line);
+		  pform_makewire(@1, $3, $2, NetNet::PINPUT);
+		  delete $3;
+		  $$ = ptmp;
+		}
+	| K_inout  net_type IDENTIFIER
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($3, @1.text,
+						     @1.first_line);
+		  pform_makewire(@1, $3, $2, NetNet::PINOUT);
+		  delete $3;
+		  $$ = ptmp;
+		}
+	| K_output net_type IDENTIFIER
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($3, @1.text,
+						     @1.first_line);
+		  pform_makewire(@1, $3, $2, NetNet::POUTPUT);
+		  delete $3;
+		  $$ = ptmp;
+		}
+	| K_output var_type IDENTIFIER
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($3, @1.text,
+						     @1.first_line);
+		  pform_makewire(@1, $3, $2, NetNet::POUTPUT);
+		  delete $3;
+		  $$ = ptmp;
+		}
+	;
+
 list_of_ports_opt
 	: '(' list_of_ports ')' { $$ = $2; }
+	| '(' list_of_port_declarations ')' { $$ = $2; }
 	|                       { $$ = 0; }
 	;
 
-list_of_variables
-	: IDENTIFIER
-		{ list<char*>*tmp = new list<char*>;
-		  tmp->push_back($1);
-		  $$ = tmp;
-		}
-	| list_of_variables ',' IDENTIFIER
-		{ list<char*>*tmp = $1;
-		  tmp->push_back($3);
-		  $$ = tmp;
-		}
-	;
 
   /* An lavalue is the expression that can go on the left side of a
      continuous assign statement. This checks (where it can) that the
@@ -1184,22 +1256,21 @@ assign_list
 		{ $$ = $1; }
 	;
 
-module
-	: module_start IDENTIFIER list_of_ports_opt ';'
-		{ pform_startmodule($2, $3, @1.text, @1.first_line);
-		}
-	  module_item_list
+
+  /* This is the global structure of a module. A module in a start
+     section, with optional ports, then an opetional list of module
+     items, and finally an end marker. */
+
+module  : module_start IDENTIFIER
+		{ pform_startmodule($2, @1.text, @1.first_line); }
+	  list_of_ports_opt ';'
+		{ pform_module_set_ports($4); }
+	  module_item_list_opt
 	  K_endmodule
 		{ pform_endmodule($2);
 		  delete $2;
 		}
-	| module_start IDENTIFIER list_of_ports_opt ';'
-		{ pform_startmodule($2, $3, @1.text, @1.first_line);
-		}
-	  K_endmodule
-		{ pform_endmodule($2);
-		  delete $2;
-		}
+
 	;
 
 module_start : K_module | K_macromodule ;
@@ -1210,7 +1281,7 @@ range_delay : range_opt delay3_opt
 
 
 module_item
-	: net_type range_delay list_of_variables ';'
+	: net_type range_delay list_of_identifiers ';'
 		{ pform_makewire(@1, $2.range, $3, $1);
 		  if ($2.delay != 0) {
 			yyerror(@2, "sorry: net delays not supported.");
@@ -1224,13 +1295,13 @@ module_item
 	| net_type drive_strength net_decl_assigns ';'
 		{ pform_makewire(@1, 0, 0, $2, $3, $1);
 		}
-	| K_trireg charge_strength_opt range_delay list_of_variables ';'
+	| K_trireg charge_strength_opt range_delay list_of_identifiers ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
 		  delete $3.range;
 		  delete $3.delay;
 		}
 
-	| port_type range_delay list_of_variables ';'
+	| port_type range_delay list_of_identifiers ';'
 		{ pform_set_port_type(@1, $3, $2.range, $1);
 		}
 	| port_type range_delay error ';'
@@ -1242,7 +1313,7 @@ module_item
 		}
 	| block_item_decl
 	| K_defparam defparam_assign_list ';'
-	| K_event list_of_variables ';'
+	| K_event list_of_identifiers ';'
 		{ pform_make_events($2, @1.text, @1.first_line);
 		}
 
@@ -1408,6 +1479,11 @@ module_item_list
 	| module_item
 	;
 
+module_item_list_opt
+	: module_item_list
+	|
+	;
+
 
   /* A net declaration assignment allows the programmer to combine the
      net declaration and the continuous assignment into a single
@@ -1449,6 +1525,10 @@ net_type
 	| K_supply1 { $$ = NetNet::SUPPLY1; }
 	| K_wor     { $$ = NetNet::WOR; }
 	| K_trior   { $$ = NetNet::TRIOR; }
+	;
+
+var_type
+	: K_reg { $$ = NetNet::REG; }
 	;
 
 parameter_assign
@@ -1655,13 +1735,9 @@ port_opt
 port_reference
 
 	: IDENTIFIER
-		{ Module::port_t*ptmp = new Module::port_t;
-		  PEIdent*tmp = new PEIdent(hname_t($1));
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  ptmp->name = $1;
-		  ptmp->expr = svector<PEIdent*>(1);
-		  ptmp->expr[0] = tmp;
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($1, @1.text,
+						     @1.first_line);
 		  delete $1;
 		  $$ = ptmp;
 		}
@@ -2394,19 +2470,19 @@ statement_opt
 task_item
 	: block_item_decl
 	    { $$ = new svector<PWire*>(0); }
-	| K_input range_opt list_of_variables ';'
+	| K_input range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, $2,
 						$3, @1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_output range_opt list_of_variables ';'
+	| K_output range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT, $2, $3,
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout range_opt list_of_variables ';'
+	| K_inout range_opt list_of_identifiers ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT, $2, $3,
 						@1.text, @1.first_line);
@@ -2568,7 +2644,7 @@ udp_output_sym
 	;
 
 udp_port_decl
-	: K_input list_of_variables ';'
+	: K_input list_of_identifiers ';'
 		{ $$ = pform_make_udp_input_ports($2); }
 	| K_output IDENTIFIER ';'
 		{ PWire*pp = new PWire($2, NetNet::IMPLICIT, NetNet::POUTPUT);

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.24 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: Module.h,v 1.25 2002/05/19 23:37:28 steve Exp $"
 #endif
 
 # include  <list>
@@ -60,7 +60,7 @@ class Module : public LineInfo {
       };
 
     public:
-      explicit Module(const char*name, const svector<port_t*>*);
+      explicit Module(const char*name);
       ~Module();
 
 
@@ -83,6 +83,10 @@ class Module : public LineInfo {
            list of names in module-order is needed to pass from
            a parameter-index to its name. */
       list<string> param_names;
+
+	/* This is an array of port descriptors, which is in turn a
+	   named array of PEident pointers. */
+      svector<port_t*> ports;
 
 	/* Keep a table of named events declared in the module. */
       map<string,PEvent*>events;
@@ -127,10 +131,6 @@ class Module : public LineInfo {
     private:
       char* name_;
 
-	/* This is an array of port descriptors, which is in turn a
-	   named array of PEident pointers. */
-      svector<port_t*> ports_;
-
       map<hname_t,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
@@ -145,6 +145,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.25  2002/05/19 23:37:28  steve
+ *  Parse port_declaration_lists from the 2001 Standard.
+ *
  * Revision 1.24  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
