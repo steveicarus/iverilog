@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.25 2001/03/29 02:52:39 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.26 2001/03/29 03:47:38 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -601,8 +601,15 @@ extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
 
 extern "C" ivl_event_t ivl_stmt_event(ivl_statement_t net)
 {
-      assert(net->type_ == IVL_ST_WAIT);
-      return net->u_.wait_.event_;
+      switch (net->type_) {
+	  case IVL_ST_WAIT:
+	    return net->u_.wait_.event_;
+	  case IVL_ST_TRIGGER:
+	    return net->u_.trig_.event_;
+	  default:
+	    assert(0);
+      }
+      return 0;
 }
 
 extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
@@ -709,6 +716,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.26  2001/03/29 03:47:38  steve
+ *  Behavioral trigger statements.
+ *
  * Revision 1.25  2001/03/29 02:52:39  steve
  *  Add unary ~ operator to tgt-vvp.
  *

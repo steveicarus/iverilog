@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.13 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.14 2001/03/29 03:47:38 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -262,6 +262,21 @@ bool dll_target::proc_trigger(const NetEvTrig*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_TRIGGER;
+
+	/* Locate the event by name. Save the ivl_event_t in the
+	   statement so that the generator can find it easily. */
+      const NetEvent*ev = net->event();
+      ivl_scope_t ev_scope = lookup_scope_(ev->scope());
+
+      for (unsigned idx = 0 ;  idx < ev_scope->nevent_ ;  idx += 1) {
+	    const char*ename = ivl_event_basename(ev_scope->event_[idx]);
+	    if (strcmp(ev->name(), ename) == 0) {
+		  stmt_cur_->u_.wait_.event_ = ev_scope->event_[idx];
+		  break;
+	    }
+      }
+
+
       return true;
 }
 
@@ -341,6 +356,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.14  2001/03/29 03:47:38  steve
+ *  Behavioral trigger statements.
+ *
  * Revision 1.13  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.

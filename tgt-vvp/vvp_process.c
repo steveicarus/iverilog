@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.10 2001/03/28 06:07:40 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.11 2001/03/29 03:47:38 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -193,6 +193,14 @@ static int show_stmt_noop(ivl_statement_t net)
       return 0;
 }
 
+static int show_stmt_trigger(ivl_statement_t net)
+{
+      ivl_event_t ev = ivl_stmt_event(net);
+      assert(ev);
+      fprintf(vvp_out, "    %%set E_%s, 0;\n", ivl_event_name(ev));
+      return 0;
+}
+
 static int show_stmt_wait(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_event(net);
@@ -275,6 +283,10 @@ static int show_statement(ivl_statement_t net)
 
 	  case IVL_ST_STASK:
 	    rc += show_system_task_call(net);
+	    break;
+
+	  case IVL_ST_TRIGGER:
+	    rc += show_stmt_trigger(net);
 	    break;
 
 	  case IVL_ST_WAIT:
@@ -387,6 +399,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.11  2001/03/29 03:47:38  steve
+ *  Behavioral trigger statements.
+ *
  * Revision 1.10  2001/03/28 06:07:40  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.
