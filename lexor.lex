@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.37 1999/11/17 00:50:06 steve Exp $"
+#ident "$Id: lexor.lex,v 1.38 1999/11/23 02:49:04 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -40,6 +40,7 @@ extern YYLTYPE yylloc;
 
 static void reset_lexor();
 static void line_directive();
+static void line_directive2();
 
 extern int check_identifier(const char*str, int len);
 static verinum*make_sized_binary(const char*txt);
@@ -66,6 +67,7 @@ W [ \t\b\f\r]+
 %%
 
 ^"#line"[ ]+\"[^\"]*\"[ ]+[0-9]+.* { line_directive(); }
+^"`line"[ ]+[0-9]+[ ]+\"[^\"]*\".* { line_directive2(); }
 
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
@@ -776,6 +778,31 @@ static void line_directive()
 
       qt2 += 1;
       yylloc.first_line = strtoul(qt2,0,0);
+}
+
+static void line_directive2()
+{
+      assert(strncmp(yytext,"`line",5) == 0);
+      char*cp = yytext + strlen("`line");
+      cp += strspn(cp, " ");
+      yylloc.first_line = strtoul(cp,&cp,10);
+
+      cp += strspn(cp, " ");
+      if (*cp == 0) return;
+
+      char*qt1 = strchr(yytext, '"');
+      assert(qt1);
+      qt1 += 1;
+
+      char*qt2 = strchr(qt1, '"');
+      assert(qt2);
+
+      char*buf = new char[qt2-qt1+1];
+      strncpy(buf, qt1, qt2-qt1);
+      buf[qt2-qt1] = 0;
+
+      delete[]yylloc.text;
+      yylloc.text = buf;
 }
 
 static void reset_lexor()
