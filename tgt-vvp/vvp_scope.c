@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.58 2001/12/14 02:05:13 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.59 2001/12/14 06:03:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -619,13 +619,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
 
 	  case IVL_LO_NOTIF0:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type NOTIF0\n");
-	    ltype = "?";
+	    ltype = "NOTIF0";
 	    break;
 
 	  case IVL_LO_NOTIF1:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type NOTIF1\n");
-	    ltype = "?";
+	    ltype = "NOTIF1";
 	    break;
 
 	  default:
@@ -1258,6 +1256,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.59  2001/12/14 06:03:34  steve
+ *  Generate notif functors.
+ *
  * Revision 1.58  2001/12/14 02:05:13  steve
  *  Parse and handle drive strengths of gates to vvp.
  *
