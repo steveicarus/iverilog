@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.65 1999/10/28 00:47:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.66 1999/10/28 04:48:29 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -111,7 +111,8 @@ class target_vvm : public target_t {
 
 	// String constants that are made into vpiHandles have th
 	// handle name mapped by this.
-      map<string,string>string_constants;
+      map<string,unsigned>string_constants;
+      unsigned string_counter;
 };
 
 
@@ -480,21 +481,18 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
 {
       if (expr->value().is_string()) {
 
-	    string& res = tgt_->string_constants[expr->value().as_string()];
-	    if (res != "") {
-		  result = "&" + res + ".base";
-		  return;
+	    unsigned& res = tgt_->string_constants[expr->value().as_string()];
+
+	    if (res == 0) {
+		  res = tgt_->string_counter ++;
+		  tgt_->init_code << "      vpip_make_string_const("
+			"&string_table[" << res << "], \"" <<
+			expr->value().as_string() << "\");" << endl;
 	    }
 
-	    res = make_temp();
-	    tgt_->delayed << "struct __vpiStringConst " << res
-			  << ";" << endl;
-	    tgt_->init_code << "      vpip_make_string_const(&" << res
-			    << ", \"" << expr->value().as_string()
-			    << "\");" << endl;
-	    tgt_->defn << "      extern struct __vpiStringConst " << res
-			  << ";" << endl;
-	    result = "&" + res + ".base";
+	    ostrstream tmp;
+	    tmp << "&string_table[" << res << "].base" << ends;
+	    result = tmp.str();
 	    return;
       }
 
@@ -572,6 +570,9 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       os << "# include \"vpi_priv.h\"" << endl;
 
       process_counter = 0;
+      string_counter = 1;
+
+      os << "static struct __vpiStringConst string_table[];" << endl;
 
       init_code << "static void design_init(vvm_simulation&sim)" << endl;
       init_code << "{" << endl;
@@ -583,6 +584,9 @@ void target_vvm::start_design(ostream&os, const Design*mod)
 
 void target_vvm::end_design(ostream&os, const Design*mod)
 {
+      os << "static struct __vpiStringConst string_table[" <<
+	    string_counter+1 << "];" << endl;
+
       defn.close();
       os << "// **** Definition code" << endl;
       { ifstream rdefn (defn_name);
@@ -1762,6 +1766,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.66  1999/10/28 04:48:29  steve
+ *  Put strings into a single string table.
+ *
  * Revision 1.65  1999/10/28 00:47:24  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler
