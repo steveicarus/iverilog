@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.10 2000/11/19 20:48:53 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.11 2001/02/17 05:14:35 steve Exp $"
 #endif
 
 /*
@@ -56,6 +56,12 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 {
 	/* Cannot delete signals referenced in an expression. */
       if (sig->get_eref() > 0)
+	    return;
+
+	/* Cannot delete the ports of tasks. There are too many places
+	   where they are referenced. */
+      if ((sig->port_type() != NetNet::NOT_A_PORT)
+	  && (sig->scope()->type() == NetScope::TASK))
 	    return;
 
 	/* Check to see if the signal is completely unconnected. If
@@ -118,6 +124,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.11  2001/02/17 05:14:35  steve
+ *  Cannot elide task ports.
+ *
  * Revision 1.10  2000/11/19 20:48:53  steve
  *  Killing some signals might make others killable.
  *
