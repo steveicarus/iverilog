@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.196 2004/05/31 23:34:38 steve Exp $"
+#ident "$Id: parse.y,v 1.197 2004/08/26 04:02:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -327,7 +327,7 @@ block_item_decl
 		{ pform_make_reals($2, @1.text, @1.first_line);
 		}
 	| K_parameter parameter_assign_decl ';'
-	| K_localparam localparam_assign_list ';'
+	| K_localparam localparam_assign_decl ';'
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
@@ -1847,21 +1847,34 @@ localparam_assign
 			            "must be constant.");
 			delete tmp;
 			tmp = 0;
+		  } else {
+			pform_set_localparam(lex_strings.make($1),
+					     active_signed,
+					     active_range, tmp);
 		  }
-		  pform_set_localparam(lex_strings.make($1), tmp);
 		  delete $1;
+		}
+	;
+
+localparam_assign_decl
+	: localparam_assign_list
+	| range { active_range = $1; active_signed = false; }
+          localparam_assign_list
+		{ active_range = 0;
+		  active_signed = false;
+		}
+	| K_signed range { active_range = $2; active_signed = true; }
+          localparam_assign_list
+		{ active_range = 0;
+		  active_signed = false;
 		}
 	;
 
 localparam_assign_list
 	: localparam_assign
-	| range localparam_assign
-		{ yywarn(@1, "Ranges in localparam definition "
-		          "are not supported.");
-		  delete $1;
-		}
 	| localparam_assign_list ',' localparam_assign
 	;
+
 
 
   /* The parameters of a module instance can be overridden by writing

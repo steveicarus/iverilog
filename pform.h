@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.80 2004/06/13 04:56:56 steve Exp $"
+#ident "$Id: pform.h,v 1.81 2004/08/26 04:02:04 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -223,7 +223,10 @@ extern void pform_set_parameter(perm_string name,
 				bool signed_flag,
 				svector<PExpr*>*range,
 				PExpr*expr);
-extern void pform_set_localparam(perm_string name, PExpr*expr);
+extern void pform_set_localparam(perm_string name,
+				bool signed_flag,
+				svector<PExpr*>*range,
+				 PExpr*expr);
 extern void pform_set_defparam(const hname_t&name, PExpr*expr);
 
 /*
@@ -295,6 +298,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.81  2004/08/26 04:02:04  steve
+ *  Add support for localparam ranges.
+ *
  * Revision 1.80  2004/06/13 04:56:56  steve
  *  Add support for the default_nettype directive.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.32 2004/06/13 04:56:54 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.33 2004/08/26 04:02:03 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -129,7 +129,25 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    val = scope->set_parameter((*cur).first, val, 0, 0, false);
+	    NetExpr*msb = 0;
+	    NetExpr*lsb = 0;
+	    bool signed_flag = false;
+
+	      /* If the parameter declaration includes msb and lsb,
+		 then use them to calculate a width for the
+		 result. Then make sure the constant expression of the
+		 parameter value is coerced to have the correct
+		 and defined width. */
+	    if ((*cur).second.msb) {
+		  msb = (*cur).second.msb ->elaborate_pexpr(des, scope);
+		  assert(msb);
+		  lsb = (*cur).second.lsb ->elaborate_pexpr(des, scope);
+		  signed_flag = (*cur).second.signed_flag;
+	    }
+
+	    val->cast_signed(signed_flag);
+	    val = scope->set_parameter((*cur).first, val,
+				       msb, lsb, signed_flag);
 	    assert(val);
 	    delete val;
       }
@@ -550,6 +568,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.33  2004/08/26 04:02:03  steve
+ *  Add support for localparam ranges.
+ *
  * Revision 1.32  2004/06/13 04:56:54  steve
  *  Add support for the default_nettype directive.
  *

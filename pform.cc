@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.127 2004/06/13 04:56:55 steve Exp $"
+#ident "$Id: pform.cc,v 1.128 2004/08/26 04:02:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1399,13 +1399,23 @@ void pform_set_parameter(perm_string name, bool signed_flag,
       pform_cur_module->param_names.push_back(name);
 }
 
-void pform_set_localparam(perm_string name, PExpr*expr)
+void pform_set_localparam(perm_string name, bool signed_flag,
+			 svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
       pform_cur_module->localparams[name].expr = expr;
-      pform_cur_module->localparams[name].msb  = 0;
-      pform_cur_module->localparams[name].lsb  = 0;
-      pform_cur_module->localparams[name].signed_flag = false;
+
+      if (range) {
+	    assert(range->count() == 2);
+	    assert((*range)[0]);
+	    assert((*range)[1]);
+	    pform_cur_module->localparams[name].msb = (*range)[0];
+	    pform_cur_module->localparams[name].lsb = (*range)[1];
+      } else {
+	    pform_cur_module->localparams[name].msb  = 0;
+	    pform_cur_module->localparams[name].lsb  = 0;
+      }
+      pform_cur_module->localparams[name].signed_flag = signed_flag;
 }
 
 void pform_set_specparam(perm_string name, PExpr*expr)
@@ -1587,6 +1597,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.128  2004/08/26 04:02:04  steve
+ *  Add support for localparam ranges.
+ *
  * Revision 1.127  2004/06/13 04:56:55  steve
  *  Add support for the default_nettype directive.
  *
