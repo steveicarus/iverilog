@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.197 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.198 2000/12/01 23:52:49 steve Exp $"
 #endif
 
 /*
@@ -1681,7 +1681,7 @@ NetProc* PDisable::elaborate(Design*des, const string&path) const
  */
 
 NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
-				    NetProc*enet) const
+				       NetProc*enet) const
 {
       NetScope*scope = des->find_scope(path);
       assert(scope);
@@ -1712,8 +1712,6 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 
       if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE)) {
 
-	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
-
 	    NetNet*ex = expr_[0]->expr()->elaborate_net(des, path,
 							1, 0, 0, 0);
 	    if (ex == 0) {
@@ -1737,15 +1735,26 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 
 	    NetESignal*ce = new NetESignal(ex);
 	    NetCondit*co = new NetCondit(new NetEUnary('!', ce), we, 0);
-	    bl->append(co);
-	    bl->append(enet);
 
 	    ev->set_line(*this);
-	    bl->set_line(*this);
 	    we->set_line(*this);
 	    co->set_line(*this);
 
-	    return bl;
+	      /* If we don't have a sub-statement after all, then we
+		 don't really need the block and we can save the
+		 node. (i.e. wait (foo==1) ;) However, the common case
+		 has a statement in the wait so we create a sequential
+		 block to join the wait and the statement. */
+
+	    if (enet) {
+		  NetBlock*bl = new NetBlock(NetBlock::SEQU);
+		  bl->set_line(*this);
+		  bl->append(co);
+		  bl->append(enet);
+		  return bl;
+	    }
+
+	    return co;
       }
 
 
@@ -2324,6 +2333,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.198  2000/12/01 23:52:49  steve
+ *  Handle null statements inside a wait. (PR#60)
+ *
  * Revision 1.197  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1
