@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.230 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: netlist.cc,v 1.231 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1650,8 +1650,8 @@ unsigned NetBUFZ::width() const
       return width_;
 }
 
-NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n)
-: NetNode(s, n, 3)
+NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid)
+: NetNode(s, n, 3), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT); pin(0).set_name(perm_string::literal("O"),0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("I"),0);
@@ -1660,6 +1660,11 @@ NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n)
 
 NetCaseCmp::~NetCaseCmp()
 {
+}
+
+unsigned NetCaseCmp::width() const
+{
+      return width_;
 }
 
 NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
@@ -2342,6 +2347,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.231  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.230  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *

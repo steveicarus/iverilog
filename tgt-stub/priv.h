@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.h,v 1.1 2004/12/12 18:15:06 steve Exp $"
+#ident "$Id: priv.h,v 1.2 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -28,6 +28,12 @@
  * written.
  */
 extern FILE*out;
+
+/*
+ * Keep a running count of errors that the stub detects. This will be
+ * the error count returned to the ivl_target environment.
+ */
+extern int stub_errors;
 
 /*
  * Show the details of the expression.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.326 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.327 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 /*
@@ -1241,7 +1241,10 @@ class NetBUFZ  : public NetNode {
 /*
  * This node is used to represent case equality in combinational
  * logic. Although this is not normally synthesizable, it makes sense
- * to support an abstract gate that can compare x and z.
+ * to support an abstract gate that can compare x and z. This node
+ * always generates a single bit result, no matter the width of the
+ * input. The elaboration, btw, needs to make sure the input widths
+ * match.
  *
  * This pins are assigned as:
  *
@@ -1252,11 +1255,16 @@ class NetBUFZ  : public NetNode {
 class NetCaseCmp  : public NetNode {
 
     public:
-      explicit NetCaseCmp(NetScope*s, perm_string n);
+      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid);
       ~NetCaseCmp();
+
+      unsigned width() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
 };
 
 /*
@@ -3336,7 +3344,7 @@ class Design {
 	// Iterate over the design...
       void dump(ostream&) const;
       void functor(struct functor_t*);
-      bool emit(struct target_t*) const;
+      int emit(struct target_t*) const;
 
 	// This is incremented by elaboration when an error is
 	// detected. It prevents code being emitted.
@@ -3411,6 +3419,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.327  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.326  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.135 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.136 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -914,35 +914,36 @@ void dll_target::logic(const NetLogic*net)
 
 void dll_target::net_case_cmp(const NetCaseCmp*net)
 {
-      struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
+      struct ivl_lpm_s*obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_CMP_EEQ;
+      obj->name  = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
 
-      obj->type_ = IVL_LO_EEQ;
+      obj->u_.arith.width = net->width();
+      obj->u_.arith.signed_flag = 0;
 
-	/* Connect all the ivl_nexus_t objects to the pins of the
-	   device. */
+      const Nexus*nex;
 
-      obj->npins_ = 3;
-      obj->pins_ = new ivl_nexus_t[obj->npins_];
-      for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
-	    const Nexus*nex = net->pin(idx).nexus();
-	    assert(nex->t_cookie());
-	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_log_add(obj->pins_[idx], obj, idx);
-      }
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
 
-      //assert(net->scope());
-      //ivl_scope_t scope = find_scope(des_, net->scope());
-      //assert(scope);
-      ivl_scope_t scope = des_.roots_[0];
+      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-      obj->scope_= scope;
-      obj->name_ = net->name();
+      nex = net->pin(2).nexus();
+      assert(nex->t_cookie());
 
-      obj->delay[0] = net->rise_time();
-      obj->delay[1] = net->fall_time();
-      obj->delay[2] = net->decay_time();
+      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-      scope_add_logic(scope, obj);
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      scope_add_lpm(obj->scope, obj);
 }
 
 /*
@@ -2225,6 +2226,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.136  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.135  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *

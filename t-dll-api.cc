@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.113 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.114 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -759,6 +759,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
@@ -911,6 +912,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_EEQ:
 	    assert(idx == 0);
 	    return net->u_.arith.q;
 
@@ -1013,6 +1015,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_MUX:
 	    return 0;
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
@@ -1067,6 +1070,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
@@ -1968,6 +1972,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.114  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.113  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

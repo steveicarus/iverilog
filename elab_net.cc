@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.142 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.143 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -633,44 +633,18 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	  }
 
 	  case 'E': // Case equals (===)
-	  case 'N': // Case equals (!==)
-	      // The comparison generates gates to bitwise compare
-	      // each pair, and AND all the comparison results.
-#if 0
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+dwidth,
-				(op_ == 'E')? NetLogic::AND : NetLogic::NAND, 1);
+	    gate = new NetCaseCmp(scope, scope->local_symbol(), dwidth);
 	    connect(gate->pin(0), osig->pin(0));
-	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-		  NetCaseCmp*cmp = new NetCaseCmp(scope,
-						  scope->local_symbol());
-
-		  if (idx < lsig->pin_count())
-			connect(cmp->pin(1), lsig->pin(idx));
-		  else
-			connect(cmp->pin(1), padbit->pin(0));
-
-		  if (idx < rsig->pin_count())
-			connect(cmp->pin(2), rsig->pin(idx));
-		  else
-			connect(cmp->pin(2), padbit->pin(0));
-
-		  connect(cmp->pin(0), gate->pin(idx+1));
-		  des->add_node(cmp);
-
-		    // Attach a label to this intermediate wire
-		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-					  NetNet::WIRE);
-		  tmp->local_flag(true);
-		  connect(cmp->pin(0), tmp->pin(0));
-	    }
-#else
-	    cerr << get_line() << ": internal error: Forgot how to "
-		 << "elab_net === operators." << endl;
-	    des->errors += 1;
-#endif
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
 	    break;
 
+	  case 'N': // Case equals (!==)
+	    cerr << get_line() << ": internal error: "
+		 << "Forgot how to elaborate !==." << endl;
+	    des->errors += 1;
+	    gate = 0;
+	    break;
 
 	  case 'e': // ==
 
@@ -2482,6 +2456,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.143  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.142  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *

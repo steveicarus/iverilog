@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.87 2004/12/11 02:31:26 steve Exp $"
+#ident "$Id: main.cc,v 1.88 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -701,11 +701,17 @@ int main(int argc, char*argv[])
 	    cout << "CODE GENERATION -t "<<target<< endl;
       }
 
-      bool emit_rc;
+      int emit_rc;
       emit_rc = emit(des, target);
-      if (!emit_rc) {
-	    cerr << "error: Code generation had errors." << endl;
+      if (emit_rc > 0) {
+	    cerr << "error: Code generation had "
+		 << emit_rc << " errors."
+		 << endl;
 	    return 1;
+      }
+      if (emit_rc < 0) {
+	    cerr << "error: Code generator failure: " << emit_rc << endl;
+	    return -1;
       }
 
       if (verbose_flag) {
@@ -748,6 +754,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.88  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.87  2004/12/11 02:31:26  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.96 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: stub.c,v 1.97 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,6 +25,30 @@
 # include <assert.h>
 
 FILE*out;
+int stub_errors = 0;
+
+/*
+ * This function finds the vector width of a signal. It relies on the
+ * assumption that all the signal inputs to the nexus have the same
+ * width. The ivl_target API should assert that condition.
+ */
+unsigned width_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+
+	    if (sig != 0) {
+		  return ivl_signal_width(sig);
+	    }
+      }
+
+	/* ERROR: A nexus should have at least one signal to carry
+	   properties like width. */
+      return 0;
+}
 
 /*
  * This is a sample target module. All this does is write to the
@@ -179,6 +203,54 @@ void show_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+/*
+ * The compare-like LPM nodes have input widths that match the
+ * ivl_lpm_width() value, and an output width of 1. This function
+ * checks that that is so, and indicates errors otherwise.
+ */
+static void check_cmp_widths(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+	/* Check that the input widths are as expected. The inputs
+	   must be the width of the ivl_lpm_width() for this device,
+	   even though the output for this device is 1 bit. */
+      if (width != width_of_nexus(ivl_lpm_data(net,0))) {
+	    fprintf(out, "    ERROR: Width of A is %u, not %u\n",
+		    width_of_nexus(ivl_lpm_data(net,0)), width);
+	    stub_errors += 1;
+      }
+
+      if (width != width_of_nexus(ivl_lpm_data(net,1))) {
+	    fprintf(out, "    ERROR: Width of B is %u, not %u\n",
+		    width_of_nexus(ivl_lpm_data(net,1)), width);
+	    stub_errors += 1;
+      }
+
+      if (width_of_nexus(ivl_lpm_q(net,0)) != 1) {
+	    fprintf(out, "    ERROR: Width of Q is %u, not 1\n",
+		    width_of_nexus(ivl_lpm_q(net,0)));
+	    stub_errors += 1;
+      }
+}
+
+/* IVL_LPM_CMP_EEQ
+ * This LPM node supports two-input compare. The output width is
+ * actually always 1, the lpm_width is the expected width of the inputs.
+ */
+static void show_lpm_cmp_eeq(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CMP_EEQ %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+      fprintf(out, "    B: %s\n", ivl_nexus_name(ivl_lpm_data(net,1)));
+      check_cmp_widths(net);
+}
+
 /* IVL_LPM_CMP_GE
  * This LPM node supports two-input compare.
  */
@@ -192,6 +264,7 @@ static void show_lpm_cmp_ge(ivl_lpm_t net)
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
       fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
       fprintf(out, "    B: %s\n", ivl_nexus_name(ivl_lpm_data(net,1)));
+      check_cmp_widths(net);
 }
 
 /* IVL_LPM_CONCAT
@@ -213,18 +286,8 @@ static void show_lpm_concat(ivl_lpm_t net)
       fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
 
       for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1) {
-	    unsigned ndx;
-	    unsigned signal_width = 0;
 	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
-
-	    for (ndx = 0 ;  ndx < ivl_nexus_ptrs(nex) ;  ndx += 1) {
-		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, ndx);
-		  ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
-		  if (sig != 0) {
-			signal_width = ivl_signal_width(sig);
-			break;
-		  }
-	    }
+	    unsigned signal_width = width_of_nexus(nex);
 
 	    fprintf(out, "    I%u: %s (width=%u)\n", idx,
 		    ivl_nexus_name(nex), signal_width);
@@ -275,6 +338,10 @@ static void show_lpm(ivl_lpm_t net)
 		}
 		break;
 	  }
+
+	  case IVL_LPM_CMP_EEQ:
+	    show_lpm_cmp_eeq(net);
+	    break;
 
 	  case IVL_LPM_CMP_GE:
 	    show_lpm_cmp_ge(net);
@@ -616,10 +683,17 @@ static void show_signal(ivl_signal_t net)
 
 		    /* Only pin-0 of signals is used. If this is
 		       something other then pin-0, report an error. */
-		  if (ivl_nexus_ptr_pin(ptr) != 0)
+		  if (ivl_nexus_ptr_pin(ptr) != 0) {
 			fprintf(out, " (pin=%u, should be 0)",
 				ivl_nexus_ptr_pin(ptr));
+			stub_errors += 1;
+		  }
 
+		  if (ivl_signal_width(sig) != ivl_signal_width(net)) {
+			fprintf(out, " (ERROR: Width=%u)",
+				ivl_signal_width(sig));
+			stub_errors += 1;
+		  }
 		  fprintf(out, "\n");
 
 	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
@@ -839,12 +913,15 @@ int target_design(ivl_design_t des)
       ivl_design_process(des, show_process, 0);
       fclose(out);
 
-      return 0;
+      return stub_errors;
 }
 
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.97  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.96  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *

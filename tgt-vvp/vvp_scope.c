@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.110 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.111 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -432,6 +432,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_SHIFTL:
@@ -442,7 +443,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_UFUNC:
 	  case IVL_LPM_PART_VP:
-	  case IVL_LPM_PART_PV: /* NOTE: This is onlt a partial driver. */
+	  case IVL_LPM_PART_PV: /* NOTE: This is only a partial driver. */
 	    if (ivl_lpm_q(lpm, 0) == nex) {
 		  sprintf(result, "L_%p", lpm);
 		  return result;
@@ -881,10 +882,6 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    ltype = "XOR";
 	    break;
 
-	  case IVL_LO_EEQ:
-	    ltype = "EEQ";
-	    break;
-
 	  case IVL_LO_PMOS:
 	    ltype = "PMOS";
 	    break;
@@ -1264,6 +1261,10 @@ static void draw_lpm_cmp(ivl_lpm_t net)
       width = ivl_lpm_width(net);
 
       switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_CMP_EEQ:
+	    type = "eeq";
+	    signed_string = "";
+	    break;
 	  case IVL_LPM_CMP_GE:
 	    type = "ge";
 	    break;
@@ -1381,9 +1382,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 }
 
 /*
- * Draw == and != gates. This is done as XNOR functors to compare each
- * pair of bits. The result is combined with a wide and, or a NAND if
- * this is a NE.
+ * XXXX OBSOLETE
  */
 static void draw_lpm_eq(ivl_lpm_t net)
 {
@@ -1683,6 +1682,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_ff(net);
 	    return;
 
+	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	    draw_lpm_cmp(net);
@@ -1824,6 +1824,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.111  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.110  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *

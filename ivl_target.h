@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.131 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.132 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -87,6 +87,10 @@ _BEGIN_DECL
  *    this includes just about every directional device that has a
  *    single output, including logic gates and nmos, pmos and cmos
  *    devices. There is also the occasional Icarus Verilog creation.
+ *    What is common about these devices is that they are
+ *    bitwise. That is, when fed a vector, they produce a vector
+ *    result where each bit of the output is made only from the same
+ *    bits in the vector inputs.
  *
  * ivl_nexus_t
  *    Structural links within an elaborated design are connected
@@ -214,8 +218,6 @@ typedef enum ivl_logic_e {
       IVL_LO_XNOR   = 18,
       IVL_LO_XOR    = 19,
 
-      IVL_LO_EEQ    = 20,
-
       IVL_LO_UDP    = 21
 } ivl_logic_t;
 
@@ -223,10 +225,12 @@ typedef enum ivl_logic_e {
 typedef enum ivl_lpm_type_e {
       IVL_LPM_ADD    =  0,
       IVL_LPM_CONCAT = 16,
+      IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
       IVL_LPM_CMP_NE = 11,
+      IVL_LPM_CMP_NEE= 19, //* Case NE (!==) */
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
       IVL_LPM_MOD    = 13,
@@ -753,6 +757,12 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * still correct. The output being written to the wider vector is
  * indeed the width of the part, even though it is written to a wider
  * gate. The target will need to handle this case specially.
+ *
+ * - Comparisons (IVL_LPM_CMP_GT/GE/EQ/NE/EEQ/NEE)
+ * These devices have two inputs, available by the ivl_lpm_data()
+ * function, and one output available by the ivl_lpm_q function. The
+ * output width is always 1, but the ivl_lpm_width() returns the width
+ * of the inputs. Both inputs must have the same width.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -1403,6 +1413,12 @@ extern DLLEXPORT int target_design(ivl_design_t des);
    is processed and available to the target. The target doesn't return
    from this function until it is finished with the design.
 
+   The return value of this function should normally be zero. If the
+   code generator detects errors, however, then the code generator
+   returns a positive number to indicate the approximate number of
+   errors detected (before it gave up.) Return values <0 are reserved
+   for system and infrastructure errors.
+
    This function is implemented in the loaded target, and not in the
    ivl core. This function is how the target module is invoked. */
 
@@ -1413,6 +1429,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.132  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.131  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

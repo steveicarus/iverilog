@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.79 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: emit.cc,v 1.80 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -361,13 +361,12 @@ void NetWhile::emit_proc_recurse(struct target_t*tgt) const
       proc_->emit_proc(tgt);
 }
 
-bool Design::emit(struct target_t*tgt) const
+int Design::emit(struct target_t*tgt) const
 {
-      bool rc = true;
+      int rc = 0;
 
-      rc = rc && tgt->start_design(this);
-      if (rc == false)
-	    return false;
+      if (tgt->start_design(this) == false)
+	    return -2;
 
 	// enumerate the scopes
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
@@ -376,27 +375,36 @@ bool Design::emit(struct target_t*tgt) const
 
 
 	// emit nodes
+      bool nodes_rc = true;
       if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
 	    do {
-		  rc = rc && cur->emit_node(tgt);
+		  nodes_rc = nodes_rc && cur->emit_node(tgt);
 		  cur = cur->node_next_;
 	    } while (cur != nodes_->node_next_);
       }
 
 
 	// emit task and function definitions
+      bool tasks_rc = true;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
-	    rc &= (*scope)->emit_defs(tgt);
+	    tasks_rc &= (*scope)->emit_defs(tgt);
 
 
 	// emit the processes
+      bool proc_rc = true;
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
-	    rc = rc && idx->emit(tgt);
+	    proc_rc &= idx->emit(tgt);
 
-      if (tgt->end_design(this) != 0)
-	    rc = false;
+      rc = tgt->end_design(this);
+
+      if (nodes_rc == false)
+	    return -1;
+      if (tasks_rc == false)
+	    return -2;
+      if (proc_rc == false)
+	  return -3;
 
       return rc;
 }
@@ -492,7 +500,7 @@ void NetEVariable::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_variable(this);
 }
 
-bool emit(const Design*des, const char*type)
+int emit(const Design*des, const char*type)
 {
       for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
 	    const struct target*tgt = target_table[idx];
@@ -503,12 +511,15 @@ bool emit(const Design*des, const char*type)
 
       cerr << "error: Code generator type " << type
 	   << " not found." << endl;
-      return false;
+      return -1;
 }
 
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.80  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.79  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.

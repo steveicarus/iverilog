@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.67 2004/12/29 23:55:43 steve Exp $"
+#ident "$Id: target.h,v 1.68 2005/01/22 01:06:55 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -154,7 +154,7 @@ struct expr_scan_t {
 /* The emit functions take a design and emit it to the output stream
    using the specified target. If the target is given by name, it is
    located in the target_table and used. */
-extern bool emit(const Design*des, const char*type);
+extern int emit(const Design*des, const char*type);
 
 /* This function takes a fully qualified verilog name (which may have,
    for example, dots in it) and produces a mangled version that can be
@@ -171,6 +171,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.68  2005/01/22 01:06:55  steve
+ *  Change case compare from logic to an LPM node.
+ *
  * Revision 1.67  2004/12/29 23:55:43  steve
  *  Unify elaboration of l-values for all proceedural assignments,
  *  including assing, cassign and force.
