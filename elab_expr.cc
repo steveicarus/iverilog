@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.72 2003/03/15 04:46:28 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.73 2003/03/25 03:00:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -779,10 +779,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  return tmp;
 	    }
 
-	// NOTE: This search pretty much assumes that text_ is a
-	// complete hierarchical name, since there is no mention of
-	// the current scope in the call to find_scope.
+	// Try full hierarchical scope name.
       if (NetScope*nsc = des->find_scope(path_)) {
+	    NetEScope*tmp = new NetEScope(nsc);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// Try relative scope name.
+      if (NetScope*nsc = des->find_scope(scope, path_)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
 	    return tmp;
@@ -938,6 +943,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.73  2003/03/25 03:00:04  steve
+ *  Scope names can be relative.
+ *
  * Revision 1.72  2003/03/15 04:46:28  steve
  *  Better organize the NetESFunc return type guesses.
  *
