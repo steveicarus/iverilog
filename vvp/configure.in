@@ -5,6 +5,11 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
 
+AC_CYGWIN
+AC_EXEEXT
+AC_MINGW32
+AC_SUBST(EXEEXT)
+
 AC_PROG_INSTALL
 
 AC_ARG_ENABLE(vvp-debug, vvp-debug -- interactive debugger for VVP runtime.,
