@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.40 1999/06/13 17:30:23 steve Exp $"
+#ident "$Id: parse.y,v 1.41 1999/06/15 02:50:02 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,10 +60,13 @@ extern void lex_end_table();
       list<Statement*>*statement_list;
 
       verinum* number;
+
+      verireal* realtime;
 };
 
 %token <text>   IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
+%token <realtime> REALTIME
 %token K_LE K_GE K_EQ K_NE K_CEQ K_CNE K_LS K_RS
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
@@ -80,7 +83,8 @@ extern void lex_end_table();
 %token K_small K_specify
 %token K_specparam K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
-%token K_trior K_vectored K_wait K_wand K_weak0 K_weak1 K_while K_wire
+%token K_trior K_trireg K_vectored K_wait K_wand K_weak0 K_weak1
+%token K_while K_wire
 %token K_wor K_xnor K_xor
 
 %token KK_attribute
@@ -186,6 +190,17 @@ case_items
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
+	;
+
+charge_strength
+	: '(' K_small ')'
+	| '(' K_medium ')'
+	| '(' K_large ')'
+	;
+
+charge_strength_opt
+	: charge_strength
+	|
 	;
 
 delay
@@ -507,15 +522,16 @@ expression_list
 
 expr_primary
 	: NUMBER
-		{ if ($1 == 0) {
-		        yyerror(@1, "XXXX No number value in primary?");
-			$$ = 0;
-		  } else {
-			PENumber*tmp = new PENumber($1);
-			tmp->set_file(@1.text);
-			tmp->set_lineno(@1.first_line);
-			$$ = tmp;
-		  }
+		{ assert($1);
+		  PENumber*tmp = new PENumber($1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| REALTIME
+		{ yyerror(@1, "Sorry, real constants not supported.");
+		  delete $1;
+		  $$ = 0;
 		}
 	| STRING
 		{ PEString*tmp = new PEString(*$1);
@@ -851,6 +867,10 @@ module_item
 			pform_set_net_range($3, $2);
 			delete $2;
 		  }
+		  delete $3;
+		}
+	| K_trireg charge_strength_opt range_opt delay_opt list_of_variables ';'
+		{ yyerror(@1, "Sorry, trireg nets not supported.");
 		  delete $3;
 		}
 	| port_type range_opt list_of_variables ';'

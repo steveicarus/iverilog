@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.11 1999/06/10 04:03:52 steve Exp $"
+#ident "$Id: PExpr.h,v 1.12 1999/06/15 02:50:02 steve Exp $"
 #endif
 
 # include  <string>
 # include  "netlist.h"
 # include  "verinum.h"
+# include  "verireal.h"
 # include  "LineInfo.h"
 
 class Design;
@@ -217,6 +218,9 @@ class PETernary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.12  1999/06/15 02:50:02  steve
+ *  Add lexical support for real numbers.
+ *
  * Revision 1.11  1999/06/10 04:03:52  steve
  *  Add support for the Ternary operator,
  *  Add support for repeat concatenation,

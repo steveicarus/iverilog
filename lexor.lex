@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.22 1999/06/14 03:15:14 steve Exp $"
+#ident "$Id: lexor.lex,v 1.23 1999/06/15 02:50:02 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -181,6 +181,17 @@ static verinum*make_unsized_hex(const char*txt);
       delete[]bits;
       return NUMBER; }
 
+[0-9][0-9_]*\.[0-9][0-9_]*([Ee][+-]?[0-9][0-9_]*)? {
+      yylval.realtime = new verireal(yytext);
+      return REALTIME; }
+
+[0-9][0-9_]*[Ee][+-]?[0-9][0-9_]* {
+      yylval.realtime = new verireal(yytext);
+      return REALTIME; }
+
+`celldefine[ \t]*\n { yylloc.first_line += 1; }
+`endcelldefine[ \t]*\n { yylloc.first_line += 1; }
+
 `timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>. { ; }
 <PPTIMESCALE>\n {
@@ -317,6 +328,7 @@ static const struct { const char*name; int code; } key_table[] = {
       { "tri1", K_tri1 },
       { "triand", K_triand },
       { "trior", K_trior },
+      { "trireg", K_trireg },
       { "vectored", K_vectored },
       { "wait", K_wait },
       { "wand", K_wand },
