@@ -121,7 +121,7 @@ devices are created from Verilog memories if the properties are
 right. The behavioral description that the -Fsynth functor matches to
 get a synchronous RAM looks very similar to that for a DFF:
 
-	memory [15:0] M;
+	reg [15:0] M;
 	always @(posedge clk) if (<we>) M[<addr>] = <expr>;
 
 Note that in this case the l-value of the assignment is an addressed
@@ -245,6 +245,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.12  2000/07/25 22:49:32  steve
+  memory is not a data type in verilog.
+
  Revision 1.11  2000/04/23 23:03:13  steve
   automatically generate macro interface code.
 
