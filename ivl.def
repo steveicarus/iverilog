@@ -22,7 +22,7 @@ ivl_event_pos
 ivl_expr_type
 ivl_expr_bits
 ivl_expr_def
-ivl_exor_lsi
+ivl_expr_lsi
 ivl_expr_memory
 ivl_expr_name
 ivl_expr_opcode
