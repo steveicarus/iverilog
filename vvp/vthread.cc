@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.80 2002/08/18 01:05:50 steve Exp $"
+#ident "$Id: vthread.cc,v 1.81 2002/08/22 03:38:40 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -492,6 +492,28 @@ bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       schedule_memory(cp->mem, thr->index[3], bit_val, cp->bit_idx[0]);
+      return true;
+}
+
+bool of_BLEND(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if (lb != rb)
+		  thr_put_bit(thr, idx1, 2);
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
       return true;
 }
 
@@ -2221,6 +2243,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.81  2002/08/22 03:38:40  steve
+ *  Fix behavioral eval of x?a:b expressions.
+ *
  * Revision 1.80  2002/08/18 01:05:50  steve
  *  x in index values leads to 0.
  *

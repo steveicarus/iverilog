@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.137 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: compile.cc,v 1.138 2002/08/22 03:38:40 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -88,6 +88,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/d", of_ASSIGN_D, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
+      { "%blend",  of_BLEND,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
       { "%cassign",of_CASSIGN,2,  {OA_FUNC_PTR, OA_FUNC_PTR2,OA_NONE} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1433,6 +1434,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.138  2002/08/22 03:38:40  steve
+ *  Fix behavioral eval of x?a:b expressions.
+ *
  * Revision 1.137  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *

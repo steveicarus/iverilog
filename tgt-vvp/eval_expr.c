@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.69 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.70 2002/08/22 03:38:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1241,11 +1241,12 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res, tmp;
 
-      unsigned lab_false, lab_out;
+      unsigned lab_true, lab_false, lab_out;
       ivl_expr_t cond = ivl_expr_oper1(exp);
       ivl_expr_t true_ex = ivl_expr_oper2(exp);
       ivl_expr_t false_ex = ivl_expr_oper3(exp);
 
+      lab_true  = local_count++;
       lab_false = local_count++;
       lab_out = local_count++;
 
@@ -1261,21 +1262,39 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
-      fprintf(vvp_out, "    %%jmp/0xz  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
+	      thread_count, lab_true, tmp.base);
+      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
 	      thread_count, lab_false, tmp.base);
+
+	/* Ambiguous case. Evaluate both true and false expressions,
+	   and use %blend to merge them. */
+
+      tmp = draw_eval_expr_wid(true_ex, wid);
+      fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
+      clr_vector(tmp);
+
+      tmp = draw_eval_expr_wid(false_ex, wid);
+      fprintf(vvp_out, "    %%blend  %u, %u, %u;\n", res.base, tmp.base, wid);
+      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
+
+	/* This is the true case. Just evaluate the true expression. */
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
 
       tmp = draw_eval_expr_wid(true_ex, wid);
       fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
       fprintf(vvp_out, "    %%jmp  T_%d.%d;\n", thread_count, lab_out);
       clr_vector(tmp);
 
+
+	/* This is the false case. Just evaluate the false expression. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
 
       tmp = draw_eval_expr_wid(false_ex, wid);
       fprintf(vvp_out, "    %%mov  %u, %u, %u;\n", res.base, tmp.base, wid);
       clr_vector(tmp);
 
-
+	/* This is the out label. */
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
 
       return res;
@@ -1726,6 +1745,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.70  2002/08/22 03:38:40  steve
+ *  Fix behavioral eval of x?a:b expressions.
+ *
  * Revision 1.69  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

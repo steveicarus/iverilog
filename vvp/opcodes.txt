@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.36 2002/05/31 20:04:22 steve Exp $
+ *  $Id: opcodes.txt,v 1.37 2002/08/22 03:38:40 steve Exp $
  */
 
 
@@ -81,6 +81,20 @@ index[0] index register. This supports indexed assignment.
 The <bit> is the address of the thread register that contains the bit
 value to assign.
 
+
+* %blend <bit-l>, <bit-r>, <wid>
+
+This instruction blends the bits of a vector into the destination in a
+manner like the expression (x ? <a> : <b>). The truth table is:
+
+	1  1 --> 1
+	0  0 --> 0
+	z  z --> z
+	x  x --> x
+	.... --> x
+
+In other words, if the bits are identical, then take that
+value. Otherwise, the value is x.
 
 * %breakpoint
 
