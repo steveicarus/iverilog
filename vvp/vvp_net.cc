@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.12 2005/02/03 04:55:13 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.13 2005/02/04 05:13:02 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -328,6 +328,146 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 
       val = res;
       return true;
+}
+
+vvp_vector2_t::vvp_vector2_t()
+{
+      vec_ = 0;
+      wid_ = 0;
+}
+
+vvp_vector2_t::vvp_vector2_t(unsigned long v, unsigned wid)
+{
+      wid_ = wid;
+      const unsigned bits_per_word = 8 * sizeof(vec_[0]);
+      const unsigned words = (wid_ + bits_per_word-1) / bits_per_word;
+
+      vec_ = new unsigned long[words];
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+	    vec_[idx] = 0;
+}
+
+vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
+{
+      wid_ = that.size();
+      const unsigned bits_per_word = 8 * sizeof(vec_[0]);
+      const unsigned words = (that.size() + bits_per_word-1) / bits_per_word;
+
+      if (words == 0) {
+	    vec_ = 0;
+	    wid_ = 0;
+	    return;
+      }
+
+      vec_ = new unsigned long[words];
+      for (unsigned idx = 0 ;  idx < words ;  idx += 1)
+	    vec_[idx] = 0;
+
+      for (unsigned idx = 0 ;  idx < that.size() ;  idx += 1) {
+	    unsigned addr = idx / bits_per_word;
+	    unsigned shift = idx % bits_per_word;
+
+	    switch (that.value(idx)) {
+		case BIT4_0:
+		  break;
+		case BIT4_1:
+		  vec_[addr] |= 1 << shift;
+		  break;
+		default:
+		  delete[]vec_;
+		  vec_ = 0;
+		  wid_ = 0;
+		  return;
+	    }
+      }
+}
+
+vvp_vector2_t::~vvp_vector2_t()
+{
+      if (vec_) delete[]vec_;
+}
+
+unsigned vvp_vector2_t::size() const
+{
+      return wid_;
+}
+
+int vvp_vector2_t::value(unsigned idx) const
+{
+      if (idx >= wid_)
+	    return 0;
+
+      const unsigned bits_per_word = 8 * sizeof(vec_[0]);
+      unsigned addr = idx/bits_per_word;
+      unsigned mask = idx%bits_per_word;
+
+      if (vec_[addr] & (1UL<<mask))
+	    return 1;
+      else
+	    return 0;
+}
+
+bool vvp_vector2_t::is_NaN() const
+{
+      return wid_ == 0;
+}
+
+/*
+ * Multiplication of two vector2 vectors returns a product as wide as
+ * the sum of the widths of the input vectors.
+ */
+vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
+{
+      const unsigned bits_per_word = 8 * sizeof(a.vec_[0]);
+      vvp_vector2_t r (0, a.size() + b.size());
+
+      assert(sizeof(unsigned long long) >= 2*sizeof(a.vec_[0]));
+      unsigned long long word_mask = (1ULL << bits_per_word) - 1ULL;
+
+      unsigned awords = (a.wid_ + bits_per_word - 1) / bits_per_word;
+      unsigned bwords = (b.wid_ + bits_per_word - 1) / bits_per_word;
+      unsigned rwords = (r.wid_ + bits_per_word - 1) / bits_per_word;
+
+      for (unsigned bdx = 0 ;  bdx < bwords ;  bdx += 1) {
+	    unsigned long long tmpb = b.vec_[bdx];
+	    if (tmpb == 0)
+		  continue;
+
+	    for (unsigned adx = 0 ;  adx < awords ;  adx += 1) {
+		  unsigned long long tmpa = a.vec_[adx];
+		  unsigned long long tmpr = tmpb * tmpa;
+
+		  for (unsigned sdx = 0
+			     ; (adx+bdx+sdx) < rwords && tmpr > 0
+			     ;  sdx += 1) {
+			unsigned long long sum = r.vec_[adx+bdx+sdx];
+			sum += tmpr & word_mask;
+			r.vec_[adx+bdx+sdx] = sum & word_mask;
+			sum  >>= bits_per_word;
+			tmpr >>= bits_per_word;
+			tmpr += sum;
+		  }
+	    }
+      }
+
+
+      return r;
+}
+
+vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&that, unsigned wid)
+{
+      vvp_vector4_t res (wid);
+
+      for (unsigned idx = 0 ;  idx < res.size() ;  idx += 1) {
+	    vvp_bit4_t bit = BIT4_0;
+
+	    if (that.value(idx))
+		  bit = BIT4_1;
+
+	    res.set_bit(idx, bit);
+      }
+
+      return res;
 }
 
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
@@ -892,6 +1032,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.13  2005/02/04 05:13:02  steve
+ *  Add wide .arith/mult, and vvp_vector2_t vectors.
+ *
  * Revision 1.12  2005/02/03 04:55:13  steve
  *  Add support for reduction logic gates.
  *

@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.12 2005/02/03 04:55:13 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.13 2005/02/04 05:13:02 steve Exp $"
 
 # include  <assert.h>
 
@@ -107,6 +107,37 @@ extern vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
  * return value becomes false to indicate an error.
  */
 extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
+
+/* vvp_vector2_t
+ */
+class vvp_vector2_t {
+
+      friend vvp_vector2_t operator + (const vvp_vector2_t&,
+				       const vvp_vector2_t&);
+      friend vvp_vector2_t operator * (const vvp_vector2_t&,
+				       const vvp_vector2_t&);
+
+    public:
+      vvp_vector2_t();
+      vvp_vector2_t(const vvp_vector2_t&);
+      explicit vvp_vector2_t(const vvp_vector4_t&that);
+      vvp_vector2_t(unsigned long val, unsigned wid);
+      ~vvp_vector2_t();
+
+      vvp_vector2_t operator = (const vvp_vector2_t&);
+
+      bool is_NaN() const;
+      unsigned size() const;
+      int value(unsigned idx) const;
+
+    private:
+      unsigned long*vec_;
+      unsigned wid_;
+};
+
+extern vvp_vector2_t operator + (const vvp_vector2_t&, const vvp_vector2_t&);
+extern vvp_vector2_t operator * (const vvp_vector2_t&, const vvp_vector2_t&);
+extern vvp_vector4_t vector2_to_vector4(const vvp_vector2_t&, unsigned wid);
 
 /*
  * This class represents a scaler value with strength. These are
@@ -511,6 +542,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.13  2005/02/04 05:13:02  steve
+ *  Add wide .arith/mult, and vvp_vector2_t vectors.
+ *
  * Revision 1.12  2005/02/03 04:55:13  steve
  *  Add support for reduction logic gates.
  *

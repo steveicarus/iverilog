@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.37 2005/01/30 05:06:49 steve Exp $"
+#ident "$Id: arith.cc,v 1.38 2005/02/04 05:13:02 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -180,9 +180,30 @@ vvp_arith_mult::~vvp_arith_mult()
 {
 }
 
+void vvp_arith_mult::wide_(vvp_net_ptr_t ptr)
+{
+      vvp_vector2_t a2 (op_a_);
+      vvp_vector2_t b2 (op_b_);
+
+      if (a2.is_NaN() || b2.is_NaN()) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      vvp_vector2_t result = a2 * b2;
+
+      vvp_vector4_t res4 = vector2_to_vector4(result, wid_);
+      vvp_send_vec4(ptr.ptr()->out, res4);
+}
+
 void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       dispatch_operand_(ptr, bit);
+
+      if (wid_ > 8 * sizeof(unsigned long)) {
+	    wide_(ptr);
+	    return ;
+      }
 
       unsigned long a;
       if (! vector4_to_value(op_a_, a)) {
@@ -200,7 +221,7 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       assert(wid_ <= 8*sizeof(val));
 
       vvp_vector4_t vval (wid_);
-      for (int idx = 0 ;  idx < wid_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    if (val & 1)
 		  vval.set_bit(idx, BIT4_1);
 	    else
@@ -652,6 +673,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.38  2005/02/04 05:13:02  steve
+ *  Add wide .arith/mult, and vvp_vector2_t vectors.
+ *
  * Revision 1.37  2005/01/30 05:06:49  steve
  *  Get .arith/sub working.
  *

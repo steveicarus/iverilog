@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.24 2005/01/28 05:34:25 steve Exp $"
+#ident "$Id: arith.h,v 1.25 2005/02/04 05:13:02 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -151,6 +151,8 @@ class vvp_arith_mult  : public vvp_arith_ {
       explicit vvp_arith_mult(unsigned wid);
       ~vvp_arith_mult();
       void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
+    private:
+      void wide_(vvp_net_ptr_t ptr);
 };
 
 class vvp_arith_sub  : public vvp_arith_ {
@@ -189,6 +191,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.25  2005/02/04 05:13:02  steve
+ *  Add wide .arith/mult, and vvp_vector2_t vectors.
+ *
  * Revision 1.24  2005/01/28 05:34:25  steve
  *  Add vector4 implementation of .arith/mult.
  *
