@@ -364,6 +364,11 @@ IEEE1364 standard, but have well defined meaning, and also sometimes
 gives nonstandard (but extended) meanings to some features of the
 language that are defined.
 
+    $is_signed(<expr>)
+	This system function returns 1 if the expression contained is
+	signed, or 0 otherwise. This is mostly of use for compiler
+	regression tests.
+
     $sizeof(<expr>)
     $bits(<expr>)
 	The $bits system function returns the size in bits of the
