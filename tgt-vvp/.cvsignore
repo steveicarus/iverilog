@@ -1,0 +1,6 @@
+Makefile
+configure
+config.status
+config.log
+dep
+vvp.tgt

@@ -1,0 +1,82 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc.,
+#    59 Temple Place - Suite 330
+#    Boston, MA 02111-1307, USA
+#
+#ident "$Id: Makefile.in,v 1.1 2001/03/19 01:20:46 steve Exp $"
+#
+#
+SHELL = /bin/sh
+
+VERSION = 0.0
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = $(prefix)/include
+
+CC = @CC@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
+CXXFLAGS = @CXXFLAGS@
+LDFLAGS = @LDFLAGS@
+
+all: vvp.tgt
+
+%.o: %.c
+	@[ -d dep ] || mkdir dep
+	$(CC) -Wall $(CPPFLAGS) -I$(srcdir)/.. -MD -c $< -o $*.o
+	mv $*.d dep
+
+O = vvp.o vvp_process.o
+
+ifeq (@CYGWIN@,yes)
+  TGTLDFLAGS=-L.. -livl
+  TGTDEPLIBS=../libivl.a
+else
+  TGTLDFLAGS=
+  TGTDEPLIBS=
+endif
+
+
+vvp.tgt: $O $(TGTDEPLIBS)
+	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+
+clean:
+	rm -f *.o dep/*.d
+
+install: all installdirs $(libdir)/ivl/vvp.tgt
+
+$(libdir)/ivl/vvp.tgt: ./vvp.tgt
+	$(INSTALL_DATA) ./vvp.tgt $(libdir)/ivl/vvp.tgt
+
+
+installdirs: ../mkinstalldirs
+	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+
+uninstall:
+	rm -f $(libdir)/ivl/vvp.tgt
+
+
+-include $(patsubst %.o, dep/%.d, $O)

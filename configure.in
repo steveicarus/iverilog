@@ -148,6 +148,6 @@ AC_SUBST(shared)
 AC_MSG_RESULT($shared)
 
 
-AC_CONFIG_SUBDIRS(vpip vvp)
+AC_CONFIG_SUBDIRS(vpip vvp tgt-vvp)
 
 AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
