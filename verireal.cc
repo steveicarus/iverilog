@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.14 2003/03/07 06:10:13 steve Exp $"
+#ident "$Id: verireal.cc,v 1.15 2004/06/04 23:33:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -117,6 +117,13 @@ verireal operator% (const verireal&l, const verinum&r)
       return res;
 }
 
+verireal operator- (const verireal&l)
+{
+      verireal res;
+      res.value_ = - l.value_;
+      return res;
+}
+
 ostream& operator<< (ostream&out, const verireal&v)
 {
       out << v.value_;
@@ -125,6 +132,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.15  2004/06/04 23:33:51  steve
+ *  Add unary minus as operator supported by verireal.
+ *
  * Revision 1.14  2003/03/07 06:10:13  steve
  *  Use strtod to convert text to doubles.
  *

@@ -1,7 +1,7 @@
 #ifndef __verireal_H
 #define __verireal_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.9 2003/02/07 06:13:44 steve Exp $"
+#ident "$Id: verireal.h,v 1.10 2004/06/04 23:33:51 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -46,6 +46,9 @@ class verireal {
       friend verireal operator% (const verireal&, const verireal&);
       friend verireal operator% (const verireal&, const verinum&);
 
+	// Unary minus.
+      friend verireal operator- (const verireal&);
+
     public:
       explicit verireal();
       explicit verireal(const char*text);
@@ -71,9 +74,13 @@ extern verireal operator/ (const verireal&, const verireal&);
 extern verireal operator/ (const verireal&, const verinum&);
 extern verireal operator% (const verireal&, const verireal&);
 extern verireal operator% (const verireal&, const verinum&);
+extern verireal operator- (const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.10  2004/06/04 23:33:51  steve
+ *  Add unary minus as operator supported by verireal.
+ *
  * Revision 1.9  2003/02/07 06:13:44  steve
  *  Store real values as native double.
  *
