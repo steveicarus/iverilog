@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.148 2005/01/29 18:46:18 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.149 2005/01/30 05:20:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1258,10 +1258,13 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 				Link::strength_t drive1) const
 {
       svector<NetNet*>nets (parms_.count());
-      unsigned pins = 0;
+      unsigned vector_width = 0;
       unsigned errors = 0;
       unsigned repeat = 1;
 
+	/* The repeat expression must evaluate to a compile-time
+	   constant. This is used to generate the width of the
+	   concatenation. */
       if (repeat_) {
 	    NetExpr*etmp = elab_and_eval(des, scope, repeat_);
 	    assert(etmp);
@@ -1284,6 +1287,11 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 		  des->errors += 1;
 		  return 0;
 	    }
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_line() <<": debug: PEConcat concat repeat="
+		 << repeat << "." << endl;
       }
 
 	/* The operands of the concatenation must contain all
@@ -1321,7 +1329,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    if (nets[idx] == 0)
 		  errors += 1;
 	    else
-		  pins += nets[idx]->pin_count();
+		  vector_width += nets[idx]->vector_width();
       }
 
       must_be_self_determined_flag = save_flag;
@@ -1336,6 +1344,18 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (debug_elaborate) {
+	    cerr << get_line() <<": debug: PEConcat concat collected "
+		 << "width=" << vector_width << ", repeat=" << repeat
+		 << " of " << nets.count() << " expressions." << endl;
+      }
+
+      NetConcat*dev = new NetConcat(scope, scope->local_symbol(),
+				    vector_width*repeat,
+				    nets.count()*repeat);
+      dev->set_line(*this);
+      des->add_node(dev);
+
 	/* Make the temporary signal that connects to all the
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
@@ -1345,17 +1365,18 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	   connect loop as many times as necessary. */
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, pins * repeat);
+			       NetNet::IMPLICIT, vector_width * repeat);
 
-      pins = 0;
-      for (unsigned rpt = 0 ;  rpt < repeat ;  rpt += 1)
-	    for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
-		  NetNet*cur = nets[idx-1];
-		  for (unsigned pin = 0;  pin < cur->pin_count();  pin += 1) {
-			connect(osig->pin(pins), cur->pin(pin));
-			pins += 1;
-		  }
+      connect(dev->pin(0), osig->pin(0));
+
+      unsigned cur_pin = 1;
+      for (unsigned rpt = 0; rpt < repeat ;  rpt += 1) {
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  NetNet*cur = nets[nets.count()-idx-1];
+		  connect(dev->pin(cur_pin++), cur->pin(0));
 	    }
+      }
+
 
       osig->local_flag(true);
       return osig;
@@ -2289,6 +2310,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	// value. This can be reduced to a no-op on a precalculated
 	// result.
       if (op_ == '-') do {
+	      // TODO: Should replace this with a call to
+	      // elab_and_eval. Possibly blend this with the rest of
+	      // the elaboration as well.
 	    verinum*val = expr_->eval_const(des, scope);
 	    if (val == 0)
 		  break;
@@ -2303,15 +2327,23 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 	      /* Take the 2s complement by taking the 1s complement
 		 and adding 1. */
-	    verinum tmp (v_not(*val));
+	    verinum tmp (v_not(*val), width);
 	    verinum one (1UL, width);
-	    tmp = tmp + one;
-	    NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
-	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-		  connect(sig->pin(idx), con->pin(idx));
+	    tmp = verinum(tmp + one, width);
+	    tmp.has_sign(val->has_sign());
 
+	    NetConst*con = new NetConst(scope, scope->local_symbol(), tmp);
+	    connect(sig->pin(0), con->pin(0));
+
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Replace expression "
+		       << *this << " with constant " << tmp << "."<<endl;
+	    }
+
+	    delete val;
 	    des->add_node(con);
 	    return sig;
+
       } while (0);
 
       NetNet* sub_sig = expr_->elaborate_net(des, scope, owidth, 0, 0, 0);
@@ -2327,18 +2359,18 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       switch (op_) {
 	  case '~': // Bitwise NOT
 	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
-			     sub_sig->pin_count());
+			     sub_sig->vector_width());
 	    sig->local_flag(true);
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1) {
-		  gate = new NetLogic(scope, scope->local_symbol(),
-				      2, NetLogic::NOT, 1);
-		  connect(gate->pin(1), sub_sig->pin(idx));
-		  connect(gate->pin(0), sig->pin(idx));
-		  des->add_node(gate);
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-	    }
+	    gate = new NetLogic(scope, scope->local_symbol(),
+				2, NetLogic::NOT, sub_sig->vector_width());
+	    gate->set_line(*this);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+
+	    connect(gate->pin(1), sub_sig->pin(0));
+	    connect(gate->pin(0), sig->pin(0));
 	    break;
 
 	  case 'N': // Reduction NOR
@@ -2360,10 +2392,10 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 			     NetNet::WIRE, owidth);
 	    sig->local_flag(true);
 
-	    if (sub_sig->pin_count() < owidth)
+	    if (sub_sig->vector_width() < owidth)
 		  sub_sig = pad_to_width(des, sub_sig, owidth);
 
-	    switch (sub_sig->pin_count()) {
+	    switch (sub_sig->vector_width()) {
 		case 0:
 		  assert(0);
 		  break;
@@ -2379,31 +2411,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  gate->decay_time(decay);
 		  break;
 
-		case 2:
-		  gate = new NetLogic(scope, scope->local_symbol(),
-				      2, NetLogic::BUF, 1);
-		  connect(gate->pin(0), sig->pin(0));
-		  connect(gate->pin(1), sub_sig->pin(0));
-		  des->add_node(gate);
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-
-		  gate = new NetLogic(scope, scope->local_symbol(),
-				      3, NetLogic::XOR, 1);
-		  connect(gate->pin(0), sig->pin(1));
-		  connect(gate->pin(1), sub_sig->pin(0));
-		  connect(gate->pin(2), sub_sig->pin(1));
-		  des->add_node(gate);
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  break;
-
 		default:
 		  NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(),
-						sig->pin_count());
-		  sub->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
+						sig->vector_width());
+		  sub->attribute(perm_string::literal("LPM_Direction"),
+				 verinum("SUB"));
 
 		  des->add_node(sub);
 
@@ -2418,7 +2430,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 		  NetNet*tmp_sig = new NetNet(scope, scope->local_symbol(),
 					      NetNet::WIRE,
-					      sub_sig->pin_count());
+					      sub_sig->vector_width());
 		  tmp_sig->local_flag(true);
 
 		  connect(tmp_sig->pin(0), sub->pin_DataA());
@@ -2432,6 +2444,8 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    sig = 0;
       }
       if (reduction) {
+	    cerr << get_line()
+		 << ": XXXX: PEUnary::elab_net reductions not complete." << endl;
 	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
 	    sig->local_flag(true);
 	    gate = new NetLogic(scope, scope->local_symbol(),
@@ -2451,6 +2465,10 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.149  2005/01/30 05:20:38  steve
+ *  Elaborate unary subtract and NOT in netlist
+ *  contexts, and concatenation too.
+ *
  * Revision 1.148  2005/01/29 18:46:18  steve
  *  Netlist boolean expressions generate gate vectors.
  *
