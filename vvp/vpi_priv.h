@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.5 2001/03/21 05:13:03 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.6 2001/03/23 02:40:23 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -150,7 +150,7 @@ vpiHandle vpip_make_string_const(char*text);
  * contained functions before compilation commences. It is called only
  * once. 
  */
-extern void vpip_load_modules(unsigned cnt, const char*tab[], const char*path);
+extern void vpip_load_module(const char*name, const char*path);
 
 /*
  * The vpip_build_vpi_call function creates a __vpiSysTaskCall object
@@ -180,6 +180,9 @@ extern void vpip_execute_vpi_call(vpiHandle obj);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.6  2001/03/23 02:40:23  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.5  2001/03/21 05:13:03  steve
  *  Allow var objects as vpiHandle arguments to %vpi_call.
  *

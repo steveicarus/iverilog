@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.6 2001/03/22 22:38:14 steve Exp $"
+#ident "$Id: main.cc,v 1.7 2001/03/23 02:40:22 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -73,7 +73,10 @@ int main(int argc, char*argv[])
       vpi_mcd_init();
 
       compile_init();
-      vpip_load_modules(module_cnt, module_tab, module_path);
+#if 0
+      for (unsigned idx = 0 ;  idx < module_cnt ;  idx += 1)
+	    vpip_load_module(module_tab[idx], module_path);
+#endif
       compile_design(design_path);
       compile_cleanup();
 
@@ -96,6 +99,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.7  2001/03/23 02:40:22  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.6  2001/03/22 22:38:14  steve
  *  Detect undefined system tasks at compile time.
  *

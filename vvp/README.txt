@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.6 2001/03/21 05:12:15 steve Exp $
+ *  $Id: README.txt,v 1.7 2001/03/23 02:40:22 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -32,6 +32,20 @@ Statements may span multiple lines, as long as there is no text (other
 then the first character of a label) in the first column of hte
 continuation line.
 
+HEADER SYNTAX
+
+Before any other non-commentary code starts, the source may contain
+some header statements. These are used for passing parameters or
+global details from the compiler to the vvp run-time. In all cases,
+the header statement starts with a left-justified keyword, and ends
+with a string.
+
+* :module "name" ;
+
+This header statement names a vpi module that vvp should load before
+the rest of the program is compiled. The compiler looks in the
+standard VPI_MODULE_PATH for files named "name.vpi", and tries to
+dynamic load them.
 
 LABELS AND SYMBOLS
 

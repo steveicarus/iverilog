@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.5 2001/03/20 02:48:40 steve Exp $"
+#ident "$Id: lexor.lex,v 1.6 2001/03/23 02:40:22 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -29,6 +29,10 @@
 %}
 
 %%
+
+  /* These are some special header keywords. */
+^":vpi_module" { return K_vpi_module; }
+
 
   /* A label is any non-blank text that appears left justified. */
 ^[.$_a-zA-Z][.$_a-zA-Z0-9]* {
@@ -99,6 +103,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.6  2001/03/23 02:40:22  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.5  2001/03/20 02:48:40  steve
  *  Copyright notices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.8 2001/03/22 22:38:14 steve Exp $"
+#ident "$Id: compile.h,v 1.9 2001/03/23 02:40:22 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -44,6 +44,9 @@ extern void compile_cleanup(void);
  * is non-zero, then simulation is not recommended.
  */
 extern unsigned compile_errors;
+
+extern const char* module_path;
+extern void compile_load_vpi_module(char*name);
 
 /*
  * This function is called by the parser to compile a functor
@@ -117,6 +120,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.9  2001/03/23 02:40:22  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.8  2001/03/22 22:38:14  steve
  *  Detect undefined system tasks at compile time.
  *

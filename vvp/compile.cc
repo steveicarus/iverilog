@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.11 2001/03/22 22:38:13 steve Exp $"
+#ident "$Id: compile.cc,v 1.12 2001/03/23 02:40:22 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -150,6 +150,12 @@ void compile_init(void)
       opcode_count = 0;
       while (opcode_table[opcode_count].mnemonic)
 	    opcode_count += 1;
+}
+
+void compile_load_vpi_module(char*name)
+{
+      vpip_load_module(name, module_path);
+      free(name);
 }
 
 /*
@@ -518,6 +524,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.12  2001/03/23 02:40:22  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.11  2001/03/22 22:38:13  steve
  *  Detect undefined system tasks at compile time.
  *

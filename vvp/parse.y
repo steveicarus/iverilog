@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.10 2001/03/21 05:13:03 steve Exp $"
+#ident "$Id: parse.y,v 1.11 2001/03/23 02:40:22 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -50,6 +50,7 @@ extern FILE*yyin;
 
 
 %token K_FUNCTOR K_SCOPE K_THREAD K_VAR K_vpi_call
+%token K_vpi_module
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -66,6 +67,20 @@ extern FILE*yyin;
 %type <vpi>  argument
 
 %%
+
+source_file : header_lines_opt program ;
+
+header_lines_opt : header_lines | ;
+
+header_lines
+	: header_line
+	| header_lines header_line
+	;
+
+header_line
+	: K_vpi_module T_STRING ';'
+		{ compile_load_vpi_module($2); }
+	;
 
   /* A program is simply a list of statements. No other structure. */
 program
@@ -274,6 +289,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.11  2001/03/23 02:40:22  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.10  2001/03/21 05:13:03  steve
  *  Allow var objects as vpiHandle arguments to %vpi_call.
  *

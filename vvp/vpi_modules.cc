@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.2 2001/03/22 05:39:34 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.3 2001/03/23 02:40:22 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -27,35 +27,36 @@
 
 typedef void (*vlog_startup_routines_t)(void);
 
-void vpip_load_modules(unsigned cnt, const char*mod[], const char*path)
+void vpip_load_module(const char*name, const char*path)
 {
-      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-	    char buf[4096];
-	    sprintf(buf, "%s/%s.vpi", path, mod[idx]);
-	      //printf("Load %s...\n", buf);
+      char buf[4096];
+      sprintf(buf, "%s/%s.vpi", path, name);
+	//printf("Load %s...\n", buf);
 
-	    ivl_dll_t dll = ivl_dlopen(buf);
-	    if (dll == 0) {
-		  fprintf(stderr, "%s: %s\n", mod[idx], dlerror());
-		  continue;
-	    }
-
-	    void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
-	    if (table == 0) {
-		  fprintf(stderr, "%s: no vlog_startup_routines\n", mod[idx]);
-		  ivl_dlclose(dll);
-		  continue;
-	    }
-
-	    vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;
-	    for (unsigned tmp = 0 ;  routines[tmp] ;  tmp += 1)
-		  (routines[tmp])();
-
+      ivl_dll_t dll = ivl_dlopen(buf);
+      if (dll == 0) {
+	    fprintf(stderr, "%s: %s\n", name, dlerror());
+	    return;
       }
+
+      void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
+      if (table == 0) {
+	    fprintf(stderr, "%s: no vlog_startup_routines\n", name);
+	    ivl_dlclose(dll);
+	    return;
+      }
+
+      vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;
+      for (unsigned tmp = 0 ;  routines[tmp] ;  tmp += 1)
+	    (routines[tmp])();
+
 }
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.3  2001/03/23 02:40:22  steve
+ *  Add the :module header statement.
+ *
  * Revision 1.2  2001/03/22 05:39:34  steve
  *  Test print that interferes with output.
  *
