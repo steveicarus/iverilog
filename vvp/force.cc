@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: force.cc,v 1.1 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: force.cc,v 1.2 2001/11/01 04:42:40 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -194,7 +194,12 @@ bool var_functor_s::deassign(vvp_ipoint_t itgt)
       return false;
 }
 
-
+/*
+ * The %cassign instruction causes a variable functor (the target) the
+ * receive a behavioral continuous assignment from the functor on the
+ * right (the source expression). If the source functor address is 0,
+ * then the port part is a constant value to write into the target.
+ */
 bool of_CASSIGN(vthread_t thr, vvp_code_t cp)
 {
       vvp_ipoint_t itgt = cp->iptr;
@@ -244,6 +249,9 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.2  2001/11/01 04:42:40  steve
+ *  Handle procedural constant functor pointers.
+ *
  * Revision 1.1  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

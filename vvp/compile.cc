@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.111 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: compile.cc,v 1.112 2001/11/01 04:42:39 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1250,9 +1250,27 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  functor_ref_lookup(&code->iptr2, 
-				     opa->argv[idx].symb.text,
-				     opa->argv[idx].symb.idx);
+		  if (strcmp(opa->argv[idx].symb.text, "C<0>") == 0) {
+			code->iptr2 = ipoint_make(0, 0);
+			free(opa->argv[idx].symb.text);
+
+		  } else if (strcmp(opa->argv[idx].symb.text, "C<1>") == 0) {
+			code->iptr2 = ipoint_make(0, 1);
+			free(opa->argv[idx].symb.text);
+
+		  } else if (strcmp(opa->argv[idx].symb.text, "C<x>") == 0) {
+			code->iptr2 = ipoint_make(0, 2);
+			free(opa->argv[idx].symb.text);
+
+		  } else if (strcmp(opa->argv[idx].symb.text, "C<z>") == 0) {
+			code->iptr2 = ipoint_make(0, 3);
+			free(opa->argv[idx].symb.text);
+
+		  } else {
+			functor_ref_lookup(&code->iptr2, 
+					   opa->argv[idx].symb.text,
+					   opa->argv[idx].symb.idx);
+		  }
 		  break;
 
 		case OA_NUMBER:
@@ -1464,6 +1482,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.112  2001/11/01 04:42:39  steve
+ *  Handle procedural constant functor pointers.
+ *
  * Revision 1.111  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *
