@@ -1,0 +1,55 @@
+
+WHAT IS XNF
+
+Xilinx Netlist Format. This is somewhat specific to the Xilinx tool
+chain, but that is sufficiently ubiquitous that it is worth it. This
+format can be fed to place and route tools and simulators. since third
+party simulators accept XNF, the format may be useful even independent
+of Xilinx parts.
+
+The xnfio function is highly recommended as it optimizes use of the IO
+blocks. Without this function, the I/O blocks will probably remain
+unused.
+
+XNFIO FUNCTION
+
+The "xnfio" function transforms the netlist where the IOBs are
+concerned. The signals with PAD attributes are checked, and
+surrounding circuitry generated to conform to the logic available in
+the IOB.
+
+If the pad is an OPAD, the function will look for an existing buf or
+not gate connected to the PAD signal. If the gate is appropriately
+connected, the buf or not gate will be turned into an OBUF. This pulls
+the buf or inverter into the IOB, freeing a CLB and providing the
+required pin circuitry.
+
+If the pad is an IPAD, the function will look for a buf, and convert
+that to an IBUF. Since Xilinx IOBs cannot invert the output from an
+IBUF, NOT gates cannot be absorbed as in the OPAD case.
+
+
+/*
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+
+ $Log: xnf.txt,v $
+ Revision 1.1  1999/05/01 02:57:11  steve
+  XNF target documentation.
+
