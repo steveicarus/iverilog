@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.1 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.2 2000/03/16 21:45:07 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -29,6 +29,7 @@ vvm_nexus::vvm_nexus()
       recvrs_ = 0;
       ival_ = 0;
       nival_ = 0;
+      value_ = Vz;
 }
 
 vvm_nexus::~vvm_nexus()
@@ -160,6 +161,7 @@ void vvm_nexus::run_values()
 
 vvm_nexus::drive_t::drive_t()
 {
+      value_ = Vx;
       nexus_ = 0;
 }
 
@@ -225,6 +227,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.2  2000/03/16 21:45:07  steve
+ *  Properly initialize driver and nexus values.
+ *
  * Revision 1.1  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and
