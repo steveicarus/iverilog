@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.15 2001/03/31 19:08:22 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.16 2001/04/01 04:34:59 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -162,11 +162,32 @@ static int show_stmt_case(ivl_statement_t net)
 	    cvec = draw_eval_expr_wid(cex, cond.wid);
 	    assert(cvec.wid == cond.wid);
 
-	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", cond.base,
-		    cvec.base, cond.wid);
-	    fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 6;\n",
-		    thread_count, local_base+idx);
+	    switch (ivl_statement_type(net)) {
 
+		case IVL_ST_CASE:
+		  fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n",
+			  cond.base, cvec.base, cond.wid);
+		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 6;\n",
+			  thread_count, local_base+idx);
+		  break;
+
+		case IVL_ST_CASEX:
+		  fprintf(vvp_out, "    %%cmp/x %u, %u, %u;\n",
+			  cond.base, cvec.base, cond.wid);
+		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n",
+			  thread_count, local_base+idx);
+		  break;
+
+		case IVL_ST_CASEZ:
+		  fprintf(vvp_out, "    %%cmp/z %u, %u, %u;\n",
+			  cond.base, cvec.base, cond.wid);
+		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n",
+			  thread_count, local_base+idx);
+		  break;
+
+		default:
+		  assert(0);
+	    }
 	    
 	      /* Done with the case expression */
 	    clr_vector(cvec);
@@ -389,6 +410,8 @@ static int show_statement(ivl_statement_t net)
 	  }
 
 	  case IVL_ST_CASE:
+	  case IVL_ST_CASEX:
+	  case IVL_ST_CASEZ:
 	    rc += show_stmt_case(net);
 	    break;
 
@@ -479,6 +502,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.16  2001/04/01 04:34:59  steve
+ *  Generate code for casex and casez
+ *
  * Revision 1.15  2001/03/31 19:08:22  steve
  *  Handle $time as system task parameter.
  *
