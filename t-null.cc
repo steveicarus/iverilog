@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-null.cc,v 1.11 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: t-null.cc,v 1.12 2000/06/14 20:29:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,12 +31,15 @@ static class target_null_t  : public target_t {
 
     public:
       void bufz(ostream&os, const NetBUFZ*) { }
+      void event(ostream&, const NetEvent*) { }
+      void func_def(ostream&, const NetFuncDef*) { }
       void memory(ostream&, const NetMemory*) { }
       void task_def(ostream&, const NetTaskDef*) { }
       void net_assign(ostream&os, const NetAssign*) { }
       void net_assign_nb(ostream&os, const NetAssignNB*) { }
       void net_const(ostream&, const NetConst*) { }
       void net_esignal(ostream&, const NetESignal*) { }
+      void net_probe(ostream&, const NetEvProbe*) { }
       bool proc_block(ostream&, const NetBlock*) { return true; }
       void proc_condit(ostream&, const NetCondit*) { }
       void proc_delay(ostream&, const NetPDelay*) { }
@@ -44,12 +47,16 @@ static class target_null_t  : public target_t {
       void proc_repeat(ostream&, const NetRepeat*) { }
       void proc_stask(ostream&, const NetSTask*) { }
       void proc_utask(ostream&os, const NetUTask*) { }
+      bool proc_wait(ostream&os, const NetEvWait*) { return true; }
 
 } target_null_obj;
 
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.12  2000/06/14 20:29:39  steve
+ *  Ignore more things in null target.
+ *
  * Revision 1.11  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,
