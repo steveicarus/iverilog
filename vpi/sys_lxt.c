@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.22 2003/08/22 23:14:27 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.23 2003/09/30 01:33:39 steve Exp $"
 #endif
 
 # include "config.h"
 # include "sys_priv.h"
 # include "lxt_write.h"
 # include "vcd_priv.h"
+# include "sys_priv.h"
 
 /*
  * This file contains the implementations of the VCD related
@@ -153,7 +154,7 @@ struct vcd_info {
 
 static struct vcd_info*vcd_list = 0;
 static struct vcd_info*vcd_dmp_list = 0;
-static unsigned long vcd_cur_time = 0;
+static PLI_UINT64 vcd_cur_time = 0;
 static int dump_is_off = 0;
 
 
@@ -194,7 +195,7 @@ struct vcd_names_list_s lxt_tab;
 
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
-static unsigned long dumpvars_time;
+static PLI_UINT64 dumpvars_time;
 inline static int dump_header_pending(void)
 {
       return dumpvars_status != 2;
@@ -223,10 +224,10 @@ static void vcd_checkpoint_x()
 static int variable_cb_2(p_cb_data cause)
 {
       struct vcd_info* info = vcd_dmp_list;
-      unsigned long now = cause->time->low;
+      PLI_UINT64 now = timerec_to_time64(cause->time);
  
       if (now != vcd_cur_time) {  
-            lt_set_time(dump_file, now);
+            lt_set_time64(dump_file, now);
 	    vcd_cur_time = now;
       }
 
@@ -270,11 +271,11 @@ static int dumpvars_cb(p_cb_data cause)
 
       dumpvars_status = 2;
 
-      dumpvars_time = cause->time->low;
+      dumpvars_time = timerec_to_time64(cause->time);
       vcd_cur_time = dumpvars_time;
 
       if (!dump_is_off) {
-            lt_set_time(dump_file, dumpvars_time);
+            lt_set_time64(dump_file, dumpvars_time);
 	    vcd_checkpoint();
       }
 
@@ -313,6 +314,7 @@ inline static int install_dumpvars_callback(void)
 static int sys_dumpoff_calltf(char*name)
 {
       s_vpi_time now;
+      PLI_UINT64 now64;
 
       if (dump_is_off)
 	    return 0;
@@ -327,9 +329,11 @@ static int sys_dumpoff_calltf(char*name)
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
-      if (now.low > vcd_cur_time)
-            lt_set_time(dump_file, now.low);
-      vcd_cur_time = now.low;
+      now64 = timerec_to_time64(&now);
+
+      if (now64 > vcd_cur_time)
+            lt_set_time64(dump_file, now64);
+      vcd_cur_time = now64;
 
       lt_set_dumpoff(dump_file);
       vcd_checkpoint_x();
@@ -340,6 +344,7 @@ static int sys_dumpoff_calltf(char*name)
 static int sys_dumpon_calltf(char*name)
 {
       s_vpi_time now;
+      PLI_UINT64 now64;
 
       if (!dump_is_off)
 	    return 0;
@@ -354,9 +359,11 @@ static int sys_dumpon_calltf(char*name)
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
-      if (now.low > vcd_cur_time)
-            lt_set_time(dump_file, now.low);
-      vcd_cur_time = now.low;
+      now64 = timerec_to_time64(&now);
+
+      if (now64 > vcd_cur_time)
+            lt_set_time64(dump_file, now64);
+      vcd_cur_time = now64;
 
       lt_set_dumpon(dump_file);
       vcd_checkpoint();
@@ -367,6 +374,7 @@ static int sys_dumpon_calltf(char*name)
 static int sys_dumpall_calltf(char*name)
 {
       s_vpi_time now;
+      PLI_UINT64 now64;
 
       if (dump_file == 0)
 	    return 0;
@@ -376,9 +384,11 @@ static int sys_dumpall_calltf(char*name)
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
-      if (now.low > vcd_cur_time)
-            lt_set_time(dump_file, now.low);
-      vcd_cur_time = now.low;
+      now64 = timerec_to_time64(&now);
+
+      if (now64> vcd_cur_time)
+            lt_set_time64(dump_file, now64);
+      vcd_cur_time = now64;
 
       vcd_checkpoint();
 
@@ -794,6 +804,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.23  2003/09/30 01:33:39  steve
+ *  dumpers must be aware of 64bit time.
+ *
  * Revision 1.22  2003/08/22 23:14:27  steve
  *  Preserve variable ranges all the way to the vpi.
  *

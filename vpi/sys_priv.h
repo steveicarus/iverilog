@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_priv.h,v 1.2 2003/05/14 04:18:16 steve Exp $"
+#ident "$Id: sys_priv.h,v 1.3 2003/09/30 01:33:39 steve Exp $"
 #endif
+
+# include  "vpi_user.h"
 
 /*
  * This function is used by sys_vcd and sys_lxt as the dumpvars
@@ -39,8 +41,14 @@ struct context_s {
 extern void sgenrand(struct context_s *context, unsigned long seed);
 extern unsigned long genrand(struct context_s *context);
 
+
+extern PLI_UINT64 timerec_to_time64(const struct t_vpi_time*time);
+
 /*
  * $Log: sys_priv.h,v $
+ * Revision 1.3  2003/09/30 01:33:39  steve
+ *  dumpers must be aware of 64bit time.
+ *
  * Revision 1.2  2003/05/14 04:18:16  steve
  *  Use seed to store random number context.
  *
