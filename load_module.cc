@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: load_module.cc,v 1.11 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: load_module.cc,v 1.12 2003/06/05 04:31:09 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -30,7 +30,7 @@
 # include  <sys/types.h>
 # include  <dirent.h>
 # include  <ctype.h>
-
+# include  <assert.h>
 
 /*
  * The module library items are maps of key names to file name within
@@ -193,6 +193,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.12  2003/06/05 04:31:09  steve
+ *  INclude missing assert.h in load_module.
+ *
  * Revision 1.11  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
