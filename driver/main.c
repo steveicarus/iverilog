@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.29 2001/11/13 03:30:26 steve Exp $"
+#ident "$Id: main.c,v 1.30 2001/11/16 05:07:19 steve Exp $"
 
 # include "config.h"
 
@@ -25,7 +25,7 @@ const char HELP[] =
 "                [-D macro[=defn]] [-I includedir] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
-"                [-W class] [-y dur] source_file(s)\n"
+"                [-W class] [-y dir] [-Y suf] source_file(s)\n"
 "See man page for details.";
 
 #define MAXSIZE 4096
@@ -89,6 +89,7 @@ const char*targ  = "vvp";
 
 char warning_flags[16] = "";
 char *library_flags = 0;
+char *library_flags2 = 0;
 
 char*inc_list = 0;
 char*def_list = 0;
@@ -282,6 +283,19 @@ void process_library_switch(const char *name)
 	    strcpy(library_flags, "-y ");
       }
       strcat(library_flags, name);
+}
+
+void process_library2_switch(const char *name)
+{
+      if (library_flags2) {
+	    library_flags2 = realloc(library_flags2, 
+				    strlen(library_flags2) + strlen(name) + 5);
+	    strcat(library_flags2, " -Y ");
+      } else {
+	    library_flags2 = malloc(strlen(name) + 4);
+	    strcpy(library_flags2, "-Y ");
+      }
+      strcat(library_flags2, name);
 }
 
 void process_include_dir(const char *name)
@@ -480,6 +494,9 @@ int main(int argc, char **argv)
 		case 'y':
 		  process_library_switch(optarg);
 		  break;
+		case 'Y':
+		  process_library2_switch(optarg);
+		  break;
 		case '?':
 		default:
 		  return 1;
@@ -605,6 +622,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.30  2001/11/16 05:07:19  steve
+ *  Add support for +libext+ in command files.
+ *
  * Revision 1.29  2001/11/13 03:30:26  steve
  *  The +incdir+ plusarg can take multiple directores,
  *  and add initial support for +define+ in the command file.

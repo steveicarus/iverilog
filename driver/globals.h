@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.9 2001/11/13 03:30:26 steve Exp $"
+#ident "$Id: globals.h,v 1.10 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -56,6 +56,7 @@ extern void process_file_name(const char*name);
 
   /* Add the name to the list of library directories. */
 extern void process_library_switch(const char*name);
+extern void process_library2_switch(const char*name);
 
   /* Add a new include file search directory */
 extern void process_include_dir(const char*name);
@@ -68,8 +69,9 @@ extern int verbose_flag;
 
 extern char warning_flags[];
 
-  /* -y flags from the command line. */
+  /* -y and -Y flags from the command line. */
 extern char* library_flags;
+extern char* library_flags2;
 
 extern const char*lookup_pattern(const char*key);
 
@@ -77,6 +79,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.10  2001/11/16 05:07:19  steve
+ *  Add support for +libext+ in command files.
+ *
  * Revision 1.9  2001/11/13 03:30:26  steve
  *  The +incdir+ plusarg can take multiple directores,
  *  and add initial support for +define+ in the command file.

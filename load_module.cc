@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.2 2001/10/22 02:05:21 steve Exp $"
+#ident "$Id: load_module.cc,v 1.3 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -36,18 +36,23 @@ bool load_module(const char*type)
       for (list<const char*>::iterator cur = library_dirs.begin()
 		 ; cur != library_dirs.end()
 		 ; cur ++ ) {
-	    sprintf(path, "%s%c%s.v", *cur, dir_character, type);
+	    for (list<const char*>::iterator suf = library_suff.begin()
+		       ; suf != library_suff.end()
+		       ; suf ++ ) {
 
-	    FILE*file = fopen(path, "r");
-	    if (file == 0)
-		  continue;
+		  sprintf(path, "%s%c%s%s", *cur, dir_character, type, *suf);
 
-	    if (verbose_flag) {
-		  cerr << "Loading library file " << path << "." << endl;
+		  FILE*file = fopen(path, "r");
+		  if (file == 0)
+			continue;
+
+		  if (verbose_flag) {
+			cerr << "Loading library file " << path << "." << endl;
+		  }
+
+		  pform_parse(path, file);
+		  return true;
 	    }
-
-	    pform_parse(path, file);
-	    return true;
       }
 
       return false;
@@ -55,6 +60,9 @@ bool load_module(const char*type)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.3  2001/11/16 05:07:19  steve
+ *  Add support for +libext+ in command files.
+ *
  * Revision 1.2  2001/10/22 02:05:21  steve
  *  Handle activating tasks in another root.
  *

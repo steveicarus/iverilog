@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/11/14 03:28:15 $" Version "$Date: 2001/11/14 03:28:15 $"
+.TH iverilog 1 "$Date: 2001/11/16 05:07:19 $" Version "$Date: 2001/11/16 05:07:19 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -209,6 +209,13 @@ for include files in much the same way that \fB-I\fP flags work on the
 command line. The difference is that multiple \fI+includedir\fP
 directories are valid parameters to a single \fB+incdir+\fP token,
 although you may also have multiple \fB+incdir+\fP lines.
+
+.TP 8
+.B +libext+\fIext\fP
+The \fB+libext\fP token in command files fives file extensions to try
+when looking for a library file. This is useful in conjunction with
+\fB-y\fP flags to list suffixes to try in each directory before moving
+on to the next library directory.
 
 .TP 8
 .B +define+\fINAME\fP=\fIvalue\fP

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.6 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: compiler.h,v 1.7 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 # include  <list>
@@ -73,9 +73,13 @@ extern bool verbose_flag;
 
 /* This is an ordered list of libraries to search. */
 extern list<const char*>library_dirs;
+extern list<const char*>library_suff;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.7  2001/11/16 05:07:19  steve
+ *  Add support for +libext+ in command files.
+ *
  * Revision 1.6  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.5 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: build_string.c,v 1.6 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -136,6 +136,15 @@ int build_string(char*output, size_t olen, const char*pattern)
 			      olen -= strlen(library_flags);
 			}
 			break;
+
+		      case 'Y':
+			if (library_flags2) {
+			      strcpy(output, library_flags2);
+			      output += strlen(library_flags2);
+			      olen -= strlen(library_flags2);
+			}
+			break;
+
 		  }
 		  pattern += 1;
 
@@ -151,6 +160,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.6  2001/11/16 05:07:19  steve
+ *  Add support for +libext+ in command files.
+ *
  * Revision 1.5  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

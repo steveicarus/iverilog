@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.50 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: main.cc,v 1.51 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -79,6 +79,7 @@ const char*target = "null";
 map<string,string> flags;
 
 list<const char*> library_dirs;
+list<const char*> library_suff;
 
 /*
  * These are the warning enable flags.
@@ -189,7 +190,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:VvW:y:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -261,6 +262,9 @@ int main(int argc, char*argv[])
 	  case 'y':
 	    library_dirs.push_back(optarg);
 	    break;
+	  case 'Y':
+	    library_suff.push_back(optarg);
+	    break;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -290,6 +294,7 @@ int main(int argc, char*argv[])
                                            ".\n"
 "\t-V               Print version and copyright information, and exit.\n"
 "\t-y <dir>         Add directory to library search path.\n"
+"\t-Y <suf>         Add suffix string library search path.\n"
 
 		  ;
 	    cout << "Netlist functions:" << endl;
@@ -304,6 +309,12 @@ int main(int argc, char*argv[])
       if (optind == argc) {
 	    cerr << "No input files." << endl;
 	    return 1;
+      }
+
+	/* If there were no -Y flags, then create a minimal library
+	   suffix search list. */
+      if (library_suff.empty()) {
+	    library_suff.push_back(".v");
       }
 
 	/* Scan the warnings enable string for warning flags. */
@@ -466,6 +477,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.51  2001/11/16 05:07:19  steve
+ *  Add support for +libext+ in command files.
+ *
  * Revision 1.50  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.3 2001/11/13 03:30:26 steve Exp $"
+#ident "$Id: cfparse.y,v 1.4 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 
@@ -31,7 +31,7 @@
 };
 
 %token TOK_Da TOK_Dv TOK_Dy
-%token TOK_DEFINE TOK_INCDIR
+%token TOK_DEFINE TOK_INCDIR TOK_LIBEXT
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -88,6 +88,11 @@ item
 
 	| TOK_INCDIR inc_args
 
+  /* The +libext token introduces a list of +<ext> arguments that
+     become individual -Y flags to ivl. */
+
+	| TOK_LIBEXT libext_args
+
   /* The +<word> tokens that are not otherwise matched, are
      ignored. The skip_args rule arranges for all the argument words
      to be consumed. */
@@ -112,6 +117,18 @@ inc_args
 
 inc_arg : TOK_PLUSARG
 		{ process_include_dir($1);
+		  free($1);
+		}
+	;
+
+  /* inc_args are +incdir+ arguments in order. */
+libext_args
+	: libext_args libext_arg
+	| libext_arg
+	;
+
+libext_arg : TOK_PLUSARG
+		{ process_library2_switch($1);
 		  free($1);
 		}
 	;

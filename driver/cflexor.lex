@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cflexor.lex,v 1.3 2001/11/13 03:30:26 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.4 2001/11/16 05:07:19 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -69,6 +69,9 @@ static int comment_enter;
 "+define+" { BEGIN(PLUS_ARGS); return TOK_DEFINE; }
 
 "+incdir+" { BEGIN(PLUS_ARGS); return TOK_INCDIR; }
+
+"+libext+" { BEGIN(PLUS_ARGS); return TOK_LIBEXT; }
+
 
   /* If it is not any known plus-flag, return the generic form. */
 "+"[^\n \t\b\f\r+]* {
