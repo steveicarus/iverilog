@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: async.cc,v 1.1 2002/06/30 02:21:31 steve Exp $"
+#ident "$Id: async.cc,v 1.2 2002/07/04 00:24:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,11 +70,17 @@ bool NetProc::is_asynchronous()
 
 bool NetProcTop::is_asynchronous()
 {
+      if (type_ == NetProcTop::KINITIAL)
+	    return false;
+
       return statement_->is_asynchronous();
 }
 
 /*
  * $Log: async.cc,v $
+ * Revision 1.2  2002/07/04 00:24:16  steve
+ *  initial statements are not asynchronous.
+ *
  * Revision 1.1  2002/06/30 02:21:31  steve
  *  Add structure for asynchronous logic synthesis.
  *
