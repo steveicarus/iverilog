@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.134 2005/01/24 05:28:30 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.135 2005/01/28 05:39:33 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -748,6 +748,20 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * the concatentation. The ivl_lpm_size function returns the number of
  * inputs help by the device.
  *
+ * - Multiply (IVL_LPM_MULT)
+ * The multiply takes two inputs and generates an output. Unlike other
+ * arithmetic nodes, the width only refers to the output. The inputs
+ * have independent widths, to reflect the arithmetic truth that the
+ * width of a general multiply is the sum of the widths of the
+ * inputs. In fact, the compiler doesn't assure that the widths of the
+ * inputs add up to the width of the output, but the possibility
+ * exists. It is *not* an error for the sum of the input widths to be
+ * more then the width of the output, although the possibility of
+ * overflow exists at run time.
+ *
+ * Multiply may be signed. If so, the output should be sign extended
+ * to fill in its result.
+ *
  * - Part Select (IVL_LPM_PART_VP and IVL_LPM_PART_PV)
  * There are two part select devices, one that extracts a part from a
  * vector, and another that writes a part of a vector. The _VP is
@@ -1444,6 +1458,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.135  2005/01/28 05:39:33  steve
+ *  Simplified NetMult and IVL_LPM_MULT.
+ *
  * Revision 1.134  2005/01/24 05:28:30  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.233 2005/01/24 05:28:30 steve Exp $"
+#ident "$Id: netlist.cc,v 1.234 2005/01/28 05:39:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1176,31 +1176,16 @@ const Link& NetDivide::pin_DataB(unsigned idx) const
 }
 
 NetMult::NetMult(NetScope*sc, perm_string n, unsigned wr,
-		 unsigned wa, unsigned wb, unsigned ws)
-: NetNode(sc, n, 2+wr+wa+wb+ws),
-  signed_(false), width_r_(wr), width_a_(wa), width_b_(wb), width_s_(ws)
+		 unsigned wa, unsigned wb)
+: NetNode(sc, n, 3),
+  signed_(false), width_r_(wr), width_a_(wa), width_b_(wb)
 {
-      pin(0).set_dir(Link::INPUT); pin(0).set_name(perm_string::literal("Aclr"), 0);
-      pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("Clock"), 0);
-
-
-      unsigned p = 2;
-      for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::OUTPUT);
-	    pin(p).set_name(perm_string::literal("Result"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("DataA"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("DataB"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_s_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("Sum"), idx);
-      }
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("DataA"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("DataB"), 0);
 }
 
 NetMult::~NetMult()
@@ -1232,77 +1217,34 @@ unsigned NetMult::width_b() const
       return width_b_;
 }
 
-unsigned NetMult::width_s() const
-{
-      return width_s_;
-}
-
-Link& NetMult::pin_Aclr()
+Link& NetMult::pin_Result()
 {
       return pin(0);
 }
 
-const Link& NetMult::pin_Aclr() const
+const Link& NetMult::pin_Result() const
 {
       return pin(0);
 }
 
-Link& NetMult::pin_Clock()
+Link& NetMult::pin_DataA()
 {
       return pin(1);
 }
 
-const Link& NetMult::pin_Clock() const
+const Link& NetMult::pin_DataA() const
 {
       return pin(1);
 }
 
-Link& NetMult::pin_Result(unsigned idx)
+Link& NetMult::pin_DataB()
 {
-      assert(idx < width_r_);
-      return pin(idx+2);
+      return pin(2);
 }
 
-const Link& NetMult::pin_Result(unsigned idx) const
+const Link& NetMult::pin_DataB() const
 {
-      assert(idx < width_r_);
-      return pin(idx+2);
-}
-
-Link& NetMult::pin_DataA(unsigned idx)
-{
-      assert(idx < width_a_);
-      return pin(idx+2+width_r_);
-}
-
-const Link& NetMult::pin_DataA(unsigned idx) const
-{
-      assert(idx < width_a_);
-      return pin(idx+2+width_r_);
-}
-
-Link& NetMult::pin_DataB(unsigned idx)
-{
-      assert(idx < width_b_);
-      return pin(idx+2+width_r_+width_a_);
-}
-
-const Link& NetMult::pin_DataB(unsigned idx) const
-{
-      assert(idx < width_b_);
-      return pin(idx+2+width_r_+width_a_);
-}
-
-Link& NetMult::pin_Sum(unsigned idx)
-{
-      assert(idx < width_s_);
-      return pin(idx+2+width_r_+width_a_+width_b_);
-}
-
-const Link& NetMult::pin_Sum(unsigned idx) const
-{
-      assert(idx < width_s_);
-      return pin(idx+2+width_r_+width_a_+width_b_);
+      return pin(2);
 }
 
 /*
@@ -2307,6 +2249,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.234  2005/01/28 05:39:33  steve
+ *  Simplified NetMult and IVL_LPM_MULT.
+ *
  * Revision 1.233  2005/01/24 05:28:30  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.329 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: netlist.h,v 1.330 2005/01/28 05:39:33 steve Exp $"
 #endif
 
 /*
@@ -796,18 +796,19 @@ class NetMemory  {
 };
 
 /*
- * This class implements the LPM_MULT component as described in the
- * EDIF LPM Version 2 1 0 standard. It is used as a structural
- * implementation of the * operator. The device has inputs DataA and
- * DataB that can have independent widths, as can the result. If the
- * result is smaller then the widths of a and b together, then the
- * device drops the least significant bits of the product.
+ * This class implements a basic LPM_MULT combinational multiplier. It
+ * is used as a structural representation of the * operator. The
+ * device has inputs A and B and output Result all with independent
+ * widths.
+ *
+ * NOTE: Check this width thing. I think that the independence of the
+ * widths is not necessary or even useful.
  */
 class NetMult  : public NetNode {
 
     public:
       NetMult(NetScope*sc, perm_string n, unsigned width,
-	      unsigned wa, unsigned wb, unsigned width_s =0);
+	      unsigned wa, unsigned wb);
       ~NetMult();
 
       bool get_signed() const;
@@ -818,23 +819,14 @@ class NetMult  : public NetNode {
       unsigned width_r() const; // Result
       unsigned width_a() const; // DataA
       unsigned width_b() const; // DataB
-      unsigned width_s() const; // Sum (my be 0)
 
-      Link& pin_Aclr();
-      Link& pin_Clock();
+      Link& pin_DataA();
+      Link& pin_DataB();
+      Link& pin_Result();
 
-      Link& pin_DataA(unsigned idx);
-      Link& pin_DataB(unsigned idx);
-      Link& pin_Result(unsigned idx);
-      Link& pin_Sum(unsigned idx);
-
-      const Link& pin_Aclr() const;
-      const Link& pin_Clock() const;
-
-      const Link& pin_DataA(unsigned idx) const;
-      const Link& pin_DataB(unsigned idx) const;
-      const Link& pin_Result(unsigned idx) const;
-      const Link& pin_Sum(unsigned idx) const;
+      const Link& pin_DataA() const;
+      const Link& pin_DataB() const;
+      const Link& pin_Result() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -845,7 +837,6 @@ class NetMult  : public NetNode {
       unsigned width_r_;
       unsigned width_a_;
       unsigned width_b_;
-      unsigned width_s_;
 };
 
 
@@ -3376,6 +3367,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.330  2005/01/28 05:39:33  steve
+ *  Simplified NetMult and IVL_LPM_MULT.
+ *
  * Revision 1.329  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.136 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.137 2005/01/28 05:39:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1136,20 +1136,7 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	/* If the carry output is connected, then connect the extra Q
 	   pin to the carry nexus and zero the a and b inputs. */
       if (net->pin_Cout().is_linked()) {
-#if 0
-	    unsigned carry = obj->u_.arith.width - 1;
-	    const Nexus*nex = net->pin_Cout().nexus();
-	    assert(nex->t_cookie());
-
-	    obj->u_.arith.q[carry] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[carry], obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
-
-	    obj->u_.arith.a[carry] = 0;
-	    obj->u_.arith.b[carry] = 0;
-#else
 	    cerr << "XXXX: t-dll.cc: Forgot how to connect cout." << endl;
-#endif
       }
 
       scope_add_lpm(obj->scope, obj);
@@ -1700,6 +1687,9 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       }
 }
 
+/*
+ * Make the NetMult object into an IVL_LPM_MULT node.
+ */
 void dll_target::lpm_mult(const NetMult*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1713,69 +1703,27 @@ void dll_target::lpm_mult(const NetMult*net)
 
       obj->u_.arith.width = wid;
 
-#if 0
-      obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
-      obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
-      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
+      const Nexus*nex;
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    const Nexus*nex;
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
 
-	    nex = net->pin_Result(idx).nexus();
-	    assert(nex->t_cookie());
+      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
-	    obj->u_.arith.q[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[idx], obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
+      nex = net->pin_DataA().nexus();
+      assert(nex->t_cookie());
 
-	    if (idx < net->width_a()) {
-		  nex = net->pin_DataA(idx).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
+      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
+      nex = net->pin_DataB().nexus();
+      assert(nex->t_cookie());
 
-	    } else if (net->get_signed()) {
-		    /* Beyond the width of input a, but if the mult is
-		       signed, then sign extend the input. */
-		  nex = net->pin_DataA(net->width_a()-1).nexus();
-
-		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    } else {
-		  obj->u_.arith.a[idx] = 0;
-	    }
+      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 
-	    if (idx < net->width_b()) {
-		  nex = net->pin_DataB(idx).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
-
-		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    } else if (net->get_signed()) {
-		    /* Beyond the width of input b, but if the mult is
-		       signed, then sign extend the input. */
-		  nex = net->pin_DataB(net->width_b()-1).nexus();
-
-		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    } else {
-		  obj->u_.arith.b[idx] = 0;
-	    }
-      }
-#else
-      cerr << "XXXX: t-dll.cc: Forgot how to handle lpm_mult." << endl;
-#endif
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -2226,6 +2174,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.137  2005/01/28 05:39:33  steve
+ *  Simplified NetMult and IVL_LPM_MULT.
+ *
  * Revision 1.136  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

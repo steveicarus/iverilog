@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.61 2005/01/16 04:20:32 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.62 2005/01/28 05:39:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -336,25 +336,21 @@ NetNet* NetEBMult::synthesize(Design*des)
 
       NetMult*mult = new NetMult(scope, scope->local_symbol(),
 				 expr_width(),
-				 lsig->pin_count(),
-				 rsig->pin_count());
+				 lsig->vector_width(),
+				 rsig->vector_width());
       des->add_node(mult);
 
       mult->set_signed( has_sign() );
       mult->set_line(*this);
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-	    connect(mult->pin_DataA(idx), lsig->pin(idx));
-
-      for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-	    connect(mult->pin_DataB(idx), rsig->pin(idx));
+      connect(mult->pin_DataA(), lsig->pin(0));
+      connect(mult->pin_DataB(), rsig->pin(0));
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
       osig->local_flag(true);
 
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
-	    connect(mult->pin_Result(idx), osig->pin(idx));
+      connect(mult->pin_Result(), osig->pin(0));
 
       return osig;
 }
@@ -856,6 +852,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.62  2005/01/28 05:39:33  steve
+ *  Simplified NetMult and IVL_LPM_MULT.
+ *
  * Revision 1.61  2005/01/16 04:20:32  steve
  *  Implement LPM_COMPARE nodes as two-input vector functors.
  *
