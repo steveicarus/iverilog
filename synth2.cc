@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth2.cc,v 1.3 2002/07/07 22:32:15 steve Exp $"
+#ident "$Id: synth2.cc,v 1.4 2002/07/16 04:40:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,8 +57,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       assert(lsig);
       assert(lval_->more == 0);
 
-      assert(nex_map->pin_count() == rsig->pin_count());
-      assert(lsig->pin_count() == rsig->pin_count());
+      assert(lsig->pin_count() == nex_map->pin_count());
+      assert(nex_map->pin_count() <= rsig->pin_count());
 
       for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
 	    unsigned ptr = find_nexus_in_set(nex_map, lsig->pin(idx).nexus());
@@ -259,6 +259,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.4  2002/07/16 04:40:48  steve
+ *  Allow wide rvalues assigned to narrow nex_out.
+ *
  * Revision 1.3  2002/07/07 22:32:15  steve
  *  Asynchronous synthesis of case statements.
  *
