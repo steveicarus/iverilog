@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.6 2002/04/14 02:56:19 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.7 2002/05/12 00:32:21 steve Exp $"
 #endif
 
 /*
@@ -238,6 +238,22 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.str = buf;
 	    break;
 
+	  case vpiIntVal:
+	    vp->value.integer = 0;
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  switch (get_bit(rfp, idx)) {
+		      case 0:
+			break;
+		      case 1:
+			vp->value.integer |= 1 << idx;
+			break;
+		      case 2:
+		      case 3:
+			break;
+		  }
+	    }
+	    break;
+
 	  default:
 	      /* XXXX Not implemented yet. */
 	    assert(0);
@@ -347,6 +363,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.7  2002/05/12 00:32:21  steve
+ *  Get thread vectors by vpiIntVal.
+ *
  * Revision 1.6  2002/04/14 02:56:19  steve
  *  Support signed expressions through to VPI.
  *
