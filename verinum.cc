@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.12 1999/11/06 16:00:17 steve Exp $"
+#ident "$Id: verinum.cc,v 1.13 2000/01/06 05:57:06 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -164,8 +164,9 @@ signed long verinum::as_long() const
 
       signed long val = 0;
 
-	// Extend the sign bit to fill the long.
-      if (bits_[nbits_-1] == V1)
+	// Extend the sign bit to fill the long. (but only for unsized
+	// numbers.)
+      if ((has_len_ == false) && (bits_[nbits_-1] == V1))
 	    val = -1;
 
       for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 1) {
@@ -467,6 +468,9 @@ verinum operator - (const verinum&left, const verinum&r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.13  2000/01/06 05:57:06  steve
+ *  Only sign-extend unsized numbers.
+ *
  * Revision 1.12  1999/11/06 16:00:17  steve
  *  Put number constants into a static table.
  *
