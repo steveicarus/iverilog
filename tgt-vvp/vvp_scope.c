@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.85 2003/03/03 01:48:41 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.86 2003/03/03 23:05:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -501,20 +501,16 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    int inst;
 	    for (inst = 0; inst < ndrivers; inst += 4) {
 		  if (ndrivers > 4)
-			fprintf(vvp_out, "RS_%s/%d/%d .resolv tri", 
-				vvp_mangle_id(ivl_nexus_name(nex)),
-				level, inst);
+			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri", 
+				nex, level, inst);
 		  else 
-			fprintf(vvp_out, "RS_%s .resolv %s", 
-				vvp_mangle_id(ivl_nexus_name(nex)),
-				resolv_type);
+			fprintf(vvp_out, "RS_%p .resolv %s", 
+				nex, resolv_type);
 		  
 		  for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
 			if (level) {
-			      fprintf(vvp_out, ", RS_%s/%d/%d",
-				      vvp_mangle_id(ivl_nexus_name(nex)),
-				      level - 1,
-				      idx*4);
+			      fprintf(vvp_out, ", RS_%p/%d/%d",
+				      nex, level - 1, idx*4);
 			} else {
 			      fprintf(vvp_out, ", %s",
 				      draw_net_input_drive(nex, drivers[idx]));
@@ -532,7 +528,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    level += 1;
       }
       
-      sprintf(result, "RS_%s", vvp_mangle_id(ivl_nexus_name(nex)));
+      sprintf(result, "RS_%p", nex);
       nex_private = strdup(result);
       ivl_nexus_set_private(nex, nex_private);
       return nex_private;
@@ -1652,6 +1648,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.86  2003/03/03 23:05:49  steve
+ *  Printed nexus names need not use ivl_nexus_name.
+ *
  * Revision 1.85  2003/03/03 01:48:41  steve
  *  Only give scope basename to .scope directives.
  *
