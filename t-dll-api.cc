@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.94 2003/03/06 01:24:37 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.95 2003/03/06 04:32:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -160,7 +160,7 @@ extern "C" const char* ivl_event_name(ivl_event_t net)
       const char*sn = ivl_scope_name(scope);
 
       unsigned need = strlen(sn) + 1 + strlen(net->name) + 1;
-      if (need < name_size) {
+      if (need > name_size) {
 	    name_buffer = (char*)realloc(name_buffer, need);
 	    name_size = need;
       }
@@ -775,7 +775,7 @@ extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
       const char*sn = ivl_scope_name(scope);
 
       unsigned need = strlen(sn) + 1 + strlen(net->name) + 1;
-      if (need < name_size) {
+      if (need > name_size) {
 	    name_buffer = (char*)realloc(name_buffer, need);
 	    name_size = need;
       }
@@ -1752,6 +1752,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.95  2003/03/06 04:32:40  steve
+ *  Wrong sense of need compared to have.
+ *
  * Revision 1.94  2003/03/06 01:24:37  steve
  *  Obsolete the ivl_event_name function.
  *
