@@ -6,11 +6,14 @@ AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
 AC_CHECK_HEADERS(getopt.h)
+AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
 AC_PROG_INSTALL
 AC_CHECK_LIB(dl,main,[DLLIB=-ldl])
 AC_SUBST(DLLIB)
 AC_CANONICAL_HOST
 # $host
+
+AC_SUBST(HAVE_IPAL)
 
 #######################
 ## test for underscores. The vpi module loader in vvm needs to know this
@@ -92,4 +95,4 @@ AC_SUBST(rdynamic)
 
 AC_MSG_RESULT($rdynamic)
 
-AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile)
+AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
