@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.104 2005/03/06 17:07:48 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.105 2005/03/22 05:18:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -85,24 +85,23 @@ static void set_to_lvariable(ivl_lval_t lval,
 		 a bit-select leval. Presumably, the x0 index register
 		 has been loaded wit the result of the evaluated
 		 ivl_lval_mux expression. */
-	    assert(wid == 1);
 
 	    draw_eval_expr_into_integer(ivl_lval_mux(lval), 0);
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 
-	    fprintf(vvp_out, "    %%set/x0 V_%s, %u;\n",
-		    vvp_signal_label(sig), bit);
+	    fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
 
       } else if (part_off > 0) {
 	      /* There is no mux expression, but a constant part
 		 offset. Load that into index x0 and generate a
 		 single-bit set instruction. */
-	    assert(wid == 1);
+	    assert(ivl_lval_width(lval) == wid);
 
 	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
-	    fprintf(vvp_out, "    %%set/x0 V_%s, %u;\n",
-		    vvp_signal_label(sig), bit);
+	    fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), bit, wid);
 
       } else {
 	    fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
@@ -1469,6 +1468,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.105  2005/03/22 05:18:34  steve
+ *  The indexed set can write a vector, not just a bit.
+ *
  * Revision 1.104  2005/03/06 17:07:48  steve
  *  Non blocking assign to memory words.
  *

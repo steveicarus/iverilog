@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.194 2005/03/19 06:23:49 steve Exp $"
+#ident "$Id: compile.cc,v 1.195 2005/03/22 05:18:34 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -150,7 +150,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%set/mv", of_SET_MV, 3,  {OA_MEM_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
-      { "%set/x0", of_SET_X0, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
 //    { "%set/x0/x",of_SET_X0_X,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
@@ -1587,6 +1587,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.195  2005/03/22 05:18:34  steve
+ *  The indexed set can write a vector, not just a bit.
+ *
  * Revision 1.194  2005/03/19 06:23:49  steve
  *  Handle LPM shifts.
  *

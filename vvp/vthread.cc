@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.132 2005/03/06 17:07:48 steve Exp $"
+#ident "$Id: vthread.cc,v 1.133 2005/03/22 05:18:34 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2729,39 +2729,49 @@ bool of_SET_WORDR(vthread_t thr, vvp_code_t cp)
 /*
  * Implement the %set/x instruction:
  *
- *      %set/x <functor>, <bit>
+ *      %set/x <functor>, <bit>, <wid>
  *
- * The single bit goes into the indexed functor. Abort the instruction
- * if the index is outside the target vector dimensions. Get the
- * target vector dimensions from the vvp_fun_signal addressed by the
- * vvp_net pointer.
+ * The bit value of a vector go into the addressed functor. Do not
+ * transfer bits that are outside the signal range. Get the target
+ * vector dimensions from the vvp_fun_signal addressed by the vvp_net
+ * pointer.
  */
 bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
-      vvp_bit4_t bit_val = thr_get_bit(thr, cp->bit_idx[0]);
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
 
 	// Implicitly, we get the base into the target vector from the
 	// X0 register.
-      long idx = thr->words[0].w_int;
+      long index = thr->words[0].w_int;
 
       vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
 
-	/* If idx < 0, then the index value is probably generated from
-	   an undefined value. At any rate, this is defined to have no
-	   effect so quit now. */
-      if (idx < 0)
+      if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
 
-      if ((unsigned)idx >= sig->size())
+      if (index >= (long)sig->size())
 	    return true;
 
-	// Make a 1-bit vector that will go to the target
-      vvp_vector4_t bit (1);
-      bit.set_bit(0, bit_val);
+      if (index < 0) {
+	    wid -= (unsigned) -index;
+	    index = 0;
+      }
+
+      if (index+wid > sig->size())
+	    wid = sig->size() - index;
+
+      vvp_vector4_t bit_vec(wid);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t bit_val = thr_get_bit(thr, bit);
+	    bit_vec.set_bit(idx, bit_val);
+	    if (bit >= 4)
+		  bit += 1;
+      }
 
       vvp_net_ptr_t ptr (net, 0);
-      vvp_send_vec4_pv(ptr, bit, idx, 1, sig->size());
+      vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->size());
 
       return true;
 }
@@ -3114,6 +3124,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.133  2005/03/22 05:18:34  steve
+ *  The indexed set can write a vector, not just a bit.
+ *
  * Revision 1.132  2005/03/06 17:07:48  steve
  *  Non blocking assign to memory words.
  *
