@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.12 2005/02/12 22:50:52 steve Exp $"
+#ident "$Id: logic.h,v 1.13 2005/02/12 23:05:25 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -94,6 +94,13 @@ class vvp_fun_bufz: public vvp_net_fun_t {
 /*
  * The muxz functor is an A-B mux device, with the data inputs on
  * ports 0 and 1. port 2 is the select input.
+ *
+ * The select input must be 1 bit wide. If it is 0, then the port-0
+ * vector is passed out. If select is 1, then port-1 is passed
+ * out. Otherwise, a vector is passed out that reflects x?: behavior
+ * in verilog. The width of the blended output is the width of the largest
+ * input (port-0 or port-1) to enter the device. The narrow vector is
+ * padded with X values.
  */
 class vvp_fun_muxz : public vvp_net_fun_t {
 
@@ -111,12 +118,9 @@ class vvp_fun_muxz : public vvp_net_fun_t {
 
 // table functor types
 
-extern const unsigned char ft_BUFIF0[];
-extern const unsigned char ft_BUFIF1[];
 extern const unsigned char ft_PMOS[];
 extern const unsigned char ft_NMOS[];
 extern const unsigned char ft_MUXX[];
-extern const unsigned char ft_MUXZ[];
 extern const unsigned char ft_EEQ[];
 extern const unsigned char ft_NAND[];
 extern const unsigned char ft_NOR[];
@@ -130,8 +134,8 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
- * Revision 1.12  2005/02/12 22:50:52  steve
- *  Implement the vvp_fun_muxz functor.
+ * Revision 1.13  2005/02/12 23:05:25  steve
+ *  Cleanup unused truth tables.
  *
  * Revision 1.11  2005/01/29 17:52:06  steve
  *  move AND to buitin instead of table.

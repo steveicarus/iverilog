@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.19 2005/02/12 22:50:52 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.20 2005/02/12 23:05:25 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -153,7 +153,7 @@ static void draw_BUFZ(void)
       printf("};\n");
 }
 #endif
-
+#if 0
 static void draw_BUFIF0(void)
 {
       unsigned i0, i1, i2, i3;
@@ -187,7 +187,8 @@ static void draw_BUFIF0(void)
 
       printf("};\n");
 }
-
+#endif
+#if 0
 static void draw_BUFIF1(void)
 {
       unsigned i0, i1, i2, i3;
@@ -221,7 +222,7 @@ static void draw_BUFIF1(void)
 
       printf("};\n");
 }
-
+#endif
 static void draw_PMOS(void)
 {
       unsigned i0, i1, i2, i3;
@@ -741,8 +742,6 @@ static void draw_oct_table()
 main()
 {
       printf("# include  \"logic.h\"\n");
-      draw_BUFIF0();
-      draw_BUFIF1();
       draw_PMOS();
       draw_NMOS();
       draw_MUXX();
@@ -762,6 +761,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.20  2005/02/12 23:05:25  steve
+ *  Cleanup unused truth tables.
+ *
  * Revision 1.19  2005/02/12 22:50:52  steve
  *  Implement the vvp_fun_muxz functor.
  *
