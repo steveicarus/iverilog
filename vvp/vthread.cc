@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.86 2002/09/18 04:29:55 steve Exp $"
+#ident "$Id: vthread.cc,v 1.87 2002/09/20 03:59:34 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -756,10 +756,6 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
  * Implement the %disable instruction by scanning the target scope for
  * all the target threads. Kill the target threads and wake up a
  * parent that is attempting a %join.
- *
- * XXXX BUG BUG!
- * The scheduler probably still has a pointer to me, and this reaping
- * will destroy this object. The result: dangling pointer.
  */
 bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 {
@@ -778,22 +774,36 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 	    tmp->scope_next->scope_prev = tmp->scope_prev;
 	    tmp->scope_prev->scope_next = tmp->scope_next;
 
-	      /* XXXX I don't support disabling threads with children. */
-	    assert(tmp->child == 0);
-	      /* XXXX Don't know how to disable waiting threads. */
-	    assert(tmp->waiting_for_event == 0);
-
 	      /* If I am disabling myself, that remember that fact so
 		 that I can finish this statement differently. */
 	    if (tmp == thr)
 		  disabled_myself_flag = true;
 
+	      /* Turn the thread off by setting is program counter to
+		 zero and setting an OFF bit. */
 	    tmp->pc = 0;
 	    tmp->i_have_ended = 1;
+
+	      /* Turn off all the children of the thread. */
+	    vthread_t child = tmp->child;
+	    while (child) {
+
+		    /* XXXX Don't know how to disable waiting children. */
+		  assert(child->waiting_for_event == 0);
+
+		  child->pc = 0;
+		  child->i_have_ended = 1;
+
+		  vthread_t next = child->child;
+		  vthread_reap(child);
+		  child = next;
+	    }
+
 
 	    if (tmp->schedule_parent_on_end) {
 		    /* If a parent is waiting in a %join, wake it up. */
 		  assert(tmp->parent);
+		  assert(tmp->waiting_for_event == 0);
 		  schedule_vthread(tmp->parent, 0, true);
 		  vthread_reap(tmp);
 
@@ -801,6 +811,17 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 		    /* If the parent is yet to %join me, let its %join
 		       do the reaping. */
 		    //assert(tmp->is_scheduled == 0);
+
+	    } else if (tmp->waiting_for_event) {
+
+		    /* If the thread is waiting for an event, then
+		       temporarily mark it as scheduled, so that the
+		       reap detaches it from everything, but does not
+		       delete it. The %zombie function will then
+		       delete the thread when the event trips. */
+		  tmp->is_scheduled = 1;
+		  vthread_reap(tmp);
+		  tmp->is_scheduled = 0;
 
 	    } else {
 		    /* No parent at all. Goodby. */
@@ -2380,6 +2401,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.87  2002/09/20 03:59:34  steve
+ *  disable threads with children.
+ *
  * Revision 1.86  2002/09/18 04:29:55  steve
  *  Add support for binary NOR operator.
  *
