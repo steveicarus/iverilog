@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.14 2001/06/12 03:53:10 steve Exp $"
+#ident "$Id: main.c,v 1.15 2001/06/15 05:14:21 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -74,9 +74,9 @@ extern const char*optarg;
 # include  "globals.h"
 
 #ifdef __MINGW32__
-const char *sep = "\\";
+const char sep = '\\';
 #else
-const char *sep = "/";
+const char sep = '/';
 #endif
 
 const char*base = IVL_ROOT;
@@ -206,10 +206,9 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    }
       }
 
-      sprintf(tmp, "%s " RDYNAMIC " -s -fno-exceptions -o %s -I%s%s%s "
-	      "-L%s%s%s %s.cc -lvvm -lvpip %s", CXX, opath, ivl_install_dir, 
+      sprintf(tmp, "%s " RDYNAMIC " -s -fno-exceptions -o %s -I%s%c%s "
+	      "-L%s%c%s %s.cc -lvvm -lvpip %s", CXX, opath, ivl_install_dir, 
 	      sep, "include", ivl_install_dir, sep, "lib", opath, DLLIB);
-
       if (verbose_flag)
 	    printf("compile: %s\n", tmp);
 
@@ -234,7 +233,7 @@ static int t_xnf(char*cmd, unsigned ncmd)
 {
       int rc;
 
-      sprintf(tmp, " | %s%sepivl %s -o %s -txnf -Fcprop -Fsynth -Fsyn-rules "
+      sprintf(tmp, " | %s%civl %s -o %s -txnf -Fcprop -Fsynth -Fsyn-rules "
 	      "-Fnodangle -Fxnfio", base, sep,warning_flags, opath);
 
       rc = strlen(tmp);
@@ -451,20 +450,25 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
-#ifdef __MINGW32__
+      /* Calculate the install directory.
+      ** This could be passed directly from the Makefile.
+      ** Is it just the $prefix option to configure?
+      **/
       {
-	static char basepath[1024],*s;
-	GetModuleFileName(NULL,basepath,1024);
-	/* Get to the end.  Search back twice for backslashes */
-	s = basepath + strlen(basepath);
-	while (*s != '\\') s--; s--;
-	while (*s != '\\') s--; 
-	*s = '\0';
-	strcpy(ivl_install_dir, basepath);
-	strcpy(s,"\\lib\\ivl");
-	base = basepath;
+        char * s;
+        #ifdef __MINGW32__
+            static char basepath[1024];
+            GetModuleFileName(NULL,basepath,1024);
+            base = basepath;
+        #endif
+        /* truncate last 2 directories */
+        strncpy(ivl_install_dir,base,MAXSIZE);
+        s = ivl_install_dir + strlen(ivl_install_dir);
+        while (*s != sep) s--;
+        s--;
+        while (*s != sep) s--; 
+        *s = NULL;
       }
-#endif      
 
 	/* Load the iverilog.conf file to get our substitution
 	   strings. */
@@ -474,7 +478,7 @@ int main(int argc, char **argv)
 	if (config_path) {
 	      strcpy(path, config_path);
 	} else {
-	      sprintf(path, "%s%siverilog.conf", base,sep);
+	      sprintf(path, "%s%civerilog.conf", base,sep);
 	}
 	fd = fopen(path, "r");
 	if (fd == 0) {
@@ -487,7 +491,7 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s%sivlpp %s%s", base,sep,
+      sprintf(tmp, "%s%civlpp %s%s", base,sep,
 	      verbose_flag?" -v":"",
 	      e_flag?"":" -L");
 
@@ -600,6 +604,10 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.15  2001/06/15 05:14:21  steve
+ *  Fix library path calculation on non Windows systems
+ *  to include the install directories. (Brendan Simon)
+ *
  * Revision 1.14  2001/06/12 03:53:10  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.
