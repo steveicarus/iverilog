@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.124 2003/12/03 02:46:24 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.125 2004/09/25 01:58:12 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -563,6 +563,9 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *
  * ivl_logic_pins
  * ivl_logic_pin
+ *    Return the nexus for the pin. If two pins are connected
+ *    together, then these values are the same. Use the nexus
+ *    functions to find other pins that are connected to this nexus.
  *
  * ivl_logic_attr (obsolete)
  *    Return the value of a specific attribute, given the key name as
@@ -1233,6 +1236,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.125  2004/09/25 01:58:12  steve
+ *  Some commentary on ivl_logic_pin.
+ *
  * Revision 1.124  2003/12/03 02:46:24  steve
  *  Add support for wait on list of named events.
  *
