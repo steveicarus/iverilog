@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.138 2000/09/26 01:35:42 steve Exp $"
+#ident "$Id: netlist.cc,v 1.139 2000/09/26 05:05:58 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1719,6 +1719,16 @@ NetExpr::~NetExpr()
 {
 }
 
+bool NetExpr::has_sign() const
+{
+      return false;
+}
+
+bool NetExpr::has_width() const
+{
+      return true;
+}
+
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
@@ -1936,6 +1946,21 @@ NetEConst::NetEConst(const verinum&val)
 
 NetEConst::~NetEConst()
 {
+}
+
+const verinum& NetEConst::value() const
+{
+      return value_;
+}
+
+bool NetEConst::has_sign() const
+{
+      return value_.has_sign();
+}
+
+bool NetEConst::has_width() const
+{
+      return value_.has_len();
 }
 
 NetEConst* NetEConst::dup_expr() const
@@ -2395,6 +2420,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.139  2000/09/26 05:05:58  steve
+ *  Detect indefinite widths where definite widths are required.
+ *
  * Revision 1.138  2000/09/26 01:35:42  steve
  *  Remove the obsolete NetEIdent class.
  *

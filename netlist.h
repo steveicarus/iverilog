@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.167 2000/09/26 01:35:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.168 2000/09/26 05:05:58 steve Exp $"
 #endif
 
 /*
@@ -810,6 +810,16 @@ class NetExpr  : public LineInfo {
 	// coersion works, then return true. Otherwise, return false.
       virtual bool set_width(unsigned);
 
+	// This method returns true if the expression is
+	// signed. Unsigned expressions return false.
+      virtual bool has_sign() const;
+
+	// This returns true if the expression has a definite
+	// width. This is generally true, but in some cases the
+	// expression is amorphous and desires a width from its
+	// environment.
+      virtual bool has_width() const;
+
 	// This method evaluates the expression and returns an
 	// equivilent expression that is reduced as far as compile
 	// time knows how. Essentially, this is designed to fold
@@ -847,9 +857,13 @@ class NetEConst  : public NetExpr {
       explicit NetEConst(const verinum&val);
       ~NetEConst();
 
-      const verinum&value() const { return value_; }
+      const verinum&value() const;
 
       virtual bool set_width(unsigned w);
+
+      virtual bool has_sign() const;
+      virtual bool has_width() const;
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -2781,6 +2795,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.168  2000/09/26 05:05:58  steve
+ *  Detect indefinite widths where definite widths are required.
+ *
  * Revision 1.167  2000/09/26 01:35:42  steve
  *  Remove the obsolete NetEIdent class.
  *

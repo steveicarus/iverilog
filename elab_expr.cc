@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.28 2000/09/24 17:41:13 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.29 2000/09/26 05:05:58 steve Exp $"
 #endif
 
 
@@ -240,7 +240,16 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope) const
 	    assert(parms_[idx]);
 	    NetExpr*ex = parms_[idx]->elaborate_expr(des, scope);
 	    if (ex == 0) continue;
+
 	    ex->set_line(*parms_[idx]);
+
+	    if (! ex->has_width()) {
+		  cerr << ex->get_line() << ": error: operand of "
+		       << "concatenation has indefinite width: "
+		       << *ex << endl;
+		  des->errors += 1;
+	    }
+
 	    tmp->set(idx, ex);
       }
 
@@ -507,6 +516,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.29  2000/09/26 05:05:58  steve
+ *  Detect indefinite widths where definite widths are required.
+ *
  * Revision 1.28  2000/09/24 17:41:13  steve
  *  fix null pointer when elaborating undefined task.
  *

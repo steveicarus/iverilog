@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.47 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.48 2000/09/26 05:05:58 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -943,6 +943,21 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+
+	      /* Look for the special case of an unsized number in a
+		 concatenation expression. Mark this as an error, but
+		 allow elaboration to continue to see if I can find
+		 more errors. */
+
+	    if (PENumber*tmp = dynamic_cast<PENumber*>(parms_[idx])) {
+		  if (tmp->value().has_len() == false) {
+			cerr << get_line() << ": error: Number "
+			     << tmp->value() << " with indefinite size"
+			     << " in concatenation." << endl;
+			errors += 1;
+		  }
+	    }
+
 	    nets[idx] = parms_[idx]->elaborate_net(des, path, 0,
 						   rise,fall,decay);
 	    if (nets[idx] == 0)
@@ -1427,6 +1442,9 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 	    return net;
       }
 
+      cerr << get_line() << ": warning: Number with indefinite size "
+	   << "in self-determined context." << endl;
+
 	/* None of the above tight constraints are present, so make a
 	   plausible choice for the width. Try to reduce the width as
 	   much as possible by eliminating high zeros of unsigned
@@ -1746,6 +1764,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.48  2000/09/26 05:05:58  steve
+ *  Detect indefinite widths where definite widths are required.
+ *
  * Revision 1.47  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *
