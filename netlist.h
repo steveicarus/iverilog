@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.44 1999/07/07 04:20:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.45 1999/07/16 04:33:41 steve Exp $"
 #endif
 
 /*
@@ -1189,6 +1189,8 @@ class NetESubSignal  : public NetExpr {
       const string&name() const { return sig_->name(); }
       const NetExpr*index() const { return idx_; }
 
+      virtual bool set_width(unsigned);
+
       NetESubSignal* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1338,6 +1340,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.45  1999/07/16 04:33:41  steve
+ *  set_width for NetESubSignal.
+ *
  * Revision 1.44  1999/07/07 04:20:57  steve
  *  Emit vvm for user defined tasks.
  *

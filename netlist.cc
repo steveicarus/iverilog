@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.41 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: netlist.cc,v 1.42 1999/07/16 04:33:41 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -718,6 +718,9 @@ NetESignal* NetESignal::dup_expr() const
 NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
 : sig_(sig), idx_(ex)
 {
+	// This suppots mux type indexing of an expression, so the
+	// with is by definition 1 bit.
+      expr_width(1);
 }
 
 NetESubSignal::~NetESubSignal()
@@ -728,6 +731,12 @@ NetESubSignal::~NetESubSignal()
 NetESubSignal* NetESubSignal::dup_expr() const
 {
       assert(0);
+}
+
+bool NetESubSignal::set_width(unsigned w)
+{
+      if (w != 1) return false;
+      return true;
 }
 
 NetEUnary::~NetEUnary()
@@ -1295,6 +1304,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.42  1999/07/16 04:33:41  steve
+ *  set_width for NetESubSignal.
+ *
  * Revision 1.41  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *
