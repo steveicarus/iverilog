@@ -228,21 +228,15 @@ verilog features.
                     regval [3:1] = 3'b0;
                     regval [7:0] = 8'b0;
 
-  - Task Enabling isn't implemented: 
-    Example: always @(value)  // This isn't available yet.
-                begin
-                  $display("value changed");
-                end
-
   - The "?" operator. Example: count = val ? 1 : 0;
 
   - Ranges within parameter definitions:
     Example: parameter [15:0] seed = 16'ha3; 
 
+    [Note: IEEE Std: 1364-1995 does not allow the syntax.]
+
   - The "&&" operator:
     Example: if (a && 0) do = 1;
-
-  - Concatenation: b = { a , 4'hd };
 
   - The "===" operator:  Example: if( a === b) do = 1;
 
@@ -254,7 +248,7 @@ verilog features.
 
   - The "<<" shift operator: Example: a = 8'b0000_0010 << 1;  
 
-  - Min/Typ/Max assignments: Example:  a = (1 : 6 : 14);
+  - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
 
   - Inversion of a vector with a bit operator:
     Example: reg [7:0] a;   a = !(8'h01);  
@@ -265,8 +259,6 @@ verilog features.
     Example: reg [0:15] b;  b = "b"; 
 
   - Function declarations/calls.
-
-  - Integer data type.
 
   - Non-scalar memories, i.e. other than registers. 
     Example: reg [1:0] b [2:0]; 
