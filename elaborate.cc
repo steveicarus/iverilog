@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.229 2001/11/04 23:12:29 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.230 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -220,8 +220,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	   gates, then I am expected to make more then one
 	   gate. Figure out how many are desired. */
       if (msb_) {
-	    verinum*msb = msb_->eval_const(des, path);
-	    verinum*lsb = lsb_->eval_const(des, path);
+	    verinum*msb = msb_->eval_const(des, scope);
+	    verinum*lsb = lsb_->eval_const(des, scope);
 
 	    if (msb == 0) {
 		  cerr << get_line() << ": error: Unable to evaluate "
@@ -904,7 +904,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       NetExpr*rv;
 
-      if (verinum*val = rval()->eval_const(des,path)) {
+      if (verinum*val = rval()->eval_const(des, scope)) {
 	    rv = new NetEConst(*val);
 	    delete val;
 
@@ -1568,7 +1568,7 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
       }
 
 
-      verinum*num = delay_->eval_const(des, path);
+      verinum*num = delay_->eval_const(des, scope);
       if (num == 0) {
 	      /* Ah, the delay is not constant. OK, elaborate the
 		 expression and let the run-time handle it. */
@@ -2409,6 +2409,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.230  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.229  2001/11/04 23:12:29  steve
  *  Pad limited r-values in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.16 2001/11/01 05:21:26 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.17 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -443,8 +443,8 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	      // If the register has indices, then this is a
 	      // memory. Create the memory object.
-	    verinum*lval = lidx_->eval_const(des, path);
-	    verinum*rval = ridx_->eval_const(des, path);
+	    verinum*lval = lidx_->eval_const(des, scope);
+	    verinum*rval = ridx_->eval_const(des, scope);
 
 	    if ((lval == 0) || (rval == 0)) {
 		  cerr << get_line() << ": internal error: There is "
@@ -476,6 +476,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.17  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.16  2001/11/01 05:21:26  steve
  *  Catch ports that have no direction.
  *

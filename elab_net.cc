@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.77 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.78 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -843,7 +843,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	   is no reason in this case to create a gate at all, just
 	   connect the lsig to the osig with the bit positions
 	   shifted. */
-      if (verinum*rval = right_->eval_const(des, path)) {
+      if (verinum*rval = right_->eval_const(des, scope)) {
 	    assert(rval->is_defined());
 	    unsigned dist = rval->as_ulong();
 	    if (dist > lwidth)
@@ -959,7 +959,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
       unsigned repeat = 1;
 
       if (repeat_) {
-	    verinum*rep = repeat_->eval_const(des, path);
+	    verinum*rep = repeat_->eval_const(des, scope);
 	    if (rep == 0) {
 		  cerr << get_line() << ": internal error: Unable to "
 		       << "evaluate constant repeat expression." << endl;
@@ -1091,7 +1091,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
       assert(sig);
 
       if (msb_ && lsb_) {
-	    verinum*mval = msb_->eval_const(des, path);
+	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
 		  cerr << msb_->get_line() << ": error: unable to "
 			"evaluate constant expression: " << *msb_ <<
@@ -1100,7 +1100,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 		  return 0;
 	    }
 
-	    verinum*lval = lsb_->eval_const(des, path);
+	    verinum*lval = lsb_->eval_const(des, scope);
 	    if (lval == 0) {
 		  cerr << lsb_->get_line() << ": error: unable to "
 			"evaluate constant expression: " << *lsb_ <<
@@ -1160,7 +1160,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
 
       } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, path);
+	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
 		  cerr << get_line() << ": error: index of " << text_ <<
 			" needs to be constant in this context." <<
@@ -1275,9 +1275,9 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	      /* Detect a part select. Evaluate the bits and elaborate
 		 the l-value by creating a sub-net that links to just
 		 the right pins. */ 
-	    verinum*mval = msb_->eval_const(des, path);
+	    verinum*mval = msb_->eval_const(des, scope);
 	    assert(mval);
-	    verinum*lval = lsb_->eval_const(des, path);
+	    verinum*lval = lsb_->eval_const(des, scope);
 	    assert(lval);
 	    unsigned midx = sig->sb_to_idx(mval->as_long());
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
@@ -1316,7 +1316,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 	    }
 
       } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, path);
+	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
 		  cerr << get_line() << ": error: index of " << text_ <<
 			" needs to be constant in l-value of assignment." <<
@@ -1392,9 +1392,9 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	      /* Detect a part select. Evaluate the bits and elaborate
 		 the l-value by creating a sub-net that links to just
 		 the right pins. */ 
-	    verinum*mval = msb_->eval_const(des, path);
+	    verinum*mval = msb_->eval_const(des, scope);
 	    assert(mval);
-	    verinum*lval = lsb_->eval_const(des, path);
+	    verinum*lval = lsb_->eval_const(des, scope);
 	    assert(lval);
 	    unsigned midx = sig->sb_to_idx(mval->as_long());
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
@@ -1424,7 +1424,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    }
 
       } else if (msb_) {
-	    verinum*mval = msb_->eval_const(des, path);
+	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
 		  cerr << get_line() << ": index of " << text_ <<
 			" needs to be constant in port context." <<
@@ -1704,7 +1704,7 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	// value. This can be reduced to a no-op on a precalculated
 	// result.
       if (op_ == '-') do {
-	    verinum*val = expr_->eval_const(des, path);
+	    verinum*val = expr_->eval_const(des, scope);
 	    if (val == 0)
 		  break;
 
@@ -1899,6 +1899,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.78  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.77  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *

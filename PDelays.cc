@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.5 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: PDelays.cc,v 1.6 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,7 +69,7 @@ static unsigned long calculate_val(Design*des, const NetScope*scope,
 	    delete dr;
 
       } else {
-	    verinum*dv = expr->eval_const(des, scope->name());
+	    verinum*dv = expr->eval_const(des, scope);
 	    if (dv == 0) {
 		  cerr << expr->get_line() << ": sorry: non-constant "
 		       << "delays not supported here: " << *expr << endl;
@@ -126,6 +126,9 @@ void PDelays::eval_delays(Design*des, const string&path,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.6  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.5  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

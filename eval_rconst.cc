@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_rconst.cc,v 1.3 2001/11/06 06:11:55 steve Exp $"
+#ident "$Id: eval_rconst.cc,v 1.4 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,7 +70,7 @@ verireal* PEBinary::eval_rconst(const Design*des, const NetScope*scope) const
 
 verireal* PEIdent::eval_rconst(const Design*des, const NetScope*scope) const
 {
-      verinum* val = eval_const(des, scope->name());
+      verinum* val = eval_const(des, scope);
       if (val == 0)
 	    return 0;
 
@@ -81,6 +81,9 @@ verireal* PEIdent::eval_rconst(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval_rconst.cc,v $
+ * Revision 1.4  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.3  2001/11/06 06:11:55  steve
  *  Support more real arithmetic in delay constants.
  *

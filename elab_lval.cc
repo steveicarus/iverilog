@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.14 2001/08/25 23:50:02 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.15 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -168,7 +168,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		 two bit select expressions, and both must be
 		 constant. Evaluate them and pass the results back to
 		 the caller. */
-	    verinum*vl = lsb_->eval_const(des, scope->name());
+	    verinum*vl = lsb_->eval_const(des, scope);
 	    if (vl == 0) {
 		  cerr << lsb_->get_line() << ": error: "
 			"Part select expressions must be constant: "
@@ -176,7 +176,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  return 0;
 	    }
-	    verinum*vm = msb_->eval_const(des, scope->name());
+	    verinum*vm = msb_->eval_const(des, scope);
 	    if (vl == 0) {
 		  cerr << msb_->get_line() << ": error: "
 			"Part select expressions must be constant: "
@@ -197,7 +197,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		 expression it not constant, then return the
 		 expression as a mux. */
 	    assert(lsb_ == 0);
-	    verinum*v = msb_->eval_const(des, scope->name());
+	    verinum*v = msb_->eval_const(des, scope);
 	    if (v == 0) {
 		  NetExpr*m = msb_->elaborate_expr(des, scope);
 		  assert(m);
@@ -277,6 +277,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.15  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.14  2001/08/25 23:50:02  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

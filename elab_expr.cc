@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.42 2001/07/29 22:22:40 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.43 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -394,8 +394,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	      // the foo[msb:lsb] expression in the original.
 	    if (lsb_) {
 		  assert(msb_);
-		  verinum*lsn = lsb_->eval_const(des, scope->name());
-		  verinum*msn = msb_->eval_const(des, scope->name());
+		  verinum*lsn = lsb_->eval_const(des, scope);
+		  verinum*msn = msb_->eval_const(des, scope);
 		  if ((lsn == 0) || (msn == 0)) {
 			cerr << get_line() << ": error: "
 			      "Part select expresions must be "
@@ -460,7 +460,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	      // to the part select, so that I save the effort of
 	      // making a mux part in the netlist.
 	    verinum*msn;
-	    if (msb_ && (msn = msb_->eval_const(des, scope->name()))) {
+	    if (msb_ && (msn = msb_->eval_const(des, scope))) {
 		  assert(idx_ == 0);
 		  unsigned long msv = msn->as_ulong();
 		  unsigned idx = net->sb_to_idx(msv);
@@ -636,6 +636,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.43  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.42  2001/07/29 22:22:40  steve
  *  support local reference to scope in expressions.
  *
@@ -660,26 +663,5 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
  * Revision 1.36  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.
- *
- * Revision 1.35  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.34  2001/01/14 23:04:55  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.33  2001/01/13 22:20:08  steve
- *  Parse parameters within nested scopes.
- *
- * Revision 1.32  2001/01/02 04:21:13  steve
- *  Support a bunch of unary operators in parameter expressions.
- *
- * Revision 1.31  2000/12/10 22:01:35  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.30  2000/11/29 05:24:00  steve
- *  synthesis for unary reduction ! and N operators.
  */
 

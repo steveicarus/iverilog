@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.10 2001/10/07 03:38:08 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.11 2001/11/07 04:01:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,7 +77,7 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 	   accurately evaluate such expressions. So eventually, I will
 	   need to be able to defer the evaluation of the expression. */
       if (repeat_) {
-	    verinum*vrep = repeat_->eval_const(des, scope->name());
+	    verinum*vrep = repeat_->eval_const(des, scope);
 	    if (vrep == 0) {
 		  cerr << get_line() << ": error: "
 			"concatenation repeat expression cannot be evaluated."
@@ -218,6 +218,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.11  2001/11/07 04:01:59  steve
+ *  eval_const uses scope instead of a string path.
+ *
  * Revision 1.10  2001/10/07 03:38:08  steve
  *  parameter names do not have defined size.
  *
