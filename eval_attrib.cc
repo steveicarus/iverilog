@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_attrib.cc,v 1.3 2002/06/06 18:57:18 steve Exp $"
+#ident "$Id: eval_attrib.cc,v 1.4 2002/08/10 21:59:39 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -51,11 +51,14 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 	    table[idx].key = (*cur).first;
 	    PExpr*exp = (*cur).second;
 
+	      /* If the attribute value is given in the source, then
+		 evalulate it as a constant. If the value is not
+		 given, then assume the value is 1. */
 	    verinum*tmp;
 	    if (exp)
 		  tmp = exp->eval_const(des, scope);
 	    else
-		  tmp = new verinum();
+		  tmp = new verinum(1);
 
 	    if (tmp == 0)
 		  cerr << "internal error: no result for " << *exp << endl;
@@ -71,6 +74,9 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 
 /*
  * $Log: eval_attrib.cc,v $
+ * Revision 1.4  2002/08/10 21:59:39  steve
+ *  The default attribute value is 1.
+ *
  * Revision 1.3  2002/06/06 18:57:18  steve
  *  Use standard name for iostream.
  *
