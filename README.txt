@@ -254,7 +254,16 @@ current state of support for Verilog.
 
   - `timescale directive
 
-Specify blocks are parsed bug ignored in general.
+  - force/release/assign/deassign procedural assignments not
+    supported.
+
+  - fork/join is not supported in vvm runtime
+
+  - structural arithmetic operators are in general not supported.
+
+  - event data type is not supported.
+
+Specify blocks are parsed but ignored in general.
 
 
 6.0 CREDITS
