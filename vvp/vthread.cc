@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.47 2001/06/30 21:07:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.48 2001/07/04 04:57:10 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -141,6 +141,36 @@ void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
 {
       thr_check_addr(thr, addr);
       thr_put_bit(thr, addr, bit);
+}
+
+# define CPU_BITS (8*sizeof(unsigned long))
+# define TOP_BIT (1UL << (CPU_BITS-1))
+
+static unsigned long* vector_to_array(struct vthread_s*thr,
+				      unsigned addr, unsigned wid)
+{
+      unsigned awid = (wid + CPU_BITS - 1) / (8*sizeof(unsigned long));
+      unsigned long*val = new unsigned long[awid];
+
+      for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
+	    val[0] = 0;
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    unsigned bit = thr_get_bit(thr, addr);
+
+	    if (bit & 2)
+		  goto x_out;
+
+	    val[idx/CPU_BITS] |= bit << (idx % CPU_BITS);
+	    if (addr >= 4)
+		  addr += 1;
+      }
+
+      return val;
+
+ x_out:
+      delete[]val;
+      return 0;
 }
 
 
@@ -298,44 +328,22 @@ bool of_AND(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-# define CPU_BITS (8*sizeof(unsigned long))
-# define TOP_BIT (1UL << (CPU_BITS-1))
 
 bool of_ADD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
+      unsigned long*lva = vector_to_array(thr, cp->bit_idx1, cp->number);
+      unsigned long*lvb = vector_to_array(thr, cp->bit_idx2, cp->number);
+      if (lva == 0 || lvb == 0)
+	    goto x_out;
 
-      unsigned awid = cp->number / (8*sizeof(unsigned long)) + 1;
-      unsigned long*lva = new unsigned long [awid+1];
-      unsigned long*rva = new unsigned long [awid+1];
-      for (unsigned idx = 0 ;  idx < awid ;  idx += 1) {
-	    lva[idx] = 0;
-	    rva[idx] = 0;
-      }
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
-
-	    if ((lb | rb) & 2)
-		  goto x_out;
-
-	    lva[idx/CPU_BITS] |= lb << (idx % CPU_BITS);
-	    rva[idx/CPU_BITS] |= rb << (idx % CPU_BITS);
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
-      }
 
       unsigned long carry;
       carry = 0;
-      for (unsigned idx = 0 ;  idx < awid ;  idx += 1) {
-	    unsigned long tmp = (lva[idx] | rva[idx]) & TOP_BIT;
-	    lva[idx] += rva[idx] + carry;
+      for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
+	    unsigned long tmp = (lva[idx] | lvb[idx]) & TOP_BIT;
+	    lva[idx] += lvb[idx] + carry;
 	    carry = (tmp > lva[idx]) ? 1 : 0;
       }
 
@@ -345,13 +353,13 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       }
 
       delete[]lva;
-      delete[]rva;
+      delete[]lvb;
 
       return true;
 
  x_out:
       delete[]lva;
-      delete[]rva;
+      delete[]lvb;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
@@ -1127,37 +1135,36 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
-      assert(cp->number <= 8*sizeof(unsigned long));
 
-      unsigned idx1 = cp->bit_idx1;
-      unsigned idx2 = cp->bit_idx2;
-      unsigned long lv = 0, rv = 0;
+      unsigned long*lva = vector_to_array(thr, cp->bit_idx1, cp->number);
+      unsigned long*lvb = vector_to_array(thr, cp->bit_idx2, cp->number);
+      if (lva == 0 || lvb == 0)
+	    goto x_out;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
 
-	    if ((lb | rb) & 2)
-		  goto x_out;
-
-	    lv |= lb << idx;
-	    rv |= rb << idx;
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
+      unsigned long carry;
+      carry = 1;
+      for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
+	    unsigned long r_inv = ~lvb[idx];
+	    unsigned long tmp = (lva[idx] | r_inv) & TOP_BIT;
+	    lva[idx] += r_inv + carry;
+	    carry = (tmp > lva[idx]) ? 1 : 0;
       }
 
-      lv -= rv;
-
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
-	    lv >>= 1;
+	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
+	    thr_put_bit(thr, cp->bit_idx1+idx, (bit&1) ? 1 : 0);
       }
+
+      delete[]lva;
+      delete[]lvb;
 
       return true;
 
  x_out:
+      delete[]lva;
+      delete[]lvb;
+
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
 
@@ -1274,6 +1281,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.48  2001/07/04 04:57:10  steve
+ *  Relax limit on behavioral subtraction.
+ *
  * Revision 1.47  2001/06/30 21:07:26  steve
  *  Support non-const right shift (unsigned).
  *
