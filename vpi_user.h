@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.32 2004/01/13 02:55:50 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.33 2004/02/19 21:32:46 steve Exp $"
 #endif
 
 
@@ -56,7 +56,7 @@ typedef struct __vpiHandle *vpiHandle;
  */
 typedef struct t_vpi_systf_data {
       PLI_INT32 type;
-      PLI_INT32 subtype;
+      PLI_INT32 sysfunctype;
       const char *tfname;
       PLI_INT32 (*calltf)(char*);
       PLI_INT32 (*compiletf)(char*);
@@ -203,6 +203,10 @@ typedef struct t_vpi_value {
 #   define vpiIntFunc     1
 #   define vpiRealFunc    2
 #   define vpiTimeFunc    3
+#define vpiSysFuncType    vpiFuncType
+#   define vpiSysFuncInt  vpiIntFunc
+#   define vpiSysFuncReal vpiRealFunc
+#   define vpiSysFuncTime vpiTimeFunc
 #define vpiSigned    65
 /* IVL private properties */
 #define _vpiNexusId 0x1000000
@@ -412,6 +416,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.33  2004/02/19 21:32:46  steve
+ *  Add sysfunctype to calltf structure.
+ *
  * Revision 1.32  2004/01/13 02:55:50  steve
  *  Get value for vpoiConstType correct.
  *
