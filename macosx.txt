@@ -33,7 +33,16 @@ install software from source form.
   then just make sure the distributed lexor_keyword.cc is newer then
   lexor_keyword.gperf, and use that.
 
-3)  Configure, build and install the Icarus Verilog sources as normal.
+3) If working with a CVS snapshot, you must run autoconf in several
+   directories.  This is aided by the 'autoconf.sh' script at the 
+   top of the source tree:
+
+   sh ./autoconf.sh
+
+   This will also run the gperf command, so make sure you'd completed
+   step #2 first.
+
+4)  Configure, build and install the Icarus Verilog sources as normal.
 
   The only change you need to make here is to use a configure command like:
 
@@ -47,8 +56,17 @@ install software from source form.
 
   You can, of course, add other configure options.
 
+6) NOTE: 'make check' will not work until after 'make install' has been run
+   since dynamically loaded code is searched for in the install location
+   rather than the build location.  The dlopen emulation library doesn't
+   support a search path option.
 
-4) Done!
+   If you are worried about overwriting a working installation with a new,
+   potentially broken one, you can always configure using --prefix="/some/path",
+   and install there to make sure everything is working and then re-configure
+   with the real path you want to install at, make clean, and make install.
+
+5) Done!
 
 
 GPERF FOR MACOSX
