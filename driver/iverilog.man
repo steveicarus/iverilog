@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2002/04/15 00:04:23 $" Version "$Date: 2002/04/15 00:04:23 $"
+.TH iverilog 1 "$Date: 2002/04/24 02:02:31 $" Version "$Date: 2002/04/24 02:02:31 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -177,7 +177,9 @@ mostly by EDIF format output.
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
-switch.
+switch. All the warning types (other then \fBall\fP) can also be
+prefixed with \fBno-\fP to turn of that warning. This is most useful
+after a \fB-Wall\fP argument to suppress isolated warning types.
 
 .TP 8
 .B all
