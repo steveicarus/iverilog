@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.3 1998/11/09 18:55:35 steve Exp $"
+#ident "$Id: verinum.cc,v 1.4 1998/11/09 19:03:26 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -178,6 +178,7 @@ ostream& operator<< (ostream&o, verinum::V v)
 	    o << "z";
 	    break;
       }
+      return o;
 }
 
 ostream& operator<< (ostream&o, const verinum&v)
@@ -208,6 +209,9 @@ ostream& operator<< (ostream&o, const verinum&v)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.4  1998/11/09 19:03:26  steve
+ *  Oops, forgot return from operator<<
+ *
  * Revision 1.3  1998/11/09 18:55:35  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,
