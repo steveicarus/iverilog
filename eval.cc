@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.28 2002/06/06 18:57:04 steve Exp $"
+#ident "$Id: eval.cc,v 1.29 2002/06/07 02:57:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -142,24 +142,13 @@ verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
       if (expr == 0)
 	    return 0;
 
-      if (msb_ != 0) {
-	    cerr << get_line() << ": internal error: unexpected index "
-		 << "to " << path_ << " in scope " << scope->name() << endl;
-	    cerr << get_line() << ":               : expression is: "
-		 << *msb_ << endl;
-	    return 0;
-      }
-
-      assert(msb_ == 0);
-
-      if (dynamic_cast<const NetEParam*>(expr)) {
-	    cerr << get_line() << ": sorry: I cannot evaluate ``" <<
-		  path_ << "'' in this scope: " << scope->name() << endl;
-	    return 0;
-      }
-
       const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       assert(eval);
+
+      if (msb_ || lsb_)
+	    return 0;
+
+
       return new verinum(eval->value());
 }
 
@@ -230,6 +219,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.29  2002/06/07 02:57:54  steve
+ *  Simply give up on constants with indices.
+ *
  * Revision 1.28  2002/06/06 18:57:04  steve
  *  Better error for identifier index eval.
  *
