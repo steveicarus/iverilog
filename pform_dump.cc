@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.41 1999/09/29 20:23:53 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.42 1999/09/29 21:15:58 steve Exp $"
 #endif
 
 /*
@@ -294,8 +294,10 @@ void PGModule::dump(ostream&out) const
 	    if (pins_[0].parm) out << *pins_[0].parm;
 	    out << ")";
 	    for (unsigned idx = 1 ;  idx < npins_ ;  idx += 1) {
-		  out << ", ." << pins_[idx].name << "(" <<
-			*pins_[idx].parm << ")";
+		  out << ", ." << pins_[idx].name << "(";
+		  if (pins_[idx].parm)
+			out << *pins_[idx].parm;
+		  out << ")";
 	    }
       } else {
 	    dump_pins(out);
@@ -335,7 +337,10 @@ void PBlock::dump(ostream&out, unsigned ind) const
       out << endl;
 
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
-	    list_[idx]->dump(out, ind+2);
+	    if (list_[idx])
+		  list_[idx]->dump(out, ind+2);
+	    else
+		  out << setw(ind+2) << "" << "/* NOOP */ ;" << endl;
       }
 
       out << setw(ind) << "" << "end" << endl;
@@ -658,6 +663,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.42  1999/09/29 21:15:58  steve
+ *  Handle some mor missing names.
+ *
  * Revision 1.41  1999/09/29 20:23:53  steve
  *  Handle empty named ports in the dump.
  *
