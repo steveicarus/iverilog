@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.45 2003/08/06 18:24:55 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.46 2003/08/22 23:14:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -516,9 +516,18 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  info->cb    = vpi_register_cb(&cb);
 	    }
 	    
-	    fprintf(dump_file, "$var %s %u %s %s $end\n",
+	    fprintf(dump_file, "$var %s %u %s %s",
 		    type, vpi_get(vpiSize, item), ident,
 		    name);
+      /* FIXME
+	    if (vpi_get(vpiVector, item)
+      */
+	    if (vpi_get(vpiSize, item) > 1
+		|| vpi_get(vpiLeftRange, item) != 0) {
+		  fprintf(dump_file, "[%i:%i]", vpi_get(vpiLeftRange, item),
+			  vpi_get(vpiRightRange, item));
+	    }
+	    fprintf(dump_file, " $end\n");
 	    break;
 
 	  case vpiRealVar:
@@ -793,6 +802,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.46  2003/08/22 23:14:27  steve
+ *  Preserve variable ranges all the way to the vpi.
+ *
  * Revision 1.45  2003/08/06 18:24:55  steve
  *  Fix error truncating bitvec in output.
  *

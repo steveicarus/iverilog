@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.95 2003/07/30 01:13:28 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.96 2003/08/22 23:14:26 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -561,8 +561,8 @@ void draw_input_from_net(ivl_nexus_t nex)
  */
 static void draw_reg_in_scope(ivl_signal_t sig)
 {
-      int msb = ivl_signal_pins(sig) - 1;
-      int lsb = 0;
+      int msb = ivl_signal_msb(sig);
+      int lsb = ivl_signal_lsb(sig);
 
       const char*signed_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";
@@ -579,8 +579,8 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 static void draw_net_in_scope(ivl_signal_t sig)
 {
       unsigned idx;
-      int msb = ivl_signal_pins(sig) - 1;
-      int lsb = 0;
+      int msb = ivl_signal_msb(sig);
+      int lsb = ivl_signal_lsb(sig);
       typedef const char*const_charp;
       const_charp* args;
 
@@ -1654,6 +1654,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.96  2003/08/22 23:14:26  steve
+ *  Preserve variable ranges all the way to the vpi.
+ *
  * Revision 1.95  2003/07/30 01:13:28  steve
  *  Add support for triand and trior.
  *

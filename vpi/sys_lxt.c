@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.21 2003/05/15 16:51:09 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.22 2003/08/22 23:14:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -522,7 +522,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  info->time.type = vpiSimTime;
 		  info->item  = item;
-		  info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiSize, item)-1, 0, LT_SYM_F_BITS);
+		  info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiLeftRange, item), vpi_get(vpiRightRange, item), LT_SYM_F_BITS);
 		  info->scheduled = 0;
 
 		  cb.time      = &info->time;
@@ -794,6 +794,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.22  2003/08/22 23:14:27  steve
+ *  Preserve variable ranges all the way to the vpi.
+ *
  * Revision 1.21  2003/05/15 16:51:09  steve
  *  Arrange for mcd id=00_00_00_01 to go to stdout
  *  as well as a user specified log file, set log

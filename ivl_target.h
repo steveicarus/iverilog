@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.121 2003/08/15 02:23:52 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.122 2003/08/22 23:14:26 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -1027,6 +1027,13 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    signal. If the signal is a vector, the idx can be a non-zero
  *    value, and the result is the nexus for the specified bit.
  *
+ * ivl_signal_msb
+ * ivl_signal_lsb
+ *    These functions return the left and right indices, respectively,
+ *    of the signal. If the signal is a scalar, both return 0. However,
+ *    it doesn't mean that the signal is a scalar if both return 0, one
+ *    can have a vector with 0 as both indices.
+ *
  * ivl_signal_port
  *    If the signal is a port to a module, this function returns the
  *    port direction. If the signal is not a port, it returns
@@ -1069,6 +1076,8 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
 
 extern ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx);
 extern unsigned    ivl_signal_pins(ivl_signal_t net);
+extern int         ivl_signal_msb(ivl_signal_t net);
+extern int         ivl_signal_lsb(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
 extern int         ivl_signal_integer(ivl_signal_t net);
@@ -1223,6 +1232,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.122  2003/08/22 23:14:26  steve
+ *  Preserve variable ranges all the way to the vpi.
+ *
  * Revision 1.121  2003/08/15 02:23:52  steve
  *  Add synthesis support for synchronous reset.
  *

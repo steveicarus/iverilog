@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.102 2003/08/15 02:23:53 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.103 2003/08/22 23:14:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1490,6 +1490,17 @@ extern "C" unsigned ivl_signal_pins(ivl_signal_t net)
       return net->width_;
 }
 
+extern "C" int ivl_signal_msb(ivl_signal_t net)
+{
+      assert(net->lsb_dist == 1 || net->lsb_dist == -1);
+      return net->lsb_index + net->lsb_dist * (net->width_ - 1);
+}
+
+extern "C" int ivl_signal_lsb(ivl_signal_t net)
+{
+      return net->lsb_index;
+}
+
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
 {
       return net->port_;
@@ -1872,6 +1883,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.103  2003/08/22 23:14:26  steve
+ *  Preserve variable ranges all the way to the vpi.
+ *
  * Revision 1.102  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
  *
