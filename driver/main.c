@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.41 2002/05/28 20:40:37 steve Exp $"
+#ident "$Id: main.c,v 1.42 2002/07/14 23:11:35 steve Exp $"
 
 # include "config.h"
 
@@ -121,6 +121,34 @@ char line[MAXSIZE];
 char tmp[MAXSIZE];
 
 static char ivl_root[MAXSIZE];
+
+static const char*my_tempfile(const char*str, FILE**fout)
+{
+      FILE*file;
+      int retry;
+
+      static char pathbuf[8192];
+
+      const char*tmpdir = getenv("TMP");
+      if (tmpdir == 0)
+	    tmpdir = getenv("TMPDIR");
+      if (tmpdir == 0)
+	    tmpdir = getenv("TEMP");
+      assert(tmpdir);
+      assert((strlen(tmpdir) + strlen(str)) < sizeof pathbuf - 10);
+
+      retry = 100;
+      file = NULL;
+      while ((retry > 0) && (file == NULL)) {
+	    unsigned code = rand();
+	    sprintf(pathbuf, "%s%c%s%04x", tmpdir, sep, str, code);
+	    file = fopen(pathbuf, "w");
+	    retry -= 1;
+      }
+
+      *fout = file;
+      return pathbuf;
+}
 
 /*
  * This is the default target type. It looks up the bits that are
@@ -414,6 +442,7 @@ int main(int argc, char **argv)
 
 	base = ivl_root;
       }
+
 #else
         /* In a UNIX environment, the IVL_ROOT from the Makefile is
 	   dependable. It points to the $prefix/lib/ivl directory,
@@ -424,9 +453,7 @@ int main(int argc, char **argv)
 
 	/* Create a temporary file for communicating input parameters
 	   to the preprocessor. */
-      source_path = strdup(tempnam(NULL, "ivrlg"));
-      assert(source_path);
-      source_file = fopen(source_path, "w");
+      source_path = strdup(my_tempfile("ivrlg", &source_file));
       if (NULL == source_file) {
 	    fprintf(stderr, "%s: Error opening temporary file %s\n",
 		    argv[0], source_path);
@@ -436,9 +463,7 @@ int main(int argc, char **argv)
 
 	/* Create another temporary file for passing configuration
 	   information to ivl. */
-      iconfig_path = strdup(tempnam(NULL, "ivrlh"));
-      assert(iconfig_path);
-      iconfig_file = fopen(iconfig_path, "w");
+      iconfig_path = strdup(my_tempfile("ivrlh", &iconfig_file));
       if (NULL == iconfig_file) {
 	    fprintf(stderr, "%s: Error opening temporary file %s\n",
 		    argv[0], iconfig_path);
@@ -721,6 +746,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.42  2002/07/14 23:11:35  steve
+ *  Do temp file creation by hand.
+ *
  * Revision 1.41  2002/05/28 20:40:37  steve
  *  ivl indexes the search path for libraries, and
  *  supports case insensitive module-to-file lookup.
