@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.59 2005/01/09 20:11:15 steve Exp $"
+#ident "$Id: compile.h,v 1.60 2005/01/22 01:06:20 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -124,6 +124,8 @@ extern void compile_arith_sum(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eeq(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_eq(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ne(char*label, long width,
@@ -285,6 +287,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.60  2005/01/22 01:06:20  steve
+ *  Implement the .cmp/eeq LPM node.
+ *
  * Revision 1.59  2005/01/09 20:11:15  steve
  *  Add the .part/pv node and related functionality.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.46 2005/01/09 20:11:15 steve Exp $"
+#ident "$Id: lexor.lex,v 1.47 2005/01/22 01:06:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -89,6 +89,7 @@
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sum"  { return K_ARITH_SUM; }
+".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
 ".cmp/ne"   { return K_CMP_NE; }
 ".cmp/ge"   { return K_CMP_GE; }
@@ -185,6 +186,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.47  2005/01/22 01:06:20  steve
+ *  Implement the .cmp/eeq LPM node.
+ *
  * Revision 1.46  2005/01/09 20:11:15  steve
  *  Add the .part/pv node and related functionality.
  *

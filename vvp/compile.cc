@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.180 2005/01/16 04:19:08 steve Exp $"
+#ident "$Id: compile.cc,v 1.181 2005/01/22 01:06:20 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -910,6 +910,22 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, wid, argc, argv);
 }
 
+void compile_cmp_eeq(char*label, long wid,
+		     unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eeq has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_eeq(wid);
+
+      make_arith(arith, label, wid, argc, argv);
+}
+
 void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
@@ -1564,6 +1580,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.181  2005/01/22 01:06:20  steve
+ *  Implement the .cmp/eeq LPM node.
+ *
  * Revision 1.180  2005/01/16 04:19:08  steve
  *  Reimplement comparators as vvp_vector4_t nodes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.32 2005/01/16 04:19:08 steve Exp $"
+#ident "$Id: arith.cc,v 1.33 2005/01/22 01:06:20 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -35,6 +35,24 @@ vvp_arith_::vvp_arith_(unsigned wid)
 {
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 	    x_val_.set_bit(idx, BIT4_X);
+
+      op_a_ = x_val_;
+      op_b_ = x_val_;
+}
+
+void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      unsigned port = ptr.port();
+      switch (port) {
+	  case 0:
+	    op_a_ = bit;
+	    break;
+	  case 1:
+	    op_b_ = bit;
+	    break;
+	  default:
+	    assert(0);
+      }
 }
 
 
@@ -321,18 +339,7 @@ vvp_arith_sub::~vvp_arith_sub()
  */
 void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      unsigned port = ptr.port();
-
-      switch (port) {
-	  case 0:
-	    op_a_ = bit;
-	    break;
-	  case 1:
-	    op_b_ = bit;
-	    break;
-	  default:
-	    assert(0);
-      }
+      dispatch_operand_(ptr, bit);
 
       vvp_net_t*net = ptr.ptr();
 
@@ -359,7 +366,28 @@ void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       vvp_send_vec4(net->out, value);
 }
 
+vvp_cmp_eeq::vvp_cmp_eeq(unsigned wid)
+: vvp_arith_(wid)
+{
+}
 
+void vvp_cmp_eeq::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      dispatch_operand_(ptr, bit);
+
+      vvp_vector4_t eeq (1);
+      eeq.set_bit(0, BIT4_1);
+
+      assert(op_a_.size() == op_b_.size());
+      for (unsigned idx = 0 ;  idx < op_a_.size() ;  idx += 1)
+	    if (op_a_.value(idx) != op_b_.value(idx)) {
+		  eeq.set_bit(0, BIT4_0);
+		  break;
+	    }
+
+      vvp_net_t*net = ptr.ptr();
+      vvp_send_vec4(net->out, eeq);
+}
 
 vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
 : vvp_arith_(wid)
@@ -594,6 +622,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.33  2005/01/22 01:06:20  steve
+ *  Implement the .cmp/eeq LPM node.
+ *
  * Revision 1.32  2005/01/16 04:19:08  steve
  *  Reimplement comparators as vvp_vector4_t nodes.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.53 2005/01/16 04:19:08 steve Exp $
+ *  $Id: README.txt,v 1.54 2005/01/22 01:06:20 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -550,6 +550,7 @@ have wide outputs, but the comparators have single bit output, so they
 are implemented a bit differently. The syntax, however, is very
 similar:
 
+	<label> .cmp/eeq <wid>, <A>, <B>;
 	<label> .cmp/eq  <wid>, <A>, <B>;
 	<label> .cmp/ne  <wid>, <A>, <B>;
 	<label> .cmp/ge  <wid>, <A>, <B>;
@@ -557,10 +558,10 @@ similar:
 	<label> .cmp/ge.s <wid>, <A>, <B>;
 	<label> .cmp/gt.s <wid>, <A>, <B>;
 
-Whereas the arithmetic statements generate an outpout the width if
+Whereas the arithmetic statements generate an output the width of
 <wid>, the comparisons produce a single bit vector result. The plain
 versions do unsigned comparison, but the ".s" versions to signed
-comparisons. (Eqlality doesn't need to care about sign.)
+comparisons. (Equality doesn't need to care about sign.)
 
 
 STRUCTURAL SHIFTER STATEMENTS:

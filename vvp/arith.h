@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.21 2005/01/16 04:19:08 steve Exp $"
+#ident "$Id: arith.h,v 1.22 2005/01/22 01:06:20 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -30,11 +30,19 @@
  * The wid constructor is used to size the output. This includes
  * precalculating an X value. Most arithmetic nodes can handle
  * whatever width comes in, given the knowledge of the output width.
+ *
+ * The width is also used to make initial values for the op_a_ and
+ * op_b_ operands. Most arithmetic operators expect the widths of the
+ * inputs to match, and since only one input at a time changes, the
+ * other will need to be initialized to X.
  */
 class vvp_arith_  : public vvp_net_fun_t {
 
     public:
       explicit vvp_arith_(unsigned wid);
+
+    protected:
+      void dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 
     protected:
       unsigned wid_;
@@ -100,6 +108,15 @@ class vvp_arith_sub  : public vvp_arith_ {
 
     public:
       virtual void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+};
+
+class vvp_cmp_eeq  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_eeq(unsigned wid);
+
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
 
 };
 
@@ -171,6 +188,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.22  2005/01/22 01:06:20  steve
+ *  Implement the .cmp/eeq LPM node.
+ *
  * Revision 1.21  2005/01/16 04:19:08  steve
  *  Reimplement comparators as vvp_vector4_t nodes.
  *
