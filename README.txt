@@ -59,6 +59,14 @@ on a UNIX-like system:
 	  A version problem with this program is the most common cause
 	  of difficulty. See the Icarus Verilog FAQ.
 
+	- readline 4.2
+	  On Linux systems, this usually means the readline-devel
+	  rpm. In any case, it is the development headers of readline
+	  that are needed.
+
+	- termcap
+	  The readline library in turn uses termcap.
+
 2.2 Compilation
 
 Unpack the tar-ball and cd into the verilog-######### directory
