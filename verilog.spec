@@ -23,11 +23,19 @@ to the IEEE-1364 standard.
 %setup -n verilog-20030722
 
 %build
+%ifarch x86_64
+./configure --prefix=/usr --libdir=/usr/lib64
+%else
 ./configure --prefix=/usr
+%endif
 make CXXFLAGS=-O
 
 %install
+%ifarch x86_64
+make prefix=$RPM_BUILD_ROOT/usr libdir=$RPM_BUILD_ROOT/usr/lib64 install
+%else
 make prefix=$RPM_BUILD_ROOT/usr install
+%endif
 
 %files
 
@@ -41,6 +49,18 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/bin/iverilog
 %attr(-,root,root) /usr/bin/iverilog-vpi
 %attr(-,root,root) /usr/bin/vvp
+%ifarch x86_64
+%attr(-,root,root) /usr/lib64/ivl/ivl
+%attr(-,root,root) /usr/lib64/ivl/ivlpp
+%attr(-,root,root) /usr/lib64/ivl/system.vpi
+%attr(-,root,root) /usr/lib64/ivl/cadpli.vpl
+%attr(-,root,root) /usr/lib64/ivl/null.tgt
+%attr(-,root,root) /usr/lib64/ivl/vvp.tgt
+%attr(-,root,root) /usr/lib64/ivl/fpga.tgt
+%attr(-,root,root) /usr/lib64/ivl/iverilog.conf
+%attr(-,root,root) /usr/lib64/libvpi.a
+%attr(-,root,root) /usr/lib64/libveriuser.a
+%else
 %attr(-,root,root) /usr/lib/ivl/ivl
 %attr(-,root,root) /usr/lib/ivl/ivlpp
 %attr(-,root,root) /usr/lib/ivl/system.vpi
@@ -51,6 +71,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %attr(-,root,root) /usr/lib/libvpi.a
 %attr(-,root,root) /usr/lib/libveriuser.a
+%endif
 %attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h
