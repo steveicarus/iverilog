@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.28 2002/07/05 20:08:44 steve Exp $"
+#ident "$Id: main.cc,v 1.29 2002/07/15 00:21:42 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -53,6 +53,8 @@ extern "C" int getopt(int argc, char*argv[], const char*fmt);
 extern "C" int optind;
 extern "C" const char*optarg;
 #endif
+
+bool verbose_flag = false;
 
 
 #if defined(HAVE_SYS_RESOURCE_H)
@@ -122,7 +124,6 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       const char*design_path = 0;
       bool debug_flag = false;
-      bool verbose_flag = false;
       struct rusage cycles[3];
       const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
@@ -279,6 +280,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.29  2002/07/15 00:21:42  steve
+ *  Fix initialization of symbol table string heap.
+ *
  * Revision 1.28  2002/07/05 20:08:44  steve
  *  Count different types of functors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.8 2002/07/09 03:20:51 steve Exp $"
+#ident "$Id: symbols.cc,v 1.9 2002/07/15 00:21:42 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -120,6 +120,7 @@ symbol_table_t new_symbol_table(void)
       tbl->root->parent = 0;
 
       tbl->str_chunk = new key_strings;
+      tbl->str_chunk->next = 0;
       tbl->str_used = 0;
 
       return tbl;
@@ -421,6 +422,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.9  2002/07/15 00:21:42  steve
+ *  Fix initialization of symbol table string heap.
+ *
  * Revision 1.8  2002/07/09 03:20:51  steve
  *  Fix split of root btree node.
  *

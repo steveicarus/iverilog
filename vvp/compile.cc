@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.135 2002/07/05 20:08:44 steve Exp $"
+#ident "$Id: compile.cc,v 1.136 2002/07/15 00:21:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -468,6 +468,11 @@ void compile_cleanup(void)
       int nerrs = 0;
       int last;
       
+      if (verbose_flag) {
+	    fprintf(stderr, " ... Linking\n");
+	    fflush(stderr);
+      }
+
       do {
 	    struct resolv_list_s *res = resolv_list;
 	    resolv_list = 0x0;
@@ -492,6 +497,11 @@ void compile_cleanup(void)
       } while (nerrs && !last);
 
       compile_errors += nerrs;
+
+      if (verbose_flag) {
+	    fprintf(stderr, " ... Removing symbol tables\n");
+	    fflush(stderr);
+      }
 
 	/* After compile is complete, the vpi symbol table is no
 	   longer needed. VPI objects are located by following
@@ -1423,6 +1433,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.136  2002/07/15 00:21:42  steve
+ *  Fix initialization of symbol table string heap.
+ *
  * Revision 1.135  2002/07/05 20:08:44  steve
  *  Count different types of functors.
  *

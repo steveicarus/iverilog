@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.43 2002/06/21 04:58:55 steve Exp $"
+#ident "$Id: compile.h,v 1.44 2002/07/15 00:21:42 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -38,6 +38,8 @@
 extern void compile_init(void);
 
 extern void compile_cleanup(void);
+
+extern bool verbose_flag;
 
 /*
  *  Connect a list of symbols to a contiguous set of ipoints.
@@ -249,6 +251,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.44  2002/07/15 00:21:42  steve
+ *  Fix initialization of symbol table string heap.
+ *
  * Revision 1.43  2002/06/21 04:58:55  steve
  *  Add support for special integer vectors.
  *
