@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.68 2003/02/27 06:45:11 steve Exp $"
+#ident "$Id: pform.h,v 1.69 2003/04/14 03:39:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -148,6 +148,10 @@ extern void pform_make_udp(const char*name, list<string>*parms,
 extern void pform_push_scope(char*name);
 extern void pform_pop_scope();
 
+
+extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
+					const char*file, unsigned loneno);
+
 /*
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
@@ -275,6 +279,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.69  2003/04/14 03:39:15  steve
+ *  Break sized constants into a size token
+ *  and a based numeric constant.
+ *
  * Revision 1.68  2003/02/27 06:45:11  steve
  *  specparams as far as pform.
  *

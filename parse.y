@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.174 2003/03/18 01:36:14 steve Exp $"
+#ident "$Id: parse.y,v 1.175 2003/04/14 03:37:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -117,7 +117,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
 %token <text>   PATHPULSE_IDENTIFIER
-%token <number> NUMBER
+%token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
 %token K_PO_POS K_PO_NEG
@@ -145,6 +145,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %token KK_attribute
 
+%type <number>  number
 %type <flag>    signed_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -230,6 +231,14 @@ main : source_file | ;
 source_file
 	: description
 	| source_file description
+	;
+
+number  : BASED_NUMBER
+	     { $$ = $1; }
+        | DEC_NUMBER
+	     { $$ = $1; }
+        | DEC_NUMBER BASED_NUMBER
+	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line); }
 	;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a
@@ -478,7 +487,7 @@ delay_value
 	
 
 delay_value_simple
-	: NUMBER
+	: DEC_NUMBER
 		{ verinum*tmp = $1;
 		  if (tmp == 0) {
 			yyerror(@1, "internal error: delay.");
@@ -879,7 +888,7 @@ expression_list
 
 
 expr_primary
-	: NUMBER
+	: number
 		{ assert($1);
 		  PENumber*tmp = new PENumber($1);
 		  tmp->set_file(@1.text);
@@ -1762,7 +1771,7 @@ parameter_value_opt
 		  tmp->by_name = $3;
 		  $$ = tmp;
 		}
-	| '#' NUMBER
+	| '#' DEC_NUMBER
 		{ assert($2);
 		  PENumber*tmp = new PENumber($2);
 		  tmp->set_file(@1.text);
@@ -2763,7 +2772,7 @@ udp_sequ_entry
 	;
 
 udp_initial
-	: K_initial IDENTIFIER '=' NUMBER ';'
+	: K_initial IDENTIFIER '=' number ';'
 		{ PExpr*etmp = new PENumber($4);
 		  PEIdent*itmp = new PEIdent(hname_t($2));
 		  PAssign*atmp = new PAssign(itmp, etmp);

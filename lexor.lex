@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.77 2003/03/18 01:36:14 steve Exp $"
+#ident "$Id: lexor.lex,v 1.78 2003/04/14 03:37:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -80,10 +80,6 @@ void reset_lexor();
 static void line_directive();
 static void line_directive2();
 
-static verinum*make_sized_binary(const char*txt);
-static verinum*make_sized_dec(const char*txt);
-static verinum*make_sized_octal(const char*txt);
-static verinum*make_sized_hex(const char*txt);
 static verinum*make_unsized_binary(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
 static verinum*make_unsized_octal(const char*txt);
@@ -228,67 +224,19 @@ W [ \t\b\f\r]+
       yylval.text = strdup(yytext);
       return SYSTEM_IDENTIFIER; }
 
-[0-9][0-9_]*[ \t]*\'[sS]?[dD][ \t]*[0-9][0-9_]* {
-      yylval.number = make_sized_dec(yytext);
-      return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ {
-      yylval.number = make_sized_binary(yytext);
-      return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ {
-      yylval.number = make_sized_octal(yytext);
-      return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ {
-      yylval.number = make_sized_hex(yytext);
-      return NUMBER; }
 
 \'[sS]?[dD][ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
-                            return NUMBER; }
+                            return BASED_NUMBER; }
 \'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
-                        return NUMBER; }
+                        return BASED_NUMBER; }
 \'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
-                        return NUMBER; }
+                        return BASED_NUMBER; }
 \'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
-                              return NUMBER; }
+                              return BASED_NUMBER; }
 
-[0-9][0-9_]*		 {
-      char buf[4096];
-
-      if (strlen(yytext) >= sizeof(buf)-2){
-	  fprintf(stderr, "Ridicilously long decimal constant will be truncated!\n");
-      }
-
-      strncpy(buf, yytext, sizeof(buf)-2);
-      buf[sizeof(buf)-1] = 0;
-
-      /* Convert the decimal number to a binary value, one digit at
-	 a time. Watch out for overflow. */
-      verinum::V*bits = new verinum::V[INTEGER_WIDTH];
-      unsigned idx=0;
-      unsigned nbits=INTEGER_WIDTH;
-
-      while(idx<nbits){
-	  int rem = dec_buf_div2(buf);
-
-	  bits[idx] = (rem==1) ? verinum::V1 : verinum::V0;
-	  ++idx;
-      }
-
-      for(; idx<nbits; ++idx){
-	  bits[idx] = verinum::V0;
-      }
-      
-      /* If we run out of bits to hold the value, but there are
-	 still valueable bits in the number, print a warning. */
-      if (strcmp(buf, "0") != 0){
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric decimal constant ``" << yytext <<
-           "'' truncated to " << nbits << " bits." << endl;
-      }
-
-      yylval.number = new verinum(bits, nbits, false);
-      yylval.number->has_sign(true);
-      delete[]bits;
-      return NUMBER; }
+[0-9][0-9_]* {
+      yylval.number = make_unsized_dec(yytext);
+      return DEC_NUMBER; }
 
 [0-9][0-9_]*\.[0-9][0-9_]*([Ee][+-]?[0-9][0-9_]*)? {
       yylval.realtime = new verireal(yytext);
@@ -397,96 +345,6 @@ void lex_end_table()
       BEGIN(INITIAL);
 }
 
-static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
-{
-      bool sign_flag = false;
-      verinum::V*bits = new verinum::V[size];
-
-      if (tolower(ptr[0]) == 's') {
-	    ptr += 1;
-	    sign_flag = true;
-      }
-      assert(tolower(*ptr) == 'b');
-      ptr += 1;
-
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-
-      unsigned idx = 0;
-      const char*eptr = ptr + strlen(ptr) - 1;
-
-      while ((eptr >= ptr) && (idx < size)) {
-
-	    switch (*eptr) {
-		case '_':
-		  break;
-		case '0':
-		  bits[idx++] = verinum::V0;
-		  break;
-		case '1':
-		  bits[idx++] = verinum::V1;
-		  break;
-		case 'z': case 'Z': case '?':
-		  bits[idx++] = verinum::Vz;
-		  break;
-		case 'x': case 'X':
-		  bits[idx++] = verinum::Vx;
-		  break;
-		default:
-		  assert(0);
-	    }
-
-	    eptr -= 1;
-      }
-
-
-	/* If we filled up the expected number of bits, but there are
-	   still characters of the number part left, then report a
-	   warning that we are truncating. */
-
-      if ((idx >= size) && (eptr >= ptr))
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric binary constant ``" << ptr <<
-           "'' truncated to " << size << " bits." << endl;
-
-
-	// Zero-extend binary number, except that z or x is extended
-	// if it is the highest supplied digit.
-      while (idx < size) {
-	    switch (ptr[0]) {
-		case '0':
-		case '1':
-		  bits[idx++] = verinum::V0;
-		  break;
-		case 'z': case 'Z': case '?':
-		  bits[idx++] = verinum::Vz;
-		  break;
-		case 'x': case 'X':
-		  bits[idx++] = verinum::Vx;
-		  break;
-		default:
-		  assert(0);
-	    }
-      }
-
-      verinum*out = new verinum(bits, size, fixed);
-      delete[]bits;
-      out->has_sign(sign_flag);
-      return out;
-}
-
-static verinum*make_sized_binary(const char*txt)
-{
-      char*ptr;
-      unsigned size = strtoul(txt,&ptr,10);
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-      assert(*ptr == '\'');
-      ptr += 1;
-
-      return make_binary_with_size(size, true, ptr);
-}
-
 static verinum*make_unsized_binary(const char*txt)
 {
       bool sign_flag = false;
@@ -538,95 +396,6 @@ static verinum*make_unsized_binary(const char*txt)
       return out;
 }
 
-static verinum*make_sized_octal(const char*txt)
-{
-      bool sign_flag = false;
-      char*ptr;
-
-      unsigned size = strtoul(txt,&ptr,10);
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-      assert(*ptr == '\'');
-      ptr += 1;
-
-      if (tolower(*ptr) == 's') {
-	    sign_flag = true;
-	    ptr += 1;
-      }
-      assert(tolower(*ptr) == 'o');
-      ptr += 1;
-
-	/* We know from the size number how bit to make the verinum
-	   array, so make it now. */
-      verinum::V*bits = new verinum::V[(size+2)/3 * 3];
-
-	/* skip white space between size and the base token. */
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-
-	/* Get a pointer to the last character of the number string,
-	   then work back from there (the least significant digit)
-	   forward until I run out of digits or space to put them. */
-      char*eptr = ptr + strlen(ptr) - 1;
-      unsigned idx = 0;
-
-      while ((eptr >= ptr) && (idx < size)) {
-	    switch (*eptr) {
-		case 'x': case 'X':
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  break;
-		case 'z': case 'Z': case '?':
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  break;
-		case '0': case '1': case '2': case '3':
-		case '4': case '5': case '6': case '7':
-		    {
-			  unsigned val = *eptr - '0';
-			  bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
-			  break;
-		    }
-		case '_':
-		  break;
-		default:
-		  assert(0);
-	    }
-
-	    eptr -= 1;
-      }
-
-	/* If we filled up all the bits and there are still characters
-	   in the number string, then we overflowed. Report a warning
-	   that we are truncating. */
-      if ((idx >= size) && (eptr >= ptr))
-	    cerr << yylloc.text << ":" << yylloc.first_line <<
-		  ": warning: Numeric octal constant ``" << ptr <<
-		  "'' truncated to " << size << " bits." << endl;
-
-
-	/* If we did not fill up all the bits from the string, then
-	   zero-extend the number. */
-      while (idx < size) switch (ptr[1]) {
-	  case 'x': case 'X':
-	    bits[idx++] = verinum::Vx;
-	    break;
-	  case 'z': case 'Z': case '?':
-	    bits[idx++] = verinum::Vz;
-	    break;
-	  default:
-	    bits[idx++] = verinum::V0;
-      }
-
-      verinum*out = new verinum(bits, size, true);
-      delete[]bits;
-      out->has_sign(sign_flag);
-      return out;
-}
 
 static verinum*make_unsized_octal(const char*txt)
 {
@@ -687,102 +456,6 @@ static verinum*make_unsized_octal(const char*txt)
       return out;
 }
 
-static verinum*make_sized_hex(const char*txt)
-{
-      bool sign_flag = false;
-      char*ptr;
-      unsigned size = strtoul(txt,&ptr,10);
-
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-
-      assert(*ptr == '\'');
-      ptr += 1;
-
-      if (tolower(*ptr) == 's') {
-	    sign_flag = true;
-	    ptr += 1;
-      }
-
-      assert(tolower(*ptr) == 'h');
-
-      ptr += 1;
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-
-      verinum::V*bits = new verinum::V[(size+3)&~3];
-
-      unsigned idx = 0;
-      char*eptr = ptr + strlen(ptr) - 1;
-
-      while ((eptr >= ptr) && (idx < size)) {
-	    switch (*eptr) {
-		case 'x': case 'X':
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  bits[idx++] = verinum::Vx;
-		  break;
-		case 'z': case 'Z': case '?':
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  bits[idx++] = verinum::Vz;
-		  break;
-		case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
-		case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
-		    {
-			  unsigned val = tolower(*eptr) - 'a' + 10;
-			  bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&8)? verinum::V1 : verinum::V0;
-			  break;
-		    }
-		case '0': case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-		    {
-			  unsigned val = *eptr - '0';
-			  bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
-			  bits[idx++] = (val&8)? verinum::V1 : verinum::V0;
-			  break;
-		    }
-		case '_':
-		  break;
-		default:
-		  assert(0);
-	    }
-
-	    eptr -= 1;
-      }
-
-	/* If we filled up the expected number of bits, but there are
-	   still characters of the number part left, then report a
-	   warning that we are truncating. */
-      if ((idx >= size) && (eptr >= ptr))
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric hex constant ``" << ptr <<
-           "'' truncated to " << size << " bits." << endl;
-
-	// zero extend hex numbers
-      while (idx < size) switch (ptr[0]) {
-	  case 'x': case 'X':
-	    bits[idx++] = verinum::Vx;
-	    break;
-	  case 'z': case 'Z': case '?':
-	    bits[idx++] = verinum::Vz;
-	    break;
-	  default:
-	    bits[idx++] = verinum::V0;
-      }
-
-      verinum*out = new verinum(bits, size, true);
-      out->has_sign(sign_flag);
-      delete[]bits;
-      return out;
-}
 
 static verinum*make_unsized_hex(const char*txt)
 {
@@ -905,80 +578,93 @@ static int dec_buf_div2(char *buf)
 
 /*
  * Making a decimal number is much easier then the other base numbers
- * because there are no z or x values to worry about.
+ * because there are no z or x values to worry about. It is much
+ * harder then other base numbers because the width needed in bits is
+ * hard to calculate.
  */
-static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
+
+static verinum*make_unsized_dec(const char*ptr)
 {
       char buf[4096];
       bool signed_flag = false;
+      unsigned idx;
 
-      if (tolower(*ptr) == 's') {
+      if (ptr[0] == '\'') {
+	      /* The number has decorations of the form 'sd<digits>,
+		 possibly with space between the d and the <digits>.
+		 Also, the 's' is optional, and markes the number as
+		 signed. */
+	    ptr += 1;
+
+	    if (tolower(*ptr) == 's') {
+		  signed_flag = true;
+		  ptr += 1;
+	    }
+
+	    assert(tolower(*ptr) == 'd');
+	    ptr += 1;
+
+	    while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
+		  ptr += 1;
+
+      } else {
+	      /* ... or an undecorated decimal number is passed
+		 it. These numbers are treated as signed decimal. */
+	    assert(isdigit(*ptr));
 	    signed_flag = true;
-	    ptr += 1;
-      }
-      assert(tolower(*ptr) == 'd');
-
-      ptr += 1;
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-
-      if (strlen(ptr) >= sizeof(buf)-2){
-	  fprintf(stderr, "Ridicilously long decimal constant will be truncated!\n");
       }
 
-      strncpy(buf, ptr, sizeof(buf)-2);
-      buf[sizeof(buf)-1] = 0;
 
-      /* Convert the decimal number to a binary value, one digit at
-	 a time. Watch out for overflow. */
-      verinum::V*bits = new verinum::V[size];
-      unsigned idx=0;
+	/* Copy the digits into a buffer that I can use to do in-place
+	   decimal divides. */
+      idx = 0;
+      while ((idx < sizeof buf) && (*ptr != 0)) {
+	    if (*ptr == '_') {
+		  ptr += 1;
+		  continue;
+	    }
 
-      while(idx<size){
-	  int rem = dec_buf_div2(buf);
-
-	  bits[idx] = (rem==1) ? verinum::V1 : verinum::V0;
-	  ++idx;
+	    buf[idx++] = *ptr++;
       }
 
-      for(; idx<size; ++idx){
-	  bits[idx] = verinum::V0;
-      }
-      
-      /* If we run out of bits to hold the value, but there are
-	 still valueable bits in the number, print a warning. */
-      if (strcmp(buf, "0") != 0){
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric decimal constant ``" << ptr <<
-           "'' truncated to " << size << " bits." << endl;
+      if (idx == sizeof buf) {
+	    fprintf(stderr, "Ridiculously long"
+		    " decimal constant will be truncated!\n");
+	    idx -= 1;
       }
 
-      verinum*out = new verinum(bits, size, fixed);
-      out->has_sign(signed_flag);
+      buf[idx] = 0;
+      unsigned tmp_size = idx * 4 + 1;
+      verinum::V *bits = new verinum::V[tmp_size];
+
+      idx = 0;
+      while (idx < tmp_size) {
+	    int rem = dec_buf_div2(buf);
+	    bits[idx++] = (rem == 1) ? verinum::V1 : verinum::V0;
+      }
+
+      assert(strcmp(buf, "0") == 0);
+
+	/* Now calculate the minimum number of bits needed to
+	   represent this unsigned number. */
+      unsigned size = tmp_size;
+      while ((size > 1) && (bits[size-1] == verinum::V0))
+	    size -= 1;
+
+	/* Now account for the signedness. Don't leave a 1 in the high
+	   bit if this is a signed number. */
+      if (signed_flag && (bits[size-1] == verinum::V1)) {
+	    size += 1;
+	    assert(size <= tmp_size);
+      }
+
+      verinum*res = new verinum(bits, size, false);
+      res->has_sign(signed_flag);
+
       delete[]bits;
-      return out;
+      return res;
 }
 
-static verinum*make_sized_dec(const char*txt)
-{
-      char*ptr;
-      unsigned size = strtoul(txt,&ptr,10);
-
-      while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
-	    ptr += 1;
-
-      assert(*ptr == '\'');
-      ptr += 1;
-
-      return make_dec_with_size(size, true, ptr);
-}
-
-static verinum*make_unsized_dec(const char*txt)
-{
-      verinum*tmp = make_dec_with_size(INTEGER_WIDTH, false, txt+1);
-      tmp->has_sign(true);
-      return tmp;
-}
 
 /*
  * The timescale parameter has the form:

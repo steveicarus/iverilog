@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.111 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: pform.cc,v 1.112 2003/04/14 03:39:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -132,6 +132,56 @@ void pform_set_timescale(int unit, int prec,
       }
 }
 
+
+verinum* pform_verinum_with_size(verinum*siz, verinum*val,
+				 const char*file, unsigned lineno)
+{
+      assert(siz->is_defined());
+      unsigned long size = siz->as_ulong();
+
+      verinum::V pad;
+
+      switch (val->get(val->len()-1)) {
+	  case verinum::Vz:
+	    pad = verinum::Vz;
+	    break;
+	  case verinum::Vx:
+	    pad = verinum::Vx;
+	    break;
+	  default:
+	    pad = verinum::V0;
+	    break;
+      }
+
+      verinum*res = new verinum(pad, size);
+
+      unsigned copy = val->len();
+      if (res->len() < copy)
+	    copy = res->len();
+
+      for (unsigned idx = 0 ;  idx < copy ;  idx += 1) {
+	    res->set(idx, val->get(idx));
+      }
+
+      res->has_sign(val->has_sign());
+
+      bool trunc_flag = false;
+      for (unsigned idx = copy ;  idx < val->len() ;  idx += 1) {
+	    if (val->get(idx) != pad) {
+		  trunc_flag = true;
+		  break;
+	    }
+      }
+
+      if (trunc_flag) {
+	    cerr << file << ":" << lineno << ": warning: Numeric constant "
+		 << "truncated to " << copy << " bits." << endl;
+      }
+
+      delete siz;
+      delete val;
+      return res;
+}
 
 /*
  * This function evaluates delay expressions. The result should be a
@@ -1414,6 +1464,10 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.112  2003/04/14 03:39:15  steve
+ *  Break sized constants into a size token
+ *  and a based numeric constant.
+ *
  * Revision 1.111  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *
