@@ -1,6 +1,7 @@
 EXPORTS
 
 vpi_chk_error
+vpi_control
 vpi_free_object
 vpi_get
 vpi_get_str
@@ -17,11 +18,14 @@ vpi_mcd_fgetc
 vpi_mcd_fputc
 vpi_mcd_name
 vpi_mcd_open
+vpi_mcd_open_x
 vpi_mcd_printf
 vpi_printf
 vpi_put_userdata
 vpi_put_value
+vpi_register_cb
 vpi_register_systf
+vpi_remove_cb
 vpi_scan
 vpi_sim_control
 vpi_sim_vcontrol

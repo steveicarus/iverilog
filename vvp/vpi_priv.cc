@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.27 2003/01/10 03:06:32 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.28 2003/01/10 19:02:21 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -383,8 +383,19 @@ extern "C" void vpi_sim_control(int operation, ...)
       va_end(ap);
 }
 
+extern "C" void vpi_control(int operation, ...)
+{
+      va_list ap;
+      va_start(ap, operation);
+      vpi_sim_vcontrol(operation, ap);
+      va_end(ap);
+}
+
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.28  2003/01/10 19:02:21  steve
+ *  Add missing vpi entry points.
+ *
  * Revision 1.27  2003/01/10 03:06:32  steve
  *  Remove vpithunk, and move libvpi to vvp directory.
  *
