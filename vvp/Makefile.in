@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.53 2003/09/13 00:59:56 steve Exp $"
+#ident "$Id: Makefile.in,v 1.54 2003/10/02 19:33:44 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -31,6 +31,8 @@ bindir = @bindir@
 libdir = @libdir@
 mandir = @mandir@
 includedir = @includedir@
+
+libdir64 = @libdir64@
 
 CC = @CC@
 HOSTCC = @CC@
@@ -56,7 +58,7 @@ all: dep vvp@EXEEXT@ libvpi.a
 
 clean:
 	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ libvpi.a libvpi.a
+	rm -rf dep vvp@EXEEXT@ libvpi.a
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache config.h
@@ -138,13 +140,13 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir)/libvpi.a $(INSTALL_DOC)
+install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir64)/libvpi.a $(INSTALL_DOC)
 
 $(bindir)/vvp@EXEEXT@: ./vvp@EXEEXT@
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(bindir)/vvp@EXEEXT@
 
-$(libdir)/libvpi.a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a $(libdir)/libvpi.a
+$(libdir64)/libvpi.a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a $(libdir64)/libvpi.a
 
 $(mandir)/man1/vvp.1: $(srcdir)/vvp.man
 	$(INSTALL_DATA) $(srcdir)/vvp.man $(mandir)/man1/vvp.1
@@ -153,12 +155,12 @@ $(prefix)/vvp.pdf: vvp.pdf
 	$(INSTALL_DATA) vvp.pdf $(prefix)/vvp.pdf
 
 installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(INSTALL_DOCDIR)
+	$(srcdir)/mkinstalldirs $(bindir) $(libdir) $(libdir64) $(INSTALL_DOCDIR)
 
 
 uninstall:
 	rm -f $(bindir)/vvp@EXEEXT@
-	rm -f $(libdir)/libvpi.a
+	rm -f $(libdir64)/libvpi.a
 	rm -f $(mandir)/man1/vvp.1
 
 -include $(patsubst %.o, dep/%.d, $O)

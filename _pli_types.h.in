@@ -19,8 +19,35 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h.in,v 1.1 2003/09/30 01:33:13 steve Exp $"
+#ident "$Id: _pli_types.h.in,v 1.2 2003/10/02 19:33:44 steve Exp $"
 #endif
+
+# undef HAVE_STDINT_H
+
+#ifdef HAVE_STDINT_H
+
+/*
+ * If the host enhironment has the stdint.h header file,
+ * then use that to size our PLI types.
+ */
+
+# include  <stdint.h>
+typedef uint64_t PLI_UINT64;
+typedef int64_t  PLI_INT64;
+typedef uint32_t PLI_UINT32;
+typedef int32_t  PLI_INT32;
+
+typedef signed short   PLI_INT16;
+typedef unsigned short PLI_UINT16;
+typedef signed char    PLI_BYTE8;
+typedef unsigned char  PLI_UBYTE8;
+
+#else
+
+/*
+ * If we do not have the c99 stdint.h header file, then use
+ * configure detenction to guess the pli types ourselves.
+ */
 
 # define SIZEOF_UNSIGNED_LONG_LONG 8
 # define SIZEOF_UNSIGNED_LONG 8
@@ -54,9 +81,13 @@ typedef signed short   PLI_INT16;
 typedef unsigned short PLI_UINT16;
 typedef signed char    PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
+#endif
 
 /*
  * $Log: _pli_types.h.in,v $
+ * Revision 1.2  2003/10/02 19:33:44  steve
+ *  Put libraries in libdir64.
+ *
  * Revision 1.1  2003/09/30 01:33:13  steve
  *  Add PLI_UINT64 to _pli_types.h.
  *

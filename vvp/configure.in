@@ -198,4 +198,14 @@ esac
 AC_SUBST(ident_support)
 AC_MSG_RESULT($ident_support)
 
+# If not otherwise specified, set the libdir64 variable
+# to the same as libdir.
+AC_MSG_CHECKING(for libdir64 path)
+if test x${libdir64} = x
+then
+	libdir64="${libdir}"
+fi
+AC_SUBST(libdir64)
+AC_MSG_RESULT(${libdir64})
+
 AC_OUTPUT(Makefile)

@@ -94,6 +94,13 @@ configure script that modify its behavior:
 	    common to use --prefix=/opt.  You can configure for a non-root
 	    install with --prefix=$HOME.
 
+NOTE FOR AMD64: If you are building on an AMD64 system, you probably
+want to put libraries in a lib64 directory instead of the usual lib
+directory. This is how Linux/AMD64 keeps 64bit libraries segregated
+from 32bit libraries. This is done by configuring like this:
+
+  ./configure libdir64='$(prefix)/lib64'
+
 2.3 (Optional) Testing
 
 To run a simple test before installation, execute
