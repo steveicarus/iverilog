@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.41 1999/06/13 04:46:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.42 1999/06/13 16:30:06 steve Exp $"
 #endif
 
 /*
@@ -1056,7 +1056,10 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       }
       assert(rval);
 
-      NetAssign*cur = new NetAssign(des, reg, rval);
+      NetAssign*cur = new NetAssign("@assign", des, reg, rval);
+      for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
+	    connect(cur->pin(idx), reg->pin(idx));
+
       cur->set_line(*this);
       des->add_node(cur);
 
@@ -1369,8 +1372,11 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(sig);
-      NetAssign*init = new NetAssign(des, sig,
+      NetAssign*init = new NetAssign("@for-assign", des, sig,
 				     expr1_->elaborate_expr(des, path));
+      for (unsigned idx = 0 ;  idx < init->pin_count() ;  idx += 1)
+	    connect(init->pin(idx), sig->pin(idx));
+
       top->append(init);
 
       NetBlock*body = new NetBlock(NetBlock::SEQU);
@@ -1379,8 +1385,11 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       sig = des->find_signal(path+"."+id2->name());
       assert(sig);
-      NetAssign*step = new NetAssign(des, sig,
+      NetAssign*step = new NetAssign("@for-assign", des, sig,
 				     expr2_->elaborate_expr(des, path));
+      for (unsigned idx = 0 ;  idx < step->pin_count() ;  idx += 1)
+	    connect(step->pin(idx), sig->pin(idx));
+
       body->append(step);
 
       NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path), body);
@@ -1498,6 +1507,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.42  1999/06/13 16:30:06  steve
+ *  Unify the NetAssign constructors a bit.
+ *
  * Revision 1.41  1999/06/13 04:46:54  steve
  *  Add part select lvalues to AssignNB.
  *

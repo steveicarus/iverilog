@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.37 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: netlist.h,v 1.38 1999/06/13 16:30:06 steve Exp $"
 #endif
 
 /*
@@ -566,9 +566,17 @@ class NetProc {
  * appears as a procedural statement AND a structural node. The
  * LineInfo is the location of the assignment statement in the source.
  */
-class NetAssign  : public NetProc, public NetNode, public LineInfo {
+
+class NetAssign_ : public NetProc, public NetNode, public LineInfo {
+
+    protected:
+      NetAssign_(const string&n, unsigned w);
+      virtual ~NetAssign_() =0;
+};
+
+class NetAssign  : public NetAssign_ {
     public:
-      explicit NetAssign(Design*des, NetNet*lv, NetExpr*rv);
+      explicit NetAssign(const string&, Design*des, NetNet*lv, NetExpr*rv);
       ~NetAssign();
 
       const NetExpr*rval() const { return rval_; }
@@ -588,7 +596,7 @@ class NetAssign  : public NetProc, public NetNode, public LineInfo {
 /*
  * ... and this is a non-blocking version of above.
  */
-class NetAssignNB  : public NetProc, public NetNode, public LineInfo {
+class NetAssignNB  : public NetAssign_ {
     public:
       explicit NetAssignNB(const string&, Design*des, unsigned w, NetExpr*rv);
       explicit NetAssignNB(const string&, Design*des, unsigned w,
@@ -1237,6 +1245,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.38  1999/06/13 16:30:06  steve
+ *  Unify the NetAssign constructors a bit.
+ *
  * Revision 1.37  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *

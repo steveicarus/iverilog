@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.4 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.5 1999/06/13 16:30:06 steve Exp $"
 #endif
 
 /*
@@ -43,7 +43,6 @@ class target_verilog : public target_t {
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void start_process(ostream&os, const NetProcTop*);
-      virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
       virtual void proc_event(ostream&os, const NetPEvent*);
@@ -150,32 +149,6 @@ void target_verilog::start_process(ostream&os, const NetProcTop*proc)
       }
 
       indent_ = 6;
-}
-
-void target_verilog::proc_assign(ostream&os, const NetAssign*net)
-{
-      os << setw(indent_) << "";
-
-      const NetNet*lval;
-      unsigned msb, lsb;
-      net->find_lval_range(lval, msb, lsb);
-
-      if ((lsb == 0) && (msb == (lval->pin_count()-1))) {
-	    os << mangle(lval->name());
-
-      } else if (msb == lsb) {
-	    os << mangle(lval->name()) << "[" << msb << "]";
-
-      } else {
-	    os << mangle(lval->name()) << "[" << msb << ":" << lsb <<
-		  "]";
-      }
-
-      os << " = ";
-
-      emit_expr_(os, net->rval());
-
-      os  << ";" << endl;
 }
 
 void target_verilog::emit_expr_(ostream&os, const NetExpr*expr)
@@ -298,6 +271,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.5  1999/06/13 16:30:06  steve
+ *  Unify the NetAssign constructors a bit.
+ *
  * Revision 1.4  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.35 1999/06/10 05:33:28 steve Exp $"
+#ident "$Id: netlist.cc,v 1.36 1999/06/13 16:30:06 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -273,14 +273,21 @@ NetProc::~NetProc()
 {
 }
 
-NetAssign::NetAssign(Design*des, NetNet*lv, NetExpr*rv)
-: NetNode("@assign", lv->pin_count()), rval_(rv)
+NetAssign_::NetAssign_(const string&n, unsigned w)
+: NetNode(n, w)
 {
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
 	    pin(idx).set_dir(NetObj::Link::OUTPUT);
-	    connect(pin(idx), lv->pin(idx));
-      }
 
+}
+
+NetAssign_::~NetAssign_()
+{
+}
+
+NetAssign::NetAssign(const string&n, Design*des, NetNet*lv, NetExpr*rv)
+: NetAssign_(n, lv->pin_count()), rval_(rv)
+{
       bool flag = rval_->set_width(lv->pin_count());
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
@@ -294,12 +301,8 @@ NetAssign::~NetAssign()
 }
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetNode(n, w), rval_(rv), bmux_(0)
+: NetAssign_(n, w), rval_(rv), bmux_(0)
 {
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(NetObj::Link::OUTPUT);
-      }
-
       bool flag = rval_->set_width(w);
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
@@ -310,12 +313,8 @@ NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
 
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
 			 NetExpr*mu, NetExpr*rv)
-: NetNode(n, w), rval_(rv), bmux_(mu)
+: NetAssign_(n, w), rval_(rv), bmux_(mu)
 {
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(NetObj::Link::OUTPUT);
-      }
-
       bool flag = rval_->set_width(1);
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
@@ -1203,6 +1202,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.36  1999/06/13 16:30:06  steve
+ *  Unify the NetAssign constructors a bit.
+ *
  * Revision 1.35  1999/06/10 05:33:28  steve
  *  Handle a few more operator bit widths.
  *
