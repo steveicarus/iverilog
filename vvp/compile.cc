@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.76 2001/06/15 04:07:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.77 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -102,6 +102,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -431,6 +432,26 @@ static void connect_arith_inputs(vvp_ipoint_t fdx, long wid,
       }
 
       free(argv);
+}
+
+void compile_arith_mult(char*label, long wid,
+			unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2*wid) {
+	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_arith_mult*arith = new vvp_arith_mult(fdx, wid);
+
+      connect_arith_inputs(fdx, wid, arith, argc, argv);
 }
 
 void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
@@ -1380,6 +1401,11 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.77  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.76  2001/06/15 04:07:58  steve
  *  Add .cmp statements for structural comparison.
  *

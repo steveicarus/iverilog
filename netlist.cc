@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.162 2001/06/15 04:14:18 steve Exp $"
+#ident "$Id: netlist.cc,v 1.163 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1012,10 +1012,10 @@ const Link& NetDivide::pin_DataB(unsigned idx) const
       return pin(idx+width_r_+width_a_);
 }
 
-NetMult::NetMult(const string&n, unsigned wr, unsigned wa, unsigned wb,
-		 unsigned ws)
-: NetNode(n, 2+wr+wa+wb+ws), width_r_(wr), width_a_(wa), width_b_(wb),
-    width_s_(ws)
+NetMult::NetMult(NetScope*sc, const string&n, unsigned wr,
+		 unsigned wa, unsigned wb, unsigned ws)
+: NetNode(sc, n, 2+wr+wa+wb+ws), width_r_(wr), width_a_(wa), width_b_(wb),
+  width_s_(ws)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr", 0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock", 0);
@@ -2323,6 +2323,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.163  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.162  2001/06/15 04:14:18  steve
  *  Generate vvp code for GT and GE comparisons.
  *

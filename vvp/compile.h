@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.27 2001/06/15 04:07:58 steve Exp $"
+#ident "$Id: compile.h,v 1.28 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -73,6 +73,8 @@ extern void compile_resolver(char*label, char*type,
  * This is called by the parser to make the various arithmetic and
  * comparison functors.
  */
+extern void compile_arith_mult(char*label, long width,
+			       unsigned argc, struct symb_s*argv);
 extern void compile_arith_sum(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub(char*label, long width,
@@ -196,6 +198,11 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.28  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.27  2001/06/15 04:07:58  steve
  *  Add .cmp statements for structural comparison.
  *

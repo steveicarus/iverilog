@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.21 2001/06/15 04:07:58 steve Exp $"
+#ident "$Id: lexor.lex,v 1.22 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -65,8 +65,9 @@
 
 
   /* These are some keywords that are recognized. */
-".arith/sub" { return K_ARITH_SUB; }
-".arith/sum" { return K_ARITH_SUM; }
+".arith/mult" { return K_ARITH_MULT; }
+".arith/sub"  { return K_ARITH_SUB; }
+".arith/sum"  { return K_ARITH_SUM; }
 ".cmp/ge"   { return K_CMP_GE; }
 ".cmp/gt"   { return K_CMP_GT; }
 ".event"    { return K_EVENT; }
@@ -144,6 +145,11 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.22  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.21  2001/06/15 04:07:58  steve
  *  Add .cmp statements for structural comparison.
  *

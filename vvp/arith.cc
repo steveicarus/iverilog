@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.4 2001/06/16 03:36:03 steve Exp $"
+#ident "$Id: arith.cc,v 1.5 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -48,6 +48,55 @@ void vvp_arith_::output_x_(bool push)
       }
 }
 
+vvp_arith_mult::vvp_arith_mult(vvp_ipoint_t b, unsigned w)
+: vvp_arith_(b, w)
+{
+}
+
+void vvp_arith_mult::set(vvp_ipoint_t i, functor_t f, bool push)
+{
+      assert(wid_ <= 8*sizeof(unsigned long));
+
+      unsigned long a = 0, b = 0;
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned ival = obj->ival;
+	    if (ival & 0xaa) {
+		  output_x_(push);
+		  return;
+	    }
+
+	    if (ival & 0x01)
+		  a += 1 << idx;
+	    if (ival & 0x04)
+		  b += 1 << idx;
+
+      }
+
+      unsigned long sum = a * b;
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned oval = sum & 1;
+	    sum >>= 1;
+
+	    if (obj->oval == oval)
+		  continue;
+
+
+	    obj->oval = oval;
+	    if (push)
+		  functor_propagate(ptr);
+	    else
+		  schedule_functor(ptr, 0);
+      }
+}
+
 vvp_arith_sum::vvp_arith_sum(vvp_ipoint_t b, unsigned w)
 : vvp_arith_(b, w)
 {
@@ -55,7 +104,7 @@ vvp_arith_sum::vvp_arith_sum(vvp_ipoint_t b, unsigned w)
 
 void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-      assert(wid_ <= sizeof(unsigned long));
+      assert(wid_ <= 8*sizeof(unsigned long));
 
       unsigned long sum = 0;
 
@@ -108,7 +157,7 @@ vvp_arith_sub::vvp_arith_sub(vvp_ipoint_t b, unsigned w)
 
 void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-      assert(wid_ <= sizeof(unsigned long));
+      assert(wid_ <= 8*sizeof(unsigned long));
 
       unsigned long sum = 0;
 
@@ -242,6 +291,11 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.5  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.4  2001/06/16 03:36:03  steve
  *  Relax width restriction for structural comparators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.42 2001/05/30 03:02:35 steve Exp $"
+#ident "$Id: vthread.cc,v 1.43 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -820,6 +820,46 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_MUL(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      assert(cp->number <= 8*sizeof(unsigned long));
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+      unsigned long lv = 0, rv = 0;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb | rb) & 2)
+		  goto x_out;
+
+	    lv |= lb << idx;
+	    rv |= rb << idx;
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      lv *= rv;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    thr_put_bit(thr, cp->bit_idx1+idx, (lv&1) ? 1 : 0);
+	    lv >>= 1;
+      }
+
+      return true;
+
+ x_out:
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx1+idx, 2);
+
+      return true;
+}
+
 bool of_NOOP(vthread_t thr, vvp_code_t cp)
 {
       return true;
@@ -1047,6 +1087,11 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.43  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.42  2001/05/30 03:02:35  steve
  *  Propagate strength-values instead of drive strengths.
  *

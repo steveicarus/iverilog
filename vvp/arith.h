@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.3 2001/06/15 04:07:58 steve Exp $"
+#ident "$Id: arith.h,v 1.4 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -47,6 +47,18 @@ class vvp_arith_  : public vvp_fobj_s {
  * in cause the 4-input summation to be calculated, and output
  * functors that are affected cause propagations.
  */
+class vvp_arith_mult  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_mult(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private: // not implemented
+      vvp_arith_mult(const vvp_arith_mult&);
+      vvp_arith_mult& operator= (const vvp_arith_mult&);
+};
+
 class vvp_arith_sum  : public vvp_arith_ {
 
     public:
@@ -96,6 +108,11 @@ class vvp_cmp_gt  : public vvp_arith_ {
 };
 /*
  * $Log: arith.h,v $
+ * Revision 1.4  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.3  2001/06/15 04:07:58  steve
  *  Add .cmp statements for structural comparison.
  *

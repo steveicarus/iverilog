@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.48 2001/06/16 02:41:42 steve Exp $"
+#ident "$Id: t-dll.h,v 1.49 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -64,6 +64,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_add_sub(const NetAddSub*);
       void lpm_compare(const NetCompare*);
       void lpm_ff(const NetFF*);
+      void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
       void lpm_ram_dq(const NetRamDq*);
       void net_assign(const NetAssign_*);
@@ -537,6 +538,11 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.49  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.48  2001/06/16 02:41:42  steve
  *  Generate code to support memory access in continuous
  *  assignment statements. (Stephan Boettcher)

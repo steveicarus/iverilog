@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.50 2001/06/16 02:41:41 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.51 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -465,6 +465,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.a[idx];
@@ -491,6 +492,7 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.b[idx];
@@ -527,6 +529,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
       switch (net->type) {
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.q[idx];
@@ -621,6 +624,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
 	  default:
@@ -1223,6 +1227,11 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.51  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.50  2001/06/16 02:41:41  steve
  *  Generate code to support memory access in continuous
  *  assignment statements. (Stephan Boettcher)

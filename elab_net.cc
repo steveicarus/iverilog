@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.68 2001/06/15 04:14:18 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.69 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -791,7 +791,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, const string&path,
       if (rsig == 0) return 0;
 
       unsigned rwidth = lwidth;
-      NetMult*mult = new NetMult(des->local_symbol(path), rwidth,
+      NetMult*mult = new NetMult(scope, des->local_symbol(path), rwidth,
 				 lsig->pin_count(),
 				 rsig->pin_count());
       des->add_node(mult);
@@ -1901,6 +1901,11 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.69  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.68  2001/06/15 04:14:18  steve
  *  Generate vvp code for GT and GE comparisons.
  *

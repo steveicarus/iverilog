@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.67 2001/06/16 02:41:41 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.68 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -205,9 +205,10 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_GE,
       IVL_LPM_CMP_GT,
       IVL_LPM_FF,
+      IVL_LPM_MULT,
       IVL_LPM_MUX,
       IVL_LPM_SUB,
-      IVL_LPM_RAM,
+      IVL_LPM_RAM
 } ivl_lpm_type_t;
 
 /* Processes are initial or always blocks with a statement. This is
@@ -517,13 +518,13 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_RAM IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX */
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_RAM IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX IVL_LPM_RAM */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
@@ -881,6 +882,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.68  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.67  2001/06/16 02:41:41  steve
  *  Generate code to support memory access in continuous
  *  assignment statements. (Stephan Boettcher)

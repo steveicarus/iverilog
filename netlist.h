@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.208 2001/06/15 04:14:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.209 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 /*
@@ -678,8 +678,8 @@ class NetMemory  {
 class NetMult  : public NetNode {
 
     public:
-      NetMult(const string&n, unsigned width, unsigned wa, unsigned wb,
-	      unsigned width_s =0);
+      NetMult(NetScope*sc, const string&n, unsigned width,
+	      unsigned wa, unsigned wb, unsigned width_s =0);
       ~NetMult();
 
 	// Get the width of the device bussed inputs. There are these
@@ -2809,6 +2809,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.209  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.208  2001/06/15 04:14:18  steve
  *  Generate vvp code for GT and GE comparisons.
  *

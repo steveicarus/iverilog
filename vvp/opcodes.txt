@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.22 2001/05/24 04:20:10 steve Exp $
+ *  $Id: opcodes.txt,v 1.23 2001/06/16 23:45:05 steve Exp $
  */
 
 
@@ -242,6 +242,14 @@ another. The destination and source vectors are assumed to be the same
 width and non-overlapping. The <dst> may not be 0-3, but if the <src>
 is one of the 4 constant bits, the effect is to replicate the value
 into the destination vector. This is useful for filling a vector.
+
+
+* %mul <bit-l>, <bit-r>, <wid>
+
+This instruction multiplies the left vector by the right vector, the
+vectors having the width <wid>. If any of the bits of either vector
+are x or z, the result is x. Otherwise, the result is the arithmetic
+product.
 
 
 * %nor/r <dst>, <src>, <wid>

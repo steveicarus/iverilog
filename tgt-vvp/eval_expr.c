@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.29 2001/05/24 04:20:10 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.30 2001/06/16 23:45:05 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -518,11 +518,11 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       struct vector_info lv;
       struct vector_info rv;
 
-      assert(ivl_expr_width(le) == wid);
-      assert(ivl_expr_width(re) == wid);
-
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
+
+      assert(lv.wid == wid);
+      assert(rv.wid == wid);
 
       switch (ivl_expr_opcode(exp)) {
 	  case '+':
@@ -531,6 +531,10 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
 	  case '-':
 	    fprintf(vvp_out, "    %%sub %u, %u, %u;\n", lv.base, rv.base, wid);
+	    break;
+
+	  case '*':
+	    fprintf(vvp_out, "    %%mul %u, %u, %u;\n", lv.base, rv.base, wid);
 	    break;
 
 	  case '%':
@@ -572,6 +576,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 
 	  case '+':
 	  case '-':
+	  case '*':
 	  case '%':
 	    rv = draw_binary_expr_arith(exp, wid);
 	    break;
@@ -1043,6 +1048,11 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.30  2001/06/16 23:45:05  steve
+ *  Add support for structural multiply in t-dll.
+ *  Add code generators and vvp support for both
+ *  structural and behavioral multiply.
+ *
  * Revision 1.29  2001/05/24 04:20:10  steve
  *  Add behavioral modulus.
  *
