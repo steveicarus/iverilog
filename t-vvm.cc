@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.177 2000/09/26 01:35:42 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.178 2000/10/06 02:21:35 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -841,7 +841,7 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
 
 void vvm_parm_rval::expr_sfunc(const NetESFunc*expr)
 {
-      if (expr->name() == "$time") {
+      if (!strcmp(expr->name(),"$time")) {
 	    result = string("vpip_sim_time()");
       } else {
 	    cerr << "Unhandled identifier: " << expr->name() << endl;
@@ -3385,6 +3385,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.178  2000/10/06 02:21:35  steve
+ *  sfuncs are char* and are compared with strcmp
+ *
  * Revision 1.177  2000/09/26 01:35:42  steve
  *  Remove the obsolete NetEIdent class.
  *
