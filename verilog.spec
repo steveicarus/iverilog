@@ -1,6 +1,6 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.7.20030412
+Version: 0.7.20030427
 Release: 0
 Copyright: GPL
 Group: Applications/Engineering
@@ -20,7 +20,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-20030412
+%setup -n verilog-20030427
 
 %build
 ./configure --prefix=/usr
