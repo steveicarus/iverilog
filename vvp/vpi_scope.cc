@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.1 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.2 2001/03/21 05:13:03 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -26,7 +26,6 @@
 # include  <malloc.h>
 # include  <assert.h>
 
-static symbol_table_t scope_table = 0;
 static struct __vpiScope*current_scope = 0;
 
 static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
@@ -60,14 +59,12 @@ void compile_scope_decl(char*label, char*name, char*parent)
 
       current_scope = scope;
 
-      symbol_value_t val;
-      val.ptr = scope;
-      sym_set_value(scope_table, label, val);
+      compile_vpi_symbol(label, &scope->base);
       free(label);
 
       if (parent) {
-	    val = sym_get_value(scope_table, parent);
-	    struct __vpiScope*sp = (struct __vpiScope*) val.ptr;
+	    vpiHandle obj = compile_vpi_lookup(parent);
+	    struct __vpiScope*sp = (struct __vpiScope*) obj;
 	    attach_to_scope_(sp, &scope->base);
 	    free(parent);
       }
@@ -75,8 +72,8 @@ void compile_scope_decl(char*label, char*name, char*parent)
 
 void compile_scope_recall(char*symbol)
 {
-      symbol_value_t val = sym_get_value(scope_table, symbol);
-      current_scope = (struct __vpiScope*)val.ptr;
+      vpiHandle obj = compile_vpi_lookup(symbol);
+      current_scope = (struct __vpiScope*)obj;
       free(symbol);
 }
 
@@ -90,18 +87,12 @@ void vpip_attach_to_current_scope(vpiHandle obj)
       attach_to_scope_(current_scope, obj);
 }
 
-void scope_init(void)
-{
-      scope_table = new_symbol_table();
-}
-
-void scope_cleanup(void)
-{
-}
-
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.2  2001/03/21 05:13:03  steve
+ *  Allow var objects as vpiHandle arguments to %vpi_call.
+ *
  * Revision 1.1  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.9 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: parse.y,v 1.10 2001/03/21 05:13:03 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -188,7 +188,12 @@ operand
   /* The argument_list is a list of vpiHandle objects that can be
      passed to a %vpi_call statement (and hence built into a
      vpiCallSysTask handle). We build up an arbitrary sized list with
-     the struct argv_s type. */
+     the struct argv_s type.
+
+     Each argument of the call is represented as a vpiHandle
+     object. If the argument is a symbol, it is located in the sym_vpi
+     symbol table. if it is someother supported object, the necessary
+     vpiHandle object is created to support it. */
 
 argument_opt
 	: ',' argument_list
@@ -217,6 +222,10 @@ argument_list
 argument
 	: T_STRING
 		{ $$ = vpip_make_string_const($1); }
+	| T_SYMBOL
+		{ $$ = compile_vpi_lookup($1);
+		  free($1);
+		}
 	;
 
 
@@ -265,6 +274,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.10  2001/03/21 05:13:03  steve
+ *  Allow var objects as vpiHandle arguments to %vpi_call.
+ *
  * Revision 1.9  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.6 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: compile.h,v 1.7 2001/03/21 05:13:03 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -52,6 +52,9 @@ extern void compile_cleanup(void);
 extern void compile_functor(char*label, char*type, unsigned init,
 			    unsigned argc, struct symb_s*argv);
 
+
+extern void compile_vpi_symbol(const char*label, vpiHandle obj);
+extern vpiHandle compile_vpi_lookup(const char*label);
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -108,6 +111,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.7  2001/03/21 05:13:03  steve
+ *  Allow var objects as vpiHandle arguments to %vpi_call.
+ *
  * Revision 1.6  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

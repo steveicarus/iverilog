@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.4 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.5 2001/03/21 05:13:03 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -177,11 +177,12 @@ extern void vpip_execute_vpi_call(vpiHandle obj);
  * These are functions used by the compiler to prepare for compilation
  * and to finish compilation in preparation for execution.
  */
-extern void scope_init(void);
-extern void scope_cleanup(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.5  2001/03/21 05:13:03  steve
+ *  Allow var objects as vpiHandle arguments to %vpi_call.
+ *
  * Revision 1.4  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

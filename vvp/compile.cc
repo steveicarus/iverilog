@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.7 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: compile.cc,v 1.8 2001/03/21 05:13:03 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -93,6 +93,14 @@ static symbol_table_t sym_codespace = 0;
 static symbol_table_t sym_functors = 0;
 
 /*
+ * VPI objects are indexed during compile time so that they can be
+ * linked together as they are created. This symbol table matches
+ * labels to vpiHandles.
+ */
+static symbol_table_t sym_vpi = 0;
+
+
+/*
  * If a functor parameter makes a forward reference to a functor, then
  * I need to save that reference and resolve it after the functors are
  * created. Use this structure to keep the unresolved references in an
@@ -115,7 +123,7 @@ static struct resolv_list_s*resolv_list = 0;
  */
 void compile_init(void)
 {
-      scope_init();
+      sym_vpi = new_symbol_table();
       sym_functors = new_symbol_table();
       functor_init();
       sym_codespace = new_symbol_table();
@@ -359,6 +367,21 @@ void compile_thread(char*start_sym)
       free(start_sym);
 }
 
+void compile_vpi_symbol(const char*label, vpiHandle obj)
+{
+      symbol_value_t val;
+      val.ptr = obj;
+      sym_set_value(sym_vpi, label, val);
+}
+
+vpiHandle compile_vpi_lookup(const char*label)
+{
+      symbol_value_t val;
+
+      val = sym_get_value(sym_vpi, label);
+      return (vpiHandle) val.ptr;
+}
+
 /*
  * A variable is a special functor, so we allocate that functor and
  * write the label into the symbol table.
@@ -377,10 +400,12 @@ void compile_variable(char*label, char*name, int msb, int lsb)
 	    obj->ival  = 0x22;
 	    obj->oval  = 0x02;
       }
-      free(label);
 
 	/* Make the vpiHandle for the reg. */
-      vpip_make_reg(name, msb, lsb, fdx);
+      vpiHandle obj = vpip_make_reg(name, msb, lsb, fdx);
+      compile_vpi_symbol(label, obj);
+
+      free(label);
 }
 
 /*
@@ -425,7 +450,6 @@ void compile_cleanup(void)
 	    }
       }
 
-      scope_cleanup();
 }
 
 void compile_dump(FILE*fd)
@@ -447,6 +471,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.8  2001/03/21 05:13:03  steve
+ *  Allow var objects as vpiHandle arguments to %vpi_call.
+ *
  * Revision 1.7  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

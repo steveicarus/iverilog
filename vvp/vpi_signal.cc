@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.1 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.2 2001/03/21 05:13:03 steve Exp $"
 #endif
 
 /*
@@ -26,6 +26,7 @@
  */
 
 # include  "vpi_priv.h"
+# include  "functor.h"
 # include  <malloc.h>
 # include  <assert.h>
 
@@ -71,6 +72,8 @@ static char* signal_get_str(int code, vpiHandle ref)
       return 0;
 }
 
+static char buf[4096];
+
 /*
  * The get_value method reads the values of the functors and returns
  * the vector to the caller. This causes no side-effect, and reads the
@@ -78,13 +81,33 @@ static char* signal_get_str(int code, vpiHandle ref)
  */
 static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 {
+      static const char bit_char[4] = { '0', '1', 'x', 'z' };
+
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
-	/* XXXX Not implemented yet. */
-      assert(0);
+      unsigned wid = (rfp->msb >= rfp->lsb)
+	    ? (rfp->msb - rfp->lsb + 1)
+	    : (rfp->lsb - rfp->msb + 1);
+
+      switch (vp->format) {
+
+	  case vpiBinStrVal:
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		  functor_t fp = functor_index(fptr);
+		  buf[wid-idx-1] = bit_char[fp->oval&3];
+	    }
+	    buf[wid] = 0;
+	    vp->value.str = buf;
+	    break;
+
+	  default:
+	      /* XXXX Not implemented yet. */
+	    assert(0);
+      }
 }
 
 /*
@@ -140,6 +163,9 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, vvp_ipoint_t base)
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.2  2001/03/21 05:13:03  steve
+ *  Allow var objects as vpiHandle arguments to %vpi_call.
+ *
  * Revision 1.1  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *

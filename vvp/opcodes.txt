@@ -42,8 +42,9 @@ register that contains the bit value to assign.
 * %vpi_call <name> [, ...]
 
 This instruction makes a call to a system task or function that was
-declared using VPI. The name is given in the source as a string. It is
-not yet defined how arguments are to be passed.
+declared using VPI. The operands are compiled down to a vpiHandle for
+the call. The instruction contains only the vpiHandle for the
+call. See the vpi.txt file for more on system task/function calls.
 
 * %waitfor <functor-label>
 
