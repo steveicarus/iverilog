@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.24 2002/09/07 04:54:51 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.25 2002/09/20 02:42:11 steve Exp $"
 #endif
 
 /*
@@ -298,6 +298,37 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
       return obj;
 }
 
+static struct __vpiCallback* make_afterdelay(p_cb_data data)
+{
+      struct __vpiCallback*obj = new_vpi_callback();
+      obj->cb_data = *data;
+      assert(data->time);
+      obj->cb_time = *(data->time);
+      obj->cb_data.time = &obj->cb_time;
+
+      obj->next = 0;
+
+      struct sync_cb*cb = new sync_cb;
+      cb->sync_flag = false;
+      cb->run = &make_sync_run;
+      cb->handle = obj;
+      obj->cb_sync = cb;
+
+      switch (obj->cb_time.type) {
+	  case vpiSimTime: {
+		vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
+		schedule_generic(cb, 0, tv);
+		break;
+	  }
+
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      return obj;
+}
+
 /*
  * The following functions are the used for pre and post simulation
  * callbacks.
@@ -394,6 +425,10 @@ vpiHandle vpi_register_cb(p_cb_data data)
 
 	  case cbReadWriteSynch:
 	    obj = make_sync(data, false);
+	    break;
+
+	  case cbAfterDelay:
+	    obj = make_afterdelay(data);
 	    break;
 
 	  case cbEndOfCompile:
@@ -495,6 +530,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.25  2002/09/20 02:42:11  steve
+ *  Add support for cbAfterDelay.
+ *
  * Revision 1.24  2002/09/07 04:54:51  steve
  *  Implement vpi_remove_cb for cbValueChange.
  *
