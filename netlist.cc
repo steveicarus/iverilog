@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.16 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: netlist.cc,v 1.17 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -729,6 +729,20 @@ void NetUDP::set_initial(char val)
       init_ = val;
 }
 
+void Design::set_parameter(const string&key, NetExpr*expr)
+{
+      parameters_[key] = expr;
+}
+
+NetExpr* Design::get_parameter(const string&key) const
+{
+      map<string,NetExpr*>::const_iterator cur = parameters_.find(key);
+      if (cur == parameters_.end())
+	    return 0;
+      else
+	    return (*cur).second;
+}
+
 string Design::get_flag(const string&key) const
 {
       map<string,string>::const_iterator tmp = flags_.find(key);
@@ -881,6 +895,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.17  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.16  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.8 1999/02/15 05:52:08 steve Exp $"
+#ident "$Id: lexor.lex,v 1.9 1999/02/21 17:01:57 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -237,6 +237,7 @@ static const struct { const char*name; int code; } key_table[] = {
       { "notif1", K_notif1 },
       { "or", K_or },
       { "output", K_output },
+      { "parameter", K_parameter },
       { "pmos", K_pmos },
       { "posedge", K_posedge },
       { "primitive", K_primitive },

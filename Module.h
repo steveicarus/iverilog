@@ -19,12 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.2 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: Module.h,v 1.3 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 # include  <list>
+# include  <map>
 # include  <vector>
 # include  <string>
+class PExpr;
 class PGate;
 class PWire;
 class PProcess;
@@ -42,6 +44,11 @@ class Module {
       : ports(nports), name_(name) { }
 
       vector<PWire*> ports;
+
+	/* The module has parameters that are evaluated when the
+	   module is elaborated. During parsing, I put the parameters
+	   into this map. */
+      map<string,PExpr*>parameters;
 
       const string&get_name() const { return name_; }
 
@@ -74,6 +81,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.3  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.2  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

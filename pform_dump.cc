@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.10 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.11 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 /*
@@ -334,6 +334,13 @@ void pform_dump(ostream&out, Module*mod)
 {
       out << "module " << mod->get_name() << ";" << endl;
 
+      typedef map<string,PExpr*>::const_iterator parm_iter_t;
+      for (parm_iter_t cur = mod->parameters.begin()
+		 ; cur != mod->parameters.end() ; cur ++) {
+	    out << "    parameter " << (*cur).first << " = " <<
+		  *(*cur).second << ";" << endl;
+      }
+
 	// Iterate through and display all the wires.
       const list<PWire*>&wires = mod->get_wires();
       for (list<PWire*>::const_iterator wire = wires.begin()
@@ -407,6 +414,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.11  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.10  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *

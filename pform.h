@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.7 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: pform.h,v 1.8 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -105,6 +105,7 @@ extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
+extern void pform_set_parameter(const string&name, PExpr*expr);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_assignment(string*t, PExpr*e);
@@ -138,6 +139,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.8  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.7  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *

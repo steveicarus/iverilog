@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.9 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: pform.cc,v 1.10 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -412,6 +412,11 @@ static void pform_set_net_range(const string&name, list<PExpr*>*range)
       }
 }
 
+void pform_set_parameter(const string&name, PExpr*expr)
+{
+      cur_module->parameters[name] = expr;
+}
+
 void pform_set_port_type(list<string>*names, NetNet::PortType pt)
 {
       for (list<string>::const_iterator cur = names->begin()
@@ -509,6 +514,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.10  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.9  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.19 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.20 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 /*
@@ -869,6 +869,10 @@ class Design {
       string get_flag(const string&key) const;
 
 
+	// PARAMETERS
+      void set_parameter(const string&, NetExpr*);
+      NetExpr*get_parameter(const string&name) const;
+
 	// SIGNALS
 
       void add_signal(NetNet*);
@@ -900,6 +904,8 @@ class Design {
       string local_symbol(const string&path);
 
     private:
+      map<string,NetExpr*> parameters_;
+
 	// List all the signals in the design.
       NetNet*signals_;
 
@@ -960,6 +966,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.20  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.19  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *

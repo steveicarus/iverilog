@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.15 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.16 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 /*
@@ -640,15 +640,22 @@ NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
 
 NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 {
-      if (text_[0] == '$')
+      if (text_[0] == '$') {
 	    return new NetEIdent(text_, 64);
-      else {
+
+      } else {
 	    string name = path+"."+text_;
-	    NetNet*net = des->find_signal(name);
-	    assert(net);
-	    NetESignal*node = new NetESignal(net);
-	    des->add_node(node);
-	    return node;
+
+	    if (NetExpr*ex = des->get_parameter(name))
+		  return ex;
+
+	    if (NetNet*net = des->find_signal(name)) {
+		  NetESignal*node = new NetESignal(net);
+		  des->add_node(node);
+		  return node;
+	    }
+
+	    assert(0);
       }
 }
 
@@ -861,6 +868,16 @@ bool Module::elaborate(Design*des, const string&path) const
 {
       bool result_flag = true;
 
+	// Generate all the parameters that this instance of this
+	// module introduce to the design.
+      typedef map<string,PExpr*>::const_iterator mparm_it_t;
+      for (mparm_it_t cur = parameters.begin()
+		 ; cur != parameters.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    NetExpr*expr = (*cur).second->elaborate_expr(des, path);
+	    des->set_parameter(pname, expr);
+      }
+
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
       const list<PWire*>&wl = get_wires();
@@ -947,6 +964,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.16  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.15  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *

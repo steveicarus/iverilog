@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.13 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: parse.y,v 1.14 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,8 +67,8 @@ extern void lex_end_table();
 %token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if
 %token K_initial K_inout K_input K_integer K_join K_large K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
-%token K_notif1 K_or K_output K_pmos K_posedge K_primitive K_pull0
-%token K_pull1 K_pulldown K_pullup K_rcmos K_reg K_release K_repeat
+%token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_primitive
+%token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_reg K_release K_repeat
 %token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalered
 %token K_small K_specify
 %token K_specparam K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task
@@ -483,6 +483,7 @@ module_item
 		  }
 		  delete $3;
 		}
+	| K_parameter parameter_assign_list ';'
 	| gatetype delay_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
 		}
@@ -540,6 +541,18 @@ net_type
 	| K_supply1 { $$ = NetNet::SUPPLY1; }
 	| K_wor     { $$ = NetNet::WOR; }
 	| K_trior   { $$ = NetNet::TRIOR; }
+	;
+
+parameter_assign
+	: IDENTIFIER '=' const_expression
+		{ pform_set_parameter(*$1, $3);
+		  delete $1;
+		}
+	;
+
+parameter_assign_list
+	: parameter_assign
+	| parameter_assign_list ',' parameter_assign
 	;
 
 port

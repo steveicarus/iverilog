@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.13 1999/02/15 02:06:15 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.14 1999/02/21 17:01:57 steve Exp $"
 #endif
 
 /*
@@ -473,6 +473,15 @@ void NetEUnary::dump(ostream&o) const
 
 void Design::dump(ostream&o) const
 {
+      o << "ELABORATED PARAMETERS:" << endl;
+      {
+	    map<string,NetExpr*>::const_iterator pp;
+	    for (pp = parameters_.begin()
+		       ; pp != parameters_.end() ;  pp ++) {
+		  o << "    " << (*pp).first << " = "  <<
+			*(*pp).second << ";" << endl;
+	    }
+      }
 
       o << "ELABORATED SIGNALS:" << endl;
 
@@ -506,6 +515,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.14  1999/02/21 17:01:57  steve
+ *  Add support for module parameters.
+ *
  * Revision 1.13  1999/02/15 02:06:15  steve
  *  Elaborate gate ranges.
  *
