@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.16 2001/11/29 01:58:18 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.17 2001/11/30 01:22:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,11 +27,11 @@
 # include  <iostream>
 
 /*
- * This file implements synthesys based on matching threads and
- * converting them to equivilent devices. The trick here is that the
+ * This file implements synthesis based on matching threads and
+ * converting them to equivalent devices. The trick here is that the
  * proc_match_t functor can be used to scan a process and generate a
  * string of tokens. That string of tokens can then be matched by the
- * rules to determin what kind of device is to be made.
+ * rules to determine what kind of device is to be made.
  */
 
 # include  "netlist.h"
@@ -134,6 +134,34 @@ start
 
 
   /* Various actions. */
+
+static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
+                          NetNet*ce, NetAssign_*a, unsigned rval_pinoffset)
+{
+
+	// a->sig() is a *NetNet, which doesn't have the loff_ and
+	// lwid_ context.  Add the correction for loff_ ourselves.
+
+	// This extra calculation allows for assignments like:
+	//    lval[7:1] <= foo;
+	// where lval is really a "reg [7:0]". In other words, part
+	// selects in the l-value are handled by loff and the lwidth().
+
+      int loff = a->get_loff();
+      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
+	    connect(ff->pin_Data(idx), d->bit(idx+rval_pinoffset));
+	    connect(ff->pin_Q(idx), a->sig()->pin(idx+loff));
+      }
+
+      connect(ff->pin_Clock(), pclk->pin(0));
+      if (ce) connect(ff->pin_Enable(), ce->pin(0));
+
+      ff->attribute("LPM_FFType", "DFF");
+      if (pclk->edge() == NetEvProbe::NEGEDGE)
+	    ff->attribute("Clock:LPM_Polarity", "INVERT");
+
+}
+
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn)
 {
@@ -150,39 +178,26 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 
       assert(d);
 
-	// FIXME!
-	// asn->l_val(0) is good as far as it goes, that's a
-	// *NetAssign_. Really need to chase the link list to the end,
-	// otherwise we don't assign properly to constructs like {a,b}. 
-	// Should turn asn->l_val(0)->lwidth() below into
-	// asn->lwidth() and follow the linked list of l-values.
-      NetFF*ff = new NetFF(top->scope(), asn->l_val(0)->name(),
-			   asn->l_val(0)->lwidth());
+      NetAssign_*a;
+      unsigned rval_pinoffset=0;
+      for (unsigned i=0; a=asn->l_val(i); i++) {
 
-	// asn->l_val(0)->sig() is a *NetNet, which doesn't have the
-	// loff_ and lwid_ context.  Add the correction for loff_
-	// ourselves.
+	// asn->l_val(i) are the set of *NetAssign_'s that form the list
+	// of lval expressions.  Treat each one independently, keeping
+	// track of which bits of rval to use for each set of DFF inputs.
+	// For example, given:
+	//      {carry,data} <= x + y + z;
+	// run through this loop twice, where a and rval_pinoffset are
+	// first data and 0, then carry and 1.
+	// FIXME:  ff gets its pin names wrong when loff_ is nonzero.
 
-	// This extra calculations allows for statments like, for
-	// example:
-	//    lval[7:1] <= foo;
-	// where lval is really a "reg [7:0]". In other words, part
-	// selects in the l-value are handled by loff and the lwidth().
-
-      int loff = asn->l_val(0)->get_loff();
-      for (unsigned idx = 0 ;  idx < ff->width() ;  idx += 1) {
-	    connect(ff->pin_Data(idx), d->bit(idx));
-	    connect(ff->pin_Q(idx), asn->l_val(0)->sig()->pin(idx+loff));
+            // cerr << "new NetFF named " << a->name() << endl;
+            NetFF*ff = new NetFF(top->scope(), a->name(),
+			   a->lwidth());
+            hookup_DFF_CE(ff, d, pclk, ce, a, rval_pinoffset);
+            des->add_node(ff);
+            rval_pinoffset += a->lwidth();
       }
-
-      connect(ff->pin_Clock(), pclk->pin(0));
-      if (ce) connect(ff->pin_Enable(), ce->pin(0));
-
-      ff->attribute("LPM_FFType", "DFF");
-      if (pclk->edge() == NetEvProbe::NEGEDGE)
-	    ff->attribute("Clock:LPM_Polarity", "INVERT");
-
-      des->add_node(ff);
       des->delete_process(top);
 }
 
