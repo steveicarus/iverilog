@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.290 2003/09/20 06:00:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.291 2003/09/20 06:08:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1121,46 +1121,22 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
- * The l-value of a procedural assignment is a very much constrained
- * expression. To wit, only identifiers, bit selects and part selects
- * are allowed. I therefore can elaborate the l-value by hand, without
- * the help of recursive elaboration.
- *
- * (For now, this does not yet support concatenation in the l-value.)
  */
 NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
       assert(rval());
 
-      NetExpr*rv;
-
-	/* Evaluate the rval expression if possible, otherwise just
-	   elaborate it. */
-      if (verinum*val = rval()->eval_const(des, scope)) {
-	    rv = new NetEConst(*val);
-	    delete val;
-
-      } else if ((rv = rval()->elaborate_expr(des, scope))) {
-
-	      /* OK, go on. */
-
-      } else {
-	      /* Unable to elaborate expression. Retreat. */
+	/* Elaborate and precalculate the r-value. */
+      NetExpr*rv = elab_and_eval(des, scope, rval());
+      if (rv == 0)
 	    return 0;
-      }
 
-      assert(rv);
-
-	/* Try to evaluate the expression, at least as far as possible. */
-      if (NetExpr*tmp = rv->eval_tree()) {
-	    delete rv;
-	    rv = tmp;
-      }
 
       { unsigned wid = count_lval_width(lv);
         rv->set_width(wid);
@@ -2632,6 +2608,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.291  2003/09/20 06:08:53  steve
+ *  Evaluate nb-assign r-values using elab_and_eval.
+ *
  * Revision 1.290  2003/09/20 06:00:37  steve
  *  Evaluate gate array index constants using elab_and_eval.
  *
