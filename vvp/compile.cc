@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.87 2001/07/11 04:43:57 steve Exp $"
+#ident "$Id: compile.cc,v 1.88 2001/07/19 04:40:55 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -87,6 +87,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -1544,6 +1545,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.88  2001/07/19 04:40:55  steve
+ *  Add support for the delayx opcode.
+ *
  * Revision 1.87  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
  *

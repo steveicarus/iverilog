@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.25 2001/06/30 21:07:26 steve Exp $
+ *  $Id: opcodes.txt,v 1.26 2001/07/19 04:40:55 steve Exp $
  */
 
 
@@ -117,6 +117,12 @@ time in the future. The <amount> is the number of the ticks in the
 future to reschedule, and is >= 0. If the %delay is zero, then the
 thread yields the processor for another thread, but will be resumed in
 the current time step.
+
+* %delayx <idx>
+
+This is similar to the %delay opcode, except that the parameter
+selects an index register, which contains the actual delay. This
+supports run-time calculated delays.
 
 * %disable <scope-label>
 

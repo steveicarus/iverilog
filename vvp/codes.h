@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.31 2001/06/30 21:07:26 steve Exp $"
+#ident "$Id: codes.h,v 1.32 2001/07/19 04:40:55 steve Exp $"
 #endif
 
 
@@ -46,6 +46,7 @@ extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
+extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
@@ -136,6 +137,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.32  2001/07/19 04:40:55  steve
+ *  Add support for the delayx opcode.
+ *
  * Revision 1.31  2001/06/30 21:07:26  steve
  *  Support non-const right shift (unsigned).
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.48 2001/07/04 04:57:10 steve Exp $"
+#ident "$Id: vthread.cc,v 1.49 2001/07/19 04:40:55 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -536,6 +536,16 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
 {
 	//printf("thread %p: %%delay %lu\n", thr, cp->number);
       schedule_vthread(thr, cp->number);
+      return false;
+}
+
+bool of_DELAYX(vthread_t thr, vvp_code_t cp)
+{
+      unsigned long delay;
+
+      assert(cp->number < 4);
+      delay = thr->index[cp->number];
+      schedule_vthread(thr, delay);
       return false;
 }
 
@@ -1281,6 +1291,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.49  2001/07/19 04:40:55  steve
+ *  Add support for the delayx opcode.
+ *
  * Revision 1.48  2001/07/04 04:57:10  steve
  *  Relax limit on behavioral subtraction.
  *
