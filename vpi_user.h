@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.17 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.18 2003/02/01 05:50:27 steve Exp $"
 #endif
 
 
@@ -192,6 +192,10 @@ typedef struct t_vpi_value {
 #   define vpiOctConst    4
 #   define vpiHexConst    5
 #   define vpiStringConst 6
+#define vpiFuncType  44
+#   define vpiIntFunc     1
+#   define vpiRealFunc    2
+#   define vpiTimeFunc    3
 #define vpiSigned    65
 /* IVL private properties */
 #define _vpiNexusId 128
@@ -367,6 +371,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.18  2003/02/01 05:50:27  steve
+ *  Make $time and $realtime available to $display uniquely.
+ *
  * Revision 1.17  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

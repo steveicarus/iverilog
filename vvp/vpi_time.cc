@@ -17,19 +17,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.9 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.10 2003/02/01 05:50:04 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
+# include  <math.h>
 # include  <assert.h>
 
 /*
  * The $time system function is supported in VPI contexts (i.e. an
- * argument to a system task/function) as a magical time variable. The
- * VPI sees it as a vpiTimeVar object, but reads from it get the
- * current value instead of some assigned value.
+ * argument to a system task/function) as a vpiSysFuncCall object. The
+ * $display function divines that this is a function call and uses a
+ * vpi_get_value to get the value.
  */
 
 /*
@@ -53,21 +54,81 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
 }
 
 
-static int timevar_get(int code, vpiHandle ref)
+static int timevar_time_get(int code, vpiHandle ref)
 {
       switch (code) {
           case vpiSize:
-	      return 64;
+	    return 64;
 
           case vpiSigned:
-	      return 0;
+	    return 0;
+
+	  case vpiFuncType:
+	    return vpiTimeFunc;
 
 	  default:
-	      fprintf(stderr, "Code: %d\n", code);
-	      assert(0);
-	      return 0;
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
       }
 }
+
+static char* timevar_time_get_str(int code, vpiHandle ref)
+{
+      switch (code) {
+	  case vpiName:
+	    return "$time";
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+static char* timevar_realtime_get_str(int code, vpiHandle ref)
+{
+      switch (code) {
+	  case vpiName:
+	    return "$realtime";
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+static int timevar_realtime_get(int code, vpiHandle ref)
+{
+      switch (code) {
+          case vpiSize:
+	    return 64;
+
+          case vpiSigned:
+	    return 0;
+
+	  case vpiFuncType:
+	    return vpiRealFunc;
+
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
+static vpiHandle timevar_handle(int code, vpiHandle ref)
+{
+      struct __vpiSystemTime*rfp
+	    = reinterpret_cast<struct __vpiSystemTime*>(ref);
+
+      switch (code) {
+	  case vpiScope:
+	    return &rfp->scope->base;
+	  default:
+	    return 0;
+      }
+}
+
 
 static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 {
@@ -77,7 +138,8 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	   the caller. */
       static struct t_vpi_time time_value;
 
-      struct __vpiSystemTime*rfp = reinterpret_cast<struct __vpiSystemTime*>(ref);
+      struct __vpiSystemTime*rfp
+	    = reinterpret_cast<struct __vpiSystemTime*>(ref);
       unsigned long x, num_bits;
       vvp_time64_t simtime = schedule_simtime();
       int units = rfp->scope->time_units;
@@ -93,6 +155,11 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.time->type = vpiSimTime;
 	    vpip_time_to_timestruct(vp->value.time, simtime);
 	    vp->format = vpiTimeVal;
+	    break;
+
+	  case vpiRealVal:
+	    vp->value.real = pow(10, vpi_time_precision-rfp->scope->time_units)
+		  * schedule_simtime();
 	    break;
 
 	  case vpiBinStrVal:
@@ -130,21 +197,37 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 }
 
 static const struct __vpirt vpip_system_time_rt = {
-      vpiTimeVar,
-      timevar_get,
-      0,
+      vpiSysFuncCall,
+      timevar_time_get,
+      timevar_time_get_str,
       timevar_get_value,
       0,
-      0,
+      timevar_handle,
       0
 };
 
+static const struct __vpirt vpip_system_realtime_rt = {
+      vpiSysFuncCall,
+      timevar_realtime_get,
+      timevar_realtime_get_str,
+      timevar_get_value,
+      0,
+      timevar_handle,
+      0
+};
 
 vpiHandle vpip_sim_time(struct __vpiScope*scope)
 {
       scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
       scope->scoped_time.scope = scope;
       return &scope->scoped_time.base;
+}
+
+vpiHandle vpip_sim_realtime(struct __vpiScope*scope)
+{
+      scope->scoped_realtime.base.vpi_type = &vpip_system_realtime_rt;
+      scope->scoped_realtime.scope = scope;
+      return &scope->scoped_realtime.base;
 }
 
 int vpip_get_time_precision(void)
@@ -160,6 +243,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.10  2003/02/01 05:50:04  steve
+ *  Make $time and $realtime available to $display uniquely.
+ *
  * Revision 1.9  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

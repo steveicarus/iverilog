@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.45 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.46 2003/02/01 05:50:04 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -145,6 +145,7 @@ struct __vpiScope {
       const char*name;
 	/* The scope has a system time of its own. */
       struct __vpiSystemTime scoped_time;
+      struct __vpiSystemTime scoped_realtime;
 	/* Keep an array of internal scope items. */
       struct __vpiHandle**intern;
       unsigned nintern;
@@ -337,6 +338,7 @@ extern void vpip_execute_vpi_call(vthread_t thr, vpiHandle obj);
  */
 
 vpiHandle vpip_sim_time(struct __vpiScope*scope);
+vpiHandle vpip_sim_realtime(struct __vpiScope*scope);
 
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
@@ -393,6 +395,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.46  2003/02/01 05:50:04  steve
+ *  Make $time and $realtime available to $display uniquely.
+ *
  * Revision 1.45  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.
