@@ -11,7 +11,7 @@ cruft of the Cygwin.dll library. The configure scripts automatically
 detect that the compilers in use are the mingw compilers and will
 configure the Makefiles appropriately.
 
-However, the mingw tools do not include all the other cruft around the
+However, the mingw tools do not include all the other tools around the
 compiler, including the shell interpreter for the configure script,
 bison, flex, gperf, etc. Therefore, you still need Cygwin to compile
 Icarus Verilog, even if you don't need the Cygwin compilers.
@@ -37,19 +37,19 @@ prompt in this window, because that is the usual bash prompt.
 Anyhow, unpack the compressed tar file (.tar.gz) of the source with a
 command like this:
 
-	$ gunzip -d verilog-20010623.tar.gz | tar xvf -
+	$ gunzip -d verilog-20010630.tar.gz | tar xvf -
 
-This will create a directory "verilog-20010623" that contains all the
+This will create a directory "verilog-20010630" that contains all the
 source. Descend into that directory, as that is where we will work
 from now on.
 
-	$ cd verilog-20010623
+	$ cd verilog-20010630
 
 * Select the mingw compilers
 
 In your cygwin window, if you type "which c++" you will get the
-response base "/usr/bin/c++" which is the cygwin compiler. This is not
-the one we want to use, however. Tell the shell where th mingw
+response path "/usr/bin/c++" which is the cygwin compiler. This is not
+the one we want to use, however. Tell the shell where the mingw
 compilers are by setting the search path like so:
 
 	$ PATH=/cygdrive/d/mingw/bin:$PATH
@@ -111,3 +111,10 @@ you chose) directory, and away you go.
 Finally, put the D:\iverilog\bin directory in your Windows path, and
 you should be able to run the iverilog and vvp commands to your
 heart's content.
+
+Currently, the iverilog.exe uses the path to itself to locate the
+libraries and modules associated with itself. In other words, if you
+execute the D:\iverilog\bin\iverilog.exe program, it will locate its
+subparts in the D:\iverilog directory and subdirectories below
+that. This means you can move the Icarus Verilog installation by
+simply moving the root directory and all its contents.
