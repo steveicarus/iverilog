@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_param.c,v 1.1 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: a_fetch_param.c,v 1.2 2003/03/14 04:59:54 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -37,6 +37,8 @@ double acc_fetch_paramval(handle object)
 	    return (double) (long)val.value.str;
 
 	  default:
+	    vpi_printf("XXXX: parameter %s has type %d\n",
+		       vpi_get_str(vpiName, object), val.format);
 	    assert(0);
 	    return 0.0;
       }
@@ -44,6 +46,9 @@ double acc_fetch_paramval(handle object)
 
 /*
  * $Log: a_fetch_param.c,v $
+ * Revision 1.2  2003/03/14 04:59:54  steve
+ *  Better message when asserting funky value type.
+ *
  * Revision 1.1  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *
