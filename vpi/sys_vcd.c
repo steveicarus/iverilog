@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.10 2000/06/03 02:22:15 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.11 2000/07/26 04:07:59 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,15 @@
 # include  <time.h>
 
 static FILE*dump_file = 0;
+
+static const char*units_names[] = {
+      "s",
+      "ms",
+      "us",
+      "ns",
+      "ps",
+      "fs"
+};
 
 struct vcd_info {
       vpiHandle item;
@@ -240,9 +249,22 @@ static int sys_dumpfile_calltf(char*name)
 	    vpi_printf("ERROR: Unable to open %s for output.\n", path);
 	    return 0;
       } else {
+	    int prec = vpi_get(vpiTimePrecision, 0);
+	    unsigned scale = 1;
+	    unsigned udx = 0;
 	    time_t walltime;
 
 	    time(&walltime);
+
+	    assert(prec >= -15);
+	    while (prec < 0) {
+		  udx += 1;
+		  prec += 3;
+	    }
+	    while (prec > 0) {
+		  scale *= 10;
+		  prec -= 1;
+	    }
 
 	    fprintf(dump_file, "$date\n");
 	    fprintf(dump_file, "\t%s",asctime(localtime(&walltime)));
@@ -251,7 +273,7 @@ static int sys_dumpfile_calltf(char*name)
 	    fprintf(dump_file, "\tIcarus Verilog\n");
 	    fprintf(dump_file, "$end\n");
 	    fprintf(dump_file, "$timescale\n");
-	    fprintf(dump_file, "\t1ps\n");
+	    fprintf(dump_file, "\t%u%s\n", scale, units_names[udx]);
 	    fprintf(dump_file, "$end\n");
       }
 
@@ -397,6 +419,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.11  2000/07/26 04:07:59  steve
+ *  Get VCD timescale from design precision.
+ *
  * Revision 1.10  2000/06/03 02:22:15  steve
  *  Interpret the depth paramter of dumpvars.
  *
