@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.80 1999/09/08 04:05:30 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.81 1999/09/10 04:04:06 steve Exp $"
 #endif
 
 /*
@@ -640,6 +640,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 
       NetNet*osig;
       NetNode*gate;
+      NetNode*gate_t;
 
       switch (op_) {
 	  case '^': // XOR
@@ -653,6 +654,9 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
 		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
 		  des->add_node(gate);
 	    }
 	    des->add_signal(osig);
@@ -669,6 +673,9 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
 		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
 		  des->add_node(gate);
 	    }
 	    des->add_signal(osig);
@@ -685,34 +692,57 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
 		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
 		  des->add_node(gate);
 	    }
 	    des->add_signal(osig);
 	    break;
 
 	  case 'e': // ==
-	    assert(lsig->pin_count() == 1);
-	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::XNOR);
-	    connect(gate->pin(1), lsig->pin(0));
-	    connect(gate->pin(2), rsig->pin(0));
+	    assert(lsig->pin_count() == rsig->pin_count());
 	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    osig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+lsig->pin_count(),
+				NetLogic::AND);
 	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate_t = new NetLogic(des->local_symbol(path), 3,
+				        NetLogic::XNOR);
+		  connect(gate_t->pin(1), lsig->pin(idx));
+		  connect(gate_t->pin(2), rsig->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx));
+		  des->add_node(gate_t);
+	    }
 	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
 	    des->add_node(gate);
 	    break;
 
 	  case 'n': // !=
-	    assert(lsig->pin_count() == 1);
-	    assert(rsig->pin_count() == 1);
-	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::XOR);
-	    connect(gate->pin(1), lsig->pin(0));
-	    connect(gate->pin(2), rsig->pin(0));
+	    assert(lsig->pin_count() == rsig->pin_count());
 	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    osig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+lsig->pin_count(),
+				NetLogic::OR);
 	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate_t = new NetLogic(des->local_symbol(path), 3,
+				        NetLogic::XOR);
+		  connect(gate_t->pin(1), lsig->pin(idx));
+		  connect(gate_t->pin(2), rsig->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx));
+		  des->add_node(gate_t);
+	    }
 	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
 	    des->add_node(gate);
 	    break;
 
@@ -733,6 +763,9 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		}
 		gate = adder;
 		des->add_signal(osig);
+		gate->rise_time(rise);
+		gate->fall_time(fall);
+		gate->decay_time(decay);
 		des->add_node(gate);
 		break;
 	  }
@@ -741,10 +774,6 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	    cerr << "Unhandled BINARY '" << op_ << "'" << endl;
 	    osig = 0;
       }
-
-      gate->rise_time(rise);
-      gate->fall_time(fall);
-      gate->decay_time(decay);
 
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
 	    delete tmp;
@@ -928,13 +957,67 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
       return net;
 }
 
-NetNet* PETernary::elaborate_net(Design*des, const string&, unsigned long,
-				 unsigned long, unsigned long) const
+NetNet* PETernary::elaborate_net(Design*des, const string&path,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const
 {
-      cerr << get_line() << ": Sorry, I cannot elaborate ?: as a net."
-	   << endl;
-      des->errors += 1;
-      return 0;
+      NetNet* expr_sig = expr_->elaborate_net(des, path);
+      NetNet* tru_sig = tru_->elaborate_net(des, path);
+      NetNet* fal_sig = fal_->elaborate_net(des, path);
+      if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) {
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetNet* sig;
+      NetLogic*exprinv;
+      NetLogic*and_tru;
+      NetLogic*and_fal;
+      NetLogic*gate;
+
+      assert(tru_sig->pin_count() == fal_sig->pin_count());
+      assert(expr_sig->pin_count() == 1);
+
+      sig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+		       tru_sig->pin_count());
+      sig->local_flag(true);
+
+      for (unsigned idx = 0 ;  idx < tru_sig->pin_count() ;  idx += 1) {
+	    exprinv = new NetLogic(des->local_symbol(path), 2, NetLogic::NOT);
+	    and_tru = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
+	    and_fal = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::OR);
+
+	    connect(exprinv->pin(1), expr_sig->pin(0));
+	    connect(and_tru->pin(1), expr_sig->pin(0));
+	    connect(and_fal->pin(1), exprinv->pin(0));
+	    connect(and_tru->pin(2), tru_sig->pin(idx));
+	    connect(and_fal->pin(2), fal_sig->pin(idx));
+	    connect(gate->pin(1), and_tru->pin(0));
+	    connect(gate->pin(2), and_fal->pin(0));
+	    connect(gate->pin(0), sig->pin(idx));
+
+	    des->add_node(exprinv);
+	    des->add_node(and_tru);
+	    des->add_node(and_fal);
+	    des->add_node(gate);
+
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+      }
+
+      des->add_signal(sig);
+
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(expr_sig))
+	    delete tmp;
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(tru_sig))
+	    delete tmp;
+      if (NetTmp*tmp = dynamic_cast<NetTmp*>(fal_sig))
+	    delete tmp;
+
+      return sig;
 }
 
 NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
@@ -963,14 +1046,38 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
       NetLogic*gate;
       switch (op_) {
 	  case '~': // Bitwise NOT
-	    assert(sub_sig->pin_count() == 1);
+	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE,
+			     sub_sig->pin_count());
+	    sig->local_flag(true);
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 2,
+				      NetLogic::NOT);
+		  connect(gate->pin(1), sub_sig->pin(idx));
+		  connect(gate->pin(0), sig->pin(idx));
+		  des->add_node(gate);
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+	    }
+	    des->add_signal(sig);
+	    break;
+
+	  case 'N': // Reduction NOR
+	  case '!': // Reduction NOT
 	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
 	    sig->local_flag(true);
-	    gate = new NetLogic(des->local_symbol(path), 2, NetLogic::NOT);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::NOR);
 	    connect(gate->pin(0), sig->pin(0));
-	    connect(gate->pin(1), sub_sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
 	    des->add_signal(sig);
 	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
 	    break;
 
 	  case '&': // Reduction AND
@@ -985,16 +1092,49 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 	    des->add_signal(sig);
 	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  case '|': // Reduction OR
+	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::OR);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    break;
+
+	  case '^': // Reduction XOR
+	    sig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+sub_sig->pin_count(),
+				NetLogic::XOR);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
+
+	    des->add_signal(sig);
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
 	    break;
 
 	  default:
 	    cerr << "Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
-
-      gate->rise_time(rise);
-      gate->fall_time(fall);
-      gate->decay_time(decay);
 
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(sub_sig))
 	    delete tmp;
@@ -2180,6 +2320,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.81  1999/09/10 04:04:06  steve
+ *  Add ternary elaboration.
+ *
  * Revision 1.80  1999/09/08 04:05:30  steve
  *  Allow assign to not match rvalue width.
  *
