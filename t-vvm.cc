@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.105 2000/02/29 05:02:30 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.106 2000/02/29 05:20:21 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1808,7 +1808,6 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
       string expr = emit_proc_rval(defn, 6, net->expr());
 
       unsigned default_idx = net->nitems();
-      bool prev_flag = false;
       for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
 
 	      // don't emit the default case here. Save it for the
@@ -2169,6 +2168,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.106  2000/02/29 05:20:21  steve
+ *  Remove excess variable.
+ *
  * Revision 1.105  2000/02/29 05:02:30  steve
  *  Handle scope of complex guards when writing case in functions.
  *
