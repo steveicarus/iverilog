@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.3 2001/08/31 04:17:56 steve Exp $"
+#ident "$Id: d-generic.c,v 1.4 2001/08/31 23:02:13 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -39,7 +39,6 @@ static void generic_show_logic(ivl_net_logic_t net)
       switch (ivl_logic_type(net)) {
 
 	  case IVL_LO_AND:
-	    assert(ivl_logic_pins(net) == 3);
 	    fprintf(xnf, "SYM, %s, AND, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
@@ -63,7 +62,6 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_NAND:
-	    assert(ivl_logic_pins(net) == 3);
 	    fprintf(xnf, "SYM, %s, NAND, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
@@ -77,7 +75,6 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_NOR:
-	    assert(ivl_logic_pins(net) == 3);
 	    fprintf(xnf, "SYM, %s, NOR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
@@ -101,7 +98,6 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_OR:
-	    assert(ivl_logic_pins(net) == 3);
 	    fprintf(xnf, "SYM, %s, OR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
@@ -115,7 +111,6 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_XOR:
-	    assert(ivl_logic_pins(net) == 3);
 	    fprintf(xnf, "SYM, %s, XOR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
@@ -129,7 +124,6 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_XNOR:
-	    assert(ivl_logic_pins(net) == 3);
 	    fprintf(xnf, "SYM, %s, XNOR, LIBVER=2.0.0\n", name);
 	    nex = ivl_logic_pin(net, 0);
 	    draw_pin(nex, "O", 'O');
@@ -204,6 +198,9 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.4  2001/08/31 23:02:13  steve
+ *  Relax pin count restriction on logic gates.
+ *
  * Revision 1.3  2001/08/31 04:17:56  steve
  *  Many more logic gate types.
  *
