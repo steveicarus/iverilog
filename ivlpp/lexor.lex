@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.4 1999/07/07 01:18:57 steve Exp $"
+#ident "$Id: lexor.lex,v 1.5 1999/07/10 00:36:12 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -72,12 +72,24 @@ static struct include_stack_t*standby = 0;
     } \
 } while(0)
 
+static int comment_enter = 0;
 %}
 
 %x PPINCLUDE
 %x PPDEFINE
+%x CCOMMENT
 
 %%
+
+  /* detect multiline, c-style comments, passing them directly to the
+     output. This is necessary to allow for ignoring directives that
+     are included within the comments. */
+
+"/*" { comment_enter = YY_START; BEGIN(CCOMMENT); ECHO; }
+<CCOMMENT>.    { ECHO; }
+<CCOMMENT>\n   { istack->lineno += 1; ECHO; }
+<CCOMMENT>"*/" { BEGIN(comment_enter); ECHO; }
+
 
   /* This set of patterns matches the include directive and the name
      that follows it. when the directive ends, the do_include function
@@ -87,7 +99,7 @@ static struct include_stack_t*standby = 0;
 
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
 
-<PPINCLUDE>[ \t\b\f\r] { ; }
+<PPINCLUDE>[ \t\b\f] { ; }
 
 <PPINCLUDE>\n { istack->lineno += 1; BEGIN(0); do_include(); }
 
@@ -102,6 +114,7 @@ static struct include_stack_t*standby = 0;
 <PPDEFINE>.* { do_define(); }
 
 <PPDEFINE>\n { istack->lineno += 1; BEGIN(0); ECHO; }
+
 
   /* This pattern notices macros and arranges for it to be replaced. */
 `[a-zA-Z][a-zA-Z0-9_]* { def_match(); }
@@ -148,6 +161,7 @@ static void def_match()
 		  = calloc(1, sizeof(struct include_stack_t));
 	    isp->str = cur->value;
 	    isp->next = istack;
+	    istack->yybs = YY_CURRENT_BUFFER;
 	    istack = isp;
 	    yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
@@ -206,6 +220,13 @@ void define_macro(const char*name, const char*value)
 
 static void do_define()
 {
+	/* FIXME: This strips trailing line comments out of the
+	   definition. It's not adequate as the "//" may have been
+	   quoted or commented, but it'll do for now. */
+      char *cp;
+      if(cp = strstr(yytext, "//"))
+	    *cp = 0;
+
       define_macro(def_name, yytext);
 }
 
