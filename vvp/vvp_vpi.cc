@@ -29,4 +29,5 @@ void vvp_vpi_init()
   vvpt.vpi_get_value = vpi_get_value;
   vvpt.vpi_put_value = vpi_put_value;
   vvpt.vpi_free_object= vpi_free_object;
+  vvpt.vpi_get_vlog_info = vpi_get_vlog_info;
 }

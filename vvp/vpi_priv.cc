@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.11 2002/01/06 00:48:39 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.12 2002/01/09 03:15:23 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -85,6 +85,27 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
       vp->type = vpiSimTime;
       vp->high = 0;
       vp->low = schedule_simtime();
+}
+
+static s_vpi_vlog_info vpi_vlog_info;
+
+int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
+{
+    if (vlog_info_p != 0)
+    {
+		*vlog_info_p = vpi_vlog_info;
+        return 1;
+    }
+    else
+        return 0;
+}
+
+void vpi_set_vlog_info(int argc, char** argv)
+{
+    vpi_vlog_info.product = "Icarus Verilog";
+    vpi_vlog_info.version = "$Name:  $";
+    vpi_vlog_info.argc    = argc;
+    vpi_vlog_info.argv    = argv;
 }
 
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
@@ -170,6 +191,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.12  2002/01/09 03:15:23  steve
+ *  Add vpi_get_vlog_info support.
+ *
  * Revision 1.11  2002/01/06 00:48:39  steve
  *  VPI access to root module scopes.
  *

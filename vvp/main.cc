@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.21 2001/10/20 01:03:42 steve Exp $"
+#ident "$Id: main.cc,v 1.22 2002/01/09 03:15:23 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -125,6 +125,7 @@ int main(int argc, char*argv[])
       struct rusage cycles[3];
       const char *logfile_name = 0x0;
       FILE *logfile = 0x0;
+      extern void vpi_set_vlog_info(int, char**);
 
 #ifdef __MINGW32__
 	/* In the Windows world, we get the first module path
@@ -206,8 +207,10 @@ int main(int argc, char*argv[])
       }
 
       vpi_mcd_init(logfile);
-      
+
       vvp_vpi_init();
+
+      vpi_set_vlog_info(argc, argv);
 
       compile_init();
 
@@ -256,6 +259,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.22  2002/01/09 03:15:23  steve
+ *  Add vpi_get_vlog_info support.
+ *
  * Revision 1.21  2001/10/20 01:03:42  steve
  *  Print memory usage information if requested (Stephan Boettcher)
  *
