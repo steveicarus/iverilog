@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/11/16 05:07:19 $" Version "$Date: 2001/11/16 05:07:19 $"
+.TH iverilog 1 "$Date: 2001/11/17 17:45:37 $" Version "$Date: 2001/11/17 17:45:37 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -23,7 +23,7 @@ implemented.
 .TP 8
 .B -B\fIbase\fP
 The \fIiverilog\fP program uses external programs to preprocess and
-compile the verilog source. Normally, the path used to locate these
+compile the Verilog source. Normally, the path used to locate these
 tools is built into the \fIiverilog\fP program. However, the \fB-B\fP
 switch allows the user to select a different set of programs. The path
 given is used to locate \fIivlpp\fP, \fIivl\fP and the VPI modules.
@@ -54,7 +54,7 @@ Defines macro \fImacro\fP as \fIdefn\fP.
 Preprocess the Verilog source, but do not compile it. The output file
 is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
-verilog source for use by other compilers.
+Verilog source for use by other compilers.
 .TP 8
 .B -I\fIincludedir\fP 
 Append directory \fIincludedir\fP to list of directories searched
@@ -199,7 +199,7 @@ source file. The path starts with the first non-white-space character.
 .TP 8
 .B -y\ \fIlibdir\fP
 A \fB-y\fP token prefixes a library directory in the command file,
-exactly like it does on the command line. The paramter to the \fB-y\fP
+exactly like it does on the command line. The parameter to the \fB-y\fP
 flag may be on the same line or the next non-comment line.
 
 .TP 8
