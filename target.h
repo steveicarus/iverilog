@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.65 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: target.h,v 1.66 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -86,14 +86,14 @@ struct target_t {
       virtual void lpm_mux(const NetMux*);
       virtual void lpm_ram_dq(const NetRamDq*);
 
+      virtual bool part_select(const NetPartSelect*);
+
 	/* Output a gate (called for each gate) */
       virtual void logic(const NetLogic*);
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
       virtual void net_case_cmp(const NetCaseCmp*);
-      virtual bool net_cassign(const NetCAssign*);
       virtual bool net_const(const NetConst*);
-      virtual bool net_force(const NetForce*);
       virtual bool net_function(const NetUserFunc*);
       virtual void net_probe(const NetEvProbe*);
 
@@ -170,6 +170,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.66  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.65  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115 2004/10/04 01:10:56 steve Exp $"
+#ident "$Id: t-dll.h,v 1.116 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -82,9 +82,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
       void lpm_ram_dq(const NetRamDq*);
+      bool part_select(const NetPartSelect*);
       void net_assign(const NetAssign_*);
-      bool net_cassign(const NetCAssign*);
-      bool net_force(const NetForce*);
       bool net_function(const NetUserFunc*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
@@ -162,6 +161,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       void add_root(ivl_design_s &des_, const NetScope *s);
 
+      void make_assign_lvals_(const NetAssignBase*net);
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
 
@@ -344,8 +344,15 @@ struct ivl_lpm_s {
 	    struct ivl_lpm_arith_s {
 		  unsigned width;
 		  unsigned signed_flag :1;
-		  ivl_nexus_t*q, *a, *b;
+		  ivl_nexus_t q,  a,  b;
 	    } arith;
+
+	    struct ivl_part_s {
+		  unsigned width;
+		  unsigned base;
+		  unsigned signed_flag :1;
+		  ivl_nexus_t q, a;
+	    } part;
 
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
@@ -395,10 +402,7 @@ struct ivl_net_const_s {
 	    char *bits_;
       } b;
 
-      union {
-	    ivl_nexus_t pin_;
-	    ivl_nexus_t*pins_;
-      } n;
+      ivl_nexus_t pin_;
 };
 
 /*
@@ -407,6 +411,7 @@ struct ivl_net_const_s {
  */
 struct ivl_net_logic_s {
       ivl_logic_t type_;
+      unsigned width_;
       ivl_udp_t udp;
 
       perm_string name_;
@@ -578,10 +583,7 @@ struct ivl_signal_s {
       perm_string name_;
       ivl_scope_t scope_;
 
-      union {
-	    ivl_nexus_t pin_;
-	    ivl_nexus_t*pins_;
-      } n;
+      ivl_nexus_t pin_;
 
       struct ivl_attribute_s*attr;
       unsigned nattr;
@@ -595,7 +597,8 @@ struct ivl_signal_s {
 struct ivl_statement_s {
       enum ivl_statement_type_e type_;
       union {
-	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
+	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB
+			IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
 		  unsigned lvals_;
 		  struct ivl_lval_s*lval_;
 		  ivl_expr_t rval_;
@@ -614,13 +617,6 @@ struct ivl_statement_s {
 		  ivl_expr_t*case_ex;
 		  struct ivl_statement_s*case_st;
 	    } case_;
-
-	    struct { /* IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
-		  unsigned lvals;
-		  struct ivl_lval_s*lval;
-		  unsigned npins;
-		  ivl_nexus_t*pins;
-	    } cassign_;
 
 	    struct { /* IVL_ST_CONDIT */
 		    /* This is the condition expression */
@@ -684,6 +680,11 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.116  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.115  2004/10/04 01:10:56  steve
  *  Clean up spurious trailing white space.
  *

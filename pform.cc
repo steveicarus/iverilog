@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.129 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: pform.cc,v 1.130 2004/12/11 02:31:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -952,7 +952,7 @@ void pform_make_modgates(perm_string type,
       delete gates;
 }
 
-PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
+static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
 			      svector<PExpr*>*del,
 			      struct str_pair_t str)
 {
@@ -1597,6 +1597,11 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.130  2004/12/11 02:31:27  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.129  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.17 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: resolv.cc,v 1.18 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -25,6 +25,7 @@
 # include  "statistics.h"
 # include  <assert.h>
 
+#if 0
 /*
  * A signal value is unambiguous if the top 4 bits and the bottom 4
  * bits are identical. This means that the VSSSvsss bits of the 8bit
@@ -187,31 +188,30 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
 
       put_ostr(val, sval, false);
 }
+#else
 
+resolv_functor::resolv_functor(vvp_scaler_t hiz_value)
+: hiz_(hiz_value)
+{
+}
+
+resolv_functor::~resolv_functor()
+{
+}
+
+void resolv_functor::recv_vec8(vvp_vector8_t vit)
+{
+      assert(0); // XXXX not implemented yet!
+}
+
+#endif
 
 /*
  * $Log: resolv.cc,v $
- * Revision 1.17  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
+ * Revision 1.18  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
  *
- * Revision 1.16  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.15  2002/09/06 04:56:29  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.14  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.13  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.12  2001/12/18 05:32:11  steve
- *  Improved functor debug dumps.
- *
- * Revision 1.11  2001/12/15 02:11:51  steve
- *  Give tri0 and tri1 their proper strengths.
  */
 

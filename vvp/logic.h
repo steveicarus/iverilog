@@ -1,7 +1,7 @@
 #ifndef __logic_H
 #define __logic_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,24 +19,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.7 2003/07/30 01:13:29 steve Exp $"
+#ident "$Id: logic.h,v 1.8 2004/12/11 02:31:29 steve Exp $"
 #endif
 
-# include  "functor.h"
+# include  "vvp_net.h"
 # include  <stddef.h>
 
 /*
- *  Table driven functor.  oval = table[ival];
+ * Table driven functor. This kind of node takes 4 inputs and
+ * generates a single output. The logic is bitwise, and implemented
+ * with a lookup table.
  */
 
-class table_functor_s: public functor_s {
+class table_functor_s: public vvp_net_fun_t {
 
     public:
       typedef const unsigned char *truth_t;
-      explicit table_functor_s(truth_t t, unsigned str0 =6, unsigned str1 =6);
+      explicit table_functor_s(truth_t t);
       virtual ~table_functor_s();
-
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
     private:
       truth_t table;
@@ -66,26 +66,10 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
- * Revision 1.7  2003/07/30 01:13:29  steve
- *  Add support for triand and trior.
- *
- * Revision 1.6  2002/08/29 03:04:01  steve
- *  Generate x out for x select on wide muxes.
- *
- * Revision 1.5  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.3  2002/01/12 04:02:16  steve
- *  Support the BUFZ logic device.
- *
- * Revision 1.2  2001/12/14 02:04:49  steve
- *  Support strength syntax on functors.
- *
- * Revision 1.1  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
+ * Revision 1.8  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
  *
  */
 #endif // __logic_H

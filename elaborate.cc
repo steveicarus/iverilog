@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.309 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -91,6 +91,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+      assert(lval->pin_count() == 1);
+
+      if (debug_elaborate) {
+	    cerr << lval->get_line() << ": debug: Elaborated l-value "
+		 << "width=" << lval->vector_width() << endl;
+      }
 
 	/* Handle the special case that the rval is simply an
 	   identifier. Get the rval as a NetNet, then use NetBUFZ
@@ -98,7 +104,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	   direct drivers. This is how I attach strengths to the
 	   assignment operation. */
       if (const PEIdent*id = dynamic_cast<const PEIdent*>(pin(1))) {
-	    NetNet*rid = id->elaborate_net(des, scope, lval->pin_count(),
+	    NetNet*rid = id->elaborate_net(des, scope, lval->vector_width(),
 					   0, 0, 0, Link::STRONG,
 					   Link::STRONG);
 	    if (rid == 0) {
@@ -107,7 +113,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    }
 
 	    assert(rid);
-
+	    assert(rid->pin_count() == 1);
 
 	      /* If the right hand net is the same type as the left
 		 side net (i.e., WIRE/WIRE) then it is enough to just
@@ -118,20 +124,16 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 is not as wide as the l-value by padding with a
 		 constant-0. */
 
-	    unsigned cnt = lval->pin_count();
-	    if (rid->pin_count() < cnt)
+	    unsigned cnt = lval->vector_width();
+	    if (rid->vector_width() < cnt)
 		  cnt = rid->pin_count();
 
 	    bool need_driver_flag = false;
 
 	      /* If the device is linked to itself, a driver is
 		 needed. Should I print a warning here? */
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-		  if (lval->pin(idx) .is_linked (rid->pin(idx))) {
-			need_driver_flag = true;
-			break;
-		  }
-	    }
+	    if (lval->pin(0) .is_linked (rid->pin(0)))
+		  need_driver_flag = true;
 
 	      /* If the nets are different type (i.e., reg vs. tri) then
 		 a driver is needed. */
@@ -145,16 +147,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	      /* If there is a strength to be carried, then I need a
 		 driver to carry that strength. */
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-		  if (rid->pin(idx).drive0() != drive0) {
-			need_driver_flag = true;
-			break;
-		  }
-		  if (rid->pin(idx).drive1() != drive1) {
-			need_driver_flag = true;
-			break;
-		  }
-	    }
+	    if (rid->pin(0).drive0() != drive0)
+		  need_driver_flag = true;
+
+	    if (rid->pin(0).drive1() != drive1)
+		  need_driver_flag = true;
+
 
 	    if (! need_driver_flag) {
 		    /* Don't need a driver, presumably because the
@@ -162,11 +160,10 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		       hook things up. If the r-value is too narrow
 		       for the l-value, then sign extend it or zero
 		       extend it, whichever makes sense. */
-		  unsigned idx;
-		  for (idx = 0 ;  idx < cnt; idx += 1)
-			connect(lval->pin(idx), rid->pin(idx));
+		  connect(lval->pin(0), rid->pin(0));
 
 		  if (cnt < lval->pin_count()) {
+#if 0
 			if (lval->get_signed() && rid->get_signed()) {
 			      for (idx = cnt
 					 ;  idx < lval->pin_count()
@@ -184,45 +181,28 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 					 ; idx += 1)
 				    connect(lval->pin(idx), tmp->pin(idx-cnt));
 			}
+#else
+			cerr << get_line() << ": internal error: "
+			     << "Forgot how to handle mismatched widths."
+			     << endl;
+#endif
 		  }
 
 	    } else {
 		    /* Do need a driver. Use BUFZ objects to carry the
 		       strength and delays. */
-		  unsigned idx;
-		  for (idx = 0 ; idx < cnt ;  idx += 1) {
-			NetBUFZ*dev = new NetBUFZ(scope,scope->local_symbol());
-			connect(lval->pin(idx), dev->pin(0));
-			connect(rid->pin(idx), dev->pin(1));
-			dev->rise_time(rise_time);
-			dev->fall_time(fall_time);
-			dev->decay_time(decay_time);
-			dev->pin(0).drive0(drive0);
-			dev->pin(0).drive1(drive1);
-			des->add_node(dev);
-		  }
 
-		  if (cnt < lval->pin_count()) {
-			if (lval->get_signed() && rid->get_signed()) {
-			      for (idx = cnt
-					 ;  idx < lval->pin_count()
-					 ;  idx += 1)
-				    connect(lval->pin(idx), lval->pin(cnt-1));
+		  NetBUFZ*dev = new NetBUFZ(scope, scope->local_symbol(),
+					    rid->vector_width());
+		  connect(lval->pin(0), dev->pin(0));
+		  connect(rid->pin(0),  dev->pin(1));
+		  dev->rise_time(rise_time);
+		  dev->fall_time(fall_time);
+		  dev->decay_time(decay_time);
+		  dev->pin(0).drive0(drive0);
+		  dev->pin(0).drive1(drive1);
+		  des->add_node(dev);
 
-			} else {
-			      NetConst*dev = new NetConst(scope,
-					      scope->local_symbol(),
-					      verinum::V0);
-
-			      des->add_node(dev);
-			      dev->pin(0).drive0(drive0);
-			      dev->pin(0).drive1(drive1);
-			      for (idx = cnt
-					 ;  idx < lval->pin_count()
-					 ; idx += 1)
-				    connect(lval->pin(idx), dev->pin(0));
-			}
-		  }
 	    }
 
 	    return;
@@ -232,7 +212,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	   which are going to be attached to the last gate before the
 	   generated NetNet. */
       NetNet*rval = pin(1)->elaborate_net(des, scope,
-					  lval->pin_count(),
+					  lval->vector_width(),
 					  rise_time, fall_time, decay_time,
 					  drive0, drive1);
       if (rval == 0) {
@@ -243,17 +223,16 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       }
 
       assert(lval && rval);
-
+      assert(rval->pin_count() == 1);
 
 	/* If the r-value insists on being smaller then the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
 	   right width so that something is connected to all the bits
 	   of the l-value. */
-      if (lval->pin_count() > rval->pin_count())
-	    rval = pad_to_width(des, rval, lval->pin_count());
+      if (lval->vector_width() > rval->vector_width())
+	    rval = pad_to_width(des, rval, lval->vector_width());
 
-      for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1)
-	    connect(lval->pin(idx), rval->pin(idx));
+      connect(lval->pin(0), rval->pin(0));
 
       if (lval->local_flag())
 	    delete lval;
@@ -355,75 +334,75 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    switch (type()) {
 		case AND:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::AND);
+					  NetLogic::AND, 1);
 		  break;
 		case BUF:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUF);
+					  NetLogic::BUF, 1);
 		  break;
 		case BUFIF0:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUFIF0);
+					  NetLogic::BUFIF0, 1);
 		  break;
 		case BUFIF1:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::BUFIF1);
+					  NetLogic::BUFIF1, 1);
 		  break;
 		case NAND:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NAND);
+					  NetLogic::NAND, 1);
 		  break;
 		case NMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NMOS);
+					  NetLogic::NMOS, 1);
 		  break;
 		case NOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOR);
+					  NetLogic::NOR, 1);
 		  break;
 		case NOT:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOT);
+					  NetLogic::NOT, 1);
 		  break;
 		case NOTIF0:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOTIF0);
+					  NetLogic::NOTIF0, 1);
 		  break;
 		case NOTIF1:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::NOTIF1);
+					  NetLogic::NOTIF1, 1);
 		  break;
 		case OR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::OR);
+					  NetLogic::OR, 1);
 		  break;
 		case RNMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RNMOS);
+					  NetLogic::RNMOS, 1);
 		  break;
 		case RPMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::RPMOS);
+					  NetLogic::RPMOS, 1);
 		  break;
 		case PMOS:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PMOS);
+					  NetLogic::PMOS, 1);
 		  break;
 		case PULLDOWN:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PULLDOWN);
+					  NetLogic::PULLDOWN, 1);
 		  break;
 		case PULLUP:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::PULLUP);
+					  NetLogic::PULLUP, 1);
 		  break;
 		case XNOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::XNOR);
+					  NetLogic::XNOR, 1);
 		  break;
 		case XOR:
 		  cur[idx] = new NetLogic(scope, inm, pin_count(),
-					  NetLogic::XOR);
+					  NetLogic::XOR, 1);
 		  break;
 		default:
 		  cerr << get_line() << ": internal error: unhandled "
@@ -1712,29 +1691,36 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       return block;
 }
 
+/*
+ * Elaborate a proceedural continuous assign. This really looks very
+ * much like other prodeedural assignments, at this point, but there
+ * is no delay to worry about. The code generator will take care of
+ * the differences between continuous assign and normal assignments.
+ */
 NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 {
+      NetCAssign*dev = 0;
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_anet(des, scope);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope);
       if (lval == 0)
 	    return 0;
 
-      NetNet*rval = expr_->elaborate_net(des, scope, lval->pin_count(),
-					 0, 0, 0);
-      if (rval == 0)
+      NetExpr*rexp = elab_and_eval(des, scope, expr_);
+      if (rexp == 0)
 	    return 0;
 
-      if (rval->pin_count() < lval->pin_count())
-	    rval = pad_to_width(des, rval, lval->pin_count());
+      dev = new NetCAssign(lval, rexp);
 
-      NetCAssign* dev = new NetCAssign(scope, scope->local_symbol(), lval);
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: ELaborate cassign,"
+		 << " lval width=" << lval->lwidth()
+		 << " rval width=" << rexp->expr_width()
+		 << " rval=" << *rexp
+		 << endl;
+      }
+
       dev->set_line(*this);
-      des->add_node(dev);
-
-      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
-	    connect(dev->pin(idx), rval->pin(idx));
-
       return dev;
 }
 
@@ -1742,7 +1728,7 @@ NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_anet(des, scope);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope);
       if (lval == 0)
 	    return 0;
 
@@ -2225,28 +2211,30 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
       return proc;
 }
 
-NetProc* PForce::elaborate(Design*des, NetScope*scope) const
+NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 {
+      NetForce*dev = 0;
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope);
       if (lval == 0)
 	    return 0;
 
-      NetNet*rval = expr_->elaborate_net(des, scope, lval->pin_count(),
-					 0, 0, 0);
-      if (rval == 0)
+      NetExpr*rexp = elab_and_eval(des, scope, expr_);
+      if (rexp == 0)
 	    return 0;
 
-      if (rval->pin_count() < lval->pin_count())
-	    rval = pad_to_width(des, rval, lval->pin_count());
+      dev = new NetForce(lval, rexp);
 
-      NetForce* dev = new NetForce(scope, scope->local_symbol(), lval);
-      des->add_node(dev);
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: ELaborate force,"
+		 << " lval width=" << lval->lwidth()
+		 << " rval width=" << rexp->expr_width()
+		 << " rval=" << *rexp
+		 << endl;
+      }
 
-      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
-	    connect(dev->pin(idx), rval->pin(idx));
-
+      dev->set_line(*this);
       return dev;
 }
 
@@ -2398,7 +2386,7 @@ NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetNet*lval = lval_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope);
       if (lval == 0)
 	    return 0;
 
@@ -2769,96 +2757,10 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
- * Revision 1.308  2004/10/04 01:10:52  steve
- *  Clean up spurious trailing white space.
+ * Revision 1.309  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
  *
- * Revision 1.307  2004/09/05 21:07:26  steve
- *  Support degenerat wait statements.
- *
- * Revision 1.306  2004/09/05 17:44:41  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.305  2004/06/30 15:32:02  steve
- *  Propagate source line number in synthetic delay statements.
- *
- * Revision 1.304  2004/06/20 15:59:06  steve
- *  Only pad the width of vector r-values.
- *
- * Revision 1.303  2004/06/13 04:56:54  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.302  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.301  2004/05/25 03:42:58  steve
- *  Handle wait with constant-false expression.
- *
- * Revision 1.300  2004/03/08 00:47:44  steve
- *  primitive ports can bind bi name.
- *
- * Revision 1.299  2004/03/08 00:10:29  steve
- *  Verilog2001 new style port declartions for primitives.
- *
- * Revision 1.298  2004/03/07 20:04:10  steve
- *  MOre thorough use of elab_and_eval function.
- *
- * Revision 1.297  2004/02/20 18:53:34  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.296  2004/02/18 17:11:55  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.295  2004/01/21 04:35:03  steve
- *  Get rid of useless warning.
- *
- * Revision 1.294  2004/01/13 03:42:49  steve
- *  Handle wide expressions in wait condition.
- *
- * Revision 1.293  2003/10/26 04:49:51  steve
- *  Attach line number information to for loop parts.
- *
- * Revision 1.292  2003/09/25 00:25:14  steve
- *  Summary list of missing modules.
- *
- * Revision 1.291  2003/09/20 06:08:53  steve
- *  Evaluate nb-assign r-values using elab_and_eval.
- *
- * Revision 1.290  2003/09/20 06:00:37  steve
- *  Evaluate gate array index constants using elab_and_eval.
- *
- * Revision 1.289  2003/09/20 01:05:35  steve
- *  Obsolete find_symbol and find_event from the Design class.
- *
- * Revision 1.288  2003/09/13 01:01:51  steve
- *  Spelling fixes.
- *
- * Revision 1.287  2003/09/04 20:28:05  steve
- *  Support time0 resolution of combinational threads.
- *
- * Revision 1.286  2003/08/28 04:11:17  steve
- *  Spelling patch.
- *
- * Revision 1.285  2003/08/05 03:01:58  steve
- *  Primitive outputs have same limitations as continuous assignment.
- *
- * Revision 1.284  2003/07/02 04:19:16  steve
- *  Elide empty begin-end in conditionals.
- *
- * Revision 1.283  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.282  2003/06/13 19:10:20  steve
- *  Handle assign of real to vector.
- *
- * Revision 1.281  2003/05/19 02:50:58  steve
- *  Implement the wait statement behaviorally instead of as nets.
- *
- * Revision 1.280  2003/05/04 20:04:08  steve
- *  Fix truncation of signed constant in constant addition.
- *
- * Revision 1.279  2003/04/24 05:25:55  steve
- *  Include port name in port assignment error message.
  */
 

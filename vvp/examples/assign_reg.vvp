@@ -1,0 +1,41 @@
+:vpi_module "system";
+
+;
+; This example demonstrates a simple blocking assignment to a
+; reg vector within a module.
+;
+
+
+main    .scope module, "main" "main";
+
+; This declares a "reg" data type named "test" in the current scope.
+; The bit range is given for the purposes of VPI access. The range
+; corresponds to the declaration "reg [7:0] test", so leads to an 8
+; bit wide vector.
+test	.var	"test", 7, 0;
+
+; The %assign/v0 opcode assigns a vector to the .var at the label,
+; with the given delay. The width of the vector from index register0.
+
+T0	%ix/load 0, 8 ;  Set the width of the vector to 8.
+
+	%assign/v0	test, 2, 0 ;
+	%delay 3;
+	%vpi_call "$display", "test = %b", test;
+
+	%assign/v0	test, 2, 1 ;
+	%delay 1;
+	%vpi_call "$display", "test = %b", test;
+	%delay 2;
+	%vpi_call "$display", "test = %b", test;
+
+	%assign/v0	test, 2, 2 ;
+	%delay 3;
+	%vpi_call "$display", "test = %b", test;
+
+	%assign/v0	test, 2, 3 ;
+	%delay 3;
+	%vpi_call "$display", "test = %b", test;
+
+	%end;
+	.thread T0;

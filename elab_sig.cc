@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.36 2004/09/27 22:34:10 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.37 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -610,6 +610,12 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
       } else {
 
 	    perm_string name = lex_strings.make(hname_.peek_tail_name());
+	    if (debug_elaborate) {
+		  cerr << get_line() << ": debug: Create signal "
+		       << name << "["<<msb<<":"<<lsb<<"]"
+		       << " in scope " << scope->name() << endl;
+	    }
+
 	    NetNet*sig = new NetNet(scope, name, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
@@ -623,6 +629,11 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.37  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.36  2004/09/27 22:34:10  steve
  *  Cleanup and factoring of autoconf.
  *

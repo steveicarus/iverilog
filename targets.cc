@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: targets.cc,v 1.11 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: targets.cc,v 1.12 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,17 +25,25 @@
 # include "target.h"
 
 extern const struct target tgt_dll;
+#ifdef WITH_T_XNF
 extern const struct target tgt_xnf;
-
+#endif
 
 const struct target *target_table[] = {
       &tgt_dll,
+#ifdef WITH_T_XNF
       &tgt_xnf,
+#endif
       0
 };
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.12  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.11  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

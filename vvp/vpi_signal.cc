@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.62 2004/05/19 03:26:25 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.63 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 /*
@@ -107,7 +107,7 @@ static int signal_get(int code, vpiHandle ref)
 
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
-		  return vvp_fvector_get(rfp->bits, 0);
+		  return (int)rfp->node;
 	    else
 		  return 0;
 
@@ -178,10 +178,12 @@ static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
-      unsigned char*bits = new unsigned char[wid];
+      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+	/* FIXME: bits should be an array of vvp_bit4_t. */
+      unsigned char* bits = new unsigned char[wid];
+
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-	    bits[idx] = functor_get(fptr);
+	    bits[idx] = vsig->value(idx);
       }
 
       unsigned hwid = (wid+2) / 3 + 1;
@@ -201,6 +203,7 @@ static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
+      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
 
       /* The result will use a character for each 8 bits of the
 	 vector. Add one extra character for the highest bits that
@@ -211,13 +214,12 @@ static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       char tmp = 0;
       int bitnr;
       for(bitnr=wid-1; bitnr>=0; bitnr--){
-	  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, bitnr);
 	  tmp <<= 1;
 
-	  switch (functor_get(fptr)) {
-	  case 0:
+	  switch (vsig->value(bitnr)) {
+	  case BIT4_0:
 	      break;
-	  case 1:
+	  case  BIT4_1:
 	      tmp |= 1;
 	      break;
 	  default:
@@ -254,6 +256,9 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       unsigned wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
+
+      vvp_fun_signal*vsig = dynamic_cast<vvp_fun_signal*>(rfp->node->fun);
+
       char *rbuf = 0;
 
       switch (vp->format) {
@@ -262,11 +267,10 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    assert(wid <= 8 * sizeof vp->value.integer);
 	    vp->value.integer = 0;
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		  switch (functor_get(fptr)) {
-		      case 0:
+		  switch (vsig->value(idx)) {
+		      case BIT4_0:
 			break;
-		      case 1:
+		      case BIT4_1:
 			vp->value.integer |= 1<<idx;
 			break;
 		      default:
@@ -278,18 +282,17 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiScalarVal: {
-		vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, 0);
-		switch (functor_get(fptr)) {
-		    case 0:
+		switch (vsig->value(0)) {
+		    case BIT4_0:
 		      vp->value.scalar = vpi0;
 		      break;
-		    case 1:
+		    case BIT4_1:
 		      vp->value.scalar = vpi1;
 		      break;
-		    case 2:
+		    case BIT4_X:
 		      vp->value.scalar = vpiX;
 		      break;
-		    case 3:
+		    case BIT4_Z:
 		      vp->value.scalar = vpiZ;
 		      break;
 		}
@@ -301,8 +304,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		  rbuf[wid-idx-1] = "01xz"[functor_get(fptr)];
+		  rbuf[wid-idx-1] = "01xz"[vsig->value(idx)];
 	    }
 	    rbuf[wid] = 0;
 	    vp->value.str = rbuf;
@@ -316,8 +318,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		      hval = hval | (functor_get(fptr) << 2*(idx % 4));
+		      hval = hval | (vsig->value(idx) << 2*(idx % 4));
 
 		      if (idx%4 == 3) {
 			    hwid -= 1;
@@ -353,8 +354,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		      hval = hval | (functor_get(fptr) << 2*(idx % 3));
+		      hval = hval | (vsig->value(idx) << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;
@@ -400,21 +400,20 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 	      op->aval = op->bval = 0;
 	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		switch (functor_get(fptr)) {
-		case 0:
+		switch (vsig->value(idx)) {
+		case BIT4_0:
 		  op->aval &= ~(1 << obit);
 		  op->bval &= ~(1 << obit);
 		  break;
-		case 1:
+		case BIT4_1:
 		  op->aval |= (1 << obit);
 		  op->bval &= ~(1 << obit);
 		  break;
-		case 2:
+		case BIT4_X:
 		  op->aval |= (1 << obit);
 		  op->bval |= (1 << obit);
 		  break;
-		case 3:
+		case BIT4_Z:
 		  op->aval &= ~(1 << obit);
 		  op->bval |= (1 << obit);
 		  break;
@@ -429,51 +428,6 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	      }
 	      break;
 	    }
-
-	  case vpiStrengthVal: {
-		s_vpi_strengthval*op = (s_vpi_strengthval*)
-		      need_result_buf(wid * sizeof(s_vpi_strengthval),
-				      RBUF_VAL);
-		vp->value.strength = op;
-
-		  /* Convert the internal strength values of each
-		     functor in the vector to a PLI2.0 version. */
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
-		      functor_t fp = functor_index(fptr);
-
-		      unsigned str = fp->get_ostr();
-		      unsigned s0 = 1 << (str&0x07);
-		      unsigned s1 = 1 << ((str>>4) & 0x07);
-
-		      switch (fp->get()) {
-			  case 0:
-			    op[idx].logic = vpi0;
-			    op[idx].s0 = s0|s1;
-			    op[idx].s1 = 0;
-			    break;
-			  case 1:
-			    op[idx].logic = vpi1;
-			    op[idx].s0 = 0;
-			    op[idx].s1 = s0|s1;
-			    break;
-			  case 2:
-			    op[idx].logic = vpiX;
-			    op[idx].s0 = s0;
-			    op[idx].s1 = s1;
-			    break;
-			  case 3:
-			    op[idx].logic = vpiZ;
-			    op[idx].s0 = vpiHiZ;
-			    op[idx].s1 = vpiHiZ;
-			    break;
-			  default:
-			    assert(0);
-		      }
-		}
-
-		break;
-	  }
 
 	  default:
 	    fprintf(stderr, "vvp internal error: get_value: "
@@ -494,14 +448,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 static void functor_poke(struct __vpiSignal*rfp, unsigned idx,
 			 unsigned val, unsigned str, unsigned long dly =0)
 {
-      vvp_ipoint_t ptr = vvp_fvector_get(rfp->bits,idx);
-
-      if (dly > 0) {
-	    schedule_assign(ptr, val, dly);
-      } else {
-	    functor_t fu = functor_index(ptr);
-	    fu->put_ostr(val, str, true);
-      }
+      fprintf(stderr, "XXXX functor_poke not implemented\n");
 }
 
 static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
@@ -762,7 +709,7 @@ static const struct __vpirt vpip_net_rt = {
  * to minimize the code modifications. Icarus implements integers
  * as 'reg signed [31:0]'.
  */
-vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_fvector_t vec)
+vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, true, vec);
       struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
@@ -775,7 +722,7 @@ vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_fvector_t vec)
  * Construct a vpiReg object. It's like a net, except for the type.
  */
 vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
-			bool signed_flag, vvp_fvector_t vec)
+			bool signed_flag, vvp_net_t*vec)
 {
       vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
       obj->vpi_type = &vpip_reg_rt;
@@ -804,7 +751,7 @@ static struct __vpiSignal* allocate_vpiSignal(void)
  * and point to the specified functor for the lsb.
  */
 vpiHandle vpip_make_net(const char*name, int msb, int lsb,
-			bool signed_flag, vvp_fvector_t vec)
+			bool signed_flag, vvp_net_t*node)
 {
       struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
@@ -813,8 +760,7 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
       obj->isint_ = false;
-      obj->bits = vec;
-      obj->callback = 0;
+      obj->node = node;
 
       obj->scope = vpip_peek_current_scope();
 
@@ -826,6 +772,11 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.63  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.62  2004/05/19 03:26:25  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

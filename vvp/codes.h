@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.66 2004/06/19 15:52:53 steve Exp $"
+#ident "$Id: codes.h,v 1.67 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 
 # include  "pointers.h"
+# include  "vvp_net.h"
 # include  "memory.h"
 # include  "vthread.h"
 
@@ -39,7 +40,6 @@ extern bool of_ADD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADDI(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
-extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
@@ -47,7 +47,7 @@ extern bool of_ASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
-extern bool of_CASSIGN(vthread_t thr, vvp_code_t code);
+extern bool of_CASSIGN_V(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
@@ -78,7 +78,6 @@ extern bool of_JMP0(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
-extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
@@ -99,7 +98,6 @@ extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE(vthread_t thr, vvp_code_t code);
-extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
@@ -133,7 +131,7 @@ struct vvp_code_s {
 
       union {
 	    unsigned long number;
-	    vvp_ipoint_t iptr;
+	    vvp_net_t    *net;
 	    vvp_code_t   cptr;
 	    vvp_memory_t mem;
 	    struct __vpiHandle*handle;
@@ -143,7 +141,7 @@ struct vvp_code_s {
 
       union {
 	    unsigned bit_idx[2];
-	    vvp_ipoint_t iptr2;
+	    vvp_net_t   *net2;
 	    vvp_code_t   cptr2;
 	    struct ufunc_core*ufunc_core_ptr;
       };
@@ -170,6 +168,11 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.67  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.66  2004/06/19 15:52:53  steve
  *  Add signed modulus operator.
  *

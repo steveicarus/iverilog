@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.28 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: schedule.cc,v 1.29 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -43,30 +43,19 @@ unsigned long count_time_pool = 0;
 
 /*
  * The event_s and event_time_s structures implement the Verilog
- * stratified event queue. The event_time_s objects are one per time
- * step. Each time step in turn contains a list of event_s objects
- * that are the actual events.
+ * stratified event queue.
+ *
+ * The event_time_s objects are one per time step. Each time step in
+ * turn contains a list of event_s objects that are the actual events.
+ *
+ * The event_s objects are base classes for the more specific sort of
+ * event.
  */
 struct event_s {
-
-      union {
-	    vthread_t thr;
-	    vvp_ipoint_t fun;
-	    functor_t    funp;
-            vvp_gen_event_t obj;
-      };
-      unsigned val  :2;
-      unsigned type :2;
-
       struct event_s*next;
-
-      void* operator new (size_t);
-      void operator delete(void*obj, size_t s);
+      virtual ~event_s() { }
+      virtual void run_run(void) =0;
 };
-const unsigned TYPE_GEN    = 0;
-const unsigned TYPE_THREAD = 1;
-const unsigned TYPE_PROP   = 2;
-const unsigned TYPE_ASSIGN = 3;
 
 struct event_time_s {
       vvp_time64_t delay;
@@ -81,43 +70,50 @@ struct event_time_s {
       void operator delete(void*obj, size_t s);
 };
 
+/*
+ * Derived event types
+ */
+struct vthread_event_s : public event_s {
+      vthread_t thr;
+      void run_run(void);
+};
+
+void vthread_event_s::run_run(void)
+{
+      count_thread_events += 1;
+      vthread_run(thr);
+}
+
+struct assign_vector4_event_s  : public event_s {
+      vvp_net_ptr_t ptr;
+      vvp_vector4_t val;
+      void run_run(void);
+};
+
+void assign_vector4_event_s::run_run(void)
+{
+      count_assign_events += 1;
+      vvp_send_vec4(ptr, val);
+}
+
+struct generic_event_s : public event_s {
+      vvp_gen_event_t obj;
+      unsigned char val;
+      void run_run(void);
+};
+
+void generic_event_s::run_run(void)
+{
+      count_gen_events += 1;
+      if (obj && obj->run)
+	    obj->run(obj, val);
+}
 
 /*
-** These event_s will be required a lot, at high frequency.
+** These event_time_s will be required a lot, at high frequency.
 ** Once allocated, we never free them, but stash them away for next time.
 */
 
-static struct event_s* event_free_list = 0;
-static const unsigned CHUNK_COUNT = 8192 / sizeof(struct event_s);
-
-inline void* event_s::operator new (size_t size)
-{
-      assert(size == sizeof(struct event_s));
-
-      struct event_s* cur = event_free_list;
-      if (!cur) {
-	    cur = (struct event_s*)
-		  malloc(CHUNK_COUNT * sizeof(struct event_s));
-	    for (unsigned idx = 1 ;  idx < CHUNK_COUNT ;  idx += 1) {
-		  cur[idx].next = event_free_list;
-		  event_free_list = cur + idx;
-	    }
-
-	    count_event_pool += CHUNK_COUNT;
-
-      } else {
-	    event_free_list = cur->next;
-      }
-
-      return cur;
-}
-
-inline void event_s::operator delete(void*obj, size_t size)
-{
-      struct event_s*cur = reinterpret_cast<event_s*>(obj);
-      cur->next = event_free_list;
-      event_free_list = cur;
-}
 
 static struct event_time_s* time_free_list = 0;
 static const unsigned TIME_CHUNK_COUNT = 8192 / sizeof(struct event_time_s);
@@ -374,10 +370,9 @@ static struct event_s* pull_sync_event(void)
 
 void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 {
-      struct event_s*cur = new event_s;
+      struct vthread_event_s*cur = new vthread_event_s;
 
       cur->thr = thr;
-      cur->type = TYPE_THREAD;
       vthread_mark_scheduled(thr);
 
       if (push_flag && (delay == 0)) {
@@ -394,14 +389,19 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
 
 void functor_s::schedule(vvp_time64_t delay, bool nba_flag)
 {
+#if 0
       struct event_s*cur = new event_s;
 
       cur->funp = this;
       cur->type = TYPE_PROP;
 
       schedule_event_(cur, delay, nba_flag? SEQ_NBASSIGN:SEQ_ACTIVE);
+#else
+      fprintf(stderr, "XXXX I forgot how to schedule functors.\n");
+#endif
 }
 
+#if 0
 void schedule_assign(vvp_ipoint_t fun, unsigned char val, vvp_time64_t delay)
 {
       struct event_s*cur = new event_s;
@@ -412,15 +412,25 @@ void schedule_assign(vvp_ipoint_t fun, unsigned char val, vvp_time64_t delay)
 
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
+#endif
+
+void schedule_assign_vector(vvp_net_ptr_t ptr,
+			    vvp_vector4_t bit,
+			    vvp_time64_t delay)
+{
+      struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
+      cur->ptr = ptr;
+      cur->val = bit;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
 
 void schedule_generic(vvp_gen_event_t obj, unsigned char val,
 		      vvp_time64_t delay, bool sync_flag)
 {
-      struct event_s*cur = new event_s;
+      struct generic_event_s*cur = new generic_event_s;
 
       cur->obj = obj;
       cur->val = val;
-      cur->type= TYPE_GEN;
 
       schedule_event_(cur, delay, sync_flag? SEQ_ROSYNC : SEQ_ACTIVE);
 }
@@ -459,10 +469,7 @@ void schedule_simulate(void)
 
 		  struct event_s*sync_cur;
 		  while ( (sync_cur = pull_sync_event()) ) {
-			assert(sync_cur->type == TYPE_GEN);
-			if (sync_cur->obj && sync_cur->obj->run) {
-			      sync_cur->obj->run(sync_cur->obj, sync_cur->val);
-			}
+			sync_cur->run_run();
 			delete sync_cur;
 		  }
 
@@ -499,6 +506,8 @@ void schedule_simulate(void)
 		  ctim->active->next = cur->next;
 	    }
 
+	    cur->run_run();
+#if 0
 	    switch (cur->type) {
 		case TYPE_THREAD:
 		  count_thread_events += 1;
@@ -529,7 +538,7 @@ void schedule_simulate(void)
 		  break;
 
 	    }
-
+#endif
 	    delete (cur);
       }
 
@@ -539,10 +548,7 @@ void schedule_simulate(void)
       for (struct event_s*sync_cur = pull_sync_event()
 		 ; sync_cur ;  sync_cur = pull_sync_event()) {
 
-	    assert(sync_cur->type == TYPE_GEN);
-
-	    if (sync_cur->obj && sync_cur->obj->run)
-		  sync_cur->obj->run(sync_cur->obj, sync_cur->val);
+	    sync_cur->run_run();
 
 	    delete (sync_cur);
       }
@@ -556,6 +562,11 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.29  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.28  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
@@ -570,8 +581,5 @@ void schedule_simulate(void)
  *
  * Revision 1.24  2003/02/22 02:52:06  steve
  *  Check for stopped flag in certain strategic points.
- *
- * Revision 1.23  2003/02/21 03:40:35  steve
- *  Add vpiStop and interactive mode.
  */
 

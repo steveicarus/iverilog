@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.47 2004/10/04 01:10:58 steve Exp $
+ *  $Id: README.txt,v 1.48 2004/12/11 02:31:29 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -241,31 +241,19 @@ A variable does not take inputs, since its value is set behaviorally
 by assignment events. It does have output, though, and its output is
 propagated into the net of functors in the usual way.
 
-Therefore, the .var statement implicitly also creates .functors
-addressed by the label of the variable. It is in fact the functors
-that behavioral code reads when the value of the variable (or net) is
-read by behavioral code. If the .var represents a vector of .functors,
-the index of the LSB is always, from the perspective of vvp, ZERO. The
-<msb>,<lsb> details are there only for the benefit of VPI support.
+A variable gets its value by assignments from procedural code: %set
+and %assign. These instructions write values to the port-0 input. From
+there, the value is held.
 
-The variable .functor implicitly has two inputs. The first is the
-value that gets set by assignments.  The second input is connected to
-the driving expression of a procedural continuous assignments.
-Variable functors have an extra internal bit that tells if a
-procedural continuous assignment is active.  The %cassign opcode
-connects and activates the procedural continuous assignment.  The
-%deassign opcode disconnects and deactivates it.
+Behavioral code can also invoke %cassign/v statements that work like
+%set/v, but instead write to port-1 of the variable node. Writes to
+port-1 of a variable activate continuous assign mode, where the values
+written to port-0 are ignored. The continuous assign mode remains
+active until a long(1) is written to port-3 (a command port).
 
-The variable statement also creates a VPI object of the appropriate
-type. See the vpi.txt file for details about that object. The msb and
-lsb values are set from the parameters of the .var or .var/s, and the
-vpiReg is marked unsigned for .var, or signed for .var/s
-
-Note that nets in a design do not necessarily have a specific functor
-or object allocated to them. Nets are just something that behavioral
-code can read, so it is enough to give to the behavioral code the
-vvp_ipoint_t object of the .functor that drives the net.
-
+Behavioral code may also invoke %force/v statements that write to port-2
+to invoke force mode. This overrides continuous assign mode until a
+long(2) is written to port-3 to disable force mode.
 
 NET STATEMENTS:
 
@@ -274,14 +262,21 @@ it (unless it uses a force) and it is given a different VPI type
 code. The syntax of a .net statement is also similar to but not
 exactly the same as the .var statement:
 
-	<label> .net   "name", <msb>, <lsb>, <symbols_list>;
-	<label> .net/s "name", <msb>, <lsb>, <symbols_list>;
+	<label> .net   "name", <msb>, <lsb>, <symbol>;
+	<label> .net/s "name", <msb>, <lsb>, <symbol>;
 
 Like a .var statement, the .net statement creates a VPI object with
-the basename and dimensions given as parameters, but unlike a .var
-statement, it creates no functors. The symbol list is a list of
-functors that feed into each bit of the vector, and the vpiHandle
-holds references to those functors that are fed it.
+the basename and dimensions given as parameters. The symbol is a
+functor that feeds into the vector of the net, and the vpiHandle
+holds references to that functor.
+
+      NOTE: Nets also, unlike .vars, should also have a way of getting
+      at the strengths of each bit. I haven't worked out how that will
+      happen, yet.
+
+The input of a .net is replicated to its output. In this sense, it
+acts like a diode. The purpose of this node is to hold various VPI
+and event trappings.
 
 The <label> is required and is used to locate the net object that is
 represents. This label does not map to a functor, so only references
@@ -443,7 +438,19 @@ resolution function.
 	<label> .resolv tri1, <symbols_list>;
 
 
-FORCE STATEMENTS:
+PART SELECT STATEMENTS:
+
+Part select statements are functors with three inputs. They take in at
+port-0 a vector, and output a selected (likely smaller) part of that
+vector. The other inputs specify what those parts are, as a cannonical
+bit number, and a width. Normally, those bits are constant values.
+
+	<label> .part <symbol>, <base>, <wid>;
+
+The input is typically a .reg or .net, but can be any vector node in
+the netlist.
+
+FORCE STATEMENTS (old method - remove me):
 
 A force statement creates functors that represent a Verilog force
 statement.
@@ -465,33 +472,44 @@ To activate and deactivate a force on a single bit, use:
 <signal> is the label of the functor that drives the signal that is
 being forced.
 
+FORCE STATEMENTS (new method - implement me):
+
+A %force instruction, as described in the .var section, forces a
+constant value onto a .var or .net, and the matching %release release
+that value. However, there are times when the value of a functor
+(i.e. another .net) needs to be forced onto a .var or .net. For this
+task, the %force/link instruction exists:
+
+	%force/link <dst>, <src> ;
+	%release/link <dst> ;
+
+This causes the output of the node <src> to be linked to the force
+input of the <dst> .var/.net node. When linked, the output functor
+will automatically drive values to the force port of the destination
+node. The matching %release/link instruction removes the link (a
+%release is still needed) to the destination.
+
+The instructions:
+
+	%cassign/link <dst>, <src> ;
+	%deassign/link <dst> ;
+
+are the same concept, but for the continuous assign port.
 
 STRUCTURAL ARITHMETIC STATEMENTS:
 
-The various Verilog arithmetic operators (+-*/%) are available to
-structural contexts even though they do not fit into nice neat
-functors. These operators are not in general bitwise, so special
-measures are needed to make them work in a functor environment. We
-create special statement types for the various arithmetic operators.
+The various Verilog arithmetic operators (+-*/%) ar avaiable to
+structural contexts as two-input functors that take in vectors. All of
+these operators take two inputs and generate a fixed width output. The
+input vectors will be padded if needed to get the desired output width.
 
-	<label> .arith/sub  <wid>, <symbols_list>;
-	<label> .arith/sum  <wid>, <symbols_list>;
-	<label> .arith/mult <wid>, <symbols_list>;
-	<label> .arith/div  <wid>, <symbols_list>;
-	<label> .arith/mod  <wid>, <symbols_list>;
+	<label> .arith/sub  <wid>, <A>, <B>;
+	<label> .arith/sum  <wid>, <A>, <B>;
+	<label> .arith/mult <wid>, <A>, <B>;
+	<label> .arith/div  <wid>, <A>, <B>;
+	<label> .arith/mod  <wid>, <A>, <B>;
 
-Addition is represented by the .arith/sum statement. This creates an
-array of functors based at the label. The width of the array is given
-by <wid>, and the <symbols_list> connects the inputs.
-
-The sum can add together up to 4 operands, specified in the
-<symbols_list> one bit at a time. All the bits of the first operand
-(lsb first) are listed, then the bits of the second, and so on. The
-number of symbols must be an even multiple of the width of the operator.
-
-Subtraction is similar to addition, except that the 2nd, 3rd and 4th
-vectors are subtracted from the first.
-
+In all cases, there are no width limits, so long as the width is fixed.
 
 STRUCTURAL COMPARE STATEMENTS:
 
@@ -586,6 +604,23 @@ correctly, all %fork statements must have a corresponding %join in the
 parent, and %end in the child. Without this proper matching, the
 hierarchical relationships can get confused. The behavior of erroneous
 code is undefined.
+
+* Thread Context
+
+The context of a thread is all the local data that only that thread
+can address. The local data is broken into two addresses spaces: bit
+memory and word memory.
+
+The bit memory is a region of 4-value bits (0,1,x,z) that can be
+addressed in strips of arbitrary length. For example, an 8-bit value
+can be in locations 8 through and including 15. The bits at address 0,
+1, 2 and 3 are special constant values. Reads from those locations
+make vectors of 0, 1, x or z values, so these can be used to
+manufacture complex values elsewhere.
+
+The word memory is a region of tagged words. The value in each word
+may be native long or real. These words have a distinct address space
+from the bits.
 
 * Threads and scopes
 

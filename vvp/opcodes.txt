@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.55 2004/06/19 15:52:53 steve Exp $
+ *  $Id: opcodes.txt,v 1.56 2004/12/11 02:31:29 steve Exp $
  */
 
 
@@ -57,9 +57,8 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
-* %assign <var-label>, <delay>, <bit>
-* %assign/d <var-label>, <delay>, <bit>
-* %assign/v0 <var-label>, <delay>, <bit>
+* %assign <var-label>, <delay>, <bit> (DEPRECATED -- use %assign/v0)
+* %assign/d <var-label>, <delay>, <bit> (DEPRECATED -- need %assign/v0/d)
 
 This does a non-blocking assignment to a variable. The <label>
 identifies the affected variable, and the <delay> gives the delay when
@@ -71,9 +70,6 @@ The %assign/d instruction is exactly the same as the %assign
 instruction, except that the <delay> specifies one of the index
 registers, that contain a calculated delay.
 
-The %assign/v0 instruction is a vector version of %assign, with the
-vector width in index register 0.
-
 * %assign/m <memory-label>, <delay>, <bit>
 
 This instruction does a non-blocking assignment to a bit in a memory
@@ -81,6 +77,16 @@ from the specified thread register <bit>.  The memory bit is addressed
 by index register 3.  Bit address zero is the LSB of the first memory
 word.
 
+* %assign/v0 <var-label>, <delay>, <bit>
+
+The %assign/v0 instruction is a vector version of non-blocking
+assignment. The <delay> is the number of clock ticks in the future
+where the assignment should be schedule, and the <bit> is the base of
+the vector to be assigned to the destination. The vector width is in
+index register 0.
+
+The <var-label> references a .var object that can receive non-blocking
+assignments. For blocking assignments, see %set/v.
 
 * %assign/wr <vpi-label>, <delay>, <index>
 
@@ -124,20 +130,17 @@ debugger commands.
 This may not work on all platforms. If run-time debugging is compiled
 out, then this function is a no-op.
 
+* %cassign/v <var-label>, <bit>, <wid>
 
-* %cassign <var-label>, <expr-label>
+Perform a continuous assign of a constant value to the target
+variable. This is similar to %set, but it uses the cassign port
+(port-1) of the signal functor instead of the normal assign, so the
+signal responds differently.
 
-Connect and active a procedural continuous assignment to a
-variable. The <var-label> identifies the affected variable, and the
-<expr-label> is the functor that drives the expression to the
-variable.  This opcode affects only a single bit.
-
-
-* %deassign <var-label>, <wid>
+* %deassign <var-label>
 
 Deactivate and disconnect a procedural continuous assignment to a
-variable. The <var-label> identifies the affected variable.  <wid>
-specifies the how many bits to deassign.
+variable. The <var-label> identifies the affected variable.
 
 
 * %cmp/u <bit-l>, <bit-r>, <wid>
@@ -294,7 +297,7 @@ bits.
 This instruction loads an immediate value into the addressed index
 register. The index register holds numeric values, so the <value> is a
 number. The idx value selects the index register, and may be 0, 1, 2
-or 3. This is different from %is/get, which loads the index register
+or 3. This is different from %ix/get, which loads the index register
 from a value in the thread bit vector.
 
 
@@ -338,19 +341,6 @@ If the matching child instruction is still running, a %join suspends
 the calling thread until the child ends. If the child is already
 ended, then the %join does not block or yield the thread.
 
-
-* %load <bit>, <functor-label>
-* %load/v <bit>, <functor-label>, <wid>
-
-This instruction loads a value from the given functor output into the
-specified thread register bit. The functor-label can refer to a .net,
-a .var or a .functor, and may be indexed with array syntax to get at a
-functor within a vector of functors. This instruction loads only a
-single bit.
-
-The %load/v instruction is a vector version, that loads an entire
-vector, starting at the given <bit> and functor.
-
 * %load/m <bit>, <memory-label>
 
 This instruction loads a value from a memory bit into the specified
@@ -364,6 +354,15 @@ instruction loads only a single bit.
 This instruction load a value from a .net object bit. Since .net
 objects don't really exist (they are only named indirection into the
 netlist) this instruction indexes into the .net list of bits.
+
+* %load/v <bit>, <functor-label>, <wid>
+
+This instruction loads a vector value from the given functor node into
+the specified thread register bit. The functor-label can refer to a
+.net, a .var or a .functor with a vector output. The entire vector,
+from the least significant up to <wid> bits, is loaded starting at
+thread bit <bit>. It is an error for the width to not match the vector
+width at the functor.
 
 * %load/wr <bit>, <vpi-label>
 
@@ -497,7 +496,6 @@ semantics.  Like:
 	%release <functor-label>	; remove the force
 
 
-* %set <var-label>, <bit>
 * %set/v <var-label>, <bit>, <wid>
 
 This sets a bit of a variable, and is used to implement blocking

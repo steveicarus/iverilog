@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbols.h,v 1.4 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: symbols.h,v 1.5 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 /*
@@ -39,6 +39,7 @@
  */
 
 # include  "config.h"
+# include  "vvp_net.h"
 
 /*
  * This is the basic type of a symbol table. It is opaque. Don't even
@@ -49,8 +50,9 @@ typedef struct symbol_table_s *symbol_table_t;
 
 typedef struct symbol_value_s {
       union {
-	    unsigned long num;
+	    vvp_net_t*net;
 	    void*ptr;
+	    unsigned long num;
       };
 } symbol_value_t;
 
@@ -79,6 +81,11 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key);
 
 /*
  * $Log: symbols.h,v $
+ * Revision 1.5  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.4  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

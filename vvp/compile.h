@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.56 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: compile.h,v 1.57 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  <stdio.h>
 # include  "parse_misc.h"
 # include  "vpi_user.h"
+# include  "vvp_net.h"
 
 /*
  * The functions described here are the compile time support
@@ -45,13 +46,13 @@ extern bool verbose_flag;
  *  Connect a list of symbols to a contiguous set of ipoints.
  *  Constants C<?> are handled by setting the ival of the ipoint.
  */
-extern void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv);
+extern void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv);
+extern void input_connect(vvp_net_t*fdx, unsigned port, char*label);
 
 /*
  *  Add a functor to the symbol table
  */
-extern void define_functor_symbol(const char*label, vvp_ipoint_t ipt);
-
+extern void define_functor_symbol(const char*label, vvp_net_t*ipt);
 
 /*
  * This is a count of errors encountered during compilation. If this
@@ -86,6 +87,9 @@ extern void compile_functor(char*label, char*type,
  */
 extern void compile_resolver(char*label, char*type,
 			     unsigned argc, struct symb_s*argv);
+
+extern void compile_part_select(char*label, char*src,
+				unsigned base, unsigned wid);
 
 /*
  * This is called by the parser to make force functors.
@@ -268,6 +272,11 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.57  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.56  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

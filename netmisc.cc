@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.8 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.9 2004/12/11 02:31:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,7 +30,7 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 {
       if (val == 0)
 	    return sig;
-
+#if 0
       NetScope*scope = sig->scope();
       unsigned long abs_val = (val >= 0)? val : (-val);
       unsigned width = sig->pin_count();
@@ -70,6 +70,10 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
       des->add_node(val_c);
 
       return res;
+#else
+      cerr << sig->get_line() << ": XXXX: Forgot how to implement add_to_net" << endl;
+      return 0;
+#endif
 }
 
 
@@ -90,6 +94,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.9  2004/12/11 02:31:27  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.8  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *

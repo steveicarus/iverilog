@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.40 2004/02/20 18:53:33 steve Exp $"
+#ident "$Id: Statement.h,v 1.41 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include  <string>
@@ -36,6 +36,7 @@ class Design;
 class NetAssign_;
 class NetCAssign;
 class NetDeassign;
+class NetForce;
 class NetScope;
 
 /*
@@ -345,7 +346,7 @@ class PForce  : public Statement {
       explicit PForce(PExpr*l, PExpr*r);
       ~PForce();
 
-      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual NetForce* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -456,6 +457,11 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.41  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.40  2004/02/20 18:53:33  steve
  *  Addtrbute keys are perm_strings.
  *

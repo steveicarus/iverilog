@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: synth2.cc,v 1.40 2004/12/11 02:31:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -768,7 +768,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       if (ff->pin_Enable().is_linked()) {
 	    NetLogic*ce_and = new NetLogic(scope,
 					   scope->local_symbol(), 3,
-					   NetLogic::AND);
+					   NetLogic::AND, 1);
 	    des->add_node(ce_and);
 	    connect(ff->pin_Enable(), ce_and->pin(1));
 	    connect(ce->pin(0), ce_and->pin(2));
@@ -985,6 +985,11 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.40  2004/12/11 02:31:27  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.39  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.132 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -650,8 +650,8 @@ bool dll_target::bufz(const NetBUFZ*net)
       assert(net->pin_count() == 2);
 
       obj->type_ = IVL_LO_BUFZ;
-
-      obj->npins_ = 2;
+      obj->width_= net->width();
+      obj->npins_= 2;
       obj->pins_ = new ivl_nexus_t[2];
 
 	/* Get the ivl_nexus_t objects connected to the two pins.
@@ -779,6 +779,8 @@ void dll_target::variable(const NetVariable*net)
 void dll_target::logic(const NetLogic*net)
 {
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
+
+      obj->width_ = net->width();
 
       switch (net->type()) {
 	  case NetLogic::AND:
@@ -941,16 +943,6 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       obj->delay[2] = net->decay_time();
 
       scope_add_logic(scope, obj);
-}
-
-bool dll_target::net_cassign(const NetCAssign*)
-{
-      return false;
-}
-
-bool dll_target::net_force(const NetForce*net)
-{
-      return true;
 }
 
 /*
@@ -1119,38 +1111,31 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    obj->u_.arith.width += 1;
       }
 
-      obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
-      obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
-      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
 
-      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
-	    const Nexus*nex;
+      const Nexus*nex;
 
-	    nex = net->pin_Result(idx).nexus();
-	    assert(nex->t_cookie());
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
 
-	    obj->u_.arith.q[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[idx], obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
+      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
-	    nex = net->pin_DataA(idx).nexus();
-	    assert(nex->t_cookie());
+      nex = net->pin_DataA().nexus();
+      assert(nex->t_cookie());
 
-	    obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
+      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-	    nex = net->pin_DataB(idx).nexus();
-	    assert(nex->t_cookie());
+      nex = net->pin_DataB().nexus();
+      assert(nex->t_cookie());
 
-	    obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
-      }
+      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 	/* If the carry output is connected, then connect the extra Q
 	   pin to the carry nexus and zero the a and b inputs. */
       if (net->pin_Cout().is_linked()) {
+#if 0
 	    unsigned carry = obj->u_.arith.width - 1;
 	    const Nexus*nex = net->pin_Cout().nexus();
 	    assert(nex->t_cookie());
@@ -1161,6 +1146,9 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 
 	    obj->u_.arith.a[carry] = 0;
 	    obj->u_.arith.b[carry] = 0;
+#else
+	    cerr << "XXXX: t-dll.cc: Forgot how to connect cout." << endl;
+#endif
       }
 
       scope_add_lpm(obj->scope, obj);
@@ -1252,7 +1240,7 @@ void dll_target::lpm_compare(const NetCompare*net)
 
       obj->u_.arith.width = net->width();
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
-
+#if 0
       obj->u_.arith.q = new ivl_nexus_t[1 + 2 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + 1;
       obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
@@ -1347,7 +1335,9 @@ void dll_target::lpm_compare(const NetCompare*net)
 	    nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
 			  IVL_DR_HiZ, IVL_DR_HiZ);
       }
-
+#else
+      cerr << "XXXX: t-dll.cc: Forgot how to handle lpm_compare." << endl;
+#endif
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1365,7 +1355,7 @@ void dll_target::lpm_divide(const NetDivide*net)
 
       obj->u_.arith.width = wid;
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
-
+#if 0
       obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
       obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
@@ -1418,7 +1408,9 @@ void dll_target::lpm_divide(const NetDivide*net)
 		  obj->u_.arith.b[idx] = 0;
 	    }
       }
-
+#else
+      cerr << "XXXX t-dll.cc: Forgot how to handle lpm_divide." << endl;
+#endif
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -1438,7 +1430,7 @@ void dll_target::lpm_modulo(const NetModulo*net)
 	    wid = net->width_b();
 
       obj->u_.arith.width = wid;
-
+#if 0
       obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
       obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
@@ -1485,7 +1477,9 @@ void dll_target::lpm_modulo(const NetModulo*net)
 		  obj->u_.arith.b[idx] = 0;
 	    }
       }
-
+#else
+      cerr << "XXXX: t-dll.cc: Forgot how to handle lpm_modulo." << endl;
+#endif
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -1732,6 +1726,7 @@ void dll_target::lpm_mult(const NetMult*net)
 
       obj->u_.arith.width = wid;
 
+#if 0
       obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
       obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
@@ -1791,7 +1786,9 @@ void dll_target::lpm_mult(const NetMult*net)
 		  obj->u_.arith.b[idx] = 0;
 	    }
       }
-
+#else
+      cerr << "XXXX: t-dll.cc: Forgot how to handle lpm_mult." << endl;
+#endif
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -1870,6 +1867,42 @@ void dll_target::lpm_mux(const NetMux*net)
 
 }
 
+bool dll_target::part_select(const NetPartSelect*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_PART;
+      obj->name = net->name(); // NetPartSelect names are permallocated.
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.part.signed_flag = 0;
+
+	/* Choose the width of the part select. */
+      obj->u_.part.width = net->width();
+      obj->u_.part.base  = net->base();
+      obj->u_.part.signed_flag = 0;
+      const Nexus*nex;
+
+	/* NetPartSelect:pin(0) is the output pin. */
+      nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.part.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.part.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+	/* NetPartSelect:pin(1) is the input pin. */
+      nex = net->pin(1).nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.part.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.part.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 /*
  * The assignment l-values are captured by the assignment statements
  * themselves in the process handling.
@@ -1885,7 +1918,10 @@ bool dll_target::net_const(const NetConst*net)
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
-      obj->width_ = net->pin_count();
+	/* constants have a single vector output. */
+      assert(net->pin_count() == 1);
+
+      obj->width_ = net->width();
       if (obj->width_ <= sizeof(char*)) {
 	    bits = obj->b.bit_;
 
@@ -1913,30 +1949,14 @@ bool dll_target::net_const(const NetConst*net)
 	/* Connect to all the nexus objects. Note that the one-bit
 	   case can be handled more efficiently without allocating
 	   array space. */
-      if (obj->width_ == 1) {
-	    ivl_drive_t drv0, drv1;
-	    drive_from_link(net->pin(0), drv0, drv1);
-	    const Nexus*nex = net->pin(0).nexus();
-	    assert(nex->t_cookie());
-	    obj->n.pin_ = (ivl_nexus_t) nex->t_cookie();
-	    nexus_con_add(obj->n.pin_, obj, 0, drv0, drv1);
 
-      } else {
-	    obj->n.pins_ = new ivl_nexus_t[obj->width_];
-	    for (unsigned idx = 0 ;  idx < obj->width_ ;  idx += 1) {
-		  if (! net->pin(idx).is_linked())
-			continue;
+      ivl_drive_t drv0, drv1;
+      drive_from_link(net->pin(0), drv0, drv1);
+      const Nexus*nex = net->pin(0).nexus();
+      assert(nex->t_cookie());
+      obj->pin_ = (ivl_nexus_t) nex->t_cookie();
+      nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
-		  ivl_drive_t drv0, drv1;
-		  drive_from_link(net->pin(idx), drv0, drv1);
-
-		  const Nexus*nex = net->pin(idx).nexus();
-		  assert(nex->t_cookie());
-
-		  obj->n.pins_[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_con_add(obj->n.pins_[idx], obj, idx, drv0, drv1);
-	    }
-      }
 
       des_.nconsts += 1;
       des_.consts = (ivl_net_const_t*)
@@ -2057,7 +2077,7 @@ void dll_target::signal(const NetNet*net)
 	/* Save the primitive properties of the signal in the
 	   ivl_signal_t object. */
 
-      obj->width_ = net->pin_count();
+      obj->width_ = net->vector_width();
       obj->signed_= net->get_signed()? 1 : 0;
       obj->lsb_index = net->lsb();
       obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
@@ -2140,39 +2160,18 @@ void dll_target::signal(const NetNet*net)
 	   t_cookie of the Nexus object so that I find it again when I
 	   next encounter the nexus. */
 
-      if (obj->width_ == 1) {
-	    const Nexus*nex = net->pin(0).nexus();
-	    if (nex->t_cookie()) {
-		  obj->n.pin_ = (ivl_nexus_t)nex->t_cookie();
-		  nexus_sig_add(obj->n.pin_, obj, 0);
-
-	    } else {
-		  ivl_nexus_t tmp = nexus_sig_make(obj, 0);
-		  tmp->name_ = strings_.add(nex->name());
-		  nex->t_cookie(tmp);
-		  obj->n.pin_ = tmp;
-	    }
+      const Nexus*nex = net->pin(0).nexus();
+      if (nex->t_cookie()) {
+	    obj->pin_ = (ivl_nexus_t)nex->t_cookie();
+	    nexus_sig_add(obj->pin_, obj, 0);
 
       } else {
-	    unsigned idx;
-
-	    obj->n.pins_ = (ivl_nexus_t*)
-		  calloc(obj->width_, sizeof(ivl_nexus_t));
-
-	    for (idx = 0 ;  idx < obj->width_ ;  idx += 1) {
-		  const Nexus*nex = net->pin(idx).nexus();
-		  if (nex->t_cookie()) {
-			obj->n.pins_[idx] = (ivl_nexus_t)nex->t_cookie();
-			nexus_sig_add(obj->n.pins_[idx], obj, idx);
-
-		  } else {
-			ivl_nexus_t tmp = nexus_sig_make(obj, idx);
-			tmp->name_ = strings_.add(nex->name());
-			nex->t_cookie(tmp);
-			obj->n.pins_[idx] = tmp;
-		  }
-	    }
+	    ivl_nexus_t tmp = nexus_sig_make(obj, 0);
+	    tmp->name_ = strings_.add(nex->name());
+	    nex->t_cookie(tmp);
+	    obj->pin_ = tmp;
       }
+
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
@@ -2180,6 +2179,11 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.132  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.131  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

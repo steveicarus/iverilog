@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.69 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: target.cc,v 1.70 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -137,31 +137,23 @@ void target_t::lpm_ram_dq(const NetRamDq*)
 	    "Unhandled NetRamDq." << endl;
 }
 
+bool target_t::part_select(const NetPartSelect*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetPartSelect." << endl;
+      return false;
+}
+
 void target_t::net_case_cmp(const NetCaseCmp*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled case compare node." << endl;
 }
 
-bool target_t::net_cassign(const NetCAssign*dev)
-{
-	cerr << "target (" << typeid(*this).name() <<  "): ";
-	cerr << dev->get_line();
-	cerr << ": Target does not support procedural continuous assignment." << endl;
-      return false;
-}
-
 bool target_t::net_const(const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled CONSTANT node." << endl;
-      return false;
-}
-
-bool target_t::net_force(const NetForce*dev)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled NetForce node." << endl;
       return false;
 }
 
@@ -420,6 +412,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.70  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.69  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.81 2004/08/26 04:02:04 steve Exp $"
+#ident "$Id: pform.h,v 1.82 2004/12/11 02:31:27 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -270,9 +270,6 @@ extern void pform_make_modgates(perm_string type,
 				svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
-extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
-				     svector<PExpr*>*delays,
-				     struct str_pair_t str);
 extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 				     svector<PExpr*>*del,
 				     struct str_pair_t str,
@@ -298,6 +295,11 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.82  2004/12/11 02:31:27  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.81  2004/08/26 04:02:04  steve
  *  Add support for localparam ranges.
  *

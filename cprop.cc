@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47 2004/02/20 18:53:34 steve Exp $"
+#ident "$Id: cprop.cc,v 1.48 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -55,86 +55,6 @@ void cprop_functor::signal(Design*des, NetNet*obj)
 
 void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 {
-	// For now, only additions are handled.
-      if (obj->attribute(perm_string::literal("LPM_Direction")) != verinum("ADD"))
-	    return;
-
-	// If the low bit on the A side is 0, then eliminate it from
-	// the adder, and pass the B side directly to the
-	// result. Don't reduce the adder smaller then a 1-bit
-	// adder. These will be eliminated later.
-      while ((obj->width() > 1)
-	     && obj->pin_DataA(0).nexus()->drivers_constant()
-	     && (obj->pin_DataA(0).nexus()->driven_value() == verinum::V0)) {
-
-	    NetAddSub*tmp = 0;
-	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
-	      //connect(tmp->pin_Aclr(), obj->pin_Aclr());
-	      //connect(tmp->pin_Add_Sub(), obj->pin_Add_Sub());
-	      //connect(tmp->pin_Clock(), obj->pin_Clock());
-	      //connect(tmp->pin_Cin(), obj->pin_Cin());
-	    connect(tmp->pin_Cout(), obj->pin_Cout());
-	      //connect(tmp->pin_Overflow(), obj->pin_Overflow());
-	    for (unsigned idx = 0 ;  idx < tmp->width() ;  idx += 1) {
-		  connect(tmp->pin_DataA(idx), obj->pin_DataA(idx+1));
-		  connect(tmp->pin_DataB(idx), obj->pin_DataB(idx+1));
-		  connect(tmp->pin_Result(idx), obj->pin_Result(idx+1));
-	    }
-	    connect(obj->pin_Result(0), obj->pin_DataB(0));
-	    delete obj;
-	    des->add_node(tmp);
-	    obj = tmp;
-	    count += 1;
-      }
-
-	// Now do the same thing on the B side.
-      while ((obj->width() > 1)
-	     && obj->pin_DataB(0).nexus()->drivers_constant()
-	     && (obj->pin_DataB(0).nexus()->driven_value() == verinum::V0)) {
-
-	    NetAddSub*tmp = 0;
-	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
-	      //connect(tmp->pin_Aclr(), obj->pin_Aclr());
-	      //connect(tmp->pin_Add_Sub(), obj->pin_Add_Sub());
-	      //connect(tmp->pin_Clock(), obj->pin_Clock());
-	      //connect(tmp->pin_Cin(), obj->pin_Cin());
-	    connect(tmp->pin_Cout(), obj->pin_Cout());
-	      //connect(tmp->pin_Overflow(), obj->pin_Overflow());
-	    for (unsigned idx = 0 ;  idx < tmp->width() ;  idx += 1) {
-		  connect(tmp->pin_DataA(idx), obj->pin_DataA(idx+1));
-		  connect(tmp->pin_DataB(idx), obj->pin_DataB(idx+1));
-		  connect(tmp->pin_Result(idx), obj->pin_Result(idx+1));
-	    }
-	    connect(obj->pin_Result(0), obj->pin_DataA(0));
-	    delete obj;
-	    des->add_node(tmp);
-	    obj = tmp;
-	    count += 1;
-      }
-
-	// If the adder is only 1 bit wide, then replace it with the
-	// simple logic gate.
-      if (obj->width() == 1) {
-	    NetLogic*tmp;
-	    if (obj->pin_Cout().is_linked()) {
-		  tmp = new NetLogic(obj->scope(),
-				     obj->scope()->local_symbol(),
-				     3, NetLogic::AND);
-		  connect(tmp->pin(0), obj->pin_Cout());
-		  connect(tmp->pin(1), obj->pin_DataA(0));
-		  connect(tmp->pin(2), obj->pin_DataB(0));
-		  des->add_node(tmp);
-	    }
-	    tmp = new NetLogic(obj->scope(), obj->name(), 3, NetLogic::XOR);
-	    connect(tmp->pin(0), obj->pin_Result(0));
-	    connect(tmp->pin(1), obj->pin_DataA(0));
-	    connect(tmp->pin(2), obj->pin_DataB(0));
-	    delete obj;
-	    des->add_node(tmp);
-	    count += 1;
-	    return;
-      }
-
 }
 
 void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
@@ -248,7 +168,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 	   with a simple XOR gate. */
       if (top == 1) {
 	    NetLogic*tmp = new NetLogic(scope, obj->name(), 3,
-					NetLogic::XNOR);
+					NetLogic::XNOR, 1);
 	    connect(tmp->pin(0), obj->pin_AEB());
 	    connect(tmp->pin(1), obj->pin_DataA(0));
 	    connect(tmp->pin(2), obj->pin_DataB(0));
@@ -449,12 +369,12 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			  case NetLogic::AND:
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::BUF);
+					       NetLogic::BUF, 1);
 			    break;
 			  case NetLogic::NAND:
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::NOT);
+					       NetLogic::NOT, 1);
 			    break;
 			  default:
 			    assert(0);
@@ -480,7 +400,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		if (top < obj->pin_count()) {
 		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
-						  obj->type());
+						  obj->type(), 1);
 		      tmp->rise_time(obj->rise_time());
 		      tmp->fall_time(obj->fall_time());
 		      tmp->decay_time(obj->decay_time());
@@ -597,12 +517,12 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			  case NetLogic::OR:
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::BUF);
+					       NetLogic::BUF, 1);
 			    break;
 			  case NetLogic::NOR:
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::NOT);
+					       NetLogic::NOT, 1);
 			    break;
 			  default:
 			    assert(0);
@@ -627,7 +547,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		if (top < obj->pin_count()) {
 		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
-						  obj->type());
+						  obj->type(), 1);
 		      tmp->rise_time(obj->rise_time());
 		      tmp->fall_time(obj->fall_time());
 		      tmp->decay_time(obj->decay_time());
@@ -766,11 +686,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      if (obj->type() == NetLogic::XOR)
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::NOT);
+					       NetLogic::NOT, 1);
 		      else
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::BUF);
+					       NetLogic::BUF, 1);
 
 		      tmp->rise_time(obj->rise_time());
 		      tmp->fall_time(obj->fall_time());
@@ -795,11 +715,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      if (obj->type() == NetLogic::XOR)
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::BUF);
+					       NetLogic::BUF, 1);
 		      else
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
-					       NetLogic::NOT);
+					       NetLogic::NOT, 1);
 
 		      tmp->rise_time(obj->rise_time());
 		      tmp->fall_time(obj->fall_time());
@@ -821,7 +741,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		if (top < obj->pin_count()) {
 		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
-						  obj->type());
+						  obj->type(), 1);
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -873,7 +793,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(obj->scope(),
 					      scope->local_symbol(),
-					      3, NetLogic::BUFIF1);
+					      3, NetLogic::BUFIF1, 1);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,1), tmp->pin(1));
@@ -906,7 +826,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(obj->scope(),
 					      scope->local_symbol(),
-					      3, NetLogic::BUFIF0);
+					      3, NetLogic::BUFIF0, 1);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
@@ -1038,6 +958,11 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.48  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.47  2004/02/20 18:53:34  steve
  *  Addtrbute keys are perm_strings.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.322 2004/12/11 02:31:27 steve Exp $"
 #endif
 
 /*
@@ -345,8 +345,11 @@ class NetNode  : public NetObj {
 /*
  * NetNet is a special kind of NetObj that doesn't really do anything,
  * but carries the properties of the wire/reg/trireg, including its
- * name. A scalar wire is a NetNet with one pin, a vector a wider
- * NetNet. NetNet objects also appear as side effects of synthesis or
+ * name. Scalers and vectors are all the same thing here, a NetNet
+ * with a single pin. The difference between a scaler and vector is
+ * the video of the atomic vector datum it carries.
+ *
+ * NetNet objects can also appear as side effects of synthesis or
  * other abstractions.
  *
  * Note that INTEGER types are an alias for a ``reg signed [31:0]''.
@@ -357,7 +360,7 @@ class NetNode  : public NetObj {
  *
  * NetNet objects are located by searching NetScope objects.
  *
- * All the pins of a NetNet object are PASSIVE: they do not drive
+ * The pin of a NetNet object are PASSIVE: they do not drive
  * anything and they are not a data sink, per se. The pins follow the
  * values on the nexus.
  */
@@ -397,6 +400,7 @@ class NetNet  : public NetObj {
 	   reg [1:8] has 8 bits, msb==1 and lsb==8. */
       long msb() const;
       long lsb() const;
+      long vector_width() const;
 
 	/* This method converts a signed index (the type that might be
 	   found in the verilog source) to a pin number. It accounts
@@ -430,12 +434,6 @@ class NetNet  : public NetObj {
 	// The NetScope class uses this for listing signals.
       friend class NetScope;
       NetNet*sig_next_, *sig_prev_;
-
-	// Keep a list of release statements that reference me. I may
-	// need to know this in order to fix them up when I am
-	// deleted.
-      friend class NetRelease;
-      NetRelease*release_list_;
 
     private:
       Type   type_;
@@ -472,18 +470,21 @@ class NetAddSub  : public NetNode {
       Link& pin_Cout();
       Link& pin_Overflow();
 
-      Link& pin_DataA(unsigned idx);
-      Link& pin_DataB(unsigned idx);
-      Link& pin_Result(unsigned idx);
+      Link& pin_DataA();
+      Link& pin_DataB();
+      Link& pin_Result();
 
       const Link& pin_Cout() const;
-      const Link& pin_DataA(unsigned idx) const;
-      const Link& pin_DataB(unsigned idx) const;
-      const Link& pin_Result(unsigned idx) const;
+      const Link& pin_DataA() const;
+      const Link& pin_DataB() const;
+      const Link& pin_Result() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      unsigned width_;
 };
 
 /*
@@ -1122,7 +1123,7 @@ class NetECRealParam  : public NetECReal {
       perm_string name_;
 };
 
-/*
+/* DEPRECATED -- REMOVE ME! Use NetPartSelect instead.
  * This is a special, magical NetNet object. It represents a constant
  * bit or part select of another NetNet, so is used to return that
  * selection from elaborate function. None of these should remain once
@@ -1136,6 +1137,29 @@ class NetSubnet  : public NetNet {
 };
 
 /*
+ * The NetPartSelect device represents an r-value part select of a
+ * signal. The output (pin 0) is a vector that is a part select of the
+ * input (pin 1). The part to be selected is the canonical (0-based)
+ * offset and the specified number of bits (wid).
+ */
+class NetPartSelect  : public NetNode {
+
+    public:
+      explicit NetPartSelect(NetNet*sig, unsigned off, unsigned wid);
+      ~NetPartSelect();
+
+      unsigned width() const;
+      unsigned base()  const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      bool emit_node(struct target_t*tgt) const;
+
+    private:
+      unsigned off_;
+      unsigned wid_;
+};
+
+/*
  * The NetBUFZ is a magic device that represents the continuous
  * assign, with the output being the target register and the input
  * the logic that feeds it. The netlist preserves the directional
@@ -1145,11 +1169,16 @@ class NetSubnet  : public NetNet {
 class NetBUFZ  : public NetNode {
 
     public:
-      explicit NetBUFZ(NetScope*s, perm_string n);
+      explicit NetBUFZ(NetScope*s, perm_string n, unsigned wid);
       ~NetBUFZ();
+
+      unsigned width() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
 };
 
 /*
@@ -1189,12 +1218,14 @@ class NetConst  : public NetNode {
       ~NetConst();
 
       verinum::V value(unsigned idx) const;
+      unsigned width() const;
 
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
+      unsigned width_;
       verinum::V*value_;
 };
 
@@ -1219,16 +1250,19 @@ class NetLogic  : public NetNode {
 		  NOTIF0, NOTIF1, OR, PULLDOWN, PULLUP, RNMOS, RPMOS,
 		  PMOS, XNOR, XOR };
 
-      explicit NetLogic(NetScope*s, perm_string n, unsigned pins, TYPE t);
+      explicit NetLogic(NetScope*s, perm_string n, unsigned pins,
+			TYPE t, unsigned wid);
 
-      TYPE type() const { return type_; }
+      TYPE type() const;
+      unsigned width() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
 
     private:
-      const TYPE type_;
+      TYPE type_;
+      unsigned width_;
 };
 
 /*
@@ -1627,31 +1661,17 @@ class NetCase  : public NetProc {
 /*
  * The cassign statement causes the r-val net to be forced onto the
  * l-val reg when it is executed. The code generator is expected to
- * know what that means. All the expressions are structural and behave
- * like nets.
- *
- * This class is a NetProc because it it turned on by procedural
- * behavior. However, it is also a NetNode because it connects to
- * nets, and when activated follows the net values.
+ * know what that means.
  */
-class NetCAssign  : public NetProc, public NetNode {
+class NetCAssign  : public NetAssignBase {
 
     public:
-      explicit NetCAssign(NetScope*s, perm_string n, NetNet*l);
+      explicit NetCAssign(NetAssign_*lv, NetExpr*rv);
       ~NetCAssign();
-
-      const Link& lval_pin(unsigned) const;
 
       virtual NexusSet* nex_input();
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
-      virtual bool emit_node(struct target_t*) const;
-
-      const NetNet*lval() const;
-
-    private:
-      NetNet*lval_;
 
     private: // not implemented
       NetCAssign(const NetCAssign&);
@@ -1709,19 +1729,14 @@ class NetCondit  : public NetProc {
  * lval is the expression of the "deassign <expr>;" statement with the
  * expr elaborated to a net.
  */
-class NetDeassign : public NetProc {
+class NetDeassign : public NetAssignBase {
 
     public:
-      explicit NetDeassign(NetNet*l);
+      explicit NetDeassign(NetAssign_*l);
       ~NetDeassign();
-
-      const NetNet*lval() const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-
-    private:
-      NetNet*lval_;
 
     private: // not implemented
       NetDeassign(const NetDeassign&);
@@ -1957,32 +1972,18 @@ class NetEvProbe  : public NetNode {
 /*
  * The force statement causes the r-val net to be forced onto the
  * l-val net when it is executed. The code generator is expected to
- * know what that means. All the expressions are structural and behave
- * like nets.
- *
- * This class is a NetProc because it it turned on by procedural
- * behavior. However, it is also a NetNode because it connects to
- * nets, and when activated follows the net values.
+ * know what that means.
  */
-class NetForce  : public NetProc, public NetNode {
+class NetForce  : public NetAssignBase {
 
     public:
-      explicit NetForce(NetScope*s, perm_string n, NetNet*l);
+      explicit NetForce(NetAssign_*l, NetExpr*r);
       ~NetForce();
-
-      const Link& lval_pin(unsigned) const;
-
-      const NetNet*lval() const;
 
       virtual NexusSet* nex_input();
 
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
-      virtual bool emit_node(struct target_t*) const;
-
-    private:
-      NetNet*lval_;
 };
 
 /*
@@ -2110,22 +2111,16 @@ class NetRepeat : public NetProc {
  * lval is the expression of the "release <expr>;" statement with the
  * expr elaborated to a net.
  */
-class NetRelease : public NetProc {
+class NetRelease : public NetAssignBase {
 
     public:
-      explicit NetRelease(NetNet*l);
+      explicit NetRelease(NetAssign_*l);
       ~NetRelease();
-
-      const NetNet*lval() const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetNet*lval_;
-	// Used to manage list within NetNet objects.
-      friend class NetNet;
-      NetRelease*release_next_;
 };
 
 
@@ -2954,7 +2949,6 @@ class NetESignal  : public NetExpr {
 
     public:
       NetESignal(NetNet*n);
-      NetESignal(NetNet*n, unsigned msi, unsigned lsi);
       ~NetESignal();
 
       perm_string name() const;
@@ -2978,8 +2972,6 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
-      unsigned msi_;
-      unsigned lsi_;
 };
 
 /*
@@ -3357,6 +3349,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.322  2004/12/11 02:31:27  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.321  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *

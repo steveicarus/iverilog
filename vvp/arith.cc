@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.30 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: arith.cc,v 1.31 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -30,57 +30,11 @@
 # include  <malloc.h>
 #endif
 
-void vvp_arith_::output_x_(vvp_ipoint_t base, bool push, unsigned val)
+vvp_arith_::vvp_arith_(unsigned wid)
+: wid_(wid), x_val_(wid)
 {
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    obj->put_oval(val, push);
-      }
-}
-
-void vvp_arith_::output_val_(vvp_ipoint_t base, bool push, unsigned long sum)
-{
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = sum & 1;
-	    sum >>= 1;
-
-	    obj->put_oval(val, push);
-      }
-}
-
-// Make sure the static sum_ scratch space is large enough for everybody
-
-vvp_wide_arith_::vvp_wide_arith_(unsigned wid)
-      : vvp_arith_(wid)
-{
-      pagecount_ = (wid + pagesize - 1)/pagesize;
-      sum_ = (unsigned long *)calloc(pagecount_, sizeof(unsigned long));
-      assert(sum_);
-}
-
-void vvp_wide_arith_::output_val_(vvp_ipoint_t base, bool push)
-{
-      unsigned page = 0;
-      unsigned pbit = 0;
-      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    unsigned val = (sum_[page] >> pbit) & 1;
-
-	    pbit += 1;
-	    if (pbit == pagesize) {
-		  pbit = 0;
-		  page += 1;
-	    }
-
-	    obj->put_oval(val, push);
-      }
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+	    x_val_.set_bit(idx, BIT4_X);
 }
 
 
@@ -94,6 +48,7 @@ inline void vvp_arith_div::wide(vvp_ipoint_t base, bool push)
 
 void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
+#if 0
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
@@ -146,6 +101,9 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    result = 0 - result;
 
       output_val_(base, push, result);
+#else
+      fprintf(stderr, "XXXX forgot how to implement vvp_arith_div::set\n");
+#endif
 }
 
 inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
@@ -155,6 +113,7 @@ inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
 
 void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
+#if 0
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
@@ -187,12 +146,16 @@ void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       }
 
       output_val_(base, push, a%b);
+#else
+      fprintf(stderr, "XXXX forgot how to implement vvp_arith_mod::set\n");
+#endif
 }
 
 // Multiplication
 
 void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
+#if 0
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
@@ -220,8 +183,12 @@ void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       }
 
       output_val_(base, push, a*b);
+#else
+      fprintf(stderr, "XXXX forgot how to implement vvp_arith_mult::set\n");
+#endif
 }
 
+#if 0
 void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
 {
       unsigned char *a, *b, *sum;
@@ -284,62 +251,67 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
       delete[]b;
       delete[]a;
 }
-
+#endif
 
 // Addition
 
-void vvp_arith_sum::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+vvp_arith_sum::vvp_arith_sum(unsigned wid)
+: vvp_arith_(wid)
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
+}
 
-      unsigned page = 0;
-      unsigned pbit = 0;
-      unsigned long carry = 0;
+vvp_arith_sum::~vvp_arith_sum()
+{
+}
 
-      sum_[0] = 0;
+void vvp_arith_sum::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      unsigned port = ptr.port();
 
+      switch (port) {
+	  case 0:
+	    op_a_ = bit;
+	    break;
+	  case 1:
+	    op_b_ = bit;
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      vvp_net_t*net = ptr.ptr();
+
+      vvp_vector4_t value (wid_);
+
+	/* Pad input vectors with this value to widen to the desired
+	   output width. */
+      const vvp_bit4_t pad = BIT4_0;
+
+      vvp_bit4_t carry = BIT4_0;
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base, idx);
-	    functor_t obj = functor_index(ptr);
+	    vvp_bit4_t a = (idx >= op_a_.size())? pad : op_a_.value(idx);
+	    vvp_bit4_t b = (idx >= op_b_.size())? pad : op_b_.value(idx);
+	    vvp_bit4_t cur = add_with_carry(a, b, carry);
 
-	    unsigned val = obj->ival;
-	    if (val & 0xaa) {
-		  output_x_(base, push);
+	    if (cur == BIT4_X) {
+		  vvp_send_vec4(net->out, x_val_);
 		  return;
 	    }
 
-	      // Accumulate the sum of the input bits.
-	    unsigned long tmp = 0;
-	    if (val & 0x01)
-		  tmp += 1;
-	    if (val & 0x04)
-		  tmp += 1;
-	    if (val & 0x10)
-		  tmp += 1;
-	    if (val & 0x40)
-		  tmp += 1;
-
-	    // Save carry bits
-	    if (pbit >= pagesize - 2)
-		  carry += (tmp + (sum_[page]>>pbit)) >> (pagesize-pbit);
-
-	    // Put the next bits into the sum,
-	    sum_[page] += tmp << pbit;
-
-	    pbit += 1;
-	    if (pbit >= pagesize) {
-		  pbit = 0;
-		  page += 1;
-		  if (page < pagecount_)
-			sum_[page] = carry;
-		  carry = 0;
-	    }
+	    value.set_bit(idx, cur);
       }
 
-      output_val_(base, push);
+      vvp_send_vec4(net->out, value);
 }
 
+vvp_arith_sub::vvp_arith_sub(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+vvp_arith_sub::~vvp_arith_sub()
+{
+}
 
 /*
  * Subtraction works by adding the 2s complement of the B, C and D
@@ -347,67 +319,54 @@ void vvp_arith_sum::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
  * plus one, so we further reduce the operation to adding in the
  * inverted value and adding a correction.
  */
-void vvp_arith_sub::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      put(i, val);
-      vvp_ipoint_t base = ipoint_make(i,0);
+      unsigned port = ptr.port();
 
-      unsigned page = 0;
-      unsigned pbit = 0;
-      unsigned long carry = 0;
+      switch (port) {
+	  case 0:
+	    op_a_ = bit;
+	    break;
+	  case 1:
+	    op_b_ = bit;
+	    break;
+	  default:
+	    assert(0);
+      }
 
-	/* There are 3 values subtracted from the first parameter, so
-	   there are three 2s complements, so three ~X +1. That's why
-	   the sum_ starts with 3. */
-      sum_[0] = 3;
+      vvp_net_t*net = ptr.ptr();
 
+      vvp_vector4_t value (wid_);
+
+	/* Pad input vectors with this value to widen to the desired
+	   output width. */
+      const vvp_bit4_t pad = BIT4_1;
+
+      vvp_bit4_t carry = BIT4_1;
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(base, idx);
-	    functor_t obj = functor_index(ptr);
+	    vvp_bit4_t a = (idx >= op_a_.size())? pad : op_a_.value(idx);
+	    vvp_bit4_t b = (idx >= op_b_.size())? pad : op_b_.value(idx);
+	    vvp_bit4_t cur = add_with_carry(a, b, carry);
 
-	    unsigned val = obj->ival;
-	    if (val & 0xaa) {
-		  output_x_(base, push);
+	    if (cur == BIT4_X) {
+		  vvp_send_vec4(net->out, x_val_);
 		  return;
 	    }
 
-	      // Accumulate the sum of the input bits. Add in the
-	      // first value, and the ones complement of the other values.
-	    unsigned long tmp = 0;
-	    if (val & 0x01)
-		  tmp += 1;
-	    if (! (val & 0x04))
-		  tmp += 1;
-	    if (! (val & 0x10))
-		  tmp += 1;
-	    if (! (val & 0x40))
-		  tmp += 1;
-
-	    // Save carry bits
-	    if (pbit >= pagesize - 2)
-		  carry += (tmp + (sum_[page]>>pbit)) >> (pagesize-pbit);
-
-	    // Put the next bits into the sum,
-	    sum_[page] += tmp << pbit;
-
-	    pbit += 1;
-	    if (pbit >= pagesize) {
-		  pbit = 0;
-		  page += 1;
-		  if (page < pagecount_)
-			sum_[page] = carry;
-		  carry = 0;
-	    }
+	    value.set_bit(idx, cur);
       }
 
-      output_val_(base, push);
+      vvp_send_vec4(net->out, value);
 }
+
+
 
 vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
 : vvp_arith_(wid)
 {
 }
 
+#if 0
 void vvp_cmp_eq::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
       put(i, val);
@@ -436,12 +395,14 @@ void vvp_cmp_eq::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
       put_oval(out_val, push);
 }
+#endif
 
 vvp_cmp_ne::vvp_cmp_ne(unsigned wid)
 : vvp_arith_(wid)
 {
 }
 
+#if 0
 void vvp_cmp_ne::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
       put(i, val);
@@ -470,14 +431,14 @@ void vvp_cmp_ne::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
       put_oval(out_val, push);
 }
-
+#endif
 
 vvp_cmp_gtge_base_::vvp_cmp_gtge_base_(unsigned wid, bool flag)
 : vvp_arith_(wid), signed_flag_(flag)
 {
 }
 
-
+#if 0
 void vvp_cmp_gtge_base_::set_base(vvp_ipoint_t i,
 				 bool push,
 				 unsigned val,
@@ -561,7 +522,7 @@ void vvp_cmp_gtge_base_::set_base(vvp_ipoint_t i,
 
       put_oval(out_val, push);
 }
-
+#endif
 
 
 vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
@@ -570,22 +531,26 @@ vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
 }
 
 
-
+#if 0
 void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned str)
 {
       set_base(i, push, val, str, 1);
 }
+#endif
 
 vvp_cmp_gt::vvp_cmp_gt(unsigned wid, bool flag)
 : vvp_cmp_gtge_base_(wid, flag)
 {
 }
 
+#if 0
 void vvp_cmp_gt::set(vvp_ipoint_t i, bool push, unsigned val, unsigned str)
 {
       set_base(i, push, val, str, 0);
 }
+#endif
 
+#if 0
 void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
       put(i, val);
@@ -634,7 +599,9 @@ void vvp_shiftl::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
       }
 }
+#endif
 
+#if 0
 void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
       put(i, val);
@@ -683,91 +650,14 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
       }
 }
-
+#endif
 
 /*
  * $Log: arith.cc,v $
- * Revision 1.30  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
+ * Revision 1.31  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
  *
- * Revision 1.29  2004/09/22 16:44:07  steve
- *  Fix LPM GE to match LPM GT behavior.
- *
- * Revision 1.28  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.27  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.26  2003/08/01 00:58:34  steve
- *  Fix arithmetic operators in 64bit processors.
- *
- * Revision 1.25  2003/04/11 05:15:38  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.24  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.23  2002/05/07 04:15:43  steve
- *  Fix uninitialized memory accesses.
- *
- * Revision 1.22  2002/01/03 04:19:02  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.21  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.20  2001/11/07 03:34:41  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.19  2001/11/04 05:03:21  steve
- *  MacOSX 10.1 updates.
- *
- * Revision 1.18  2001/10/31 04:27:46  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.17  2001/10/27 03:22:26  steve
- *  Minor rework of summation carry propagation (Stephan Boettcher)
- *
- * Revision 1.16  2001/10/16 03:10:20  steve
- *  Get Division error into the division method!
- *
- * Revision 1.15  2001/10/16 03:06:18  steve
- *  Catch division by zero in .arith/div.
- *
- * Revision 1.14  2001/10/16 02:47:37  steve
- *  Add arith/div object.
- *
- * Revision 1.13  2001/10/14 17:36:18  steve
- *  Forgot to propagate carry.
- *
- * Revision 1.12  2001/10/14 16:36:43  steve
- *  Very wide multiplication (Anthony Bybell)
- *
- * Revision 1.11  2001/07/13 00:38:57  steve
- *  Remove width restriction on subtraction.
- *
- * Revision 1.10  2001/07/11 02:27:21  steve
- *  Add support for REadOnlySync and monitors.
- *
- * Revision 1.9  2001/07/07 02:57:33  steve
- *  Add the .shift/r functor.
- *
- * Revision 1.8  2001/07/06 04:46:44  steve
- *  Add structural left shift (.shift/l)
- *
- * Revision 1.7  2001/06/29 01:21:48  steve
- *  Relax limit on width of structural sum.
- *
- * Revision 1.6  2001/06/29 01:20:20  steve
- *  Relax limit on width of structural sum.
- *
- * Revision 1.5  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.18 2004/06/17 16:06:18 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.19 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,7 +87,7 @@ NetESFunc* NetESFunc::dup_expr() const
 
 NetESignal* NetESignal::dup_expr() const
 {
-      NetESignal*tmp = new NetESignal(net_, msi_, lsi_);
+      NetESignal*tmp = new NetESignal(net_);
       assert(tmp);
       tmp->expr_width(expr_width());
       return tmp;
@@ -143,6 +143,11 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.19  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.18  2004/06/17 16:06:18  steve
  *  Help system function signedness survive elaboration.
  *

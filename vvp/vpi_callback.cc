@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.34 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.35 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 /*
@@ -96,85 +96,6 @@ struct __vpiCallback* new_vpi_callback()
       return obj;
 }
 
-/*
- * The callback_functor_s functor is used to support cbValueChange
- * callbacks. When a value change callback is created, instances of
- * this functor are created to receive values and detect changes in
- * the functor web at the right spot.
- */
-
-struct callback_functor_s: public functor_s {
-      callback_functor_s();
-      virtual ~callback_functor_s();
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      struct __vpiCallback *cb_handle;
-};
-
-callback_functor_s::callback_functor_s()
-{}
-
-callback_functor_s::~callback_functor_s()
-{}
-
-/*
- * Make the functors necessary to support an edge callback. This is a
- * single event functor that is in turn fed by edge detector functors
- * attached to all the input bit functors. (Just like an event-or.)
- * This function creates the callback_functor and the necessary event
- * functors, and attaches the event functors to the net.
- */
-struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
-						     event_functor_s::edge_t edge)
-{
-      // Let's make a callback functor.
-      struct callback_functor_s *obj = new callback_functor_s;
-
-      // We want to connect nvec inputs
-      unsigned nvec = vvp_fvector_size(vec);
-
-      // We require a total of nfun functors.  If there's an edge to
-      // look for, then all inputs must go to extra event functors.
-      // Otherwise we just make sure we have one input left on the base
-      // functor to connect the extras to, if there are any.
-      unsigned nfun = (nvec+3)/4;
-      if (edge != vvp_edge_none)
-	    nfun ++ ;
-      else if (nfun > 1  &&  4*nfun == nvec)
-	    nfun ++;
-
-      vvp_ipoint_t fdx = functor_allocate(nfun);
-      functor_define(fdx, obj);
-
-      for (unsigned i=1; i<nfun; i++) {
-	functor_t fu = new event_functor_s(edge);
-	functor_define(ipoint_index(fdx, i), fu);
-	fu->out = fdx;
-      }
-
-      unsigned i;
-
-      if (edge != vvp_edge_none)
-	    i = 4;
-      else if (nvec > 4)
-	    i = 1;
-      else
-	    i = 0;
-
-      for (unsigned vi = 0;  vi < nvec;  vi++, i++) {
-	    vvp_ipoint_t vipt = vvp_fvector_get(vec, vi);
-	    functor_t vfu = functor_index(vipt);
-
-	    vvp_ipoint_t ipt = ipoint_input_index(fdx, i);
-	    functor_t fu = functor_index(ipt);
-	    unsigned pp = ipoint_port(ipt);
-
-	    fu->port[pp] = vfu->out;
-	    vfu->out = ipt;
-      }
-
-      obj->cb_handle = 0;
-      return obj;
-}
 
 /*
  * A value change callback is tripped when a bit of a signal
@@ -202,21 +123,18 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	  case vpiReg:
 	  case vpiNet:
 	  case vpiIntegerVar:
+	      /* Attach the callback to the vvp_fun_signal node by
+		 putting it in the vpi_callbacks list. */
 	    struct __vpiSignal*sig;
 	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-	      /* Create callback functors, if necessary, to do the
-		 value change detection and carry the callback
-		 objects. */
-	    if (sig->callback == 0) {
-		  sig->callback = vvp_fvector_make_callback(sig->bits);
-		  assert(sig->callback);
-	    }
+	    vvp_fun_signal*sig_fun;
+	    sig_fun = dynamic_cast<vvp_fun_signal*>(sig->node->fun);
+	    assert(sig_fun);
 
-	      /* Attach the __vpiCallback object to the signals
-		 callback functors. */
-	    obj->next = sig->callback->cb_handle;
-	    sig->callback->cb_handle = obj;
+	      /* Attach the __vpiCallback object to the signal. */
+	    obj->next = sig_fun->vpi_callbacks;
+	    sig_fun->vpi_callbacks = obj;
 	    break;
 
 	  case vpiRealVar:
@@ -512,25 +430,25 @@ void callback_execute(struct __vpiCallback*cur)
 }
 
 /*
- * A callback_functor_s functor uses its set method to detect value
- * changes. When a value comes in, the __vpiCallback objects that are
- * associated with this callback functor are all called.
+ * A vvp_fun_signal uses this method to run its callbacks whenever it
+ * has a value change. If the cb_rtn is non-nil, then call the
+ * callback function. If the cb_rtn pointer is nil, then the object
+ * has been marked for deletion. Free it.
  */
-
-void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
+void vvp_fun_signal::run_vpi_callbacks()
 {
-      struct __vpiCallback *next = cb_handle;
+      struct __vpiCallback *next = vpi_callbacks;
       struct __vpiCallback *prev = 0;
 
       while (next) {
-	    struct __vpiCallback * cur = next;
+	    struct __vpiCallback*cur = next;
 	    next = cur->next;
 
 	    if (cur->cb_data.cb_rtn != 0) {
 		  if (cur->cb_data.value) {
 			switch (cur->cb_data.value->format) {
 			    case vpiScalarVal:
-			      cur->cb_data.value->value.scalar = val;
+			      cur->cb_data.value->value.scalar = value(0);
 			      break;
 			    case vpiSuppressVal:
 			      break;
@@ -546,7 +464,7 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 	    } else if (prev == 0) {
 
-		  cb_handle = next;
+		  vpi_callbacks = next;
 		  cur->next = 0;
 		  vpi_free_object(&cur->base);
 
@@ -556,89 +474,21 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 		  cur->next = 0;
 		  vpi_free_object(&cur->base);
 	    }
-
       }
 }
 
 
-
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.35  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.34  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *
  * Revision 1.33  2004/02/18 02:51:59  steve
  *  Fix type mismatches of various VPI functions.
- *
- * Revision 1.32  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.31  2003/04/25 04:36:42  steve
- *  Properly skip cancelled callbacks.
- *
- * Revision 1.30  2003/04/19 23:32:57  steve
- *  Add support for cbNextSimTime.
- *
- * Revision 1.29  2003/03/12 02:50:32  steve
- *  Add VPI tracing.
- *
- * Revision 1.28  2003/02/17 00:58:38  steve
- *  Strict correctness of vpi_free_object results.
- *
- * Revision 1.27  2003/02/10 05:20:10  steve
- *  Add value change callbacks to real variables.
- *
- * Revision 1.26  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.25  2002/09/20 02:42:11  steve
- *  Add support for cbAfterDelay.
- *
- * Revision 1.24  2002/09/07 04:54:51  steve
- *  Implement vpi_remove_cb for cbValueChange.
- *
- * Revision 1.23  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.22  2002/07/31 03:22:23  steve
- *  Set vpi_mode_flag to represent cpReadOnlySync actions.
- *
- * Revision 1.21  2002/07/12 02:07:36  steve
- *  vpiIntegerVars can have callbacks.
- *
- * Revision 1.20  2002/06/11 03:47:34  steve
- *  Stub value change callbacks for consts and modules.
- *
- * Revision 1.19  2002/06/02 19:05:50  steve
- *  Check for null pointers from users.
- *
- * Revision 1.18  2002/05/28 22:55:20  steve
- *  Callbacks can happen during calltf functions.
- *
- * Revision 1.17  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.16  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.15  2002/05/09 03:34:31  steve
- *  Handle null time and calltf pointers.
- *
- * Revision 1.14  2002/05/04 03:17:29  steve
- *  Properly free vpi callback objects.
- *
- * Revision 1.13  2002/05/04 03:03:17  steve
- *  Add simulator event callbacks.
- *
- * Revision 1.12  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
- *
- * Revision 1.11  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
  */
 

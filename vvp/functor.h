@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.52 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: functor.h,v 1.53 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -277,15 +277,6 @@ unsigned functor_get(vvp_ipoint_t ptr)
 
 //          Special infrastructure functor types
 
-/*
- * A "waitable" functor is one that the %wait instruction can wait
- * on. This includes the infrastructure needed to hold threads.
- */
-struct waitable_hooks_s {
-      vthread_t threads;
-};
-
-
 // The extra_outputs_functor_s class is for devices that require
 // multiple inputs and outputs.
 // ->set redirects the job to the base_, who knows what shall be done.
@@ -343,6 +334,11 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.53  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.52  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

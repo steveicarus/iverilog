@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.93 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.94 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -77,6 +77,9 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
       ivl_signal_t sig  = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
 
+      assert(idx == 0);
+      assert(part_off == 0); // XXXX Forgot how to support part/bit writes.
+
       if (ivl_lval_mux(lval)) {
 	    assert(wid == 1);
 	    if ((ivl_signal_pins(sig)-1) <= 0xffffU) {
@@ -92,13 +95,9 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
 			  vvp_signal_label(sig), bit);
 	    }
 
-      } else if (wid == 1) {
-	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-		    vvp_signal_label(sig), idx+part_off, bit);
-
       } else {
-	    fprintf(vvp_out, "    %%set/v V_%s[%u], %u, %u;\n",
-		    vvp_signal_label(sig), idx+part_off, bit, wid);
+	    fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
+		    vvp_signal_label(sig), bit, wid);
 
       }
 }
@@ -142,9 +141,12 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
       unsigned part_off = ivl_lval_part_off(lval);
       assert(ivl_lval_mux(lval) == 0);
 
+      assert(part_off == 0);
+      assert(idx == 0);
+
       fprintf(vvp_out, "    %%ix/load 0, %u;\n", width);
-      fprintf(vvp_out, "    %%assign/v0 V_%s[%u], %u, %u;\n",
-	      vvp_signal_label(sig), part_off+idx, delay, bit);
+      fprintf(vvp_out, "    %%assign/v0 V_%s, %u, %u;\n",
+	      vvp_signal_label(sig), delay, bit);
 
 }
 
@@ -212,8 +214,8 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 		  skip_set_flag = 1;
 	    }
 
-	    if (bit_limit > ivl_lval_pins(lval))
-		  bit_limit = ivl_lval_pins(lval);
+	    if (bit_limit > ivl_lval_width(lval))
+		  bit_limit = ivl_lval_width(lval);
 
 	    if (mem) {
 		  for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
@@ -223,10 +225,12 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 			set_to_memory(mem, idx, bidx);
 			cur_rbit += 1;
 		  }
-
+#if 0
 		  for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
 			set_to_memory(mem, idx, 0);
-
+#else
+		  assert(0);
+#endif
 	    } else {
 
 		  unsigned bidx = res.base < 4
@@ -234,11 +238,6 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 			: (res.base+cur_rbit);
 		  set_to_lvariable(lval, 0, bidx, bit_limit);
 		  cur_rbit += bit_limit;
-
-		  if (bit_limit < ivl_lval_pins(lval)) {
-			unsigned cnt = ivl_lval_pins(lval) - bit_limit;
-			set_to_lvariable(lval, bit_limit, 0, cnt);
-		  }
 	    }
 
 
@@ -317,8 +316,8 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			skip_set_flag = 1;
 		  }
 
-		  if (bit_limit > ivl_lval_pins(lval))
-			bit_limit = ivl_lval_pins(lval);
+		  if (bit_limit > ivl_lval_width(lval))
+			bit_limit = ivl_lval_width(lval);
 
 		  if (mem) {
 			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
@@ -329,11 +328,28 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			}
 
 			for (idx = bit_limit
-				   ; idx < ivl_lval_pins(lval) ; idx += 1)
+				   ; idx < ivl_lval_width(lval) ; idx += 1)
 			      set_to_memory(mem, idx, 0);
 
 
 		  } else {
+			  /* Here we have the case of a blocking
+			     assign of a number to a signal:
+
+			     <sig> = NUMBER;
+
+			     Collect the number value into thread
+			     bits, and use a %set/v to write the reg
+			     variable. */
+
+			ivl_signal_t sig = ivl_lval_sig(lval);
+			struct vector_info vect;
+			vect.wid  = ivl_lval_width(lval);
+			vect.base = allocate_vector(vect.wid);
+
+			  /* This loop makes the value into thread
+			     bits. Use the constant thread bits 0-3 to
+			     generate the values of the vector. */
 			idx = 0;
 			while (idx < bit_limit) {
 			      unsigned cnt = 1;
@@ -341,19 +357,19 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 				     && (bits[cur_rbit] == bits[cur_rbit+cnt]))
 				    cnt += 1;
 
-			      set_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       cnt);
+			      fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+				      vect.base+idx,
+				      bitchar_to_idx(bits[cur_rbit]),
+				      cnt);
 
 			      cur_rbit += cnt;
 			      idx += cnt;
 			}
 
-
-			if (bit_limit < ivl_lval_pins(lval)) {
-			      unsigned cnt = ivl_lval_pins(lval) - bit_limit;
-			      set_to_lvariable(lval, bit_limit, 0, cnt);
-			}
+			  /* write out the value into the .var. */
+			fprintf(vvp_out, "   %%set/v V_%s, %u, %u;\n",
+				vvp_signal_label(sig), vect.base, vect.wid);
+			clr_vector(vect);
 		  }
 
 		  if (skip_set_flag) {
@@ -490,138 +506,6 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	    del = 0;
       }
 
-	/* Handle the special case that the r-value is a constant. We
-	   can generate the %set statement directly, without any worry
-	   about generating code to evaluate the r-value expressions. */
-
-      if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
-	    unsigned lidx;
-	    const char*bits = ivl_expr_bits(rval);
-	    unsigned wid = ivl_expr_width(rval);
-	    unsigned cur_rbit = 0;
-
-	    if (del != 0)
-		  calculate_into_x1(del);
-
-	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
-		  unsigned skip_set = transient_id++;
-		  unsigned skip_set_flag = 0;
-		  unsigned idx;
-		  unsigned bit_limit = wid - cur_rbit;
-		  lval = ivl_stmt_lval(net, lidx);
-
-		    /* If there is a mux for the lval, calculate the
-		       value and write it into index0. */
-		  if (ivl_lval_mux(lval)) {
-			calculate_into_x0(ivl_lval_mux(lval));
-			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-			skip_set_flag = 1;
-		  }
-
-		  mem = ivl_lval_mem(lval);
-		  if (mem) {
-			draw_memory_index_expr(mem, ivl_lval_idx(lval));
-			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-			skip_set_flag = 1;
-		  }
-
-		  if (bit_limit > ivl_lval_pins(lval))
-			bit_limit = ivl_lval_pins(lval);
-
-		  if (mem) {
-			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			      assign_to_memory(mem, idx,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       delay);
-			      cur_rbit += 1;
-			}
-
-			for (idx = bit_limit
-				   ; idx < ivl_lval_pins(lval)
-				   ; idx += 1) {
-			      assign_to_memory(mem, idx, 0, delay);
-			}
-
-		  } else if ((del == 0) && (bit_limit > 2)) {
-
-			  /* We have a vector, but no runtime
-			     calculated delays, to try to use vector
-			     assign instructions. */
-			idx = 0;
-			while (idx < bit_limit) {
-			      unsigned wid = 0;
-
-			      do {
-				    wid += 1;
-				    if ((idx + wid) == bit_limit)
-					  break;
-
-			      } while (bits[cur_rbit] == bits[cur_rbit+wid]);
-
-			      switch (wid) {
-				  case 1:
-				    assign_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       delay, 0);
-				    break;
-				  case 2:
-				    assign_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       delay, 0);
-				    assign_to_lvariable(lval, idx+1,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       delay, 0);
-				    break;
-				  default:
-				    assign_to_lvector(lval, idx,
-					      bitchar_to_idx(bits[cur_rbit]),
-					      delay, wid);
-				    break;
-			      }
-
-			      idx += wid;
-			      cur_rbit += wid;
-			}
-
-			if (bit_limit < ivl_lval_pins(lval)) {
-			      unsigned wid = ivl_lval_pins(lval) - bit_limit;
-			      assign_to_lvector(lval, bit_limit,
-						0, delay, wid);
-			}
-
-		  } else {
-			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			      if (del != 0)
-				    assign_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       1, 1);
-			      else
-				    assign_to_lvariable(lval, idx,
-					       bitchar_to_idx(bits[cur_rbit]),
-					       delay, 0);
-			      cur_rbit += 1;
-			}
-
-			for (idx = bit_limit
-				   ; idx < ivl_lval_pins(lval)
-				   ; idx += 1) {
-			      if (del != 0)
-				    assign_to_lvariable(lval, idx, 0,
-							1, 1);
-			      else
-				    assign_to_lvariable(lval, idx, 0,
-							delay, 0);
-			}
-		  }
-
-		  if (skip_set_flag) {
-			fprintf(vvp_out, "t_%u ;\n", skip_set);
-			clear_expression_lookaside();
-		  }
-	    }
-	    return 0;
-      }
-
 
       { struct vector_info res = draw_eval_expr(rval, 0);
         unsigned wid = res.wid;
@@ -653,10 +537,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		    skip_set_flag = 1;
 	      }
 
-	      if (bit_limit > ivl_lval_pins(lval))
-		    bit_limit = ivl_lval_pins(lval);
+	      if (bit_limit > ivl_lval_width(lval))
+		    bit_limit = ivl_lval_width(lval);
 
-	      if ((bit_limit > 2) && (mem == 0) && (del == 0)) {
+	      if ((mem == 0) && (del == 0)) {
 
 		    unsigned bidx = res.base < 4
 			  ? res.base
@@ -682,7 +566,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		    }
 	      }
 
-	      for (idx = bit_limit; idx < ivl_lval_pins(lval); idx += 1)
+	      for (idx = bit_limit; idx < ivl_lval_width(lval); idx += 1)
 			  if (mem)
 				assign_to_memory(mem, idx, 0, delay);
 			  else if (del != 0)
@@ -939,8 +823,7 @@ static int show_stmt_cassign(ivl_statement_t net)
 {
       ivl_lval_t lval;
       ivl_signal_t lsig;
-      unsigned idx;
-      char*tmp_label;
+      ivl_expr_t rval;
 
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
@@ -948,16 +831,22 @@ static int show_stmt_cassign(ivl_statement_t net)
       lsig = ivl_lval_sig(lval);
       assert(lsig != 0);
       assert(ivl_lval_mux(lval) == 0);
-      assert(ivl_signal_pins(lsig) == ivl_stmt_nexus_count(net));
       assert(ivl_lval_part_off(lval) == 0);
 
-      tmp_label = strdup(vvp_signal_label(lsig));
-      for (idx = 0 ;  idx < ivl_stmt_nexus_count(net) ;  idx += 1) {
-	    fprintf(vvp_out, "    %%cassign V_%s[%u], %s;\n",
-		    tmp_label, idx,
-		    draw_net_input(ivl_stmt_nexus(net, idx)));
+      if ( (rval = ivl_stmt_rval(net)) ) {
+
+	    struct vector_info rvec = draw_eval_expr(rval, STUFF_OK_47);
+	    fprintf(vvp_out, "  %%cassign/v V_%s, %u, %u;\n",
+		    vvp_signal_label(lsig), rvec.base, rvec.wid);
+
+      } else {
+	      /* The statement nexus count is an obsolete concept.
+		 Should be 1. */
+	    assert(ivl_stmt_nexus_count(net) == 1);
+
+	    fprintf(stderr, "XXXX tgt-vvp: forgot how to implement cassign\n");
+	    return -1;
       }
-      free(tmp_label);
 
       return 0;
 }
@@ -976,10 +865,8 @@ static int show_stmt_deassign(ivl_statement_t net)
       assert(ivl_lval_mux(lval) == 0);
       assert(ivl_lval_part_off(lval) == 0);
 
-      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    fprintf(vvp_out, "    %%deassign V_%s[%u], 1;\n",
-		    vvp_signal_label(lsig), idx);
-      }
+      fprintf(vvp_out, "   %%deassign V_%s;\n", vvp_signal_label(lsig));
+
       return 0;
 }
 
@@ -1113,7 +1000,7 @@ static int show_stmt_force(ivl_statement_t net)
       assert(lsig != 0);
       assert(ivl_lval_mux(lval) == 0);
       assert(ivl_lval_part_off(lval) == 0);
-
+#if 0
       force_functor_label += 1;
       tmp_label = strdup(vvp_signal_label(lsig));
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
@@ -1128,6 +1015,9 @@ static int show_stmt_force(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%force f_%u.%u, 1;\n",
 		    force_functor_label, idx);
       }
+#else
+      fprintf(stderr, "XXXX I forgot how to implement %%force\n");
+#endif
       return 0;
 }
 
@@ -1222,7 +1112,7 @@ static int show_stmt_release(ivl_statement_t net)
 	   done before we start. */
       if (ivl_stmt_lvals(net) == 0)
 	    return 0;
-
+#if 0
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
 
@@ -1243,7 +1133,9 @@ static int show_stmt_release(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%release V_%s[%u];\n",
 		    vvp_signal_label(lsig), idx);
       }
-
+#else
+      fprintf(stderr, "XXXX I forgot how to implement %%release\n");
+#endif
       return 0;
 }
 
@@ -1626,6 +1518,11 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.94  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.93  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.109 2004/12/11 02:31:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -129,26 +129,22 @@ extern "C" const char*ivl_const_bits(ivl_net_const_t net)
 	    return net->b.bits_;
 }
 
-extern "C" ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx)
+extern "C" ivl_nexus_t ivl_const_nex(ivl_net_const_t net)
 {
       assert(net);
-      assert(idx < net->width_);
-      if (net->width_ == 1)
-	    return net->n.pin_;
-      else
-	    return net->n.pins_[idx];
-}
-
-extern "C" unsigned ivl_const_pins(ivl_net_const_t net)
-{
-      assert(net);
-      return net->width_;
+      return net->pin_;
 }
 
 extern "C" int ivl_const_signed(ivl_net_const_t net)
 {
       assert(net);
       return net->signed_;
+}
+
+extern "C" unsigned ivl_const_width(ivl_net_const_t net)
+{
+      assert(net);
+      return net->width_;
 }
 
 extern "C" const char* ivl_event_name(ivl_event_t net)
@@ -585,6 +581,11 @@ extern "C" unsigned  ivl_logic_delay(ivl_net_logic_t net, unsigned transition)
       return net->delay[transition];
 }
 
+extern "C" unsigned ivl_logic_width(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->width_;
+}
 
 extern "C" unsigned    ivl_udp_sequ(ivl_udp_t net)
 {
@@ -673,6 +674,18 @@ extern "C" ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net)
       }
 }
 
+extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_PART:
+	    return net->u_.part.base;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
 {
       assert(net);
@@ -749,8 +762,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
-	    assert(idx < net->u_.arith.width);
-	    return net->u_.arith.a[idx];
+	    assert(idx == 0);
+	    return net->u_.arith.a;
 
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
@@ -764,6 +777,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 		  return net->u_.ff.d.pin;
 	    else
 		  return net->u_.ff.d.pins[idx];
+
+	  case IVL_LPM_PART:
+	    assert(idx == 0);
+	    return net->u_.part.a;
 
 	  default:
 	    assert(0);
@@ -785,8 +802,8 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
-	    assert(idx < net->u_.arith.width);
-	    return net->u_.arith.b[idx];
+	    assert(idx == 0);
+	    return net->u_.arith.b;
 
 	  default:
 	    assert(0);
@@ -873,15 +890,15 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
-	    assert(idx < net->u_.arith.width);
-	    return net->u_.arith.q[idx];
+	    assert(idx == 0);
+	    return net->u_.arith.q;
 
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	    assert(idx == 0);
-	    return net->u_.arith.q[0];
+	    return net->u_.arith.q;
 
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
@@ -906,6 +923,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_UFUNC:
 	    assert(idx < net->u_.ufunc.port_wid[0]);
 	    return net->u_.ufunc.pins[idx];
+
+	  case IVL_LPM_PART:
+	    assert(idx == 0);
+	    return net->u_.part.q;
 
 	  default:
 	    assert(0);
@@ -987,6 +1008,8 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return 0;
 	  case IVL_LPM_UFUNC:
 	    return 0;
+	  case IVL_LPM_PART:
+	    return net->u_.part.signed_flag;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1035,6 +1058,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	    return net->u_.shift.width;
 	  case IVL_LPM_UFUNC:
 	    return net->u_.ufunc.port_wid[0];
+	  case IVL_LPM_PART:
+	    return net->u_.part.width;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1091,12 +1116,20 @@ extern "C" unsigned ivl_lval_part_off(ivl_lval_t net)
       return net->loff_;
 }
 
-extern "C" unsigned ivl_lval_pins(ivl_lval_t net)
+extern "C" unsigned ivl_lval_width(ivl_lval_t net)
 {
       assert(net);
       return net->width_;
 }
 
+#if 0
+extern "C" unsigned ivl_lval_pins(ivl_lval_t net)
+{
+      assert(net);
+      return net->width_;
+}
+#endif
+#if 0
 extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
 {
       assert(net);
@@ -1104,6 +1137,7 @@ extern "C" ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx)
       assert(net->type_ != IVL_LVAL_MEM);
       return ivl_signal_pin(net->n.sig, idx+net->loff_);
 }
+#endif
 
 extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
 {
@@ -1504,21 +1538,9 @@ extern "C" const char* ivl_signal_name(ivl_signal_t net)
       return name_buffer;
 }
 
-extern "C" ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx)
+extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net)
 {
-      assert(net);
-      assert(idx < net->width_);
-      if (net->width_ == 1) {
-	    return net->n.pin_;
-
-      } else {
-	    return net->n.pins_[idx];
-      }
-}
-
-extern "C" unsigned ivl_signal_pins(ivl_signal_t net)
-{
-      return net->width_;
+      return net->pin_;
 }
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)
@@ -1530,6 +1552,11 @@ extern "C" int ivl_signal_msb(ivl_signal_t net)
 extern "C" int ivl_signal_lsb(ivl_signal_t net)
 {
       return net->lsb_index;
+}
+
+extern "C" unsigned ivl_signal_width(ivl_signal_t net)
+{
+      return net->width_;
 }
 
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
@@ -1760,15 +1787,12 @@ extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
-	    assert(idx < net->u_.assign_.lvals_);
-	    return net->u_.assign_.lval_ + idx;
-
 	  case IVL_ST_CASSIGN:
 	  case IVL_ST_DEASSIGN:
 	  case IVL_ST_FORCE:
 	  case IVL_ST_RELEASE:
-	    assert(idx < net->u_.cassign_.lvals);
-	    return net->u_.cassign_.lval + idx;
+	    assert(idx < net->u_.assign_.lvals_);
+	    return net->u_.assign_.lval_ + idx;
 
 	  default:
 	    assert(0);
@@ -1781,13 +1805,11 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
-	    return net->u_.assign_.lvals_;
-
 	  case IVL_ST_CASSIGN:
 	  case IVL_ST_DEASSIGN:
 	  case IVL_ST_FORCE:
 	  case IVL_ST_RELEASE:
-	    return net->u_.cassign_.lvals;
+	    return net->u_.assign_.lvals_;
 
 	  default:
 	    assert(0);
@@ -1798,17 +1820,25 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 {
       assert((net->type_ == IVL_ST_ASSIGN)
-	     || (net->type_ == IVL_ST_ASSIGN_NB));
+	     || (net->type_ == IVL_ST_ASSIGN_NB)
+	     || (net->type_ == IVL_ST_CASSIGN)
+	     || (net->type_ == IVL_ST_DEASSIGN));
 
       unsigned sum = 0;
-      for (unsigned idx = 0 ;  idx < net->u_.assign_.lvals_ ;  idx += 1) {
-	    ivl_lval_t cur = net->u_.assign_.lval_ + idx;
+
+      unsigned nlvals;
+      struct ivl_lval_s*lvals;
+      nlvals = net->u_.assign_.lvals_;
+      lvals  = net->u_.assign_.lval_;
+
+      for (unsigned idx = 0 ;  idx < nlvals ;  idx += 1) {
+	    ivl_lval_t cur = lvals + idx;
 	    switch(cur->type_) {
 		case IVL_LVAL_MUX:
 		  sum += 1;
 		  break;
 		case IVL_LVAL_REG:
-		  sum += ivl_lval_pins(cur);
+		  sum += ivl_lval_width(cur);
 		  break;
 		case IVL_LVAL_MEM:
 		  sum += ivl_memory_width(ivl_lval_mem(cur));
@@ -1829,33 +1859,6 @@ extern "C" const char* ivl_stmt_name(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_STASK:
 	    return net->u_.stask_.name_;
-	  default:
-	    assert(0);
-      }
-
-      return 0;
-}
-
-extern "C" ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx)
-{
-      switch (net->type_) {
-	  case IVL_ST_CASSIGN:
-	  case IVL_ST_FORCE:
-	    assert(idx < net->u_.cassign_.npins);
-	    return net->u_.cassign_.pins[idx];
-	  default:
-	    assert(0);
-      }
-
-      return 0;
-}
-
-extern "C" unsigned ivl_stmt_nexus_count(ivl_statement_t net)
-{
-      switch (net->type_) {
-	  case IVL_ST_CASSIGN:
-	  case IVL_ST_FORCE:
-	    return net->u_.cassign_.npins;
 	  default:
 	    assert(0);
       }
@@ -1892,6 +1895,7 @@ extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
+	  case IVL_ST_CASSIGN:
 	    return net->u_.assign_.rval_;
 	  default:
 	    assert(0);
@@ -1935,6 +1939,11 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.109  2004/12/11 02:31:27  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.108  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

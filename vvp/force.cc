@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: force.cc,v 1.8 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: force.cc,v 1.9 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -104,6 +104,7 @@ static bool release_force(vvp_ipoint_t itgt, functor_t tgt)
  */
 bool of_FORCE(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = cp->bit_idx[0];
 
       for (unsigned i=0; i<wid; i++) {
@@ -141,7 +142,9 @@ bool of_FORCE(vthread_t thr, vvp_code_t cp)
 	      // on its forced value.
 	    fofu->set(ifofu, false, fofu->get_oval(), fofu->get_ostr());
       }
-
+#else
+      fprintf(stderr, "XXXX forgot how to implement %%force\n");
+#endif
       return true;
 }
 
@@ -151,12 +154,15 @@ bool of_FORCE(vthread_t thr, vvp_code_t cp)
  */
 bool of_RELEASE(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       vvp_ipoint_t itgt = cp->iptr;
       functor_t tgt = functor_index(itgt);
 
       if (release_force(itgt, tgt))
 	    tgt->enable(itgt);
-
+#else
+      fprintf(stderr, "XXXX forgot how to implement %%release\n");
+#endif
       return true;
 }
 
@@ -213,84 +219,14 @@ bool var_functor_s::deassign(vvp_ipoint_t itgt)
       return false;
 }
 
-/*
- * The %cassign instruction causes a variable functor (the target) the
- * receive a behavioral continuous assignment from the functor on the
- * right (the source expression). If the source functor address is 0,
- * then the port part is a constant value to write into the target.
- */
-bool of_CASSIGN(vthread_t thr, vvp_code_t cp)
-{
-      vvp_ipoint_t itgt = cp->iptr;
-      vvp_ipoint_t iexp = cp->iptr2;
-
-      functor_t tgt = functor_index(itgt);
-
-      var_functor_s *var = dynamic_cast<var_functor_s *>(tgt);
-      assert(var);
-      var->deassign(itgt);
-
-      // a constant expression?
-      if (ipoint_make(iexp, 0) == 0) {
-	    tgt->port[3] = ipoint_make(0, 3);
-	    tgt->set(ipoint_make(itgt, 1), true, ipoint_port(iexp));
-	    return true;
-      }
-
-      functor_t fu = functor_index(iexp);
-
-      tgt->port[3] = iexp;
-      tgt->port[1] = fu->out;
-      fu->out = ipoint_make(itgt, 1);
-
-      tgt->set(ipoint_make(itgt, 1), true, fu->get());
-
-      return true;
-}
-
-bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
-{
-      vvp_ipoint_t itgt = cp->iptr;
-      unsigned wid = cp->bit_idx[0];
-
-      for (unsigned i = 0; i<wid; i++) {
-	    vvp_ipoint_t ipt = ipoint_index(itgt, i);
-	    functor_t tgt = functor_index(ipt);
-
-	    var_functor_s *var = dynamic_cast<var_functor_s *>(tgt);
-	    assert(var);
-
-	    var->deassign(ipt);
-      }
-
-      return true;
-}
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.9  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.8  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
- *
- * Revision 1.7  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2002/08/07 00:54:20  steve
- *  Documentation, and excessive inlines.
- *
- * Revision 1.5  2002/03/17 03:23:11  steve
- *  Force the push flags to be explicit.
- *
- * Revision 1.4  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.3  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.2  2001/11/01 04:42:40  steve
- *  Handle procedural constant functor pointers.
- *
- * Revision 1.1  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
  */

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.104 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -350,33 +350,53 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       sptr = ivl_nexus_ptr_sig(nptr);
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-	    sprintf(result, "V_%s[%u]", vvp_signal_label(sptr), nptr_pin);
+	      /* Input is a .var. Note that these devices have only
+		 exactly one pin (that carries a vector) so nptr_pin
+		 must be 0. */
+	    assert(nptr_pin == 0);
+	    sprintf(result, "V_%s", vvp_signal_label(sptr));
 	    return result;
       }
 
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
+	      /* Constants should have exactly 1 pin, with a vector
+		 result. */
+	    assert(nptr_pin == 0);
 	    const char*bits = ivl_const_bits(cptr);
 	    ivl_drive_t drive;
-	    switch (bits[nptr_pin]) {
-		case '0':
-		  drive = ivl_nexus_ptr_drive0(nptr);
-		  if (drive == IVL_DR_HiZ)
-			sprintf(result, "C<z>");
-		  else
-			sprintf(result, "C<%s0>", drive_string(drive));
-		  break;
-		case '1':
-		  drive = ivl_nexus_ptr_drive1(nptr);
-		  if (drive == IVL_DR_HiZ)
-			sprintf(result, "C<z>");
-		  else
-			sprintf(result, "C<%s1>", drive_string(drive));
-		  break;
-		default:
-		  sprintf(result, "C<%c>", bits[nptr_pin]);
+	    unsigned idx;
+
+	    char*dp = result;
+	    strcpy(dp, "C4<");
+	    dp += strlen(dp);
+
+	    for (idx = 0 ; idx < ivl_const_width(cptr) ;  idx += 1) {
+		  switch (bits[ivl_const_width(cptr)-idx-1]) {
+		      case '0':
+			drive = ivl_nexus_ptr_drive0(nptr);
+			if (drive == IVL_DR_HiZ) {
+			      *dp++ = 'z';
+			} else {
+			      *dp++ = '0';
+			}
+			break;
+		      case '1':
+			drive = ivl_nexus_ptr_drive1(nptr);
+			if (drive == IVL_DR_HiZ) {
+			      *dp++ = 'z';
+			} else {
+			      *dp++ = '1';
+			}
+			break;
+		      default:
+			*dp++ = bits[idx];
+			break;
+		  }
+		  assert(dp - result < sizeof result);
 	    }
 
+	    strcpy(dp, ">");
 	    return result;
       }
 
@@ -403,11 +423,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	  case IVL_LPM_UFUNC:
-	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
-		  if (ivl_lpm_q(lpm, idx) == nex) {
-		     sprintf(result, "L_%p[%u]", lpm, idx);
-		     return result;
-		  }
+	  case IVL_LPM_PART:
+	    if (ivl_lpm_q(lpm, 0) == nex) {
+		  sprintf(result, "L_%p", lpm);
+		  return result;
+	    }
 
 	    break;
 
@@ -520,13 +540,13 @@ const char* draw_net_input(ivl_nexus_t nex)
       if (ndrivers == 0) {
 	    switch (res) {
 		case IVL_SIT_TRI:
-		  nex_private = "C<z>";
+		  nex_private = "C4<z>";
 		  break;
 		case IVL_SIT_TRI0:
-		  nex_private = "C<0>";
+		  nex_private = "C4<0>";
 		  break;
 		case IVL_SIT_TRI1:
-		  nex_private = "C<1>";
+		  nex_private = "C4<1>";
 		  break;
 		default:
 		  assert(0);
@@ -566,7 +586,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 			}
 		  }
 		  for ( ;  idx < inst+4 ;  idx += 1)
-			fprintf(vvp_out, ", C<z>");
+			fprintf(vvp_out, ", C4<z>");
 
 		  fprintf(vvp_out, ";\n");
 	    }
@@ -623,11 +643,10 @@ static void draw_reg_in_scope(ivl_signal_t sig)
  */
 static void draw_net_in_scope(ivl_signal_t sig)
 {
-      unsigned idx;
       int msb = ivl_signal_msb(sig);
       int lsb = ivl_signal_lsb(sig);
       typedef const char*const_charp;
-      const_charp* args;
+      const char* arg;
 
       const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
 
@@ -635,24 +654,16 @@ static void draw_net_in_scope(ivl_signal_t sig)
       if (ivl_signal_local(sig))
 	    return;
 
-      args = (const_charp*)calloc(ivl_signal_pins(sig), sizeof(char*));
-
-	/* Connect all the pins of the signal to something. */
-      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
-	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
-
-	    args[idx] = draw_net_input(nex);
+	/* Connect the pin of the signal to something. */
+      {
+	    ivl_nexus_t nex = ivl_signal_nex(sig);
+	    arg = draw_net_input(nex);
       }
 
-      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d",
+      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d, %s;\n",
 	      vvp_signal_label(sig), signed_flag,
-	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
-      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
-	    fprintf(vvp_out, ", %s", args[idx]);
-      }
-      fprintf(vvp_out, ";\n");
+	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb, arg);
 
-      free(args);
 }
 
 static void draw_delay(ivl_net_logic_t lptr)
@@ -939,7 +950,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			}
 		  }
 		  for ( ;  pdx < inst+4 ;  pdx += 1) {
-			fprintf(vvp_out, ", C<%c>", identity_val);
+			fprintf(vvp_out, ", C4<%c>", identity_val);
 		  }
 
 		  fprintf(vvp_out, ";\n");
@@ -1137,25 +1148,35 @@ static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
       unsigned idx;
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    ivl_nexus_t a = ivl_lpm_data(net, idx);
-	    if (a) {
-		  fprintf(vvp_out, ", ");
-		  draw_input_from_net(a);
-	    } else {
-		  fprintf(vvp_out, ", C<0>");
-	    }
+
+      assert(width > 0);
+      ivl_nexus_t nex = ivl_lpm_data(net, 0);
+      ivl_signal_t sig = 0;
+
+      ivl_nexus_ptr_t np;
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    np = ivl_nexus_ptr(nex,idx);
+	    sig = ivl_nexus_ptr_sig(np);
+	    if (sig != 0)
+		  break;
       }
 
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    ivl_nexus_t b = ivl_lpm_datab(net, idx);
-	    if (b) {
-		  fprintf(vvp_out, ", ");
-		  draw_input_from_net(b);
-	    } else {
-		  fprintf(vvp_out, ", C<0>");
-	    }
+      assert(sig != 0);
+
+      fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
+
+      sig = 0;
+      nex = ivl_lpm_datab(net, 0);
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    np = ivl_nexus_ptr(nex,idx);
+	    sig = ivl_nexus_ptr_sig(np);
+	    if (sig != 0)
+		  break;
       }
+
+      assert(sig != 0);
+
+      fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
 }
 
 static void draw_lpm_add(ivl_lpm_t net)
@@ -1458,6 +1479,22 @@ static void draw_lpm_ufunc(ivl_lpm_t net)
       fprintf(vvp_out, ";\n");
 }
 
+/*
+ * Handle a PART SELECT device. This has a single input and output.
+ */
+static void draw_lpm_part(ivl_lpm_t net)
+{
+      unsigned width, base;
+
+      width = ivl_lpm_width(net);
+      base = ivl_lpm_base(net);
+
+      fprintf(vvp_out, "L_%p .part ", net);
+      draw_input_from_net(ivl_lpm_data(net, 0));
+
+      fprintf(vvp_out, ", %u, %u;\n", base, width);
+}
+
 static void draw_lpm_in_scope(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
@@ -1472,6 +1509,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MOD:
 	    draw_lpm_add(net);
+	    return;
+
+	  case IVL_LPM_PART:
+	    draw_lpm_part(net);
 	    return;
 
 	  case IVL_LPM_CMP_EQ:
@@ -1624,6 +1665,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.104  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.103  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *

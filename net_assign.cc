@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.18 2004/08/28 15:08:31 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.19 2004/12/11 02:31:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,7 +42,7 @@ NetAssign_::NetAssign_(NetNet*s)
 : sig_(s), mem_(0), var_(0), bmux_(0)
 {
       loff_ = 0;
-      lwid_ = sig_->pin_count();
+      lwid_ = sig_->vector_width();
       sig_->incr_lref();
       more = 0;
 }
@@ -130,7 +130,7 @@ void NetAssign_::set_part(unsigned lo, unsigned lw)
       loff_ = lo;
       lwid_ = lw;
       if (sig_) {
-	    assert(sig_->pin_count() >= (lo + lw));
+	    assert(sig_->vector_width() >= (lo + lw));
       } else {
 	    assert(mem_);
 	    assert(lwid_ == mem_->width());
@@ -259,8 +259,49 @@ NetAssignNB::~NetAssignNB()
 {
 }
 
+NetCAssign::NetCAssign(NetAssign_*lv, NetExpr*rv)
+: NetAssignBase(lv, rv)
+{
+}
+
+NetCAssign::~NetCAssign()
+{
+}
+
+NetDeassign::NetDeassign(NetAssign_*l)
+: NetAssignBase(l, 0)
+{
+}
+
+NetDeassign::~NetDeassign()
+{
+}
+
+NetForce::NetForce(NetAssign_*lv, NetExpr*rv)
+: NetAssignBase(lv, rv)
+{
+}
+
+NetForce::~NetForce()
+{
+}
+
+NetRelease::NetRelease(NetAssign_*l)
+: NetAssignBase(l, 0)
+{
+}
+
+NetRelease::~NetRelease()
+{
+}
+
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.19  2004/12/11 02:31:26  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.18  2004/08/28 15:08:31  steve
  *  Do not change reg to wire in NetAssign_ unless synthesizing.
  *
@@ -270,37 +311,5 @@ NetAssignNB::~NetAssignNB()
  * Revision 1.16  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
- *
- * Revision 1.15  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.14  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.13  2002/07/02 03:02:57  steve
- *  Change the signal to a net when assignments go away.
- *
- * Revision 1.12  2002/06/08 23:42:46  steve
- *  Add NetRamDq synthsesis from memory l-values.
- *
- * Revision 1.11  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.10  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.9  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
  */
 

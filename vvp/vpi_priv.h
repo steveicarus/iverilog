@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.59 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.60 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
 # include  "pointers.h"
+# include  "vvp_net.h"
 # include  "memory.h"
 
 /*
@@ -177,16 +178,14 @@ struct __vpiSignal {
       unsigned signed_flag  : 1;
       unsigned isint_ : 1;	// original type was integer
 	/* The represented value is here. */
-      vvp_fvector_t bits;
-        /* This is the callback event functor */
-      struct callback_functor_s *callback;
+      vvp_net_t*node;
 };
 extern vpiHandle vpip_make_int(const char*name, int msb, int lsb,
-			       vvp_fvector_t vec);
+			       vvp_net_t*vec);
 extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
-			       bool signed_flag, vvp_fvector_t vec);
+			       bool signed_flag, vvp_net_t*net);
 extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
-			       bool signed_flag, vvp_fvector_t vec);
+			       bool signed_flag, vvp_net_t*node);
 
 /*
  * These methods support the vpi creation of events. The name string
@@ -200,12 +199,12 @@ struct __vpiNamedEvent {
 	/* Parent scope of this object. */
       struct __vpiScope*scope;
 	/* The functor, used for %set operations. */
-      vvp_ipoint_t funct;
+      vvp_net_t*funct;
 	/* List of callbacks interested in this event. */
       struct __vpiCallback*callbacks;
 };
 
-extern vpiHandle vpip_make_named_event(const char*name, vvp_ipoint_t f);
+extern vpiHandle vpip_make_named_event(const char*name, vvp_net_t*f);
 extern void vpip_run_named_event_callbacks(vpiHandle ref);
 extern void vpip_real_value_change(struct __vpiCallback*cbh,
 				   vpiHandle ref);
@@ -418,6 +417,11 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.60  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.59  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

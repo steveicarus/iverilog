@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: stub.c,v 1.91 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -184,6 +184,7 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 static void show_lpm(ivl_lpm_t net)
 {
       unsigned idx;
+      ivl_nexus_t nex;
       unsigned width = ivl_lpm_width(net);
 
       switch (ivl_lpm_type(net)) {
@@ -191,19 +192,11 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_ADD: {
 		fprintf(out, "  LPM_ADD %s: <width=%u>\n",
 			ivl_lpm_basename(net), width);
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
-		      fprintf(out, "    Data B %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
+		fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
+		nex = ivl_lpm_data(net, 0);
+		fprintf(out, "    DataA: %s\n", nex? ivl_nexus_name(nex) : "");
+		ivl_nexus_t nex = ivl_lpm_datab(net, 0);
+		fprintf(out, "    DataB: %s\n", nex? ivl_nexus_name(nex) : "");
 		break;
 	  }
 
@@ -367,6 +360,15 @@ static void show_lpm(ivl_lpm_t net)
 		break;
 	  }
 
+	  case IVL_LPM_PART: {
+		fprintf(out, "  LPM_PART %s: <width=%u, base=%u, signed=%d>\n",
+			ivl_lpm_basename(net),
+			width, ivl_lpm_base(net), ivl_lpm_signed(net));
+		fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+		fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+		break;
+	  }
+
 	  default:
 	    fprintf(out, "  LPM(%d) %s: <width=%u, signed=%d>\n",
 		    ivl_lpm_type(net),
@@ -396,17 +398,13 @@ static void show_assign_lval(ivl_lval_t lval, unsigned ind)
 
       } else {
 	    unsigned pp;
-	    ivl_nexus_t nex = ivl_lval_pin(lval, 0);
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    ivl_nexus_t nex = ivl_signal_nex(sig);
 
 	    fprintf(out, "%*spart_off=%u {%s", ind, "",
 		    ivl_lval_part_off(lval),
 		    ivl_nexus_name(nex));
 	    fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
-	    for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
-		  nex = ivl_lval_pin(lval, pp);
-		  fprintf(out, ", %s", ivl_nexus_name(nex));
-		  fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
-	    }
 	    fprintf(out, "}\n");
       }
 }
@@ -481,6 +479,17 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_ST_CASSIGN:
+	    fprintf(out, "%*sCONTINUOUS ASSIGN <lwidth=%u>\n", ind, "",
+		    ivl_stmt_lwidth(net));
+
+	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
+		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
+
+	    if (ivl_stmt_rval(net))
+		  show_expression(ivl_stmt_rval(net), ind+4);
+	    break;
+
 	  case IVL_ST_CONDIT: {
 		ivl_expr_t ex = ivl_stmt_cond_expr(net);
 		ivl_statement_t t = ivl_stmt_cond_true(net);
@@ -500,6 +509,15 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 		break;
 	  }
+
+	  case IVL_ST_DEASSIGN:
+	    fprintf(out, "%*sDEASSIGN <lwidth=%u>\n", ind, "",
+		    ivl_stmt_lwidth(net));
+
+	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
+		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
+
+	    break;
 
 	  case IVL_ST_DELAY:
 	    fprintf(out, "%*s#%lu\n", ind, "", ivl_stmt_delay_val(net));
@@ -656,7 +674,9 @@ static void show_event(ivl_event_t net)
 
 static void show_signal(ivl_signal_t net)
 {
-      unsigned pin;
+      unsigned idx;
+      ivl_nexus_t nex;
+
       const char*type = "?";
       const char*port = "";
       const char*sign = ivl_signal_signed(net)? "signed" : "unsigned";
@@ -702,61 +722,60 @@ static void show_signal(ivl_signal_t net)
 	    break;
       }
 
-      fprintf(out, "  %s %s %s[%u] %s\n", type, sign, port,
-	      ivl_signal_pins(net), ivl_signal_basename(net));
+      nex = ivl_signal_nex(net);
 
-      for (pin = 0 ;  pin < ivl_signal_pins(net) ;  pin += 1) {
-	    unsigned idx;
-	    ivl_nexus_t nex = ivl_signal_pin(net, pin);
-
-	    fprintf(out, "    [%u]: nexus=%s\n", pin, ivl_nexus_name(nex));
-
-	    for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
-		  ivl_net_const_t con;
-		  ivl_net_logic_t log;
-		  ivl_lpm_t lpm;
-		  ivl_signal_t sig;
-		  ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
-
-		  static const char* str_tab[8] = {
-			"HiZ", "small", "medium", "weak",
-			"large", "pull", "strong", "supply"};
-
-		  const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
-		  const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
-
-		  if ((sig = ivl_nexus_ptr_sig(ptr))) {
-			fprintf(out, "      %s[%u] (%s0, %s1)\n",
-				ivl_signal_name(sig),
-				ivl_nexus_ptr_pin(ptr), dr0, dr1);
-
-		  } else if ((log = ivl_nexus_ptr_log(ptr))) {
-			fprintf(out, "      %s[%u] (%s0, %s1)\n",
-				ivl_logic_name(log),
-				ivl_nexus_ptr_pin(ptr), dr0, dr1);
-
-		  } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
-			fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
-				ivl_scope_name(ivl_lpm_scope(lpm)),
-				ivl_lpm_basename(lpm), dr0, dr1);
-
-		  } else if ((con = ivl_nexus_ptr_con(ptr))) {
-			const char*bits = ivl_const_bits(con);
-			unsigned pin = ivl_nexus_ptr_pin(ptr);
-
-			fprintf(out, "      const-%c (%s0, %s1)\n",
-				bits[pin], dr0, dr1);
+      fprintf(out, "  %s %s %s[%d:%d] %s  <width=%u> nexus=%s\n",
+	      type, sign, port,
+	      ivl_signal_msb(net), ivl_signal_lsb(net),
+	      ivl_signal_basename(net), ivl_signal_width(net),
+	      ivl_nexus_name(nex));
 
 
-		  } else {
-			fprintf(out, "      ?[%u] (%s0, %s1)\n",
-				ivl_nexus_ptr_pin(ptr), dr0, dr1);
-		  }
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_net_const_t con;
+	    ivl_net_logic_t log;
+	    ivl_lpm_t lpm;
+	    ivl_signal_t sig;
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+
+	    static const char* str_tab[8] = {
+		  "HiZ", "small", "medium", "weak",
+		  "large", "pull", "strong", "supply"};
+
+	    const char*dr0 = str_tab[ivl_nexus_ptr_drive0(ptr)];
+	    const char*dr1 = str_tab[ivl_nexus_ptr_drive1(ptr)];
+
+	    if ((sig = ivl_nexus_ptr_sig(ptr))) {
+		  fprintf(out, "      %s[%u] (%s0, %s1)\n",
+			  ivl_signal_name(sig),
+			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
+
+	    } else if ((log = ivl_nexus_ptr_log(ptr))) {
+		  fprintf(out, "      %s[%u] (%s0, %s1)\n",
+			  ivl_logic_name(log),
+			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
+
+	    } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
+		  fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
+			  ivl_scope_name(ivl_lpm_scope(lpm)),
+			  ivl_lpm_basename(lpm), dr0, dr1);
+
+	    } else if ((con = ivl_nexus_ptr_con(ptr))) {
+		  const char*bits = ivl_const_bits(con);
+		  unsigned pin = ivl_nexus_ptr_pin(ptr);
+
+		  fprintf(out, "      const-%c (%s0, %s1)\n",
+			  bits[pin], dr0, dr1);
+
+
+	    } else {
+		  fprintf(out, "      ?[%u] (%s0, %s1)\n",
+			  ivl_nexus_ptr_pin(ptr), dr0, dr1);
 	    }
       }
 
-      for (pin = 0 ;  pin < ivl_signal_attr_cnt(net) ;  pin += 1) {
-	    ivl_attribute_t atr = ivl_signal_attr_val(net, pin);
+      for (idx = 0 ;  idx < ivl_signal_attr_cnt(net) ;  idx += 1) {
+	    ivl_attribute_t atr = ivl_signal_attr_val(net, idx);
 
 	    switch (atr->type) {
 		case IVL_ATT_STR:
@@ -837,7 +856,7 @@ static void show_logic(ivl_net_logic_t net)
 		  fprintf(out, ", %s", ivl_nexus_name(nex));
       }
 
-      fprintf(out, ");\n");
+      fprintf(out, "); <width=%u>\n", ivl_logic_width(net));
 
       npins = ivl_logic_attr_cnt(net);
       for (idx = 0 ;  idx < npins ;  idx += 1) {
@@ -953,6 +972,11 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.91  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.90  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *

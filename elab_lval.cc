@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.29 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.30 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -283,7 +283,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		 converted to normalized form so is relative the
 		 variable pins. */
 
-	    if ((wid + loff) > reg->pin_count()) {
+	    if ((wid + loff) > reg->vector_width()) {
 		  cerr << get_line() << ": error: bit/part select "
 		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		       << " is out of range." << endl;
@@ -293,8 +293,6 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 	    lv = new NetAssign_(reg);
 	    lv->set_part(loff, wid);
-
-	    assert(moff < reg->pin_count());
       }
 
 
@@ -352,6 +350,11 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.30  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.29  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.65 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.66 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -145,89 +145,14 @@ bool dll_target::func_def(const NetScope*net)
 }
 
 /*
+ * This private function makes the assignment lvals for the various
+ * kinds of assignment statements.
  */
-void dll_target::proc_assign(const NetAssign*net)
+void dll_target::make_assign_lvals_(const NetAssignBase*net)
 {
-      unsigned cnt;
-
       assert(stmt_cur_);
-      assert(stmt_cur_->type_ == IVL_ST_NONE);
 
-      stmt_cur_->type_ = IVL_ST_ASSIGN;
-
-      stmt_cur_->u_.assign_.lvals_ = cnt = net->l_val_count();
-      stmt_cur_->u_.assign_.lval_ = new struct ivl_lval_s[cnt];
-      stmt_cur_->u_.assign_.delay = 0;
-
-	/* The assignment may have multiple concatenated
-	   l-values. Scan them and accumulate an ivl_lval_t list. */
-      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
-	    const NetAssign_*asn = net->l_val(idx);
-
-	    cur->width_ = asn->lwidth();
-	    cur->loff_  = asn->get_loff();
-	    if (asn->sig()) {
-		  cur->type_  = IVL_LVAL_REG;
-		  cur->n.sig  = find_signal(des_, asn->sig());
-
-		  cur->idx = 0;
-		  if (asn->bmux()) {
-			assert(expr_ == 0);
-			asn->bmux()->expr_scan(this);
-
-			if (cur->n.sig->lsb_index != 0)
-			      sub_off_from_expr_(asn->sig()->lsb());
-			if (cur->n.sig->lsb_dist != 1)
-			      mul_expr_by_const_(cur->n.sig->lsb_dist);
-
-			cur->type_ = IVL_LVAL_MUX;
-			cur->idx = expr_;
-			expr_ = 0;
-		  }
-
-	    } else if (asn->var()) {
-		  cur->type_ = IVL_LVAL_VAR;
-		  cur->idx = 0;
-		  cur->n.var = find_variable(des_, asn->var());
-
-	    } else {
-		  assert(asn->mem());
-		  cur->type_ = IVL_LVAL_MEM;
-		  cur->n.mem = find_memory(des_, asn->mem());
-		  assert(cur->n.mem);
-		  cur->width_ = ivl_memory_width(cur->n.mem);
-
-		  assert(expr_ == 0);
-		  asn->bmux()->expr_scan(this);
-		  cur->idx = expr_;
-		  expr_ = 0;
-	    }
-      }
-
-      assert(expr_ == 0);
-      net->rval()->expr_scan(this);
-      stmt_cur_->u_.assign_.rval_ = expr_;
-      expr_ = 0;
-
-      const NetExpr*del = net->get_delay();
-      if (del) {
-	    del->expr_scan(this);
-	    stmt_cur_->u_.assign_.delay = expr_;
-	    expr_ = 0;
-      }
-}
-
-
-void dll_target::proc_assign_nb(const NetAssignNB*net)
-{
       unsigned cnt = net->l_val_count();
-
-      const NetExpr* delay_exp = net->get_delay();
-      assert(stmt_cur_);
-      assert(stmt_cur_->type_ == IVL_ST_NONE);
-
-      stmt_cur_->type_ = IVL_ST_ASSIGN_NB;
 
       stmt_cur_->u_.assign_.lvals_ = cnt;
       stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[cnt];
@@ -276,7 +201,49 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 
 	    }
       }
+}
 
+/*
+ */
+void dll_target::proc_assign(const NetAssign*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_ASSIGN;
+
+      stmt_cur_->u_.assign_.delay = 0;
+
+	/* Make the lval fields. */
+      make_assign_lvals_(net);
+
+      assert(expr_ == 0);
+      net->rval()->expr_scan(this);
+      stmt_cur_->u_.assign_.rval_ = expr_;
+      expr_ = 0;
+
+      const NetExpr*del = net->get_delay();
+      if (del) {
+	    del->expr_scan(this);
+	    stmt_cur_->u_.assign_.delay = expr_;
+	    expr_ = 0;
+      }
+}
+
+
+void dll_target::proc_assign_nb(const NetAssignNB*net)
+{
+      const NetExpr* delay_exp = net->get_delay();
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_ASSIGN_NB;
+      stmt_cur_->u_.assign_.delay  = 0;
+
+	/* Make the lval fields. */
+      make_assign_lvals_(net);
+
+	/* Make the rval field. */
       assert(expr_ == 0);
       net->rval()->expr_scan(this);
       stmt_cur_->u_.assign_.rval_ = expr_;
@@ -428,27 +395,13 @@ bool dll_target::proc_cassign(const NetCAssign*net)
 
       stmt_cur_->type_ = IVL_ST_CASSIGN;
 
-      stmt_cur_->u_.cassign_.lvals = 1;
-      stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
-	    calloc(1, sizeof(struct ivl_lval_s));
+	/* Make the l-value fields. */
+      make_assign_lvals_(net);
 
-      const NetNet*lsig = net->lval();
-
-      stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
-      stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
-      stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
-      stmt_cur_->u_.cassign_.lval[0].idx    = 0;
-      stmt_cur_->u_.cassign_.lval[0].n.sig  = find_signal(des_, lsig);
-
-      stmt_cur_->u_.cassign_.npins = net->pin_count();
-      stmt_cur_->u_.cassign_.pins = (ivl_nexus_t*)
-	    calloc(stmt_cur_->u_.cassign_.npins, sizeof(ivl_nexus_t));
-
-      ivl_nexus_t*ntmp = stmt_cur_->u_.cassign_.pins;
-      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-	    ntmp[idx] = (ivl_nexus_t)net->pin(idx).nexus()->t_cookie();
-	    assert(ntmp[idx]);
-      }
+      assert(expr_ == 0);
+      net->rval()->expr_scan(this);
+      stmt_cur_->u_.assign_.rval_ = expr_;
+      expr_ = 0;
 
       return true;
 }
@@ -485,19 +438,9 @@ bool dll_target::proc_deassign(const NetDeassign*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_DEASSIGN;
-      stmt_cur_->u_.cassign_.lvals = 1;
-      stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
-	    calloc(1, sizeof(struct ivl_lval_s));
 
-      const NetNet*lsig = net->lval();
-
-      stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
-      stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
-      stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
-      stmt_cur_->u_.cassign_.lval[0].idx    = 0;
-      stmt_cur_->u_.cassign_.lval[0].n.sig  = find_signal(des_, lsig);
-      stmt_cur_->u_.cassign_.npins = 0;
-      stmt_cur_->u_.cassign_.pins  = 0;
+	/* Make the l-value fields. */
+      make_assign_lvals_(net);
 
       return true;
 }
@@ -554,52 +497,19 @@ bool dll_target::proc_disable(const NetDisable*net)
 
 bool dll_target::proc_force(const NetForce*net)
 {
+
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_FORCE;
 
-      stmt_cur_->u_.cassign_.lvals = 1;
-      stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
-	    calloc(1, sizeof(struct ivl_lval_s));
+	/* Make the l-value fields. */
+      make_assign_lvals_(net);
 
-      const NetNet*lsig = net->lval();
-      assert(lsig);
-      ivl_signal_t sig = find_signal(des_, lsig);
-      assert(sig);
-
-      ivl_lval_type_t ltype;
-      switch (sig->type_) {
-	  case IVL_SIT_REG:
-	    ltype = IVL_LVAL_REG;
-	    break;
-	  case IVL_SIT_TRI:
-	  case IVL_SIT_TRI0:
-	  case IVL_SIT_TRI1:
-	    ltype = IVL_LVAL_NET;
-	    break;
-	  default:
-	    cerr << net->get_line() << ": internal error: Sorry, "
-		 << "force to nets not supported by this target."
-		 << endl;
-	    return false;
-      }
-
-      stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
-      stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
-      stmt_cur_->u_.cassign_.lval[0].type_  = ltype;
-      stmt_cur_->u_.cassign_.lval[0].idx    = 0;
-      stmt_cur_->u_.cassign_.lval[0].n.sig  = sig;
-
-      stmt_cur_->u_.cassign_.npins = net->pin_count();
-      stmt_cur_->u_.cassign_.pins = (ivl_nexus_t*)
-	    calloc(stmt_cur_->u_.cassign_.npins, sizeof(ivl_nexus_t));
-
-      ivl_nexus_t*ntmp = stmt_cur_->u_.cassign_.pins;
-      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-	    ntmp[idx] = (ivl_nexus_t)net->pin(idx).nexus()->t_cookie();
-	    assert(ntmp[idx]);
-      }
+      assert(expr_ == 0);
+      net->rval()->expr_scan(this);
+      stmt_cur_->u_.assign_.rval_ = expr_;
+      expr_ = 0;
 
       return true;
 }
@@ -630,47 +540,8 @@ bool dll_target::proc_release(const NetRelease*net)
 
       stmt_cur_->type_ = IVL_ST_RELEASE;
 
-	/* If there is no signal attached to the release, then it is
-	   the victim of an elided net. In that case, simply state
-	   that there are no lvals, and that's all. */
-      const NetNet*lsig = net->lval();
-      if (lsig == 0) {
-	    stmt_cur_->u_.cassign_.lvals = 0;
-	    return true;
-      }
-
-      assert(lsig);
-      stmt_cur_->u_.cassign_.lvals = 1;
-      stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
-	    calloc(1, sizeof(struct ivl_lval_s));
-
-
-      ivl_signal_t sig = find_signal(des_, lsig);
-      assert(sig);
-
-      ivl_lval_type_t ltype;
-      switch (sig->type_) {
-	  case IVL_SIT_REG:
-	    ltype = IVL_LVAL_REG;
-	    break;
-	  case IVL_SIT_TRI:
-	  case IVL_SIT_TRI0:
-	  case IVL_SIT_TRI1:
-	    ltype = IVL_LVAL_NET;
-	    break;
-	  default:
-	    cerr << net->get_line() << ": internal error: Sorry, "
-		 << "force/release to nets not supported by this target."
-		 << endl;
-	    return false;
-      }
-
-
-      stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
-      stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
-      stmt_cur_->u_.cassign_.lval[0].type_  = ltype;
-      stmt_cur_->u_.cassign_.lval[0].idx    = 0;
-      stmt_cur_->u_.cassign_.lval[0].n.sig  = sig;
+	/* Make the l-value fields. */
+      make_assign_lvals_(net);
 
       return true;
 }
@@ -872,6 +743,11 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.66  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.65  2004/10/04 01:10:55  steve
  *  Clean up spurious trailing white space.
  *

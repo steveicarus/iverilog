@@ -19,59 +19,41 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.8 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: resolv.h,v 1.9 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 # include  "config.h"
-# include  "functor.h"
+# include  "vvp_net.h"
 
 /*
  * This functor type resolves its inputs using the verilog method of
  * combining signals, and outputs that resolved value. The puller
  * value is also blended with the result. This helps with the
- * implementation of tri0 and tri1, which have pull constants attached.
+ * implementation of tri0 and tri1, which have pull constants
+ * attached.
+ *
+ * This node takes in vvp_vector8_t values, and emits a vvp_vector8_t
+ * value.
  */
-class resolv_functor_s: public functor_s {
+class resolv_functor : public vvp_net_fun_t {
 
     public:
-      explicit resolv_functor_s(unsigned char hiz_value);
-      ~resolv_functor_s();
+      explicit resolv_functor(vvp_scaler_t hiz_value);
+      ~resolv_functor();
 
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-
+      void recv_vec8(vvp_vector8_t bit);
 
     private:
-      unsigned char istr[4];
-      unsigned char hiz_;
+      vvp_vector8_t driven_;
+      vvp_scaler_t hiz_;
 };
 
 /*
  * $Log: resolv.h,v $
- * Revision 1.8  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.7  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2001/12/18 05:32:11  steve
- *  Improved functor debug dumps.
- *
- * Revision 1.5  2001/12/15 02:11:51  steve
- *  Give tri0 and tri1 their proper strengths.
- *
- * Revision 1.4  2001/12/15 01:54:39  steve
- *  Support tri0 and tri1 resolvers.
- *
- * Revision 1.3  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.2  2001/05/12 01:48:57  steve
- *  Silly copyright typo.
- *
- * Revision 1.1  2001/05/09 02:53:53  steve
- *  Implement the .resolv syntax.
+ * Revision 1.9  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
  *
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_force.cc,v 1.12 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_force.cc,v 1.13 2004/12/11 02:31:26 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -33,110 +33,14 @@
 # include  "netlist.h"
 # include  <assert.h>
 
-/*
- * Construct the procedural continuous assignment statement. This is a
- * bit different from a normal assignment because the the lval is only
- * intermittently connected. The deassign in particular disconnects
- * the signals when they are not being assigned anymore. Because of
- * this, there is no other reference to the lval to make it stay put
- * so we increment the eref.
- *
- * XXXX I'm not sure this is the right way. Perhaps I should create
- * output pins to connect to the netlist? But that would cause the
- * link ring to grow, and that is not quite correct either. Hmm...
- */
-NetCAssign::NetCAssign(NetScope*s, perm_string n, NetNet*l)
-: NetNode(s, n, l->pin_count()), lval_(l)
-{
-      lval_->incr_eref();
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("I"), idx);
-      }
-}
-
-NetCAssign::~NetCAssign()
-{
-      lval_->decr_eref();
-}
-
-const NetNet* NetCAssign::lval() const
-{
-      return lval_;
-}
-
-const Link& NetCAssign::lval_pin(unsigned idx) const
-{
-      assert(idx < lval_->pin_count());
-      return lval_->pin(idx);
-}
-
-NetDeassign::NetDeassign(NetNet*l)
-: lval_(l)
-{
-      lval_->incr_eref();
-}
-
-NetDeassign::~NetDeassign()
-{
-      lval_->decr_eref();
-}
-
-const NetNet*NetDeassign::lval() const
-{
-      return lval_;
-}
-
-NetForce::NetForce(NetScope*s, perm_string n, NetNet*l)
-: NetNode(s, n, l->pin_count()), lval_(l)
-{
-      lval_->incr_eref();
-
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name(perm_string::literal("I"), idx);
-      }
-}
-
-NetForce::~NetForce()
-{
-      lval_->decr_eref();
-}
-
-const Link& NetForce::lval_pin(unsigned idx) const
-{
-      assert(idx < lval_->pin_count());
-      return lval_->pin(idx);
-}
-
-const NetNet* NetForce::lval() const
-{
-      return lval_;
-}
-
-NetRelease::NetRelease(NetNet*l)
-: lval_(l)
-{
-	/* Put myself into a release list that the net is
-	   keeping. This is so that the NetNet can detach itself if
-	   and when it is deleted by the optimizer. */
-      release_next_ = lval_->release_list_;
-      lval_->release_list_ = this;
-}
-
-NetRelease::~NetRelease()
-{
-      assert(lval_ == 0);
-}
-
-const NetNet*NetRelease::lval() const
-{
-      return lval_;
-}
-
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.13  2004/12/11 02:31:26  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.12  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.175 2004/10/04 01:10:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.176 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -88,7 +88,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%assign/d", of_ASSIGN_D, 3,  {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
@@ -96,7 +95,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",  of_BLEND,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
-      { "%cassign",of_CASSIGN,2,  {OA_FUNC_PTR, OA_FUNC_PTR2,OA_NONE} },
+      { "%cassign/v",of_CASSIGN_V,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/wr", of_CMPWR,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -106,7 +105,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cvt/ir", of_CVT_IR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cvt/ri", of_CVT_RI, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cvt/vr", of_CVT_VR, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%deassign",of_DEASSIGN,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%deassign",of_DEASSIGN,1,{OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%div",    of_DIV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -125,7 +124,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
@@ -146,7 +144,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%release",of_RELEASE,1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
-      { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
@@ -213,21 +210,21 @@ static symbol_table_t sym_vpi = 0;
  *  Add a functor to the symbol table
  */
 
-void define_functor_symbol(const char*label, vvp_ipoint_t ipt)
+void define_functor_symbol(const char*label, vvp_net_t*net)
 {
       symbol_value_t val;
-      val.num = ipt;
+      val.net = net;
       sym_set_value(sym_functors, label, val);
 }
 
-static vvp_ipoint_t lookup_functor_symbol(const char*label)
+static vvp_net_t*lookup_functor_symbol(const char*label)
 {
       assert(sym_functors);
       symbol_value_t val = sym_get_value(sym_functors, label);
-      return val.num;
+      return val.net;
 }
 
-static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
+static vvp_net_t* vvp_net_lookup(const char*label)
 {
         /* First, look to see if the symbol is a vpi object of some
 	   sort. If it is, then get the vvp_ipoint_t pointer out of
@@ -240,7 +237,7 @@ static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
 		case vpiReg:
 		case vpiIntegerVar: {
 		      __vpiSignal*sig = (__vpiSignal*)vpi;
-		      return vvp_fvector_get(sig->bits, idx);
+		      return sig->node;
 		}
 
 		case vpiNamedEvent: {
@@ -253,10 +250,9 @@ static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
 	    }
       }
 
+
 	/* Failing that, look for a general functor. */
-      vvp_ipoint_t tmp = lookup_functor_symbol(label);
-      if (tmp)
-	    tmp = ipoint_index(tmp, idx);
+      vvp_net_t*tmp = lookup_functor_symbol(label);
 
       return tmp;
 }
@@ -282,6 +278,7 @@ static vvp_ipoint_t ipoint_lookup(const char *label, unsigned idx)
 static struct resolv_list_s*resolv_list = 0;
 
 struct resolv_list_s {
+      virtual ~resolv_list_s() { }
       struct resolv_list_s*next;
       virtual bool resolve(bool mes = false) = 0;
 };
@@ -299,48 +296,50 @@ static void resolv_submit(struct resolv_list_s*cur)
 
 
 /*
- *  And the application to functor input lookup
+ * Look up vvp_nets in the symbol table. The "source" is the label for
+ * the net that I want to feed, and net->port[port] is the vvp_net
+ * input that I want that node to feed into. When the name is found,
+ * put net->port[port] into the fan-out list for that node.
  */
-
-struct functor_resolv_list_s: public resolv_list_s {
+struct vvp_net_resolv_list_s: public resolv_list_s {
+	// node to locate
       char*source;
-      unsigned idx;
-      vvp_ipoint_t port;
+	// port to be driven by the located node.
+      vvp_net_ptr_t port;
       virtual bool resolve(bool mes);
 };
 
-bool functor_resolv_list_s::resolve(bool mes)
+bool vvp_net_resolv_list_s::resolve(bool mes)
 {
-      vvp_ipoint_t tmp = ipoint_lookup(source, idx);
+      vvp_net_t*tmp = vvp_net_lookup(source);
 
       if (tmp) {
-	    functor_t fport = functor_index(tmp);
-	    functor_t iobj = functor_index(port);
-
-	    iobj->port[ipoint_port(port)] = fport->out;
-	    fport->out = port;
+	      // Link the input port to the located output.
+	    vvp_net_t*net = port.ptr();
+	    net->port[port.port()] = tmp->out;
+	    tmp->out = port;
 
 	    free(source);
 	    return true;
       }
 
       if (mes)
-	    fprintf(stderr, "unresolved functor reference: %s\n", source);
+	    fprintf(stderr, "unresolved vvp_net reference: %s\n", source);
 
       return false;
 }
 
 inline static
-void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
+void postpone_functor_input(vvp_net_ptr_t port, char*lab)
 {
-      struct functor_resolv_list_s*res = new struct functor_resolv_list_s;
+      struct vvp_net_resolv_list_s*res = new struct vvp_net_resolv_list_s;
 
-      res->port   = ptr;
+      res->port   = port;
       res->source = lab;
-      res->idx    = idx;
 
       resolv_submit(res);
 }
+
 
 /*
  *  Generic functor reference lookup.
@@ -348,14 +347,13 @@ void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
 
 struct functor_gen_resolv_list_s: public resolv_list_s {
       char*source;
-      unsigned idx;
-      vvp_ipoint_t *ref;
+      vvp_net_t**ref;
       virtual bool resolve(bool mes);
 };
 
 bool functor_gen_resolv_list_s::resolve(bool mes)
 {
-      vvp_ipoint_t tmp = ipoint_lookup(source, idx);
+      vvp_net_t*tmp = vvp_net_lookup(source);
 
       if (tmp) {
 	    *ref = tmp;
@@ -370,14 +368,13 @@ bool functor_gen_resolv_list_s::resolve(bool mes)
       return false;
 }
 
-void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx)
+void functor_ref_lookup(vvp_net_t**ref, char*lab)
 {
       struct functor_gen_resolv_list_s*res =
 	    new struct functor_gen_resolv_list_s;
 
       res->ref    = ref;
       res->source = lab;
-      res->idx    = idx;
 
       resolv_submit(res);
 }
@@ -653,7 +650,7 @@ void compile_vpi_time_precision(long pre)
 }
 
 /*
- * Run through the arguments looking for the functors that are
+ * Run through the arguments looking for the nodes that are
  * connected to my input ports. For each source functor that I
  * find, connect the output of that functor to the indexed
  * input by inserting myself (complete with the port number in
@@ -666,53 +663,61 @@ void compile_vpi_time_precision(long pre)
  * and skip the symbol lookup.
  */
 
-void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
+void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 {
+      vvp_net_ptr_t ifdx = vvp_net_ptr_t(fdx, port);
+      char*tp;
+
+	/* Is this a vvp_vector4_t constant value? */
+      if ((strncmp(label, "C4<", 3) == 0)
+	  && ((tp = strchr(label,'>')))
+	  && (tp[1] == 0)
+	  && (strspn(label+3, "01xz") == (tp-label-3))) {
+
+	    size_t v4size = tp-label-3;
+	    vvp_vector4_t tmp (v4size);
+
+	    for (unsigned idx = 0 ;  idx < v4size ;  idx += 1) {
+		  vvp_bit4_t bit;
+		  switch (label[3+idx]) {
+		      case '0':
+			bit = BIT4_0;
+			break;
+		      case '1':
+			bit = BIT4_1;
+			break;
+		      case 'x':
+			bit = BIT4_X;
+			break;
+		      case 'z':
+			bit = BIT4_Z;
+			break;
+		      default:
+			assert(0);
+			break;
+		  }
+		  tmp.set_bit(v4size-idx-1, bit);
+	    }
+
+	    vvp_send_vec4(ifdx, tmp);
+	    free(label);
+	    return;
+      }
+
+	/* Handle the general case that this is a label for a node in
+	   the vvp net. This arranges for the label to be preserved in
+	   a linker list, and linked when the symbol table is
+	   complete. */
+      postpone_functor_input(ifdx, label);
+}
+
+void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv)
+{
+      assert(argc <= 4);
 
       for (unsigned idx = 0;  idx < argc;  idx += 1) {
 
-	      /* Find the functor for this input. This assumes that
-		 wide (more then 4 inputs) gates are consecutive
-		 functors. */
-	    vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
-	    functor_t iobj = functor_index(ifdx);
-
-	    if (strcmp(argv[idx].text, "C<0>") == 0)
-		  iobj->set(ifdx, false, 0, St0);
-
-	    else if (strcmp(argv[idx].text, "C<we0>") == 0)
-		  iobj->set(ifdx, false, 0, We0);
-
-	    else if (strcmp(argv[idx].text, "C<pu0>") == 0)
-		  iobj->set(ifdx, false, 0, Pu0);
-
-	    else if (strcmp(argv[idx].text, "C<su0>") == 0)
-		  iobj->set(ifdx, false, 0, Su0);
-
-	    else if (strcmp(argv[idx].text, "C<1>") == 0)
-		  iobj->set(ifdx, false, 1, St1);
-
-	    else if (strcmp(argv[idx].text, "C<we1>") == 0)
-		  iobj->set(ifdx, false, 1, We1);
-
-	    else if (strcmp(argv[idx].text, "C<pu1>") == 0)
-		  iobj->set(ifdx, false, 1, Pu1);
-
-	    else if (strcmp(argv[idx].text, "C<su1>") == 0)
-		  iobj->set(ifdx, false, 1, Su1);
-
-	    else if (strcmp(argv[idx].text, "C<x>") == 0)
-		  iobj->set(ifdx, false, 2, StX);
-
-	    else if (strcmp(argv[idx].text, "C<z>") == 0)
-		  iobj->set(ifdx, false, 3, HiZ);
-
-	    else {
-		  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
-		  continue;
-	    }
-
-	    free(argv[idx].text);
+	    input_connect(fdx, idx, argv[idx].text);
       }
 }
 
@@ -731,7 +736,7 @@ void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
       assert(0);
 }
 
-
+#if 0
 static vvp_ipoint_t make_const_functor(unsigned val,
 				       unsigned str0,
 				       unsigned str1)
@@ -744,9 +749,11 @@ static vvp_ipoint_t make_const_functor(unsigned val,
 
       return fdx;
 }
+#endif
 
 /* Lookup a functor[idx] and save the ipoint in *ref. */
 
+#if 0
 static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 {
       if (lab == 0)
@@ -786,10 +793,11 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 	    functor_ref_lookup(ref, lab, idx);
 	    return;
       }
-
       free(lab);
 }
+#endif
 
+#if 0
 static void make_extra_outputs(vvp_ipoint_t fdx, unsigned wid)
 {
       for (unsigned i=1;  i < wid;  i++) {
@@ -799,33 +807,20 @@ static void make_extra_outputs(vvp_ipoint_t fdx, unsigned wid)
 	    fu->base_ = fdx;
       }
 }
+#endif
 
 static void make_arith(vvp_arith_ *arith,
 		       char*label, long wid,
 		       unsigned argc, struct symb_s*argv)
 {
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      functor_define(fdx, arith);
+      vvp_net_t* ptr = new vvp_net_t;
+      ptr->fun = arith;
 
-      define_functor_symbol(label, fdx);
+      define_functor_symbol(label, ptr);
       free(label);
 
-      make_extra_outputs(fdx, wid);
-
-      unsigned opcount = argc / wid;
-
-      struct symb_s tmp_argv[4];
-      for (int idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t ptr = ipoint_index(fdx,idx);
-	    functor_t obj = functor_index(ptr);
-
-	    obj->ival = 0xaa >> 2*(4 - opcount);
-
-	    for (unsigned cdx = 0 ;  cdx < opcount ;  cdx += 1)
-		  tmp_argv[cdx] = argv[idx + wid*cdx];
-
-	    inputs_connect(ptr, opcount, tmp_argv);
-      }
+      assert(argc == 2);
+      inputs_connect(ptr, argc, argv);
 
       free(argv);
 }
@@ -904,21 +899,13 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if ((argc % wid) != 0) {
-	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
-	    compile_errors += 1;
-	    return;
-      }
-
-      unsigned opcount = argc / wid;
-      if (opcount > 4) {
-	    fprintf(stderr, "%s; .arith has too many operands.\n", label);
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
 
       vvp_arith_ *arith = new vvp_arith_sum(wid);
-
       make_arith(arith, label, wid, argc, argv);
 }
 
@@ -988,6 +975,7 @@ static void make_shift(vvp_arith_*arith,
 		       char*label, long wid,
 		       unsigned argc, struct symb_s*argv)
 {
+#if 0
       vvp_ipoint_t fdx = functor_allocate(wid);
       functor_define(fdx, arith);
 
@@ -1015,7 +1003,9 @@ static void make_shift(vvp_arith_*arith,
 
 	    inputs_connect(ptr, tmp_argc, tmp_argv);
       }
-
+#else
+      fprintf(stderr, "XXXX make_shift not implemented\n");
+#endif
       free(argv);
 }
 
@@ -1069,23 +1059,22 @@ void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
       assert(argc <= 4);
-
-      functor_t obj = 0;
+      vvp_net_fun_t* obj = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor_s(HiZ);
+	    obj = new resolv_functor(vvp_scaler_t(BIT4_Z, 0));
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor_s(Pu0);
+	    obj = new resolv_functor(vvp_scaler_t(BIT4_0, 5));
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor_s(Pu1);
+	    obj = new resolv_functor(vvp_scaler_t(BIT4_1, 5));
 
       } else if (strcmp(type,"triand") == 0) {
-	    obj = new table_functor_s(ft_TRIAND, 6, 6);
+	    obj = new table_functor_s(ft_TRIAND);
 
       } else if (strcmp(type,"trior") == 0) {
-	    obj = new table_functor_s(ft_TRIOR, 6, 6);
+	    obj = new table_functor_s(ft_TRIOR);
 
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
@@ -1093,13 +1082,10 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       }
 
       if (obj) {
-	    vvp_ipoint_t fdx = functor_allocate(1);
-	    functor_define(fdx, obj);
-	    define_functor_symbol(label, fdx);
-
-	    inputs_connect(fdx, argc, argv);
+	    vvp_net_t*net = new vvp_net_t;
+	    define_functor_symbol(label, net);
+	    inputs_connect(net, argc, argv);
       }
-
       free(type);
       free(label);
       free(argv);
@@ -1108,6 +1094,7 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 void compile_force(char*label, struct symb_s signal,
 		   unsigned argc, struct symb_s*argv)
 {
+#if 0
       vvp_ipoint_t ifofu = functor_allocate(argc);
       define_functor_symbol(label, ifofu);
 
@@ -1121,7 +1108,9 @@ void compile_force(char*label, struct symb_s signal,
 	    // connect the force expression, one bit.
 	    inputs_connect(iobj, 1, &argv[i]);
       }
-
+#else
+      fprintf(stderr, "XXXX compile_force not implemented\n");
+#endif
       free(argv);
       free(signal.text);
       free(label);
@@ -1161,7 +1150,7 @@ void compile_udp_functor(char*label, char*type,
 {
       struct vvp_udp_s *u = udp_find(type);
       assert (argc == u->nin);
-
+#if 0
       functor_t udp = new udp_functor_s(u);
 
       unsigned nfun = (argc+3)/4;
@@ -1186,6 +1175,9 @@ void compile_udp_functor(char*label, char*type,
 
       if (u->sequ)
 	    udp->put_oval(u->init, false);
+#else
+      fprintf(stderr, "XXXX compile_udp_functor not implemented\n");
+#endif
 }
 
 
@@ -1207,6 +1199,7 @@ void compile_memory_port(char *label, char *memid,
 			 unsigned naddr,
 			 unsigned argc, struct symb_s *argv)
 {
+#if 0
   vvp_memory_t mem = memory_find(memid);
   free(memid);
   assert(mem);
@@ -1226,6 +1219,9 @@ void compile_memory_port(char *label, char *memid,
 
   inputs_connect(ix, argc, argv);
   free(argv);
+#else
+  fprintf(stderr, "XXXX compile_memory_port not implemented.\n");
+#endif
 }
 
 void compile_memory_init(char *memid, unsigned i, unsigned char val)
@@ -1322,9 +1318,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  functor_ref_lookup(&code->iptr,
-				     opa->argv[idx].symb.text,
-				     opa->argv[idx].symb.idx);
+		  functor_ref_lookup(&code->net, opa->argv[idx].symb.text);
 		  break;
 
 		case OA_FUNC_PTR2:
@@ -1336,27 +1330,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  if (strcmp(opa->argv[idx].symb.text, "C<0>") == 0) {
-			code->iptr2 = ipoint_make(0, 0);
-			free(opa->argv[idx].symb.text);
-
-		  } else if (strcmp(opa->argv[idx].symb.text, "C<1>") == 0) {
-			code->iptr2 = ipoint_make(0, 1);
-			free(opa->argv[idx].symb.text);
-
-		  } else if (strcmp(opa->argv[idx].symb.text, "C<x>") == 0) {
-			code->iptr2 = ipoint_make(0, 2);
-			free(opa->argv[idx].symb.text);
-
-		  } else if (strcmp(opa->argv[idx].symb.text, "C<z>") == 0) {
-			code->iptr2 = ipoint_make(0, 3);
-			free(opa->argv[idx].symb.text);
-
-		  } else {
-			functor_ref_lookup(&code->iptr2,
-					   opa->argv[idx].symb.text,
-					   opa->argv[idx].symb.idx);
-		  }
+		  functor_ref_lookup(&code->net2, opa->argv[idx].symb.text);
 		  break;
 
 		case OA_NUMBER:
@@ -1519,20 +1493,15 @@ void compile_variable(char*label, char*name, int msb, int lsb,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_ipoint_t fdx = functor_allocate(wid);
-      define_functor_symbol(label, fdx);
-
-      functor_t fu = new var_functor_s [wid];
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    functor_define(ipoint_index(fdx, idx), fu+idx);
-      }
-      count_functors_var += wid;
+      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
+      vvp_net_t*node = new vvp_net_t;
+      node->fun = vsig;
+      define_functor_symbol(label, node);
 
 	/* Make the vpiHandle for the reg. */
-      vvp_fvector_t vec = vvp_fvector_continuous_new(wid, fdx);
       vpiHandle obj = (signed_flag > 1) ?
-			vpip_make_int(name, msb, lsb, vec) :
-			vpip_make_reg(name, msb, lsb, signed_flag!=0, vec);
+			vpip_make_int(name, msb, lsb, node) :
+			vpip_make_reg(name, msb, lsb, signed_flag!=0, node);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1540,23 +1509,35 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       free(name);
 }
 
+/*
+ * Here we handle .net records from the vvp source:
+ *
+ *    <label> .net   <name>, <msb>, <lsb>, <input> ;
+ *    <label> .net/s <name>, <msb>, <lsb>, <input> ;
+ *
+ * Create a VPI handle to represent it, and fill that handle in with
+ * references into the net.
+ */
 void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
-      vvp_fvector_t vec = vvp_fvector_new(wid);
-	//define_fvector_symbol(label, vec);
+      vvp_net_t*node = new vvp_net_t;
 
-      assert(argc == wid);
+      vvp_fun_signal*vsig = new vvp_fun_signal(wid);
+      node->fun = vsig;
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t *ref = vvp_fvector_member(vec, idx);
-	    functor_reference(ref, argv[idx].text, argv[idx].idx);
-      }
+	/* Add the label into the functor symbol table. */
+      define_functor_symbol(label, node);
+
+      assert(argc == 1);
+
+	/* Connect the source to my input. */
+      inputs_connect(node, 1, argv);
 
 	/* Make the vpiHandle for the reg. */
-      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, vec);
+      vpiHandle obj = vpip_make_net(name, msb, lsb, signed_flag, node);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1579,52 +1560,10 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
- * Revision 1.175  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
+ * Revision 1.176  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
  *
- * Revision 1.174  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.173  2004/06/19 15:52:53  steve
- *  Add signed modulus operator.
- *
- * Revision 1.172  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.171  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.170  2003/09/04 20:26:31  steve
- *  Add $push flag for threads.
- *
- * Revision 1.169  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.168  2003/07/22 20:30:24  steve
- *  Forgot to read the /x parameter for %load/x
- *
- * Revision 1.167  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.166  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.165  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.164  2003/05/26 04:44:54  steve
- *  Add the set/x0/x instruction.
- *
- * Revision 1.163  2003/05/25 03:04:55  steve
- *  Useless cast.
- *
- * Revision 1.162  2003/05/24 02:48:37  steve
- *  More thorough overflow error message.
- *
- * Revision 1.161  2003/05/23 03:44:34  steve
- *  Assert that parameters fix into opcode.
- *
- * Revision 1.160  2003/04/23 03:09:25  steve
- *  VPI Access to named events.
  */
 

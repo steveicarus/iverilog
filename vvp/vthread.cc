@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.122 2004/10/04 01:11:00 steve Exp $"
+#ident "$Id: vthread.cc,v 1.123 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -138,12 +138,12 @@ static void thr_check_addr(struct vthread_s*thr, unsigned addr)
       }
 }
 
-static inline unsigned thr_get_bit(struct vthread_s*thr, unsigned addr)
+static inline vvp_bit4_t thr_get_bit(struct vthread_s*thr, unsigned addr)
 {
       assert(addr < thr->nbits);
       unsigned idx = addr % (CPU_WORD_BITS/2);
       addr /= (CPU_WORD_BITS/2);
-      return (thr->bits[addr] >> (idx*2)) & 3UL;
+      return  (vvp_bit4_t) ((thr->bits[addr] >> (idx*2)) & 3UL);
 }
 
 static inline void thr_put_bit(struct vthread_s*thr,
@@ -216,6 +216,31 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
  x_out:
       delete[]val;
       return 0;
+}
+
+/*
+ * This function gets from the thread a vector of bits starting from
+ * the addressed location and for the specified width.
+ */
+static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
+					    unsigned bit, unsigned wid)
+{
+      	/* Make a vector of the desired width. */
+      vvp_vector4_t value (wid);
+
+      if (bit >= 4) {
+	    for (unsigned idx = 0; idx < wid; idx +=1, bit += 1) {
+		  vvp_bit4_t bit_val = thr_get_bit(thr, bit);
+		  value.set_bit(idx, bit_val);
+	    }
+      } else {
+	    vvp_bit4_t bit_val = (vvp_bit4_t)bit;
+	    for (unsigned idx = 0; idx < wid; idx +=1, bit += 1) {
+		  value.set_bit(idx, bit_val);
+	    }
+      }
+
+      return value;
 }
 
 
@@ -517,18 +542,15 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
-{
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
-      schedule_assign(cp->iptr, bit_val, cp->bit_idx[0]);
-      return true;
-}
-
 bool of_ASSIGN_D(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] < 4);
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       schedule_assign(cp->iptr, bit_val, thr->words[cp->bit_idx[0]].w_int);
+#else
+      fprintf(stderr, "XXXX forgot how to implemented %%assign/d\n");
+#endif
       return true;
 }
 
@@ -544,15 +566,10 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
       unsigned delay = cp->bit_idx[0];
       unsigned bit = cp->bit_idx[1];
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
-	    unsigned char bit_val = thr_get_bit(thr, bit);
-	    schedule_assign(iptr, bit_val, delay);
-
-	    if (bit >= 4)
-		  bit += 1;
-      }
+      vvp_net_ptr_t ptr (cp->net, 0);
+      schedule_assign_vector(ptr, value, delay);
 
       return true;
 }
@@ -584,9 +601,13 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
 bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->words[0].w_int);
       schedule_assign(itmp, bit_val, cp->bit_idx[0]);
+#else
+      fprintf(stderr, "XXXX forgot how to implement %%assign/x0\n");
+#endif
       return true;
 }
 
@@ -621,6 +642,34 @@ bool of_BLEND(vthread_t thr, vvp_code_t cp)
 
 bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
 {
+      return true;
+}
+
+/*
+ * the %cassign/v instruction invokes a continuous assign of a
+ * constant value to a signal. The instruction arguments are:
+ *
+ *     %cassign/v <net>, <base>, <wid> ;
+ *
+ * Where the <net> is the net label assembled into a vvp_net pointer,
+ * and the <base> and <wid> are stashed in the bit_idx array.
+ *
+ * This instruction writes vvp_vector4_t values to port-1 of the
+ * target signal.
+ */
+bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net  = cp->net;
+      unsigned  base = cp->bit_idx[0];
+      unsigned  wid  = cp->bit_idx[1];
+
+	/* Collect the thread bits into a vector4 item. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
+
+	/* set the value into port 1 of the destination. */
+      vvp_net_ptr_t ptr (net, 1);
+      vvp_send_vec4(ptr, value);
+
       return true;
 }
 
@@ -875,6 +924,21 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 	    thr_put_bit(thr, base+idx, (rl&1)? 1 : 0);
 	    rl >>= 1;
       }
+
+      return true;
+}
+
+/*
+ * This implements the %deassign instruction. All we do is write a
+ * long(1) to port-3 of the addressed net. This turns off an active
+ * continuous assign activated by %cassign/v
+ */
+bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_net_ptr_t ptr (net, 3);
+      vvp_send_long(ptr, 1);
 
       return true;
 }
@@ -1566,13 +1630,6 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
-bool of_LOAD(vthread_t thr, vvp_code_t cp)
-{
-      assert(cp->bit_idx[0] >= 4);
-      thr_put_bit(thr, cp->bit_idx[0], functor_get(cp->iptr));
-      return true;
-}
-
 bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -1582,7 +1639,15 @@ bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * Load net/indexed.
+ * %load/nx <bit>, <vpi-label>, <idx>  ; Load net/indexed.
+ *
+ * cp->bit_idx[0] contains the <bit> value, an index into the thread
+ * bit register.
+ *
+ * cp->bin_idx[1] is the <idx> value from the words array.
+ *
+ * cp->handle is the linked reference to the __vpiSignal that we are
+ * to read from.
  */
 bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
 {
@@ -1595,21 +1660,47 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
 
       unsigned idx = thr->words[cp->bit_idx[1]].w_int;
 
-      vvp_ipoint_t ptr = vvp_fvector_get(sig->bits, idx);
-      thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
+      vvp_fun_signal*fun = dynamic_cast<vvp_fun_signal*>(sig->node->fun);
+      assert(sig != 0);
+
+      vvp_bit4_t val = fun->value(idx);
+      thr_put_bit(thr, cp->bit_idx[0], val);
+
       return true;
 }
 
+/* %load/v <bit>, <label>, <wid>
+ *
+ * Implement the %load/v instruction. Load the vector value of the
+ * requested width from the <label> functor starting in the thread bit
+ * <bit>.
+ *
+ * The <bit> value is the destination in the thread vector store, and
+ * is in cp->bit_idx[0].
+ *
+ * The <wid> value is the expected with of the vector, and is in
+ * cp->bit_idx[1].
+ *
+ * The functor to read from is the vvp_net_t object pointed to by the
+ * cp->net pointer.
+ */
 bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] > 0);
 
       unsigned bit = cp->bit_idx[0];
-      for (unsigned idx = 0;  idx < cp->bit_idx[1];  idx += 1, bit += 1) {
+      unsigned wid = cp->bit_idx[1];
+      vvp_net_t*net = cp->net;
 
-	    vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
-	    thr_put_bit(thr, bit, functor_get(iptr));
+	/* For the %load to work, the functor must actually be a
+	   signal functor. Only signals save their vector value. */
+      vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
+      assert(sig);
+
+      for (unsigned idx = 0;  idx < wid;  idx += 1, bit += 1) {
+	    vvp_bit4_t val = sig->value(idx);
+	    thr_put_bit(thr, bit, val);
       }
 
       return true;
@@ -1633,8 +1724,12 @@ bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] <  4);
 
+#if 0
       vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->words[cp->bit_idx[1]].w_int);
       thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
+#else
+      fprintf(stderr, "XXXX forgot how to implement %%load/x\n");
+#endif
       return true;
 }
 
@@ -2429,14 +2524,6 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 
 static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
 
-bool of_SET(vthread_t thr, vvp_code_t cp)
-{
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
-      functor_set(cp->iptr, bit_val, strong_values[bit_val], true);
-
-      return true;
-}
-
 bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
 {
       unsigned char val = thr_get_bit(thr, cp->bit_idx[0]);
@@ -2445,26 +2532,30 @@ bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * This implements the "%set/v <label>, <bit>, <wid>" instruction.
+ *
+ * The <label> is a reference to a vvp_net_t object, and it is in
+ * cp->net.
+ *
+ * The <bit> is the thread bit address, and is in cp->bin_idx[0].
+ *
+ * The <wid> is the width of the vector I'm to make, and is in
+ * cp->bin_idx[1].
+ */
 bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[1] > 0);
-
       unsigned bit = cp->bit_idx[0];
-      if (bit >= 4) {
-	    for (unsigned idx = 0;  idx < cp->bit_idx[1]; idx += 1, bit += 1) {
-		  unsigned char bit_val = thr_get_bit(thr, bit);
-		  vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
-		  functor_set(iptr, bit_val, strong_values[bit_val], true);
-	    }
+      unsigned wid = cp->bit_idx[1];
 
-      } else {
-	    unsigned char bit_val = strong_values[bit];
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
-	    for (unsigned idx = 0;  idx < cp->bit_idx[1]; idx += 1) {
-		  vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
-		  functor_set(iptr, bit, bit_val, true);
-	    }
-      }
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+      vvp_send_vec4(ptr, value);
+
       return true;
 }
 
@@ -2502,12 +2593,16 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       if ((unsigned)idx > cp->bit_idx[1])
 	    return true;
 
+#if 0
 	/* Form the functor pointer from the base pointer and the
 	   index from the index register. */
       vvp_ipoint_t itmp = ipoint_index(cp->iptr, idx);
 
 	/* Set the value. */
       functor_set(itmp, bit_val, strong_values[bit_val], true);
+#else
+      fprintf(stderr, "XXXX forgot how to implement %%set/x0\n");
+#endif
 
       return true;
 }
@@ -2527,12 +2622,16 @@ bool of_SET_X0_X(vthread_t thr, vvp_code_t cp)
       if (idx > lim)
 	    return true;
 
+#if 0
 	/* Form the functor pointer from the base pointer and the
 	   index from the index register. */
       vvp_ipoint_t itmp = ipoint_index(cp->iptr, idx);
 
 	/* Set the value. */
       functor_set(itmp, bit_val, strong_values[bit_val], true);
+#else
+      fprintf(stderr, "XXXX forgot how to implement %%set/x0/x\n");
+#endif
 
       return true;
 }
@@ -2727,19 +2826,25 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
       return schedule_finished()? false : true;
 }
 
-/*
- * Implement the wait by locating the functor for the event, and
- * adding this thread to the threads list for the event.
+/* %wait <label>;
+ * Implement the wait by locating the vvp_net_T for the event, and
+ * adding this thread to the threads list for the event. The some
+ * argument is the  reference to the functor to wait for. This must be
+ * an event object of some sort.
  */
 bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
       assert(! thr->waiting_for_event);
       thr->waiting_for_event = 1;
-      waitable_hooks_s* ep = dynamic_cast<waitable_hooks_s*>(functor_index(cp->iptr));
+
+      vvp_net_t*net = cp->net;
+	/* Get the functor as a waitable_hooks_s object. */
+      waitable_hooks_s*ep = dynamic_cast<waitable_hooks_s*> (net->fun);
       assert(ep);
+	/* Add this thread to the list in the event. */
       thr->wait_next = ep->threads;
       ep->threads = thr;
-
+	/* Return false to suspend this thread. */
       return false;
 }
 
@@ -2874,6 +2979,11 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.123  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.122  2004/10/04 01:11:00  steve
  *  Clean up spurious trailing white space.
  *

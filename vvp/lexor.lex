@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.43 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: lexor.lex,v 1.44 2004/12/11 02:31:29 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -101,6 +101,7 @@
 ".net"      { return K_NET; }
 ".net/s"    { return K_NET_S; }
 ".param"    { return K_PARAM; }
+".part"     { return K_PART; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".shift/l"  { return K_SHIFTL; }
@@ -182,6 +183,11 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.44  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.43  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *

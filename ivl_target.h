@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.126 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.127 2004/12/11 02:31:26 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -231,6 +231,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
+      IVL_LPM_PART   = 15, /* part select */
       IVL_LPM_SHIFTL =  6,
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SUB    =  8,
@@ -388,13 +389,36 @@ extern int         ivl_design_time_precision(ivl_design_t des);
 extern unsigned        ivl_design_consts(ivl_design_t des);
 extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
 
-/*
- * These methods apply to ivl_net_const_t objects.
+/* VECTOR CONSTANTS
+ * Vector constants are nodes with no input and a single vector
+ * output. The output is an array of 4-value bits, using a single char
+ * value for each bit.
+ *
+ * ivl_const_bits
+ *    This returns a pointer to an array of conststant characters,
+ *    each byte a '0', '1', 'x' or 'z'. The array is *not* nul
+ *    terminated.
+ *
+ * ivl_const_nex
+ *    Return the ivl_nexus_t of the output for the constant.
+ *
+ * ivl_const_signed
+ *    Return true (!0) if the constant is a signed value, 0 otherwise.
+ *
+ * ivl_const_width
+ *    Return the width, in logical bits, of the constant.
+ *
+ * ivl_const_pin
+ * ivl_const_pins
+ *    DEPRECATED
  */
 extern const char* ivl_const_bits(ivl_net_const_t net);
-extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx);
-extern unsigned    ivl_const_pins(ivl_net_const_t net);
+extern ivl_nexus_t ivl_const_nex(ivl_net_const_t net);
 extern int         ivl_const_signed(ivl_net_const_t net);
+extern unsigned    ivl_const_width(ivl_net_const_t net);
+
+/* extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx); */
+/* extern unsigned    ivl_const_pins(ivl_net_const_t net); */
 
 /* EVENTS
  *
@@ -545,9 +569,13 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * the ivl_net_logic_t can represent. The various functions then
  * provide access to the bits of information for a given logic device.
  *
+ * The ivl_net_logic_t nodes are bit-slice devices. That means that
+ * the device may have width (and therefore processes vectors) but
+ * each bit slice of the width is independent.
+ *
  * ivl_logic_type
- *    This method returns the type of logic gate that the cookie
- *    represents.
+ *    This method returns the type of logic gate that the node
+ *    represents. The logic type implies the meaning of the various pins.
  *
  * ivl_logic_name (obsolete)
  *    This method returns the complete name of the logic gate. Every
@@ -566,6 +594,11 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  *    Return the nexus for the pin. If two pins are connected
  *    together, then these values are the same. Use the nexus
  *    functions to find other pins that are connected to this nexus.
+ *
+ * ivl_logic_width
+ *    This returns the width of the logic array. This does not affect
+ *    the number of pins, but implies the width of the vector at each
+ *    pin.
  *
  * ivl_logic_attr (obsolete)
  *    Return the value of a specific attribute, given the key name as
@@ -633,6 +666,10 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * These functions apply to a subset of the LPM devices, or may have
  * varying meaning depending on the device:
  *
+ * ivl_lpm_base
+ *    The IVL_LPM_PART objects use this value as the base (first bit)
+ *    of the part select. The ivl_lpm_width is the size of the part.
+ *
  * ivl_lpm_data
  *    Return the input data nexus for device types that have a single
  *    input vector. This is also used to the get nexa of the first
@@ -674,13 +711,16 @@ extern ivl_expr_t  ivl_lpm_aset_value(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
+  /* IVL_LPM_PART */
+extern unsigned ivl_lpm_base(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */
 extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB */
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT IVL_LPM_RAM
+     IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
   /* IVL_LPM_MUX IVL_LPM_UFUNC */
@@ -688,8 +728,8 @@ extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
 extern ivl_nexus_t ivl_lpm_data2(ivl_lpm_t net, unsigned sdx, unsigned idx);
   /* IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx);
-  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_RAM IVL_LPM_SUB
-     IVL_LPM_UFUNC */
+  /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_RAM
+     IVL_LPM_SUB IVL_LPM_UFUNC */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX IVL_LPM_RAM */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
@@ -714,6 +754,11 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  * bit of the part select. The compiler takes care of positioning the
  * part select so that ivl_lval_pin(net, 0) is the proper bit in the
  * signal.
+ *
+ * ivl_lval_width
+ *    The width of a vector that this lval can receive. This accounts
+ *    for the local part selecting I might to in the lval object, as
+ *    well as the target object width.
  *
  * ivl_lval_mux
  *    If the l-value includes a bit select expression, this method
@@ -751,14 +796,17 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    Return the number of pins for this object.
  */
 
+extern unsigned    ivl_lval_width(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
 extern ivl_variable_t ivl_lval_var(ivl_lval_t net);
 extern unsigned    ivl_lval_part_off(ivl_lval_t net);
+extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
+#if 0
 extern unsigned    ivl_lval_pins(ivl_lval_t net);
 extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
-extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
+#endif
 
 /* NEXUS
  * connections of signals and nodes is handled by single-bit
@@ -1024,14 +1072,21 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  * Signals have a name (obviously) and types. A signal may also be
  * signed or unsigned.
  *
- * ivl_signal_pins
+ * ivl_signal_pins (replace these with ivl_signal_nex)
  * ivl_signal_pin
  *    The ivl_signal_pin function returns the nexus connected to the
  *    signal. If the signal is a vector, the idx can be a non-zero
  *    value, and the result is the nexus for the specified bit.
  *
+ * ivl_signal_nex
+ *    This is the nexus of the signal. This is used for managing
+ *    connections to the rest of the net. There is exactly one pin for
+ *    a signal. If the signal represents a vector, then the entire
+ *    vector is carried through the single output.
+ *
  * ivl_signal_msb
  * ivl_signal_lsb
+ * ivl_signal_width
  *    These functions return the left and right indices, respectively,
  *    of the signal. If the signal is a scalar, both return 0. However,
  *    it doesn't mean that the signal is a scalar if both return 0, one
@@ -1077,10 +1132,10 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    key does not exist, the function returns 0.
  */
 
-extern ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx);
-extern unsigned    ivl_signal_pins(ivl_signal_t net);
+extern ivl_nexus_t ivl_signal_nex(ivl_signal_t net);
 extern int         ivl_signal_msb(ivl_signal_t net);
 extern int         ivl_signal_lsb(ivl_signal_t net);
+extern unsigned    ivl_signal_width(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
 extern int         ivl_signal_integer(ivl_signal_t net);
@@ -1093,6 +1148,8 @@ extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
 extern unsigned        ivl_signal_attr_cnt(ivl_signal_t net);
 extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);
 
+/* ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx); */
+/* unsigned    ivl_signal_pins(ivl_signal_t net); */
 
 /*
  * These functions get information about a process. A process is
@@ -1141,10 +1198,32 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * one type of statement, so the comment in front of them tells which
  * statement types can be passed to the function.
  *
+ * FUNCTION SUMMARY:
+ *
  * ivl_stmt_block_scope
  *    If the block is named, then there is a scope associated with
  *    this. The code generator may need to know this in order to
  *    handle disable statements.
+ *
+ * ivl_stmt_rval
+ *    Return the rval expression of the assignment. This is the value
+ *    that is to be calculated and assigned to the l-value is
+ *    assignment statements.
+ *
+ * SOME INTERESTING SPECIAL CASES:
+ *
+ * - IVL_ST_CASSIGN
+ * This reflects a procedural continuous assignment to an l-value. The
+ * l-value is the same as any other assignment (use ivl_stmt_lval).
+ *
+ * The value to be assigned may be an ivl_expr_t retrieved by the
+ * ivl_stmt_rval function. In this case, the run time is expected to
+ * calculate the value of the expression at the assignment, then
+ * continuous assign that constant value.
+ *
+ * If the ivl_stmt_rval for a CASSIGN is nil, then the ivl_stmt_nexus
+ * function instead contains a nexus that should be connected at run
+ * time to the l-value.
  */
 
   /* IVL_ST_BLOCK, IVL_ST_FORK */
@@ -1236,6 +1315,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.127  2004/12/11 02:31:26  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.126  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *

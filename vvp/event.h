@@ -19,44 +19,50 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.5 2004/10/04 01:10:59 steve Exp $"
+#ident "$Id: event.h,v 1.6 2004/12/11 02:31:29 steve Exp $"
 #endif
 
-# include  "functor.h"
+# include  "vvp_net.h"
+# include  "pointers.h"
 
 /*
  *  Event / edge detection functors
  */
 
-struct event_functor_s: public edge_inputs_functor_s, public waitable_hooks_s {
-      typedef unsigned short edge_t;
-      explicit event_functor_s(edge_t e);
-      virtual ~event_functor_s();
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      edge_t edge;
+/*
+ * A "waitable" functor is one that the %wait instruction can wait
+ * on. This includes the infrastructure needed to hold threads.
+ */
+struct waitable_hooks_s {
+      vthread_t threads;
 };
 
-#define VVP_EDGE(a,b) (1<<(((a)<<2)|(b)))
+/*
+ * The vvp_fun_edge functor detects events that are edges of various
+ * types. This should be hooked to a vvp_net_t that is connected to
+ * the output of a signal that we wish to watch for edges.
+ */
+class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
 
-const event_functor_s::edge_t vvp_edge_posedge
-      = VVP_EDGE(0,1)
-      | VVP_EDGE(0,2)
-      | VVP_EDGE(0,3)
-      | VVP_EDGE(2,1)
-      | VVP_EDGE(3,1)
-      ;
+    public:
+      typedef unsigned short edge_t;
+      explicit vvp_fun_edge(edge_t e);
 
-const event_functor_s::edge_t vvp_edge_negedge
-      = VVP_EDGE(1,0)
-      | VVP_EDGE(1,2)
-      | VVP_EDGE(1,3)
-      | VVP_EDGE(2,0)
-      | VVP_EDGE(3,0)
-      ;
+      virtual ~vvp_fun_edge();
 
-const event_functor_s::edge_t vvp_edge_anyedge = 0x7bde;
-const event_functor_s::edge_t vvp_edge_none = 0;
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
 
+    private:
+      vvp_vector4_t bits_;
+      edge_t edge_;
+};
+
+extern const vvp_fun_edge::edge_t vvp_edge_posedge;
+extern const vvp_fun_edge::edge_t vvp_edge_negedge;
+extern const vvp_fun_edge::edge_t vvp_edge_anyedge;
+extern const vvp_fun_edge::edge_t vvp_edge_none;
+
+#if 0
 /*
  * This is a functor to represent named events. This functor has no
  * inputs, and no output. It is a functor so that the %wait and %set
@@ -77,9 +83,15 @@ struct named_event_functor_s  : public waitable_hooks_s, public functor_s {
  */
 struct callback_functor_s *vvp_fvector_make_callback
                     (vvp_fvector_t, event_functor_s::edge_t = vvp_edge_none);
+#endif
 
 /*
  * $Log: event.h,v $
+ * Revision 1.6  2004/12/11 02:31:29  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.5  2004/10/04 01:10:59  steve
  *  Clean up spurious trailing white space.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.28 2004/01/20 21:00:47 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.29 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include  "vvp_config.h"
@@ -138,7 +138,7 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
  *    Return the base of an allocated vector in the thread. The bits
  *    are marked allocated in the process.
  *
- *  clr_bector
+ *  clr_vector
  *    Clear a vector previously allocated.
  *
  * The thread vector allocator also keeps a lookaside of expression
@@ -193,6 +193,11 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.29  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.28  2004/01/20 21:00:47  steve
  *  Isolate configure from containing config.h
  *

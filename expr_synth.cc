@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59 2004/06/30 02:16:26 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.60 2004/12/11 02:31:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -60,11 +60,9 @@ NetNet* NetEBAdd::synthesize(Design*des)
 
       perm_string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
-      for (unsigned idx = 0 ;  idx < width;  idx += 1) {
-	    connect(lsig->pin(idx), adder->pin_DataA(idx));
-	    connect(rsig->pin(idx), adder->pin_DataB(idx));
-	    connect(osig->pin(idx), adder->pin_Result(idx));
-      }
+      connect(lsig->pin(0), adder->pin_DataA());
+      connect(rsig->pin(0), adder->pin_DataB());
+      connect(osig->pin(0), adder->pin_Result());
       des->add_node(adder);
 
       switch (op()) {
@@ -136,19 +134,19 @@ NetNet* NetEBBits::synthesize(Design*des)
 
 	    switch (op()) {
 		case '&':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::AND);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::AND, 1);
 		  break;
 		case '|':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::OR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::OR, 1);
 		  break;
 		case '^':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::XOR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::XOR, 1);
 		  break;
 		case 'O':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::NOR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::NOR, 1);
 		  break;
 		case 'X':
-		  gate = new NetLogic(scope, oname, 3, NetLogic::XNOR);
+		  gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, 1);
 		  break;
 		default:
 		  assert(0);
@@ -191,12 +189,12 @@ NetNet* NetEBComp::synthesize(Design*des)
 		case 'e':
 		case 'E':
 		  gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::NOR);
+				      lsig->pin_count()+1, NetLogic::NOR, 1);
 		  break;
 		case 'n':
 		case 'N':
 		  gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::OR);
+				      lsig->pin_count()+1, NetLogic::OR, 1);
 		  break;
 
 		case '>':
@@ -205,11 +203,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 		       happen. */
 		  if (rcon) {
 			gate = new NetLogic(scope, scope->local_symbol(),
-					    lsig->pin_count()+1, NetLogic::OR);
+					    lsig->pin_count()+1, NetLogic::OR, 1);
 		  } else {
 			assert(0);
 			gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::NOR);
+				      lsig->pin_count()+1, NetLogic::NOR, 1);
 		  }
 		  break;
 
@@ -217,11 +215,11 @@ NetNet* NetEBComp::synthesize(Design*des)
 		    /* 0 < sig is handled like sig > 0. */
 		  if (! rcon) {
 			gate = new NetLogic(scope, scope->local_symbol(),
-					    lsig->pin_count()+1, NetLogic::OR);
+					    lsig->pin_count()+1, NetLogic::OR, 1);
 		  } else {
 			assert(0);
 			gate = new NetLogic(scope, scope->local_symbol(),
-				      lsig->pin_count()+1, NetLogic::NOR);
+				      lsig->pin_count()+1, NetLogic::NOR, 1);
 		  }
 		  break;
 
@@ -258,7 +256,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   operation. Make an XNOR gate instead of a comparator. */
       if ((width == 1) && ((op_ == 'e') || (op_ == 'E'))) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					 3, NetLogic::XNOR);
+					 3, NetLogic::XNOR, 1);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
@@ -271,7 +269,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   an XOR instead of an XNOR gate. */
       if ((width == 1) && ((op_ == 'n') || (op_ == 'N'))) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					 3, NetLogic::XOR);
+					 3, NetLogic::XOR, 1);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
@@ -449,7 +447,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 
 	    NetLogic*olog = new NetLogic(scope, oname,
 					 lsig->pin_count()+rsig->pin_count()+1,
-					 NetLogic::OR);
+					 NetLogic::OR, 1);
 
 	    connect(osig->pin(0), olog->pin(0));
 
@@ -471,7 +469,7 @@ NetNet* NetEBLogic::synthesize(Design*des)
 	    NetLogic*olog;
 	    perm_string oname = scope->local_symbol();
 
-	    olog = new NetLogic(scope, oname, 3, NetLogic::AND);
+	    olog = new NetLogic(scope, oname, 3, NetLogic::AND, 1);
 
 	    connect(osig->pin(0), olog->pin(0));
 	    des->add_node(olog);
@@ -669,7 +667,7 @@ NetNet* NetEUBits::synthesize(Design*des)
 
 	    switch (op()) {
 		case '~':
-		  gate = new NetLogic(scope, oname, 2, NetLogic::NOT);
+		  gate = new NetLogic(scope, oname, 2, NetLogic::NOT, 1);
 		  break;
 		default:
 		  assert(0);
@@ -702,32 +700,32 @@ NetNet* NetEUReduce::synthesize(Design*des)
 	  case 'N':
 	  case '!':
 	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::NOR);
+				NetLogic::NOR, 1);
 	    break;
 
 	  case '&':
 	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::AND);
+				NetLogic::AND, 1);
 	    break;
 
 	  case '|':
 	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::OR);
+				NetLogic::OR, 1);
 	    break;
 
 	  case '^':
 	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::XOR);
+				NetLogic::XOR, 1);
 	    break;
 
 	  case 'A':
 	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::NAND);
+				NetLogic::NAND, 1);
 	    break;
 
 	  case 'X':
 	    gate = new NetLogic(scope, oname, isig->pin_count()+1,
-				NetLogic::XNOR);
+				NetLogic::XNOR, 1);
 	    break;
 
 	  default:
@@ -854,27 +852,16 @@ NetNet* NetETernary::synthesize(Design *des)
  */
 NetNet* NetESignal::synthesize(Design*des)
 {
-      if ((lsi_ == 0) && (msi_ == (net_->pin_count() - 1)))
-	    return net_;
-
-      assert(msi_ >= lsi_);
-      unsigned wid = msi_ - lsi_ + 1;
-
-      NetScope*scope = net_->scope();
-      assert(scope);
-
-      perm_string name = scope->local_symbol();
-      NetNet*tmp = new NetNet(scope, name, NetNet::WIRE, wid);
-      tmp->local_flag(true);
-
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-	    connect(tmp->pin(idx), net_->pin(idx+lsi_));
-
-      return tmp;
+      return net_;
 }
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.60  2004/12/11 02:31:26  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.59  2004/06/30 02:16:26  steve
  *  Implement signed divide and signed right shift in nets.
  *

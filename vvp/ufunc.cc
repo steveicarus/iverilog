@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.4 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: ufunc.cc,v 1.5 2004/12/11 02:31:30 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -138,7 +138,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 		   unsigned portc, struct symb_s*portv,
 		   unsigned retc,  struct symb_s*retv)
 {
-
+#if 0
 	/* Create an array of vvp_ipoint_t pointers, that point to the
 	   .var bits of the function ports. Do this for the input
 	   ports and the output port. */
@@ -232,10 +232,18 @@ void compile_ufunc(char*label, char*code, unsigned wid,
       }
 
       inputs_connect(ibase, argc, argv);
+#else
+      fprintf(stderr, "XXXX compile_ufunc not implemented.\n");
+#endif
 }
 
 /*
  * $Log: ufunc.cc,v $
+ * Revision 1.5  2004/12/11 02:31:30  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.4  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *

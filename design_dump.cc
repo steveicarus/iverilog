@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.149 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.150 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -96,8 +96,10 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
 	    o << " scope=" << scope()->name();
-      o << " #(" << rise_time() << "," << fall_time() << "," <<
-	    decay_time() << ") init=";
+      o << " #(" << rise_time() << "," << fall_time() << ","
+	<<  decay_time() << ") vector_width=" << vector_width()
+	<< " pin_count=" << pin_count()
+	<< " init=";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
 	    o << pin(idx-1).get_init();
 
@@ -189,16 +191,11 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 
 void NetAddSub::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Adder (NetAddSub): " << name() << endl;
+      o << setw(ind) << "" << "Adder (NetAddSub): " << name()
+	<< " width=" << width() << " pin_count=" << pin_count()
+	<< endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
-}
-
-void NetCAssign::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "Procedural continuous assign (NetCAssign): "
-	<< name() << endl;
-      dump_node_pins(o, ind+4);
 }
 
 void NetCLShift::dump_node(ostream&o, unsigned ind) const
@@ -223,12 +220,6 @@ void NetDivide::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetForce::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "force " << lval_->name() << endl;
-      dump_node_pins(o, ind+4);
-}
-
 void NetMult::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_MULT (NetMult): " << name() << endl;
@@ -249,7 +240,7 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "NetBUFZ: " << name()
 	<< " scope=" << (scope()? scope()->name() : "")
 	<< " delay=(" << rise_time() << "," << fall_time() << "," <<
-	    decay_time() << ")" << endl;
+	    decay_time() << ") width=" << width() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -261,8 +252,8 @@ void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 
 void NetConst::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "constant ";
-      for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
+      o << setw(ind) << "" << "constant " << width_ << "'b";
+      for (unsigned idx = width_ ;  idx > 0 ;  idx -= 1)
 	    o << value_[idx-1];
       o << ": " << name() << endl;
       dump_node_pins(o, ind+4);
@@ -353,6 +344,13 @@ void NetModulo::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
+void NetPartSelect::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NetPartSelect: "
+	<< name() << " off=" << off_ << " wid=" << wid_ <<endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
 void NetRamDq::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_RAM_DQ (" << mem_->name() << "): "
@@ -557,8 +555,9 @@ void NetCase::dump(ostream&o, unsigned ind) const
 
 void NetCAssign::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "cassign " << lval_->name() << " = "
-	<< name() << ";" << endl;
+      o << setw(ind) << "" << "cassign ";
+      dump_lval(o);
+      o << " = " << *rval() << "; /* " << get_line() << " */" << endl;
 }
 
 void NetCondit::dump(ostream&o, unsigned ind) const
@@ -578,8 +577,9 @@ void NetCondit::dump(ostream&o, unsigned ind) const
 
 void NetDeassign::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "deassign " << lval_->name() << "; "
-	<< "/* " << get_line() << " */" << endl;
+      o << setw(ind) << "" << "deassign ";
+      dump_lval(o);
+      o << "; /* " << get_line() << " */" << endl;
 }
 
 void NetDisable::dump(ostream&o, unsigned ind) const
@@ -632,8 +632,9 @@ void NetEvWait::dump(ostream&o, unsigned ind) const
 
 void NetForce::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "force " << lval_->name() << " = "
-	<< name() << ";" << endl;
+      o << setw(ind) << "" << "force ";
+      dump_lval(o);
+      o << " = " << *rval() << "; /* " << get_line() << " */" << endl;
 }
 
 void NetForever::dump(ostream&o, unsigned ind) const
@@ -677,12 +678,9 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
 
 void NetRelease::dump(ostream&o, unsigned ind) const
 {
-      if (lval_)
-	    o << setw(ind) << "" << "release " << lval_->name() << "; "
-	      << "/* " << get_line() << " */" << endl;
-      else
-	    o << setw(ind) << "" << "release (null); "
-	      << "/* " << get_line() << " */" << endl;
+      o << setw(ind) << "" << "release ";
+      dump_lval(o);
+      o << "; /* " << get_line() << " */" << endl;
 }
 
 void NetRepeat::dump(ostream&o, unsigned ind) const
@@ -995,7 +993,7 @@ void NetESignal::dump(ostream&o) const
 {
       if (has_sign())
 	    o << "+";
-      o << name() << "[" << msi_<<":"<<lsi_ << "]";
+      o << name() << "[" << msi()<<":"<<lsi() << "]";
 }
 
 void NetEBitSel::dump(ostream&o) const
@@ -1089,6 +1087,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.150  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.149  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

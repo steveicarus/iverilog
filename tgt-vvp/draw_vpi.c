@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.9 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.10 2004/12/11 02:31:28 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -89,6 +89,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  break;
 
 		case IVL_EX_SIGNAL:
+#if 0
 		    /* If the signal node is narrower then the signal
 		       itself, then this is a part select so I'm going
 		       to need to evaluate the expression.
@@ -112,7 +113,9 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  } else {
 			continue;
 		  }
-
+#else
+		  continue;
+#endif
 
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
@@ -169,6 +172,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		    /* If this is a part select, then the value was
 		       calculated above. Otherwise, just pass the
 		       signal. */
+#if 0
 		  if (ivl_expr_width(expr) !=
 		      ivl_signal_pins(ivl_expr_signal(expr))) {
 			break;
@@ -182,6 +186,11 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 				vvp_signal_label(ivl_expr_signal(expr)));
 			continue;
 		  }
+#else
+		  fprintf(vvp_out, ", V_%s",
+			  vvp_signal_label(ivl_expr_signal(expr)));
+		  continue;
+#endif
 
 		case IVL_EX_VARIABLE: {
 		      ivl_variable_t var = ivl_expr_variable(expr);
@@ -296,6 +305,11 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.10  2004/12/11 02:31:28  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.9  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *

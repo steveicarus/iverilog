@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.169 2004/10/13 22:01:34 steve Exp $"
+#ident "$Id: Makefile.in,v 1.170 2004/12/11 02:31:25 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -104,8 +104,8 @@ distclean: clean
 	    do (cd $$dir ; $(MAKE) $@); done
 	rm -f Makefile config.status config.log config.cache config.h
 
-TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-xnf.o
-FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o xnfio.o
+TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o
+FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
 
 O = main.o async.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_lval.o elab_net.o elab_anet.o elab_pexpr.o elab_scope.o \

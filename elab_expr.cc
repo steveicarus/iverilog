@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.91 2004/10/04 01:10:52 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.92 2004/12/11 02:31:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -699,10 +699,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			delete msn;
 			return 0;
 		  }
-
+#if 0
 		  NetESignal*tmp = new NetESignal(net,
 						  net->sb_to_idx(msv),
 						  net->sb_to_idx(lsv));
+#else
+		  NetESignal*tmp = new NetESignal(net);
+		  cerr << get_line() << ": internal error: I forgot "
+			"how to elaborate part selects." << endl;
+#endif
 		  tmp->set_line(*this);
 
 		  return tmp;
@@ -735,7 +740,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			return tmp;
 		  }
 
+#if 0
 		  NetESignal*tmp = new NetESignal(net, idx, idx);
+#else
+		  NetESignal*tmp = new NetESignal(net);
+		  cerr << get_line() << ": internal error: I forgot "
+			"how to elaborate constant bit selects." << endl;
+#endif
 		  tmp->set_line(*this);
 
 		  return tmp;
@@ -1005,6 +1016,11 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.92  2004/12/11 02:31:25  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.91  2004/10/04 01:10:52  steve
  *  Clean up spurious trailing white space.
  *

@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.86 2004/10/04 01:10:53 steve Exp $"
+#ident "$Id: main.cc,v 1.87 2004/12/11 02:31:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -137,7 +137,9 @@ extern void synth(Design*des);
 extern void synth2(Design*des);
 extern void syn_rules(Design*des);
 extern void nodangle(Design*des);
+#ifdef WITH_T_XNF
 extern void xnfio(Design*des);
+#endif
 
 typedef void (*net_func)(Design*);
 static struct net_func_map {
@@ -149,7 +151,9 @@ static struct net_func_map {
       { "synth",   &synth },
       { "synth2",  &synth2 },
       { "syn-rules",   &syn_rules },
+#ifdef WITH_T_XNF
       { "xnfio",   &xnfio },
+#endif
       { 0, 0 }
 };
 
@@ -744,6 +748,11 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.87  2004/12/11 02:31:26  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.86  2004/10/04 01:10:53  steve
  *  Clean up spurious trailing white space.
  *

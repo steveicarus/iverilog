@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226 2004/10/04 01:10:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.227 2004/12/11 02:31:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,13 +227,11 @@ NetNode::~NetNode()
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
-: NetObj(s, n, npins), sig_next_(0), sig_prev_(0),
+: NetObj(s, n, 1), sig_next_(0), sig_prev_(0),
     type_(t), port_type_(NOT_A_PORT), signed_(false), msb_(npins-1), lsb_(0),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
-
-      release_list_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -257,24 +255,20 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
-	    pin(idx).set_name(perm_string::literal("P"), idx);
-	    pin(idx).set_dir(dir);
-	    pin(idx).set_init(init_value);
-      }
+      pin(0).set_name(perm_string::literal("P"), 0);
+      pin(0).set_dir(dir);
+      pin(0).set_init(init_value);
 
-      scope()->add_signal(this);
+      s->add_signal(this);
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
-: NetObj(s, n, ((ms>ls)?ms-ls:ls-ms) + 1),
+: NetObj(s, n, 1),
     sig_next_(0), sig_prev_(0), type_(t),
     port_type_(NOT_A_PORT), signed_(false), msb_(ms), lsb_(ls),
     local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
-
-      release_list_ = 0;
 
       verinum::V init_value = verinum::Vz;
       Link::DIR dir = Link::PASSIVE;
@@ -297,11 +291,9 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, long ms, long ls)
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_name(perm_string::literal("P"), idx);
-	    pin(idx).set_dir(dir);
-	    pin(idx).set_init(init_value);
-      }
+      pin(0).set_name(perm_string::literal("P"), 0);
+      pin(0).set_dir(dir);
+      pin(0).set_init(init_value);
 
       s->add_signal(this);
 }
@@ -325,14 +317,6 @@ NetNet::~NetNet()
       if (scope())
 	    scope()->rem_signal(this);
 
-	/* Detach me from all the NetRelease objects that refer to me. */
-      while (release_list_) {
-	    NetRelease*tmp = release_list_;
-	    release_list_ = tmp->release_next_;
-	    assert(tmp->lval_ == this);
-	    tmp->lval_ = 0;
-	    tmp->release_next_ = 0;
-      }
 }
 
 NetNet::Type NetNet::type() const
@@ -409,6 +393,14 @@ long NetNet::msb() const
       return msb_;
 }
 
+long NetNet::vector_width() const
+{
+      if (msb_ > lsb_)
+	    return msb_ - lsb_ + 1;
+      else
+	    return lsb_ - msb_ + 1;
+}
+
 bool NetNet::sb_is_valid(long sb) const
 {
       if (msb_ >= lsb_)
@@ -464,7 +456,7 @@ unsigned NetNet::get_refs() const
 
 
 NetSubnet::NetSubnet(NetNet*sig, unsigned off, unsigned wid)
-: NetNet(sig->scope(), sig->scope()->local_symbol(), sig->type(), wid)
+: NetNet(sig->scope(), sig->scope()->local_symbol(), sig->type(), wid-1,0)
 {
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 	    connect(sig->pin(idx+off), pin(idx));
@@ -472,6 +464,33 @@ NetSubnet::NetSubnet(NetNet*sig, unsigned off, unsigned wid)
       port_type(sig->port_type());
       local_flag(true);
       set_line(*sig);
+}
+
+NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid)
+: NetNode(sig->scope(), sig->scope()->local_symbol(), 2),
+    off_(off), wid_(wid)
+{
+      connect(pin(1), sig->pin(0));
+      set_line(*sig);
+
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      pin(1).set_name(perm_string::literal("I"), 0);
+}
+
+NetPartSelect::~NetPartSelect()
+{
+}
+
+unsigned NetPartSelect::width() const
+{
+      return wid_;
+}
+
+unsigned NetPartSelect::base() const
+{
+      return off_;
 }
 
 NetProc::NetProc()
@@ -694,33 +713,31 @@ const verinum& NetFF::sset_value() const
  *    3  -- Cin
  *    4  -- Cout
  *    5  -- Overflow
- *    6  -- DataA[0]
- *    7  -- DataB[0]
- *    8  -- Result[0]
+ *    6  -- DataA (normally a vector)
+ *    7  -- DataB (normally a vector)
+ *    8  -- Result (normally a vector)
  */
 NetAddSub::NetAddSub(NetScope*s, perm_string n, unsigned w)
-: NetNode(s, n, w*3+6)
+: NetNode(s, n, 9), width_(w)
 {
-      pin(0).set_dir(Link::INPUT); pin(0).set_name(
-				 perm_string::literal("Add_Sub"), 0);
-      pin(1).set_dir(Link::INPUT); pin(1).set_name(
-				 perm_string::literal("Aclr"), 0);
-      pin(2).set_dir(Link::INPUT); pin(2).set_name(
-				 perm_string::literal("Clock"), 0);
-      pin(3).set_dir(Link::INPUT); pin(3).set_name(
-				 perm_string::literal("Cin"), 0);
-      pin(4).set_dir(Link::OUTPUT); pin(4).set_name(
-				 perm_string::literal("Cout"), 0);
-      pin(5).set_dir(Link::OUTPUT); pin(5).set_name(
-				 perm_string::literal("Overflow"), 0);
-      for (unsigned idx = 0 ;  idx < w ;  idx += 1) {
-	    pin_DataA(idx).set_dir(Link::INPUT);
-	    pin_DataB(idx).set_dir(Link::INPUT);
-	    pin_Result(idx).set_dir(Link::OUTPUT);
-	    pin_DataA(idx).set_name(perm_string::literal("DataA"), idx);
-	    pin_DataB(idx).set_name(perm_string::literal("DataB"), idx);
-	    pin_Result(idx).set_name(perm_string::literal("Result"), idx);
-      }
+      pin(0).set_dir(Link::INPUT);
+      pin(0).set_name(perm_string::literal("Add_Sub"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("Aclr"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("Clock"), 0);
+      pin(3).set_dir(Link::INPUT);
+      pin(3).set_name(perm_string::literal("Cin"), 0);
+      pin(4).set_dir(Link::OUTPUT);
+      pin(4).set_name(perm_string::literal("Cout"), 0);
+      pin(5).set_dir(Link::OUTPUT);
+      pin(5).set_name(perm_string::literal("Overflow"), 0);
+      pin(6).set_dir(Link::INPUT);
+      pin(6).set_name(perm_string::literal("DataA"), 0);
+      pin(7).set_dir(Link::INPUT);
+      pin(7).set_name(perm_string::literal("DataB"), 0);
+      pin(8).set_dir(Link::OUTPUT);
+      pin(8).set_name(perm_string::literal("Result"), 0);
 }
 
 NetAddSub::~NetAddSub()
@@ -729,7 +746,7 @@ NetAddSub::~NetAddSub()
 
 unsigned NetAddSub::width()const
 {
-      return (pin_count() - 6) / 3;
+      return width_;
 }
 
 Link& NetAddSub::pin_Cout()
@@ -742,46 +759,34 @@ const Link& NetAddSub::pin_Cout() const
       return pin(4);
 }
 
-Link& NetAddSub::pin_DataA(unsigned idx)
+Link& NetAddSub::pin_DataA()
 {
-      idx = 6 + idx*3;
-      assert(idx < pin_count());
-      return pin(idx);
+      return pin(6);
 }
 
-const Link& NetAddSub::pin_DataA(unsigned idx) const
+const Link& NetAddSub::pin_DataA() const
 {
-      idx = 6 + idx*3;
-      assert(idx < pin_count());
-      return pin(idx);
+      return pin(6);
 }
 
-Link& NetAddSub::pin_DataB(unsigned idx)
+Link& NetAddSub::pin_DataB()
 {
-      idx = 7 + idx*3;
-      assert(idx < pin_count());
-      return pin(idx);
+      return pin(7);
 }
 
-const Link& NetAddSub::pin_DataB(unsigned idx) const
+const Link& NetAddSub::pin_DataB() const
 {
-      idx = 7 + idx*3;
-      assert(idx < pin_count());
-      return pin(idx);
+      return pin(7);
 }
 
-Link& NetAddSub::pin_Result(unsigned idx)
+Link& NetAddSub::pin_Result()
 {
-      idx = 8 + idx*3;
-      assert(idx < pin_count());
-      return pin(idx);
+      return pin(8);
 }
 
-const Link& NetAddSub::pin_Result(unsigned idx) const
+const Link& NetAddSub::pin_Result() const
 {
-      idx = 8 + idx*3;
-      assert(idx < pin_count());
-      return pin(idx);
+      return pin(8);
 }
 
 /*
@@ -1591,8 +1596,8 @@ const Link& NetRamDq::pin_Q(unsigned idx) const
       return pin(3+awidth_+width()+idx);
 }
 
-NetBUFZ::NetBUFZ(NetScope*s, perm_string n)
-: NetNode(s, n, 2)
+NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w)
+: NetNode(s, n, 2), width_(w)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
@@ -1604,6 +1609,10 @@ NetBUFZ::~NetBUFZ()
 {
 }
 
+unsigned NetBUFZ::width() const
+{
+      return width_;
+}
 
 NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n)
 : NetNode(s, n, 3)
@@ -1656,7 +1665,7 @@ NetProc* NetCondit::else_clause()
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)
-: NetNode(s, n, 1)
+: NetNode(s, n, 1), width_(1)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name(perm_string::literal("O"), 0);
@@ -1665,12 +1674,12 @@ NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, const verinum&val)
-: NetNode(s, n, val.len())
+: NetNode(s, n, 1), width_(val.len())
 {
-      value_ = new verinum::V[pin_count()];
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(Link::OUTPUT);
-	    pin(idx).set_name(perm_string::literal("O"), idx);
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("O"), 0);
+      value_ = new verinum::V[width_];
+      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
 	    value_[idx] = val.get(idx);
       }
 }
@@ -1682,8 +1691,13 @@ NetConst::~NetConst()
 
 verinum::V NetConst::value(unsigned idx) const
 {
-      assert(idx < pin_count());
+      assert(idx < width_);
       return value_[idx];
+}
+
+unsigned NetConst::width() const
+{
+      return width_;
 }
 
 NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
@@ -2071,15 +2085,14 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->pin_count()), net_(n)
+: NetExpr(n->vector_width()), net_(n)
 {
-      msi_ = n->pin_count() - 1;
-      lsi_ = 0;
       net_->incr_eref();
       set_line(*n);
       cast_signed(net_->get_signed());
 }
 
+#if 0
 NetESignal::NetESignal(NetNet*n, unsigned m, unsigned l)
 : NetExpr(m - l + 1), net_(n)
 {
@@ -2090,6 +2103,7 @@ NetESignal::NetESignal(NetNet*n, unsigned m, unsigned l)
       set_line(*n);
       cast_signed(net_->get_signed());
 }
+#endif
 
 NetESignal::~NetESignal()
 {
@@ -2103,13 +2117,13 @@ perm_string NetESignal::name() const
 
 unsigned NetESignal::bit_count() const
 {
-      return msi_ - lsi_ + 1;
+      return net_->vector_width();
 }
 
 Link& NetESignal::bit(unsigned idx)
 {
-      assert(idx <= (msi_ - lsi_));
-      return net_->pin(idx + lsi_);
+      assert(idx <= 0);
+      return net_->pin(idx);
 }
 
 const NetNet* NetESignal::sig() const
@@ -2119,12 +2133,12 @@ const NetNet* NetESignal::sig() const
 
 unsigned NetESignal::lsi() const
 {
-      return lsi_;
+      return net_->lsb();
 }
 
 unsigned NetESignal::msi() const
 {
-      return msi_;
+      return net_->msb();
 }
 
 NetEBitSel::NetEBitSel(NetESignal*sig, NetExpr*ex)
@@ -2231,8 +2245,9 @@ NetEUReduce::~NetEUReduce()
 {
 }
 
-NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins, TYPE t)
-: NetNode(s, n, pins), type_(t)
+NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins,
+		   TYPE t, unsigned wid)
+: NetNode(s, n, pins), type_(t), width_(wid)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name(perm_string::literal("O"), 0);
@@ -2240,6 +2255,16 @@ NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins, TYPE t)
 	    pin(idx).set_dir(Link::INPUT);
 	    pin(idx).set_name(perm_string::literal("I"), idx-1);
       }
+}
+
+NetLogic::TYPE NetLogic::type() const
+{
+      return type_;
+}
+
+unsigned NetLogic::width() const
+{
+      return width_;
 }
 
 NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
@@ -2281,6 +2306,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.227  2004/12/11 02:31:26  steve
+ *  Rework of internals to carry vectors through nexus instead
+ *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
+ *  down this path.
+ *
  * Revision 1.226  2004/10/04 01:10:54  steve
  *  Clean up spurious trailing white space.
  *
