@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.66 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: stub.c,v 1.67 2002/09/16 00:28:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -182,8 +182,14 @@ static void show_lpm(ivl_lpm_t net)
 
 		fprintf(out, "  LPM_FF %s: <width=%u>\n",
 			ivl_lpm_name(net), width);
-		fprintf(out, "    clk: %s\n",
-			ivl_nexus_name(ivl_lpm_clk(net)));
+
+		if (ivl_lpm_enable(net))
+		      fprintf(out, "    clk: %s CE: %s\n",
+			      ivl_nexus_name(ivl_lpm_clk(net)),
+			      ivl_nexus_name(ivl_lpm_enable(net)));
+		else
+		      fprintf(out, "    clk: %s\n",
+			      ivl_nexus_name(ivl_lpm_clk(net)));
 
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Data %u: %s\n", idx,
@@ -706,6 +712,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.67  2002/09/16 00:28:25  steve
+ *  Display FF enables.
+ *
  * Revision 1.66  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *
