@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.80 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.81 1999/11/28 00:56:08 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -720,7 +720,21 @@ bool target_vvm::process(ostream&os, const NetProcTop*top)
 void target_vvm::signal(ostream&os, const NetNet*sig)
 {
 #if 1
-      os << "// XXXX handle signal " << sig->name() << endl;
+      string net_name = mangle(sig->name());
+      os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
+	    net_name<< "_bits; /* " << sig->name() <<
+	    " */" << endl;
+      os << "static vvm_signal_t<" << sig->pin_count() << "> " <<
+	    net_name << "(&" << net_name << "_bits);" << endl;
+
+      init_code << "      vpip_make_reg(&" << net_name <<
+	    ", \"" << sig->name() << "\");" << endl;
+
+      if (const NetScope*scope = sig->scope()) {
+	    string sname = mangle(scope->name()) + "_scope";
+	    init_code << "      vpip_attach_to_scope(&" << sname
+		      << ", &" << net_name << ".base);" << endl;
+      }
 #endif
 
 	/* Scan the signals of the vector, passing the initial value
@@ -1299,6 +1313,7 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 
 void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 {
+#if 0
       bool&flag = esignal_printed_flag[net->name()];
       if (flag)
 	    return;
@@ -1313,16 +1328,6 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 
       init_code << "      vpip_make_reg(&" << net_name <<
 	    ", \"" << net->name() << "\");" << endl;
-
-#if 0
-	/* If the signal (that I am declaring and initializing) is
-	   attached to a scope in the netlist, then attach it to the
-	   scope for real here. */
-      if (const NetScope*scope = net->scope()) {
-	    init_code << "      vpip_attach_to_scope(&" <<
-		  mangle(scope->name()) << "_scope, &" << net_name <<
-		  ".base);" << endl;
-      }
 #endif
 }
 
@@ -1987,6 +1992,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.81  1999/11/28 00:56:08  steve
+ *  Build up the lists in the scope of a module,
+ *  and get $dumpvars to scan the scope for items.
+ *
  * Revision 1.80  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_vcd.c,v 1.1 1999/11/07 20:33:30 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.2 1999/11/28 00:56:08 steve Exp $"
 #endif
 
 /*
@@ -122,13 +122,60 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-static int sys_dumpvars_calltf(char*name)
+static void scan_scope(unsigned depth, vpiHandle argv)
 {
       struct t_cb_data cb;
       struct vcd_info*info;
       char ident[64];
       unsigned nident = 0;
 
+      vpiHandle item;
+      vpiHandle sublist;
+
+      cb.reason = cbValueChange;
+      cb.cb_rtn = variable_cb;
+
+      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
+	    const char*type;
+
+	    switch (vpi_get(vpiType, item)) {
+		case vpiNet:
+		case vpiReg:
+		  type = "wire";
+		  if (vpi_get(vpiType, item) == vpiReg)
+			type = "reg";
+
+		  sprintf(ident, "<%u", nident++);
+		  info = malloc(sizeof(*info));
+		  info->time.type = vpiSimTime;
+		  cb.time = &info->time;
+		  cb.user_data = (char*)info;
+		  cb.obj = item;
+		  info->item  = item;
+		  info->ident = strdup(ident);
+		  info->cb    = vpi_register_cb(&cb);
+		  info->next = vcd_list;
+		  vcd_list   = info;
+		  fprintf(dump_file, "$var %s %u %s %s $end\n",
+			  type, vpi_get(vpiSize, item), ident,
+			  vpi_get_str(vpiFullName, item));
+		  break;
+
+		case vpiModule:
+		  sublist = vpi_iterate(vpiInternalScope, item);
+		  if (sublist && (depth > 0))
+			scan_scope(depth-1, sublist);
+		  break;
+
+		default:
+		  vpi_printf("ERROR: $dumpvars: Unsupported parameter type\n");
+	    }
+
+      }
+}
+
+static int sys_dumpvars_calltf(char*name)
+{
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
@@ -140,40 +187,7 @@ static int sys_dumpvars_calltf(char*name)
 
       assert(dump_file);
 
-      cb.reason = cbValueChange;
-      cb.cb_rtn = variable_cb;
-
-      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
-
-	    switch (vpi_get(vpiType, item)) {
-		case vpiNet:
-		case vpiReg: {
-		      const char*type = "wire";
-		      if (vpi_get(vpiType, item) == vpiReg)
-			    type = "reg";
-
-		      sprintf(ident, "<%u", nident++);
-		      info = malloc(sizeof(*info));
-		      info->time.type = vpiSimTime;
-		      cb.time = &info->time;
-		      cb.user_data = (char*)info;
-		      cb.obj = item;
-		      info->item  = item;
-		      info->ident = strdup(ident);
-		      info->cb    = vpi_register_cb(&cb);
-		      info->next = vcd_list;
-		      vcd_list   = info;
-		      fprintf(dump_file, "$var %s %u %s %s $end\n",
-			      type, vpi_get(vpiSize, item), ident,
-			      vpi_get_str(vpiFullName, item));
-		      break;
-		}
-
-		default:
-		  vpi_printf("ERROR: (%s): Unsupported parameter type\n",
-			     name);
-	    }
-      }
+      scan_scope(99, argv);
 
       fprintf(dump_file, "$enddefinitions $end\n");
       fprintf(dump_file, "#0\n");
@@ -212,6 +226,10 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.2  1999/11/28 00:56:08  steve
+ *  Build up the lists in the scope of a module,
+ *  and get $dumpvars to scan the scope for items.
+ *
  * Revision 1.1  1999/11/07 20:33:30  steve
  *  Add VCD output and related system tasks.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.8 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.9 1999/11/28 00:56:08 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -107,6 +107,7 @@ typedef struct t_vpi_value {
 #define vpiTimeVar     63
 #define vpiSysTfCall   85
 #define vpiArgument    89
+#define vpiInternalScope 92
 
 #define vpiCallback  1000
 
@@ -210,6 +211,10 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.9  1999/11/28 00:56:08  steve
+ *  Build up the lists in the scope of a module,
+ *  and get $dumpvars to scan the scope for items.
+ *
  * Revision 1.8  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *

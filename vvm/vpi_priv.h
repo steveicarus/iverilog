@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.7 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.8 1999/11/28 00:56:08 steve Exp $"
 #endif
 
 /*
@@ -123,6 +123,9 @@ struct __vpiScope {
       struct __vpiHandle base;
 	/* The scope has a name. (this points to static memory.) */
       const char*name;
+	/* Keep an array of internal scope items. */
+      struct __vpiHandle**intern;
+      unsigned nintern;
 };
 extern void vpip_attach_to_scope(struct __vpiScope*scope, vpiHandle obj);
 
@@ -271,6 +274,10 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.8  1999/11/28 00:56:08  steve
+ *  Build up the lists in the scope of a module,
+ *  and get $dumpvars to scan the scope for items.
+ *
  * Revision 1.7  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *
