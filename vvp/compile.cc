@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.98 2001/08/26 22:59:32 steve Exp $"
+#ident "$Id: compile.cc,v 1.99 2001/09/11 01:54:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1109,6 +1109,12 @@ void compile_memory_port(char *label, char *memid,
   define_functor_symbol(label, ix);
   free(label);
 
+  for (unsigned i=0; i<nfun; i++) {
+        vvp_ipoint_t iix = ipoint_index(ix, i);
+	functor_t ip = functor_index(iix);
+	ip->ival = 0xaa;
+  }
+
   inputs_connect(ix, argc, argv);
   free(argv);
 
@@ -1629,6 +1635,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.99  2001/09/11 01:54:58  steve
+ *  initial structural memory propagation (Stephan Boettcher)
+ *
  * Revision 1.98  2001/08/26 22:59:32  steve
  *  Add the assign/x0 and set/x opcodes.
  *

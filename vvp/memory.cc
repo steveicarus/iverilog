@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.6 2001/08/09 19:37:05 steve Exp $"
+#ident "$Id: memory.cc,v 1.7 2001/09/11 01:54:58 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -163,6 +163,7 @@ void memory_new(vvp_memory_t mem, char *name, int msb, int lsb,
   mem->name = name;
 }
 
+static void update_addr(vvp_memory_port_t addr);
 
 void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix, 
 		     unsigned nbits, unsigned bitoff,
@@ -192,7 +193,6 @@ void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix,
       vvp_ipoint_t ifdx = ipoint_index(ix, idx);
       functor_t iobj = functor_index(ifdx);
 	  
-      iobj->ival = 0xaa;
       iobj->oval = 0x02;
       iobj->mode = M42;
       iobj->out = 0;
@@ -201,6 +201,8 @@ void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix,
 
   a->cur_addr = VVP_MEMORY_NO_ADDR;
   a->cur_bits = 0x0;
+
+  update_addr(a);
 }
 
 void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val)
@@ -264,8 +266,6 @@ unsigned char functor_get_input(vvp_ipoint_t ip)
   unsigned char bits = functor_get_inputs(ip);
   return (bits >> (2*ipoint_port(ip))) & 3;
 }
-
-static void update_addr(vvp_memory_port_t addr);
 
 static 
 bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
