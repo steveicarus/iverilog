@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.6 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: parse.y,v 1.7 2003/09/26 21:25:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  <string.h>
 # include  "globals.h"
 
 

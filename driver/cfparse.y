@@ -18,13 +18,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cfparse.y,v 1.9 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: cfparse.y,v 1.10 2003/09/26 21:25:58 steve Exp $"
 #endif
 
 
 # include  "globals.h"
 # include  "cfparse_misc.h"
 # include  <ctype.h>
+# include  <stdlib.h>
+# include  <string.h>
+
 
 /*
  * This flag is set to 0, 1 or 2 if file names are to be translated to
@@ -207,4 +210,5 @@ skip_arg : TOK_PLUSARG
 
 int yyerror(const char*msg)
 {
+	return 0;
 }

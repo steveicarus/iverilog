@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.55 2003/09/23 05:57:15 steve Exp $"
+#ident "$Id: main.c,v 1.56 2003/09/26 21:25:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -365,7 +365,6 @@ int main(int argc, char **argv)
       int e_flag = 0;
       int version_flag = 0;
       int opt, idx, rc;
-      char*cp;
 
 #ifdef __MINGW32__
       { char * s;
@@ -547,7 +546,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION "\n");
-	    printf("Copyright 1998-2002 Stephen Williams\n");
+	    printf("Copyright 1998-2003 Stephen Williams\n");
 	    printf("$Name:  $\n");
 
 	    if (version_flag)
@@ -694,6 +693,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.56  2003/09/26 21:25:58  steve
+ *  Warnings cleanup.
+ *
  * Revision 1.55  2003/09/23 05:57:15  steve
  *  Pass -m flag from driver via iconfig file.
  *
