@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.7 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: verireal.h,v 1.8 2003/02/07 02:48:43 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -27,6 +27,8 @@
 #else
 class ostream;
 #endif
+
+class verinum;
 
 /*
  * This class holds a floating point decimal number. The number is
@@ -39,6 +41,10 @@ class verireal {
 
       friend ostream& operator<< (ostream&, const verireal&);
       friend verireal operator* (const verireal&, const verireal&);
+      friend verireal operator/ (const verireal&, const verireal&);
+      friend verireal operator/ (const verireal&, const verinum&);
+      friend verireal operator% (const verireal&, const verireal&);
+      friend verireal operator% (const verireal&, const verinum&);
 
     public:
       explicit verireal();
@@ -63,9 +69,16 @@ class verireal {
 
 extern ostream& operator<< (ostream&, const verireal&);
 extern verireal operator* (const verireal&, const verireal&);
+extern verireal operator/ (const verireal&, const verireal&);
+extern verireal operator/ (const verireal&, const verinum&);
+extern verireal operator% (const verireal&, const verireal&);
+extern verireal operator% (const verireal&, const verinum&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.8  2003/02/07 02:48:43  steve
+ *  NetEBDiv handles real value constant expressions.
+ *
  * Revision 1.7  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

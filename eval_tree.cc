@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.46 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.47 2003/02/07 02:47:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -544,24 +544,59 @@ NetEConst* NetEBComp::eval_tree()
  * The NetEBDiv operator includes the / and % operators. First evaluate
  * the sub-expressions, then perform the required operation.
  */
-NetEConst* NetEBDiv::eval_tree()
+NetExpr* NetEBDiv::eval_tree()
 {
       eval_sub_tree_();
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      if (lc == 0) return 0;
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-      if (rc == 0) return 0;
+      if (expr_type() == NetExpr::ET_REAL) {
+	    NetECReal*lc = dynamic_cast<NetECReal*>(left_);
+	    if (lc == 0) return 0;
 
-      verinum lval = lc->value();
-      verinum rval = rc->value();
+	    verireal lval = lc->value();
 
-      switch (op_) {
-	  case '/':
-	    return new NetEConst(lval / rval);
+	    if (NetECReal*rc = dynamic_cast<NetECReal*>(right_)) {
+		  verireal rval = rc->value();
 
-	  case '%':
-	    return new NetEConst(lval % rval);
+		  switch (op_) {
+		      case '/':
+			return new NetECReal(lval / rval);
+
+		      case '%':
+			return new NetECReal(lval % rval);
+		  }
+
+	    } else if (NetEConst*rc = dynamic_cast<NetEConst*>(right_)) {
+
+		  verinum rval = rc->value();
+
+		  switch (op_) {
+		      case '/':
+			return new NetECReal(lval / rval);
+
+		      case '%':
+			return new NetECReal(lval % rval);
+		  }
+
+	    }
+
+
+      } else {
+	    assert(expr_type() == NetExpr::ET_VECTOR);
+	    NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+	    if (lc == 0) return 0;
+	    NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+	    if (rc == 0) return 0;
+
+	    verinum lval = lc->value();
+	    verinum rval = rc->value();
+
+	    switch (op_) {
+		case '/':
+		  return new NetEConst(lval / rval);
+
+		case '%':
+		  return new NetEConst(lval % rval);
+	    }
       }
 
       return 0;
@@ -1187,6 +1222,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.47  2003/02/07 02:47:58  steve
+ *  NetEBDiv handles real value constant expressions.
+ *
  * Revision 1.46  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

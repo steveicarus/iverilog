@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.9 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: verireal.cc,v 1.10 2003/02/07 02:48:43 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "verireal.h"
+# include  "verinum.h"
 # include  <ctype.h>
 # include  <iostream>
 # include  <math.h>
@@ -138,6 +139,45 @@ verireal operator* (const verireal&l, const verireal&r)
       return res;
 }
 
+verireal operator/ (const verireal&l, const verireal&r)
+{
+      verireal res;
+      res.sign_ = l.sign_ != r.sign_;
+      res.mant_ = l.mant_ / r.mant_;
+      res.exp10_= l.exp10_ - r.exp10_;
+      return res;
+}
+
+verireal operator/ (const verireal&l, const verinum&r)
+{
+      verireal res;
+      res.sign_ = l.sign_;
+
+      long rmant = r.as_long();
+      if (rmant < 0) {
+	    rmant = -rmant;
+	    res.sign_ = !res.sign_;
+      }
+
+      res.mant_ = l.mant_ / rmant;
+      res.exp10_= l.exp10_;
+      return res;
+}
+
+verireal operator% (const verireal&l, const verireal&r)
+{
+      verireal res;
+      assert(0);
+      return res;
+}
+
+verireal operator% (const verireal&l, const verinum&r)
+{
+      verireal res;
+      assert(0);
+      return res;
+}
+
 ostream& operator<< (ostream&out, const verireal&v)
 {
       out << (v.sign_? "-" : "+") << v.mant_ << "e" << v.exp10_;
@@ -146,6 +186,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.10  2003/02/07 02:48:43  steve
+ *  NetEBDiv handles real value constant expressions.
+ *
  * Revision 1.9  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

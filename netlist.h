@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.275 2003/02/06 17:50:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.276 2003/02/07 02:47:57 steve Exp $"
 #endif
 
 /*
@@ -2350,7 +2350,7 @@ class NetEBDiv : public NetEBinary {
 
       virtual bool set_width(unsigned w);
       virtual NetEBDiv* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*);
 };
 
@@ -3198,6 +3198,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.276  2003/02/07 02:47:57  steve
+ *  NetEBDiv handles real value constant expressions.
+ *
  * Revision 1.275  2003/02/06 17:50:23  steve
  *  Real constants have no defined vector width
  *
