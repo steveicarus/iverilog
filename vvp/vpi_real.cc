@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.5 2003/02/10 05:20:10 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.6 2003/02/28 21:20:34 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -66,8 +66,13 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	    vp->format = vpiRealVal;
+
 	  case vpiRealVal:
 	    vp->value.real = rfp->value;
+	    break;
+
+	  case vpiIntVal:
+	    vp->value.integer = (int)(rfp->value + 0.5);
 	    break;
 
 	  case vpiDecStrVal:
@@ -173,6 +178,9 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.6  2003/02/28 21:20:34  steve
+ *  Allow read of realvar as int.
+ *
  * Revision 1.5  2003/02/10 05:20:10  steve
  *  Add value change callbacks to real variables.
  *
