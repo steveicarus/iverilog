@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.57 2004/08/30 17:42:53 steve Exp $"
+#ident "$Id: Makefile.in,v 1.58 2004/10/04 01:09:22 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -108,7 +108,7 @@ uninstall32:
 endif
 
 clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi
+	rm -rf *.o sys_readmem_lex.c dep system.vpi bin32
 
 distclean: clean
 	rm -f Makefile
