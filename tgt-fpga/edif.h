@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.6 2003/08/07 05:18:04 steve Exp $"
+#ident "$Id: edif.h,v 1.7 2003/09/03 23:34:09 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -203,6 +203,8 @@ extern edif_cellref_t edif_cellref_create(edif_t edf, edif_cell_t cell);
    FPGA devices. */
 extern void edif_cellref_pstring(edif_cellref_t ref, const char*name,
 				 const char*value);
+extern void edif_cellref_pinteger(edif_cellref_t ref, const char*name,
+				  int value);
 
 /* This function gets the joint associated with a nexus. This will
    create a joint if necessary. */
@@ -229,6 +231,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.7  2003/09/03 23:34:09  steve
+ *  Support synchronous set of LPM_FF devices.
+ *
  * Revision 1.6  2003/08/07 05:18:04  steve
  *  Add support for OR/NOR/bufif0/bufif1.
  *

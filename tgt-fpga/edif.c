@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.7 2003/08/07 05:18:04 steve Exp $"
+#ident "$Id: edif.c,v 1.8 2003/09/03 23:34:09 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -357,6 +357,16 @@ void edif_cellref_pstring(edif_cellref_t ref, const char*name,
       ref->property = prp;
 }
 
+void edif_cellref_pinteger(edif_cellref_t ref, const char*name, int value)
+{
+      struct cellref_property_*prp = malloc(sizeof(struct cellref_property_));
+      prp->name = name;
+      prp->ptype = PRP_INTEGER;
+      prp->value_.num = value;
+      prp->next = ref->property;
+      ref->property = prp;
+}
+
 edif_joint_t edif_joint_create(edif_t edf)
 {
       edif_joint_t jnt = malloc(sizeof(struct edif_joint_s));
@@ -607,6 +617,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.8  2003/09/03 23:34:09  steve
+ *  Support synchronous set of LPM_FF devices.
+ *
  * Revision 1.7  2003/08/07 05:18:04  steve
  *  Add support for OR/NOR/bufif0/bufif1.
  *
