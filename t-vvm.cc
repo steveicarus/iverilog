@@ -17,14 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.49 1999/09/28 03:11:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.50 1999/09/28 23:45:09 steve Exp $"
 #endif
 
 # include  <iostream>
+# include  <fstream>
 # include  <strstream>
 # include  <iomanip>
 # include  <string>
 # include  <typeinfo>
+# include  <unistd.h>
 # include  "netlist.h"
 # include  "target.h"
 
@@ -39,6 +41,8 @@ static string make_temp()
 
 class target_vvm : public target_t {
     public:
+      target_vvm();
+
       virtual void start_design(ostream&os, const Design*);
       virtual void signal(ostream&os, const NetNet*);
       virtual void memory(ostream&os, const NetMemory*);
@@ -80,9 +84,15 @@ class target_vvm : public target_t {
 	// being generated.
       string thread_class_;
 
-      ostrstream delayed;
-      ostrstream init_code;
-      ostrstream start_code;
+      char*delayed_name;
+      ofstream delayed;
+
+      char*init_code_name;
+      ofstream init_code;
+
+      char *start_code_name;
+      ofstream start_code;
+
       unsigned process_counter;
       unsigned thread_step_;
 
@@ -92,6 +102,11 @@ class target_vvm : public target_t {
       map<string,bool>pevent_printed_flag;
 };
 
+
+target_vvm::target_vvm()
+: delayed_name(0), init_code_name(0)
+{
+}
 
 /*
  * This class emits code for the rvalue of a procedural
@@ -500,6 +515,15 @@ static string emit_parm_rval(ostream&os, const NetExpr*expr)
 
 void target_vvm::start_design(ostream&os, const Design*mod)
 {
+      delayed_name = tempnam(0, "ivlde");
+      delayed.open(delayed_name, ios::in | ios::out | ios::trunc);
+
+      init_code_name = tempnam(0, "ivlic");
+      init_code.open(init_code_name, ios::in | ios::out | ios::trunc);
+
+      start_code_name = tempnam(0, "ivlsc");
+      start_code.open(start_code_name, ios::in | ios::out | ios::trunc);
+
       os << "# include \"vvm.h\"" << endl;
       os << "# include \"vvm_gates.h\"" << endl;
       os << "# include \"vvm_func.h\"" << endl;
@@ -521,14 +545,40 @@ void target_vvm::start_design(ostream&os, const Design*mod)
 
 void target_vvm::end_design(ostream&os, const Design*mod)
 {
-      delayed << ends;
-      os << delayed.str();
+      delayed.close();
+      os << "// **** Delayed code" << endl;
+      { ifstream rdelayed (delayed_name);
+	os << rdelayed.rdbuf();
+      }
+      unlink(delayed_name);
+      free(delayed_name);
+      delayed_name = 0;
+      os << "// **** end delayed code" << endl;
 
-      init_code << "}" << endl << ends;
-      os << init_code.str();
 
-      start_code << "}" << endl << ends;
-      os << start_code.str();
+      os << "// **** init_code" << endl;
+      init_code << "}" << endl;
+      init_code.close();
+      { ifstream rinit_code (init_code_name);
+        os << rinit_code.rdbuf();
+      }
+      unlink(init_code_name);
+      free(init_code_name);
+      init_code_name = 0;
+      os << "// **** end init_code" << endl;
+
+
+      os << "// **** start_code" << endl;
+      start_code << "}" << endl;
+      start_code.close();
+      { ifstream rstart_code (start_code_name);
+        os << rstart_code.rdbuf();
+      }
+      unlink(start_code_name);
+      free(start_code_name);
+      start_code_name = 0;
+      os << "// **** end start_code" << endl;
+
 
       os << "main()" << endl << "{" << endl;
       os << "      vvm_load_vpi_module(\"system.vpi\");" << endl;
@@ -1209,6 +1259,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 		  exit_step << "_;" << endl;
       }
 
+      sc << ends;
       os << "        /* endcase */" << endl;
       os << "        return true;" << endl;
       os << "      }" << endl;
@@ -1510,6 +1561,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.50  1999/09/28 23:45:09  steve
+ *  Use files instead of strstreams for delayed output,
+ *  and fix a missing ends in case output code.
+ *
  * Revision 1.49  1999/09/28 03:11:09  steve
  *  save the thread class name so that behaviors in tasks have it.
  *
