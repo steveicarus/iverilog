@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.9 2001/09/16 01:48:16 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.10 2001/09/16 22:26:47 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -71,6 +71,12 @@ static const char*virtex_library_text =
 "                 (port D (direction INPUT))\n"
 "                 (port C (direction INPUT))\n"
 "                 (port CE (direction INPUT)))))\n"
+"      (cell GBUF (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O (direction OUTPUT))\n"
+"                 (port I (direction INPUT)))))\n"
 "      (cell GND (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -324,9 +330,60 @@ static void edif_show_lut4(const char*name, unsigned uref,
       edif_set_nexus_joint(I3, jbuf);
 }
 
+void edif_show_cellref_logic(ivl_net_logic_t net, const char*cellref)
+{
+      char jbuf[1024];
+      unsigned idx;
+      const char*cp;
+      char*tmpname;
+
+      edif_uref += 1;
+
+      cp = strchr(cellref, ':');
+      assert(cp);
+
+      tmpname = malloc(cp - cellref + 1);
+      strncpy(tmpname, cellref, cp-cellref);
+      tmpname[cp-cellref] = 0;
+
+      fprintf(xnf, "(instance (rename U%u (string \"%s\"))"
+	      " (viewRef net (cellRef %s (libraryRef VIRTEX))))\n",
+	      edif_uref, ivl_logic_name(net), tmpname);
+
+      free(tmpname);
+
+      cellref = cp + 1;
+
+      for (idx = 0 ;  idx < ivl_logic_pins(net) ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_logic_pin(net, idx);
+
+	    cp = strchr(cellref, ',');
+	    if (cp == 0)
+		  cp = cellref+strlen(cellref);
+
+	    tmpname = malloc(cp - cellref + 1);
+	    strncpy(tmpname, cellref, cp-cellref);
+	    tmpname[cp-cellref] = 0;
+
+	    sprintf(jbuf, "(portRef %s (instanceRef U%u))",
+		    tmpname, edif_uref);
+	    edif_set_nexus_joint(nex, jbuf);
+
+	    free(tmpname);
+	    cellref = *cp? cp+1 : cp;
+      }
+}
+
 static void edif_show_virtex_logic(ivl_net_logic_t net)
 {
       char jbuf[1024];
+
+      { const char*dev = ivl_logic_attr(net, "cellref");
+        if (dev != 0) {
+	      edif_show_cellref_logic(net, dev);
+	      return;
+	}
+      }
 
       edif_uref += 1;
 
@@ -1004,6 +1061,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.10  2001/09/16 22:26:47  steve
+ *  Support the cellref attribute.
+ *
  * Revision 1.9  2001/09/16 01:48:16  steve
  *  Suppor the PAD attribute on signals.
  *
