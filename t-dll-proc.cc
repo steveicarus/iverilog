@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.26 2001/04/15 02:58:11 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.27 2001/04/15 03:14:31 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -297,6 +297,7 @@ void dll_target::proc_case(const NetCase*net)
       assert(stmt_cur_->type_ != IVL_ST_NONE);
 
       assert(expr_ == 0);
+      assert(net->expr());
       net->expr()->expr_scan(this);
       stmt_cur_->u_.case_.cond = expr_;
       expr_ = 0;
@@ -311,8 +312,9 @@ void dll_target::proc_case(const NetCase*net)
 
       for (unsigned idx = 0 ;  idx < ncase ;  idx += 1) {
 	    const NetExpr*ex = net->expr(idx);
+	    assert(ex);
 	    if (ex) {
-		  net->expr(idx)->expr_scan(this);
+		  ex->expr_scan(this);
 		  save_cur->u_.case_.case_ex[idx] = expr_;
 		  expr_ = 0;
 	    } else {
@@ -320,7 +322,11 @@ void dll_target::proc_case(const NetCase*net)
 	    }
 
 	    stmt_cur_ = save_cur->u_.case_.case_st + idx;
-	    net->stat(idx)->emit_proc(this);
+	    if (net->stat(idx) == 0) {
+		  stmt_cur_->type_ = IVL_ST_NOOP;
+	    } else {
+		  net->stat(idx)->emit_proc(this);
+	    }
       }
 
       stmt_cur_ = save_cur;
@@ -602,6 +608,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.27  2001/04/15 03:14:31  steve
+ *  Handle noop as case statements.
+ *
  * Revision 1.26  2001/04/15 02:58:11  steve
  *  vvp support for <= with internal delay.
  *
