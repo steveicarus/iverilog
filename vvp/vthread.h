@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.h,v 1.4 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: vthread.h,v 1.5 2001/04/21 00:34:39 steve Exp $"
 #endif
 
 /*
@@ -43,6 +43,12 @@ typedef struct vthread_s*vthread_t;
 extern vthread_t vthread_new(unsigned long sa, struct __vpiScope*scope);
 
 /*
+ * This function marks the thread as scheduled. It is used only by the
+ * schedule_vthread function.
+ */
+extern void vthread_mark_scheduled(vthread_t thr);
+
+/*
  * Cause this thread to execute instructions until in is put to sleep
  * by executing some sort of delay or wait instruction.
  */
@@ -59,6 +65,9 @@ extern void vthread_schedule_list(vthread_t thr);
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.5  2001/04/21 00:34:39  steve
+ *  Working %disable and reap handling references from scheduler.
+ *
  * Revision 1.4  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *

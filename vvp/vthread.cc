@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.28 2001/04/18 05:04:19 steve Exp $"
+#ident "$Id: vthread.cc,v 1.29 2001/04/21 00:34:39 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -87,6 +87,7 @@ struct vthread_s {
       unsigned schedule_parent_on_end :1;
       unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
+      unsigned is_scheduled      :1;
 	/* This points to the sole child of the thread. */
       struct vthread_s*child;
 	/* This points to my parent, if I have one. */
@@ -194,9 +195,19 @@ static void vthread_reap(vthread_t thr)
       thr->scope_prev->scope_next = thr->scope_next;
 
       thr->pc = 0;
-      delete thr;
+
+	/* If this thread is not scheduled, then is it safe to delete
+	   it now. Otherwise, let the schedule event (which will
+	   execute the thread at of_ZOMBIE) delete the object. */
+      if (thr->is_scheduled == 0)
+	    delete thr;
 }
 
+void vthread_mark_scheduled(vthread_t thr)
+{
+      assert(thr->is_scheduled == 0);
+      thr->is_scheduled = 1;
+}
 
 /*
  * This function runs a thread by fetching an instruction,
@@ -204,6 +215,9 @@ static void vthread_reap(vthread_t thr)
  */
 void vthread_run(vthread_t thr)
 {
+      assert(thr->is_scheduled);
+      thr->is_scheduled = 0;
+
       for (;;) {
 	    vvp_code_t cp = codespace_index(thr->pc);
 	    thr->pc += 1;
@@ -492,18 +506,24 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 	    assert(tmp->child == 0);
 	    assert(tmp != thr);
 	      /* XXXX Not supported yet. */
-	    assert(tmp->waiting_for_event);
+	    assert(tmp->waiting_for_event == 0);
 
 	    tmp->pc = 0;
 	    tmp->i_have_ended = 1;
 
-	      /* If a parent is waiting in a %join, wake it up. */
 	    if (tmp->schedule_parent_on_end) {
+		    /* If a parent is waiting in a %join, wake it up. */
 		  assert(tmp->parent);
 		  schedule_vthread(tmp->parent, 0);
-	    }
+		  vthread_reap(tmp);
 
-	    if (tmp->parent == 0) {
+	    } else if (tmp->parent) {
+		    /* If the parent is yet to %join me, let its %join
+		       do the reaping. */
+		    //assert(tmp->is_scheduled == 0);
+
+	    } else {
+		    /* No parent at all. Goodby. */
 		  vthread_reap(tmp);
 	    }
       }
@@ -523,23 +543,10 @@ bool of_END(vthread_t thr, vvp_code_t)
       thr->i_have_ended = 1;
       thr->pc = 0;
 
-#if 0
-	/* Reap direct descendents that have already ended. Do
-	   this in a loop until I run out of dead children. */
-
-      while (thr->child && (thr->child->i_have_ended)) {
-	    fprintf(stderr, "vvp warning: A thread left dangling "
-		    "children at %%end. This is caused\n"
-		    "           : by a missing %%join.\n");
-	    vthread_t tmp = thr->child;
-	    vthread_reap(tmp);
-      }
-#else
 	/* If this thread has children, then there is a programming
 	   error as there were not enough %join instructions to reap
 	   all the children. */
       assert(thr->child == 0);
-#endif
 
 
 	/* If I have a parent who is waiting for me, then mark that I
@@ -556,12 +563,6 @@ bool of_END(vthread_t thr, vvp_code_t)
 	   no reason to stick around. This can happen, for example if
 	   I am an ``initial'' thread. */
       if (thr->parent == 0) {
-#if 0
-	    if (thr->child)
-		  fprintf(stderr, "vvp warning: A thread left dangling "
-			  "children at delete. This is caused\n"
-			  "           : by a missing %%join.\n");
-#endif
 	    vthread_reap(thr);
 	    return false;
       }
@@ -872,6 +873,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.29  2001/04/21 00:34:39  steve
+ *  Working %disable and reap handling references from scheduler.
+ *
  * Revision 1.28  2001/04/18 05:04:19  steve
  *  %end complete the %join for the parent.
  *

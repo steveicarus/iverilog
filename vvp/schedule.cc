@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.5 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: schedule.cc,v 1.6 2001/04/21 00:34:39 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -120,6 +120,7 @@ void schedule_vthread(vthread_t thr, unsigned delay)
       cur->delay = delay;
       cur->thr = thr;
       cur->type = TYPE_THREAD;
+      vthread_mark_scheduled(thr);
 
       schedule_event_(cur);
 }
@@ -195,6 +196,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.6  2001/04/21 00:34:39  steve
+ *  Working %disable and reap handling references from scheduler.
+ *
  * Revision 1.5  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
