@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.59 2005/01/22 00:58:22 steve Exp $
+ *  $Id: opcodes.txt,v 1.60 2005/02/14 01:50:23 steve Exp $
  */
 
 
@@ -520,22 +520,18 @@ sets only a single bit.
 
 This instruction writes a real word to the specified VPI-like object.
 
-* %set/x0 <var-label>, <bit>, <top>
-* %set/x0/x <var-label>, <bit>, <word>
+* %set/x0 <var-label>, <bit>
 
-This sets the bit of a variable functor, the address calculated by
-using the index register 0 to index the functor address of
-<var-label>.
+This sets the bit of a signal vector, the address calculated by
+using the index register 0 to index the bit within the vector of
+<var-label>. The destination must be a signal of some sort. Otherwise,
+the instrution will fail.
 
 If the index value in index register is <0 (for example if %ix/get
 converted an unknown value into the register) then the set is not
-performed. Also, if the index value is > the immediate top value, then
-the set is not performed. The 0 and <top> values suffice to provide
-complete bounds checking.
-
-The %set/x0/x instruction is the same, except the bound value is in
-a word register instead of in the opcode. This allows for bounds that
-are larger then 0xffff.
+performed. Also, if the index value is beyond the width of the target
+signal, then the set is not performed. The instruction gets the
+dimensions of the target signal from the signal itself.
 
 
 * %shiftl/i0 <bit>, <wid>

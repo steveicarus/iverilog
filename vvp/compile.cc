@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.186 2005/02/12 03:27:18 steve Exp $"
+#ident "$Id: compile.cc,v 1.187 2005/02/14 01:50:23 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -148,8 +148,8 @@ const static struct opcode_table_s opcode_table[] = {
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
-      { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%set/x0/x",of_SET_X0_X,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%set/x0", of_SET_X0, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+//    { "%set/x0/x",of_SET_X0_X,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/s/i0", of_SHIFTR_S_I0,2,{OA_BIT1,OA_NUMBER, OA_NONE} },
@@ -1618,6 +1618,11 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.187  2005/02/14 01:50:23  steve
+ *  Signals may receive part vectors from %set/x0
+ *  instructions. Re-implement the %set/x0 to do
+ *  just that. Remove the useless %set/x0/x instruction.
+ *
  * Revision 1.186  2005/02/12 03:27:18  steve
  *  Support C8 constants.
  *

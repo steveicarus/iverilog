@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.128 2005/02/12 06:13:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.129 2005/02/14 01:50:23 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2657,15 +2657,23 @@ bool of_SET_WORDR(vthread_t thr, vvp_code_t cp)
 /*
  * Implement the %set/x instruction:
  *
- *      %set/x <functor>, <bit>, <idx>
+ *      %set/x <functor>, <bit>
  *
  * The single bit goes into the indexed functor. Abort the instruction
- * if the index is <0.
+ * if the index is outside the target vector dimensions. Get the
+ * target vector dimensions from the vvp_fun_signal addressed by the
+ * vvp_net pointer.
  */
 bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
+      vvp_net_t*net = cp->net;
+      vvp_bit4_t bit_val = thr_get_bit(thr, cp->bit_idx[0]);
+
+	// Implicitly, we get the base into the target vector from the
+	// X0 register.
       long idx = thr->words[0].w_int;
+
+      vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
 
 	/* If idx < 0, then the index value is probably generated from
 	   an undefined value. At any rate, this is defined to have no
@@ -2673,48 +2681,15 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       if (idx < 0)
 	    return true;
 
-      if ((unsigned)idx > cp->bit_idx[1])
+      if ((unsigned)idx >= sig->size())
 	    return true;
 
-#if 0
-	/* Form the functor pointer from the base pointer and the
-	   index from the index register. */
-      vvp_ipoint_t itmp = ipoint_index(cp->iptr, idx);
+	// Make a 1-bit vector that will go to the target
+      vvp_vector4_t bit (1);
+      bit.set_bit(0, bit_val);
 
-	/* Set the value. */
-      functor_set(itmp, bit_val, strong_values[bit_val], true);
-#else
-      fprintf(stderr, "XXXX forgot how to implement %%set/x0\n");
-#endif
-
-      return true;
-}
-
-bool of_SET_X0_X(vthread_t thr, vvp_code_t cp)
-{
-      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
-      long idx = thr->words[0].w_int;
-      long lim = thr->words[cp->bit_idx[1]].w_int;
-
-	/* If idx < 0, then the index value is probably generated from
-	   an undefined value. At any rate, this is defined to have no
-	   effect so quit now. */
-      if (idx < 0)
-	    return true;
-
-      if (idx > lim)
-	    return true;
-
-#if 0
-	/* Form the functor pointer from the base pointer and the
-	   index from the index register. */
-      vvp_ipoint_t itmp = ipoint_index(cp->iptr, idx);
-
-	/* Set the value. */
-      functor_set(itmp, bit_val, strong_values[bit_val], true);
-#else
-      fprintf(stderr, "XXXX forgot how to implement %%set/x0/x\n");
-#endif
+      vvp_net_ptr_t ptr (net, 0);
+      vvp_send_vec4_pv(ptr, bit, idx, 1, sig->size());
 
       return true;
 }
@@ -3067,6 +3042,11 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.129  2005/02/14 01:50:23  steve
+ *  Signals may receive part vectors from %set/x0
+ *  instructions. Re-implement the %set/x0 to do
+ *  just that. Remove the useless %set/x0/x instruction.
+ *
  * Revision 1.128  2005/02/12 06:13:22  steve
  *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
  *

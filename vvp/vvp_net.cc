@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.16 2005/02/12 06:13:22 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.17 2005/02/14 01:50:23 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -607,6 +607,7 @@ void vvp_net_fun_t::recv_long(vvp_net_ptr_t, long)
 /* **** vvp_fun_signal methods **** */
 
 vvp_fun_signal::vvp_fun_signal(unsigned wid)
+: bits4_(wid)
 {
       vpi_callbacks = 0;
       continuous_assign_active_ = false;
@@ -649,6 +650,31 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    force_ = bit;
 	    vvp_send_vec4(ptr.ptr()->out, force_);
 	    run_vpi_callbacks();
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
+void vvp_fun_signal::recv_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t bit,
+				  unsigned base, unsigned wid, unsigned vwid)
+{
+      assert(bit.size() == wid);
+      assert(bits4_.size() == vwid);
+
+      switch (ptr.port()) {
+	  case 0: // Normal input
+	    if (! continuous_assign_active_) {
+		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+			if (base+idx >= bits4_.size())
+			      break;
+			bits4_.set_bit(base+idx, bit.value(idx));
+		  }
+		  vvp_send_vec4(ptr.ptr()->out, bits4_);
+		  run_vpi_callbacks();
+	    }
 	    break;
 
 	  default:
@@ -1098,6 +1124,11 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.17  2005/02/14 01:50:23  steve
+ *  Signals may receive part vectors from %set/x0
+ *  instructions. Re-implement the %set/x0 to do
+ *  just that. Remove the useless %set/x0/x instruction.
+ *
  * Revision 1.16  2005/02/12 06:13:22  steve
  *  Add debug dumps for vectors, and fix vvp_scaler_t make from BIT4_X values.
  *

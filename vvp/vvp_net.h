@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.16 2005/02/13 05:26:30 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.17 2005/02/14 01:50:23 steve Exp $"
 
 # include  <stdio.h>
 # include  <assert.h>
@@ -338,7 +338,23 @@ extern void vvp_send_real(vvp_net_ptr_t ptr, double val);
 extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 
 /*
- * Part-vector versions of above functions.
+ * Part-vector versions of above functions. This function uses the
+ * corresponding recv_vec4_pv method in the vvp_net_fun_t functor to
+ * deliver parts of a vector.
+ *
+ * The ptr is the destination input port to write to.
+ *
+ * <val> is the vector to be written. The width of this vector must
+ * exactly match the <wid> vector.
+ *
+ * The <base> is where in the receiver the bit vector is to be
+ * written. This address is given in cannonical units; 0 is the LSB, 1
+ * is the next bit, and so on.
+ *
+ * The <vwid> is the width of the destination vector that this part is
+ * part of. This is used by intermediate nodes, i.e. resolvers, to
+ * know how wide to pad with Z, if it needs to transform the part to a
+ * mirror of the destination vector.
  */
 extern void vvp_send_vec4_pv(vvp_net_ptr_t ptr, vvp_vector4_t val,
 			     unsigned base, unsigned wid, unsigned vwid);
@@ -548,6 +564,10 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       void recv_vec8(vvp_net_ptr_t port, vvp_vector8_t bit);
       void recv_long(vvp_net_ptr_t port, long bit);
 
+	// Part select variants of above
+      void recv_vec4_pv(vvp_net_ptr_t port, vvp_vector4_t bit,
+			unsigned base, unsigned wid, unsigned vwid);
+
 	// Get information about the vector value.
       unsigned   size() const;
       vvp_bit4_t value(unsigned idx) const;
@@ -575,6 +595,11 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.17  2005/02/14 01:50:23  steve
+ *  Signals may receive part vectors from %set/x0
+ *  instructions. Re-implement the %set/x0 to do
+ *  just that. Remove the useless %set/x0/x instruction.
+ *
  * Revision 1.16  2005/02/13 05:26:30  steve
  *  tri0 and tri1 resolvers must replace HiZ with 0/1 after resolution.
  *
