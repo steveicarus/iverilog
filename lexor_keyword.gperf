@@ -82,7 +82,7 @@ rpmos,		K_rpmos
 rtran,		K_rtran
 rtranif0,	K_rtranif0
 rtranif1,	K_rtranif1
-scalered,	K_scalered
+scalared,	K_scalared
 signed,		K_signed
 small,		K_small
 specify,	K_specify

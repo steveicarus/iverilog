@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.161 2002/09/16 00:28:51 steve Exp $"
+#ident "$Id: parse.y,v 1.162 2002/10/13 05:01:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,7 +115,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_primitive
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
 %token K_reg K_release K_repeat
-%token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalered
+%token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalared
 %token K_signed K_small K_specify
 %token K_specparam K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
