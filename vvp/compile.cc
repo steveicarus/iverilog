@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.141 2002/09/12 15:49:43 steve Exp $"
+#ident "$Id: compile.cc,v 1.142 2002/09/18 02:55:18 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -456,6 +456,40 @@ void code_label_lookup(struct vvp_code_s *code, char *label)
 {
       struct code_label_resolv_list_s *res
 	    = new struct code_label_resolv_list_s;
+
+      res->code  = code;
+      res->label = label;
+
+      resolv_submit(res);
+}
+
+/*
+ * Lookup memories.
+ */
+struct memory_resolv_list_s: public resolv_list_s {
+      struct vvp_code_s *code;
+      char *label;
+      virtual bool resolve(bool mes);
+};
+
+bool memory_resolv_list_s::resolve(bool mes)
+{
+      code->mem = memory_find(label);
+      if (code->mem != 0) {
+	    free(label);
+	    return true;
+      }
+
+      if (mes)
+	    fprintf(stderr, "Memory unresolved: %s\n", label);
+
+      return false;
+}
+
+static void compile_mem_lookup(struct vvp_code_s *code, char *label)
+{
+      struct memory_resolv_list_s *res
+	    = new struct memory_resolv_list_s;
 
       res->code  = code;
       res->label = label;
@@ -1253,12 +1287,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  code->mem = memory_find(opa->argv[idx].symb.text);
-		  if (code->mem == 0) {
-			yyerror("memory undefined");
-		  }
-
-		  free(opa->argv[idx].symb.text);
+		  compile_mem_lookup(code, opa->argv[idx].symb.text);
 		  break;
 
 		case OA_VPI_PTR:
@@ -1450,6 +1479,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.142  2002/09/18 02:55:18  steve
+ *  Allow forward references of memories.
+ *
  * Revision 1.141  2002/09/12 15:49:43  steve
  *  Add support for binary nand operator.
  *
