@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.24 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: eval.cc,v 1.25 2001/12/29 00:43:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -85,7 +85,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 		res = new verinum(lv % rv, l->len());
 		break;
 	  }
-	  case 'l': {
+	  case 'l': { // left shift (<<)
 		assert(r->is_defined());
 		unsigned long rv = r->as_ulong();
 		res = new verinum(verinum::V0, l->len());
@@ -93,6 +93,17 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 		      unsigned cnt = res->len() - rv;
 		      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 			    res->set(idx+rv, l->get(idx));
+		}
+		break;
+	  }
+	  case 'r': { // right shift (>>)
+		assert(r->is_defined());
+		unsigned long rv = r->as_ulong();
+		res = new verinum(verinum::V0, l->len());
+		if (rv < res->len()) {
+		      unsigned cnt = res->len() - rv;
+		      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+			    res->set(idx, l->get(idx+rv));
 		}
 		break;
 	  }
@@ -196,6 +207,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.25  2001/12/29 00:43:55  steve
+ *  Evaluate constant right shifts.
+ *
  * Revision 1.24  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
