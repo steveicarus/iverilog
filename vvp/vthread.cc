@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.8 2001/03/23 01:11:06 steve Exp $"
+#ident "$Id: vthread.cc,v 1.9 2001/03/23 01:53:46 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -108,16 +108,7 @@ void vthread_run(vthread_t thr)
 
 bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
-	//printf("thread %p: %%assign\n", thr);
-
-      unsigned char bit_val = 3;
-      if ((cp->bit_idx2 & ~0x3) == 0x0) {
-	    bit_val = cp->bit_idx2&3;
-
-      } else {
-	    printf("XXXX bit_idx out of range?\n");
-      }
-
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
       schedule_assign(cp->iptr, bit_val, cp->bit_idx1);
       return true;
 }
@@ -234,16 +225,7 @@ bool of_NOOP(vthread_t thr, vvp_code_t cp)
 
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
-	//printf("thread %p: %%set %u, %u\n", thr, cp->iptr, cp->bit_idx1);
-
-      unsigned char bit_val = 3;
-      if ((cp->bit_idx1 & ~0x3) == 0x0) {
-	    bit_val = cp->bit_idx1&3;
-
-      } else {
-	    printf("XXXX bit_idx out of range?\n");
-      }
-
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
       functor_set(cp->iptr, bit_val);
 
       return true;
@@ -258,6 +240,9 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.9  2001/03/23 01:53:46  steve
+ *  Support set of functors from thread bits.
+ *
  * Revision 1.8  2001/03/23 01:11:06  steve
  *  Handle vectors pulled out of a constant bit.
  *
