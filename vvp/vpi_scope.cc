@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.20 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.21 2002/11/15 22:14:12 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -100,20 +100,29 @@ static vpiHandle scope_get_handle(int code, vpiHandle obj)
 /* compares vpiType's considering object classes */
 static int compare_types(int code, int type)
 {
-      if (  code == type
-	|| (code == vpiInternalScope &&
+	/* NOTE: The Verilog VPI does not for any object support
+	   vpiScope as an iterator parameter, so it is used here as a
+	   means to scan everything in the *current* scope. */
+      if (code == vpiScope)
+	    return 1;
+
+      if (code == type)
+	    return 1;
+
+      if ( code == vpiInternalScope &&
 	     (type == vpiModule ||
 	     type == vpiFunction ||
 	     type == vpiTask ||
 	     type == vpiNamedBegin ||
-	     type == vpiNamedFork))
-	|| (code == vpiVariables &&
+	     type == vpiNamedFork) )
+	    return 1;
+
+      if ( code == vpiVariables &&
 	     (type == vpiIntegerVar ||
 	     type == vpiTimeVar))
-      )
-	    return 1;
-      else
-	    return 0;
+      	    return 1;
+
+      return 0;
 }
 
 static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
@@ -153,17 +162,7 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 	     || (obj->vpi_type->type_code == vpiNamedBegin)
 	     || (obj->vpi_type->type_code == vpiNamedFork));
 
-      switch (code) {
-	  case vpiInternalScope:
-	  case vpiMemory:
-	  case vpiModule:
-	  case vpiNamedEvent:
-	  case vpiNet:
-	  case vpiReg:
-	    return module_iter_subset(code, ref);
-
-      }
-      return 0;
+      return module_iter_subset(code, ref);
 }
 
 /*
@@ -407,6 +406,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.21  2002/11/15 22:14:12  steve
+ *  Add vpiScope iterate on vpiScope objects.
+ *
  * Revision 1.20  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

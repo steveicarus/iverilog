@@ -396,6 +396,17 @@ language that are defined.
 	Icarus Verilog will override the $timeformat minimum width and
 	use the explicit minimum width.
 
+    vpiScope iterator on vpiScope objects.
+
+	In the VPI, the normal way to iterate over vpiScope objects
+	contained within a vpiScope object, is the vpiInternalScope
+	iterator. Icarus Verilog adds support for the vpiScope
+	iterator of a vpiScope object, that iterates over *everything*
+	the is contained in the current scope. This is useful in cases
+	where one wants to iterate over all the objects in a scope
+	without iterating over all the contained types explicitly.
+
+
 6.0 CREDITS
 
 Except where otherwise noted, Icarus Verilog, ivl and ivlpp are
