@@ -19,20 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.9 2003/07/15 03:49:22 steve Exp $"
+#ident "$Id: PUdp.h,v 1.10 2003/07/15 05:07:13 steve Exp $"
 #endif
 
 # include  <map>
 # include  "svector.h"
-# include  <string>
 # include  "verinum.h"
 
 class PExpr;
-
-svector<string>::svector<string>(unsigned size)
-: nitems_(size), items_(new string[size])
-{
-}
 
 /*
  * This class represents a parsed UDP. This is a much simpler object
@@ -58,8 +52,7 @@ svector<string>::svector<string>(unsigned size)
 class PUdp {
 
     public:
-      explicit PUdp(const string&n, unsigned nports)
-      : ports(nports), sequential(false), initial(verinum::Vx), name_(n) { }
+      explicit PUdp(const string&n, unsigned nports);
 
       svector<string>ports;
       bool sequential;
@@ -84,6 +77,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.10  2003/07/15 05:07:13  steve
+ *  Move PUdp constructor into compiled file.
+ *
  * Revision 1.9  2003/07/15 03:49:22  steve
  *  Spelling fixes.
  *

@@ -21,9 +21,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: svector.h,v 1.6 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: svector.h,v 1.7 2003/07/15 05:07:13 steve Exp $"
 #endif
 
+# include  <string>
 # include  <assert.h>
 
 /*
@@ -96,7 +97,20 @@ template <class TYPE> class svector {
 };
 
 /*
+ * Override the implementation of the above template for the string
+ * type parameter. The initialization to nil works different here.
+ */
+svector<string>::svector<string>(unsigned size)
+: nitems_(size), items_(new string[size])
+{
+}
+
+
+/*
  * $Log: svector.h,v $
+ * Revision 1.7  2003/07/15 05:07:13  steve
+ *  Move PUdp constructor into compiled file.
+ *
  * Revision 1.6  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *
