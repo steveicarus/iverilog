@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.3 2001/04/25 04:45:52 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.4 2001/05/10 00:16:00 steve Exp $"
 #endif
 
 
@@ -84,6 +84,11 @@ typedef struct t_vpi_vecval {
       int aval, bval; /* ab encoding: 00=0, 10=1, 11=X, 01=Z */
 } s_vpi_vecval, *p_vpi_vecval;
 
+typedef struct t_vpi_strengthval {
+      int logic;
+      int s0, s1;
+} s_vpi_strengthval, *p_vpi_strengthval;
+
 /*
  * This structure holds values that are passed back and forth between
  * the simulator and the application.
@@ -127,6 +132,15 @@ typedef struct t_vpi_value {
 #define vpiL 5
 #define vpiDontCare 6
 
+/* STRENGTH VALUES */
+#define vpiSupplyDrive  0x80
+#define vpiStrongDrive  0x40
+#define vpiPullDrive    0x20
+#define vpiLargeCharge  0x10
+#define vpiWeakDrive    0x08
+#define vpiMediumCharge 0x04
+#define vpiSmallCharge  0x02
+#define vpiHiZ          0x01
 
 /* OBJECT CODES */
 #define vpiConstant     7
@@ -293,6 +307,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.4  2001/05/10 00:16:00  steve
+ *  Add the vpi_user strength definitions.
+ *
  * Revision 1.3  2001/04/25 04:45:52  steve
  *  Implement vpi_put_value for signals.
  *
