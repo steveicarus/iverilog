@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.7 2003/04/04 04:59:03 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.8 2003/04/04 06:20:29 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -84,10 +84,6 @@ static edif_cell_t cell_xorcy = 0;
 const unsigned XORCY_O = 0;
 const unsigned XORCY_CI = 1;
 const unsigned XORCY_LI = 2;
-
-const unsigned MULT_AND_LO = 0;
-const unsigned MULT_AND_I0 = 1;
-const unsigned MULT_AND_I1 = 2;
 
 /*
  * The check_cell_* functions can be called in front of any reference
@@ -236,6 +232,10 @@ static void check_cell_xorcy(void)
 }
 
 
+
+const unsigned MULT_AND_LO = 0;
+const unsigned MULT_AND_I0 = 1;
+const unsigned MULT_AND_I1 = 2;
 static edif_cell_t celltable_mult_and(edif_xlibrary_t xlib)
 {
       edif_cell_t cell = edif_xcell_create(xlib, "MULT_AND", 3);
@@ -509,6 +509,57 @@ static void edif_cellref_logic(ivl_net_logic_t net, const char*def)
       free(str);
 }
 
+static void lut_logic(ivl_net_logic_t net, const char*init3,
+		      const char*init4, const char*init5)
+{
+      edif_cellref_t lut;
+      edif_joint_t jnt;
+      const char* init;
+
+      assert(ivl_logic_pins(net) <= 5);
+      assert(ivl_logic_pins(net) >= 3);
+
+      switch (ivl_logic_pins(net)) {
+	  case 3:
+	    check_cell_lut2();
+	    lut = edif_cellref_create(edf, cell_lut2);
+	    init = init3;
+	    break;
+
+	  case 4:
+	    check_cell_lut3();
+	    lut = edif_cellref_create(edf, cell_lut3);
+	    init = init4;
+	    break;
+
+	  case 5:
+	    check_cell_lut4();
+	    lut = edif_cellref_create(edf, cell_lut4);
+	    init = init5;
+	    break;
+      }
+
+      edif_cellref_pstring(lut, "INIT", init);
+
+      switch (ivl_logic_pins(net)) {
+	  case 5:
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 4));
+	    edif_add_to_joint(jnt, lut, LUT_I3);
+	  case 4:
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 3));
+	    edif_add_to_joint(jnt, lut, LUT_I2);
+	  case 3:
+	    jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+      }
+
+      jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
+      edif_add_to_joint(jnt, lut, LUT_I0);
+
+      jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
+      edif_add_to_joint(jnt, lut, LUT_O);
+}
+
 static void virtex2_logic(ivl_net_logic_t net)
 {
       edif_cellref_t obj;
@@ -537,69 +588,34 @@ static void virtex2_logic(ivl_net_logic_t net)
 	    edif_add_to_joint(jnt, obj, BUF_I);
 	    break;
 
+	  case IVL_LO_AND:
+	    assert(ivl_logic_pins(net) <= 5);
+	    assert(ivl_logic_pins(net) >= 3);
+	    lut_logic(net, "8", "80", "8000");
+	    break;
+
+	  case IVL_LO_NOR:
+	    assert(ivl_logic_pins(net) <= 5);
+	    assert(ivl_logic_pins(net) >= 3);
+	    lut_logic(net, "1", "01", "0001");
+	    break;
+
 	  case IVL_LO_OR:
 	    assert(ivl_logic_pins(net) <= 5);
 	    assert(ivl_logic_pins(net) >= 3);
+	    lut_logic(net, "E", "FE", "FFFE");
+	    break;
 
-	    switch (ivl_logic_pins(net)) {
+	  case IVL_LO_XNOR:
+	    assert(ivl_logic_pins(net) <= 5);
+	    assert(ivl_logic_pins(net) >= 3);
+	    lut_logic(net, "9", "69", "9669");
+	    break;
 
-		case 3:
-		  check_cell_lut2();
-		  obj = edif_cellref_create(edf, cell_lut2);
-		  edif_cellref_pstring(obj, "INIT", "E");
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
-		  edif_add_to_joint(jnt, obj, LUT_O);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
-		  edif_add_to_joint(jnt, obj, LUT_I0);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
-		  edif_add_to_joint(jnt, obj, LUT_I1);
-		  break;
-
-		case 4:
-		  check_cell_lut3();
-		  obj = edif_cellref_create(edf, cell_lut3);
-		  edif_cellref_pstring(obj, "INIT", "FE");
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
-		  edif_add_to_joint(jnt, obj, LUT_O);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
-		  edif_add_to_joint(jnt, obj, LUT_I0);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
-		  edif_add_to_joint(jnt, obj, LUT_I1);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 3));
-		  edif_add_to_joint(jnt, obj, LUT_I2);
-		  break;
-
-		case 5:
-		  check_cell_lut4();
-		  obj = edif_cellref_create(edf, cell_lut4);
-		  edif_cellref_pstring(obj, "INIT", "FFFE");
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 0));
-		  edif_add_to_joint(jnt, obj, LUT_O);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 1));
-		  edif_add_to_joint(jnt, obj, LUT_I0);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 2));
-		  edif_add_to_joint(jnt, obj, LUT_I1);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 3));
-		  edif_add_to_joint(jnt, obj, LUT_I2);
-
-		  jnt = edif_joint_of_nexus(edf, ivl_logic_pin(net, 4));
-		  edif_add_to_joint(jnt, obj, LUT_I3);
-		  break;
-
-		default:
-		  assert(0);
-	    }
+	  case IVL_LO_XOR:
+	    assert(ivl_logic_pins(net) <= 5);
+	    assert(ivl_logic_pins(net) >= 3);
+	    lut_logic(net, "6", "96", "6996");
 	    break;
 
 	  default:
@@ -969,6 +985,162 @@ static void virtex2_add(ivl_lpm_t net)
 }
 
 /*
+ * This method handles both == and != operators, the identity
+ * comparison operators.
+ *
+ * If the identity compare is applied to small enough input vectors,
+ * it is shoved into a single LUT. Otherwise, it is strung out into a
+ * row of LUT devices chained together by carry muxes. The output of
+ * the comparison is the output of the last mux.
+ *
+ * When the compare is small, a LUT is generated with the appropriate
+ * truth table to cause an == or != result.
+ *
+ * When the compare is too wide for a single LUT, then it is made into
+ * a chain connected by a string of carry mux devices. Each LUT
+ * implements == for up to two pairs of bits, even if the final output
+ * is supposed to be !=. The LUT output is connected to an associated
+ * MUX select input. The CO output of each muxcy is passed up to the
+ * next higher order bits of the compare.
+ *
+ * For identity == compare, a != output from the LUT selects the DI
+ * input of the muxcy, generating a 0 output that is passed up. Since
+ * the next higher muxcy now gets a 0 input to both DI and CI, the
+ * output of the next higher muxcy is guaranteed to be 0, and so on to
+ * the final output of the carry chain. If the output from a LUT is ==,
+ * then the CI input of the muxcy is selected and the truth of this
+ * level depends on lower order bits. The least significan muxcy is
+ * connected to GND and VCC so that its CO follows the least
+ * significant LUT.
+ *
+ * Identity != is the same as == except that the output is
+ * inverted. To get that effect without putting an inverter on the
+ * output of the top muxcy pin CO (which would cost a LUT) the DI
+ * inputs are all connected to VCC instead of GND, and the CI of the
+ * least significant muxcy is connected to GND instead of VCC.
+ */
+static void virtex_eq(ivl_lpm_t net)
+{
+      edif_cellref_t lut, mux, mux_prev;
+      edif_joint_t jnt, jnt_di;
+      unsigned idx;
+
+	/* True if I'm implementing CMP_EQ instead of CMP_NE */
+      int eq = 1;
+
+      assert(ivl_lpm_width(net) >= 1);
+
+      if (ivl_lpm_type(net) == IVL_LPM_CMP_NE)
+	    eq = 0;
+
+      switch (ivl_lpm_width(net)) {
+
+	  case 1:
+	    check_cell_lut2();
+	    lut = edif_cellref_create(edf, cell_lut2);
+	    edif_cellref_pstring(lut, "INIT", eq? "9" : "6");
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+	    return;
+
+	  case 2:
+	    check_cell_lut4();
+	    lut = edif_cellref_create(edf, cell_lut4);
+	    edif_cellref_pstring(lut, "INIT", eq? "9009" : "6FF6");
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 0));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 1));
+	    edif_add_to_joint(jnt, lut, LUT_I2);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 1));
+	    edif_add_to_joint(jnt, lut, LUT_I3);
+	    return;
+
+	  default:
+	    check_cell_lut2();
+	    check_cell_lut4();
+	    check_cell_muxcy();
+
+	    { edif_cellref_t di;
+	      di = edif_cellref_create(edf, eq? cell_0 : cell_1);
+	      jnt_di = edif_joint_create(edf);
+	      edif_add_to_joint(jnt_di, di, 0);
+	    }
+
+	    mux_prev = 0;
+	    for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 2) {
+		  int subwid = 2;
+		  if ((idx + 1) == ivl_lpm_width(net))
+			subwid = 1;
+
+		  mux = edif_cellref_create(edf, cell_muxcy);
+		  if (subwid == 2) {
+			lut = edif_cellref_create(edf, cell_lut4);
+			edif_cellref_pstring(lut, "INIT", eq? "9009" : "6FF6");
+		  } else {
+			lut = edif_cellref_create(edf, cell_lut2);
+			edif_cellref_pstring(lut, "INIT", eq? "9" : "6");
+		  }
+
+		  jnt = edif_joint_create(edf);
+		  edif_add_to_joint(jnt, lut, LUT_O);
+		  edif_add_to_joint(jnt, mux, MUXCY_S);
+
+		  jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, idx));
+		  edif_add_to_joint(jnt, lut, LUT_I0);
+
+		  jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, idx));
+		  edif_add_to_joint(jnt, lut, LUT_I1);
+
+		  if (subwid > 1) {
+			jnt = edif_joint_of_nexus(edf,
+					       ivl_lpm_data(net, idx+1));
+			edif_add_to_joint(jnt, lut, LUT_I2);
+
+			jnt = edif_joint_of_nexus(edf,
+					       ivl_lpm_datab(net, idx+1));
+			edif_add_to_joint(jnt, lut, LUT_I3);
+		  }
+
+		  edif_add_to_joint(jnt_di, mux, MUXCY_DI);
+
+		  if (mux_prev) {
+			jnt = edif_joint_create(edf);
+			edif_add_to_joint(jnt, mux, MUXCY_CI);
+			edif_add_to_joint(jnt, mux_prev, MUXCY_O);
+		  } else {
+			edif_cellref_t ci;
+			ci = edif_cellref_create(edf, eq? cell_1 : cell_0);
+			jnt = edif_joint_create(edf);
+			edif_add_to_joint(jnt, ci, 0);
+			edif_add_to_joint(jnt, mux, MUXCY_CI);
+		  }
+
+		  mux_prev = mux;
+	    }
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
+	    edif_add_to_joint(jnt, mux_prev, MUXCY_O);
+	    return;
+      }
+}
+
+/*
  * Implement hardware for the device (A >= B). We use LUT devices if
  * it can handle the slices, or carry chain logic if the slices must
  * span LUT devices.
@@ -1139,8 +1311,8 @@ const struct device_s d_virtex2_edif = {
       virtex2_pad,
       virtex2_logic,
       virtex2_generic_dff,
-      0,
-      0,
+      virtex_eq,
+      virtex_eq,
       virtex2_cmp_ge,
       0,
       virtex2_add,
@@ -1152,6 +1324,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.8  2003/04/04 06:20:29  steve
+ *  Add == and some lut logic.
+ *
  * Revision 1.7  2003/04/04 04:59:03  steve
  *  Add xlibrary celltable.
  *
