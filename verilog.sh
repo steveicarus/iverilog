@@ -71,7 +71,7 @@ verilogFile=$@;
 # If no output file is given should we guess one or...?
 # Assumes a few silly things if several files are given
 if test -z "${outputFile}" ; then 
-    outputFile=`echo ${verilogFile} | sed -e 's;.* \(.*\)\..*;\1;'`;
+    outputFile=`echo ${verilogFile} | sed -e 's;\(.* \+\)*\(.*\)\..*;\2;'`;
     outputFile="${outputFile}${targetSuffix}" ;
 fi
 
