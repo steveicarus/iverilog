@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.20 2002/11/22 05:46:06 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.21 2002/11/24 02:26:14 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -528,7 +528,7 @@ static void wide_AND_logic(ivl_net_logic_t net, unsigned edif_uref)
 			  edif_uref, slice);
 	    } else {
 		  fprintf(xnf, "(net U%uMM%u (joined"
-			  " (portRef O (instanceReg U%uM%u))"
+			  " (portRef O (instanceRef U%uM%u))"
 			  " (portReg CI (instanceRef U%uM%u))))\n",
 			  edif_uref, slice,
 			  edif_uref, slice-1,
@@ -610,6 +610,7 @@ static void wide_AND_logic(ivl_net_logic_t net, unsigned edif_uref)
 	    sprintf(jbuf, "(portRef I2 (instanceRef U%uL%u))",
 		    edif_uref, slice);
 	    edif_set_nexus_joint(ivl_logic_pin(net, idx+2), jbuf);
+	    break;
 
 	  default:
 	    assert(0);
@@ -640,7 +641,7 @@ static void wide_AND_logic(ivl_net_logic_t net, unsigned edif_uref)
 	      edif_uref, slice);
 
       fprintf(xnf, "(net U%uMM%u (joined"
-	      " (portRef O (instanceReg U%uM%u))"
+	      " (portRef O (instanceRef U%uM%u))"
 	      " (portReg CI (instanceRef U%uM%u))))\n",
 	      edif_uref, slice,
 	      edif_uref, slice-1,
@@ -1907,6 +1908,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.21  2002/11/24 02:26:14  steve
+ *  Fix instanceRef spelling.
+ *
  * Revision 1.20  2002/11/22 05:46:06  steve
  *  Handle wide AND/NOR devices with Virtex carry logic.
  *
