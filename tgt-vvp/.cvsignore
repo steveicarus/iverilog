@@ -2,5 +2,6 @@ Makefile
 configure
 config.status
 config.log
+autom4te.cache
 dep
 vvp.tgt
