@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.8 2001/07/13 00:38:57 steve Exp $"
+#ident "$Id: arith.h,v 1.9 2001/10/16 02:47:37 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -43,10 +43,22 @@ class vvp_arith_  : public vvp_fobj_s {
 
 
 /*
- * This class is a mode-42 object for arithmetic sum. Inputs that come
- * in cause the 4-input summation to be calculated, and output
- * functors that are affected cause propagations.
+ * This class is a mode-42 object for arithmetic operators. Inputs
+ * that come in cause the 4-input summation to be calculated, and
+ * output functors that are affected cause propagations.
  */
+class vvp_arith_div  : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_div(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private: // not implemented
+      vvp_arith_div(const vvp_arith_div&);
+      vvp_arith_div& operator= (const vvp_arith_div&);
+};
+
 class vvp_arith_mult  : public vvp_arith_ {
 
     public:
@@ -147,6 +159,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.9  2001/10/16 02:47:37  steve
+ *  Add arith/div object.
+ *
  * Revision 1.8  2001/07/13 00:38:57  steve
  *  Remove width restriction on subtraction.
  *

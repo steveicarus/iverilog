@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.13 2001/10/14 17:36:18 steve Exp $"
+#ident "$Id: arith.cc,v 1.14 2001/10/16 02:47:37 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -46,6 +46,58 @@ void vvp_arith_::output_x_(bool push)
 		  functor_propagate(ptr);
 	    else
 		  schedule_functor(ptr, 0);
+      }
+}
+
+vvp_arith_div::vvp_arith_div(vvp_ipoint_t b, unsigned w)
+: vvp_arith_(b, w)
+{
+}
+
+void vvp_arith_div::set(vvp_ipoint_t i, functor_t f, bool push)
+{
+      if (wid_ <= 8*sizeof(unsigned long)) {
+	    unsigned long a = 0, b = 0;
+
+	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+		  vvp_ipoint_t ptr = ipoint_index(base_,idx);
+		  functor_t obj = functor_index(ptr);
+
+		  unsigned ival = obj->ival;
+		  if (ival & 0xaa) {
+			output_x_(push);
+			return;
+		  }
+
+		  if (ival & 0x01)
+			a += 1 << idx;
+		  if (ival & 0x04)
+			b += 1 << idx;
+
+	    }
+
+	    unsigned long sum = a / b;
+
+	    for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+		  vvp_ipoint_t ptr = ipoint_index(base_,idx);
+		  functor_t obj = functor_index(ptr);
+
+		  unsigned oval = sum & 1;
+		  sum >>= 1;
+
+		  if (obj->oval == oval)
+			continue;
+
+
+		  obj->oval = oval;
+		  if (push)
+			functor_propagate(ptr);
+		  else
+			schedule_functor(ptr, 0);
+	    }
+
+      } else {
+	    assert(0);
       }
 }
 
@@ -574,6 +626,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.14  2001/10/16 02:47:37  steve
+ *  Add arith/div object.
+ *
  * Revision 1.13  2001/10/14 17:36:18  steve
  *  Forgot to propagate carry.
  *

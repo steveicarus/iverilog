@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.26 2001/07/07 02:57:33 steve Exp $"
+#ident "$Id: lexor.lex,v 1.27 2001/10/16 02:47:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -66,6 +66,7 @@
 
 
   /* These are some keywords that are recognized. */
+".arith/div"  { return K_ARITH_DIV; }
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sum"  { return K_ARITH_SUM; }
@@ -148,6 +149,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.27  2001/10/16 02:47:37  steve
+ *  Add arith/div object.
+ *
  * Revision 1.26  2001/07/07 02:57:33  steve
  *  Add the .shift/r functor.
  *
