@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.88 2004/06/30 03:05:04 steve Exp $"
+#ident "$Id: stub.c,v 1.89 2004/09/25 01:57:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -668,6 +668,12 @@ static void show_signal(ivl_signal_t net)
 	  case IVL_SIT_TRI:
 	    type = "tri";
 	    break;
+	  case IVL_SIT_TRI0:
+	    type = "tri0";
+	    break;
+	  case IVL_SIT_TRI1:
+	    type = "tri1";
+	    break;
 	  case IVL_SIT_SUPPLY0:
 	    type = "supply0";
 	    break;
@@ -947,6 +953,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.89  2004/09/25 01:57:33  steve
+ *  Dump tri0 and tri1 nets.
+ *
  * Revision 1.88  2004/06/30 03:05:04  steve
  *  Dump variable type of system function.
  *
