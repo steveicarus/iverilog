@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.4 2001/09/01 02:28:42 steve Exp $"
+#ident "$Id: gates.c,v 1.5 2001/09/01 04:30:44 steve Exp $"
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -49,6 +49,10 @@ static void show_gate_logic(ivl_net_logic_t net)
 static void show_gate_lpm(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
+
+	  case IVL_LPM_ADD:
+	    device->show_add(net);
+	    break;
 
 	  case IVL_LPM_CMP_EQ:
 	    device->show_cmp_eq(net);
@@ -88,6 +92,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.5  2001/09/01 04:30:44  steve
+ *  Generic ADD code.
+ *
  * Revision 1.4  2001/09/01 02:28:42  steve
  *  Generate code for MUX devices.
  *

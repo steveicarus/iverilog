@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.6 2001/09/01 02:28:42 steve Exp $"
+#ident "$Id: d-generic.c,v 1.7 2001/09/01 04:30:44 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -301,17 +301,125 @@ static void generic_show_mux(ivl_lpm_t net)
       }
 }
 
+/*
+ * This code cheats and just generates ADD4 devices enough to support
+ * the add. Make no effort to optimize, because we have no idea what
+ * kind of device we have.
+ */
+static void generic_show_add(ivl_lpm_t net)
+{
+      char name[1024];
+      ivl_nexus_t nex;
+      unsigned idx, nadd4, tail;
+
+      mangle_lpm_name(net, name, sizeof name);
+
+	/* Make this many ADD4 devices. */
+      nadd4 = ivl_lpm_width(net) / 4;
+      tail  = ivl_lpm_width(net) % 4;
+
+      for (idx = 0 ;  idx < nadd4 ;  idx += 1) {
+	    fprintf(xnf, "SYM, %s/A%u, ADD4\n", name, idx);
+
+	    if (idx > 0)
+		  fprintf(xnf, "    PIN, CI, I, %s/CO%u\n", name, idx-1);
+
+	    nex = ivl_lpm_q(net, idx*4+0);
+	    draw_pin(nex, "S0", 'O');
+
+	    nex = ivl_lpm_q(net, idx*4+1);
+	    draw_pin(nex, "S1", 'O');
+
+	    nex = ivl_lpm_q(net, idx*4+2);
+	    draw_pin(nex, "S2", 'O');
+
+	    nex = ivl_lpm_q(net, idx*4+3);
+	    draw_pin(nex, "S3", 'O');
+
+	    nex = ivl_lpm_data(net, idx*4+0);
+	    draw_pin(nex, "A0", 'I');
+
+	    nex = ivl_lpm_data(net, idx*4+1);
+	    draw_pin(nex, "A1", 'I');
+
+	    nex = ivl_lpm_data(net, idx*4+2);
+	    draw_pin(nex, "A2", 'I');
+
+	    nex = ivl_lpm_data(net, idx*4+3);
+	    draw_pin(nex, "A3", 'I');
+
+	    nex = ivl_lpm_datab(net, idx*4+0);
+	    draw_pin(nex, "B0", 'I');
+
+	    nex = ivl_lpm_datab(net, idx*4+1);
+	    draw_pin(nex, "B1", 'I');
+
+	    nex = ivl_lpm_datab(net, idx*4+2);
+	    draw_pin(nex, "B2", 'I');
+
+	    nex = ivl_lpm_datab(net, idx*4+3);
+	    draw_pin(nex, "B3", 'I');
+
+	    if ((idx*4+4) < ivl_lpm_width(net))
+		  fprintf(xnf, "    PIN, CO, O, %s/CO%u\n", name, idx);
+
+	    fprintf(xnf, "END\n");
+      }
+
+      if (tail > 0) {
+	    fprintf(xnf, "SYM, %s/A%u, ADD4\n", name, nadd4);
+	    if (nadd4 > 0)
+		  fprintf(xnf, "    PIN, CI, I, %s/CO%u\n", name, nadd4-1);
+
+	    switch (tail) {
+		case 3:
+		  nex = ivl_lpm_data(net, nadd4*4+2);
+		  draw_pin(nex, "A2", 'I');
+
+		  nex = ivl_lpm_datab(net, nadd4*4+2);
+		  draw_pin(nex, "B2", 'I');
+
+		  nex = ivl_lpm_q(net, nadd4*4+2);
+		  draw_pin(nex, "S2", 'O');
+		case 2:
+		  nex = ivl_lpm_data(net, nadd4*4+1);
+		  draw_pin(nex, "A1", 'I');
+
+		  nex = ivl_lpm_datab(net, nadd4*4+1);
+		  draw_pin(nex, "B1", 'I');
+
+		  nex = ivl_lpm_q(net, nadd4*4+1);
+		  draw_pin(nex, "S1", 'O');
+		case 1:
+		  nex = ivl_lpm_data(net, nadd4*4+0);
+		  draw_pin(nex, "A0", 'I');
+
+		  nex = ivl_lpm_datab(net, nadd4*4+0);
+		  draw_pin(nex, "B0", 'I');
+
+		  nex = ivl_lpm_q(net, nadd4*4+0);
+		  draw_pin(nex, "S0", 'O');
+	    }
+
+	    fprintf(xnf, "END\n");
+      }
+}
+
 const struct device_s d_generic = {
       generic_show_logic,
       generic_show_dff,
       generic_show_cmp_eq,
       generic_show_cmp_eq,
-      generic_show_mux
+      generic_show_mux,
+      generic_show_add
 };
 
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.7  2001/09/01 04:30:44  steve
+ *  Generic ADD code.
+ *
  * Revision 1.6  2001/09/01 02:28:42  steve
  *  Generate code for MUX devices.
  *
