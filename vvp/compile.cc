@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.13 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: compile.cc,v 1.14 2001/03/25 03:54:26 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -71,6 +71,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
+      { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
@@ -111,6 +112,11 @@ static symbol_table_t sym_vpi = 0;
  * I need to save that reference and resolve it after the functors are
  * created. Use this structure to keep the unresolved references in an
  * unsorted singly linked list.
+ *
+ * The postpone_functor_input arranges for a functor input to be
+ * resolved and connected at cleanup. This is used if the symbol is
+ * defined after its use in a functor. The ptr parameter is the
+ * complete vvp_input_t for the input port.
  */
 struct resolv_list_s {
       struct resolv_list_s*next;
@@ -121,6 +127,19 @@ struct resolv_list_s {
 };
 
 static struct resolv_list_s*resolv_list = 0;
+
+static void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
+{
+      struct resolv_list_s*res = (struct resolv_list_s*)
+	    calloc(1, sizeof(struct resolv_list_s));
+
+      res->port    = ptr;
+      res->source = lab;
+      res->idx    = idx;
+      res->next   = resolv_list;
+      resolv_list = res;
+}
+
 
 /*
  * Instructions may make forward references to labels. In this case,
@@ -198,14 +217,10 @@ void compile_functor(char*label, char*type, unsigned init,
 		  free(argv[idx].text);
 
 	    } else {
-		  struct resolv_list_s*res = (struct resolv_list_s*)
-			calloc(1, sizeof(struct resolv_list_s));
+		  postpone_functor_input(ipoint_make(fdx, idx),
+					 argv[idx].text,
+					 argv[idx].idx);
 
-		  res->port = ipoint_make(fdx, idx);
-		  res->source = argv[idx].text;
-		  res->idx  = argv[idx].idx;
-		  res->next = resolv_list;
-		  resolv_list = res;
 	    }
       }
 
@@ -467,12 +482,18 @@ void compile_net(char*label, char*name, int msb, int lsb,
 	    functor_t obj = functor_index(ptr);
 
 	    val = sym_get_value(sym_functors, argv[idx].text);
-	    assert(val.num);
+	    if (val.num) {
 
-	    functor_t src = functor_index(ipoint_index(val.num,
-						       argv[idx].idx));
-	    obj->port[0] = src->out;
-	    src->out = ptr;
+		  functor_t src = functor_index(ipoint_index(val.num,
+							     argv[idx].idx));
+		  obj->port[0] = src->out;
+		  src->out = ptr;
+
+	    } else {
+		  postpone_functor_input(ipoint_make(ptr, 0),
+					 argv[idx].text,
+					 argv[idx].idx);
+	    }
       }
 
 	/* Make the vpiHandle for the reg. */
@@ -566,6 +587,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.14  2001/03/25 03:54:26  steve
+ *  Add JMP0XZ and postpone net inputs when needed.
+ *
  * Revision 1.13  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.10 2001/03/23 04:56:03 steve Exp $"
+#ident "$Id: vthread.cc,v 1.11 2001/03/25 03:54:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -195,6 +195,13 @@ bool of_JMP0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
+{
+      if (thr_get_bit(thr, cp->bit_idx1) != 1)
+	    thr->pc = cp->cptr;
+      return true;
+}
+
 bool of_LOAD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
@@ -244,6 +251,9 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.11  2001/03/25 03:54:26  steve
+ *  Add JMP0XZ and postpone net inputs when needed.
+ *
  * Revision 1.10  2001/03/23 04:56:03  steve
  *  eq is x if either value of cmp/u has x or z.
  *
