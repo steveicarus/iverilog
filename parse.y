@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.187 2004/01/13 02:55:50 steve Exp $"
+#ident "$Id: parse.y,v 1.188 2004/01/21 03:37:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,7 +171,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mport> port_declaration
-%type <mports> list_of_ports list_of_ports_opt list_of_port_declarations
+%type <mports> list_of_ports module_port_list_opt list_of_port_declarations
 
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> function_item function_item_list
@@ -1303,6 +1303,27 @@ port_declaration
 		  delete $6;
 		  $$ = ptmp;
 		}
+	| attribute_list_opt
+          K_output var_type signed_opt range_opt IDENTIFIER '=' expression
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($6, @2.text,
+						     @2.first_line);
+		  pform_module_define_port(@2, $6, NetNet::POUTPUT,
+					   $3, $4, $5, $1);
+		  port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.port_net_type = $3;
+		  port_declaration_context.sign_flag = $4;
+		  port_declaration_context.range = $5;
+
+		  if (! pform_expression_is_constant($8))
+			yyerror(@8, "error: register declaration assignment"
+				" value must be a constant expression.");
+		  pform_make_reginit(@6, $6, $8);
+
+		  delete $1;
+		  delete $6;
+		  $$ = ptmp;
+		}
 	;
 
 
@@ -1310,12 +1331,6 @@ port_declaration
 net_type_opt
 	: net_type { $$ = $1; }
 	| { $$ = NetNet::IMPLICIT; }
-	;
-
-list_of_ports_opt
-	: '(' list_of_ports ')' { $$ = $2; }
-	| '(' list_of_port_declarations ')' { $$ = $2; }
-	|                       { $$ = 0; }
 	;
 
 signed_opt : K_signed { $$ = true; } | {$$ = false; } ;
@@ -1431,7 +1446,7 @@ assign_list
 module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
           module_parameter_port_list_opt
-	  list_of_ports_opt ';'
+	  module_port_list_opt ';'
 		{ pform_module_set_ports($6); }
 	  module_item_list_opt
 	  K_endmodule
@@ -1445,6 +1460,12 @@ module_start : K_module | K_macromodule ;
 
 range_delay : range_opt delay3_opt
 		{ $$.range = $1; $$.delay = $2; }
+	;
+
+module_port_list_opt
+	: '(' list_of_ports ')' { $$ = $2; }
+	| '(' list_of_port_declarations ')' { $$ = $2; }
+	|                       { $$ = 0; }
 	;
 
   /* Module declarations include optional ANSII style module parameter
