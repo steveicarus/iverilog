@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.5 2003/03/31 00:25:19 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.6 2003/03/31 01:34:19 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -774,7 +774,7 @@ static void virtex2_show_shiftl(ivl_lpm_t net)
       for (sdx = 1 ;  sdx < nsel ;  sdx += 1) {
 
 	    for (qdx = 0 ;  qdx < width ;  qdx += 1) {
-		  unsigned shift = 1 << (sdx - 1);
+		  unsigned shift = 1 << sdx;
 		  edif_joint_t jnt0 = edif_joint_create(edf);
 		  edif_joint_t jnt1 = (qdx >= shift)
 			? edif_joint_create(edf)
@@ -1142,6 +1142,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.6  2003/03/31 01:34:19  steve
+ *  Wide shift of MUX was wrong.
+ *
  * Revision 1.5  2003/03/31 00:25:19  steve
  *  Fix wrong input constant to bottom of GE.
  *
