@@ -17,43 +17,113 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.5 2003/04/12 18:57:14 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.6 2003/05/27 16:22:10 steve Exp $"
 #endif
 
 #include  <veriuser.h>
 #include  <vpi_user.h>
+#include  <stdlib.h>
+#include  <math.h>
 
 /*
- * tf_getlongtime implemented using VPI interface
+ * some TF time routines implemented using VPI interface
  */
-int tf_getlongtime(int *hightime)
-{
-      s_vpi_time time;
-      time.type = vpiSimTime;
-      vpi_get_time (0 /* NULL */, &time);
-      *hightime = time.high;
-      return time.low;
+
+static long long
+scale(int high, int low, char *obj) {
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      long long scaled;
+
+      scaled = high;
+      scaled = (scaled << 32) | low;
+      scaled *= pow(10, vpi_get(vpiTimePrecision,0) -
+			vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand));
+
+      return scaled;
 }
 
-/* Alias for commercial simulators */
-int tf_getlongsimtime(int *hightime) \
-      __attribute__ ((weak, alias ("tf_getlongtime")));
-
-PLI_INT32 tf_igettimeprecision(void*obj)
-{
-      return vpi_get(vpiTimePrecision, 0);
-}
 
 PLI_INT32 tf_gettime(void)
 {
       s_vpi_time time;
       time.type = vpiSimTime;
-      vpi_get_time (0 /* NULL */, &time);
-      return time.low;
+      vpi_get_time (0, &time);
+      return scale(time.high, time.low, 0) & 0xffffffff;
 }
+
+char *tf_strgettime(void)
+{
+      static char buf[32];
+      s_vpi_time time;
+
+      time.type = vpiSimTime;
+      vpi_get_time (0, &time);
+      if (time.high)
+	    snprintf(buf, sizeof(buf)-1, "%u%08u", time.high, time.low);
+      else
+	    snprintf(buf, sizeof(buf)-1, "%u", time.low);
+      return buf;
+}
+
+PLI_INT32 tf_getlongtime(PLI_INT32 *high)
+{
+      s_vpi_time time;
+      long long scaled;
+      time.type = vpiSimTime;
+      vpi_get_time (0, &time);
+      scaled = scale(time.high, time.low, 0);
+
+      *high = (scaled >> 32) & 0xffffffff;
+      return scaled & 0xffffffff;
+}
+
+PLI_INT32 tf_igetlongtime(PLI_INT32 *high, char *obj)
+{
+      s_vpi_time time;
+      long long scaled;
+      time.type = vpiSimTime;
+      vpi_get_time ((vpiHandle)obj, &time);
+      scaled = scale(time.high, time.low, obj);
+
+      *high = (scaled >> 32) & 0xffffffff;
+      return scaled & 0xffffffff;
+}
+
+/* Alias for commercial simulators */
+PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) \
+      __attribute__ ((weak, alias ("tf_getlongtime")));
+
+
+PLI_INT32 tf_gettimeprecision(void)
+{
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      return vpi_get(vpiTimePrecision, hand);
+}
+
+PLI_INT32 tf_igettimeprecision(void*obj)
+{
+      vpiHandle hand = vpi_handle(vpiScope, (vpiHandle)obj);
+      return vpi_get(vpiTimePrecision, hand);
+}
+
+
+PLI_INT32 tf_gettimeunit()
+{
+      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+      return vpi_get(vpiTimeUnit, hand);
+}
+
+PLI_INT32 tf_igettimeunit(char *obj)
+{
+      return vpi_get(!obj ? vpiTimePrecision : vpiTimeUnit, (vpiHandle)obj);
+}
+
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.6  2003/05/27 16:22:10  steve
+ *  PLI get time units/precision.
+ *
  * Revision 1.5  2003/04/12 18:57:14  steve
  *  More acc_ function stubs.
  *

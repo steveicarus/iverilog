@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.29 2003/03/14 05:01:22 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.30 2003/05/27 16:22:10 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -67,6 +67,8 @@ static int scope_get(int code, vpiHandle obj)
       switch (code) {
 	  case vpiTimeUnit:
 	    return ref->time_units;
+	  case vpiTimePrecision:
+	    return vpip_get_time_precision();
       }
 
       return 0;
@@ -463,6 +465,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.30  2003/05/27 16:22:10  steve
+ *  PLI get time units/precision.
+ *
  * Revision 1.29  2003/03/14 05:01:22  steve
  *  vpiModule handle of scope is parent scope.
  *
