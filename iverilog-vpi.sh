@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.7 2002/09/18 23:25:18 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.8 2002/09/24 01:50:53 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -113,4 +113,4 @@ then
 fi
 
 echo "Making $OUT from $OBJ..."
-exec $LD -o $OUT $LDFLAGS $OBJ $LDLIBS
+exec $LD -o $OUT $LDFLAGS $OBJ $LIB $LDLIBS
