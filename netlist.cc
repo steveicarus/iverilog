@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.163 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: netlist.cc,v 1.164 2001/07/01 00:27:34 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -185,6 +185,19 @@ NetObj::NetObj(NetScope*s, const string&n, unsigned np)
       }
 }
 
+NetObj::NetObj(NetScope*s, const char*n, unsigned np)
+: scope_(s), npins_(np), delay1_(0), delay2_(0), delay3_(0)
+{
+      name_ = new char[strlen(n)+1];
+      strcpy(name_, n);
+
+      pins_ = new Link[npins_];
+      for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+	    pins_[idx].node_ = this;
+	    pins_[idx].pin_  = idx;
+      }
+}
+
 NetObj::~NetObj()
 {
       delete[]name_;
@@ -255,6 +268,11 @@ NetNode::NetNode(const string&n, unsigned npins)
 }
 
 NetNode::NetNode(NetScope*s, const string&n, unsigned npins)
+: NetObj(s, n, npins), node_next_(0), node_prev_(0), design_(0)
+{
+}
+
+NetNode::NetNode(NetScope*s, const char*n, unsigned npins)
 : NetObj(s, n, npins), node_next_(0), node_prev_(0), design_(0)
 {
 }
@@ -492,7 +510,7 @@ const NetScope* NetProcTop::scope() const
  *     ...
  */
 
-NetFF::NetFF(NetScope*s, const string&n, unsigned wid)
+NetFF::NetFF(NetScope*s, const char*n, unsigned wid)
 : NetNode(s, n, 8 + 2*wid)
 {
       pin_Clock().set_dir(Link::INPUT);
@@ -2323,6 +2341,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.164  2001/07/01 00:27:34  steve
+ *  Make NetFF constructor take const char* for the name.
+ *
  * Revision 1.163  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

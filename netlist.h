@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.209 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: netlist.h,v 1.210 2001/07/01 00:27:34 steve Exp $"
 #endif
 
 /*
@@ -81,6 +81,7 @@ class NetObj {
     public:
       explicit NetObj(const string&n, unsigned npins);
       explicit NetObj(NetScope*s, const string&n, unsigned npins);
+      explicit NetObj(NetScope*s, const char*n, unsigned npins);
       virtual ~NetObj();
 
       NetScope* scope();
@@ -281,6 +282,7 @@ class NetNode  : public NetObj {
 
     public:
       explicit NetNode(NetScope*s, const string&n, unsigned npins);
+      explicit NetNode(NetScope*s, const char*n, unsigned npins);
       explicit NetNode(const string&n, unsigned npins);
 
       virtual ~NetNode();
@@ -590,7 +592,7 @@ class NetModulo  : public NetNode {
 class NetFF  : public NetNode {
 
     public:
-      NetFF(NetScope*s, const string&n, unsigned width);
+      NetFF(NetScope*s, const char*n, unsigned width);
       ~NetFF();
 
       unsigned width() const;
@@ -2809,6 +2811,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.210  2001/07/01 00:27:34  steve
+ *  Make NetFF constructor take const char* for the name.
+ *
  * Revision 1.209  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
