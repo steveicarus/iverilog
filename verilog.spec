@@ -38,6 +38,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/man/man1/vvp.1.gz
 
 %attr(-,root,root) /usr/bin/iverilog
+%attr(-,root,root) /usr/bin/iverilog-vpi
 %attr(-,root,root) /usr/bin/vvp
 %attr(-,root,root) /usr/lib/ivl/ivl
 %attr(-,root,root) /usr/lib/ivl/ivlpp
