@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.46 2002/11/09 06:01:11 steve Exp $"
+#ident "$Id: sys_display.c,v 1.47 2002/12/21 19:41:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -113,95 +113,157 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
       }
 }
 
-static void format_time(unsigned mcd, int fsize, const char*value)
+/*
+ * This function writes the time value into the mcd target with the
+ * proper format. The mcd is the destination file.
+ *
+ * The fsize is the width of the field to use. Normally, this is -1 to
+ * reflect the format string "%t". It may also be 0 for the format
+ * string "%0t". This formatter also allows for the nonstandard use of
+ * positive values to enforce a with to override the width given in
+ * the $timeformat system task.
+ *
+ * The value argument is the time value as a decimal string. There are
+ * no leading zeros in this string, and the units of the value are
+ * given in the units argument.
+ */
+static void format_time(unsigned mcd, int fsize,
+			const char*value, int time_units)
 {
       char buf[256];
       const char*cp;
-      char*bp;
-      unsigned len;
+      char*bp, *start_address;
 
-      int idx, idx_point, idx_start, idx_value;
+      int idx;
+      int fraction_chars, fraction_pad, value_chop, whole_fill;
 
-	/* This is the time precision for the simulation. */
-      int prec = vpi_get(vpiTimePrecision, 0);
+	/* This is the format precision expressed as the power of 10
+	   of the desired precision. The following code uses this
+	   format to be consistent with the units specifications. */
+      int format_precision = timeformat_info.units - timeformat_info.prec;
 
+	/* If the fsize is <0, then use the value from the
+	   $timeformat. If the fsize is >=0, then it overrides the
+	   $timeformat value. */
       if (fsize < 0)
 	    fsize = timeformat_info.width;
 
-	/* bp starts at the end of the buffer, and works forward as we
-	   build up the output value. */
-      bp = buf + sizeof buf;
+      assert(fsize < (sizeof buf - 1));
 
-	/* cp points to digits of the value, starting with the least
-	   significant. If the value is only '0', then short circuit
-	   the value by setting cp = value. */
-      if (value[0] != '0')
-	    cp = value + strlen(value);
+
+	/* This is the number of characters to the right of the
+	   decimal point. This is defined completely by the
+	   timeformat. It is legal for the precision to be larger then
+	   the units, and in this case there will be no fraction_chars
+	   at all. */
+      fraction_chars = timeformat_info.units - format_precision;
+      if (fraction_chars < 0)
+	    fraction_chars = 0;
+
+	/* This is the number of zeros I must add to the value to get
+	   the desired precision within the fraction. If this value is
+	   greater then 0, the value does not have enough characters,
+	   so I will be adding zeros. */
+
+      fraction_pad = time_units - format_precision;
+      if (fraction_pad < 0)
+	    fraction_pad = 0;
+      if (fraction_pad > fraction_chars)
+	    fraction_pad = fraction_chars;
+
+
+	/* This is the number of characters of excess precision in the
+	   supplied value. This many characters are chopped from the
+	   least significant end. */
+      value_chop = format_precision - time_units;
+      if (value_chop < 0)
+	    value_chop = 0;
+
+	/* This is the number of zeros that I must add to the integer
+	   part of the output string to pad the value out to the
+	   desired units. This will only have a non-zero value if the
+	   units of the value is greater then the desired units.
+
+	   Detect the special case where the value is 0. In this case,
+	   do not do any integer filling ever. The output should be
+	   padded with blanks in that case. */
+      whole_fill = time_units - timeformat_info.units;
+      if (whole_fill < 0)
+	    whole_fill = 0;
+      if (strcmp(value,"0") == 0)
+	    whole_fill = 0;
+
+	/* This is the expected start address of the output. It
+	   accounts for the fsize value that is chosen. The output
+	   will be filled out to complete the buffer. */
+      if (fsize == 0)
+	    start_address = buf;
       else
+	    start_address = buf + sizeof buf - fsize - 1;
+
+	/* Now start the character pointers, ready to start copying
+	   the value into the format. */
+      cp = value + strlen(value);
+      if (value_chop > (cp - value))
 	    cp = value;
+      else
+	    cp -= value_chop;
 
-
-	/* Draw the suffix into the buffer. */
+      bp = buf + sizeof buf;
       *--bp = 0;
+
+
+	/* Write the suffix. */
       bp -= strlen(timeformat_info.suff);
       strcpy(bp, timeformat_info.suff);
 
-	/* This is the precision index where the decimal point goes. */
-      idx_point = timeformat_info.units;
-
-	/* This is the precision index where we start drawing digits. */
-      idx_start =  idx_point - (int)timeformat_info.prec;
-
-	/* This is the precision index where the integer time value
-	   digits start. */
-      idx_value = prec;
-
-      idx = idx_start;
-      if (idx > idx_value)
-	    idx = idx_value;
-
-	/* If we want no precision, then set idx_point to a high value
-	   so that the '.' is never printed. */
-      if (timeformat_info.prec == 0)
-	    idx_point = idx - 1;
-
-	/* Now build up the time string, from the least significant
-	   digit up to the last. */
-      while ((cp > value) || (idx <= idx_point)) {
-
-	    if (idx == idx_point) {
-		  *--bp = '.';
-	    }
-
-	    if (idx >= idx_start) {
-
-		  if (idx < idx_value) {
-			*--bp = '0';
-		  } else if (cp > value) {
-			*--bp = cp[-1];
-		  } else {
-			*--bp = '0';
-		  }
-
-	    }
-
-	    if ((idx >= idx_value) && (cp > value))
-		  cp -= 1;
-
-	    idx += 1;
-      }
-
-	/* Patch up cases that need a leading 0. */
-      if ((*bp == '.') || (idx == idx_start))
+	/* Write the padding needed to fill out the fraction. */
+      for (idx = 0 ;  idx < fraction_pad ;  idx += 1)
 	    *--bp = '0';
 
-	/* Pad the string on the left to the requested minimum
-	   width. Pad with spaces. */
-      len = strlen(bp);
-      while (len < fsize) {
-	    *--bp = ' ';
-	    len += 1;
+	/* Subtract the pad from the needed chars. */
+      assert(fraction_pad <= fraction_chars);
+      fraction_chars -= fraction_pad;
+      fraction_pad = 0;
+
+	/* Write the fraction chars. */
+      for (idx = 0 ;  idx < fraction_chars ;  idx += 1) {
+	    if (cp > value)
+		  *--bp = *--cp;
+	    else
+		  *--bp = '0';
+
+	    assert(cp >= value);
       }
+
+	/* Write the decimal point, if needed. */
+      if (timeformat_info.prec > 0)
+	    *--bp = '.';
+
+	/* Fill the gap between the value and the decimal point. */
+      for (idx = 0 ;  idx < whole_fill ;  idx += 1)
+	    *--bp = '0';
+
+	/* Write the integer part of the value. */
+      while (cp > value) {
+	    *--bp = *--cp;
+      }
+
+	/* Fill the leading characters to make up the desired
+	   width. This may require a '0' if the last character
+	   written was the decimal point. */
+      if (fsize > 0) {
+	    while (bp > start_address) {
+		  if (*bp == '.')
+			*--bp = '0';
+		  else
+			*--bp = ' ';
+	    }
+      } else {
+	    if (*bp == '.')
+		  *--bp = '0';
+      }
+	    
 
       vpi_mcd_printf(mcd, "%s", bp);
 }
@@ -305,6 +367,8 @@ static int format_str(vpiHandle scope, unsigned int mcd,
       char*cp = fmt;
       char format_char = ' ';
       int idx;
+	/* Time units of the current scope. */
+      int time_units = vpi_get(vpiTimeUnit, scope);
 
       assert(fmt);
 
@@ -499,7 +563,8 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 				  break;
 
 			      case 't':
-				format_time(mcd, fsize, value.value.str);
+				format_time(mcd, fsize,
+					    value.value.str, time_units);
 				break;
 
 			      case 'd':
@@ -1229,6 +1294,8 @@ static int sys_timeformat_calltf(char *xx)
 
 static int sys_end_of_compile(p_cb_data cb_data)
 {
+	/* The default timeformat prints times in unit of simulation
+	   precision. */
       timeformat_info.suff  = strdup("");
       timeformat_info.units = vpi_get(vpiTimePrecision, 0);
       timeformat_info.prec  = 0;
@@ -1484,6 +1551,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.47  2002/12/21 19:41:49  steve
+ *  Rewrite time formatting to account for local scope.
+ *
  * Revision 1.46  2002/11/09 06:01:11  steve
  *  display octal escapes properly.
  *
