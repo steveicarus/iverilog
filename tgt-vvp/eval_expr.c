@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.61 2002/05/30 01:57:23 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.62 2002/05/31 20:04:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -554,25 +554,40 @@ static int number_is_unknown(ivl_expr_t ex)
       return 0;
 }
 
-static struct vector_info draw_add_immediate(ivl_expr_t le,
-					     ivl_expr_t re,
-					     unsigned wid)
+/*
+ * This function returns TRUE if the number can be represented in a
+ * 16bit immediate value. This amounts to looking for non-zero bits
+ * above bitX. The maximum size of the immediate may vary, so use
+ * lim_wid at the width limit to use.
+ */
+static int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
 {
-      struct vector_info lv;
+      const char*bits;
+      unsigned idx;
+
+      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
+
+      bits = ivl_expr_bits(ex);
+      for (idx = lim_wid ;  idx < ivl_expr_width(ex) ;  idx += 1)
+	    if (bits[idx] != '0')
+		  return 0;
+
+      return 1;
+}
+
+static unsigned long get_number_immediate(ivl_expr_t ex)
+{
       unsigned long imm = 0;
       unsigned idx;
 
-      lv = draw_eval_expr_wid(le, wid);
-      assert(lv.wid == wid);
-
-      switch (ivl_expr_type(re)) {
+      switch (ivl_expr_type(ex)) {
 	  case IVL_EX_ULONG:
-	    imm = ivl_expr_uvalue(re);
+	    imm = ivl_expr_uvalue(ex);
 	    break;
 
 	  case IVL_EX_NUMBER: {
-		const char*bits = ivl_expr_bits(re);
-		unsigned nbits = ivl_expr_width(re);
+		const char*bits = ivl_expr_bits(ex);
+		unsigned nbits = ivl_expr_width(ex);
 		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
 		    case '0':
 		      break;
@@ -588,6 +603,21 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 	  default:
 	    assert(0);
       }
+
+      return imm;
+}
+
+static struct vector_info draw_add_immediate(ivl_expr_t le,
+					     ivl_expr_t re,
+					     unsigned wid)
+{
+      struct vector_info lv;
+      unsigned long imm;
+
+      lv = draw_eval_expr_wid(le, wid);
+      assert(lv.wid == wid);
+
+      imm = get_number_immediate(re);
 
 	/* Now generate enough %addi instructions to add the entire
 	   immediate value to the destination. The adds are done 16
@@ -613,6 +643,23 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
       return lv;
 }
 
+static struct vector_info draw_mul_immediate(ivl_expr_t le,
+					     ivl_expr_t re,
+					     unsigned wid)
+{
+      struct vector_info lv;
+      unsigned long imm;
+
+      lv = draw_eval_expr_wid(le, wid);
+      assert(lv.wid == wid);
+
+      imm = get_number_immediate(re);
+
+      fprintf(vvp_out, "    %%muli %u, %lu, %u;\n", lv.base, imm, lv.wid);
+
+      return lv;
+}
+
 static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
@@ -629,9 +676,15 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
       if ((ivl_expr_opcode(exp) == '+')
 	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
-	  && (ivl_expr_width(re) <= 8 * sizeof(unsigned long))
-	  && (! number_is_unknown(re)))
+	  && (! number_is_unknown(re))
+	  && number_is_immediate(re, 8*sizeof(unsigned long)))
 	    return draw_add_immediate(le, re, wid);
+
+      if ((ivl_expr_opcode(exp) == '*')
+	  && (ivl_expr_type(re) == IVL_EX_NUMBER)
+	  && (! number_is_unknown(re))
+	  && number_is_immediate(re, 16))
+	    return draw_mul_immediate(le, re, wid);
 
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
@@ -1595,6 +1648,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.62  2002/05/31 20:04:57  steve
+ *   Generate %muli instructions when possible.
+ *
  * Revision 1.61  2002/05/30 01:57:23  steve
  *  Use addi with wide immediate values.
  *
