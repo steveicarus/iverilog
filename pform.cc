@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.112 2003/04/14 03:39:15 steve Exp $"
+#ident "$Id: pform.cc,v 1.113 2003/04/28 17:50:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -950,7 +950,8 @@ void pform_module_define_port(const struct vlltype&li,
  * function is called for every declaration.
  */
 void pform_makewire(const vlltype&li, const char*nm,
-		    NetNet::Type type, svector<named_pexpr_t*>*attr)
+		    NetNet::Type type, NetNet::PortType pt,
+		    svector<named_pexpr_t*>*attr)
 {
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
@@ -977,7 +978,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 	    return;
       }
 
-      cur = new PWire(name, type, NetNet::NOT_A_PORT);
+      cur = new PWire(name, type, pt);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
 
@@ -996,13 +997,14 @@ void pform_makewire(const vlltype&li,
 		    bool signed_flag,
 		    list<char*>*names,
 		    NetNet::Type type,
+		    NetNet::PortType pt,
 		    svector<named_pexpr_t*>*attr)
 {
       for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    char*txt = *cur;
-	    pform_makewire(li, txt, type, attr);
+	    pform_makewire(li, txt, type, pt, attr);
 	    pform_set_net_range(txt, range, signed_flag);
 	    free(txt);
       }
@@ -1026,7 +1028,7 @@ void pform_makewire(const vlltype&li,
       while (first) {
 	    net_decl_assign_t*next = first->next;
 
-	    pform_makewire(li, first->name, type, 0);
+	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, 0);
 	    pform_set_net_range(first->name, range, signed_flag);
 
 	    hname_t name = hier_name(first->name);
@@ -1464,6 +1466,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.113  2003/04/28 17:50:57  steve
+ *  More 2001 port declaration support.
+ *
  * Revision 1.112  2003/04/14 03:39:15  steve
  *  Break sized constants into a size token
  *  and a based numeric constant.

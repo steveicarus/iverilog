@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.69 2003/04/14 03:39:15 steve Exp $"
+#ident "$Id: pform.h,v 1.70 2003/04/28 17:50:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -157,7 +157,7 @@ extern verinum* pform_verinum_with_size(verinum*s, verinum*val,
  * go into a module that is currently opened.
  */
 extern void pform_makewire(const struct vlltype&li, const char*name,
-			   NetNet::Type type,
+			   NetNet::Type type, NetNet::PortType pt,
 			   svector<named_pexpr_t*>*attr);
 
 extern void pform_makewire(const struct vlltype&li,
@@ -165,6 +165,7 @@ extern void pform_makewire(const struct vlltype&li,
 			   bool signed_flag,
 			   list<char*>*names,
 			   NetNet::Type type,
+			   NetNet::PortType,
 			   svector<named_pexpr_t*>*attr);
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
@@ -279,6 +280,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.70  2003/04/28 17:50:57  steve
+ *  More 2001 port declaration support.
+ *
  * Revision 1.69  2003/04/14 03:39:15  steve
  *  Break sized constants into a size token
  *  and a based numeric constant.

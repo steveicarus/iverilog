@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.176 2003/04/25 02:28:53 steve Exp $"
+#ident "$Id: parse.y,v 1.177 2003/04/28 17:50:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1424,7 +1424,8 @@ range_delay : range_opt delay3_opt
 
 module_item
 	: attribute_list_opt net_type signed_opt range_delay list_of_identifiers ';'
-		{ pform_makewire(@2, $4.range, $3, $5, $2, $1);
+		{ pform_makewire(@2, $4.range, $3, $5, $2,
+				 NetNet::NOT_A_PORT, $1);
 		  if ($4.delay != 0) {
 			yyerror(@4, "sorry: net delays not supported.");
 			delete $4.delay;
@@ -1457,6 +1458,33 @@ module_item
 	| port_type signed_opt range_delay list_of_identifiers ';'
 		{ pform_set_port_type(@1, $4, $3.range, $2, $1);
 		}
+
+  /* The next two rules handle Verilog 2001 statements of the form:
+       input wire signed [h:l] <list>;
+     This creates the wire and sets the port type all at once. */
+
+	| port_type net_type signed_opt range_opt list_of_identifiers ';'
+		{ pform_makewire(@1, $4, $3, $5, $2, $1, 0);
+		}
+
+	| K_output var_type signed_opt range_opt list_of_identifiers ';'
+		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::POUTPUT, 0);
+		}
+
+  /* var_type declaration (reg variables) cannot be input or output,
+     because the port declaration implies an external driver, which
+     cannot be attached to a reg. These rules catch that error early. */
+
+	| K_input var_type signed_opt range_opt list_of_identifiers ';'
+		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINPUT, 0);
+		  yyerror(@2, "error: reg variables cannot be inputs.");
+		}
+
+	| K_inout var_type signed_opt range_opt list_of_identifiers ';'
+		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINOUT, 0);
+		  yyerror(@2, "error: reg variables cannot be inouts.");
+		}
+
 	| port_type signed_opt range_delay error ';'
 		{ yyerror(@3, "error: Invalid variable list"
 			  " in port declaration.");
@@ -1464,7 +1492,14 @@ module_item
 		  if ($3.delay) delete $3.delay;
 		  yyerrok;
 		}
+
+  /* block_item_decl rule is shared with task blocks and named
+     begin/end. */
+
 	| block_item_decl
+
+  /* */
+
 	| K_defparam defparam_assign_list ';'
 	| K_event list_of_identifiers ';'
 		{ pform_make_events($2, @1.text, @1.first_line);
@@ -2065,11 +2100,13 @@ range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
 	: IDENTIFIER
-		{ pform_makewire(@1, $1, NetNet::REG, 0);
+		{ pform_makewire(@1, $1, NetNet::REG,
+				 NetNet::NOT_A_PORT, 0);
 		  $$ = $1;
 		}
 	| IDENTIFIER '=' expression
-		{ pform_makewire(@1, $1, NetNet::REG, 0);
+		{ pform_makewire(@1, $1, NetNet::REG,
+				 NetNet::NOT_A_PORT, 0);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "error: register declaration assignment"
 				" value must be a constant expression.");
@@ -2077,7 +2114,8 @@ register_variable
 		  $$ = $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ pform_makewire(@1, $1, NetNet::REG, 0);
+		{ pform_makewire(@1, $1, NetNet::REG,
+				 NetNet::NOT_A_PORT, 0);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "error: msb of register range must be constant.");
 		  if (! pform_expression_is_constant($5))
