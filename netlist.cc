@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.132 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.133 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -163,7 +163,7 @@ Link* find_next_output(Link*lnk)
 }
 
 NetObj::NetObj(const string&n, unsigned np)
-: name_(n), npins_(np), delay1_(0), delay2_(0), delay3_(0), mark_(false)
+: name_(n), npins_(np), delay1_(0), delay2_(0), delay3_(0)
 {
       pins_ = new Link[npins_];
       for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
@@ -274,10 +274,20 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 {
       assert(scope_);
 
-      ivalue_ = new verinum::V[npins];
+      verinum::V init_value = verinum::Vz;
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	  case INTEGER:
+	    init_value = verinum::Vx;
+	    break;
+	  default:
+	    break;
+      }
+
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
-	    ivalue_[idx] = verinum::Vz;
+	    pin(idx).set_init(init_value);
       }
 
       scope_->add_signal(this);
@@ -291,10 +301,20 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 {
       assert(scope_);
 
-      ivalue_ = new verinum::V[pin_count()];
+      verinum::V init_value = verinum::Vz;
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	  case INTEGER:
+	    init_value = verinum::Vx;
+	    break;
+	  default:
+	    break;
+      }
+
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_name("P", idx);
-	    ivalue_[idx] = verinum::Vz;
+	    pin(idx).set_init(init_value);
       }
 
       scope_->add_signal(this);
@@ -2438,6 +2458,14 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.133  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.132  2000/07/07 04:53:54  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and

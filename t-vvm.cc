@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.161 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.162 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1098,8 +1098,10 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 		  "].connect(&" << net_name << ", " << idx << ");" << endl;
 
 	      // Propogate the initial value to inputs throughout.
-	    if (new_nexus_flag)
-		  emit_init_value_(sig->pin(idx), sig->get_ival(idx));
+	    if (new_nexus_flag) {
+		  verinum::V init = sig->pin(idx).nexus()->get_init();
+		  emit_init_value_(sig->pin(idx), init);
+	    }
       }
 
       os << "static vvm_signal_t " << net_name << ";" << endl;
@@ -1125,9 +1127,10 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	   to the inputs of all the connected devices. */
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
 
+	    verinum::V init = sig->pin(idx).nexus()->get_init();
 	    init_code << "      " << mangle(sig->name()) << ".init_P("
 		      << idx << ", ";
-	    switch (sig->get_ival(idx)) {
+	    switch (init) {
 		case verinum::V0:
 		  init_code << "St0";
 		  break;
@@ -3083,6 +3086,14 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.162  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.161  2000/07/07 04:53:54  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and

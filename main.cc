@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.34 2000/05/13 20:55:47 steve Exp $"
+#ident "$Id: main.cc,v 1.35 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -87,7 +87,6 @@ extern Design* elaborate(const map<string,Module*>&modules,
 			 const string&root);
 
 extern void cprop(Design*des);
-extern void propinit(Design*des);
 extern void synth(Design*des);
 extern void syn_rules(Design*des);
 extern void nodangle(Design*des);
@@ -100,7 +99,6 @@ static struct net_func_map {
 } func_table[] = {
       { "cprop",   &cprop },
       { "nodangle",&nodangle },
-      { "propinit",&propinit },
       { "synth",   &synth },
       { "syn-rules",   &syn_rules },
       { "xnfio",   &xnfio },
@@ -305,6 +303,14 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.35  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.34  2000/05/13 20:55:47  steve
  *  Use yacc based synthesizer.
  *

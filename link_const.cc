@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.4 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: link_const.cc,v 1.5 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -33,8 +33,15 @@ bool link_drivers_constant(const Link&lnk)
 		  continue;
 	    if (cur->get_dir() == Link::INPUT)
 		  continue;
-	    if (cur->get_dir() == Link::PASSIVE)
+
+	      /* If the link is PASSIVE then it doesn't count as a
+		 driver if its initial value is Vz. This is pertinant
+		 because REGs are PASSIVE but can receive values from
+		 procedural assignments. */
+	    if ((cur->get_dir() == Link::PASSIVE)
+		&& (cur->get_init() == verinum::Vz))
 		  continue;
+
 	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
 		  return false;
       }
@@ -53,7 +60,7 @@ verinum::V driven_value(const Link&lnk)
 		  return obj->value(cur->get_pin());
       }
 
-      return verinum::Vz;
+      return lnk.get_init();
 }
 
 NetConst* link_const_value(Link&pin, unsigned&idx)
@@ -83,6 +90,14 @@ NetConst* link_const_value(Link&pin, unsigned&idx)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.5  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.4  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

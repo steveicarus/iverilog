@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.31 2000/06/28 18:38:54 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.32 2000/07/14 06:12:58 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -84,7 +84,7 @@ verinum::V link_get_ival(const Link&lnk)
 		  continue;
 
 	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
-		  return sig->get_ival(cur->get_pin());
+		  return cur->nexus()->get_init();
 
       }
 
@@ -878,6 +878,14 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.32  2000/07/14 06:12:58  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.31  2000/06/28 18:38:54  steve
  *  Use nexus type to get nexus name.
  *

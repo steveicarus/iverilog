@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.8 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: netlist.txt,v 1.9 2000/07/14 06:12:57 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -60,13 +60,20 @@ changed during processing.
 STRUCTURAL LINKS
 
 The NetNode and NetNet classes contain arrays of Link objects, one
-object per pin. Each pin is a single bit. The Link objects link
-circularly to all the NetNode and NetNet objects' links that are
-connected together in the design. This way, code that examines a node
+object per pin. Each pin is a single bit. The Link objects link to all
+the NetNode and NetNet objects' links that are connected together in
+the design, and to a Nexus object. This way, code that examines a node
 of the design can discover what is connected to each pin.
 
-See the NetObj::Link class definition for a description of the link
-methods.
+The connected set of links also has common properties that are stored
+or access from the Nexus object. All the Links that are connected
+together are also connected to a single Nexus object. This object is
+useful for accessing the properties and values that come from the
+connected set of links. The Nexus object is also handy for iterating
+over the connected set of Links.
+
+See the Link class definition in netlist.h for a description of the link
+methods, and the Nexus class for nexus global methods.
 
 Currently, a link has 3 possible direction properties:
 
@@ -263,6 +270,14 @@ some task calls. C++ programmers recognize this as inlining a task.)
 
 
  $Log: netlist.txt,v $
+ Revision 1.9  2000/07/14 06:12:57  steve
+  Move inital value handling from NetNet to Nexus
+  objects. This allows better propogation of inital
+  values.
+
+  Clean up constant propagation  a bit to account
+  for regs that are not really values.
+
  Revision 1.8  2000/03/08 04:36:54  steve
   Redesign the implementation of scopes and parameters.
   I now generate the scopes and notice the parameters

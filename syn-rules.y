@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.5 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.6 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 /*
@@ -193,6 +193,12 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       des->delete_process(top);
 }
 
+/*
+ * An assignment in an initial statement is the same as giving the
+ * nexus an initial value. For synthesized netlists, we can just set
+ * the initial value for the link and get rid of the assignment
+ * process.
+ */
 static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn)
 {
       NetESignal*rsig = dynamic_cast<NetESignal*> (asn->rval());
@@ -207,7 +213,7 @@ static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn)
 		       ;  cur ;  cur = cur->next_nlink()) {
 
 		  if (NetNet*net = dynamic_cast<NetNet*> (cur->get_obj()))
-			net->set_ival(cur->get_pin(), bit);
+			cur->set_init(bit);
 
 	    }
       }

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.8 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: net_design.cc,v 1.9 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 /*
@@ -468,36 +468,16 @@ void Design::delete_process(NetProcTop*top)
       delete top;
 }
 
-void Design::clear_node_marks()
-{
-      if (nodes_ == 0)
-	    return;
-
-      NetNode*cur = nodes_;
-      do {
-	    cur->set_mark(false);
-	    cur = cur->node_next_;
-      } while (cur != nodes_);
-}
-
-NetNode* Design::find_node(bool (*func)(const NetNode*))
-{
-      if (nodes_ == 0)
-	    return 0;
-
-      NetNode*cur = nodes_->node_next_;
-      do {
-	    if ((cur->test_mark() == false) && func(cur))
-		  return cur;
-
-	    cur = cur->node_next_;
-      } while (cur != nodes_->node_next_);
-
-      return 0;
-}
-
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.9  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.8  2000/05/02 16:27:38  steve
  *  Move signal elaboration to a seperate pass.
  *

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.60 2000/07/11 23:07:28 steve Exp $"
+#ident "$Id: Makefile.in,v 1.61 2000/07/14 06:12:56 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -67,7 +67,7 @@ distclean: clean
 	rm -f Makefile
 
 TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
-FF = nodangle.o propinit.o synth.o syn-rules.o xnfio.o
+FF = nodangle.o synth.o syn-rules.o xnfio.o
 
 O = main.o cprop.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_net.o elab_pexpr.o elab_scope.o elab_sig.o emit.o eval.o eval_tree.o \

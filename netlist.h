@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.144 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.145 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 /*
@@ -96,9 +96,6 @@ class NetObj {
 	// all have the same values.
       bool has_compat_attributes(const NetObj&that) const;
 
-      bool test_mark() const { return mark_; }
-      void set_mark(bool flag=true) { mark_ = flag; }
-
       Link&pin(unsigned idx);
       const Link&pin(unsigned idx) const;
 
@@ -114,8 +111,6 @@ class NetObj {
       unsigned delay3_;
 
       map<string,string> attributes_;
-
-      bool mark_;
 };
 
 class Link {
@@ -136,11 +131,21 @@ class Link {
       void set_dir(DIR d);
       DIR get_dir() const;
 
+	// A link has a drive strength for 0 and 1 values. The drive0
+	// strength is for when the link has the value 0, and drive1
+	// strength is for when the link has a value 1.
       void drive0(strength_t);
       void drive1(strength_t);
 
       strength_t drive0() const;
       strength_t drive1() const;
+
+	// A link has an initial value that is used by the nexus to
+	// figure out its initial value. Normally, only the object
+	// that contains the link sets the initial value, and only the
+	// attached Nexus gets it. The default link value is Vx.
+      void set_init(verinum::V val);
+      verinum::V get_init() const;
 
       void cur_link(NetObj*&net, unsigned &pin);
       void cur_link(const NetObj*&net, unsigned &pin) const;
@@ -174,10 +179,12 @@ class Link {
       NetObj*get_obj();
       unsigned get_pin() const;
 
+	// A link of an object (sometimes called a "pin") has a
+	// name. It is convenient for the name to have a string and an
+	// integer part.
       void set_name(const string&, unsigned inst =0);
       const string& get_name() const;
       unsigned get_inst() const;
-
 
     private:
 	// The NetNode manages these. They point back to the
@@ -187,6 +194,7 @@ class Link {
 
       DIR dir_;
       strength_t drive0_, drive1_;
+      verinum::V init_;
 
 	// These members name the pin of the link. If the name
 	// has width, then the ninst_ member is the index of the
@@ -223,6 +231,7 @@ class Nexus {
       ~Nexus();
 
       string name() const;
+      verinum::V get_init() const;
 
       Link*first_nlink();
       const Link* first_nlink()const;
@@ -278,6 +287,10 @@ class NetNode  : public NetObj {
  * automatically adds itself to the scope.
  *
  * NetNet objects are located by searching NetScope objects.
+ *
+ * All the pins of a NetNet object are PASSIVE: they do not drive
+ * anything and they are not a data sink, per se. The pins follow the
+ * values on the nexus.
  */
 class NetNet  : public NetObj, public LineInfo {
 
@@ -297,7 +310,7 @@ class NetNet  : public NetObj, public LineInfo {
       const NetScope* scope() const;
 
       Type type() const { return type_; }
-      void type(Type t) { type_ = t; }
+	//void type(Type t) { type_ = t; }
 
       PortType port_type() const { return port_type_; }
       void port_type(PortType t) { port_type_ = t; }
@@ -323,10 +336,12 @@ class NetNet  : public NetObj, public LineInfo {
       void decr_eref();
       unsigned get_eref() const;
 
+#if 0
       verinum::V get_ival(unsigned pin) const
 	    { return ivalue_[pin]; }
       void set_ival(unsigned pin, verinum::V val)
 	    { ivalue_[pin] = val; }
+#endif
 
       virtual void dump_net(ostream&, unsigned) const;
 
@@ -344,8 +359,6 @@ class NetNet  : public NetObj, public LineInfo {
 
       bool local_flag_;
       unsigned eref_count_;
-
-      verinum::V*ivalue_;
 };
 
 /*
@@ -2571,9 +2584,6 @@ class Design {
       void functor(struct functor_t*);
       bool emit(ostream&, struct target_t*) const;
 
-      void clear_node_marks();
-      NetNode*find_node(bool (*test)(const NetNode*));
-
 	// This is incremented by elaboration when an error is
 	// detected. It prevents code being emitted.
       unsigned errors;
@@ -2648,6 +2658,14 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.145  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.144  2000/07/07 04:53:54  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.1 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.2 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -206,15 +206,19 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    verinum::V iv = verinum::Vz;
 	    if (wtype == NetNet::REG)
 		  iv = verinum::Vx;
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  sig->set_ival(idx, iv);
-
       }
 }
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.2  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.1  2000/05/02 16:27:38  steve
  *  Move signal elaboration to a seperate pass.
  *

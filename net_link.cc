@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.1 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: net_link.cc,v 1.2 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -47,8 +47,8 @@ void connect(Link&l, Link&r)
 }
 
 Link::Link()
-: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG),
-    inst_(0), next_(0), nexus_(0)
+: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG), init_(verinum::Vx),
+  inst_(0), next_(0), nexus_(0)
 {
       (new Nexus()) -> relink(this);
 }
@@ -101,6 +101,17 @@ Link::strength_t Link::drive1() const
 {
       return drive1_;
 }
+
+void Link::set_init(verinum::V val)
+{
+      init_ = val;
+}
+
+verinum::V Link::get_init() const
+{
+      return init_;
+}
+
 
 void Link::cur_link(NetObj*&net, unsigned &pin)
 {
@@ -193,6 +204,21 @@ Nexus::Nexus()
 Nexus::~Nexus()
 {
       assert(list_ == 0);
+}
+
+verinum::V Nexus::get_init() const
+{
+      assert(list_);
+      for (Link*cur = list_ ;  cur ;  cur = cur->next_) {
+	    if (cur->get_dir() == Link::OUTPUT)
+		  return verinum::Vx;
+
+	    if ((cur->get_dir() == Link::PASSIVE)
+		&& (cur->get_init() != verinum::Vz))
+		  return cur->get_init();
+      }
+
+      return verinum::Vz;
 }
 
 void Nexus::unlink(Link*that)
@@ -293,6 +319,14 @@ string Nexus::name() const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.2  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.1  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

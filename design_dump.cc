@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.89 2000/07/07 04:53:53 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.90 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 /*
@@ -79,8 +79,12 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       o << " #(" << rise_time() << "," << fall_time() << "," <<
 	    decay_time() << ") init=";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
-	    o << ivalue_[idx-1];
-      o << endl;
+	    o << pin(idx-1).get_init();
+
+      o << " (";
+      for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
+	    o << pin(idx-1).nexus()->get_init();
+      o << ")" << endl;
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    if (! pin(idx).is_linked())
@@ -973,6 +977,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.90  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.89  2000/07/07 04:53:53  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.177 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.178 2000/07/14 06:12:57 steve Exp $"
 #endif
 
 /*
@@ -100,14 +100,28 @@ void PGAssign::elaborate(Design*des, const string&path) const
 					   0, 0, 0, Link::STRONG,
 					   Link::STRONG);
 	    assert(rid);
-	    for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1) {
-		  NetBUFZ*dev = new NetBUFZ(des->local_symbol(path));
-		  connect(lval->pin(idx), dev->pin(0));
-		  connect(rid->pin(idx), dev->pin(1));
-		  dev->pin(0).drive0(drive0);
-		  dev->pin(0).drive1(drive1);
-		  des->add_node(dev);
-	    }
+
+
+	      /* If the right hand net is the same type as the left
+		 side net (i.e. WIRE/WIRE) then it is enough to just
+		 connect them together. Otherwise, put a bufz between
+		 them to carry strengths from the rval */
+
+	    if (rid->type() == lval->type())
+		  for (unsigned idx = 0 ;  idx < lval->pin_count(); idx += 1) {
+			connect(lval->pin(idx), rid->pin(idx));
+		  }
+
+	    else
+		  for (unsigned idx = 0 ; idx < lval->pin_count();  idx += 1) {
+			NetBUFZ*dev = new NetBUFZ(des->local_symbol(path));
+			connect(lval->pin(idx), dev->pin(0));
+			connect(rid->pin(idx), dev->pin(1));
+			dev->pin(0).drive0(drive0);
+			dev->pin(0).drive1(drive1);
+			des->add_node(dev);
+		  }
+
 	    return;
       }
 
@@ -2458,6 +2472,14 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.178  2000/07/14 06:12:57  steve
+ *  Move inital value handling from NetNet to Nexus
+ *  objects. This allows better propogation of inital
+ *  values.
+ *
+ *  Clean up constant propagation  a bit to account
+ *  for regs that are not really values.
+ *
  * Revision 1.177  2000/07/07 04:53:54  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and
