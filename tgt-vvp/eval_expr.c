@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.106 2003/10/01 17:44:20 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.107 2004/06/19 16:17:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1033,7 +1033,8 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '%':
-	    fprintf(vvp_out, "    %%mod %u, %u, %u;\n", lv.base, rv.base, wid);
+	    fprintf(vvp_out, "    %%mod%s %u, %u, %u;\n", sign_string,
+		    lv.base, rv.base, wid);
 	    break;
 
 	  default:
@@ -2135,6 +2136,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.107  2004/06/19 16:17:37  steve
+ *  Generate signed modulus if appropriate.
+ *
  * Revision 1.106  2003/10/01 17:44:20  steve
  *  Slightly more efficient unary minus.
  *
