@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.13 2002/04/22 02:41:30 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.14 2002/06/02 18:57:17 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -81,6 +81,10 @@ extern void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t exp);
 extern unsigned short allocate_vector(unsigned short wid);
 extern void clr_vector(struct vector_info vec);
 
+extern int number_is_unknown(ivl_expr_t ex);
+extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
+extern unsigned long get_number_immediate(ivl_expr_t ex);
+
 /*
  * These are used to count labels as I generate code.
  */
@@ -89,6 +93,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.14  2002/06/02 18:57:17  steve
+ *  Generate %cmpi/u where appropriate.
+ *
  * Revision 1.13  2002/04/22 02:41:30  steve
  *  Reduce the while loop expression if needed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.62 2002/05/31 20:04:57 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.63 2002/06/02 18:57:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -94,16 +94,158 @@ unsigned short allocate_vector(unsigned short wid)
       return base;
 }
 
+int number_is_unknown(ivl_expr_t ex)
+{
+      const char*bits;
+      unsigned idx;
+
+      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
+
+      bits = ivl_expr_bits(ex);
+      for (idx = 0 ;  idx < ivl_expr_width(ex) ;  idx += 1)
+	    if ((bits[idx] != '0') && (bits[idx] != '1'))
+		  return 1;
+
+      return 0;
+}
+
+/*
+ * This function returns TRUE if the number can be represented in a
+ * 16bit immediate value. This amounts to looking for non-zero bits
+ * above bitX. The maximum size of the immediate may vary, so use
+ * lim_wid at the width limit to use.
+ */
+int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
+{
+      const char*bits;
+      unsigned idx;
+
+      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
+
+      bits = ivl_expr_bits(ex);
+      for (idx = lim_wid ;  idx < ivl_expr_width(ex) ;  idx += 1)
+	    if (bits[idx] != '0')
+		  return 0;
+
+      return 1;
+}
+
+unsigned long get_number_immediate(ivl_expr_t ex)
+{
+      unsigned long imm = 0;
+      unsigned idx;
+
+      switch (ivl_expr_type(ex)) {
+	  case IVL_EX_ULONG:
+	    imm = ivl_expr_uvalue(ex);
+	    break;
+
+	  case IVL_EX_NUMBER: {
+		const char*bits = ivl_expr_bits(ex);
+		unsigned nbits = ivl_expr_width(ex);
+		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
+		    case '0':
+		      break;
+		    case '1':
+		      imm |= 1 << idx;
+		      break;
+		    default:
+		      assert(0);
+		}
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+      return imm;
+}
+
+static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
+					    ivl_expr_t le,
+					    ivl_expr_t re)
+{
+      unsigned wid;
+      struct vector_info lv;
+      unsigned long imm = get_number_immediate(re);
+
+      wid = ivl_expr_width(le);
+      lv = draw_eval_expr_wid(le, wid);
+
+      switch (ivl_expr_opcode(exp)) {
+	  case 'E': /* === */
+	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
+		    lv.base, imm, wid);
+	    clr_vector(lv);
+	    lv.base = 6;
+	    lv.wid = 1;
+	    break;
+
+	  case 'e': /* == */
+	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
+		    lv.base, imm, wid);
+	    clr_vector(lv);
+	    lv.base = 4;
+	    lv.wid = 1;
+	    break;
+
+	  case 'N': /* !== */
+	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
+		    lv.base, imm, wid);
+	    clr_vector(lv);
+	    lv.base = 6;
+	    lv.wid = 1;
+	    fprintf(vvp_out, "    %%inv 6, 1;\n");
+	    break;
+
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
+		    lv.base, imm, wid);
+	    clr_vector(lv);
+	    lv.base = 4;
+	    lv.wid = 1;
+	    fprintf(vvp_out, "    %%inv 4, 1;\n");
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+	/* Move the result out out the 4-7 bit that the compare
+	   uses. This is because that bit may be clobbered by other
+	   expressions. */
+      { unsigned short base = allocate_vector(ewid);
+        fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
+	lv.base = base;
+	lv.wid = ewid;
+	if (ewid > 1)
+	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, ewid-1);
+      }
+
+      return lv;
+}
 
 static struct vector_info draw_binary_expr_eq(ivl_expr_t exp, unsigned ewid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
       ivl_expr_t re = ivl_expr_oper2(exp);
 
+      unsigned wid;
+
       struct vector_info lv;
       struct vector_info rv;
 
-      unsigned wid = ivl_expr_width(le);
+      if ((ivl_expr_type(re) == IVL_EX_ULONG)
+	  && (0 == (ivl_expr_uvalue(re) & ~0xffff)))
+	    return draw_eq_immediate(exp, ewid, le, re);
+
+      if ((ivl_expr_type(re) == IVL_EX_NUMBER)
+	  && (! number_is_unknown(re))
+	  && number_is_immediate(re, 16))
+	    return draw_eq_immediate(exp, ewid, le, re);
+
+      wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
 	    wid = ivl_expr_width(re);
 
@@ -537,74 +679,6 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
       }
 
       return lv;
-}
-
-static int number_is_unknown(ivl_expr_t ex)
-{
-      const char*bits;
-      unsigned idx;
-
-      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
-
-      bits = ivl_expr_bits(ex);
-      for (idx = 0 ;  idx < ivl_expr_width(ex) ;  idx += 1)
-	    if ((bits[idx] != '0') && (bits[idx] != '1'))
-		  return 1;
-
-      return 0;
-}
-
-/*
- * This function returns TRUE if the number can be represented in a
- * 16bit immediate value. This amounts to looking for non-zero bits
- * above bitX. The maximum size of the immediate may vary, so use
- * lim_wid at the width limit to use.
- */
-static int number_is_immediate(ivl_expr_t ex, unsigned lim_wid)
-{
-      const char*bits;
-      unsigned idx;
-
-      assert(ivl_expr_type(ex) == IVL_EX_NUMBER);
-
-      bits = ivl_expr_bits(ex);
-      for (idx = lim_wid ;  idx < ivl_expr_width(ex) ;  idx += 1)
-	    if (bits[idx] != '0')
-		  return 0;
-
-      return 1;
-}
-
-static unsigned long get_number_immediate(ivl_expr_t ex)
-{
-      unsigned long imm = 0;
-      unsigned idx;
-
-      switch (ivl_expr_type(ex)) {
-	  case IVL_EX_ULONG:
-	    imm = ivl_expr_uvalue(ex);
-	    break;
-
-	  case IVL_EX_NUMBER: {
-		const char*bits = ivl_expr_bits(ex);
-		unsigned nbits = ivl_expr_width(ex);
-		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
-		    case '0':
-		      break;
-		    case '1':
-		      imm |= 1 << idx;
-		      break;
-		    default:
-		      assert(0);
-		}
-		break;
-	  }
-
-	  default:
-	    assert(0);
-      }
-
-      return imm;
 }
 
 static struct vector_info draw_add_immediate(ivl_expr_t le,
@@ -1648,6 +1722,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.63  2002/06/02 18:57:17  steve
+ *  Generate %cmpi/u where appropriate.
+ *
  * Revision 1.62  2002/05/31 20:04:57  steve
  *   Generate %muli instructions when possible.
  *

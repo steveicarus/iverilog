@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.58 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.59 2002/06/02 18:57:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -443,6 +443,26 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		  default_case = idx;
 		  continue;
 	    }
+
+	      /* Is the guard expression something I can pass to a
+		 %cmpi/u instruction? If so, use that instead. */
+
+	    if ((ivl_statement_type(net) == IVL_ST_CASE)
+		&& (ivl_expr_type(cex) == IVL_EX_NUMBER)
+		&& (! number_is_unknown(cex))
+		&& number_is_immediate(cex, 16)) {
+
+		  unsigned long imm = get_number_immediate(cex);
+
+		  fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
+			  cond.base, imm, cond.wid);
+		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 6;\n",
+			  thread_count, local_base+idx);
+
+		  continue;
+	    }
+
+	      /* Oh well, do this case the hard way. */
 
 	    cvec = draw_eval_expr_wid(cex, cond.wid);
 	    assert(cvec.wid == cond.wid);
@@ -1200,6 +1220,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.59  2002/06/02 18:57:17  steve
+ *  Generate %cmpi/u where appropriate.
+ *
  * Revision 1.58  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have
