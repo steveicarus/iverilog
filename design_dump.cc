@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.24 1999/05/17 04:53:47 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.25 1999/05/30 01:11:46 steve Exp $"
 #endif
 
 /*
@@ -123,7 +123,7 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 
 void NetAssign::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Procedural assign: " << *rval_.ref() << endl;
+      o << setw(ind) << "" << "Procedural assign: " << *rval_ << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -330,12 +330,12 @@ void NetBlock::dump(ostream&o, unsigned ind) const
 
 void NetCase::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "case (" << *expr_.ref() << ")" << endl;
+      o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
 
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 	    o << setw(ind+2) << "";
-	    if (items_[idx].guard.ref())
-		  o << *items_[idx].guard.ref() << ":";
+	    if (items_[idx].guard)
+		  o << *items_[idx].guard << ":";
 	    else
 		  o << "default:";
 
@@ -421,12 +421,12 @@ void NetTask::dump(ostream&o, unsigned ind) const
 
       if (nparms_ > 0) {
 	    o << "(";
-	    if (parms_[0].ref())
+	    if (parms_[0])
 		  parms_[0]->dump(o);
 
 	    for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
 		  o << ", ";
-		  if (parms_[idx].ref())
+		  if (parms_[idx])
 			parms_[idx]->dump(o);
 	    }
 
@@ -437,7 +437,7 @@ void NetTask::dump(ostream&o, unsigned ind) const
 
 void NetWhile::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "while (" << *cond_.ref() << ")" << endl;
+      o << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
       proc_->dump(o, ind+3);
 }
 
@@ -549,11 +549,11 @@ void Design::dump(ostream&o) const
 {
       o << "ELABORATED PARAMETERS:" << endl;
       {
-	    map<string,NetExpr::REF>::const_iterator pp;
+	    map<string,NetExpr*>::const_iterator pp;
 	    for (pp = parameters_.begin()
 		       ; pp != parameters_.end() ;  pp ++) {
 		  o << "    " << (*pp).first << " = "  <<
-			*(*pp).second.ref() << ";" << endl;
+			*(*pp).second << ";" << endl;
 	    }
       }
 
@@ -598,6 +598,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.25  1999/05/30 01:11:46  steve
+ *  Exressions are trees that can duplicate, and not DAGS.
+ *
  * Revision 1.24  1999/05/17 04:53:47  steve
  *  translate the letter synonyms for operators.
  *

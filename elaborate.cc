@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.29 1999/05/29 02:36:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.30 1999/05/30 01:11:46 steve Exp $"
 #endif
 
 /*
@@ -831,8 +831,8 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 
 	// If the identifier name a paramter name, then return
 	// the expression that it represents.
-      if (NetExpr*ex = des->get_parameter(name))
-	    return ex;
+      if (const NetExpr*ex = des->get_parameter(name))
+	    return ex->dup_expr();
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
@@ -1247,6 +1247,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.30  1999/05/30 01:11:46  steve
+ *  Exressions are trees that can duplicate, and not DAGS.
+ *
  * Revision 1.29  1999/05/29 02:36:17  steve
  *  module parameter bind by name.
  *

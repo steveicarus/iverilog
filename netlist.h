@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.32 1999/05/27 04:13:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.33 1999/05/30 01:11:46 steve Exp $"
 #endif
 
 /*
@@ -322,15 +322,10 @@ class NetMemory  {
  * set_width() method is used to compel an expression to have a
  * certain width, and is used particulary when the expression is an
  * rvalue in an assignment statement.
- *
- * The NetExpr::REF type can be used sort of like a pointer to
- * NetExpr objects. The NetExpr uses this list to know if it is still
- * being referenced, so can handle garbage collection. Also, this
- * trick can be used to replace subexpressions.
  */
 class NetExpr  : public LineInfo {
     public:
-      explicit NetExpr(unsigned w =0) : width_(w), reflist_(0)  { }
+      explicit NetExpr(unsigned w =0) : width_(w)  { }
       virtual ~NetExpr() =0;
 
       virtual void expr_scan(struct expr_scan_t*) const =0;
@@ -343,50 +338,15 @@ class NetExpr  : public LineInfo {
 	// coersion works, then return true. Otherwise, return false.
       virtual bool set_width(unsigned);
 
-    public:
-      class REF {
-	    friend class NetExpr;
-	  public:
-	    void clr();
-	    void set(NetExpr*);
-	    NetExpr*ref() const { return ref_; }
-
-	    void clr_and_delete()
-		  { NetExpr*tmp = ref_;
-		    clr();
-		    if (tmp && tmp->is_referenced() == false)
-			  delete tmp;
-		  }
-
-	    NetExpr*operator-> () const { return ref_; }
-	    REF& operator=(NetExpr*that) { set(that); return *this; }
-
-	    REF() : ref_(0), next_(0) { }
-	    REF(NetExpr*that) : ref_(0), next_(0) { set(that); }
-	    REF(const REF&that) : ref_(0), next_(0) { set(that.ref_); }
-	    ~REF() { clr(); }
-	  private:
-	    NetExpr*ref_;
-	    REF*next_;
-	  private:// not implemented
-	    REF& operator=(const REF&);
-      };
-      friend class NetExpr::REF;
-
-	/* This method causes every item that references this object
-	   to reference that object instead. When this complete,
-	   no references to me will remain. */
-      void substitute(NetExpr*that);
-
-      bool is_referenced() const { return reflist_ != 0; }
+	// Make a duplicate of myself, and subexpressions if I have
+	// any. This is a deep copy operation.
+      virtual NetExpr*dup_expr() const =0;
 
     protected:
       void expr_width(unsigned w) { width_ = w; }
 
     private:
       unsigned width_;
-
-      REF*reflist_;
 
     private: // not implemented
       NetExpr(const NetExpr&);
@@ -605,7 +565,7 @@ class NetAssign  : public NetProc, public NetNode, public LineInfo {
       explicit NetAssign(Design*des, NetNet*lv, NetExpr*rv);
       ~NetAssign();
 
-      const NetExpr*rval() const { return rval_.ref(); }
+      const NetExpr*rval() const { return rval_; }
 
       void find_lval_range(const NetNet*&net, unsigned&msb,
 			   unsigned&lsb) const;
@@ -616,7 +576,7 @@ class NetAssign  : public NetProc, public NetNode, public LineInfo {
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetExpr::REF rval_;
+      NetExpr* rval_;
 };
 
 /*
@@ -630,16 +590,16 @@ class NetAssignMem : public NetProc, public LineInfo {
       ~NetAssignMem();
 
       const NetMemory*memory()const { return mem_; }
-      const NetExpr*index()const { return index_.ref(); }
-      const NetExpr*rval()const { return rval_.ref(); }
+      const NetExpr*index()const { return index_; }
+      const NetExpr*rval()const { return rval_; }
 
       virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
       NetMemory*mem_;
-      NetExpr::REF index_;
-      NetExpr::REF rval_;
+      NetExpr* index_;
+      NetExpr* rval_;
 };
 
 /* A block is stuff line begin-end blocks, that contain and ordered
@@ -682,10 +642,10 @@ class NetCase  : public NetProc {
 
       void set_case(unsigned idx, NetExpr*ex, NetProc*st);
 
-      const NetExpr*expr() const { return expr_.ref(); }
+      const NetExpr*expr() const { return expr_; }
       unsigned nitems() const { return nitems_; }
 
-      const NetExpr*expr(unsigned idx) const { return items_[idx].guard.ref();}
+      const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
       const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
       virtual void emit_proc(ostream&, struct target_t*) const;
@@ -694,11 +654,11 @@ class NetCase  : public NetProc {
     private:
 
       struct Item {
-	    NetExpr::REF guard;
+	    NetExpr*guard;
 	    NetProc*statement;
       };
 
-      NetExpr::REF expr_;
+      NetExpr* expr_;
       unsigned nitems_;
       Item*items_;
 };
@@ -712,7 +672,7 @@ class NetCondit  : public NetProc {
       NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
       : expr_(ex), if_(i), else_(e) { }
 
-      NetExpr*expr() const { return expr_.ref(); }
+      const NetExpr*expr() const { return expr_; }
       void emit_recurse_if(ostream&, struct target_t*) const;
       void emit_recurse_else(ostream&, struct target_t*) const;
 
@@ -720,7 +680,7 @@ class NetCondit  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetExpr::REF expr_;
+      NetExpr* expr_;
       NetProc*if_;
       NetProc*else_;
 };
@@ -805,7 +765,7 @@ class NetTask  : public NetProc {
     public:
       NetTask(const string&na, unsigned np)
       : name_(na), nparms_(np)
-      { parms_ = new NetExpr::REF[nparms_]; }
+      { parms_ = new NetExpr*[nparms_]; }
       ~NetTask();
 
       const string& name() const { return name_; }
@@ -817,9 +777,9 @@ class NetTask  : public NetProc {
         parms_[idx] = p;
       }
 
-      NetExpr* parm(unsigned idx) const
+      const NetExpr* parm(unsigned idx) const
       { assert(idx < nparms_);
-        return parms_[idx].ref();
+        return parms_[idx];
       }
 
       virtual void emit_proc(ostream&, struct target_t*) const;
@@ -828,7 +788,7 @@ class NetTask  : public NetProc {
     private:
       string name_;
       unsigned nparms_;
-      NetExpr::REF*parms_;
+      NetExpr**parms_;
 };
 
 /*
@@ -842,7 +802,7 @@ class NetWhile  : public NetProc {
       NetWhile(NetExpr*c, NetProc*p)
       : cond_(c), proc_(p) { }
 
-      const NetExpr*expr() const { return cond_.ref(); }
+      const NetExpr*expr() const { return cond_; }
 
       void emit_proc_recurse(ostream&, struct target_t*) const;
 
@@ -850,7 +810,7 @@ class NetWhile  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetExpr::REF cond_;
+      NetExpr* cond_;
       NetProc*proc_;
 };
 
@@ -909,20 +869,22 @@ class NetEBinary  : public NetExpr {
       NetEBinary(char op, NetExpr*l, NetExpr*r);
       ~NetEBinary();
 
-      const NetExpr*left() const { return left_.ref(); }
-      const NetExpr*right() const { return right_.ref(); }
+      const NetExpr*left() const { return left_; }
+      const NetExpr*right() const { return right_; }
 
       char op() const { return op_; }
 
       virtual bool set_width(unsigned w);
+
+      virtual NetEBinary* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
     private:
       char op_;
-      NetExpr::REF left_;
-      NetExpr::REF right_;
+      NetExpr* left_;
+      NetExpr* right_;
 };
 
 class NetEConst  : public NetExpr {
@@ -937,6 +899,8 @@ class NetEConst  : public NetExpr {
       virtual bool set_width(unsigned w);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
+
+      virtual NetEConst* dup_expr() const;
 
     private:
       verinum value_;
@@ -958,16 +922,18 @@ class NetEUnary  : public NetExpr {
       ~NetEUnary();
 
       char op() const { return op_; }
-      const NetExpr* expr() const { return expr_.ref(); }
+      const NetExpr* expr() const { return expr_; }
 
       virtual bool set_width(unsigned w);
+
+      virtual NetEUnary* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
     private:
       char op_;
-      NetExpr::REF expr_;
+      NetExpr* expr_;
 };
 
 /* System identifiers are represented here. */
@@ -978,6 +944,8 @@ class NetEIdent  : public NetExpr {
       : NetExpr(w), name_(n) { }
 
       const string& name() const { return name_; }
+
+      NetEIdent* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -996,15 +964,18 @@ class NetEMemory  : public NetExpr {
       virtual ~NetEMemory();
 
       const string& name () const { return mem_->name(); }
-      const NetExpr* index() const { return idx_.ref(); }
+      const NetExpr* index() const { return idx_; }
 
       virtual bool set_width(unsigned);
+
+      virtual NetEMemory*dup_expr() const;
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
     private:
       NetMemory*mem_;
-      NetExpr::REF idx_;
+      NetExpr* idx_;
 };
 
 /*
@@ -1024,6 +995,8 @@ class NetESignal  : public NetExpr, public NetNode {
       const string& name() const { return NetNode::name(); }
 
       virtual bool set_width(unsigned);
+
+      virtual NetESignal* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -1048,7 +1021,9 @@ class NetESubSignal  : public NetExpr {
       ~NetESubSignal();
 
       const string&name() const { return sig_->name(); }
-      const NetExpr*index() const { return idx_.ref(); }
+      const NetExpr*index() const { return idx_; }
+
+      NetESubSignal* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -1056,7 +1031,7 @@ class NetESubSignal  : public NetExpr {
     private:
 	// For now, only support single-bit selects of a signal.
       NetESignal*sig_;
-      NetExpr::REF idx_;
+      NetExpr* idx_;
 };
 
 /*
@@ -1082,7 +1057,7 @@ class Design {
 
 	// PARAMETERS
       void set_parameter(const string&, NetExpr*);
-      NetExpr*get_parameter(const string&name) const;
+      const NetExpr*get_parameter(const string&name) const;
 
 	// SIGNALS
       void add_signal(NetNet*);
@@ -1123,7 +1098,7 @@ class Design {
     private:
 	// List all the parameters in the design. This table includes
 	// the parameters of instantiated modules in canonical names.
-      map<string,NetExpr::REF> parameters_;
+      map<string,NetExpr*> parameters_;
 
 	// List all the signals in the design.
       NetNet*signals_;
@@ -1190,6 +1165,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.33  1999/05/30 01:11:46  steve
+ *  Exressions are trees that can duplicate, and not DAGS.
+ *
  * Revision 1.32  1999/05/27 04:13:08  steve
  *  Handle expression bit widths with non-fatal errors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.28 1999/05/27 04:13:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.29 1999/05/30 01:11:46 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -358,7 +358,7 @@ void NetBlock::append(NetProc*cur)
 NetCase::NetCase(NetExpr*ex, unsigned cnt)
 : expr_(ex), nitems_(cnt)
 {
-      assert(expr_.ref());
+      assert(expr_);
       items_ = new Item[nitems_];
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 	    items_[idx].statement = 0;
@@ -367,9 +367,9 @@ NetCase::NetCase(NetExpr*ex, unsigned cnt)
 
 NetCase::~NetCase()
 {
-      expr_.clr_and_delete();
+      delete expr_;
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    items_[idx].guard.clr_and_delete();
+	    delete items_[idx].guard;
 	    if (items_[idx].statement) delete items_[idx].statement;
       }
       delete[]items_;
@@ -380,14 +380,14 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
       assert(idx < nitems_);
       items_[idx].guard = e;
       items_[idx].statement = p;
-      if (items_[idx].guard.ref())
-	    items_[idx].guard.ref()->set_width(expr_.ref()->expr_width());
+      if (items_[idx].guard)
+	    items_[idx].guard->set_width(expr_->expr_width());
 }
 
 NetTask::~NetTask()
 {
       for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
-	    parms_[idx].clr_and_delete();
+	    delete parms_[idx];
 
       delete[]parms_;
 }
@@ -404,62 +404,15 @@ bool NetExpr::set_width(unsigned w)
       return false;
 }
 
-void NetExpr::REF::clr()
+NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
+: op_(op), left_(l), right_(r)
 {
-      if (ref_ == 0)
-	    return;
-
-      NetExpr*ref = ref_;
-      ref_ = 0;
-      if (ref->reflist_ == this) {
-	    ref->reflist_ = next_;
-	    return;
-      }
-
-      NetExpr::REF*cur;
-      for (cur = ref->reflist_ ; cur->next_ != this  ;  cur = cur->next_) {
-	    assert(cur->next_);
-      }
-
-      cur->next_ = next_;
-}
-
-void NetExpr::REF::set(NetExpr*that)
-{
-      clr();
-      if (that == 0) return;
-      ref_ = that;
-      next_ = that->reflist_;
-      that->reflist_ = this;
-}
-
-void NetExpr::substitute(NetExpr*that)
-{
-      if (reflist_ == 0)
-	    return;
-
-      REF*cur = reflist_;
-      while (cur->next_) {
-	    cur->ref_ = that;
-	    cur = cur->next_;
-      }
-
-      cur->next_ = that->reflist_;
-      cur->ref_ = that;
-      that->reflist_ = reflist_;
-      reflist_ = 0;
 }
 
 NetEBinary::~NetEBinary()
 {
-      left_.clr_and_delete();
-      right_.clr_and_delete();
-}
-
-
-NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
-: op_(op), left_(l), right_(r)
-{
+      delete left_;
+      delete right_;
 }
 
 bool NetEBinary::set_width(unsigned w)
@@ -510,6 +463,11 @@ bool NetEBinary::set_width(unsigned w)
       return flag;
 }
 
+NetEBinary* NetEBinary::dup_expr() const
+{
+      assert(0);
+}
+
 NetEConst::~NetEConst()
 {
 }
@@ -525,6 +483,18 @@ bool NetEConst::set_width(unsigned w)
       value_ = verinum(value_, w);
       expr_width(w);
       return true;
+}
+
+NetEConst* NetEConst::dup_expr() const
+{
+      NetEConst*tmp = new NetEConst(value_);
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetEIdent* NetEIdent::dup_expr() const
+{
+      assert(0);
 }
 
 NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
@@ -547,6 +517,11 @@ bool NetEMemory::set_width(unsigned w)
       assert(w == mem_->width());
       expr_width(w);
       return true;
+}
+
+NetEMemory* NetEMemory::dup_expr() const
+{
+      assert(0);
 }
 
 NetESignal::NetESignal(NetNet*n)
@@ -573,6 +548,11 @@ bool NetESignal::set_width(unsigned w)
       return true;
 }
 
+NetESignal* NetESignal::dup_expr() const
+{
+      assert(0);
+}
+
 NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
 : sig_(sig), idx_(ex)
 {
@@ -580,12 +560,17 @@ NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
 
 NetESubSignal::~NetESubSignal()
 {
-      idx_.clr_and_delete();
+      delete idx_;
+}
+
+NetESubSignal* NetESubSignal::dup_expr() const
+{
+      assert(0);
 }
 
 NetEUnary::~NetEUnary()
 {
-      expr_.clr_and_delete();
+      delete expr_;
 }
 
 bool NetEUnary::set_width(unsigned w)
@@ -607,6 +592,11 @@ bool NetEUnary::set_width(unsigned w)
       }
       expr_width(w);
       return flag;
+}
+
+NetEUnary* NetEUnary::dup_expr() const
+{
+      assert(0);
 }
 
 NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
@@ -892,13 +882,13 @@ void Design::set_parameter(const string&key, NetExpr*expr)
       parameters_[key] = expr;
 }
 
-NetExpr* Design::get_parameter(const string&key) const
+const NetExpr* Design::get_parameter(const string&key) const
 {
-      map<string,NetExpr::REF>::const_iterator cur = parameters_.find(key);
+      map<string,NetExpr*>::const_iterator cur = parameters_.find(key);
       if (cur == parameters_.end())
 	    return 0;
       else
-	    return (*cur).second.ref();
+	    return (*cur).second;
 }
 
 string Design::get_flag(const string&key) const
@@ -1078,6 +1068,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.29  1999/05/30 01:11:46  steve
+ *  Exressions are trees that can duplicate, and not DAGS.
+ *
  * Revision 1.28  1999/05/27 04:13:08  steve
  *  Handle expression bit widths with non-fatal errors.
  *

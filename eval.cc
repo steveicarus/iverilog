@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.2 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: eval.cc,v 1.3 1999/05/30 01:11:46 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -59,9 +59,9 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
 verinum* PEIdent::eval_const(const Design*des, const string&path) const
 {
       assert(msb_ == 0);
-      NetExpr*expr = des->get_parameter(path + "." + text_);
+      const NetExpr*expr = des->get_parameter(path + "." + text_);
       if (expr == 0) return 0;
-      NetEConst*eval = dynamic_cast<NetEConst*>(expr);
+      const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       assert(eval);
       return new verinum(eval->value());
 }
@@ -73,6 +73,9 @@ verinum* PENumber::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.3  1999/05/30 01:11:46  steve
+ *  Exressions are trees that can duplicate, and not DAGS.
+ *
  * Revision 1.2  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>
