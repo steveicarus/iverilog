@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.90 2003/03/13 06:07:11 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.91 2003/03/25 02:15:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1538,14 +1538,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%s .scope %s, \"%s\"",
-	      vvp_mangle_id(ivl_scope_name(net)), 
-	      type,
-	      vvp_mangle_name(ivl_scope_basename(net)));
+      fprintf(vvp_out, "S_%p .scope %s, \"%s\"",
+	      net, type, vvp_mangle_name(ivl_scope_basename(net)));
 
       if (parent) {
-	    fprintf(vvp_out, ", S_%s;\n",
-		    vvp_mangle_id(ivl_scope_name(parent)));
+	    fprintf(vvp_out, ", S_%p;\n", parent);
       } else {
 
 	    fprintf(vvp_out, ";\n");
@@ -1630,6 +1627,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.91  2003/03/25 02:15:48  steve
+ *  Use hash code for scope labels.
+ *
  * Revision 1.90  2003/03/13 06:07:11  steve
  *  Use %p name for all LPM functors.
  *

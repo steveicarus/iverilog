@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.83 2003/03/15 04:45:18 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.84 2003/03/25 02:15:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -668,8 +668,8 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
       out_id = transient_id++;
       sub_id = transient_id++;
 
-      fprintf(vvp_out, "    %%fork t_%u, S_%s;\n",
-	      sub_id, vvp_mangle_id(ivl_scope_name(subscope)));
+      fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
+	      sub_id, subscope);
       fprintf(vvp_out, "    %%jmp t_%u;\n", out_id);
       fprintf(vvp_out, "t_%u ;\n", sub_id);
 
@@ -957,8 +957,7 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
 
       ivl_scope_t target = ivl_stmt_call(net);
-      fprintf(vvp_out, "    %%disable S_%s;\n", 
-	      vvp_mangle_id(ivl_scope_name(target)));
+      fprintf(vvp_out, "    %%disable S_%p;\n", target);
 
       return rc;
 }
@@ -1021,9 +1020,8 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	   fork/join. Send the threads off to a bit of code where they
 	   are implemented. */
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
-	    fprintf(vvp_out, "    %%fork t_%u, S_%s;\n",
-		    id_base+idx, 
-		    vvp_mangle_id(ivl_scope_name(sscope)));
+	    fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
+		    id_base+idx, sscope);
       }
 
 	/* Draw code to execute the remaining thread in the current
@@ -1134,8 +1132,7 @@ static int show_stmt_utask(ivl_statement_t net)
 
       fprintf(vvp_out, "    %%fork TD_%s",
 	      vvp_mangle_id(ivl_scope_name(task)));
-      fprintf(vvp_out, ", S_%s;\n", 
-	      vvp_mangle_id(ivl_scope_name(task)));
+      fprintf(vvp_out, ", S_%p;\n", task);
       fprintf(vvp_out, "    %%join;\n");
       clear_expression_lookaside();
       return 0;
@@ -1364,8 +1361,7 @@ int draw_process(ivl_process_t net, void*x)
       ivl_statement_t stmt = ivl_process_stmt(net);
 
       local_count = 0;
-      fprintf(vvp_out, "    .scope S_%s;\n", 
-	      vvp_mangle_id(ivl_scope_name(scope)));
+      fprintf(vvp_out, "    .scope S_%p;\n", scope);
 
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
@@ -1435,6 +1431,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.84  2003/03/25 02:15:48  steve
+ *  Use hash code for scope labels.
+ *
  * Revision 1.83  2003/03/15 04:45:18  steve
  *  Allow real-valued vpi functions to have arguments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.4 2003/03/15 04:45:18 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.5 2003/03/25 02:15:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -184,8 +184,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  continue;
 
 		case IVL_EX_SCOPE:
-		  fprintf(vvp_out, ", S_%s",
-			  vvp_mangle_id(ivl_scope_name(ivl_expr_scope(expr))));
+		  fprintf(vvp_out, ", S_%p", ivl_expr_scope(expr));
 		  continue;
 
 		case IVL_EX_SFUNC:
@@ -275,6 +274,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.5  2003/03/25 02:15:48  steve
+ *  Use hash code for scope labels.
+ *
  * Revision 1.4  2003/03/15 04:45:18  steve
  *  Allow real-valued vpi functions to have arguments.
  *

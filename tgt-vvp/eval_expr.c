@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.93 2003/03/15 04:45:18 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.94 2003/03/25 02:15:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1672,7 +1672,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
 	/* Call the function */
       fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
-      fprintf(vvp_out, ", S_%s;\n", vvp_mangle_id(ivl_scope_name(def)));
+      fprintf(vvp_out, ", S_%p;\n", def);
       fprintf(vvp_out, "    %%join;\n");
 
 	/* Fresh basic block starts after the join. */
@@ -2002,6 +2002,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.94  2003/03/25 02:15:48  steve
+ *  Use hash code for scope labels.
+ *
  * Revision 1.93  2003/03/15 04:45:18  steve
  *  Allow real-valued vpi functions to have arguments.
  *
