@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.9 2001/09/29 04:45:20 steve Exp $"
+#ident "$Id: memory.cc,v 1.10 2001/09/29 20:55:42 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -400,7 +400,7 @@ void vvp_memory_port_s::set(vvp_ipoint_t i, functor_t f, bool push)
 
 void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
 {
-  if (idx/4 > (mem->size * mem->fwidth))
+  if (idx/4 >= (mem->size * mem->fwidth))
     return;
 
   if (!set_bit(mem->bits, idx, val))
@@ -413,7 +413,7 @@ void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
 
 unsigned memory_get(vvp_memory_t mem, unsigned idx)
 {
-  if (idx/4 > (mem->size * mem->fwidth))
+  if (idx/4 >= (mem->size * mem->fwidth))
     return 2;
 
   return get_bit(mem->bits, idx);
