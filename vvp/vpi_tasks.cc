@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.7 2001/05/20 00:46:12 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.8 2001/06/25 03:12:06 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,26 @@
 # include  <malloc.h>
 # include  <string.h>
 # include  <assert.h>
+
+static const struct __vpirt vpip_systask_def_rt = {
+      vpiSysTask,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+};
+
+static const struct __vpirt vpip_sysfunc_def_rt = {
+      vpiSysFunc,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+};
 
 static vpiHandle systask_handle(int type, vpiHandle ref)
 {
@@ -280,12 +300,26 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 void vpi_register_systf(const struct t_vpi_systf_data*ss)
 {
       struct __vpiUserSystf*cur = allocate_def();
+      switch (ss->type) {
+	  case vpiSysTask:
+	    cur->base.vpi_type = &vpip_systask_def_rt;
+	    break;
+	  case vpiSysFunc:
+	    cur->base.vpi_type = &vpip_sysfunc_def_rt;
+	    break;
+	  default:
+	    assert(0);
+      }
+
       cur->info = *ss;
       cur->info.tfname = strdup(ss->tfname);
 }
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.8  2001/06/25 03:12:06  steve
+ *  Give task/function definitions a vpi type object.
+ *
  * Revision 1.7  2001/05/20 00:46:12  steve
  *  Add support for system function calls.
  *
