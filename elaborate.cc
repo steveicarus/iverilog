@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.276 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.277 2003/03/26 06:16:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -656,8 +656,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 						    prts_pin_count,
 						    0, 0, 0);
 		  if (sig == 0) {
-			cerr << "internal error: Expression too complicated "
-			      "for elaboration." << endl;
+			cerr << (*pins)[idx]->get_line()
+			     << ": internal error: Port expression "
+			     << "too complicated for elaboration." << endl;
 			continue;
 		  }
 	    }
@@ -2498,6 +2499,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.277  2003/03/26 06:16:38  steve
+ *  Some better internal error messages.
+ *
  * Revision 1.276  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

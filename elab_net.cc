@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.109 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.110 2003/03/26 06:16:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1307,7 +1307,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
 		  cerr << msb_->get_line() << ": error: unable to "
-			"evaluate constant expression: " << *msb_ <<
+			"evaluate constant MSB expression: " << *msb_ <<
 			endl;
 		  des->errors += 1;
 		  return 0;
@@ -1316,7 +1316,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    verinum*lval = lsb_->eval_const(des, scope);
 	    if (lval == 0) {
 		  cerr << lsb_->get_line() << ": error: unable to "
-			"evaluate constant expression: " << *lsb_ <<
+			"evaluate constant LSB expression: " << *lsb_ <<
 			endl;
 		  delete mval;
 		  des->errors += 1;
@@ -2279,6 +2279,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.110  2003/03/26 06:16:38  steve
+ *  Some better internal error messages.
+ *
  * Revision 1.109  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *
