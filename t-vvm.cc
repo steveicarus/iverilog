@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.100 2000/02/13 19:59:33 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.101 2000/02/14 00:12:09 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -52,6 +52,7 @@ class target_vvm : public target_t {
 
     public:
       target_vvm();
+      ~target_vvm();
 
       virtual void start_design(ostream&os, const Design*);
       virtual void scope(ostream&os, const NetScope*);
@@ -83,6 +84,7 @@ class target_vvm : public target_t {
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
+              void proc_condit_fun(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_stask(ostream&os, const NetSTask*);
@@ -103,6 +105,13 @@ class target_vvm : public target_t {
 	// This is the name of the thread (process or task) that is
 	// being generated.
       string thread_class_;
+
+	// This flag is true if we are writing out a function
+	// definition. Thread steps are not available within
+	// functions, and certain constructs are handled
+	// differently. A flag is enough because function definitions
+	// cannot nest.
+      bool function_def_flag_;
 
 	// Method definitions go into this file.
       char*defn_name;
@@ -136,8 +145,13 @@ class target_vvm : public target_t {
 
 
 target_vvm::target_vvm()
-: delayed_name(0), init_code_name(0)
+: function_def_flag_(false), delayed_name(0), init_code_name(0)
 {
+}
+
+target_vvm::~target_vvm()
+{
+      assert(function_def_flag_ == false);
 }
 
 /*
@@ -865,6 +879,12 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
 {
       thread_step_ = 0;
       const string name = mangle(def->name());
+
+	// Flag that we are now in a function definition. Note that
+	// function definitions cannot nest.
+      assert(! function_def_flag_);
+      function_def_flag_ = true;
+
       os << "// Function " << def->name() << endl;
       os << "static void " << name << "();" << endl;
 
@@ -873,6 +893,9 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
       defn << "{" << endl;
       def->proc()->emit_proc(os, this);
       defn << "}" << endl;
+
+      assert(function_def_flag_);
+      function_def_flag_ = false;
 }
 
 string target_vvm::defn_gate_outputfun_(ostream&os,
@@ -1751,6 +1774,11 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 {
+      if (function_def_flag_) {
+	    proc_condit_fun(os, net);
+	    return;
+      }
+
       string expr = emit_proc_rval(defn, 8, net->expr());
 
       unsigned if_step   = ++thread_step_;
@@ -1790,6 +1818,19 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 
       defn << "bool " << thread_class_ << "::step_" << out_step <<
 	    "_() {" << endl;
+}
+
+void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
+{
+      string expr = emit_proc_rval(defn, 8, net->expr());
+
+      defn << "      // " << net->get_line() << ": conditional (if-else)"
+	   << endl;
+      defn << "      if (" << expr << "[0] == V1) {" << endl;
+      net->emit_recurse_if(os, this);
+      defn << "      } else {" << endl;
+      net->emit_recurse_else(os, this);
+      defn << "      }" << endl;
 }
 
 /*
@@ -2064,6 +2105,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.101  2000/02/14 00:12:09  steve
+ *  support if-else in function definitions.
+ *
  * Revision 1.100  2000/02/13 19:59:33  steve
  *  Handle selecting memory words at run time.
  *
