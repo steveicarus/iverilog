@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.3 2000/05/14 17:55:04 steve Exp $"
+#ident "$Id: link_const.cc,v 1.4 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -25,9 +25,12 @@
 
 bool link_drivers_constant(const Link&lnk)
 {
-      for (const Link*cur = lnk.next_link()
-		 ; *cur != lnk ; cur = cur->next_link()) {
+      const Nexus*nex = lnk.nexus();
+      for (const Link*cur = nex->first_nlink()
+		 ; cur  ;  cur = cur->next_nlink()) {
 
+	    if (cur == &lnk)
+		  continue;
 	    if (cur->get_dir() == Link::INPUT)
 		  continue;
 	    if (cur->get_dir() == Link::PASSIVE)
@@ -41,8 +44,9 @@ bool link_drivers_constant(const Link&lnk)
 
 verinum::V driven_value(const Link&lnk)
 {
-      for (const Link*cur = lnk.next_link()
-		 ; *cur != lnk ; cur = cur->next_link()) {
+      const Nexus*nex = lnk.nexus();
+      for (const Link*cur = nex->first_nlink()
+		 ; cur  ;  cur = cur->next_nlink()) {
 
 	    const NetConst*obj;
 	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj()))
@@ -57,8 +61,9 @@ NetConst* link_const_value(Link&pin, unsigned&idx)
       NetConst*robj = 0;
       unsigned ridx = 0;
 
-      for (Link*cur = pin.next_link()
-		 ; *cur != pin ;  cur = cur->next_link()) {
+      Nexus*nex = pin.nexus();
+      for (Link*cur = nex->first_nlink()
+		 ; cur  ;  cur = cur->next_nlink()) {
 
 	    NetConst*tmp;
 	    if ((tmp = dynamic_cast<NetConst*>(cur->get_obj())) == 0)
@@ -78,6 +83,10 @@ NetConst* link_const_value(Link&pin, unsigned&idx)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.4  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.3  2000/05/14 17:55:04  steve
  *  Support initialization of FF Q value.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.14 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.15 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -70,8 +70,9 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 
 	/* Look for an existing OBUF connected to this signal. If it
 	   is there, then no need to add one. */
-      for (Link*idx = net->pin(0).next_link()
-		 ; *idx != net->pin(0)  ; idx = idx->next_link()) {
+      Nexus*nex = net->pin(0).nexus();
+      for (Link*idx = nex->first_nlink()
+		 ; idx  ; idx = idx->next_nlink()) {
 	    NetLogic*tmp;
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
 		  continue;
@@ -211,8 +212,10 @@ static void make_ibuf(Design*des, NetNet*net)
 
 	/* Look for an existing BUF connected to this signal and
 	   suitably connected that I can use it as an IBUF. */
-      for (Link*idx = net->pin(0).next_link()
-		 ; *idx != net->pin(0)  ; idx = idx->next_link()) {
+
+      Nexus*nex = net->pin(0).nexus();
+      for (Link*idx = nex->first_nlink()
+		 ; idx ; idx = idx->next_nlink()) {
 	    NetLogic*tmp;
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
 		  continue;
@@ -356,6 +359,10 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.15  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.14  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

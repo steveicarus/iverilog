@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.130 2000/06/24 22:55:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.131 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -75,173 +75,13 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 }
 
 
-void connect(Link&l, Link&r)
-{
-      assert(&l != &r);
-      assert(l.next_->prev_ == &l);
-      assert(l.prev_->next_ == &l);
-      assert(r.next_->prev_ == &r);
-      assert(r.prev_->next_ == &r);
-
-      Link* cur = &l;
-      do {
-	    Link*tmp = cur->next_;
-
-	      // If I stumble on r in the nexus, then stop now because
-	      // we are already connected.
-	    if (tmp == &r) break;
-
-	      // Pull cur out of left list...
-	    cur->prev_->next_ = cur->next_;
-	    cur->next_->prev_ = cur->prev_;
-
-	      // Put cur in right list
-	    cur->next_ = r.next_;
-	    cur->prev_ = &r;
-	    cur->next_->prev_ = cur;
-	    cur->prev_->next_ = cur;
-
-	      // Go to the next item in the left list.
-	    cur = tmp;
-      } while (cur != &l);
-
-      assert(l.next_->prev_ == &l);
-      assert(l.prev_->next_ == &l);
-      assert(r.next_->prev_ == &r);
-      assert(r.prev_->next_ == &r);
-}
-
-Link::Link()
-: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG),
-  inst_(0), next_(this), prev_(this)
-{
-}
-
-Link::~Link()
-{
-      unlink();
-}
-
-void Link::set_dir(DIR d)
-{
-      dir_ = d;
-}
-
-Link::DIR Link::get_dir() const
-{
-      return dir_;
-}
-
-void Link::drive0(Link::strength_t str)
-{
-      drive0_ = str;
-}
-
-void Link::drive1(Link::strength_t str)
-{
-      drive1_ = str;
-}
-
-Link::strength_t Link::drive0() const
-{
-      return drive0_;
-}
-
-Link::strength_t Link::drive1() const
-{
-      return drive1_;
-}
-
-void Link::cur_link(NetObj*&net, unsigned &pin)
-{
-      net = node_;
-      pin = pin_;
-}
-
-void Link::cur_link(const NetObj*&net, unsigned &pin) const
-{
-      net = node_;
-      pin = pin_;
-}
-
-void Link::unlink()
-{
-      next_->prev_ = prev_;
-      prev_->next_ = next_;
-      next_ = prev_ = this;
-}
-
-bool Link::is_equal(const Link&that) const
-{
-      return (node_ == that.node_) && (pin_ == that.pin_);
-}
-
-bool Link::is_linked() const
-{
-      return next_ != this;
-}
-
-bool Link::is_linked(const Link&that) const
-{
-      for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
-	    if (idx->is_equal(that))
-		  return true;
-
-      return false;
-}
-
-Link* Link::next_link()
-{
-      assert(next_->prev_ == this);
-      assert(prev_->next_ == this);
-      return next_;
-}
-
-const Link* Link::next_link() const
-{
-      assert(next_->prev_ == this);
-      assert(prev_->next_ == this);
-      return next_;
-}
-
-const NetObj*Link::get_obj() const
-{
-      return node_;
-}
-
-NetObj*Link::get_obj()
-{
-      return node_;
-}
-
-unsigned Link::get_pin() const
-{
-      return pin_;
-}
-
-void Link::set_name(const string&n, unsigned i)
-{
-      name_ = n;
-      inst_ = i;
-}
-
-const string& Link::get_name() const
-{
-      return name_;
-}
-
-unsigned Link::get_inst() const
-{
-      return inst_;
-}
-
 unsigned count_inputs(const Link&pin)
 {
-      unsigned count = (pin.get_dir() == Link::INPUT)? 1 : 0;
+      unsigned count = 0;
 
-      for (const Link*clnk = pin.next_link()
-		 ; clnk != &pin
-		 ; clnk = clnk->next_link()) {
+      const Nexus*nex = pin.nexus();
+      for (const Link*clnk = nex->first_nlink()
+		 ; clnk ; clnk = clnk->next_nlink()) {
 	    const NetObj*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
@@ -254,11 +94,11 @@ unsigned count_inputs(const Link&pin)
 
 unsigned count_outputs(const Link&pin)
 {
-      unsigned count = (pin.get_dir() == Link::OUTPUT)? 1 : 0;
+      unsigned count = 0;
 
-      for (const Link*clnk = pin.next_link()
-		 ; clnk != &pin
-		 ; clnk = clnk->next_link()) {
+      const Nexus*nex = pin.nexus();
+      for (const Link*clnk = nex->first_nlink()
+		 ; clnk ; clnk = clnk->next_nlink()) {
 	    const NetObj*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
@@ -272,12 +112,10 @@ unsigned count_outputs(const Link&pin)
 unsigned count_signals(const Link&pin)
 {
       unsigned count = 0;
-      if (dynamic_cast<const NetNet*>(pin.get_obj()))
-	    count += 1;
 
-      for (const Link*clnk = pin.next_link()
-		 ; clnk != &pin
-		 ; clnk = clnk->next_link()) {
+      const Nexus*nex = pin.nexus();
+      for (const Link*clnk = nex->first_nlink()
+		 ; clnk ; clnk = clnk->next_nlink()) {
 	    const NetObj*cur;
 	    unsigned cpin;
 	    clnk->cur_link(cur, cpin);
@@ -290,9 +128,10 @@ unsigned count_signals(const Link&pin)
 
 const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 {
-      for (const Link*clnk = net->pin(pin).next_link()
-		 ; clnk->get_obj() != net
-		 ; clnk = clnk->next_link()) {
+      const Nexus*nex = net->pin(pin).nexus();
+
+      for (const Link*clnk = nex->first_nlink()
+		 ; clnk ; clnk = clnk->next_nlink()) {
 
 	    const NetObj*cur;
 	    unsigned cpin;
@@ -310,10 +149,15 @@ const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 
 Link* find_next_output(Link*lnk)
 {
-      for (Link*cur = lnk->next_link()
-		 ;  cur != lnk ;  cur = cur->next_link())
+      Link*cur = lnk->next_nlink();
+      while (cur != lnk) {
 	    if (cur->get_dir() == Link::OUTPUT)
 		  return cur;
+
+	    cur = cur->next_nlink();
+	    if (cur == 0)
+		  cur = lnk->nexus()->first_nlink();
+      }
 
       return 0;
 }
@@ -395,21 +239,29 @@ NetNode::~NetNode()
 
 NetNode* NetNode::next_node()
 {
-      for (Link*pin0 = pin(0).next_link()
-		 ; *pin0 != pin(0) ;  pin0 = pin0->next_link()) {
+      Link*pin0 = pin(0).next_nlink();
+      if (pin0 == 0)
+	    pin0 = pin(0).nexus()->first_nlink();
+
+      while (pin0 != &pin(0)) {
 	    NetNode*cur = dynamic_cast<NetNode*>(pin0->get_obj());
 	    if (cur == 0)
-		  continue;
+		  goto continue_label;
 	    if (cur->pin_count() != pin_count())
-		  continue;
+		  goto continue_label;
 
+	    { bool flag = true;
+	      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
+		    flag = flag && pin(idx).is_linked(cur->pin(idx));
 
-	    bool flag = true;
-	    for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
-		  flag = flag && pin(idx).is_linked(cur->pin(idx));
+	      if (flag == true)
+		    return cur;
+	    }
 
-	    if (flag == true)
-		  return cur;
+      continue_label:
+	    pin0 = pin0->next_nlink();
+	    if (pin0 == 0)
+		  pin0 = pin(0).nexus()->first_nlink();
       }
 
       return 0;
@@ -2612,6 +2464,10 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.131  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.130  2000/06/24 22:55:19  steve
  *  Get rid of useless next_link method.
  *

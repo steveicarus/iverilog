@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.87 2000/06/24 22:55:19 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.88 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 /*
@@ -86,18 +86,9 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    if (! pin(idx).is_linked())
 		  continue;
 
-	    o << setw(ind+4) << "" << "[" << idx << "]:";
-
-	    for (const Link*clnk = pin(idx).next_link()
-		       ; clnk != &pin(idx)
-		       ; clnk = clnk->next_link()) {
-
-		  unsigned cpin;
-		  const NetObj*cur;
-		  clnk->cur_link(cur, cpin);
-		  o << " " << cur->name() << "[" << cpin << "]";
-	    }
-	    o << endl;
+	    const Nexus*nex = pin(idx).nexus();
+	    o << setw(ind+4) << "" << "[" << idx << "]: " << nex
+	      << " " << nex->name() << endl;
       }
       dump_obj_attr(o, ind+4);
 }
@@ -145,19 +136,14 @@ void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 	    }
 
 	    o << " (" << pin(idx).drive0() << "0 "
-	      << pin(idx).drive1() << "1):";
+	      << pin(idx).drive1() << "1): ";
 
-	    for (const Link*clnk = pin(idx).next_link()
-		       ; clnk != &pin(idx)
-		       ; clnk = clnk->next_link()) {
-
-		  unsigned cpin;
-		  const NetObj*cur;
-		  clnk->cur_link(cur, cpin);
-		  const NetNet*sig = dynamic_cast<const NetNet*>(cur);
-		  if (sig) o << " " << sig->name() << "[" << cpin << "]";
+	    if (pin(idx).is_linked()) {
+		  const Nexus*nex = pin(idx).nexus();
+		  o << nex << " " << nex->name();
 	    }
 	    o << endl;
+
       }
 }
 
@@ -981,6 +967,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.88  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.87  2000/06/24 22:55:19  steve
  *  Get rid of useless next_link method.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.142 2000/06/24 22:55:20 steve Exp $"
+#ident "$Id: netlist.h,v 1.143 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 /*
@@ -36,6 +36,7 @@
 
 class Design;
 class Link;
+class Nexus;
 class NetNode;
 class NetProc;
 class NetProcTop;
@@ -118,8 +119,10 @@ class NetObj {
 };
 
 class Link {
+
       friend void connect(Link&, Link&);
       friend class NetObj;
+      friend class Nexus;
 
     public:
       enum DIR { PASSIVE, INPUT, OUTPUT };
@@ -142,8 +145,14 @@ class Link {
       void cur_link(NetObj*&net, unsigned &pin);
       void cur_link(const NetObj*&net, unsigned &pin) const;
 
-      Link* next_link();
-      const Link* next_link() const;
+	// Get a pointer to the nexus that represents all the links
+	// connected to me.
+      Nexus* nexus();
+      const Nexus* nexus()const;
+
+	// Return a pointer to the next link in the nexus.
+      Link* next_nlink();
+      const Link* next_nlink() const;
 
 	// Remove this link from the set of connected pins. The
 	// destructor will automatically do this if needed.
@@ -169,6 +178,7 @@ class Link {
       const string& get_name() const;
       unsigned get_inst() const;
 
+
     private:
 	// The NetNode manages these. They point back to the
 	// NetNode so that following the links can get me here.
@@ -186,12 +196,47 @@ class Link {
 
     private:
       Link *next_;
-      Link *prev_;
+      Nexus*nexus_;
 
     private: // not implemented
       Link(const Link&);
       Link& operator= (const Link&);
 };
+
+
+/*
+ * The Nexus represents a collection of links that are joined
+ * together. Each link has its own properties, this class holds the
+ * properties of the group.
+ *
+ * The links in a nexus are grouped into a singly linked list, with
+ * the nexus pointing to the first Link. Each link in turn points to
+ * the next link in the nexus, with the last link pointing to 0.
+ */
+class Nexus {
+
+      friend void connect(Link&, Link&);
+      friend class Link;
+
+    public:
+      explicit Nexus();
+      ~Nexus();
+
+      string name() const;
+
+      Link*first_nlink();
+      const Link* first_nlink()const;
+
+    private:
+      Link*list_;
+      void unlink(Link*);
+      void relink(Link*);
+
+    private: // not implemented
+      Nexus(const Nexus&);
+      Nexus& operator= (const Nexus&);
+};
+
 
 /*
  * A NetNode is a device of some sort, where each pin has a different
@@ -2585,6 +2630,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.143  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.142  2000/06/24 22:55:20  steve
  *  Get rid of useless next_link method.
  *

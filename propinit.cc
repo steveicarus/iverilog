@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: propinit.cc,v 1.3 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: propinit.cc,v 1.4 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 /*
@@ -61,8 +61,9 @@ static void prop_sequdp_output(NetUDP*udp)
 	/* Take the output value and write it to all the NetNet pins
 	   that are connected to the output pin. */
 
-      for (Link*lnk = udp->pin(0).next_link()
-		 ; (*lnk) != udp->pin(0) ;  lnk = lnk->next_link()) {
+      Nexus*nex = udp->pin(0).nexus();
+      for (Link*lnk = nex->first_nlink()
+		 ; lnk  ; lnk = lnk->next_nlink()) {
 
 	    if (NetNet*sig = dynamic_cast<NetNet*>(lnk->get_obj()))
 		  sig->set_ival(lnk->get_pin(), ival);
@@ -81,6 +82,10 @@ void propinit(Design*des)
 
 /*
  * $Log: propinit.cc,v $
+ * Revision 1.4  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.3  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.7 2000/05/31 02:26:49 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.8 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 /*
@@ -71,14 +71,21 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 	   to every pin of this signal. */
       unsigned significant_flags = 0;
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
-	    Link&lnk = sig->pin(idx);
-	    for (Link*cur = lnk.next_link()
-		       ; cur != &lnk ;  cur = cur->next_link()) {
+	    Nexus*nex = sig->pin(idx).nexus();
+
+	    for (Link*cur = nex->first_nlink()
+		       ; cur ;  cur = cur->next_nlink()) {
+
+		  if (cur == &sig->pin(idx))
+			continue;
+
 		  NetNet*cursig = dynamic_cast<NetNet*>(cur->get_obj());
 		  if (cursig == 0)
 			continue;
+
 		  if (cursig->local_flag())
 			continue;
+
 		  significant_flags += 1;
 		  break;
 	    }
@@ -98,6 +105,10 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.8  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.7  2000/05/31 02:26:49  steve
  *  Globally merge redundant event objects.
  *

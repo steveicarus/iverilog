@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.7 2000/05/14 17:55:04 steve Exp $"
+#ident "$Id: netmisc.h,v 1.8 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -32,14 +32,6 @@
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
-
-/*
- * This function chooses a nexus name for the link. The algorithm is
- * such that any signal in the link will have the same nexus name, and
- * signals that are not connected together will have a different nexus
- * name.
- */
-extern string nexus_from_link(const Link*lnk);
 
 /*
  * Check to see if the link has a constant value driven to it. If
@@ -65,6 +57,10 @@ extern verinum::V driven_value(const Link&lnk);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.8  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.7  2000/05/14 17:55:04  steve
  *  Support initialization of FF Q value.
  *

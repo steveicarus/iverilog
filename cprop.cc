@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.11 2000/06/24 22:55:19 steve Exp $"
+#ident "$Id: cprop.cc,v 1.12 2000/06/25 19:59:41 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -249,8 +249,10 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 	// them. If I find any, this this constant is used by a
 	// behavioral expression somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1) {
-	    Link*clnk = obj->pin(idx).next_link();
-	    while (clnk != &obj->pin(idx)) {
+	    Nexus*nex = obj->pin(idx).nexus();
+	    for (Link*clnk = nex->first_nlink()
+		       ; clnk ; clnk = clnk->next_nlink()) {
+
 		  NetObj*cur;
 		  unsigned pin;
 		  clnk->cur_link(cur, pin);
@@ -259,7 +261,6 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 		  if (tmp && tmp->get_eref() > 0)
 			return;
 
-		  clnk = clnk->next_link();
 	    }
       }
 
@@ -285,6 +286,10 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.12  2000/06/25 19:59:41  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.11  2000/06/24 22:55:19  steve
  *  Get rid of useless next_link method.
  *

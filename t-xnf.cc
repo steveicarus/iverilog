@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.29 2000/05/14 17:55:04 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.30 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -77,12 +77,15 @@
 
 verinum::V link_get_ival(const Link&lnk)
 {
-      const Link*cur = lnk.next_link();
-      while (cur != &lnk) {
+      const Nexus*nex = lnk.nexus();
+      for (const Link*cur = nex->first_nlink()
+		 ;  cur ;  cur = cur->next_nlink()) {
+	    if (cur == &lnk)
+		  continue;
+
 	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
 		  return sig->get_ival(cur->get_pin());
 
-	    cur = cur->next_link();
       }
 
       return verinum::Vx;
@@ -153,11 +156,12 @@ string target_xnf::mangle(const string&name)
 string target_xnf::choose_sig_name(const Link*lnk)
 {
       assert(lnk->is_linked());
-      const NetNet*sig = dynamic_cast<const NetNet*>(lnk->get_obj());
-      unsigned pin = lnk->get_pin();
+      const NetNet*sig = 0;
+      unsigned pin = 0;
 
-      for (const Link*cur = lnk->next_link()
-		 ;  cur != lnk ;  cur = cur->next_link()) {
+      const Nexus*nex = lnk->nexus();
+      for (const Link*cur = nex->first_nlink()
+		 ;  cur ;  cur = cur->next_nlink()) {
 
 	    const NetNet*cursig = dynamic_cast<const NetNet*>(cur->get_obj());
 	    if (cursig == 0)
@@ -918,6 +922,10 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.30  2000/06/25 19:59:42  steve
+ *  Redesign Links to include the Nexus class that
+ *  carries properties of the connected set of links.
+ *
  * Revision 1.29  2000/05/14 17:55:04  steve
  *  Support initialization of FF Q value.
  *

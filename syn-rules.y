@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.4 2000/06/13 03:24:48 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.5 2000/06/25 19:59:42 steve Exp $"
 #endif
 
 /*
@@ -202,13 +202,13 @@ static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn)
 
 	    verinum::V bit = driven_value(rsig->pin(idx));
 
-	    Link*cur = asn->pin(idx).next_link();
-	    while (cur != &asn->pin(idx)) {
+	    Nexus*nex = asn->pin(idx).nexus();
+	    for (Link*cur = nex->first_nlink()
+		       ;  cur ;  cur = cur->next_nlink()) {
 
 		  if (NetNet*net = dynamic_cast<NetNet*> (cur->get_obj()))
 			net->set_ival(cur->get_pin(), bit);
 
-		  cur = cur->next_link();
 	    }
       }
 
