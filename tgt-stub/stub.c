@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.104 2005/01/29 18:46:18 steve Exp $"
+#ident "$Id: stub.c,v 1.105 2005/01/30 05:09:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -247,6 +247,29 @@ static void check_cmp_widths(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_arithmetic_pins(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      nex = ivl_lpm_q(net, 0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
+
+      nex = ivl_lpm_data(net, 0);
+      fprintf(out, "    DataA: %s\n", nex? ivl_nexus_name(nex) : "");
+
+      nex = ivl_lpm_data(net, 1);
+      fprintf(out, "    DataB: %s\n", nex? ivl_nexus_name(nex) : "");
+}
+
+static void show_lpm_add(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_ADD %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      show_lpm_arithmetic_pins(net);
+}
+
 /* IVL_LPM_CMP_EEQ
  * This LPM node supports two-input compare. The output width is
  * actually always 1, the lpm_width is the expected width of the inputs.
@@ -357,24 +380,26 @@ static void show_lpm_mult(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_sub(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_SUB %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      show_lpm_arithmetic_pins(net);
+}
+
 static void show_lpm(ivl_lpm_t net)
 {
       unsigned idx;
-      ivl_nexus_t nex;
       unsigned width = ivl_lpm_width(net);
 
       switch (ivl_lpm_type(net)) {
 
-	  case IVL_LPM_ADD: {
-		fprintf(out, "  LPM_ADD %s: <width=%u>\n",
-			ivl_lpm_basename(net), width);
-		fprintf(out, "    Q: %s\n", ivl_nexus_name(ivl_lpm_q(net, 0)));
-		nex = ivl_lpm_data(net, 0);
-		fprintf(out, "    DataA: %s\n", nex? ivl_nexus_name(nex) : "");
-		ivl_nexus_t nex = ivl_lpm_datab(net, 0);
-		fprintf(out, "    DataB: %s\n", nex? ivl_nexus_name(nex) : "");
-		break;
-	  }
+	  case IVL_LPM_ADD:
+	    show_lpm_add(net);
+	    break;
 
 	  case IVL_LPM_DIVIDE: {
 		fprintf(out, "  LPM_DIVIDE %s: <width=%u %s>\n",
@@ -444,20 +469,9 @@ static void show_lpm(ivl_lpm_t net)
 		break;
 	  }
 
-	  case IVL_LPM_SUB: {
-		fprintf(out, "  LPM_SUB %s: <width=%u>\n",
-			ivl_lpm_basename(net), width);
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_data(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Data B %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_datab(net, idx)));
-		break;
-	  }
+	  case IVL_LPM_SUB:
+	    show_lpm_sub(net);
+	    break;
 
 	  case IVL_LPM_FF: {
 
@@ -998,6 +1012,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.105  2005/01/30 05:09:04  steve
+ *  Support LPM_SUB
+ *
  * Revision 1.104  2005/01/29 18:46:18  steve
  *  Netlist boolean expressions generate gate vectors.
  *
