@@ -21,9 +21,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: svector.h,v 1.7 2003/07/15 05:07:13 steve Exp $"
+#ident "$Id: svector.h,v 1.8 2003/07/16 00:54:07 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  <string>
 # include  <assert.h>
 
@@ -108,6 +109,9 @@ svector<string>::svector<string>(unsigned size)
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.8  2003/07/16 00:54:07  steve
+ *  Needs the config.h header.
+ *
  * Revision 1.7  2003/07/15 05:07:13  steve
  *  Move PUdp constructor into compiled file.
  *
