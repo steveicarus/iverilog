@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.120 2002/01/11 05:21:47 steve Exp $"
+#ident "$Id: compile.cc,v 1.121 2002/03/08 05:41:45 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -572,9 +572,19 @@ struct const_functor_s: public functor_s {
 	    { odrive0 = str0; odrive1 = str1; }
       virtual void set(vvp_ipoint_t, bool, unsigned, unsigned);   
 };
-void const_functor_s::set(vvp_ipoint_t, bool, unsigned, unsigned) 
+void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned) 
 {
-      assert(! "const_functor_s::set: don't do that");
+      fprintf(stderr, "internal error: Set value to const_functor 0x%x\n", p);
+      fprintf(stderr, "              : Value is %u, trying to set %u\n",
+	      oval, val);
+
+      debug_print(p);
+#if defined(WITH_DEBUG)
+      breakpoint();
+#else
+      fprintf(stderr, "              : I'm driving functor 0x%x\n", out);
+      assert(0);
+#endif
 }
 
 
@@ -1379,6 +1389,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.121  2002/03/08 05:41:45  steve
+ *  Debug code for write to constants.
+ *
  * Revision 1.120  2002/01/11 05:21:47  steve
  *  Magic stime object support.
  *
