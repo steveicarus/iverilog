@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.17 2001/04/18 05:12:03 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.18 2001/04/21 01:49:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -309,6 +309,64 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       return lv;
 }
 
+static struct vector_info draw_binary_expr_ls(ivl_expr_t exp, unsigned wid)
+{
+      ivl_expr_t le = ivl_expr_oper1(exp);
+      ivl_expr_t re = ivl_expr_oper2(exp);
+
+      unsigned shift;
+
+      struct vector_info lv;
+      struct vector_info rs;
+
+      lv = draw_eval_expr_wid(le, wid);
+
+	/* XXXX support only constant right expressions. */
+      switch (ivl_expr_type(re)) {
+	  case IVL_EX_NUMBER: {
+		unsigned idx, nbits = ivl_expr_width(re);
+		const char*bits = ivl_expr_bits(re);
+
+		for (idx = 0 ;  idx < nbits ;  idx += 1) switch (bits[idx]) {
+
+		    case '0':
+		      break;
+		    case '1':
+		      assert(idx < (8*sizeof shift));
+		      shift |= 1 << idx;
+		      break;
+		    default:
+		      assert(0);
+		}
+		break;
+	  }
+	    
+	  case IVL_EX_ULONG:
+	    shift = ivl_expr_uvalue(re);
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      if (shift >= wid) {
+	    rs.base = 0;
+	    rs.wid  = wid;
+	    return rs;
+      }
+
+      assert(lv.wid >= (wid - shift));
+      rs.base = allocate_vector(wid);
+      rs.wid = wid;
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u;\n", rs.base+shift,
+	      lv.base, wid-shift);
+      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", rs.base, shift);
+      clr_vector(lv);
+
+      return rs;
+}
+
 static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
@@ -356,6 +414,10 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 
 	  case '+':
 	    rv = draw_binary_expr_plus(exp, wid);
+	    break;
+
+	  case 'l':
+	    rv = draw_binary_expr_ls(exp, wid);
 	    break;
 
 	  case '&':
@@ -670,6 +732,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.18  2001/04/21 01:49:17  steve
+ *  Left shift by a constant amount.
+ *
  * Revision 1.17  2001/04/18 05:12:03  steve
  *  Use the new %fork syntax.
  *
