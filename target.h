@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.17 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: target.h,v 1.18 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -86,6 +86,7 @@ struct target_t {
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
+      virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
@@ -135,6 +136,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.18  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.17  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.61 1999/09/13 03:10:59 steve Exp $"
+#ident "$Id: netlist.cc,v 1.62 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -427,12 +427,30 @@ NetAssignNB::~NetAssignNB()
 }
 
 
-NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
+NetAssignMem_::NetAssignMem_(NetMemory*m, NetExpr*i, NetExpr*r)
 : mem_(m), index_(i), rval_(r)
 {
 }
 
+NetAssignMem_::~NetAssignMem_()
+{
+}
+
+NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
+: NetAssignMem_(m, i, r)
+{
+}
+
 NetAssignMem::~NetAssignMem()
+{
+}
+
+NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetExpr*i, NetExpr*r)
+: NetAssignMem_(m, i, r)
+{
+}
+
+NetAssignMemNB::~NetAssignMemNB()
 {
 }
 
@@ -1782,6 +1800,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.62  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.61  1999/09/13 03:10:59  steve
  *  Clarify msb/lsb in context of netlist. Properly
  *  handle part selects in lval and rval of expressions,

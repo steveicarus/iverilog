@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.18 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: target.cc,v 1.19 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -126,6 +126,12 @@ void target_t::proc_assign_nb(ostream&os, const NetAssignNB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled non-blocking assignment." << endl;
+}
+
+void target_t::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled non-blocking memory assignment." << endl;
 }
 
 void target_t::proc_block(ostream&os, const NetBlock*)
@@ -262,6 +268,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.19  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.18  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.17 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: Statement.h,v 1.18 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 # include  <string>
@@ -120,6 +120,10 @@ class PAssignNB  : public PAssign_ {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
+
+    private:
+      NetProc*assign_to_memory_(class NetMemory*, PExpr*,
+				Design*des, const string&path) const;
 };
 
 /*
@@ -333,6 +337,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.18  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.17  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

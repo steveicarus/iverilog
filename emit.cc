@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.20 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: emit.cc,v 1.21 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 /*
@@ -98,6 +98,11 @@ void NetAssignNB::emit_proc(ostream&o, struct target_t*tgt) const
 void NetAssignMem::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign_mem(o, this);
+}
+
+void NetAssignMemNB::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_assign_mem_nb(o, this);
 }
 
 void NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
@@ -326,6 +331,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.21  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.20  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *

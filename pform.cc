@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.42 1999/09/10 05:02:09 steve Exp $"
+#ident "$Id: pform.cc,v 1.43 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -625,9 +625,14 @@ static void pform_set_reg_integer(const string&nm)
 {
       string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
+      if (cur == 0) {
+	    cur = new PWire(nm, NetNet::INTEGER, NetNet::NOT_A_PORT);
+	    pform_cur_module->add_wire(cur);
+      } else {
+	    bool rc = cur->set_wire_type(NetNet::INTEGER);
+	    assert(rc);
+      }
       assert(cur);
-      bool rc = cur->set_wire_type(NetNet::INTEGER);
-      assert(rc);
 
       cur->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
 		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
@@ -693,6 +698,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.43  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.42  1999/09/10 05:02:09  steve
  *  Handle integers at task parameters.
  *

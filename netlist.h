@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.63 1999/09/13 03:10:59 steve Exp $"
+#ident "$Id: netlist.h,v 1.64 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 /*
@@ -668,25 +668,48 @@ class NetAssignNB  : public NetAssign_ {
 
 /*
  * Assignment to memory is handled separately because memory is
- * not a node.
+ * not a node. There are blocking and non-blocking variants, just like
+ * regular assign, and the NetAssignMem_ base class takes care of all
+ * the common stuff.
  */
-class NetAssignMem : public NetProc, public LineInfo {
+class NetAssignMem_ : public NetProc, public LineInfo {
 
     public:
-      explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
-      ~NetAssignMem();
+      explicit NetAssignMem_(NetMemory*, NetExpr*idx, NetExpr*rv);
+      ~NetAssignMem_();
 
       const NetMemory*memory()const { return mem_; }
       const NetExpr*index()const { return index_; }
       const NetExpr*rval()const { return rval_; }
 
-      virtual void emit_proc(ostream&, struct target_t*) const;
-      virtual void dump(ostream&, unsigned ind) const;
-
     private:
       NetMemory*mem_;
       NetExpr* index_;
       NetExpr* rval_;
+};
+
+class NetAssignMem : public NetAssignMem_ {
+
+    public:
+      explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
+      ~NetAssignMem();
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+};
+
+class NetAssignMemNB : public NetAssignMem_ {
+
+    public:
+      explicit NetAssignMemNB(NetMemory*, NetExpr*idx, NetExpr*rv);
+      ~NetAssignMemNB();
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
 };
 
 /* A block is stuff line begin-end blocks, that contain and ordered
@@ -1559,6 +1582,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.64  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.63  1999/09/13 03:10:59  steve
  *  Clarify msb/lsb in context of netlist. Properly
  *  handle part selects in lval and rval of expressions,

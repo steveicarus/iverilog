@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.39 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.40 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 /*
@@ -369,10 +369,22 @@ void NetAssignMem::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
       o << "/* " << get_line() << " */" << endl;
       o << setw(ind) << "";
-      o << mem_->name() << "[";
-      index_->dump(o);
+      o << memory()->name() << "[";
+      index()->dump(o);
       o << "] = ";
-      rval_->dump(o);
+      rval()->dump(o);
+      o << ";" << endl;
+}
+
+void NetAssignMemNB::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "";
+      o << "/* " << get_line() << " */" << endl;
+      o << setw(ind) << "";
+      o << memory()->name() << "[";
+      index()->dump(o);
+      o << "] <= ";
+      rval()->dump(o);
       o << ";" << endl;
 }
 
@@ -733,6 +745,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.40  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.39  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.84 1999/09/14 01:50:52 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.85 1999/09/15 01:55:06 steve Exp $"
 #endif
 
 /*
@@ -898,6 +898,11 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 {
       NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
+	    if (des->find_memory(path+"."+text_)) {
+		  cerr << get_line() << ": Sorry, memories not supported"
+			" in this context." << endl;
+		  return 0;
+	    }
 	    sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
 	    des->add_signal(sig);
 	    cerr << get_line() << ": warning: Implicitly defining "
@@ -938,6 +943,13 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << get_line() << ": index of " << text_ <<
+			" needs to be constant in this context." <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
 	    assert(mval);
 	    unsigned idx = sig->sb_to_idx(mval->as_long());
 	    NetTmp*tmp = new NetTmp(1);
@@ -1633,6 +1645,36 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 }
 
 /*
+ * I do not really know how to elaborate mem[x] <= expr, so this
+ * method pretends it is a blocking assign and elaborates
+ * that. However, I report an error so that the design isn't actually
+ * executed by anyone.
+ */
+NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
+				      Design*des, const string&path) const
+{
+	/* Elaborate the r-value expression, ... */
+      NetExpr*rv = rval()->elaborate_expr(des, path);
+      if (rv == 0) {
+	    cerr << get_line() << ": " << "failed to elaborate expression."
+		 << endl;
+	    return 0;
+      }
+      assert(rv);
+      rv->set_width(mem->width());
+
+	/* Elaborate the expression to calculate the index, ... */
+      NetExpr*idx = ix->elaborate_expr(des, path);
+      assert(idx);
+
+	/* And connect them together in an assignment NetProc. */
+      NetAssignMemNB*am = new NetAssignMemNB(mem, idx, rv);
+      am->set_line(*this);
+
+      return am;
+}
+
+/*
  * The l-value of a procedural assignment is a very much constrained
  * expression. To wit, only identifiers, bit selects and part selects
  * are allowed. I therefore can elaborate the l-value by hand, without
@@ -1642,6 +1684,18 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
  */
 NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 {
+	/* Catch the case where the lvalue is a reference to a memory
+	   item. These are handled differently. */
+      do {
+	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
+	    if (id == 0) break;
+
+	    if (NetMemory*mem = des->find_memory(path+"."+id->name()))
+		  return assign_to_memory_(mem, id->msb_, des, path);
+
+      } while(0);
+
+
       unsigned lsb, msb;
       NetExpr*mux;
       NetNet*reg = elaborate_lval(des, path, msb, lsb, mux);
@@ -2378,6 +2432,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.85  1999/09/15 01:55:06  steve
+ *  Elaborate non-blocking assignment to memories.
+ *
  * Revision 1.84  1999/09/14 01:50:52  steve
  *  implicitly declare wires if needed.
  *
