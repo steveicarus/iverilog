@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.13 2002/06/04 01:42:58 steve Exp $"
+#ident "$Id: veriuser.h,v 1.14 2002/06/07 02:58:58 steve Exp $"
 #endif
 
 /*
@@ -104,9 +104,15 @@ extern int tf_dostop(void);
 extern void tf_error(const char*, ...)
       __attribute__((format (printf,1,2)));
 
+extern char* tf_getcstringp(int nparam);
+
 extern char* tf_getinstance(void);
 
+extern int tf_getlongp(int*aof_highvalue, int pnum);
+
 extern int tf_getlongtime(int*high_bits);
+
+extern int tf_getp(int pnum);
 
 extern int tf_nump(void);
 
@@ -117,6 +123,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.14  2002/06/07 02:58:58  steve
+ *  Add a bunch of acc/tf functions. (mruff)
+ *
  * Revision 1.13  2002/06/04 01:42:58  steve
  *  Add misctf support to libveriuser
  *
