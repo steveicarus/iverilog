@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.91 2002/06/19 04:20:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.92 2002/06/22 04:22:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2079,10 +2079,33 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  break;
 
 		default:
-		  cerr << get_line() << ": internal error: Wide unary " 
-		       << "minus not supported here." << endl;
-		  des->errors += 1;
-		  sig = 0;
+		  NetAddSub*sub = new NetAddSub(scope, scope->local_hsymbol(),
+						sig->pin_count());
+		  sub->attribute("LPM_Direction", verinum("SUB"));
+
+		  des->add_node(sub);
+
+		  for (unsigned idx = 0 ;  idx < sig->pin_count();  idx += 1)
+			connect(sig->pin(idx), sub->pin_Result(idx));
+
+		  for (unsigned idx = 0; idx < sub_sig->pin_count(); idx += 1)
+			connect(sub_sig->pin(idx), sub->pin_DataB(idx));
+
+		  verinum tmp_num (verinum::V0, sub->width(), true);
+		  NetConst*tmp_con = new NetConst(scope,
+						  scope->local_hsymbol(),
+						  tmp_num);
+		  des->add_node(tmp_con);
+
+		  NetNet*tmp_sig = new NetNet(scope, scope->local_hsymbol(),
+					      NetNet::WIRE,
+					      sub_sig->pin_count());
+		  tmp_sig->local_flag(true);
+
+		  for (unsigned idx = 0; idx < sig->pin_count(); idx += 1) {
+			connect(tmp_sig->pin(idx), sub->pin_DataA(idx));
+			connect(tmp_sig->pin(idx), tmp_con->pin(idx));
+		  }
 		  break;
 	    }
 	    break;
@@ -2098,6 +2121,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.92  2002/06/22 04:22:40  steve
+ *  Wide unary minus in continuous assignments.
+ *
  * Revision 1.91  2002/06/19 04:20:03  steve
  *  Remove NetTmp and add NetSubnet class.
  *
