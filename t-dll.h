@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.37 2001/04/07 19:26:32 steve Exp $"
+#ident "$Id: t-dll.h,v 1.38 2001/04/15 02:58:11 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -171,6 +171,10 @@ struct ivl_expr_s {
 		  ivl_expr_t    *parm;
 		  unsigned short parms;
 	    } ufunc_;
+
+	    struct {
+		  unsigned long value;
+	    } ulong_;
 
 	    struct {
 		  char op_;
@@ -365,6 +369,7 @@ struct ivl_statement_s {
 		  unsigned lvals_;
 		  struct ivl_lval_s*lval_;
 		  ivl_expr_t rval_;
+		  ivl_expr_t delay;
 	    } assign_;
 
 	    struct { /* IVL_ST_BLOCK, IVL_ST_FORK */
@@ -432,6 +437,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.38  2001/04/15 02:58:11  steve
+ *  vvp support for <= with internal delay.
+ *
  * Revision 1.37  2001/04/07 19:26:32  steve
  *  Add the disable statemnent.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.51 2001/04/07 19:24:36 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.52 2001/04/15 02:58:11 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -161,6 +161,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
       IVL_EX_UFUNC,
+      IVL_EX_ULONG,
       IVL_EX_UNARY
 } ivl_expr_type_t;
 
@@ -387,6 +388,8 @@ extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
 extern int         ivl_expr_signed(ivl_expr_t net);
   /* IVL_EX_STRING */
 extern const char* ivl_expr_string(ivl_expr_t net);
+  /* IVL_EX_ULONG */
+extern unsigned long ivl_expr_uvalue(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
@@ -721,6 +724,8 @@ extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
   /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
+extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_WAIT */
@@ -760,6 +765,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.52  2001/04/15 02:58:11  steve
+ *  vvp support for <= with internal delay.
+ *
  * Revision 1.51  2001/04/07 19:24:36  steve
  *  Add the disable statemnent.
  *

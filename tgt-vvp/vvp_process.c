@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.26 2001/04/06 02:28:03 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.27 2001/04/15 02:58:11 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -156,6 +156,14 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 {
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t del  = ivl_stmt_delay_expr(net);
+
+      unsigned long delay = 0;
+      if (del != 0) {
+	      /* XXXX Only support constant values. */
+	    assert(ivl_expr_type(del) == IVL_EX_ULONG);
+	    delay = ivl_expr_uvalue(del);
+      }
 
 
 	/* Handle the special case that the r-value is a constant. We
@@ -175,7 +183,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
 		  assign_to_nexus(ivl_lval_pin(lval, idx),
-				  bitchar_to_idx(bits[idx]), 0);
+				  bitchar_to_idx(bits[idx]), delay);
 
 	    return 0;
       }
@@ -195,10 +203,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      wid = ivl_lval_pins(lval);
 
 	for (idx = 0 ;  idx < wid ;  idx += 1)
-	      assign_to_nexus(ivl_lval_pin(lval, idx), res.base+idx, 0);
+	      assign_to_nexus(ivl_lval_pin(lval, idx), res.base+idx, delay);
 
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
-	      assign_to_nexus(ivl_lval_pin(lval, idx), 0, 0);
+	      assign_to_nexus(ivl_lval_pin(lval, idx), 0, delay);
 
 	clr_vector(res);
       }
@@ -717,6 +725,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.27  2001/04/15 02:58:11  steve
+ *  vvp support for <= with internal delay.
+ *
  * Revision 1.26  2001/04/06 02:28:03  steve
  *  Generate vvp code for functions with ports.
  *

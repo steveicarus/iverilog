@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.37 2001/04/06 02:28:02 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.38 2001/04/15 02:58:11 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -290,6 +290,12 @@ extern "C" const char* ivl_expr_string(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_STRING);
       return net->u_.string_.value_;
+}
+
+extern "C" unsigned long ivl_expr_uvalue(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_ULONG);
+      return net->u_.ulong_.value;
 }
 
 extern "C" unsigned ivl_expr_width(ivl_expr_t net)
@@ -753,6 +759,19 @@ extern "C" ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net)
 	    return net->u_.condit_.stmt_ + 0;
 }
 
+extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_ASSIGN:
+	  case IVL_ST_ASSIGN_NB:
+	    return net->u_.assign_.delay;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
 {
       assert(net->type_ == IVL_ST_DELAY);
@@ -884,6 +903,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.38  2001/04/15 02:58:11  steve
+ *  vvp support for <= with internal delay.
+ *
  * Revision 1.37  2001/04/06 02:28:02  steve
  *  Generate vvp code for functions with ports.
  *

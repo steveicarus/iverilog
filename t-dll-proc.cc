@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.25 2001/04/07 19:26:32 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.26 2001/04/15 02:58:11 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -125,6 +125,7 @@ void dll_target::proc_assign(const NetAssign*net)
 
       stmt_cur_->u_.assign_.lvals_ = cnt = net->l_val_count();
       stmt_cur_->u_.assign_.lval_ = new struct ivl_lval_s[cnt];
+      stmt_cur_->u_.assign_.delay = 0;
 
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
@@ -164,19 +165,24 @@ void dll_target::proc_assign(const NetAssign*net)
 
 void dll_target::proc_assign_nb(const NetAssignNB*net)
 {
-      unsigned cnt;
+      unsigned cnt = net->l_val_count();
+
+      unsigned long delay_val = net->l_val(0)->rise_time();
 
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_ASSIGN_NB;
 
-      stmt_cur_->u_.assign_.lvals_ = cnt = net->l_val_count();
-      stmt_cur_->u_.assign_.lval_ = new struct ivl_lval_s[cnt];
+      stmt_cur_->u_.assign_.lvals_ = cnt;
+      stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[cnt];
+      stmt_cur_->u_.assign_.delay  = 0;
 
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
 	    const NetAssign_*asn = net->l_val(idx);
+
+	    assert(asn->rise_time() == delay_val);
 
 	    cur->width_ = asn->pin_count();
 
@@ -207,6 +213,15 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
       net->rval()->expr_scan(this);
       stmt_cur_->u_.assign_.rval_ = expr_;
       expr_ = 0;
+
+      if (delay_val > 0) {
+	    ivl_expr_t de = new struct ivl_expr_s;
+	    de->type_ = IVL_EX_ULONG;
+	    de->width_  = 8 * sizeof(unsigned long);
+	    de->signed_ = 0;
+	    de->u_.ulong_.value = delay_val;
+	    stmt_cur_->u_.assign_.delay = de;
+      }
 }
 
 
@@ -587,6 +602,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.26  2001/04/15 02:58:11  steve
+ *  vvp support for <= with internal delay.
+ *
  * Revision 1.25  2001/04/07 19:26:32  steve
  *  Add the disable statemnent.
  *
