@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.59 2001/12/14 06:03:34 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.60 2001/12/15 02:13:33 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -126,6 +126,31 @@ const char *vvp_mangle_name(const char *id)
       return out;
 }
 
+ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+      ivl_signal_type_t out = IVL_SIT_TRI;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_signal_type_t stype;
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0)
+		  continue;
+
+	    stype = ivl_signal_type(sig);
+	    if (stype == IVL_SIT_REG)
+		  continue;
+	    if (stype == IVL_SIT_TRI)
+		  continue;
+	    if (stype == IVL_SIT_NONE)
+		  continue;
+	    out = stype;
+      }
+
+      return out;
+}
+
 /*
  * The draw_scope function draws the major functional items within a
  * scope. This includes the scopes themselves, of course. All the
@@ -196,14 +221,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    return result;
       }
 
-      if (sptr && (ivl_signal_type(sptr) == IVL_SIT_SUPPLY1)) {
-	    return "C<su1>";
-      }
-
-      if (sptr && (ivl_signal_type(sptr) == IVL_SIT_SUPPLY0)) {
-	    return "C<su0>";
-      }
-
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
 	    const char*bits = ivl_const_bits(cptr);
@@ -270,6 +287,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
  */
 const char* draw_net_input(ivl_nexus_t nex)
 {
+      ivl_signal_type_t res;
       char result[512];
       unsigned idx;
       int level;
@@ -277,11 +295,43 @@ const char* draw_net_input(ivl_nexus_t nex)
       static ivl_nexus_ptr_t *drivers = 0x0;
       static unsigned adrivers = 0;
 
+      const char*resolv_type;
+
 	/* If this nexus already has a label, then its input is
 	   already figured out. Just return the existing label. */
       char*nex_private = (char*)ivl_nexus_get_private(nex);
       if (nex_private)
 	    return nex_private;
+
+      res = signal_type_of_nexus(nex);
+      switch (res) {
+	  case IVL_SIT_TRI:
+	    resolv_type = "tri";
+	    break;
+	  case IVL_SIT_TRI0:
+	    resolv_type = "tri0";
+	    break;
+	  case IVL_SIT_TRI1:
+	    resolv_type = "tri1";
+	    break;
+
+	      /* Catch the special cases that the nets are supply
+		 nets. Drive constant values uncomditionally. */
+	  case IVL_SIT_SUPPLY0:
+	    nex_private = "C<su0>";
+	    ivl_nexus_set_private(nex, nex_private);
+	    return nex_private;
+	  case IVL_SIT_SUPPLY1:
+	    nex_private = "C<su1>";
+	    ivl_nexus_set_private(nex, nex_private);
+	    return nex_private;
+
+	  default:
+	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %u\n", res);
+	    assert(0);
+	    resolv_type = "tri";
+	    break;
+      }
 
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -306,14 +356,28 @@ const char* draw_net_input(ivl_nexus_t nex)
 	/* If the nexus has no drivers, then send a constant HiZ into
 	   the net. */
       if (ndrivers == 0) {
-	    nex_private = "C<z>";
+	    switch (res) {
+		case IVL_SIT_TRI:
+		  nex_private = "C<z>";
+		  break;
+		case IVL_SIT_TRI0:
+		  nex_private = "C<0>";
+		  break;
+		case IVL_SIT_TRI1:
+		  nex_private = "C<1>";
+		  break;
+		default:
+		  assert(0);
+	    }
 	    ivl_nexus_set_private(nex, nex_private);
 	    return nex_private;
       }
 
 
-	/* If the nexus has exactly one driver, then simply draw it. */
-      if (ndrivers == 1) {
+	/* If the nexus has exactly one driver, then simply draw
+	   it. Note that this will *not* work if the nexus is not a
+	   TRI type nexus. */
+      if (ndrivers == 1 && res == IVL_SIT_TRI) {
 	    nex_private = strdup(draw_net_input_drive(nex, drivers[0]));
 	    ivl_nexus_set_private(nex, nex_private);
 	    return nex_private;
@@ -328,8 +392,9 @@ const char* draw_net_input(ivl_nexus_t nex)
 				vvp_mangle_id(ivl_nexus_name(nex)),
 				level, inst);
 		  else 
-			fprintf(vvp_out, "RS_%s .resolv tri", 
-				vvp_mangle_id(ivl_nexus_name(nex)));
+			fprintf(vvp_out, "RS_%s .resolv %s", 
+				vvp_mangle_id(ivl_nexus_name(nex)),
+				resolv_type);
 		  
 		  for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
 			if (level) {
@@ -1256,6 +1321,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.60  2001/12/15 02:13:33  steve
+ *  Support all 3 TRI net types.
+ *
  * Revision 1.59  2001/12/14 06:03:34  steve
  *  Generate notif functors.
  *
