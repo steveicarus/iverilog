@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.67 1999/10/28 21:36:00 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.68 1999/10/28 21:51:21 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -760,7 +760,7 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
 void target_vvm::emit_gate_outputfun_(const NetNode*gate)
 {
       delayed << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*sim, vvm_bit_t val)" <<
+	    "_output_fun(vvm_simulation*sim, vpip_bit_t val)" <<
 	    endl << "{" << endl;
 
 	/* The output function connects to pin 0 of the netlist part
@@ -796,7 +796,7 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 void target_vvm::logic(ostream&os, const NetLogic*gate)
 {
       os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
 
       switch (gate->type()) {
 	  case NetLogic::AND:
@@ -846,7 +846,7 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 {
       os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
 
       os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
 	    mangle(gate->name()) << "_output_fun);" << endl;
@@ -913,7 +913,7 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
       os << "};" << dec << setfill(' ') << endl;
 
       os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
 
       os << "static vvm_udp_ssequ<" << gate->pin_count()-1 << "> " <<
 	    mangle(gate->name()) << "(&" << mangle(gate->name()) <<
@@ -1032,7 +1032,7 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 {
       os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
 
       assert(gate->pin_count() == 3);
       os << "static vvm_eeq" << "<" << gate->rise_time() << "> "
@@ -1054,7 +1054,7 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 void target_vvm::net_const(ostream&os, const NetConst*gate)
 {
       os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
 
       os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
 	    mangle(gate->name()) << "_output_fun);" << endl;
@@ -1758,6 +1758,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.68  1999/10/28 21:51:21  steve
+ *  gate output pins use vpip_bit_t (Eric Aardoom)
+ *
  * Revision 1.67  1999/10/28 21:36:00  steve
  *  Get rid of monitor_t and fold __vpiSignal into signal.
  *
