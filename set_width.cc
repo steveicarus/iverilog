@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.16 2001/02/07 21:47:13 steve Exp $"
+#ident "$Id: set_width.cc,v 1.17 2001/02/08 01:10:30 steve Exp $"
 #endif
 
 /*
@@ -115,17 +115,11 @@ bool NetEBBits::set_width(unsigned w)
       left_->set_width(w);
       right_->set_width(w);
 
-	/* Now increase me up to the size of the largest operand. This
-	   accounts for operands that can't shrink. */
+
+	/*  */
 
       unsigned use_width = w;
-#if 0
-      if (use_width < left_->expr_width())
-	    use_width = left_->expr_width();
 
-      if (use_width < right_->expr_width())
-	    use_width = right_->expr_width();
-#endif
 
 	/* If the operands end up too small, then pad them to suit. */
 
@@ -343,6 +337,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.17  2001/02/08 01:10:30  steve
+ *  Remove dead code.
+ *
  * Revision 1.16  2001/02/07 21:47:13  steve
  *  Fix expression widths for rvalues and parameters (PR#131,132)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.61 2001/01/25 02:05:16 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.62 2001/02/08 01:10:30 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -167,13 +167,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
 
-	// If the desired output size if creater then the largest
-	// operand, then include the carry of the adder as an output.
-#if 0
-      unsigned owidth = width;
-      if (lwidth > owidth)
-	    owidth = width + 1;
-#else
+
 	/* The owidth is the output width of the lpm_add_sub
 	   device. If the desired with is greater then the width of
 	   the operands, then widen the adder and let code below pad
@@ -196,7 +190,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	  default:
 	    assert(0);
       }
-#endif
+
 
 	// Pad out the operands, if necessary, the match the width of
 	// the adder device.
@@ -1902,6 +1896,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.62  2001/02/08 01:10:30  steve
+ *  Remove dead code.
+ *
  * Revision 1.61  2001/01/25 02:05:16  steve
  *  Handle wide net constants with unary minus.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.155 2001/02/07 21:47:13 steve Exp $"
+#ident "$Id: netlist.cc,v 1.156 2001/02/08 01:10:30 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1789,19 +1789,6 @@ bool NetExpr::has_width() const
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
-#if 0
-      if (l->expr_width() > r->expr_width())
-	    r->set_width(l->expr_width());
-
-      if (r->expr_width() > l->expr_width())
-	    l->set_width(r->expr_width());
-
-      if (l->expr_width() < r->expr_width())
-	    r->set_width(l->expr_width());
-
-      if (r->expr_width() < l->expr_width())
-	    l->set_width(r->expr_width());
-#endif
       if (r->expr_width() > l->expr_width())
 	    expr_width(r->expr_width());
       else
@@ -1829,31 +1816,6 @@ NetEBAdd* NetEBAdd::dup_expr() const
 NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
-#if 0
-	/* First try to naturally adjust the size of the
-	   expressions to match. */
-      if (l->expr_width() > r->expr_width())
-	    r->set_width(l->expr_width());
-
-      if (r->expr_width() > l->expr_width())
-	    l->set_width(r->expr_width());
-
-      if (l->expr_width() < r->expr_width())
-	    r->set_width(l->expr_width());
-
-      if (r->expr_width() < l->expr_width())
-	    l->set_width(r->expr_width());
-
-	/* If the expressions cannot be matched, pad them to fit. */
-      if (l->expr_width() > r->expr_width())
-	    right_ = pad_to_width(r, l->expr_width());
-
-      if (r->expr_width() > l->expr_width())
-	    left_ = pad_to_width(l, r->expr_width());
-
-      assert(left_->expr_width() == right_->expr_width());
-      expr_width(left_->expr_width());
-#endif
       if (r->expr_width() > l->expr_width())
 	    expr_width(r->expr_width());
       else
@@ -2493,6 +2455,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.156  2001/02/08 01:10:30  steve
+ *  Remove dead code.
+ *
  * Revision 1.155  2001/02/07 21:47:13  steve
  *  Fix expression widths for rvalues and parameters (PR#131,132)
  *
