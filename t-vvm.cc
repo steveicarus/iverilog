@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.81 1999/11/28 00:56:08 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.82 1999/11/28 01:16:19 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -719,7 +719,6 @@ bool target_vvm::process(ostream&os, const NetProcTop*top)
 
 void target_vvm::signal(ostream&os, const NetNet*sig)
 {
-#if 1
       string net_name = mangle(sig->name());
       os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
 	    net_name<< "_bits; /* " << sig->name() <<
@@ -735,7 +734,7 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    init_code << "      vpip_attach_to_scope(&" << sname
 		      << ", &" << net_name << ".base);" << endl;
       }
-#endif
+
 
 	/* Scan the signals of the vector, passing the initial value
 	   to the inputs of all the connected devices. */
@@ -874,7 +873,7 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
       gate->pin(gpin).next_link(cur, pin);
       while (cur != gate) {
 
-	    if (dynamic_cast<const NetNet*>(cur)) {
+	    if (dynamic_cast<const NetESignal*>(cur)) {
 		    // Skip signals
 
 	    } else if (cur->pin(pin).get_name() != "") {
@@ -1313,22 +1312,6 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 
 void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 {
-#if 0
-      bool&flag = esignal_printed_flag[net->name()];
-      if (flag)
-	    return;
-
-      flag = true;
-      string net_name = mangle(net->name());
-      os << "static vvm_bitset_t<" << net->pin_count() << "> " <<
-	    net_name<< "_bits; /* " << net->name() <<
-	    " */" << endl;
-      os << "static vvm_signal_t<" << net->pin_count() << "> " <<
-	    net_name << "(&" << net_name << "_bits);" << endl;
-
-      init_code << "      vpip_make_reg(&" << net_name <<
-	    ", \"" << net->name() << "\");" << endl;
-#endif
 }
 
 /*
@@ -1992,6 +1975,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.82  1999/11/28 01:16:19  steve
+ *  gate outputs need to set signal values.
+ *
  * Revision 1.81  1999/11/28 00:56:08  steve
  *  Build up the lists in the scope of a module,
  *  and get $dumpvars to scan the scope for items.

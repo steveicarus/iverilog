@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.94 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: netlist.cc,v 1.95 1999/11/28 01:16:18 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -374,8 +374,10 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
     local_flag_(false)
 {
       ivalue_ = new verinum::V[npins];
-      for (unsigned idx = 0 ;  idx < npins ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
+	    pin(idx).set_name("P", idx);
 	    ivalue_[idx] = verinum::Vz;
+      }
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
@@ -384,8 +386,10 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
     port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false)
 {
       ivalue_ = new verinum::V[pin_count()];
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_name("P", idx);
 	    ivalue_[idx] = verinum::Vz;
+      }
 }
 
 NetNet::~NetNet()
@@ -2617,6 +2621,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.95  1999/11/28 01:16:18  steve
+ *  gate outputs need to set signal values.
+ *
  * Revision 1.94  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *
