@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.11 2002/02/03 01:01:51 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.12 2002/03/18 05:33:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -219,13 +219,19 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	    vp->format = vpiBinStrVal;
 	    break;
 
-	  case vpiDecStrVal:
-	    vpip_bits_to_dec_str(rfp->bits, rfp->nbits,
-				 buf, sizeof buf, 0);
+	  case vpiDecStrVal: {
+		unsigned wid = rfp->nbits;
+		unsigned char*tmp = new unsigned char[wid];
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		      tmp[idx] = (rfp->bits[idx/4] >> 2*(idx%4)) & 3;
 
-	    vp->value.str = buf;
-	    vp->format = vpiDecStrVal;
-	    break;
+		vpip_bits_to_dec_str(tmp, wid, buf, sizeof buf, 0);
+
+		delete[]tmp;
+		vp->value.str = buf;
+		vp->format = vpiDecStrVal;
+		break;
+	  }
 
 	  case vpiIntVal: {
 		unsigned val = 0;
@@ -403,6 +409,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.12  2002/03/18 05:33:24  steve
+ *  vpip_bits_to_dec_str takes a bit array in a specific format.
+ *
  * Revision 1.11  2002/02/03 01:01:51  steve
  *  Use Larrys bits-to-decimal-string code.
  *
