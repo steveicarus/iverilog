@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.48 2001/10/10 04:47:43 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.49 2001/10/14 03:24:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -496,6 +496,20 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 
       assert(lv.wid == wid);
       assert(rv.wid == wid);
+
+	/* The arithmetic instructions replace the left operand with
+	   the result. If the left operand is a replicated constant,
+	   then I need to make a writeable copy so that the
+	   instruction can operate. */
+      if (lv.base < 4) {
+	    struct vector_info tmp;
+
+	    tmp.base = allocate_vector(wid);
+	    tmp.wid = wid;
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", tmp.base,
+		    lv.base, wid);
+	    lv = tmp;
+      }
 
       switch (ivl_expr_opcode(exp)) {
 	  case '+':
@@ -1270,6 +1284,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.49  2001/10/14 03:24:35  steve
+ *  Handle constant bits in arithmetic expressions.
+ *
  * Revision 1.48  2001/10/10 04:47:43  steve
  *  Support vectors as operands to logical and.
  *
