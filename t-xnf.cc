@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.5 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.6 1998/12/09 02:43:19 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -300,7 +300,10 @@ void target_xnf::logic(ostream&os, const NetLogic*net)
       os << ", LIBVER=2.0.0" << endl;
 
       draw_pin(os, "O", net->pin(0));
-      for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
+
+      if (net->pin_count() == 2) {
+	    draw_pin(os, "I", net->pin(1));
+      } else for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
 	    string name = "I";
 	    assert(net->pin_count() <= 11);
 	    name += (char)('0'+idx-1);
@@ -330,6 +333,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.6  1998/12/09 02:43:19  steve
+ *  Fix 2pin logic gates.
+ *
  * Revision 1.5  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved
