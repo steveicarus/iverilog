@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.7 2003/03/24 02:28:38 steve Exp $
+  $Id: fpga.txt,v 1.8 2003/07/02 00:26:49 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -16,7 +16,7 @@ The code generator is invoked with the -tfpga flag to iverilog. It
 understands the part= and the arch= parameters, which can be set with
 the -p flag of iverilog:
 
-	iverilog -parch=virtex -fpart=v50-pq240-6 -tfpga foo.vl
+	iverilog -parch=virtex -ppart=v50-pq240-6 -tfpga foo.vl
 
 This example selects the Virtex architecture, and give the detailed
 part number as v50-pq240-6. The output is written into a.out unless a
@@ -179,6 +179,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.8  2003/07/02 00:26:49  steve
+ Fix spelling of part= flag.
+
 Revision 1.7  2003/03/24 02:28:38  steve
  Document the virtex2 architecture.
 
