@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.46 2001/04/29 23:13:33 steve Exp $"
+#ident "$Id: compile.cc,v 1.47 2001/04/30 03:53:19 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -221,35 +221,51 @@ static void define_functor_symbol(char*label, vvp_ipoint_t fdx)
  * the vvp_ipoint_t) into the list that the source heads.
  *   
  * If the source functor is not declared yet, then don't do
- * the link yet. Save the reference to be resolved later. 
-*/
+ * the link yet. Save the reference to be resolved later.
+ *
+ * If the source is a constant value, then set the ival of the functor
+ * and skip the symbol lookup.
+ */
 
 static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 {
-  for (unsigned idx = 0;  idx < argc;  idx += 1) 
-    {
-      vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
-      functor_t iobj = functor_index(ifdx);
+	/* Functors only have 4 inputs. The struct functor_s defines
+	   this to be so. */
+      assert(argc <= 4);
 
-      symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-      vvp_ipoint_t tmp = val.num;
-      
-      if (tmp) 
-	{
-	  tmp = ipoint_index(tmp, argv[idx].idx);
-	  functor_t fport = functor_index(tmp);
-	  iobj->port[ipoint_port(ifdx)] = fport->out;
-	  fport->out = ifdx;
-	  
-	  free(argv[idx].text);
-	} 
-      else 
-	{
-	  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
-	}
-    }
+      for (unsigned idx = 0;  idx < argc;  idx += 1) {
 
-  free(argv);
+	    vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
+	    functor_t iobj = functor_index(ifdx);
+
+	    if (strcmp(argv[idx].text, "C<0>") == 0) {
+		  free(argv[idx].text);
+		  iobj->ival &= ~(3 << idx*2);
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<1>") == 0) {
+		  free(argv[idx].text);
+		  iobj->ival &= ~(3 << idx*2);
+		  iobj->ival |= 1 << idx*2;
+		  continue;
+	    }
+
+	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
+	    vvp_ipoint_t tmp = val.num;
+
+	    if (tmp) {
+		  tmp = ipoint_index(tmp, argv[idx].idx);
+		  functor_t fport = functor_index(tmp);
+		  iobj->port[ipoint_port(ifdx)] = fport->out;
+		  fport->out = ifdx;
+		  free(argv[idx].text);
+	    } else {
+		  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
+	    }
+      }
+
+      free(argv);
 }
 
 /*
@@ -266,8 +282,6 @@ void compile_functor(char*label, char*type, unsigned init,
       define_functor_symbol(label, fdx);
 
       assert(argc <= 4);
-
-      inputs_connect(fdx, argc, argv);
 
       obj->ival = init;
       obj->oval = 2;
@@ -309,6 +323,18 @@ void compile_functor(char*label, char*type, unsigned init,
       } else {
 	    yyerror("invalid functor type.");
       }
+
+	/* Connect the inputs of this functor to the given symbols. If
+	   there are C<X> inputs, set the ival appropriately. */
+      inputs_connect(fdx, argc, argv);
+
+	/* Recalculate the output based on the given ival. if the oval
+	   turns out to *not* be x, then schedule the functor so that
+	   the value gets propagated. */
+      unsigned char out = obj->table[obj->ival >> 2];
+      obj->oval = 3 & (out >> 2 * (obj->ival&3));
+      if (obj->oval != 2)
+	    schedule_functor(fdx, 0);
 
       free(label);
       free(type);
@@ -937,6 +963,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.47  2001/04/30 03:53:19  steve
+ *  Fix up functor inputs to support C<?> values.
+ *
  * Revision 1.46  2001/04/29 23:13:33  steve
  *  Add bufif0 and bufif1 functors.
  *
