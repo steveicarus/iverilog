@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: codes.h,v 1.2 2001/03/11 23:06:49 steve Exp $"
 #endif
 
 
@@ -47,12 +47,14 @@ extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 struct vvp_code_s {
       vvp_code_fun opcode;
 
-      unsigned short bit_idx;
-      unsigned long  number;
       union {
+	    unsigned number;
 	    vvp_ipoint_t iptr;
 	    vvp_cpoint_t cptr;
       };
+
+      unsigned short bit_idx1;
+      unsigned short bit_idx2;
 };
 
 
@@ -81,6 +83,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.2  2001/03/11 23:06:49  steve
+ *  Compact the vvp_code_s structure.
+ *
  * Revision 1.1  2001/03/11 00:29:38  steve
  *  Add the vvp engine to cvs.
  *

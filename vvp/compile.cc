@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: compile.cc,v 1.3 2001/03/11 23:06:49 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -42,10 +42,11 @@
 enum operand_e {
 	/* Place holder for unused operand */
       OA_NONE,
-	/* The operand is a number, an immediate unsigned long integer */
+	/* The operand is a number, an immediate unsigned integer */
       OA_NUMBER,
 	/* The operand is a thread bit index */
-      OA_BIT,
+      OA_BIT1,
+      OA_BIT2,
 	/* The operand is a pointer to code space */
       OA_CODE_PTR,
 	/* The operand is a variable or net pointer */
@@ -61,10 +62,10 @@ struct opcode_table_s {
 };
 
 const static struct opcode_table_s opcode_table[] = {
-      { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_NUMBER, OA_BIT} },
-      { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,   OA_NONE} },
-      { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,   OA_NONE} },
-      { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT,    OA_NONE} },
+      { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,  OA_BIT2} },
+      { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,  OA_NONE} },
+      { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,  OA_NONE} },
+      { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,  OA_NONE} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
 
@@ -229,13 +230,22 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		case OA_NONE:
 		  break;
 
-		case OA_BIT:
+		case OA_BIT1:
 		  if (opa->argv[idx].ltype != L_NUMB) {
 			yyerror("operand format");
 			break;
 		  }
 
-		  code->bit_idx = opa->argv[idx].numb;
+		  code->bit_idx1 = opa->argv[idx].numb;
+		  break;
+
+		case OA_BIT2:
+		  if (opa->argv[idx].ltype != L_NUMB) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  code->bit_idx2 = opa->argv[idx].numb;
 		  break;
 
 		case OA_CODE_PTR:
@@ -381,6 +391,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.3  2001/03/11 23:06:49  steve
+ *  Compact the vvp_code_s structure.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *

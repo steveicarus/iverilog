@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.1 2001/03/11 00:29:38 steve Exp $"
+#ident "$Id: codes.cc,v 1.2 2001/03/11 23:06:49 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -95,7 +95,7 @@ void codespace_dump(FILE*fd)
 
 	    if (cop->opcode == &of_ASSIGN) {
 		  fprintf(fd, "%%assign 0x%u, %lu, %u\n",
-			  cop->iptr, cop->number, cop->bit_idx);
+			  cop->iptr, cop->bit_idx1, cop->bit_idx2);
 
 	    } else if (cop->opcode == &of_DELAY) {
 		  fprintf(fd, "%%delay %lu\n", cop->number);
@@ -105,7 +105,7 @@ void codespace_dump(FILE*fd)
 
 	    } else if (cop->opcode == &of_SET) {
 		  fprintf(fd, "%%set 0x%lu, %u\n",
-			  cop->iptr, cop->bit_idx);
+			  cop->iptr, cop->bit_idx1);
 
 	    } else {
 		  fprintf(fd, "opcode %p\n", cop->opcode);
@@ -116,6 +116,9 @@ void codespace_dump(FILE*fd)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.2  2001/03/11 23:06:49  steve
+ *  Compact the vvp_code_s structure.
+ *
  * Revision 1.1  2001/03/11 00:29:38  steve
  *  Add the vvp engine to cvs.
  *

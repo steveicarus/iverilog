@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.2 2001/03/11 22:42:11 steve Exp $"
+#ident "$Id: vthread.cc,v 1.3 2001/03/11 23:06:49 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -64,14 +64,14 @@ bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
       printf("thread %p: %%assign\n", thr);
 
       unsigned char bit_val = 3;
-      if ((cp->bit_idx & ~0x3) == 0x0) {
-	    bit_val = cp->bit_idx&3;
+      if ((cp->bit_idx2 & ~0x3) == 0x0) {
+	    bit_val = cp->bit_idx2&3;
 
       } else {
 	    printf("XXXX bit_idx out of range?\n");
       }
 
-      schedule_assign(cp->iptr, bit_val, cp->number);
+      schedule_assign(cp->iptr, bit_val, cp->bit_idx1);
       return true;
 }
 
@@ -95,11 +95,11 @@ bool of_NOOP(vthread_t thr, vvp_code_t cp)
 
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
-      printf("thread %p: %%set %lu, %u\n", thr, cp->iptr, cp->bit_idx);
+      printf("thread %p: %%set %u, %u\n", thr, cp->iptr, cp->bit_idx1);
 
       unsigned char bit_val = 3;
-      if ((cp->bit_idx & ~0x3) == 0x0) {
-	    bit_val = cp->bit_idx&3;
+      if ((cp->bit_idx1 & ~0x3) == 0x0) {
+	    bit_val = cp->bit_idx1&3;
 
       } else {
 	    printf("XXXX bit_idx out of range?\n");
@@ -112,6 +112,9 @@ bool of_SET(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.3  2001/03/11 23:06:49  steve
+ *  Compact the vvp_code_s structure.
+ *
  * Revision 1.2  2001/03/11 22:42:11  steve
  *  Functor values and propagation.
  *
