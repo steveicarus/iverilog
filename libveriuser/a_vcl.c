@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_vcl.c,v 1.2 2003/04/20 02:48:39 steve Exp $"
+#ident "$Id: a_vcl.c,v 1.3 2003/04/24 02:02:37 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -39,7 +39,7 @@ static struct vcl_record*vcl_list = 0;
 
 static PLI_INT32 vcl_value_callback(struct t_cb_data*cb)
 {
-      struct vcl_record*cur = cb->user_data;
+      struct vcl_record*cur = (struct vcl_record*)cb->user_data;
 
       vpi_printf("XXXX Call vcl_callback(<type=%d>);\n",
 		 vpi_get(vpiType, cur->obj));
@@ -87,6 +87,9 @@ void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
 /*
  * $Log: a_vcl.c,v $
+ * Revision 1.3  2003/04/24 02:02:37  steve
+ *  Clean up some simple warnings.
+ *
  * Revision 1.2  2003/04/20 02:48:39  steve
  *  Support value change callbacks.
  *
