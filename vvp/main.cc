@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.13 2001/05/12 20:38:06 steve Exp $"
+#ident "$Id: main.cc,v 1.14 2001/05/20 17:34:53 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -29,6 +29,12 @@
 # include  <stdio.h>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
+#endif
+
+#if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
+extern "C" int getopt(int argc, char*argv[], const char*fmt);
+extern "C" int optind;
+extern "C" const char*optarg;
 #endif
 
 
@@ -102,6 +108,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.14  2001/05/20 17:34:53  steve
+ *  declare getopt by hand in mingw32 compile.
+ *
  * Revision 1.13  2001/05/12 20:38:06  steve
  *  A resolver that understands some simple strengths.
  *
