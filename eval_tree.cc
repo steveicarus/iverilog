@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.15 2000/12/16 20:00:17 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.16 2001/01/01 21:49:33 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -289,25 +289,50 @@ NetEConst* NetEBShift::eval_tree()
 
       verinum rv = re->value();
       verinum lv = le->value();
+
+	/* Calculate the width of the result. If it is not fixed, then
+	   get it from the left operand. */
+      unsigned wid = expr_width();
+      if (wid == 0)
+	    wid = left_->expr_width();
+
       if (rv.is_defined()) {
 
-	    unsigned wid = expr_width();
 	    unsigned shift = rv.as_ulong();
 
+
+	    assert(wid);
 	    verinum nv (verinum::V0, wid);
 
-	    if (op() == 'r')
-		  for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1)
+	    if (op() == 'r') {
+		  unsigned cnt = wid;
+		  if (cnt > nv.len())
+			cnt = nv.len();
+		  if (shift >= lv.len())
+			cnt = 0;
+		  else if (cnt > (lv.len()-shift))
+			cnt = (lv.len()-shift);
+		  for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 			nv.set(idx, lv[idx+shift]);
 
-	    else
-		  for (unsigned idx = 0 ;  idx < (wid-shift) ;  idx += 1)
+	    } else {
+		  unsigned cnt = wid;
+		  if (cnt > lv.len())
+			cnt = lv.len();
+		  if (shift >= nv.len())
+			cnt = 0;
+		  else if (cnt > (nv.len()-shift))
+			cnt = nv.len() - shift;
+
+		  for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 			nv.set(idx+shift, lv[idx]);
+	    }
 
 	    res = new NetEConst(nv);
 
       } else {
-	    verinum nv (verinum::Vx, expr_width());
+	    assert(wid);
+	    verinum nv (verinum::Vx, wid);
 	    res = new NetEConst(nv);
       }
 
@@ -414,23 +439,37 @@ NetExpr* NetETernary::eval_tree()
 	    if (c == 0)
 		  return 0;
 
+	    assert(cond_ != c);
 	    delete cond_;
 	    cond_ = c;
       }
-
 
 	/* If the condition is 1 or 0, return the true or false
 	   expression. Try to evaluate the expression down as far as
 	   we can. */
 
       if (c->value().get(0) == verinum::V1) {
+	    tmp = dynamic_cast<NetEConst*>(true_val_);
+	    if (tmp) return tmp->dup_expr();
+
 	    tmp = true_val_->eval_tree();
-	    return tmp? tmp : true_val_;
+	    if (tmp) {
+		  delete true_val_;
+		  true_val_ = tmp;
+	    }
+	    return true_val_->dup_expr();
       }
 
       if (c->value().get(0) == verinum::V0) {
+	    tmp = dynamic_cast<NetEConst*>(false_val_);
+	    if (tmp) return tmp->dup_expr();
+
 	    tmp = false_val_->eval_tree();
-	    return tmp? tmp : false_val_;
+	    if (tmp) {
+		  delete false_val_;
+		  false_val_ = tmp;
+	    }
+	    return false_val_->dup_expr();
       }
 
 
@@ -524,6 +563,9 @@ NetEConst* NetEUnary::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.16  2001/01/01 21:49:33  steve
+ *  Fix shift and ternary operators in parameter expressions (PR#86)
+ *
  * Revision 1.15  2000/12/16 20:00:17  steve
  *  Handle non-constant l-values.
  *
