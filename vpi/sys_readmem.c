@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem.c,v 1.7 2001/11/09 03:39:21 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.8 2001/12/01 02:40:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -35,11 +35,13 @@ static int sys_readmem_calltf(char*name)
       int wwid;
       char*path;
       FILE*file;
+      unsigned addr;
       s_vpi_value value;
       vpiHandle words;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
+      vpiHandle mitem;
 
       if (item == 0) {
 	    vpi_printf("%s: file name parameter missing.\n", name);
@@ -63,14 +65,14 @@ static int sys_readmem_calltf(char*name)
       path = strdup(value.value.str);
 
 	/* Get and check the second paramter. It must be a memory. */
-      item = vpi_scan(argv);
-      if (item == 0) {
+      mitem = vpi_scan(argv);
+      if (mitem == 0) {
 	    vpi_printf("%s: Missing memory parameter\n", name);
 	    free(path);
 	    return 0;
       }
 
-      if (vpi_get(vpiType, item) != vpiMemory) {
+      if (vpi_get(vpiType, mitem) != vpiMemory) {
 	    vpi_printf("%s: Second parameter must be a memory.\n", name);
 	    free(path);
 	    vpi_free_object(argv);
@@ -88,7 +90,7 @@ static int sys_readmem_calltf(char*name)
 	    return 0;
       }
 
-      words = vpi_iterate(vpiMemoryWord, item);
+      words = vpi_iterate(vpiMemoryWord, mitem);
       assert(words);
 
       item = vpi_scan(words);
@@ -101,14 +103,32 @@ static int sys_readmem_calltf(char*name)
       else
 	    sys_readmem_start_file(file, 0, wwid, value.value.vector);
 
-      while (item && ((code = readmemlex()) != 0)) {
+      addr = 0;
+
+      while ((code = readmemlex()) != 0) {
 	    switch (code) {
 		case MEM_ADDRESS:
-		  vpi_printf("XXXX addresses not supported\n");
+		  if (addr > value.value.vector->aval) {
+			vpi_free_object(words);
+			words = vpi_iterate(vpiMemoryWord, mitem);
+			item = vpi_scan(words);
+			addr = 0;
+		  }
+		  while (item && addr < value.value.vector->aval) {
+			item = vpi_scan(words);
+			addr += 1;
+		  }
 		  break;
 		case MEM_WORD:
-		  vpi_put_value(item, &value, 0, vpiNoDelay);
-		  item = vpi_scan(words);
+		  if (item) {
+			vpi_put_value(item, &value, 0, vpiNoDelay);
+			item = vpi_scan(words);
+			addr += 1;
+		  } else {
+			vpi_printf("%s(%s): too much data (addr=0x%x)\n", 
+				   name, path, addr);
+			goto bailout;
+		  }
 		  break;
 		default:
 		  vpi_printf("Huh?! (%d)\n", code);
@@ -116,7 +136,9 @@ static int sys_readmem_calltf(char*name)
 	    }
       }
 
+  bailout:
       if (item) vpi_free_object(words);
+      free(path);
       free(value.value.vector);
       fclose(file);
       return 0;
@@ -231,6 +253,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.8  2001/12/01 02:40:10  steve
+ *  Support addresses in readmemh.
+ *
  * Revision 1.7  2001/11/09 03:39:21  steve
  *  Support $writememh
  *
