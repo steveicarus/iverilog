@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.19 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.20 2003/03/03 03:27:35 steve Exp $"
 #endif
 
 /*
@@ -70,6 +70,30 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
 }
 
 /*
+ * the get_str function only needs to support vpiName
+ */
+
+static char *systask_get_str(int type, vpiHandle ref)
+{
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      char *bn = rfp->defn->info.tfname;
+      char *rbuf = need_result_buf(strlen(bn) + 1, RBUF_STR);
+
+      switch (type) {
+
+          case vpiName:
+            strcpy(rbuf,bn);
+	    return rbuf;
+      }
+
+      return 0;
+}
+
+/*
  * the iter function only supports getting an iterator of the
  * arguments. This works equally well for tasks and functions.
  */
@@ -88,7 +112,7 @@ static vpiHandle systask_iter(int type, vpiHandle ref)
 static const struct __vpirt vpip_systask_rt = {
       vpiSysTaskCall,
       0,
-      0,
+      systask_get_str,
       0,
       0,
       systask_handle,
@@ -201,7 +225,7 @@ static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp,
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
       0,
-      0,
+      systask_get_str,
       0,
       sysfunc_put_value,
       systask_handle,
@@ -211,7 +235,7 @@ static const struct __vpirt vpip_sysfunc_rt = {
 static const struct __vpirt vpip_sysfunc_real_rt = {
       vpiSysFuncCall,
       0,
-      0,
+      systask_get_str,
       0,
       sysfunc_put_real_value,
       systask_handle,
@@ -414,6 +438,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.20  2003/03/03 03:27:35  steve
+ *  Support vpiName for system task/function calls.
+ *
  * Revision 1.19  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.
