@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.70 1999/09/29 22:56:31 steve Exp $"
+#ident "$Id: parse.y,v 1.71 1999/09/30 00:48:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -692,7 +692,9 @@ func_body
 	: function_item_list statement
                 { $$ = new PFunction($1, $2); }
 	| function_item_list
-		{ yyerror(@1, "error: function body has no statement."); }
+		{ yyerror(@1, "error: function body has no statement.");
+		  $$ = new PFunction($1, 0);
+		}
 	;
 
 function_item
@@ -710,14 +712,24 @@ function_item
                 { $$ = 0; }
 	;
 
+  /* A function_item_list only lists the input/output/inout
+     declarations. The integer and reg declarations are handled in
+     place, so are not listed. The list builder needs to account for
+     the possibility that the various parts may be NULL. */
 function_item_list
 	: function_item
                 { $$ = $1; }
 	| function_item_list function_item
-		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
-		  delete $1;
-		  delete $2;
-		  $$ = tmp;
+		{ if ($1 && $2) {
+		        svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
+			delete $1;
+			delete $2;
+			$$ = tmp;
+		  } else if ($1) {
+			$$ = $1;
+		  } else {
+			$$ = $2;
+		  }
 		}
 	;
 
