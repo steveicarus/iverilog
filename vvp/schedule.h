@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.13 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: schedule.h,v 1.14 2003/02/21 03:40:35 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -88,7 +88,14 @@ extern vvp_time64_t schedule_simtime(void);
  * schedule_finish() function has been called.
  */
 extern void schedule_finish(int rc);
+extern void schedule_stop(int rc);
 extern bool schedule_finished(void);
+
+/*
+ * The scheduler calls this function to process stop events. When this
+ * function returns, the simulation resumes.
+ */
+extern void stop_handler(int rc);
 
 /*
  * These are event counters for the sake of performance measurements.
@@ -101,6 +108,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.14  2003/02/21 03:40:35  steve
+ *  Add vpiStop and interactive mode.
+ *
  * Revision 1.13  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

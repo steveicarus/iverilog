@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.30 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.31 2003/02/21 03:40:35 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -372,6 +372,10 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 	    schedule_finish(0);
 	    break;
 
+	  case vpiStop:
+	    schedule_stop(0);
+	    break;
+
 	  default:
 	    assert(0);
       }
@@ -395,6 +399,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.31  2003/02/21 03:40:35  steve
+ *  Add vpiStop and interactive mode.
+ *
  * Revision 1.30  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2003/02/20 00:50:28 $" Version "$Date: 2003/02/20 00:50:28 $"
+.TH vvp 1 "$Date: 2003/02/21 03:40:35 $" Version "$Date: 2003/02/21 03:40:35 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -90,6 +90,18 @@ waveforms are dumped in vcd format, but this variable can be used to
 select lxt format, which is far more compact, though limited to
 gtkwave or compatible viewers.
 
+.SH INTERACTIVE MODE
+.PP
+The simulation engine supports an interactive mode. The user may
+interrupt the simulation (typically by typing Ctrl-C) to get to the
+interactive prompt. From that prompt, the \fIhelp\fP command prints a
+brief summary of the available commands.
+.PP
+The interactive mode may also be entered by a call to the \fI$stop\fP
+system task from within the simulation, or by a call to the
+\fIvpi_control\fP VPI function with the \fIvpiStop\fP control
+argument. These means of entering interactive mode are equivalent.
+
 .SH "AUTHOR"
 .nf
 Steve Williams (steve@icarus.com)
@@ -101,7 +113,7 @@ iverilog-vpi(1),
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2001 Stephen Williams
+Copyright \(co  2001-2003 Stephen Williams
 
 This document can be freely redistributed according to the terms of the 
 GNU General Public License version 2.0

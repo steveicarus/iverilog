@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.22 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: schedule.cc,v 1.23 2003/02/21 03:40:35 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -27,6 +27,7 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  <signal.h>
 # include  <stdlib.h>
 # include  <assert.h>
 
@@ -134,16 +135,42 @@ static struct event_s* synch_list = 0;
  * simulation.
  */
 static bool schedule_runnable = true;
+static bool schedule_stopped  = false;
 
 void schedule_finish(int)
 {
       schedule_runnable = false;
 }
 
+void schedule_stop(int)
+{
+      schedule_stopped = true;
+}
+
 bool schedule_finished(void)
 {
       return !schedule_runnable;
 }
+
+/*
+ * These are the signal handling infrastructure. The SIGINT signal
+ * leads to an implicit $stop.
+ */
+static void signals_handler(int)
+{
+      schedule_stopped = true;
+}
+
+static void signals_capture(void)
+{
+      signal(SIGINT, &signals_handler);
+}
+
+static void signals_revert(void)
+{
+      signal(SIGINT, SIG_DFL);
+}
+
 
 /*
  * This function does all the hard work of putting an event into the
@@ -334,7 +361,15 @@ void schedule_simulate(void)
       // Execute pre-simulation callbacks
       vpiPresim();
 
+      signals_capture();
+
       while (schedule_runnable && sched_list) {
+
+	    if (schedule_stopped) {
+		  schedule_stopped = false;
+		  stop_handler(0);
+		  continue;
+	    }
 
 	      /* Pull the first item off the list. Fixup the last
 		 pointer in the next cell, if necessary. */
@@ -431,12 +466,17 @@ void schedule_simulate(void)
       }
 
 
+      signals_revert();
+
       // Execute post-simulation callbacks
       vpiPostsim();
 }
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.23  2003/02/21 03:40:35  steve
+ *  Add vpiStop and interactive mode.
+ *
  * Revision 1.22  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *
@@ -462,57 +502,5 @@ void schedule_simulate(void)
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.
  *  Keep simulation time in a 64bit number.
- *
- * Revision 1.15  2002/03/17 03:23:55  steve
- *  Force the push flags to be explicit.
- *
- * Revision 1.14  2001/12/06 03:31:25  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.13  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.12  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.11  2001/07/11 02:27:21  steve
- *  Add support for REadOnlySync and monitors.
- *
- * Revision 1.10  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.9  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
- *
- * Revision 1.8  2001/05/05 23:51:49  steve
- *  Forward the simulation time for every event.
- *
- * Revision 1.7  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.6  2001/04/21 00:34:39  steve
- *  Working %disable and reap handling references from scheduler.
- *
- * Revision 1.5  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.4  2001/03/31 19:00:43  steve
- *  Add VPI support for the simulation time.
- *
- * Revision 1.3  2001/03/19 01:55:38  steve
- *  Add support for the vpiReset sim control.
- *
- * Revision 1.2  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
  */
 
