@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.5 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: target.h,v 1.6 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -58,6 +58,9 @@ struct target_t {
 	/* Output a signal (called for each signal) */
       virtual void signal(ostream&os, const NetNet*);
 
+	/* Output a memory (called for each memory object) */
+      virtual void memory(ostream&os, const NetMemory*);
+
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
@@ -94,6 +97,7 @@ struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
       virtual void expr_ident(const NetEIdent*);
+      virtual void expr_memory(const NetEMemory*);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
@@ -116,6 +120,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.6  1999/04/19 01:59:37  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.5  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

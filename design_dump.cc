@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.16 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.17 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 /*
@@ -55,6 +55,12 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << ivalue_[idx-1];
       o << endl;
       dump_obj_attr(o, ind+4);
+}
+
+void NetMemory::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << ""  << name_ << "[" << width_ << "] " <<
+	    "[" << idxh_ << ":" << idxl_ << "]" << endl;
 }
 
 
@@ -463,6 +469,13 @@ void NetESignal::dump(ostream&o) const
       o << name();
 }
 
+void NetEMemory::dump(ostream&o) const
+{
+      o << mem_->name() << "[";
+      idx_->dump(o);
+      o << "]";
+}
+
 void NetESignal::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Expression Node: " << name() << endl;
@@ -500,6 +513,15 @@ void Design::dump(ostream&o) const
 	    } while (cur != signals_->sig_next_);
       }
 
+      o << "ELABORATED MEMORIES:" << endl;
+      {
+	    map<string,NetMemory*>::const_iterator pp;
+	    for (pp = memories_.begin()
+		       ; pp != memories_.end() ; pp ++) {
+		  (*pp).second->dump(o, 0);
+	    }
+      }
+
       o << "ELABORATED NODES:" << endl;
 
 	// dump the nodes,
@@ -521,6 +543,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.17  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.16  1999/03/15 02:43:32  steve
  *  Support more operators, especially logical.
  *

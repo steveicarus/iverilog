@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.10 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: pform.cc,v 1.11 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -385,6 +385,20 @@ void pform_set_type_attrib(const string&name, const string&key,
       (*udp).second ->attributes[key] = value;
 }
 
+void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
+{
+      PWire*cur = cur_module->get_wire(name);
+      if (cur == 0) {
+	    VLerror("name is not a valid net.");
+	    return;
+      }
+
+      assert(cur->lidx == 0);
+      assert(cur->ridx == 0);
+      cur->lidx = l;
+      cur->ridx = r;
+}
+
 static void pform_set_net_range(const string&name, list<PExpr*>*range)
 {
       assert(range->size() == 2);
@@ -514,6 +528,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.11  1999/04/19 01:59:37  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.10  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

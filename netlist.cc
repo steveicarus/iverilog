@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.19 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: netlist.cc,v 1.20 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -238,6 +238,26 @@ NetNode::~NetNode()
 {
       if (design_)
 	    design_->del_node(this);
+}
+
+NetNet::NetNet(const string&n, Type t, unsigned npins)
+: NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0),
+    type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
+    local_flag_(false)
+{
+      ivalue_ = new verinum::V[npins];
+      for (unsigned idx = 0 ;  idx < npins ;  idx += 1)
+	    ivalue_[idx] = verinum::Vz;
+}
+
+NetNet::NetNet(const string&n, Type t, long ms, long ls)
+: NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
+    sig_prev_(0), design_(0), type_(t), port_type_(NOT_A_PORT),
+    msb_(ms), lsb_(ls), local_flag_(false)
+{
+      ivalue_ = new verinum::V[pin_count()];
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
+	    ivalue_[idx] = verinum::Vz;
 }
 
 NetNet::~NetNet()
@@ -474,6 +494,27 @@ NetEConst::~NetEConst()
 void NetEConst::set_width(unsigned w)
 {
       assert(w <= value_.len());
+      expr_width(w);
+}
+
+NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
+: mem_(m), idx_(i)
+{
+}
+
+NetEMemory::~NetEMemory()
+{
+}
+
+void NetMemory::set_attributes(const map<string,string>&attr)
+{
+      assert(attributes_.size() == 0);
+      attributes_ = attr;
+}
+
+void NetEMemory::set_width(unsigned w)
+{
+      assert(w == mem_->width());
       expr_width(w);
 }
 
@@ -854,6 +895,20 @@ NetNet* Design::find_signal(const string&name)
       return 0;
 }
 
+void Design::add_memory(NetMemory*mem)
+{
+      memories_[mem->name()] = mem;
+}
+
+NetMemory* Design::find_memory(const string&key)
+{
+      map<string,NetMemory*>::const_iterator cur = memories_.find(key);
+      if (cur == memories_.end())
+	    return 0;
+
+      return (*cur).second;
+}
+
 void Design::add_node(NetNode*net)
 {
       assert(net->design_ == 0);
@@ -961,6 +1016,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.20  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.19  1999/03/15 02:43:32  steve
  *  Support more operators, especially logical.
  *

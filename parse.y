@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.16 1999/03/16 04:44:45 steve Exp $"
+#ident "$Id: parse.y,v 1.17 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -87,7 +87,7 @@ extern void lex_end_table();
 %type <statement> udp_initial udp_init_opt
 
 %type <text> identifier lvalue register_variable
-%type <strings> list_of_register_variables
+%type <strings> register_variable_list
 %type <strings> list_of_variables
 
 %type <wire> port
@@ -194,7 +194,10 @@ delay
 		  }
 		}
 	| '#' IDENTIFIER
-		{ $$ = new PEIdent(*$2);
+		{ PEIdent*tmp = new PEIdent(*$2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		  delete $2;
 		}
 	;
@@ -317,7 +320,10 @@ expr_primary
 		  delete $1;
 		}
 	| identifier
-		{ $$ = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		  delete $1;
 		}
 	| SYSTEM_IDENTIFIER
@@ -326,12 +332,16 @@ expr_primary
 		}
 	| identifier '[' expression ']'
 		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  tmp->msb_ = $3;
 		  delete $1;
 		  $$ = tmp;
 		}
 	| identifier '[' expression ':' expression ']'
 		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  tmp->msb_ = $3;
 		  tmp->lsb_ = $5;
 		  delete $1;
@@ -447,20 +457,6 @@ list_of_ports_opt
 	|                       { $$ = 0; }
 	;
 
-list_of_register_variables
-	: register_variable
-		{ list<string>*tmp = new list<string>;
-		  tmp->push_back(*$1);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| list_of_register_variables ',' register_variable
-		{ list<string>*tmp = $1;
-		  tmp->push_back(*$3);
-		  delete $3;
-		  $$ = tmp;
-		}
-	;
 list_of_variables
 	: IDENTIFIER
 		{ list<string>*tmp = new list<string>;
@@ -508,14 +504,13 @@ module_item
 		  }
 		  delete $3;
 		}
-	| K_reg range_opt list_of_register_variables ';'
-		{ pform_makewire($3, NetNet::REG);
-		  if ($2) {
-			pform_set_net_range($3, $2);
-			delete $2;
-		  }
+	| K_reg range register_variable_list ';'
+		{ pform_set_net_range($3, $2);
+		  delete $2;
 		  delete $3;
 		}
+	| K_reg register_variable_list ';'
+		{ delete $2; }
 	| K_parameter parameter_assign_list ';'
 	| gatetype delay_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
@@ -629,12 +624,35 @@ range_opt
 	| { $$ = 0; }
 	;
 
+  /* The register_variable rule is matched only when I am parsing
+     variables in a "reg" definition. I therefore know that I am
+     creating registers and I do not need to let the containing rule
+     handle it. The register variable list simply packs them together
+     so that bit ranges can be assigned. */
 register_variable
 	: IDENTIFIER
-		{ $$ = $1; }
-	| IDENTIFIER '[' error ']'
-		{ yyerror(@1, "Sorry, register regions not implemented.");
+		{ pform_makewire(*$1, NetNet::REG);
 		  $$ = $1;
+		}
+	| IDENTIFIER '[' const_expression ':' const_expression ']'
+		{ pform_makewire(*$1, NetNet::REG);
+		  pform_set_reg_idx(*$1, $3, $5);
+		  $$ = $1;
+		}
+	;
+
+register_variable_list
+	: register_variable
+		{ list<string>*tmp = new list<string>;
+		  tmp->push_back(*$1);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| register_variable_list ',' register_variable
+		{ list<string>*tmp = $1;
+		  tmp->push_back(*$3);
+		  delete $3;
+		  $$ = tmp;
 		}
 	;
 

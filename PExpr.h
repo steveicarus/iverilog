@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.4 1998/11/11 00:01:51 steve Exp $"
+#ident "$Id: PExpr.h,v 1.5 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 # include  <string>
 # include  "verinum.h"
+# include  "LineInfo.h"
 
 class Design;
 class NetNet;
@@ -38,7 +39,7 @@ class NetExpr;
  * up a netlist interpretation of the expression.
  */
 
-class PExpr {
+class PExpr : public LineInfo {
     public:
       virtual ~PExpr();
 
@@ -63,7 +64,7 @@ class PEIdent : public PExpr {
 
     public:
       explicit PEIdent(const string&s)
-      : text_(s), msb_(0), lsb_(0) { }
+      : text_(s), msb_(0), lsb_(0), idx_(0) { }
 
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
@@ -77,6 +78,10 @@ class PEIdent : public PExpr {
 	// Use these to support bit- and part-select operators.
       PExpr*msb_;
       PExpr*lsb_;
+
+	// If this is a reference to a memory, this is the index
+	// expression.
+      PExpr*idx_;
 };
 
 class PENumber : public PExpr {
@@ -146,6 +151,9 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.5  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.4  1998/11/11 00:01:51  steve
  *  Check net ranges in declarations.
  *

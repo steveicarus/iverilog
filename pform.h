@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.8 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: pform.h,v 1.9 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -97,10 +97,11 @@ extern void pform_make_udp(string*name, list<string>*parms,
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
-extern void pform_makewire(const string&name, NetNet::Type type);
+extern void pform_makewire(const string&name, NetNet::Type type = NetNet::IMPLICIT);
 extern void pform_makewire(const list<string>*names, NetNet::Type type);
 extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, list<PExpr*>*);
+extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
 extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
@@ -139,6 +140,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.9  1999/04/19 01:59:37  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.8  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

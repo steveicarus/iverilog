@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.11 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.12 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 /*
@@ -119,7 +119,17 @@ void PWire::dump(ostream&out) const
 	    out << " [" << *msb << ":" << *lsb << "]";
       }
 
-      out << " " << name << ";" << endl;
+      out << " " << name;
+
+	// If the wire has indices, dump them.
+      if (lidx || ridx) {
+	    out << "[";
+	    if (lidx) out << *lidx;
+	    if (ridx) out << ":" << *ridx;
+	    out << "]";
+      }
+
+      out << ";" << endl;
       for (map<string,string>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
@@ -414,6 +424,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.12  1999/04/19 01:59:37  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.11  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.6 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: emit.cc,v 1.7 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 /*
@@ -173,6 +173,15 @@ void Design::emit(ostream&o, struct target_t*tgt) const
       }
 
 
+	// emit memories
+      {
+	    map<string,NetMemory*>::const_iterator mi;
+	    for (mi = memories_.begin() ;  mi != memories_.end() ; mi++) {
+		  tgt->memory(o, (*mi).second);
+	    }
+      }
+
+
 	// emit nodes
       {
 	    NetNode*cur = nodes_->node_next_;
@@ -205,6 +214,11 @@ void NetEIdent::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_ident(this);
 }
 
+void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_memory(this);
+}
+
 void NetESignal::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_signal(this);
@@ -234,6 +248,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.7  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.6  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

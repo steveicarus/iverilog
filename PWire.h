@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PWire.h,v 1.2 1998/11/23 00:20:22 steve Exp $"
+#ident "$Id: PWire.h,v 1.3 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -37,7 +37,8 @@ class PWire {
 
     public:
       PWire(const string&n, NetNet::Type t =NetNet::IMPLICIT)
-      : name(n), type(t), port_type(NetNet::NOT_A_PORT), msb(0), lsb(0)
+      : name(n), type(t), port_type(NetNet::NOT_A_PORT), msb(0),
+	lsb(0), lidx(0), ridx(0)
       { }
 
       string name;
@@ -46,6 +47,11 @@ class PWire {
 
       PExpr*msb;
       PExpr*lsb;
+
+	// If this wire is actually a memory, these indices will give
+	// me the size and address range of the memory.
+      PExpr*lidx;
+      PExpr*ridx;
 
       map<string,string> attributes;
 
@@ -61,6 +67,9 @@ class PWire {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.3  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.2  1998/11/23 00:20:22  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

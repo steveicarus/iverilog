@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.18 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.19 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 /*
@@ -91,7 +91,13 @@ static void do_assign(Design*des, const string&path,
 static const map<string,Module*>* modlist = 0;
 static const map<string,PUdp*>*   udplist = 0;
 
-/* Elaborate a source wire. Generally pretty easy. */
+/*
+ * Elaborate a source wire. The "wire" is the declaration of wires,
+ * registers, ports and memories. The parser has already merged the
+ * multiple properties of a wire (i.e. "input wire") so come the
+ * elaboration this creates an object in the design that represent the
+ * defined item.
+ */
 void PWire::elaborate(Design*des, const string&path) const
 {
       NetNet::Type wtype = type;
@@ -100,6 +106,8 @@ void PWire::elaborate(Design*des, const string&path) const
 
       unsigned wid = 1;
 
+	/* Wires, registers and memories can have a width, expressed
+	   as the msb index and lsb index. */
       if (msb && lsb) {
 	    verinum*mval = msb->eval_const();
 	    assert(mval);
@@ -123,10 +131,29 @@ void PWire::elaborate(Design*des, const string&path) const
 	    wid = val->as_ulong();
       }
 
-      NetNet*sig = new NetNet(path + "." + name, wtype, wid);
-      sig->port_type(port_type);
-      sig->set_attributes(attributes);
-      des->add_signal(sig);
+      if (lidx || ridx) {
+	      // If the register has indices, then this is a
+	      // memory. Create the memory object.
+	    verinum*lval = lidx->eval_const();
+	    assert(lval);
+	    verinum*rval = ridx->eval_const();
+	    assert(rval);
+
+	    long lnum = lval->as_long();
+	    long rnum = rval->as_long();
+	    delete lval;
+	    delete rval;
+	    NetMemory*sig = new NetMemory(path+"."+name, wid, lnum, rnum);
+	    sig->set_attributes(attributes);
+	    des->add_memory(sig);
+
+      } else {
+
+	    NetNet*sig = new NetNet(path + "." + name, wtype, wid);
+	    sig->port_type(port_type);
+	    sig->set_attributes(attributes);
+	    des->add_signal(sig);
+      }
 }
 
 void PGate::elaborate(Design*des, const string&path) const
@@ -667,7 +694,26 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 		  return node;
 	    }
 
-	    assert(0);
+	    if (NetMemory*mem = des->find_memory(name)) {
+		  assert(msb_ != 0);
+		  assert(lsb_ == 0);
+		  assert(idx_ == 0);
+		  NetExpr*i = msb_->elaborate_expr(des, path);
+		  if (i == 0) {
+			cerr << get_line() << ": Unable to exaborate "
+			      "index expression `" << *msb_ << "'" << endl;
+			des->errors += 1;
+			return 0;
+		  }
+
+		  NetEMemory*node = new NetEMemory(mem, i);
+		  return node;
+	    }
+
+	    cerr << get_line() << ": Unable to bind wire/reg/memory "
+		  "`" << path << "." << text_ << "'" << endl;
+	    des->errors += 1;
+	    return 0;
       }
 }
 
@@ -709,6 +755,11 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       assert(expr_);
 
       NetExpr*rval = expr_->elaborate_expr(des, path);
+      if (rval == 0) {
+	    cerr << get_line() << ": " << "failed to elaborate expression."
+		 << endl;
+	    return 0;
+      }
       assert(rval);
 
       NetAssign*cur = new NetAssign(reg, rval);
@@ -977,6 +1028,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.19  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.18  1999/03/15 02:43:32  steve
  *  Support more operators, especially logical.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.5 1999/02/08 02:49:56 steve Exp $"
+#ident "$Id: target.cc,v 1.6 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -33,6 +33,12 @@ void target_t::start_design(ostream&os, const Design*)
 
 void target_t::signal(ostream&os, const NetNet*)
 {
+}
+
+void target_t::memory(ostream&os, const NetMemory*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled memory." << endl;
 }
 
 void target_t::logic(ostream&os, const NetLogic*)
@@ -146,6 +152,12 @@ void expr_scan_t::expr_ident(const NetEIdent*)
 	    "unhandled expr_ident." << endl;
 }
 
+void expr_scan_t::expr_memory(const NetEMemory*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_memory." << endl;
+}
+
 void expr_scan_t::expr_signal(const NetESignal*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -166,6 +178,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.6  1999/04/19 01:59:37  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.5  1999/02/08 02:49:56  steve
  *  Turn the NetESignal into a NetNode so
  *  that it can connect to the netlist.

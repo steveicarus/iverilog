@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.22 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.23 1999/04/19 01:59:36 steve Exp $"
 #endif
 
 /*
@@ -218,27 +218,13 @@ class NetNet  : public NetObj {
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
-      explicit NetNet(const string&n, Type t, unsigned npins =1)
-      : NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0),
-	type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
-	local_flag_(false)
-	    { ivalue_ = new verinum::V[npins];
-	      for (unsigned idx = 0 ;  idx < npins ;  idx += 1)
-		    ivalue_[idx] = verinum::Vz;
-	    }
+      explicit NetNet(const string&n, Type t, unsigned npins =1);
 
-      explicit NetNet(const string&n, Type t, long ms, long ls)
-      : NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
-	sig_prev_(0), design_(0), type_(t), port_type_(NOT_A_PORT),
-	msb_(ms), lsb_(ls), local_flag_(false)
-	    { ivalue_ = new verinum::V[pin_count()];
-	      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
-		    ivalue_[idx] = verinum::Vz;
-	    }
+      explicit NetNet(const string&n, Type t, long ms, long ls);
 
       virtual ~NetNet();
 
-	// Every signal has a name, even if it is null.
+
       Type type() const { return type_; }
       void type(Type t) { type_ = t; }
 
@@ -280,6 +266,34 @@ class NetNet  : public NetObj {
       bool local_flag_;
 
       verinum::V*ivalue_;
+};
+
+/*
+ * This class represents the declared memory object. The parser
+ * creates one of these for each declared memory in the elaborated
+ * design. A reference to one of these is handled by the NetEMemory
+ * object, which is derived from NetExpr.
+ */
+class NetMemory  {
+
+    public:
+      NetMemory(const string&n, long w, long s, long e)
+      : name_(n), width_(w), idxh_(s), idxl_(e) { }
+
+      const string&name() const { return name_; }
+      unsigned width() const { return width_; }
+
+      void set_attributes(const map<string,string>&a);
+
+      void dump(ostream&o, unsigned lm) const;
+
+    private:
+      string name_;
+      unsigned width_;
+      long idxh_;
+      long idxl_;
+
+      map<string,string> attributes_;
 };
 
 /* =========
@@ -898,6 +912,24 @@ class NetEIdent  : public NetExpr {
 };
 
 /*
+ * A reference to a memory is represented by this expression.
+ */
+class NetEMemory  : public NetExpr {
+
+    public:
+      NetEMemory(NetMemory*mem, NetExpr*idx);
+      virtual ~NetEMemory();
+
+      virtual void set_width(unsigned);
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+    private:
+      NetMemory*mem_;
+      NetExpr::REF idx_;
+};
+
+/*
  * When a signal shows up in an expression, this type represents
  * it. From this the expression can get any kind of access to the
  * structural signal.
@@ -953,6 +985,10 @@ class Design {
       void del_signal(NetNet*);
       NetNet*find_signal(const string&name);
 
+	// Memories
+      void add_memory(NetMemory*);
+      NetMemory* find_memory(const string&name);
+
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);
@@ -987,6 +1023,8 @@ class Design {
 
 	// List all the signals in the design.
       NetNet*signals_;
+
+      map<string,NetMemory*> memories_;
 
 	// List the nodes in the design
       NetNode*nodes_;
@@ -1048,6 +1086,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.23  1999/04/19 01:59:36  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.22  1999/03/15 02:43:32  steve
  *  Support more operators, especially logical.
  *

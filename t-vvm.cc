@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.14 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.15 1999/04/19 01:59:37 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -41,6 +41,7 @@ class target_vvm : public target_t {
     public:
       virtual void start_design(ostream&os, const Design*);
       virtual void signal(ostream&os, const NetNet*);
+      virtual void memory(ostream&os, const NetMemory*);
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
@@ -330,6 +331,12 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 		  }
 	    }
       }
+}
+
+void target_vvm::memory(ostream&os, const NetMemory*mem)
+{
+      os << "static vvm_bitset_t<" << mem->width() << "> " <<
+	    mangle(mem->name()) << "[" << "];" << endl;
 }
 
 /*
@@ -883,6 +890,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.15  1999/04/19 01:59:37  steve
+ *  Add memories to the parse and elaboration phases.
+ *
  * Revision 1.14  1999/03/15 02:43:32  steve
  *  Support more operators, especially logical.
  *
