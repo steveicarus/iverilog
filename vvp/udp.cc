@@ -18,10 +18,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.6 2001/06/18 00:51:23 steve Exp $"
+#ident "$Id: udp.cc,v 1.7 2001/07/16 19:08:32 steve Exp $"
 #endif
 
 #include "udp.h"
+#include "schedule.h"
 #include "symbols.h"
 #include <assert.h>
 #include <malloc.h>
@@ -51,7 +52,7 @@ void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
   if (out != fp->oval) 
     {
       fp->oval = out;
-      functor_propagate(ptr);
+      schedule_functor(ptr, 0);
     }
 }
 
@@ -231,6 +232,9 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.7  2001/07/16 19:08:32  steve
+ *  Schedule instead of propagating UDP output. (Stephan Boettcher)
+ *
  * Revision 1.6  2001/06/18 00:51:23  steve
  *  Add more UDP edge types, and finish up compile
  *  and run-time support. (Stephan Boettcher)
