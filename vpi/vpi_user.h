@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.21 2000/09/30 03:20:48 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.22 2000/10/03 16:15:35 steve Exp $"
 #endif
 
 
@@ -31,22 +31,14 @@
 #  define DLLEXPORT
 #endif
 
-#undef VPI_STORAGE_CLASS
-#if defined(BUILD_vvm)
-# define VVM_STORAGE_CLASS DLLEXPORT
+#undef VPIP_STORAGE_CLASS
+#if defined(__build_vpip)
+# define VPIP_STORAGE_CLASS DLLEXPORT
 #else
-#  define VVM_STORAGE_CLASS DLLIMPORT
+#  define VPIP_STORAGE_CLASS DLLIMPORT
 #endif
 
-#undef VPI_STORAGE_CLASS
-#if defined(BUILD_vpi) 
-# define VPI_STORAGE_CLASS DLLEXPORT
-#else
-#  define VPI_STORAGE_CLASS DLLIMPORT
-#endif
-
-#define VVM_EXTERN extern VVM_STORAGE_CLASS
-#define VPI_EXTERN extern VPI_STORAGE_CLASS
+#define VPIP_EXTERN extern VPIP_STORAGE_CLASS
 
 #ifdef __cplusplus
 extern "C" {
@@ -188,13 +180,13 @@ typedef struct t_vpi_value {
 
 
 /* VPI FUNCTIONS */
-VVM_EXTERN void vpi_register_systf(const struct t_vpi_systf_data*ss);
-VVM_EXTERN void vpi_printf(const char*fmt, ...);
+VPIP_EXTERN void vpi_register_systf(const struct t_vpi_systf_data*ss);
+VPIP_EXTERN void vpi_printf(const char*fmt, ...);
 
-VVM_EXTERN unsigned int vpi_mcd_close(unsigned int mcd);
-VVM_EXTERN char *vpi_mcd_name(unsigned int mcd);
-VVM_EXTERN unsigned int vpi_mcd_open(char *name);
-VVM_EXTERN int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
+VPIP_EXTERN unsigned int vpi_mcd_close(unsigned int mcd);
+VPIP_EXTERN char *vpi_mcd_name(unsigned int mcd);
+VPIP_EXTERN unsigned int vpi_mcd_open(char *name);
+VPIP_EXTERN int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
 
 /*
  * support for VPI callback functions.
@@ -234,8 +226,8 @@ typedef struct t_cb_data {
 #define cbInteractiveScopeChange 23
 #define cbUnresolvedSystf   24
 
-VVM_EXTERN vpiHandle vpi_register_cb(p_cb_data data);
-VVM_EXTERN int vpi_remove_cb(vpiHandle ref);
+VPIP_EXTERN vpiHandle vpi_register_cb(p_cb_data data);
+VPIP_EXTERN int vpi_remove_cb(vpiHandle ref);
 
 /*
  * This function allows a vpi application to control the simulation
@@ -252,30 +244,30 @@ VVM_EXTERN int vpi_remove_cb(vpiHandle ref);
  * vpiReset -
  * vpiSetInteractiveScope -
  */
-VVM_EXTERN void vpi_sim_control(int operation, ...);
+VPIP_EXTERN void vpi_sim_control(int operation, ...);
 #define vpiStop 1
 #define vpiFinish 2
 #define vpiReset  3
 #define vpiSetInteractiveScope 4
 
-VVM_EXTERN vpiHandle  vpi_handle(int type, vpiHandle ref);
-VVM_EXTERN vpiHandle  vpi_iterate(int type, vpiHandle ref);
-VVM_EXTERN vpiHandle  vpi_scan(vpiHandle iter);
-VVM_EXTERN vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
+VPIP_EXTERN vpiHandle  vpi_handle(int type, vpiHandle ref);
+VPIP_EXTERN vpiHandle  vpi_iterate(int type, vpiHandle ref);
+VPIP_EXTERN vpiHandle  vpi_scan(vpiHandle iter);
+VPIP_EXTERN vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
 
-VVM_EXTERN void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
-VVM_EXTERN int   vpi_get(int property, vpiHandle ref);
-VVM_EXTERN char* vpi_get_str(int property, vpiHandle ref);
-VVM_EXTERN void  vpi_get_value(vpiHandle expr, p_vpi_value value);
-VVM_EXTERN vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
+VPIP_EXTERN void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
+VPIP_EXTERN int   vpi_get(int property, vpiHandle ref);
+VPIP_EXTERN char* vpi_get_str(int property, vpiHandle ref);
+VPIP_EXTERN void  vpi_get_value(vpiHandle expr, p_vpi_value value);
+VPIP_EXTERN vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
 			       p_vpi_time when, int flags);
 
-VVM_EXTERN int vpi_free_object(vpiHandle ref);
-VVM_EXTERN int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
+VPIP_EXTERN int vpi_free_object(vpiHandle ref);
+VPIP_EXTERN int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p);
 
 
 /* This is the table of startup routines included in each module. */
-VPI_EXTERN void (*vlog_startup_routines[])();
+extern DLLEXPORT void (*vlog_startup_routines[])();
 
 #ifdef __cplusplus
 }
@@ -283,6 +275,9 @@ VPI_EXTERN void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.22  2000/10/03 16:15:35  steve
+ *  Cleanup build of VPI modules under Cygwin. (Venkat)
+ *
  * Revision 1.21  2000/09/30 03:20:48  steve
  *  Cygwin port changes from Venkat
  *

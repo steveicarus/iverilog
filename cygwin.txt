@@ -1,0 +1,54 @@
+
+This file describes the build procedure under cygwin32 (Windows 95/98/NT/2K)
+----------------------------------------------------------------------------
+To build using cygwin:
+
+Prerequisites:
+
+ o Latest net release (1.1.4) of cygwin (sources.redhat.com/cygwin)
+ o autoconf version 2.13 (or later) from cygutils (cygutils.netpedia.net)
+ o cvs (1.10.8 or later) also from cygutils
+
+Procedure:
+ o Get the source code - see the main icarus verilog page for how to 
+   do this
+ o cd to the verilog directory
+ o autoconf
+ o ./configure
+ o make
+ o make install
+
+That's all that's needed.  But there're two common problems during
+the make phase.  All steps are in the verilog directory.
+
+1. 
+
+If gcc dies saying virtual memory exhausted while compiling parse.c 
+  then recompile with -O1 or without -O flag and do these steps to
+  continue
+     o c++ -DHAVE_GETOPT_H=1 -DUSE_LIBVPIP=1  -g -I. -MD -c parse.cc -o parse.o
+     o mv parse.d dep/parse.d
+     o make
+
+2.
+
+If gcc dies in the vpi directory while compiling vpi_systask.c with the
+  error, conflicting types for `_cygwin_dll_entry', then fix the line in 
+  /usr/include/cygwin/cygwin_dll.h.  Change the line:
+
+  int WINAPI _cygwin_dll_entry (HANDLE h, DWORD reason, void *ptr); \
+to 
+  int WINAPI _cygwin_dll_entry (HINSTANCE h, DWORD reason, void *ptr); \
+
+  Note the change from HANDLE to HINSTANCE.  Then do
+     o make
+
+To build your own extensions - just include vpi_user.h and link with
+a command like this:
+
+ $(CC) -shared -o <dllname> <objects> -Wl,--enable-auto-image-base -L../vvm -lvvm -lvpip
+
+ - Venkat Iyer <venkat@comit.com>
+
+
+

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.12 2000/09/30 03:20:47 steve Exp $"
+#ident "$Id: Makefile.in,v 1.13 2000/10/03 16:15:35 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -41,7 +41,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@ -DBUILD_vpi
+CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
@@ -57,11 +57,13 @@ sys_readmem.o sys_readmem_lex.o sys_vcd.o
 
 ifeq (@CYGWIN@,yes)
   SYSTEM_VPI_LDFLAGS=-Wl,--enable-auto-image-base -L../vvm -lvvm -lvpip
+  VPIP_LIBS = ../vvm/libvvm.a ../vvm/libvpip.a
 else
   SYSTEM_VPI_LDFLAGS=
+  VPIP_LIBS = 
 endif
 
-system.vpi: $O
+system.vpi: $O $(VPIP_LIBS)
 	$(CC) -shared -o $@ $O $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
