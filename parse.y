@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.119 2001/04/21 00:55:46 steve Exp $"
+#ident "$Id: parse.y,v 1.120 2001/04/28 22:56:15 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1227,6 +1227,14 @@ module_item
 		}
 	| K_pulldown gate_instance_list ';'
 		{ pform_makegates(PGBuiltin::PULLDOWN, decl_strength, 0, $2);
+		}
+
+	| K_pullup '(' dr_strength1 ')' gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5);
+		}
+
+	| K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5);
 		}
 
   /* This rule handles instantiations of modules and user defined
