@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.31 2003/08/28 04:11:19 steve Exp $"
+#ident "$Id: synth2.cc,v 1.32 2003/10/27 02:18:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -539,6 +539,8 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    NetNet*asig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, nex_map->pin_count());
 	    asig->local_flag(true);
+
+	    assert(if_ != 0);
 	    bool flag = if_->synth_async(des, scope, nex_map, asig);
 
 	    assert(asig->pin_count() == ff->width());
@@ -567,6 +569,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    delete expr_input;
 
 	    assert(events_in.count() == 1);
+	    assert(else_ != 0);
 	    return else_->synth_sync(des, scope, ff, nex_map,
 				     nex_out, svector<NetEvProbe*>(0))
 		  && flag;
@@ -578,10 +581,15 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	   is not asyncronous because we know the condition is not
 	   included in the sensitivity list, but if the if_ case is
 	   constant (has no inputs) then we can model this as a
-	   synchronous set/reset. */
+	   synchronous set/reset.
+
+	   This is only synchronous set/reset if there is a true and a
+	   false clause, and no inputs. The "no inputs" requirement is
+	   met if the assignments are of all constant values. */
+      assert(if_ != 0);
       NexusSet*a_set = if_->nex_input();
 
-      if (a_set->count() == 0) {
+      if ((a_set->count() == 0) && if_ && else_) {
 
 	    NetNet*rst = expr_->synthesize(des);
 	    assert(rst->pin_count() == 1);
@@ -617,6 +625,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    delete a_set;
 
+	    assert(else_ != 0);
 	    return else_->synth_sync(des, scope, ff, nex_map,
 				     nex_out, svector<NetEvProbe*>(0))
 		  && flag;
@@ -877,6 +886,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.32  2003/10/27 02:18:04  steve
+ *  Handle special case of FF with enable and constant data.
+ *
  * Revision 1.31  2003/08/28 04:11:19  steve
  *  Spelling patch.
  *
