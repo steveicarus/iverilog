@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.3 2001/04/26 15:52:22 steve Exp $"
+#ident "$Id: udp.cc,v 1.4 2001/05/06 03:51:37 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -29,15 +29,20 @@
 static symbol_table_t udp_table;
 
 
-static void udp_functor_set(vvp_ipoint_t ptr, functor_t fp, bool)
+void vvp_udp_s::set(vvp_ipoint_t ptr, functor_t fp, bool)
 {
-  unsigned char out = udp_propagate(ptr);
+  unsigned char out = propagate_(ptr);
 
   if (out != fp->oval) 
     {
       fp->oval = out;
       functor_propagate(ptr);
     }
+}
+
+unsigned vvp_udp_s::get(vvp_ipoint_t i, functor_t f)
+{
+      assert(0);
 }
 
 struct vvp_udp_s *udp_create(char *label)
@@ -59,9 +64,6 @@ struct vvp_udp_s *udp_create(char *label)
   u->init = 3;
   u->table = 0x0;
 
-  u->get = 0x0;
-  u->set = udp_functor_set;
-
   return u;
 }
 
@@ -71,20 +73,17 @@ struct vvp_udp_s *udp_find(char *label)
   return (struct vvp_udp_s *)v.ptr;
 }
 
-unsigned char udp_propagate(vvp_ipoint_t uix)
+unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
 {
   functor_t fu = functor_index(uix);
-  struct vvp_udp_s *u = fu->udp;
-  assert(u);
-  assert(u->table);
 
   unsigned char ret = 2;
 
-  for (char **rptr = u->table; *rptr ; rptr++) 
+  for (char **rptr = table; *rptr ; rptr++) 
     {
       char *row = *rptr;
 
-      if (u->sequ)
+      if (sequ)
 	{
 	  char old_out = (fu->oval&3)["01xx"];
 	  if (  row[0]=='?' 
@@ -99,7 +98,7 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 
       int i;
 
-      for (i=0;  i < u->nin;  i++, row++)
+      for (i=0;  i < nin;  i++, row++)
 	{
 	  assert (*row);
 	  
@@ -176,7 +175,7 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 	    }
 	}
       
-      if (i == u->nin)
+      if (i == nin)
 	{
 	  assert(*row);
 	  if (*row == '-')
@@ -198,7 +197,7 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 	}
     }
  
-  for (int i=0;  i < u->nin;  i+=4)
+  for (int i=0;  i < nin;  i+=4)
     {
       functor_t fu = functor_index(ipoint_input_index(uix, i));
       fu->old_ival = fu->ival;
@@ -209,6 +208,9 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.4  2001/05/06 03:51:37  steve
+ *  Regularize the mode-42 functor handling.
+ *
  * Revision 1.3  2001/04/26 15:52:22  steve
  *  Add the mode-42 functor concept to UDPs.
  *

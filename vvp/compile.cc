@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.55 2001/05/06 00:18:13 steve Exp $"
+#ident "$Id: compile.cc,v 1.56 2001/05/06 03:51:37 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -408,11 +408,11 @@ void compile_udp_functor(char*label, char*type,
       if (idx)
 	{
 	  iobj->out = fdx;
-	  iobj->udp = 0;
+	  iobj->obj = 0;
 	}
       else
 	{
-	  iobj->udp = u;
+	  iobj->obj = u;
 	}
     }
 
@@ -1048,6 +1048,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.56  2001/05/06 03:51:37  steve
+ *  Regularize the mode-42 functor handling.
+ *
  * Revision 1.55  2001/05/06 00:18:13  steve
  *  Propagate non-x constant net values.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.15 2001/05/03 04:54:33 steve Exp $"
+#ident "$Id: functor.cc,v 1.16 2001/05/06 03:51:37 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -260,6 +260,7 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, bool push)
 		  ptr = fp->out;
 		  fp = functor_index(ptr);
 	    }
+	    assert(fp->mode == M42);
 	    fp->obj->set(ptr, fp, push);
 	    break;
       }
@@ -269,7 +270,7 @@ unsigned functor_get(vvp_ipoint_t ptr)
 {
       functor_t fp = functor_index(ptr);
       assert(fp);
-      if (fp->mode == M42 && fp->obj && fp->obj->get)
+      if ((fp->mode == M42) && fp->obj)
 	    return fp->obj->get(ptr, fp);
       return fp->oval & 3;
 }
@@ -330,6 +331,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.16  2001/05/06 03:51:37  steve
+ *  Regularize the mode-42 functor handling.
+ *
  * Revision 1.15  2001/05/03 04:54:33  steve
  *  Fix handling of a mode 1 functor that feeds into a
  *  mode 2 functor. Feed the result only if the event

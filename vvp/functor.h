@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.17 2001/04/29 23:13:34 steve Exp $"
+#ident "$Id: functor.h,v 1.18 2001/05/06 03:51:37 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -65,7 +65,7 @@
  *
  * MODE 2: NAMED EVENT FUNCTORS
  *
- * These fuctors do not bother to check for edges. Any event on the
+ * These functors do not bother to check for edges. Any event on the
  * input causes an event to be detected. Like mode-1 functors, these
  * can have %wait instructions waiting on them. Mode-2 functors do not
  * have structural inputs, however. They take their inputs from %set
@@ -75,6 +75,14 @@
  * functors by setting their outputs to put to the mode-2
  * functor. Since the mode-2 functor does not take input, any number
  * of mode-1 and mode-2 functors may point in.
+ *
+ * MODE 42: LIFE, THE UNIVERSE AND EVERYTHING ELSE
+ *
+ * These functors are and escape for all other behaviors. This mode
+ * supports arbitrary complex behavior by replacing the truth table
+ * with a struct vvp_fobj_s pointer. This abstract class has virtual
+ * methods for receiving and retrieving values. See the vvp_fobj_s
+ * definition below.
  */
 
 struct functor_s {
@@ -82,7 +90,6 @@ struct functor_s {
       union {
 	    vvp_truth_t table;
 	    vvp_event_t event;
-	    struct vvp_udp_s *udp; // mode 3
             struct vvp_fobj_s *obj;
       };
 
@@ -94,7 +101,6 @@ struct functor_s {
       unsigned char ival;
       unsigned char oval;
 	/* functor mode:  0 == table ;  1 == event ; 2 == named event */
-	/*                3 == udp                                    */
       unsigned char mode;
       union {
  	    unsigned char old_ival; // mode 3
@@ -105,18 +111,31 @@ typedef struct functor_s *functor_t;
 
 /*
  * This a an `obj' structute for mode-42 functors.  
- * Each instance stores the get and set funtion pointers, for speed.
- * Future, less important pointers may be pushed one level out to a 
- * `per type' kind of table. 
+ * Each instance implements the get and set methods in a type specific
+ * way, so that this represents a completely general functor.
+ *
+ * ::set(...)
+ *
+ * This method is called when any of the 4 inputs of the functor
+ * receives a bit value. This method is called even if the set value
+ * is the same as the existing value.
+ *
+ * ::get(...)
+ *
+ * This method is called to pull the "value" of the functor. Normally,
+ * there is not much of a trick to this, but some types might need to
+ * do complex things here, like look up a memory index. Anyhow, this
+ * method must be idempotent, because I'm only going to tell you that
+ * it happens when it happens.
  */
 
 #define M42 42
 
-typedef struct vvp_fobj_s vvp_fobj_t;
 struct vvp_fobj_s {
-  unsigned (*get)(vvp_ipoint_t i, functor_t f);
-  void (*set)(vvp_ipoint_t i, functor_t f, bool push);
+      virtual unsigned get(vvp_ipoint_t i, functor_t f) =0;
+      virtual void set(vvp_ipoint_t i, functor_t f, bool push) =0;
 };
+
 
 /*
  * If functor mode is 1, the event member is valid and the vvp_event_s
@@ -203,6 +222,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.18  2001/05/06 03:51:37  steve
+ *  Regularize the mode-42 functor handling.
+ *
  * Revision 1.17  2001/04/29 23:13:34  steve
  *  Add bufif0 and bufif1 functors.
  *

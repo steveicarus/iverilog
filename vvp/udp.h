@@ -20,27 +20,38 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.h,v 1.5 2001/04/28 20:09:05 steve Exp $"
+#ident "$Id: udp.h,v 1.6 2001/05/06 03:51:37 steve Exp $"
 #endif
 
 #include "pointers.h"
 #include "functor.h"
 
-struct vvp_udp_s : public vvp_fobj_s
+class vvp_udp_s : public vvp_fobj_s
 {
-  char *name;
-  unsigned short sequ;
-  unsigned short nin;
-  unsigned char  init;
-  char **table;
+    public:
+      unsigned get(vvp_ipoint_t i, functor_t f);
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    public:
+      char *name;
+      unsigned short sequ;
+      unsigned short nin;
+      unsigned char  init;
+      char **table;
+
+    private:
+      unsigned char propagate_(vvp_ipoint_t i);
 };
 
 struct vvp_udp_s *udp_create(char *label);
 struct vvp_udp_s *udp_find(char *label);
-unsigned char udp_propagate(vvp_ipoint_t);
+
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.6  2001/05/06 03:51:37  steve
+ *  Regularize the mode-42 functor handling.
+ *
  * Revision 1.5  2001/04/28 20:09:05  steve
  *  Excessive header include.
  *

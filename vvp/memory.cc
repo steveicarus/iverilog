@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.1 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: memory.cc,v 1.2 2001/05/06 03:51:37 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -71,13 +71,16 @@ struct vvp_memory_index_s
 
 struct vvp_memory_port_s : public vvp_fobj_s
 {
-  vvp_memory_t mem;
-  vvp_ipoint_t ix;
-  vvp_memory_port_t next;
-  int cur_addr;
-  vvp_memory_bits_t cur_bits;
-  int bitoff;
-  int nbits;
+      unsigned get(vvp_ipoint_t i, functor_t f);
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+      vvp_memory_t mem;
+      vvp_ipoint_t ix;
+      vvp_memory_port_t next;
+      int cur_addr;
+      vvp_memory_bits_t cur_bits;
+      int bitoff;
+      int nbits;
 };
 
 // Compilation
@@ -153,14 +156,11 @@ void memory_new(vvp_memory_t mem, char *name, int msb, int lsb,
   mem->name = name;
 }
 
-static void port_functor_set(vvp_ipoint_t i, functor_t f, bool push);
 
 void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix, 
 		     unsigned nbits, unsigned bitoff)
 {
   vvp_memory_port_t a = new struct vvp_memory_port_s;
-  a->set = port_functor_set;  
-  a->get = 0x0;
   
   a->mem = mem;
   a->ix = ix;
@@ -321,13 +321,15 @@ void update_data(vvp_memory_port_t data,
     }
 }
 
-static
-void port_functor_set(vvp_ipoint_t i, functor_t f, bool push)
+void vvp_memory_port_s::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-  vvp_memory_port_t addr = (vvp_memory_port_t)f->obj;
-  if (update_addr_bit(addr, i))
-    update_data(addr, addr->cur_bits);
-  return;
+      if (update_addr_bit(this, i))
+	    update_data(this, cur_bits);
+}
+
+unsigned vvp_memory_port_s::get(vvp_ipoint_t i, functor_t f)
+{
+      assert(0);
 }
 
 static
