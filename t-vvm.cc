@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.108 2000/03/16 19:03:03 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.109 2000/03/16 21:47:27 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1076,12 +1076,28 @@ void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
 	    gate->width_dist() << "> " << mangle(gate->name()) << ";"
 	 << endl;
 
-      for (unsigned idx = 0 ; idx < gate->width() ;  idx += 1) {
-	    unsigned pin = gate->pin_Result(idx).get_pin();
-	    string outfun = defn_gate_outputfun_(os, gate, pin);
-	    init_code << "      " << mangle(gate->name()) <<
-		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
-	    emit_gate_outputfun_(gate, pin);
+	/* Connect the Data input pins... */
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_Data(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  mangle(gate->name()) << ", " << mangle(gate->name())
+		      << ".key_Data(" << idx << "));" << endl;
+      }
+
+	/* Connect the Distance input pins... */
+      for (unsigned idx = 0 ;  idx < gate->width_dist() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_Distance(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&" <<
+		  mangle(gate->name()) << ", " << mangle(gate->name())
+		      << ".key_Distance(" << idx << "));" << endl;
+      }
+
+	/* Connect the output drivers to the nexus nodes. */
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_Result(idx)));
+	    init_code << "      " << nexus << "_nex.connect(" <<
+		  mangle(gate->name()) << ".config_rout(" << idx <<
+		  "));" << endl;
       }
 }
 
@@ -2262,6 +2278,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.109  2000/03/16 21:47:27  steve
+ *  Update LMP_CLSHIFT to use nexus interface.
+ *
  * Revision 1.108  2000/03/16 19:03:03  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.38 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.39 2000/03/16 21:47:27 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -182,7 +182,8 @@ class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       vpip_bit_t input_[WIDTH];
 };
 
-template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
+template <unsigned WIDTH, unsigned WDIST>
+class vvm_clshift  : public vvm_nexus::recvr_t {
 
     public:
       explicit vvm_clshift()
@@ -190,8 +191,6 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 	      dist_val_ = WIDTH;
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    data_[idx] = Vx;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    out_[idx] = 0;
 	      for (unsigned idx = 0 ;  idx < WDIST ;  idx += 1)
 		    dist_[idx] = Vx;
 	    }
@@ -208,15 +207,36 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
       void init_Direction(unsigned, vpip_bit_t val)
 	    { dir_ = val; }
 
+      vvm_nexus::drive_t* config_rout(unsigned idx)
+	    { return out_+idx; }
+
+      unsigned key_Data(unsigned idx) const { return idx; }
+      unsigned key_Distance(unsigned idx) const { return 0x10000+idx; }
+      unsigned key_Direction(unsigned) const { return 0x20000; }
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val)
+      { unsigned code = key>>16;
+        unsigned idx = key & 0xffff;
+	switch (code) {
+	    case 0:
+	      set_Data(idx, val);
+	      break;
+	    case 1:
+	      set_Distance(idx, val);
+	      break;
+	    default:
+	      set_Direction(idx, val);
+	      break;
+	}
+      }
+
       void set_Data(unsigned idx, vpip_bit_t val)
 	    { if (data_[idx] == val) return;
 	      data_[idx] = val;
 	      if ((dist_val_ + idx) >= WIDTH) return;
 	      if ((dist_val_ + idx) < 0) return;
-	      vvm_out_event::action_t out = out_[dist_val_+idx];
-	      if (out == 0) return;
-	      vvm_event*ev = new vvm_out_event(val, out);
-	      ev->schedule();
+	      out_[dist_val_+idx].set_value(val);
 	    }
 
       void set_Distance(unsigned idx, vpip_bit_t val)
@@ -233,15 +253,11 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 	      compute_();
 	    }
 
-      void config_rout(unsigned idx, vvm_out_event::action_t o)
-	    { out_[idx] = o;
-	    }
-
     private:
       vpip_bit_t dir_;
       vpip_bit_t data_[WIDTH];
       vpip_bit_t dist_[WDIST];
-      vvm_out_event::action_t out_[WIDTH];
+      vvm_nexus::drive_t out_[WIDTH];
       int dist_val_;
 
       void calculate_dist_()
@@ -266,21 +282,16 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
       void compute_()
 	    { vvm_event*ev;
 	      if (dist_val_ == WIDTH) {
-		    for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
-			  if (out_[idx] == 0) continue;
-			  ev = new vvm_out_event(Vx, out_[idx]);
-			  ev->schedule();
-		    }
+		    for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+			  out_[idx].set_value(Vx);
 		    return;
 	      }
 	      for (int idx = 0 ;  idx < WIDTH ;  idx += 1) {
-		    if (out_[idx] == 0) continue;
 		    vpip_bit_t val;
 		    if ((idx-dist_val_) >= WIDTH) val = V0;
 		    else if ((idx-dist_val_) < 0) val = V0;
 		    else val = data_[idx-dist_val_];
-		    ev = new vvm_out_event(val, out_[idx]);
-		    ev->schedule();
+		    out_[idx].set_value(val);
 	      }
 	    }
 };
@@ -981,6 +992,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.39  2000/03/16 21:47:27  steve
+ *  Update LMP_CLSHIFT to use nexus interface.
+ *
  * Revision 1.38  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and
