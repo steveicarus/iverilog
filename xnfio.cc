@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: xnfio.cc,v 1.4 1999/11/02 01:43:55 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.5 1999/11/02 04:55:01 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -97,7 +97,7 @@ static void make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", "OBUFT:O,I,T");
+		  tmp->attribute("XNF-LCA", "OBUFT:O,I,~T");
 		  return;
 	    }
 
@@ -105,7 +105,7 @@ static void make_obuf(Design*des, NetNet*net)
 		&& (count_inputs(tmp->pin(0)) == 0)
 		&& (count_outputs(tmp->pin(0)) == 1)
 		&& (idx->get_pin() == 0)  ) {
-		  tmp->attribute("XNF-LCA", "OBUFT:O,I,~T");
+		  tmp->attribute("XNF-LCA", "OBUFT:O,I,T");
 		  return;
 	    }
       }
@@ -217,6 +217,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.5  1999/11/02 04:55:01  steve
+ *  repair the sense of T from bufif01
+ *
  * Revision 1.4  1999/11/02 01:43:55  steve
  *  Fix iobuf and iobufif handling.
  *
