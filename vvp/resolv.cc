@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.5 2001/07/21 02:34:39 steve Exp $"
+#ident "$Id: resolv.cc,v 1.6 2001/10/14 01:45:11 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -161,11 +161,11 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 	    break;
       }
 
-      fp->ostr = val;
+      fp->oval = oval;
 
 	/* If the output changes, then create a propagation event. */
-      if (oval != fp->oval) {
-	    fp->oval = oval;
+      if (val != fp->ostr) {
+	    fp->ostr = val;
 	    if (push)
 		  functor_propagate(ptr);
 	    else
@@ -175,6 +175,9 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.6  2001/10/14 01:45:11  steve
+ *  Propogate strength-only changes from resolver.
+ *
  * Revision 1.5  2001/07/21 02:34:39  steve
  *  Fix blending of ambiguous pairs.
  *
