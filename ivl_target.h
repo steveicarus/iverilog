@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.44 2001/04/02 00:28:35 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.45 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -249,6 +249,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_FORK,
       IVL_ST_STASK,
       IVL_ST_TRIGGER,
+      IVL_ST_UTASK,
       IVL_ST_WAIT,
       IVL_ST_WHILE
 } ivl_statement_type_t;
@@ -540,6 +541,10 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    If the scope has no children, this method will return 0 and
  *    otherwise do nothing.
  *
+ * ivl_scope_def
+ *    Task definition scopes carry a task definition, in the form of
+ *    a statement. This method accesses that definition.
+ *
  * ivl_scope_event
  * ivl_scope_events
  *    Scopes have 0 or more event objects in them.
@@ -569,6 +574,9 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 
 extern int          ivl_scope_children(ivl_scope_t net,
 				       ivl_scope_f func, void*cd);
+
+extern ivl_statement_t ivl_scope_def(ivl_scope_t net);
+
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_logs(ivl_scope_t net);
@@ -674,6 +682,8 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
   /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
+  /* IVL_ST_UTASK */
+extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);
   /* IVL_ST_CASE */
 extern unsigned ivl_stmt_case_count(ivl_statement_t net);
   /* IVL_ST_CASE */
@@ -725,6 +735,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.45  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.44  2001/04/02 00:28:35  steve
  *  Support the scope expression node.
  *

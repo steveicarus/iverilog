@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.49 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: target.h,v 1.50 2001/04/02 02:28:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -69,7 +69,7 @@ struct target_t {
       virtual void memory(const NetMemory*);
 
 	/* Output a defined task. */
-      virtual void task_def(const NetTaskDef*);
+      virtual void task_def(const NetScope*);
       virtual void func_def(const NetFuncDef*);
 
 	/* LPM style components are handled here. */
@@ -160,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.50  2001/04/02 02:28:13  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.49  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *

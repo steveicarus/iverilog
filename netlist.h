@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.200 2001/03/29 02:52:01 steve Exp $"
+#ident "$Id: netlist.h,v 1.201 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 /*
@@ -1979,16 +1979,18 @@ class NetEUFunc  : public NetExpr {
 class NetUTask  : public NetProc {
 
     public:
-      NetUTask(NetTaskDef*);
+      NetUTask(NetScope*);
       ~NetUTask();
 
-      const string& name() const { return task_->name(); }
+      const string& name() const;
+
+      const NetScope* task() const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetTaskDef*task_;
+      NetScope*task_;
 };
 
 /*
@@ -2784,8 +2786,8 @@ class Design {
       NetFuncDef* find_function(const string&path);
 
 	// Tasks
-      NetTaskDef* find_task(NetScope*scope, const string&name);
-      NetTaskDef* find_task(const string&key);
+      NetScope* find_task(NetScope*scope, const string&name);
+      NetScope* find_task(const string&key);
 
 	// NODES
       void add_node(NetNode*);
@@ -2870,6 +2872,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.201  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.200  2001/03/29 02:52:01  steve
  *  Add const probe method to NetEvent.
  *

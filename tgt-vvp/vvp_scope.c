@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.11 2001/04/01 21:34:48 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.12 2001/04/02 02:28:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -257,12 +257,19 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    draw_event_in_scope(event);
       }
 
+      if (ivl_scope_type(net) == IVL_SCT_TASK)
+	    draw_task_definition(net);
+
+
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
 }
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.12  2001/04/02 02:28:13  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.11  2001/04/01 21:34:48  steve
  *  Recognize the BUF device.
  *

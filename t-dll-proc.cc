@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.19 2001/04/01 06:52:28 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.20 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -72,6 +72,22 @@ bool dll_target::process(const NetProcTop*net)
       des_.threads_ = obj;
 
       return true;
+}
+
+void dll_target::task_def(const NetScope*net)
+{
+      ivl_scope_t scope = lookup_scope_(net);
+      const NetTaskDef*def = net->task_def();
+
+      assert(stmt_cur_ == 0);
+      stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
+      assert(stmt_cur_);
+      def->proc()->emit_proc(this);
+
+      assert(stmt_cur_);
+      scope->def = stmt_cur_;
+      stmt_cur_ = 0;
+
 }
 
 /*
@@ -330,6 +346,15 @@ bool dll_target::proc_trigger(const NetEvTrig*net)
       return true;
 }
 
+void dll_target::proc_utask(const NetUTask*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_UTASK;
+      stmt_cur_->u_.utask_.def = lookup_scope_(net->task());
+}
+
 bool dll_target::proc_wait(const NetEvWait*net)
 {
       assert(stmt_cur_);
@@ -438,6 +463,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.20  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.19  2001/04/01 06:52:28  steve
  *  support the NetWhile statement.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.11 2001/03/30 04:55:22 steve Exp $
+ *  $Id: README.txt,v 1.12 2001/04/02 02:28:13 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -242,11 +242,18 @@ A transient thread is created with a %fork instruction. When a
 transient thread is created this way, the operand to the %fork gives
 the starting address, and the new thread is said to be a child of the
 forking thread. The children of a thread are pushed onto a stack of
-children.
+children. A thread can have only one direct child.
 
 A transient thread is reaped with a %join instruction. %join waits for
 the top thread in the stack of children to complete, then
 continues. It is an error to %join when there are no children.
+
+As you can see, the transient thread in VVP is a cross between a
+conventional thread and a function call. In fact, there is no %call
+instruction in vvp, the job is accomplished with %fork/%join in the
+caller and %end in the callee. The %fork, then is simply a
+generalization of a function call, where the caller does not
+necessarily wait for the callee.
 
 TRUTH TABLES
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.18 2001/04/02 00:27:53 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.19 2001/04/02 02:28:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -335,6 +335,15 @@ static int show_stmt_trigger(ivl_statement_t net)
       return 0;
 }
 
+static int show_stmt_utask(ivl_statement_t net)
+{
+      ivl_scope_t task = ivl_stmt_call(net);
+
+      fprintf(vvp_out, "    %%fork TD_%s;\n", ivl_scope_name(task));
+      fprintf(vvp_out, "    %%join;\n");
+      return 0;
+}
+
 static int show_stmt_wait(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_event(net);
@@ -496,6 +505,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_stmt_trigger(net);
 	    break;
 
+	  case IVL_ST_UTASK:
+	    rc += show_stmt_utask(net);
+	    break;
+
 	  case IVL_ST_WAIT:
 	    rc += show_stmt_wait(net);
 	    break;
@@ -561,8 +574,27 @@ int draw_process(ivl_process_t net, void*x)
       return rc;
 }
 
+int draw_task_definition(ivl_scope_t scope)
+{
+      int rc = 0;
+      ivl_statement_t def = ivl_scope_def(scope);
+
+      fprintf(vvp_out, "TD_%s ;\n", ivl_scope_name(scope));
+
+      assert(def);
+      rc += show_statement(def);
+
+      fprintf(vvp_out, "    %%end;\n");
+
+      thread_count += 1;
+      return rc;
+}
+
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.19  2001/04/02 02:28:13  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.18  2001/04/02 00:27:53  steve
  *  Scopes and numbers as vpi_call parameters.
  *

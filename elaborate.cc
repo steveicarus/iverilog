@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.208 2001/02/15 06:59:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.209 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 /*
@@ -1366,7 +1366,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-      NetTaskDef*def = des->find_task(scope, name_);
+      NetScope*task = des->find_task(scope, name_);
+      NetTaskDef*def = task->task_def();
       if (def == 0) {
 	    cerr << get_line() << ": error: Enable of unknown task ``" <<
 		  scope->name() << "." << name_ << "''." << endl;
@@ -1386,7 +1387,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	/* Handle tasks with no parameters specially. There is no need
 	   to make a sequential block to hold the generated code. */
       if (nparms() == 0) {
-	    cur = new NetUTask(def);
+	    cur = new NetUTask(task);
 	    return cur;
       }
 
@@ -1425,7 +1426,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       }
 
 	/* Generate the task call proper... */
-      cur = new NetUTask(def);
+      cur = new NetUTask(task);
       block->append(cur);
 
 
@@ -2171,7 +2172,8 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
 
 void PTask::elaborate(Design*des, const string&path) const
 {
-      NetTaskDef*def = des->find_task(path);
+      NetScope*task = des->find_task(path);
+      NetTaskDef*def = task->task_def();
       assert(def);
 
       NetProc*st;
@@ -2367,6 +2369,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.209  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.208  2001/02/15 06:59:36  steve
  *  FreeBSD port has a maintainer now.
  *

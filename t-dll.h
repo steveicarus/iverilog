@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.31 2001/04/02 00:28:35 steve Exp $"
+#ident "$Id: t-dll.h,v 1.32 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -84,8 +84,11 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_delay(const NetPDelay*);
       void proc_stask(const NetSTask*);
       bool proc_trigger(const NetEvTrig*);
+      void proc_utask(const NetUTask*);
       bool proc_wait(const NetEvWait*);
       void proc_while(const NetWhile*);
+
+      void task_def(const NetScope*);
 
       struct ivl_expr_s*expr_;
       void expr_binary(const NetEBinary*);
@@ -304,6 +307,9 @@ struct ivl_scope_s {
 
       unsigned nlpm_;
       ivl_lpm_t* lpm_;
+
+	/* Scopes that are tasks have a definition. */
+      ivl_statement_t def;
 };
 
 /*
@@ -385,6 +391,10 @@ struct ivl_statement_s {
 		  ivl_event_t event_;
 	    } trig_;
 
+	    struct { /* IVL_ST_UTASK */
+		  ivl_scope_t def;
+	    } utask_;
+
 	    struct { /* IVL_ST_WAIT */
 		  ivl_event_t event_;
 		  ivl_statement_t stmt_;
@@ -399,6 +409,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.32  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.31  2001/04/02 00:28:35  steve
  *  Support the scope expression node.
  *

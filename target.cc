@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.50 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: target.cc,v 1.51 2001/04/02 02:28:13 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -49,7 +49,7 @@ void target_t::func_def(const NetFuncDef*)
 	    "Unhandled function definition." << endl;
 }
 
-void target_t::task_def(const NetTaskDef*)
+void target_t::task_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled task definition." << endl;
@@ -389,6 +389,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.51  2001/04/02 02:28:13  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.50  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *

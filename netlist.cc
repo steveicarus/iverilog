@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.157 2001/02/10 21:20:38 steve Exp $"
+#ident "$Id: netlist.cc,v 1.158 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1752,13 +1752,23 @@ NetEUFunc* NetEUFunc::dup_expr() const
       return 0;
 }
 
-NetUTask::NetUTask(NetTaskDef*def)
+NetUTask::NetUTask(NetScope*def)
 : task_(def)
 {
 }
 
 NetUTask::~NetUTask()
 {
+}
+
+const string& NetUTask::name() const
+{
+      return task_->name();
+}
+
+const NetScope* NetUTask::task() const
+{
+      return task_;
 }
 
 NetExpr::NetExpr(unsigned w)
@@ -2460,6 +2470,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.158  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.157  2001/02/10 21:20:38  steve
  *  Binary operators with operands of indefinite width
  *  has itself an indefinite width.

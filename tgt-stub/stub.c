@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.34 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: stub.c,v 1.35 2001/04/02 02:28:13 steve Exp $"
 #endif
 
 /*
@@ -236,6 +236,10 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_TRIGGER:
 	    fprintf(out, "%*s-> ...\n", ind, "");
+	    break;
+
+	  case IVL_ST_UTASK:
+	    fprintf(out, "%*scall task ...\n", ind, "");
 	    break;
 
 	  case IVL_ST_WAIT: {
@@ -480,6 +484,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.35  2001/04/02 02:28:13  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.34  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *

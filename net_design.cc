@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.18 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: net_design.cc,v 1.19 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 /*
@@ -393,20 +393,20 @@ NetFuncDef* Design::find_function(const string&key)
       return 0;
 }
 
-NetTaskDef* Design::find_task(NetScope*scope, const string&name)
+NetScope* Design::find_task(NetScope*scope, const string&name)
 {
       NetScope*task = find_scope(scope, name);
       if (task && (task->type() == NetScope::TASK))
-	    return task->task_def();
+	    return task;
 
       return 0;
 }
 
-NetTaskDef* Design::find_task(const string&key)
+NetScope* Design::find_task(const string&key)
 {
       NetScope*task = find_scope(key);
       if (task && (task->type() == NetScope::TASK))
-	    return task->task_def();
+	    return task;
 
       return 0;
 }
@@ -473,6 +473,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.19  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.18  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.203 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.204 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -150,7 +150,7 @@ class target_vvm : public target_t {
       virtual void event(const NetEvent*);
       virtual void signal(const NetNet*);
       virtual void memory(const NetMemory*);
-      virtual void task_def(const NetTaskDef*);
+      virtual void task_def(const NetScope*);
       virtual void func_def(const NetFuncDef*);
 
       virtual void lpm_add_sub(const NetAddSub*);
@@ -1357,8 +1357,10 @@ void target_vvm::memory(const NetMemory*mem)
 	    mem->count() << ");" << endl;
 }
 
-void target_vvm::task_def(const NetTaskDef*def)
+void target_vvm::task_def(const NetScope*scope)
 {
+      const NetTaskDef*def = scope->task_def();
+
       thread_step_ = 0;
       const string name = mangle(def->name());
       const string save_thread_class = thread_class_;
@@ -3636,6 +3638,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.204  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.203  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *

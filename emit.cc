@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.56 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: emit.cc,v 1.57 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 /*
@@ -357,7 +357,7 @@ void NetScope::emit_defs(struct target_t*tgt) const
 	    tgt->func_def(this->func_def());
 	    break;
 	  case TASK:
-	    tgt->task_def(this->task_def());
+	    tgt->task_def(this);
 	    break;
       }
 
@@ -478,6 +478,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.57  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.56  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *

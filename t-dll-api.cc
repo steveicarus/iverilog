@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.31 2001/04/02 00:28:35 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.32 2001/04/02 02:28:12 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -452,6 +452,12 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
       return 0;
 }
 
+extern "C" ivl_statement_t ivl_scope_def(ivl_scope_t net)
+{
+      assert(net);
+      return net->def;
+}
+
 extern "C" unsigned ivl_scope_events(ivl_scope_t net)
 {
       assert(net);
@@ -602,6 +608,17 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
 	    return net->u_.block_.stmt_ + i;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_scope_t ivl_stmt_call(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_UTASK:
+	    return net->u_.utask_.def;
 	  default:
 	    assert(0);
 	    return 0;
@@ -812,6 +829,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.32  2001/04/02 02:28:12  steve
+ *  Generate code for task calls.
+ *
  * Revision 1.31  2001/04/02 00:28:35  steve
  *  Support the scope expression node.
  *
