@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.16 1999/06/06 20:42:48 steve Exp $"
+#ident "$Id: lexor.lex,v 1.17 1999/06/06 23:08:00 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -154,7 +154,8 @@ static verinum*make_unsized_hex(const char*txt);
 		  value = 10 * value + (*cp - '0');
       }
 
-      unsigned nbits = 8 * sizeof value;
+      assert(INTEGER_WIDTH <= (8*sizeof(value)));
+      unsigned nbits = INTEGER_WIDTH;
       verinum::V*bits = new verinum::V[8 * sizeof value];
 
       for (unsigned idx = 0 ;  idx < nbits ;  idx += 1, value >>= 1) {
