@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.175 2003/04/14 03:37:47 steve Exp $"
+#ident "$Id: parse.y,v 1.176 2003/04/25 02:28:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,6 +33,14 @@ extern void lex_end_table();
 
 static svector<PExpr*>* active_range = 0;
 static bool active_signed = false;
+
+/* Port declaration lists use this structure for context. */
+static struct {
+      NetNet::Type port_net_type;
+      NetNet::PortType port_type;
+      bool sign_flag;
+      svector<PExpr*>* range;
+} port_declaration_context;
 
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
@@ -162,7 +170,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
 %type <mport> port port_opt port_reference port_reference_list
-%type <mport> port_declaration port_declaration_error
+%type <mport> port_declaration
 %type <mports> list_of_ports list_of_ports_opt list_of_port_declarations
 
 %type <wires> task_item task_item_list task_item_list_opt
@@ -1197,15 +1205,23 @@ list_of_port_declarations
 		  delete $1;
 		  $$ = tmp;
 		}
-	| list_of_port_declarations ',' port_declaration_error
-		{ svector<Module::port_t*>*tmp;
-		  if ($3) {
-			tmp = new svector<Module::port_t*>(*$1, $3);
-			delete $1;
-			$$ = tmp;
-		  } else {
-			$$ = $1;
-		  }
+	| list_of_port_declarations ',' IDENTIFIER
+		{ Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($3, @3.text,
+						     @3.first_line);
+		  svector<Module::port_t*>*tmp
+			= new svector<Module::port_t*>(*$1, ptmp);
+
+		    /* Get the port declaration details, the port type
+		       and what not, from context data stored by the
+		       last port_declaration rule. */
+		  pform_module_define_port(@3, $3,
+					port_declaration_context.port_type,
+					port_declaration_context.port_net_type,
+					port_declaration_context.sign_flag,
+					port_declaration_context.range);
+		  delete $1;
+		  $$ = tmp;
 		}
         ;
 
@@ -1216,6 +1232,10 @@ port_declaration
 						     @1.first_line);
 		  pform_module_define_port(@1, $5, NetNet::PINPUT,
 					   $2, $3, $4);
+		  port_declaration_context.port_type = NetNet::PINPUT;
+		  port_declaration_context.port_net_type = $2;
+		  port_declaration_context.sign_flag = $3;
+		  port_declaration_context.range = $4;
 		  delete $5;
 		  $$ = ptmp;
 		}
@@ -1225,6 +1245,10 @@ port_declaration
 						     @1.first_line);
 		  pform_module_define_port(@1, $5, NetNet::PINOUT,
 					   $2, $3, $4);
+		  port_declaration_context.port_type = NetNet::PINOUT;
+		  port_declaration_context.port_net_type = $2;
+		  port_declaration_context.sign_flag = $3;
+		  port_declaration_context.range = $4;
 		  delete $5;
 		  $$ = ptmp;
 		}
@@ -1234,6 +1258,10 @@ port_declaration
 						     @1.first_line);
 		  pform_module_define_port(@1, $5, NetNet::POUTPUT,
 					   $2, $3, $4);
+		  port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.port_net_type = $2;
+		  port_declaration_context.sign_flag = $3;
+		  port_declaration_context.range = $4;
 		  delete $5;
 		  $$ = ptmp;
 		}
@@ -1243,31 +1271,15 @@ port_declaration
 						     @1.first_line);
 		  pform_module_define_port(@1, $5, NetNet::POUTPUT,
 					   $2, $3, $4);
+		  port_declaration_context.port_type = NetNet::POUTPUT;
+		  port_declaration_context.port_net_type = $2;
+		  port_declaration_context.sign_flag = $3;
+		  port_declaration_context.range = $4;
 		  delete $5;
 		  $$ = ptmp;
 		}
 	;
 
-  /* Detect some ways the port declaration can be messed up. */
-port_declaration_error
-	: net_type_opt signed_opt range_opt IDENTIFIER
-		{ ostringstream msg1, msg2;
-		  msg1 << "error: Port " << $4 << " in declaration "
-		      << "list requires a direction keyword.";
-		  yyerror(@4, msg1.str().c_str());
-
-		  msg2 << "error: Do you mean ``inout " << $4 << "''?";
-		  yyerror(@4, msg2.str().c_str());
-
-		  Module::port_t*ptmp;
-		  ptmp = pform_module_port_reference($4, @4.text,
-						     @4.first_line);
-		  pform_module_define_port(@4, $4, NetNet::PINOUT,
-					   $1, $2, $3);
-		  delete $4;
-		  $$ = ptmp;
-		}
-	;
 
 
 net_type_opt
