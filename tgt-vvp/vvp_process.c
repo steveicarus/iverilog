@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.87 2003/05/26 04:45:37 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.88 2003/07/29 05:12:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1098,7 +1098,16 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 
       unsigned out = transient_id++;
       unsigned id_base = transient_id;
-      transient_id += cnt-1;
+
+	/* cnt is the number of sub-threads. If the fork-join has no
+	   name, then we can put one of the sub-threads in the current
+	   thread, so decrement the count by one. */
+      if (scope == 0) {
+	    cnt -= 1;
+	    scope = sscope;
+      }
+
+      transient_id += cnt;
 
 	/* If no subscope use provided */
       if (!scope) scope = sscope;
@@ -1106,21 +1115,25 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
 	   are implemented. */
-      for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
 	    fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
 		    id_base+idx, scope);
       }
 
-	/* Draw code to execute the remaining thread in the current
-	   thread, then generate enough joins to merge back together. */
-      rc += show_statement(ivl_stmt_block_stmt(net, cnt-1), scope);
+	/* If we are putting one sub-thread into the current thread,
+	   then draw its code here. */
+      if (ivl_stmt_block_scope(net) == 0)
+	    rc += show_statement(ivl_stmt_block_stmt(net, cnt), scope);
 
-      for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
+
+	/* Generate enough joins to collect all the sub-threads. */
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
 	    fprintf(vvp_out, "    %%join;\n");
       }
       fprintf(vvp_out, "    %%jmp t_%u;\n", out);
 
-      for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
+	/* Generate the sub-threads themselves. */
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
 	    clear_expression_lookaside();
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), scope);
@@ -1522,6 +1535,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.88  2003/07/29 05:12:10  steve
+ *  All the threads of a named fork go into sub-scope.
+ *
  * Revision 1.87  2003/05/26 04:45:37  steve
  *  Use set/x0/x if the target vector is too wide for set/x0.
  *
