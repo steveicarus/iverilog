@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.61 2000/05/23 16:03:13 steve Exp $"
+#ident "$Id: pform.cc,v 1.62 2000/07/22 22:09:04 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -39,6 +39,8 @@ string vl_file = "";
 extern int VLparse();
 
 static Module*pform_cur_module = 0;
+static int pform_time_unit = 0;
+static int pform_time_prec = 0;
 
 /*
  * The scope stack and the following functions handle the processing
@@ -52,6 +54,13 @@ struct scope_name_t {
       struct scope_name_t*next;
 };
 static scope_name_t*scope_stack  = 0;
+
+void pform_set_timescale(int unit, int prec)
+{
+      assert(unit >= prec);
+      pform_time_unit = unit;
+      pform_time_prec = prec;
+}
 
 void pform_push_scope(const string&name)
 {
@@ -110,6 +119,8 @@ void pform_startmodule(const string&name, svector<Module::port_t*>*ports)
       }
 
       pform_cur_module = new Module(name, ports);
+      pform_cur_module->time_unit = pform_time_unit;
+      pform_cur_module->time_precision = pform_time_prec;
       delete ports;
 }
 
@@ -874,6 +885,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.62  2000/07/22 22:09:04  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.61  2000/05/23 16:03:13  steve
  *  Better parsing of expressions lists will empty expressoins.
  *

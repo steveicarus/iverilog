@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.90 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.91 2000/07/22 22:09:03 steve Exp $"
 #endif
 
 /*
@@ -679,6 +679,9 @@ void NetScope::dump(ostream&o) const
       }
       o << endl;
 
+      o << "    timescale = 10e" << time_unit() << " / 10e"
+	<< time_precision() << endl;
+
 	/* Dump the parameters for this scope. */
       {
 	    map<string,NetExpr*>::const_iterator pp;
@@ -935,6 +938,7 @@ void NetEUnary::dump(ostream&o) const
 
 void Design::dump(ostream&o) const
 {
+      o << "DESIGN TIME PRECISION: 10e" << get_precision() << endl;
       o << "SCOPES:" << endl;
       root_scope_->dump(o);
 
@@ -977,6 +981,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.91  2000/07/22 22:09:03  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.90  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

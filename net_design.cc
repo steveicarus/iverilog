@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.10 2000/07/16 04:56:08 steve Exp $"
+#ident "$Id: net_design.cc,v 1.11 2000/07/22 22:09:03 steve Exp $"
 #endif
 
 /*
@@ -47,6 +47,7 @@ Design:: Design()
 : errors(0), root_scope_(0), nodes_(0), procs_(0), lcounter_(0)
 {
       procs_idx_ = 0;
+      des_precision_ = 0;
 }
 
 Design::~Design()
@@ -59,6 +60,31 @@ string Design::local_symbol(const string&path)
       res << "_L" << (lcounter_++) << ends;
 
       return path + "." + res.str();
+}
+
+void Design::set_precision(int val)
+{
+      if (val < des_precision_)
+	    des_precision_ = val;
+}
+
+int Design::get_precision() const
+{
+      return des_precision_;
+}
+
+unsigned long Design::scale_to_precision(unsigned long val,
+					 const NetScope*scope) const
+{
+      int units = scope->time_unit();
+      assert( units > des_precision_ );
+
+      while (units > des_precision_) {
+	    units -= 1;
+	    val *= 10;
+      }
+
+      return val;
 }
 
 NetScope* Design::make_root_scope(const string&root)
@@ -471,6 +497,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.11  2000/07/22 22:09:03  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.10  2000/07/16 04:56:08  steve
  *  Handle some edge cases during node scans.
  *

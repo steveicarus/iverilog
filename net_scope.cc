@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.6 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.7 2000/07/22 22:09:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -46,6 +46,8 @@ NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
       memories_ = 0;
       signals_ = 0;
       events_ = 0;
+      time_unit_ = up->time_unit();
+      time_prec_ = up->time_precision();
       sib_ = up_->sub_;
       up_->sub_ = this;
 }
@@ -91,6 +93,26 @@ const NetExpr* NetScope::get_parameter(const string&key) const
 NetScope::TYPE NetScope::type() const
 {
       return type_;
+}
+
+void NetScope::time_unit(int val)
+{
+      time_unit_ = val;
+}
+
+void NetScope::time_precision(int val)
+{
+      time_prec_ = val;
+}
+
+int NetScope::time_unit() const
+{
+      return time_unit_;
+}
+
+int NetScope::time_precision() const
+{
+      return time_prec_;
 }
 
 string NetScope::basename() const
@@ -281,6 +303,9 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.7  2000/07/22 22:09:03  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.6  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.178 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.179 2000/07/22 22:09:03 steve Exp $"
 #endif
 
 /*
@@ -1611,13 +1611,15 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
       }
       assert(num);
 
+	/* Convert the delay in the units of the scope to the
+	   precision of the design as a whole. */
+      unsigned long val = des->scale_to_precision(num->as_ulong(), scope);
 
 	/* If there is a statement, then elaborate it and create a
 	   NetPDelay statement to contain it. Note that we create a
 	   NetPDelay statement even if the value is 0 because #0 does
 	   in fact have a well defined meaning in Verilog. */
 
-      unsigned long val = num->as_ulong();
       if (statement_) {
 	    NetProc*stmt = statement_->elaborate(des, path);
 	    return new NetPDelay(val, stmt);
@@ -2425,6 +2427,9 @@ Design* elaborate(const map<string,Module*>&modules,
 	// Make the root scope, then scan the pform looking for scopes
 	// and parameters. 
       NetScope*scope = des->make_root_scope(root);
+      scope->time_unit(rmod->time_unit);
+      scope->time_precision(rmod->time_precision);
+      des->set_precision(rmod->time_precision);
       if (! rmod->elaborate_scope(des, scope)) {
 	    delete des;
 	    return 0;
@@ -2472,6 +2477,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.179  2000/07/22 22:09:03  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.178  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

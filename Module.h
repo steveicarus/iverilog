@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.19 2000/05/16 04:05:15 steve Exp $"
+#ident "$Id: Module.h,v 1.20 2000/07/22 22:09:03 steve Exp $"
 #endif
 
 # include  <list>
@@ -84,6 +84,9 @@ class Module {
 	/* Keep a table of named events declared in the module. */
       map<string,PEvent*>events;
 
+	/* These are the timescale for this module. The default is
+	   set by the `timescale directive. */
+      int time_unit, time_precision;
 
       const string&get_name() const { return name_; }
 
@@ -136,6 +139,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.20  2000/07/22 22:09:03  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.19  2000/05/16 04:05:15  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used

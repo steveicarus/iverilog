@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.147 2000/07/16 04:56:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.148 2000/07/22 22:09:04 steve Exp $"
 #endif
 
 /*
@@ -2461,6 +2461,20 @@ class NetScope {
 
       TYPE type() const;
 
+	/* Scopes have their own time units and time precision. The
+	   unit and precision are given as power of 10, i.e. -3 is
+	   units of milliseconds.
+
+	   If a NetScope is created with a parent scope, the new scope
+	   will initially inherit the unit and precision of the
+	   parent scope. */
+
+      void time_unit(int);
+      void time_precision(int);
+
+      int time_unit() const;
+      int time_precision() const;
+
 	/* The name of the scope is the fully qualified hierarchical
 	   name, whereas the basename is just my name within my parent
 	   scope. */
@@ -2491,6 +2505,8 @@ class NetScope {
     private:
       TYPE type_;
       string name_;
+
+      signed char time_unit_, time_prec_;
 
       map<string,NetExpr*>parameters_;
       map<string,NetExpr*>localparams_;
@@ -2530,6 +2546,19 @@ class Design {
 
       NetScope* make_root_scope(const string&name);
       NetScope* find_root_scope();
+
+
+	/* Attempt to set the precision to the specified value. If the
+	   precision is already more precise, the keep the precise
+	   setting. This is intended to hold the simulation precision
+	   for use throughout the entire design. */
+
+      void set_precision(int val);
+      int  get_precision() const;
+
+	/* This function takes a delay value and a scope, and returns
+	   the delay value scaled to the precision of the design. */
+      unsigned long scale_to_precision(unsigned long, const NetScope*)const;
 
 	/* look up a scope. If no starting scope is passed, then the
 	   path name string is taken as an absolute scope
@@ -2613,6 +2642,8 @@ class Design {
 
       map<string,string> flags_;
 
+      int des_precision_;
+
       unsigned lcounter_;
 
     private: // not implemented
@@ -2660,6 +2691,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.148  2000/07/22 22:09:04  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.147  2000/07/16 04:56:08  steve
  *  Handle some edge cases during node scans.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.4 2000/04/09 17:44:30 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.5 2000/07/22 22:09:03 steve Exp $"
 #endif
 
 /*
@@ -209,7 +209,10 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	// Create the new scope as a MODULE with my name.
       NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
-
+	// Set time units and precision.
+      my_scope->time_unit(mod->time_unit);
+      my_scope->time_precision(mod->time_precision);
+      des->set_precision(mod->time_precision);
 
 	// This call actually arranges for the description of the
 	// module type to process this instance and handle parameters
@@ -415,6 +418,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.5  2000/07/22 22:09:03  steve
+ *  Parse and elaborate timescale to scopes.
+ *
  * Revision 1.4  2000/04/09 17:44:30  steve
  *  Catch event declarations during scope elaborate.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.45 2000/06/27 04:36:29 steve Exp $"
+#ident "$Id: lexor.lex,v 1.46 2000/07/22 22:09:03 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -39,6 +39,8 @@ extern string vl_file;
 # define yylval VLlval
 extern YYLTYPE yylloc;
 
+extern void pform_set_timescale(int, int);
+
 static void reset_lexor();
 static void line_directive();
 static void line_directive2();
@@ -52,6 +54,8 @@ static verinum*make_unsized_binary(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
 static verinum*make_unsized_octal(const char*txt);
 static verinum*make_unsized_hex(const char*txt);
+
+static void process_timescale(const char*txt);
 
 static int comment_enter;
 %}
@@ -218,10 +222,8 @@ W [ \t\b\f\r]+
   /* Notice and handle the timescale directive. */
 
 `timescale { BEGIN(PPTIMESCALE); }
-<PPTIMESCALE>. { ; }
+<PPTIMESCALE>.* { process_timescale(yytext); }
 <PPTIMESCALE>\n {
-      cerr << yylloc.text << ":" << yylloc.first_line
-	   << ": Sorry, `timescale not supported." << endl;
       yylloc.first_line += 1;
       BEGIN(0); }
 
@@ -815,6 +817,109 @@ static verinum*make_unsized_dec(const char*txt)
       return make_dec_with_size(INTEGER_WIDTH, false, txt+1);
 }
 
+/*
+ * The timescale parameter has the form:
+ *      " <num> xs / <num> xs"
+ */
+static void process_timescale(const char*txt)
+{
+      unsigned num;
+      const char*cp = txt + strspn(txt, " \t");
+      char*tmp;
+      const char*ctmp;
+
+      int unit = 0;
+      int prec = 0;
+
+      num = strtoul(cp, &tmp, 10);
+      if (num == 0) {
+	    VLerror(yylloc, "Invalid timescale string.");
+	    return;
+      }
+
+      while (num >= 10) {
+	    unit += 1;
+	    num  /= 10;
+      }
+      if (num != 1) {
+	    VLerror(yylloc, "Invalid timescale unit number.");
+	    return;
+      }
+
+      cp = tmp;
+      cp += strspn(cp, " \t");
+      ctmp = cp + strcspn(cp, " \t/");
+
+      if (strncmp("s", cp, ctmp-cp) == 0) {
+	    unit -= 0;
+
+      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
+	    unit -= 3;
+
+      } else if (strncmp("us", cp, ctmp-cp) == 0) {
+	    unit -= 6;
+
+      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
+	    unit -= 9;
+
+      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
+	    unit -= 12;
+
+      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
+	    unit -= 15;
+
+      } else {
+	    VLerror(yylloc, "Invalid timescale unit of measurement");
+	    return;
+      }
+
+      cp = ctmp;
+      cp += strspn(cp, " \t/");
+
+      num = strtoul(cp, &tmp, 10);
+      if (num == 0) {
+	    VLerror(yylloc, "Invalid timescale string.");
+	    return;
+      }
+      assert(num);
+      while (num >= 10) {
+	    prec += 1;
+	    num  /= 10;
+      }
+      if (num != 1) {
+	    VLerror(yylloc, "Invalid timescale precision number.");
+	    return;
+      }
+
+      cp = tmp;
+      cp += strspn(cp, " \t");
+      ctmp = cp + strcspn(cp, " \t");
+
+      if (strncmp("s", cp, ctmp-cp) == 0) {
+	    prec -= 0;
+
+      } else if (strncmp("ms", cp, ctmp-cp) == 0) {
+	    prec -= 3;
+
+      } else if (strncmp("us", cp, ctmp-cp) == 0) {
+	    prec -= 6;
+
+      } else if (strncmp("ns", cp, ctmp-cp) == 0) {
+	    prec -= 9;
+
+      } else if (strncmp("ps", cp, ctmp-cp) == 0) {
+	    prec -= 12;
+
+      } else if (strncmp("fs", cp, ctmp-cp) == 0) {
+	    prec -= 15;
+
+      } else {
+	    VLerror(yylloc, "Invalid timescale precision units of measurement");
+	    return;
+      }
+
+      pform_set_timescale(unit, prec);
+}
 
 static int yywrap()
 {
