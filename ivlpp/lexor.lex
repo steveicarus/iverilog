@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.37 2003/02/02 23:54:35 steve Exp $"
+#ident "$Id: lexor.lex,v 1.38 2003/02/03 00:28:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,20 +116,25 @@ W [ \t\b\f]+
 <CCOMMENT>"*/" { BEGIN(comment_enter); ECHO; }
 
   /* Detect and pass multiline pragma comments. As with C-style
-     comments, pragma comments are passed through, and CPP directives
-     contained within are ignored. */
+     comments, pragma comments are passed through, and preprocessor
+     directives contained within are ignored. Contains macros are
+     expanded, however. */
 
 "(*" { comment_enter = YY_START; BEGIN(PCOMENT); ECHO; }
 <PCOMENT>.    { ECHO; }
 <PCOMENT>\n   { istack->lineno += 1; ECHO; }
 <PCOMENT>"*)" { BEGIN(comment_enter); ECHO; }
+<PCOMENT>`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
 
-  /* Strings do not contain macros or preprocessor directives. */
+  /* Strings do not contain preprocessor directives, but can expand
+     macros. If that happens, they get expanded in the context of the
+     string. */
 \"            { comment_enter = YY_START; BEGIN(CSTRING); ECHO; }
-<CSTRING>\\\" { yymore(); }
-<CSTRING>\n   { yymore(); }
+<CSTRING>\\\" { ECHO; }
+<CSTRING>\n   { ECHO; }
 <CSTRING>\"   { BEGIN(comment_enter);  ECHO; }
-<CSTRING>.    { yymore(); }
+<CSTRING>.    { ECHO; }
+<CSTRING>`[a-zA-Z][a-zA-Z0-9_$]* { def_match(); }
 
   /* This set of patterns matches the include directive and the name
      that follows it. when the directive ends, the do_include function
@@ -306,7 +311,6 @@ static int is_defined(const char*name)
 static void def_match()
 {
       struct define_t*cur = def_lookup(yytext+1);
-
       if (cur) {
 	    struct include_stack_t*isp;
 
