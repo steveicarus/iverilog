@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.73 2002/01/03 04:19:01 steve Exp $"
+#ident "$Id: t-dll.h,v 1.74 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -108,7 +108,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_block(const NetBlock*);
       void proc_case(const NetCase*);
       bool proc_cassign(const NetCAssign*);
-      void proc_condit(const NetCondit*);
+      bool proc_condit(const NetCondit*);
       bool proc_deassign(const NetDeassign*);
       bool proc_delay(const NetPDelay*);
       bool proc_disable(const NetDisable*);
@@ -590,6 +590,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.74  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.73  2002/01/03 04:19:01  steve
  *  Add structural modulus support down to vvp.
  *

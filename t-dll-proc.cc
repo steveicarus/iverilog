@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.40 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.41 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -421,7 +421,7 @@ bool dll_target::proc_cassign(const NetCAssign*net)
       return true;
 }
 
-void dll_target::proc_condit(const NetCondit*net)
+bool dll_target::proc_condit(const NetCondit*net)
 {
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
@@ -438,12 +438,13 @@ void dll_target::proc_condit(const NetCondit*net)
       ivl_statement_t save_cur_ = stmt_cur_;
 
       stmt_cur_ = save_cur_->u_.condit_.stmt_+0;
-      net->emit_recurse_if(this);
+      bool flag = net->emit_recurse_if(this);
 
       stmt_cur_ = save_cur_->u_.condit_.stmt_+1;
-      net->emit_recurse_else(this);
+      flag = flag && net->emit_recurse_else(this);
 
       stmt_cur_ = save_cur_;
+      return flag;
 }
 
 bool dll_target::proc_deassign(const NetDeassign*net)
@@ -531,8 +532,16 @@ bool dll_target::proc_force(const NetForce*net)
 	    calloc(1, sizeof(struct ivl_lval_s));
 
       const NetNet*lsig = net->lval();
+      assert(lsig);
       ivl_signal_t sig = find_signal(des_, lsig);
       assert(sig);
+      if (sig->type_ != IVL_SIT_REG) {
+	    cerr << net->get_line() << ": internal error: Sorry, "
+		 << "force to nets not supported by this target."
+		 << endl;
+	    return false;
+      }
+
       assert(sig->type_ == IVL_SIT_REG);
 
       stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
@@ -784,6 +793,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.41  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.40  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *

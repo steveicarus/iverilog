@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.6 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: net_force.cc,v 1.7 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,6 +89,8 @@ const NetNet*NetDeassign::lval() const
 NetForce::NetForce(NetScope*s, const string&n, NetNet*l)
 : NetNode(s, n, l->pin_count()), lval_(l)
 {
+      lval_->incr_eref();
+
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
 	    pin(idx).set_name("I", idx);
@@ -97,6 +99,7 @@ NetForce::NetForce(NetScope*s, const string&n, NetNet*l)
 
 NetForce::~NetForce()
 {
+      lval_->decr_eref();
 }
 
 const Link& NetForce::lval_pin(unsigned idx) const
@@ -127,6 +130,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.7  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.6  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *

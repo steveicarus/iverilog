@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.54 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: target.h,v 1.55 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -105,7 +105,7 @@ struct target_t {
       virtual bool proc_block(const NetBlock*);
       virtual void proc_case(const NetCase*);
       virtual bool proc_cassign(const NetCAssign*);
-      virtual void proc_condit(const NetCondit*);
+      virtual bool proc_condit(const NetCondit*);
       virtual bool proc_deassign(const NetDeassign*);
       virtual bool proc_delay(const NetPDelay*);
       virtual bool proc_disable(const NetDisable*);
@@ -162,6 +162,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.55  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.54  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

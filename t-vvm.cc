@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.213 2001/10/14 03:50:53 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.214 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -190,7 +190,7 @@ class target_vvm : public target_t {
       virtual void proc_case(const NetCase*net);
               void proc_case_fun(ostream&os, const NetCase*net);
       virtual bool proc_cassign(const NetCAssign*);
-      virtual void proc_condit(const NetCondit*);
+      virtual bool proc_condit(const NetCondit*);
               void proc_condit_fun(ostream&os, const NetCondit*);
       virtual bool proc_deassign(const NetDeassign*);
       virtual bool proc_delay(const NetPDelay*);
@@ -3195,11 +3195,11 @@ bool target_vvm::proc_cassign(const NetCAssign*dev)
       return true;
 }
 
-void target_vvm::proc_condit(const NetCondit*net)
+bool target_vvm::proc_condit(const NetCondit*net)
 {
       if (function_def_flag_) {
 	    proc_condit_fun(out, net);
-	    return;
+	    return true;
       }
 
       string expr = emit_proc_rval(this, net->expr());
@@ -3250,6 +3250,7 @@ void target_vvm::proc_condit(const NetCondit*net)
 
       defn << "static bool " << thread_class_ << "_step_" << out_step <<
 	    "_(vvm_thread*thr) {" << endl;
+      return true;
 }
 
 void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
@@ -3658,6 +3659,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.214  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.213  2001/10/14 03:50:53  steve
  *  vvm support for pullup/down gates (PR#288)
  *

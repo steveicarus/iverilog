@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.57 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: target.cc,v 1.58 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -216,11 +216,12 @@ bool target_t::proc_cassign(const NetCAssign*dev)
       return false;
 }
 
-void target_t::proc_condit(const NetCondit*condit)
+bool target_t::proc_condit(const NetCondit*condit)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled conditional:" << endl;
       condit->dump(cerr, 6);
+      return false;
 }
 
 bool target_t::proc_deassign(const NetDeassign*dev)
@@ -383,6 +384,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.58  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.57  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.228 2001/12/31 00:08:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.229 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 /*
@@ -1455,8 +1455,8 @@ class NetCondit  : public NetProc {
 	// Replace the condition expression.
       void set_expr(NetExpr*ex);
 
-      void emit_recurse_if(struct target_t*) const;
-      void emit_recurse_else(struct target_t*) const;
+      bool emit_recurse_if(struct target_t*) const;
+      bool emit_recurse_else(struct target_t*) const;
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -2864,6 +2864,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.229  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.228  2001/12/31 00:08:14  steve
  *  Support $signed cast of expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.77 2002/01/12 04:03:09 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.78 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -163,10 +163,13 @@ static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 
 ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 {
-      unsigned i;
-      ivl_scope_t scope = NULL;
-      for (i = 0; i < des.nroots_ && scope == NULL; i++)
+      assert(cur);
+
+      ivl_scope_t scope = 0;
+      for (unsigned i = 0; i < des.nroots_ && scope == 0; i += 1) {
+	    assert(des.roots_[i]);
 	    scope = find_scope_from_root(des.roots_[i], cur);
+      }
       return scope;
 }
 
@@ -1873,6 +1876,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.78  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.77  2002/01/12 04:03:09  steve
  *  Make BUFZ device strengths available.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.63 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: emit.cc,v 1.64 2002/01/19 19:02:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -186,8 +186,7 @@ bool NetCAssign::emit_proc(struct target_t*tgt) const
 
 bool NetCondit::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_condit(this);
-      return true;
+      return tgt->proc_condit(this);
 }
 
 bool NetDeassign::emit_proc(struct target_t*tgt) const
@@ -263,16 +262,20 @@ void NetBlock::emit_recurse(struct target_t*tgt) const
       } while (cur != last_);
 }
 
-void NetCondit::emit_recurse_if(struct target_t*tgt) const
+bool NetCondit::emit_recurse_if(struct target_t*tgt) const
 {
       if (if_)
-	    if_->emit_proc(tgt);
+	    return if_->emit_proc(tgt);
+      else
+	    return true;
 }
 
-void NetCondit::emit_recurse_else(struct target_t*tgt) const
+bool NetCondit::emit_recurse_else(struct target_t*tgt) const
 {
       if (else_)
-	    else_->emit_proc(tgt);
+	    return else_->emit_proc(tgt);
+      else
+	    return true;
 }
 
 bool NetEvProbe::emit_node(struct target_t*tgt) const
@@ -474,6 +477,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.64  2002/01/19 19:02:08  steve
+ *  Pass back target errors processing conditionals.
+ *
  * Revision 1.63  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *
