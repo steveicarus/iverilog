@@ -14,7 +14,7 @@
 AC_DEFUN([AX_CPP_IDENT],
 [AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
 [AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.1 2003/11/08 19:27:50 steve Exp $"
+#ident "$Id: aclocal.m4,v 1.2 2004/01/15 06:05:20 steve Exp $"
 ],[while (0) {}],
 [AS_VAR_SET(ax_cv_cpp_ident, yes)],
 [AS_VAR_SET(ax_cv_cpp_ident, no)])])
@@ -47,7 +47,7 @@ AC_DEFUN([AX_C_UNDERSCORES_LEADING],
 [_AX_C_UNDERSCORES_MATCH_IF([_underscore],
 [AS_VAR_SET(ax_cv_c_underscores_leading, yes)],
 [AS_VAR_SET(ax_cv_c_underscores_leading, no)])])
-if test $ax_cv_c_underscores_leading = yes; then
+if test $ax_cv_c_underscores_leading = yes -a "$CYGWIN" != "yes" -a "$MINGW32" != "yes"; then
  AC_DEFINE(NEED_LU)
 fi
 ])# AX_C_UNDERSCORES_LEADING
