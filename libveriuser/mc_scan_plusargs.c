@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: mc_scan_plusargs.c,v 1.1 2002/05/24 20:29:07 steve Exp $"
+#ident "$Id: mc_scan_plusargs.c,v 1.2 2002/05/24 21:46:21 steve Exp $"
 #endif
 
 # include  <string.h>
@@ -43,8 +43,9 @@ char *mc_scan_plusargs(char *plusarg)
 	    a = *argv;
 	    p = plusarg;
 
-	    /* skip plus */
-	    if (*a == '+') a++;
+	    /* only plusargs */
+	    if (*a != '+') continue;
+	    a += 1;
 
 	    /* impossible matches */
 	    if (strlen(a) < strlen(p)) continue;
@@ -68,6 +69,9 @@ char *mc_scan_plusargs(char *plusarg)
 
 /*
  * $Log: mc_scan_plusargs.c,v $
+ * Revision 1.2  2002/05/24 21:46:21  steve
+ *  Only match plusargs.
+ *
  * Revision 1.1  2002/05/24 20:29:07  steve
  *  Implement mc_scan_plusargs.
  *
