@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.44 2003/04/25 05:06:32 steve Exp $"
+#ident "$Id: cprop.cc,v 1.45 2003/10/31 02:40:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -277,10 +277,14 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
 {
 	// Look for and count unlinked FF outputs. Note that if the
 	// Data and Q pins are connected together, they can be removed
-	// from the circuit.
+	// from the circuit, since it doesn't do anything.
       unsigned unlinked_count = 0;
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (connected(obj->pin_Data(idx), obj->pin_Q(idx))) {
+	    if (connected(obj->pin_Data(idx), obj->pin_Q(idx))
+		&& (! obj->pin_Sclr().is_linked())
+		&& (! obj->pin_Sset().is_linked())
+		&& (! obj->pin_Aclr().is_linked())
+		&& (! obj->pin_Aset().is_linked())) {
 		  obj->pin_Data(idx).unlink();
 		  obj->pin_Q(idx).unlink();
 	    }
@@ -1027,6 +1031,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.45  2003/10/31 02:40:06  steve
+ *  Donot elide FF that has set or clr connections.
+ *
  * Revision 1.44  2003/04/25 05:06:32  steve
  *  Handle X values in constant == nets.
  *
