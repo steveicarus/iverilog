@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.99 2005/02/14 01:51:39 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.100 2005/02/14 05:00:11 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -347,13 +347,12 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			  /* Here we have the case of a blocking
 			     assign of a number to a signal:
 
-			     <sig> = NUMBER;
+			     <lval> = NUMBER;
 
 			     Collect the number value into thread
 			     bits, and use a %set/v to write the reg
 			     variable. */
 
-			ivl_signal_t sig = ivl_lval_sig(lval);
 			struct vector_info vect;
 			vect.wid  = ivl_lval_width(lval);
 			vect.base = allocate_vector(vect.wid);
@@ -378,8 +377,8 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 			}
 
 			  /* write out the value into the .var. */
-			fprintf(vvp_out, "   %%set/v V_%s, %u, %u;\n",
-				vvp_signal_label(sig), vect.base, vect.wid);
+			set_to_lvariable(lval, 0, vect.base, vect.wid);
+
 			clr_vector(vect);
 		  }
 
@@ -1550,6 +1549,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.100  2005/02/14 05:00:11  steve
+ *  Handle bitmux lvalues for constant r-values.
+ *
  * Revision 1.99  2005/02/14 01:51:39  steve
  *  Handle bit selects in l-values to assignments.
  *
