@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.109 1999/10/05 06:19:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.110 1999/10/06 00:39:00 steve Exp $"
 #endif
 
 /*
@@ -723,7 +723,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 				        NetLogic::XNOR);
 		  connect(gate_t->pin(1), lsig->pin(idx));
 		  connect(gate_t->pin(2), rsig->pin(idx));
-		  connect(gate_t->pin(0), gate->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx+1));
 		  des->add_node(gate_t);
 	    }
 	    des->add_signal(osig);
@@ -746,7 +746,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 				        NetLogic::XOR);
 		  connect(gate_t->pin(1), lsig->pin(idx));
 		  connect(gate_t->pin(2), rsig->pin(idx));
-		  connect(gate_t->pin(0), gate->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx+1));
 		  des->add_node(gate_t);
 	    }
 	    des->add_signal(osig);
@@ -2553,6 +2553,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.110  1999/10/06 00:39:00  steve
+ *  == and != connected to the wrong pins of the compare.
+ *
  * Revision 1.109  1999/10/05 06:19:46  steve
  *  Add support for reduction NOR.
  *
