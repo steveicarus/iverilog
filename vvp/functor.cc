@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.39 2002/07/05 02:50:58 steve Exp $"
+#ident "$Id: functor.cc,v 1.40 2002/08/07 00:54:20 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -29,6 +29,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+
+# include  <stdio.h>
 
 /*
  * Functors are created as the source design is read in. Each is
@@ -138,6 +140,54 @@ functor_s::~functor_s()
 {
 }
 
+/*
+ * This method sets the saved output value, bits and strength, then
+ * propagates that value to the connected inputs.
+ */
+void functor_s::propagate(unsigned val, unsigned str, bool push)
+{
+      cval = val;
+      cstr = str;
+      vvp_ipoint_t idx = out;
+      while (idx) {
+	    functor_t idxp = functor_index(idx);
+	    idxp->set(idx, push, val, str);
+	    idx = idxp->port[ipoint_port(idx)];
+      }
+
+#if defined(WITH_DEBUG)
+      if (break_flag)
+	    breakpoint();
+#endif
+}
+
+void functor_s::put_ostr(unsigned val, unsigned str, bool push)
+{
+      if (str != get_ostr() || val != get_oval()) {
+
+	    unsigned char ooval = oval;
+	    ostr = str;
+	    oval = val;
+
+	      /* If output is inhibited (by a .force functor) then
+		 this is as far as we go. */
+	    if (inhibit)
+		  return;
+
+	    unsigned del;
+	    if (delay)
+	      del = vvp_delay_get(delay, ooval, val);
+	    else
+	      del = 0;
+
+	    if (push && del == 0) {
+		  propagate(push);
+	    }
+	    else
+		  schedule(del);
+      }
+}
+
 //          Special infrastructure functor types
 
 extra_outputs_functor_s::~extra_outputs_functor_s()
@@ -203,6 +253,9 @@ void functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.40  2002/08/07 00:54:20  steve
+ *  Documentation, and excessive inlines.
+ *
  * Revision 1.39  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.46 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: functor.h,v 1.47 2002/08/07 00:54:20 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -219,51 +219,9 @@ inline void functor_s::put(vvp_ipoint_t ptr, unsigned val)
       ival = (ival & imask) | ((val & 3) << (2*pp));
 }
 
-inline void functor_s::propagate(unsigned val, unsigned str, bool push)
-{
-      cval = val;
-      cstr = str;
-      vvp_ipoint_t idx = out;
-      while (idx) {
-	    functor_t idxp = functor_index(idx);
-	    idxp->set(idx, push, val, str);
-	    idx = idxp->port[ipoint_port(idx)];
-      }
-
-#if defined(WITH_DEBUG)
-      if (break_flag)
-	    breakpoint();
-#endif
-}
-
 inline void functor_s::propagate(bool push)
 {
       propagate(get_oval(), get_ostr(), push);
-}
-
-inline void functor_s::put_ostr(unsigned val, unsigned str, bool push)
-{
-      if (str != get_ostr() || val != get_oval()) {
-
-	    unsigned char ooval = oval;
-	    ostr = str;
-	    oval = val;
-
-	    if (inhibit)
-		  return;
-
-	    unsigned del;
-	    if (delay)
-	      del = vvp_delay_get(delay, ooval, val);
-	    else
-	      del = 0;
-
-	    if (push && del == 0) {
-		  propagate(push);
-	    }
-	    else
-		  schedule(del);
-      }
 }
 
 inline void functor_s::put_oval(unsigned val, bool push)
@@ -394,6 +352,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.47  2002/08/07 00:54:20  steve
+ *  Documentation, and excessive inlines.
+ *
  * Revision 1.46  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *

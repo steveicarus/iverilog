@@ -18,30 +18,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: force.cc,v 1.5 2002/03/17 03:23:11 steve Exp $"
+#ident "$Id: force.cc,v 1.6 2002/08/07 00:54:20 steve Exp $"
 #endif
 
 # include  "codes.h"
 # include  "force.h"
 
+# include  <stdio.h>
 # include  <assert.h>
 
-inline bool functor_s::disable(vvp_ipoint_t ptr)
+/*
+ * This functor method turns off the output of the functor by setting
+ * an inhibit flag. While this flag is set, the functor is not
+ * supposed to set its output or propagate values.
+ */
+bool functor_s::disable(vvp_ipoint_t ptr)
 {
       bool r = inhibit;
       inhibit = 1;
       return r;
 }
 
-inline bool functor_s::enable(vvp_ipoint_t ptr)
+bool functor_s::enable(vvp_ipoint_t ptr)
 {
       bool r = inhibit;
       inhibit = 0;
       if (r) {
-	    if (get_str() != get_ostr())
+	    if (get_str() != get_ostr()) {
 		  propagate(true);
-	    else
+	    } else {
 		  assert(get() == get_oval());
+	    }
       }
       return r;
 }
@@ -64,6 +71,9 @@ void force_functor_s::set(vvp_ipoint_t i, bool push,
 
 static bool release_force(vvp_ipoint_t itgt, functor_t tgt)
 {
+	// Given the ipointer to the target functor, look for a force
+	// functor that is saving this output value in its input
+	// 3. That is the functor that is forcing me.
       vvp_ipoint_t *ref = &tgt->out;
       while (*ref) {
 	    functor_t fofu =  functor_index(*ref);
@@ -86,6 +96,12 @@ static bool release_force(vvp_ipoint_t itgt, functor_t tgt)
       return false;
 }
 
+/*
+ * The %force instruction causes the referenced force functor[s] to
+ * interpose themselves in front of the precompiled target
+ * functors. The operand of the %force is the label of the force
+ * functor, and the width of the functor array.
+ */
 bool of_FORCE(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = cp->bit_idx[0];
@@ -102,21 +118,37 @@ bool of_FORCE(vthread_t thr, vvp_code_t cp)
 
 	    ff->active = 1;
 
+	      // tgt is the functor who's output I plan to force. The
+	      // compiler stored the target pointer is the out pointer
+	      // of the force functor. (The out pointer is not
+	      // otherwise used.)
 	    vvp_ipoint_t itgt = fofu->out;
 	    functor_t tgt = functor_index(itgt);
 
+	      // This turns OFF the target functor's output
+	      // driver. If it is already off, then detach the
+	      // previous force before continuing.
 	    if (tgt->disable(itgt))
 		  release_force(itgt, tgt);
 
+	      // Link the functor as the first functor driven by the
+	      // target. This allows the functor to track the unforced
+	      // drive value, and also aids in releasing the force.
 	    fofu->port[3] = tgt->out;
 	    tgt->out = ipoint_make(ifofu, 3);
 
+	      // Set the value to cause the overridden functor to take
+	      // on its forced value.
 	    fofu->set(ifofu, false, fofu->get_oval(), fofu->get_ostr());
       }
 
       return true;
 }
 
+/*
+ * The %release instruction causes any force functors driving the
+ * target functor to be released.
+ */
 bool of_RELEASE(vthread_t thr, vvp_code_t cp)
 {
       vvp_ipoint_t itgt = cp->iptr;
@@ -236,6 +268,9 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.6  2002/08/07 00:54:20  steve
+ *  Documentation, and excessive inlines.
+ *
  * Revision 1.5  2002/03/17 03:23:11  steve
  *  Force the push flags to be explicit.
  *
