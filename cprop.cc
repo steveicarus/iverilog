@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.38 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: cprop.cc,v 1.39 2002/08/20 04:12:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -348,6 +348,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    assert(0);
 		      }
 
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -372,6 +376,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			  default:
 			    assert(0);
 		      }
+
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
 
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -416,6 +424,11 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			  default:
 			    assert(0);
 		      }
+
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -427,12 +440,16 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		}
 
 		  /* Finally, this cleans up the gate by creating a
-		     new [N]OR gate that has the right number of
+		     new [N]AND gate that has the right number of
 		     inputs, connected in the right place. */
 		if (top < obj->pin_count()) {
 		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
 						  obj->type());
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -494,6 +511,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    assert(0);
 		      }
 
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -518,6 +539,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			  default:
 			    assert(0);
 		      }
+
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
 
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -547,6 +572,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			  default:
 			    assert(0);
 		      }
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -564,6 +593,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		      NetLogic*tmp = new NetLogic(scope,
 						  obj->name(), top,
 						  obj->type());
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -666,6 +699,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    : verinum::V0;
 		      NetConst*tmp = new NetConst(scope, obj->name(), out);
 
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -700,6 +737,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 					       obj->name(), 2,
 					       NetLogic::BUF);
 
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
+
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
 		      tmp->pin(0).drive1(obj->pin(0).drive1());
@@ -724,6 +765,10 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 			    tmp = new NetLogic(scope,
 					       obj->name(), 2,
 					       NetLogic::NOT);
+
+		      tmp->rise_time(obj->rise_time());
+		      tmp->fall_time(obj->fall_time());
+		      tmp->decay_time(obj->decay_time());
 
 		      des->add_node(tmp);
 		      tmp->pin(0).drive0(obj->pin(0).drive0());
@@ -949,6 +994,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.39  2002/08/20 04:12:22  steve
+ *  Copy gate delays when doing gate delay substitutions.
+ *
  * Revision 1.38  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
