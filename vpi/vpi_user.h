@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.17 2000/05/18 03:27:32 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.18 2000/05/31 01:32:16 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -88,7 +88,7 @@ typedef struct t_vpi_value {
 #define vpiHexStrVal    4
 #define vpiScalarVal    5
 #define vpiIntVal       6
-#define vpiReadVal      7
+#define vpiRealVal      7
 #define vpiStringVal    8
 #define vpiVectorVal    9
 #define vpiStrengthVal 10
@@ -246,6 +246,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.18  2000/05/31 01:32:16  steve
+ *  typ vpiRealType.
+ *
  * Revision 1.17  2000/05/18 03:27:32  steve
  *  Support writing scalars and vectors to signals.
  *
