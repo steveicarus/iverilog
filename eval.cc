@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.16 2000/12/10 22:01:36 steve Exp $"
+#ident "$Id: eval.cc,v 1.17 2001/01/04 04:47:51 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -81,12 +81,26 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
 		res = new verinum(lv % rv, l->len());
 		break;
 	  }
+	  case 'l': {
+		assert(r->is_defined());
+		unsigned long rv = r->as_ulong();
+		res = new verinum(verinum::V0, l->len());
+		if (rv < res->len()) {
+		      unsigned cnt = res->len() - rv;
+		      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+			    res->set(idx+rv, l->get(idx));
+		}
+		break;
+	  }
+
 	  default:
 	    delete l;
 	    delete r;
 	    return 0;
       }
 
+      delete l;
+      delete r;
       return res;
 }
 
@@ -169,6 +183,9 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.17  2001/01/04 04:47:51  steve
+ *  Add support for << is signal indices.
+ *
  * Revision 1.16  2000/12/10 22:01:36  steve
  *  Support decimal constants in behavioral delays.
  *

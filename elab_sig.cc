@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.7 2000/12/11 00:31:43 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.8 2001/01/04 04:47:51 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -325,8 +325,17 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // If the register has indices, then this is a
 	      // memory. Create the memory object.
 	    verinum*lval = lidx_->eval_const(des, path);
-	    assert(lval);
 	    verinum*rval = ridx_->eval_const(des, path);
+
+	    if ((lval == 0) || (rval == 0)) {
+		  cerr << get_line() << ": internal error: There is "
+		       << "a problem evaluating indices for ``"
+		       << basename << "''." << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	    assert(lval);
 	    assert(rval);
 
 	    long lnum = lval->as_long();
@@ -348,6 +357,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.8  2001/01/04 04:47:51  steve
+ *  Add support for << is signal indices.
+ *
  * Revision 1.7  2000/12/11 00:31:43  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.
