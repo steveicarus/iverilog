@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.72 2002/11/07 03:12:18 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.73 2002/11/07 05:19:55 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -206,16 +206,33 @@ static int show_stmt_assign(ivl_statement_t net)
 
 
 		  } else {
+			idx = 0;
+			while (idx < bit_limit) {
+			      unsigned cnt = 1;
+			      while (((idx + cnt) < bit_limit)
+				     && (bits[cur_rbit] == bits[cur_rbit+cnt]))
+				    cnt += 1;
+
+			      set_to_lvariable(lval, idx,
+					       bitchar_to_idx(bits[cur_rbit]),
+					       cnt);
+
+			      cur_rbit += cnt;
+			      idx += cnt;
+			}
+
+#if 0
 			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			      set_to_lvariable(lval, idx,
 					       bitchar_to_idx(bits[cur_rbit]), 1);
 
 			      cur_rbit += 1;
 			}
-
-			for (idx = bit_limit
-				   ; idx < ivl_lval_pins(lval) ; idx += 1)
-			      set_to_lvariable(lval, idx, 0, 1);
+#endif
+			if (bit_limit < ivl_lval_pins(lval)) {
+			      unsigned cnt = ivl_lval_pins(lval) - bit_limit;
+			      set_to_lvariable(lval, bit_limit, 0, cnt);
+			}
 		  }
 
 		  if (skip_set_flag) {
@@ -270,19 +287,7 @@ static int show_stmt_assign(ivl_statement_t net)
 			  set_to_memory(mem, idx, 0);
 
 	      } else {
-#if 0
-		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			  unsigned bidx = res.base < 4
-				? res.base
-				: (res.base+cur_rbit);
-			  set_to_lvariable(lval, idx, bidx, 1);
 
-			  cur_rbit += 1;
-		    }
-
-		    for (idx = bit_limit;  idx < ivl_lval_pins(lval); idx += 1)
-			  set_to_lvariable(lval, idx, 0, 1);
-#else
 		    unsigned bidx = res.base < 4
 			  ? res.base
 			  : (res.base+cur_rbit);
@@ -293,7 +298,6 @@ static int show_stmt_assign(ivl_statement_t net)
 			  unsigned cnt = ivl_lval_pins(lval) - bit_limit;
 			  set_to_lvariable(lval, bit_limit, 0, cnt);
 		    }
-#endif
 	      }
 
 
@@ -1375,6 +1379,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.73  2002/11/07 05:19:55  steve
+ *  Use Vector %set to set constants in variables.
+ *
  * Revision 1.72  2002/11/07 03:12:18  steve
  *  Vectorize load from REG variables.
  *
