@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.8 2000/05/11 23:37:28 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.9 2000/08/02 00:57:03 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -36,6 +36,7 @@ vvm_nexus::vvm_nexus()
       forcer_key_ = 0;
       assigner_ = 0;
       assigner_key_ = 0;
+      resolution_function = &vvm_resolution_wire;
 }
 
 vvm_nexus::~vvm_nexus()
@@ -269,11 +270,30 @@ vvm_nexus::recvr_t::~recvr_t()
 {
 }
 
-vpip_bit_t vvm_nexus::resolution_function(const vpip_bit_t*bits,
-					  unsigned nbits) const
+vpip_bit_t vvm_resolution_wire(const vpip_bit_t*bits, unsigned nbits)
 {
       if (nbits == 0) return HiZ;
       return vpip_bits_resolve(bits, nbits);
+}
+
+vpip_bit_t vvm_resolution_tri0(const vpip_bit_t*bits, unsigned nbits)
+{
+      if (nbits == 0) return Pu0;
+
+      vpip_bit_t res = vpip_bits_resolve(bits, nbits);
+      if (B_ISZ(res)) return Pu0;
+
+      return res;
+}
+
+vpip_bit_t vvm_resolution_tri1(const vpip_bit_t*bits, unsigned nbits)
+{
+      if (nbits == 0) return Pu1;
+
+      vpip_bit_t res = vpip_bits_resolve(bits, nbits);
+      if (B_ISZ(res)) return Pu1;
+
+      return res;
 }
 
 class delayed_assign_event  : public vvm_event {
@@ -297,6 +317,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.9  2000/08/02 00:57:03  steve
+ *  tri01 support in vvm.
+ *
  * Revision 1.8  2000/05/11 23:37:28  steve
  *  Add support for procedural continuous assignment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.164 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.165 2000/08/02 00:57:02 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1098,6 +1098,25 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 
 	    init_code << "      nexus_wire_table[" << ncode <<
 		  "].connect(&" << net_name << ", " << idx << ");" << endl;
+
+	      /* By default, the nexus object uses a resolution
+		 function that is suitable for simulating wire and tri
+		 signals. If the signal is some other sort, the write
+		 a resolution function into the nexus that properly
+		 handles the different semantics. */
+
+	    switch (sig->type()) {
+		case NetNet::TRI0:
+		  init_code << "      nexus_wire_table[" << ncode
+			    << "].resolution_function = vvm_resolution_tri0;"
+			    << endl;
+		  break;
+		case NetNet::TRI1:
+		  init_code << "      nexus_wire_table[" << ncode
+			    << "].resolution_function = vvm_resolution_tri1;"
+			    << endl;
+		  break;
+	    }
 
 	      // Propogate the initial value to inputs throughout.
 	    if (new_nexus_flag) {
@@ -3088,6 +3107,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.165  2000/08/02 00:57:02  steve
+ *  tri01 support in vvm.
+ *
  * Revision 1.164  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

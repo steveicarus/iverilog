@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.h,v 1.4 2000/05/11 23:37:28 steve Exp $"
+#ident "$Id: vvm_nexus.h,v 1.5 2000/08/02 00:57:03 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -123,7 +123,7 @@ class vvm_nexus {
 	// generates the current value for the nexus. It also passes
 	// that value on to the receuvers.
       void run_values();
-      vpip_bit_t resolution_function(const vpip_bit_t*, unsigned) const;
+      vpip_bit_t (*resolution_function)(const vpip_bit_t*, unsigned);
 
     private:
       vpip_bit_t value_;
@@ -150,6 +150,10 @@ class vvm_nexus {
 };
 
 
+extern vpip_bit_t vvm_resolution_wire(const vpip_bit_t*bits, unsigned nbits);
+extern vpip_bit_t vvm_resolution_tri0(const vpip_bit_t*bits, unsigned nbits);
+extern vpip_bit_t vvm_resolution_tri1(const vpip_bit_t*bits, unsigned nbits);
+
 /*
  * This function arranges for a non-blocking reg_assign to a nexus. It
  * creates all the events needed to make it happen after the specified
@@ -160,6 +164,9 @@ extern void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.h,v $
+ * Revision 1.5  2000/08/02 00:57:03  steve
+ *  tri01 support in vvm.
+ *
  * Revision 1.4  2000/05/11 23:37:28  steve
  *  Add support for procedural continuous assignment.
  *
