@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.125 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: netlist.cc,v 1.126 2000/05/19 01:43:16 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1917,8 +1917,8 @@ NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
       if (r->expr_width() < l->expr_width())
 	    l->set_width(r->expr_width());
 
-      if (r->expr_width() != l->expr_width())
-	    expr_width(0);
+      if (r->expr_width() > l->expr_width())
+	    expr_width(r->expr_width());
       else
 	    expr_width(l->expr_width());
 }
@@ -2604,6 +2604,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.126  2000/05/19 01:43:16  steve
+ *  Accept different widths for add operands.
+ *
  * Revision 1.125  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *
