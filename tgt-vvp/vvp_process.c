@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.49 2001/11/14 03:28:49 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.50 2001/11/18 01:28:18 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -587,7 +587,29 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_stmt_force(ivl_statement_t net)
 {
-      fprintf(vvp_out, "    %%force ????;\n");
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
+      unsigned idx;
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+
+      lsig = ivl_lval_sig(lval);
+      assert(lsig != 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(ivl_lval_part_off(lval) == 0);
+
+      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
+	    fprintf(vvp_out, "f_%s.%u .force V_%s[%u], %s;\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx,
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx,
+		    draw_net_input(ivl_stmt_nexus(net, idx)));
+      }
+
+      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
+	    fprintf(vvp_out, "    %%force f_%s.%u, 1;\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+      }
       return 0;
 }
 
@@ -654,7 +676,26 @@ static int show_stmt_noop(ivl_statement_t net)
 
 static int show_stmt_release(ivl_statement_t net)
 {
-      fprintf(vvp_out, "    %%release ????;\n");
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
+      unsigned idx;
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+
+      lsig = ivl_lval_sig(lval);
+      assert(lsig != 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(ivl_lval_part_off(lval) == 0);
+
+      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
+	    fprintf(vvp_out, "    %%load 4, V_%s[%u];\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+	    fprintf(vvp_out, "    %%set V_%s[%u], 4;\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+	    fprintf(vvp_out, "    %%release V_%s[%u];\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+      }
       return 0;
 }
 
@@ -1057,6 +1098,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.50  2001/11/18 01:28:18  steve
+ *  Generate force code for variable l-values.
+ *
  * Revision 1.49  2001/11/14 03:28:49  steve
  *  DLL target support for force and release.
  *
