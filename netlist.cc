@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.92 1999/11/21 18:03:35 steve Exp $"
+#ident "$Id: netlist.cc,v 1.93 1999/11/24 04:01:59 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1926,6 +1926,25 @@ const NetExpr* NetRepeat::expr() const
       return expr_;
 }
 
+NetScope::NetScope(const string&n)
+: name_(n)
+{
+}
+
+NetScope::NetScope(const string&p, const string&n)
+: name_(p + "." + n)
+{
+}
+
+NetScope::~NetScope()
+{
+}
+
+string NetScope::name() const
+{
+      return name_;
+}
+
 NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
 : name_(n), proc_(0), ports_(po)
 {
@@ -2216,6 +2235,28 @@ void NetUDP::set_initial(char val)
       assert(sequential_);
       assert((val == '0') || (val == '1') || (val == 'x'));
       init_ = val;
+}
+
+Design:: Design()
+: errors(0), signals_(0), nodes_(0), procs_(0), lcounter_(0)
+{
+}
+
+Design::~Design()
+{
+}
+
+string Design::make_root_scope(const string&root)
+{
+      scopes_[root] = new NetScope(root);
+      return root;
+}
+
+string Design::make_scope(const string&path, const string&name)
+{
+      string npath = path + "." + name;
+      scopes_[npath] = new NetScope(path, name);
+      return npath;
 }
 
 void Design::set_parameter(const string&key, NetExpr*expr)
@@ -2531,6 +2572,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.93  1999/11/24 04:01:59  steve
+ *  Detect and list scope names.
+ *
  * Revision 1.92  1999/11/21 18:03:35  steve
  *  Fix expression width of memory references.
  *

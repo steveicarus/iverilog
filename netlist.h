@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.93 1999/11/21 17:35:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.94 1999/11/24 04:01:59 steve Exp $"
 #endif
 
 /*
@@ -1830,6 +1830,26 @@ class NetESubSignal  : public NetExpr {
       NetExpr* idx_;
 };
 
+
+/*
+ * This object type is used to contain a logical scope within a
+ * design.
+ */
+class NetScope {
+
+    public:
+      NetScope(const string&root);
+      NetScope(const string&path, const string&n);
+      ~NetScope();
+
+      string name() const;
+
+      void dump(ostream&) const;
+
+    private:
+      string name_;
+};
+
 /*
  * This class contains an entire design. It includes processes and a
  * netlist, and can be passed around from function to function.
@@ -1837,7 +1857,9 @@ class NetESubSignal  : public NetExpr {
 class Design {
 
     public:
-      Design() : errors(0), signals_(0), nodes_(0), procs_(0), lcounter_(0) { }
+      Design();
+      ~Design();
+
 
 	/* The flags are a generic way of accepting command line
 	   parameters/flags and passing them to the processing steps
@@ -1850,6 +1872,8 @@ class Design {
 
       string get_flag(const string&key) const;
 
+      string make_root_scope(const string&name);
+      string make_scope(const string&path, const string&name);
 
 	// PARAMETERS
       void set_parameter(const string&, NetExpr*);
@@ -1901,6 +1925,8 @@ class Design {
       string local_symbol(const string&path);
 
     private:
+      map<string,NetScope*> scopes_;
+
 	// List all the parameters in the design. This table includes
 	// the parameters of instantiated modules in canonical names.
       map<string,NetExpr*> parameters_;
@@ -1977,6 +2003,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.94  1999/11/24 04:01:59  steve
+ *  Detect and list scope names.
+ *
  * Revision 1.93  1999/11/21 17:35:37  steve
  *  Memory name lookup handles scopes.
  *

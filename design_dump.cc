@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.58 1999/11/21 00:13:08 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.59 1999/11/24 04:01:58 steve Exp $"
 #endif
 
 /*
@@ -579,6 +579,11 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetScope::dump(ostream&o) const
+{
+      o << name_ << endl;
+}
+
 void NetSTask::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << name_;
@@ -773,6 +778,14 @@ void NetEUnary::dump(ostream&o) const
 
 void Design::dump(ostream&o) const
 {
+      o << "SCOPES:" << endl;
+      {
+	    map<string,NetScope*>::const_iterator pp;
+	    for (pp = scopes_.begin()
+		       ; pp != scopes_.end() ;  pp ++)
+		  (*pp).second -> dump(o);
+      }
+
       o << "ELABORATED PARAMETERS:" << endl;
       {
 	    map<string,NetExpr*>::const_iterator pp;
@@ -842,6 +855,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.59  1999/11/24 04:01:58  steve
+ *  Detect and list scope names.
+ *
  * Revision 1.58  1999/11/21 00:13:08  steve
  *  Support memories in continuous assignments.
  *

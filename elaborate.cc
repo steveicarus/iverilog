@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.128 1999/11/21 20:03:24 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.129 1999/11/24 04:01:58 steve Exp $"
 #endif
 
 /*
@@ -376,7 +376,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 {
       assert(get_name() != "");
-      const string my_name = path + "." + get_name();
+      const string my_name = des->make_scope(path, get_name());
 
       const svector<PExpr*>*pins;
 
@@ -1322,7 +1322,7 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetBlock*cur = new NetBlock(type);
       bool fail_flag = false;
 
-      string npath = name_.length()? (path+"."+name_) : path;
+      string npath = name_.length()? des->make_scope(path, name_) : path;
 
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
@@ -2129,6 +2129,8 @@ Design* elaborate(const map<string,Module*>&modules,
 	// module and elaborate what I find.
       Design*des = new Design;
 
+      des->make_root_scope(root);
+
       modlist = &modules;
       udplist = &primitives;
       bool rc = rmod->elaborate(des, root, (svector<PExpr*>*)0);
@@ -2145,6 +2147,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.129  1999/11/24 04:01:58  steve
+ *  Detect and list scope names.
+ *
  * Revision 1.128  1999/11/21 20:03:24  steve
  *  Handle multiply in constant expressions.
  *
@@ -2292,235 +2297,5 @@ Design* elaborate(const map<string,Module*>&modules,
  *
  * Revision 1.86  1999/09/15 04:17:52  steve
  *  separate assign lval elaboration for error checking.
- *
- * Revision 1.85  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.84  1999/09/14 01:50:52  steve
- *  implicitly declare wires if needed.
- *
- * Revision 1.83  1999/09/13 03:10:59  steve
- *  Clarify msb/lsb in context of netlist. Properly
- *  handle part selects in lval and rval of expressions,
- *  and document where the least significant bit goes
- *  in NetNet objects.
- *
- * Revision 1.82  1999/09/12 01:16:51  steve
- *  Pad r-values in certain assignments.
- *
- * Revision 1.81  1999/09/10 04:04:06  steve
- *  Add ternary elaboration.
- *
- * Revision 1.80  1999/09/08 04:05:30  steve
- *  Allow assign to not match rvalue width.
- *
- * Revision 1.79  1999/09/08 02:24:39  steve
- *  Empty conditionals (pmonta@imedia.com)
- *
- * Revision 1.78  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.77  1999/09/03 04:28:38  steve
- *  elaborate the binary plus operator.
- *
- * Revision 1.76  1999/09/02 01:59:27  steve
- *  Parse non-blocking assignment delays.
- *
- * Revision 1.75  1999/09/01 20:46:19  steve
- *  Handle recursive functions and arbitrary function
- *  references to other functions, properly pass
- *  function parameters and save function results.
- *
- * Revision 1.74  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.73  1999/08/25 22:22:41  steve
- *  elaborate some aspects of functions.
- *
- * Revision 1.72  1999/08/23 16:48:39  steve
- *  Parameter overrides support from Peter Monta
- *  AND and XOR support wide expressions.
- *
- * Revision 1.71  1999/08/18 04:00:02  steve
- *  Fixup spelling and some error messages. <LRDoolittle@lbl.gov>
- *
- * Revision 1.70  1999/08/08 20:06:06  steve
- *  Uninitialized low and high indices for single gate syntax
- *
- * Revision 1.69  1999/08/06 04:05:28  steve
- *  Handle scope of parameters.
- *
- * Revision 1.68  1999/08/05 04:58:57  steve
- *  Allow integers as register lvalues.
- *
- * Revision 1.67  1999/08/04 02:13:02  steve
- *  Elaborate module ports that are concatenations of
- *  module signals.
- *
- * Revision 1.66  1999/08/03 04:14:49  steve
- *  Parse into pform arbitrarily complex module
- *  port declarations.
- *
- * Revision 1.65  1999/08/01 21:48:11  steve
- *  set width of procedural r-values when then
- *  l-value is a memory word.
- *
- * Revision 1.64  1999/08/01 21:18:55  steve
- *  elaborate rise/fall/decay for continuous assign.
- *
- * Revision 1.63  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.62  1999/07/31 03:16:54  steve
- *  move binary operators to derived classes.
- *
- * Revision 1.61  1999/07/28 03:46:57  steve
- *  Handle no ports at all for tasks.
- *
- * Revision 1.60  1999/07/24 19:19:06  steve
- *  Add support for task output and inout ports.
- *
- * Revision 1.59  1999/07/24 02:11:20  steve
- *  Elaborate task input ports.
- *
- * Revision 1.58  1999/07/18 21:17:50  steve
- *  Add support for CE input to XNF DFF, and do
- *  complete cleanup of replaced design nodes.
- *
- * Revision 1.57  1999/07/17 19:50:59  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.56  1999/07/17 18:06:02  steve
- *  Better handling of bit width of + operators.
- *
- * Revision 1.55  1999/07/17 03:08:31  steve
- *  part select in expressions.
- *
- * Revision 1.54  1999/07/13 04:08:26  steve
- *  Construct delayed assignment as an equivalent block.
- *
- * Revision 1.53  1999/07/12 00:59:36  steve
- *  procedural blocking assignment delays.
- *
- * Revision 1.52  1999/07/10 03:00:05  steve
- *  Proper initialization of registers.
- *
- * Revision 1.51  1999/07/10 02:19:26  steve
- *  Support concatenate in l-values.
- *
- * Revision 1.50  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.49  1999/06/24 04:45:29  steve
- *  Elaborate wide structoral bitwise OR.
- *
- * Revision 1.48  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.47  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.46  1999/06/17 05:34:42  steve
- *  Clean up interface of the PWire class,
- *  Properly match wire ranges.
- *
- * Revision 1.45  1999/06/15 05:38:39  steve
- *  Support case expression lists.
- *
- * Revision 1.44  1999/06/15 03:44:53  steve
- *  Get rid of the STL vector template.
- *
- * Revision 1.43  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.42  1999/06/13 16:30:06  steve
- *  Unify the NetAssign constructors a bit.
- *
- * Revision 1.41  1999/06/13 04:46:54  steve
- *  Add part select lvalues to AssignNB.
- *
- * Revision 1.40  1999/06/12 23:16:37  steve
- *  Handle part selects as l-values to continuous assign.
- *
- * Revision 1.39  1999/06/10 04:03:53  steve
- *  Add support for the Ternary operator,
- *  Add support for repeat concatenation,
- *  Correct some seg faults cause by elaboration
- *  errors,
- *  Parse the casex anc casez statements.
- *
- * Revision 1.38  1999/06/09 03:00:06  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.37  1999/06/09 00:58:06  steve
- *  Support for binary | (Stephen Tell)
- *
- * Revision 1.36  1999/06/07 02:23:31  steve
- *  Support non-blocking assignment down to vvm.
- *
- * Revision 1.35  1999/06/06 23:07:43  steve
- *  Drop degenerate blocks.
- *
- * Revision 1.34  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.33  1999/06/03 05:16:25  steve
- *  Compile time evalutation of constant expressions.
- *
- * Revision 1.32  1999/06/02 15:38:46  steve
- *  Line information with nets.
- *
- * Revision 1.31  1999/05/31 15:45:35  steve
- *  Fix error message.
- *
- * Revision 1.30  1999/05/30 01:11:46  steve
- *  Exressions are trees that can duplicate, and not DAGS.
- *
- * Revision 1.29  1999/05/29 02:36:17  steve
- *  module parameter bind by name.
- *
- * Revision 1.28  1999/05/27 04:13:08  steve
- *  Handle expression bit widths with non-fatal errors.
- *
- * Revision 1.27  1999/05/20 04:31:45  steve
- *  Much expression parsing work,
- *  mark continuous assigns with source line info,
- *  replace some assertion failures with Sorry messages.
- *
- * Revision 1.26  1999/05/16 05:08:42  steve
- *  Redo constant expression detection to happen
- *  after parsing.
- *
- *  Parse more operators and expressions.
- *
- * Revision 1.25  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.24  1999/05/05 03:04:46  steve
- *  Fix handling of null delay statements.
- *
- * Revision 1.23  1999/05/01 20:43:55  steve
- *  Handle wide events, such as @(a) where a has
- *  many bits in it.
- *
- *  Add to vvm the binary ^ and unary & operators.
- *
- *  Dump events a bit more completely.
- *
- * Revision 1.22  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
  */
 
