@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.13 2000/05/13 20:55:47 steve Exp $"
+#ident "$Id: iverilog.c,v 1.14 2000/05/14 19:41:52 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -106,7 +106,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
       if (f_list) {
 	    rc = strlen(f_list);
 	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
+	    strcpy(cmd+ncmd, f_list);
 	    ncmd += rc;
       }
 
@@ -166,7 +166,7 @@ static int t_xnf(char*cmd, unsigned ncmd)
       if (f_list) {
 	    rc = strlen(f_list);
 	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
+	    strcpy(cmd+ncmd, f_list);
 	    ncmd += rc;
       }
 
@@ -237,8 +237,8 @@ int main(int argc, char **argv)
 		  break;
 		case 'f':
 		  if (f_list == 0) {
-			f_list = malloc(strlen("-f")+strlen(optarg)+1);
-			strcpy(f_list, "-f");
+			f_list = malloc(strlen(" -f")+strlen(optarg)+1);
+			strcpy(f_list, " -f");
 			strcat(f_list, optarg);
 		  } else {
 			f_list = realloc(f_list, strlen(f_list) +
@@ -355,6 +355,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.14  2000/05/14 19:41:52  steve
+ *  Fix -f flag handling.
+ *
  * Revision 1.13  2000/05/13 20:55:47  steve
  *  Use yacc based synthesizer.
  *
