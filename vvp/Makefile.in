@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.51 2003/08/22 04:27:11 steve Exp $"
+#ident "$Id: Makefile.in,v 1.52 2003/09/05 18:04:16 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -33,6 +33,7 @@ mandir = @mandir@
 includedir = @includedir@
 
 CC = @CC@
+HOSTCC = @CC@
 CXX = @CXX@ -Wall
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -102,7 +103,7 @@ dep:
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
-	$(CC) -o draw_tt $(srcdir)/draw_tt.c
+	$(HOSTCC) -o draw_tt $(srcdir)/draw_tt.c
 	./draw_tt > tables.cc
 	rm draw_tt@EXEEXT@
 
