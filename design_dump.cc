@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.25 1999/05/30 01:11:46 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.26 1999/05/31 15:46:20 steve Exp $"
 #endif
 
 /*
@@ -288,7 +288,7 @@ void NetAssign::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "";
 
-      NetNet*sig;
+      const NetNet*sig;
       unsigned msb, lsb;
       find_lval_range(sig, msb, lsb);
       o << sig->name() << "[" << msb;
@@ -598,6 +598,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.26  1999/05/31 15:46:20  steve
+ *  Compilation warning.
+ *
  * Revision 1.25  1999/05/30 01:11:46  steve
  *  Exressions are trees that can duplicate, and not DAGS.
  *
