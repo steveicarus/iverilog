@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.17 2004/05/31 23:34:36 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.18 2004/06/17 16:06:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,6 +75,8 @@ NetESFunc* NetESFunc::dup_expr() const
 {
       NetESFunc*tmp = new NetESFunc(name_, type_, expr_width(), nparms());
       assert(tmp);
+
+      tmp->cast_signed(has_sign());
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 	    assert(tmp->parm(idx));
 	    tmp->parm(idx, tmp->parm(idx)->dup_expr());
@@ -141,6 +143,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.18  2004/06/17 16:06:18  steve
+ *  Help system function signedness survive elaboration.
+ *
  * Revision 1.17  2004/05/31 23:34:36  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

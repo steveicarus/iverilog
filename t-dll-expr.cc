@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.38 2003/07/26 03:34:43 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.39 2004/06/17 16:06:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -382,6 +382,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
 	    break;
       }
       expr->width_= net->expr_width();
+      expr->signed_ = net->has_sign()? 1 : 0;
 	/* system function names are lex_strings strings. */
       expr->u_.sfunc_.name_ = net->name();
 
@@ -603,6 +604,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.39  2004/06/17 16:06:19  steve
+ *  Help system function signedness survive elaboration.
+ *
  * Revision 1.38  2003/07/26 03:34:43  steve
  *  Start handling pad of expressions in code generators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.87 2004/06/04 23:34:15 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.88 2004/06/17 16:06:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -244,6 +244,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 
       NetESFunc*fun = new NetESFunc(path_.peek_name(0), sfunc_type,
 				    wid, nparms);
+      if (sfunc_info->signed_flag)
+	    fun->cast_signed(true);
 
 	/* Now run through the expected parameters. If we find that
 	   there are missing parameters, print an error message.
@@ -965,6 +967,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.88  2004/06/17 16:06:18  steve
+ *  Help system function signedness survive elaboration.
+ *
  * Revision 1.87  2004/06/04 23:34:15  steve
  *  Special case for unary - of real literal.
  *

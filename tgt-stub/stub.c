@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.85 2004/06/16 16:22:04 steve Exp $"
+#ident "$Id: stub.c,v 1.86 2004/06/17 16:06:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -121,8 +121,8 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    fprintf(out, "%*s<function=\"%s\", width=%u>\n", ind, "",
-		    ivl_expr_name(net), ivl_expr_width(net));
+	    fprintf(out, "%*s<function=\"%s\", width=%u, %s>\n", ind, "",
+		    ivl_expr_name(net), ivl_expr_width(net), sign);
 	    { unsigned cnt = ivl_expr_parms(net);
 	      unsigned idx;
 	      for (idx = 0 ;  idx < cnt ;  idx += 1)
@@ -909,6 +909,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.86  2004/06/17 16:06:19  steve
+ *  Help system function signedness survive elaboration.
+ *
  * Revision 1.85  2004/06/16 16:22:04  steve
  *  Dump NE LPM device.
  *
