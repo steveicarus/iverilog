@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.3 2003/01/28 04:15:50 steve Exp $"
+#ident "$Id: eval_real.c,v 1.4 2003/02/07 02:46:16 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,7 @@ int allocate_word()
       while ((1 << res) & word_alloc_mask)
 	    res += 1;
 
+      assert(res < 8*sizeof(word_alloc_mask));
       word_alloc_mask |= 1 << res;
       return res;
 }
@@ -66,12 +67,19 @@ static int draw_binary_real(ivl_expr_t exp)
 	    clr_word(r);
 	    break;
 
+	  case '-':
+	    fprintf(vvp_out, "    %%sub/wr %d, %d;\n", l, r);
+	    clr_word(r);
+	    break;
+
 	  case '*':
 	    fprintf(vvp_out, "    %%mul/wr %d, %d;\n", l, r);
 	    clr_word(r);
 	    break;
 
 	  default:
+	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
+		    ivl_expr_opcode(exp));
 	    assert(0);
       }
 
@@ -160,15 +168,37 @@ static int draw_realnum_real(ivl_expr_t exp)
 
 static int draw_sfunc_real(ivl_expr_t exp)
 {
+      struct vector_info sv;
       int res;
       assert(ivl_expr_parms(exp) == 0);
-      assert(ivl_expr_value(exp) == IVL_VT_REAL);
 
-      res = allocate_word();
-      fprintf(vvp_out, "    %%vpi_func/r \"%s\", %d;\n",
-	      ivl_expr_name(exp), res);
+      switch (ivl_expr_value(exp)) {
+	  case IVL_VT_REAL:
+	    res = allocate_word();
+	    fprintf(vvp_out, "    %%vpi_func/r \"%s\", %d;\n",
+		    ivl_expr_name(exp), res);
 
-      return res;
+	    return res;
+
+	  case IVL_VT_VECTOR:
+	      /* If the value of the sfunc is a vector, then evaluate
+		 it as a vector, then convert the result to a real
+		 (via an index register) for the result. */
+	    sv = draw_eval_expr(exp, 0);
+	    clr_vector(sv);
+	    
+	    res = allocate_word();
+	    fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n",
+		    res, sv.base, sv.wid);
+
+	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+	    return res;
+
+	  default:
+	    assert(0);
+      }
+
+      return -1;
 }
 
 /*
@@ -219,9 +249,25 @@ int draw_eval_real(ivl_expr_t exp)
 	    break;
 
 	  default:
-	    fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
-		    ivl_expr_type(exp));
-	    return 0;
+	    if (ivl_expr_value(exp) == IVL_VT_VECTOR) {
+		  struct vector_info sv = draw_eval_expr(exp, 0);
+
+		  clr_vector(sv);
+		  res = allocate_word();
+
+		  fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n", res,
+			  sv.base, sv.wid);
+
+		  fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
+
+	    } else {
+		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",
+			  ivl_expr_type(exp));
+		  fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
+			  ivl_expr_type(exp));
+		  return 0;
+	    }
+	    break;
       }
 
       return res;
@@ -230,6 +276,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.4  2003/02/07 02:46:16  steve
+ *  Handle real value subtract and comparisons.
+ *
  * Revision 1.3  2003/01/28 04:15:50  steve
  *  Deliver residual bits of real value.
  *

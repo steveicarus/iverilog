@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.90 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.91 2003/02/07 02:46:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -532,8 +532,20 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
+	  case 'L': /* <= */
+	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
 	  case '>':
 	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  case 'G': /* >= */
+	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
@@ -560,10 +572,11 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       if (ivl_expr_width(re) > owid)
 	    owid = ivl_expr_width(re);
 
-      if (ivl_expr_value(le) == IVL_VT_REAL) {
-	    assert(ivl_expr_value(re) == IVL_VT_REAL);
+      if (ivl_expr_value(le) == IVL_VT_REAL)
 	    return draw_binary_expr_le_real(exp);
-      }
+
+      if (ivl_expr_value(re) == IVL_VT_REAL)
+	    return draw_binary_expr_le_real(exp);
 
       assert(ivl_expr_value(le) == IVL_VT_VECTOR);
       assert(ivl_expr_value(re) == IVL_VT_VECTOR);
@@ -2101,6 +2114,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.91  2003/02/07 02:46:16  steve
+ *  Handle real value subtract and comparisons.
+ *
  * Revision 1.90  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.
