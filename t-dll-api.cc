@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.110 2004/12/15 17:10:40 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.111 2004/12/18 18:56:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -176,6 +176,10 @@ extern "C" const char* ivl_event_basename(ivl_event_t net)
       return net->name;
 }
 
+extern "C" ivl_scope_t ivl_event_scope(ivl_event_t net)
+{
+      return net->scope;
+}
 
 extern "C" unsigned ivl_event_nany(ivl_event_t net)
 {
@@ -1942,6 +1946,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.111  2004/12/18 18:56:18  steve
+ *  Add ivl_event_scope, and better document ivl_event_X methods.
+ *
  * Revision 1.110  2004/12/15 17:10:40  steve
  *  Fixup force statement elaboration.
  *
