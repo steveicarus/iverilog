@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.34 2004/09/05 17:44:41 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.35 2004/09/10 00:15:17 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "compiler.h"
 # include  <iostream>
+# include  <stdio.h>
 
 /*
  * Elaboration happens in two passes, generally. The first scans the
@@ -634,6 +635,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.35  2004/09/10 00:15:17  steve
+ *  Missing stdio.h header for warnings.
+ *
  * Revision 1.34  2004/09/05 17:44:41  steve
  *  Add support for module instance arrays.
  *
