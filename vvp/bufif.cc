@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.4 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: bufif.cc,v 1.5 2001/12/14 06:03:17 steve Exp $"
 #endif
 
 # include  "bufif.h"
 # include  "functor.h"
 # include  "schedule.h"
 
-void vvp_bufif1_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
+void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 {
       put(ptr, v);
 
@@ -40,16 +40,16 @@ void vvp_bufif1_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
       unsigned val;
       unsigned str;
 
-      switch (in1 ^ pol) {
+      switch (in1 ^ pol_) {
 
 	  case 1:
 	    switch (in0) {
 		case 0:
-		  val = 0;
+		  val = 0 ^ inv_;
 		  str = out0;
 		  break;
 		case 1:
-		  val = 1;
+		  val = 1 ^ inv_;
 		  str = out1;
 		  break;
 		default:
@@ -85,6 +85,9 @@ void vvp_bufif1_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.5  2001/12/14 06:03:17  steve
+ *  Arrange bufif to support notif as well.
+ *
  * Revision 1.4  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

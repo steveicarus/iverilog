@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.5 2001/12/14 02:04:49 steve Exp $"
+#ident "$Id: logic.cc,v 1.6 2001/12/14 06:03:17 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -83,10 +83,10 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_BUF, ostr0, ostr1);
 
       } else if (strcmp(type, "BUFIF0") == 0) {
-	    obj = new vvp_bufif0_s;
+	    obj = new vvp_bufif_s(true,false);
 
       } else if (strcmp(type, "BUFIF1") == 0) {
-	    obj = new vvp_bufif1_s;
+	    obj = new vvp_bufif_s(false,false);
 
       } else if (strcmp(type, "PMOS") == 0) {
 	    obj = new vvp_pmos_s;
@@ -114,6 +114,12 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "NOT") == 0) {
 	    obj = new table_functor_s(ft_NOT, ostr0, ostr1);
+
+      } else if (strcmp(type, "NOTIF0") == 0) {
+	    obj = new vvp_bufif_s(true,true);
+
+      } else if (strcmp(type, "NOTIF1") == 0) {
+	    obj = new vvp_bufif_s(false,true);
 
       } else if (strcmp(type, "XNOR") == 0) {
 	    obj = new table_functor_s(ft_XNOR, ostr0, ostr1);
@@ -146,6 +152,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.6  2001/12/14 06:03:17  steve
+ *  Arrange bufif to support notif as well.
+ *
  * Revision 1.5  2001/12/14 02:04:49  steve
  *  Support strength syntax on functors.
  *
