@@ -17,8 +17,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.7 2000/11/01 03:19:36 steve Exp $"
+#ident "$Id: sys_table.c,v 1.8 2000/12/14 23:36:34 steve Exp $"
 #endif
+#include "vpi_user.h"
 
 extern void sys_finish_register();
 extern void sys_display_register();
@@ -44,6 +45,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.8  2000/12/14 23:36:34  steve
+ *  include vpi_user.h.
+ *
  * Revision 1.7  2000/11/01 03:19:36  steve
  *  Add the general $time system function.
  *
