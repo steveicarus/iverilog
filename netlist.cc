@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.34 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: netlist.cc,v 1.35 1999/06/10 05:33:28 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -472,6 +472,7 @@ bool NetEBinary::set_width(unsigned w)
 	  case 'e': /* == */
 	  case 'n': /* != */
 	  case '<': /* < */
+	  case '>': /* > */
 	    assert(w == 1);
 	    expr_width(w);
 	    flag = left_->set_width(right_->expr_width());
@@ -505,6 +506,8 @@ bool NetEBinary::set_width(unsigned w)
 	  case '^':
 	  case '&':
 	  case '|':
+	  case '%':
+	  case '/':
 	    flag = left_->set_width(w) && flag;
 	    flag = right_->set_width(w) && flag;
 	    expr_width(w);
@@ -642,7 +645,9 @@ void NetMemory::set_attributes(const map<string,string>&attr)
 
 bool NetEMemory::set_width(unsigned w)
 {
-      assert(w == mem_->width());
+      if (w != mem_->width())
+	    return false;
+
       expr_width(w);
       return true;
 }
@@ -1198,6 +1203,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.35  1999/06/10 05:33:28  steve
+ *  Handle a few more operator bit widths.
+ *
  * Revision 1.34  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *
