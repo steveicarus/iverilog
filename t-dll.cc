@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.99 2002/11/03 22:44:19 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.100 2002/11/05 02:12:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,31 +36,33 @@
 
 inline ivl_dll_t ivl_dlopen(const char *name)
 {
-  return (ivl_dll_t) LoadLibrary(name);
+      ivl_dll_t res =  (ivl_dll_t) LoadLibrary(name);
+      return res;
 }
 
 
 inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
 {
-  FARPROC sym;
-  return (void*)GetProcAddress((HMODULE)dll, nm);
+      FARPROC sym;
+      return (void*)GetProcAddress((HMODULE)dll, nm);
 }
 
 inline void ivl_dlclose(ivl_dll_t dll)
 {
-  FreeLibrary((HMODULE)dll);
+      FreeLibrary((HMODULE)dll);
 }
 
 const char *dlerror(void)
 {
-  static char msg[255];
+  static char msg[256];
+  unsigned long err = GetLastError();
   FormatMessage( 
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
-		GetLastError(),
+		err,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPTSTR) &msg,
-		0,
+		sizeof(msg) - 1,
 		NULL 
 		);
   return msg;
@@ -1979,6 +1981,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.100  2002/11/05 02:12:35  steve
+ *  Fix the call to FormatMessage under Windows.
+ *
  * Revision 1.99  2002/11/03 22:44:19  steve
  *  Cast for gcc convenience.
  *
