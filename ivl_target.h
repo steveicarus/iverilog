@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.140 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.141 2005/02/13 01:15:07 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -282,15 +282,13 @@ typedef enum ivl_signal_port_e {
    are resolved by the core compiler, and integers are converted into
    signed registers. */
 typedef enum ivl_signal_type_e {
-      IVL_SIT_NONE  = 0,
-      IVL_SIT_REG,
-      IVL_SIT_SUPPLY0,
-      IVL_SIT_SUPPLY1,
-      IVL_SIT_TRI,
-      IVL_SIT_TRI0,
-      IVL_SIT_TRI1,
-      IVL_SIT_TRIAND,
-      IVL_SIT_TRIOR
+      IVL_SIT_NONE = 0,
+      IVL_SIT_REG  = 1,
+      IVL_SIT_TRI  = 4,
+      IVL_SIT_TRI0 = 5,
+      IVL_SIT_TRI1 = 6,
+      IVL_SIT_TRIAND = 7,
+      IVL_SIT_TRIOR  = 8
 } ivl_signal_type_t;
 
 /* This is the type code for ivl_statement_t objects. */
@@ -661,6 +659,12 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * device has a number of pins that is the number of inputs to a logic
  * array of identical gates, and the ivl_logic_width, is the width of
  * the vector into each input pin and out of the output pin.
+ *
+ * - IVL_LO_PULLUP/IVL_LO_PULLDOWN
+ * These devices are grouped as logic devices with zero inputs because
+ * the outputs have the same characteristics as other logic
+ * devices. They are special only in that they have zero inputs, and
+ * their drivers typically have strength other then strong.
  */
 
 extern const char* ivl_logic_name(ivl_net_logic_t net);
@@ -1500,6 +1504,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.141  2005/02/13 01:15:07  steve
+ *  Replace supply nets with wires connected to pullup/down supply devices.
+ *
  * Revision 1.140  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,

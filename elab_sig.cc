@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.37 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.38 2005/02/13 01:15:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -609,6 +609,40 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else {
 
+	      /* If the net type is supply0 or supply1, replace it
+		 with a simple wire with a pulldown/pullup with supply
+		 strength. In other words, transform:
+
+		 supply0 foo;
+
+		 to:
+
+		 wire foo;
+		 pulldown #(supply0) (foo);
+
+		 This reduces the backend burden, and behaves exactly
+		 the same. */
+
+	    NetLogic*pull = 0;
+	    if (wtype == NetNet::SUPPLY0 || wtype == NetNet::SUPPLY1) {
+		  NetLogic::TYPE pull_type = (wtype==NetNet::SUPPLY1)
+			? NetLogic::PULLUP
+			: NetLogic::PULLDOWN;
+		  pull = new NetLogic(scope, scope->local_symbol(),
+				      1, pull_type, wid);
+		  pull->set_line(*this);
+		  pull->pin(0).drive0(Link::SUPPLY);
+		  pull->pin(0).drive1(Link::SUPPLY);
+		  des->add_node(pull);
+		  wtype = NetNet::WIRE;
+
+		  if (debug_elaborate) {
+			cerr << get_line() << ": debug: "
+			     << "Generate a SUPPLY pulldown for the "
+			     << "supply0 net." << endl;
+		  }
+	    }
+
 	    perm_string name = lex_strings.make(hname_.peek_tail_name());
 	    if (debug_elaborate) {
 		  cerr << get_line() << ": debug: Create signal "
@@ -622,6 +656,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->set_signed(get_signed());
 	    sig->set_isint(get_isint());
 
+	    if (pull)
+		  connect(sig->pin(0), pull->pin(0));
+
 	    for (unsigned idx = 0 ;  idx < nattrib ;  idx += 1)
 		  sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
       }
@@ -629,6 +666,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.38  2005/02/13 01:15:07  steve
+ *  Replace supply nets with wires connected to pullup/down supply devices.
+ *
  * Revision 1.37  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

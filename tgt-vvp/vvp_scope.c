@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.118 2005/02/12 22:54:29 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.119 2005/02/13 01:15:07 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -646,18 +646,6 @@ const char* draw_net_input(ivl_nexus_t nex)
 	  case IVL_SIT_TRIOR:
 	    resolv_type = "trior";
 	    break;
-
-	      /* Catch the special cases that the nets are supply
-		 nets. Drive constant values uncomditionally. */
-	  case IVL_SIT_SUPPLY0:
-	    nex_private = "C<su0>";
-	    ivl_nexus_set_private(nex, nex_private);
-	    return nex_private;
-	  case IVL_SIT_SUPPLY1:
-	    nex_private = "C<su1>";
-	    ivl_nexus_set_private(nex, nex_private);
-	    return nex_private;
-
 	  default:
 	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %u\n", res);
 	    assert(0);
@@ -2041,6 +2029,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.119  2005/02/13 01:15:07  steve
+ *  Replace supply nets with wires connected to pullup/down supply devices.
+ *
  * Revision 1.118  2005/02/12 22:54:29  steve
  *  Implement a-b muxes as vector devices
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.109 2005/02/12 22:53:41 steve Exp $"
+#ident "$Id: stub.c,v 1.110 2005/02/13 01:15:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -817,12 +817,6 @@ static void show_signal(ivl_signal_t net)
 	  case IVL_SIT_TRI1:
 	    type = "tri1";
 	    break;
-	  case IVL_SIT_SUPPLY0:
-	    type = "supply0";
-	    break;
-	  case IVL_SIT_SUPPLY1:
-	    type = "supply1";
-	    break;
 	  default:
 	    break;
       }
@@ -1117,6 +1111,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.110  2005/02/13 01:15:07  steve
+ *  Replace supply nets with wires connected to pullup/down supply devices.
+ *
  * Revision 1.109  2005/02/12 22:53:41  steve
  *  Check IVL_LPM_MUX configuration.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.140 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.141 2005/02/13 01:15:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -295,10 +295,6 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 	  case IVL_SIT_REG:
 	    drive = IVL_DR_STRONG;
 	    break;
-	  case IVL_SIT_SUPPLY0:
-	  case IVL_SIT_SUPPLY1:
-	    drive = IVL_DR_SUPPLY;
-	    break;
 	  default:
 	    break;
       }
@@ -319,10 +315,6 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
       switch (ivl_signal_type(net)) {
 	  case IVL_SIT_REG:
 	    drive = IVL_DR_STRONG;
-	    break;
-	  case IVL_SIT_SUPPLY0:
-	  case IVL_SIT_SUPPLY1:
-	    drive = IVL_DR_SUPPLY;
 	    break;
 	  default:
 	    break;
@@ -2160,12 +2152,13 @@ void dll_target::signal(const NetNet*net)
 	    obj->isint_ = net->get_isint();
 	    break;
 
+	      /* The SUPPLY0/1 net types are replaced with pulldown/up
+		 by elaborate. They should not make it here. */
 	  case NetNet::SUPPLY0:
-	    obj->type_ = IVL_SIT_SUPPLY0;
+	    assert(0);
 	    break;
-
 	  case NetNet::SUPPLY1:
-	    obj->type_ = IVL_SIT_SUPPLY1;
+	    assert(0);
 	    break;
 
 	  case NetNet::TRI:
@@ -2229,6 +2222,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.141  2005/02/13 01:15:07  steve
+ *  Replace supply nets with wires connected to pullup/down supply devices.
+ *
  * Revision 1.140  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,
