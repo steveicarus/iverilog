@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.42 2001/08/23 02:54:15 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.43 2001/08/31 01:37:56 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1071,7 +1071,21 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
       switch (ivl_expr_opcode(exp)) {
 	  case '~':
 	    res = draw_eval_expr_wid(sub, wid);
-	    fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
+	    switch (res.base) {
+		case 0:
+		  res.base = 1;
+		  break;
+		case 1:
+		  res.base = 0;
+		  break;
+		case 2:
+		case 3:
+		  res.base = 2;
+		  break;
+		default:
+		  fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
+		  break;
+	    }
 	    break;
 
 	  case '!':
@@ -1183,6 +1197,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.43  2001/08/31 01:37:56  steve
+ *  Handle update in place of repeat constants.
+ *
  * Revision 1.42  2001/08/23 02:54:15  steve
  *  Handle wide assignment to narrow return value.
  *
