@@ -1,7 +1,7 @@
 Summary: Icarus Verilog
 Name: verilog
 Version: 0.3
-Release: 0
+Release: 1
 Copyright: GPL
 Group: Applications/Engineering
 Source: ftp://icarus.com/pub/eda/verilog/v0.3/verilog-0.3rc1.tar.gz
@@ -34,17 +34,18 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) %doc COPYING README.txt BUGS.txt netlist.txt vpi.txt vvm.txt xnf.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
-%attr(-,root,root) /usr/bin/verilog
 %attr(-,root,root) /usr/bin/iverilog
 %attr(-,root,root) /usr/lib/ivl/ivl
 %attr(-,root,root) /usr/lib/ivl/ivlpp
 %attr(-,root,root) /usr/lib/ivl/system.vpi
 %attr(-,root,root) /usr/lib/libvvm.a
-%attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/vpi_priv.h
+%attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/vvm.h
+%attr(-,root,root) /usr/include/vvm_calltf.h
 %attr(-,root,root) /usr/include/vvm_func.h
 %attr(-,root,root) /usr/include/vvm_gates.h
+%attr(-,root,root) /usr/include/vvm_nexus.h
+%attr(-,root,root) /usr/include/vvm_signal.h
 %attr(-,root,root) /usr/include/vvm_thread.h
-%attr(-,root,root) /usr/include/vvm_calltf.h
 %attr(-,root,root) /usr/man/man1/iverilog.1
