@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.68 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.69 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,7 +46,16 @@ extern "C" int ivl_design_process(ivl_design_t des,
 
 extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
 {
-      return des->root_;
+      assert (des->nroots_);
+      return des->roots_[0];
+}
+
+extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
+				 unsigned int *nscopes)
+{
+      assert (nscopes && scopes);
+      *scopes = &des->roots_[0];
+      *nscopes = des->nroots_;
 }
 
 extern "C" int ivl_design_time_precision(ivl_design_t des)
@@ -1389,6 +1398,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.69  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.68  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.25 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: functor.cc,v 1.26 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,7 +114,9 @@ void NetScope::run_functor(Design*des, functor_t*fun)
 void Design::functor(functor_t*fun)
 {
 	// Scan the scopes
-      root_scope_->run_functor(this, fun);
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+	   scope != root_scopes_.end(); scope++)
+	    (*scope)->run_functor(this, fun);
 
 	// apply to processes
       procs_idx_ = procs_;
@@ -286,6 +288,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.26  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.25  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

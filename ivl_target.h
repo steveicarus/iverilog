@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.84 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.85 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -332,6 +332,9 @@ extern const char* ivl_design_flag(ivl_design_t des, const char*key);
 extern int         ivl_design_process(ivl_design_t des,
 				      ivl_process_f fun, void*cd);
 extern ivl_scope_t ivl_design_root(ivl_design_t des);
+extern void        ivl_design_roots(ivl_design_t des, 
+				    ivl_scope_t **scopes,
+				    unsigned int *nscopes);
 extern int         ivl_design_time_precision(ivl_design_t des);
 
 extern unsigned        ivl_design_consts(ivl_design_t des);
@@ -964,6 +967,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.85  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.84  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *

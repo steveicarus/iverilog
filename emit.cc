@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.62 2001/08/25 23:50:02 steve Exp $"
+#ident "$Id: emit.cc,v 1.63 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -369,7 +369,9 @@ bool Design::emit(struct target_t*tgt) const
 	    return false;
 
 	// enumerate the scopes
-      root_scope_->emit_scope(tgt);
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+	   scope != root_scopes_.end(); scope++)
+	    (*scope)->emit_scope(tgt);
 
 
 	// emit nodes
@@ -383,7 +385,9 @@ bool Design::emit(struct target_t*tgt) const
 
 
 	// emit task and function definitions
-      root_scope_->emit_defs(tgt);
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+	   scope != root_scopes_.end(); scope++)
+	    (*scope)->emit_defs(tgt);
 
 
 	// emit the processes
@@ -470,6 +474,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.63  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.62  2001/08/25 23:50:02  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.35 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.36 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,7 +115,7 @@ void dll_target::func_def(const NetScope*net)
       if (scope->ports > 0) {
 	    scope->port = new ivl_signal_t[scope->ports];
 	    for (unsigned idx = 0 ;  idx < scope->ports ;  idx += 1)
-		  scope->port[idx] = find_signal(des_.root_, def->port(idx));
+		  scope->port[idx] = find_signal(des_, def->port(idx));
       }
 }
 
@@ -141,7 +141,7 @@ void dll_target::proc_assign(const NetAssign*net)
 	    cur->width_ = asn->lwidth();
 	    cur->loff_  = asn->get_loff();
 	    cur->type_  = IVL_LVAL_REG;
-	    cur->n.sig  = find_signal(des_.root_, asn->sig());
+	    cur->n.sig  = find_signal(des_, asn->sig());
 
 	    cur->idx = 0;
 	    if (asn->bmux()) {
@@ -181,7 +181,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 	    cur->type_ = IVL_LVAL_REG;
 	    cur->width_ = asn->lwidth();
 	    cur->loff_  = asn->get_loff();
-	    cur->n.sig = find_signal(des_.root_, asn->sig());
+	    cur->n.sig = find_signal(des_, asn->sig());
 
 	    cur->idx = 0;
 	    if (asn->bmux()) {
@@ -669,6 +669,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.36  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.35  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

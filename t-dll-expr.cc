@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.18 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.19 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -225,7 +225,7 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
-      expr_->u_.signal_.sig = find_signal(des_.root_, net->sig());
+      expr_->u_.signal_.sig = find_signal(des_, net->sig());
       expr_->u_.signal_.lsi = net->lsi();
       expr_->u_.signal_.msi = net->msi();
 }
@@ -237,7 +237,7 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr);
 
-      if (net->sig()->lsb() != 0) {
+      if (0/*net->sig()->lsb() != 0*/) {
 	    cerr << net->get_line() << ": sorry: LSB for signal "
 		 << "is not zero." << endl;
       }
@@ -245,7 +245,7 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
       expr->type_ = IVL_EX_BITSEL;
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
-      expr->u_.bitsel_.sig = find_signal(des_.root_, net->sig());
+      expr->u_.bitsel_.sig = find_signal(des_, net->sig());
 
       net->index()->expr_scan(this);
       assert(expr_);
@@ -301,6 +301,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.19  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.18  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

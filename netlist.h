@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.216 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: netlist.h,v 1.217 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 /*
@@ -30,6 +30,7 @@
  */
 # include  <string>
 # include  <map>
+# include  <list>
 # include  "verinum.h"
 # include  "LineInfo.h"
 # include  "svector.h"
@@ -2710,9 +2711,10 @@ class Design {
 
       NetScope* make_root_scope(const string&name);
       NetScope* find_root_scope();
+      list<NetScope*> find_root_scopes();
 
       const NetScope* find_root_scope() const;
-
+      const list<NetScope*> find_root_scopes() const;
 
 	/* Attempt to set the precision to the specified value. If the
 	   precision is already more precise, the keep the precise
@@ -2789,7 +2791,7 @@ class Design {
     private:
 	// Keep a tree of scopes. The NetScope class handles the wide
 	// tree and per-hop searches for me.
-      NetScope*root_scope_;
+      list<NetScope*>root_scopes_;
 
 	// List the nodes in the design
       NetNode*nodes_;
@@ -2849,6 +2851,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.217  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.216  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *

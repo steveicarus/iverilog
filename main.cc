@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.47 2001/07/30 02:44:05 steve Exp $"
+#ident "$Id: main.cc,v 1.48 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -44,6 +44,7 @@ const char NOTICE[] =
 # include  <iostream.h>
 # include  <fstream>
 # include  <queue>
+# include  <list>
 # include  <map>
 # include  <unistd.h>
 # include  <stdlib.h>
@@ -73,7 +74,6 @@ extern "C" const char*optarg;
 const char VERSION[] = "$Name:  $ $State: Exp $";
 
 const char*target = "null";
-string start_module = "";
 
 map<string,string> flags;
 
@@ -102,7 +102,7 @@ static void parm_to_flagmap(const string&flag)
 
 extern Design* elaborate(const map<string,Module*>&modules,
 			 const map<string,PUdp*>&primitives,
-			 const string&root);
+			 list <string>root);
 
 extern void cprop(Design*des);
 extern void synth(Design*des);
@@ -175,6 +175,7 @@ int main(int argc, char*argv[])
       int opt;
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
+      list<string> roots;
 
       struct tms cycles[5];
 
@@ -217,7 +218,7 @@ int main(int argc, char*argv[])
 	    parm_to_flagmap(optarg);
 	    break;
 	  case 's':
-	    start_module = optarg;
+	    roots.push_back(string(optarg));
 	    break;
 	  case 'T':
 	    if (strcmp(optarg,"min") == 0) {
@@ -337,40 +338,41 @@ int main(int argc, char*argv[])
       }
 
 
-	/* If the user did not give a specific module to start with,
-	   then look for the single module that has no ports. If there
-	   are multiple modules with no ports, then give up. */
+	/* If the user did not give specific module(s) to start with,
+	   then look for modules that are not instantiated anywhere.  */
 
-      if (start_module == "") {
-	    for (map<string,Module*>::iterator mod = modules.begin()
-		       ; mod != modules.end()
-		       ; mod ++ ) {
-		  Module*cur = (*mod).second;
-		  if (cur->port_count() == 0)
-			if (start_module == "") {
-			      start_module = cur->get_name();
-		        } else {
-			      cerr << "More then 1 top level module."
-				   << endl;
-			      return 1;
+      if (roots.empty()) {
+	    map<string,bool> mentioned_p;
+	    map<string,Module*>::iterator mod;
+	    if (verbose_flag)
+		  cout << "LOCATING TOP-LEVEL MODULES..." << endl << "  ";
+	    for (mod = modules.begin(); mod != modules.end(); mod++) {
+		  list<PGate*> gates = (*mod).second->get_gates();
+		  list<PGate*>::const_iterator gate;
+		  for (gate = gates.begin(); gate != gates.end(); gate++) {
+			PGModule *mod = dynamic_cast<PGModule*>(*gate);
+			if (mod) {
+			      // Note that this module has been instantiated
+			      mentioned_p[mod->get_type()] = true;
 			}
+		  }
 	    }
+
+	    for (mod = modules.begin(); mod != modules.end(); mod++) {
+		  if (mentioned_p[(*mod).second->get_name()] == false) {
+			if (verbose_flag)
+			      cout << " " << (*mod).second->get_name();
+			roots.push_back((*mod).second->get_name());
+		  }
+	    }
+	    if (verbose_flag)
+		  cout << endl;
       }
-
-	/* If the previous attempt to find a start module failed, but
-	   there is only one module, then just let the user get away
-	   with it. */
-
-      if ((start_module == "") && (modules.size() == 1)) {
-	    map<string,Module*>::iterator mod = modules.begin();
-	    Module*cur = (*mod).second;
-	    start_module = cur->get_name();
-      }
-
+	    
 	/* If there is *still* no guess for the root module, then give
 	   up completely, and complain. */
 
-      if (start_module == "") {
+      if (roots.empty()) {
 	    cerr << "No top level modules, and no -s option." << endl;
 	    return 1;
       }
@@ -382,20 +384,19 @@ int main(int argc, char*argv[])
 		  cerr<<" ... done, "
 		      <<cycles_diff(cycles+1, cycles+0)<<" seconds."<<endl;
 	    }
-	    cout << "ELABORATING DESIGN -s "<<start_module<<" ..." << endl;
+	    cout << "ELABORATING DESIGN" << endl;
       }
 
 	/* On with the process of elaborating the module. */
-      Design*des = elaborate(modules, primitives, start_module);
+      Design*des = elaborate(modules, primitives, roots);
       if (des == 0) {
-	    cerr << start_module << ": error: "
-		 << "Unable to elaborate module." << endl;
+	    cerr << "Elaboration failed" << endl;
 	    return 1;
       }
 
       if (des->errors) {
-	    cerr << start_module << ": error: " << des->errors
-		 << " elaborating module." << endl;
+	    cerr << des->errors
+		 << " error(s) during elaboration." << endl;
 	    return des->errors;
       }
 
@@ -454,6 +455,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.48  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.47  2001/07/30 02:44:05  steve
  *  Cleanup defines and types for mingw compile.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.220 2001/08/25 23:50:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.221 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,7 @@
 
 # include  <typeinfo>
 # include  <strstream>
+# include  <list>
 # include  "pform.h"
 # include  "PEvent.h"
 # include  "netlist.h"
@@ -2277,16 +2278,18 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       return result_flag;
 }
 
+struct root_elem {
+      Module *mod;
+      NetScope *scope;
+};
+
 Design* elaborate(const map<string,Module*>&modules,
 		  const map<string,PUdp*>&primitives,
-		  const string&root)
+		  list<string>roots)
 {
-	// Look for the root module in the list.
-      map<string,Module*>::const_iterator mod = modules.find(root);
-      if (mod == modules.end())
-	    return 0;
-
-      Module*rmod = (*mod).second;
+      svector<root_elem*> root_elems(roots.size());
+      bool rc = true;
+      unsigned i = 0;
 
 	// This is the output design. I fill it in as I scan the root
 	// module and elaborate what I find.
@@ -2295,15 +2298,33 @@ Design* elaborate(const map<string,Module*>&modules,
       modlist = &modules;
       udplist = &primitives;
 
-	// Make the root scope, then scan the pform looking for scopes
-	// and parameters. 
-      NetScope*scope = des->make_root_scope(root);
-      scope->time_unit(rmod->time_unit);
-      scope->time_precision(rmod->time_precision);
-      des->set_precision(rmod->time_precision);
-      if (! rmod->elaborate_scope(des, scope)) {
-	    delete des;
-	    return 0;
+      for (list<string>::const_iterator root = roots.begin();
+	   root != roots.end(); root++) {
+	    // Look for the root module in the list.
+	    map<string,Module*>::const_iterator mod = modules.find(*root);
+	    if (mod == modules.end()) {
+		  cerr << "Unable to find root module \"" << (*root) << "\"." << endl; 
+		  des->errors++;
+		  continue;
+	    }
+
+	    Module *rmod = (*mod).second;
+	    
+	    // Make the root scope, then scan the pform looking for scopes
+	    // and parameters. 
+	    NetScope*scope = des->make_root_scope(*root);
+	    scope->time_unit(rmod->time_unit);
+	    scope->time_precision(rmod->time_precision);
+	    des->set_precision(rmod->time_precision);
+	    if (! rmod->elaborate_scope(des, scope)) {
+		  delete des;
+		  return 0;
+	    }
+
+	    struct root_elem *r = new struct root_elem;
+	    r->mod = rmod;
+	    r->scope = scope;
+	    root_elems[i++] = r;
       }
 
 	// This method recurses through the scopes, looking for
@@ -2319,19 +2340,22 @@ Design* elaborate(const map<string,Module*>&modules,
 	// constants.
       des->evaluate_parameters();
 
+      for (i = 0; i < root_elems.count(); i++) {
+	    Module *rmod = root_elems[i]->mod;
+	    NetScope *scope = root_elems[i]->scope;
 
-	// With the parameters evaluated down to constants, we have
-	// what we need to elaborate signals and memories. This pass
-	// creates all the NetNet and NetMemory objects for declared
-	// objects.
-      if (! rmod->elaborate_sig(des, scope)) {
-	    delete des;
-	    return 0;
+	    // With the parameters evaluated down to constants, we have
+	    // what we need to elaborate signals and memories. This pass
+	    // creates all the NetNet and NetMemory objects for declared
+	    // objects.
+	    if (! rmod->elaborate_sig(des, scope)) {
+		  delete des;
+		  return 0;
+	    }
+	    // Now that the structure and parameters are taken care of,
+	    // run through the pform again and generate the full netlist.
+	    rc &= rmod->elaborate(des, scope);
       }
-
-	// Now that the structure and parameters are taken care of,
-	// run through the pform again and generate the full netlist.
-      bool rc = rmod->elaborate(des, scope);
 
 
       modlist = 0;
@@ -2348,6 +2372,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.221  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.220  2001/08/25 23:50:02  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster

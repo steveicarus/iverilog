@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.66 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.67 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -101,37 +101,46 @@ static struct dll_target dll_target_obj;
  * NetScope object. The search works by looking for the parent scope,
  * then scanning the parent scope for the NetScope object.
  */
-ivl_scope_t dll_target::find_scope(ivl_scope_t root, const NetScope*cur)
+static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 {
       ivl_scope_t parent, tmp;
 
       if (const NetScope*par = cur->parent()) {
-	    parent = find_scope(root, par);
+	    parent = find_scope_from_root(root, par);
+
+	    for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
+		  if (strcmp(tmp->name_, cur->name().c_str()) == 0)
+			return tmp;
 
       } else {
-	    assert(strcmp(root->name_, cur->name().c_str()) == 0);
-	    return root;
+	    if (strcmp(root->name_, cur->name().c_str()) == 0)
+		  return root;
       }
-
-      for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
-	    if (strcmp(tmp->name_, cur->name().c_str()) == 0)
-		  return tmp;
 
       return 0;
 }
 
+ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
+{
+      unsigned i;
+      ivl_scope_t scope = NULL;
+      for (i = 0; i < des.nroots_ && scope == NULL; i++)
+	    scope = find_scope_from_root(des.roots_[i], cur);
+      return scope;
+}
+
 ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
 {
-      return find_scope(des_.root_, cur);
+      return find_scope(des_, cur);
 }
 
 /*
  * This is a convenience function to locate an ivl_signal_t object
  * given the NetESignal that has the signal name.
  */
-ivl_signal_t dll_target::find_signal(ivl_scope_t root, const NetNet*net)
+ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
 {
-      ivl_scope_t scope = find_scope(root, net->scope());
+      ivl_scope_t scope = find_scope(des, net->scope());
       assert(scope);
 
       const char*nname = net->name();
@@ -177,7 +186,11 @@ static ivl_memory_t find_memory(ivl_scope_t root, const NetMemory*cur)
 
 ivl_memory_t dll_target::lookup_memory_(const NetMemory*cur)
 {
-      return find_memory(des_.root_, cur);
+      unsigned i;
+      ivl_memory_t mem = NULL;
+      for (i = 0; i < des_.nroots_ && mem == NULL; i++)
+	    mem = find_memory(des_.roots_[i], cur);
+      return mem;
 }
 
 static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
@@ -334,8 +347,37 @@ static void scope_add_mem(ivl_scope_t scope, ivl_memory_t net)
       scope->mem_[scope->nmem_-1] = net;
 }
 
+void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
+{
+      ivl_scope_t root_ = new struct ivl_scope_s;
+      const char *name = s->name().c_str();
+      root_->name_ = strdup(name);
+      root_->child_ = 0;
+      root_->sibling_ = 0;
+      root_->parent = 0;
+      root_->nsigs_ = 0;
+      root_->sigs_ = 0;
+      root_->nlog_ = 0;
+      root_->log_ = 0;
+      root_->nevent_ = 0;
+      root_->event_ = 0;
+      root_->nlpm_ = 0;
+      root_->lpm_ = 0;
+      root_->nmem_ = 0;
+      root_->mem_ = 0;
+      root_->type_ = IVL_SCT_MODULE;
+      root_->tname_ = root_->name_;
+      des_.nroots_++;
+      if (des_.roots_)
+	    des_.roots_ = (ivl_scope_t *)realloc(des_.roots_, des_.nroots_ * sizeof(ivl_scope_t));
+      else
+	    des_.roots_ = (ivl_scope_t *)malloc(des_.nroots_ * sizeof(ivl_scope_t));
+      des_.roots_[des_.nroots_ - 1] = root_;
+}
+
 bool dll_target::start_design(const Design*des)
 {
+      list<NetScope *> root_scopes;
       dll_path_ = des->get_flag("DLL");
       dll_ = ivl_dlopen(dll_path_.c_str());
       if (dll_ == 0) {
@@ -348,24 +390,14 @@ bool dll_target::start_design(const Design*des)
 	// Initialize the design object.
       des_.self = des;
       des_.time_precision = des->get_precision();
-      des_.root_ = new struct ivl_scope_s;
-      des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
-      des_.root_->child_ = 0;
-      des_.root_->sibling_ = 0;
-      des_.root_->parent = 0;
-      des_.root_->nsigs_ = 0;
-      des_.root_->sigs_ = 0;
-      des_.root_->nlog_ = 0;
-      des_.root_->log_ = 0;
-      des_.root_->nevent_ = 0;
-      des_.root_->event_ = 0;
-      des_.root_->nlpm_ = 0;
-      des_.root_->lpm_ = 0;
-      des_.root_->nmem_ = 0;
-      des_.root_->mem_ = 0;
-      des_.root_->type_ = IVL_SCT_MODULE;
-      des_.root_->tname_ = des_.root_->name_;
+      des_.nroots_ = 0;
+      des_.roots_ = NULL;
 
+      root_scopes = des->find_root_scopes();
+      for (list<NetScope*>::const_iterator scope = root_scopes.begin();
+	   scope != root_scopes.end(); scope++)
+	    add_root(des_, *scope);
+      
       des_.consts  = (ivl_net_const_t*)
 	    malloc(sizeof(ivl_net_const_t));
       des_.nconsts = 0;
@@ -446,7 +478,7 @@ bool dll_target::bufz(const NetBUFZ*net)
 	/* Attach the logic device to the scope that contains it. */
 
       assert(net->scope());
-      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      ivl_scope_t scope = find_scope(des_, net->scope());
       assert(scope);
 
       obj->scope_ = scope;
@@ -463,7 +495,7 @@ void dll_target::event(const NetEvent*net)
 {
       struct ivl_event_s *obj = new struct ivl_event_s;
 
-      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      ivl_scope_t scope = find_scope(des_, net->scope());
       obj->name = strdup(net->full_name().c_str());
       obj->scope = scope;
       scope_add_event(scope, obj);
@@ -576,7 +608,7 @@ void dll_target::logic(const NetLogic*net)
       }
 
       assert(net->scope());
-      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      ivl_scope_t scope = find_scope(des_, net->scope());
       assert(scope);
 
       obj->scope_= scope;
@@ -605,10 +637,10 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
 	    nexus_log_add(obj->pins_[idx], obj, idx);
       }
 
-      // assert(net->scope());
-      // ivl_scope_t scope = find_scope(des_.root_, net->scope());
-      // assert(scope);
-      ivl_scope_t scope = des_.root_;
+      //assert(net->scope());
+      //ivl_scope_t scope = find_scope(des_, net->scope());
+      //assert(scope);
+      ivl_scope_t scope = des_.roots_[0];
 
       obj->scope_= scope;
       obj->name_ = strdup(net->name());
@@ -672,7 +704,7 @@ void dll_target::udp(const NetUDP*net)
       }
 
       assert(net->scope());
-      ivl_scope_t scope = find_scope(des_.root_, net->scope());
+      ivl_scope_t scope = find_scope(des_, net->scope());
       assert(scope);
 
       obj->scope_= scope;
@@ -685,7 +717,7 @@ void dll_target::memory(const NetMemory*net)
 {
       ivl_memory_t obj = new struct ivl_memory_s;
       obj->name_  = strdup(net->name().c_str());
-      obj->scope_ = find_scope(des_.root_, net->scope());
+      obj->scope_ = find_scope(des_, net->scope());
       obj->width_ = net->width();
       obj->signed_ = 0;
       obj->size_ = net->count();
@@ -703,7 +735,7 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    obj->type = IVL_LPM_ADD;
       obj->name = strdup(net->name());
       assert(net->scope());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
 	/* Choose the width of the adder. If the carry bit is
@@ -772,7 +804,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       obj->type = IVL_LPM_SHIFTL;
       obj->name = strdup(net->name());
       assert(net->scope());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
 	/* Look at the direction input of the device, and select the
@@ -848,7 +880,7 @@ void dll_target::lpm_compare(const NetCompare*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->name = strdup(net->name());
       assert(net->scope());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
       bool swap_operands = false;
@@ -960,7 +992,7 @@ void dll_target::lpm_divide(const NetDivide*net)
       obj->type  = IVL_LPM_DIVIDE;
       obj->name  = strdup(net->name());
       assert(net->scope());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
       unsigned wid = net->width_r();
@@ -1017,7 +1049,7 @@ void dll_target::lpm_ff(const NetFF*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_FF;
       obj->name  = strdup(net->name());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
       obj->u_.ff.width = net->width();
@@ -1085,7 +1117,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       obj->name  = strdup(net->name());
       obj->u_.ff.mem = lookup_memory_(net->mem());
       assert(obj->u_.ff.mem);
-      obj->scope = find_scope(des_.root_, net->mem()->scope());
+      obj->scope = find_scope(des_, net->mem()->scope());
       assert(obj->scope);
 
       obj->u_.ff.width = net->width();
@@ -1198,7 +1230,7 @@ void dll_target::lpm_mult(const NetMult*net)
       obj->type  = IVL_LPM_MULT;
       obj->name  = strdup(net->name());
       assert(net->scope());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
       unsigned wid = net->width_r();
@@ -1255,7 +1287,7 @@ void dll_target::lpm_mux(const NetMux*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
       obj->name  = strdup(net->name());
-      obj->scope = find_scope(des_.root_, net->scope());
+      obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
       obj->u_.mux.width = net->width();
@@ -1399,15 +1431,20 @@ void dll_target::scope(const NetScope*net)
       ivl_scope_t scope;
 
       if (net->parent() == 0) {
-	    assert(strcmp(des_.root_->name_, net->name().c_str()) == 0);
-	    scope = des_.root_;
+	    unsigned i;
+	    scope = NULL;
+	    for (i = 0; i < des_.nroots_ && scope == NULL; i++) {
+		  if (strcmp(des_.roots_[i]->name_, net->name().c_str()) == 0)
+			scope = des_.roots_[i];
+	    }
+	    assert(scope);
 
       } else {
 	    scope = new struct ivl_scope_s;
 	    scope->name_ = strdup(net->name().c_str());
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
-	    scope->parent = find_scope(des_.root_, net->parent());
+	    scope->parent = find_scope(des_, net->parent());
 	    scope->nsigs_ = 0;
 	    scope->sigs_ = 0;
 	    scope->nlog_ = 0;
@@ -1459,7 +1496,7 @@ void dll_target::signal(const NetNet*net)
 	   it. This involves growing the sigs_ array in the scope
 	   object, or creating the sigs_ array if this is the first
 	   signal. */
-      obj->scope_ = find_scope(des_.root_, net->scope());
+      obj->scope_ = find_scope(des_, net->scope());
       assert(obj->scope_);
 
       if (obj->scope_->nsigs_ == 0) {
@@ -1617,6 +1654,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.67  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.66  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *

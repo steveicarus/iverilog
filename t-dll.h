@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.65 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: t-dll.h,v 1.66 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -40,7 +40,8 @@ struct ivl_design_s {
 
       int time_precision;
 
-      ivl_scope_t root_;
+      ivl_scope_t *roots_;
+      unsigned nroots_;
 
       ivl_process_t threads_;
 
@@ -132,8 +133,9 @@ struct dll_target  : public target_t, public expr_scan_t {
       ivl_memory_t lookup_memory_(const NetMemory*mem);
 
     private:
-      static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur);
-      static ivl_signal_t find_signal(ivl_scope_t root, const NetNet*net);
+      static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
+      static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
+      void add_root(ivl_design_s &des_, const NetScope *s);
 };
 
 /*
@@ -570,6 +572,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.66  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.65  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *

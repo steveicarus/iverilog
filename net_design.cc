@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.20 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: net_design.cc,v 1.21 2001/10/19 21:53:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,7 +34,7 @@
 # include  <strstream>
 
 Design:: Design()
-: errors(0), root_scope_(0), nodes_(0), procs_(0), lcounter_(0)
+: errors(0), nodes_(0), procs_(0), lcounter_(0)
 {
       procs_idx_ = 0;
       des_precision_ = 0;
@@ -79,22 +79,33 @@ unsigned long Design::scale_to_precision(unsigned long val,
 
 NetScope* Design::make_root_scope(const string&root)
 {
-      assert(root_scope_ == 0);
+      NetScope *root_scope_;
       root_scope_ = new NetScope(0, root, NetScope::MODULE);
       root_scope_->set_module_name(root.c_str());
+      root_scopes_.push_back(root_scope_);
       return root_scope_;
 }
 
 NetScope* Design::find_root_scope()
 {
-      assert(root_scope_);
-      return root_scope_;
+      assert(root_scopes_.front());
+      return root_scopes_.front();
 }
 
 const NetScope* Design::find_root_scope() const
 {
-      assert(root_scope_);
-      return root_scope_;
+      assert(root_scopes_.front());
+      return root_scopes_.front();
+}
+
+list<NetScope*> Design::find_root_scopes()
+{
+      return root_scopes_;
+}
+
+const list<NetScope*> Design::find_root_scopes() const
+{
+      return root_scopes_;
 }
 
 /*
@@ -105,23 +116,26 @@ const NetScope* Design::find_root_scope() const
  */
 NetScope* Design::find_scope(const string&key) const
 {
-      if (key == root_scope_->name())
-	    return root_scope_;
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+	   scope != root_scopes_.end(); scope++) {
+	    if (key == (*scope)->name())
+		  return *scope;
 
-      string path = key;
-      string root = parse_first_name(path);
+	    string path = key;
+	    string root = parse_first_name(path);
 
-      NetScope*cur = root_scope_;
-      if (root != cur->name())
-	    return 0;
+	    NetScope*cur = *scope;
+	    if (root != cur->name())
+		  continue;
 
-      while (cur) {
-	    string next = parse_first_name(path);
-	    cur = cur->child(next);
-	    if (path == "") return cur;
+	    while (cur) {
+		  string next = parse_first_name(path);
+		  cur = cur->child(next);
+		  if (path == "") return cur;
+	    }
+	    return cur;
       }
-
-      return cur;
+      return 0;
 }
 
 /*
@@ -194,7 +208,9 @@ const NetExpr* Design::find_parameter(const NetScope*scope,
  */
 void Design::run_defparams()
 {
-      root_scope_->run_defparams(this);
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+	   scope != root_scopes_.end(); scope++)
+	    (*scope)->run_defparams(this);
 }
 
 void NetScope::run_defparams(Design*des)
@@ -231,7 +247,9 @@ void NetScope::run_defparams(Design*des)
 
 void Design::evaluate_parameters()
 {
-      root_scope_->evaluate_parameters(this);
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+	   scope != root_scopes_.end(); scope++)
+	    (*scope)->evaluate_parameters(this);
 }
 
 void NetScope::evaluate_parameters(Design*des)
@@ -477,6 +495,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.21  2001/10/19 21:53:24  steve
+ *  Support multiple root modules (Philip Blundell)
+ *
  * Revision 1.20  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
