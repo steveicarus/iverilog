@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.21 1999/05/12 04:03:19 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.22 1999/06/07 02:23:31 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -45,12 +45,14 @@ class target_vvm : public target_t {
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
+      virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
+      virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
@@ -213,6 +215,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case 'n':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_ne("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '<':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_lt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'o':
@@ -548,6 +554,109 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
 }
 
 /*
+ * The non-blocking assignment works by creating an event to do the
+ * assignment at the right time. The value to be assigned is saved in
+ * the event and the event function performs the actual assignment.
+ *
+ * The net part of the assign generates a type ot represent the
+ * assignment. Creating instances of this event will be dealt with
+ * later.
+ */
+void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
+{
+      const string name = mangle(net->name());
+      unsigned iwid = net->rval()->expr_width();
+      os << "class " << name << " : public vvm_event {" << endl;
+      os << "    public:" << endl;
+
+      if (net->bmux()) {
+	    os << "      " << name << "(vvm_simulation*s, const vvm_bitset_t<"
+	       << iwid << ">&v, unsigned idx)" << endl;
+	    os << "      : sim_(s), value_(v), idx_(idx) { }" << endl;
+      } else {
+	    os << "      " << name << "(vvm_simulation*s, const vvm_bitset_t<"
+	       << iwid << ">&v)" << endl;
+	    os << "      : sim_(s), value_(v) { }" << endl;
+      }
+      os << "      void event_function();" << endl;
+
+      os << "    private:" << endl;
+      os << "      vvm_simulation*sim_;" << endl;
+      os << "      vvm_bitset_t<" << iwid << ">value_;" << endl;
+
+      if (net->bmux())
+	    os << "      unsigned idx_;" << endl;
+
+      os << "};" << endl;
+
+
+	/* Write the event_function to do the actual assignment. */
+
+      delayed << "void " << name << "::event_function()" << endl;
+      delayed << "{" << endl;
+
+      if (net->bmux()) {
+	      /* If the assignment is to a single bit (with a mux)
+		 then write a switch statement that selects which pins
+		 to write to. */
+	    delayed << "      switch (idx_) {" << endl;
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  const NetObj*cur;
+		  unsigned pin;
+
+		  delayed << "        case " << idx << ":" << endl;
+		  for (net->pin(idx).next_link(cur, pin)
+			     ; net->pin(idx) != cur->pin(pin)
+			     ; cur->pin(pin).next_link(cur, pin)) {
+
+			  // Skip output only pins.
+			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
+			      continue;
+
+			  // Skip signals, I'll hit them when I handle the
+			  // NetESignal nodes.
+			if (dynamic_cast<const NetNet*>(cur))
+			      continue;
+
+			delayed << "          " << mangle(cur->name()) <<
+			      ".set(sim_, " << pin << ", value_[0]);" << endl;
+		  }
+
+		  delayed << "          break;" << endl;
+	    }
+	    delayed << "      }" << endl;
+
+      } else {
+
+	      /* If there is no BMUX, then write all the bits of the
+		 value to all the pins. */
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  const NetObj*cur;
+		  unsigned pin;
+
+		  for (net->pin(idx).next_link(cur, pin)
+			     ; net->pin(idx) != cur->pin(pin)
+			     ; cur->pin(pin).next_link(cur, pin)) {
+
+			  // Skip output only pins.
+			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
+			      continue;
+
+			  // Skip signals, I'll hit them when I handle the
+			  // NetESignal nodes.
+			if (dynamic_cast<const NetNet*>(cur))
+			      continue;
+
+			delayed << "      " << mangle(cur->name()) <<
+			      ".set(sim_, " << pin << ", value_[" <<
+			      idx << "]);" << endl;
+		  }
+	    }
+      }
+      delayed << "}" << endl;
+}
+
+/*
  * The NetConst is a synthetic device created to represent constant
  * values. I represent them in the output as a vvm_bufz object that
  * has its input connected to nothing but is initialized to the
@@ -685,8 +794,8 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 		       ; net->pin(idx) != cur->pin(pin)
 		       ; cur->pin(pin).next_link(cur, pin)) {
 
-		    // Skip NetAssign nodes. They are output-only.
-		  if (dynamic_cast<const NetAssign*>(cur))
+		    // Skip output only pins.
+		  if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
 			continue;
 
 		    // Skip signals, I'll hit them when I handle the
@@ -710,6 +819,22 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
       os << "        /* " << amem->get_line() << " */" << endl;
       os << "        " << mangle(mem->name())
 	 << "[" << index << ".as_unsigned()] = " << rval << ";" << endl;
+}
+
+void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
+{
+      string rval = emit_proc_rval(os, 8, net->rval());
+
+      if (net->bmux()) {
+	    string bval = emit_proc_rval(os, 8, net->bmux());
+	    os << "        sim_->insert_event(0, new " <<
+		  mangle(net->name()) << "(sim_, " << rval << ", " << bval
+	       << ".as_unsigned()));" << endl;
+
+      } else {
+	    os << "        sim_->insert_event(0, new " <<
+		  mangle(net->name()) << "(sim_, " << rval << "));" << endl;
+      }
 }
 
 void target_vvm::proc_block(ostream&os, const NetBlock*net)
@@ -852,13 +977,51 @@ void target_vvm::proc_task(ostream&os, const NetTask*net)
       }
 }
 
+/*
+ * The while loop is implemented by making each iteration one [or
+ * more] basic block and letting the loop condition skip to the block
+ * after or continue with the current block. This is similar to how
+ * the condit is handled. The basic structure of the loop is as follows:
+ *
+ *    head_step:
+ *       evaluate condition
+ *       if false, go to out_step
+ *       execute body
+ *
+ *    out_step:
+ */
 void target_vvm::proc_while(ostream&os, const NetWhile*net)
 {
-      os << "        for (;;) {" << endl;
-      string expr = emit_proc_rval(os, 12, net->expr());
-      os << "            if (" << expr << "[0] != V1) break;" << endl;
-      net->emit_proc_recurse(os, this);
+      unsigned head_step = ++thread_step_;
+      unsigned out_step = ++thread_step_;
+
+      os << "        step_ = &step_" << head_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      // " << net->expr()->get_line() <<
+	    ": top of while condition." << endl;
+      os << "      bool step_" << head_step << "_()" << endl;
+      os << "      {" << endl;
+
+      string expr = emit_proc_rval(os, 8, net->expr());
+      os << "        // " << net->expr()->get_line() <<
+	    ": test while condition." << endl;
+      os << "        if (" << expr << "[0] != V1) {" << endl;
+      os << "            step_ = &step_" << out_step << "_;" << endl;
+      os << "            return true;" << endl;
       os << "        }" << endl;
+
+      net->emit_proc_recurse(os, this);
+
+      os << "        // " << net->expr()->get_line() <<
+	    ": end of while loop." << endl;
+      os << "        step_ = &step_" << head_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      bool step_" << out_step << "_()" << endl;
+      os << "      {" << endl;
 }
 
 /*
@@ -958,6 +1121,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.22  1999/06/07 02:23:31  steve
+ *  Support non-blocking assignment down to vvm.
+ *
  * Revision 1.21  1999/05/12 04:03:19  steve
  *  emit NetAssignMem objects in vvm target.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.32 1999/06/06 20:45:38 steve Exp $"
+#ident "$Id: netlist.cc,v 1.33 1999/06/07 02:23:31 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -277,6 +277,7 @@ NetAssign::NetAssign(Design*des, NetNet*lv, NetExpr*rv)
 : NetNode("@assign", lv->pin_count()), rval_(rv)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_dir(NetObj::Link::OUTPUT);
 	    connect(pin(idx), lv->pin(idx));
       }
 
@@ -295,6 +296,10 @@ NetAssign::~NetAssign()
 NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
 : NetNode(n, w), rval_(rv), bmux_(0)
 {
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_dir(NetObj::Link::OUTPUT);
+      }
+
       bool flag = rval_->set_width(w);
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
@@ -307,6 +312,10 @@ NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
 			 NetExpr*mu, NetExpr*rv)
 : NetNode(n, w), rval_(rv), bmux_(mu)
 {
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_dir(NetObj::Link::OUTPUT);
+      }
+
       bool flag = rval_->set_width(1);
       if (flag == false) {
 	    cerr << rv->get_line() << ": Expression bit width" <<
@@ -462,6 +471,7 @@ bool NetEBinary::set_width(unsigned w)
 		 sure that the subexpressions have the same width. */
 	  case 'e': /* == */
 	  case 'n': /* != */
+	  case '<': /* < */
 	    assert(w == 1);
 	    expr_width(w);
 	    flag = left_->set_width(right_->expr_width());
@@ -1154,6 +1164,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.33  1999/06/07 02:23:31  steve
+ *  Support non-blocking assignment down to vvm.
+ *
  * Revision 1.32  1999/06/06 20:45:38  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

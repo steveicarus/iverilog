@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.35 1999/06/06 23:07:43 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.36 1999/06/07 02:23:31 steve Exp $"
 #endif
 
 /*
@@ -794,6 +794,8 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
       switch (op_) {
 	  case 'e':
 	  case 'n':
+	  case '<':
+	  case '>':
 	    flag = tmp->set_width(1);
 	    if (flag == false) {
 		  cerr << get_line() << ": expression bit width"
@@ -1367,6 +1369,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.36  1999/06/07 02:23:31  steve
+ *  Support non-blocking assignment down to vvm.
+ *
  * Revision 1.35  1999/06/06 23:07:43  steve
  *  Drop degenerate blocks.
  *

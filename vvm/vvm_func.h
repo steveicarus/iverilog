@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.4 1999/05/01 20:43:55 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.5 1999/06/07 02:23:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -249,6 +249,13 @@ vvm_bitset_t<1> vvm_binop_ne(const vvm_bitset_t<LW>&l,
 }
 
 template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_lt(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      assert(0); // Not implemented yet.
+}
+
+template <unsigned LW, unsigned RW>
 vvm_bitset_t<1> vvm_binop_land(const vvm_bitset_t<LW>&l,
 			       const vvm_bitset_t<RW>&r)
 {
@@ -270,6 +277,9 @@ vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.5  1999/06/07 02:23:31  steve
+ *  Support non-blocking assignment down to vvm.
+ *
  * Revision 1.4  1999/05/01 20:43:55  steve
  *  Handle wide events, such as @(a) where a has
  *  many bits in it.
