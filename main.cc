@@ -1,6 +1,8 @@
+
+const char COPYRIGHT[] =
+          "Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)";
+
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
- *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
  *    General Public License as published by the Free Software
@@ -17,8 +19,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.17 1999/06/17 05:33:12 steve Exp $"
+#ident "$Id: main.cc,v 1.18 1999/06/19 03:46:42 steve Exp $"
 #endif
+
+const char NOTICE[] =
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License\n"
+"  along with this program; if not, write to the Free Software\n"
+"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+;
 
 # include  <stdio.h>
 # include  <iostream.h>
@@ -30,6 +48,7 @@
 # include  "netlist.h"
 # include  "target.h"
 
+const char VERSION[] = "$Name:  $ $State: Exp $";
 
 const char*target = "null";
 string start_module = "";
@@ -99,7 +118,7 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
 
-      while ((opt = getopt(argc, argv, "F:f:hN:o:P:s:t:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hN:o:P:s:t:v")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -132,6 +151,11 @@ int main(int argc, char*argv[])
 	  case 't':
 	    target = optarg;
 	    break;
+	  case 'v':
+	    cout << "Icarus Verilog version " << VERSION << endl;
+	    cout << COPYRIGHT << endl;
+	    cout << endl << NOTICE << endl;
+	    return 0;
 	  default:
 	    flag_errors += 1;
 	    break;
@@ -248,6 +272,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.18  1999/06/19 03:46:42  steve
+ *  Add the -v switch.
+ *
  * Revision 1.17  1999/06/17 05:33:12  steve
  *  Redundant declaration of pform_parse.
  *
@@ -290,38 +317,5 @@ int main(int argc, char*argv[])
  *  Signal folding is aware of attributes, and
  *  the XNF target can dump UDP objects based on LCA
  *  attributes.
- *
- * Revision 1.7  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.6  1998/11/25 02:35:53  steve
- *  Parse UDP primitives all the way to pform.
- *
- * Revision 1.5  1998/11/18 04:25:22  steve
- *  Add -f flags for generic flag key/values.
- *
- * Revision 1.4  1998/11/16 05:03:52  steve
- *  Add the sigfold function that unlinks excess
- *  signal nodes, and add the XNF target.
- *
- * Revision 1.3  1998/11/13 06:23:17  steve
- *  Introduce netlist optimizations with the
- *  cprop function to do constant propogation.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:28:59  steve
- *  Introduce verilog to CVS.
- *
  */
 
