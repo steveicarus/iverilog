@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.52 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: parse.y,v 1.53 1999/07/28 03:47:24 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1242,7 +1242,7 @@ register_variable_list
 specify_item
 	: K_specparam specparam_list ';'
 	| specify_simple_path '=' '(' expression_list ')' ';'
-		{ yyerror(@1, "Sorry, specify path declarations not supported.");
+		{ /* yyerror(@1, "Sorry, specify path declarations not supported."); */
 		  delete $4;
 		}
 	;
@@ -1259,7 +1259,7 @@ specify_simple_path
 
 specparam
 	: IDENTIFIER '=' expression
-		{ yyerror(@1, "Sorry, specparam assignments not supported.");
+		{ /* yyerror(@1, "Sorry, specparam assignments not supported."); */
 		  delete $1;
 		  delete $3;
 		}
