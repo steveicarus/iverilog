@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.7 2001/05/20 17:13:27 steve Exp $"
+#ident "$Id: Makefile.in,v 1.8 2001/10/09 16:50:17 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -40,13 +40,14 @@ INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = @CXXFLAGS@
+CFLAGS  = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: vvp.tgt
 
 %.o: %.c
 	@[ -d dep ] || mkdir dep
-	$(CC) -Wall -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall -I$(srcdir)/.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = vvp.o eval_expr.o vvp_process.o vvp_scope.o
