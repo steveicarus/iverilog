@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.45 2003/02/27 22:13:22 steve Exp $"
+#ident "$Id: Makefile.in,v 1.46 2003/03/04 03:13:57 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -79,10 +79,10 @@ ifeq (@WIN32@,yes)
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
 vvp@EXEEXT@ libvpi.a: $O vvp.def
-	$(CXX) -o vvp@EXEEXT@ $O $(dllib) @EXTRALIBS@	
+	$(CXX) -o vvp@EXEEXT@ $O $(dllib) $(LIBS)
 	dlltool --dllname vvp@EXEEXT@ --def vvp.def \
 		--output-lib libvpi.a --output-exp vvp.exp
-	$(CXX) -o vvp@EXEEXT@ vvp.exp $O $(dllib) @EXTRALIBS@
+	$(CXX) -o vvp@EXEEXT@ vvp.exp $O $(dllib) $(LIBS)
 else
 libvpi.a: libvpi.c
 	$(CC) -c $(srcdir)/libvpi.c
