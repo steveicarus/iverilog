@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type_str.c,v 1.1 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: a_fetch_type_str.c,v 1.2 2003/02/19 04:37:04 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -30,6 +30,9 @@ char* acc_fetch_type_str(PLI_INT32 type)
 	  case accParameter:
 	    return "accParameter";
 
+	  case accConstant:
+	    return "accConstant";
+
 	  default:
 	    vpi_printf("XXXX acc_fetch_type_str(%d);\n", type);
 	    return "acc_fetch_type_str(unknown)";
@@ -40,6 +43,9 @@ char* acc_fetch_type_str(PLI_INT32 type)
 
 /*
  * $Log: a_fetch_type_str.c,v $
+ * Revision 1.2  2003/02/19 04:37:04  steve
+ *  fullname for accConstant.
+ *
  * Revision 1.1  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC
