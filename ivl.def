@@ -32,6 +32,7 @@ ivl_expr_repeat
 ivl_expr_scope
 ivl_expr_signed
 ivl_expr_string
+ivl_expr_uvalue
 ivl_expr_width
 
 ivl_logic_name
@@ -102,6 +103,7 @@ ivl_stmt_case_stmt
 ivl_stmt_cond_expr
 ivl_stmt_cond_false
 ivl_stmt_cond_true
+ivl_stmt_delay_expr
 ivl_stmt_delay_val
 ivl_stmt_event
 ivl_stmt_lval
