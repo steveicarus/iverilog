@@ -2,6 +2,16 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(netlist.h)
 AC_CONFIG_HEADER(config.h)
 
+AC_ARG_ENABLE(vvm, vvm target -- the obsolete vvm code generator,
+	AC_DEFINE(ENABLE_VVM))
+if test "${enable_vvm+set}" = set
+then
+    ENABLE_VVM=yes
+else
+    ENABLE_VVM=no
+fi
+AC_SUBST(ENABLE_VVM)
+
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX

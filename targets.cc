@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: targets.cc,v 1.8 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: targets.cc,v 1.9 2002/02/16 03:18:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,18 +25,26 @@
 # include "target.h"
 
 extern const struct target tgt_dll;
-extern const struct target tgt_vvm;
 extern const struct target tgt_xnf;
+
+#ifdef ENABLE_VVM
+extern const struct target tgt_vvm;
+#endif
 
 const struct target *target_table[] = {
       &tgt_dll,
+#ifdef ENABLE_VVM
       &tgt_vvm,
+#endif
       &tgt_xnf,
       0
 };
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.9  2002/02/16 03:18:54  steve
+ *  Make vvm optional, normally off.
+ *
  * Revision 1.8  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2002/02/03 07:05:37 $" Version "$Date: 2002/02/03 07:05:37 $"
+.TH iverilog 1 "$Date: 2002/02/16 03:18:54 $" Version "$Date: 2002/02/16 03:18:54 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -12,10 +12,9 @@ iverilog - Icarus Verilog compiler
 .PP
 \fIiverilog\fP is a compiler that translates Verilog source code into
 executable programs for simulation, or other netlist formats for
-further processing. The currently supported targets are \fIvvm\fP (for
-executable simulation) and \fIvvp\fP for simulation, and \fIxnf\fP for
-synthesis. Other target types are added as code generators are
-implemented.
+further processing. The currently supported targets are \fIvvp\fP for
+simulation, and \fIxnf\fP and \fIfpga\fP for synthesis. Other target
+types are added as code generators are implemented.
 
 .SH OPTIONS
 .l
@@ -153,27 +152,21 @@ desired target.
 The null target causes no code to be generated. It is useful for
 checking the syntax of the Verilog source.
 .TP 8
-.B vvm
-The target is an executable program that uses the vvm simulation
-runtime. The compiler actually generates C++ code, then compiles and
-links that code to make the output executable.
-.TP 8
 .B vvp
 This is the default. The vvp target generates code for the vvp
 runtime. The output is a complete program that simulates the design
-(like with vvm) but must be run by the \fBvvp\fP command. This target
-is much faster then the \fBvvm\fP target, but not quite as complete.
+but must be run by the \fBvvp\fP command.
 .TP 8
 .B xnf
 This is the Xilinx Netlist Format used by many tools for placing
 devices in FPGAs or other programmable devices. The Icarus Verilog XNF
 code generator can generate complete designs or XNF macros that can be
-imported into larger designs by other tools.
+imported into larger designs by other tools. (This target is obsolete,
+use the \fBfpga\fP target instead.)
 .TP 8
 .B fpga
-This is a variant of the XNF code generator that supports a wider
-variety of target devices. It is intended as a future replacement for
-the existing \fBxnf\fP target, but for now is still experimental.
+This is a synthesis target that supports a variety of fpga devices,
+mostly by EDIF format output.
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
