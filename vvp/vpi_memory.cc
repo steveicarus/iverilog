@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.9 2002/05/17 04:12:19 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.10 2002/06/30 04:35:47 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -341,7 +341,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
       switch (vp->format) {
 	  default:
-	    assert(!"not implemented");
+	    assert("format not implemented");
 
           case vpiBinStrVal:
 	      assert(width < sizeof(buf));
@@ -438,6 +438,40 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			
 		  vp->value.integer |= bit << idx;
 	    }
+	    break;
+
+          case vpiVectorVal: {
+		  assert(width < (sizeof(buf)/sizeof(s_vpi_vecval)*32));
+		  s_vpi_vecval *op = (p_vpi_vecval)buf;
+		  vp->value.vector = op;
+
+		  op->aval = op->bval = 0;
+                  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+			switch (memory_get(rfp->mem->mem, idx)) {
+			case 0:
+			      op->aval &= ~(1 << idx % 32);
+			      op->bval &= ~(1 << idx % 32);
+			      break;
+			case 1:
+			      op->aval |=  (1 << idx % 32);
+			      op->bval &= ~(1 << idx % 32);
+			      break;
+			case 2:
+			      op->aval &= ~(1 << idx % 32);
+			      op->bval |=  (1 << idx % 32);
+			      break;
+			case 3:
+			      op->aval |= (1 << idx % 32);
+			      op->bval |= (1 << idx % 32);
+			      break;
+			}
+			if (idx && !(idx % 32)) {
+			      op++;
+			      op->aval = op->bval = 0;
+			}
+		  }
+		  break;
+            }
       }
 }
 
@@ -502,6 +536,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.10  2002/06/30 04:35:47  steve
+ *  Get vpiVectorVal for memories.
+ *
  * Revision 1.9  2002/05/17 04:12:19  steve
  *  Rewire vpiMemory and vpiMemoryWord handles to
  *  support proper iteration of words, and the
