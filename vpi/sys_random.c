@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.12 2004/06/10 02:14:42 steve Exp $"
+#ident "$Id: sys_random.c,v 1.13 2004/06/17 14:44:01 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -295,7 +295,7 @@ static int sys_random_calltf(char*name)
       vpiHandle call_handle;
       vpiHandle argv;
       vpiHandle seed = 0;
-      long i_seed = 0;
+      static long i_seed = 0;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
@@ -362,6 +362,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.13  2004/06/17 14:44:01  steve
+ *  Save seed in static variable, in case user doesnt pass it.
+ *
  * Revision 1.12  2004/06/10 02:14:42  steve
  *  Fix transcription error scaling c in uniform range.
  *
