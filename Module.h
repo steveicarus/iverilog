@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.35 2004/02/20 18:53:33 steve Exp $"
+#ident "$Id: Module.h,v 1.36 2004/05/25 19:21:06 steve Exp $"
 #endif
 
 # include  <list>
@@ -84,7 +84,7 @@ class Module : public LineInfo {
 	/* specparams are simpler then other params, in that they have
 	   no type information. They are merely constant
 	   expressions. */
-      map<string,PExpr*>specparams;
+      map<perm_string,PExpr*>specparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
@@ -105,7 +105,7 @@ class Module : public LineInfo {
       svector<port_t*> ports;
 
 	/* Keep a table of named events declared in the module. */
-      map<string,PEvent*>events;
+      map<perm_string,PEvent*>events;
 
 	/* Keep a table of datum variables declared in the module. */
       map<hname_t,PData*>datum;
@@ -166,6 +166,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.36  2004/05/25 19:21:06  steve
+ *  More identifier lists use perm_strings.
+ *
  * Revision 1.35  2004/02/20 18:53:33  steve
  *  Addtrbute keys are perm_strings.
  *

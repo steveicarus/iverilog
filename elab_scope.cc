@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.30 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.31 2004/05/25 19:21:06 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -226,7 +226,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// elaboration, so do it now. This allows for normal
 	// elaboration to reference these events.
 
-      for (map<string,PEvent*>::const_iterator et = events.begin()
+      for (map<perm_string,PEvent*>::const_iterator et = events.begin()
 		 ; et != events.end() ;  et ++ ) {
 
 	    (*et).second->elaborate_scope(des, scope);
@@ -549,6 +549,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.31  2004/05/25 19:21:06  steve
+ *  More identifier lists use perm_strings.
+ *
  * Revision 1.30  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

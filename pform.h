@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.77 2004/03/08 00:10:30 steve Exp $"
+#ident "$Id: pform.h,v 1.78 2004/05/25 19:21:07 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -172,7 +172,7 @@ extern void pform_makewire(const struct vlltype&li, const char*name,
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
 			   bool signed_flag,
-			   list<char*>*names,
+			   list<perm_string>*names,
 			   NetNet::Type type,
 			   NetNet::PortType,
 			   svector<named_pexpr_t*>*attr);
@@ -190,17 +190,18 @@ extern void pform_make_reginit(const struct vlltype&li,
      i.e. input, output or inout. If the wire does not exist, create
      it. The second form takes a single name. */
 extern void pform_set_port_type(const struct vlltype&li,
-				list<char*>*names,
+				list<perm_string>*names,
 				svector<PExpr*>*range,
 				bool signed_flag,
 				NetNet::PortType);
-extern void pform_set_port_type(const char*nm, NetNet::PortType pt,
+extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 
-extern void pform_set_net_range(list<char*>*names, svector<PExpr*>*, bool);
+extern void pform_set_net_range(list<perm_string>*names,
+				svector<PExpr*>*, bool);
 extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
-extern void pform_set_reg_integer(list<char*>*names);
-extern void pform_set_reg_time(list<char*>*names);
+extern void pform_set_reg_integer(list<perm_string>*names);
+extern void pform_set_reg_time(list<perm_string>*names);
 extern void pform_set_task(perm_string name, PTask*);
 extern void pform_set_function(const char*, NetNet::Type,
 			       svector<PExpr*>*, PFunction*);
@@ -224,9 +225,9 @@ extern void pform_set_defparam(const hname_t&name, PExpr*expr);
 /*
  * Functions related to specify blocks.
  */
-extern void pform_set_specparam(const string&name, PExpr*expr);
-extern void pform_make_specify_path(list<char*>*src, char pol,
-				    bool full_flag, list<char*>*dst);
+extern void pform_set_specparam(perm_string name, PExpr*expr);
+extern void pform_make_specify_path(list<perm_string>*src, char pol,
+				    bool full_flag, list<perm_string>*dst);
 
 /*
  * pform_make_behavior creates processes that are declared with always
@@ -235,16 +236,16 @@ extern void pform_make_specify_path(list<char*>*src, char pol,
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*,
 				      svector<named_pexpr_t*>*attr);
 
-extern svector<PWire*>* pform_make_udp_input_ports(list<char*>*);
+extern svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
 
 extern bool pform_expression_is_constant(const PExpr*);
 
-extern void pform_make_events(list<char*>*names,
+extern void pform_make_events(list<perm_string>*names,
 			      const char*file, unsigned lineno);
 /*
  * Make real datum objects.
  */
-extern void pform_make_reals(list<char*>*names,
+extern void pform_make_reals(list<perm_string>*names,
 			     const char*file, unsigned lineno);
 
 /*
@@ -275,7 +276,7 @@ extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 					     bool signed_flag,
 					     svector<PExpr*>*range,
-					     list<char*>*names,
+					     list<perm_string>*names,
 					     const char* file,
 					     unsigned lineno);
 
@@ -290,6 +291,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.78  2004/05/25 19:21:07  steve
+ *  More identifier lists use perm_strings.
+ *
  * Revision 1.77  2004/03/08 00:10:30  steve
  *  Verilog2001 new style port declartions for primitives.
  *

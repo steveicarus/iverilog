@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.85 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.86 2004/05/25 19:21:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -756,7 +756,7 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
-      typedef map<string,PExpr*>::const_iterator specparm_iter_t;
+      typedef map<perm_string,PExpr*>::const_iterator specparm_iter_t;
       for (specparm_iter_t cur = specparams.begin()
 		 ; cur != specparams.end() ; cur ++) {
 	    out << "    specparam " << (*cur).first << " = "
@@ -772,7 +772,7 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
-      for (map<string,PEvent*>::const_iterator cur = events.begin()
+      for (map<perm_string,PEvent*>::const_iterator cur = events.begin()
 		 ; cur != events.end() ;  cur ++ ) {
 	    PEvent*ev = (*cur).second;
 	    out << "    event " << ev->name() << "; // "
@@ -881,6 +881,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.86  2004/05/25 19:21:07  steve
+ *  More identifier lists use perm_strings.
+ *
  * Revision 1.85  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *

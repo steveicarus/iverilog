@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.194 2004/05/25 03:42:44 steve Exp $"
+#ident "$Id: parse.y,v 1.195 2004/05/25 19:21:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,7 +77,6 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 	/* text items are C strings allocated by the lexor using
 	   strdup. They can be put into lists with the texts type. */
       char*text;
-      list<char*>*texts;
       list<perm_string>*perm_strings;
 
       hname_t*hier;
@@ -169,7 +168,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %type <hier> identifier
 %type <text> register_variable
-%type <texts> register_variable_list list_of_identifiers
+%type <perm_strings> register_variable_list list_of_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
@@ -215,7 +214,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <range_delay> range_delay
 
 %type <letter> spec_polarity
-%type <texts>  specify_path_identifiers
+%type <perm_strings>  specify_path_identifiers
 
 %token K_TAND
 %right '?' ':'
@@ -1171,14 +1170,16 @@ identifier
      non-hierarchical names separated by ',' characters. */
 list_of_identifiers
 	: IDENTIFIER
-		{ list<char*>*tmp = new list<char*>;
-		  tmp->push_back($1);
+		{ list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
+		  delete[]$1;
 		}
 	| list_of_identifiers ',' IDENTIFIER
-		{ list<char*>*tmp = $1;
-		  tmp->push_back($3);
+		{ list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
+		  delete[]$3;
 		}
 	;
 
@@ -2197,14 +2198,16 @@ register_variable
 
 register_variable_list
 	: register_variable
-		{ list<char*>*tmp = new list<char*>;
-		  tmp->push_back($1);
+		{ list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
+		  delete[]$1;
 		}
 	| register_variable_list ',' register_variable
-		{ list<char*>*tmp = $1;
-		  tmp->push_back($3);
+		{ list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
+		  delete[]$3;
 		}
 	;
 
@@ -2314,24 +2317,28 @@ specify_simple_path
 
 specify_path_identifiers
 	: IDENTIFIER
-		{ list<char*>*tmp = new list<char*>;
-		  tmp->push_back($1);
+		{ list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
+		  delete[]$1;
 		}
 	| IDENTIFIER '[' expr_primary ']'
-		{ list<char*>*tmp = new list<char*>;
-		  tmp->push_back($1);
+		{ list<perm_string>*tmp = new list<perm_string>;
+		  tmp->push_back(lex_strings.make($1));
 		  $$ = tmp;
+		  delete[]$1;
 		}
 	| specify_path_identifiers ',' IDENTIFIER
-		{ list<char*>*tmp = $1;
-		  tmp->push_back($3);
+		{ list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
+		  delete[]$3;
 		}
 	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
-		{ list<char*>*tmp = $1;
-		  tmp->push_back($3);
+		{ list<perm_string>*tmp = $1;
+		  tmp->push_back(lex_strings.make($3));
 		  $$ = tmp;
+		  delete[]$3;
 		}
 	;
 
@@ -2344,7 +2351,7 @@ specparam
 			delete tmp;
 			tmp = 0;
 		  } else {
-			pform_set_specparam($1, tmp);
+			pform_set_specparam(lex_strings.make($1), tmp);
 		  }
 		  delete $1;
 		}

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.124 2004/03/08 00:10:30 steve Exp $"
+#ident "$Id: pform.cc,v 1.125 2004/05/25 19:21:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -668,7 +668,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
  * only called by the parser within the scope of the net declaration,
  * and the name that I receive only has the tail component.
  */
-static void pform_set_net_range(const char*name,
+static void pform_set_net_range(const char* name,
 				const svector<PExpr*>*range,
 				bool signed_flag)
 {
@@ -693,18 +693,17 @@ static void pform_set_net_range(const char*name,
       cur->set_signed(signed_flag);
 }
 
-void pform_set_net_range(list<char*>*names,
+void pform_set_net_range(list<perm_string>*names,
 			 svector<PExpr*>*range,
 			 bool signed_flag)
 {
       assert((range == 0) || (range->count() == 2));
 
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_set_net_range(txt, range, signed_flag);
-	    free(txt);
       }
 
       delete names;
@@ -716,27 +715,26 @@ void pform_set_net_range(list<char*>*names,
  * This is invoked to make a named event. This is the declaration of
  * the event, and not necessarily the use of it.
  */
-static void pform_make_event(const char*name, const char*fn, unsigned ln)
+static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 {
-      PEvent*event = new PEvent(lex_strings.make(name));
+      PEvent*event = new PEvent(name);
       event->set_file(fn);
       event->set_lineno(ln);
       pform_cur_module->events[name] = event;
 }
 
-void pform_make_events(list<char*>*names, const char*fn, unsigned ln)
+void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
 {
-      list<char*>::iterator cur;
+      list<perm_string>::iterator cur;
       for (cur = names->begin() ;  cur != names->end() ;  cur++) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_make_event(txt, fn, ln);
-	    free(txt);
       }
 
       delete names;
 }
 
-static void pform_make_datum(const char*name, const char*fn, unsigned ln)
+static void pform_make_datum(perm_string name, const char*fn, unsigned ln)
 {
       hname_t hname = hier_name(name);
       PData*datum = new PData(hname);
@@ -745,13 +743,12 @@ static void pform_make_datum(const char*name, const char*fn, unsigned ln)
       pform_cur_module->datum[hname] = datum;
 }
 
-void pform_make_reals(list<char*>*names, const char*fn, unsigned ln)
+void pform_make_reals(list<perm_string>*names, const char*fn, unsigned ln)
 {
-      list<char*>::iterator cur;
+      list<perm_string>::iterator cur;
       for (cur = names->begin() ;  cur != names->end() ;  cur++) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_make_datum(txt, fn, ln);
-	    free(txt);
       }
 
       delete names;
@@ -1131,18 +1128,17 @@ void pform_makewire(const vlltype&li, const char*nm,
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
 		    bool signed_flag,
-		    list<char*>*names,
+		    list<perm_string>*names,
 		    NetNet::Type type,
 		    NetNet::PortType pt,
 		    svector<named_pexpr_t*>*attr)
 {
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_makewire(li, txt, type, pt, attr);
 	    pform_set_net_range(txt, range, signed_flag);
-	    free(txt);
       }
 
       delete names;
@@ -1182,7 +1178,7 @@ void pform_makewire(const vlltype&li,
       }
 }
 
-void pform_set_port_type(const char*nm, NetNet::PortType pt,
+void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 			 const char*file, unsigned lineno)
 {
       hname_t name = hier_name(nm);
@@ -1259,16 +1255,16 @@ void pform_set_port_type(const char*nm, NetNet::PortType pt,
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      bool signed_flag,
 				      svector<PExpr*>*range,
-				      list<char*>*names,
+				      list<perm_string>*names,
 				      const char* file,
 				      unsigned lineno)
 {
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; cur ++ ) {
 
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    hname_t name = hier_name(txt);
 
 	      /* Look for a preexisting wire. If it exists, set the
@@ -1291,7 +1287,6 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
 
-	    free(txt);
 	    delete res;
 	    res = tmp;
       }
@@ -1424,7 +1419,7 @@ void pform_set_localparam(perm_string name, PExpr*expr)
       pform_cur_module->localparams[name].signed_flag = false;
 }
 
-void pform_set_specparam(const string&name, PExpr*expr)
+void pform_set_specparam(perm_string name, PExpr*expr)
 {
       assert(expr);
       pform_cur_module->specparams[name] = expr;
@@ -1439,27 +1434,26 @@ void pform_set_defparam(const hname_t&name, PExpr*expr)
 /*
  * XXXX Not implemented yet.
  */
-extern void pform_make_specify_path(list<char*>*src, char pol,
-				    bool full_flag, list<char*>*dst)
+extern void pform_make_specify_path(list<perm_string>*src, char pol,
+				    bool full_flag, list<perm_string>*dst)
 {
       delete src;
       delete dst;
 }
 
 void pform_set_port_type(const struct vlltype&li,
-			 list<char*>*names,
+			 list<perm_string>*names,
 			 svector<PExpr*>*range,
 			 bool signed_flag,
 			 NetNet::PortType pt)
 {
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    if (range)
 		  pform_set_net_range(txt, range, signed_flag);
-	    free(txt);
       }
 
       delete names;
@@ -1487,14 +1481,13 @@ static void pform_set_reg_integer(const char*nm)
       cur->set_signed(true);
 }
 
-void pform_set_reg_integer(list<char*>*names)
+void pform_set_reg_integer(list<perm_string>*names)
 {
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_set_reg_integer(txt);
-	    free(txt);
       }
       delete names;
 }
@@ -1516,31 +1509,31 @@ static void pform_set_reg_time(const char*nm)
 		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
 }
 
-void pform_set_reg_time(list<char*>*names)
+void pform_set_reg_time(list<perm_string>*names)
 {
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    char*txt = *cur;
+	    perm_string txt = *cur;
 	    pform_set_reg_time(txt);
-	    free(txt);
       }
       delete names;
 }
 
-svector<PWire*>* pform_make_udp_input_ports(list<char*>*names)
+svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 {
       svector<PWire*>*out = new svector<PWire*>(names->size());
 
       unsigned idx = 0;
-      for (list<char*>::iterator cur = names->begin()
+      for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    char*txt = *cur;
-	    PWire*pp = new PWire(txt, NetNet::IMPLICIT, NetNet::PINPUT);
+	    perm_string txt = *cur;
+	    PWire*pp = new PWire(hname_t(txt),
+				 NetNet::IMPLICIT,
+				 NetNet::PINPUT);
 	    (*out)[idx] = pp;
 	    idx += 1;
-	    free(txt);
       }
 
       delete names;
@@ -1605,6 +1598,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.125  2004/05/25 19:21:07  steve
+ *  More identifier lists use perm_strings.
+ *
  * Revision 1.124  2004/03/08 00:10:30  steve
  *  Verilog2001 new style port declartions for primitives.
  *
