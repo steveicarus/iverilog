@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.1 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.2 2001/11/09 03:39:07 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -181,7 +181,26 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(rfp->base.vpi_type->type_code==vpiMemoryWord);
       
-      assert(0 && "sorry, not yet");
+      unsigned width = memory_data_width(rfp->mem->mem);
+      unsigned bidx = rfp->index * ((width+3)&~3);
+
+      switch (vp->format) {
+	  default:
+	    assert(!"not implemented");
+
+      	  case vpiIntVal:
+	    vp->value.integer = 0;
+	    for (unsigned idx = 0;  idx < width;  idx += 1) {
+
+		  unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
+		  if (bit>1) {
+			vp->value.integer = 0;
+			break;
+		  }
+			
+		  vp->value.integer |= bit << idx;
+	    }
+      }
 }
 
 static const struct __vpirt vpip_memory_rt = {
@@ -221,6 +240,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.2  2001/11/09 03:39:07  steve
+ *  Support vpiIntVal from memory.
+ *
  * Revision 1.1  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
