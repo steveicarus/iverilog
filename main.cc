@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.7 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: main.cc,v 1.8 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -63,6 +63,7 @@ extern void emit(ostream&o, const Design*, const char*);
 extern void cprop(Design*des);
 extern void sigfold(Design*des);
 extern void stupid(Design*des);
+extern void nobufz(Design*des);
 
 typedef void (*net_func)(Design*);
 static struct net_func_map {
@@ -70,6 +71,7 @@ static struct net_func_map {
       void (*func)(Design*);
 } func_table[] = {
       { "cprop",   &cprop },
+      { "nobufz",  &nobufz },
       { "sigfold", &sigfold },
       { "stupid",  &stupid },
       { 0, 0 }
@@ -227,6 +229,14 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.8  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.7  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

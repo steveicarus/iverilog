@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: cprop.cc,v 1.1 1998/11/13 06:23:17 steve Exp $"
+#ident "$Id: cprop.cc,v 1.2 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -149,22 +149,27 @@ static void look_for_core_logic(Design*des, NetConst*obj)
  */
 static void dangling_const(Design*des, NetConst*obj)
 {
-      NetObj*cur;
-      unsigned pin;
-      for (obj->pin(0).next_link(cur, pin)
-		 ; cur != obj
-		 ; cur->pin(pin).next_link(cur, pin)) {
-	    if (! dynamic_cast<NetNet*>(cur))
-		  return;
+	// If there are any links that take input, abort this
+	// operation.
+      if (count_inputs(obj->pin(0)) > 0)
+	    return;
+
+	// If there are no other drivers, delete all the signals that
+	// are also dangling.
+      if (count_outputs(obj->pin(0)) == 1) {
+
+	    NetObj*cur;
+	    unsigned pin;
+	    obj->pin(0).next_link(cur, pin);
+	    while (cur != obj) {
+		  cerr << "cprop: delete dangling signal " << cur->name() <<
+			"." << endl;
+		  delete cur;
+		  obj->pin(0).next_link(cur, pin);
+	    }
       }
 
-      obj->pin(0).next_link(cur, pin);
-      while (cur != obj) {
-	    cerr << "cprop: delete dangling signal " << cur->name() <<
-		  "." << endl;
-	    delete cur;
-	    obj->pin(0).next_link(cur, pin);
-      }
+	// Done. Delete me.
       delete obj;
 }
 
@@ -182,6 +187,14 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.2  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.1  1998/11/13 06:23:17  steve
  *  Introduce netlist optimizations with the
  *  cprop function to do constant propogation.

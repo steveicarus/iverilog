@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.9 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: netlist.h,v 1.10 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 /*
@@ -49,6 +49,10 @@ struct target;
  * The web of nodes that makes up a circuit is held together by the
  * Link class. There is a link for each pin. All mutually connected
  * pins form a ring of links.
+ *
+ * A link can be INPUT, OUTPUT or PASSIVE. An input never drives the
+ * signal, and PASSIVE never receives the value of the signal. Wires
+ * are PASSIVE, for example.
  */
 class NetObj {
 
@@ -58,8 +62,13 @@ class NetObj {
 	    friend class NetObj;
 
 	  public:
-	    Link() : next_(this), prev_(this) { }
+	    enum DIR { PASSIVE, INPUT, OUTPUT };
+	    Link() : dir_(PASSIVE), next_(this), prev_(this) { }
 	    ~Link() { unlink(); }
+
+	      // Manipulate the link direction.
+	    void set_dir(DIR d) { dir_ = d; }
+	    DIR get_dir() const { return dir_; }
 
 	    void cur_link(NetObj*&net, unsigned &pin)
 		  { net = node_;
@@ -101,6 +110,7 @@ class NetObj {
 	      // NetNode so that following the links can get me here.
 	    NetObj *node_;
 	    unsigned pin_;
+	    DIR dir_;
 
 	  private:
 	    Link *next_;
@@ -129,6 +139,10 @@ class NetObj {
 
       void set_attributes(const map<string,string>&);
       string attribute(const string&key) const;
+
+	// Return true if this has all the attributes in that and they
+	// all have the same values.
+      bool has_compat_attributes(const NetObj&that) const;
 
       bool test_mark() const { return mark_; }
       void set_mark(bool flag=true) { mark_ = flag; }
@@ -266,7 +280,10 @@ class NetBUFZ  : public NetNode {
 
     public:
       explicit NetBUFZ(const string&n)
-      : NetNode(n, 2) { }
+      : NetNode(n, 2)
+      { pin(0).set_dir(Link::OUTPUT);
+        pin(1).set_dir(Link::INPUT);
+      }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -276,7 +293,7 @@ class NetConst  : public NetNode {
 
     public:
       explicit NetConst(const string&n, verinum::V v)
-      : NetNode(n, 1), value_(v) { }
+      : NetNode(n, 1), value_(v) { pin(0).set_dir(Link::OUTPUT); }
 
       verinum::V value() const { return value_; }
 
@@ -288,15 +305,15 @@ class NetConst  : public NetNode {
 };
 
 /*
- * This class represents all manner of logic gates.
+ * This class represents all manner of logic gates. Pin 0 is OUTPUT and
+ * all the remaining pins are INPUT
  */
 class NetLogic  : public NetNode {
 
     public:
       enum TYPE { AND, NAND, NOR, NOT, OR, XNOR, XOR };
 
-      explicit NetLogic(const string&n, unsigned pins, TYPE t)
-      : NetNode(n, pins), type_(t) { }
+      explicit NetLogic(const string&n, unsigned pins, TYPE t);
 
       TYPE type() const { return type_; }
 
@@ -315,9 +332,7 @@ class NetLogic  : public NetNode {
 class NetUDP  : public NetNode {
 
     public:
-      explicit NetUDP(const string&n, unsigned pins)
-      : NetNode(n, pins) { }
-
+      explicit NetUDP(const string&n, unsigned pins);
 
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -752,6 +767,7 @@ inline bool operator != (const NetObj::Link&l, const NetObj::Link&r)
    connected to other things, connect is transitive. */
 extern void connect(NetObj::Link&, NetObj::Link&);
 
+/* Return true if l and r are connected. */
 inline bool connected(const NetObj::Link&l, const NetObj::Link&r)
 { return l.is_linked(r); }
 
@@ -759,6 +775,9 @@ inline bool connected(const NetObj::Link&l, const NetObj::Link&r)
    l is connected to a pin in r. This is expecially useful for
    checking signal vectors. */
 extern bool connected(const NetObj&l, const NetObj&r);
+
+extern unsigned count_inputs(const NetObj::Link&pin);
+extern unsigned count_outputs(const NetObj::Link&pin);
 
 /* Find the signal connected to the given node pin. There should
    always be exactly one signal. The bidx parameter get filled with
@@ -773,6 +792,14 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.10  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.9  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.7 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.8 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 /*
@@ -260,6 +260,9 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
       net->set_attributes(udp->attributes);
 
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    if (pin(idx) == 0)
+		  continue;
+
 	    NetNet*sig = pin(idx)->elaborate_net(des, path);
 	    if (sig == 0) {
 		  cerr << "Expression too complicated for elaboration:"
@@ -729,6 +732,14 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.8  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.7  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.9 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: netlist.cc,v 1.10 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -115,6 +115,36 @@ bool connected(const NetObj&l, const NetObj&r)
       return true;
 }
 
+unsigned count_inputs(const NetObj::Link&pin)
+{
+      unsigned count = (pin.get_dir() == NetObj::Link::INPUT)? 1 : 0;
+      const NetObj*cur;
+      unsigned cpin;
+      pin.next_link(cur, cpin);
+      while (cur->pin(cpin) != pin) {
+	    if (cur->pin(cpin).get_dir() == NetObj::Link::INPUT)
+		  count += 1;
+	    cur->pin(cpin).next_link(cur, cpin);
+      }
+
+      return count;
+}
+
+unsigned count_outputs(const NetObj::Link&pin)
+{
+      unsigned count = (pin.get_dir() == NetObj::Link::OUTPUT)? 1 : 0;
+      const NetObj*cur;
+      unsigned cpin;
+      pin.next_link(cur, cpin);
+      while (cur->pin(cpin) != pin) {
+	    if (cur->pin(cpin).get_dir() == NetObj::Link::OUTPUT)
+		  count += 1;
+	    cur->pin(cpin).next_link(cur, cpin);
+      }
+
+      return count;
+}
+
 const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 {
       const NetObj*cur;
@@ -161,6 +191,23 @@ string NetObj::attribute(const string&key) const
 	    return "";
 
       return (*idx).second;
+}
+
+bool NetObj::has_compat_attributes(const NetObj&that) const
+{
+      map<string,string>::const_iterator idx;
+      for (idx = that.attributes_.begin()
+		 ; idx != that.attributes_.end() ;  idx ++) {
+	   map<string,string>::const_iterator cur;
+	   cur = attributes_.find((*idx).first);
+
+	   if (cur == attributes_.end())
+		 return false;
+	   if ((*cur).second != (*idx).second)
+		 return false;
+      }
+
+      return true;
 }
 
 NetNode::~NetNode()
@@ -344,6 +391,22 @@ void NetEUnary::set_width(unsigned w)
       expr_width(w);
 }
 
+NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
+: NetNode(n, pins), type_(t)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
+	    pin(idx).set_dir(Link::INPUT);
+}
+
+NetUDP::NetUDP(const string&n, unsigned pins)
+: NetNode(n, pins)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
+	    pin(idx).set_dir(Link::INPUT);
+}
+
 string Design::get_flag(const string&key) const
 {
       map<string,string>::const_iterator tmp = flags_.find(key);
@@ -496,6 +559,14 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.10  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.9  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

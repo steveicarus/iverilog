@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.5 1998/12/01 00:42:13 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.6 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 /*
@@ -75,7 +75,19 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    o << setw(ind) << "" << idx << ":";
+	    o << setw(ind) << "" << idx;
+	    switch (pin(idx).get_dir()) {
+		case Link::PASSIVE:
+		  o << " p";
+		  break;
+		case Link::INPUT:
+		  o << " I";
+		  break;
+		case Link::OUTPUT:
+		  o << " O";
+		  break;
+	    }
+	    o << ":";
 
 	    unsigned cpin;
 	    const NetObj*cur;
@@ -392,6 +404,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.6  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.5  1998/12/01 00:42:13  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

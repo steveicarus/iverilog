@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sigfold.cc,v 1.1 1998/11/16 05:03:53 steve Exp $"
+#ident "$Id: sigfold.cc,v 1.2 1998/12/02 04:37:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -39,6 +39,17 @@
  * The result of this should be that signals of enclosing modules will
  * be preferred over signals of instantiated modules, and bussed
  * signals (vectors) will be preferred over scaler signals.
+ *
+ * The presence of attributes modifies the folding process, by placing
+ * restrictions on what is allowed.
+ *
+ *      If two signals have an attribute key X, they can be folded
+ *      only if X has the same value for both signals.
+ *
+ *      If signal A has attribute X and signal B does not, then
+ *      signals can be folded if B can take the attribute.
+ *
+ *      All the pins in a vector have identical attributes.
  */
 
 static unsigned depth(const string&sym)
@@ -63,18 +74,49 @@ static void clear_extra_signals(NetNet*net, unsigned npin)
       unsigned pin = npin;
       for (net->pin(pin).next_link(cur, pin) ; cur != net ; ) {
 
+	      // sig is the node I am going to try to subsume.
 	    NetNet*sig = dynamic_cast<NetNet*>(cur);
-	    if ((sig == 0)
-		|| (depth(sig->name()) < mydepth)
-		|| (sig->pin_count() > net->pin_count())) {
+
+	      // Skip the node if it isn't even a signal.
+	    if (sig == 0) {
 		  cur->pin(pin).next_link(cur, pin);
 		  continue;
 	    }
 
+	      // Skip the node if it has incompatible attributes.
+	    if (! net->has_compat_attributes(*sig)) {
+
+		    // SPECIAL CASE!
+		  if (sig->has_compat_attributes(*net)) {
+			net->pin(npin).unlink();
+			return;
+		  }
+
+		  cur->pin(pin).next_link(cur, pin);
+		  continue;
+	    }
+
+	      // Skip the node if it is higher up.
+	    if (depth(sig->name()) < mydepth) {
+		  cur->pin(pin).next_link(cur, pin);
+		  continue;
+	    }
+
+	      // Skip the node if it is a larger vector.
+	    if (sig->pin_count() > net->pin_count()) {
+		  cur->pin(pin).next_link(cur, pin);
+		  continue;
+	    }
+
+	      // save the next link, ...
 	    NetObj*nxt;
 	    unsigned pnxt;
 	    cur->pin(pin).next_link(nxt, pnxt);
+
+	      // disconnect the target signal, ...
 	    sig->pin(pin).unlink();
+
+	      // And onward.
 	    cur = nxt;
 	    pin = pnxt;
       }
@@ -110,6 +152,14 @@ void sigfold(Design*des)
 
 /*
  * $Log: sigfold.cc,v $
+ * Revision 1.2  1998/12/02 04:37:13  steve
+ *  Add the nobufz function to eliminate bufz objects,
+ *  Object links are marked with direction,
+ *  constant propagation is more careful will wide links,
+ *  Signal folding is aware of attributes, and
+ *  the XNF target can dump UDP objects based on LCA
+ *  attributes.
+ *
  * Revision 1.1  1998/11/16 05:03:53  steve
  *  Add the sigfold function that unlinks excess
  *  signal nodes, and add the XNF target.
