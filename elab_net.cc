@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.69 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.70 2001/07/01 23:37:48 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1219,8 +1219,9 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
       for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
 	    connect(ram->pin_Address(idx), adr->pin(idx));
 
-      NetNet*osig = new NetTmp(scope, des->local_symbol(mem->name()),
-			       ram->width());
+      NetNet*osig = new NetNet(scope, des->local_symbol(mem->name()),
+			       NetNet::IMPLICIT, ram->width());
+      osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
 	    connect(ram->pin_Q(idx), osig->pin(idx));
@@ -1901,6 +1902,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.70  2001/07/01 23:37:48  steve
+ *  Make sure tmp net gets connected to ramdq output
+ *
  * Revision 1.69  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
