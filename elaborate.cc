@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.100 1999/09/25 02:57:30 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.101 1999/09/29 00:42:50 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  <strstream>
 # include  "pform.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 
 string Design::local_symbol(const string&path)
 {
@@ -1525,26 +1526,6 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       return reg;
 }
 
-/*
- * This funciton transforms an expression by padding the high bits
- * with V0 until the expression has the desired width. This may mean
- * not transforming the expression at all, if it is already wide
- * enough.
- */
-static NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
-{
-      if (wid > expr->expr_width()) {
-	    verinum pad(verinum::V0, wid - expr->expr_width());
-	    NetEConst*co = new NetEConst(pad);
-	    NetEConcat*cc = new NetEConcat(2);
-	    cc->set(0, co);
-	    cc->set(1, expr);
-	    cc->set_width(wid);
-	    expr = cc;
-      }
-      return expr;
-}
-
 NetProc* PAssign::elaborate(Design*des, const string&path) const
 {
 	/* Catch the case where the lvalue is a reference to a memory
@@ -2591,6 +2572,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.101  1999/09/29 00:42:50  steve
+ *  Allow expanding of additive operators.
+ *
  * Revision 1.100  1999/09/25 02:57:30  steve
  *  Parse system function calls.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.3 1999/09/23 03:56:57 steve Exp $"
+#ident "$Id: set_width.cc,v 1.4 1999/09/29 00:42:51 steve Exp $"
 #endif
 
 /*
@@ -28,6 +28,7 @@
  * whatever is needed to deal with the size mismatch.
  */
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  <typeinfo>
 
 
@@ -76,21 +77,30 @@ bool NetEBinary::set_width(unsigned w)
  */
 bool NetEBAdd::set_width(unsigned w)
 {
-      bool flag = true;
 
-      if (left_->expr_width() > right_->expr_width())
-	    right_->set_width(left_->expr_width());
-      else
-	    left_->set_width(right_->expr_width());
+      unsigned wid = w;
+      if (left_->expr_width() > wid)
+	    wid = left_->expr_width();
+      if (right_->expr_width() > wid)
+	    wid = right_->expr_width();
 
-      if (left_->expr_width() == w)
-	    expr_width(w);
-      else if (left_->expr_width() == (w-1))
-	    expr_width(w);
-      else
-	    flag = false;
+      left_->set_width(wid);
+      right_->set_width(wid);
 
-      return flag;
+      if (left_->expr_width() < wid) {
+	    NetExpr*tmp = pad_to_width(left_, wid);
+	    assert(tmp);
+	    left_ = tmp;
+      }
+
+      if (right_->expr_width() < wid) {
+	    NetExpr*tmp = pad_to_width(right_, wid);
+	    assert(tmp);
+	    right_ = tmp;
+      }
+
+      expr_width(wid);
+      return wid == w;
 }
 
 /*
@@ -251,6 +261,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.4  1999/09/29 00:42:51  steve
+ *  Allow expanding of additive operators.
+ *
  * Revision 1.3  1999/09/23 03:56:57  steve
  *  Support shift operators.
  *
