@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.16 2000/03/18 06:12:26 steve Exp $"
+#ident "$Id: lexor.lex,v 1.17 2000/03/29 04:36:42 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -35,6 +35,7 @@ static void output_init();
 
 static void def_match();
 static void def_start();
+static void def_finish();
 static void def_undefine();
 static void do_define();
 static int  is_defined(const char*name);
@@ -135,12 +136,14 @@ W [ \t\b\f]+
 <PPDEFINE>.* { do_define(); }
 
 <PPDEFINE>\n {
+      def_finish();
       istack->lineno += 1;
       fputc('\n', yyout);
       BEGIN(0);
   }
 
 <PPDEFINE><<EOF>> {
+      def_finish();
       istack->lineno += 1;
       fputc('\n', yyout);
       BEGIN(0);
@@ -326,6 +329,13 @@ static void do_define()
       }
 
       define_macro(def_name, yytext);
+      def_name[0] = 0;
+}
+
+static void def_finish()
+{
+      if (def_name[0])
+	    define_macro(def_name, "1");
 }
 
 static void def_undefine()
