@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.168 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.169 2000/08/20 17:49:04 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -34,7 +34,7 @@
   // Comparison for use in sorting algorithms.
 
 struct less_verinum {
-      bool operator() (const verinum&left, const verinum&right)
+      bool operator() (const verinum&left, const verinum&right) const
 	    { return left.is_before(right); }
 };
 
@@ -3117,6 +3117,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.169  2000/08/20 17:49:04  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.168  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *

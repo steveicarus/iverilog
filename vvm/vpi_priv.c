@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.8 2000/07/26 03:53:12 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.9 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -43,7 +43,6 @@ static struct systf_entry*systf_task_list = 0;
 
 /* This is the handle of the task currently being called. */
 static struct __vpiSysTaskCall*vpip_cur_task;
-
 
 void vpip_calltask(const char*fname, unsigned nparms, vpiHandle*parms)
 {
@@ -234,6 +233,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.9  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.8  2000/07/26 03:53:12  steve
  *  Make simulation precision available to VPI.
  *

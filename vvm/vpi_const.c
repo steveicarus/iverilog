@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.11 2000/08/08 01:47:40 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.12 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,7 +30,7 @@
  * This function is used in a couple places to interpret a bit string
  * as a value.
  */
-void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
+void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 {
       static char buff[1024];
       static s_vpi_vecval vect[64];
@@ -322,7 +322,7 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	  case vpiStringVal:
-	    vp->value.str = rfp->value;
+	    vp->value.str = (char*)rfp->value;
 	    vp->format = vpiStringVal;
 	    break;
 
@@ -393,6 +393,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.12  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.11  2000/08/08 01:47:40  steve
  *  Add vpi_vlog_info support from Adrian
  *

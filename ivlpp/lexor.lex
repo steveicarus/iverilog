@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.19 2000/08/01 01:38:25 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: lexor.lex,v 1.20 2000/08/20 17:49:04 steve Exp $"
 #endif
 
 # include  <stdio.h>

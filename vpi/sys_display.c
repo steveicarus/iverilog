@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.16 2000/05/31 02:15:43 steve Exp $"
+#ident "$Id: sys_display.c,v 1.17 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -571,13 +571,14 @@ void sys_display_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
-
-      vpi_mcd_init();
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.17  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.16  2000/05/31 02:15:43  steve
  *  typo: fix vpiReadVal to vpiRealVal
  *

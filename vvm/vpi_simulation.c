@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_simulation.c,v 1.3 2000/07/26 03:53:12 steve Exp $"
+#ident "$Id: vpi_simulation.c,v 1.4 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -71,6 +71,8 @@ void vpip_init_simulation()
       cur->next = cur->prev = cur;
       vpip_simulation_obj.sim = cur;
       vpip_simulation_obj.time_precision = 0;
+
+      vpi_mcd_init();
 }
 
 void vpip_time_scale(int precision)
@@ -201,6 +203,9 @@ void vpip_simulation_run()
 
 /*
  * $Log: vpi_simulation.c,v $
+ * Revision 1.4  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.3  2000/07/26 03:53:12  steve
  *  Make simulation precision available to VPI.
  *

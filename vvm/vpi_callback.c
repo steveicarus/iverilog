@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_callback.c,v 1.7 2000/03/31 07:08:39 steve Exp $"
+#ident "$Id: vpi_callback.c,v 1.8 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -47,7 +47,7 @@ static void vpip_call_callback(void*cp)
 
       switch (rfp->cb_data.time->type) {
 	  case vpiSuppressTime:
-	  case vpiScaledRealTime: // XXXX not supported
+	  case vpiScaledRealTime: /* XXXX not supported */
 	    break;
 
 	  case vpiSimTime:
@@ -191,6 +191,9 @@ int vpi_remove_cb(vpiHandle ref)
 
 /*
  * $Log: vpi_callback.c,v $
+ * Revision 1.8  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.7  2000/03/31 07:08:39  steve
  *  allow cancelling of cbValueChange events.
  *

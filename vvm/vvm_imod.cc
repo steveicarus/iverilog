@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(WINNT)
-#ident "$Id: vvm_imod.cc,v 1.1 2000/05/19 04:22:56 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: vvm_imod.cc,v 1.2 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 
@@ -77,6 +77,9 @@ void vvm_binop_imod(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 
 /*
  * $Log: vvm_imod.cc,v $
+ * Revision 1.2  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.1  2000/05/19 04:22:56  steve
  *  Add the integer modulus function.
  *

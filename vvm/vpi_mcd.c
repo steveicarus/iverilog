@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.c,v 1.1 2000/05/07 18:20:08 steve Exp $"
+#ident "$Id: vpi_mcd.c,v 1.2 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -37,7 +37,7 @@ static struct mcd_entry mcd_table[32];
 /* Initialize mcd portion of vpi.  Must be called before
  * any vpi_mcd routines can be used.
  */
-void vpi_mcd_init()
+void vpi_mcd_init(void)
 {
 	mcd_table[0].fp = stdout;
 	mcd_table[0].filename = "<stdout>";

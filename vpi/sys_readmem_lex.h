@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: sys_readmem_lex.h,v 1.2 2000/01/23 23:54:36 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: sys_readmem_lex.h,v 1.3 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -34,6 +34,9 @@ extern int readmemlex();
 
 /*
  * $Log: sys_readmem_lex.h,v $
+ * Revision 1.3  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.2  2000/01/23 23:54:36  steve
  *  Compile time problems with vpi_user.h
  *

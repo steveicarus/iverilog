@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: parse.y,v 1.1 1999/07/03 17:24:11 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: parse.y,v 1.2 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 static void yyerror(const char*msg);

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.10 2000/05/18 03:27:32 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.11 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -65,7 +65,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       vpip_bits_get_value(rfp->bits, rfp->nbits, vp);
 }
 
-static void signal_put_value(vpiHandle ref, s_vpi_value*vp,
+static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 			     p_vpi_time when, int flags)
 {
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
@@ -73,6 +73,7 @@ static void signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	     || (ref->vpi_type->type_code==vpiReg));
 
       vpip_bits_set_value(rfp->bits, rfp->nbits, vp);
+      return ref;
 }
 
 static const struct __vpirt vpip_net_rt = {
@@ -121,6 +122,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.11  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.10  2000/05/18 03:27:32  steve
  *  Support writing scalars and vectors to signals.
  *

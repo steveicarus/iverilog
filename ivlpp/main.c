@@ -16,8 +16,8 @@ const char COPYRIGHT[] =
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: main.c,v 1.5 2000/06/30 15:49:44 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: main.c,v 1.6 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -148,6 +148,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.6  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.5  2000/06/30 15:49:44  steve
  *  Handle errors from parser slightly differently.
  *

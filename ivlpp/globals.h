@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: globals.h,v 1.3 2000/06/30 15:49:44 steve Exp $"
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: globals.h,v 1.4 2000/08/20 17:49:04 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -42,6 +42,9 @@ extern int yyparse();
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.4  2000/08/20 17:49:04  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.3  2000/06/30 15:49:44  steve
  *  Handle errors from parser slightly differently.
  *

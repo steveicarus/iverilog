@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.22 2000/07/26 03:53:12 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.23 2000/08/20 17:49:05 steve Exp $"
 #endif
 
 /*
@@ -111,7 +111,7 @@ extern vpip_bit_t vpip_pair_resolve(vpip_bit_t a, vpip_bit_t b);
 extern vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
 
 
-extern void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits,
+extern void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
 extern void vpip_bits_set_value(vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
@@ -282,7 +282,7 @@ struct __vpiStringConst {
 struct __vpiNumberConst {
       struct __vpiHandle base;
 
-      vpip_bit_t*bits;
+      const vpip_bit_t*bits;
       unsigned nbits;
 };
 
@@ -351,6 +351,7 @@ extern struct vpip_simulation vpip_simulation_obj;
 extern void vpip_init_simulation();
 extern void vpip_time_scale(int precision);
 extern void vpip_simulation_run();
+extern void vpi_mcd_init(void);
 
 /*
  * Schedule an event to be run sometime in the future. The d parmater
@@ -384,6 +385,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.23  2000/08/20 17:49:05  steve
+ *  Clean up warnings and portability issues.
+ *
  * Revision 1.22  2000/07/26 03:53:12  steve
  *  Make simulation precision available to VPI.
  *
