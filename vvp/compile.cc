@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.43 2001/04/26 15:52:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.44 2001/04/28 20:24:03 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -203,6 +203,56 @@ void compile_load_vpi_module(char*name)
 }
 
 /*
+ *  Add a functor to the symbol table
+ */
+
+static void define_functor_symbol(char*label, vvp_ipoint_t fdx)
+{
+  symbol_value_t val;
+  val.num = fdx;
+  sym_set_value(sym_functors, label, val);
+}
+
+/* 
+ * Run through the arguments looking for the functors that are
+ * connected to my input ports. For each source functor that I
+ * find, connect the output of that functor to the indexed
+ * input by inserting myself (complete with the port number in
+ * the vvp_ipoint_t) into the list that the source heads.
+ *   
+ * If the source functor is not declared yet, then don't do
+ * the link yet. Save the reference to be resolved later. 
+*/
+
+static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
+{
+  for (unsigned idx = 0;  idx < argc;  idx += 1) 
+    {
+      vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
+      functor_t iobj = functor_index(ifdx);
+
+      symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
+      vvp_ipoint_t tmp = val.num;
+      
+      if (tmp) 
+	{
+	  tmp = ipoint_index(tmp, argv[idx].idx);
+	  functor_t fport = functor_index(tmp);
+	  iobj->port[ipoint_port(ifdx)] = fport->out;
+	  fport->out = ifdx;
+	  
+	  free(argv[idx].text);
+	} 
+      else 
+	{
+	  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
+	}
+    }
+
+  free(argv);
+}
+
+/*
  * The parser calls this function to create a functor. I allocate a
  * functor, and map the name to the vvp_ipoint_t address for the
  * functor. Also resolve the inputs to the functor.
@@ -213,41 +263,11 @@ void compile_functor(char*label, char*type, unsigned init,
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      { symbol_value_t val;
-        val.num = fdx;
-	sym_set_value(sym_functors, label, val);
-      }
+      define_functor_symbol(label, fdx);
 
       assert(argc <= 4);
 
-	/* Run through the arguments looking for the functors that are
-	   connected to my input ports. For each source functor that I
-	   find, connect the output of that functor to the indexed
-	   input by inserting myself (complete with the port number in
-	   the vvp_ipoint_t) into the list that the source heads.
-
-	   If the source functor is not declared yet, then don't do
-	   the link yet. Save the reference to be resolved later. */
-
-      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
-	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    vvp_ipoint_t tmp = val.num;
-
-	    if (tmp) {
-		  tmp = ipoint_index(tmp, argv[idx].idx);
-		  functor_t fport = functor_index(tmp);
-		  obj->port[idx] = fport->out;
-		  fport->out = ipoint_make(fdx, idx);
-
-		  free(argv[idx].text);
-
-	    } else {
-		  postpone_functor_input(ipoint_make(fdx, idx),
-					 argv[idx].text,
-					 argv[idx].idx);
-
-	    }
-      }
+      inputs_connect(fdx, argc, argv);
 
       obj->ival = init;
       obj->oval = 2;
@@ -284,7 +304,6 @@ void compile_functor(char*label, char*type, unsigned init,
 	    yyerror("invalid functor type.");
       }
 
-      free(argv);
       free(label);
       free(type);
 }
@@ -298,6 +317,7 @@ void compile_udp_def(int sequ, char *label, char *name,
   u->nin = nin;
   u->init = init;
   u->table = table;
+  free(label);
 }
 
 char **compile_udp_table(char **table, char *row)
@@ -327,11 +347,8 @@ void compile_udp_functor(char*label, char*type,
   vvp_ipoint_t fdx = functor_allocate(nfun);
   functor_t obj = functor_index(fdx);
 
-  { 
-    symbol_value_t val;
-    val.num = fdx;
-    sym_set_value(sym_functors, label, val);
-  }
+  define_functor_symbol(label, fdx);
+  free(label);  
 
   for (unsigned idx = 0;  idx < argc;  idx += 4) 
     {
@@ -352,41 +369,8 @@ void compile_udp_functor(char*label, char*type,
 	  iobj->udp = u;
 	}
     }
-  
-  /* Run through the arguments looking for the functors that are
-     connected to my input ports. For each source functor that I
-     find, connect the output of that functor to the indexed
-     input by inserting myself (complete with the port number in
-     the vvp_ipoint_t) into the list that the source heads.
-     
-     If the source functor is not declared yet, then don't do
-     the link yet. Save the reference to be resolved later. */
 
-  for (unsigned idx = 0;  idx < argc;  idx += 1) 
-    {
-      vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
-      functor_t iobj = functor_index(ifdx);
-
-      symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-      vvp_ipoint_t tmp = val.num;
-      
-      if (tmp) 
-	{
-	  tmp = ipoint_index(tmp, argv[idx].idx);
-	  functor_t fport = functor_index(tmp);
-	  iobj->port[ipoint_port(ifdx)] = fport->out;
-	  fport->out = ifdx;
-	  
-	  free(argv[idx].text);
-	} 
-      else 
-	{
-	  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
-	}
-    }
-  
-  free(argv);
-  free(label);
+  inputs_connect(fdx, argc, argv);
 }
 
 
@@ -396,10 +380,7 @@ void compile_event(char*label, char*type,
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      { symbol_value_t val;
-        val.num = fdx;
-	sym_set_value(sym_functors, label, val);
-      }
+      define_functor_symbol(label, fdx);
 
       assert(argc <= 4);
 
@@ -412,27 +393,7 @@ void compile_event(char*label, char*type,
 	   If the source functor is not declared yet, then don't do
 	   the link yet. Save the reference to be resolved later. */
 
-      for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
-	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
-	    vvp_ipoint_t tmp = val.num;
-
-	    if (tmp) {
-		  tmp = ipoint_index(tmp, argv[idx].idx);
-		  functor_t fport = functor_index(tmp);
-		  obj->port[idx] = fport->out;
-		  fport->out = ipoint_make(fdx, idx);
-
-		  free(argv[idx].text);
-
-	    } else {
-		  postpone_functor_input(ipoint_make(fdx, idx),
-					 argv[idx].text,
-					 argv[idx].idx);
-
-	    }
-      }
-
-      free(argv);
+      inputs_connect(fdx, argc, argv);
 
       obj->ival = 0xaa;
       obj->oval = 2;
@@ -461,10 +422,7 @@ void compile_named_event(char*label, char*name)
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      { symbol_value_t val;
-        val.num = fdx;
-	sym_set_value(sym_functors, label, val);
-      }
+      define_functor_symbol(label, fdx);
 
       obj->ival = 0xaa;
       obj->oval = 2;
@@ -484,10 +442,7 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
       vvp_ipoint_t fdx = functor_allocate(1);
       functor_t obj = functor_index(fdx);
 
-      { symbol_value_t val;
-        val.num = fdx;
-	sym_set_value(sym_functors, label, val);
-      }
+      define_functor_symbol(label, fdx);
 
       obj->ival = 0xaa;
       obj->oval = 2;
@@ -517,7 +472,6 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
       }
 
       free(argv);
-
       free(label);
 }
 
@@ -795,9 +749,8 @@ void compile_variable(char*label, char*name, int msb, int lsb,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
       vvp_ipoint_t fdx = functor_allocate(wid);
-      symbol_value_t val;
-      val.num = fdx;
-      sym_set_value(sym_functors, label, val);
+
+      define_functor_symbol(label, fdx);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    functor_t obj = functor_index(ipoint_index(fdx,idx));
@@ -819,9 +772,8 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
       vvp_ipoint_t fdx = functor_allocate(wid);
-      symbol_value_t val;
-      val.num = fdx;
-      sym_set_value(sym_functors, label, val);
+
+      define_functor_symbol(label, fdx);
 
 	/* Allocate all the functors for the net itself. */
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -846,7 +798,7 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		  continue;
 	    }
 
-	    val = sym_get_value(sym_functors, argv[idx].text);
+	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
 	    if (val.num) {
 
 		  functor_t src = functor_index(ipoint_index(val.num,
@@ -957,6 +909,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.44  2001/04/28 20:24:03  steve
+ *  input connect cleanup. (Stephan Boettcher)
+ *
  * Revision 1.43  2001/04/26 15:52:22  steve
  *  Add the mode-42 functor concept to UDPs.
  *
