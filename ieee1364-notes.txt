@@ -339,8 +339,58 @@ the l-value will select oblivion if it is out of range. That is, if
 idx has a value that is not a valid bit select of vec, then the
 assignment will have no effect.
 
-$Id: ieee1364-notes.txt,v 1.9 2002/01/26 02:08:07 steve Exp $
+
+* SCHEDULING VALUES IN LOGIC
+
+The interaction between blocking assignments in procedural code and
+logic gates in gate-level code and expressions is poorly defined in
+Verilog. Consider this example:
+
+   reg a;
+   reg b;
+   wire q = a & b;
+
+   initial begin
+      a = 1;
+      b = 0;
+      #1 b = 1;
+      if (q !== 0) begin
+	 $display("FAILED -- q changed too soon? %b", q);
+	 $finish;
+      end
+   end
+
+This is a confusing situation. It is clear from the Verilog standard
+that an assignment to a variable using a blocking assign causes the
+l-value to receive the value before the assignment completes. This
+means that a subsequent read of the assigned variable *must* read back
+what was blocking-assigned.
+
+However, in the example above, the "wire q = a & b" expresses some
+gate logic between a/b and q. The standard does not say whether a read
+out of logic should read the value computed from previous assigns to
+the input from the same thread. Specifically, when "a" and "b" are
+assigned by blocking assignments, will a read of "q" get the computed
+value or the existing value?
+
+In fact, existing commercial tools do it both ways. Some tools print
+the FAILED message in the above example, and some do not. Icarus
+Verilog does not print the FAILED message in the above example,
+because the gate value change is *scheduled* when inputs are assigned,
+but not propagated until the thread gives up the processor.
+
+Icarus Verilog chooses this behavior in order to filter out zero-width
+pulses as early as possible. The implication of this is that a read of
+the output of combinational logic will most likely *not* reflect the
+changes in inputs until the thread that changed the inputs yields
+execution.
+
+
+$Id: ieee1364-notes.txt,v 1.10 2002/03/31 01:54:13 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.10  2002/03/31 01:54:13  steve
+ Notes about scheduling
+
 Revision 1.9  2002/01/26 02:08:07  steve
  Handle x in l-value of set/x
 
