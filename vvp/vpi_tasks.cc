@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.10 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.11 2002/04/07 02:34:10 steve Exp $"
 #endif
 
 /*
@@ -278,8 +278,11 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
       obj->vwid  = vwid;
 
 	/* If there is a compiletf function, call it here. */
-      if (obj->defn->info.compiletf)
+      if (obj->defn->info.compiletf) {
+	    vpip_cur_task = obj;
 	    obj->defn->info.compiletf (obj->defn->info.user_data);
+	    vpip_cur_task = 0;
+      }
 
       return &obj->base;
 }
@@ -332,6 +335,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.11  2002/04/07 02:34:10  steve
+ *  Set vpip_cur_task while calling compileft
+ *
  * Revision 1.10  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *
