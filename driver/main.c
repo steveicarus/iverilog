@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.11 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: main.c,v 1.12 2001/05/20 18:06:57 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -37,7 +37,9 @@ See man page for details.";
 #include <assert.h>
 
 #include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 
 #ifdef __MINGW32__
 #include <windows.h>
@@ -45,6 +47,20 @@ See man page for details.";
 
 #if HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
+#if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
+extern int getopt(int argc, char*argv[], const char*fmt);
+extern int optind;
+extern const char*optarg;
+#endif
+
+#if !defined(WIFEXITED)
+# define WIFEXITED(rc) ((rc&~0xff) == 0)
+#endif
+
+#if !defined(WEXITSTATUS)
+# define WEXITSTATUS(rc) (rc)
 #endif
 
 #ifndef IVL_ROOT
@@ -580,6 +596,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.12  2001/05/20 18:06:57  steve
+ *  local declares if the header is missing.
+ *
  * Revision 1.11  2001/05/20 15:09:40  steve
  *  Mingw32 support (Venkat Iyer)
  *

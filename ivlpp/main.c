@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.8 2000/12/06 05:15:21 steve Exp $"
+#ident "$Id: main.c,v 1.9 2001/05/20 18:08:07 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -46,6 +46,12 @@ const char VERSION[] = "$Name:  $ $State: Exp $";
 # include  <getopt.h>
 #endif
 # include  "globals.h"
+
+#if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
+extern int getopt(int argc, char*argv[], const char*fmt);
+extern int optind;
+extern const char*optarg;
+#endif
 
 char**include_dir = 0;
 unsigned include_cnt = 0;
@@ -177,6 +183,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.9  2001/05/20 18:08:07  steve
+ *  local declares if the header is missing.
+ *
  * Revision 1.8  2000/12/06 05:15:21  steve
  *  fix portfaults pass values.
  *
