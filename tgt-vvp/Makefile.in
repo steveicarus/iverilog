@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.20 2004/01/26 23:31:57 steve Exp $"
+#ident "$Id: Makefile.in,v 1.21 2004/01/28 23:54:10 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -38,7 +38,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = @CXXFLAGS@
 CFLAGS  = @CFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -49,7 +49,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall @ident_support@ $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall -I. -I$(srcdir)/.. @ident_support@ $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = vvp.o draw_mux.o draw_vpi.o eval_expr.o eval_real.o vector.o \
