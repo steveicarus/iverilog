@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.27 2001/06/07 03:09:03 steve Exp $
+ *  $Id: README.txt,v 1.28 2001/06/15 03:28:30 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -296,27 +296,43 @@ data bus, bit 0 is the lsb of the first word, bit 20 is the lsb of the
 second word.
 
 Structural read access is implemented in terms of address and data
-ports.  An address port is the concatinations of the smallest number of
-address bits required to express each address range.  The addresses
-applied to the address port are expected to be withing the ranges
-specified. 
+ports.  The addresses applied to the address port are expected to be
+withing the ranges specified, not based at zero.
 
-An port is a vector of functors that is wide enough to accept all
-address bits and at least as wide as the requested subset of the data
-port.
+A read port is a vector of functors that is wide enough to accept all
+provided address bits and at least as wide as the requested subset of
+the data port.
 
-	<label> .mem/port <memid>, <msb>,<lsb>, <symbols_list> ;
+	<label> .mem/port <memid>, <msb>,<lsb>, <aw>, <addr_bits> ;
 
 <label> identifies the vector of output functors, to allow connections
 to the data output.  <memid> is the label of the memory. <msb>,<lsb>
 select a part of the data width.  These are not relative to the data
-port range defined for the memory.  The LSB of the data word if here
+port range defined for the memory.  The LSB of the data word is here
 referred to as 0, regardless to the range specified in the memory
-definition.  The <symbols_list> connects to the address inputs of this
-port. 
+definition.  <addr_bits> is a list of symbols, which connect to the
+address inputs of this port.  There are <aw> address bits (<aw> may
+become a list of numbers, when multi-index memory ports become
+supported).
 
 Any address change, or any change in the addressed memory contents is
 imediately propagated to the port outputs.
+
+A write port is a superset of a read port.  It is a vector of functors
+that is wide enough to accept the address bits, an event input, a
+write enable input, and the data inputs.
+
+	<label> .mem/port <memid>, <msb>,<lsb>, <aw>, <addr_bits>, 
+                          <event>, <we>, <data> ;
+
+<event> is an event functor that triggers a write, if the <we> input
+is true.  <data> is a list of symbols that connect to the data input
+port.  For asynchronous transparent write operation, connect
+<event> to C<z>, the RAM will transparently follow any changes on
+address and data lines, while <we> is true.
+
+There is no Verilog construct that calls for a structural write port
+to a memory, but synthesis may ask for lpm_ram_d[pq] objects.
 
 To initialize a memory, use:
 

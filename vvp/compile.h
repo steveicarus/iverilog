@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.25 2001/06/07 03:09:03 steve Exp $"
+#ident "$Id: compile.h,v 1.26 2001/06/15 03:28:31 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -108,6 +108,7 @@ extern void compile_memory(char *label, char *name, int lsb, int msb,
 
 extern void compile_memory_port(char *label, char *memid, 
 				unsigned lsb, unsigned msb,
+				unsigned naddr,
 				unsigned argc, struct symb_s *argv);
 
 extern void compile_memory_init(char *memid, unsigned idx, unsigned char val);
@@ -190,6 +191,10 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.26  2001/06/15 03:28:31  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.25  2001/06/07 03:09:03  steve
  *  Implement .arith/sub subtraction.
  *

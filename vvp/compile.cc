@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.74 2001/06/10 17:12:51 steve Exp $"
+#ident "$Id: compile.cc,v 1.75 2001/06/15 03:28:31 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -612,6 +612,7 @@ void compile_memory(char *label, char *name, int msb, int lsb,
 
 void compile_memory_port(char *label, char *memid, 
 			 unsigned msb, unsigned lsb,
+			 unsigned naddr,
 			 unsigned argc, struct symb_s *argv)
 {
   vvp_memory_t mem = memory_find(memid);
@@ -624,21 +625,25 @@ void compile_memory_port(char *label, char *memid,
   assert (msb < memory_data_width(mem));
   unsigned nbits = msb-lsb+1;
 
-  unsigned awidth = memory_addr_width(mem);
-  unsigned nfun = (awidth + 3)/4;
+  bool writable = argc >= (naddr + 2 + nbits);
+
+  unsigned nfun = naddr;
+  if (writable)
+	nfun += 2 + nbits;
+  assert(nfun == argc);
+  nfun = (nfun+3)/4;
   if (nfun < nbits)
     nfun = nbits;
       
   vvp_ipoint_t ix = functor_allocate(nfun);
 
-  assert(argc == awidth);
   define_functor_symbol(label, ix);
   free(label);
 
   inputs_connect(ix, argc, argv);
   free(argv);
 
-  memory_port_new(mem, ix, nbits, lsb);
+  memory_port_new(mem, ix, nbits, lsb, naddr, writable);
 }
 
 void compile_memory_init(char *memid, unsigned i, unsigned char val)
@@ -1335,6 +1340,10 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.75  2001/06/15 03:28:31  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.74  2001/06/10 17:12:51  steve
  *  Instructions can forward reference functors.
  *

@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.h,v 1.2 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: memory.h,v 1.3 2001/06/15 03:28:31 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -38,7 +38,9 @@ typedef struct vvp_memory_index_s *vvp_memory_index_t;
 void memory_new(vvp_memory_t mem, char *name, int lsb, int msb,
 		unsigned idxs, long *idx);
 void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix, 
-		     unsigned nbits, unsigned bitoff);
+		     unsigned nbits, unsigned bitoff,
+		     unsigned naddr, bool writable);
+
 void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val);
 
 void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val);
@@ -46,7 +48,6 @@ unsigned memory_get(vvp_memory_t mem, unsigned idx);
 void schedule_memory(vvp_memory_t mem, unsigned idx, 
 		     unsigned char val, unsigned delay);
 
-unsigned memory_addr_width(vvp_memory_t mem);
 unsigned memory_size(vvp_memory_t mem);
 char *memory_name(vvp_memory_t mem);
 unsigned memory_data_width(vvp_memory_t mem);
@@ -60,6 +61,10 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.3  2001/06/15 03:28:31  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.2  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

@@ -19,7 +19,7 @@
 ;    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
 
 ; This sample demonstrates memory,  also including index register
-; arithmetic. 
+; arithmetic.  And a memory write port
 
 main	.scope	"example";
 
@@ -36,12 +36,20 @@ memory	.mem	"memory", 8,2, 27,5 ;
 ;;; An address/data port.
 ;
 ;   reg [4:0]  a;
+;   reg        we;
+;   event      wclk;
+;   reg [5:0]  di;
 ;   wire [5:0] d = memory[a][8:3];
 ;   reg [6:0]  m;
 
 a	.var	"a", 4,0;
+we	.var	"we", 0,0;
+wclk	.event	"wclk";
+di	.var	"di", 5,0;
 d	.net	"d", 5,0, mem[0],mem[1],mem[2],mem[3],mem[4],mem[5];
-mem	.mem/port memory, 6,1, a[0],a[1],a[2],a[3],a[4];
+mem	.mem/port memory, 6,1, 
+		5, a[0],a[1],a[2],a[3],a[4],
+		wclk, we, di[0],di[1],di[2],di[3],di[4],di[5];
 m	.var	"m", 6,0;
 
 ;;; The data port mem[] does not connect to the LSB of the memory.
@@ -76,6 +84,7 @@ m	.var	"m", 6,0;
 ;   always 
 ;     begin
 ;	#5 $display("a:%b d:%b", a, d);
+;	-> wclk;
 ;	#5 a <= a+1;
 ;     end
 
@@ -84,6 +93,8 @@ always ;
 	%delay	5;
 
 	%vpi_call "$display", "a:%b d:%b", a, d;
+
+	%set	wclk, 0;
 
 	%delay	5;
 
@@ -109,8 +120,18 @@ always ;
 ;
 ;   initial 
 ;     begin
+;       we = 0;
+;	di = 'b 10zx10;
 ;	a = 0;
-;	#320;
+;	#220;
+;       $readmemh("memory.hex", memory);
+;	#30;
+;	we = 1;
+;	#5;
+;	$display("write to a=%b", a);
+;	#5;
+;	we = 0;
+;	#60;
 ;	memory[23] <= 'b 1xz01;
 ;	#320;
 ;	m = memory[9];
@@ -121,6 +142,13 @@ always ;
 
 	.scope	main;
 initial ;
+	%set	we, 0;
+	%set	di[0], 0;
+	%set	di[1], 1;
+	%set	di[2], 2;
+	%set	di[3], 3;
+	%set	di[4], 0;
+	%set	di[5], 1;
 	%set	a[0], 0;
 	%set	a[1], 0;
 	%set	a[2], 0;
@@ -129,7 +157,13 @@ initial ;
 
 	%delay	220;
 	%vpi_call "$readmemh", "memory.hex", memory;
-	%delay	100;
+	%delay	30;
+	%set	we, 1;
+	%delay	5;
+	%vpi_call "$display", "write to a=%b", a;
+	%delay	5;
+	%set	we, 0;
+	%delay	60;
 
 ;;; Memories are indexed by index register 3.  The index register
 ;;; points to the bit position in the memory.  Each memory word

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.29 2001/06/07 03:09:03 steve Exp $"
+#ident "$Id: parse.y,v 1.30 2001/06/15 03:28:31 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -139,8 +139,8 @@ statement
         | T_LABEL K_MEM T_STRING ',' T_NUMBER ',' T_NUMBER ',' numbers ';'
 		{ compile_memory($1, $3, $5, $7, $9.cnt, $9.nvec); }
 
-        | T_LABEL K_MEM_P T_SYMBOL ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
-		{ compile_memory_port($1, $3, $5, $7, $9.cnt, $9.vect); }
+        | T_LABEL K_MEM_P T_SYMBOL ',' T_NUMBER ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
+		{ compile_memory_port($1, $3, $5, $7, $9, $11.cnt, $11.vect); }
 
 	| mem_init_stmt
 
@@ -458,6 +458,10 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.30  2001/06/15 03:28:31  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.29  2001/06/07 03:09:03  steve
  *  Implement .arith/sub subtraction.
  *
