@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.148 2000/11/29 23:16:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.149 2000/12/04 17:37:04 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -209,40 +209,24 @@ const NetScope* NetObj::scope() const
 
 void NetObj::set_attributes(const map<string,string>&attr)
 {
-      assert(attributes_.size() == 0);
-      attributes_ = attr;
+      attributes_.set_attributes(attr);
 }
 
 string NetObj::attribute(const string&key) const
 {
-      map<string,string>::const_iterator idx = attributes_.find(key);
-      if (idx == attributes_.end())
-	    return "";
-
-      return (*idx).second;
+      return attributes_.attribute(key);
 }
 
 void NetObj::attribute(const string&key, const string&value)
 {
-      attributes_[key] = value;
+      attributes_.attribute(key, value);
 }
 
 bool NetObj::has_compat_attributes(const NetObj&that) const
 {
-      map<string,string>::const_iterator idx;
-      for (idx = that.attributes_.begin()
-		 ; idx != that.attributes_.end() ;  idx ++) {
-	   map<string,string>::const_iterator cur;
-	   cur = attributes_.find((*idx).first);
-
-	   if (cur == attributes_.end())
-		 return false;
-	   if ((*cur).second != (*idx).second)
-		 return false;
-      }
-
-      return true;
+      return attributes_.has_compat_attributes(that.attributes_);
 }
+
 
 Link& NetObj::pin(unsigned idx)
 {
@@ -2057,11 +2041,6 @@ unsigned NetMemory::index_to_address(long idx) const
 }
 
 
-void NetMemory::set_attributes(const map<string,string>&attr)
-{
-      assert(attributes_.size() == 0);
-      attributes_ = attr;
-}
 
 NetEMemory* NetEMemory::dup_expr() const
 {
@@ -2471,6 +2450,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.149  2000/12/04 17:37:04  steve
+ *  Add Attrib class for holding NetObj attributes.
+ *
  * Revision 1.148  2000/11/29 23:16:19  steve
  *  Do not delete synthesized signals used in expressions.
  *

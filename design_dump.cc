@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.104 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.105 2000/12/04 17:37:03 steve Exp $"
 #endif
 
 /*
@@ -153,11 +153,10 @@ void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 
 void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 {
-      for (map<string,string>::const_iterator idx = attributes_.begin()
-		 ; idx != attributes_.end()
-		 ; idx ++) {
-	    o << setw(ind) << "" << (*idx).first << " = \"" <<
-		  (*idx).second << "\"" << endl;
+      unsigned idx;
+      for (idx = 0 ;  idx < attributes_.size() ;  idx += 1) {
+	    o << setw(ind) << "" << attributes_.key(idx) << " = \"" <<
+		  attributes_.value(idx) << "\"" << endl;
       }
 }
 
@@ -995,6 +994,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.105  2000/12/04 17:37:03  steve
+ *  Add Attrib class for holding NetObj attributes.
+ *
  * Revision 1.104  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1

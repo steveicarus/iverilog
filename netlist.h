@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.183 2000/12/02 05:08:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.184 2000/12/04 17:37:04 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,7 @@
 # include  "verinum.h"
 # include  "LineInfo.h"
 # include  "svector.h"
+# include  "Attrib.h"
 
 class Design;
 class Link;
@@ -115,7 +116,7 @@ class NetObj {
       unsigned delay2_;
       unsigned delay3_;
 
-      map<string,string> attributes_;
+      Attrib attributes_;
 };
 
 class Link {
@@ -625,8 +626,6 @@ class NetMemory  {
 	// that are not zero based.
       unsigned index_to_address(long idx) const;
 
-      void set_attributes(const map<string,string>&a);
-
       void dump(ostream&o, unsigned lm) const;
 
     private:
@@ -634,8 +633,6 @@ class NetMemory  {
       unsigned width_;
       long idxh_;
       long idxl_;
-
-      map<string,string> attributes_;
 
       friend class NetRamDq;
       NetRamDq* ram_list_;
@@ -2824,6 +2821,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.184  2000/12/04 17:37:04  steve
+ *  Add Attrib class for holding NetObj attributes.
+ *
  * Revision 1.183  2000/12/02 05:08:04  steve
  *  Spelling error in comment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.5 2000/11/20 00:58:40 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.6 2000/12/04 17:37:04 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -335,7 +335,6 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    delete rval;
 	    NetMemory*sig = new NetMemory(scope, path+"."+basename,
 					  wid, lnum, rnum);
-	    sig->set_attributes(attributes);
 
       } else {
 
@@ -348,6 +347,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.6  2000/12/04 17:37:04  steve
+ *  Add Attrib class for holding NetObj attributes.
+ *
  * Revision 1.5  2000/11/20 00:58:40  steve
  *  Add support for supply nets (PR#17)
  *
