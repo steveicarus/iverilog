@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.12 2001/04/14 05:10:56 steve Exp $"
+#ident "$Id: lexor.lex,v 1.13 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -80,8 +80,9 @@
      kind of instruction this really is. The few exceptions (that have
      exceptional parameter requirements) are listed first. */
 
-"%vpi_call" {
-      return K_vpi_call; }
+"%vpi_call" { return K_vpi_call; }
+"%disable"  { return K_disable; }
+"%fork"     { return K_fork; }
 
 "%"[.$_/a-zA-Z0-9]+ {
       yylval.text = strdup(yytext);
@@ -126,6 +127,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.13  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.12  2001/04/14 05:10:56  steve
  *  support the .event/or statement.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.15 2001/04/14 05:10:56 steve Exp $
+ *  $Id: README.txt,v 1.16 2001/04/18 04:21:23 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -293,16 +293,11 @@ vvp.txt for .scope declarations.) The .thread statement placed in the
 assembly source after a .scope statement causes the thread to join the
 named scope.
 
-Transient threads initially inherit the scope of the parent
-thread. Right after the %fork statement, the new thread is created
-within the scope of the thread that executes the %fork
-statement. Transient threads leaf the parent scope and join a new
-scope with the %scope instruction.
-
-A thread normally executes a %scope instruction only once. At any
-rate, a thread is only in a single scope, and does not remember past
-scopes that it might have been a part of. This is how a new thread
-switches out of the parent scope and into its own scope.
+Transient threads join a scope that is the operand to the %fork
+instruction. The scope is referenced by name, and the thread created
+by the fork atomically joins that scope. Once the transient thread
+joins the scope, it stays there until it ends. Threads never change
+scopes, not even transient threads.
 
 TRUTH TABLES
 

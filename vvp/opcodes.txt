@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.13 2001/04/15 16:37:48 steve Exp $
+ *  $Id: opcodes.txt,v 1.14 2001/04/18 04:21:23 steve Exp $
  */
 
 
@@ -87,7 +87,14 @@ future to reschedule, and is >= 0. If the %delay is zero, then the
 thread yields the processor for another thread, but will be resumed in
 the current time step.
 
-* %fork <code-label>
+* %disable <scope-label>
+
+This instruction terminates threads that are part of a specific
+scope. The label identifies the scope in question, and the threads are
+the threads that are currently within that scope.
+
+
+* %fork <code-label>, <scope-label>
 
 This instruction is similar to %jmp, except that it creates a new
 thread to start executing at the specified address. The new thread is

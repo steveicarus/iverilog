@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.15 2001/04/14 05:10:56 steve Exp $"
+#ident "$Id: compile.h,v 1.16 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -104,8 +104,11 @@ struct comp_operands_s {
 typedef struct comp_operands_s*comp_operands_t;
 
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
+extern void compile_disable(char*label, struct symb_s symb);
 extern void compile_vpi_call(char*label, char*name,
 			     unsigned argc, vpiHandle*argv);
+extern void compile_fork(char*label, struct symb_s targ_s,
+			 struct symb_s scope_s);
 extern void compile_codelabel(char*label);
 
 /*
@@ -139,6 +142,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.16  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.15  2001/04/14 05:10:56  steve
  *  support the .event/or statement.
  *

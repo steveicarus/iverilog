@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.19 2001/04/15 16:37:48 steve Exp $"
+#ident "$Id: codes.h,v 1.20 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 
@@ -43,6 +43,7 @@ extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
+extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
@@ -75,10 +76,16 @@ struct vvp_code_s {
 	    vvp_ipoint_t iptr;
 	    vvp_cpoint_t cptr;
 	    struct __vpiHandle*handle;
+	    struct fork_extend*fork;
       };
 
       unsigned short bit_idx1;
       unsigned short bit_idx2;
+};
+
+struct fork_extend {
+      vvp_cpoint_t cptr;
+      struct __vpiScope*scope;
 };
 
 
@@ -110,6 +117,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.20  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.19  2001/04/15 16:37:48  steve
  *  add XOR support.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.34 2001/04/15 16:37:48 steve Exp $"
+#ident "$Id: compile.cc,v 1.35 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -74,7 +74,6 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%fork",   of_FORK,   1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
@@ -548,6 +547,72 @@ void compile_codelabel(char*label)
       free(label);
 }
 
+void compile_disable(char*label, struct symb_s symb)
+{
+      vvp_cpoint_t ptr = codespace_allocate();
+
+	/* First, I can give the label a value that is the current
+	   codespace pointer. Don't need the text of the label after
+	   this is done. */
+      if (label) {
+	    symbol_value_t val;
+	    val.num = ptr;
+	    sym_set_value(sym_codespace, label, val);
+      }
+
+
+	/* Fill in the basics of the %disable in the instruction. */
+      vvp_code_t code = codespace_index(ptr);
+      code->opcode = of_DISABLE;
+
+	/* Figure out the target SCOPE. */
+      code->handle = compile_vpi_lookup(symb.text);
+      assert(code->handle);
+
+      free(label);
+      free(symb.text);
+}
+
+/*
+ * The %fork instruction is a little different from other instructions
+ * in that it has an extended field that holds the information needed
+ * to create the new thread. This includes the target PC and scope.
+ * I get these from the parser in the form of symbols.
+ */
+void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
+{
+      symbol_value_t tmp;
+      vvp_cpoint_t ptr = codespace_allocate();
+
+	/* First, I can give the label a value that is the current
+	   codespace pointer. Don't need the text of the label after
+	   this is done. */
+      if (label) {
+	    symbol_value_t val;
+	    val.num = ptr;
+	    sym_set_value(sym_codespace, label, val);
+      }
+
+	/* Fill in the basics of the %fork in the instruction. */
+      vvp_code_t code = codespace_index(ptr);
+      code->opcode = of_FORK;
+      code->fork = new struct fork_extend;
+
+	/* Figure out the target PC. */
+      tmp = sym_get_value(sym_codespace, dest.text);
+      code->fork->cptr = tmp.num;
+      assert(code->fork->cptr);
+
+	/* Figure out the target SCOPE. */
+      vpiHandle sh = compile_vpi_lookup(scope.text);
+      assert(sh);
+      code->fork->scope = (struct __vpiScope*)sh;
+
+      free(label);
+      free(dest.text);
+      free(scope.text);
+}
+
 void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 {
       vvp_cpoint_t ptr = codespace_allocate();
@@ -590,7 +655,7 @@ void compile_thread(char*start_sym)
 	    return;
       }
 
-      vthread_t thr = vthread_new(pc);
+      vthread_t thr = vthread_new(pc, vpip_peek_current_scope());
       schedule_vthread(thr, 0);
       free(start_sym);
 }
@@ -763,6 +828,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.35  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.34  2001/04/15 16:37:48  steve
  *  add XOR support.
  *

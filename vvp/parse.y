@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.19 2001/04/14 05:10:56 steve Exp $"
+#ident "$Id: parse.y,v 1.20 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -52,7 +52,7 @@ extern FILE*yyin;
 
 
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
-%token K_VAR K_VAR_S K_vpi_call
+%token K_VAR K_VAR_S K_vpi_call K_disable K_fork
 %token K_vpi_module
 
 %token <text> T_INSTR
@@ -143,6 +143,16 @@ statement
 
 	| label_opt K_vpi_call T_STRING argument_opt ';'
 		{ compile_vpi_call($1, $3, $4.argc, $4.argv); }
+
+  /* %disable statements are instructions that takes a scope reference
+     as an operand. It therefore is parsed uniquely. */
+
+	| label_opt K_disable symbol ';'
+		{ compile_disable($1, $3); }
+
+
+	| label_opt K_fork symbol ',' symbol ';'
+		{ compile_fork($1, $3, $5); }
 
 
   /* Scope statements come in two forms. There are the scope
@@ -329,6 +339,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.20  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.19  2001/04/14 05:10:56  steve
  *  support the .event/or statement.
  *

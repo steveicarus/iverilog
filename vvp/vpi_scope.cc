@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.3 2001/04/03 03:46:14 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.4 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -94,12 +94,12 @@ static void attach_to_scope_(struct __vpiScope*scope, vpiHandle obj)
  */
 void compile_scope_decl(char*label, char*name, char*parent)
 {
-      struct __vpiScope*scope = (struct __vpiScope*)
-	    malloc(sizeof(struct __vpiScope));
+      struct __vpiScope*scope = new struct __vpiScope;
       scope->base.vpi_type = &vpip_scope_rt;
       scope->name = name;
       scope->intern = 0;
       scope->nintern = 0;
+      scope->threads = 0;
 
       current_scope = scope;
 
@@ -121,9 +121,9 @@ void compile_scope_recall(char*symbol)
       free(symbol);
 }
 
-vpiHandle vpip_peek_current_scope(void)
+struct __vpiScope* vpip_peek_current_scope(void)
 {
-      return &current_scope->base;
+      return current_scope;
 }
 
 void vpip_attach_to_current_scope(vpiHandle obj)
@@ -134,6 +134,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.4  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.3  2001/04/03 03:46:14  steve
  *  VPI access time as a decimal string, and
  *  stub vpi access to the scopes.

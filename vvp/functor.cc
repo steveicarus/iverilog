@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.11 2001/04/14 05:10:56 steve Exp $"
+#ident "$Id: functor.cc,v 1.12 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -274,8 +274,8 @@ void functor_dump(FILE*fd)
 {
       for (unsigned idx = 1 ;  idx < functor_count ;  idx += 1) {
 	    functor_t cur = functor_index(idx*4);
-	    fprintf(fd, "%10p: out=%x port={%x %x %x %x}\n",
-		    (void*)(idx*4), cur->out, cur->port[0],
+	    fprintf(fd, "%08x: out=%x port={%x %x %x %x}\n",
+		    (idx*4), cur->out, cur->port[0],
 		    cur->port[1], cur->port[2], cur->port[3]);
       }
 }
@@ -306,6 +306,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.12  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.11  2001/04/14 05:10:56  steve
  *  support the .event/or statement.
  *

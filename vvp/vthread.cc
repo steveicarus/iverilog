@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.26 2001/04/15 16:37:48 steve Exp $"
+#ident "$Id: vthread.cc,v 1.27 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -85,14 +85,16 @@ struct vthread_s {
       unsigned nbits :16;
 	/* My parent sets this when it wants me to wake it up. */
       unsigned schedule_parent_on_end :1;
-      unsigned i_have_ended :1;
+      unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
 	/* This points to the sole child of the thread. */
       struct vthread_s*child;
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
 	/* This is used for keeping wait queues. */
-      struct vthread_s*next;
+      struct vthread_s*wait_next;
+	/* These are used to keep the thread in a scope. */
+      struct vthread_s*scope_next, *scope_prev;
 };
 
 static void thr_check_addr(struct vthread_s*thr, unsigned addr)
@@ -129,7 +131,7 @@ static inline void thr_put_bit(struct vthread_s*thr,
 /*
  * Create a new thread with the given start address.
  */
-vthread_t vthread_new(unsigned long pc)
+vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
@@ -137,7 +139,28 @@ vthread_t vthread_new(unsigned long pc)
       thr->nbits  = 16*4;
       thr->child  = 0;
       thr->parent = 0;
-      thr->next   = 0;
+      thr->wait_next   = 0;
+
+	/* If the target scope never held a thread, then create a
+	   header cell for it. This is a stub to make circular lists
+	   easier to work with. */
+      if (scope->threads == 0) {
+	    scope->threads = new struct vthread_s;
+	    scope->threads->pc = 0;
+	    scope->threads->bits   = 0;
+	    scope->threads->nbits  = 0;
+	    scope->threads->child  = 0;
+	    scope->threads->parent = 0;
+	    scope->threads->scope_prev = scope->threads;
+	    scope->threads->scope_next = scope->threads;
+      }
+
+      { vthread_t tmp = scope->threads;
+        thr->scope_next = tmp->scope_next;
+	thr->scope_prev = tmp;
+	thr->scope_next->scope_prev = thr;
+	thr->scope_prev->scope_next = thr;
+      }
 
       thr->schedule_parent_on_end = 0;
       thr->i_have_ended = 0;
@@ -147,20 +170,30 @@ vthread_t vthread_new(unsigned long pc)
       thr_put_bit(thr, 1, 1);
       thr_put_bit(thr, 2, 2);
       thr_put_bit(thr, 3, 3);
+
       return thr;
 }
 
 static void vthread_reap(vthread_t thr)
 {
-      assert(thr->next == 0);
+      assert(thr->wait_next == 0);
       assert(thr->child == 0);
+
       free(thr->bits);
+      thr->bits = 0;
 
       if (thr->child)
 	    thr->child->parent = thr->parent;
       if (thr->parent)
 	    thr->parent->child = thr->child;
 
+      thr->child = 0;
+      thr->parent = 0;
+
+      thr->scope_next->scope_prev = thr->scope_prev;
+      thr->scope_prev->scope_next = thr->scope_next;
+
+      thr->pc = 0;
       delete thr;
 }
 
@@ -187,7 +220,7 @@ void vthread_run(vthread_t thr)
 }
 
 /*
- * This is called by an event functor to wait up all the threads on
+ * This is called by an event functor to wake up all the threads on
  * its list. I in fact created that list in the %wait instruction, and
  * I also am certain that the waiting_for_event flag is set.
  */
@@ -195,9 +228,10 @@ void vthread_schedule_list(vthread_t thr)
 {
       while (thr) {
 	    vthread_t tmp = thr;
-	    thr = thr->next;
+	    thr = thr->wait_next;
 	    assert(tmp->waiting_for_event);
 	    tmp->waiting_for_event = 0;
+	    tmp->wait_next = 0;
 	    schedule_vthread(tmp, 0);
       }
 }
@@ -431,29 +465,86 @@ bool of_DELAY(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Implement the %disable instruction by scanning the target scope for
+ * all the target threads. Kill the target threads and wake up a
+ * parent that is attempting a %join.
+ *
+ * XXXX BUG BUG!
+ * The scheduler probably still has a pointer to me, and this reaping
+ * will destroy this object. The result: dangling pointer.
+ */
+bool of_DISABLE(vthread_t thr, vvp_code_t cp)
+{
+      struct __vpiScope*scope = (struct __vpiScope*)cp->handle;
+      if (scope->threads == 0)
+	    return true;
+
+      struct vthread_s*head = scope->threads;
+
+      while (head->scope_next != head) {
+	    vthread_t tmp = head->scope_next;
+
+	      /* Pull the target thread out of the scope. */
+	    tmp->scope_next->scope_prev = tmp->scope_prev;
+	    tmp->scope_prev->scope_next = tmp->scope_next;
+
+	      /* XXXX I don't support disabling threads with children. */
+	    assert(tmp->child == 0);
+	    assert(tmp != thr);
+	      /* XXXX Not supported yet. */
+	    assert(tmp->waiting_for_event);
+
+	    tmp->pc = 0;
+	    tmp->i_have_ended = 1;
+
+	      /* If a parent is waiting in a %join, wake it up. */
+	    if (tmp->schedule_parent_on_end) {
+		  assert(tmp->parent);
+		  schedule_vthread(tmp->parent, 0);
+	    }
+
+	    if (tmp->parent == 0) {
+		  vthread_reap(tmp);
+	    }
+      }
+
+      return true;
+}
+
+/*
  * This terminates the current thread. If there is a parent who is
  * waiting for me to die, then I schedule it. At any rate, I mark
  * myself as a zombie by setting my pc to 0.
  */
-bool of_END(vthread_t thr, vvp_code_t cp)
+bool of_END(vthread_t thr, vvp_code_t)
 {
       assert(! thr->waiting_for_event);
 
       thr->i_have_ended = 1;
       thr->pc = 0;
 
+#if 0
 	/* Reap direct descendents that have already ended. Do
 	   this in a loop until I run out of dead children. */
 
       while (thr->child && (thr->child->i_have_ended)) {
+	    fprintf(stderr, "vvp warning: A thread left dangling "
+		    "children at %%end. This is caused\n"
+		    "           : by a missing %%join.\n");
 	    vthread_t tmp = thr->child;
 	    vthread_reap(tmp);
       }
+#else
+	/* If this thread has children, then there is a programming
+	   error as there were not enough %join instructions to reap
+	   all the children. */
+      assert(thr->child == 0);
+#endif
 
 
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. The parent will reap
-	   me, so don't do it here. */
+	   me with a %join, so don't do it here. */
       if (thr->schedule_parent_on_end) {
 	    assert(thr->parent);
 	    schedule_vthread(thr->parent, 0);
@@ -464,10 +555,12 @@ bool of_END(vthread_t thr, vvp_code_t cp)
 	   no reason to stick around. This can happen, for example if
 	   I am an ``initial'' thread. */
       if (thr->parent == 0) {
+#if 0
 	    if (thr->child)
 		  fprintf(stderr, "vvp warning: A thread left dangling "
-			  "children. This is probably caused\n"
-			  "           : a missing %%join in this thread.\n");
+			  "children at delete. This is caused\n"
+			  "           : by a missing %%join.\n");
+#endif
 	    vthread_reap(thr);
 	    return false;
       }
@@ -486,7 +579,7 @@ bool of_END(vthread_t thr, vvp_code_t cp)
  */
 bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
-      vthread_t child = vthread_new(cp->cptr);
+      vthread_t child = vthread_new(cp->fork->cptr, cp->fork->scope);
 
       child->child  = thr->child;
       child->parent = thr;
@@ -562,11 +655,14 @@ bool of_JOIN(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->child);
       assert(thr->child->parent == thr);
+
+	/* If the child has already ended, reap it now. */
       if (thr->child->i_have_ended) {
 	    vthread_reap(thr->child);
 	    return true;
       }
 
+	/* Otherwise, I get to start waiting. */
       thr->child->schedule_parent_on_end = 1;
       return false;
 }
@@ -683,7 +779,7 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       functor_t fp = functor_index(cp->iptr);
       assert((fp->mode == 1) || (fp->mode == 2));
       vvp_event_t ep = fp->event;
-      thr->next = ep->threads;
+      thr->wait_next = ep->threads;
       ep->threads = thr;
 
       return false;
@@ -764,13 +860,20 @@ bool of_XOR(vthread_t thr, vvp_code_t cp)
 }
 
 
-bool of_ZOMBIE(vthread_t, vvp_code_t)
+bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 {
+      thr->pc = 0;
+      if ((thr->parent == 0) && (thr->child == 0))
+	    delete thr;
+
       return false;
 }
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.27  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.26  2001/04/15 16:37:48  steve
  *  add XOR support.
  *
@@ -794,61 +897,5 @@ bool of_ZOMBIE(vthread_t, vvp_code_t)
  *
  * Revision 1.19  2001/04/01 07:22:08  steve
  *  Implement the less-then and %or instructions.
- *
- * Revision 1.18  2001/04/01 06:12:14  steve
- *  Add the bitwise %and instruction.
- *
- * Revision 1.17  2001/04/01 04:34:28  steve
- *  Implement %cmp/x and %cmp/z instructions.
- *
- * Revision 1.16  2001/03/31 17:36:02  steve
- *  Add the jmp/1 instruction.
- *
- * Revision 1.15  2001/03/31 01:59:59  steve
- *  Add the ADD instrunction.
- *
- * Revision 1.14  2001/03/30 04:55:22  steve
- *  Add fork and join instructions.
- *
- * Revision 1.13  2001/03/29 03:46:36  steve
- *  Support named events as mode 2 functors.
- *
- * Revision 1.12  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.11  2001/03/25 03:54:26  steve
- *  Add JMP0XZ and postpone net inputs when needed.
- *
- * Revision 1.10  2001/03/23 04:56:03  steve
- *  eq is x if either value of cmp/u has x or z.
- *
- * Revision 1.9  2001/03/23 01:53:46  steve
- *  Support set of functors from thread bits.
- *
- * Revision 1.8  2001/03/23 01:11:06  steve
- *  Handle vectors pulled out of a constant bit.
- *
- * Revision 1.7  2001/03/22 05:08:00  steve
- *  implement %load, %inv, %jum/0 and %cmp/u
- *
- * Revision 1.6  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.5  2001/03/19 01:55:38  steve
- *  Add support for the vpiReset sim control.
- *
- * Revision 1.4  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.3  2001/03/11 23:06:49  steve
- *  Compact the vvp_code_s structure.
- *
- * Revision 1.2  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.4 2001/03/31 19:00:43 steve Exp $"
+#ident "$Id: schedule.cc,v 1.5 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -39,9 +39,10 @@ struct event_s {
       struct event_s*next;
       struct event_s*last;
 };
-const unsigned TYPE_THREAD = 0;
-const unsigned TYPE_PROP   = 1;
-const unsigned TYPE_ASSIGN = 2;
+const unsigned TYPE_NOOP   = 0;
+const unsigned TYPE_THREAD = 1;
+const unsigned TYPE_PROP   = 2;
+const unsigned TYPE_ASSIGN = 3;
 
 /*
  * This is the head of the list of pending events.
@@ -194,6 +195,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.5  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.4  2001/03/31 19:00:43  steve
  *  Add VPI support for the simulation time.
  *

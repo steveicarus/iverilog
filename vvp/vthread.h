@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.h,v 1.3 2001/04/13 03:55:18 steve Exp $"
+#ident "$Id: vthread.h,v 1.4 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 /*
@@ -40,7 +40,7 @@ typedef struct vthread_s*vthread_t;
  * address. The generated thread is ready to run, but is not yet
  * scheduled.
  */
-extern vthread_t vthread_new(unsigned long sa);
+extern vthread_t vthread_new(unsigned long sa, struct __vpiScope*scope);
 
 /*
  * Cause this thread to execute instructions until in is put to sleep
@@ -59,6 +59,9 @@ extern void vthread_schedule_list(vthread_t thr);
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.4  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.3  2001/04/13 03:55:18  steve
  *  More complete reap of all threads.
  *

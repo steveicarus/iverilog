@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.4 2001/03/22 22:38:14 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.5 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 /*
@@ -39,7 +39,7 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
 
       switch (type) {
 	  case vpiScope:
-	    return rfp->scope;
+	    return &rfp->scope->base;
 	  default:
 	    return 0;
       };
@@ -197,6 +197,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.5  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.4  2001/03/22 22:38:14  steve
  *  Detect undefined system tasks at compile time.
  *

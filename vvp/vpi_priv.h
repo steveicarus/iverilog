@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.12 2001/04/05 01:34:26 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.13 2001/04/18 04:21:23 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -85,8 +85,11 @@ struct __vpiScope {
       /* Keep an array of internal scope items. */
       struct __vpiHandle**intern;
       unsigned nintern;
+	/* Keep a list of threads in the scope. */
+      vthread_t threads;
 };
-extern vpiHandle vpip_peek_current_scope(void);
+
+extern struct __vpiScope* vpip_peek_current_scope(void);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
 
 /*
@@ -96,7 +99,7 @@ extern void vpip_attach_to_current_scope(vpiHandle obj);
  */
 struct __vpiSignal {
       struct __vpiHandle base;
-      vpiHandle scope;
+      struct __vpiScope* scope;
 	/* The name of this reg/net object */
       char*name;
 	/* The indices that define the width and access offset. */
@@ -128,7 +131,7 @@ struct __vpiUserSystf {
 
 struct __vpiSysTaskCall {
       struct __vpiHandle base;
-      vpiHandle scope;
+      struct __vpiScope* scope;
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
@@ -193,6 +196,9 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.13  2001/04/18 04:21:23  steve
+ *  Put threads into scopes.
+ *
  * Revision 1.12  2001/04/05 01:34:26  steve
  *  Add the .var/s and .net/s statements for VPI support.
  *
