@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.79 2003/11/26 01:37:14 steve Exp $"
+#ident "$Id: main.cc,v 1.80 2004/02/15 00:19:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -711,11 +711,14 @@ int main(int argc, char*argv[])
 	    cerr << "***" << endl;
       }
 
-      return des->errors;
+      return des? des->errors : 1;
 }
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.80  2004/02/15 00:19:29  steve
+ *  Report elaboration errors without crashing.
+ *
  * Revision 1.79  2003/11/26 01:37:14  steve
  *  Properly initialize vpi_module_list with system.
  *
