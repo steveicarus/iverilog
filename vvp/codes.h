@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.21 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: codes.h,v 1.22 2001/05/02 01:57:25 steve Exp $"
 #endif
 
 
@@ -65,6 +65,7 @@ extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_XNOR(vthread_t thr, vvp_code_t code);
@@ -125,6 +126,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.22  2001/05/02 01:57:25  steve
+ *  Support behavioral subtraction.
+ *
  * Revision 1.21  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *

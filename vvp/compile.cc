@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.50 2001/05/01 05:00:02 steve Exp $"
+#ident "$Id: compile.cc,v 1.51 2001/05/02 01:57:25 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -97,6 +97,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_I1,   OA_BIT1,     OA_NONE} },
+      { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%xor",    of_XOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1064,6 +1065,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.51  2001/05/02 01:57:25  steve
+ *  Support behavioral subtraction.
+ *
  * Revision 1.50  2001/05/01 05:00:02  steve
  *  Implement %ix/load.
  *

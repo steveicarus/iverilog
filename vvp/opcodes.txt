@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.15 2001/05/01 05:00:02 steve Exp $
+ *  $Id: opcodes.txt,v 1.16 2001/05/02 01:57:26 steve Exp $
  */
 
 
@@ -19,6 +19,8 @@ This instruction adds the right vector into the left vector, the
 vectors having the width <wid>. If any of the bits of either vector
 are x or z, the result is x. Otherwise, the result is the arithmetic
 sum.
+
+See also the %sub instruction.
 
 * %and <bit-l>, <bit-r>, <wid>
 
@@ -207,6 +209,19 @@ assignments. The <label> identifies the variable to receive the new
 value. Once the set completes, the value is immediately available to
 be read out of the variable. The <bit> is the address of the thread
 register that contains the bit value to assign.
+
+
+* %sub <bit-l>, <bit-r>, <wid>
+
+This instruction arithmetically subtracts the right vector out of the
+left vector. It accomplishes this by adding to the left vector 1 plus
+the 1s complement of the right vector. The carry value is dropped, and
+the result, placed in <bit-l>, is the subtraction of <bit-r> from the
+input <bit-l>. Both vectors have the same width. If any bits in either
+operand are x, then the entire result is x.
+
+See also the %add instruction.
+
 
 * %vpi_call <name> [, ...]
 

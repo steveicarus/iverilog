@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.22 2001/05/01 02:07:34 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.23 2001/05/02 01:57:25 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -524,7 +524,10 @@ static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
 
-      fprintf(vvp_out, "    %%add %u, %u, %u;\n", lv.base, rv.base, wid);
+      if (ivl_expr_opcode(exp) == '-')
+	    fprintf(vvp_out, "    %%sub %u, %u, %u;\n", lv.base, rv.base, wid);
+      else
+	    fprintf(vvp_out, "    %%add %u, %u, %u;\n", lv.base, rv.base, wid);
 
       clr_vector(rv);
 
@@ -556,6 +559,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '+':
+	  case '-':
 	    rv = draw_binary_expr_plus(exp, wid);
 	    break;
 
@@ -883,6 +887,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.23  2001/05/02 01:57:25  steve
+ *  Support behavioral subtraction.
+ *
  * Revision 1.22  2001/05/01 02:07:34  steve
  *  Comparisons cant leave their results in the opcode
  *  result area or their values will be clobbered by other
