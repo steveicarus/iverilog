@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.45 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.46 2001/10/19 23:52:36 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -588,7 +588,7 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
-      fprintf(vvp_out, "t_%u\n", out);
+      fprintf(vvp_out, "t_%u ;\n", out);
 
       return rc;
 }
@@ -984,6 +984,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.46  2001/10/19 23:52:36  steve
+ *  Add trailing ; to fork-join out labels.
+ *
  * Revision 1.45  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *
