@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.79 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vthread.cc,v 1.80 2002/08/18 01:05:50 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1228,13 +1228,26 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * Load a vector into an index register. The format of the
+ * opcode is:
+ *
+ *   %ix/get <ix>, <base>, <wid>
+ *
+ * where <ix> is the index register, <base> is the base of the
+ * vector and <wid> is the width in bits.
+ *
+ * Index registers only hold binary values, so if any of the
+ * bits of the vector are x or z, then set the value to 0
+ * and give up.
+ */
 bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 {
       unsigned long v = 0;
       for (unsigned i = 0; i<cp->number; i++) {
 	    unsigned char vv = thr_get_bit(thr, cp->bit_idx[1] + i);
 	    if (vv&2) {
-		  v = ~0UL;
+		  v = 0UL;
 		  break;
 	    }
 	    v |= vv << i;
@@ -2208,6 +2221,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.80  2002/08/18 01:05:50  steve
+ *  x in index values leads to 0.
+ *
  * Revision 1.79  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *
