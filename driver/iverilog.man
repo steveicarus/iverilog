@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/07/29 22:50:28 $" Version "$Date: 2001/07/29 22:50:28 $"
+.TH iverilog 1 "$Date: 2001/08/31 17:28:10 $" Version "$Date: 2001/08/31 17:28:10 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -145,6 +145,11 @@ This is the Xilinx Netlist Format used by many tools for placing
 devices in FPGAs or other programmable devices. The Icarus Verilog XNF
 code generator can generate complete designs or XNF macros that can be
 imported into larger designs by other tools.
+.TP 8
+.B fpga
+This is a variant of the XNF code generator that supports a wider
+variety of target devices. It is intented as a future replacement for
+the existing \fBxnf\fP target, but for now is still experimental.
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
