@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.193 2000/12/15 21:40:26 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.194 2000/12/15 21:54:43 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2660,7 +2660,10 @@ void target_vvm::proc_assign_mem_nb(const NetAssignMemNB*amem)
 
       defn << "      /* " << amem->get_line() << " */" << endl;
 
-      assert(mem->width() <= amem->rval()->expr_width());
+	/* Note here that the vvm_memory_t::assign_nb constructor will
+	   pad the rval with St0 if it is not as wide as the memory
+	   word. If this is not what is desired, then it should have
+	   been fixed up by semantic analysis anyhow. */
 
       defn << "      (new vvm_memory_t::assign_nb(" << mangle(mem->name())
 	   << ", " << index << ".as_unsigned(), " << rval <<
@@ -3410,6 +3413,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.194  2000/12/15 21:54:43  steve
+ *  Allow non-blocking assign to pad memory word with zeros.
+ *
  * Revision 1.193  2000/12/15 21:40:26  steve
  *  concatenation as parameter to system tasks. PR#64)
  *

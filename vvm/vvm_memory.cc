@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_memory.cc,v 1.1 2000/12/15 20:05:16 steve Exp $"
+#ident "$Id: vvm_memory.cc,v 1.2 2000/12/15 21:54:43 steve Exp $"
 #endif
 
 # include  "vvm_signal.h"
@@ -80,8 +80,14 @@ vvm_memory_t::assign_nb::assign_nb(vvm_memory_t&m, unsigned i,
 				   const vvm_bitset_t&v)
 : mem_(m), index_(i), bits_(new vpip_bit_t[m.width]), val_(bits_, m.width)
 {
-      for (unsigned idx = 0 ;  idx < m.width ;  idx += 1)
+      unsigned top = m.width;
+      if (top > v.nbits)
+	    top = v.nbits;
+
+      for (unsigned idx = 0 ;  idx < top ;  idx += 1)
 	    val_[idx] = v[idx];
+      for (unsigned idx = top ;  idx < m.width ;  idx += 1)
+	    val_[idx] = St0;
 }
 
 
@@ -97,6 +103,9 @@ void vvm_memory_t::assign_nb::event_function()
 
 /*
  * $Log: vvm_memory.cc,v $
+ * Revision 1.2  2000/12/15 21:54:43  steve
+ *  Allow non-blocking assign to pad memory word with zeros.
+ *
  * Revision 1.1  2000/12/15 20:05:16  steve
  *  Fix memory access in vvm. (PR#70)
  *
