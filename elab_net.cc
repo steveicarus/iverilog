@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.129 2004/06/16 23:32:58 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.130 2004/06/18 16:38:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -423,10 +423,32 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
       if (val.len() < lsig->pin_count())
 	    val = verinum(val, lsig->pin_count());
 
+	/* Look for the very special case that we know the compare
+	   results a priori due to different high bits, that are
+	   constant pad in the signal. */
+      if (val.len() > lsig->pin_count()) {
+	    unsigned idx = lsig->pin_count();
+	    verinum::V lpad = verinum::V0;
+
+	    while (idx < val.len()) {
+		  if (val.get(idx) != lpad) {
+			verinum oval (op_code == 'e'
+				      ? verinum::V0
+				      : verinum::V1,
+				      1);
+			NetEConst*ogate = new NetEConst(oval);
+			NetNet*osig = ogate->synthesize(des);
+			delete ogate;
+			return osig;
+		  }
+
+		  idx +=1;
+	    }
+      }
 
       unsigned zeros = 0;
       unsigned ones = 0;
-      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
 	    if (val.get(idx) == verinum::V0)
 		  zeros += 1;
 	    if (val.get(idx) == verinum::V1)
@@ -450,7 +472,7 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 
       unsigned zidx = 0;
       unsigned oidx = 0;
-      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
 	    if (val.get(idx) == verinum::V0) {
 		  zidx += 1;
 		  connect(zero_gate->pin(zidx), lsig->pin(idx));
@@ -2573,6 +2595,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.130  2004/06/18 16:38:22  steve
+ *  compare-to-constant uses sig len, not val len.
+ *
  * Revision 1.129  2004/06/16 23:32:58  steve
  *  Handle equality compare to constants specially.
  *
