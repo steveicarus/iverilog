@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.7 2002/07/05 04:40:59 steve Exp $"
+#ident "$Id: symbols.cc,v 1.8 2002/07/09 03:20:51 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -147,7 +147,7 @@ void delete_symbol_table(symbol_table_t tab)
       delete tab;
 }
 
-/* Do as split_leaf_ do, but for nodes. */
+/* Do as split_leaf_ does, but for nodes. */
 static void split_node_(struct tree_node_*cur)
 {
 	unsigned int idx, idx1, idx2, tmp;
@@ -158,54 +158,51 @@ static void split_node_(struct tree_node_*cur)
 
 	while (cur->count == node_width)
 	{
-		/* Create a new node to hold half the data from the old node. */
+		/* Create a new node to hold half the data from cur. */
 		new_node = new struct tree_node_;
 		new_node->leaf_flag = false;
 		new_node->count = cur->count / 2;
 		if (cur->parent) 
 			/* cur is not root; new_node becomes sibling. */
 			new_node->parent = cur->parent;
-		else
-			/* cur is root; new_node becomes child. */
-			/* And. move the first half of child to another new
-				node later */
-			new_node->parent = cur;
 
 		/* Move the last half of the data from the end of the old node
-		   to the beggining of the new node. At the same time, reduce
+		   to the begining of the new node. At the same time, reduce
 		   the size of the old node. */
 		idx1 = new_node->count;
 		idx2 = cur->count;
 		while (idx1 > 0) {
-			idx1 -= 1;
-			idx2 -= 1;
-			new_node->child[idx1] = cur->child[idx2];
-			new_node->child[idx1]->parent = new_node;
-			cur->count -= 1;
+		      idx1 -= 1;
+		      idx2 -= 1;
+		      new_node->child[idx1] = cur->child[idx2];
+		      new_node->child[idx1]->parent = new_node;
+		      cur->count -= 1;
 		}
 
 		assert(new_node->count > 0);
 		assert(cur->count > 0);
 
-		if (cur->parent == 0)
-		{
+		if (cur->parent == 0) {
 			/* cur is root. Move first half of children to
-				another new node, and put the two
-				new nodes in cur. */ 
-			cur->child[cur->count] /* used as tmep var */ = new_node;
-			new_node = new struct tree_node_;
-			new_node->leaf_flag = false;
-			new_node->count = cur->count;
-			for (idx = 0; idx < cur->count; idx ++)
-			{
-				new_node->child[idx] = cur->child[idx];
-				new_node->child[idx]->parent = new_node;
-			}
-			cur->child[0] = new_node;
-			cur->child[1] = cur->child[cur->count];
-			cur->count = 2;
+			   another new node, and put the two new nodes
+			   in cur. The plan here is to make cur into
+			   the new root and split its contents into 2
+			   children. */
+
+		      new_node->parent = cur;
+		      struct tree_node_*new2_node = new struct tree_node_;
+		      new2_node->leaf_flag = false;
+		      new2_node->count = cur->count;
+		      new2_node->parent = cur;
+		      for (idx = 0; idx < cur->count; idx += 1) {
+			    new2_node->child[idx] = cur->child[idx];
+			    new2_node->child[idx]->parent = new2_node;
+		      }
+		      cur->child[0] = new2_node;
+		      cur->child[1] = new_node;
+		      cur->count = 2;
 			/* no more ancestors, stop the while loop */
-			break; 
+		      break; 
 		}
 		
 		/* cur is not root. hook new_node to cur->parent. */ 
@@ -424,6 +421,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.8  2002/07/09 03:20:51  steve
+ *  Fix split of root btree node.
+ *
  * Revision 1.7  2002/07/05 04:40:59  steve
  *  Symbol table uses more efficient key string allocator,
  *  and remove all the symbol tables after compile is done.
