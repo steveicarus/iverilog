@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.159 2003/11/18 06:31:45 steve Exp $"
+#ident "$Id: Makefile.in,v 1.160 2003/11/26 01:36:55 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -239,8 +239,8 @@ $(libdir)/ivl/xnf.conf: $(srcdir)/xnf.conf
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(includedir)/ivl_target.h
 
-$(includedir)/_pli_types.h: $(srcdir)/_pli_types.h
-	$(INSTALL_DATA) $(srcdir)/_pli_types.h $(includedir)/_pli_types.h
+$(includedir)/_pli_types.h: _pli_types.h
+	$(INSTALL_DATA) $< $(includedir)/_pli_types.h
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h
