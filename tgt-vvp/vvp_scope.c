@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.65 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.66 2002/03/18 00:18:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1281,10 +1281,63 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 
 static void draw_lpm_ufunc(ivl_lpm_t net)
 {
-      fprintf(stderr, "tgt-vvp: ivl_ufunc not yet supported.\n");
-      fprintf(vvp_out, "L_%s .func %u %u;\n",
+      unsigned idx, bit;
+      char comma;
+      ivl_scope_t def = ivl_lpm_define(net);
+
+      fprintf(vvp_out, "L_%s .ufunc TD_%s, %u",
 	      vvp_mangle_id(ivl_lpm_name(net)),
-	      ivl_lpm_width(net), 0);
+	      ivl_scope_name(def),
+	      ivl_lpm_width(net));
+
+	/* Print all the net signals that connect to the input of the
+	   function. Print them one per line, for convenience. */
+      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
+	    comma = ' ';
+	    fprintf(vvp_out, ",\n");
+	    for (bit = 0 ; bit < ivl_lpm_data2_width(net, idx) ; bit += 1) {
+		  fprintf(vvp_out, "%c ", comma);
+		  draw_input_from_net(ivl_lpm_data2(net, idx, bit));
+		  comma = ',';
+	    }
+      }
+
+
+      assert((ivl_lpm_size(net)+1) == ivl_scope_ports(def));
+
+	/* Now print all the variables in the function scope that
+	   receive the input values given in the previous list. */
+      for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
+	    ivl_signal_t psig = ivl_scope_port(def, idx+1);
+	    comma = ' ';
+
+	    if (idx == 0)
+		  fprintf(vvp_out, "\n(");
+	    else
+		  fprintf(vvp_out, ",\n");
+
+	    for (bit = 0 ; bit < ivl_signal_pins(psig) ; bit += 1) {
+		  fprintf(vvp_out, "%c V_%s[%u]", comma,
+			  vvp_mangle_id(ivl_signal_name(psig)), bit);
+		  comma = ',';
+	    }
+      }
+
+      fprintf(vvp_out, ")\n");
+
+      { ivl_signal_t psig = ivl_scope_port(def, 0);
+        assert(ivl_lpm_width(net) == ivl_signal_pins(psig));
+
+	comma = ' ';
+	for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	      fprintf(vvp_out, "%c V_%s[%u]", comma,
+		      vvp_mangle_id(ivl_signal_name(psig)),
+		      idx);
+	      comma = ',';
+	}
+      }
+
+      fprintf(vvp_out, ";\n");
 }
 
 static void draw_lpm_in_scope(ivl_lpm_t net)
@@ -1423,6 +1476,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.66  2002/03/18 00:18:50  steve
+ *  Generate port information in the .ufunc statement.
+ *
  * Revision 1.65  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *
