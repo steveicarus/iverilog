@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.8 2003/05/16 03:50:28 steve Exp $"
+#ident "$Id: stop.cc,v 1.9 2003/10/15 02:17:39 steve Exp $"
 #endif
 
 /*
@@ -210,6 +210,17 @@ static void cmd_list(unsigned, char*[])
 			       sig->signed_flag? "signed " : "");
 		  else
 			printf("reg     : %s%s[%d:%d]\n", sig->name,
+			       sig->signed_flag? "signed " : "",
+			       sig->msb, sig->lsb);
+		  break;
+
+		case vpiNet:
+		  sig = (struct __vpiSignal*) table[idx];
+		  if ((sig->msb == 0) && (sig->lsb == 0))
+			printf("net     : %s%s\n", sig->name,
+			       sig->signed_flag? "signed " : "");
+		  else
+			printf("net     : %s%s[%d:%d]\n", sig->name,
 			       sig->signed_flag? "signed " : "",
 			       sig->msb, sig->lsb);
 		  break;
@@ -441,6 +452,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.9  2003/10/15 02:17:39  steve
+ *  Include net objects in list display.
+ *
  * Revision 1.8  2003/05/16 03:50:28  steve
  *  Fallback functionality if readline is not present.
  *
