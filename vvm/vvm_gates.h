@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.54 2000/04/01 21:40:23 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.55 2000/04/08 05:49:59 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -516,8 +516,8 @@ class vvm_ram_dq  : protected vvm_ram_callback,  public vvm_nexus::recvr_t {
 	    }
 
       void send_out_()
-	    { vpip_bit_t*ov_bits[WIDTH];
-	      vvm_bitset_t ov(bits, WIDTH);
+	    { vpip_bit_t ov_bits[WIDTH];
+	      vvm_bitset_t ov(ov_bits, WIDTH);
 	      mem_->get_word(addr_val_, ov);
 	      for (unsigned bit = 0 ;  bit < WIDTH ;  bit += 1) {
 		    vvm_out_event*ev = new vvm_out_event(ov[bit], out_+bit);
@@ -867,6 +867,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.55  2000/04/08 05:49:59  steve
+ *  Fix memory object compile problems.
+ *
  * Revision 1.54  2000/04/01 21:40:23  steve
  *  Add support for integer division.
  *
