@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.17 2001/06/21 04:15:22 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.18 2001/06/29 00:42:39 steve Exp $"
 #endif
 
 /*
@@ -341,7 +341,7 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		  cb.obj = item;
 		  info->item  = item;
 		  info->ident = strdup(vcdid);
-		  info->fullname = fullname;
+		  info->fullname = strdup(fullname);
 		  info->cb    = vpi_register_cb(&cb);
 		  info->next = vcd_list;
 		  vcd_list   = info;
@@ -476,6 +476,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.18  2001/06/29 00:42:39  steve
+ *  Get a private copy of the object name.
+ *
  * Revision 1.17  2001/06/21 04:15:22  steve
  *  Add dumpon and dumpoff (Stephan Boettcher)
  *
