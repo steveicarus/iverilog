@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: svector.h,v 1.8 2003/07/16 00:54:07 steve Exp $"
+#ident "$Id: svector.h,v 1.9 2003/07/23 02:35:44 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -101,7 +101,7 @@ template <class TYPE> class svector {
  * Override the implementation of the above template for the string
  * type parameter. The initialization to nil works different here.
  */
-svector<string>::svector<string>(unsigned size)
+inline svector<string>::svector<string>(unsigned size)
 : nitems_(size), items_(new string[size])
 {
 }
@@ -109,6 +109,9 @@ svector<string>::svector<string>(unsigned size)
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.9  2003/07/23 02:35:44  steve
+ *  Inline the svector<string> constructor.
+ *
  * Revision 1.8  2003/07/16 00:54:07  steve
  *  Needs the config.h header.
  *
