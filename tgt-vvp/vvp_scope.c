@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.7 2001/03/28 06:07:40 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.8 2001/03/29 03:47:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -169,7 +169,7 @@ static void draw_event_in_scope(ivl_event_t obj)
       } else {
 	    unsigned idx;
 	    unsigned pins = ivl_event_pins(obj);
-	    assert(pins < 4);
+	    assert(pins <= 4);
 	    fprintf(vvp_out, "E_%s .event ", ivl_event_name(obj));
 	    switch (edge) {
 		case IVL_EDGE_POS:
@@ -245,6 +245,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.8  2001/03/29 03:47:13  steve
+ *  events can take up to 4 inputs.
+ *
  * Revision 1.7  2001/03/28 06:07:40  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.
