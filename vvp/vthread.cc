@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.20 2001/04/01 22:25:33 steve Exp $"
+#ident "$Id: vthread.cc,v 1.21 2001/04/03 03:18:34 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -475,7 +475,7 @@ bool of_OR(vthread_t thr, vvp_code_t cp)
 bool of_SET(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
-      functor_set(cp->iptr, bit_val);
+      functor_set(cp->iptr, bit_val, true);
 
       return true;
 }
@@ -504,6 +504,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.21  2001/04/03 03:18:34  steve
+ *  support functor_set push for blocking assignment.
+ *
  * Revision 1.20  2001/04/01 22:25:33  steve
  *  Add the reduction nor instruction.
  *

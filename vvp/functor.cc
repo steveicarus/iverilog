@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.9 2001/03/31 19:29:23 steve Exp $"
+#ident "$Id: functor.cc,v 1.10 2001/04/03 03:18:34 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -132,7 +132,7 @@ functor_t functor_index(vvp_ipoint_t point)
       return functor_table[point]->table[index1]->table + index0;
 }
 
-static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp)
+static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
 	/* Locate the new output value in the table. */
       unsigned char out = fp->table[fp->ival >> 2];
@@ -142,7 +142,10 @@ static void functor_set_mode0(vvp_ipoint_t ptr, functor_t fp)
 	/* If the output changes, then create a propagation event. */
       if (out != fp->oval) {
 	    fp->oval = out;
-	    schedule_functor(ptr, 0);
+	    if (push)
+		  functor_propagate(ptr);
+	    else
+		  schedule_functor(ptr, 0);
       }
 }
 
@@ -209,7 +212,7 @@ static void functor_set_mode2(functor_t fp)
  * output. If the output changes any, then generate the necessary
  * propagation events to pass the output on.
  */
-void functor_set(vvp_ipoint_t ptr, unsigned bit)
+void functor_set(vvp_ipoint_t ptr, unsigned bit, bool push)
 {
       functor_t fp = functor_index(ptr);
       unsigned pp = ipoint_port(ptr);
@@ -223,7 +226,7 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit)
 
       switch (fp->mode) {
 	  case 0:
-	    functor_set_mode0(ptr, fp);
+	    functor_set_mode0(ptr, fp, push);
 	    break;
 	  case 1:
 	    functor_set_mode1(fp);
@@ -297,6 +300,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.10  2001/04/03 03:18:34  steve
+ *  support functor_set push for blocking assignment.
+ *
  * Revision 1.9  2001/03/31 19:29:23  steve
  *  Fix compilation warnings.
  *

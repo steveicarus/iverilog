@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.8 2001/04/01 21:31:46 steve Exp $"
+#ident "$Id: functor.h,v 1.9 2001/04/03 03:18:34 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -112,7 +112,7 @@ extern vvp_ipoint_t functor_allocate(unsigned wid);
  * calculates a new output value. If there is any propagation to do,
  * propagation events are created.
  */
-extern void functor_set(vvp_ipoint_t point, unsigned val);
+extern void functor_set(vvp_ipoint_t point, unsigned val, bool push=false);
 
 extern unsigned functor_get(vvp_ipoint_t ptr);
 
@@ -145,6 +145,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.9  2001/04/03 03:18:34  steve
+ *  support functor_set push for blocking assignment.
+ *
  * Revision 1.8  2001/04/01 21:31:46  steve
  *  Add the buf functor type.
  *
