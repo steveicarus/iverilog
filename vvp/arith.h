@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.9 2001/10/16 02:47:37 steve Exp $"
+#ident "$Id: arith.h,v 1.10 2001/10/27 03:22:26 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -81,6 +81,7 @@ class vvp_arith_sum  : public vvp_arith_ {
 
     private:
       unsigned long*sum_;
+      static const unsigned pagesize = 8*sizeof(unsigned long);
 
     private: // not implemented
       vvp_arith_sum(const vvp_arith_sum&);
@@ -97,6 +98,7 @@ class vvp_arith_sub  : public vvp_arith_ {
 
     private:
       unsigned long*sum_;
+      static const unsigned pagesize = 8*sizeof(unsigned long);
 
     private: // not implemented
       vvp_arith_sub(const vvp_arith_sub&);
@@ -159,6 +161,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.10  2001/10/27 03:22:26  steve
+ *  Minor rework of summation carry propagation (Stephan Boettcher)
+ *
  * Revision 1.9  2001/10/16 02:47:37  steve
  *  Add arith/div object.
  *

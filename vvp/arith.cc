@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.16 2001/10/16 03:10:20 steve Exp $"
+#ident "$Id: arith.cc,v 1.17 2001/10/27 03:22:26 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -263,19 +263,19 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 	    if (ival & 0x40)
 		  tmp += 1;
 
-	      // Add in the carry carried over.
-	    assert(tmp < (ULONG_MAX/2));
-	    tmp += carry;
-	      // Put the next bit into the sum,
-	    sum_[page] |= ((tmp&1) << pbit);
-	      // ... and carry the remaining bits.
-	    carry = tmp >> 1;
+	    // Save carry bits
+	    if (pbit >= pagesize - 2)
+		  carry += (tmp + (sum_[page]>>pbit)) >> (pagesize-pbit);
+
+	    // Put the next bit into the sum,
+	    sum_[page] += tmp << pbit;
 
 	    pbit += 1;
-	    if (pbit == 8 * sizeof sum_[page]) {
+	    if (pbit >= pagesize) {
 		  pbit = 0;
 		  page += 1;
-		  sum_[page] = 0;
+		  sum_[page] = carry;
+		  carry = 0;
 	    }
       }
 
@@ -326,13 +326,12 @@ void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 {
       unsigned page = 0;
       unsigned pbit = 0;
+      unsigned long carry = 0;
 
 	/* There are 3 values subtracted from the first parameter, so
 	   there are three 2s complements, so three ~X +1. That's why
-	   the carry starts with 3. */
-      unsigned long carry = 3;
-
-      sum_[0] = 0;
+	   the sum_ starts with 3. */
+      sum_[0] = 3;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
@@ -356,19 +355,19 @@ void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 	    if (! (ival & 0x40))
 		  tmp += 1;
 
-	      // Add in the carry carried over.
-	    assert(tmp < (ULONG_MAX/2));
-	    tmp += carry;
-	      // Put the next bit into the sum,
-	    sum_[page] |= ((tmp&1) << pbit);
-	      // ... and carry the remaining bits.
-	    carry = tmp >> 1;
+	    // Save carry bits
+	    if (pbit >= pagesize - 2)
+		  carry += (tmp + (sum_[page]>>pbit)) >> (pagesize-pbit);
+
+	    // Put the next bits into the sum,
+	    sum_[page] += tmp << pbit;
 
 	    pbit += 1;
-	    if (pbit == 8 * sizeof sum_[page]) {
+	    if (pbit >= pagesize) {
 		  pbit = 0;
 		  page += 1;
-		  sum_[page] = 0;
+		  sum_[page] = carry;
+		  carry = 0;
 	    }
       }
 
@@ -634,6 +633,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.17  2001/10/27 03:22:26  steve
+ *  Minor rework of summation carry propagation (Stephan Boettcher)
+ *
  * Revision 1.16  2001/10/16 03:10:20  steve
  *  Get Division error into the division method!
  *
