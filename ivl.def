@@ -49,7 +49,7 @@ ivl_process_stmt
 ivl_statement_type
 
 ivl_stmt_block_count
-ivl_stmt_blocl_stmt
+ivl_stmt_block_stmt
 ivl_stmt_cond_expr
 ivl_stmt_cond_false
 ivl_stmt_cond_true

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.12 2000/10/15 04:46:23 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.13 2000/10/16 22:44:54 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -143,6 +143,12 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
 	    assert(0);
       }
 
+      return 0;
+}
+
+extern "C" ivl_expr_t ivl_expr_oper3(ivl_expr_t net)
+{
+      assert(net);
       return 0;
 }
 
@@ -416,6 +422,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.13  2000/10/16 22:44:54  steve
+ *  Stubs so that cygwin port will link ivl.
+ *
  * Revision 1.12  2000/10/15 04:46:23  steve
  *  Scopes and processes are accessible randomly from
  *  the design, and signals and logic are accessible

@@ -6,12 +6,10 @@ syn-rules.cc
 syn-rules.cc.output
 lexor.cc
 ivl
+ivl.exp
 dep
 configure
 Makefile
-verilog
-gverilog
-iverilog
 config.status
 config.log
 config.cache
