@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.17 1999/03/01 03:27:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.18 1999/03/15 02:43:32 steve Exp $"
 #endif
 
 /*
@@ -510,6 +510,19 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	    des->add_node(gate);
 	    break;
 
+	  case 'n': // !=
+	    assert(lsig->pin_count() == 1);
+	    assert(rsig->pin_count() == 1);
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::XOR);
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    connect(gate->pin(0), osig->pin(0));
+	    des->add_signal(osig);
+	    des->add_node(gate);
+	    break;
+
 	  default:
 	    cerr << "Unhandled BINARY '" << op_ << "'" << endl;
 	    osig = 0;
@@ -699,6 +712,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       assert(rval);
 
       NetAssign*cur = new NetAssign(reg, rval);
+      cur->set_line(*this);
       des->add_node(cur);
 
       return cur;
@@ -963,6 +977,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.18  1999/03/15 02:43:32  steve
+ *  Support more operators, especially logical.
+ *
  * Revision 1.17  1999/03/01 03:27:53  steve
  *  Prevent the duplicate allocation of ESignal objects.
  *

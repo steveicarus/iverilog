@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.21 1999/03/01 03:27:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.22 1999/03/15 02:43:32 steve Exp $"
 #endif
 
 /*
@@ -558,11 +558,15 @@ class NetProc {
       NetProc*next_;
 };
 
-/* This is a procedural assignment. The lval is a register, and the
-   assignment happens when the code is executed by the design. The
-   node part of the NetAssign has as many pins as the width of the
-   lvalue object. */
-class NetAssign  : public NetProc, public NetNode {
+/*
+ * This is a procedural assignment. The lval is a register, and the
+ * assignment happens when the code is executed by the design. The
+ * node part of the NetAssign has as many pins as the width of the
+ * lvalue object and represents the elaborated lvalue. Thus, this
+ * appears as a procedural statement AND a structural node. The
+ * LineInfo is the location of the assignment statement in the source.
+ */
+class NetAssign  : public NetProc, public NetNode, public LineInfo {
     public:
       explicit NetAssign(NetNet*lv, NetExpr*rv);
       ~NetAssign();
@@ -793,7 +797,23 @@ class NetProcTop  : public LineInfo {
       NetProcTop*next_;
 };
 
-
+/*
+ * This class represents a binary operator, with the left and right
+ * operands and a single character for the operator. The operator
+ * values are:
+ *
+ *   ^  -- Bit-wise exclusive OR
+ *   +  -- Arithmetic add
+ *   -  -- Arighmetic minus
+ *   &  -- Bit-wise AND
+ *   |  -- Bit-wise OR
+ *   e  -- Logical equality (==)
+ *   E  -- Case equality (===)
+ *   n  -- Logical inequality (!=)
+ *   N  -- Case inequality (!==)
+ *   a  -- Logical AND (&&)
+ *   o  -- Logical OR (||)
+ */
 class NetEBinary  : public NetExpr {
 
     public:
@@ -833,6 +853,14 @@ class NetEConst  : public NetExpr {
       verinum value_;
 };
 
+/*
+ * This class represents a unaru operator, with the single operand
+ * and a single character for the operator. The operator values are:
+ *
+ *   ~  -- Bit-wise negation
+ *   !  -- Logical negation
+ *   &  -- Reduction AND
+ */
 class NetEUnary  : public NetExpr {
 
     public:
@@ -1020,6 +1048,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.22  1999/03/15 02:43:32  steve
+ *  Support more operators, especially logical.
+ *
  * Revision 1.21  1999/03/01 03:27:53  steve
  *  Prevent the duplicate allocation of ESignal objects.
  *

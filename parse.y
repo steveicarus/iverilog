@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.14 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: parse.y,v 1.15 1999/03/15 02:43:32 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -60,6 +60,7 @@ extern void lex_end_table();
 %token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
 %token K_LE K_GE K_EQ K_NE K_CEQ K_CNE
+%token K_LOR K_LAND
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
@@ -116,6 +117,9 @@ extern void lex_end_table();
 %left K_EQ K_NE K_CEQ K_CNE
 %left '&'
 %left '^'
+%left '|'
+%left K_LAND
+%left K_LOR
 
 %%
 
@@ -229,6 +233,9 @@ expression
 	| '&' expression %prec UNARY_PREC
 		{ $$ = new PEUnary('&', $2);
 		}
+	| '!' expression %prec UNARY_PREC
+		{ $$ = new PEUnary('!', $2);
+		}
 	| expression '^' expression
 		{ $$ = new PEBinary('^', $1, $3);
 		}
@@ -241,6 +248,9 @@ expression
 	| expression '&' expression
 		{ $$ = new PEBinary('&', $1, $3);
 		}
+	| expression '|' expression
+		{ $$ = new PEBinary('|', $1, $3);
+		}
 	| expression K_EQ expression
 		{ $$ = new PEBinary('e', $1, $3);
 		}
@@ -252,6 +262,12 @@ expression
 		}
 	| expression K_CNE expression
 		{ $$ = new PEBinary('N', $1, $3);
+		}
+	| expression K_LOR expression
+		{ $$ = new PEBinary('o', $1, $3);
+		}
+	| expression K_LAND expression
+		{ $$ = new PEBinary('a', $1, $3);
 		}
 	;
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.13 1999/02/22 03:01:12 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.14 1999/03/15 02:43:32 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -144,6 +144,10 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	    os_ << "vvm_unop_not(" << result << ");"
 		<< endl;
 	    break;
+	  case '!':
+	    os_ << "vvm_unop_lnot(" << result << ");"
+		<< endl;
+	    break;
 	  default:
 	    cerr << "vvm: Unhandled unary op `" << expr->op() << "'"
 		 << endl;
@@ -174,6 +178,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_ne("
 		<< lres << "," << rres << ");" << endl;
 	    break;
+	  case 'o':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_lor("
+		<< lres << "," << rres << ");" << endl;
+	    break;
 	  case '+':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_plus("
 		<< lres << "," << rres << ");" << endl;
@@ -184,6 +192,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case '&':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_and("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '|':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_or("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  default:
@@ -585,7 +597,8 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       net->find_lval_range(lval, msb, lsb);
 
       if ((lsb == 0) && (msb == (lval->pin_count()-1))) {
-	    os << "        // " << lval->name() << " = ";
+	    os << "        // " << net->get_line() << ": "
+	       << lval->name() << " = ";
 	    net->rval()->dump(os);
 	    os << endl;
       } else {
@@ -870,6 +883,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.14  1999/03/15 02:43:32  steve
+ *  Support more operators, especially logical.
+ *
  * Revision 1.13  1999/02/22 03:01:12  steve
  *  Handle default case.
  *

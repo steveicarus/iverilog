@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.18 1999/03/01 03:27:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.19 1999/03/15 02:43:32 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -444,7 +444,12 @@ void NetEBinary::set_width(unsigned w)
 	  case 'e':
 	    assert(w == 1);
 	    expr_width(w);
-	    break;;
+	    break;
+
+	  case 'o':
+	    assert(w == 1);
+	    expr_width(w);
+	    break;
 
 	      /* The default rule is that the operands of the binary
 		 operator might as well use the same width as the
@@ -956,6 +961,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.19  1999/03/15 02:43:32  steve
+ *  Support more operators, especially logical.
+ *
  * Revision 1.18  1999/03/01 03:27:53  steve
  *  Prevent the duplicate allocation of ESignal objects.
  *

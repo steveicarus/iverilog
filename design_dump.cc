@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.15 1999/03/01 03:27:53 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.16 1999/03/15 02:43:32 steve Exp $"
 #endif
 
 /*
@@ -427,11 +427,17 @@ void NetEBinary::dump(ostream&o) const
 	  default:
 	    o << op_;
 	    break;
+	  case 'a':
+	    o << "&&";
+	    break;
 	  case 'e':
 	    o << "==";
 	    break;
 	  case 'n':
 	    o << "!=";
+	    break;
+	  case 'o':
+	    o << "||";
 	    break;
       }
       o << "(";
@@ -515,6 +521,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.16  1999/03/15 02:43:32  steve
+ *  Support more operators, especially logical.
+ *
  * Revision 1.15  1999/03/01 03:27:53  steve
  *  Prevent the duplicate allocation of ESignal objects.
  *
