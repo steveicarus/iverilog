@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.79 2001/06/19 03:01:10 steve Exp $"
+#ident "$Id: compile.cc,v 1.80 2001/06/23 01:04:07 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1008,6 +1008,34 @@ void compile_codelabel(char*label)
       free(label);
 }
 
+
+struct postponed_handles_list_s {
+      struct postponed_handles_list_s*next;
+      vpiHandle *handle;
+      char*name;
+};
+
+static struct postponed_handles_list_s *late_handles;
+
+static vpiHandle postpone_vpi_symbol_lookup(vpiHandle *handle, 
+					    char*name)
+{
+      *handle = compile_vpi_lookup(name);
+      if (*handle)
+	    free(name);
+      else {
+	    struct postponed_handles_list_s*res = 
+		  (struct postponed_handles_list_s*)
+		  malloc(sizeof(struct postponed_handles_list_s));
+
+	    res->handle  = handle;
+	    res->name    = name;
+	    res->next    = late_handles;
+	    late_handles = res;
+      }
+      return *handle;
+}
+
 void compile_disable(char*label, struct symb_s symb)
 {
       vvp_cpoint_t ptr = codespace_allocate();
@@ -1026,12 +1054,9 @@ void compile_disable(char*label, struct symb_s symb)
       vvp_code_t code = codespace_index(ptr);
       code->opcode = of_DISABLE;
 
-	/* Figure out the target SCOPE. */
-      code->handle = compile_vpi_lookup(symb.text);
-      assert(code->handle);
+      postpone_vpi_symbol_lookup(&code->handle, symb.text);
 
       free(label);
-      free(symb.text);
 }
 
 /*
@@ -1072,13 +1097,10 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       }
 
 	/* Figure out the target SCOPE. */
-      vpiHandle sh = compile_vpi_lookup(scope.text);
-      assert(sh);
-      code->fork->scope = (struct __vpiScope*)sh;
-
+      postpone_vpi_symbol_lookup((vpiHandle*)&code->fork->scope, scope.text);
+      
       free(label);
       free(dest.text);
-      free(scope.text);
 }
 
 void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
@@ -1391,6 +1413,23 @@ void compile_cleanup(void)
 		  cresolv_flist = res;
 	    }
       }
+
+      struct postponed_handles_list_s *lhandle = late_handles;
+      late_handles = 0x0;
+      while (lhandle) {
+	    struct postponed_handles_list_s *tmp = lhandle;
+	    lhandle = lhandle->next;
+	    postpone_vpi_symbol_lookup(tmp->handle, tmp->name);
+	    free(tmp);
+      }
+      lhandle = late_handles;
+      while (lhandle) {
+	    compile_errors += 1;
+	    fprintf(stderr, 
+		    "unresolved vpi name lookup: %s\n",
+		    lhandle->name);
+	    lhandle = lhandle->next;
+      }
 }
 
 /*
@@ -1409,6 +1448,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.80  2001/06/23 01:04:07  steve
+ *  Allow forward references of task scopes. (Stephan Boettcher)
+ *
  * Revision 1.79  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
  *
