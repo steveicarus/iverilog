@@ -19,27 +19,36 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem_lex.lex,v 1.6 2002/02/06 04:49:24 steve Exp $"
+#ident "$Id: sys_readmem_lex.lex,v 1.7 2003/02/09 05:07:06 steve Exp $"
 #endif
 # include "sys_readmem_lex.h"
 # include  <string.h>
 static void make_addr();
 static void make_hex_value();
 static void make_bin_value();
+
+static int save_state;
+
 %}
 
 %x BIN
 %x HEX
+%x CCOMMENT
 
 %option noyywrap
 %%
 
-<*>"//".* { ; }
-<*>[ \t\f\n\r] { ; }
+<HEX,BIN>"//".* { ; }
+<HEX,BIN>[ \t\f\n\r] { ; }
 
-<*>@[0-9a-fA-F]+ { make_addr(); return MEM_ADDRESS; }
+<HEX,BIN>@[0-9a-fA-F]+ { make_addr(); return MEM_ADDRESS; }
 <HEX>[0-9a-fA-FxXzZ_]+  { make_hex_value(); return MEM_WORD; }
 <BIN>[01xXzZ_]+  { make_bin_value(); return MEM_WORD; }
+
+<HEX,BIN>"/*"   { save_state = YY_START; BEGIN(CCOMMENT); }
+<CCOMMENT>[^*]* { ; }
+<CCOMMENT>"*"   { ; }
+<CCOMMENT>"*"+"/" { BEGIN(save_state); }
 
 %%
 static unsigned word_width = 0;
