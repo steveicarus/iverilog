@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.32 2002/04/27 04:48:43 steve Exp $"
+#ident "$Id: verinum.cc,v 1.33 2002/04/27 23:26:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -233,7 +233,7 @@ string verinum::as_string() const
 
       char*tmp = new char[nbits_/8+1];
       char*cp = tmp;
-      for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 8, cp += 1) {
+      for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 8) {
 	    V*bp = bits_+idx;
 	    *cp = 0;
 	    if (*(--bp) == V1) *cp |= 0x80;
@@ -244,6 +244,10 @@ string verinum::as_string() const
 	    if (*(--bp) == V1) *cp |= 0x04;
 	    if (*(--bp) == V1) *cp |= 0x02;
 	    if (*(--bp) == V1) *cp |= 0x01;
+	    if (*cp != 0) {
+		  cp += 1;
+		  *cp = 0;
+	    }
       }
 
       tmp[nbits_/8] = 0;
@@ -798,6 +802,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.33  2002/04/27 23:26:24  steve
+ *  Trim leading nulls from string forms.
+ *
  * Revision 1.32  2002/04/27 04:48:43  steve
  *  Display string verinums as strings.
  *

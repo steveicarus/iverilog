@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.14 2002/04/27 22:36:39 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.15 2002/04/27 23:26:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -196,6 +196,51 @@ static int binary_get(int code, vpiHandle ref)
       }
 }
 
+static void binary_vpiStringVal(struct __vpiBinaryConst*rfp, p_vpi_value vp)
+{
+      unsigned nchar = rfp->nbits / 8;
+      unsigned tail = rfp->nbits%8;
+
+      char*cp = buf;
+
+      if (tail > 0) {
+	    char char_val = 0;
+	    for (unsigned idx = rfp->nbits-tail; idx < rfp->nbits; idx += 1) {
+		  unsigned nibble = idx/4;
+		  unsigned shift  = 2 * (idx%4);
+		  unsigned val = (rfp->bits[nibble] >> shift) & 3;
+		  if (val & 1)
+			char_val |= 1 << idx;
+	    }
+
+	    if (char_val != 0)
+		  *cp++ = char_val;
+      }
+
+      for (unsigned idx = 0 ;  idx < nchar ;  idx += 1) {
+	    unsigned bit = (nchar - idx - 1) * 8;
+	    unsigned nibble = bit/4;
+	    unsigned vall = rfp->bits[nibble+0];
+	    unsigned valh = rfp->bits[nibble+1];
+
+	    char char_val = 0;
+	    if (vall&0x01) char_val |= 0x01;
+	    if (vall&0x04) char_val |= 0x02;
+	    if (vall&0x10) char_val |= 0x04;
+	    if (vall&0x40) char_val |= 0x08;
+	    if (valh&0x01) char_val |= 0x10;
+	    if (valh&0x04) char_val |= 0x20;
+	    if (valh&0x10) char_val |= 0x40;
+	    if (valh&0x40) char_val |= 0x80;
+
+	    if (char_val != 0)
+		  *cp++ = char_val;
+      }
+
+      *cp = 0;
+      vp->format = vpiStringVal;
+      vp->value.str = buf;
+}
 
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
@@ -237,9 +282,6 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	  case vpiHexStrVal: {
 		unsigned nchar = (rfp->nbits+3)/4;
 		assert(nchar < sizeof buf);
-		unsigned cum_val = 0;
-		unsigned nz = 0;
-		unsigned nx = 0;
 		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 4) {
 		      unsigned nibble = idx/4;
 		      unsigned vals = rfp->bits[nibble];
@@ -282,6 +324,10 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		vp->value.integer = val;
 		break;
 	  }
+
+	  case vpiStringVal:
+	    binary_vpiStringVal(rfp, vp);
+	    break;
 
 	  default:
 	    fprintf(stderr, "vvp error: format %d not supported "
@@ -453,6 +499,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.15  2002/04/27 23:26:24  steve
+ *  Trim leading nulls from string forms.
+ *
  * Revision 1.14  2002/04/27 22:36:39  steve
  *  Support drawing vpiBinaryConst in hex.
  *
