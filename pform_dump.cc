@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.56 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.57 2000/05/06 15:41:57 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,30 @@ ostream& operator << (ostream&out, const PExpr&obj)
 ostream& operator << (ostream&o, const PDelays&d)
 {
       d.dump_delays(o);
+      return o;
+}
+
+ostream& operator<< (ostream&o, PGate::strength_t str)
+{
+      switch (str) {
+	  case PGate::HIGHZ:
+	    o << "highz";
+	    break;
+	  case PGate::WEAK:
+	    o << "weak";
+	    break;
+	  case PGate::PULL:
+	    o << "pull";
+	    break;
+	  case PGate::STRONG:
+	    o << "strong";
+	    break;
+	  case PGate::SUPPLY:
+	    o << "supply";
+	    break;
+	  default:
+	    assert(0);
+      }
       return o;
 }
 
@@ -252,7 +276,7 @@ void PGate::dump(ostream&out) const
 
 void PGAssign::dump(ostream&out) const
 {
-      out << "    assign ";
+      out << "    assign (" << strength0() << "0 " << strength1() << "1) ";
       dump_delays(out);
       out << " " << *pin(0) << " = " << *pin(1) << ";" << endl;
 }
@@ -273,6 +297,7 @@ void PGBuiltin::dump(ostream&out) const
 	    out << "    builtin gate ";
       }
 
+      out << "(" << strength0() << "0 " << strength1() << "1) ";
       dump_delays(out);
       out << " " << get_name();
 
@@ -748,6 +773,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.57  2000/05/06 15:41:57  steve
+ *  Carry assignment strength to pform.
+ *
  * Revision 1.56  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.93 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: parse.y,v 1.94 2000/05/06 15:41:56 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -33,6 +33,8 @@ extern void lex_end_table();
       char letter;
       char*text;
       list<string>*strings;
+
+      struct str_pair_t drive;
 
       PCase::Item*citem;
       svector<PCase::Item*>*citems;
@@ -97,6 +99,7 @@ extern void lex_end_table();
 
 %token KK_attribute
 
+%type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
 %type <strings> udp_entry_list udp_comb_entry_list udp_sequ_entry_list
@@ -381,20 +384,49 @@ description
 
 drive_strength
 	: '(' dr_strength0 ',' dr_strength1 ')'
+		{ $$.str0 = $2.str0;
+		  $$.str1 = $4.str1;
+		}
 	| '(' dr_strength1 ',' dr_strength0 ')'
+		{ $$.str0 = $4.str0;
+		  $$.str1 = $2.str1;
+		}
 	| '(' dr_strength0 ',' K_highz1 ')'
+		{ $$.str0 = $2.str0;
+		  $$.str1 = PGate::HIGHZ;
+		}
 	| '(' dr_strength1 ',' K_highz0 ')'
+		{ $$.str0 = PGate::HIGHZ;
+		  $$.str1 = $2.str1;
+		}
 	| '(' K_highz1 ',' dr_strength0 ')'
+		{ $$.str0 = $4.str0;
+		  $$.str1 = PGate::HIGHZ;
+		}
 	| '(' K_highz0 ',' dr_strength1 ')'
+		{ $$.str0 = PGate::HIGHZ;
+		  $$.str1 = $4.str1;
+		}
 	;
 
 drive_strength_opt
-	: drive_strength
-	|
+	: drive_strength { $$ = $1; }
+	|                { $$.str0 = PGate::STRONG; $$.str1 = PGate::STRONG; }
 	;
 
-dr_strength0 : K_supply0 | K_strong0 | K_pull0 | K_weak0 ;
-dr_strength1 : K_supply1 | K_strong1 | K_pull1 | K_weak1 ;
+dr_strength0
+	: K_supply0 { $$.str0 = PGate::SUPPLY; }
+	| K_strong0 { $$.str0 = PGate::STRONG; }
+	| K_pull0   { $$.str0 = PGate::PULL; }
+	| K_weak0   { $$.str0 = PGate::WEAK; }
+	;
+
+dr_strength1
+	: K_supply1 { $$.str1 = PGate::SUPPLY; }
+	| K_strong1 { $$.str1 = PGate::STRONG; }
+	| K_pull1   { $$.str1 = PGate::PULL; }
+	| K_weak1   { $$.str1 = PGate::WEAK; }
+	;
 
 event_control
 	: '@' IDENTIFIER
@@ -1139,7 +1171,7 @@ module_item
 		  delete $1;
 		}
 	| K_assign drive_strength_opt delay3_opt assign_list ';'
-		{ pform_make_pgassign_list($4, $3, @1.text, @1.first_line); }
+		{ pform_make_pgassign_list($4, $3, $2, @1.text, @1.first_line); }
 	| K_assign error '=' expression ';'
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
@@ -1197,14 +1229,20 @@ module_item_list
 net_decl_assign
 	: IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($1);
-		  PGAssign*tmp = pform_make_pgassign(id, $3, 0);
+		  struct str_pair_t str;
+		  str.str0 = PGate::STRONG;
+		  str.str1 = PGate::STRONG;
+		  PGAssign*tmp = pform_make_pgassign(id, $3, 0, str);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = $1;
 		}
 	| delay1 IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($2);
-		  PGAssign*tmp = pform_make_pgassign(id, $4, $1);
+		  struct str_pair_t str;
+		  str.str0 = PGate::STRONG;
+		  str.str1 = PGate::STRONG;
+		  PGAssign*tmp = pform_make_pgassign(id, $4, $1, str);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = $2;

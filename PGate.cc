@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.cc,v 1.8 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: PGate.cc,v 1.9 2000/05/06 15:41:56 steve Exp $"
 #endif
 
 # include  "PGate.h"
@@ -31,6 +31,8 @@ PGate::PGate(const string&name,
 : name_(name), pins_(pins)
 {
       if (del) delay_.set_delays(del);
+      str0_ = STRONG;
+      str1_ = STRONG;
 }
 
 PGate::PGate(const string&name,
@@ -39,15 +41,39 @@ PGate::PGate(const string&name,
 : name_(name), pins_(pins)
 {
       if (del) delay_.set_delay(del);
+      str0_ = STRONG;
+      str1_ = STRONG;
 }
 
 PGate::PGate(const string&name, svector<PExpr*>*pins)
 : name_(name), pins_(pins)
 {
+      str0_ = STRONG;
+      str1_ = STRONG;
 }
 
 PGate::~PGate()
 {
+}
+
+PGate::strength_t PGate::strength0() const
+{
+      return str0_;
+}
+
+void PGate::strength0(PGate::strength_t s)
+{
+      str0_ = s;
+}
+
+PGate::strength_t PGate::strength1() const
+{
+      return str1_;
+}
+
+void PGate::strength1(PGate::strength_t s)
+{
+      str1_ = s;
 }
 
 void PGate::elaborate_scope(Design*, NetScope*) const
@@ -152,6 +178,9 @@ void PGModule::set_range(PExpr*msb, PExpr*lsb)
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.9  2000/05/06 15:41:56  steve
+ *  Carry assignment strength to pform.
+ *
  * Revision 1.8  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

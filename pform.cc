@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.57 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: pform.cc,v 1.58 2000/05/06 15:41:57 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -451,7 +451,8 @@ void pform_make_modgates(const string&type,
 }
 
 PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
-			      svector<PExpr*>*del)
+			      svector<PExpr*>*del,
+			      struct str_pair_t str)
 {
       svector<PExpr*>*wires = new svector<PExpr*>(2);
       (*wires)[0] = lval;
@@ -464,19 +465,24 @@ PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       else
 	    cur = new PGAssign(wires, del);
 
+      cur->strength0(str.str0);
+      cur->strength1(str.str1);
+
       pform_cur_module->add_gate(cur);
       return cur;
 }
 
 void pform_make_pgassign_list(svector<PExpr*>*alist,
 			      svector<PExpr*>*del,
+			      struct str_pair_t str,
 			      const string& text,
 			      unsigned lineno)
 {
 	PGAssign*tmp;
 	for (unsigned idx = 0 ;  idx < alist->count()/2 ;  idx += 1) {
 	      tmp = pform_make_pgassign((*alist)[2*idx],
-					(*alist)[2*idx+1], del);
+					(*alist)[2*idx+1],
+					del, str);
 	      tmp->set_file(text);
 	      tmp->set_lineno(lineno);
 	}
@@ -853,6 +859,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.58  2000/05/06 15:41:57  steve
+ *  Carry assignment strength to pform.
+ *
  * Revision 1.57  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.38 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: pform.h,v 1.39 2000/05/06 15:41:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -73,6 +73,8 @@ struct parmvalue_t {
       svector<PExpr*>*by_order;
       svector<portname_t*>*by_name;
 };
+
+struct str_pair_t { PGate::strength_t str0, str1; };
 
 /* The lgate is gate instantiation information. */
 struct lgate {
@@ -158,9 +160,11 @@ extern void pform_make_modgates(const string&type,
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
 extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
-				     svector<PExpr*>*delays);
+				     svector<PExpr*>*delays,
+				     struct str_pair_t str);
 extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 				     svector<PExpr*>*del,
+				     struct str_pair_t str,
 				     const string& text,
 				     unsigned lineno);
 
@@ -185,6 +189,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.39  2000/05/06 15:41:57  steve
+ *  Carry assignment strength to pform.
+ *
  * Revision 1.38  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.17 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: PGate.h,v 1.18 2000/05/06 15:41:56 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -42,10 +42,17 @@ class Module;
  * This pins of a gate are connected to expressions. The elaboration
  * step will need to convert expressions to a network of gates in
  * order to elaborate expression inputs, but that can easily be done.
+ *
+ * The PGate base class also carries the strength0 and strength1
+ * strengths for those gates where the driver[s] can be described by a
+ * single strength pair. There is a strength of the 0 drive, and a
+ * strength of the 1 drive.
  */
 class PGate : public LineInfo {
       
     public:
+      enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
+
       explicit PGate(const string&name, svector<PExpr*>*pins,
 		     const svector<PExpr*>*del);
 
@@ -66,6 +73,12 @@ class PGate : public LineInfo {
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
 
+      strength_t strength0() const;
+      strength_t strength1() const;
+
+      void strength0(strength_t);
+      void strength1(strength_t);
+
       map<string,string> attributes;
 
       virtual void dump(ostream&out) const;
@@ -83,6 +96,8 @@ class PGate : public LineInfo {
       const string name_;
       PDelays delay_;
       svector<PExpr*>*pins_;
+
+      strength_t str0_, str1_;
 
     private: // not implemented
       PGate(const PGate&);
@@ -204,6 +219,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.18  2000/05/06 15:41:56  steve
+ *  Carry assignment strength to pform.
+ *
  * Revision 1.17  2000/05/02 16:27:38  steve
  *  Move signal elaboration to a seperate pass.
  *
