@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.14 2000/07/25 02:55:13 steve Exp $"
+#ident "$Id: cprop.cc,v 1.15 2000/08/02 14:48:01 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -289,7 +289,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       if (flag) {
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(des->local_symbol(obj->name()),
-					      3, NetLogic::BUFIF1);
+					      3, NetLogic::BUFIF0);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
 		  connect(obj->pin_Data(idx,0), tmp->pin(1));
@@ -378,6 +378,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.15  2000/08/02 14:48:01  steve
+ *  use bufif0 if z is in true case of mux.
+ *
  * Revision 1.14  2000/07/25 02:55:13  steve
  *  Unlink z constants from nets.
  *
