@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.82 1999/09/12 01:16:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.83 1999/09/13 03:10:59 steve Exp $"
 #endif
 
 /*
@@ -105,10 +105,16 @@ void PWire::elaborate(Design*des, const string&path) const
 	    wtype = NetNet::REG;
 
       unsigned wid = 1;
+      long lsb = 0, msb = 0;
 
       if (msb_.count()) {
 	    svector<long>mnum (msb_.count());
 	    svector<long>lnum (msb_.count());
+
+	      /* There may be multiple declarations of ranges, because
+		 the symbol may have its range declared in i.e. input
+		 and reg declarations. Calculate *all* the numbers
+		 here. I will resolve the values later. */
 
 	    for (unsigned idx = 0 ;  idx < msb_.count() ;  idx += 1) {
 		  verinum*mval = msb_[idx]->eval_const(des,path);
@@ -134,6 +140,8 @@ void PWire::elaborate(Design*des, const string&path) const
 		  delete lval;
 	    }
 
+	      /* Make sure all the values for msb and lsb match by
+		 value. If not, report an error. */
 	    for (unsigned idx = 1 ;  idx < msb_.count() ;  idx += 1) {
 		  if ((mnum[idx] != mnum[0]) || (lnum[idx] != lnum[0])) {
 			cerr << get_line() << ": Inconsistent width, "
@@ -145,6 +153,8 @@ void PWire::elaborate(Design*des, const string&path) const
 		  }
 	    }
 
+	    lsb = lnum[0];
+	    msb = mnum[0];
 	    if (mnum[0] > lnum[0])
 		  wid = mnum[0] - lnum[0] + 1;
 	    else
@@ -173,7 +183,7 @@ void PWire::elaborate(Design*des, const string&path) const
 
       } else {
 
-	    NetNet*sig = new NetNet(path + "." + name_, wtype, wid);
+	    NetNet*sig = new NetNet(path + "." + name_, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_attributes(attributes);
@@ -1255,14 +1265,18 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 		  verinum*msn = msb_->eval_const(des, path);
 		  unsigned long lsv = lsn->as_ulong();
 		  unsigned long msv = msn->as_ulong();
-		  assert(msv >= lsv);
-		  unsigned long wid = msv-lsv+1;
+		  unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
+		  assert(wid <= net->pin_count());
+		  assert(net->sb_to_idx(msv) >= net->sb_to_idx(lsv));
 
 		  string tname = des->local_symbol(path);
 		  NetESignal*tmp = new NetESignal(tname, wid);
 		  tmp->set_line(*this);
+
+		    // Connect the pins from the lsb up to the msb.
+		  unsigned off = net->sb_to_idx(lsv);
 		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-			connect(tmp->pin(idx), net->pin(idx+lsv));
+			connect(tmp->pin(idx), net->pin(idx+off));
 
 		  des->add_node(tmp);
 		  return tmp;
@@ -1373,6 +1387,10 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       return am;
 }
 
+/*
+ * Elaborate an l-value as a NetNet (it may already exist) and make up
+ * the part select stuff for where the assignment is going to be made.
+ */
 NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 				 unsigned&msb, unsigned&lsb,
 				 NetExpr*&mux) const
@@ -1453,12 +1471,32 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       } else {
 	    assert(id->msb_ == 0);
 	    assert(id->lsb_ == 0);
-	    msb = reg->pin_count() - 1;
-	    lsb = 0;
+	    msb = reg->msb();
+	    lsb = reg->lsb();
 	    mux = 0;
       }
 
       return reg;
+}
+
+/*
+ * This funciton transforms an expression by padding the high bits
+ * with V0 until the expression has the desired width. This may mean
+ * not transforming the expression at all, if it is already wide
+ * enough.
+ */
+static NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
+{
+      if (wid > expr->expr_width()) {
+	    verinum pad(verinum::V0, wid - expr->expr_width());
+	    NetEConst*co = new NetEConst(pad);
+	    NetEConcat*cc = new NetEConcat(2);
+	    cc->set(0, co);
+	    cc->set(1, expr);
+	    cc->set_width(wid);
+	    expr = cc;
+      }
+      return expr;
 }
 
 NetProc* PAssign::elaborate(Design*des, const string&path) const
@@ -1513,9 +1551,9 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       if (rise_time) {
 	    string n = des->local_symbol(path);
-	    unsigned wid = msb - lsb + 1;
+	    unsigned wid = reg->pin_count();
 
-	    if (! rv->set_width(wid)) {
+	    if (! rv->set_width(reg->pin_count())) {
 		  cerr << get_line() << ": Unable to match expression "
 			"width of " << rv->expr_width() << " to l-value"
 			" width of " << wid << "." << endl;
@@ -1527,6 +1565,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    tmp->set_line(*this);
 	    des->add_signal(tmp);
 
+	      /* Generate an assignment of the l-value to the temporary... */
 	    n = des->local_symbol(path);
 	    NetAssign*a1 = new NetAssign(n, des, wid, rv);
 	    a1->set_line(*this);
@@ -1535,6 +1574,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(a1->pin(idx), tmp->pin(idx));
 
+	      /* Generate an assignment of the temporary to the r-value... */
 	    n = des->local_symbol(path);
 	    NetESignal*sig = new NetESignal(tmp);
 	    des->add_node(sig);
@@ -1543,8 +1583,9 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    des->add_node(a2);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(a2->pin(idx), reg->pin(idx+lsb));
+		  connect(a2->pin(idx), reg->pin(idx));
 
+	      /* And build up the complex statement. */
 	    NetPDelay*de = new NetPDelay(rise_time, a2);
 
 	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
@@ -1555,13 +1596,22 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       }
 
       if (mux == 0) {
-	    unsigned wid = msb - lsb + 1;
+	      /* This is a simple assign to a register. There may be a
+		 part select, so take care that the width is of the
+		 part, and using the lsb, make sure the correct range
+		 of bits is assigned. */
+	    unsigned wid = (msb >= lsb)? (msb-lsb+1) : (lsb-msb+1);
+	    assert(wid <= reg->pin_count());
 
 	    rv->set_width(wid);
+	    rv = pad_to_width(rv, wid);
+	    assert(rv->expr_width() >= wid);
 
 	    cur = new NetAssign(des->local_symbol(path), des, wid, rv);
+	    unsigned off = reg->sb_to_idx(lsb);
+	    assert((off+wid) <= reg->pin_count());
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->pin(idx), reg->pin(idx+lsb));
+		  connect(cur->pin(idx), reg->pin(idx+off));
 
       } else {
 	    assert(reg->pin_count() == 1);
@@ -1611,18 +1661,9 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    unsigned wid = msb - lsb + 1;
 
 	    rv->set_width(wid);
+	    rv = pad_to_width(rv, wid);
+	    assert(wid <= rv->expr_width());
 
-	      /* If the l-value is larger then the r-value, then pad
-		 the r-value with 0s. */
-	    if (wid > rv->expr_width()) {
-		  verinum pad(verinum::V0, wid-rv->expr_width());
-		  NetEConst*co = new NetEConst(pad);
-		  NetEConcat*cc = new NetEConcat(2);
-		  cc->set(0, co);
-		  cc->set(1, rv);
-		  cc->set_width(wid);
-		  rv = cc;
-	    }
 	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(cur->pin(idx), reg->pin(idx+lsb));
@@ -2334,6 +2375,12 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.83  1999/09/13 03:10:59  steve
+ *  Clarify msb/lsb in context of netlist. Properly
+ *  handle part selects in lval and rval of expressions,
+ *  and document where the least significant bit goes
+ *  in NetNet objects.
+ *
  * Revision 1.82  1999/09/12 01:16:51  steve
  *  Pad r-values in certain assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.60 1999/09/12 01:16:51 steve Exp $"
+#ident "$Id: netlist.cc,v 1.61 1999/09/13 03:10:59 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -240,6 +240,18 @@ bool NetObj::has_compat_attributes(const NetObj&that) const
       return true;
 }
 
+NetObj::Link& NetObj::pin(unsigned idx)
+{
+      assert(idx < npins_);
+      return pins_[idx];
+}
+
+const NetObj::Link& NetObj::pin(unsigned idx) const
+{
+      assert(idx < npins_);
+      return pins_[idx];
+}
+
 NetNode::~NetNode()
 {
       if (design_)
@@ -270,6 +282,14 @@ NetNet::~NetNet()
 {
       if (design_)
 	    design_->del_signal(this);
+}
+
+unsigned NetNet::sb_to_idx(long sb) const
+{
+      if (msb_ >= lsb_)
+	    return sb - lsb_;
+      else
+	    return lsb_ - sb;
 }
 
 NetProc::~NetProc()
@@ -1762,6 +1782,12 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.61  1999/09/13 03:10:59  steve
+ *  Clarify msb/lsb in context of netlist. Properly
+ *  handle part selects in lval and rval of expressions,
+ *  and document where the least significant bit goes
+ *  in NetNet objects.
+ *
  * Revision 1.60  1999/09/12 01:16:51  steve
  *  Pad r-values in certain assignments.
  *

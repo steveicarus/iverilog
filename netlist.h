@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.62 1999/09/11 04:43:17 steve Exp $"
+#ident "$Id: netlist.h,v 1.63 1999/09/13 03:10:59 steve Exp $"
 #endif
 
 /*
@@ -170,8 +170,8 @@ class NetObj {
       bool test_mark() const { return mark_; }
       void set_mark(bool flag=true) { mark_ = flag; }
 
-      Link&pin(unsigned idx) { return pins_[idx]; }
-      const Link&pin(unsigned idx) const { return pins_[idx]; }
+      Link&pin(unsigned idx);
+      const Link&pin(unsigned idx) const;
 
       void dump_node_pins(ostream&, unsigned) const;
       void dump_obj_attr(ostream&, unsigned) const;
@@ -220,7 +220,8 @@ class NetNode  : public NetObj {
  *
  * Note that a net of any sort has exactly one pin. The pins feature
  * of the NetObj class is used to make a set of identical wires, in
- * order to support ranges, or busses.
+ * order to support ranges, or busses. When dealing with vectors,
+ * pin(0) is always the least significant bit.
  */
 class NetNet  : public NetObj, public LineInfo {
 
@@ -243,15 +244,17 @@ class NetNet  : public NetObj, public LineInfo {
       PortType port_type() const { return port_type_; }
       void port_type(PortType t) { port_type_ = t; }
 
+	/* These methods return the msb and lsb indices for the most
+	   significant and least significant bits. These are signed
+	   longs, and may be different from pin numbers. For example,
+	   reg [1:8] has 8 bits, msb==1 and lsb==8. */
       long msb() const { return msb_; }
       long lsb() const { return lsb_; }
 
-      unsigned sb_to_idx(long sb) const
-	    { if (msb_ >= lsb_)
-		    return sb - lsb_;
-	      else
-		    return lsb_ - sb;
-	    }
+	/* This method converts a signed index (the type that might be
+	   found in the verilog source) to a pin number. It accounts
+	   for variation in the definition of the reg/wire/whatever. */
+      unsigned sb_to_idx(long sb) const;
 
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
@@ -1556,6 +1559,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.63  1999/09/13 03:10:59  steve
+ *  Clarify msb/lsb in context of netlist. Properly
+ *  handle part selects in lval and rval of expressions,
+ *  and document where the least significant bit goes
+ *  in NetNet objects.
+ *
  * Revision 1.62  1999/09/11 04:43:17  steve
  *  Support ternary and <= operators in vvm.
  *
