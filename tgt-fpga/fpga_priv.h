@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: fpga_priv.h,v 1.1 2001/08/28 04:14:20 steve Exp $"
+#ident "$Id: fpga_priv.h,v 1.2 2001/08/30 04:31:04 steve Exp $"
 
 # include  <stdio.h>
 # include  "device.h"
@@ -39,8 +39,13 @@ extern device_t device;
 extern void mangle_logic_name(ivl_net_logic_t net, char*buf, size_t nbuf);
 extern void mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
 
+extern const char*mangle_nexus_name(ivl_nexus_t net);
+
 /*
  * $Log: fpga_priv.h,v $
+ * Revision 1.2  2001/08/30 04:31:04  steve
+ *  Mangle nexus names.
+ *
  * Revision 1.1  2001/08/28 04:14:20  steve
  *  Add the fpga target.
  *

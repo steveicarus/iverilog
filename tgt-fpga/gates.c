@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.1 2001/08/28 04:14:20 steve Exp $"
+#ident "$Id: gates.c,v 1.2 2001/08/30 04:31:04 steve Exp $"
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -25,7 +25,7 @@
 void draw_pin(ivl_nexus_t nex, const char*nam, char dir)
 {
       const char*use_name = nam;
-      const char*nex_name = ivl_nexus_name(nex);
+      const char*nex_name = mangle_nexus_name(nex);
       int invert = 0;
 
       if (use_name[0] == '~') {
@@ -76,6 +76,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.2  2001/08/30 04:31:04  steve
+ *  Mangle nexus names.
+ *
  * Revision 1.1  2001/08/28 04:14:20  steve
  *  Add the fpga target.
  *

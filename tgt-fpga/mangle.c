@@ -16,11 +16,12 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: mangle.c,v 1.1 2001/08/28 04:14:20 steve Exp $"
+#ident "$Id: mangle.c,v 1.2 2001/08/30 04:31:05 steve Exp $"
 
 
 # include  "fpga_priv.h"
 # include  <string.h>
+# include  <malloc.h>
 
 static size_t mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
 {
@@ -56,9 +57,46 @@ void mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf)
       strcpy(buf+cnt, ivl_lpm_basename(net));
 }
 
+/*
+ * Nexus names are used in pin records to connect things together. It
+ * almost doesn't matter what the nexus name is, but for readability
+ * we choose a name that is close to the nexus name. This function
+ * converts the existing name to a name that XNF can use.
+ *
+ * For speed, this function saves the calculated string into the real
+ * nexus by using the private pointer. Every nexus is used at least
+ * twice, so this cuts the mangling time in half at least.
+ */
+const char* mangle_nexus_name(ivl_nexus_t net)
+{
+      char*name = ivl_nexus_get_private(net);
+      char*cp;
+
+      if (name != 0) {
+	    return name;
+      }
+
+      name = malloc(strlen(ivl_nexus_name(net)) + 1);
+      strcpy(name, ivl_nexus_name(net));
+
+      for (cp = name ;  *cp ;  cp += 1) switch (*cp) {
+
+	  case '.':
+	    *cp = '/';
+	    break;
+	  default:
+	    break;
+      }
+
+      ivl_nexus_set_private(net, name);
+      return name;
+}
 
 /*
  * $Log: mangle.c,v $
+ * Revision 1.2  2001/08/30 04:31:05  steve
+ *  Mangle nexus names.
+ *
  * Revision 1.1  2001/08/28 04:14:20  steve
  *  Add the fpga target.
  *
