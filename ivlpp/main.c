@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.7 2000/09/13 22:33:13 steve Exp $"
+#ident "$Id: main.c,v 1.8 2000/12/06 05:15:21 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -67,7 +67,8 @@ int main(int argc, char*argv[])
       define_macro("delay_mode_distributed", "`delay_mode_distributed", 1);
       define_macro("delay_mode_unit",     "`delay_mode_unit", 1);
       define_macro("delay_mode_path",     "`delay_mode_path", 1);
-      define_macro("disable_portfaults",  "`enable_portfaults", 1);
+      define_macro("disable_portfaults",  "`disable_portfaults", 1);
+      define_macro("enable_portfaults",   "`enable_portfaults", 1);
       define_macro("endcelldefine",       "`endcelldefine", 1);
       define_macro("endprotect",          "`endprotect", 1);
       define_macro("nosuppress_faults",   "`nosuppress_faults", 1);
@@ -176,6 +177,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.8  2000/12/06 05:15:21  steve
+ *  fix portfaults pass values.
+ *
  * Revision 1.7  2000/09/13 22:33:13  steve
  *  undefined macros are null (with warnings.)
  *
