@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.12 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.13 2001/12/30 04:47:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -256,8 +256,10 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// later.)
       mod->elaborate_scope(des, my_scope);
 
-	// Look for module parameter replacements. This map receives
-	// those replacements.
+	// Look for module parameter replacements. The "replace" map
+	// maps parameter name to replacement expression that is
+	// passed. It is built up by the ordered overrices or named
+	// overrides.
 
       typedef map<string,PExpr*>::const_iterator mparm_it_t;
       map<string,PExpr*> replace;
@@ -271,12 +273,18 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
       if (overrides_) {
 	    assert(parms_ == 0);
 	    list<string>::const_iterator cur = mod->param_names.begin();
-	    for (unsigned idx = 0
-		       ;  idx < overrides_->count()
-		       ; idx += 1, cur++) {
-		  replace[*cur] = (*overrides_)[idx];
-	    }
+	    unsigned idx = 0;
+	    for (;;) {
+		  if (idx >= overrides_->count())
+			break;
+		  if (cur == mod->param_names.end())
+			break;
 
+		  replace[*cur] = (*overrides_)[idx];
+
+		  idx += 1;
+		  cur ++;
+	    }
       }
 
 	// Named parameter overrides carry a name with each override
@@ -459,6 +467,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.13  2001/12/30 04:47:57  steve
+ *  Properly handle empty target in positionla parameter override.
+ *
  * Revision 1.12  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
