@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.20 2001/07/16 18:48:07 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.21 2001/07/24 01:34:56 steve Exp $"
 #endif
 
 /*
@@ -167,6 +167,39 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       }
 }
 
+static void signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+{
+      char*cp;
+      unsigned idx;
+      unsigned wid = (rfp->msb >= rfp->lsb)
+	    ? (rfp->msb - rfp->lsb + 1)
+	    : (rfp->lsb - rfp->msb + 1);
+
+      assert(wid % 8 == 0);
+
+      cp = buf;
+      for (idx = wid ;  idx >= 8 ;  idx -= 8) {
+	    char tmp = 0;
+	    unsigned bdx;
+
+	    for (bdx = 8 ;  bdx > 0 ;  bdx -= 1) {
+		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx-8+bdx-1);
+		  tmp <<= 1;
+		  switch (functor_oval(fptr)) {
+		      case 0:
+			break;
+		      case 1:
+			tmp |= 1;
+			break;
+		      default:
+			break;
+		  }
+	    }
+	    *cp++ = tmp? tmp : ' ';
+      }
+      *cp++ = 0;
+}
+
 /*
  * The get_value method reads the values of the functors and returns
  * the vector to the caller. This causes no side-effect, and reads the
@@ -288,8 +321,15 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.str = buf;
 	    break;
 
+	  case vpiStringVal:
+	    signal_vpiStringVal(rfp, vp);
+	    vp->value.str = buf;
+	    break;
+
 	  default:
-	      /* XXXX Not implemented yet. */
+	    fprintf(stderr, "vvp internal error: signal_get_value: "
+		    "value type %u not implemented.\n", vp->format);
+
 	    assert(0);
       }
 }
@@ -465,6 +505,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.21  2001/07/24 01:34:56  steve
+ *  Implement string value for signals.
+ *
  * Revision 1.20  2001/07/16 18:48:07  steve
  *  Properly pad unknow values. (Stephan Boettcher)
  *
