@@ -14,4 +14,5 @@ parse.output
 parse.h
 tables.cc
 vvp
+vvp.exp
 vvp.pdf
