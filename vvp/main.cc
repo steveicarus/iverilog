@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.4 2001/03/20 06:16:24 steve Exp $"
+#ident "$Id: main.cc,v 1.5 2001/03/22 21:26:54 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -29,7 +29,7 @@
 # include  <getopt.h>
 
 
-const char*module_path = ".";
+const char*module_path = MODULE_DIR;
 unsigned module_cnt = 0;
 const char*module_tab[64];
 
@@ -90,6 +90,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.5  2001/03/22 21:26:54  steve
+ *  Compile in a default VPI module dir.
+ *
  * Revision 1.4  2001/03/20 06:16:24  steve
  *  Add support for variable vectors.
  *
