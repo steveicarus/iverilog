@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.28 2000/01/06 05:56:02 steve Exp $"
+#ident "$Id: vvm.h,v 1.29 2000/01/08 03:09:14 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -251,6 +251,20 @@ class vvm_memory_t : public __vpiMemory {
 	      cb_list_ = ram;
 	    }
 
+      class assign_nb  : public vvm_event {
+	  public:
+	    assign_nb(vvm_memory_t<WIDTH,SIZE>&m, unsigned i,
+		      const vvm_bitset_t<WIDTH>&v)
+	    : mem_(m), index_(i), val_(v) { }
+
+	    void event_function() { mem_.set_word(index_, val_); }
+
+	  private:
+	    vvm_memory_t<WIDTH,SIZE>&mem_;
+	    unsigned index_;
+	    vvm_bitset_t<WIDTH> val_;
+      };
+
     private:
       vvm_ram_callback*cb_list_;
       void call_list_(unsigned idx)
@@ -259,8 +273,12 @@ class vvm_memory_t : public __vpiMemory {
 	    }
 };
 
+
 /*
  * $Log: vvm.h,v $
+ * Revision 1.29  2000/01/08 03:09:14  steve
+ *  Non-blocking memory writes.
+ *
  * Revision 1.28  2000/01/06 05:56:02  steve
  *  Add memory address range check.
  *

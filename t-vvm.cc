@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.93 2000/01/02 17:57:56 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.94 2000/01/08 03:09:14 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -78,6 +78,7 @@ class target_vvm : public target_t {
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
+      virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
@@ -776,7 +777,8 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
       os << "class " << name << "  : public vvm_thread {" << endl;
       os << "    public:" << endl;
       os << "      " << name << "(vvm_thread*th)" << endl;
-      os << "      : vvm_thread(), back_(th), step_(&" << name << "::step_0_)" << endl;
+      os << "      : vvm_thread(), back_(th), step_(&" << name <<
+	    "::step_0_), callee_(0)" << endl;
       os << "      { }" << endl;
       os << "      ~" << name << "() { }" << endl;
       os << "      bool go() { return (this->*step_)(); }" << endl;
@@ -1360,7 +1362,7 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
       os << "    public:" << endl;
       os << "      " << thread_class_ << "()" << endl;
       os << "      : vvm_thread(), step_(&" << thread_class_ <<
-	    "::step_0_)" << endl;
+	    "::step_0_), callee_(0)" << endl;
       os << "      { }" << endl;
       os << "      ~" << thread_class_ << "() { }" << endl;
       os << endl;
@@ -1505,6 +1507,37 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 	    defn << "      (new " << mangle(net->name()) << "("
 		 << rval << ")) -> schedule(" << net->rise_time() <<
 		  ");" << endl;
+      }
+}
+
+void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
+{
+
+      string index = mangle(amem->index()->name()) + "_bits";
+      string rval = emit_proc_rval(defn, 8, amem->rval());
+      const NetMemory*mem = amem->memory();
+
+      defn << "      /* " << amem->get_line() << " */" << endl;
+      if (mem->width() == amem->rval()->expr_width()) {
+	    defn << "      (new vvm_memory_t<" << mem->width() << ","
+		 << mem->count() << ">::assign_nb(" << mangle(mem->name())
+		 << ", " << index << ".as_unsigned(), " << rval <<
+		  ")) -> schedule();" << endl;
+
+      } else {
+
+	    assert(mem->width() <= amem->rval()->expr_width());
+	    string tmp = make_temp();
+	    defn << "      vvm_bitset_t<" << mem->width() << ">" <<
+		  tmp << ";" << endl;
+	    for (unsigned idx = 0 ;  idx < mem->width() ;  idx += 1)
+		  defn << "      " << tmp << "[" << idx << "] = " <<
+			rval << "[" << idx << "];" << endl;
+
+	    defn << "      (new vvm_memory_t<" << mem->width() << ","
+		 << mem->count() << ">::assign_nb(" << mangle(mem->name())
+		 << ", " << index << ".as_unsigned(), " << tmp <<
+		  ")) -> schedule();" << endl;
       }
 }
 
@@ -1786,6 +1819,7 @@ void target_vvm::proc_utask(ostream&os, const NetUTask*net)
 {
       unsigned out_step = ++thread_step_;
       const string name = mangle(net->name());
+      defn << "      assert(callee_ == 0);" << endl;
       defn << "      callee_ = new " << name << "(this);" << endl;
       defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
@@ -1796,6 +1830,7 @@ void target_vvm::proc_utask(ostream&os, const NetUTask*net)
       defn << "bool " << thread_class_ << "::step_" << out_step <<
 	    "_() {" << endl;
       defn << "      delete callee_;" << endl;
+      defn << "      callee_ = 0;" << endl;
 }
 
 /*
@@ -1958,6 +1993,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.94  2000/01/08 03:09:14  steve
+ *  Non-blocking memory writes.
+ *
  * Revision 1.93  2000/01/02 17:57:56  steve
  *  It is possible for node to initialize several pins of a signal.
  *
