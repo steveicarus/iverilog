@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.38 1999/06/12 20:35:27 steve Exp $"
+#ident "$Id: parse.y,v 1.39 1999/06/12 23:16:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -758,7 +758,9 @@ lavalue
 		}
 	| IDENTIFIER range
 		{ PEIdent*tmp = new PEIdent(*$1);
-		  yyerror(@3, "Sorry, lvalue bit range not supported.");
+		  assert($2->count() == 2);
+		  tmp->msb_ = (*$2)[0];
+		  tmp->lsb_ = (*$2)[1];
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  delete $1;

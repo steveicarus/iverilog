@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.39 1999/06/10 04:03:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.40 1999/06/12 23:16:37 steve Exp $"
 #endif
 
 /*
@@ -198,6 +198,16 @@ void PGAssign::elaborate(Design*des, const string&path) const
       }
 
       assert(lval && rval);
+
+      if (lval->pin_count() != rval->pin_count()) {
+	    cerr << get_line() << ": lval width (" <<
+		  lval->pin_count() << ") != rval width (" <<
+		  rval->pin_count() << ")." << endl;
+	    delete lval;
+	    delete rval;
+	    des->errors += 1;
+	    return;
+      }
 
       do_assign(des, path, lval, rval);
 }
@@ -770,17 +780,21 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 }
 
 /*
- * XXXX For now, only generate a single bit. I am going to have to add
- * code to properly calculate expression bit widths, eventually.
  */
 NetNet* PENumber::elaborate_net(Design*des, const string&path) const
 {
-      NetNet*net = new NetNet(des->local_symbol(path), NetNet::IMPLICIT);
+      unsigned width = value_->len();
+      NetNet*net = new NetNet(des->local_symbol(path),
+			      NetNet::IMPLICIT, width);
       net->local_flag(true);
-      NetConst*tmp = new NetConst(des->local_symbol(path), value_->get(0));
-      des->add_node(tmp);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+	    NetConst*tmp = new NetConst(des->local_symbol(path),
+					value_->get(idx));
+	    des->add_node(tmp);
+	    connect(net->pin(idx), tmp->pin(0));
+      }
+
       des->add_signal(net);
-      connect(net->pin(0), tmp->pin(0));
       return net;
 }
 
@@ -1096,7 +1110,13 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	   by making a mux expression to attach to the assignment
 	   node. */
       NetAssignNB*cur;
-      if (id->msb_) {
+      if (id->msb_ && id->lsb_) {
+	    cerr << get_line() << ": Sorry, bit ranges not supported"
+		  " in l-values." << endl;
+	    des->errors += 1;
+	    return 0;
+
+      } else if (id->msb_) {
 	    assert(id->lsb_ == 0);
 	    verinum*v = id->msb_->eval_const(des, path);
 	    if (v == 0) {
@@ -1462,6 +1482,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.40  1999/06/12 23:16:37  steve
+ *  Handle part selects as l-values to continuous assign.
+ *
  * Revision 1.39  1999/06/10 04:03:53  steve
  *  Add support for the Ternary operator,
  *  Add support for repeat concatenation,
