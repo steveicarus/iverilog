@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.40 2003/09/19 03:50:12 steve Exp $"
+#ident "$Id: net_design.cc,v 1.41 2003/09/20 01:05:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -540,29 +540,6 @@ NetScope* Design::find_task(const hname_t&key)
       return 0;
 }
 
-NetEvent* Design::find_event(NetScope*scope, const hname_t&p)
-{
-      hname_t path = p;
-      assert(scope);
-
-      char*key = path.remove_tail_name();
-      if (path.peek_name(0))
-	    scope = find_scope(scope, path);
-
-      while (scope) {
-	    if (NetEvent*ev = scope->find_event(key)) {
-		  delete key;
-		  return ev;
-	    }
-
-	    if (scope->type() == NetScope::MODULE)
-		  break;
-	    scope = scope->parent();
-      }
-
-      delete key;
-      return 0;
-}
 
 
 void Design::add_node(NetNode*net)
@@ -640,6 +617,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.41  2003/09/20 01:05:36  steve
+ *  Obsolete find_symbol and find_event from the Design class.
+ *
  * Revision 1.40  2003/09/19 03:50:12  steve
  *  Remove find_memory method from Design class.
  *

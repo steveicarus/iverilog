@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.288 2003/09/13 01:01:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.289 2003/09/20 01:05:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1811,22 +1811,6 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 {
       assert(scope);
 
-
-	/* Handle the special case of an event name as an identifier
-	   in an expression. Make a named event reference. */
-
-      if (expr_.count() == 1) {
-	    assert(expr_[0]->expr());
-	    PEIdent*id = dynamic_cast<PEIdent*>(expr_[0]->expr());
-	    NetEvent*ev;
-	    if (id && (ev = des->find_event(scope, id->path()))) {
-		  NetEvWait*pr = new NetEvWait(enet);
-		  pr->add_event(ev);
-		  pr->set_line(*this);
-		  return pr;
-	    }
-      }
-
 	/* Create a single NetEvent and NetEvWait. Then, create a
 	   NetEvProbe for each conjunctive event in the event
 	   list. The NetEvProbe objects all refer back to the NetEvent
@@ -1879,12 +1863,21 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
-		  NetEvent*tmp = des->find_event(scope, id->path());
-		  if (tmp) {
-			wa->add_event(tmp);
+		  NetNet*       sig = 0;
+		  NetMemory*    mem = 0;
+		  NetVariable*  var = 0;
+		  const NetExpr*par = 0;
+		  NetEvent*     eve = 0;
+
+		  NetScope*found_in = symbol_search(des, scope, id->path(),
+						    sig, mem, var, par, eve);
+
+		  if (found_in && eve) {
+			wa->add_event(eve);
 			continue;
 		  }
 	    }
+
 
 	      /* So now we have a normal event expression. Elaborate
 		 the sub-expression as a net and decide how to handle
@@ -2361,15 +2354,30 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetEvent*ev = des->find_event(scope, event_);
-      if (ev == 0) {
+      NetNet*       sig = 0;
+      NetMemory*    mem = 0;
+      NetVariable*  var = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      NetScope*found_in = symbol_search(des, scope, event_,
+					sig, mem, var, par, eve);
+
+      if (found_in == 0) {
 	    cerr << get_line() << ": error: event <" << event_ << ">"
 		 << " not found." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      NetEvTrig*trig = new NetEvTrig(ev);
+      if (eve == 0) {
+	    cerr << get_line() << ": error:  <" << event_ << ">"
+		 << " is not a named event." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetEvTrig*trig = new NetEvTrig(eve);
       trig->set_line(*this);
       return trig;
 }
@@ -2615,6 +2623,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.289  2003/09/20 01:05:35  steve
+ *  Obsolete find_symbol and find_event from the Design class.
+ *
  * Revision 1.288  2003/09/13 01:01:51  steve
  *  Spelling fixes.
  *
