@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.52 2001/10/21 23:38:16 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.53 2001/10/22 00:04:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -394,12 +394,6 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
 	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
 	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
-
-	/* Attach input information to the nexus. */
-      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
-	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
-	    draw_net_input(nex);
-      }
 }
 
 /*
@@ -1211,6 +1205,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.53  2001/10/22 00:04:51  steve
+ *  Remove useless code for drawing .var inputs.
+ *
  * Revision 1.52  2001/10/21 23:38:16  steve
  *  wrong variable for clk input to memory.
  *
