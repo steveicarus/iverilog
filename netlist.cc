@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.210 2003/03/29 05:51:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.211 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -849,6 +849,7 @@ const Link& NetCLShift::pin_Distance(unsigned idx) const
 NetCompare::NetCompare(NetScope*s, const string&n, unsigned wi)
 : NetNode(s, lex_strings.add(n.c_str()), 8+2*wi), width_(wi)
 {
+      signed_flag_ = false;
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr");
       pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock");
       pin(2).set_dir(Link::OUTPUT); pin(2).set_name("AGB");
@@ -872,6 +873,16 @@ NetCompare::~NetCompare()
 unsigned NetCompare::width() const
 {
       return width_;
+}
+
+bool NetCompare::get_signed() const
+{
+      return signed_flag_;
+}
+
+void NetCompare::set_signed(bool flag)
+{
+      signed_flag_ = flag;
 }
 
 Link& NetCompare::pin_Aclr()
@@ -2151,6 +2162,10 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.211  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.210  2003/03/29 05:51:25  steve
  *  Sign extend NetMult inputs if result is signed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.91 2003/03/25 02:15:48 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.92 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1133,6 +1133,7 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 {
       unsigned width;
       const char*type = "";
+      const char*signed_string = ivl_lpm_signed(net)? ".s" : "";
 
       width = ivl_lpm_width(net);
 
@@ -1147,9 +1148,10 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s.%s .cmp/%s %u", 
+      fprintf(vvp_out, "L_%s.%s .cmp/%s%s %u", 
 	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-	      vvp_mangle_id(ivl_lpm_basename(net)), type, width);
+	      vvp_mangle_id(ivl_lpm_basename(net)), type,
+	      signed_string, width);
 
       draw_lpm_arith_a_b_inputs(net);
 
@@ -1627,6 +1629,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.92  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.91  2003/03/25 02:15:48  steve
  *  Use hash code for scope labels.
  *

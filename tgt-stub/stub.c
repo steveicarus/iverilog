@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.76 2003/03/29 05:51:26 steve Exp $"
+#ident "$Id: stub.c,v 1.77 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -304,8 +304,11 @@ static void show_lpm(ivl_lpm_t net)
 	  }
 
 	  default:
-	    fprintf(out, "  %s: <width=%u>\n", ivl_lpm_basename(net),
-		    ivl_lpm_width(net));
+	    fprintf(out, "  LPM(%d) %s: <width=%u, signed=%d>\n",
+		    ivl_lpm_type(net),
+		    ivl_lpm_basename(net),
+		    ivl_lpm_width(net),
+		    ivl_lpm_signed(net));
       }
 }
 
@@ -837,6 +840,10 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.77  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.76  2003/03/29 05:51:26  steve
  *  Sign extend NetMult inputs if result is signed.
  *

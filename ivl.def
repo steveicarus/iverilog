@@ -75,6 +75,7 @@ ivl_lpm_q
 ivl_lpm_scope
 ivl_lpm_select
 ivl_lpm_selects
+ivl_lpm_signed
 ivl_lpm_size
 ivl_lpm_type
 ivl_lpm_width

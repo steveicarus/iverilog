@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.109 2003/03/29 05:51:25 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.110 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1071,6 +1071,8 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
+      obj->u_.arith.signed_flag = 0;
+
 	/* Choose the width of the adder. If the carry bit is
 	   connected, then widen the adder by one and plan on leaving
 	   the fake inputs unconnected. */
@@ -1219,6 +1221,7 @@ void dll_target::lpm_compare(const NetCompare*net)
       bool swap_operands = false;
 
       obj->u_.arith.width = net->width();
+      obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
 
       obj->u_.arith.q = new ivl_nexus_t[1 + 2 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + 1;
@@ -2117,6 +2120,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.110  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.109  2003/03/29 05:51:25  steve
  *  Sign extend NetMult inputs if result is signed.
  *

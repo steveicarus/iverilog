@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.115 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.116 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -643,6 +643,10 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    This is the size of the select input for a LPM_MUX device, or the 
  *    address bus width of an LPM_RAM.
  *
+ * ivl_lpm_signed
+ *    Arithmetic LPM devices may be signed or unsigned if there is a
+ *    distinction.
+ *
  * ivl_lpm_size
  *    In addition to a width, some devices have a size. The size is
  *    often the number of inputs per out, i.e., the number of inputs
@@ -652,6 +656,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
 extern const char*    ivl_lpm_basename(ivl_lpm_t net);
 extern ivl_scope_t    ivl_lpm_scope(ivl_lpm_t net);
+extern int            ivl_lpm_signed(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
 extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 
@@ -1204,6 +1209,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.116  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.115  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

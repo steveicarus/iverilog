@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.96 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.97 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -896,6 +896,35 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	    return net->u_.shift.select;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" int ivl_lpm_signed(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
+	  case IVL_LPM_MUX:
+	    return 0;
+	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
+	  case IVL_LPM_MULT:
+	  case IVL_LPM_SUB:
+	    return net->u_.arith.signed_flag;
+	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
+	    return 0;
+	  case IVL_LPM_UFUNC:
+	    return 0;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1797,6 +1826,10 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.97  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.96  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.100 2003/03/10 23:40:54 steve Exp $"
+#ident "$Id: t-dll.h,v 1.101 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -334,7 +334,8 @@ struct ivl_lpm_s {
 	    } shift;
 
 	    struct ivl_lpm_arith_s {
-		  unsigned short width;
+		  unsigned width :16;
+		  unsigned signed_flag :1;
 		  ivl_nexus_t*q, *a, *b;
 	    } arith;
 
@@ -672,6 +673,10 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.101  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.100  2003/03/10 23:40:54  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.284 2003/04/08 04:33:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.285 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 /*
@@ -533,6 +533,9 @@ class NetCompare  : public NetNode {
 
       unsigned width() const;
 
+      bool get_signed() const;
+      void set_signed(bool);
+
       Link& pin_Aclr();
       Link& pin_Clock();
       Link& pin_AGB();
@@ -563,6 +566,7 @@ class NetCompare  : public NetNode {
 
     private:
       unsigned width_;
+      bool signed_flag_;
 };
 
 /*
@@ -3246,6 +3250,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.285  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.284  2003/04/08 04:33:55  steve
  *  Synthesize shift expressions.
  *

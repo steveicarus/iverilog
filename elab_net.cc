@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.111 2003/03/29 05:51:25 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.112 2003/04/11 05:18:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -421,14 +421,31 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
       unsigned dwidth = lsig->pin_count();
       if (rsig->pin_count() > dwidth) dwidth = rsig->pin_count();
 
-      NetNet*zero = 0;
+	/* Operands of binary compare need to be padded to equal
+	   size. Figure the pad bit needed to extend the narrowest
+	   vector. */
+      NetNet*padbit = 0;
       if (lsig->pin_count() != rsig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
-					verinum::V0);
-	    des->add_node(tmp);
-	    zero = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    zero->local_flag(true);
-	    connect(tmp->pin(0), zero->pin(0));
+	    unsigned lwid = lsig->pin_count();
+	    unsigned rwid = rsig->pin_count();
+
+	    padbit = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
+	    padbit->local_flag(true);
+
+	    if (lsig->get_signed() && (lwid < rwid)) {
+
+		  connect(padbit->pin(0), lsig->pin(lwid-1));
+
+	    } else if (rsig->get_signed() && (rwid < lwid)) {
+
+		  connect(padbit->pin(0), rsig->pin(rwid-1));
+
+	    } else {
+		  NetConst*tmp = new NetConst(scope, scope->local_symbol(),
+					      verinum::V0);
+		  des->add_node(tmp);
+		  connect(tmp->pin(0), padbit->pin(0));
+	    }
       }
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
@@ -447,11 +464,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 		      connect(cmp->pin_DataA(idx), lsig->pin(idx));
 		for (unsigned idx = lsig->pin_count(); idx < dwidth ; idx += 1)
-		      connect(cmp->pin_DataA(idx), zero->pin(0));
+		      connect(cmp->pin_DataA(idx), padbit->pin(0));
 		for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
 		      connect(cmp->pin_DataB(idx), rsig->pin(idx));
 		for (unsigned idx = rsig->pin_count(); idx < dwidth ; idx += 1)
-		      connect(cmp->pin_DataB(idx), zero->pin(0));
+		      connect(cmp->pin_DataB(idx), padbit->pin(0));
 
 		switch (op_) {
 		    case '<':
@@ -467,6 +484,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		      connect(cmp->pin_AGEB(), osig->pin(0));
 		      break;
 		}
+		  /* If both operands are signed, then do a signed
+		     compare. */
+		if (lsig->get_signed() && rsig->get_signed())
+		      cmp->set_signed(true);
+
 		gate = cmp;
 		break;
 	  }
@@ -487,12 +509,12 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  if (idx < lsig->pin_count())
 			connect(cmp->pin(1), lsig->pin(idx));
 		  else
-			connect(cmp->pin(1), zero->pin(0));
+			connect(cmp->pin(1), padbit->pin(0));
 
 		  if (idx < rsig->pin_count())
 			connect(cmp->pin(2), rsig->pin(idx));
 		  else
-			connect(cmp->pin(2), zero->pin(0));
+			connect(cmp->pin(2), padbit->pin(0));
 
 		  connect(cmp->pin(0), gate->pin(idx+1));
 		  des->add_node(cmp);
@@ -527,12 +549,12 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		    if (idx < lsig->pin_count())
 			  connect(cmp->pin_DataA(idx), lsig->pin(idx));
 		    else
-			  connect(cmp->pin_DataA(idx), zero->pin(0));
+			  connect(cmp->pin_DataA(idx), padbit->pin(0));
 
 		    if (idx < rsig->pin_count())
 			  connect(cmp->pin_DataB(idx), rsig->pin(idx));
 		    else
-			  connect(cmp->pin_DataB(idx), zero->pin(0));
+			  connect(cmp->pin_DataB(idx), padbit->pin(0));
 
 	      }
 	      connect(cmp->pin_AEB(), osig->pin(0));
@@ -561,12 +583,12 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		    if (idx < lsig->pin_count())
 			  connect(cmp->pin_DataA(idx), lsig->pin(idx));
 		    else
-			  connect(cmp->pin_DataA(idx), zero->pin(0));
+			  connect(cmp->pin_DataA(idx), padbit->pin(0));
 
 		    if (idx < rsig->pin_count())
 			  connect(cmp->pin_DataB(idx), rsig->pin(idx));
 		    else
-			  connect(cmp->pin_DataB(idx), zero->pin(0));
+			  connect(cmp->pin_DataB(idx), padbit->pin(0));
 
 	      }
 	      connect(cmp->pin_ANEB(), osig->pin(0));
@@ -1014,15 +1036,35 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
  * This method elaborates a call to a function in the context of a
  * continuous assignment.
  */
-NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope, unsigned,
-				      unsigned long,
-				      unsigned long,
-				      unsigned long,
-				      Link::strength_t,
-				      Link::strength_t) const
+NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
+				      unsigned width,
+				      unsigned long rise,
+				      unsigned long fall,
+				      unsigned long decay,
+				      Link::strength_t drive0,
+				      Link::strength_t drive1) const
 {
       unsigned errors = 0;
       unsigned func_pins = 0;
+
+	/* Handle the special case that the function call is to
+	   $signed. This takes a single expression argument, and
+	   forces it to be a signed result. Otherwise, it is as if the
+	   $signed did not exist. */
+      if (strcmp(path_.peek_name(0), "$signed") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $signed() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetNet*sub = expr->elaborate_net(des, scope, width, rise,
+					     fall, decay, drive0, drive1);
+	    sub->set_signed(true);
+	    return sub;
+      }
 
 	/* Look up the function definition. */
       NetFuncDef*def = des->find_function(scope, path_);
@@ -1276,6 +1318,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
 		  verinum pvalue = pc->value();
+
 		  sig = new NetNet(scope, path_.peek_name(0),
 				   NetNet::IMPLICIT, pc->expr_width());
 		  NetConst*cp = new NetConst(scope, scope->local_symbol(),
@@ -2281,6 +2324,10 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.112  2003/04/11 05:18:08  steve
+ *  Handle signed magnitude compare all the
+ *  way through to the vvp code generator.
+ *
  * Revision 1.111  2003/03/29 05:51:25  steve
  *  Sign extend NetMult inputs if result is signed.
  *
