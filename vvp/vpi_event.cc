@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_event.cc,v 1.8 2003/04/23 03:09:25 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.9 2003/05/04 20:43:36 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -100,22 +100,51 @@ vpiHandle vpip_make_named_event(const char*name, vvp_ipoint_t funct)
       return &obj->base;
 }
 
+/*
+ * This function runs the callbacks for a named event. All the
+ * callbacks are listed in the callback member of the event handle,
+ * this function scans that list.
+ *
+ * This also handles the case where the callback has been removed. The
+ * vpi_remove_cb doesn't actually remove any callbacks, it marks them
+ * as cancelled by clearing the cb_rtn function. This function reaps
+ * those marked handles when it scans the list.
+ */
 void vpip_run_named_event_callbacks(vpiHandle ref)
 {
       assert((ref->vpi_type->type_code==vpiNamedEvent));
 
       struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
 
-      struct __vpiCallback*cur = obj->callbacks;
-      while (cur) {
-	    struct __vpiCallback*next = cur->next;
-	    callback_execute(cur);
-	    cur = next;
+      struct __vpiCallback*next = obj->callbacks;
+      struct __vpiCallback*prev = 0;
+      while (next) {
+	    struct __vpiCallback*cur = next;
+	    next = cur->next;
+
+	    if (cur->cb_data.cb_rtn != 0) {
+		  callback_execute(cur);
+		  prev = cur;
+
+	    } else if (prev == 0) {
+		  obj->callbacks = next;
+		  cur->next = 0;
+		  vpi_free_object(&cur->base);
+
+	    } else {
+		  assert(prev->next == cur);
+		  prev->next = next;
+		  cur->next = 0;
+		  vpi_free_object(&cur->base);
+	    }
       }
 }
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.9  2003/05/04 20:43:36  steve
+ *  Event callbacks support vpi_remove_cb.
+ *
  * Revision 1.8  2003/04/23 03:09:25  steve
  *  VPI Access to named events.
  *
