@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.94 1999/09/22 02:00:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.95 1999/09/22 04:30:04 steve Exp $"
 #endif
 
 /*
@@ -1834,7 +1834,10 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
  */
 NetProc* PBlock::elaborate(Design*des, const string&path) const
 {
-      NetBlock*cur = new NetBlock(NetBlock::SEQU);
+      NetBlock::Type type = (bl_type_==PBlock::BL_PAR)
+	    ? NetBlock::PARA
+	    : NetBlock::SEQU;
+      NetBlock*cur = new NetBlock(type);
       bool fail_flag = false;
 
       string npath = name_.length()? (path+"."+name_) : path;
@@ -2613,6 +2616,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.95  1999/09/22 04:30:04  steve
+ *  Parse and elaborate named for/join blocks.
+ *
  * Revision 1.94  1999/09/22 02:00:48  steve
  *  assignment with blocking event delay.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.42 1999/09/16 04:18:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.43 1999/09/22 04:30:04 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1077,6 +1077,11 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 
 void target_vvm::proc_block(ostream&os, const NetBlock*net)
 {
+      if (net->type() == NetBlock::PARA) {
+	    cerr << "internal error: vvm cannot emit parallel blocks."
+		 << endl;
+	    return;
+      }
       net->emit_recurse(os, this);
 }
 
@@ -1442,6 +1447,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.43  1999/09/22 04:30:04  steve
+ *  Parse and elaborate named for/join blocks.
+ *
  * Revision 1.42  1999/09/16 04:18:15  steve
  *  elaborate concatenation repeats.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.65 1999/09/22 02:00:48 steve Exp $"
+#ident "$Id: parse.y,v 1.66 1999/09/22 04:30:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1453,18 +1453,36 @@ statement
 		  delete $2;
 		  $$ = tmp;
 		}
+	| K_fork ':' IDENTIFIER
+		{ pform_push_scope($3); }
+	  block_item_decls_opt
+	  statement_list K_join
+		{ pform_pop_scope();
+		  PBlock*tmp = new PBlock($3, PBlock::BL_PAR, *$6);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $3;
+		  delete $6;
+		  $$ = tmp;
+		}
+	| K_fork K_join
+		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| K_fork ':' IDENTIFIER K_join
+		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
 	| K_release lavalue ';'
 		{ yyerror(@1, "Sorry, release not supported.");
 		  $$ = 0;
 		}
 	| K_repeat '(' expression ')' statement
 		{ PRepeat*tmp = new PRepeat($3, $5);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		}
-	| K_fork K_join
-		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
