@@ -18,12 +18,12 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.46 2000/04/21 06:41:02 steve Exp $"
+#ident "$Id: Makefile.in,v 1.47 2000/04/26 20:53:21 steve Exp $"
 #
 #
 SHELL = /bin/sh
 
-VERSION = 0.2PRE
+VERSION = 0.3PRE
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -102,9 +102,6 @@ verilog: $(srcdir)/verilog.sh
 ivl: $O
 	$(CXX) $(CXXFLAGS) -o ivl $O
 
-gverilog: gverilog.c
-	$(CC) $(CPPFLAGS) -o gverilog -DLIBDIR='"@libdir@"' -DINCDIR='"@includedir@"' gverilog.c
-
 iverilog: iverilog.c
 	$(CC) $(CPPFLAGS) -o iverilog -DIVL_ROOT='"@libdir@/ivl"' iverilog.c
 
@@ -131,16 +128,13 @@ lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t lexor_keyword.gperf > lexor_keyword.cc
 
 
-install: all installdirs $(bindir)/verilog $(bindir)/gverilog $(bindir)/iverilog $(libdir)/ivl/ivl $(mandir)/man1/verilog.1
+install: all installdirs $(bindir)/verilog $(bindir)/iverilog $(libdir)/ivl/ivl $(mandir)/man1/verilog.1 $(mandir)/man1/iverilog.1
 	cd vpi ; $(MAKE) install
 	cd vvm ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 
 $(bindir)/verilog: ./verilog
 	$(INSTALL_SCRIPT) ./verilog $(bindir)/verilog
-
-$(bindir)/gverilog: ./gverilog
-	$(INSTALL_PROGRAM) ./gverilog $(bindir)/gverilog
 
 $(bindir)/iverilog: ./iverilog
 	$(INSTALL_PROGRAM) ./iverilog $(bindir)/iverilog
@@ -152,6 +146,9 @@ $(libdir)/ivl/ivl: ./ivl
 $(mandir)/man1/verilog.1: $(srcdir)/verilog.1
 	$(INSTALL_DATA) $(srcdir)/verilog.1 $(mandir)/man1/verilog.1
 
+$(mandir)/man1/iverilog.1: $(srcdir)/iverilog.man
+	$(INSTALL_DATA) $(srcdir)/iverilog.man $(mandir)/man1/iverilog.1
+
 installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(bindir) $(libdir)/ivl $(mandir)/man1
 
@@ -161,6 +158,7 @@ uninstall:
 	rm -f $(bindir)/gverilog
 	rm -f $(bindir)/iverilog
 	rm -f $(mandir)/man1/verilog.1
+	rm -f $(mandir)/man1/iverilog.1
 	cd vpi ; $(MAKE) uninstall
 	cd vvm ; $(MAKE) uninstall
 	cd ivlpp ; $(MAKE) uninstall

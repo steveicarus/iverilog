@@ -1,0 +1,107 @@
+.TH iverilog 1 "April, 2000" Version 19990913
+.SH NAME
+iverilog - Icarus Verilog compiler
+
+.SH SYNOPSIS
+.B iverilog
+[-Dmacro[=defn]] [-E] [-Iincludepath] [-mmodule] [-ooutputfilename] [-stopmodule] [-ttype] [-v] sourcefile[s]
+
+.SH DESCRIPTION
+.PP
+\fIiverilog\fP is a compiler that translates Verilog source code into
+executable programs for simulation, or other netlist formats for
+further processing. The currenty supported targets are \fIvvm\fP (for
+executable simulation) and \fIxnf\fP for synthesis. Other target
+types are added as code generators are implemented.
+
+.SH OPTIONS
+.l
+\fIiverilog\fP accepts the following options:
+.TP 8
+.B -D\fImacro\fP
+Defines macro \fImacro\fP with the string `1' as its definition. (NOT IMPLEMENTED)
+.TP 8
+.B -D\fImacro=defn\fP
+Defines macro \fImacro\fP as \fIdefn\fP. (NOT IMPLEMENTED)
+.TP 8
+.B -E
+Preprocess the Verilog source, but do not compile it. The output file
+is the Verilog input, but with file inclusions and macro references
+expanded and removed. This is useful, for example, to preprocess
+verilog source for use by other compilers.
+.TP 8
+.B -I\fIincludepath\fP 
+Append path \fIincludepath\fP to list of paths searched for Verilog
+include files. (NOT IMPLEMENTED)
+.TP 8
+.B -m\fImodule\fP
+Add this module to the list of VPI modules to be loaded by the
+simulation. (NOT IMPLEMENTED)
+.TP 8
+.B -o \fIfilename\fP
+Place output in the file \fIfilename\fP. If no output file name is
+specified, \fIiverilog\fP uses the default name \fBa.out\fP.
+.TP 8
+.B -s \fItopmodule\fP
+Specify the top level module to elaborate. Icarus Verilog will by default
+choose the only module that has no ports. However, this simplistic
+heuristic is often not sufficient, and sometimes not what is wanted
+anyhow.
+.TP 8
+.B -v
+Turn on verbose messages. This will print the command lines that are
+executed to perform the actual compilation, along with version
+information from the various components.
+
+.SH TARGETS
+
+The Icarus Verilog compiler supports a variety of targets, for
+different purposes, and the \fB-t\fP flag is used to select the
+desired target.
+
+.TP 8
+.B null
+The null target causes no code to be generated. It is useful for
+checking the syntax of the Verilog source.
+.TP 8
+.B vvm
+This is the default. The target is an executable program that uses the
+vvm simulation runtime. The compiler actually generates C++ code, then
+compiles and links that code to make the output executable.
+.TP 8
+.B xnf
+This is the Xilinx Netlist Format used by many tools for placing
+devices in FPGAs or other programmable devices. The Icarus Verilog XNF
+code generator can generate complete designs or XNF macros that can be
+imported into larger designs by other tools.
+
+.SH EXAMPLES 
+These examples assume that you have a Verilog source file called hello.v in
+the current directory
+
+To compile hello.v to an executable file called a.out:
+
+	verilog hello.v
+
+To compile hello.v to an executable file called hello:
+
+	verilog -o hello hello.v
+
+To compile hello.v to a file in XNF-format called hello.xnf
+
+	verilog -txnf -ohello.xnf hello.v
+
+
+.SH "AUTHOR"
+.nf
+Steve Williams (steve@icarus.com)
+
+.SH SEE ALSO
+.BR "<http://www.icarus.com/eda/verilog/>"
+
+.SH COPYRIGHT
+.nf
+Copyright \(co  2000 Stephen Williams
+
+This document can be freely redistributed according to the terms of the 
+GNU General Public License version 2.0
