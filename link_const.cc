@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.7 2000/11/20 01:41:12 steve Exp $"
+#ident "$Id: link_const.cc,v 1.8 2001/02/16 03:27:07 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -35,11 +35,30 @@ bool link_drivers_constant(const Link&lnk)
 
       for (const Link*cur = nex->first_nlink()
 		 ; cur  ;  cur = cur->next_nlink()) {
+	    const NetNet*sig;
 
 	    if (cur == &lnk)
 		  continue;
 	    if (cur->get_dir() == Link::INPUT)
 		  continue;
+
+	      /* If this is an input or input port of a root module,
+		 then the is probably not a constant value. I
+		 certainly don't know what the value is, anyhow. */
+
+	    if (sig = dynamic_cast<const NetNet*>(cur->get_obj())) do {
+		  if (sig->port_type() == NetNet::NOT_A_PORT)
+			break;
+
+		  if (sig->port_type() == NetNet::POUTPUT)
+			break;
+
+		  if (sig->scope()->parent())
+			break;
+
+		  flag = false;
+	    } while(0);
+
 
 	      /* If the link is PASSIVE then it doesn't count as a
 		 driver if its initial value is Vz. This is pertinant
@@ -95,6 +114,9 @@ verinum::V driven_value(const Link&lnk)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.8  2001/02/16 03:27:07  steve
+ *  links to root inputs are not constant.
+ *
  * Revision 1.7  2000/11/20 01:41:12  steve
  *  Whoops, return the calculated constant value rom driven_value.
  *
