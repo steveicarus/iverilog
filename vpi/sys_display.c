@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.25 2001/06/25 03:11:41 steve Exp $"
+#ident "$Id: sys_display.c,v 1.26 2001/07/11 02:22:17 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -336,9 +336,14 @@ static int monitor_cb_1(p_cb_data cause)
 	   handle. I use this to reschedule the callback if needed. */
       vpiHandle*cbh = (vpiHandle*) (cause->user_data);
 
-	/* Reschedule this event so that it happens for the next
+      	/* Reschedule this event so that it happens for the next
 	   trigger on this variable. */
-      cb = *cause;
+      time.type = vpiSuppressTime;
+      cb.reason = cbValueChange;
+      cb.cb_rtn = monitor_cb_1;
+      cb.time = &time;
+      cb.obj  = cause->obj;
+      cb.user_data = cause->user_data;
       *cbh = vpi_register_cb(&cb);
       
       if (monitor_scheduled) return 0;
@@ -721,6 +726,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.26  2001/07/11 02:22:17  steve
+ *  Manually create the stage-2 callback structure.
+ *
  * Revision 1.25  2001/06/25 03:11:41  steve
  *  More robust about incorrect arguments.
  *
