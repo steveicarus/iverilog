@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.3 2000/09/10 03:59:59 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.4 2000/09/10 15:43:59 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -92,6 +92,12 @@ NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
  */
 NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 {
+      if (repeat_) {
+	    cerr << get_line() << ": error: Repeat concatenations make "
+		  "no sense in l-value expressions. I refuse." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetAssign_*res = 0;
 
@@ -111,6 +117,8 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 		  unsigned wid2 = res->pin_count() + tmp->pin_count();
 		  NetAssign_*tmp2 = new NetAssign_(res->name(), wid2);
 
+		  assert(tmp->more == 0);
+
 		  tmp2->more = res->more;
 		  res->more = 0;
 
@@ -126,7 +134,11 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 		  des->add_node(res);
 
 	    } else {
-		  tmp->more = res;
+		  NetAssign_*last = tmp;
+		  while (last->more)
+			last = last->more;
+
+		  last->more = res;
 		  res = tmp;
 	    }
       }
@@ -262,6 +274,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.4  2000/09/10 15:43:59  steve
+ *  Some error checking.
+ *
  * Revision 1.3  2000/09/10 03:59:59  steve
  *  Agressively merge NetAssign_ within concatenations.
  *
