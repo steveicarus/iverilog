@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.2 2002/05/10 03:54:46 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.3 2002/05/15 01:25:25 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -77,6 +77,8 @@ fi
 # Put the .vpi on the result file.
 OUT=$OUT".vpi"
 
+compile_errors=0
+
 # Compile all the source files into object files
 for src
 in $CCSRC
@@ -85,7 +87,7 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CC -c -o $obj $src
+    $CC -c -o $obj $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 
@@ -96,9 +98,15 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CXX -c -o $obj $src
+    $CXX -c -o $obj $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 
+if test $compile_errors -gt 0
+then
+    echo "Some ($compile_errors) files failed to compile."
+    exit $compile_errors
+fi
+
 echo "Making $OUT from $OBJ..."
-$LD -o $OUT $LDFLAGS $OBJ $LDLIBS
+exec $LD -o $OUT $LDFLAGS $OBJ $LDLIBS
