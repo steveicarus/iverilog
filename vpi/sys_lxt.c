@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.13 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.14 2003/02/11 05:21:33 steve Exp $"
 #endif
 
 # include "config.h"
 # include "sys_priv.h"
 # include "lxt_write.h"
+# include "vcd_priv.h"
 
 /*
  * This file contains the implementations of the VCD related
@@ -148,9 +149,18 @@ static void show_this_item(struct vcd_info*info)
 {
       s_vpi_value value;
 
-      value.format = vpiBinStrVal;
-      vpi_get_value(info->item, &value);
-      lt_emit_value_bit_string(dump_file, info->sym, 0 /* array row */, value.value.str);
+      if (vpi_get(vpiType,info->item) == vpiRealVar) {
+	    value.format = vpiRealVal;
+	    vpi_get_value(info->item, &value);
+	    lt_emit_value_double(dump_file, info->sym, 0, value.value.real);
+
+      } else {
+	    value.format = vpiBinStrVal;
+	    vpi_get_value(info->item, &value);
+	    lt_emit_value_bit_string(dump_file, info->sym,
+				     0 /* array row */,
+				     value.value.str);
+      }
 }
 
 
@@ -164,73 +174,7 @@ static void show_this_item_x(struct vcd_info*info)
  * managed qsorted list of scope names for duplicates bsearching
  */
 
-struct vcd_names_s {
-      const char *name;
-      struct vcd_names_s *next;
-};
-
-static struct vcd_names_s *vcd_names_list;
-static const char **vcd_names_sorted;
-static int listed_names, sorted_names;
-
-inline static void vcd_names_add(const char *name)
-{
-      struct vcd_names_s *nl = (struct vcd_names_s *)
-	    malloc(sizeof(struct vcd_names_s));
-      assert(nl);
-      nl->name = strdup(name);
-      nl->next = vcd_names_list;
-      vcd_names_list = nl;
-      listed_names ++;
-}
-
-static int vcd_names_compare(const void *s1, const void *s2)
-{
-      const char *v1 = *(const char **) s1;
-      const char *v2 = *(const char **) s2;
-
-      return strcmp(v1, v2);
-}
-
-static const char *vcd_names_search(const char *key)
-{
-      const char **v = (const char **)
-	    bsearch(&key, 
-		    vcd_names_sorted, sorted_names,
-		    sizeof(const char *), vcd_names_compare );
-      
-      return(v ? *v : NULL);
-}
-
-static void vcd_names_sort(void)
-{
-      if (listed_names) {
-	    struct vcd_names_s *r; 
-	    const char **l;
-	    
-	    sorted_names += listed_names;
-	    vcd_names_sorted = (const char **) 
-		  realloc(vcd_names_sorted, 
-			  sorted_names*(sizeof(const char *)));
-	    assert(vcd_names_sorted);
-	    
-	    l = vcd_names_sorted + sorted_names - listed_names;
-	    listed_names = 0;
-
-	    r = vcd_names_list;
-	    vcd_names_list = 0x0;
-
-	    while (r) {
-		  struct vcd_names_s *rr = r;
-		  r = rr->next;
-		  *(l++) = rr->name;
-		  free(rr);
-	    }
-	    
-	    qsort(vcd_names_sorted, sorted_names, 
-		  sizeof(const char **), vcd_names_compare);
-      }
-}
+struct vcd_names_list_s lxt_tab;
 
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
@@ -474,71 +418,6 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-/* 
-   Nexus Id cache
-
-   In structural models, many signals refer to the same nexus.
-   Some structural models also have very many signals.  This cache
-   saves nexus_id - vcd_id pairs, and reuses the vcd_id when a signal 
-   refers to a nexus that is already dumped.
-
-   The new signal will be listed as a $var, but no callback 
-   will be installed.  This saves considerable CPU time and leads 
-   to smalle VCD files.
-
-   The _vpiNexusId is a private (int) property of IVL simulators.
-*/
-
-struct vcd_id_s 
-{
-  const char *id;
-  struct vcd_id_s *next;
-  int nex;
-};
-
-static inline unsigned ihash(int nex)
-{
-  unsigned a = nex;
-  a ^= a>>16;
-  a ^= a>>8;
-  return a & 0xff;
-}
-
-static struct vcd_id_s **vcd_ids;
-
-inline static const char *find_nexus_ident(int nex)
-{
-      struct vcd_id_s *bucket;
-      
-      if (!vcd_ids) {
-	    vcd_ids = (struct vcd_id_s **)
-		  calloc(256, sizeof(struct vcd_id_s*));
-	    assert(vcd_ids);
-      }
-
-      bucket = vcd_ids[ihash(nex)];
-      while (bucket) {
-	    if (nex == bucket->nex)
-		  return bucket->id;
-	    bucket = bucket->next;
-      }
-
-      return 0;
-}
-
-inline static void set_nexus_ident(int nex, const char *id)
-{
-      struct vcd_id_s *bucket;
-
-      assert(vcd_ids);
-
-      bucket = (struct vcd_id_s *) malloc(sizeof(struct vcd_id_s));
-      bucket->next = vcd_ids[ihash(nex)];
-      bucket->id = id;
-      bucket->nex = nex;
-      vcd_ids[ihash(nex)] = bucket;
-}
-
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
@@ -623,7 +502,35 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
             }
 	    
 	    break;
-	    
+
+	  case vpiRealVar:
+
+	    if (skip)
+		  break;
+
+	    name = vpi_get_str(vpiName, item);
+	    ident = create_full_name(name);
+
+	    info = malloc(sizeof(*info));
+
+	    info->time.type = vpiSimTime;
+	    info->item  = item;
+	    info->sym   = lt_symbol_add(dump_file, ident, 0 /* array rows */, vpi_get(vpiSize, item)-1, 0, LT_SYM_F_DOUBLE);
+
+	    cb.time      = &info->time;
+	    cb.user_data = (char*)info;
+	    cb.value     = NULL;
+	    cb.obj       = item;
+	    cb.reason    = cbValueChange;
+	    cb.cb_rtn    = variable_cb;
+
+	    info->next  = vcd_list;
+	    vcd_list    = info;
+
+	    info->cb    = vpi_register_cb(&cb);
+
+	    break;
+
 	  case vpiModule:      type = "module";      if(0){
 	  case vpiNamedBegin:  type = "begin";      }if(0){
 	  case vpiTask:        type = "task";       }if(0){
@@ -642,11 +549,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
 
-		  nskip = sorted_names && fullname
-			&& vcd_names_search(fullname);
+		  nskip = 0 != vcd_names_search(&lxt_tab, fullname);
 		  
 		  if (!nskip) 
-			vcd_names_add(fullname);
+			vcd_names_add(&lxt_tab, fullname);
 		  else 
 		    vpi_mcd_printf(6,
 				   "LXT warning:"
@@ -762,7 +668,7 @@ static int sys_dumpvars_calltf(char*name)
 
 	    int dep = draw_scope(item);
 
-	    vcd_names_sort();
+	    vcd_names_sort(&lxt_tab);
 	    scan_item(depth, item, 0);
 	    
 	    while (dep--) {
@@ -820,6 +726,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.14  2003/02/11 05:21:33  steve
+ *  Support dump of vpiRealVar objects.
+ *
  * Revision 1.13  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

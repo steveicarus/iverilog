@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.40 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.41 2003/02/11 05:21:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -37,6 +37,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  "vcd_priv.h"
+
 
 static FILE*dump_file = 0;
 
@@ -104,7 +106,12 @@ static void show_this_item(struct vcd_info*info)
 {
       s_vpi_value value;
 
-      if (vpi_get(vpiSize, info->item) == 1) {
+      if (vpi_get(vpiType, info->item) == vpiRealVar) {
+	    value.format = vpiRealVal;
+	    vpi_get_value(info->item, &value);
+	    fprintf(dump_file, "r%.16g %s\n", value.value.real, info->ident);
+
+      } else if (vpi_get(vpiSize, info->item) == 1) {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
 	    fprintf(dump_file, "%s%s\n", value.value.str, info->ident);
@@ -132,73 +139,7 @@ static void show_this_item_x(struct vcd_info*info)
  * managed qsorted list of scope names for duplicates bsearching
  */
 
-struct vcd_names_s {
-      const char *name;
-      struct vcd_names_s *next;
-};
-
-static struct vcd_names_s *vcd_names_list;
-static const char **vcd_names_sorted;
-static int listed_names, sorted_names;
-
-inline static void vcd_names_add(const char *name)
-{
-      struct vcd_names_s *nl = (struct vcd_names_s *)
-	    malloc(sizeof(struct vcd_names_s));
-      assert(nl);
-      nl->name = strdup(name);
-      nl->next = vcd_names_list;
-      vcd_names_list = nl;
-      listed_names ++;
-}
-
-static int vcd_names_compare(const void *s1, const void *s2)
-{
-      const char *v1 = *(const char **) s1;
-      const char *v2 = *(const char **) s2;
-
-      return strcmp(v1, v2);
-}
-
-static const char *vcd_names_search(const char *key)
-{
-      const char **v = (const char **)
-	    bsearch(&key, 
-		    vcd_names_sorted, sorted_names,
-		    sizeof(const char *), vcd_names_compare );
-      
-      return(v ? *v : NULL);
-}
-
-void vcd_names_sort(void)
-{
-      if (listed_names) {
-	    struct vcd_names_s *r; 
-	    const char **l;
-	    
-	    sorted_names += listed_names;
-	    vcd_names_sorted = (const char **) 
-		  realloc(vcd_names_sorted, 
-			  sorted_names*(sizeof(const char *)));
-	    assert(vcd_names_sorted);
-	    
-	    l = vcd_names_sorted + sorted_names - listed_names;
-	    listed_names = 0;
-
-	    r = vcd_names_list;
-	    vcd_names_list = 0x0;
-
-	    while (r) {
-		  struct vcd_names_s *rr = r;
-		  r = rr->next;
-		  *(l++) = rr->name;
-		  free(rr);
-	    }
-	    
-	    qsort(vcd_names_sorted, sorted_names, 
-		  sizeof(const char **), vcd_names_compare);
-      }
-}
+struct vcd_names_list_s vcd_tab = { 0 };
 
 
 static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
@@ -465,71 +406,6 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-/* 
-   Nexus Id cache
-
-   In structural models, many signals refer to the same nexus.
-   Some structural models also have very many signals.  This cache
-   saves nexus_id - vcd_id pairs, and reuses the vcd_id when a signal 
-   refers to a nexus that is already dumped.
-
-   The new signal will be listed as a $var, but no callback 
-   will be installed.  This saves considerable CPU time and leads 
-   to smalle VCD files.
-
-   The _vpiNexusId is a private (int) property of IVL simulators.
-*/
-
-struct vcd_id_s 
-{
-  const char *id;
-  struct vcd_id_s *next;
-  int nex;
-};
-
-static inline unsigned ihash(int nex)
-{
-  unsigned a = nex;
-  a ^= a>>16;
-  a ^= a>>8;
-  return a & 0xff;
-}
-
-static struct vcd_id_s **vcd_ids;
-
-inline static const char *find_nexus_ident(int nex)
-{
-      struct vcd_id_s *bucket;
-      
-      if (!vcd_ids) {
-	    vcd_ids = (struct vcd_id_s **)
-		  calloc(256, sizeof(struct vcd_id_s*));
-	    assert(vcd_ids);
-      }
-
-      bucket = vcd_ids[ihash(nex)];
-      while (bucket) {
-	    if (nex == bucket->nex)
-		  return bucket->id;
-	    bucket = bucket->next;
-      }
-
-      return 0;
-}
-
-inline static void set_nexus_ident(int nex, const char *id)
-{
-      struct vcd_id_s *bucket;
-
-      assert(vcd_ids);
-
-      bucket = (struct vcd_id_s *) malloc(sizeof(struct vcd_id_s));
-      bucket->next = vcd_ids[ihash(nex)];
-      bucket->id = id;
-      bucket->nex = nex;
-      vcd_ids[ihash(nex)] = bucket;
-}
-
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
@@ -614,7 +490,39 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		    type, vpi_get(vpiSize, item), ident,
 		    name);
 	    break;
-	    
+
+	  case vpiRealVar:
+
+	    if (skip)
+		  break;
+
+	      /* Declare the variable in the VCD file. */
+	    name = vpi_get_str(vpiName, item);
+	    ident = strdup(vcdid);
+	    gen_new_vcd_id();
+	    fprintf(dump_file, "$var real 1 %s %s $end\n",
+		    ident, name);
+
+	      /* Add a callback for the variable. */
+	    info = malloc(sizeof(*info));
+
+	    info->time.type = vpiSimTime;
+	    info->item  = item;
+	    info->ident = ident;
+
+	    cb.time      = &info->time;
+	    cb.user_data = (char*)info;
+	    cb.value     = NULL;
+	    cb.obj       = item;
+	    cb.reason    = cbValueChange;
+	    cb.cb_rtn    = variable_cb;
+
+	    info->next  = vcd_list;
+	    vcd_list    = info;
+
+	    info->cb    = vpi_register_cb(&cb);
+	    break;
+
 	  case vpiModule:      type = "module";      if(0){
 	  case vpiNamedBegin:  type = "begin";      }if(0){
 	  case vpiTask:        type = "task";       }if(0){
@@ -633,11 +541,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
 
-		  nskip = sorted_names && fullname
-			&& vcd_names_search(fullname);
+		  nskip = 0 != vcd_names_search(&vcd_tab, fullname);
 		  
 		  if (!nskip) 
-			vcd_names_add(fullname);
+			vcd_names_add(&vcd_tab, fullname);
 		  else 
 		    vpi_mcd_printf(6,
 				   "VCD warning:"
@@ -794,7 +701,7 @@ static int sys_dumpvars_calltf(char*name)
 
 	    int dep = draw_scope(item);
 
-	    vcd_names_sort();
+	    vcd_names_sort(&vcd_tab);
 	    scan_item(depth, item, 0);
 	    
 	    while (dep--) {
@@ -852,6 +759,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.41  2003/02/11 05:21:33  steve
+ *  Support dump of vpiRealVar objects.
+ *
  * Revision 1.40  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal
