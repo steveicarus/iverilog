@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.127 2004/12/11 02:31:26 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.128 2004/12/15 17:10:40 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -748,12 +748,7 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *
  * Var lvals are things like assignments to a part select or a bit
  * select. Assignment to the whole variable is a special case of a
- * part select, as is a bit select with a constant expression. The
- * ivl_lval_pins statement returns the width of the part select for
- * the lval. The ivl_lval_pin function returns the nexus to the N-th
- * bit of the part select. The compiler takes care of positioning the
- * part select so that ivl_lval_pin(net, 0) is the proper bit in the
- * signal.
+ * part select, as is a bit select with a constant expression.
  *
  * ivl_lval_width
  *    The width of a vector that this lval can receive. This accounts
@@ -788,12 +783,6 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    If the l-value is a memory, this method returns an
  *    ivl_expr_t that represents the index expression.  Otherwise, it
  *    returns 0.
- *
- * ivl_lval_pin
- *    Return an ivl_nexus_t for the connection of the ivl_lval_t.
- *
- * ivl_lval_pins
- *    Return the number of pins for this object.
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
@@ -1205,25 +1194,44 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  *    this. The code generator may need to know this in order to
  *    handle disable statements.
  *
+ * ivl_stmt_lval
+ * ivl_stmt_lvals
+ *    Return the number of l-values for an assignment statement, or
+ *    the specific l-value. If there is more then 1 l-value, then the
+ *    l-values are presumed to be vector values concatenated together
+ *    from msb (idx==0) to lsb.
+ *
  * ivl_stmt_rval
  *    Return the rval expression of the assignment. This is the value
- *    that is to be calculated and assigned to the l-value is
+ *    that is to be calculated and assigned to the l-value in all the
  *    assignment statements.
  *
  * SOME INTERESTING SPECIAL CASES:
+ *
+ * - Assignments: IVL_ST_ASSIGN, IVL_ST_ASSIGN_NB, IVL_CASSIGN, IVL_ST_FORCE
+ *
+ * The assignments support ivl_stmt_rval to get the r-value expression
+ * that is to be assign to the l-value, and ivl_stmt_lval[s] to get
+ * the l-value that receives the value. The compiler has already made
+ * sure that the types (l-value and r-value) are compatible.
+ *
+ * If the l-value is a vector, then the compiler also makes sure the
+ * expression width of the r-values matches. It handles padding or
+ * operator sizing as needed to get the width exactly right.
  *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The
  * l-value is the same as any other assignment (use ivl_stmt_lval).
  *
- * The value to be assigned may be an ivl_expr_t retrieved by the
- * ivl_stmt_rval function. In this case, the run time is expected to
- * calculate the value of the expression at the assignment, then
- * continuous assign that constant value.
+ * The value to be assigned is an ivl_expr_t retrieved by the
+ * ivl_stmt_rval function. The run time is expected to calculate the
+ * value of the expression at the assignment, then continuous assign
+ * that constant value. If the expression is non-constant, the code
+ * generator is supposed to know what to do about that, too.
  *
- * If the ivl_stmt_rval for a CASSIGN is nil, then the ivl_stmt_nexus
- * function instead contains a nexus that should be connected at run
- * time to the l-value.
+ * - IVL_ST_FORCE
+ * This is very much like IVL_ST_CASSIGN, but adds that l-values can
+ * include nets (tri, wire, etc).
  */
 
   /* IVL_ST_BLOCK, IVL_ST_FORK */
@@ -1259,18 +1267,19 @@ extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
      IVL_ST_FORCE IVL_ST_RELEASE */
 extern unsigned ivl_stmt_lvals(ivl_statement_t net);
-  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN */
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
-  /* IVL_ST_CASSIGN IVL_ST_FORCE */
+#if 0
 extern ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx);
 extern unsigned    ivl_stmt_nexus_count(ivl_statement_t net);
+#endif
   /* IVL_ST_STASK */
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
-  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_FORCE */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_DELAYX, IVL_ST_FOREVER, IVL_ST_REPEAT
      IVL_ST_WAIT, IVL_ST_WHILE */
@@ -1315,6 +1324,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.128  2004/12/15 17:10:40  steve
+ *  Fixup force statement elaboration.
+ *
  * Revision 1.127  2004/12/11 02:31:26  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

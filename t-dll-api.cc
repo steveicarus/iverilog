@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.109 2004/12/11 02:31:27 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.110 2004/12/15 17:10:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1822,7 +1822,9 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
       assert((net->type_ == IVL_ST_ASSIGN)
 	     || (net->type_ == IVL_ST_ASSIGN_NB)
 	     || (net->type_ == IVL_ST_CASSIGN)
-	     || (net->type_ == IVL_ST_DEASSIGN));
+	     || (net->type_ == IVL_ST_DEASSIGN)
+	     || (net->type_ == IVL_ST_FORCE)
+	     || (net->type_ == IVL_ST_RELEASE));
 
       unsigned sum = 0;
 
@@ -1896,6 +1898,7 @@ extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
 	  case IVL_ST_ASSIGN:
 	  case IVL_ST_ASSIGN_NB:
 	  case IVL_ST_CASSIGN:
+	  case IVL_ST_FORCE:
 	    return net->u_.assign_.rval_;
 	  default:
 	    assert(0);
@@ -1939,6 +1942,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.110  2004/12/15 17:10:40  steve
+ *  Fixup force statement elaboration.
+ *
  * Revision 1.109  2004/12/11 02:31:27  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
