@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.3 2003/08/09 02:40:50 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.4 2003/08/09 03:23:03 steve Exp $"
 #endif
 
 /*
@@ -581,6 +581,77 @@ static void lpm_show_add(ivl_lpm_t net)
       }
 }
 
+static void lpm_show_mult(ivl_lpm_t net)
+{
+      char name[64];
+      unsigned idx;
+
+      edif_cell_t cell;
+      edif_cellref_t ref;
+      edif_joint_t jnt;
+
+      sprintf(name, "mult%u", ivl_lpm_width(net));
+      cell = edif_xlibrary_findcell(xlib, name);
+
+      if (cell == 0) {
+	    cell = edif_xcell_create(xlib, strdup(name),
+				     3 * ivl_lpm_width(net));
+
+	    for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+
+		  sprintf(name, "Result%u", idx);
+		  edif_cell_portconfig(cell, idx*3+0,
+				       strdup(name),
+				       IVL_SIP_OUTPUT);
+
+		  sprintf(name, "DataA%u", idx);
+		  edif_cell_portconfig(cell, idx*3+1,
+				       strdup(name),
+				       IVL_SIP_INPUT);
+
+		  sprintf(name, "DataB%u", idx);
+		  edif_cell_portconfig(cell, idx*3+2,
+				       strdup(name),
+				       IVL_SIP_INPUT);
+	    }
+
+	    edif_cell_pstring(cell,  "LPM_Type",  "LPM_MULT");
+	    edif_cell_pinteger(cell, "LPM_WidthP", ivl_lpm_width(net));
+	    edif_cell_pinteger(cell, "LPM_WidthA", ivl_lpm_width(net));
+	    edif_cell_pinteger(cell, "LPM_WidthB", ivl_lpm_width(net));
+      }
+
+      ref = edif_cellref_create(edf, cell);
+
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    unsigned pin;
+	    ivl_nexus_t nex;
+
+	    sprintf(name, "Result%u", idx);
+	    pin = edif_cell_port_byname(cell, name);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, idx));
+	    edif_add_to_joint(jnt, ref, pin);
+
+	    if ( (nex = ivl_lpm_data(net, idx)) ) {
+		  sprintf(name, "DataA%u", idx);
+		  pin = edif_cell_port_byname(cell, name);
+
+		  jnt = edif_joint_of_nexus(edf, nex);
+		  edif_add_to_joint(jnt, ref, pin);
+	    }
+
+	    if ( (nex = ivl_lpm_datab(net, idx)) ) {
+		  sprintf(name, "DataB%u", idx);
+		  pin = edif_cell_port_byname(cell, name);
+
+		  jnt = edif_joint_of_nexus(edf, nex);
+		  edif_add_to_joint(jnt, ref, pin);
+	    }
+      }
+
+}
+
 const struct device_s d_lpm_edif = {
       lpm_show_header,
       lpm_show_footer,
@@ -595,11 +666,15 @@ const struct device_s d_lpm_edif = {
       lpm_show_add, /* show_add */
       lpm_show_add, /* show_sub */
       0, /* show_shiftl */
-      0  /* show_shiftr */
+      0, /* show_shiftr */
+      lpm_show_mult /* show_mult */
 };
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.4  2003/08/09 03:23:03  steve
+ *  Add support for IVL_LPM_MULT device.
+ *
  * Revision 1.3  2003/08/09 02:40:50  steve
  *  Generate LPM_FF devices.
  *

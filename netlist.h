@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.295 2003/07/26 03:34:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.296 2003/08/09 03:23:40 steve Exp $"
 #endif
 
 /*
@@ -2525,6 +2525,7 @@ class NetEBMult : public NetEBinary {
       virtual bool set_width(unsigned w);
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetNet* synthesize(Design*);
 
     private:
 
@@ -3315,6 +3316,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.296  2003/08/09 03:23:40  steve
+ *  Add support for IVL_LPM_MULT device.
+ *
  * Revision 1.295  2003/07/26 03:34:42  steve
  *  Start handling pad of expressions in code generators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.46 2003/07/26 03:34:42 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.47 2003/08/09 03:23:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -312,6 +312,45 @@ NetNet* NetEBComp::synthesize(Design*des)
 	    des->errors += 1;
 	    return 0;
       }
+
+      return osig;
+}
+
+NetNet* NetEBMult::synthesize(Design*des)
+{
+      NetNet*lsig = left_->synthesize(des);
+      NetNet*rsig = right_->synthesize(des);
+
+      if (lsig == 0)
+	    return 0;
+
+      if (rsig == 0)
+	    return 0;
+
+      NetScope*scope = lsig->scope();
+      assert(scope);
+
+      NetMult*mult = new NetMult(scope, scope->local_symbol(),
+				 expr_width(),
+				 lsig->pin_count(),
+				 rsig->pin_count());
+      des->add_node(mult);
+
+      mult->set_signed( has_sign() );
+      mult->set_line(*this);
+
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+	    connect(mult->pin_DataA(idx), lsig->pin(idx));
+
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+	    connect(mult->pin_DataB(idx), lsig->pin(idx));
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, expr_width());
+      osig->local_flag(true);
+
+      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
+	    connect(mult->pin_Result(idx), osig->pin(idx));
 
       return osig;
 }
@@ -770,6 +809,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.47  2003/08/09 03:23:40  steve
+ *  Add support for IVL_LPM_MULT device.
+ *
  * Revision 1.46  2003/07/26 03:34:42  steve
  *  Start handling pad of expressions in code generators.
  *

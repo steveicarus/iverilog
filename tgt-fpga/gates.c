@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.12 2003/08/07 04:04:01 steve Exp $"
+#ident "$Id: gates.c,v 1.13 2003/08/09 03:23:03 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -114,6 +114,15 @@ static void show_gate_lpm(ivl_lpm_t net)
 	    device->show_mux(net);
 	    break;
 
+	  case IVL_LPM_MULT:
+	    if (device->show_mult == 0) {
+		  fprintf(stderr, "fpga.tgt: IVL_LPM_MULT not supported"
+			  " by this target.\n");
+		  return;
+	    }
+	    device->show_mult(net);
+	    break;
+
 	  case IVL_LPM_SHIFTL:
 	    if (device->show_shiftl == 0) {
 		  fprintf(stderr, "fpga.tgt: IVL_LPM_SHIFTL not supported"
@@ -159,6 +168,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.13  2003/08/09 03:23:03  steve
+ *  Add support for IVL_LPM_MULT device.
+ *
  * Revision 1.12  2003/08/07 04:04:01  steve
  *  Add an LPM device type.
  *
