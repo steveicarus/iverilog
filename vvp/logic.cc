@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.16 2004/12/31 05:56:36 steve Exp $"
+#ident "$Id: logic.cc,v 1.17 2005/01/29 17:52:06 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -78,6 +78,37 @@ void table_functor_s::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
       vvp_send_vec4(ptr.ptr()->out, result);
 }
 
+vvp_fun_and::vvp_fun_and()
+{
+}
+
+vvp_fun_and::~vvp_fun_and()
+{
+}
+
+void vvp_fun_and::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      input_[ptr.port()] = bit;
+
+      vvp_vector4_t result (bit);
+
+      for (unsigned idx = 0 ;  idx < result.size() ;  idx += 1) {
+	    vvp_bit4_t bitbit = BIT4_1;
+	    for (unsigned pdx = 0 ;  pdx < 4 ;  pdx += 1) {
+		  if (input_[pdx].size() < idx) {
+			bitbit = BIT4_X;
+			break;
+		  }
+
+		  bitbit = bitbit & input_[pdx].value(idx);
+	    }
+
+	    result.set_bit(idx, bitbit);
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, result);
+}
+
 vvp_fun_buf::vvp_fun_buf()
 {
       count_functors_table += 1;
@@ -133,7 +164,7 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_OR);
 
       } else if (strcmp(type, "AND") == 0) {
-	    obj = new table_functor_s(ft_AND);
+	    obj = new vvp_fun_and();
 
       } else if (strcmp(type, "BUF") == 0) {
 	    obj = new vvp_fun_buf();
@@ -213,6 +244,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.17  2005/01/29 17:52:06  steve
+ *  move AND to buitin instead of table.
+ *
  * Revision 1.16  2004/12/31 05:56:36  steve
  *  Add specific BUFZ functor.
  *

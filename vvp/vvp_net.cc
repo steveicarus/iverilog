@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.9 2005/01/28 05:34:25 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.10 2005/01/29 17:52:06 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -57,6 +57,19 @@ bool bit4_is_xz(vvp_bit4_t a)
       if (a == BIT4_Z)
 	    return true;
       return false;
+}
+
+vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
+{
+      if (a == BIT4_0)
+	    return BIT4_0;
+      if (b == BIT4_0)
+	    return BIT4_0;
+      if (bit4_is_xz(a))
+	    return BIT4_X;
+      if (bit4_is_xz(b))
+	    return BIT4_X;
+      return BIT4_1;
 }
 
 void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
@@ -222,6 +235,36 @@ void vvp_vector4_t::set_bit(unsigned idx, vvp_bit4_t val)
 	    bits_val_ &= ~mask;
 	    bits_val_ |= val << (2*off);
       }
+}
+
+char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
+{
+      char*res = buf;
+      *buf++ = 'C';
+      *buf++ = '4';
+      *buf++ = '<';
+      buf_len -= 3;
+
+      for (unsigned idx = 0 ;  idx < size() && buf_len >= 2 ;  idx += 1) {
+	    switch (value(size()-idx-1)) {
+		case BIT4_0:
+		  *buf++ = '0';
+		  break;
+		case BIT4_1:
+		  *buf++ = '1';
+		  break;
+		case BIT4_X:
+		  *buf++ = 'x';
+		  break;
+		case BIT4_Z:
+		  *buf++ = 'z';
+	    }
+	    buf_len -= 1;
+      }
+
+      *buf++ = '>';
+      *buf++ = 0;
+      return res;
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
@@ -809,6 +852,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.10  2005/01/29 17:52:06  steve
+ *  move AND to buitin instead of table.
+ *
  * Revision 1.9  2005/01/28 05:34:25  steve
  *  Add vector4 implementation of .arith/mult.
  *

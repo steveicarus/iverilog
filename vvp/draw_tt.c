@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.17 2004/12/31 05:57:25 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.18 2005/01/29 17:52:06 steve Exp $"
 #endif
 
 # include  <stdio.h>
 
+#if 0
 static void draw_AND(void)
 {
       unsigned i0, i1, i2, i3;
@@ -55,6 +56,7 @@ static void draw_AND(void)
 
       printf("};\n");
 }
+#endif
 
 static void draw_NAND(void)
 {
@@ -737,7 +739,6 @@ static void draw_oct_table()
 main()
 {
       printf("# include  \"logic.h\"\n");
-      draw_AND();
       draw_BUFIF0();
       draw_BUFIF1();
       draw_PMOS();
@@ -760,6 +761,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.18  2005/01/29 17:52:06  steve
+ *  move AND to buitin instead of table.
+ *
  * Revision 1.17  2004/12/31 05:57:25  steve
  *  No need to draw BUF or BUFZ tables.
  *

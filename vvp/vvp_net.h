@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.9 2005/01/28 05:34:25 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.10 2005/01/29 17:52:06 steve Exp $"
 
 # include  <assert.h>
 
@@ -52,6 +52,8 @@ enum vvp_bit4_t {
 extern vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c);
   /* Return TRUE if the bit is BIT4_X or BIT4_Z */
 extern bool bit4_is_xz(vvp_bit4_t a);
+  /* Some common boolean operators */
+extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
 
 /*
  * This class represents scaler values collected into vectors. The
@@ -72,6 +74,9 @@ class vvp_vector4_t {
       unsigned size() const { return size_; }
       vvp_bit4_t value(unsigned idx) const;
       void set_bit(unsigned idx, vvp_bit4_t val);
+
+	// Display the value into the buf as a string.
+      char*as_string(char*buf, size_t buf_len);
 
       vvp_vector4_t(const vvp_vector4_t&that);
       vvp_vector4_t& operator= (const vvp_vector4_t&that);
@@ -502,6 +507,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.10  2005/01/29 17:52:06  steve
+ *  move AND to buitin instead of table.
+ *
  * Revision 1.9  2005/01/28 05:34:25  steve
  *  Add vector4 implementation of .arith/mult.
  *

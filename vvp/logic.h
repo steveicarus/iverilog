@@ -1,7 +1,7 @@
 #ifndef __logic_H
 #define __logic_H
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.10 2004/12/31 05:56:36 steve Exp $"
+#ident "$Id: logic.h,v 1.11 2005/01/29 17:52:06 steve Exp $"
 #endif
 
 # include  "vvp_net.h"
@@ -43,6 +43,20 @@ class table_functor_s: public vvp_net_fun_t {
     private:
       truth_t table;
       vvp_vector4_t input_[4];
+};
+
+class vvp_fun_boolean_ : public vvp_net_fun_t {
+
+    protected:
+      vvp_vector4_t input_[4];
+};
+
+class vvp_fun_and  : public vvp_fun_boolean_ {
+
+    public:
+      explicit vvp_fun_and();
+      ~vvp_fun_and();
+      void recv_vec4(vvp_net_ptr_t p, vvp_vector4_t bit);
 };
 
 /*
@@ -101,6 +115,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.11  2005/01/29 17:52:06  steve
+ *  move AND to buitin instead of table.
+ *
  * Revision 1.10  2004/12/31 05:56:36  steve
  *  Add specific BUFZ functor.
  *
