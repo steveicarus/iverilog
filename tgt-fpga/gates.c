@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.2 2001/08/30 04:31:04 steve Exp $"
+#ident "$Id: gates.c,v 1.3 2001/09/01 02:01:30 steve Exp $"
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -50,6 +50,14 @@ static void show_gate_lpm(ivl_lpm_t net)
 {
       switch (ivl_lpm_type(net)) {
 
+	  case IVL_LPM_CMP_EQ:
+	    device->show_cmp_eq(net);
+	    break;
+
+	  case IVL_LPM_CMP_NE:
+	    device->show_cmp_ne(net);
+	    break;
+
 	  case IVL_LPM_FF:
 	    device->show_dff(net);
 	    break;
@@ -76,6 +84,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.3  2001/09/01 02:01:30  steve
+ *  identity compare, and PWR records for constants.
+ *
  * Revision 1.2  2001/08/30 04:31:04  steve
  *  Mangle nexus names.
  *

@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: device.h,v 1.2 2001/08/31 02:59:06 steve Exp $"
+#ident "$Id: device.h,v 1.3 2001/09/01 02:01:30 steve Exp $"
 
 # include  <ivl_target.h>
 
@@ -40,11 +40,17 @@ struct device_s {
       void (*show_logic)(ivl_net_logic_t net);
 	/* This method emits a D type Flip-Flop */
       void (*show_dff)(ivl_lpm_t net);
+	/* These methods show various comparators */
+      void (*show_cmp_eq)(ivl_lpm_t net);
+      void (*show_cmp_ne)(ivl_lpm_t net);
 };
 
 
 /*
  * $Log: device.h,v $
+ * Revision 1.3  2001/09/01 02:01:30  steve
+ *  identity compare, and PWR records for constants.
+ *
  * Revision 1.2  2001/08/31 02:59:06  steve
  *  Add root port SIG records.
  *

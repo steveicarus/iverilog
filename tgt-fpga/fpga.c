@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: fpga.c,v 1.2 2001/08/31 02:59:06 steve Exp $"
+#ident "$Id: fpga.c,v 1.3 2001/09/01 02:01:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,6 +75,23 @@ static void show_root_ports(ivl_scope_t root)
       }
 }
 
+static void show_design_consts(ivl_design_t des)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_design_consts(des) ;  idx += 1) {
+	    unsigned pin;
+	    ivl_net_const_t net = ivl_design_const(des, idx);
+	    const char*val = ivl_const_bits(net);
+
+	    for (pin = 0 ;  pin < ivl_const_pins(net) ;  pin += 1) {
+		  ivl_nexus_t nex = ivl_const_pin(net, pin);
+		  fprintf(xnf, "PWR,%c,%s\n", val[pin],
+			  mangle_nexus_name(nex));
+	    }
+      }
+}
+
 /*
  * This is the main entry point that ivl uses to invoke me, the code
  * generator.
@@ -110,12 +127,17 @@ int target_design(ivl_design_t des)
 	   netlist. */
       show_scope_gates(root, 0);
 
+      show_design_consts(des);
+
       fprintf(xnf, "EOF\n");
       return 0;
 }
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.3  2001/09/01 02:01:30  steve
+ *  identity compare, and PWR records for constants.
+ *
  * Revision 1.2  2001/08/31 02:59:06  steve
  *  Add root port SIG records.
  *

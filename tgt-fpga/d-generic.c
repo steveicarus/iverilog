@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.4 2001/08/31 23:02:13 steve Exp $"
+#ident "$Id: d-generic.c,v 1.5 2001/09/01 02:01:30 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -190,14 +190,86 @@ static void generic_show_dff(ivl_lpm_t net)
       fprintf(xnf, "END\n");
 }
 
+/*
+ * The generic == comparator uses EQN records to generate 2-bit
+ * comparators, that are then connected together by a wide AND gate.
+ */
+static void generic_show_cmp_eq(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned idx;
+      char name[1024];
+	/* Make this many dual pair comparators, and */
+      unsigned deqn = ivl_lpm_width(net) / 2;
+	/* Make this many single pair comparators. */
+      unsigned seqn = ivl_lpm_width(net) % 2;
+
+      mangle_lpm_name(net, name, sizeof name);
+
+      for (idx = 0 ;  idx < deqn ;  idx += 1) {
+	    fprintf(xnf, "SYM, %s/CD%u, EQN, "
+		    "EQN=(~((I0 @ I1) + (I2 @ I3)))\n",
+		    name, idx);
+
+	    fprintf(xnf, "    PIN, O, O, %s/CDO%u\n", name, idx);
+
+	    nex = ivl_lpm_data(net, 2*idx);
+	    draw_pin(nex, "I0", 'I');
+	    nex = ivl_lpm_datab(net, 2*idx);
+	    draw_pin(nex, "I1", 'I');
+
+	    nex = ivl_lpm_data(net, 2*idx+1);
+	    draw_pin(nex, "I2", 'I');
+	    nex = ivl_lpm_datab(net, 2*idx+1);
+	    draw_pin(nex, "I3", 'I');
+
+	    fprintf(xnf, "END\n");
+      }
+
+      if (seqn != 0) {
+	    fprintf(xnf, "SYM, %s/CT, XNOR, LIBVER=2.0.0\n", name);
+
+	    fprintf(xnf, "    PIN, O, O, %s/CTO\n", name);
+
+	    nex = ivl_lpm_data(net, 2*deqn);
+	    draw_pin(nex, "I0", 'I');
+
+	    nex = ivl_lpm_datab(net, 2*deqn);
+	    draw_pin(nex, "I1", 'I');
+
+	    fprintf(xnf, "END\n");
+      }
+
+      if (ivl_lpm_type(net) == IVL_LPM_CMP_EQ)
+	    fprintf(xnf, "SYM, %s/OUT, AND, LIBVER=2.0.0\n", name);
+      else
+	    fprintf(xnf, "SYM, %s/OUT, NAND, LIBVER=2.0.0\n", name);
+
+      nex = ivl_lpm_q(net, 0);
+      draw_pin(nex, "O", 'O');
+
+      for (idx = 0 ;  idx < deqn ;  idx += 1)
+	    fprintf(xnf, "    PIN, I%u, I, %s/CDO%u\n", idx, name, idx);
+
+      for (idx = 0 ;  idx < seqn ;  idx += 1)
+	    fprintf(xnf, "    PIN, I%u, I, %s/CTO\n", deqn+idx, name);
+
+      fprintf(xnf, "END\n");
+}
+
 const struct device_s d_generic = {
       generic_show_logic,
-      generic_show_dff
+      generic_show_dff,
+      generic_show_cmp_eq,
+      generic_show_cmp_eq
 };
 
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.5  2001/09/01 02:01:30  steve
+ *  identity compare, and PWR records for constants.
+ *
  * Revision 1.4  2001/08/31 23:02:13  steve
  *  Relax pin count restriction on logic gates.
  *
