@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.8 1999/12/30 04:19:12 steve Exp $"
+#ident "$Id: functor.cc,v 1.9 2000/01/02 17:57:20 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -78,7 +78,7 @@ void Design::functor(functor_t*fun)
 		  NetNode*tmp = cur->node_next_;
 		  cur->functor_node(this, fun);
 		  cur = tmp;
-	    } while (cur != nodes_->node_next_);
+	    } while (nodes_ && cur != nodes_->node_next_);
       }
 }
 
@@ -158,6 +158,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.9  2000/01/02 17:57:20  steve
+ *  Handle nodes running out during node scan.
+ *
  * Revision 1.8  1999/12/30 04:19:12  steve
  *  Propogate constant 0 in low bits of adders.
  *
