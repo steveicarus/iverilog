@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: tables.c,v 1.1 2001/09/02 21:33:07 steve Exp $"
+#ident "$Id: tables.c,v 1.2 2001/09/06 04:28:40 steve Exp $"
 
 # include  "fpga_priv.h"
 # include  <string.h>
@@ -24,6 +24,7 @@
 
 extern const struct device_s d_generic;
 extern const struct device_s d_generic_edif;
+extern const struct device_s d_virtex_edif;
 
 
 const struct device_table_s {
@@ -32,7 +33,7 @@ const struct device_table_s {
 } device_table[] = {
       { "generic-edif", &d_generic_edif },
       { "generic-xnf",  &d_generic },
-      { "virtex",       &d_generic_edif },
+      { "virtex",       &d_virtex_edif },
       { 0, 0 }
 };
 
@@ -53,6 +54,9 @@ device_t device_from_arch(const char*arch)
 
 /*
  * $Log: tables.c,v $
+ * Revision 1.2  2001/09/06 04:28:40  steve
+ *  Separate the virtex and generic-edif code generators.
+ *
  * Revision 1.1  2001/09/02 21:33:07  steve
  *  Rearrange the XNF code generator to be generic-xnf
  *  so that non-XNF code generation is also possible.

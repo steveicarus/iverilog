@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic-edif.c,v 1.2 2001/09/02 23:53:55 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.3 2001/09/06 04:28:40 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -32,9 +32,9 @@ struct nexus_recall {
 };
 static struct nexus_recall*net_list = 0;
 
-static unsigned uref = 0;
+unsigned edif_uref = 0;
 
-static void set_nexus_joint(ivl_nexus_t nex, const char*joint)
+void edif_set_nexus_joint(ivl_nexus_t nex, const char*joint)
 {
       size_t newlen;
       struct nexus_recall*rec;
@@ -91,7 +91,7 @@ static void show_root_ports_edif(ivl_scope_t root)
 			  use_name, dir);
 
 		  sprintf(jbuf, "(portRef %s)", use_name);
-		  set_nexus_joint(ivl_signal_pin(sig, 0), jbuf);
+		  edif_set_nexus_joint(ivl_signal_pin(sig, 0), jbuf);
 
 	    } else {
 		  unsigned pin;
@@ -101,10 +101,48 @@ static void show_root_ports_edif(ivl_scope_t root)
 				"\"%s[%u]\") (direction %s))\n", use_name,
 				pin, use_name, pin, dir);
 			sprintf(jbuf, "(portRef %s_%u)", use_name, pin);
-			set_nexus_joint(ivl_signal_pin(sig, pin), jbuf);
+			edif_set_nexus_joint(ivl_signal_pin(sig, pin), jbuf);
 		  }
 	    }
       }
+}
+
+
+void edif_show_header_generic(ivl_design_t des, const char*library)
+{
+      ivl_scope_t root = ivl_design_root(des);
+
+	/* write the primitive header */
+      fprintf(xnf, "(edif %s\n", ivl_scope_name(root));
+      fprintf(xnf, "    (edifVersion 2 0 0)\n");
+      fprintf(xnf, "    (edifLevel 0)\n");
+      fprintf(xnf, "    (keywordMap (keywordLevel 0))\n");
+      fprintf(xnf, "    (status\n");
+      fprintf(xnf, "     (written\n");
+      fprintf(xnf, "        (timeStamp 0 0 0 0 0 0)\n");
+      fprintf(xnf, "        (author \"unknown\")\n");
+      fprintf(xnf, "        (program \"Icarus Verilog/fpga.tgt\")))\n");
+
+	/* Write out the external references here? */
+      fputs(library, xnf);
+
+	/* Write out the library header */
+      fprintf(xnf, "    (library DESIGN\n");
+      fprintf(xnf, "      (edifLevel 0)\n");
+      fprintf(xnf, "      (technology (numberDefinition))\n");
+
+	/* The root module is a cell in the library. */
+      fprintf(xnf, "      (cell %s\n", ivl_scope_name(root));
+      fprintf(xnf, "        (cellType GENERIC)\n");
+      fprintf(xnf, "        (view Netlist_representation\n");
+      fprintf(xnf, "          (viewType NETLIST)\n");
+      fprintf(xnf, "          (interface\n");
+
+      show_root_ports_edif(root);
+
+      fprintf(xnf, "          )\n"); /* end the (interface ) sexp */
+
+      fprintf(xnf, "          (contents\n");
 }
 
 static const char*external_library_text =
@@ -156,42 +194,9 @@ static const char*external_library_text =
 "    )\n"
 ;
 
-
 static void edif_show_header(ivl_design_t des)
 {
-      ivl_scope_t root = ivl_design_root(des);
-
-	/* write the primitive header */
-      fprintf(xnf, "(edif %s\n", ivl_scope_name(root));
-      fprintf(xnf, "    (edifVersion 2 0 0)\n");
-      fprintf(xnf, "    (edifLevel 0)\n");
-      fprintf(xnf, "    (keywordMap (keywordLevel 0))\n");
-      fprintf(xnf, "    (status\n");
-      fprintf(xnf, "     (written\n");
-      fprintf(xnf, "        (timeStamp 0 0 0 0 0 0)\n");
-      fprintf(xnf, "        (author \"unknown\")\n");
-      fprintf(xnf, "        (program \"Icarus Verilog/fpga.tgt\")))\n");
-
-	/* Write out the external references here? */
-      fputs(external_library_text, xnf);
-
-	/* Write out the library header */
-      fprintf(xnf, "    (library DESIGN\n");
-      fprintf(xnf, "      (edifLevel 0)\n");
-      fprintf(xnf, "      (technology (numberDefinition))\n");
-
-	/* The root module is a cell in the library. */
-      fprintf(xnf, "      (cell %s\n", ivl_scope_name(root));
-      fprintf(xnf, "        (cellType GENERIC)\n");
-      fprintf(xnf, "        (view Netlist_representation\n");
-      fprintf(xnf, "          (viewType NETLIST)\n");
-      fprintf(xnf, "          (interface\n");
-
-      show_root_ports_edif(root);
-
-      fprintf(xnf, "          )\n"); /* end the (interface ) sexp */
-
-      fprintf(xnf, "          (contents\n");
+      edif_show_header_generic(des, external_library_text);
 }
 
 static void edif_show_consts(ivl_design_t des)
@@ -209,7 +214,7 @@ static void edif_show_consts(ivl_design_t des)
 		  const char*name;
 		  const char*port;
 
-		  uref += 1;
+		  edif_uref += 1;
 
 		  switch (val[pin]) {
 		      case '0':
@@ -229,17 +234,17 @@ static void edif_show_consts(ivl_design_t des)
 		  fprintf(xnf, "(instance U%u "
 			  "(viewRef Netlist_representation"
 			  " (cellRef %s (libraryRef VIRTEX))))\n",
-			  uref, name);
+			  edif_uref, name);
 
 		  sprintf(jbuf, "(portRef %s (instanceRef U%u))",
-			  port, uref);
-		  set_nexus_joint(nex, jbuf);
+			  port, edif_uref);
+		  edif_set_nexus_joint(nex, jbuf);
 	    }
       }
 
 }
 
-static void edif_show_footer(ivl_design_t des)
+void edif_show_footer(ivl_design_t des)
 {
       unsigned nref = 0;
       struct nexus_recall*cur;
@@ -275,7 +280,7 @@ static void edif_show_logic(ivl_net_logic_t net)
       char jbuf[1024];
       unsigned idx;
 
-      uref += 1;
+      edif_uref += 1;
 
       switch (ivl_logic_type(net)) {
 
@@ -284,33 +289,33 @@ static void edif_show_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) >= 3);
 
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
-		    uref, ivl_logic_name(net));
+		    edif_uref, ivl_logic_name(net));
 	    fprintf(xnf, " (viewRef Netlist_representation"
 		    " (cellRef AND%u (libraryRef VIRTEX))))\n",
 		    ivl_logic_pins(net) - 1);
 
-	    sprintf(jbuf, "(portRef O (instanceRef U%u))", uref);
-	    set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
 
 	    for (idx = 1 ;  idx < ivl_logic_pins(net)  ;  idx += 1) {
 		  sprintf(jbuf, "(portRef I%u (instanceRef U%u))",
-			  idx-1, uref);
-		  set_nexus_joint(ivl_logic_pin(net, idx), jbuf);
+			  idx-1, edif_uref);
+		  edif_set_nexus_joint(ivl_logic_pin(net, idx), jbuf);
 	    }
 	    break;
 
 	  case IVL_LO_BUF:
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
-		    uref, ivl_logic_name(net));
+		    edif_uref, ivl_logic_name(net));
 	    fprintf(xnf, " (viewRef Netlist_representation"
 		    " (cellRef BUF (libraryRef VIRTEX))))\n");
 
-	    sprintf(jbuf, "(portRef O (instanceRef U%u))", uref);
-	    set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
 
-	    sprintf(jbuf, "(portRef I (instanceRef U%u))", uref);
-	    set_nexus_joint(ivl_logic_pin(net, 1), jbuf);
+	    sprintf(jbuf, "(portRef I (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 1), jbuf);
 	    break;
 
 	  case IVL_LO_NOR:
@@ -318,18 +323,18 @@ static void edif_show_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) >= 3);
 
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
-		    uref, ivl_logic_name(net));
+		    edif_uref, ivl_logic_name(net));
 	    fprintf(xnf, " (viewRef Netlist_representation"
 		    " (cellRef NOR%u (libraryRef VIRTEX))))\n",
 		    ivl_logic_pins(net) - 1);
 
-	    sprintf(jbuf, "(portRef O (instanceRef U%u))", uref);
-	    set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
+	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(ivl_logic_pin(net, 0), jbuf);
 
 	    for (idx = 1 ;  idx < ivl_logic_pins(net)  ;  idx += 1) {
 		  sprintf(jbuf, "(portRef I%u (instanceRef U%u))",
-			  idx-1, uref);
-		  set_nexus_joint(ivl_logic_pin(net, idx), jbuf);
+			  idx-1, edif_uref);
+		  edif_set_nexus_joint(ivl_logic_pin(net, idx), jbuf);
 	    }
 	    break;
 
@@ -338,34 +343,34 @@ static void edif_show_logic(ivl_net_logic_t net)
       }
 }
 
-static void edif_show_dff(ivl_lpm_t net)
+void edif_show_generic_dff(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
       char jbuf[1024];
 
       assert(ivl_lpm_width(net) == 1);
 
-      uref += 1;
+      edif_uref += 1;
 
-      fprintf(xnf, "(instance (rename U%u \"%s\")", uref, ivl_lpm_name(net));
+      fprintf(xnf, "(instance (rename U%u \"%s\")", edif_uref, ivl_lpm_name(net));
       fprintf(xnf, " (viewRef Netlist_representation"
 		    " (cellRef FDCE (libraryRef VIRTEX))))\n");
 
       nex = ivl_lpm_q(net, 0);
-      sprintf(jbuf, "(portRef Q (instanceRef U%u))", uref);
-      set_nexus_joint(nex, jbuf);
+      sprintf(jbuf, "(portRef Q (instanceRef U%u))", edif_uref);
+      edif_set_nexus_joint(nex, jbuf);
 
       nex = ivl_lpm_data(net, 0);
-      sprintf(jbuf, "(portRef D (instanceRef U%u))", uref);
-      set_nexus_joint(nex, jbuf);
+      sprintf(jbuf, "(portRef D (instanceRef U%u))", edif_uref);
+      edif_set_nexus_joint(nex, jbuf);
 
       nex = ivl_lpm_clk(net);
-      sprintf(jbuf, "(portRef C (instanceRef U%u))", uref);
-      set_nexus_joint(nex, jbuf);
+      sprintf(jbuf, "(portRef C (instanceRef U%u))", edif_uref);
+      edif_set_nexus_joint(nex, jbuf);
 
       if ((nex = ivl_lpm_enable(net))) {
-	    sprintf(jbuf, "(portRef CE (instanceRef U%u))", uref);
-	    set_nexus_joint(nex, jbuf);
+	    sprintf(jbuf, "(portRef CE (instanceRef U%u))", edif_uref);
+	    edif_set_nexus_joint(nex, jbuf);
       }
 }
 
@@ -374,7 +379,7 @@ const struct device_s d_generic_edif = {
       edif_show_header,
       edif_show_footer,
       edif_show_logic,
-      edif_show_dff,
+      edif_show_generic_dff,
       0,
       0,
       0,
@@ -384,6 +389,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.3  2001/09/06 04:28:40  steve
+ *  Separate the virtex and generic-edif code generators.
+ *
  * Revision 1.2  2001/09/02 23:53:55  steve
  *  Add virtex support for some basic logic, the DFF
  *  and constant signals.

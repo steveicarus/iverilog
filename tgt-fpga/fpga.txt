@@ -2,15 +2,35 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.1 2001/09/02 23:58:49 steve Exp $
+  $Id: fpga.txt,v 1.2 2001/09/06 04:28:40 steve Exp $
+
+The FPGA code generator supports a variety of FPGA devices, writing
+XNF or EDIF depending on the target. You can select the architecture
+of the device, and the detailed part name. The architecture is used to
+select library primitives, and the detailed part name is written into
+the generated file for the use of downstream tools.
 
 INVOKING THE FPGA TARGET
 
-This code generator is invoked with the -tfpga flag to iverilog. The
-code generator understands the part= and the arch= parameters, which
-can be set with the -p flag of iverilog:
+The code generator is invoked with the -tfpga flag to iverilog. It
+understands the part= and the arch= parameters, which can be set with
+the -p flag of iverilog:
 
 	iverilog -parch=virtex -fpart=v50-pq240-6 -tfpga foo.vl
+
+This example selects the virtext architecture, and give the detailed
+part number as v50-pq240-6. The output is written into a.out unless a
+different output file is specified with the -o flag.
+
+The following is a list of architecture types that this code generator
+supports.
+
+* arch=generic-edif
+
+This is generic EDIF code. It doesn't necessarily work because the
+external library is not available to the code generator. But, what it
+does is generate generic style gates that a portability library can
+map to target gates if desired.
 
 * arch=generic-xnf
 
@@ -25,7 +45,8 @@ code for your part.
 If this is selected, then the output is formatted as an EDIF 200 file,
 suitable for Virtex class devices. This is supposed to know that you
 are targeting a Virtex part, so can generate primitives instead of
-using external macros.
+using external macros. It includes the VIRTEX internal library, and
+should work properly for any Virtex part.
 
 
 XNF ROOT PORTS
@@ -65,6 +86,9 @@ definitions, including the proper direction marks.
 
 ---
 $Log: fpga.txt,v $
+Revision 1.2  2001/09/06 04:28:40  steve
+ Separate the virtex and generic-edif code generators.
+
 Revision 1.1  2001/09/02 23:58:49  steve
  Add documentation for the code generator.
 
