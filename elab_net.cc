@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.19 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.20 2000/01/18 04:53:40 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -86,6 +86,25 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
 		  gate = new NetLogic(des->local_symbol(path), 3,
 				      NetLogic::XOR);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  des->add_node(gate);
+	    }
+	    des->add_signal(osig);
+	    break;
+
+	  case 'X': // XNOR
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE,
+			      lsig->pin_count());
+	    osig->local_flag(true);
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate = new NetLogic(des->local_symbol(path), 3,
+				      NetLogic::XNOR);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
 		  connect(gate->pin(0), osig->pin(idx));
@@ -1262,6 +1281,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.20  2000/01/18 04:53:40  steve
+ *  Support structural XNOR.
+ *
  * Revision 1.19  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *
