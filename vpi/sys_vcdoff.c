@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcdoff.c,v 1.2 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_vcdoff.c,v 1.3 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -61,8 +61,8 @@ static void open_dumpfile(const char*path)
       dump_file = fopen(path, "w");
 
       if (dump_file == 0) {
-	    vpi_mcd_printf(6, 
-			   "VCD Error: Unable to open %s for output.\n", 
+	    vpi_mcd_printf(6,
+			   "VCD Error: Unable to open %s for output.\n",
 			   path);
 	    return;
       } else {
@@ -83,9 +83,9 @@ static int sys_dumpfile_calltf(char*name)
 
 	    if (vpi_get(vpiType, item) != vpiConstant
 		|| vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_mcd_printf(6, 
+		  vpi_mcd_printf(6,
 				 "VCD Error:"
-				 " %s parameter must be a string constant\n", 
+				 " %s parameter must be a string constant\n",
 				 name);
 		  return 0;
 	    }
@@ -171,6 +171,9 @@ void sys_vcdoff_register()
 
 /*
  * $Log: sys_vcdoff.c,v $
+ * Revision 1.3  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.2  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.2 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: delay.cc,v 1.3 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -47,8 +47,8 @@ inline unsigned vvp_delay_size(vvp_delay_t del)
 }
 
 inline vvp_delay_s::vvp_delay_s(const unsigned char *t)
-{ 
-      memcpy((void*)tab, (void*)t, sizeof(tab)); 
+{
+      memcpy((void*)tab, (void*)t, sizeof(tab));
 }
 
 vvp_delay_s::vvp_delay_s(unsigned d)
@@ -78,7 +78,7 @@ vvp_delay_3_s::vvp_delay_3_s(unsigned r, unsigned f, unsigned z)
 
 vvp_delay_6_s::vvp_delay_6_s(unsigned r, unsigned f, unsigned rz,
 			     unsigned zr, unsigned fz, unsigned zf)
-      : vvp_delay_12_s(r, f, rz, zr, fz, zf, 
+      : vvp_delay_12_s(r, f, rz, zr, fz, zf,
 		       dmin(r, rz),
 		       dmax(r, zr),
 		       dmin(f, fz),
@@ -148,7 +148,7 @@ vvp_delay_t vvp_delay_add(vvp_delay_t d1, vvp_delay_t d2)
       vvp_delay_t out = s1 > s2 ? d1 : d2;
       if (s1==0 || s2==0)
 	    return out;
-      
+
       vvp_delay_t oth = s1 > s2 ? d2 : d1;
       unsigned    s   = s1 > s2 ? s1 : s2;
       unsigned    so  = s1 > s2 ? s2 : s1;
@@ -200,7 +200,7 @@ vvp_delay_t vvp_delay_add(vvp_delay_t d1, vvp_delay_t d2)
 	    out->del[ 9] = oth->del[1];
 	    out->del[10] = oth->del[2];
 	    out->del[11] = oth->del[5];
-	    break;    
+	    break;
       }
 
       vvp_delay_delete(oth);
@@ -229,7 +229,7 @@ vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src, unsigned mask)
       if (mask) {
 	    static bool done_that = false;
 	    if (!done_that) {
-		  vvp_printf(VVP_PRINT_WARNING, 
+		  vvp_printf(VVP_PRINT_WARNING,
 			     "Warning:"
 			     " partial replacement of delay values"
 			     " of different size"
@@ -247,6 +247,9 @@ vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src, unsigned mask)
 
 /*
 ** $Log: delay.cc,v $
+** Revision 1.3  2004/10/04 01:10:59  steve
+**  Clean up spurious trailing white space.
+**
 ** Revision 1.2  2002/08/12 01:35:08  steve
 **  conditional ident string using autoconfig.
 **

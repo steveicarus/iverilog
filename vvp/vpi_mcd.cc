@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_mcd.cc,v 1.11 2003/07/21 01:20:59 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -80,7 +80,7 @@ extern "C" PLI_UINT32 vpi_mcd_close(PLI_UINT32 mcd)
 	if (IS_MCD(mcd)) {
 		for(int i = 1; i < 31; i++) {
 			if(((mcd>>i) & 1) && mcd_table[i].fp) {
-				if(fclose(mcd_table[i].fp)) rc |= 1<<i;	
+				if(fclose(mcd_table[i].fp)) rc |= 1<<i;
 				free(mcd_table[i].filename);
 				mcd_table[i].fp = NULL;
 				mcd_table[i].filename = NULL;
@@ -230,6 +230,9 @@ extern "C" FILE *vpi_get_file(PLI_INT32 fd)
 
 /*
  * $Log: vpi_mcd.cc,v $
+ * Revision 1.12  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.11  2003/07/21 01:20:59  steve
  *  vpi_mcd_vprintf can only scan the va_list once.
  *

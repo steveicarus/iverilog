@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.30 2004/08/28 15:08:32 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.31 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -301,7 +301,7 @@ struct tokenize : public proc_match_t {
       int condit(NetCondit*dev)
       {
 	    syn_token_t*cur;
-	    
+
 	    cur = new syn_token_t;
 	    cur->token = S_IF;
 	    cur->next_ = 0;
@@ -338,7 +338,7 @@ struct tokenize : public proc_match_t {
       int event_wait(NetEvWait*dev)
       {
 	    syn_token_t*cur;
-	    
+
 	    cur = new syn_token_t;
 	    cur->token = '@';
 	    cur->evwait = dev;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.18 2004/09/22 16:44:07 steve Exp $"
+#ident "$Id: arith.h,v 1.19 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -43,7 +43,7 @@ class vvp_arith_  : public functor_s {
 
 class vvp_wide_arith_  : public vvp_arith_ {
     public:
-      explicit vvp_wide_arith_(unsigned wid); 
+      explicit vvp_wide_arith_(unsigned wid);
 
     protected:
       static const unsigned pagesize = 8*sizeof(unsigned long);
@@ -169,6 +169,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.19  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.18  2004/09/22 16:44:07  steve
  *  Fix LPM GE to match LPM GT behavior.
  *

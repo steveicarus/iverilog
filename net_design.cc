@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.44 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: net_design.cc,v 1.45 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -247,7 +247,7 @@ const NetExpr* Design::find_parameter(const NetScope*scope,
  */
 void Design::run_defparams()
 {
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
 	    (*scope)->run_defparams(this);
 }
@@ -291,7 +291,7 @@ void NetScope::run_defparams(Design*des)
 
 void Design::evaluate_parameters()
 {
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
 	    (*scope)->evaluate_parameters(this);
 }
@@ -618,6 +618,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.45  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.44  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

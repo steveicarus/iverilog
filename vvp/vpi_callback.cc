@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.33 2004/02/18 02:51:59 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.34 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 /*
@@ -110,7 +110,7 @@ struct callback_functor_s: public functor_s {
       struct __vpiCallback *cb_handle;
 };
 
-callback_functor_s::callback_functor_s() 
+callback_functor_s::callback_functor_s()
 {}
 
 callback_functor_s::~callback_functor_s()
@@ -141,7 +141,7 @@ struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 	    nfun ++ ;
       else if (nfun > 1  &&  4*nfun == nvec)
 	    nfun ++;
-      
+
       vvp_ipoint_t fdx = functor_allocate(nfun);
       functor_define(fdx, obj);
 
@@ -157,7 +157,7 @@ struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 	    i = 4;
       else if (nvec > 4)
 	    i = 1;
-      else 
+      else
 	    i = 0;
 
       for (unsigned vi = 0;  vi < nvec;  vi++, i++) {
@@ -564,6 +564,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.34  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.33  2004/02/18 02:51:59  steve
  *  Fix type mismatches of various VPI functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.15 2003/03/14 18:01:00 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.16 2004/10/04 01:11:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -182,7 +182,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->value.real *= schedule_simtime();
 	    break;
 
-	  case vpiBinStrVal: 
+	  case vpiBinStrVal:
 	    x = simtime;
 	    num_bits = 8 * sizeof(vvp_time64_t);
 
@@ -274,6 +274,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.16  2004/10/04 01:11:00  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.15  2003/03/14 18:01:00  steve
  *  Refix vpiRealVal scaling of time.
  *

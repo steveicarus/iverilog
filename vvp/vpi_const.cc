@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.31 2004/05/18 18:43:38 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.32 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -82,7 +82,7 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
           case vpiDecStrVal:
 	      if (size > 4){
 		  // We only support standard integers. Ignore other bytes...
-		  size = 4;	
+		  size = 4;
 		  fprintf(stderr, "Warning (vpi_const.cc): %%d on constant strings only looks "
 			  "at first 4 bytes!\n");
 	      }
@@ -183,7 +183,7 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
       return &obj->base;
 }
 
-    
+
 struct __vpiStringParam  : public __vpiStringConst {
       const char*basename;
       struct __vpiScope* scope;
@@ -410,7 +410,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 			    rbuf[nchar-idx/4-1] = "0123456789abcdef"[val];
 		      }
 		}
-		      
+
 		rbuf[nchar] = 0;
 		vp->value.str = rbuf;
 		break;
@@ -557,7 +557,7 @@ static int dec_get(int code, vpiHandle ref)
 	  case vpiConstType:
 	    return vpiDecConst;
 
-	  case vpiSigned: 
+	  case vpiSigned:
 	    return 1;
 
 	  case vpiSize:
@@ -652,6 +652,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.32  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.31  2004/05/18 18:43:38  steve
  *  Allow vpiParamter as a string type.
  *

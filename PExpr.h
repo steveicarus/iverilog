@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.65 2003/02/08 19:49:21 steve Exp $"
+#ident "$Id: PExpr.h,v 1.66 2004/10/04 01:10:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -160,7 +160,7 @@ class PEEvent : public PExpr {
 
       edge_t type() const;
       PExpr* expr() const;
- 
+
       virtual void dump(ostream&) const;
 
     private:
@@ -492,6 +492,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.66  2004/10/04 01:10:51  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.65  2003/02/08 19:49:21  steve
  *  Calculate delay statement delays using elaborated
  *  expressions instead of pre-elaborated expression

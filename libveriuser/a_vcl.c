@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_vcl.c,v 1.6 2003/06/17 16:55:07 steve Exp $"
+#ident "$Id: a_vcl.c,v 1.7 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -154,7 +154,7 @@ static PLI_INT32 vcl_value_callback(struct t_cb_data*cb)
       vcr.vc_hightime = sim_time.high;
       vcr.vc_lowtime  = sim_time.low;
       vcr.user_data = cur->user_data;
-      
+
       (cur->consumer) (&vcr);
       return 0;
 }
@@ -206,6 +206,9 @@ void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
 /*
  * $Log: a_vcl.c,v $
+ * Revision 1.7  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.6  2003/06/17 16:55:07  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens

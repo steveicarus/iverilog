@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.28 2004/03/08 00:47:44 steve Exp $"
+#ident "$Id: PGate.h,v 1.29 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -50,7 +50,7 @@ class Module;
  * strength of the 1 drive.
  */
 class PGate : public LineInfo {
-      
+
     public:
       enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
 
@@ -227,6 +227,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.29  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.28  2004/03/08 00:47:44  steve
  *  primitive ports can bind bi name.
  *

@@ -38,7 +38,7 @@ quite similar.
   lexor_keyword.gperf, and use that.
 
 3) If working with a CVS snapshot, you must run autoconf in several
-   directories.  This is aided by the 'autoconf.sh' script at the 
+   directories.  This is aided by the 'autoconf.sh' script at the
    top of the source tree:
 
    sh ./autoconf.sh

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.46 2004/06/16 16:33:25 steve Exp $
+ *  $Id: README.txt,v 1.47 2004/10/04 01:10:58 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -167,7 +167,7 @@ are strings which describe input states or edges, and the new output
 state.	Combinatorial UDPs require one character for each input, and
 one character at the end for the output state.	Sequential UDPs need
 an additional char for the current state, which is the first char of
-the row.  
+the row.
 
 Any input transition or the new state must match at most one row (or
 all matches must provide the same output state).  If no row matches,
@@ -176,7 +176,7 @@ the output becomes 1'bx.
 The output state can be specified as "0", "1", or "x".	Sequential
 UDPs may also have "-": no change.
 
-An input or current output state can be 
+An input or current output state can be
 
 	"1": 1
 	"0": 0
@@ -192,20 +192,20 @@ replaced by an edge specification.  Valid edges are:
 	"*": (??)	"_": (?0)	"+": (?1)	"%": (?x)
 	"P": (0?)			"r": (01)	"Q": (0x)
 	"N": (1?)	"f": (10)			"M": (1x)
-	"B": (x?)	"F": (x0)	"R": (x1)	
+	"B": (x?)	"F": (x0)	"R": (x1)
 
 	"n": (1?) | (?0)
 	"p": (0?) | (?1)
 
 A combinatorial UDP is defined like this:
 
-	<type> .udp/comb "<name>", <number>, "<row0>", "<row1>", ... ; 
- 
+	<type> .udp/comb "<name>", <number>, "<row0>", "<row1>", ... ;
+
 <type> is a label that identifies the UDP.  <number> is the number of
 inputs.	 "<name>" is there for public identification.  Sequential UDPs
 need an additional initialization value:
 
-	<type> .udp/sequ "<name>", <number>, <init>, "<row0>", "<row1>", ... ; 
+	<type> .udp/sequ "<name>", <number>, <init>, "<row0>", "<row1>", ... ;
 
 <init> is the initial value for all instances of the UDP.  We do not
 provide initial values for individual instances.  <init> must be a
@@ -218,7 +218,7 @@ A UDP functor instance is created so:
 Where <label> identifies the functor, <type> is the label of a UDP
 defined earlier, and <symbol_list> is a list of symbols, one for each
 input of the UDP.
- 
+
 
 VARIABLE STATEMENTS:
 
@@ -302,7 +302,7 @@ memory's contents.
 
 The pair of numbers <msb>,<lsb> defines the data port width.  The pair
 <last>,<first> defines the address range.  Multiple address ranges are
-allowed for multidimensional indexing.  
+allowed for multidimensional indexing.
 
 Procedural access to the memory references the memory as single array
 of bits.  For this purpose, the number of bits in a memory word is
@@ -337,7 +337,7 @@ A write port is a superset of a read port.  It is a vector of functors
 that is wide enough to accept the address bits, an event input, a
 write enable input, and the data inputs.
 
-	<label> .mem/port <memid>, <msb>,<lsb>, <aw>, <addr_bits>, 
+	<label> .mem/port <memid>, <msb>,<lsb>, <aw>, <addr_bits>,
                           <event>, <we>, <data> ;
 
 <event> is an event functor that triggers a write, if the <we> input

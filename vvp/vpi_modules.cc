@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_modules.cc,v 1.17 2003/10/08 23:09:09 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.18 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -114,13 +114,13 @@ void vpip_load_module(const char*name)
 	    if (rc != 0) {
 		  fprintf(stderr, "%s: Unable to find a "
 			  "`%s.vpi' module on the search path.\n",
-			  name, name); 
+			  name, name);
 		  return;
 	    }
 
       }
 
-      /* must have found some file that could possibly be a vpi module 
+      /* must have found some file that could possibly be a vpi module
        * try to open it as a shared object.
        */
       dll = ivl_dlopen(buf, export_flag);
@@ -149,6 +149,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.18  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.17  2003/10/08 23:09:09  steve
  *  Completely support vvp32 when enabled.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.8 2003/04/23 02:22:47 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.9 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -68,7 +68,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    ivl_expr_t expr = tnet
 		  ? ivl_stmt_parm(tnet, idx)
 		  : ivl_expr_parm(fnet, idx);
-	    
+
 	    switch (ivl_expr_type(expr)) {
 
 		    /* These expression types can be handled directly,
@@ -148,7 +148,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    ivl_expr_t expr = tnet
 		  ? ivl_stmt_parm(tnet, idx)
 		  : ivl_expr_parm(fnet, idx);
-	    
+
 	    switch (ivl_expr_type(expr)) {
 		case IVL_EX_NONE:
 		  fprintf(vvp_out, ", \" \"");
@@ -178,7 +178,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			break;
 
 		  } else {
-			fprintf(vvp_out, ", V_%s", 
+			fprintf(vvp_out, ", V_%s",
 				vvp_signal_label(ivl_expr_signal(expr)));
 			continue;
 		  }
@@ -194,7 +194,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			fprintf(vvp_out, ", P_%p", par);
 
 		  } else {
-			fprintf(vvp_out, ", \"%s\"", 
+			fprintf(vvp_out, ", \"%s\"",
 				ivl_expr_string(expr));
 		  }
 		  continue;
@@ -213,10 +213,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			continue;
 		  }
 		  break;
-		  
+
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
-			fprintf(vvp_out, ", M_%s", 
+			fprintf(vvp_out, ", M_%s",
 				vvp_memory_label(ivl_expr_memory(expr)));
 			continue;
 		  }
@@ -243,7 +243,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    }
 	    veci++;
       }
-      
+
       assert(veci == vecs);
 
       if (vecs) {
@@ -296,6 +296,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.9  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.8  2003/04/23 02:22:47  steve
  *  Fix word register leak.
  *

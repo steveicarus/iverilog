@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.4 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: event.h,v 1.5 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -38,7 +38,7 @@ struct event_functor_s: public edge_inputs_functor_s, public waitable_hooks_s {
 
 #define VVP_EDGE(a,b) (1<<(((a)<<2)|(b)))
 
-const event_functor_s::edge_t vvp_edge_posedge 
+const event_functor_s::edge_t vvp_edge_posedge
       = VVP_EDGE(0,1)
       | VVP_EDGE(0,2)
       | VVP_EDGE(0,3)
@@ -46,7 +46,7 @@ const event_functor_s::edge_t vvp_edge_posedge
       | VVP_EDGE(3,1)
       ;
 
-const event_functor_s::edge_t vvp_edge_negedge 
+const event_functor_s::edge_t vvp_edge_negedge
       = VVP_EDGE(1,0)
       | VVP_EDGE(1,2)
       | VVP_EDGE(1,3)
@@ -80,6 +80,9 @@ struct callback_functor_s *vvp_fvector_make_callback
 
 /*
  * $Log: event.h,v $
+ * Revision 1.5  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.4  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

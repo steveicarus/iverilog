@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.121 2004/06/19 16:17:02 steve Exp $"
+#ident "$Id: vthread.cc,v 1.122 2004/10/04 01:11:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1018,7 +1018,7 @@ static void divide_bits(unsigned len, unsigned char*lbits,
 		  break;
 	    }
       }
-         
+
       for(i=len-1;i>=0;i--) {
 	    if(z[i]) {
 		  mxz=i;
@@ -1031,13 +1031,13 @@ static void divide_bits(unsigned len, unsigned char*lbits,
 		  fprintf(stderr, "Division By Zero error, exiting.\n");
 		  exit(255);
 	    }
-	                 
+
 	    goto tally;
       }
 
       copylen = mxa + 2;
-      current = mxz - mxa; 
-         
+      current = mxz - mxa;
+
       while(current > -1) {
 	    carry = 1;
 	    for(i=0;i<copylen;i++) {
@@ -1045,14 +1045,14 @@ static void divide_bits(unsigned len, unsigned char*lbits,
 		  t[i] = (temp&1);
 		  carry = (temp>>1);
 	    }
-	                 
+
 	    if(carry) {
 		  for(i=0;i<copylen;i++) {
 			z[i+current] = t[i];
 		  }
 		  b[current] = 1;
 	    }
-       	  
+
 	    current--;
       }
 
@@ -1733,7 +1733,7 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
       }
 
       copylen = mxa + 2;
-      current = mxz - mxa; 
+      current = mxz - mxa;
 
       while(current > -1) {
 	    carry = 1;
@@ -1741,7 +1741,7 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 		  temp = z[i+current] + a[i] + carry;
 		  t[i] = (temp&1);
 		  carry = (temp>>1);
-	    }  
+	    }
 
 	    if(carry) {
 		  for(i=0;i<copylen;i++) {
@@ -2045,7 +2045,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 		  idx2 += 1;
       }
 
-//    do "unsigned ZZ sum = a * b" the hard way.. 
+//    do "unsigned ZZ sum = a * b" the hard way..
       for(int i=0;i<=mxb;i++)
                 {
                 if(b[i])
@@ -2156,7 +2156,7 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
 	    idx1 += 1;
       }
 
-//    do "unsigned ZZ sum = a * b" the hard way.. 
+//    do "unsigned ZZ sum = a * b" the hard way..
       for(int i=0;i<=mxb;i++) {
 	    if(b[i]) {
 		  unsigned char carry=0;
@@ -2338,9 +2338,9 @@ bool of_XORR(vthread_t thr, vvp_code_t cp)
 		  break;
 	    }
       }
-      
+
       thr_put_bit(thr, cp->bit_idx[0], lb);
-      
+
       return true;
 }
 
@@ -2361,9 +2361,9 @@ bool of_XNORR(vthread_t thr, vvp_code_t cp)
 		  break;
 	    }
       }
-      
+
       thr_put_bit(thr, cp->bit_idx[0], lb);
-      
+
       return true;
 }
 
@@ -2874,6 +2874,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.122  2004/10/04 01:11:00  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.121  2004/06/19 16:17:02  steve
  *  Watch type of mak bit matches masked value.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: config.h.in,v 1.10 2003/08/26 16:26:01 steve Exp $"
+#ident "$Id: config.h.in,v 1.11 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -31,7 +31,7 @@
 #endif
 
 # undef NEED_LU
-# undef NEED_TU  
+# undef NEED_TU
 # undef WLU
 # undef WTU
 # undef HAVE_TIMES
@@ -50,6 +50,9 @@
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.11  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.10  2003/08/26 16:26:01  steve
  *  ifdef idents correctly.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.35 2004/09/05 21:30:16 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.36 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 
@@ -177,7 +177,7 @@ typedef struct t_vpi_value {
 #define vpiSysTfCall   85
 #define vpiArgument    89
 #define vpiInternalScope 92
-#define vpiVariables   100 
+#define vpiVariables   100
 
 #define vpiCallback  1000
 
@@ -419,6 +419,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.36  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.35  2004/09/05 21:30:16  steve
  *  Better type safety.
  *

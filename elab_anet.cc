@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.9 2003/09/19 03:50:12 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.10 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -157,7 +157,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 	    cerr << get_line() << ": error: bit/part selects not allowed "
 		 << "on left side of procedural continuous assignment."
-		 << endl; 
+		 << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -167,6 +167,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.10  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.9  2003/09/19 03:50:12  steve
  *  Remove find_memory method from Design class.
  *

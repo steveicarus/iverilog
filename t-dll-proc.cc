@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.64 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.65 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -830,7 +830,7 @@ bool dll_target::proc_wait(const NetEvWait*net)
 			}
 		  }
 	    }
-      }	    
+      }
 
 	/* The ivl_statement_t for the wait statement is not complete
 	   until we calculate the sub-statement. */
@@ -872,6 +872,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.65  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.64  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

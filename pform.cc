@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.128 2004/08/26 04:02:04 steve Exp $"
+#ident "$Id: pform.cc,v 1.129 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -278,7 +278,7 @@ void pform_endmodule(const char*name)
       perm_string mod_name = pform_cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
 
-      map<perm_string,Module*>::const_iterator test = 
+      map<perm_string,Module*>::const_iterator test =
 	    pform_modules.find(mod_name);
 
       if (test != pform_modules.end()) {
@@ -1597,6 +1597,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.129  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.128  2004/08/26 04:02:04  steve
  *  Add support for localparam ranges.
  *

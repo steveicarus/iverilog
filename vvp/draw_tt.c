@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.15 2003/07/30 01:13:29 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.16 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -37,10 +37,10 @@ static void draw_AND(void)
 
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
-			      if ((i0 == 0) || (i1 == 0) || 
+			      if ((i0 == 0) || (i1 == 0) ||
 				  (i2 == 0) || (i3 == 0))
 				    val = 0;
-			      else if ((i0 == 1) && (i1 == 1) && 
+			      else if ((i0 == 1) && (i1 == 1) &&
 				       (i2 == 1) && (i3 == 1))
 				    val = 1;
 			      else
@@ -71,10 +71,10 @@ static void draw_NAND(void)
 
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
-			      if ((i0 == 0) || (i1 == 0) || 
+			      if ((i0 == 0) || (i1 == 0) ||
 				  (i2 == 0) || (i3 == 0))
 				    val = 1;
-			      else if ((i0 == 1) && (i1 == 1) && 
+			      else if ((i0 == 1) && (i1 == 1) &&
 				       (i2 == 1) && (i3 == 1))
 				    val = 0;
 			      else
@@ -410,10 +410,10 @@ static void draw_NOR(void)
 
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
-			      if ((i0 == 1) || (i1 == 1) || 
+			      if ((i0 == 1) || (i1 == 1) ||
 				  (i2 == 1) || (i3 == 1))
 				    val = 0;
-			      else if ((i0 == 0) && (i1 == 0) && 
+			      else if ((i0 == 0) && (i1 == 0) &&
 				       (i2 == 0) && (i3 == 0))
 				    val = 1;
 			      else
@@ -476,10 +476,10 @@ static void draw_OR(void)
 
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
-			      if ((i0 == 1) || (i1 == 1) || 
+			      if ((i0 == 1) || (i1 == 1) ||
 				  (i2 == 1) || (i3 == 1))
 				    val = 1;
-			      else if ((i0 == 0) && (i1 == 0) && 
+			      else if ((i0 == 0) && (i1 == 0) &&
 				       (i2 == 0) && (i3 == 0))
 				    val = 0;
 			      else
@@ -574,13 +574,13 @@ static void draw_TRIAND(void)
 
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
-			      if ((i0 == 0) || (i1 == 0) || 
+			      if ((i0 == 0) || (i1 == 0) ||
 				  (i2 == 0) || (i3 == 0))
 				    val = 0;
-			      else if ((i0 == 2) || (i1 == 2) || 
+			      else if ((i0 == 2) || (i1 == 2) ||
 				       (i2 == 2) || (i3 == 2))
 				    val = 2;
-			      else if ((i0 == 3) && (i1 == 3) && 
+			      else if ((i0 == 3) && (i1 == 3) &&
 				       (i2 == 3) && (i3 == 3))
 				    val = 3;
 			      else
@@ -611,13 +611,13 @@ static void draw_TRIOR(void)
 
 			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
 			      unsigned val;
-			      if ((i0 == 1) || (i1 == 1) || 
+			      if ((i0 == 1) || (i1 == 1) ||
 				  (i2 == 1) || (i3 == 1))
 				    val = 1;
-			      else if ((i0 == 2) || (i1 == 2) || 
+			      else if ((i0 == 2) || (i1 == 2) ||
 				       (i2 == 2) || (i3 == 2))
 				    val = 2;
-			      else if ((i0 == 3) && (i1 == 3) && 
+			      else if ((i0 == 3) && (i1 == 3) &&
 				       (i2 == 3) && (i3 == 3))
 				    val = 3;
 			      else
@@ -758,6 +758,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.16  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.15  2003/07/30 01:13:29  steve
  *  Add support for triand and trior.
  *

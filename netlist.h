@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.320 2004/10/04 00:25:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.321 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 /*
@@ -1384,7 +1384,7 @@ class NetProc : public virtual LineInfo {
  * The l-value of the assignment is a collection of NetAssign_
  * objects that are connected to the structural netlist where the
  * assignment has its effect. The NetAssign_ class is not to be
- * derived from. 
+ * derived from.
  *
  * The collection is arranged from lsb up to msb, and represents the
  * concatenation of l-values. The elaborator may collapse some
@@ -3357,6 +3357,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.321  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.320  2004/10/04 00:25:18  steve
  *  Remove inaccurate comment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getp.c,v 1.6 2003/06/17 16:55:07 steve Exp $"
+#ident "$Id: getp.c,v 1.7 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -158,7 +158,7 @@ char *tf_istrgetp(PLI_INT32 n, PLI_INT32 fmt, void *obj)
 		  case 'd': value.format = vpiDecStrVal; break;
 		  case 'h': value.format = vpiHexStrVal; break;
 	    }
-	    if (value.format > 0) { 
+	    if (value.format > 0) {
 		  vpi_get_value(arg_h, &value);
 		  rtn = value.value.str;
 	    }
@@ -184,6 +184,9 @@ char *tf_strgetp(PLI_INT32 n, PLI_INT32 fmt)
 
 /*
  * $Log: getp.c,v $
+ * Revision 1.7  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.6  2003/06/17 16:55:07  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens

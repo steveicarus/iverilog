@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: config.h.in,v 1.17 2004/05/18 18:45:11 steve Exp $"
+#ident "$Id: config.h.in,v 1.18 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
@@ -29,7 +29,7 @@
 # define SIZEOF_UNSIGNED 0
 
 # undef NEED_LU
-# undef NEED_TU  
+# undef NEED_TU
 # undef WLU
 # undef WTU
 # undef HAVE_DLFCN_H
@@ -96,6 +96,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.18  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.17  2004/05/18 18:45:11  steve
  *  Handle explicit set of unsigned long width. For -m32
  *

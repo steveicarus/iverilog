@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_funcs.cc,v 1.5 2004/03/17 17:07:12 steve Exp $"
+#ident "$Id: sys_funcs.cc,v 1.6 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -163,7 +163,7 @@ int load_sys_func_table(const char*path)
 		  while (flag[0]) {
 			cp = flag + strcspn(flag, " \t\r\n");
 			if (cp[0]) *cp++ = 0;
-			
+
 			if (strcmp(flag,"signed") == 0) {
 			      signed_flag = true;
 
@@ -193,6 +193,9 @@ int load_sys_func_table(const char*path)
 
 /*
  * $Log: sys_funcs.cc,v $
+ * Revision 1.6  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.5  2004/03/17 17:07:12  steve
  *  Protect ident pragma.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.90 2004/08/28 15:42:11 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.91 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -41,7 +41,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, bool) const
 /*
  * Elaborate binary expressions. This involves elaborating the left
  * and right sides, and creating one of a variety of different NetExpr
- * types. 
+ * types.
  */
 NetEBinary* PEBinary::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
@@ -346,7 +346,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope, bool) const
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
 
-      
+
 
       svector<NetExpr*> parms (parms_count);
 
@@ -1005,6 +1005,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.91  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.90  2004/08/28 15:42:11  steve
  *  Add support for $unsigned.
  *

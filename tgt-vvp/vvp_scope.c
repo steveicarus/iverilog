@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.102 2004/09/25 21:04:25 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.103 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -42,17 +42,17 @@ const char *vvp_mangle_id(const char *id)
 {
       static char *out = 0x0;
       static size_t out_len;
-      
+
       int nesc = 0;
       int iout = 0;
       const char *inp = id;
 
       const char nosym[] = "!\"#%&'()*+,-/:;<=>?@[\\]^`{|}~";
-      
+
       char *se = strpbrk(inp, nosym);
       if (!se)
 	    return id;
-      
+
       do {
 	    int n = se - inp;
 	    unsigned int nlen = strlen(id) + 4*(++nesc) + 1;
@@ -83,7 +83,7 @@ const char *vvp_mangle_id(const char *id)
 
 	    se = strpbrk(inp, nosym);
       } while (se);
-      
+
       strcpy(out+iout, inp);
       return out;
 }
@@ -92,17 +92,17 @@ const char *vvp_mangle_name(const char *id)
 {
       static char *out = 0x0;
       static size_t out_len;
-      
+
       int nesc = 0;
       int iout = 0;
       const char *inp = id;
 
       const char nosym[] = "\"\\";
-      
+
       char *se = strpbrk(inp, nosym);
       if (!se)
 	    return id;
-      
+
       do {
 	    int n = se - inp;
 	    unsigned int nlen = strlen(id) + 2*(++nesc) + 1;
@@ -121,7 +121,7 @@ const char *vvp_mangle_name(const char *id)
 
 	    se = strpbrk(inp, nosym);
       } while (se);
-      
+
       strcpy(out+iout, inp);
       return out;
 }
@@ -226,7 +226,7 @@ const char*drive_string(ivl_drive_t drive)
       return "";
 }
 
-	    
+
 /*
  * The draw_scope function draws the major functional items within a
  * scope. This includes the scopes themselves, of course. All the
@@ -550,12 +550,12 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    unsigned int inst;
 	    for (inst = 0; inst < ndrivers; inst += 4) {
 		  if (ndrivers > 4)
-			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri", 
+			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri",
 				nex, level, inst);
-		  else 
-			fprintf(vvp_out, "RS_%p .resolv %s", 
+		  else
+			fprintf(vvp_out, "RS_%p .resolv %s",
 				nex, resolv_type);
-		  
+
 		  for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
 			if (level) {
 			      fprintf(vvp_out, ", RS_%p/%d/%d",
@@ -567,7 +567,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 		  }
 		  for ( ;  idx < inst+4 ;  idx += 1)
 			fprintf(vvp_out, ", C<z>");
-		  
+
 		  fprintf(vvp_out, ";\n");
 	    }
 	    if (ndrivers > 4)
@@ -576,7 +576,7 @@ const char* draw_net_input(ivl_nexus_t nex)
 		  ndrivers = 0;
 	    level += 1;
       }
-      
+
       sprintf(result, "RS_%p", nex);
       nex_private = strdup(result);
       ivl_nexus_set_private(nex, nex_private);
@@ -660,7 +660,7 @@ static void draw_delay(ivl_net_logic_t lptr)
       unsigned d0 = ivl_logic_delay(lptr, 0);
       unsigned d1 = ivl_logic_delay(lptr, 1);
       unsigned d2 = ivl_logic_delay(lptr, 2);
-      
+
       if (d0 == 0 && d1 == 0 && d2 == 0)
 	    return;
 
@@ -689,14 +689,14 @@ static void draw_udp_def(ivl_udp_t udp)
     }
 
   if (ivl_udp_sequ(udp))
-	fprintf(vvp_out, 
+	fprintf(vvp_out,
 		"UDP_%s .udp/sequ \"%s\", %d, %d",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp),
 		init );
   else
-	fprintf(vvp_out, 
+	fprintf(vvp_out,
 		"UDP_%s .udp/comb \"%s\", %d",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
@@ -713,7 +713,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
   unsigned pdx;
 
   ivl_udp_t udp = ivl_logic_udp(lptr);
-  
+
   static ivl_udp_t *udps = 0x0;
   static int nudps = 0;
   int i;
@@ -721,7 +721,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
   for (i=0; i<nudps; i++)
     if (udps[i] == udp)
       break;
-  
+
   if (i >= nudps)
     {
       udps = realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
@@ -731,10 +731,10 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
     }
 
   fprintf(vvp_out, "L_%p .udp", lptr);
-  fprintf(vvp_out, " UDP_%s", 
+  fprintf(vvp_out, " UDP_%s",
 	  vvp_mangle_id(ivl_udp_name(udp)));
   draw_delay(lptr);
-  
+
   for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
 	ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
 
@@ -749,7 +749,7 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	      draw_input_from_net(nex);
 	}
   }
-  
+
   fprintf(vvp_out, ";\n");
 }
 
@@ -777,7 +777,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  input_strings[pdx] = draw_net_input(nex);
 	    }
       }
-      
+
       switch (ivl_logic_type(lptr)) {
 
           case IVL_LO_UDP:
@@ -911,17 +911,17 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       input_strings = calloc(ninp, sizeof(char*));
       for (pdx = 0 ;  pdx < ninp ;  pdx += 1)
 	    input_strings[pdx] = draw_net_input(ivl_logic_pin(lptr, pdx+1));
-      
+
       level = 0;
       ninp = ivl_logic_pins(lptr) - 1;
       while (ninp) {
 	    int inst;
 	    for (inst = 0; inst < ninp; inst += 4) {
 		  if (ninp > 4)
-			fprintf(vvp_out, "L_%p/%d/%d .functor %s", 
+			fprintf(vvp_out, "L_%p/%d/%d .functor %s",
 				lptr, level, inst, lcasc);
 		  else {
-			fprintf(vvp_out, "L_%p .functor %s", 
+			fprintf(vvp_out, "L_%p .functor %s",
 				lptr, ltype);
 
 			draw_delay(lptr);
@@ -941,7 +941,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  for ( ;  pdx < inst+4 ;  pdx += 1) {
 			fprintf(vvp_out, ", C<%c>", identity_val);
 		  }
-		  
+
 		  fprintf(vvp_out, ";\n");
 	    }
 	    if (ninp > 4)
@@ -990,7 +990,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  unsigned sub, top;
 
 		  fprintf(vvp_out, "E_%p/%u .event edge", obj, ecnt);
-		  
+
 		  top = idx + 4;
 		  if (nany < top)
 			top = nany;
@@ -1041,9 +1041,9 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 	    for (idx = 1 ;  idx < cnt ;  idx += 1)
 		  fprintf(vvp_out, ", E_%p/%u", obj, idx);
-	    
+
 	    fprintf(vvp_out, ";\n");
-	    
+
       } else {
 	    unsigned num_input_strings = nany + nneg + npos;
 	    unsigned idx;
@@ -1053,14 +1053,14 @@ static void draw_event_in_scope(ivl_event_t obj)
 	    if (nany > 0) {
 		  assert((nneg + npos) == 0);
 		  assert(nany <= 4);
-		  
+
 		  edge = "edge";
-		  
+
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
 			input_strings[idx] = draw_net_input(nex);
 		  }
-		  
+
 	    } else if (nneg > 0) {
 		  assert((nany + npos) == 0);
 		  edge = "negedge";
@@ -1069,11 +1069,11 @@ static void draw_event_in_scope(ivl_event_t obj)
 			ivl_nexus_t nex = ivl_event_neg(obj, idx);
 			input_strings[idx] = draw_net_input(nex);
 		  }
-		  
+
 	    } else {
 		  assert((nany + nneg) == 0);
 		  edge = "posedge";
-		  
+
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
 			input_strings[idx] = draw_net_input(nex);
@@ -1104,8 +1104,8 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
       }
 
       fprintf(vvp_out, "L_%p .mem/port", net);
-      fprintf(vvp_out, 
-	      " M_%s, %d,0, %d,\n  ", 
+      fprintf(vvp_out,
+	      " M_%s, %d,0, %d,\n  ",
 	      vvp_memory_label(mem),
 	      width-1,
 	      awidth);
@@ -1115,7 +1115,7 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
 	    if (idx) fprintf(vvp_out, ", ");
 	    draw_input_from_net(pin);
       }
-      
+
       if (clk) {
 	    fprintf(vvp_out, ",\n  CLK_%p, ",  net);
 	    pin = ivl_lpm_enable(net);
@@ -1129,7 +1129,7 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
 		  draw_input_from_net(pin);
 	    }
       }
-      
+
       fprintf(vvp_out, ";\n");
 }
 
@@ -1214,7 +1214,7 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s.%s .cmp/%s%s %u", 
+      fprintf(vvp_out, "L_%s.%s .cmp/%s%s %u",
 	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 	      vvp_mangle_id(ivl_lpm_basename(net)), type,
 	      signed_string, width);
@@ -1245,7 +1245,7 @@ static void draw_lpm_eq(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s.%s .cmp/%s %u", 
+      fprintf(vvp_out, "L_%s.%s .cmp/%s %u",
 	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 	      vvp_mangle_id(ivl_lpm_basename(net)), type, width);
 
@@ -1515,7 +1515,7 @@ static void draw_mem_in_scope(ivl_memory_t net)
       int msb = ivl_memory_width(net) - 1;
       int lsb = 0;
       fprintf(vvp_out, "M_%s .mem \"%s\", %u,%u, %u,%u;\n",
-	      vvp_memory_label(net), 
+	      vvp_memory_label(net),
 	      vvp_mangle_name(ivl_memory_basename(net)),
 	      msb, lsb, root, last);
 }
@@ -1624,6 +1624,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.103  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.102  2004/09/25 21:04:25  steve
  *  More carefull about eliding bufzs that carry strength.
  *

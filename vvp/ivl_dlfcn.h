@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.9 2003/12/12 05:43:08 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.10 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -48,14 +48,14 @@ inline const char *dlerror(void)
 {
   static char msg[256];
   unsigned long err = GetLastError();
-  FormatMessage( 
+  FormatMessage(
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		err,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPTSTR) &msg,
 		sizeof(msg) - 1,
-		NULL 
+		NULL
 		);
   return msg;
 }
@@ -96,6 +96,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.10  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.9  2003/12/12 05:43:08  steve
  *  Some systems dlsym requires leading _ or not on whim.
  *

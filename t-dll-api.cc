@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.107 2004/06/30 02:16:27 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.108 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1050,7 +1050,7 @@ extern "C" ivl_memory_t ivl_lpm_memory(ivl_lpm_t net)
 	  default:
 	    assert(0);
 	    return 0;
-      }      
+      }
 }
 
 extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
@@ -1935,6 +1935,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.108  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.107  2004/06/30 02:16:27  steve
  *  Implement signed divide and signed right shift in nets.
  *

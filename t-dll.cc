@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.130 2004/06/30 02:16:27 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.131 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,14 +57,14 @@ const char *dlerror(void)
 {
   static char msg[256];
   unsigned long err = GetLastError();
-  FormatMessage( 
+  FormatMessage(
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		err,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPTSTR) &msg,
 		sizeof(msg) - 1,
-		NULL 
+		NULL
 		);
   return msg;
 }
@@ -599,7 +599,7 @@ bool dll_target::start_design(const Design*des)
       for (list<NetScope*>::const_iterator scope = root_scopes.begin();
 	   scope != root_scopes.end(); scope++)
 	    add_root(des_, *scope);
-      
+
       des_.consts  = (ivl_net_const_t*)
 	    malloc(sizeof(ivl_net_const_t));
       des_.nconsts = 0;
@@ -1044,9 +1044,9 @@ void dll_target::udp(const NetUDP*net)
 
 	  udps[net->udp_name()] = u;
 	}
-      
+
       obj->udp = u;
-      
+
       // Some duplication of code here, see: dll_target::logic()
 
         /* Connect all the ivl_nexus_t objects to the pins of the
@@ -1617,12 +1617,12 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 
       obj->u_.ff.width = net->width();
       obj->u_.ff.swid = net->awidth();
-      
+
       scope_add_lpm(obj->scope, obj);
 
       const Nexus*nex;
 
-      // A write port is present only if something is connected to 
+      // A write port is present only if something is connected to
       // the clock input.
 
       bool has_write_port = net->pin_InClock().is_linked();
@@ -1649,7 +1649,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 	    obj->u_.ff.clk = 0x0;
 	    obj->u_.ff.we = 0x0;
       }
-	    
+
       // Connect the address bus
 
       if (obj->u_.ff.swid == 1) {
@@ -1661,7 +1661,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
       }
       else {
 	    obj->u_.ff.s.pins = new ivl_nexus_t [obj->u_.ff.swid];
-	    
+
 	    for (unsigned idx = 0 ;  idx < obj->u_.ff.swid ;  idx += 1) {
 		  nex = net->pin_Address(idx).nexus();
 		  assert(nex->t_cookie());
@@ -1670,7 +1670,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 				IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
       }
-      
+
       // Connect the data busses
 
       if (obj->u_.ff.width == 1) {
@@ -1687,7 +1687,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 		  nexus_lpm_add(obj->u_.ff.d.pin, obj,
 				0, IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
-      } 
+      }
       else if (has_write_port) {
 	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
 	    obj->u_.ff.d.pins = obj->u_.ff.q.pins + obj->u_.ff.width;
@@ -1698,17 +1698,17 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
 		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
 				IVL_DR_STRONG, IVL_DR_STRONG);
-		  
+
 		  nex = net->pin_Data(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
 		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
 				IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
-      } 
+      }
       else {
 	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width];
-	    
+
 	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
 		  nex = net->pin_Q(idx).nexus();
 		  assert(nex->t_cookie());
@@ -2180,6 +2180,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.131  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.130  2004/06/30 02:16:27  steve
  *  Implement signed divide and signed right shift in nets.
  *

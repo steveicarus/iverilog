@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.13 2004/06/17 14:44:01 steve Exp $"
+#ident "$Id: sys_random.c,v 1.14 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -320,7 +320,7 @@ static int sys_random_calltf(char*name)
         /* Send updated seed back to seed parameter. */
       if (seed) {
 	    val.format = vpiIntVal;
-	    val.value.integer = i_seed;		
+	    val.value.integer = i_seed;
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
 
@@ -362,6 +362,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.14  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.13  2004/06/17 14:44:01  steve
  *  Save seed in static variable, in case user doesnt pass it.
  *

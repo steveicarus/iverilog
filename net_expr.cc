@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.22 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.23 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -32,7 +32,7 @@ NetExpr::TYPE NetExpr::expr_type() const
 
 /*
  * Create an add/sub node from the two operands. Make a best guess of
- * the 
+ * the
  */
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
@@ -516,6 +516,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.23  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.22  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

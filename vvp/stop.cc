@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.11 2004/02/21 00:44:34 steve Exp $"
+#ident "$Id: stop.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 /*
@@ -354,7 +354,7 @@ static void cmd_unknown(unsigned, char*argv[])
 }
 
 struct {
-      const char*name; 
+      const char*name;
       void (*proc)(unsigned argc, char*argv[]);
       const char*summary;
 } cmd_table[] = {
@@ -404,7 +404,7 @@ static void invoke_command(char*txt)
 
 	/* Chop the line into words. */
       for (char*cp = txt+strspn(txt, " ")
-		 ; *cp; cp += strspn(cp, " ")) { 
+		 ; *cp; cp += strspn(cp, " ")) {
 	    argv[argc] = cp;
 
 	    if (cp[0] == '"') {
@@ -494,6 +494,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.12  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.11  2004/02/21 00:44:34  steve
  *  Add load command to interactive stop.
  *  Support decimal constants passed interactive to system tasks.

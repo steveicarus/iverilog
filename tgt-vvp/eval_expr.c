@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.109 2004/09/10 00:14:31 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.110 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -838,7 +838,7 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
 		fprintf(vvp_out, "    %%ix/load 0, %u;\n", shift);
 		break;
 	  }
-	    
+
 	  case IVL_EX_ULONG:
 	    fprintf(vvp_out, "    %%ix/load 0, %lu;\n", ivl_expr_uvalue(re));
 	    break;
@@ -1527,7 +1527,7 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 		unsigned long v = 0;
 		int unknown_flag = 0;
 		unsigned idx;
-		for (idx = 0 ;  idx < nbits ;  idx += 1) 
+		for (idx = 0 ;  idx < nbits ;  idx += 1)
 		      switch (bits[idx]) {
 			  case '0':
 			    break;
@@ -1546,7 +1546,7 @@ void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 		break;
 	  }
 	  case IVL_EX_ULONG: {
-		unsigned v = ivl_expr_uvalue(ae); 
+		unsigned v = ivl_expr_uvalue(ae);
 		fprintf(vvp_out, "    %%ix/load 3, %u;\n", (v-root)*width);
 		fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
 		break;
@@ -1576,7 +1576,7 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
 
       if (swid > wid)
 	    swid = wid;
-      
+
       res.base = allocate_vector(wid);
       res.wid  = wid;
 
@@ -2139,6 +2139,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.110  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.109  2004/09/10 00:14:31  steve
  *  Relaxed width constraint on pad_expression output.
  *

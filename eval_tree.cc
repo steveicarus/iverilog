@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.61 2004/09/10 23:51:42 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.62 2004/10/04 01:10:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1251,7 +1251,7 @@ NetEConst* NetESelect::eval_tree()
       for (unsigned long idx = 0 ;  idx < expr_width() ;  idx += 1) {
 	    if ((bval >= 0) && ((unsigned long) bval < eval.len()))
 		  oval.set(idx, eval.get(bval));
-	    else 
+	    else
 		  oval.set(idx, verinum::Vx);
 
 	    bval += 1;
@@ -1423,7 +1423,7 @@ NetEConst* NetEUnary::eval_tree()
 
 	  case '-': {
 		if (val.is_defined()) {
-		      
+
 		      verinum tmp (verinum::V0, val.len());
 		      tmp.has_sign(val.has_sign());
 		      val = tmp - val;
@@ -1551,6 +1551,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.62  2004/10/04 01:10:53  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.61  2004/09/10 23:51:42  steve
  *  Fix the evaluation of constant ternary expressions.
  *

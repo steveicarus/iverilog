@@ -1,4 +1,4 @@
-		THE ICARUS VERILOG COMPILATION SYSTEM 
+		THE ICARUS VERILOG COMPILATION SYSTEM
 		Copyright 2000-2003 Stephen Williams
 
 
@@ -9,7 +9,7 @@ described in the IEEE-1364 standard. Of course, it's not quite there
 yet. It does currently handle a mix of structural and behavioral
 constructs. For a view of the current state of Icarus Verilog, see its
 home page at <http://www.icarus.com/eda/verilog>.
- 
+
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
 tools. These back-end tools currently include a simulator engine
@@ -296,8 +296,8 @@ Example: Compiling "hello.vl"
 
 ------------------------ hello.vl ----------------------------
 module main();
- 
-initial 
+
+initial
   begin
     $display("Hi there");
     $finish ;
@@ -307,7 +307,7 @@ endmodule
 
 --------------------------------------------------------------
 
-Ensure that "iverilog" is on your search path, and the vpi library 
+Ensure that "iverilog" is on your search path, and the vpi library
 is available.
 
 To compile the program:

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.24 2004/06/13 04:56:53 steve Exp $"
+#ident "$Id: Module.cc,v 1.25 2004/10/04 01:10:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,7 +76,7 @@ unsigned Module::port_count() const
 /*
  * Return the array of PEIdent object that are at this port of the
  * module. If the port is internally unconnected, return an empty
- * array. 
+ * array.
  */
 const svector<PEIdent*>& Module::get_port(unsigned idx) const
 {
@@ -150,6 +150,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.25  2004/10/04 01:10:51  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.24  2004/06/13 04:56:53  steve
  *  Add support for the default_nettype directive.
  *

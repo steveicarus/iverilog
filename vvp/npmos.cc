@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.cc,v 1.8 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: npmos.cc,v 1.9 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -31,18 +31,18 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
       if (pp == 0) {
 
 	    /* from IEEE 1384-1995 Table 7-8 */
-	    static const unsigned char rmos_table[8] 
+	    static const unsigned char rmos_table[8]
 		  = { 0, 1, 1, 2, 2, 3, 5, 5 };
 	    /* just reduce SUPPLY to STRONG */
 	    static const unsigned char mos_table[8]
 		  = { 0, 1, 2, 3, 4, 5, 6, 6 };
-	    
+
 	    const unsigned char *table = res ? rmos_table : mos_table;
-	    
+
 	    unsigned vals = s & 0x88;
 	    unsigned s1 = table[s & 0x7];
 	    unsigned s2 = table[(s & 0x70) >> 4];
-	    
+
 	    istr =  vals | s1 | (s2 << 4);
       }
 
@@ -90,6 +90,9 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.9  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.8  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_mcd.c,v 1.6 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: vpi_mcd.c,v 1.7 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -58,7 +58,7 @@ unsigned int vpi_mcd_close(unsigned int mcd)
 	for(i = 3; i < 31; i++) {
 		if( ((mcd>>i) & 1) && mcd_table[i].filename) {
 			if(fclose(mcd_table[i].fp) != 0)
-				rc |= 1<<i;				
+				rc |= 1<<i;
 			free(mcd_table[i].filename);
 			mcd_table[i].fp = NULL;
 			mcd_table[i].filename = NULL;
@@ -148,6 +148,9 @@ int vpi_mcd_fgetc(unsigned int mcd)
 
 /*
  * $Log: vpi_mcd.c,v $
+ * Revision 1.7  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.6  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *

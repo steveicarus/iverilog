@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.92 2004/05/19 03:25:42 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.93 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -91,7 +91,7 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
 		  fprintf(vvp_out, "    %%set/x0/x V_%s, %u, 3;\n",
 			  vvp_signal_label(sig), bit);
 	    }
-			  
+
       } else if (wid == 1) {
 	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
 		    vvp_signal_label(sig), idx+part_off, bit);
@@ -148,7 +148,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
 
 }
 
-static void assign_to_memory(ivl_memory_t mem, unsigned idx, 
+static void assign_to_memory(ivl_memory_t mem, unsigned idx,
 			     unsigned bit, unsigned delay)
 {
       if (idx)
@@ -530,7 +530,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 		  if (mem) {
 			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			      assign_to_memory(mem, idx, 
+			      assign_to_memory(mem, idx,
 					       bitchar_to_idx(bits[cur_rbit]),
 					       delay);
 			      cur_rbit += 1;
@@ -821,7 +821,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		default:
 		  assert(0);
 	    }
-	    
+
 	      /* Done with the case expression */
 	    clr_vector(cvec);
       }
@@ -1121,7 +1121,7 @@ static int show_stmt_force(ivl_statement_t net)
 		    force_functor_label, idx,
 		    tmp_label, idx,
 		    draw_net_input(ivl_stmt_nexus(net, idx)));
-      } 
+      }
       free(tmp_label);
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
@@ -1389,7 +1389,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 static int show_system_task_call(ivl_statement_t net)
 {
       unsigned parm_count = ivl_stmt_parm_count(net);
-      
+
       if (parm_count == 0) {
 	    fprintf(vvp_out, "    %%vpi_call \"%s\";\n", ivl_stmt_name(net));
 	    clear_expression_lookaside();
@@ -1626,6 +1626,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.93  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.92  2004/05/19 03:25:42  steve
  *  Generate code for nb assign to reals.
  *

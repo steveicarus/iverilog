@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.43 2003/09/09 00:56:45 steve Exp $"
+#ident "$Id: functor.cc,v 1.44 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -48,7 +48,7 @@
  */
 
 functor_t **functor_list = 0x0;
-static unsigned functor_count = 0; 
+static unsigned functor_count = 0;
 static unsigned functor_chunk_count = 0;
 
 /*
@@ -186,7 +186,7 @@ void functor_s::put_ostr(unsigned val, unsigned str,
 extra_outputs_functor_s::~extra_outputs_functor_s()
 {}
 
-void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push, 
+void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push,
 				  unsigned val, unsigned)
 {
       put(i, val);
@@ -198,7 +198,7 @@ void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push,
 extra_ports_functor_s::~extra_ports_functor_s()
 {}
 
-void extra_ports_functor_s::set(vvp_ipoint_t i, bool push, 
+void extra_ports_functor_s::set(vvp_ipoint_t i, bool push,
 			       unsigned val, unsigned str)
 {
       functor_t base = functor_index(base_);
@@ -208,7 +208,7 @@ void extra_ports_functor_s::set(vvp_ipoint_t i, bool push,
 extra_inputs_functor_s::~extra_inputs_functor_s()
 {}
 
-void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push, 
+void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
 				 unsigned val, unsigned)
 {
       put(i, val);
@@ -222,6 +222,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.44  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.43  2003/09/09 00:56:45  steve
  *  Reimpelement scheduler to divide nonblocking assign queue out.
  *

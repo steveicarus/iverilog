@@ -11,7 +11,7 @@
  *    Change the function prototypes to use ANSI/ISO C syntax.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: mt19937int.c,v 1.4 2003/05/14 04:18:16 steve Exp $"
+#ident "$Id: mt19937int.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 /* A C-program for MT19937: Integer version (1998/4/6)            */
@@ -34,7 +34,7 @@
 /* See the GNU Library General Public License for more details.    */
 /* You should have received a copy of the GNU Library General      */
 /* Public License along with this library; if not, write to the    */
-/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */ 
+/* Free Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA   */
 /* 02111-1307  USA                                                 */
 
 /* Copyright (C) 1997 Makoto Matsumoto and Takuji Nishimura.       */
@@ -50,14 +50,14 @@
 
 #include "sys_priv.h"
 
-/* Period parameters */  
+/* Period parameters */
 #define N 624
 #define M 397
 #define MATRIX_A 0x9908b0df   /* constant vector a */
 #define UPPER_MASK 0x80000000 /* most significant w-r bits */
 #define LOWER_MASK 0x7fffffff /* least significant r bits */
 
-/* Tempering parameters */   
+/* Tempering parameters */
 #define TEMPERING_MASK_B 0x9d2c5680
 #define TEMPERING_MASK_C 0xefc60000
 #define TEMPERING_SHIFT_U(y)  (y >> 11)
@@ -83,7 +83,7 @@ sgenrand(struct context_s *context, unsigned long seed)
     context->mti = mti;
 }
 
-unsigned long 
+unsigned long
 genrand(struct context_s *context)
 {
     unsigned long y;
@@ -112,7 +112,7 @@ genrand(struct context_s *context)
 
         mti = 0;
     }
-  
+
     y = mt[mti++];
     y ^= TEMPERING_SHIFT_U(y);
     y ^= TEMPERING_SHIFT_S(y) & TEMPERING_MASK_B;
@@ -121,11 +121,14 @@ genrand(struct context_s *context)
 
     context->mti = mti;
 
-    return y; 
+    return y;
 }
 
 /*
  * $Log: mt19937int.c,v $
+ * Revision 1.5  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.4  2003/05/14 04:18:16  steve
  *  Use seed to store random number context.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.136 2004/10/04 00:25:46 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.137 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1839,7 +1839,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
       if (msb_ && lsb_) {
 	      /* Detect a part select. Evaluate the bits and elaborate
 		 the l-value by creating a sub-net that links to just
-		 the right pins. */ 
+		 the right pins. */
 	    verinum*mval = msb_->eval_const(des, scope);
 	    assert(mval);
 	    verinum*lval = lsb_->eval_const(des, scope);
@@ -1949,7 +1949,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       if (msb_ && lsb_) {
 	      /* Detect a part select. Evaluate the bits and elaborate
 		 the l-value by creating a sub-net that links to just
-		 the right pins. */ 
+		 the right pins. */
 	    verinum*mval = msb_->eval_const(des, scope);
 	    assert(mval);
 	    verinum*lval = lsb_->eval_const(des, scope);
@@ -2511,6 +2511,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.137  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.136  2004/10/04 00:25:46  steve
  *  Error message to match assertion.
  *

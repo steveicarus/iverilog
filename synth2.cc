@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.38 2004/08/28 15:08:32 steve Exp $"
+#ident "$Id: synth2.cc,v 1.39 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,7 +87,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				const NetNet*nex_map, NetNet*nex_out)
 {
       DEBUG_SYNTH2_ENTRY("NetAssignBase")
- 
+
       NetNet*rsig = rval_->synthesize(des);
       assert(rsig);
 
@@ -306,7 +306,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
 		  connect(mux->pin_Data(idx, item), sig->pin(idx));
       }
-	    
+
       delete[]statement_map;
       des->add_node(mux);
 
@@ -346,7 +346,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
       }
-      
+
       NetNet*bsig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       bsig->local_flag(true);
@@ -985,6 +985,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.39  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.38  2004/08/28 15:08:32  steve
  *  Do not change reg to wire in NetAssign_ unless synthesizing.
  *

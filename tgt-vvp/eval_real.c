@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.10 2003/12/19 01:27:10 steve Exp $"
+#ident "$Id: eval_real.c,v 1.11 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 /*
@@ -207,7 +207,7 @@ static int draw_sfunc_real(ivl_expr_t exp)
 		 (via an index register) for the result. */
 	    sv = draw_eval_expr(exp, 0);
 	    clr_vector(sv);
-	    
+
 	    res = allocate_word();
 	    fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n",
 		    res, sv.base, sv.wid);
@@ -298,6 +298,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.11  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.10  2003/12/19 01:27:10  steve
  *  Fix various unsigned compare warnings.
  *

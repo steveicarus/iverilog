@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_deposit.c,v 1.4 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_deposit.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -45,11 +45,11 @@ static int sys_deposit_calltf(char *name)
   value = vpi_scan(argv);
   assert(value);
   vpi_free_object(argv);
-  
+
   val.format = vpiIntVal;
   vpi_get_value(value, &val);
 
-  switch (vpi_get(vpiType, target)) 
+  switch (vpi_get(vpiType, target))
     {
     default:
       vpi_printf("ERROR: %s invalid target parameter\n", name);
@@ -66,7 +66,7 @@ static int sys_deposit_calltf(char *name)
 void sys_deposit_register()
 {
   s_vpi_systf_data tf_data;
-  
+
   tf_data.type      = vpiSysTask;
   tf_data.tfname    = "$deposit";
   tf_data.calltf    = sys_deposit_calltf;
@@ -79,6 +79,9 @@ void sys_deposit_register()
 
 /*
  * $Log: sys_deposit.c,v $
+ * Revision 1.5  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.4  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

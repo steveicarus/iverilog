@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random_mti.c,v 1.2 2004/10/04 00:14:08 steve Exp $"
+#ident "$Id: sys_random_mti.c,v 1.3 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -138,7 +138,7 @@ static int sys_mti_random_calltf(char*name)
 	    vpi_get_value(seed, &val);
 	    i_seed = val.value.integer;
 
-	      /* Since there is a seed use the current 
+	      /* Since there is a seed use the current
 	         context or create a new one */
 	    context = (struct context_s *)vpi_get_userdata(call_handle);
 	    if (!context) {
@@ -167,7 +167,7 @@ static int sys_mti_random_calltf(char*name)
         /* mark seed with cookie */
       if (seed && i_seed != COOKIE) {
 	    val.format = vpiIntVal;
-	    val.value.integer = COOKIE;		
+	    val.value.integer = COOKIE;
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
 
@@ -202,6 +202,9 @@ void sys_random_mti_register()
 
 /*
  * $Log: sys_random_mti.c,v $
+ * Revision 1.3  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.2  2004/10/04 00:14:08  steve
  *  MTI functions only user Mersene Twister
  *

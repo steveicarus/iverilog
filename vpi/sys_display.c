@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.70 2004/02/20 01:53:02 steve Exp $"
+#ident "$Id: sys_display.c,v 1.71 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -297,7 +297,7 @@ static void format_time(unsigned mcd, int fsize,
 	    if (*bp == '.')
 		  *--bp = '0';
       }
-	    
+
 
       my_mcd_printf(mcd, "%s", bp);
 }
@@ -492,7 +492,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 
 	    use_count = 1;
 	    break;
-	
+
 	      /* Print numeric value is decimal integer format. */
 	  case 'd':
 	  case 'D':
@@ -776,7 +776,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			my_mcd_printf(mcd, "\"");
 			cp += 1;
 			break;
-			
+
 		      case '0':
 		      case '1':
 		      case '2':
@@ -1024,7 +1024,7 @@ static int sys_strobe_calltf(char*name)
 			      return 0;
 		      }
 		      break;
-		      
+
 	      default:
 		      vpi_printf("ERROR: %s mcd parameter must be integral", name);
 		      vpi_printf(", got vpiType=%d\n", type);
@@ -1190,7 +1190,7 @@ static int sys_monitoroff_calltf(char*name)
       return 0;
 }
 
-/* Implement $fdisplay and $fwrite.  
+/* Implement $fdisplay and $fwrite.
  * Perhaps this could be merged into sys_display_calltf.
  */
 static int sys_fdisplay_calltf(char *name)
@@ -1566,6 +1566,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.71  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.70  2004/02/20 01:53:02  steve
  *  Do not strip leading spaces, or expect them either.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.h,v 1.4 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: npmos.h,v 1.5 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -29,7 +29,7 @@ class vvp_pmos_s  : public functor_s {
     public:
       vvp_pmos_s() : istr(StX), pol(0), res(0) {}
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      
+
     protected:
       unsigned char istr;
       unsigned pol : 1;
@@ -56,6 +56,9 @@ class vvp_rnmos_s  : public vvp_pmos_s {
 
 /*
  * $Log: npmos.h,v $
+ * Revision 1.5  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.4  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: symbols.cc,v 1.11 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: symbols.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -109,7 +109,7 @@ static inline char* node_last_key(struct tree_node_*node)
 /*
  * Allocate a new symbol table means creating the table structure and
  * a root node, and initializing the pointers and members of the root
- * node. 
+ * node.
  */
 symbol_table_t new_symbol_table(void)
 {
@@ -163,7 +163,7 @@ static void split_node_(struct tree_node_*cur)
 		new_node = new struct tree_node_;
 		new_node->leaf_flag = false;
 		new_node->count = cur->count / 2;
-		if (cur->parent) 
+		if (cur->parent)
 			/* cur is not root; new_node becomes sibling. */
 			new_node->parent = cur->parent;
 
@@ -203,10 +203,10 @@ static void split_node_(struct tree_node_*cur)
 		      cur->child[1] = new_node;
 		      cur->count = 2;
 			/* no more ancestors, stop the while loop */
-		      break; 
+		      break;
 		}
-		
-		/* cur is not root. hook new_node to cur->parent. */ 
+
+		/* cur is not root. hook new_node to cur->parent. */
 		idx = 0;
 		while (cur->parent->child[idx] != cur) {
 			assert(idx < cur->parent->count);
@@ -422,6 +422,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.12  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.11  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2004/03/10 04:51:25 $" Version "$Date: 2004/03/10 04:51:25 $"
+.TH iverilog 1 "$Date: 2004/10/04 01:10:56 $" Version "$Date: 2004/10/04 01:10:56 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -57,7 +57,7 @@ language. This flag is most useful to restrict the language to a set
 supported by tools of specific generations, for compatibility with
 other tools.
 .TP 8
-.B -I\fIincludedir\fP 
+.B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
@@ -316,7 +316,7 @@ and directory strings.
 Variable values come from the operating system environment, and not
 from preprocessor defines elsewhere in the file or the command line.
 
-.SH EXAMPLES 
+.SH EXAMPLES
 These examples assume that you have a Verilog source file called hello.v in
 the current directory
 
@@ -349,5 +349,5 @@ vvp(1),
 .nf
 Copyright \(co  2002 Stephen Williams
 
-This document can be freely redistributed according to the terms of the 
+This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

@@ -82,7 +82,7 @@ static dslxt_Tree * dslxt_insert(char *i, dslxt_Tree * t, unsigned int val) {
 /* Return a pointer to the resulting tree.                 */
     dslxt_Tree * n;
     int dir;
-    
+
     n = (dslxt_Tree *) calloc (1, sizeof (dslxt_Tree));
     if (n == NULL) {
 	fprintf(stderr, "dslxt_insert: ran out of memory, exiting.\n");
@@ -140,7 +140,7 @@ static dslxt_Tree * dslxt_delete(char *i, dslxt_Tree * t) {
 /*
  * functions which emit various big endian
  * data to a file
- */ 
+ */
 static int lt_emit_u8(struct lt_trace *lt, int value)
 {
 unsigned char buf[1];
@@ -221,7 +221,7 @@ return(nmemb);
 static int lt_emit_string(struct lt_trace *lt, char *value)
 {
 int rc=1;
-do  
+do
 	{
         rc&=lt_emit_u8(lt, *value);
         } while(*(value++));
@@ -234,7 +234,7 @@ return(rc);
  * data to a file.  (lt->position needs to be
  * fixed up on gzclose so the tables don't
  * get out of sync!)
- */ 
+ */
 static int lt_emit_u8z(struct lt_trace *lt, int value)
 {
 unsigned char buf[1];
@@ -321,7 +321,7 @@ return(nmemb);
 static int lt_emit_stringz(struct lt_trace *lt, char *value)
 {
 int rc=1;
-do  
+do
 	{
         rc&=lt_emit_u8z(lt, *value);
         } while(*(value++));
@@ -333,7 +333,7 @@ return(rc);
  * data to a file.  (lt->position needs to be
  * fixed up on BZ2_bzclose so the tables don't
  * get out of sync!)
- */ 
+ */
 static int lt_emit_u8bz(struct lt_trace *lt, int value)
 {
 unsigned char buf[1];
@@ -420,7 +420,7 @@ return(nmemb);
 static int lt_emit_stringbz(struct lt_trace *lt, char *value)
 {
 int rc=1;
-do  
+do
 	{
         rc&=lt_emit_u8bz(lt, *value);
         } while(*(value++));
@@ -487,7 +487,7 @@ for(p=s;*p;p++)
                 {
                 h=h^(g>>24);
                 h=h^g;
-                }   
+                }
         }
 
 h^=h2;						/* combine the two hashes */
@@ -514,17 +514,17 @@ struct lt_symbol *temp;
 
 hv=lt_hash(s);
 if(!(temp=lt->sym[hv])) return(NULL); /* no hash entry, add here wanted to add */
-	
+
 while(temp)
         {
         if(!strcmp(temp->name,s))
                 {
-                return(temp); /* in table already */    
+                return(temp); /* in table already */
                 }
         if(!temp->next) break;
         temp=temp->next;
         }
-	
+
 return(NULL); /* not found, add here if you want to add*/
 }
 
@@ -549,13 +549,13 @@ if(lt->compress_fac_str)
 	lt_emit_u16z(lt, i);
 	lt_emit_stringz(lt, str+i);
         free(lt->compress_fac_str);
-        } 
+        }
         else
         {
 	lt_emit_u16z(lt, 0);
 	lt_emit_stringz(lt, str);
         }
-         
+
 lt->compress_fac_str = (char *) malloc((lt->compress_fac_len=len)+1);
 strcpy(lt->compress_fac_str, str);
 }
@@ -591,10 +591,10 @@ while(lastch!=s->name)
 	{
 	if(*lastch=='[')
 		{
-		*lastch=0x00;	
+		*lastch=0x00;
 		return;
 		}
-	lastch--;	
+	lastch--;
 	}
 return;
 }
@@ -620,12 +620,12 @@ if((lt)&&(lt->numfacs))
 				strip_brack(s);
 				s=s->symchain;
 				}
-			else	
+			else
 			for(i=0;i<lt->numfacs;i++)
 				{
 				lt->sorted_facs[i] = s;
 				s=s->symchain;
-				}	
+				}
 			qsort((void *)lt->sorted_facs, lt->numfacs, sizeof(struct lt_symbol *), lt_compare);
 
 			for(i=0;i<lt->numfacs;i++)
@@ -653,7 +653,7 @@ if((lt)&&(lt->numfacs))
 		free(lt->compress_fac_str); lt->compress_fac_str=NULL;
 		lt->compress_fac_len=0;
 		lt->zfacname_predec_size = lt->zpackcount;
-	
+
 		gzclose(lt->zhandle);
 		fseek(lt->handle, 0L, SEEK_END);
 		lt->position=ftell(lt->handle);
@@ -688,13 +688,13 @@ if((lt)&&(lt->numfacs))
 		if(is_interlaced_trace)
 			{
 			lt->zhandle = gzdopen(dup(fileno(lt->handle)), "wb9");
-	
+
 			lt->sync_table_offset = lt->position;
 			for(i=0;i<lt->numfacs;i++)
 				{
 				lt_emit_u32z(lt, lt->sorted_facs[i]->last_change);
 				}
-	
+
 			gzclose(lt->zhandle); lt->zhandle = NULL;
 			fseek(lt->handle, 0L, SEEK_END);
 			lt->position=ftell(lt->handle);
@@ -705,7 +705,7 @@ if((lt)&&(lt->numfacs))
 }
 
 
-/* 
+/*
  * initialize the trace and get back and lt context
  */
 struct lt_trace *lt_init(const char *name)
@@ -831,7 +831,7 @@ switch(numbytes_trans&3)
 	case 3: lt->lt_emit_u32(lt, numtrans); break;
 	}
 
-/* printf("Clock finish for '%s' at %Ld ending with '%c' for %d repeats over a switch delta of %d\n", 
+/* printf("Clock finish for '%s' at %Ld ending with '%c' for %d repeats over a switch delta of %d\n",
 	s->name, lt->timeval, s->clk_prevval, s->clk_numtrans - LT_CLKPACK, s->clk_delta); */
 s->clk_prevtrans = ULLDescriptor(~0);
 s->clk_numtrans = 0;
@@ -932,7 +932,7 @@ switch(numbytes_trans&3)
 	case 3: lt->lt_emit_u32(lt, numtrans); break;
 	}
 
-/* printf("Clock finish for '%s' at %Ld ending with '%08x' for %d repeats over a switch delta of %Ld\n", 
+/* printf("Clock finish for '%s' at %Ld ending with '%08x' for %d repeats over a switch delta of %Ld\n",
 	s->name, lt->timeval, s->clk_prevval, s->clk_numtrans - LT_CLKPACK_M, s->clk_delta); */
 s->clk_prevtrans = ULLDescriptor(~0);
 s->clk_numtrans = 0;
@@ -1000,7 +1000,7 @@ for(i=0;i<lt->num_dict_entries;i++)
 	/* fprintf(stderr, "%8d) '%s'\n", ds->val, ds->item); */
 	lt_emit_stringz(lt, ds->item+1);
 	}
-	
+
 gzclose(lt->zhandle);
 fseek(lt->handle, 0L, SEEK_END);
 lt->position=ftell(lt->handle);
@@ -1037,13 +1037,13 @@ if(lt)
                                 if(s->clk_numtrans > LT_CLKPACK_M) lt_flushclock_m(lt, s);
                                 }
                                 else
-                                {   
+                                {
                                 if(s->clk_numtrans > LT_CLKPACK) lt_flushclock(lt, s);
                                 }
                         }
-                         
+
                 s=s->symchain;
-		}	
+		}
 
 	lt_set_dumpon(lt);	/* in case it was turned off */
 
@@ -1101,7 +1101,7 @@ if(lt)
 		while(t)
 			{
 			lt_emit_u32z(lt, t->position - lastposition); lastposition = t->position;
-			t=t->next;			
+			t=t->next;
 			}
 
 		t=lt->timehead;
@@ -1111,9 +1111,9 @@ if(lt)
 				{
 				lxttime_t delta = t->timeval - lasttime;
 				lt_emit_u64z(lt, (int)(delta>>32), (int)delta); lasttime = t->timeval;
-				
+
 				t2=t->next;
-				free(t);			
+				free(t);
 				t=t2;
 				}
 			}
@@ -1122,12 +1122,12 @@ if(lt)
 			while(t)
 				{
 				lt_emit_u32z(lt, (int)(t->timeval - lasttime)); lasttime = t->timeval;
-				
+
 				t2=t->next;
-				free(t);			
+				free(t);
 				t=t2;
 				}
-	
+
 			lt->timehead = lt->timecurr = NULL;
 			}
 
@@ -1137,7 +1137,7 @@ if(lt)
 		lt->ztime_table_size = lt->position - lt->ztime_table_size;
 		}
 
-	if(lt->initial_value>=0) 
+	if(lt->initial_value>=0)
 		{
 		lt->initial_value_offset = lt->position;
 		lt_emit_u8(lt, lt->initial_value);
@@ -1152,7 +1152,7 @@ if(lt)
 	if(lt->double_used)
 		{
 		lt->double_test_offset = lt->position;
-		lt_emit_double(lt, 3.14159);		
+		lt_emit_double(lt, 3.14159);
 		}
 
 	if(lt->dumpoffcount)
@@ -1168,7 +1168,7 @@ if(lt)
 			lt_emit_u64(lt, (int)((ltt->timeval)>>32), (int)ltt->timeval);
 			ltt2 = ltt;
 			ltt=ltt->next;
-			free(ltt2);			
+			free(ltt2);
 			}
 
 		lt->dumpoffhead = lt->dumpoffcurr = NULL;
@@ -1211,7 +1211,7 @@ if(lt)
 		{
 		struct lt_symbol *s = lt->symchain;
 		struct lt_symbol *s2;
-		
+
 		while(s)
 			{
 			free(s->name);
@@ -1326,7 +1326,7 @@ return(sa);
 }
 
 
-/* 
+/*
  * set current time
  */
 int lt_inc_time_by_delta(struct lt_trace *lt, unsigned int timeval)
@@ -1365,7 +1365,7 @@ if(lt)
 				else
 				{
 				free(trl);
-				goto bail;				
+				goto bail;
 				}
 			}
 			else
@@ -1446,7 +1446,7 @@ if((lt)&&(!lt->emitted))
 }
 
 /*
- * sets change interlace 
+ * sets change interlace
  */
 void lt_set_no_interlace(struct lt_trace *lt)
 {
@@ -1471,12 +1471,12 @@ if((lt)&&(!lt->emitted)&&(!lt->sorted_facs))
 			strip_brack(s);
 			s=s->symchain;
 			}
-		else	
+		else
 		for(i=0;i<lt->numfacs;i++)
 			{
 			lt->sorted_facs[i] = s;
 			s=s->symchain;
-			}	
+			}
 		qsort((void *)lt->sorted_facs, lt->numfacs, sizeof(struct lt_symbol *), lt_compare);
 
 		for(i=0;i<lt->numfacs;i++)
@@ -1516,12 +1516,12 @@ if(lt)
 	{
 	int tag;
 	switch(value)
-		{		
+		{
 		case '0':	tag = 0; break;
 		case '1':	tag = 1; break;
-		case 'Z':	
+		case 'Z':
 		case 'z':	tag = 2; break;
-		case 'X':	
+		case 'X':
 		case 'x':	tag = 3; break;
 		case 'H':
 		case 'h':	tag = 4; break;
@@ -1817,7 +1817,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 				{
 				tag = (numbytes<<4);
 				}
-	
+
 			lt->lt_emit_u8(lt, tag);
 			switch(numbytes&3)
 				{
@@ -1838,7 +1838,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 				}
 			lt->lt_emit_u8(lt, optimized ? (3+optimized1) : 0);
 			}
-	
+
 		s->last_change = start_position;
 
 		if(s->rows>0)
@@ -1904,7 +1904,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 						{
 						if(lt->num_dict_entries==(256*65536)) lt->dict32_offset = lt->position;
 						}
-			
+
 					lt->num_dict_entries++;
 					}
 
@@ -1949,14 +1949,14 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 				value <<= (24-len);
 				rc=lt->lt_emit_u24(lt, value);
 				}
-			else			
+			else
 				{
 				value <<= (32-len);
 				rc=lt->lt_emit_u32(lt, value);
 				}
 			}
-		}	
-	
+		}
+
 	if(lt->timebuff)
 		{
 		lt->timechangecount++;
@@ -2018,7 +2018,7 @@ if((s->flags)&LT_SYM_F_DOUBLE)
 			{
 			numbytes = 0;
 			}
-	
+
 		start_position = lt->position;
 		s->last_change = start_position;
 
@@ -2074,7 +2074,7 @@ if((s->flags)&LT_SYM_F_DOUBLE)
 		}
 
 	rc=lt->lt_emit_double(lt, value);
-	
+
 	if(lt->timebuff)
 		{
 		lt->timechangecount++;
@@ -2136,7 +2136,7 @@ if((s->flags)&LT_SYM_F_STRING)
 			{
 			numbytes = 0;
 			}
-	
+
 		start_position = lt->position;
 		s->last_change = start_position;
 
@@ -2192,7 +2192,7 @@ if((s->flags)&LT_SYM_F_STRING)
 		}
 
 	rc=lt->lt_emit_string(lt, value);
-	
+
 	if(lt->timebuff)
 		{
 		lt->timechangecount++;
@@ -2300,7 +2300,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 						s->clk_prevval1 = s->clk_prevval;
 						s->clk_prevval  = ivalue;
 
-						/* printf("Clock value '%08x' for '%s' [len=%d] at %Ld (#%d)\n", 
+						/* printf("Clock value '%08x' for '%s' [len=%d] at %Ld (#%d)\n",
 							ivalue, s->name, len, lt->timeval, s->clk_numtrans); */
 						return(1);
 						}
@@ -2429,12 +2429,12 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 	while((ch=*(pnt++)))
 		{
 		switch(ch)
-			{		
+			{
 			case '0':
 			case '1':	mvl|=LT_MVL_2; break;
-			case 'Z':	
-			case 'z':	
-			case 'X':	
+			case 'Z':
+			case 'z':
+			case 'X':
 			case 'x':	mvl|=LT_MVL_4; break;
 			default:	mvl|=LT_MVL_9; break;
 			}
@@ -2443,13 +2443,13 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 		}
 
 	switch(prevch)
-		{		
+		{
 		case 0x00:	tagadd = 0; break;
 		case '0':	tagadd = 3; break;
 		case '1':	tagadd = 4; break;
-		case 'Z':	
+		case 'Z':
 		case 'z':	tagadd = 5; break;
-		case 'X':	
+		case 'X':
 		case 'x':	tagadd = 6; break;
 		case 'H':
 		case 'h':	tagadd = 7; break;
@@ -2546,7 +2546,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 				int outval = 0;
 				int thisval= 0;
 
-				pnt = value;				
+				pnt = value;
 
 				if((lt->dictmode)&&(len>lt->mindictwidth))
 					{
@@ -2577,7 +2577,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 							{
 							if(lt->num_dict_entries==(256*65536)) lt->dict32_offset = lt->position;
 							}
-			
+
 						lt->num_dict_entries++;
 						}
 
@@ -2615,8 +2615,8 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 					outval |= (thisval<<bitpos);
 					bitpos--;
 					if((bitpos==-1)||(i==len-1))
-						{					
-						lt->lt_emit_u8(lt, outval); 
+						{
+						lt->lt_emit_u8(lt, outval);
 						outval = 0;
 						bitpos = 7;
 						}
@@ -2630,7 +2630,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 				int outval = 0;
 				int thisval= 0;
 
-				pnt = value;				
+				pnt = value;
 
 				for(i=0;i<len;i++)
 					{
@@ -2649,8 +2649,8 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 					outval |= (thisval<<bitpos);
 					bitpos-=2;
 					if((bitpos==-2)||(i==len-1))
-						{					
-						lt->lt_emit_u8(lt, outval); 
+						{
+						lt->lt_emit_u8(lt, outval);
 						outval = 0;
 						bitpos = 6;
 						}
@@ -2664,7 +2664,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 				int outval = 0;
 				int thisval= 0;
 
-				pnt = value;				
+				pnt = value;
 
 				for(i=0;i<len;i++)
 					{
@@ -2693,8 +2693,8 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 					outval |= (thisval<<bitpos);
 					bitpos-=4;
 					if((bitpos==-4)||(i==len-1))
-						{					
-						lt->lt_emit_u8(lt, outval); 
+						{
+						lt->lt_emit_u8(lt, outval);
 						outval = 0;
 						bitpos = 4;
 						}
@@ -2704,7 +2704,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 
 		rc=1;
 		}
-	
+
 	if(lt->timebuff)
 		{
 		lt->timechangecount++;

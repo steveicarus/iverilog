@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.31 2003/05/29 02:21:45 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.32 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -244,18 +244,18 @@ void functor_set_scope(vpiHandle scope)
 	    if (last->scope == scope) {
 		  return;
 	    }
-	    
+
 	    if (last->start == nfun) {
 		  last->scope = scope;
 		  return;
 	    }
       }
-      
+
       n_functor_scopes += 1;
       if (n_functor_scopes >= a_functor_scopes) {
 	    a_functor_scopes += 512;
 	    functor_scopes = (struct functor_scope_s *)
-		  realloc(functor_scopes, 
+		  realloc(functor_scopes,
 			  a_functor_scopes*sizeof(struct functor_scope_s));
 	    assert(functor_scopes);
       }
@@ -276,7 +276,7 @@ vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
 	    return NULL;
 
       unsigned fidx = ipt/4;
-      
+
       unsigned first = 0;
       unsigned last = n_functor_scopes;
       while (first < last) {
@@ -287,7 +287,7 @@ vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
 		  last = next;
 	    else if (next == first)
 		  break;
-	    else 
+	    else
 		  first = next;
       }
 
@@ -473,6 +473,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.32  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.31  2003/05/29 02:21:45  steve
  *  Implement acc_fetch_defname and its infrastructure in vvp.
  *

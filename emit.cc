@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.76 2004/05/31 23:34:37 steve Exp $"
+#ident "$Id: emit.cc,v 1.77 2004/10/04 01:10:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -372,7 +372,7 @@ bool Design::emit(struct target_t*tgt) const
 	    return false;
 
 	// enumerate the scopes
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
 	    (*scope)->emit_scope(tgt);
 
@@ -388,7 +388,7 @@ bool Design::emit(struct target_t*tgt) const
 
 
 	// emit task and function definitions
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
 	    rc &= (*scope)->emit_defs(tgt);
 
@@ -511,6 +511,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.77  2004/10/04 01:10:53  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.76  2004/05/31 23:34:37  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

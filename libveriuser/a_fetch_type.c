@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.7 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: a_fetch_type.c,v 1.8 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -78,7 +78,7 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 	    type = vpi_get(vpiNetType, obj);
 	    switch(type) {
 		case vpiWire: return accWire;
-		default: 
+		default:
 		vpi_printf("acc_fetch_fulltype: vpiNetType %d unknown?\n",
 			   type);
 		return accUnknown;
@@ -121,6 +121,9 @@ PLI_INT32 acc_fetch_fulltype(handle obj)
 
 /*
  * $Log: a_fetch_type.c,v $
+ * Revision 1.8  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.7  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

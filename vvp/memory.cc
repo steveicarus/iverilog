@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.21 2003/09/09 00:56:45 steve Exp $"
+#ident "$Id: memory.cc,v 1.22 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -75,7 +75,7 @@ struct vvp_memory_port_s : public functor_s
 
       vvp_memory_t mem;
       vvp_ipoint_t ix;
-  
+
       unsigned naddr;
 
       vvp_memory_port_t next;
@@ -145,11 +145,11 @@ vvp_memory_t memory_create(char *label)
 {
   if (!memory_table)
     memory_table = new_symbol_table();
-  
+
   assert(!memory_find(label));
 
   vvp_memory_t mem = new struct vvp_memory_s;
-  
+
   symbol_value_t v;
   v.ptr = mem;
   sym_set_value(memory_table, label, v);
@@ -214,7 +214,7 @@ vvp_ipoint_t memory_port_new(vvp_memory_t mem,
     nfun = nbits;
 
   vvp_memory_port_t a = new struct vvp_memory_port_s;
-  
+
   a->mem = mem;
   a->naddr = naddr;
   a->writable = writable;
@@ -222,11 +222,11 @@ vvp_ipoint_t memory_port_new(vvp_memory_t mem,
   a->bitoff = bitoff;
   a->next = mem->addr_root;
   mem->addr_root = a;
-  
+
   a->ix = functor_allocate(nfun);
   functor_define(a->ix, a);
 
-  if (nfun > 1) 
+  if (nfun > 1)
     {
       extra_ports_functor_s *fu = new extra_ports_functor_s[nfun-1];
       for (unsigned i = 0; i< nfun - 1; i++) {
@@ -249,21 +249,21 @@ void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val)
 
 // Utilities
 
-inline static 
+inline static
 vvp_memory_bits_t get_word_ix(vvp_memory_t mem, unsigned idx)
 {
   return mem->bits + idx*mem->fwidth;
 }
 
-inline static 
+inline static
 vvp_memory_bits_t get_word(vvp_memory_t mem, int addr)
 {
   assert(mem->a_idxs==1);
   unsigned waddr = addr - mem->a_idx[0].first;
-  
+
   if (waddr >= mem->size)
     return 0x0;
-  
+
   return get_word_ix(mem, waddr);
 }
 
@@ -292,7 +292,7 @@ unsigned char get_bit(vvp_memory_bits_t bits, int bit)
   return (get_nibble(bits, bit) >> (2*(bit&3))) & 3;
 }
 
-inline static 
+inline static
 unsigned char functor_get_inputs(vvp_ipoint_t ip)
 {
   functor_t fp = functor_index(ip);
@@ -300,14 +300,14 @@ unsigned char functor_get_inputs(vvp_ipoint_t ip)
   return fp->ival;
 }
 
-inline static 
+inline static
 unsigned char functor_get_input(vvp_ipoint_t ip)
 {
   unsigned char bits = functor_get_inputs(ip);
   return (bits >> (2*ipoint_port(ip))) & 3;
 }
 
-static 
+static
 bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
 {
   unsigned abit = ip - addr->ix;
@@ -357,7 +357,7 @@ void update_data(vvp_memory_port_t data)
 }
 
 static
-void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit, 
+void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit,
 		       unsigned char val)
 {
   if (!bits)
@@ -395,7 +395,7 @@ void write_event(vvp_memory_port_t p)
       unsigned val = functor_get_input(p->ix + p->naddr + 2 + i);
       if (set_bit(p->cur_bits, i + p->bitoff, val))
 	{
-	  // if a write would change the memory bit, but <we> is 
+	  // if a write would change the memory bit, but <we> is
 	  // undefined (x or z), set the bit to x.
 	  if (we > 1)
 	    {
@@ -423,7 +423,7 @@ void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
   // undefined, we do asynchronous write.  Else any event on ix+naddr
   // is a valid write clock edge.  Connect an appropriate edge event
   // functor.
-  
+
   if (i == ix+naddr
       || (writable && functor_get_input(ix+naddr) == 3))
     {
@@ -463,7 +463,7 @@ unsigned memory_get(vvp_memory_t mem, unsigned idx)
 
 struct mem_assign_s: public vvp_gen_event_s
 {
-  union 
+  union
   {
     vvp_memory_t mem;
     struct mem_assign_s *next;
@@ -497,7 +497,7 @@ static void run_mem_assign(vvp_gen_event_t obj, unsigned char val)
   ma_free(e);
 }
 
-void schedule_memory(vvp_memory_t mem, unsigned idx, 
+void schedule_memory(vvp_memory_t mem, unsigned idx,
 		     unsigned char val, unsigned delay)
 {
   struct mem_assign_s *e = ma_alloc();
@@ -509,6 +509,9 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.22  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.21  2003/09/09 00:56:45  steve
  *  Reimpelement scheduler to divide nonblocking assign queue out.
  *

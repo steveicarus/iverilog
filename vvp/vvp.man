@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2003/12/07 20:05:56 $" Version "$Date: 2003/12/07 20:05:56 $"
+.TH vvp 1 "$Date: 2004/10/04 01:11:00 $" Version "$Date: 2004/10/04 01:11:00 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -129,5 +129,5 @@ iverilog-vpi(1),
 .nf
 Copyright \(co  2001-2003 Stephen Williams
 
-This document can be freely redistributed according to the terms of the 
+This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

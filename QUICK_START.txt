@@ -16,8 +16,8 @@ execute even the most trivial design. For the purposes of simulation,
 we use as our example *the* most trivial simulation:
 
   module main;
- 
-  initial 
+
+  initial
     begin
       $display("Hello, World");
       $finish ;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_null.c,v 1.2 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: vpi_null.c,v 1.3 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -36,13 +36,16 @@ static struct __vpiNull vpip_null = {
       { &vpip_null_rt }
 };
 
-extern struct __vpiNull *vpip_get_null(void) 
+extern struct __vpiNull *vpip_get_null(void)
 {
     return &vpip_null;
 }
 
 /*
  * $Log: vpi_null.c,v $
+ * Revision 1.3  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.2  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_to_dec.cc,v 1.6 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpip_to_dec.cc,v 1.7 2004/10/04 01:11:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -99,7 +99,7 @@ static inline int write_digits(unsigned long v, char **buf,
 	for (i=0; i<BDIGITS; ++i) {
 		if (!(zero_suppress&=(segment[i]=='0'))) {
 			*(*buf)++=segment[i]; --(*nbuf);
-		} 
+		}
 	}
 	return zero_suppress;
 }
@@ -254,6 +254,9 @@ void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 
 /*
  * $Log: vpip_to_dec.cc,v $
+ * Revision 1.7  2004/10/04 01:11:00  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.6  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

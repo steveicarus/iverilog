@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.12 2002/09/06 04:56:29 steve Exp $"
+#ident "$Id: logic.cc,v 1.13 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -38,8 +38,8 @@
  *   to 4 inputs.
  */
 
-table_functor_s::table_functor_s(truth_t t, unsigned str0, unsigned str1) 
-: table(t) 
+table_functor_s::table_functor_s(truth_t t, unsigned str0, unsigned str1)
+: table(t)
 {
       count_functors_table += 1;
       assert(str0 <= 7);
@@ -48,7 +48,7 @@ table_functor_s::table_functor_s(truth_t t, unsigned str0, unsigned str1)
       odrive1 = str1;
 }
 
-table_functor_s::~table_functor_s() 
+table_functor_s::~table_functor_s()
 {}
 
 void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
@@ -167,6 +167,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.13  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.12  2002/09/06 04:56:29  steve
  *  Add support for %v is the display system task.
  *  Change the encoding of H and L outputs from

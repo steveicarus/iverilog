@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.167 2004/09/18 01:59:44 steve Exp $"
+#ident "$Id: Makefile.in,v 1.168 2004/10/04 01:10:51 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -93,7 +93,7 @@ clean:
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc 
+	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
 	rm -rf dep ivl@EXEEXT@
 
@@ -133,7 +133,7 @@ ifeq (@WIN32@,yes)
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
 ivl@EXEEXT@: $O ivl.def
-	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@	
+	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
 	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
 	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@

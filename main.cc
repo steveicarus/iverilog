@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.85 2004/09/25 01:58:44 steve Exp $"
+#ident "$Id: main.cc,v 1.86 2004/10/04 01:10:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -417,14 +417,14 @@ extern Design* elaborate(list <perm_string> root);
 #if defined(HAVE_TIMES)
 static double cycles_diff(struct tms *a, struct tms *b)
 {
-      clock_t aa = a->tms_utime 
-	    +      a->tms_stime 
-	    +      a->tms_cutime 
+      clock_t aa = a->tms_utime
+	    +      a->tms_stime
+	    +      a->tms_cutime
 	    +      a->tms_cstime;
 
-      clock_t bb = b->tms_utime 
-	    +      b->tms_stime 
-	    +      b->tms_cutime 
+      clock_t bb = b->tms_utime
+	    +      b->tms_stime
+	    +      b->tms_cutime
 	    +      b->tms_cstime;
 
       return (aa-bb)/(double)sysconf(_SC_CLK_TCK);
@@ -526,7 +526,7 @@ int main(int argc, char*argv[])
 		      perror(depfile_name);
 	      }
       }
-	      
+
 
       if (verbose_flag) {
 	    if (times_flag)
@@ -606,7 +606,7 @@ int main(int argc, char*argv[])
 	    if (verbose_flag)
 		  cout << endl;
       }
-	    
+
 	/* If there is *still* no guess for the root module, then give
 	   up completely, and complain. */
 
@@ -744,6 +744,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.86  2004/10/04 01:10:53  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.85  2004/09/25 01:58:44  steve
  *  Add a debug_elaborate flag
  *

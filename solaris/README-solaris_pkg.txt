@@ -1,4 +1,4 @@
-# $Id: README-solaris_pkg.txt,v 1.1 2000/06/16 18:58:45 steve Exp $
+# $Id: README-solaris_pkg.txt,v 1.2 2004/10/04 01:10:56 steve Exp $
 
 Notes about the solaris package.
 
@@ -41,7 +41,7 @@ III.  Notes on building a solaris package from sources
    to the same as the argument to "--prefix="
 
 3) edit the 'prototype' file to add/removed files/directories from the list
-   of installed components. 
+   of installed components.
 
 4) run the 'mksolpkg' script to create the solaris package
 

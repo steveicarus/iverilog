@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_plusargs.c,v 1.4 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: sys_plusargs.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -198,7 +198,7 @@ static int sys_value_plusargs_compiletf(char*xx)
 	      return 0;
 	}
       }
-      
+
       arg = vpi_scan(argv);
       if (argv == 0) {
 	    vpi_printf("ERROR: $value$plusargs requires two arguments\n");
@@ -329,6 +329,9 @@ void sys_plusargs_register()
 
 /*
  * $Log: sys_plusargs.c,v $
+ * Revision 1.5  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.4  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *

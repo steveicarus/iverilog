@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.32 2004/06/13 04:56:54 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.33 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -267,7 +267,7 @@ void NetScope::rem_event(NetEvent*ev)
 		  assert(cur->snext_);
 		  cur = cur->snext_;
 	    }
-	    cur->snext_ = ev->snext_;	    
+	    cur->snext_ = ev->snext_;
       }
 
       ev->snext_ = 0;
@@ -323,7 +323,7 @@ void NetScope::rem_signal(NetNet*net)
 /*
  * This method looks for a signal within the current scope. The name
  * is assumed to be the base name of the signal, so no sub-scopes are
- * searched. 
+ * searched.
  */
 NetNet* NetScope::find_signal(const char*key)
 {
@@ -467,6 +467,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.33  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.32  2004/06/13 04:56:54  steve
  *  Add support for the default_nettype directive.
  *

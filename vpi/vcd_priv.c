@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.c,v 1.5 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: vcd_priv.c,v 1.6 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  "vpi_config.h"
@@ -64,7 +64,7 @@ const char *vcd_names_search(struct vcd_names_list_s*tab, const char *key)
       if (tab->vcd_names_sorted == 0)
 	    return 0;
 
-      v = (const char **) bsearch(&key, 
+      v = (const char **) bsearch(&key,
 				  tab->vcd_names_sorted, tab->sorted_names,
 				  sizeof(const char *), vcd_names_compare );
 
@@ -74,15 +74,15 @@ const char *vcd_names_search(struct vcd_names_list_s*tab, const char *key)
 void vcd_names_sort(struct vcd_names_list_s*tab)
 {
       if (tab->listed_names) {
-	    struct vcd_names_s *r; 
+	    struct vcd_names_s *r;
 	    const char **l;
-	    
+
 	    tab->sorted_names += tab->listed_names;
-	    tab->vcd_names_sorted = (const char **) 
-		  realloc(tab->vcd_names_sorted, 
+	    tab->vcd_names_sorted = (const char **)
+		  realloc(tab->vcd_names_sorted,
 			  tab->sorted_names*(sizeof(const char *)));
 	    assert(tab->vcd_names_sorted);
-	    
+
 	    l = tab->vcd_names_sorted + tab->sorted_names - tab->listed_names;
 	    tab->listed_names = 0;
 
@@ -95,29 +95,29 @@ void vcd_names_sort(struct vcd_names_list_s*tab)
 		  *(l++) = rr->name;
 		  free(rr);
 	    }
-	    
-	    qsort(tab->vcd_names_sorted, tab->sorted_names, 
+
+	    qsort(tab->vcd_names_sorted, tab->sorted_names,
 		  sizeof(const char **), vcd_names_compare);
       }
 }
 
 
-/* 
+/*
    Nexus Id cache
 
    In structural models, many signals refer to the same nexus.
    Some structural models also have very many signals.  This cache
-   saves nexus_id - vcd_id pairs, and reuses the vcd_id when a signal 
+   saves nexus_id - vcd_id pairs, and reuses the vcd_id when a signal
    refers to a nexus that is already dumped.
 
-   The new signal will be listed as a $var, but no callback 
-   will be installed.  This saves considerable CPU time and leads 
+   The new signal will be listed as a $var, but no callback
+   will be installed.  This saves considerable CPU time and leads
    to smalle VCD files.
 
    The _vpiNexusId is a private (int) property of IVL simulators.
 */
 
-struct vcd_id_s 
+struct vcd_id_s
 {
       const char *id;
       struct vcd_id_s *next;
@@ -137,7 +137,7 @@ static struct vcd_id_s **vcd_ids = 0;
 const char *find_nexus_ident(int nex)
 {
       struct vcd_id_s *bucket;
-      
+
       if (!vcd_ids) {
 	    vcd_ids = (struct vcd_id_s **)
 		  calloc(256, sizeof(struct vcd_id_s*));
@@ -170,6 +170,9 @@ void set_nexus_ident(int nex, const char *id)
 
 /*
  * $Log: vcd_priv.c,v $
+ * Revision 1.6  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.5  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

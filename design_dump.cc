@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.148 2004/05/31 23:34:36 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.149 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1064,7 +1064,7 @@ void Design::dump(ostream&o) const
 {
       o << "DESIGN TIME PRECISION: 10e" << get_precision() << endl;
       o << "SCOPES:" << endl;
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
 	    (*scope)->dump(o);
 
@@ -1089,6 +1089,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.149  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.148  2004/05/31 23:34:36  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.11 2003/11/12 03:20:14 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.12 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 /*
@@ -320,7 +320,7 @@ static void lpm_logic(ivl_net_logic_t net)
       edif_cell_t cell;
       edif_cellref_t ref;
       edif_joint_t jnt;
-	    
+
       switch (ivl_logic_type(net)) {
 
 	  case IVL_LO_BUFZ:
@@ -876,6 +876,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.12  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.11  2003/11/12 03:20:14  steve
  *  devices need show_cmp_gt
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.174 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: compile.cc,v 1.175 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -25,9 +25,9 @@
 # include  "functor.h"
 # include  "logic.h"
 # include  "resolv.h"
-# include  "udp.h" 
+# include  "udp.h"
 # include  "memory.h"
-# include  "force.h" 
+# include  "force.h"
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -326,11 +326,11 @@ bool functor_resolv_list_s::resolve(bool mes)
 
       if (mes)
 	    fprintf(stderr, "unresolved functor reference: %s\n", source);
-      
+
       return false;
 }
 
-inline static 
+inline static
 void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
 {
       struct functor_resolv_list_s*res = new struct functor_resolv_list_s;
@@ -366,13 +366,13 @@ bool functor_gen_resolv_list_s::resolve(bool mes)
 
       if (mes)
 	    fprintf(stderr, "unresolved functor reference: %s\n", source);
-      
+
       return false;
 }
 
 void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx)
 {
-      struct functor_gen_resolv_list_s*res = 
+      struct functor_gen_resolv_list_s*res =
 	    new struct functor_gen_resolv_list_s;
 
       res->ref    = ref;
@@ -400,13 +400,13 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    unsigned base, wid;
 	    unsigned n = 0;
 	    char ss[32];
-	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n) 
+	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n)
 		&& n == strlen(label)) {
 		  val.ptr = vpip_make_vthr_vector(base, wid, false);
 		  sym_set_value(sym_vpi, label, val);
 
 	    } else if (3 <= sscanf(label, "T<%u,%u,%[su]>%n", &base,
-				   &wid, ss, &n) 
+				   &wid, ss, &n)
 		       && n == strlen(label)) {
 
 		  bool signed_flag = false;
@@ -442,10 +442,10 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    free(label);
 	    return true;
       }
-      
+
       if (mes)
 	    fprintf(stderr, "unresolved vpi name lookup: %s\n", label);
-      
+
       return false;
 }
 
@@ -568,7 +568,7 @@ void compile_cleanup(void)
       int lnerrs = -1;
       int nerrs = 0;
       int last;
-      
+
       if (verbose_flag) {
 	    fprintf(stderr, " ... Linking\n");
 	    fflush(stderr);
@@ -592,8 +592,8 @@ void compile_cleanup(void)
 		  }
 	    }
 	    if (nerrs && last)
-		  fprintf(stderr, 
-			  "compile_cleanup: %d unresolved items\n", 
+		  fprintf(stderr,
+			  "compile_cleanup: %d unresolved items\n",
 			  nerrs);
       } while (nerrs && !last);
 
@@ -652,13 +652,13 @@ void compile_vpi_time_precision(long pre)
       vpip_set_time_precision(pre);
 }
 
-/* 
+/*
  * Run through the arguments looking for the functors that are
  * connected to my input ports. For each source functor that I
  * find, connect the output of that functor to the indexed
  * input by inserting myself (complete with the port number in
  * the vvp_ipoint_t) into the list that the source heads.
- *   
+ *
  * If the source functor is not declared yet, then don't do
  * the link yet. Save the reference to be resolved later.
  *
@@ -677,7 +677,7 @@ void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 	    vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
 	    functor_t iobj = functor_index(ifdx);
 
-	    if (strcmp(argv[idx].text, "C<0>") == 0) 
+	    if (strcmp(argv[idx].text, "C<0>") == 0)
 		  iobj->set(ifdx, false, 0, St0);
 
 	    else if (strcmp(argv[idx].text, "C<we0>") == 0)
@@ -718,11 +718,11 @@ void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 
 
 struct const_functor_s: public functor_s {
-      const_functor_s(unsigned str0, unsigned str1) 
+      const_functor_s(unsigned str0, unsigned str1)
 	    { odrive0 = str0; odrive1 = str1; }
-      virtual void set(vvp_ipoint_t, bool, unsigned, unsigned);   
+      virtual void set(vvp_ipoint_t, bool, unsigned, unsigned);
 };
-void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned) 
+void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
 {
       fprintf(stderr, "internal error: Set value to const_functor 0x%x\n", p);
       fprintf(stderr, "              : Value is %u, trying to set %u\n",
@@ -732,8 +732,8 @@ void const_functor_s::set(vvp_ipoint_t p, bool, unsigned val, unsigned)
 }
 
 
-static vvp_ipoint_t make_const_functor(unsigned val, 
-				       unsigned str0, 
+static vvp_ipoint_t make_const_functor(unsigned val,
+				       unsigned str0,
 				       unsigned str1)
 {
       vvp_ipoint_t fdx = functor_allocate(1);
@@ -758,10 +758,10 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
       else if (strcmp(lab, "C<su0>") == 0)
 	    *ref = make_const_functor(0,7,7);
 
-      else if (strcmp(lab, "C<pu0>") == 0) 
+      else if (strcmp(lab, "C<pu0>") == 0)
 	    *ref = make_const_functor(0,5,5);
 
-      else if (strcmp(lab, "C<we0>") == 0) 
+      else if (strcmp(lab, "C<we0>") == 0)
 	    *ref = make_const_functor(0,3,3);
 
       else if (strcmp(lab, "C<1>") == 0)
@@ -772,16 +772,16 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 
       else if (strcmp(lab, "C<pu1>") == 0)
 	    *ref = make_const_functor(1,5,5);
- 
+
       else if (strcmp(lab, "C<we1>") == 0)
 	    *ref = make_const_functor(1,3,3);
- 
+
       else if (strcmp(lab, "C<x>") == 0)
 	    *ref = make_const_functor(2,6,6);
-      
+
       else if (strcmp(lab, "C<z>") == 0)
 	    *ref = make_const_functor(3,6,6);
-      
+
       else {
 	    functor_ref_lookup(ref, lab, idx);
 	    return;
@@ -801,7 +801,7 @@ static void make_extra_outputs(vvp_ipoint_t fdx, unsigned wid)
 }
 
 static void make_arith(vvp_arith_ *arith,
-		       char*label, long wid, 
+		       char*label, long wid,
 		       unsigned argc, struct symb_s*argv)
 {
       vvp_ipoint_t fdx = functor_allocate(wid);
@@ -1062,7 +1062,7 @@ void compile_shiftr(char*label, long wid, unsigned argc, struct symb_s*argv)
       }
 
       vvp_arith_ *arith = new vvp_shiftr(wid);
-      
+
       make_shift(arith, label, wid, argc, argv);
 }
 
@@ -1096,7 +1096,7 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 	    vvp_ipoint_t fdx = functor_allocate(1);
 	    functor_define(fdx, obj);
 	    define_functor_symbol(label, fdx);
-	    
+
 	    inputs_connect(fdx, argc, argv);
       }
 
@@ -1161,15 +1161,15 @@ void compile_udp_functor(char*label, char*type,
 {
       struct vvp_udp_s *u = udp_find(type);
       assert (argc == u->nin);
-      
+
       functor_t udp = new udp_functor_s(u);
-      
+
       unsigned nfun = (argc+3)/4;
       vvp_ipoint_t fdx = functor_allocate(nfun);
       functor_define(fdx, udp);
       define_functor_symbol(label, fdx);
-      free(label);  
-      
+      free(label);
+
       if (nfun > 1) {
 	    for (unsigned i=0;  i < nfun-1;  i++) {
 		  functor_t fu = new edge_inputs_functor_s;
@@ -1183,7 +1183,7 @@ void compile_udp_functor(char*label, char*type,
 
       inputs_connect(fdx, argc, argv);
       free(argv);
-      
+
       if (u->sequ)
 	    udp->put_oval(u->init, false);
 }
@@ -1202,7 +1202,7 @@ void compile_memory(char *label, char *name, int msb, int lsb,
   free(label);
 }
 
-void compile_memory_port(char *label, char *memid, 
+void compile_memory_port(char *label, char *memid,
 			 unsigned msb, unsigned lsb,
 			 unsigned naddr,
 			 unsigned argc, struct symb_s *argv)
@@ -1211,8 +1211,8 @@ void compile_memory_port(char *label, char *memid,
   free(memid);
   assert(mem);
 
-  // This is not a Verilog bit range. 
-  // This is a data port bit range. 
+  // This is not a Verilog bit range.
+  // This is a data port bit range.
   assert (lsb >= 0  &&  lsb<=msb);
   assert (msb < memory_data_width(mem));
   unsigned nbits = msb-lsb+1;
@@ -1254,7 +1254,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	/* First, I can give the label a value that is the current
 	   codespace pointer. Don't need the text of the label after
 	   this is done. */
-      if (label) 
+      if (label)
 	    compile_codelabel(label);
 
 	/* Lookup the opcode in the opcode table. */
@@ -1322,7 +1322,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  functor_ref_lookup(&code->iptr, 
+		  functor_ref_lookup(&code->iptr,
 				     opa->argv[idx].symb.text,
 				     opa->argv[idx].symb.idx);
 		  break;
@@ -1353,7 +1353,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			free(opa->argv[idx].symb.text);
 
 		  } else {
-			functor_ref_lookup(&code->iptr2, 
+			functor_ref_lookup(&code->iptr2,
 					   opa->argv[idx].symb.text,
 					   opa->argv[idx].symb.idx);
 		  }
@@ -1410,7 +1410,7 @@ void compile_codelabel(char*label)
 
 void compile_disable(char*label, struct symb_s symb)
 {
-      if (label) 
+      if (label)
 	    compile_codelabel(label);
 
 	/* Fill in the basics of the %disable in the instruction. */
@@ -1428,7 +1428,7 @@ void compile_disable(char*label, struct symb_s symb)
  */
 void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 {
-      if (label) 
+      if (label)
 	    compile_codelabel(label);
 
 
@@ -1466,9 +1466,9 @@ void compile_vpi_func_call(char*label, char*name,
 			   unsigned vbit, int vwid,
 			   unsigned argc, vpiHandle*argv)
 {
-      if (label) 
+      if (label)
 	    compile_codelabel(label);
-      
+
 	/* Create an instruction in the code space. */
       vvp_code_t code = codespace_allocate();
       code->opcode = &of_VPI_CALL;
@@ -1579,6 +1579,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.175  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.174  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *

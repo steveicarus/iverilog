@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.38 2003/06/25 04:04:19 steve Exp $"
+#ident "$Id: main.cc,v 1.39 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -35,7 +35,7 @@
 # include  <sys/time.h>
 # include  <sys/resource.h>
 # if defined(LINUX)
-#  include <asm/page.h> 
+#  include <asm/page.h>
 # endif
 #endif // defined(HAVE_SYS_RESOURCE_H)
 
@@ -136,7 +136,7 @@ int main(int argc, char*argv[])
 	  /* Get to the end.  Search back twice for backslashes */
 	s = path + strlen(path);
 	while (*s != '\\') s--; s--;
-	while (*s != '\\') s--; 
+	while (*s != '\\') s--;
 	strcpy(s,"\\lib\\ivl");
 	vpip_module_path[0] = strdup(path);
       }
@@ -252,7 +252,7 @@ int main(int argc, char*argv[])
 	    print_rusage(cycles+1, cycles+0);
 	    vpi_mcd_printf(1, "Running ...\n");
       }
-       
+
 
       schedule_simulate();
 
@@ -277,6 +277,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.39  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.38  2003/06/25 04:04:19  steve
  *  Fix mingw portability problems.
  *

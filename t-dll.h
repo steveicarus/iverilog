@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.114 2004/06/30 02:16:27 steve Exp $"
+#ident "$Id: t-dll.h,v 1.115 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -472,7 +472,7 @@ struct ivl_nexus_s {
 };
 
 
-/* 
+/*
  * Memory.
  */
 struct ivl_memory_s {
@@ -684,6 +684,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.115  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.114  2004/06/30 02:16:27  steve
  *  Implement signed divide and signed right shift in nets.
  *

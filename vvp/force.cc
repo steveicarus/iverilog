@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: force.cc,v 1.7 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: force.cc,v 1.8 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -53,7 +53,7 @@ bool functor_s::enable(vvp_ipoint_t ptr)
       return r;
 }
 
-void force_functor_s::set(vvp_ipoint_t i, bool push, 
+void force_functor_s::set(vvp_ipoint_t i, bool push,
 			  unsigned val, unsigned str)
 {
       if (ipoint_port(i) == 0) {
@@ -161,11 +161,11 @@ bool of_RELEASE(vthread_t thr, vvp_code_t cp)
 }
 
 
-/* 
+/*
 **  Variable functors receive %set or %assign-ed values at port[0].
 **  Continuous assignments are connected to port[1].
 **
-**  port[3] points back to the functor that drives the continuous 
+**  port[3] points back to the functor that drives the continuous
 **  assignment.  This also serves as a flag if assignment is active.
 **
 **  A constant is assigned if the expr ipoint is < 4, i.e. a port of
@@ -175,7 +175,7 @@ bool of_RELEASE(vthread_t thr, vvp_code_t cp)
 void var_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned val, unsigned)
 {
       unsigned pp = ipoint_port(ptr);
-      
+
       if (assigned() && pp==1  ||  !assigned() && pp==0) {
 	    put_oval(val, push);
       }
@@ -204,8 +204,8 @@ bool var_functor_s::deassign(vvp_ipoint_t itgt)
 		  port[1] = 0;
 		  return true;
 	    }
-		
-	    functor_t fu =  functor_index(*ref);		  
+
+	    functor_t fu =  functor_index(*ref);
 	    unsigned pp = ipoint_port(*ref);
 	    ref = &fu->port[pp];
       }
@@ -244,7 +244,7 @@ bool of_CASSIGN(vthread_t thr, vvp_code_t cp)
       fu->out = ipoint_make(itgt, 1);
 
       tgt->set(ipoint_make(itgt, 1), true, fu->get());
-      
+
       return true;
 }
 
@@ -268,6 +268,9 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.8  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.7  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

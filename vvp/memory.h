@@ -1,4 +1,4 @@
-#ifndef __memory_H                                      // -*- c++ -*- 
+#ifndef __memory_H                                      // -*- c++ -*-
 #define __memory_H
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.6 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: memory.h,v 1.7 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -45,7 +45,7 @@ void memory_init_nibble(vvp_memory_t mem, unsigned idx, unsigned char val);
 
 void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val);
 unsigned memory_get(vvp_memory_t mem, unsigned idx);
-void schedule_memory(vvp_memory_t mem, unsigned idx, 
+void schedule_memory(vvp_memory_t mem, unsigned idx,
 		     unsigned char val, unsigned delay);
 
 unsigned memory_size(vvp_memory_t mem);
@@ -65,6 +65,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.7  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.6  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

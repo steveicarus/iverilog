@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.89 2004/09/25 01:57:33 steve Exp $"
+#ident "$Id: stub.c,v 1.90 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,7 +114,7 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    fprintf(out, "%*s<string=\"%s\", width=%u", ind, "",
 		    ivl_expr_string(net), ivl_expr_width(net));
 	    if (par != 0)
-		      fprintf(out, ", parameter=%s", 
+		      fprintf(out, ", parameter=%s",
 			      ivl_parameter_basename(par));
 
 	    fprintf(out, ">\n");
@@ -168,7 +168,7 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 			  fprintf(out, "%02x", tmp.bv[idx-1]);
 		    fprintf(out, ")");
 		    if (par != 0)
-			  fprintf(out, ", parameter=%s", 
+			  fprintf(out, ", parameter=%s",
 				  ivl_parameter_basename(par));
 
 		    fprintf(out, ">\n");
@@ -953,6 +953,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.90  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.89  2004/09/25 01:57:33  steve
  *  Dump tri0 and tri1 nets.
  *

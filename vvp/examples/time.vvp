@@ -33,5 +33,5 @@ main	.scope "main";
 code
 	%delay 45;
 	%vpi_call "$display", "Hello, Clock: ", $time;
-	%end; 
+	%end;
 	.thread	code;

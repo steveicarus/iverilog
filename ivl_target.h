@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.125 2004/09/25 01:58:12 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.126 2004/10/04 01:10:53 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -48,7 +48,7 @@ _BEGIN_DECL
  */
 
 
-/* 
+/*
  * In order to grab onto data in the design, the core passes cookies
  * to the various functions of the module. These cookies can in turn
  * be passed to access functions in the core to get more detailed
@@ -380,7 +380,7 @@ extern const char* ivl_design_flag(ivl_design_t des, const char*key);
 extern int         ivl_design_process(ivl_design_t des,
 				      ivl_process_f fun, void*cd);
 extern ivl_scope_t ivl_design_root(ivl_design_t des);
-extern void        ivl_design_roots(ivl_design_t des, 
+extern void        ivl_design_roots(ivl_design_t des,
 				    ivl_scope_t **scopes,
 				    unsigned int *nscopes);
 extern int         ivl_design_time_precision(ivl_design_t des);
@@ -594,7 +594,7 @@ extern unsigned        ivl_logic_attr_cnt(ivl_net_logic_t net);
 extern ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net, unsigned idx);
 
 /* UDP
- * 
+ *
  */
 
 extern unsigned    ivl_udp_sequ(ivl_udp_t net);
@@ -647,7 +647,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    output vector. This is most devices, it turns out.
  *
  * ivl_lpm_selects
- *    This is the size of the select input for a LPM_MUX device, or the 
+ *    This is the size of the select input for a LPM_MUX device, or the
  *    address bus width of an LPM_RAM.
  *
  * ivl_lpm_signed
@@ -720,9 +720,9 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    returns an ivl_expr_t that represents that
  *    expression.  Otherwise, it returns 0.
  *
- * ivl_lval_mem 
+ * ivl_lval_mem
  *    If the l-value is a memory, this method returns an
- *    ivl_memory_t that represents that memory. Otherwise, it 
+ *    ivl_memory_t that represents that memory. Otherwise, it
  *    returns 0.
  *
  * ivl_lval_sig
@@ -739,9 +739,9 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    The part select of the signal is based here. This is the
  *    canonical index of bit-0 of the part select.
  *
- * ivl_lval_idx 
+ * ivl_lval_idx
  *    If the l-value is a memory, this method returns an
- *    ivl_expr_t that represents the index expression.  Otherwise, it 
+ *    ivl_expr_t that represents the index expression.  Otherwise, it
  *    returns 0.
  *
  * ivl_lval_pin
@@ -764,7 +764,7 @@ extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
  * connections of signals and nodes is handled by single-bit
  * nexus. These functions manage the ivl_nexus_t object. They also
  * manage the ivl_nexus_ptr_t objects that are closely related to the
- * nexus. 
+ * nexus.
  *
  * ivl_nexus_name
  *    Each nexus is given a name, typically derived from the signals
@@ -944,7 +944,7 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  *    Every scope has a hierarchical name. This name is also a prefix
  *    of all the names of objects contained within the scope. The
  *    ivl_scope_basename is the name of the scope without the included
- *    hierarchy. 
+ *    hierarchy.
  *
  * ivl_scope_param
  * ivl_scope_params
@@ -1236,6 +1236,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.126  2004/10/04 01:10:53  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.125  2004/09/25 01:58:12  steve
  *  Some commentary on ivl_logic_pin.
  *

@@ -28,7 +28,7 @@ fi
 oslabel=`uname -s`-`uname -r`-$march
 fname=$name-$ver-$oslabel
 
-cp -f prototype $basedir 
+cp -f prototype $basedir
 cp -f pkginfo  $basedir
 cd $basedir
 
@@ -41,7 +41,7 @@ gzip -f $fname
 
 echo "Your $oslabel package is left in /tmp/$fname.gz"
 
-# cleanup 
+# cleanup
 rm -f $basedir/prototype $basedir/pkginfo
 rm -fr /var/spool/pkg/$pkg
 

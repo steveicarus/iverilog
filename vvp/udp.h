@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.13 2003/09/17 03:39:55 steve Exp $"
+#ident "$Id: udp.h,v 1.14 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #include "functor.h"
@@ -37,10 +37,10 @@ struct vvp_udp_s
       unsigned sequ;
       unsigned nin;
       unsigned char init;
-  
+
       void compile_table(char **tab);
       unsigned char propagate(functor_t fu, vvp_ipoint_t i);
-  
+
     private:
       void compile_row_(udp_table_entry_t, char *);
 };
@@ -100,6 +100,9 @@ class udp_functor_s : public edge_inputs_functor_s
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.14  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.13  2003/09/17 03:39:55  steve
  *  Internal documentation of UDP devices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cflexor.lex,v 1.7 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.8 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -113,10 +113,10 @@ static int comment_enter;
      is a little bit tricky, as we don't want to mistake a comment for
      a string word. */
 "/"[^\*\/].* { cflval.text = strdup(yytext);
-               return TOK_STRING; } 
+               return TOK_STRING; }
 
 [^/\n \t\b\r+-].* { cflval.text = strdup(yytext);
-                   return TOK_STRING; } 
+                   return TOK_STRING; }
 
   /* Fallback match. */
 . { return yytext[0]; }

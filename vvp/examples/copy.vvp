@@ -48,6 +48,6 @@ code
 	%set V_main.a, 1;
 	%delay 1;
 	%vpi_call "$display", "a=%b, b=%b", V_main.a, V_main.b;
-	%end; 
+	%end;
 
 	.thread	code;

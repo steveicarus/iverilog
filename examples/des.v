@@ -218,11 +218,11 @@ output 	[1:48] k;
 wire 	[1:56] YY;
 
         assign YY[1:28]=c;         assign YY[29:56]=d;
-        
+
         assign k[1]=YY[14];   assign k[2]=YY[17];   assign k[3]=YY[11];   assign k[4]=YY[24];   assign k[5]=YY[1];    assign k[6]=YY[5];
         assign k[7]=YY[3];    assign k[8]=YY[28];   assign k[9]=YY[15];   assign k[10]=YY[6];   assign k[11]=YY[21];  assign k[12]=YY[10];
-        assign k[13]=YY[23];  assign k[14]=YY[19];  assign k[15]=YY[12];  assign k[16]=YY[4];   assign k[17]=YY[26];  assign k[18]=YY[8]; 
-        assign k[19]=YY[16];  assign k[20]=YY[7];   assign k[21]=YY[27];  assign k[22]=YY[20];  assign k[23]=YY[13];  assign k[24]=YY[2]; 
+        assign k[13]=YY[23];  assign k[14]=YY[19];  assign k[15]=YY[12];  assign k[16]=YY[4];   assign k[17]=YY[26];  assign k[18]=YY[8];
+        assign k[19]=YY[16];  assign k[20]=YY[7];   assign k[21]=YY[27];  assign k[22]=YY[20];  assign k[23]=YY[13];  assign k[24]=YY[2];
         assign k[25]=YY[41];  assign k[26]=YY[52];  assign k[27]=YY[31];  assign k[28]=YY[37];  assign k[29]=YY[47];  assign k[30]=YY[55];
         assign k[31]=YY[30];  assign k[32]=YY[40];  assign k[33]=YY[51];  assign k[34]=YY[45];  assign k[35]=YY[33];  assign k[36]=YY[48];
         assign k[37]=YY[44];  assign k[38]=YY[49];  assign k[39]=YY[39];  assign k[40]=YY[56];  assign k[41]=YY[34];  assign k[42]=YY[53];
@@ -252,13 +252,13 @@ input 	[1:64] key;
 output 	[1:48] k1x,k2x,k3x,k4x,k5x,k6x,k7x,k8x,k9x,k10x,k11x,k12x,k13x,k14x,k15x,k16x;
 wire 	[1:28] c0x,c1x,c2x,c3x,c4x,c5x,c6x,c7x,c8x,c9x,c10x,c11x,c12x,c13x,c14x,c15x,c16x;
 wire 	[1:28] d0x,d1x,d2x,d3x,d4x,d5x,d6x,d7x,d8x,d9x,d10x,d11x,d12x,d13x,d14x,d15x,d16x;
-  
+
 pc1 pc1(key, c0x, d0x);
 
 rol1 rc1(c1x, c0x); rol1 rd1(d1x, d0x);
 rol1 rc2(c2x, c1x); rol1 rd2(d2x, d1x);
 rol2 rc3(c3x, c2x); rol2 rd3(d3x, d2x);
-rol2 rc4(c4x, c3x); rol2 rd4(d4x, d3x);  
+rol2 rc4(c4x, c3x); rol2 rd4(d4x, d3x);
 rol2 rc5(c5x, c4x); rol2 rd5(d5x, d4x);
 rol2 rc6(c6x, c5x); rol2 rd6(d6x, d5x);
 rol2 rc7(c7x, c6x); rol2 rd7(d7x, d6x);
@@ -272,7 +272,7 @@ rol2 rce(c14x, c13x); rol2 rde(d14x, d13x);
 rol2 rcf(c15x, c14x); rol2 rdf(d15x, d14x);
 rol1 rcg(c16x, c15x); rol1 rdg(d16x, d15x);
 
-        
+
 pc2 pc2x1(c1x,d1x,k1x);
 pc2 pc2x2(c2x,d2x,k2x);
 pc2 pc2x3(c3x,d3x,k3x);
@@ -913,7 +913,7 @@ assign l0x[17]=pt[62];        assign l0x[18]=pt[54];        assign l0x[19]=pt[46
 assign l0x[21]=pt[30];        assign l0x[22]=pt[22];        assign l0x[23]=pt[14];        assign l0x[24]=pt[6];
 assign l0x[25]=pt[64];        assign l0x[26]=pt[56];        assign l0x[27]=pt[48];        assign l0x[28]=pt[40];
 assign l0x[29]=pt[32];        assign l0x[30]=pt[24];        assign l0x[31]=pt[16];        assign l0x[32]=pt[8];
-        
+
 assign r0x[1]=pt[57];         assign r0x[2]=pt[49];         assign r0x[3]=pt[41];         assign r0x[4]=pt[33];
 assign r0x[5]=pt[25];         assign r0x[6]=pt[17];         assign r0x[7]=pt[9];          assign r0x[8]=pt[1];
 assign r0x[9]=pt[59];         assign r0x[10]=pt[51];        assign r0x[11]=pt[43];        assign r0x[12]=pt[35];
@@ -935,7 +935,7 @@ assign e[9]=ri[6];    assign e[10]=ri[7];   assign e[11]=ri[8];   assign e[12]=r
 assign e[17]=ri[12];  assign e[18]=ri[13];  assign e[19]=ri[12];  assign e[20]=ri[13];  assign e[21]=ri[14];  assign e[22]=ri[15];  assign e[23]=ri[16];  assign e[24]=ri[17];
 assign e[25]=ri[16];  assign e[26]=ri[17];  assign e[27]=ri[18];  assign e[28]=ri[19];  assign e[29]=ri[20];  assign e[30]=ri[21];  assign e[31]=ri[20];  assign e[32]=ri[21];
 assign e[33]=ri[22];  assign e[34]=ri[23];  assign e[35]=ri[24];  assign e[36]=ri[25];  assign e[37]=ri[24];  assign e[38]=ri[25];  assign e[39]=ri[26];  assign e[40]=ri[27];
-assign e[41]=ri[28];  assign e[42]=ri[29];  assign e[43]=ri[28];  assign e[44]=ri[29];  assign e[45]=ri[30];  assign e[46]=ri[31];  assign e[47]=ri[32];  assign e[48]=ri[1]; 
+assign e[41]=ri[28];  assign e[42]=ri[29];  assign e[43]=ri[28];  assign e[44]=ri[29];  assign e[45]=ri[30];  assign e[46]=ri[31];  assign e[47]=ri[32];  assign e[48]=ri[1];
 
 endmodule
 

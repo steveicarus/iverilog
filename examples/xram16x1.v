@@ -28,7 +28,7 @@ module ram16x1 (q, d, a, we, wclk);
    input wclk;
 
    reg mem[15:0];
-   
+
    assign q = mem[a];
    always @(posedge wclk) if (we) mem[a] = d;
 
@@ -39,7 +39,7 @@ module main;
    reg d;
    reg [3:0] a;
    reg we, wclk;
-    
+
    ram16x1 r1 (q, d, a, we, wclk);
 
    initial begin

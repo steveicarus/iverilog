@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.58 2004/06/30 03:00:36 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.59 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -296,8 +296,8 @@ vpiHandle vpip_make_dec_const(int value);
 vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value);
 
 /*
- *  This one looks like a constant, but really is a vector in the current 
- *  thread. 
+ *  This one looks like a constant, but really is a vector in the current
+ *  thread.
  */
 
 vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
@@ -414,10 +414,13 @@ enum vpi_rbuf_t {
       RBUF_STR
 	/* Storage for *_get_str() */
 };
-extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type); 
+extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.59  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.58  2004/06/30 03:00:36  steve
  *  Some explination of vpi_func arguments.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.3 2002/08/12 01:35:06 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.4 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 /*
@@ -224,7 +224,7 @@ extern struct __vpiNull *vpip_get_null(void);
  * This type represents the handle to a Verilog scope. These include
  * module instantiations and name begin-end blocks. The attach
  * function is used to attach handles to the scope by the runtime
- * initializaiton. 
+ * initializaiton.
  */
 struct __vpiScope {
       struct __vpiHandle base;
@@ -412,6 +412,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.4  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.3  2002/08/12 01:35:06  steve
  *  conditional ident string using autoconfig.
  *

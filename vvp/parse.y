@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.59 2004/08/28 16:26:41 steve Exp $"
+#ident "$Id: parse.y,v 1.60 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -137,8 +137,8 @@ statement
 		}
 
 
-  /* UDP statements define or instantiate UDPs.  Definitions take a 
-     label (UDP type id) a name (string), the number of inputs, and 
+  /* UDP statements define or instantiate UDPs.  Definitions take a
+     label (UDP type id) a name (string), the number of inputs, and
      for sequential UDPs the initial value. */
 
 	| T_LABEL K_UDP_S T_STRING ',' T_NUMBER ',' T_NUMBER ',' udp_table ';'
@@ -300,7 +300,7 @@ statement
 	| label_opt K_vpi_call T_STRING argument_opt ';'
 		{ compile_vpi_call($1, $3, $4.argc, $4.argv); }
 
-	| label_opt K_vpi_func T_STRING ',' 
+	| label_opt K_vpi_func T_STRING ','
 	  T_NUMBER ',' T_NUMBER argument_opt ';'
 		{ compile_vpi_func_call($1, $3, $5, $7, $8.argc, $8.argv); }
 
@@ -459,16 +459,16 @@ operand
      the struct argv_s type.
 
      Each argument of the call is represented as a vpiHandle
-     object.  If the argument is a symbol, the symbol name will be 
+     object.  If the argument is a symbol, the symbol name will be
      kept, until the argument_list is complete.  Then, all symbol
-     lookups will be attempted.  Postponed lookups will point into the 
+     lookups will be attempted.  Postponed lookups will point into the
      resulting $$->argv.
      If it is some other supported object, the necessary
      vpiHandle object is created to support it. */
 
 argument_opt
 	: ',' argument_list
-		{ 
+		{
 		  argv_sym_lookup(&$2);
 		  $$ = $2;
 		}
@@ -589,9 +589,9 @@ udp_table
 	;
 
 mem_init_stmt
-	: K_MEM_I symbol ',' T_NUMBER o_komma 
+	: K_MEM_I symbol ',' T_NUMBER o_komma
 		{ compile_memory_init($2.text, $2.idx, $4); }
-        | mem_init_stmt T_NUMBER o_komma 
+        | mem_init_stmt T_NUMBER o_komma
 		{ compile_memory_init(0x0,     0,      $2); }
 	;
 
@@ -606,7 +606,7 @@ signed_t_number
 	;
 
 delay
-	: /* empty */ 
+	: /* empty */
 		{ $$ = 0; }
 	| '(' T_NUMBER ')'
 		{ $$ = new vvp_delay_2_s($2, $2); }
@@ -635,6 +635,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.60  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.59  2004/08/28 16:26:41  steve
  *  .net range values can be signed.
  *

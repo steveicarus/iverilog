@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.25 2003/09/24 20:46:48 steve Exp $"
+#ident "$Id: udp.cc,v 1.26 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -65,7 +65,7 @@ struct vvp_udp_s *udp_create(char *label)
   assert(!udp_find(label));
 
   struct vvp_udp_s *u = new vvp_udp_s;
-  
+
   symbol_value_t v;
   v.ptr = u;
   sym_set_value(udp_table, label, v);
@@ -86,7 +86,7 @@ struct vvp_udp_s *udp_find(char *label)
 }
 
 typedef unsigned int udp_vec_t;
-struct udp_table_entry_s 
+struct udp_table_entry_s
 {
   udp_vec_t not_0;          // all inputs that must not be 0
   udp_vec_t not_1x;         // all inputs that must not be 1, x
@@ -95,7 +95,7 @@ struct udp_table_entry_s
   unsigned char out;        // new output, 0..2
 };
 
-enum edge_type_e 
+enum edge_type_e
 {
   EDGE_0   = 0x01,
   EDGE_1   = 0x02,
@@ -121,7 +121,7 @@ unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
   for (unsigned i=0; i < nin;  i+=4)
     {
       int idx = ipoint_input_index(base, i);
-      edge_inputs_functor_s *pfun = 
+      edge_inputs_functor_s *pfun =
 	    dynamic_cast<edge_inputs_functor_s *>(functor_index(idx));
       assert(pfun);
 
@@ -170,7 +170,7 @@ unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
 	  ret = row->out;
 	  break;
 	}
-      
+
       if (row->edge_idx != edge_idx)
 	continue;
 
@@ -266,7 +266,7 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 	  n1x = 1; // 1 not allowed
 	  edge = EDGE_any;
 	  break;
-	  
+
 	case 'N':
 	  edge = EDGE_1;
 	  break;
@@ -324,7 +324,7 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 	  edge = EDGE_0 | EDGE_1;
 	  break;
 	}
-      
+
       if (edge)
 	{
 	  if (!sequ)
@@ -369,11 +369,14 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
       fprintf(stderr, "vvp: illegal character (%d) in udp output spec\n", *s);
       assert(0);
     }
-  
+
 }
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.26  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.25  2003/09/24 20:46:48  steve
  *  Standard udp scheduling behavior.
  *

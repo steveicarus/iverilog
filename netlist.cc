@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.225 2004/06/30 02:16:26 steve Exp $"
+#ident "$Id: netlist.cc,v 1.226 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -365,7 +365,7 @@ void NetNet::type(NetNet::Type t)
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(dir);
       }
-	    
+
 }
 
 
@@ -2281,6 +2281,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.226  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.225  2004/06/30 02:16:26  steve
  *  Implement signed divide and signed right shift in nets.
  *

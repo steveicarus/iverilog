@@ -26,21 +26,21 @@
   *  Compile this program with the command:
   *
   *      iverilog -ohello_vpi hello_vpi.vl
-  *  
+  *
   *  After churning for a little while, the program will create the output
   *  file "hello" which is compiled, linked and ready to run. Run this
   *  program like so:
-  *  
+  *
   *      vvp -M. -mhello_vpi hello_vpi
-  *  
+  *
   *  and the program will print the message to its output. Easy! For
   *  more on how to make the iverilog command work, see the iverilog
   *  manual page.
   */
 
 module main();
- 
-initial 
+
+initial
   begin
      $my_hello;
      $finish ;

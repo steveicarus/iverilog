@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.31 2002/08/16 05:18:27 steve Exp $"
+#ident "$Id: functor.cc,v 1.32 2004/10/04 01:10:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,7 +114,7 @@ void NetScope::run_functor(Design*des, functor_t*fun)
 void Design::functor(functor_t*fun)
 {
 	// Scan the scopes
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
 	   scope != root_scopes_.end(); scope++)
 	    (*scope)->run_functor(this, fun);
 
@@ -267,6 +267,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.32  2004/10/04 01:10:53  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.31  2002/08/16 05:18:27  steve
  *  Fix intermix of node functors and node delete.
  *

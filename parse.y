@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.200 2004/09/14 18:24:56 steve Exp $"
+#ident "$Id: parse.y,v 1.201 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -501,7 +501,7 @@ delay_value
 	| expression ':' expression ':' expression
 		{ $$ = pform_select_mtm_expr($1, $3, $5); }
 	;
-	
+
 
 delay_value_simple
 	: DEC_NUMBER
@@ -2455,7 +2455,7 @@ spec_notifier
 		{  }
 	| ','  identifier
 		{ delete $2; }
-	| spec_notifier ',' 
+	| spec_notifier ','
 		{  }
 	| spec_notifier ',' identifier
 		{ delete $3;

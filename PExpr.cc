@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.34 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.35 2004/10/04 01:10:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,12 +67,12 @@ bool PEBinary::is_constant(Module*mod) const
       return left_->is_constant(mod) && right_->is_constant(mod);
 }
 
-PECallFunction::PECallFunction(const hname_t&n, const svector<PExpr *> &parms) 
+PECallFunction::PECallFunction(const hname_t&n, const svector<PExpr *> &parms)
 : path_(n), parms_(parms)
 {
 }
 
-PECallFunction::PECallFunction(const hname_t&n) 
+PECallFunction::PECallFunction(const hname_t&n)
 : path_(n)
 {
 }
@@ -262,6 +262,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.35  2004/10/04 01:10:51  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.34  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

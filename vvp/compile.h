@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.55 2004/06/30 02:15:57 steve Exp $"
+#ident "$Id: compile.h,v 1.56 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -144,14 +144,14 @@ extern void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx);
  */
 extern void code_label_lookup(struct vvp_code_s *code, char *label);
 
-/* 
+/*
  * The `compile_udp_def' function creates a UDP.  The `table' is a
- * NULL terminated array of char*, as assembled by `compile_udp_table'.  
- * `compile_udp_table' is called with `table'==NULL to create a new 
+ * NULL terminated array of char*, as assembled by `compile_udp_table'.
+ * `compile_udp_table' is called with `table'==NULL to create a new
  * table, or with an existing table to append to.
  *
- * `compile_udp_functor' creates a mode-3 functor referring to the 
- * labeled UDP.  
+ * `compile_udp_functor' creates a mode-3 functor referring to the
+ * labeled UDP.
  */
 
 extern void compile_udp_def(int sequ, char*label, char *name,
@@ -170,7 +170,7 @@ extern char **compile_udp_table(char **table, char *row);
 extern void compile_memory(char *label, char *name, int lsb, int msb,
 			   unsigned idxs, long *idx);
 
-extern void compile_memory_port(char *label, char *memid, 
+extern void compile_memory_port(char *label, char *memid,
 				unsigned lsb, unsigned msb,
 				unsigned naddr,
 				unsigned argc, struct symb_s *argv);
@@ -268,6 +268,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.56  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.55  2004/06/30 02:15:57  steve
  *  Add signed LPM divide.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.27 2003/09/26 02:15:15 steve Exp $"
+#ident "$Id: schedule.cc,v 1.28 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -84,7 +84,7 @@ struct event_time_s {
 
 /*
 ** These event_s will be required a lot, at high frequency.
-** Once allocated, we never free them, but stash them away for next time. 
+** Once allocated, we never free them, but stash them away for next time.
 */
 
 static struct event_s* event_free_list = 0;
@@ -556,6 +556,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.28  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.27  2003/09/26 02:15:15  steve
  *  Slight performance tweaks of scheduler.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.29 2004/09/22 16:44:07 steve Exp $"
+#ident "$Id: arith.cc,v 1.30 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -35,7 +35,7 @@ void vvp_arith_::output_x_(vvp_ipoint_t base, bool push, unsigned val)
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
-	    
+
 	    obj->put_oval(val, push);
       }
 }
@@ -45,10 +45,10 @@ void vvp_arith_::output_val_(vvp_ipoint_t base, bool push, unsigned long sum)
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
-	    
+
 	    unsigned val = sum & 1;
 	    sum >>= 1;
-	    
+
 	    obj->put_oval(val, push);
       }
 }
@@ -107,13 +107,13 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
-	    
+
 	    unsigned val = obj->ival;
 	    if (val & 0xaa) {
 		  output_x_(base, push);
 		  return;
 	    }
-	    
+
 	    if (val & 0x01)
 		  a += 1UL << idx;
 	    if (val & 0x04)
@@ -164,17 +164,17 @@ void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       }
 
       unsigned long a = 0, b = 0;
-      
+
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
 	    functor_t obj = functor_index(ptr);
-	    
+
 	    unsigned val = obj->ival;
 	    if (val & 0xaa) {
 		  output_x_(base, push);
 		  return;
 	    }
-	    
+
 	    if (val & 0x01)
 		  a += 1UL << idx;
 	    if (val & 0x04)
@@ -245,9 +245,9 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
 		  return;
 	    }
 
-	    if((a[idx] = ((ival & 0x01) != 0))) mxa=idx+1;  
+	    if((a[idx] = ((ival & 0x01) != 0))) mxa=idx+1;
 	    if((b[idx] = ((ival & 0x04) != 0))) mxb=idx;
-            sum[idx] = 0;                   
+            sum[idx] = 0;
       }
 
 	/* do the a*b multiply using the long method we learned in
@@ -687,6 +687,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.30  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.29  2004/09/22 16:44:07  steve
  *  Fix LPM GE to match LPM GT behavior.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.28 2004/06/30 03:00:36 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.29 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 /*
@@ -150,7 +150,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp)
       assert(rfp->vbit >= 4);
 
       switch (vp->format) {
-	    
+
 	  case vpiIntVal: {
 		long val = vp->value.integer;
 		for (int idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
@@ -371,7 +371,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	  case vpiSysTask:
 	    obj->base.vpi_type = &vpip_systask_rt;
 	    break;
-	    
+
 	  case vpiSysFunc:
 	    if (vwid > 0) {
 		  obj->base.vpi_type = &vpip_sysfunc_rt;
@@ -484,6 +484,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.29  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.28  2004/06/30 03:00:36  steve
  *  Some explination of vpi_func arguments.
  *

@@ -43,7 +43,7 @@ code
 	%set V_main.a, 0;
 	%delay 1;
 	%set V_main.a, 1;
-	%end; 
+	%end;
 	.thread	code;
 
 loop	%wait V_main.b;

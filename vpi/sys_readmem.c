@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.15 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.16 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -120,12 +120,12 @@ static int sys_readmem_calltf(char*name)
       vpiHandle right_range;
       vpiHandle word_index;
 
-      /* These are left and right hand side parameters in the 
+      /* These are left and right hand side parameters in the
 	 declaration of the memory. */
       int left_addr, right_addr;
 
       /* start_addr and stop_addr are the parameters given to $readmem in the
-	 verilog code. When not specified, start_addr is equal to the lower of 
+	 verilog code. When not specified, start_addr is equal to the lower of
 	 the [left,right]_addr and stop_addr is equal to the higher of the
 	 [left,right]_addr. */
       int start_addr, stop_addr, addr_incr;
@@ -284,7 +284,7 @@ static int sys_readmem_calltf(char*name)
       item = vpi_scan(words);
       wwid = vpi_get(vpiSize, item);
 
-      /* variable that will be uses by the lexer to pass values 
+      /* variable that will be uses by the lexer to pass values
 	 back to this code */
       value.format = vpiVectorVal;
       value.value.vector = calloc((wwid+31)/32, sizeof(s_vpi_vecval));
@@ -308,7 +308,7 @@ static int sys_readmem_calltf(char*name)
 
 	  case MEM_WORD:
 	      if (addr >= min_addr && addr <= max_addr){
-		  word_index = vpi_handle_by_index(mitem, addr); 
+		  word_index = vpi_handle_by_index(mitem, addr);
 		  assert(word_index);
 		  vpi_put_value(word_index, &value, 0, vpiNoDelay);
 	      }
@@ -330,7 +330,7 @@ static int sys_readmem_calltf(char*name)
  bailout:
       free(value.value.vector);
 
-      if (item) 
+      if (item)
 	  vpi_free_object(words);
       free(path);
       fclose(file);
@@ -527,12 +527,12 @@ static int sys_writemem_calltf(char*name)
 	  if (cnt%16 == 0)
 	      fprintf(file, "// 0x%08x\n", cnt);
 
-	  word_index = vpi_handle_by_index(mitem, addr); 
+	  word_index = vpi_handle_by_index(mitem, addr);
 	  assert(word_index);
 	  vpi_get_value(word_index, &value);
 	  fprintf(file, "%s\n", value.value.str);
       }
-      
+
       fclose(file);
       return 0;
 }
@@ -576,6 +576,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.16  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.15  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt2.c,v 1.7 2004/02/15 20:46:01 steve Exp $"
+#ident "$Id: sys_lxt2.c,v 1.8 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -226,8 +226,8 @@ static int variable_cb_2(p_cb_data cause)
 {
       struct vcd_info* info = vcd_dmp_list;
       PLI_UINT64 now = timerec_to_time64(cause->time);
- 
-      if (now != vcd_cur_time) {  
+
+      if (now != vcd_cur_time) {
             lxt2_wr_set_time64(dump_file, now);
 	    vcd_cur_time = now;
       }
@@ -256,7 +256,7 @@ static int variable_cb_1(p_cb_data cause)
           cb.reason = cbReadOnlySynch;
           cb.cb_rtn = variable_cb_2;
           vpi_register_cb(&cb);
-      } 
+      }
 
       info->scheduled = 1;
       info->dmp_next  = vcd_dmp_list;
@@ -408,17 +408,17 @@ static void open_dumpfile(const char*path)
       dump_file = lxt2_wr_init(path);
 
       if (dump_file == 0) {
-	    vpi_mcd_printf(1, 
-			   "LXT Error: Unable to open %s for output.\n", 
+	    vpi_mcd_printf(1,
+			   "LXT Error: Unable to open %s for output.\n",
 			   path);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
 
-	    vpi_mcd_printf(1, 
-			   "LXT info: dumpfile %s opened for output.\n", 
+	    vpi_mcd_printf(1,
+			   "LXT info: dumpfile %s opened for output.\n",
 			   path);
-	    
+
 	    assert(prec >= -15);
 	    lxt2_wr_set_timescale(dump_file, prec);
 
@@ -444,9 +444,9 @@ static int sys_dumpfile_calltf(char*name)
 
 	    if (vpi_get(vpiType, item) != vpiConstant
 		|| vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_mcd_printf(1, 
+		  vpi_mcd_printf(1,
 				 "LXT Error:"
-				 " %s parameter must be a string constant\n", 
+				 " %s parameter must be a string constant\n",
 				 name);
 		  return 0;
 	    }
@@ -529,7 +529,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    if (skip)
 		  break;
-	    
+
 	    name = vpi_get_str(vpiName, item);
 	    nexus_id = vpi_get(_vpiNexusId, item);
 	    if (nexus_id) {
@@ -537,12 +537,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    } else {
 		  ident = 0;
 	    }
-	    
+
 	    if (!ident) {
 		  char*tmp = create_full_name(name);
 		  ident = strdup_sh(&name_heap, tmp);
 		  free(tmp);
-		  
+
 		  if (nexus_id)
 			set_nexus_ident(nexus_id, ident);
 
@@ -575,7 +575,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 				       vpi_get(vpiSize, item)-1, 0);
 		  free(n);
             }
-	    
+
 	    break;
 
 	  case vpiRealVar:
@@ -626,16 +626,16 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vpi_get_str(vpiFullName, item);
 
 #if 0
-		  vpi_mcd_printf(1, 
+		  vpi_mcd_printf(1,
 				 "LXT info:"
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
 #endif
 		  nskip = 0 != vcd_names_search(&lxt_tab, fullname);
-		  
-		  if (!nskip) 
+
+		  if (!nskip)
 			vcd_names_add(&lxt_tab, fullname);
-		  else 
+		  else
 		    vpi_mcd_printf(1,
 				   "LXT warning:"
 				   " ignoring signals"
@@ -645,7 +645,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  name = vpi_get_str(vpiName, item);
 
                   push_scope(name);	/* keep in type info determination for possible future usage */
-		  
+
 		  for (i=0; types[i]>0; i++) {
 			vpiHandle hand;
 			argv = vpi_iterate(types[i], item);
@@ -653,11 +653,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			      scan_item(depth-1, hand, nskip);
 			}
 		  }
-		  
+
                   pop_scope();
 	    }
 	    break;
-	    
+
 	  default:
 	    vpi_mcd_printf(1,
 			   "LXT Error: $lxtdumpvars: Unsupported parameter "
@@ -675,7 +675,7 @@ static int draw_scope(vpiHandle item)
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope)
 	    return 0;
-      
+
       depth = 1 + draw_scope(scope);
       name = vpi_get_str(vpiName, scope);
 
@@ -686,7 +686,7 @@ static int draw_scope(vpiHandle item)
 	  case vpiNamedFork:   type = "fork";       break;
       	  default:             type = "module";     break;
       }
-      
+
       push_scope(name);	/* keep in type info determination for possible future usage */
 
       return depth;
@@ -752,7 +752,7 @@ static int sys_dumpvars_calltf(char*name)
 
 	    vcd_names_sort(&lxt_tab);
 	    scan_item(depth, item, 0);
-	    
+
 	    while (dep--) {
 		  pop_scope();
 	    }
@@ -839,6 +839,9 @@ void sys_lxt2_register()
 
 /*
  * $Log: sys_lxt2.c,v $
+ * Revision 1.8  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.7  2004/02/15 20:46:01  steve
  *  Add the $dumpflush function
  *

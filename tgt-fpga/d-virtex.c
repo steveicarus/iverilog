@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.34 2004/02/15 18:03:30 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.35 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -41,7 +41,7 @@ const static struct edif_xlib_celltable virtex_celltable[] = {
       { "MULT_AND", xilinx_cell_mult_and },
       { 0, 0}
 };
-	    
+
 /*
  * The show_header function is called before any of the devices of the
  * netlist are scanned.
@@ -846,6 +846,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.35  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.34  2004/02/15 18:03:30  steve
  *  Cleanup of warnings.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_udp.cc,v 1.9 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: net_udp.cc,v 1.10 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -42,7 +42,7 @@ bool NetUDP::first(string&inp, char&out) const
   table_idx = (unsigned) -1;
   return next(inp, out);
 }
-  
+
 bool NetUDP::next(string&inp, char&out) const
 {
   table_idx++;
@@ -62,9 +62,9 @@ bool NetUDP::next(string&inp, char&out) const
     }
 
   out = udp->toutput[table_idx];
-  assert( (out == '0') 
-       || (out == '1') 
-       || (out == 'x') 
+  assert( (out == '0')
+       || (out == '1')
+       || (out == 'x')
        || (is_sequential() && (out == '-')));
 
   return true;
@@ -92,6 +92,9 @@ char NetUDP::get_initial() const
 
 /*
  * $Log: net_udp.cc,v $
+ * Revision 1.10  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.9  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

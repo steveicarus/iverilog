@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: link_const.cc,v 1.16 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: link_const.cc,v 1.17 2004/10/04 01:10:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -59,7 +59,7 @@ bool Nexus::drivers_constant() const
 		 outside world. */
 
 	    if (cur_dir == Link::PASSIVE) {
-		  
+
 		  const NetObj*obj = cur->get_obj();
 		  if (obj->scope()->parent() != 0)
 			continue;
@@ -164,6 +164,9 @@ verinum::V Nexus::driven_value() const
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.17  2004/10/04 01:10:53  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.16  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *

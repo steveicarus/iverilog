@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.17 2003/11/12 03:20:14 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.18 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -442,7 +442,7 @@ static void edif_show_generic_dff(ivl_lpm_t net)
 
 	    if (aset) {
 	       if (abits[idx] == '1') {
-		     sprintf(jbuf, "(portRef PRE (instanceRef U%u))", 
+		     sprintf(jbuf, "(portRef PRE (instanceRef U%u))",
 			     edif_uref);
 		     edif_set_nexus_joint(aset, jbuf);
 	       } else {
@@ -477,6 +477,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.18  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.17  2003/11/12 03:20:14  steve
  *  devices need show_cmp_gt
  *

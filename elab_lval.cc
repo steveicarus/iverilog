@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.28 2004/08/28 14:59:44 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.29 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,7 +40,7 @@
  * If there is a part select (i.e., foo[3:1] <= <value>) the NetAssign_
  * is made only as wide as it needs to be (3 bits in this example) and
  * connected to the correct bits of foo. A constant bit select is a
- * special case of the part select. 
+ * special case of the part select.
  *
  * If the bit-select is non-constant (i.e., foo[<expr>] = <value>) the
  * NetAssign_ is made wide enough to connect to all the bits of foo,
@@ -352,6 +352,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.29  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.28  2004/08/28 14:59:44  steve
  *  More detailed error message about bad variable.
  *

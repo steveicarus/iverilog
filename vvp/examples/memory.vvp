@@ -29,7 +29,7 @@ main	.scope	"example";
 
 memory	.mem	"memory", 8,2, 27,5 ;
 
-;;; The word width is 7 bits [8:2].  
+;;; The word width is 7 bits [8:2].
 ;;; The memory size is 23 words, 5..27.
 ;;; Memory words are always numbered in ascending order.
 
@@ -47,7 +47,7 @@ we	.var	"we", 0,0;
 wclk	.event	"wclk";
 di	.var	"di", 5,0;
 d	.net	"d", 5,0, mem[0],mem[1],mem[2],mem[3],mem[4],mem[5];
-mem	.mem/port memory, 6,1, 
+mem	.mem/port memory, 6,1,
 		5, a[0],a[1],a[2],a[3],a[4],
 		wclk, we, di[0],di[1],di[2],di[3],di[4],di[5];
 m	.var	"m", 6,0;
@@ -81,7 +81,7 @@ m	.var	"m", 6,0;
 
 ;;; Run through the addresses and display the data output.
 ;
-;   always 
+;   always
 ;     begin
 ;	#5 $display("a:%b d:%b", a, d);
 ;	-> wclk;
@@ -118,7 +118,7 @@ always ;
 ;;; Initialize a[], run some cycles, overwrite a memory word, run a
 ;;; bit more, read a memory word, finish.
 ;
-;   initial 
+;   initial
 ;     begin
 ;       we = 0;
 ;	di = 'b 10zx10;
@@ -167,7 +167,7 @@ initial ;
 
 ;;; Memories are indexed by index register 3.  The index register
 ;;; points to the bit position in the memory.  Each memory word
-;;; occupies a multiple of 4 bits.  Bit position zero is the LSB of 
+;;; occupies a multiple of 4 bits.  Bit position zero is the LSB of
 ;;; the first memory word, here: memory[5][2].
 
 	%ix/load 3, 23 ;	memory word index

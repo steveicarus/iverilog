@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.20 2004/05/19 03:30:46 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.21 2004/10/04 01:11:00 steve Exp $"
 #endif
 
 /*
@@ -43,13 +43,13 @@ struct __vpiVThrVec {
       char *name;
 };
 
-inline static 
+inline static
 unsigned get_bit(struct __vpiVThrVec *rfp, unsigned idx)
 {
       return vthread_get_bit(vpip_current_vthread, rfp->bas+idx);
 }
 
-inline static 
+inline static
 void set_bit(struct __vpiVThrVec *rfp, unsigned idx, unsigned bit)
 {
       return vthread_put_bit(vpip_current_vthread, rfp->bas+idx, bit);
@@ -173,7 +173,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 
       struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
       char *rbuf;
-      
+
       unsigned wid = rfp->wid;
 
       switch (vp->format) {
@@ -186,7 +186,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    rbuf[wid] = 0;
 	    vp->value.str = rbuf;
 	    break;
-	    
+
 	  case vpiHexStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
@@ -312,7 +312,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
       unsigned wid = rfp->wid;
 
       switch (vp->format) {
-	    
+
 	  case vpiIntVal: {
 		assert(wid <= sizeof(long));
 
@@ -365,7 +365,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp)
       return ref;
 }
 
-// The code fully supports vpiReg, vpi_Net, but we do not 
+// The code fully supports vpiReg, vpi_Net, but we do not
 // create such things, yet.  Lacking a name, for example.
 
 static const struct __vpirt vpip_vthr_const_rt = {
@@ -520,6 +520,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.21  2004/10/04 01:11:00  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.20  2004/05/19 03:30:46  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

@@ -32,5 +32,5 @@ main	.scope module, "main";
 
 code
 	%vpi_call "$display", "Hello, World.";
-	%end; 
+	%end;
 	.thread	code;

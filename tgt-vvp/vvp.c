@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp.c,v 1.16 2003/05/16 03:22:52 steve Exp $"
+#ident "$Id: vvp.c,v 1.17 2004/10/04 01:10:57 steve Exp $"
 #endif
 
 /*
@@ -64,7 +64,7 @@ inline static void draw_module_declarations(ivl_design_t des)
 
 
 int target_design(ivl_design_t des)
-        
+
 {
       int rc;
       ivl_scope_t *roots;
@@ -108,6 +108,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: vvp.c,v $
+ * Revision 1.17  2004/10/04 01:10:57  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.16  2003/05/16 03:22:52  steve
  *  Use fopen64 to open output file.
  *

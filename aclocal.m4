@@ -14,7 +14,7 @@
 AC_DEFUN([AX_CPP_IDENT],
 [AC_CACHE_CHECK([for ident support in C compiler], ax_cv_cpp_ident,
 [AC_TRY_COMPILE([
-#ident "$Id: aclocal.m4,v 1.5 2004/09/27 22:34:10 steve Exp $"
+#ident "$Id: aclocal.m4,v 1.6 2004/10/04 01:10:52 steve Exp $"
 ],[while (0) {}],
 [AS_VAR_SET(ax_cv_cpp_ident, yes)],
 [AS_VAR_SET(ax_cv_cpp_ident, no)])])
@@ -137,16 +137,16 @@ AC_DEFUN([AX_C_PICFLAG],
 [AC_MSG_CHECKING([for flag to make position independent code])
 PICFLAG=-fPIC
 case "${host}" in
-        
+
      *-*-cygwin*)
         PICFLAG=
         ;;
 
-     *-*-hpux*) 
+     *-*-hpux*)
         PICFLAG=+z
         ;;
-        
-esac    
+
+esac
 AC_SUBST(PICFLAG)
 AC_MSG_RESULT($PICFLAG)
 ])# AX_C_PICFLAG
@@ -174,19 +174,19 @@ case "${host}" in
         ;;
 
     *-*-cygwin*)
-        rdynamic="" 
+        rdynamic=""
         ;;
 
     *-*-hpux*)
         rdynamic="-E"
         ;;
-        
+
     *-*-darwin*)
         rdynamic="-Wl,-all_load"
         strip_dynamic="-SX"
         ;;
 
-esac    
+esac
 AC_SUBST(rdynamic)
 AC_MSG_RESULT($rdynamic)
 AC_SUBST(strip_dynamic)

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.h,v 1.3 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: delay.h,v 1.4 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -37,19 +37,19 @@
 **  del = NULL;
 **         new delay with zero delay.
 **
-**  del = new vvp_delay_s(delay); 
+**  del = new vvp_delay_s(delay);
 **         new delay with one spec for all edges.
 **
-**  del = new vvp_delay_2_s(delay, delay); 
+**  del = new vvp_delay_2_s(delay, delay);
 **         new delay with two specs for rise and fall delays.
 **
-**  del = new vvp_delay_3_s(delay); 
+**  del = new vvp_delay_3_s(delay);
 **         new delay with three specs for rise, fall, and highz delays.
 **
-**  del = new vvp_delay_6_s(delay, del...); 
+**  del = new vvp_delay_6_s(delay, del...);
 **         new delay with six specs for all 01z edge delays.
 **
-**  del = new vvp_delay_12_s(delay, del...); 
+**  del = new vvp_delay_12_s(delay, del...);
 **         new delay with twelve specs for all edge delays.
 **
 **  void vvp_delsy_delete(del);
@@ -59,7 +59,7 @@
 **         add the delay spaces.  del1 and del2 are deleted.
 **
 **  del = vvp_delay_set(tgt, src, mask);
-**         set then non-masked edges of delay tgt from src.  
+**         set then non-masked edges of delay tgt from src.
 **         tgt and src are deleted.
 */
 
@@ -75,26 +75,26 @@ struct vvp_delay_s {
       unsigned del[1];
 };
 
-struct vvp_delay_2_s : public vvp_delay_s { 
+struct vvp_delay_2_s : public vvp_delay_s {
       vvp_delay_2_s(unsigned, unsigned);
-      unsigned dell[4-1]; 
+      unsigned dell[4-1];
 };
 
-struct vvp_delay_3_s : public vvp_delay_s  { 
+struct vvp_delay_3_s : public vvp_delay_s  {
       vvp_delay_3_s(unsigned, unsigned, unsigned);
-      unsigned dell[6-1]; 
+      unsigned dell[6-1];
 };
 
-struct vvp_delay_12_s : public vvp_delay_s { 
-      vvp_delay_12_s(unsigned, unsigned, unsigned, 
+struct vvp_delay_12_s : public vvp_delay_s {
+      vvp_delay_12_s(unsigned, unsigned, unsigned,
 		     unsigned, unsigned, unsigned,
-		     unsigned, unsigned, unsigned, 
+		     unsigned, unsigned, unsigned,
 		     unsigned, unsigned, unsigned);
       unsigned dell[12-1];
 };
 
-struct vvp_delay_6_s : public vvp_delay_12_s  { 
-      vvp_delay_6_s(unsigned, unsigned, unsigned, 
+struct vvp_delay_6_s : public vvp_delay_12_s  {
+      vvp_delay_6_s(unsigned, unsigned, unsigned,
 		    unsigned, unsigned, unsigned);
 };
 
@@ -108,11 +108,14 @@ unsigned vvp_delay_get(vvp_delay_t del, unsigned char oval, unsigned char nval)
 vvp_delay_t vvp_delay_new(unsigned n, unsigned *dels);
 void vvp_delay_delete(vvp_delay_t);
 vvp_delay_t vvp_delay_add(vvp_delay_t, vvp_delay_t);
-vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src, 
+vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src,
 			  unsigned mask = 0);
 
 /*
 ** $Log: delay.h,v $
+** Revision 1.4  2004/10/04 01:10:59  steve
+**  Clean up spurious trailing white space.
+**
 ** Revision 1.3  2002/08/12 01:35:08  steve
 **  conditional ident string using autoconfig.
 **

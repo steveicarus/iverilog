@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.13 2003/11/26 01:47:18 steve Exp $"
+#ident "$Id: event.cc,v 1.14 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -33,13 +33,13 @@
 # include  <malloc.h>
 #endif
 
-event_functor_s::event_functor_s(edge_t e) 
+event_functor_s::event_functor_s(edge_t e)
 : edge(e)
 {
       threads = 0;
 }
 
-event_functor_s::~event_functor_s() 
+event_functor_s::~event_functor_s()
 {}
 
 /*
@@ -61,9 +61,9 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 		 requested edge. If there is no edge table, then any
 		 set is a match. */
 	    if (edge) {
-		  
+
 		  unsigned pp = ipoint_port(ptr);
-		  
+
 		  unsigned oval = (old_ival >> 2*pp) & 3;
 		  unsigned nval = (ival     >> 2*pp) & 3;
 		  edge_p = edge & VVP_EDGE(oval,nval);
@@ -157,11 +157,11 @@ void compile_event(char*label, char*type,
 
 	   If the source functor is not declared yet, then don't do
 	   the link yet. Save the reference to be resolved later. */
-      
+
       if (edge != vvp_edge_none)
 	    inputs_connect(fdx, argc, argv);
       else
-	    // Are we sure that we have those .event/or 
+	    // Are we sure that we have those .event/or
 	    // drivers exclusively?
 	    for (unsigned i=0; i<argc; i++) {
 		  inputs_connect(fdx, 1, argv+i);
@@ -197,6 +197,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.14  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.13  2003/11/26 01:47:18  steve
  *  Propagate named event outputs, if any.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.307 2004/09/05 21:07:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.308 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -213,7 +213,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 			      NetConst*dev = new NetConst(scope,
 					      scope->local_symbol(),
 					      verinum::V0);
-			
+
 			      des->add_node(dev);
 			      dev->pin(0).drive0(drive0);
 			      dev->pin(0).drive1(drive1);
@@ -960,7 +960,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
 		  delete tmp;
       }
-      
+
 	// All done. Add the object to the design.
       des->add_node(net);
 }
@@ -2689,7 +2689,7 @@ Design* elaborate(list<perm_string>roots)
 	    map<perm_string,Module*>::const_iterator mod = pform_modules.find(*root);
 	    if (mod == pform_modules.end()) {
 		  cerr << "error: Unable to find the root module \""
-		       << (*root) << "\" in the Verilog source." << endl; 
+		       << (*root) << "\" in the Verilog source." << endl;
 		  cerr << "     : Perhaps ``-s " << (*root)
 		       << "'' is incorrect?" << endl;
 		  des->errors++;
@@ -2697,9 +2697,9 @@ Design* elaborate(list<perm_string>roots)
 	    }
 
 	    Module *rmod = (*mod).second;
-	    
+
 	    // Make the root scope, then scan the pform looking for scopes
-	    // and parameters. 
+	    // and parameters.
 	    NetScope*scope = des->make_root_scope(*root);
 	    scope->time_unit(rmod->time_unit);
 	    scope->time_precision(rmod->time_precision);
@@ -2769,6 +2769,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.308  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.307  2004/09/05 21:07:26  steve
  *  Support degenerat wait statements.
  *

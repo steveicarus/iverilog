@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2004/02/10 19:25:00 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2004/10/04 01:10:56 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -42,7 +42,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @ident_support@ -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
-LDFLAGS = @LDFLAGS@ 
+LDFLAGS = @LDFLAGS@
 
 all: ivlpp
 

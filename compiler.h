@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.25 2004/09/25 01:58:44 steve Exp $"
+#ident "$Id: compiler.h,v 1.26 2004/10/04 01:10:52 steve Exp $"
 #endif
 
 # include  <list>
@@ -65,7 +65,7 @@
 /*
  * These are flags to enable various sorts of warnings. By default all
  * the warnings are off, the -W<list> parameter arranges for each to be
- * enabled. 
+ * enabled.
  */
 
 /* Implicit definitions of wires. */
@@ -136,6 +136,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.26  2004/10/04 01:10:52  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.25  2004/09/25 01:58:44  steve
  *  Add a debug_elaborate flag
  *

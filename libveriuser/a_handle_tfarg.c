@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_tfarg.c,v 1.5 2003/03/18 01:21:49 steve Exp $"
+#ident "$Id: a_handle_tfarg.c,v 1.6 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 #include  <acc_user.h>
@@ -29,7 +29,7 @@
 handle acc_handle_tfarg(int n)
 {
       vpiHandle sys_h, sys_i, rtn_h = 0;
-      
+
       if (n > 0) {
 	    sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
 	    sys_i = vpi_iterate(vpiArgument, sys_h);
@@ -58,6 +58,9 @@ handle acc_handle_tfinst(void)
 
 /*
  * $Log: a_handle_tfarg.c,v $
+ * Revision 1.6  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.5  2003/03/18 01:21:49  steve
  *  Fix warning about uninitialized variable.
  *

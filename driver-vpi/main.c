@@ -399,7 +399,7 @@ static void checkIvlDir(char *root)
 static void setup_mingw_environment()
 {
 	char *pOldPATH = getenv("PATH");		/* get current path */
-	
+
 	if (*gstr.pMINGW) {
 		checkMingwDir(gstr.pMINGW);
 		SetRegistryKey(IVL_REGKEY_MINGW,gstr.pMINGW);

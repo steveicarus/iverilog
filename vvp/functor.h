@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.51 2003/09/09 00:56:45 steve Exp $"
+#ident "$Id: functor.h,v 1.52 2004/10/04 01:10:59 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -76,7 +76,7 @@
  * The functor calculates, when it operates, a 4-value output into
  * oval and a fully strength aware value into ostr.  Functors with
  * fixed drive strength use the odrive0 and odrive1 fields to form the
- * strength value.  
+ * strength value.
  */
 
 /*
@@ -137,7 +137,7 @@ inline static functor_t functor_index(vvp_ipoint_t point)
 }
 
 /*
- * This function defines the functor object.  After allocation an ipoint, 
+ * This function defines the functor object.  After allocation an ipoint,
  * you must call this before functor_index() is called on it.
  */
 extern void functor_define(vvp_ipoint_t point, functor_t obj);
@@ -150,7 +150,7 @@ extern void functor_define(vvp_ipoint_t point, functor_t obj);
 struct functor_s {
       functor_s();
       virtual ~functor_s();
-      
+
         /* delay object */
       vvp_delay_t delay;
 	/* This is the output for the device. */
@@ -170,7 +170,7 @@ struct functor_s {
     private:
 	/* Strength form of the output value. */
       unsigned cstr       : 8;
-      
+
     protected:
       unsigned ostr       : 8;
       unsigned oval       : 2;
@@ -179,7 +179,7 @@ struct functor_s {
       unsigned inhibit    : 1;
 
     public:
-      virtual void set(vvp_ipoint_t ipt, bool push, 
+      virtual void set(vvp_ipoint_t ipt, bool push,
 		       unsigned val, unsigned str = 0) = 0;
 
       inline unsigned char get()      { return cval; }
@@ -257,7 +257,7 @@ inline void functor_s::put_oval(unsigned val, bool push, bool nba_flag)
  * output. If the output changes any, then generate the necessary
  * propagation events to pass the output on.
  */
-inline static 
+inline static
 void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
 {
       functor_t fp = functor_index(ptr);
@@ -268,7 +268,7 @@ void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push)
  * Read the value of the functor. In fact, only the *value* is read --
  * the strength of that value is stripped off.
  */
-inline static 
+inline static
 unsigned functor_get(vvp_ipoint_t ptr)
 {
       functor_t fp = functor_index(ptr);
@@ -286,7 +286,7 @@ struct waitable_hooks_s {
 };
 
 
-// The extra_outputs_functor_s class is for devices that require 
+// The extra_outputs_functor_s class is for devices that require
 // multiple inputs and outputs.
 // ->set redirects the job to the base_, who knows what shall be done.
 
@@ -299,7 +299,7 @@ struct extra_outputs_functor_s: public functor_s {
 };
 
 // extra_ports_functor_s redirects to base without setting the inputs.
-// But base must be aware that i may not match this.  This is used by 
+// But base must be aware that i may not match this.  This is used by
 // memory ports.
 
 struct extra_ports_functor_s : public extra_outputs_functor_s
@@ -309,7 +309,7 @@ struct extra_ports_functor_s : public extra_outputs_functor_s
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
-// The extra_inputs_functor_s class is for devices that require 
+// The extra_inputs_functor_s class is for devices that require
 // multiple inputs but only one output
 // ->set redirects the job to ->out, that knows what shall be done.
 
@@ -343,6 +343,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.52  2004/10/04 01:10:59  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.51  2003/09/09 00:56:45  steve
  *  Reimpelement scheduler to divide nonblocking assign queue out.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_event.cc,v 1.25 2004/02/19 06:57:10 steve Exp $"
+#ident "$Id: net_event.cc,v 1.26 2004/10/04 01:10:54 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -201,7 +201,7 @@ NexusSet* NetEvent::nex_async_()
       if (trig_ != 0)
 	    return 0;
 
-      
+
       NexusSet*tmp = new NexusSet;
       for (NetEvProbe*cur = probes_ ;  cur != 0 ;  cur = cur->enext_) {
 	    if (cur->edge() != NetEvProbe::ANYEDGE) {
@@ -449,6 +449,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.26  2004/10/04 01:10:54  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.25  2004/02/19 06:57:10  steve
  *  Memory and Event names use perm_string.
  *

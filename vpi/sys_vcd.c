@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.55 2004/02/15 20:46:01 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.56 2004/10/04 01:10:58 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -73,7 +73,7 @@ static void gen_new_vcd_id(void)
            vcdid[i] = (char)((v%94)+33); /* for range 33..126 */
            v /= 94;
            if(!v) {
-                 vcdid[i+1] = '\0'; 
+                 vcdid[i+1] = '\0';
                  break;
            }
       }
@@ -93,11 +93,11 @@ static char *truncate_bitvec(char *s)
 	    return s;
       else
 	    s += 1;
-            
-      for(;;s++) { 
+
+      for(;;s++) {
 	    l=r; r=*s;
 	    if(!r) return (s-1);
-                 
+
 	    if(l!=r)
 		  return(((l=='0')&&(r=='1'))?s:s-1);
 
@@ -208,7 +208,7 @@ static int variable_cb_1(p_cb_data cause)
           cb.reason = cbReadOnlySynch;
           cb.cb_rtn = variable_cb_2;
           vpi_register_cb(&cb);
-      } 
+      }
 
       info->scheduled = 1;
       info->dmp_next  = vcd_dmp_list;
@@ -365,8 +365,8 @@ static void open_dumpfile(void)
       dump_file = fopen(dump_path, "w");
 
       if (dump_file == 0) {
-	    vpi_mcd_printf(1, 
-			   "VCD Error: Unable to open %s for output.\n", 
+	    vpi_mcd_printf(1,
+			   "VCD Error: Unable to open %s for output.\n",
 			   dump_path);
 	    return;
       } else {
@@ -375,10 +375,10 @@ static void open_dumpfile(void)
 	    unsigned udx = 0;
 	    time_t walltime;
 
-	    vpi_mcd_printf(1, 
-			   "VCD info: dumpfile %s opened for output.\n", 
+	    vpi_mcd_printf(1,
+			   "VCD info: dumpfile %s opened for output.\n",
 			   dump_path);
-	    
+
 	    time(&walltime);
 
 	    assert(prec >= -15);
@@ -416,9 +416,9 @@ static int sys_dumpfile_compiletf(char*name)
 
 	    if (vpi_get(vpiType, item) != vpiConstant
 		|| vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_mcd_printf(1, 
+		  vpi_mcd_printf(1,
 				 "VCD Error:"
-				 " %s parameter must be a string constant\n", 
+				 " %s parameter must be a string constant\n",
 				 name);
 		  return 0;
 	    }
@@ -501,9 +501,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    if (skip)
 		  break;
-	    
+
 	    name = vpi_get_str(vpiName, item);
-	    
+
 	    nexus_id = vpi_get(_vpiNexusId, item);
 
 	    if (nexus_id) {
@@ -511,14 +511,14 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    } else {
 		  ident = 0;
 	    }
-	    
+
 	    if (!ident) {
 		  ident = strdup(vcdid);
 		  gen_new_vcd_id();
-		  
+
 		  if (nexus_id)
 			set_nexus_ident(nexus_id, ident);
-		  
+
 		  info = malloc(sizeof(*info));
 
 		  info->time.type = vpiSimTime;
@@ -540,7 +540,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  info->cb    = vpi_register_cb(&cb);
 	    }
-	    
+
 	    fprintf(dump_file, "$var %s %u %s %s",
 		    type, vpi_get(vpiSize, item), ident,
 		    name);
@@ -604,16 +604,16 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vpi_get_str(vpiFullName, item);
 
 #if 0
-		  vpi_mcd_printf(1, 
+		  vpi_mcd_printf(1,
 				 "VCD info:"
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
 #endif
 		  nskip = 0 != vcd_names_search(&vcd_tab, fullname);
-		  
-		  if (!nskip) 
+
+		  if (!nskip)
 			vcd_names_add(&vcd_tab, fullname);
-		  else 
+		  else
 		    vpi_mcd_printf(1,
 				   "VCD warning:"
 				   " ignoring signals"
@@ -631,11 +631,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			      scan_item(depth-1, hand, nskip);
 			}
 		  }
-		  
+
 		  fprintf(dump_file, "$upscope $end\n");
 	    }
 	    break;
-	    
+
 	  default:
 	    vpi_mcd_printf(1,
 			   "VCD Error: $dumpvars: Unsupported parameter "
@@ -652,7 +652,7 @@ static int draw_scope(vpiHandle item)
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope)
 	    return 0;
-      
+
       depth = 1 + draw_scope(scope);
       name = vpi_get_str(vpiName, scope);
 
@@ -663,7 +663,7 @@ static int draw_scope(vpiHandle item)
 	  case vpiNamedFork:   type = "fork";       break;
       	  default:             type = "module";     break;
       }
-      
+
       fprintf(dump_file, "$scope %s %s $end\n", type, name);
 
       return depth;
@@ -771,7 +771,7 @@ static int sys_dumpvars_calltf(char*name)
 
 	    vcd_names_sort(&vcd_tab);
 	    scan_item(depth, item, 0);
-	    
+
 	    while (dep--) {
 		  fprintf(dump_file, "$upscope $end\n");
 	    }
@@ -835,6 +835,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.56  2004/10/04 01:10:58  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.55  2004/02/15 20:46:01  steve
  *  Add the $dumpflush function
  *

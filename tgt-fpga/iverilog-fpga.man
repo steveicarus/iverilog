@@ -1,4 +1,4 @@
-.TH iverilog-fpga 1 "$Date: 2003/10/27 06:12:47 $" Version "$Date: 2003/10/27 06:12:47 $"
+.TH iverilog-fpga 1 "$Date: 2004/10/04 01:10:57 $" Version "$Date: 2004/10/04 01:10:57 $"
 .SH NAME
 iverilog-fpga \- FPGA code generator for Icarus Verilog
 
@@ -183,5 +183,5 @@ iverilog(1),
 .nf
 Copyright \(co  2003 Stephen Williams
 
-This document can be freely redistributed according to the terms of the 
+This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.87 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.88 2004/10/04 01:10:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -266,7 +266,7 @@ void PGate::dump_pins(ostream&out) const
 {
       if (pin_count()) {
 	    if (pin(0)) out << *pin(0);
-			      
+
 	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
 		  out << ", ";
 		  if (pin(idx)) out << *pin(idx);
@@ -495,7 +495,7 @@ void PCase::dump(ostream&out, unsigned ind) const
 
 	    } else {
 		  out << setw(ind+2) << "" << *cur->expr[0];
-			
+
 		  for(unsigned e = 1 ; e < cur->expr.count() ; e += 1)
 			out << ", " << *cur->expr[e];
 
@@ -909,6 +909,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.88  2004/10/04 01:10:55  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.87  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

@@ -14,7 +14,7 @@ Prerequisites:
  o Latest net release (1.1.4) of cygwin (sources.redhat.com/cygwin)
 
 Procedure:
- o Get the source code - see the main Icarus Verilog page for how to 
+ o Get the source code - see the main Icarus Verilog page for how to
    do this
  o cd to the verilog directory
  o autoconf.sh
@@ -22,7 +22,7 @@ Procedure:
  o make
  o make install
 
-That's all that's needed.  
+That's all that's needed.
 
 To build your own extensions - just include vpi_user.h and link with
 a command like this:

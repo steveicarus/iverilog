@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_tfarg.c,v 1.9 2004/02/18 02:51:59 steve Exp $"
+#ident "$Id: a_fetch_tfarg.c,v 1.10 2004/10/04 01:10:56 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -42,7 +42,7 @@ double acc_fetch_itfarg(PLI_INT32 n, handle obj)
       if (hand) {
 	    value.format=vpiRealVal;
 	    vpi_get_value(hand, &value);
-	    rtn = value.value.real; 
+	    rtn = value.value.real;
 	    vpi_free_object(iter);
       } else {
 	    rtn = 0.0;
@@ -77,7 +77,7 @@ PLI_INT32 acc_fetch_itfarg_int(PLI_INT32 n, handle obj)
       if (hand) {
 	    value.format=vpiIntVal;
 	    vpi_get_value(hand, &value);
-	    rtn = value.value.integer; 
+	    rtn = value.value.integer;
 	    vpi_free_object(iter);
       } else {
 	    rtn = 0;
@@ -134,6 +134,9 @@ char *acc_fetch_tfarg_str(PLI_INT32 n)
 
 /*
  * $Log: a_fetch_tfarg.c,v $
+ * Revision 1.10  2004/10/04 01:10:56  steve
+ *  Clean up spurious trailing white space.
+ *
  * Revision 1.9  2004/02/18 02:51:59  steve
  *  Fix type mismatches of various VPI functions.
  *
