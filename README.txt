@@ -295,13 +295,6 @@ current state of support for Verilog.
 
   - fork/join is not supported in vvm runtime
 
-  - structural arithmetic operators are in general not supported.
-    Procedural expressions are OK. Constant expressions are OK.
-
-            assign foo = a + b; // sorry
-            always @(a or b) foo = a + b; // OK
-	    parameter foo = a + b; // OK
-
   - Structural shift operators are in general not supported.
     Procedural expressions are OK. Constant expressions are OK.
 
