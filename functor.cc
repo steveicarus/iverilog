@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.10 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: functor.cc,v 1.11 2000/02/13 04:35:43 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -145,6 +145,18 @@ int NetAssignMem::match_proc(proc_match_t*that)
       return that->assign_mem(this);
 }
 
+int proc_match_t::block(NetBlock*)
+{
+      cerr << "default (failing) match for block" << endl;
+      return 0;
+}
+
+int NetBlock::match_proc(proc_match_t*that)
+{
+      cerr << "NetBlock::match_proc" << endl;
+      return that->block(this);
+}
+
 int proc_match_t::condit(NetCondit*)
 {
       return 0;
@@ -152,6 +164,7 @@ int proc_match_t::condit(NetCondit*)
 
 int NetCondit::match_proc(proc_match_t*that)
 {
+      cerr << "NetCondit::match_proc" << endl;
       return that->condit(this);
 }
 
@@ -167,6 +180,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.11  2000/02/13 04:35:43  steve
+ *  Include some block matching from Larry.
+ *
  * Revision 1.10  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

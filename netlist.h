@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.108 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: netlist.h,v 1.109 2000/02/13 04:35:43 steve Exp $"
 #endif
 
 /*
@@ -1072,7 +1072,7 @@ class NetAssignMemNB : public NetAssignMem_ {
     private:
 };
 
-/* A block is stuff line begin-end blocks, that contain and ordered
+/* A block is stuff like begin-end blocks, that contain an ordered
    list of NetProc statements.
 
    NOTE: The emit method calls the target->proc_block function but
@@ -1092,6 +1092,7 @@ class NetBlock  : public NetProc {
 
       void emit_recurse(ostream&, struct target_t*) const;
       virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -2151,6 +2152,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.109  2000/02/13 04:35:43  steve
+ *  Include some block matching from Larry.
+ *
  * Revision 1.108  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

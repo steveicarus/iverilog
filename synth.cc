@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: synth.cc,v 1.4 1999/12/05 02:24:09 steve Exp $"
+#ident "$Id: synth.cc,v 1.5 2000/02/13 04:35:43 steve Exp $"
 #endif
 
 /*
@@ -205,6 +205,21 @@ void match_dff::make_ram_()
       des_->add_node(ram);
 }
 
+class match_block : public proc_match_t {
+
+    public:
+      match_block(Design*d, NetProcTop*t)
+      : des_(d), top_(t)
+      { }
+
+      ~match_block() { }
+
+    private:
+
+      Design*des_;
+      NetProcTop*top_;
+};
+
 class synth_f  : public functor_t {
 
     public:
@@ -242,6 +257,11 @@ void synth_f::proc_always_(class Design*des)
 	    des->delete_process(top_);
 	    return;
       }
+
+      match_block block_pat(des, top_);
+      if (top_->statement()->match_proc(&block_pat)) {
+	    cerr << "XXXX: recurse and return here" << endl;
+      }
 }
 
 
@@ -253,6 +273,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.5  2000/02/13 04:35:43  steve
+ *  Include some block matching from Larry.
+ *
  * Revision 1.4  1999/12/05 02:24:09  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.7 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: functor.h,v 1.8 2000/02/13 04:35:43 steve Exp $"
 #endif
 
 /*
@@ -65,11 +65,15 @@ struct proc_match_t {
       virtual int assign_mem(class NetAssignMem*);
       virtual int condit(class NetCondit*);
       virtual int pevent(class NetPEvent*);
+      virtual int block(class NetBlock*);
 };
 
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.8  2000/02/13 04:35:43  steve
+ *  Include some block matching from Larry.
+ *
  * Revision 1.7  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *
