@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.36 1999/06/07 02:23:31 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.37 1999/06/09 00:58:06 steve Exp $"
 #endif
 
 /*
@@ -597,6 +597,19 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	    assert(lsig->pin_count() == 1);
 	    assert(rsig->pin_count() == 1);
 	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
+	    connect(gate->pin(1), lsig->pin(0));
+	    connect(gate->pin(2), rsig->pin(0));
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    connect(gate->pin(0), osig->pin(0));
+	    des->add_signal(osig);
+	    des->add_node(gate);
+	    break;
+
+	  case '|': // OR
+	    assert(lsig->pin_count() == 1);
+	    assert(rsig->pin_count() == 1);
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::OR);
 	    connect(gate->pin(1), lsig->pin(0));
 	    connect(gate->pin(2), rsig->pin(0));
 	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
@@ -1369,6 +1382,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.37  1999/06/09 00:58:06  steve
+ *  Support for binary | (Stephen Tell)
+ *
  * Revision 1.36  1999/06/07 02:23:31  steve
  *  Support non-blocking assignment down to vvm.
  *
