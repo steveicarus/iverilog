@@ -19,9 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.10 2002/04/20 04:33:23 steve Exp $"
+#ident "$Id: config.h.in,v 1.11 2002/05/24 00:43:16 steve Exp $"
 #endif
 
+# define SIZEOF_UNSIGNED_LONG_LONG 0
 # define SIZEOF_UNSIGNED_LONG 0
 # define SIZEOF_UNSIGNED 0
 
@@ -84,6 +85,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.11  2002/05/24 00:43:16  steve
+ *  Define SIZEOF_UNSIGNED_LONG_LONG
+ *
  * Revision 1.10  2002/04/20 04:33:23  steve
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.
