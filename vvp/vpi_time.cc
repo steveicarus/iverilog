@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.cc,v 1.5 2001/10/15 02:55:03 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.6 2002/01/15 03:06:29 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -32,6 +32,22 @@ static struct __vpiSystemTime {
       struct __vpiHandle base;
       struct t_vpi_time value;
 } time_handle;
+
+static int timevar_get(int code, vpiHandle ref)
+{
+      switch (code) {
+          case vpiSize:
+	      return 64;
+
+          case vpiSigned:
+	      return 0;
+
+	  default:
+	      fprintf(stderr, "Code: %d\n", code);
+	      assert(0);
+	      return 0;
+      }
+}
 
 static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 {
@@ -85,7 +101,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 
 static const struct __vpirt vpip_system_time_rt = {
       vpiTimeVar,
-      0,
+      timevar_get,
       0,
       timevar_get_value,
       0,
@@ -113,6 +129,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.6  2002/01/15 03:06:29  steve
+ *  Support vpiSize and vpiSigned for time objects.
+ *
  * Revision 1.5  2001/10/15 02:55:03  steve
  *  sign warning.
  *
