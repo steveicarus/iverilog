@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.2 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: parse.y,v 1.3 2002/01/24 03:57:45 steve Exp $"
 #endif
+
+# include  <stdio.h>
 
 static void yyerror(const char*msg);
 %}
