@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+# Added support for the -t flag, for odd-ball target types. <steve@icarus.com>
 
 # Setup variables
 execPath=@bindir@
@@ -24,16 +25,13 @@ execIVLPP=${execPath}/ivlpp
 execIVL=${execPath}/ivl
 execCpp=/usr/bin/g++
 
-vvmTarget="-t vvm"
-xnfTarget="-t xnf"
-
 tmpDir=/tmp
 tmpPPFile=${tmpDir}/ivl$$.pp
 tmpCCFile=${tmpDir}/ivl$$.cc
 
 VPIModulePath=@libdir@/ivl:.
 
-target=${vvmTarget}
+target="vvm"
 targetSuffix=""
 
 # If VPI module path aren't set up, warn at least
@@ -43,16 +41,17 @@ if test -z "${VPI_MODULE_PATH}" ; then
 fi
 
 # Try to extract given parameters
-parameter=`getopt D:I:Xxo:s: "$@"` 
+parameter=`getopt D:I:Xxo:s:t: "$@"` 
 eval set -- "${parameter}" 
 while true ; do 
 
     case "$1" in
       -D) extDefines="${extDefines} -D$2" ; shift 2 ;;
       -I) extIncPath="${extIncPath} -I $2" ; shift 2 ;;
-      -X) targetSuffix=".xnf" ; target=${xnfTarget} ; shift ;;
+      -X) target="xnf" ; shift ;;
       -o) outputFile=$2 ; shift 2 ;;
       -s) topModule="-s $2 " ; shift 2 ;;
+      -t) target="-t $2" ; shift 2 ;;
       -x) execute="true"; shift ;;
       --) shift ; break ;;
        *) echo "Internal error! Arg is $1 " ; exit 1 ;;
@@ -68,6 +67,12 @@ if test -z "${verilogFile}" ; then
     echo "verilog [-Dmacro[=defn]] [-Iincludepath] [-X] [-x] [-o outputfilename] [-s topmodule] sourcefile[s]" ;
     exit 1;
 fi
+
+# Shoose a target file suffix based on the target type.
+case "$target" in
+ vvm) targetSuffix="" ;;
+   *) targetSuffix=".$target" ;;
+esac
 
 
 # If no output file is given should we guess one or...?
@@ -87,7 +92,7 @@ fi
 
 
 # Compile preprocessed verilog file
-${execIVL} ${target} -o ${tmpCCFile} ${topModule} ${tmpPPFile}
+${execIVL} -t ${target} -o ${tmpCCFile} ${topModule} ${tmpPPFile}
 if test $? -ne  0 ; then
     echo "Verilog compilation failed. Terminating compilation."
     rm -f ${tmpCCFile}
@@ -96,19 +101,19 @@ fi
 rm -f ${tmpPPFile}
 
 
-case "${targetSuffix}" in
+case "${target}" in
 
-    .xnf) mv ${tmpCCFile} ${outputFile} ;;
+    "xnf") mv ${tmpCCFile} ${outputFile} ;;
 
-    "")  ${execCpp} -rdynamic ${tmpCCFile} -o ${outputFile} -lvvm -ldl ;
-         if test $? -ne 0 ; then
+    "vvm")  ${execCpp} -rdynamic ${tmpCCFile} -o ${outputFile} -lvvm -ldl ;
+	    if test $? -ne 0 ; then
 	     echo "C++ compilation failed. Terminating compilation."
 	     rm -f ${tmpCCFile}
 	     exit 1
-          fi
-          rm -f ${tmpCCFile} ;;
+	    fi
+	    rm -f ${tmpCCFile} ;;
 
-    *) echo "Internal error in target compilation." ; exit 1
+    *) mv ${tmpCCFile} ${outputFile} ;;
 
 esac
 
