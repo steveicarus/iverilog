@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt-virtex.v,v 1.3 2003/07/05 20:22:18 steve Exp $"
+ *   $Id: sqrt-virtex.v,v 1.4 2003/11/25 18:35:31 steve Exp $"
  */
 
 /*
@@ -269,6 +269,7 @@ module main;
    task reset_dut;
       begin
 	 reset = 1;
+	 @(posedge clk) ;
 	 #1 reset = 0;
 	 @(negedge clk) ;
       end
