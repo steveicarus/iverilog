@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.9 2001/03/26 04:00:39 steve Exp $
+ *  $Id: README.txt,v 1.10 2001/03/29 03:46:36 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -197,8 +197,8 @@ through .event objects, that are declare like so:
 	<label> .event "name";
 
 
-This event statement declares an object that a %waitfor instruction
-can take as an operand. When a thread executes a %waitfor, it puts
+This event statement declares an object that a %wait instruction
+can take as an operand. When a thread executes a %wait, it puts
 itself in the notification list of the event and suspends. The
 <symbols_list> is a set of inputs that can trigger the event.
 
@@ -206,6 +206,15 @@ The <type> describes the conditions needed to trigger the event. It
 may be posedge, negedge or edge. If the type is instead a "name"
 string, then this is a named event which receives events by the %set
 instruction instead of from the output of a functor.
+
+If the event has inputs (a requirement unless it is a named event)
+then it has up to 4 symbols that address functors. The event then
+detects the appropriate edge on any of the inputs and signals when the
+event is true. Normally (in Verilog) a posedge or negedge event only
+watches a single bit, so the generated code would only include a
+single symbol for the addressed bit. However, if there are several
+events of the same edge in an event OR expression, the compiler may
+combine up to 4 into a single event.
 
 
 THREAD STATEMENTS:

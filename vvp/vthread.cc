@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.12 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: vthread.cc,v 1.13 2001/03/29 03:46:36 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -268,7 +268,7 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 bool of_WAIT(vthread_t thr, vvp_code_t cp)
 {
       functor_t fp = functor_index(cp->iptr);
-      assert(fp->mode == 1);
+      assert((fp->mode == 1) || (fp->mode == 2));
       vvp_event_t ep = fp->event;
       thr->next = ep->threads;
       ep->threads = thr;
@@ -278,6 +278,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.13  2001/03/29 03:46:36  steve
+ *  Support named events as mode 2 functors.
+ *
  * Revision 1.12  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

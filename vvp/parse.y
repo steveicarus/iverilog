@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.13 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: parse.y,v 1.14 2001/03/29 03:46:36 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -107,12 +107,16 @@ statement
 		{ compile_functor($1, $3, $5, 0, 0); }
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
-     list of inputs. */
+     list of inputs. If the type is instead a string, then we have a
+     named event instead. */
 
 	| T_LABEL K_EVENT T_SYMBOL ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_event($1, $3, obj.cnt, obj.vect);
 		}
+
+	| T_LABEL K_EVENT T_STRING ';'
+		{ compile_named_event($1, $3); }
 
   /* Instructions may have a label, and have zero or more
      operands. The meaning of and restrictions on the operands depends
@@ -303,6 +307,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.14  2001/03/29 03:46:36  steve
+ *  Support named events as mode 2 functors.
+ *
  * Revision 1.13  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

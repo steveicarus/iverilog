@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.11 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: compile.h,v 1.12 2001/03/29 03:46:36 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -73,6 +73,8 @@ extern vpiHandle compile_vpi_lookup(const char*label);
  */
 extern void compile_event(char*label, char*type,
 			  unsigned argc, struct symb_s*argv);
+
+extern void compile_named_event(char*label, char*name);
 
 /*
  * A code statement is a label, an opcode and up to 3 operands. There
@@ -132,6 +134,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.12  2001/03/29 03:46:36  steve
+ *  Support named events as mode 2 functors.
+ *
  * Revision 1.11  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

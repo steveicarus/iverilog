@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.7 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: functor.cc,v 1.8 2001/03/29 03:46:36 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -190,6 +190,21 @@ static void functor_set_mode1(functor_t fp)
 }
 
 /*
+ * A mode-2 functor is a named event. In this case, any set at all is
+ * enough to trigger the blocked threads.
+ */
+static void functor_set_mode2(functor_t fp)
+{
+      vvp_event_t ep = fp->event;
+
+      if (ep->threads) {
+	    vthread_t tmp = ep->threads;
+	    ep->threads = 0;
+	    vthread_schedule_list(tmp);
+      }
+}
+
+/*
  * Set the addressed bit of the functor, and recalculate the
  * output. If the output changes any, then generate the necessary
  * propagation events to pass the output on.
@@ -212,6 +227,9 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit)
 	    break;
 	  case 1:
 	    functor_set_mode1(fp);
+	    break;
+	  case 2:
+	    functor_set_mode2(fp);
 	    break;
       }
 }
@@ -282,6 +300,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.8  2001/03/29 03:46:36  steve
+ *  Support named events as mode 2 functors.
+ *
  * Revision 1.7  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

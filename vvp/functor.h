@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.6 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: functor.h,v 1.7 2001/03/29 03:46:36 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -70,7 +70,7 @@ struct functor_s {
 	/* These are the input values. */
       unsigned char ival;
       unsigned char oval;
-	/* functor mode:  0 == table ;  1 == event */
+	/* functor mode:  0 == table ;  1 == event ; 2 == named event */
       unsigned char mode;
 };
 
@@ -144,6 +144,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.7  2001/03/29 03:46:36  steve
+ *  Support named events as mode 2 functors.
+ *
  * Revision 1.6  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.17 2001/03/28 17:24:32 steve Exp $"
+#ident "$Id: compile.cc,v 1.18 2001/03/29 03:46:36 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -314,6 +314,28 @@ void compile_event(char*label, char*type,
 
       free(type);
       free(label);
+}
+
+void compile_named_event(char*label, char*name)
+{
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_t obj = functor_index(fdx);
+
+      { symbol_value_t val;
+        val.num = fdx;
+	sym_set_value(sym_functors, label, val);
+      }
+
+      obj->ival = 0xaa;
+      obj->oval = 2;
+      obj->mode = 2;
+
+      obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
+      obj->event->threads = 0;
+      obj->event->ival = obj->ival;
+
+      free(label);
+      free(name);
 }
 
 /*
@@ -663,6 +685,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.18  2001/03/29 03:46:36  steve
+ *  Support named events as mode 2 functors.
+ *
  * Revision 1.17  2001/03/28 17:24:32  steve
  *  include string.h for strcmp et al.
  *
