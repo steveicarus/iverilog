@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.56 2002/04/25 05:03:11 steve Exp $"
+#ident "$Id: stub.c,v 1.57 2002/04/27 04:20:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -84,6 +84,11 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  case IVL_EX_SFUNC:
 	    fprintf(out, "%*s<function=\"%s\", width=%u>\n", ind, "",
 		    ivl_expr_name(net), ivl_expr_width(net));
+	    { unsigned cnt = ivl_expr_parms(net);
+	      unsigned idx;
+	      for (idx = 0 ;  idx < cnt ;  idx += 1)
+		    show_expression(ivl_expr_parm(net, idx), ind+3);
+	    }
 	    break;
 
 	  case IVL_EX_SIGNAL:
@@ -625,6 +630,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.57  2002/04/27 04:20:52  steve
+ *  Dump parametres for system functions.
+ *
  * Revision 1.56  2002/04/25 05:03:11  steve
  *  Dump bit select expressions.
  *
