@@ -23,7 +23,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.6 2000/02/24 01:56:28 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -79,7 +79,7 @@ vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count)
       vpip_bit_t outval = inp[0];
       for (unsigned i = 1 ;  i < count ;  i += 1)
 	    outval = outval | inp[i];
-      return not(outval);
+      return v_not(outval);
 }
 
 vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count)
@@ -92,12 +92,12 @@ vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count)
 
 vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count)
 {
-      return not(compute_and(inp,count));
+      return v_not(compute_and(inp,count));
 }
 
 vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count)
 {
-      return not(compute_xor(inp,count));
+      return v_not(compute_xor(inp,count));
 }
 
 void compute_mux(vpip_bit_t*out, unsigned wid,
@@ -143,6 +143,9 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.6  2000/02/24 01:56:28  steve
+ *  change not to v_not.
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *
