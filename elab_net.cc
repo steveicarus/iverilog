@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.9 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.10 1999/11/30 04:33:41 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -499,6 +499,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 			       unsigned long fall,
 			       unsigned long decay) const
 {
+      NetScope*scope = des->find_scope(path);
       NetNet*sig = des->find_signal(path, text_);
 
       if (sig == 0) {
@@ -525,7 +526,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
 	    } else {
 
-		  sig = new NetNet(0, path+"."+text_, NetNet::IMPLICIT, 1);
+		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT, 1);
 		  des->add_signal(sig);
 		  cerr << get_line() << ": warning: Implicitly defining "
 			"wire " << path << "." << text_ << "." << endl;
@@ -816,6 +817,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.10  1999/11/30 04:33:41  steve
+ *  Put implicitly defined signals in the scope.
+ *
  * Revision 1.9  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *
