@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.39 2003/04/14 03:40:21 steve Exp $"
+#ident "$Id: verinum.cc,v 1.40 2003/05/25 03:01:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -342,7 +342,7 @@ verinum trim_vnum(const verinum&that)
 	    tlen = 1;
 	    for (unsigned idx = tlen ;  idx < that.len() ;  idx += 1)
 		  if (that.get(idx) != verinum::V0)
-			tlen = idx;
+			tlen = idx+1;
 
       }
 
@@ -845,6 +845,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.40  2003/05/25 03:01:19  steve
+ *  Get length of trimed unsigned value right.
+ *
  * Revision 1.39  2003/04/14 03:40:21  steve
  *  Make some effort to preserve bits while
  *  operating on constant values.
