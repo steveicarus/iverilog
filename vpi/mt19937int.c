@@ -11,7 +11,7 @@
  *    Change the function prototypes to use ANSI/ISO C syntax.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: mt19937int.c,v 1.3 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: mt19937int.c,v 1.4 2003/05/14 04:18:16 steve Exp $"
 #endif
 
 /* A C-program for MT19937: Integer version (1998/4/6)            */
@@ -48,6 +48,7 @@
 /* ACM Transactions on Modeling and Computer Simulation,           */
 /* Vol. 8, No. 1, January 1998, pp 3--30.                          */
 
+#include "sys_priv.h"
 
 /* Period parameters */  
 #define N 624
@@ -64,13 +65,13 @@
 #define TEMPERING_SHIFT_T(y)  (y << 15)
 #define TEMPERING_SHIFT_L(y)  (y >> 18)
 
-static unsigned long mt[N]; /* the array for the state vector  */
-static int mti=N+1; /* mti==N+1 means mt[N] is not initialized */
-
 /* initializing the array with a NONZERO seed */
 void
-sgenrand(unsigned long seed)
+sgenrand(struct context_s *context, unsigned long seed)
 {
+    unsigned long *mt = context->mt;
+    int mti;
+
     /* setting initial seeds to mt[N] using         */
     /* the generator Line 25 of Table 1 in          */
     /* [KNUTH 1981, The Art of Computer Programming */
@@ -78,20 +79,25 @@ sgenrand(unsigned long seed)
     mt[0]= seed & 0xffffffff;
     for (mti=1; mti<N; mti++)
         mt[mti] = (69069 * mt[mti-1]) & 0xffffffff;
+
+    context->mti = mti;
 }
 
 unsigned long 
-genrand()
+genrand(struct context_s *context)
 {
     unsigned long y;
     static unsigned long mag01[2]={0x0, MATRIX_A};
     /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
+    unsigned long *mt = context->mt;
+    int mti = context->mti;
+
     if (mti >= N) { /* generate N words at one time */
         int kk;
 
         if (mti == N+1)   /* if sgenrand() has not been called, */
-            sgenrand(4357); /* a default initial seed is used   */
+            sgenrand(context, 4357); /* a default initial seed is used   */
 
         for (kk=0;kk<N-M;kk++) {
             y = (mt[kk]&UPPER_MASK)|(mt[kk+1]&LOWER_MASK);
@@ -113,11 +119,16 @@ genrand()
     y ^= TEMPERING_SHIFT_T(y) & TEMPERING_MASK_C;
     y ^= TEMPERING_SHIFT_L(y);
 
+    context->mti = mti;
+
     return y; 
 }
 
 /*
  * $Log: mt19937int.c,v $
+ * Revision 1.4  2003/05/14 04:18:16  steve
+ *  Use seed to store random number context.
+ *
  * Revision 1.3  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_priv.h,v 1.1 2002/08/15 02:12:20 steve Exp $"
+#ident "$Id: sys_priv.h,v 1.2 2003/05/14 04:18:16 steve Exp $"
 #endif
 
 /*
@@ -29,7 +29,21 @@
 extern int sys_vcd_dumpvars_compiletf(char*name);
 
 /*
+ * Context structure for PRNG in mt19937int.c
+ */
+struct context_s {
+      int		mti;		/* the array for the state vector */
+      unsigned long	mt[1023];	/* mti==N+1 means mt[N] is not init */
+};
+
+extern void sgenrand(struct context_s *context, unsigned long seed);
+extern unsigned long genrand(struct context_s *context);
+
+/*
  * $Log: sys_priv.h,v $
+ * Revision 1.2  2003/05/14 04:18:16  steve
+ *  Use seed to store random number context.
+ *
  * Revision 1.1  2002/08/15 02:12:20  steve
  *  add dumpvars_compiletf to check first argument.
  *

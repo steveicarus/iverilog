@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,20 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.5 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: sys_random.c,v 1.6 2003/05/14 04:18:16 steve Exp $"
 #endif
 
 # include "config.h"
+# include "sys_priv.h"
 
 # include  <vpi_user.h>
 # include  <assert.h>
 # include  <stdlib.h>
 # include  <math.h>
 # include  <limits.h>
-
-extern void sgenrand(unsigned long seed);
-extern unsigned long genrand(void);
-
 
 static long rtl_dist_uniform(long*seed, long start, long end)
 {
@@ -104,12 +101,20 @@ static int sys_dist_uniform_sizetf(char*x)
  * Implement the $random system function using the ``Mersenne
  * Twister'' random number generator MT19937.
  */
+
+/* make sure this matches N+1 in mti19937int.c */
+#define NP1	624+1
+
+static struct context_s global_context = { .mti = NP1 };
+
 static int sys_random_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
       vpiHandle argv;
       vpiHandle seed = 0;
+      int pseed;
+      struct context_s *context;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
@@ -123,21 +128,40 @@ static int sys_random_calltf(char*name)
 
 	    val.format = vpiIntVal;
 	    vpi_get_value(seed, &val);
-	    sgenrand(val.value.integer);
+	    pseed = val.value.integer;
+
+	      /* Since there is a seed use the current 
+	         context or create a new one */
+	    context = (struct context_s *)vpi_get_userdata(call_handle);
+	    if (!context) {
+		  context = (struct context_s *)calloc(1, sizeof(*context));
+		  context->mti = NP1;
+		  assert(context);
+
+		    /* squrrel away context */
+		  vpi_put_userdata(call_handle, (void *)context);
+	    }
+
+	      /* If the argument is not the Icarus cookie, then
+		 reseed context */
+	    if (pseed != 0x1ca1ca1c)
+	          sgenrand(context, pseed);
+      } else {
+	    /* use global context */
+          context = &global_context;
       }
 
       val.format = vpiIntVal;
-      val.value.integer = genrand();
+      val.value.integer = genrand(context);
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
-#if 0
+        /* mark seed with cookie */
       if (seed) {
 	    val.format = vpiIntVal;
-	    val.value.integer = i_seed;
+	    val.value.integer = 0x1ca1ca1c;		
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
-#endif
 
       return 0;
 }
@@ -170,6 +194,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.6  2003/05/14 04:18:16  steve
+ *  Use seed to store random number context.
+ *
  * Revision 1.5  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *
