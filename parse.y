@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.163 2002/11/02 03:27:52 steve Exp $"
+#ident "$Id: parse.y,v 1.164 2002/11/09 02:22:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1684,7 +1684,7 @@ localparam_assign_list
 
 
   /* The parameters of a module instance can be overridden by writing
-     a list of expressions in a syntax much line a delay list. (The
+     a list of expressions in a syntax much like a delay list. (The
      difference being the list can have any length.) The pform that
      attaches the expression list to the module checks that the
      expressions are constant.
