@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.3 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.4 2000/09/07 22:37:48 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -282,7 +282,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 			return;
 		  }
 		  verinum*lval = lsb_[idx]->eval_const(des, path);
-		  if (mval == 0) {
+		  if (lval == 0) {
 			cerr << lsb_[idx]->get_line() << ": error: "
 			      "Unable to evaluate constant expression ``" <<
 			      *lsb_[idx] << "''." << endl;
@@ -352,6 +352,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.4  2000/09/07 22:37:48  steve
+ *  ack, detect when lval fails.
+ *
  * Revision 1.3  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during
