@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.20 2001/07/25 03:10:50 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.21 2001/09/30 05:18:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,6 +33,9 @@
 # include  <string.h>
 # include  <assert.h>
 # include  <time.h>
+#ifdef HAVE_MALLOC_H
+# include  <malloc.h>
+#endif
 
 static FILE*dump_file = 0;
 
@@ -49,8 +52,7 @@ struct vcd_info {
       vpiHandle item;
       vpiHandle cb;
       struct t_vpi_time time;
-      char*ident;
-      char*fullname;
+      const char*ident;
       struct vcd_info*next;
 };
 
@@ -115,59 +117,74 @@ static void show_this_item(struct vcd_info*info)
 
 
 /*
- * managed qsorted list of vcd_info structs for duplicates bsearching
+ * managed qsorted list of scope names for duplicates bsearching
  */
-static int nident=0, old_nident=0;
-static struct vcd_info **vcd_info_name_sorted=NULL;
 
-static int vcd_info_name_bsearch_compare(const void *s1, const void *s2)
+struct vcd_names_s {
+      const char *name;
+      struct vcd_names_s *next;
+};
+
+static struct vcd_names_s *vcd_names_list;
+static const char **vcd_names_sorted;
+static int listed_names, sorted_names;
+
+inline static void vcd_names_add(const char *name)
 {
-      char *v1;
-      struct vcd_info *v2;
-
-      v1=(char *)s1;
-      v2=*((struct vcd_info **)s2);
-
-      return(strcmp(v1, v2->fullname));
+      struct vcd_names_s *nl = (struct vcd_names_s *)
+	    malloc(sizeof(struct vcd_names_s));
+      assert(nl);
+      nl->name = name;
+      nl->next = vcd_names_list;
+      vcd_names_list = nl;
+      listed_names ++;
 }
 
-static struct vcd_info *bsearch_vcd_info(char *key)
+static int vcd_names_compare(const void *s1, const void *s2)
 {
-      struct vcd_info **v;
+      const char *v1 = *(const char **) s1;
+      const char *v2 = *(const char **) s2;
 
-      v=(struct vcd_info **)bsearch(key, vcd_info_name_sorted, old_nident,
-				    sizeof(struct vcd_info *), vcd_info_name_bsearch_compare);
-
-      return(v ? (*v) : NULL);
+      return strcmp(v1, v2);
 }
 
-static int vcd_info_name_compare(const void *s1, const void *s2)
+static const char *vcd_names_search(const char *key)
 {
-      struct vcd_info *v1, *v2;
+      const char **v = (const char **)
+	    bsearch(&key, 
+		    vcd_names_sorted, sorted_names,
+		    sizeof(const char *), vcd_names_compare );
+      
+      return(v ? *v : NULL);
+}
 
-      v1=*((struct vcd_info **)s1);
-      v2=*((struct vcd_info **)s2);
-
-      return(strcmp(v1->fullname, v2->fullname));
-}  
-
-void vcd_info_post_process(void)
+void vcd_names_sort(void)
 {
-      if(nident) {
-	    struct vcd_info **l, *r;
+      if (listed_names) {
+	    struct vcd_names_s *r; 
+	    const char **l;
+	    
+	    sorted_names += listed_names;
+	    vcd_names_sorted = (const char **) 
+		  realloc(vcd_names_sorted, 
+			  sorted_names*(sizeof(const char *)));
+	    assert(vcd_names_sorted);
+	    
+	    l = vcd_names_sorted + sorted_names - listed_names;
+	    listed_names = 0;
 
-	    if (vcd_info_name_sorted) free(vcd_info_name_sorted);
-	
-	    old_nident+=nident;
-	    nident=0;
-	    l=vcd_info_name_sorted=(struct vcd_info **)malloc(old_nident*(sizeof(struct vcd_info *)));
-	    r=vcd_list;
-	    while(r) {
-		  *(l++)=r;
-		  r=r->next;
+	    r = vcd_names_list;
+	    vcd_names_list = 0x0;
+
+	    while (r) {
+		  struct vcd_names_s *rr = r;
+		  r = rr->next;
+		  *(l++) = rr->name;
+		  free(rr);
 	    }
-
-	    qsort(vcd_info_name_sorted, old_nident, sizeof(struct vcd_info *), vcd_info_name_compare);
+	    
+	    qsort(vcd_names_sorted, sorted_names, 
+		  sizeof(const char **), vcd_names_compare);
       }
 }
 
@@ -207,6 +224,59 @@ static int variable_cb(p_cb_data cause)
       return 0;
 }
 
+static int dumpvars_status = 0; /* 0:fresh 1:cb installed, 2:callback done */
+static unsigned long dumpvars_time;
+
+static int dumpvars_cb(p_cb_data cause)
+{
+      dumpvars_time = cause->time->low;
+      vcd_cur_time = dumpvars_time;
+
+      fprintf(dump_file, "$enddefinitions $end\n");
+
+      if (!dump_is_off) {
+	    fprintf(dump_file, "#%lu\n", dumpvars_time);
+	    fprintf(dump_file, "$dumpvars\n");
+	    vcd_checkpoint();
+	    fprintf(dump_file, "$end\n");
+      }
+
+      dumpvars_status = 2;
+
+      return 0;
+}
+
+inline static int install_dumpvars_callback(void)
+{
+      struct t_cb_data cb;
+      static struct t_vpi_time time;
+
+      if (dumpvars_status == 1)
+	    return 0;
+
+      if (dumpvars_status == 2) {
+	    fprintf(stderr, 
+		    "VCD error:"
+		    " $dumpvars ignored\n"
+		    "VCD error:"
+		    " $dumpvars was previously called at simtime %lu\n",
+		    dumpvars_time);
+	    return 1;
+      }
+
+      time.type = vpiSimTime;
+      cb.time = &time;
+      cb.reason = cbReadOnlySynch;
+      cb.cb_rtn = dumpvars_cb;
+      cb.user_data = 0x0;
+      cb.obj = 0x0;
+
+      vpi_register_cb(&cb);
+
+      dumpvars_status = 1;
+      return 0;
+}
+
 static int sys_dumpoff_calltf(char*name)
 {
       dump_is_off = 1;
@@ -215,7 +285,19 @@ static int sys_dumpoff_calltf(char*name)
 
 static int sys_dumpon_calltf(char*name)
 {
+      s_vpi_time now;
       dump_is_off = 0;
+
+      if (dump_file == 0)
+	    return 0;
+
+      vpi_get_time(0, &now);
+      if (now.low > vcd_cur_time) {
+	    fprintf(dump_file, "#%u\n", now.low);
+	    vcd_cur_time = now.low;
+	    vcd_checkpoint();
+      }
+
       return 0;
 }
 
@@ -310,7 +392,73 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-static void scan_scope(unsigned depth, vpiHandle argv)
+/* 
+   Nexus Id cache
+
+   In structural models, many signals refer to the same nexus.
+   Some structural models also have very many signals.  This cache
+   saves nexus_id - vcd_id pairs, and reuses the vcd_id when a signal 
+   refers to a nexus that is already dumped.
+
+   The new signal will be listed as a $var, but no callback 
+   will be installed.  This saves considerable CPU time and leads 
+   to smalle VCD files.
+
+   The _vpiNexusId is a private (int) property of IVL simulators.
+*/
+
+struct vcd_id_s 
+{
+  const char *id;
+  struct vcd_id_s *next;
+  int nex;
+};
+
+static inline unsigned ihash(int nex)
+{
+  unsigned a = nex;
+  a ^= a>>16;
+  a ^= a>>8;
+  return a & 0xff;
+}
+
+static struct vcd_id_s **vcd_ids;
+
+inline static const char *find_nexus_ident(int nex)
+{
+      struct vcd_id_s *bucket;
+      
+      if (!vcd_ids) {
+	    vcd_ids = (struct vcd_id_s **)
+		  calloc(256, sizeof(struct vcd_id_s*));
+	    assert(vcd_ids);
+      }
+
+      bucket = vcd_ids[ihash(nex)];
+      while (bucket) {
+	    if (nex == bucket->nex)
+		  return bucket->id;
+	    bucket = bucket->next;
+      }
+
+      return 0;
+}
+
+inline static void set_nexus_ident(int nex, const char *id)
+{
+      struct vcd_id_s *bucket;
+
+      assert(vcd_ids);
+
+      bucket = (struct vcd_id_s *) malloc(sizeof(struct vcd_id_s));
+      bucket->next = vcd_ids[ihash(nex)];
+      bucket->id = id;
+      bucket->nex = nex;
+      vcd_ids[ihash(nex)] = bucket;
+}
+
+
+static void scan_scope(unsigned depth, vpiHandle argv, int skip)
 {
       struct t_cb_data cb;
       struct vcd_info*info;
@@ -323,35 +471,52 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 
       for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
 	    const char*type;
-	    char*fullname;
+	    const char*fullname;
+	    const char* ident;
+	    int nexus_id;
 
 	    switch (vpi_get(vpiType, item)) {
 		case vpiNet:
 		case vpiReg:
-		  fullname=vpi_get_str(vpiFullName, item);
-		  if((old_nident)&&(fullname)&&(bsearch_vcd_info(fullname)))
-			continue;
+		  if (skip)
+			break;
 
+		  fullname = vpi_get_str(vpiFullName, item);
+		  
 		  type = "wire";
 		  if (vpi_get(vpiType, item) == vpiReg)
 			type = "reg";
 
-		  info = malloc(sizeof(*info));
-		  info->time.type = vpiSimTime;
-		  cb.time = &info->time;
-		  cb.user_data = (char*)info;
-		  cb.obj = item;
-		  info->item  = item;
-		  info->ident = strdup(vcdid);
-		  info->fullname = strdup(fullname);
-		  info->cb    = vpi_register_cb(&cb);
-		  info->next = vcd_list;
-		  vcd_list   = info;
+		  nexus_id = vpi_get(_vpiNexusId, item);
+
+		  if (nexus_id) {
+			ident = find_nexus_ident(nexus_id);
+		  } else {
+			ident = 0;
+		  }
+
+		  if (!ident) {
+			ident = strdup(vcdid);
+			gen_new_vcd_id();
+
+			if (nexus_id)
+			      set_nexus_ident(nexus_id, ident);
+			
+			info = malloc(sizeof(*info));
+			info->time.type = vpiSimTime;
+			cb.time = &info->time;
+			cb.user_data = (char*)info;
+			cb.obj = item;
+			info->item  = item;
+			info->ident = ident;
+			info->cb    = vpi_register_cb(&cb);
+			info->next = vcd_list;
+			vcd_list   = info;
+		  }
+
 		  fprintf(dump_file, "$var %s %u %s %s $end\n",
-			  type, vpi_get(vpiSize, item), info->ident,
-			  info->fullname);
-		  gen_new_vcd_id();
-		  nident += 1;
+			  type, vpi_get(vpiSize, item), ident,
+			  fullname);
 		  break;
 
 		case vpiModule:
@@ -359,10 +524,39 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		case vpiTask:
 		case vpiFunction:
 		  if (depth > 0) {
+			static int scan_depth = 0;
+			
+			const char* fullname =
+			      vpi_get_str(vpiFullName, item);
+
+			int nskip;
+			
+			/* 
+			   Scopes can be scanned multiple times if
+			   arguments to $dumpvars() overlap.
+			   
+			   While we are decending into a scope, we cannot
+			   encounter duplicates from the current root scope.
+			   So we need to add the list of previously scanned
+			   scopes only before scanning a new root scope.
+
+			   Explicitely specified signals are not covered. 
+			*/
+
+			if (scan_depth == 0)
+			      vcd_names_sort();
+
+			nskip = sorted_names && fullname
+			      && vcd_names_search(fullname);
+
+			if (!nskip) 
+			      vcd_names_add(fullname);
+			
 			sublist = vpi_iterate(vpiInternalScope, item);
 			if (sublist) {
-			      vcd_info_post_process();
-			      scan_scope(depth-1, sublist);
+			      scan_depth++;
+			      scan_scope(depth-1, sublist, nskip);
+			      scan_depth--;
 			}
 		  }
 		  break;
@@ -373,24 +567,15 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 	    }
 
       }
-
-	/* close + sort this level so parent collisions are found */
-      vcd_info_post_process();
 }
 
 static int sys_dumpvars_calltf(char*name)
 {
       unsigned depth;
       s_vpi_value value;
-      s_vpi_time now;
       vpiHandle item;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-
-      if (argv == 0) {
-	    vpi_printf("SORRY: %s requires arguments\n", name);
-	    return 0;
-      }
+      vpiHandle argv;
 
       if (dump_file == 0) {
 	    vpi_printf("warning: %s caused default dumpfile "
@@ -401,6 +586,16 @@ static int sys_dumpvars_calltf(char*name)
 			     "dumpfile.vcd for output.\n");
 		  return 0;
 	    }
+      }
+
+      if (install_dumpvars_callback()) {
+	    return 0;
+      }
+
+      argv = vpi_iterate(vpiArgument, sys);
+      if (argv == 0) {
+	    vpi_printf("SORRY: %s requires arguments\n", name);
+	    return 0;
       }
 
       item = vpi_scan(argv);
@@ -419,16 +614,7 @@ static int sys_dumpvars_calltf(char*name)
 
       depth = value.value.integer == 0? 0xffffU : value.value.integer;
 
-      assert(dump_file);
-
-      scan_scope(depth, argv);
-
-      fprintf(dump_file, "$enddefinitions $end\n");
-
-      vpi_get_time(0, &now);
-      fprintf(dump_file, "#%u\n", now.low);
-
-      vcd_checkpoint();
+      scan_scope(depth, argv, 0);
 
       return 0;
 }
@@ -480,6 +666,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.21  2001/09/30 05:18:46  steve
+ *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
+ *
  * Revision 1.20  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

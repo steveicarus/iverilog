@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.24 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.25 2001/09/30 05:18:46 steve Exp $"
 #endif
 
 /*
@@ -70,6 +70,12 @@ static int signal_get(int code, vpiHandle ref)
 		  return rfp->msb - rfp->lsb + 1;
 	    else
 		  return rfp->lsb - rfp->msb + 1;
+
+	  case _vpiNexusId:
+	    if (rfp->msb == rfp->lsb)
+		  return vvp_fvector_get(rfp->bits, 0);
+	    else
+		  return 0;
 
 	  default:
 	    return 0;
@@ -499,6 +505,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.25  2001/09/30 05:18:46  steve
+ *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
+ *
  * Revision 1.24  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *

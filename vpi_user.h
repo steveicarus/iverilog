@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.5 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.6 2001/09/30 05:18:46 steve Exp $"
 #endif
 
 
@@ -179,6 +179,8 @@ typedef struct t_vpi_value {
 #   define vpiHexConst    5
 #   define vpiStringConst 6
 #define vpiSigned    65
+/* IVL private properties */
+#define _vpiNexusId 128
 
 /* DELAY MODES */
 #define vpiNoDelay            1
@@ -307,6 +309,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.6  2001/09/30 05:18:46  steve
+ *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/05/20 15:09:40  steve
  *  Mingw32 support (Venkat Iyer)
  *
@@ -321,95 +326,5 @@ EXTERN_C_END
  *
  * Revision 1.1  2001/03/19 01:21:45  steve
  *  vpi_user header file is a root header.
- *
- * Revision 1.25  2001/01/06 22:22:17  steve
- *  Support signed decimal display of variables.
- *
- * Revision 1.24  2000/10/28 00:51:42  steve
- *  Add scope to threads in vvm, pass that scope
- *  to vpi sysTaskFunc objects, and add vpi calls
- *  to access that information.
- *
- *  $display displays scope in %m (PR#1)
- *
- * Revision 1.23  2000/10/04 02:37:44  steve
- *  Use .def file instead of _dllexport.
- *
- * Revision 1.22  2000/10/03 16:15:35  steve
- *  Cleanup build of VPI modules under Cygwin. (Venkat)
- *
- * Revision 1.21  2000/09/30 03:20:48  steve
- *  Cygwin port changes from Venkat
- *
- * Revision 1.20  2000/08/08 01:47:52  steve
- *  Add vpi_vlog_info support from Adrian
- *
- * Revision 1.19  2000/07/26 03:53:12  steve
- *  Make simulation precision available to VPI.
- *
- * Revision 1.18  2000/05/31 01:32:16  steve
- *  typ vpiRealType.
- *
- * Revision 1.17  2000/05/18 03:27:32  steve
- *  Support writing scalars and vectors to signals.
- *
- * Revision 1.16  2000/05/07 18:20:08  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.15  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.14  2000/03/08 04:36:54  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.13  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.12  2000/02/13 19:18:28  steve
- *  Accept memory words as parameter to $display.
- *
- * Revision 1.11  2000/01/20 06:04:55  steve
- *  $dumpall checkpointing in VCD dump.
- *
- * Revision 1.10  1999/12/15 04:01:14  steve
- *  Add the VPI implementation of $readmemh.
- *
- * Revision 1.9  1999/11/28 00:56:08  steve
- *  Build up the lists in the scope of a module,
- *  and get $dumpvars to scan the scope for items.
- *
- * Revision 1.8  1999/11/27 19:07:58  steve
- *  Support the creation of scopes.
- *
- * Revision 1.7  1999/11/10 02:52:24  steve
- *  Create the vpiMemory handle type.
- *
- * Revision 1.6  1999/11/07 20:33:30  steve
- *  Add VCD output and related system tasks.
- *
- * Revision 1.5  1999/11/07 02:25:08  steve
- *  Add the $monitor implementation.
- *
- * Revision 1.4  1999/10/28 00:47:25  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
- *
- * Revision 1.3  1999/08/19 02:51:03  steve
- *  Add vpi_sim_control
- *
- * Revision 1.2  1999/08/18 03:44:49  steve
- *  declare vou_sim_control
- *
- * Revision 1.1  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
  */
 #endif
