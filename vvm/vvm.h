@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.7 1999/05/03 01:51:29 steve Exp $"
+#ident "$Id: vvm.h,v 1.8 1999/06/07 03:40:22 steve Exp $"
 #endif
 
 # include  <vector>
@@ -69,6 +69,15 @@ inline vvm_bit_t operator ^ (vvm_bit_t l, vvm_bit_t r)
       if (r == Vz) return Vx;
       if (l == V0) return r;
       return (r == V0)? V1 : V0;
+}
+
+inline vvm_bit_t less_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
+{
+      if (l == Vx) return Vx;
+      if (r == Vx) return Vx;
+      if (l > r) return V0;
+      if (l < r) return V1;
+      return c;
 }
 
 extern vvm_bit_t add_with_carry(vvm_bit_t l, vvm_bit_t r, vvm_bit_t&carry);
@@ -268,6 +277,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.8  1999/06/07 03:40:22  steve
+ *  Implement the < binary operator.
+ *
  * Revision 1.7  1999/05/03 01:51:29  steve
  *  Restore support for wait event control.
  *
