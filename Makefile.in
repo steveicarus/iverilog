@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.134 2002/09/16 00:30:33 steve Exp $"
+#ident "$Id: Makefile.in,v 1.135 2002/11/06 03:42:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -238,7 +238,10 @@ $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
 	$(STRIP) $(strip_dynamic) $(libdir)/ivl/ivl@EXEEXT@
 
-$(libdir)/ivl/iverilog.conf: $(srcdir)/iverilog.conf
+# Install iverilog.conf whenever ivl.exe is installed. This
+# forces iverilog.conf to be treated similarly, in spite of
+# dates in the source bundle.
+$(libdir)/ivl/iverilog.conf: $(libdir)/ivl/ivl@EXEEXT@
 	$(INSTALL_DATA) $(srcdir)/iverilog.conf $(libdir)/ivl/iverilog.conf
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
