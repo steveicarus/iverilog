@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.14 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: emit.cc,v 1.15 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 /*
@@ -145,9 +145,14 @@ void NetRepeat::emit_proc(ostream&o, struct target_t*tgt) const
       tgt->proc_repeat(o, this);
 }
 
-void NetTask::emit_proc(ostream&o, struct target_t*tgt) const
+void NetSTask::emit_proc(ostream&o, struct target_t*tgt) const
 {
-      tgt->proc_task(o, this);
+      tgt->proc_stask(o, this);
+}
+
+void NetUTask::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_utask(o, this);
 }
 
 void NetWhile::emit_proc(ostream&o, struct target_t*tgt) const
@@ -218,6 +223,14 @@ void Design::emit(ostream&o, struct target_t*tgt) const
 	    }
       }
 
+
+	// emit task definitions
+      {
+	    map<string,NetTaskDef*>::const_iterator ta;
+	    for (ta = tasks_.begin() ; ta != tasks_.end() ;  ta ++) {
+		  tgt->task_def(o, (*ta).second);
+	    }
+      }
 
 	// emit nodes
       if (nodes_) {
@@ -295,6 +308,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.15  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.14  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

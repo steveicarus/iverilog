@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.40 1999/06/24 05:02:36 steve Exp $"
+#ident "$Id: netlist.cc,v 1.41 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -430,12 +430,33 @@ NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 {
 }
 
-NetTask::~NetTask()
+NetSTask::NetSTask(const string&na, const svector<NetExpr*>&pa)
+: name_(na), parms_(pa)
 {
-      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
+      assert(name_[0] == '$');
+}
+
+NetSTask::~NetSTask()
+{
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    delete parms_[idx];
 
-      delete[]parms_;
+}
+
+const NetExpr* NetSTask::parm(unsigned idx) const
+{
+      return parms_[idx];
+}
+
+NetUTask::NetUTask(NetTaskDef*def, const svector<NetExpr*>&p)
+: task_(def), parms_(p)
+{
+}
+
+NetUTask::~NetUTask()
+{
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+	    delete parms_[idx];
 }
 
 NetExpr::~NetExpr()
@@ -772,6 +793,16 @@ NetRepeat::~NetRepeat()
 const NetExpr* NetRepeat::expr() const
 {
       return expr_;
+}
+
+NetTaskDef::NetTaskDef(const string&n, NetProc*p)
+: name_(n), proc_(p)
+{
+}
+
+NetTaskDef::~NetTaskDef()
+{
+      delete proc_;
 }
 
 NetUDP::NetUDP(const string&n, unsigned pins, bool sequ)
@@ -1143,6 +1174,20 @@ NetMemory* Design::find_memory(const string&key)
       return (*cur).second;
 }
 
+void Design::add_task(const string&key, NetTaskDef*def)
+{
+      tasks_[key] = def;
+}
+
+NetTaskDef* Design::find_task(const string&key)
+{
+      map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
+      if (cur == tasks_.end())
+	    return 0;
+
+      return (*cur).second;
+}
+
 void Design::add_node(NetNode*net)
 {
       assert(net->design_ == 0);
@@ -1250,6 +1295,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.41  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.40  1999/06/24 05:02:36  steve
  *  Properly terminate signal matching scan.
  *

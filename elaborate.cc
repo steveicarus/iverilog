@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.49 1999/06/24 04:45:29 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.50 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 /*
@@ -1352,13 +1352,47 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 
 NetProc* PCallTask::elaborate(Design*des, const string&path) const
 {
-      NetTask*cur = new NetTask(name(), nparms());
+      if (name_[0] == '$')
+	    return elaborate_sys(des, path);
+      else
+	    return elaborate_usr(des, path);
+}
+
+/*
+ * A call to a system task involves elaborating all the parameters,
+ * then passing the list to the NetSTask object.
+ */
+NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
+{
+      svector<NetExpr*>eparms (nparms());
 
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 	    PExpr*ex = parm(idx);
-	    cur->parm(idx, ex? ex->elaborate_expr(des, path) : 0);
+	    eparms[idx] = ex? ex->elaborate_expr(des, path) : 0;
       }
 
+      NetSTask*cur = new NetSTask(name(), eparms);
+      return cur;
+}
+
+NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
+{
+      svector<NetExpr*>eparms (nparms());
+
+      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+	    PExpr*ex = parm(idx);
+	    eparms[idx] = ex? ex->elaborate_expr(des, path) : 0;
+      }
+
+      NetTaskDef*def = des->find_task(path + "." + name_);
+      if (def == 0) {
+	    cerr << get_line() << ": Enable of unknown task ``" <<
+		  name_ << "''." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetUTask*cur = new NetUTask(def, eparms);
       return cur;
 }
 
@@ -1532,6 +1566,25 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
 }
 
 /*
+ * A task definition is elaborated by elaborating the statement that
+ * it contains, and ... XXXX
+ */
+void PTask::elaborate(Design*des, const string&path) const
+{
+      NetProc*st = statement_->elaborate(des, path);
+      if (st == 0) {
+	    cerr << statement_->get_line() << ": Unable to elaborate "
+		  "statement in task " << path << " at " << get_line()
+		 << "." << endl;
+	    return;
+      }
+
+      NetTaskDef*def = new NetTaskDef(path, st);
+
+      des->add_task(path, def);
+}
+
+/*
  * The while loop is fairly directly represented in the netlist.
  */
 NetProc* PWhile::elaborate(Design*des, const string&path) const
@@ -1564,6 +1617,16 @@ bool Module::elaborate(Design*des, const string&path) const
 		 ; wt ++ ) {
 
 	    (*wt)->elaborate(des, path);
+      }
+
+	// Elaborate the task definitions. This is done before the
+	// behaviors so that task calls may reference these, and after
+	// the signals so that the tasks can reference them.
+      typedef map<string,PTask*>::const_iterator mtask_it_t;
+      for (mtask_it_t cur = tasks_.begin()
+		 ; cur != tasks_.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    (*cur).second->elaborate(des, pname);
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -1641,6 +1704,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.50  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.49  1999/06/24 04:45:29  steve
  *  Elaborate wide structoral bitwise OR.
  *

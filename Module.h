@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.4 1999/06/15 03:44:53 steve Exp $"
+#ident "$Id: Module.h,v 1.5 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 # include  <list>
@@ -28,6 +28,7 @@
 # include  <string>
 class PExpr;
 class PGate;
+class PTask;
 class PWire;
 class PProcess;
 class Design;
@@ -55,6 +56,7 @@ class Module {
       void add_gate(PGate*gate);
       void add_wire(PWire*wire);
       void add_behavior(PProcess*behave);
+      void add_task(const string&name, PTask*def);
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
@@ -64,6 +66,7 @@ class Module {
       const list<PGate*>& get_gates() const { return gates_; }
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
+      void dump(ostream&out) const;
       bool elaborate(Design*, const string&path) const;
 
     private:
@@ -72,6 +75,7 @@ class Module {
       list<PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
+      map<string,PTask*> tasks_;
 
     private: // Not implemented
       Module(const Module&);
@@ -81,6 +85,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.5  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.4  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.21 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: pform.h,v 1.22 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -27,6 +27,7 @@
 # include  "Statement.h"
 # include  "PGate.h"
 # include  "PExpr.h"
+# include  "PTask.h"
 # include  "PUdp.h"
 # include  "PWire.h"
 # include  "verinum.h"
@@ -119,13 +120,13 @@ extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<string>*names);
+extern void pform_set_task(const string&, PTask*);
 extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
 extern void pform_set_parameter(const string&name, PExpr*expr);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
-extern Statement* pform_make_calltask(string*t, svector<PExpr*>* =0);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<string>*);
 
@@ -156,6 +157,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.22  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.21  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,

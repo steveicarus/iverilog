@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.47 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: parse.y,v 1.48 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -51,6 +51,8 @@ extern void lex_end_table();
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
+
+      PTask*task;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -125,6 +127,7 @@ extern void lex_end_table();
 %type <gatetype> gatetype
 %type <porttype> port_type
 
+%type <task> task_body
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_opt
@@ -977,8 +980,16 @@ module_item
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		}
-	| K_task IDENTIFIER ';' task_body K_endtask
-		{ yyerror(@1, "Sorry, task declarations not supported.");
+	| K_task IDENTIFIER ';'
+		{ pform_push_scope(*$2); }
+	  task_body
+		{ pform_pop_scope(); }
+	  K_endtask
+		{ PTask*tmp = $5;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  pform_set_task(*$2, $5);
+		  delete $2;
 		}
 	| K_function range_or_type_opt  IDENTIFIER ';' func_body K_endfunction
 		{ yyerror(@1, "Sorry, function declarations not supported.");
@@ -1454,25 +1465,52 @@ statement
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list ')' ';'
-		{ $$ = pform_make_calltask($1, $3);
+		{ PCallTask*tmp = new PCallTask(*$1, *$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' ')' ';'
-		{ $$ = pform_make_calltask($1);
+		{ svector<PExpr*>pt (0);
+		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER ';'
-		{ $$ = pform_make_calltask($1);
+		{ svector<PExpr*>pt (0);
+		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
 		}
 	| identifier '(' expression_list ')' ';'
-		{ yyerror(@1, "Sorry, task enabling not implemented.");
-		  $$ = new PNoop;
+		{ PCallTask*tmp = new PCallTask(*$1, *$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
 		}
 	| identifier '(' ')' ';'
-		{ yyerror(@1, "Sorry, task enabling not implemented.");
-		  $$ = new PNoop;
+		{ svector<PExpr*>pt (0);
+		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
 		}
 	| identifier ';'
-		{ yyerror(@1, "Sorry, task enabling not implemented.");
-		  $$ = new PNoop;
+		{ svector<PExpr*>pt (0);
+		  PCallTask*tmp = new PCallTask(*$1, pt);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $1;
+		  $$ = tmp;
 		}
 	| error ';'
 		{ yyerror(@1, "malformed statement");
@@ -1501,13 +1539,22 @@ statement_opt
 
 task_body
 	: task_item_list_opt statement_opt
+		{ PTask*tmp = new PTask($2);
+		  $$ = tmp;
+		}
 	;
 
 task_item
 	: block_item_decl
 	| K_input range_opt list_of_variables ';'
+		{ yyerror(@1, "Sorry, task input ports not implemented.");
+		}
 	| K_output range_opt list_of_variables ';'
+		{ yyerror(@1, "Sorry, task output ports not implemented.");
+		}
 	| K_inout range_opt list_of_variables ';'
+		{ yyerror(@1, "Sorry, task inout ports not implemented.");
+		}
 	;
 
 task_item_list

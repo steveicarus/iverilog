@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.12 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: target.cc,v 1.13 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -39,6 +39,12 @@ void target_t::memory(ostream&os, const NetMemory*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled memory." << endl;
+}
+
+void target_t::task_def(ostream&os, const NetTaskDef*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled task definition." << endl;
 }
 
 void target_t::logic(ostream&os, const NetLogic*)
@@ -107,6 +113,8 @@ void target_t::proc_assign_nb(ostream&os, const NetAssignNB*)
 
 void target_t::proc_block(ostream&os, const NetBlock*)
 {
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_block." << endl;
 }
 
 void target_t::proc_case(ostream&os, const NetCase*cur)
@@ -147,8 +155,16 @@ void target_t::proc_repeat(ostream&os, const NetRepeat*)
 	    "Unhandled proc_repeat." << endl;
 }
 
-void target_t::proc_task(ostream&os, const NetTask*)
+void target_t::proc_stask(ostream&os, const NetSTask*)
 {
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_stask." << endl;
+}
+
+void target_t::proc_utask(ostream&os, const NetUTask*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_utask." << endl;
 }
 
 void target_t::proc_while(ostream&os, const NetWhile*net)
@@ -220,6 +236,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.13  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.12  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

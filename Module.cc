@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.2 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: Module.cc,v 1.3 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -26,6 +26,11 @@
 void Module::add_gate(PGate*gate)
 {
       gates_.push_back(gate);
+}
+
+void Module::add_task(const string&name, PTask*task)
+{
+      tasks_[name] = task;
 }
 
 void Module::add_wire(PWire*wire)
@@ -54,6 +59,9 @@ PWire* Module::get_wire(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.3  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.2  1999/06/17 05:34:42  steve
  *  Clean up interface of the PWire class,
  *  Properly match wire ranges.

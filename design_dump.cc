@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.30 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.31 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 /*
@@ -191,6 +191,13 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
+}
+
+void NetTaskDef::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "task " << name_ << ";" << endl;
+      proc_->dump(o, ind+4);
+      o << setw(ind) << "" << "endtask" << endl;
 }
 
 void NetUDP::dump_sequ_(ostream&o, unsigned ind) const
@@ -445,16 +452,22 @@ void NetNEvent::dump_proc(ostream&o) const
       o << name();
 }
 
-void NetTask::dump(ostream&o, unsigned ind) const
+void NetRepeat::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
+      statement_->dump(o, ind+2);
+}
+
+void NetSTask::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << name_;
 
-      if (nparms_ > 0) {
+      if (parms_.count() > 0) {
 	    o << "(";
 	    if (parms_[0])
 		  parms_[0]->dump(o);
 
-	    for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
+	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
 		  o << ", ";
 		  if (parms_[idx])
 			parms_[idx]->dump(o);
@@ -465,10 +478,24 @@ void NetTask::dump(ostream&o, unsigned ind) const
       o << ";" << endl;
 }
 
-void NetRepeat::dump(ostream&o, unsigned ind) const
+void NetUTask::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
-      statement_->dump(o, ind+2);
+      o << setw(ind) << "" << task_->name();
+
+      if (parms_.count() > 0) {
+	    o << "(";
+	    if (parms_[0])
+		  parms_[0]->dump(o);
+
+	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+		  o << ", ";
+		  if (parms_[idx])
+			parms_[idx]->dump(o);
+	    }
+
+	    o << ")";
+      }
+      o << ";" << endl;
 }
 
 void NetWhile::dump(ostream&o, unsigned ind) const
@@ -621,6 +648,15 @@ void Design::dump(ostream&o) const
 	    }
       }
 
+      o << "ELABORATED TASK DEFINITIONS:" << endl;
+      {
+	    map<string,NetTaskDef*>::const_iterator pp;
+	    for (pp = tasks_.begin()
+		       ; pp != tasks_.end() ; pp ++) {
+		  (*pp).second->dump(o, 0);
+	    }
+      }
+
       o << "ELABORATED NODES:" << endl;
 
 	// dump the nodes,
@@ -642,6 +678,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.31  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.30  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.13 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: Statement.h,v 1.14 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -173,6 +173,9 @@ class PCallTask  : public Statement {
       virtual NetProc* elaborate(Design*des, const string&path) const;
 
     private:
+      NetProc* elaborate_sys(Design*des, const string&path) const;
+      NetProc* elaborate_usr(Design*des, const string&path) const;
+
       const string name_;
       svector<PExpr*> parms_;
 };
@@ -327,6 +330,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.14  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.13  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,

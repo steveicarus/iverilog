@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.12 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: target.h,v 1.13 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -61,6 +61,9 @@ struct target_t {
 	/* Output a memory (called for each memory object) */
       virtual void memory(ostream&os, const NetMemory*);
 
+	/* Output a defined task. */
+      virtual void task_def(ostream&, const NetTaskDef*);
+
 	/* Output a gate (called for each gate) */
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
@@ -83,7 +86,8 @@ struct target_t {
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
-      virtual void proc_task(ostream&os, const NetTask*);
+      virtual void proc_stask(ostream&os, const NetSTask*);
+      virtual void proc_utask(ostream&os, const NetUTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
 
       virtual void proc_event(ostream&os, const NetPEvent*);
@@ -127,6 +131,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.13  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.12  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

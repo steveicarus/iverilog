@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.42 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.43 1999/07/03 02:12:51 steve Exp $"
 #endif
 
 /*
@@ -33,6 +33,7 @@
 # include  "verinum.h"
 # include  "sref.h"
 # include  "LineInfo.h"
+# include  "svector.h"
 
 class Design;
 class NetNode;
@@ -838,38 +839,76 @@ class NetRepeat : public NetProc {
       NetProc*statement_;
 };
 
-/* The elaborator should expand all the user defined tasks in line, so
-   this leaves the NetTask to represent activations of system tasks,
-   or external tasks that are not known at compile time. */
-class NetTask  : public NetProc {
+/*
+ * The NetSTask class is a call to a system task. These kinds of tasks
+ * are generally handled very simply in the target. They certainly are
+ * handled differently from user defined tasks because ivl knows all
+ * about the user defined tasks.
+ */
+class NetSTask  : public NetProc {
 
     public:
-      NetTask(const string&na, unsigned np)
-      : name_(na), nparms_(np)
-      { parms_ = new NetExpr*[nparms_]; }
-      ~NetTask();
+      NetSTask(const string&na, const svector<NetExpr*>&);
+      ~NetSTask();
 
       const string& name() const { return name_; }
 
-      unsigned nparms() const { return nparms_; }
+      unsigned nparms() const { return parms_.count(); }
 
-      void parm(unsigned idx, NetExpr*p)
-      { assert(idx < nparms_);
-        parms_[idx] = p;
-      }
-
-      const NetExpr* parm(unsigned idx) const
-      { assert(idx < nparms_);
-        return parms_[idx];
-      }
+      const NetExpr* parm(unsigned idx) const;
 
       virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
       string name_;
-      unsigned nparms_;
-      NetExpr**parms_;
+      svector<NetExpr*>parms_;
+};
+
+/*
+ * This class represents an elaborated class definition. NetUTask
+ * classes may refer to objects of this type to get the meaning of the
+ * defined task.
+ */
+class NetTaskDef {
+
+    public:
+      NetTaskDef(const string&n, NetProc*p);
+      ~NetTaskDef();
+
+      const string& name() const { return name_; }
+
+      void dump(ostream&, unsigned) const;
+
+    private:
+      string name_;
+      NetProc*proc_;
+
+    private: // not implemented
+      NetTaskDef(const NetTaskDef&);
+      NetTaskDef& operator= (const NetTaskDef&);
+};
+
+/*
+ * A call to a user defined task is elaborated into this object. I
+ * save the parameters and the pointer to the task definition.
+ */
+class NetUTask  : public NetProc {
+
+    public:
+      NetUTask(NetTaskDef*, const svector<NetExpr*>&);
+      ~NetUTask();
+
+      unsigned nparms() const { return parms_.count(); }
+
+      const NetExpr* parm(unsigned idx) const;
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetTaskDef*task_;
+      svector<NetExpr*>parms_;
 };
 
 /*
@@ -1193,6 +1232,10 @@ class Design {
       void add_memory(NetMemory*);
       NetMemory* find_memory(const string&name);
 
+	// Tasks
+      void add_task(const string&n, NetTaskDef*);
+      NetTaskDef* find_task(const string&key);
+
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);
@@ -1229,6 +1272,9 @@ class Design {
       NetNet*signals_;
 
       map<string,NetMemory*> memories_;
+
+	// List the task definitions in the design.
+      map<string,NetTaskDef*> tasks_;
 
 	// List the nodes in the design
       NetNode*nodes_;
@@ -1290,6 +1336,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.43  1999/07/03 02:12:51  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.42  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,
@@ -1345,133 +1394,5 @@ extern ostream& operator << (ostream&, NetNet::Type);
  *  memories as lvalues.
  *
  *  Parse task declarations, integer types.
- *
- * Revision 1.28  1999/05/01 20:43:55  steve
- *  Handle wide events, such as @(a) where a has
- *  many bits in it.
- *
- *  Add to vvm the binary ^ and unary & operators.
- *
- *  Dump events a bit more completely.
- *
- * Revision 1.27  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.26  1999/04/25 22:52:32  steve
- *  Generate SubSignal refrences in vvm.
- *
- * Revision 1.25  1999/04/25 00:44:10  steve
- *  Core handles subsignal expressions.
- *
- * Revision 1.24  1999/04/22 04:56:58  steve
- *  Add to vvm proceedural memory references.
- *
- * Revision 1.23  1999/04/19 01:59:36  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.22  1999/03/15 02:43:32  steve
- *  Support more operators, especially logical.
- *
- * Revision 1.21  1999/03/01 03:27:53  steve
- *  Prevent the duplicate allocation of ESignal objects.
- *
- * Revision 1.20  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.19  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- * Revision 1.18  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.17  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.16  1999/02/01 00:26:49  steve
- *  Carry some line info to the netlist,
- *  Dump line numbers for processes.
- *  Elaborate prints errors about port vector
- *  width mismatch
- *  Emit better handles null statements.
- *
- * Revision 1.15  1998/12/20 02:05:41  steve
- *  Function to calculate wire initial value.
- *
- * Revision 1.14  1998/12/18 05:16:25  steve
- *  Parse more UDP input edge descriptions.
- *
- * Revision 1.13  1998/12/17 23:54:58  steve
- *  VVM support for small sequential UDP objects.
- *
- * Revision 1.12  1998/12/14 02:01:35  steve
- *  Fully elaborate Sequential UDP behavior.
- *
- * Revision 1.11  1998/12/07 04:53:17  steve
- *  Generate OBUF or IBUF attributes (and the gates
- *  to garry them) where a wire is a pad. This involved
- *  figuring out enough of the netlist to know when such
- *  was needed, and to generate new gates and signales
- *  to handle what's missing.
- *
- * Revision 1.10  1998/12/02 04:37:13  steve
- *  Add the nobufz function to eliminate bufz objects,
- *  Object links are marked with direction,
- *  constant propagation is more careful will wide links,
- *  Signal folding is aware of attributes, and
- *  the XNF target can dump UDP objects based on LCA
- *  attributes.
- *
- * Revision 1.9  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.8  1998/11/23 00:20:23  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.7  1998/11/18 04:25:22  steve
- *  Add -f flags for generic flag key/values.
- *
- * Revision 1.6  1998/11/16 05:03:53  steve
- *  Add the sigfold function that unlinks excess
- *  signal nodes, and add the XNF target.
- *
- * Revision 1.5  1998/11/13 06:23:17  steve
- *  Introduce netlist optimizations with the
- *  cprop function to do constant propogation.
- *
- * Revision 1.4  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.3  1998/11/07 19:17:10  steve
- *  Calculate expression widths at elaboration time.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:01  steve
- *  Introduce verilog to CVS.
- *
  */
 #endif

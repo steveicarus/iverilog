@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.26 1999/06/24 04:21:45 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.27 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -58,7 +58,7 @@ class target_vvm : public target_t {
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
-      virtual void proc_task(ostream&os, const NetTask*);
+      virtual void proc_stask(ostream&os, const NetSTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
@@ -1038,23 +1038,24 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
       os << "      {" << endl;
 }
 
-void target_vvm::proc_task(ostream&os, const NetTask*net)
+/*
+ * Calls to system tasks are done here. We know that this is a system
+ * task and that I need to generate an external call. Calls to user
+ * defined tasks are handled elsewhere.
+ */
+void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 {
-      if (net->name()[0] == '$') {
-	    string ptmp = make_temp();
-	    os << "        struct vvm_calltf_parm " << ptmp << "[" <<
-		  net->nparms() << "];" << endl;
-	    for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1)
-		  if (net->parm(idx)) {
-			string val = emit_parm_rval(os, net->parm(idx));
-			os << "        " << ptmp << "[" << idx << "] = " <<
-			      val << ";" << endl;
-		  }
-	    os << "        vvm_calltask(sim_, \"" << net->name() << "\", " <<
-		  net->nparms() << ", " << ptmp << ");" << endl;
-      } else {
-	    os << "        // Huh? " << net->name() << endl;
-      }
+      string ptmp = make_temp();
+      os << "        struct vvm_calltf_parm " << ptmp << "[" <<
+	    net->nparms() << "];" << endl;
+      for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1)
+	    if (net->parm(idx)) {
+		  string val = emit_parm_rval(os, net->parm(idx));
+		  os << "        " << ptmp << "[" << idx << "] = " <<
+			val << ";" << endl;
+	    }
+      os << "        vvm_calltask(sim_, \"" << net->name() << "\", " <<
+	    net->nparms() << ", " << ptmp << ");" << endl;
 }
 
 /*
@@ -1201,6 +1202,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.27  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.26  1999/06/24 04:21:45  steve
  *  Add the === and !== binary operators.
  *

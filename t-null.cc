@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.3 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: t-null.cc,v 1.4 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,8 +31,11 @@ static class target_null_t  : public target_t {
 
     public:
       void bufz(ostream&os, const NetBUFZ*) { }
+      void memory(ostream&, const NetMemory*) { }
+      void task_def(ostream&, const NetTaskDef*) { }
       void net_esignal(ostream&, const NetESignal*) { }
       void net_event(ostream&, const NetNEvent*) { }
+      void proc_block(ostream&, const NetBlock*) { }
       void proc_delay(ostream&, const NetPDelay*) { }
       void proc_event(ostream&, const NetPEvent*) { }
       void proc_forever(ostream&, const NetForever*) { }
@@ -43,6 +46,9 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.4  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.3  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

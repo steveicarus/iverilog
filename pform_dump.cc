@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.25 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.26 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 /*
@@ -304,7 +304,7 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 	    out << ")";
       }
 
-      out << ";" << endl;
+      out << "; /* " << get_line() << " */" << endl;
 }
 
 void PCase::dump(ostream&out, unsigned ind) const
@@ -398,6 +398,12 @@ void PRepeat::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+3);
 }
 
+void PTask::dump(ostream&out, unsigned ind) const
+{
+      statement_->dump(out, ind);
+}
+
+
 void PWhile::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
@@ -420,46 +426,57 @@ void PProcess::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+2);
 }
 
-void pform_dump(ostream&out, Module*mod)
+void Module::dump(ostream&out) const
 {
-      out << "module " << mod->get_name() << ";" << endl;
+      out << "module " << name_ << ";" << endl;
 
       typedef map<string,PExpr*>::const_iterator parm_iter_t;
-      for (parm_iter_t cur = mod->parameters.begin()
-		 ; cur != mod->parameters.end() ; cur ++) {
+      for (parm_iter_t cur = parameters.begin()
+		 ; cur != parameters.end() ; cur ++) {
 	    out << "    parameter " << (*cur).first << " = " <<
 		  *(*cur).second << ";" << endl;
       }
 
 	// Iterate through and display all the wires.
-      const list<PWire*>&wires = mod->get_wires();
-      for (list<PWire*>::const_iterator wire = wires.begin()
-		 ; wire != wires.end()
+      for (list<PWire*>::const_iterator wire = wires_.begin()
+		 ; wire != wires_.end()
 		 ; wire ++ ) {
 
 	    (*wire)->dump(out);
       }
 
+	// Dump the task definitions.
+      typedef map<string,PTask*>::const_iterator task_iter_t;
+      for (task_iter_t cur = tasks_.begin()
+		 ; cur != tasks_.end() ; cur ++) {
+	    out << "    task " << (*cur).first << ";" << endl;
+	    (*cur).second->dump(out, 6);
+	    out << "    endtask;" << endl;
+      }
+
 
 	// Iterate through and display all the gates
-      const list<PGate*>&gates = mod->get_gates();
-      for (list<PGate*>::const_iterator gate = gates.begin()
-		 ; gate != gates.end()
+      for (list<PGate*>::const_iterator gate = gates_.begin()
+		 ; gate != gates_.end()
 		 ; gate ++ ) {
 
 	    (*gate)->dump(out);
       }
 
 
-      const list<PProcess*>&behaves = mod->get_behaviors();
-      for (list<PProcess*>::const_iterator behav = behaves.begin()
-		 ; behav != behaves.end()
+      for (list<PProcess*>::const_iterator behav = behaviors_.begin()
+		 ; behav != behaviors_.end()
 		 ; behav ++ ) {
 
 	    (*behav)->dump(out, 4);
       }
 
       out << "endmodule" << endl;
+}
+
+void pform_dump(ostream&out, Module*mod)
+{
+      mod->dump(out);
 }
 
 void PUdp::dump(ostream&out) const
@@ -504,6 +521,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.26  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.25  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,

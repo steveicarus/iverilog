@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.5 1999/06/13 16:30:06 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.6 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 /*
@@ -46,7 +46,7 @@ class target_verilog : public target_t {
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
       virtual void proc_event(ostream&os, const NetPEvent*);
-      virtual void proc_task(ostream&os, const NetTask*);
+      virtual void proc_stask(ostream&os, const NetSTask*);
       virtual void end_design(ostream&os, const Design*);
     private:
       unsigned indent_;
@@ -236,7 +236,7 @@ static void vtask_parm(ostream&os, const NetExpr*ex)
       }
 }
 
-void target_verilog::proc_task(ostream&os, const NetTask*net)
+void target_verilog::proc_stask(ostream&os, const NetSTask*net)
 {
       os << setw(indent_) << "" << net->name();
       if (net->nparms() > 0) {
@@ -271,6 +271,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.6  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.5  1999/06/13 16:30:06  steve
  *  Unify the NetAssign constructors a bit.
  *

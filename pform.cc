@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.30 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: pform.cc,v 1.31 1999/07/03 02:12:52 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -37,7 +37,7 @@ string vl_file = "";
 
 extern int VLparse();
 
-static Module*cur_module = 0;
+static Module*pform_cur_module = 0;
 
 /*
  * The scope stack and the following functions handle the processing
@@ -96,13 +96,13 @@ static unsigned long evaluate_delay(PExpr*delay)
 
 void pform_startmodule(const string&name, svector<PWire*>*ports)
 {
-      assert( cur_module == 0 );
-      cur_module = new Module(name, ports? ports->count() : 0);
+      assert( pform_cur_module == 0 );
+      pform_cur_module = new Module(name, ports? ports->count() : 0);
 
       if (ports) {
 	    for (unsigned idx = 0 ;  idx < ports->count() ;  idx += 1) {
-		  cur_module->add_wire((*ports)[idx]);
-		  cur_module->ports[idx] = (*ports)[idx];
+		  pform_cur_module->add_wire((*ports)[idx]);
+		  pform_cur_module->ports[idx] = (*ports)[idx];
 	    }
 	    delete ports;
       }
@@ -110,15 +110,15 @@ void pform_startmodule(const string&name, svector<PWire*>*ports)
 
 void pform_endmodule(const string&name)
 {
-      assert(cur_module);
-      assert(name == cur_module->get_name());
-      vl_modules[name] = cur_module;
-      cur_module = 0;
+      assert(pform_cur_module);
+      assert(name == pform_cur_module->get_name());
+      vl_modules[name] = pform_cur_module;
+      pform_cur_module = 0;
 }
 
 bool pform_expression_is_constant(const PExpr*ex)
 {
-      return ex->is_constant(cur_module);
+      return ex->is_constant(pform_cur_module);
 }
 
 void pform_make_udp(string*name, list<string>*parms,
@@ -285,7 +285,7 @@ void pform_makegate(PGBuiltin::Type type,
       cur->set_file(info.file);
       cur->set_lineno(info.lineno);
 
-      cur_module->add_gate(cur);
+      pform_cur_module->add_gate(cur);
 }
 
 void pform_makegates(PGBuiltin::Type type,
@@ -320,7 +320,7 @@ static void pform_make_modgate(const string&type,
       PGate*cur = new PGModule(type, name, wires);
       cur->set_file(fn);
       cur->set_lineno(ln);
-      cur_module->add_gate(cur);
+      pform_cur_module->add_gate(cur);
 }
 
 static void pform_make_modgate(const string&type,
@@ -346,7 +346,7 @@ static void pform_make_modgate(const string&type,
       PGate*cur = new PGModule(type, name, pins, npins);
       cur->set_file(fn);
       cur->set_lineno(ln);
-      cur_module->add_gate(cur);
+      pform_cur_module->add_gate(cur);
 }
 
 void pform_make_modgates(const string&type, svector<lgate>*gates)
@@ -377,7 +377,7 @@ PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval)
       (*wires)[0] = lval;
       (*wires)[1] = rval;
       PGAssign*cur = new PGAssign(wires);
-      cur_module->add_gate(cur);
+      pform_cur_module->add_gate(cur);
       return cur;
 }
 
@@ -385,7 +385,7 @@ void pform_makewire(const vlltype&li, const string&nm,
 		    NetNet::Type type)
 {
       const string name = scoped_name(nm);
-      PWire*cur = cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(name);
       if (cur) {
 	    if (cur->get_wire_type() != NetNet::IMPLICIT) {
 		  strstream msg;
@@ -402,7 +402,7 @@ void pform_makewire(const vlltype&li, const string&nm,
       cur = new PWire(name, type, NetNet::NOT_A_PORT);
       cur->set_file(li.text);
       cur->set_lineno(li.first_line);
-      cur_module->add_wire(cur);
+      pform_cur_module->add_wire(cur);
 }
 
 void pform_makewire(const vlltype&li, const list<string>*names,
@@ -417,7 +417,7 @@ void pform_makewire(const vlltype&li, const list<string>*names,
 
 void pform_set_port_type(const string&name, NetNet::PortType pt)
 {
-      PWire*cur = cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    VLerror("name is not a port.");
 	    return;
@@ -427,9 +427,14 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
 	    VLerror("error setting port direction.");
 }
 
+void pform_set_task(const string&name, PTask*task)
+{
+      pform_cur_module->add_task(name, task);
+}
+
 void pform_set_attrib(const string&name, const string&key, const string&value)
 {
-      PWire*cur = cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(name);
       assert(cur);
       cur->attributes[key] = value;
 }
@@ -456,7 +461,7 @@ void pform_set_type_attrib(const string&name, const string&key,
  */
 void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
 {
-      PWire*cur = cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    VLerror("name is not a valid net.");
 	    return;
@@ -470,7 +475,7 @@ static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
       assert(range);
       assert(range->count() == 2);
 
-      PWire*cur = cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    VLerror("name is not a valid net.");
 	    return;
@@ -494,7 +499,7 @@ void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
 
 void pform_set_parameter(const string&name, PExpr*expr)
 {
-      cur_module->parameters[name] = expr;
+      pform_cur_module->parameters[name] = expr;
 }
 
 void pform_set_port_type(list<string>*names, NetNet::PortType pt)
@@ -508,7 +513,7 @@ void pform_set_port_type(list<string>*names, NetNet::PortType pt)
 
 static void pform_set_reg_integer(const string&name)
 {
-      PWire*cur = cur_module->get_wire(name);
+      PWire*cur = pform_cur_module->get_wire(name);
       assert(cur);
       bool rc = cur->set_wire_type(NetNet::INTEGER);
       assert(rc);
@@ -546,10 +551,11 @@ svector<PWire*>* pform_make_udp_input_ports(list<string>*names)
 PProcess* pform_make_behavior(PProcess::Type type, Statement*st)
 {
       PProcess*pp = new PProcess(type, st);
-      cur_module->add_behavior(pp);
+      pform_cur_module->add_behavior(pp);
       return pp;
 }
 
+#if 0
 Statement* pform_make_calltask(string*name, svector<PExpr*>*parms)
 {
       if (parms == 0)
@@ -560,6 +566,7 @@ Statement* pform_make_calltask(string*name, svector<PExpr*>*parms)
       delete parms;
       return ct;
 }
+#endif
 
 FILE*vl_input = 0;
 int pform_parse(const char*path, map<string,Module*>&modules,
@@ -587,6 +594,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.31  1999/07/03 02:12:52  steve
+ *  Elaborate user defined tasks.
+ *
  * Revision 1.30  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,
