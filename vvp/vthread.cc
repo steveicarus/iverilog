@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.85 2002/09/12 15:49:43 steve Exp $"
+#ident "$Id: vthread.cc,v 1.86 2002/09/18 04:29:55 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2023,6 +2023,36 @@ bool of_OR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_NOR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned idx1 = cp->bit_idx[0];
+      unsigned idx2 = cp->bit_idx[1];
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb == 1) || (rb == 1)) {
+		  thr_put_bit(thr, idx1, 0);
+
+	    } else if ((lb == 0) && (rb == 0)) {
+		  thr_put_bit(thr, idx1, 1);
+
+	    } else {
+		  thr_put_bit(thr, idx1, 2);
+	    }
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      return true;
+}
+
 static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
 
 bool of_SET(vthread_t thr, vvp_code_t cp)
@@ -2350,6 +2380,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.86  2002/09/18 04:29:55  steve
+ *  Add support for binary NOR operator.
+ *
  * Revision 1.85  2002/09/12 15:49:43  steve
  *  Add support for binary nand operator.
  *

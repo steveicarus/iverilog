@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.100 2002/09/12 15:49:43 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.101 2002/09/18 04:29:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,6 +68,7 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	  case '&':
 	  case '^':
 	  case 'A': // Bitwise NAND (~&)
+	  case 'O': // Bitwise NOR (~|)
 	  case 'X': // Exclusing NOR
 	    return elaborate_net_bit_(des, scope, width, rise, fall, decay);
 	  case 'E': // === (case equals)
@@ -359,6 +360,20 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
 		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
 					       3, NetLogic::OR);
+		  connect(gate->pin(1), lsig->pin(idx));
+		  connect(gate->pin(2), rsig->pin(idx));
+		  connect(gate->pin(0), osig->pin(idx));
+		  gate->rise_time(rise);
+		  gate->fall_time(fall);
+		  gate->decay_time(decay);
+		  des->add_node(gate);
+	    }
+	    break;
+
+	  case 'O': // Bitwise NOR
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  NetLogic*gate = new NetLogic(scope, scope->local_hsymbol(),
+					       3, NetLogic::NOR);
 		  connect(gate->pin(1), lsig->pin(idx));
 		  connect(gate->pin(2), rsig->pin(idx));
 		  connect(gate->pin(0), osig->pin(idx));
@@ -2192,6 +2207,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.101  2002/09/18 04:29:55  steve
+ *  Add support for binary NOR operator.
+ *
  * Revision 1.100  2002/09/12 15:49:43  steve
  *  Add support for binary nand operator.
  *

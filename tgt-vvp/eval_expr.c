@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.77 2002/09/13 04:09:51 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.78 2002/09/18 04:29:55 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -630,6 +630,11 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 		    lv.base, rv.base, wid);
 	    break;
 
+	  case 'O': /* NOR (~|) */
+	    fprintf(vvp_out, "    %%nor %u, %u, %u;\n",
+		    lv.base, rv.base, wid);
+	    break;
+
 	  case 'X': /* exclusive nor (~^) */
 	    fprintf(vvp_out, "    %%xnor %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
@@ -921,6 +926,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case '|':
 	  case '^':
 	  case 'A': /* NAND (~&) */
+	  case 'O': /* NOR  (~|) */
 	  case 'X': /* XNOR (~^) */
 	    rv = draw_binary_expr_logic(exp, wid);
 	    break;
@@ -1834,6 +1840,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int xz_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.78  2002/09/18 04:29:55  steve
+ *  Add support for binary NOR operator.
+ *
  * Revision 1.77  2002/09/13 04:09:51  steve
  *  single bit optimization for != in expressions,
  *  and expand ++ and != results if needed.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.142 2002/09/18 02:55:18 steve Exp $"
+#ident "$Id: compile.cc,v 1.143 2002/09/18 04:29:55 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -127,6 +127,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%nand",   of_NAND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand/r", of_NANDR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%nor",    of_NOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1479,6 +1480,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.143  2002/09/18 04:29:55  steve
+ *  Add support for binary NOR operator.
+ *
  * Revision 1.142  2002/09/18 02:55:18  steve
  *  Allow forward references of memories.
  *

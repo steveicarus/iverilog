@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.41 2002/09/12 15:49:43 steve Exp $
+ *  $Id: opcodes.txt,v 1.42 2002/09/18 04:29:55 steve Exp $
  */
 
 
@@ -369,6 +369,18 @@ means the following:
 	? and 0 --> 1
 	1 and 1 --> 0
 	otherwise   x
+
+
+* %nor <dst>, <src>, <wid>
+
+Perform the bitwise nor of the vectors. Each bit in the <dst> is
+combined with the corresponding bit in the source, according to the
+truth table:
+
+	1 nor ? --> 0
+	? nor 1 --> 0
+	0 nor 0 --> 1
+	otherwise  x
 
 
 * %nor/r <dst>, <src>, <wid>
