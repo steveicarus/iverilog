@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.107 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: stub.c,v 1.108 2005/02/12 06:17:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -755,7 +755,7 @@ static void signal_nexus_const(ivl_signal_t sig,
       fprintf(out, " (%s0, %s1, width=%u)\n", dr0, dr1, width);
 
       if (ivl_signal_width(sig) != width) {
-	    fprintf(stderr, "ERROR: Width of signal does not match "
+	    fprintf(out, "ERROR: Width of signal does not match "
 		    "width of connected constant vector.\n");
 	    stub_errors += 1;
       }
@@ -900,83 +900,75 @@ static void show_logic(ivl_net_logic_t net)
 
       switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
-	    fprintf(out, "  and %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  and %s", name);
 	    break;
 	  case IVL_LO_BUF:
-	    fprintf(out, "  buf %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  buf %s", name);
 	    break;
 	  case IVL_LO_BUFIF0:
-	    fprintf(out, "  bufif0 %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  bufif0 %s", name);
 	    break;
 	  case IVL_LO_BUFIF1:
-	    fprintf(out, "  bufif1 %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  bufif1 %s", name);
 	    break;
 	  case IVL_LO_BUFZ:
-	    fprintf(out, "  bufz #(%u) %s (%s",
-		    ivl_logic_delay(net, 0),
-		    name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  bufz #(%u) %s", ivl_logic_delay(net, 0), name);
 	    break;
 	  case IVL_LO_NOT:
-	    fprintf(out, "  not #(%u) %s (%s",
-		    ivl_logic_delay(net, 0),
-		    name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  not #(%u) %s", ivl_logic_delay(net, 0), name);
 	    break;
 	  case IVL_LO_OR:
-	    fprintf(out, "  or %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  or %s", name);
+	    break;
+	  case IVL_LO_PULLDOWN:
+	    fprintf(out, "  pulldown %s", name);
+	    break;
+	  case IVL_LO_PULLUP:
+	    fprintf(out, "  pullup %s", name);
 	    break;
 	  case IVL_LO_XOR:
-	    fprintf(out, "  xor %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  xor %s", name);
 	    break;
 
 	  case IVL_LO_UDP:
-	    fprintf(out, "  primitive %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  primitive %s", name);
 	    break;
 
 	  default:
-	    fprintf(out, "  unsupported gate %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "  unsupported gate %s", name);
 	    break;
       }
 
+      fprintf(out, " <width=%u>\n", ivl_logic_width(net));
+
       npins = ivl_logic_pins(net);
-      for (idx = 1 ;  idx < npins ;  idx += 1) {
-	    ivl_nexus_t nex = ivl_logic_pin(net,idx);
+
+	/* Show the pins of the gate. Pin-0 is always the output, and
+	   the remaining pins are the inputs. Inputs may be
+	   unconnected, but if connected the nexus width must exactly
+	   match the gate width. */
+      for (idx = 0 ;  idx < npins ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_logic_pin(net, idx);
+	    const char*nexus_name =  nex? ivl_nexus_name(nex) : "";
+
+	    fprintf(out, "    %d: %s\n", idx, nexus_name);
 
 	    if (nex == 0) {
-		  fprintf(out, ", <HiZ>");
-	    } else {
-		  fprintf(out, ", %s", ivl_nexus_name(nex));
-
-		  if (ivl_logic_width(net) != width_of_nexus(nex)) {
-			fprintf(stderr,
-				"ERROR: Logic pin %u width mismatch.",
-				idx);
-			fprintf(stderr,
-				" Expect width=%u, nexus width=%u\n",
-				ivl_logic_width(net), width_of_nexus(nex));
+		  if (idx == 0) {
+			fprintf(out, "    0: ERROR: Pin 0 must not "
+				"be unconnected\n");
 			stub_errors += 1;
 		  }
+		  continue;
+	    }
+
+	    if (ivl_logic_width(net) != width_of_nexus(nex)) {
+		  fprintf(out, "    %d: ERROR: Nexus width is %u\n",
+			  idx, width_of_nexus(nex));
+		  stub_errors += 1;
 	    }
       }
 
-      fprintf(out, "); <width=%u>\n", ivl_logic_width(net));
-
-      if (ivl_logic_width(net) != width_of_nexus(ivl_logic_pin(net,0))) {
-	    fprintf(stderr, "ERROR: Logic output pin width mismatch.");
-	    fprintf(stderr, " Expect width=%u, nexus width=%u\n",
-		    ivl_logic_width(net),
-		    width_of_nexus(ivl_logic_pin(net,0)));
-	    stub_errors += 1;
-      }
 
       npins = ivl_logic_attr_cnt(net);
       for (idx = 0 ;  idx < npins ;  idx += 1) {
@@ -1092,6 +1084,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.108  2005/02/12 06:17:43  steve
+ *  Check nexus widths of IVL_LO_ nodes.
+ *
  * Revision 1.107  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *
