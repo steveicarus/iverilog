@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.5 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.6 2002/11/05 02:11:56 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -45,7 +45,20 @@ inline void ivl_dlclose(ivl_dll_t dll)
 { (void)FreeLibrary((HINSTANCE)dll);}
 
 inline const char *dlerror(void)
-{ static char s[30]; sprintf(s,"DLError:%ld", GetLastError()); return s;}
+{
+  static char msg[256];
+  unsigned long err = GetLastError();
+  FormatMessage( 
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		err,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR) &msg,
+		sizeof(msg) - 1,
+		NULL 
+		);
+  return msg;
+}
 
 #elif defined(HAVE_DLFCN_H)
 inline ivl_dll_t ivl_dlopen(const char*name)
@@ -77,6 +90,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.6  2002/11/05 02:11:56  steve
+ *  Better error message for load failure on Windows.
+ *
  * Revision 1.5  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
