@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.13 2000/07/15 05:13:43 steve Exp $"
+#ident "$Id: cprop.cc,v 1.14 2000/07/25 02:55:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -316,6 +316,21 @@ struct cprop_dc_functor  : public functor_t {
 
 void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 {
+	// 'bz constant values drive high impedance to whatever is
+	// connected to it. In otherwords, it is a noop.
+      { unsigned tmp = 0;
+        for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
+	      if (obj->value(idx) == verinum::Vz) {
+		    obj->pin(idx).unlink();
+		    tmp += 1;
+	      }
+
+	if (tmp == obj->pin_count()) {
+	      delete obj;
+	      return;
+	}
+      }
+
 	// If there are any links that take input, the constant is
 	// used structurally somewhere.
       for (unsigned idx = 0 ;  idx < obj->pin_count() ;  idx += 1)
@@ -363,6 +378,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.14  2000/07/25 02:55:13  steve
+ *  Unlink z constants from nets.
+ *
  * Revision 1.13  2000/07/15 05:13:43  steve
  *  Detect muxing Vz as a bufufN.
  *
