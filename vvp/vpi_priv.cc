@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.18 2002/07/05 17:14:15 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.19 2002/07/12 02:04:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -215,8 +215,10 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
       if (ref == 0)
 	    return vpi_iterate_global(type);
 
-      assert(ref->vpi_type->iterate_);
-      return (ref->vpi_type->iterate_)(type, ref);
+      if (ref->vpi_type->iterate_)
+          return (ref->vpi_type->iterate_)(type, ref);
+      else
+          return 0;
 }
 
 vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
@@ -246,6 +248,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.19  2002/07/12 02:04:44  steve
+ *  vpi_iterate return null if there is nothing to iterate.
+ *
  * Revision 1.18  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
  *
