@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.115 2005/02/08 00:12:36 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.116 2005/02/10 04:55:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -566,19 +566,29 @@ const char* draw_net_input(ivl_nexus_t nex)
 	/* If the nexus has no drivers, then send a constant HiZ into
 	   the net. */
       if (ndrivers == 0) {
+	    unsigned idx, wid = width_of_nexus(nex);
+	    char*tmp = malloc(wid + 5);
+	    nex_private = tmp;
+	    strcpy(tmp, "C4<");
+	    tmp += strlen(tmp);
 	    switch (res) {
 		case IVL_SIT_TRI:
-		  nex_private = "C4<z>";
+		  for (idx = 0 ;  idx < wid ;  idx += 1)
+			*tmp++ = 'z';
 		  break;
 		case IVL_SIT_TRI0:
-		  nex_private = "C4<0>";
+		  for (idx = 0 ;  idx < wid ;  idx += 1)
+			*tmp++ = '0';
 		  break;
 		case IVL_SIT_TRI1:
-		  nex_private = "C4<1>";
+		  for (idx = 0 ;  idx < wid ;  idx += 1)
+			*tmp++ = '1';
 		  break;
 		default:
 		  assert(0);
 	    }
+	    *tmp++ = '>';
+	    *tmp = 0;
 	    ivl_nexus_set_private(nex, nex_private);
 	    return nex_private;
       }
@@ -1910,6 +1920,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.116  2005/02/10 04:55:45  steve
+ *  Get the C4 width right for undriven nexa.
+ *
  * Revision 1.115  2005/02/08 00:12:36  steve
  *  Add the NetRepeat node, and code generator support.
  *
