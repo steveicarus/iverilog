@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.55 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: codes.h,v 1.56 2003/01/26 18:16:22 steve Exp $"
 #endif
 
 
@@ -54,6 +54,8 @@ extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
+extern bool of_CVT_IR(vthread_t thr, vvp_code_t code);
+extern bool of_CVT_RI(vthread_t thr, vvp_code_t code);
 extern bool of_DEASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
@@ -166,6 +168,10 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.56  2003/01/26 18:16:22  steve
+ *  Add %cvt/ir and %cvt/ri instructions, and support
+ *  real values passed as arguments to VPI tasks.
+ *
  * Revision 1.55  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.43 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.44 2003/01/26 18:16:22 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -288,6 +288,8 @@ vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value);
 
 vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
+vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
+
 /*
  * This function is called before any compilation to load VPI
  * modules. This gives the modules a chance to announce their
@@ -390,6 +392,10 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.44  2003/01/26 18:16:22  steve
+ *  Add %cvt/ir and %cvt/ri instructions, and support
+ *  real values passed as arguments to VPI tasks.
+ *
  * Revision 1.43  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.148 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: compile.cc,v 1.149 2003/01/26 18:16:22 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -101,6 +101,8 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cvt/ir", of_CVT_IR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%cvt/ri", of_CVT_RI, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%deassign",of_DEASSIGN,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
@@ -403,7 +405,13 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  val.ptr = vpip_make_vthr_vector(base, wid, signed_flag);
 		  sym_set_value(sym_vpi, label, val);
 
+	    } else if (2 == sscanf(label, "W<%u,%[r]>%n", &base, ss, &n)
+		       && n == strlen(label)) {
+
+		  val.ptr = vpip_make_vthr_word(base, ss);
+		  sym_set_value(sym_vpi, label, val);
 	    }
+
       }
 
       if (!val.ptr) {
@@ -1499,6 +1507,10 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.149  2003/01/26 18:16:22  steve
+ *  Add %cvt/ir and %cvt/ri instructions, and support
+ *  real values passed as arguments to VPI tasks.
+ *
  * Revision 1.148  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

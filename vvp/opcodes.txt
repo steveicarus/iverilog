@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.46 2003/01/25 23:48:06 steve Exp $
+ *  $Id: opcodes.txt,v 1.47 2003/01/26 18:16:22 steve Exp $
  */
 
 
@@ -175,6 +175,14 @@ the left or right operand as don't care positions. The %cmp/x
 instruction will also treat x values in either operand as don't care.
 
 Only bit 4 is set by these instructions.
+
+
+* %cvt/ir <bit-l>, <bit-r>
+* %cvt/ri <bit-l>, <bit-r>
+
+Copy a word from r to l, converting int from real to integer in the
+process.
+
 
 * %delay <delay>
 

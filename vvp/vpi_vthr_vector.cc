@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.8 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.9 2003/01/26 18:16:22 steve Exp $"
 #endif
 
 /*
@@ -360,9 +360,72 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
       return &obj->base;
 }
 
+struct __vpiVThrWord {
+      struct __vpiHandle base;
+      char* name;
+      int subtype;
+      unsigned short index;
+};
+
+static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
+{
+      assert(ref->vpi_type->type_code==vpiConstant);
+
+      struct __vpiVThrWord*obj = (struct __vpiVThrWord*)ref;
+
+      static char buf[64];
+      double val = vthread_get_real(vpip_current_vthread, obj->index);
+
+      switch (vp->format) {
+
+	  case vpiObjTypeVal:
+	    vp->format = vpiRealVal;
+	  case vpiRealVal:
+	    vp->value.real = val;
+	    break;
+
+	  case vpiDecStrVal:
+	    sprintf(buf, "%0.0f", val);
+	    vp->value.str = buf;
+	    break;
+
+	  default:
+	    vp->format = vpiSuppressVal;
+	    break;
+      }
+}
+
+static const struct __vpirt vpip_vthr_const_real_rt = {
+      vpiConstant,
+      0,
+      0,
+      vthr_real_get_value,
+      0,
+      0,
+      0
+};
+
+vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
+{
+      struct __vpiVThrWord*obj = (struct __vpiVThrWord*)
+	    malloc(sizeof(struct __vpiVThrWord));
+
+      assert(type[0] == 'r');
+
+      obj->base.vpi_type = &vpip_vthr_const_real_rt;
+      obj->name = "W<>";
+      obj->subtype = vpiRealConst;
+      obj->index = base;
+
+      return &obj->base;
+}
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.9  2003/01/26 18:16:22  steve
+ *  Add %cvt/ir and %cvt/ri instructions, and support
+ *  real values passed as arguments to VPI tasks.
+ *
  * Revision 1.8  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

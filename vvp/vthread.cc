@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.97 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: vthread.cc,v 1.98 2003/01/26 18:16:22 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -180,6 +180,11 @@ unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr)
 void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
 {
       thr_put_bit(thr, addr, bit);
+}
+
+double vthread_get_real(struct vthread_s*thr, unsigned addr)
+{
+      return thr->words[addr].w_real;
 }
 
 static unsigned long* vector_to_array(struct vthread_s*thr,
@@ -806,6 +811,22 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CVT_IR(vthread_t thr, vvp_code_t cp)
+{
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_int = (long)(r);
+
+      return true;
+}
+
+bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
+{
+      long r = thr->words[cp->bit_idx[1]].w_int;
+      thr->words[cp->bit_idx[0]].w_real = (double)(r);
+
+      return true;
+}
+
 bool of_DELAY(vthread_t thr, vvp_code_t cp)
 {
 	//printf("thread %p: %%delay %lu\n", thr, cp->number);
@@ -1379,7 +1400,7 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 	    }
 	    v |= vv << i;
       }
-      thr->words[cp->bit_idx[0] & 3].w_int = v;
+      thr->words[cp->bit_idx[0]].w_int = v;
 	/* Set bit 4 as a flag if the input is unknown. */
       thr_put_bit(thr, 4, unknown_flag? 1 : 0);
       return true;
@@ -1874,6 +1895,7 @@ bool of_MUL_WR(vthread_t thr, vvp_code_t cp)
       double l = thr->words[cp->bit_idx[0]].w_real;
       double r = thr->words[cp->bit_idx[1]].w_real;
       thr->words[cp->bit_idx[0]].w_real = l * r;
+
       return true;
 }
 
@@ -2581,6 +2603,10 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.98  2003/01/26 18:16:22  steve
+ *  Add %cvt/ir and %cvt/ri instructions, and support
+ *  real values passed as arguments to VPI tasks.
+ *
  * Revision 1.97  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
