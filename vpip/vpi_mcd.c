@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.c,v 1.3 2001/06/12 03:53:10 steve Exp $"
+#ident "$Id: vpi_mcd.c,v 1.4 2001/07/22 18:19:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -43,7 +43,7 @@ void vpi_mcd_init(void)
 	mcd_table[0].filename = "<stdout>";
 	mcd_table[1].fp = stderr;
 	mcd_table[1].filename = "<stderr>";
-	mcd_table[2].fp = stdout;  /* TODO: initialize this to log file */
+	mcd_table[2].fp = 0;  /* TODO: initialize this to log file */
 	mcd_table[2].filename = "<stdlog>";
 }
 
