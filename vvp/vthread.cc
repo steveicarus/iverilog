@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.131 2005/03/05 05:45:18 steve Exp $"
+#ident "$Id: vthread.cc,v 1.132 2005/03/06 17:07:48 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -622,9 +622,24 @@ bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/* %assign/mv <memory>, <delay>, <bit>
+ * This generates an assignment event to a memory. Index register 0
+ * contains the width of the vector (and the word) and index register
+ * 3 contains the cannonical address of the word in memory.
+ */
 bool of_ASSIGN_MV(vthread_t thr, vvp_code_t cp)
 {
-      fprintf(stderr, "XXXX %%assign/mv not implemented yet\n");
+      unsigned wid = thr->words[0].w_int;
+      unsigned adr = thr->words[3].w_int;
+
+      assert(wid > 0);
+
+      unsigned delay = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      schedule_assign_memory_word(cp->mem, adr, value, delay);
       return true;
 }
 
@@ -3099,6 +3114,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.132  2005/03/06 17:07:48  steve
+ *  Non blocking assign to memory words.
+ *
  * Revision 1.131  2005/03/05 05:45:18  steve
  *  Check that lead.mv vector width matches word.
  *

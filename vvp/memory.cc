@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.24 2005/03/05 05:44:32 steve Exp $"
+#ident "$Id: memory.cc,v 1.25 2005/03/06 17:07:48 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -175,7 +175,15 @@ long memory_right_range(vvp_memory_t mem, unsigned ix)
 
 vvp_vector4_t memory_get_word(vvp_memory_t mem, unsigned addr)
 {
-	// XXXX For now, assume this can't happen
+	/* If the address is out of range, then return a vector of all
+	   X bits. */
+      if (addr >= mem->word_count) {
+	    vvp_vector4_t val (mem->width);
+	    for (unsigned idx = 0 ;  idx < mem->width ;  idx += 1)
+		  val.set_bit(idx, BIT4_X);
+	    return val;
+      }
+
       assert(addr <= mem->word_count);
 
       if (mem->words[addr].size() == 0) {
@@ -526,6 +534,9 @@ static void run_mem_assign(vvp_gen_event_t obj, unsigned char val)
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.25  2005/03/06 17:07:48  steve
+ *  Non blocking assign to memory words.
+ *
  * Revision 1.24  2005/03/05 05:44:32  steve
  *  Get read width of unitialized memory words right.
  *

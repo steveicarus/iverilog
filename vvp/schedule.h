@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.19 2005/02/12 03:26:14 steve Exp $"
+#ident "$Id: schedule.h,v 1.20 2005/03/06 17:07:48 steve Exp $"
 #endif
 
 # include  "vthread.h"
 # include  "pointers.h"
 # include  "vvp_net.h"
+# include  "memory.h"
 
 /*
  * This causes a thread to be scheduled for execution. The schedule
@@ -48,6 +49,10 @@ extern void schedule_assign_vector(vvp_net_ptr_t ptr,
 				   vvp_vector4_t val,
 				   vvp_time64_t  delay);
 
+extern void schedule_assign_memory_word(vvp_memory_t mem,
+					unsigned word_address,
+					vvp_vector4_t val,
+					vvp_time64_t delay);
 /*
  * This is very similar to schedule_assign_vector, but generates an
  * event in the active queue. It is used at link time to set an initial
@@ -121,6 +126,9 @@ extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.20  2005/03/06 17:07:48  steve
+ *  Non blocking assign to memory words.
+ *
  * Revision 1.19  2005/02/12 03:26:14  steve
  *  Support scheduling vvp_vector8_t objects.
  *

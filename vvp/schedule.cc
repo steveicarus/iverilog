@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.31 2005/02/12 03:26:14 steve Exp $"
+#ident "$Id: schedule.cc,v 1.32 2005/03/06 17:07:48 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -106,6 +106,19 @@ void assign_vector8_event_s::run_run(void)
 {
       count_assign_events += 1;
       vvp_send_vec8(ptr, val);
+}
+
+struct assign_memory_word_s  : public event_s {
+      vvp_memory_t mem;
+      unsigned adr;
+      vvp_vector4_t val;
+      void run_run(void);
+};
+
+void assign_memory_word_s::run_run(void)
+{
+      count_assign_events += 1;
+      memory_set_word(mem, adr, val);
 }
 
 struct generic_event_s : public event_s {
@@ -424,6 +437,18 @@ void schedule_assign_vector(vvp_net_ptr_t ptr,
       schedule_event_(cur, delay, SEQ_NBASSIGN);
 }
 
+void schedule_assign_memory_word(vvp_memory_t mem,
+				 unsigned word_addr,
+				 vvp_vector4_t val,
+				 vvp_time64_t delay)
+{
+      struct assign_memory_word_s*cur = new struct assign_memory_word_s;
+      cur->mem = mem;
+      cur->adr = word_addr;
+      cur->val = val;
+      schedule_event_(cur, delay, SEQ_NBASSIGN);
+}
+
 void schedule_set_vector(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
       struct assign_vector4_event_s*cur = new struct assign_vector4_event_s;
@@ -578,6 +603,9 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.32  2005/03/06 17:07:48  steve
+ *  Non blocking assign to memory words.
+ *
  * Revision 1.31  2005/02/12 03:26:14  steve
  *  Support scheduling vvp_vector8_t objects.
  *

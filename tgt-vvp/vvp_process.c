@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.103 2005/03/05 05:47:42 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.104 2005/03/06 17:07:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -164,12 +164,13 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned idx,
 
 }
 
-static void assign_to_memory(ivl_memory_t mem, unsigned idx,
-			     unsigned bit, unsigned delay)
+static void assign_to_memory_word(ivl_memory_t mem, unsigned bit,
+				  unsigned delay, unsigned wid)
 {
-      if (idx)
-	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
-      fprintf(vvp_out, "    %%assign/m M_%s, %u, %u;\n",
+      assert(wid = ivl_memory_width(mem));
+
+      fprintf(vvp_out, "   %%ix/load 0, %u;\n", wid);
+      fprintf(vvp_out, "   %%assign/mv M_%s, %u, %u;\n",
 	      vvp_memory_label(mem), delay, bit);
 }
 
@@ -472,14 +473,22 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		    assign_to_lvector(lval, 0, bidx, delay, bit_limit);
 		    cur_rbit += bit_limit;
 
+	      } else if (mem) {
+		      /* XXXX don't yes know what to do with a delay
+			 in an index variable. */
+		    assert(del == 0);
+		    assign_to_memory_word(mem, res.base, delay, bit_limit);
+
 	      } else {
+		    assert(!mem);
+		      /* XXXX This is obsolete, the
+			 assign_to_lvariable should be removed for the
+			 vector version. */
 		    for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
 			  unsigned bidx = res.base < 4
 				? res.base
 				: (res.base+cur_rbit);
-			  if (mem)
-				assign_to_memory(mem, idx, bidx, delay);
-			  else if (del != 0)
+			  if (del != 0)
 				assign_to_lvariable(lval, idx, bidx,
 						    1, 1);
 			  else
@@ -488,15 +497,14 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 			  cur_rbit += 1;
 		    }
-	      }
 
-	      for (idx = bit_limit; idx < ivl_lval_width(lval); idx += 1)
-			  if (mem)
-				assign_to_memory(mem, idx, 0, delay);
-			  else if (del != 0)
+		    for (idx = bit_limit; idx < ivl_lval_width(lval); idx += 1)
+			  if (del != 0)
 				assign_to_lvariable(lval, idx, 0, 1, 1);
 			  else
 				assign_to_lvariable(lval, idx, 0, delay, 0);
+
+	      }
 
 
 	      if (skip_set_flag) {
@@ -1461,6 +1469,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.104  2005/03/06 17:07:48  steve
+ *  Non blocking assign to memory words.
+ *
  * Revision 1.103  2005/03/05 05:47:42  steve
  *  Handle memory words in l-value concatenations.
  *
