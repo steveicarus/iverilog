@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.103 2003/02/22 06:26:58 steve Exp $"
+#ident "$Id: vthread.cc,v 1.104 2003/02/27 20:36:29 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -828,6 +828,21 @@ bool of_CVT_RI(vthread_t thr, vvp_code_t cp)
 {
       long r = thr->words[cp->bit_idx[1]].w_int;
       thr->words[cp->bit_idx[0]].w_real = (double)(r);
+
+      return true;
+}
+
+bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
+{
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      long rl = (long)r;
+      unsigned base = cp->bit_idx[0];
+      unsigned wid = cp->number;
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    thr_put_bit(thr, base+idx, (rl&1)? 1 : 0);
+	    rl >>= 1;
+      }
 
       return true;
 }
@@ -2664,6 +2679,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.104  2003/02/27 20:36:29  steve
+ *  Add the cvt/vr instruction.
+ *
  * Revision 1.103  2003/02/22 06:26:58  steve
  *  When checking for stop, remember to reschedule.
  *

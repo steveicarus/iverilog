@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.49 2003/02/09 23:33:26 steve Exp $
+ *  $Id: opcodes.txt,v 1.50 2003/02/27 20:36:29 steve Exp $
  */
 
 
@@ -185,10 +185,15 @@ Only bit 4 is set by these instructions.
 
 * %cvt/ir <bit-l>, <bit-r>
 * %cvt/ri <bit-l>, <bit-r>
+* %cvt/vr <bit-l>, <bit-r>, <wid>
 
-Copy a word from r to l, converting int from real to integer in the
-process.
+Copy a word from r to l, converting it from real to integer (ir) or
+integer to real (ri) in the process. The source and destinaition may
+be the same word address, leading to a convert in place.
 
+The %cvt/vr opcode converts a real word <bit-r> to a thread vector
+starting at <bit-l> and with the width <wid>. Non-integer precision is
+lost in the conversion.
 
 * %delay <delay>
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.57 2003/02/06 17:41:47 steve Exp $"
+#ident "$Id: codes.h,v 1.58 2003/02/27 20:36:29 steve Exp $"
 #endif
 
 
@@ -56,6 +56,7 @@ extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_IR(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RI(vthread_t thr, vvp_code_t code);
+extern bool of_CVT_VR(vthread_t thr, vvp_code_t code);
 extern bool of_DEASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
@@ -169,6 +170,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.58  2003/02/27 20:36:29  steve
+ *  Add the cvt/vr instruction.
+ *
  * Revision 1.57  2003/02/06 17:41:47  steve
  *  Add the %sub/wr instruction.
  *
