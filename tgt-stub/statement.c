@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.1 2004/12/12 18:15:06 steve Exp $"
+#ident "$Id: statement.c,v 1.2 2004/12/15 17:11:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -93,6 +93,22 @@ static void show_stmt_force(ivl_statement_t net, unsigned ind)
 	      ind+4, "", lwid);
 
       show_expression(ivl_stmt_rval(net), ind+4);
+}
+
+static void show_stmt_release(ivl_statement_t net, unsigned ind)
+{
+      unsigned idx;
+      unsigned lwid = 0;
+
+      fprintf(out, "%*srelease <lwidth=%u>\n", ind, "",
+	      ivl_stmt_lwidth(net));
+
+      for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1) {
+	    lwid += show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
+      }
+
+      fprintf(out, "%*sTotal l-value width: %u bits\n",
+	      ind+4, "", lwid);
 }
 
 void show_statement(ivl_statement_t net, unsigned ind)
@@ -220,6 +236,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_NOOP:
 	    fprintf(out, "%*s/* noop */;\n", ind, "");
+	    break;
+
+	  case IVL_ST_RELEASE:
+	    show_stmt_release(net, ind);
 	    break;
 
 	  case IVL_ST_STASK: {
