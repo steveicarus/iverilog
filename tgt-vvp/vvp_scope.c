@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.10 2001/04/01 01:48:21 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.11 2001/04/01 21:34:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -120,6 +120,10 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	  case IVL_LO_AND:
 	    ltype = "AND";
 	    init_val = 0x55;
+	    break;
+
+	  case IVL_LO_BUF:
+	    ltype = "BUF";
 	    break;
 
 	  case IVL_LO_NOR:
@@ -259,6 +263,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.11  2001/04/01 21:34:48  steve
+ *  Recognize the BUF device.
+ *
  * Revision 1.10  2001/04/01 01:48:21  steve
  *  Redesign event information to support arbitrary edge combining.
  *
