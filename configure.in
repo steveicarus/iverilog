@@ -47,6 +47,10 @@ AC_SUBST(WIN32)
 AC_MSG_RESULT($WIN32)
 AC_SUBST(EXEEXT)
 
+# vvp32 is by default disabled
+#enable_vvp32=no
+AC_SUBST(enable_vvp32)
+
 
 AC_LANG_CPLUSPLUS
 

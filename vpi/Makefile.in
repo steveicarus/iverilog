@@ -3,9 +3,7 @@
 #    and/or modify it in source code form under the terms of the GNU
 #    Library General Public License as published by the Free Software
 #    Foundation; either version 2 of the License, or (at your option)
-#    any later version. In order to redistribute the software in
-#    binary form, you will need a Picture Elements Binary Software
-#    License.
+#    any later version.
 #
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.45 2003/10/02 21:30:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.46 2003/10/08 23:17:39 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -50,7 +48,13 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
-all: dep system.vpi
+ifeq (@enable_vvp32@,yes)
+ALL32 = all32
+INSTALL32 = install32
+UNINSTALL32 = uninistall32
+endif
+
+all: dep system.vpi $(ALL32)
 
 dep:
 	mkdir dep
@@ -79,6 +83,31 @@ system.vpi: $O ../vvp/libvpi.a
 sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
 
+ifeq (@enable_vvp32@,yes)
+
+vpidir32 = $(libdir)/ivl/@vpidir2@
+
+all32: bin32 bin32/system.vpi
+
+bin32:
+	mkdir bin32
+
+bin32/%.o: %.c
+	$(CC) -m32 -Wall -I$(srcdir)/.. -I$(srcdir) -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
+
+bin32/system.vpi: $(addprefix bin32/,$O)
+	$(CC) -m32 @shared@ -o $@ $(addprefix bin32/,$O) -L../vvp/bin32 $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+
+install32: all32 $(vpidir2)/system.vpi
+
+$(vpidir2)/system.vpi: bin32/system.vpi
+	$(INSTALL_PROGRAM) bin32/system.vpi $(vpidir2)/system.vpi
+	$(STRIP) $(strip_dynamic) $(vpidir2)/system.vpi
+
+uninstall32:
+	rm -f $(vpidir2)/system.vpi
+endif
+
 clean:
 	rm -rf *.o sys_readmem_lex.c dep system.vpi
 
@@ -94,7 +123,7 @@ $(vpidir)/system.vpi: ./system.vpi
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(vpidir)
 
-uninstall:
+uninstall: $(UNINSTALL32)
 	rm -f $(vpidir)/system.vpi
 
 

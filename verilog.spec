@@ -26,7 +26,7 @@ to the IEEE-1364 standard.
 
 %build
 %ifarch x86_64
-./configure --prefix=/usr libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir1=.
+./configure --prefix=/usr libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
 %else
 ./configure --prefix=/usr
 %endif
@@ -54,16 +54,17 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/fpga.tgt
 %attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %ifarch x86_64
+%attr(-,root,root) /usr/bin/vvp32
 %attr(-,root,root) /usr/lib/ivl/vpi64/system.vpi
 %attr(-,root,root) /usr/lib/ivl/vpi64/cadpli.vpl
 %attr(-,root,root) /usr/lib64/libvpi.a
 %attr(-,root,root) /usr/lib64/libveriuser.a
 %else
-%attr(-,root,root) /usr/lib/ivl/system.vpi
 %attr(-,root,root) /usr/lib/ivl/cadpli.vpl
-%attr(-,root,root) /usr/lib/libvpi.a
 %attr(-,root,root) /usr/lib/libveriuser.a
 %endif
+%attr(-,root,root) /usr/lib/ivl/system.vpi
+%attr(-,root,root) /usr/lib/libvpi.a
 %attr(-,root,root) /usr/include/ivl_target.h
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h
