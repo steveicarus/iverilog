@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.3 2001/03/25 03:53:40 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.4 2001/03/25 05:59:47 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -33,6 +33,8 @@
 /*
  * This function takes a nexus and looks for an input functor. It then
  * draws to the output a string that represents that functor.
+ *
+ * XXXX This function does not yet support multiple drivers.
  */
 static void draw_nexus_input(ivl_nexus_t nex)
 {
@@ -114,6 +116,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		    ivl_scope_name(net), ivl_scope_name(net));
 
 
+	/* Scan the scope for logic devices. For each device, draw out
+	   a functor that connects pin 0 to the output, and the
+	   remaining pins to inputs. */
+
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1) {
 	    unsigned pdx;
 	    ivl_net_logic_t lptr = ivl_scope_log(net, idx);
@@ -145,6 +151,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       }
 
 
+	/* Scan the signals (reg and net) and draw the appropriate
+	   statements to make the signal function. */
+
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1) {
 	    ivl_signal_t sig = ivl_scope_sig(net, idx);
 
@@ -164,6 +173,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.4  2001/03/25 05:59:47  steve
+ *  Recursive make check target.
+ *
  * Revision 1.3  2001/03/25 03:53:40  steve
  *  Include signal bit index in functor input.
  *
