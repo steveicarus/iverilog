@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.74 2002/11/08 05:00:31 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.75 2002/11/17 18:31:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -866,6 +866,7 @@ static int show_stmt_force(ivl_statement_t net)
       ivl_lval_t lval;
       ivl_signal_t lsig;
       unsigned idx;
+      static unsigned force_functor_label = 0;
 
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
@@ -875,16 +876,17 @@ static int show_stmt_force(ivl_statement_t net)
       assert(ivl_lval_mux(lval) == 0);
       assert(ivl_lval_part_off(lval) == 0);
 
+      force_functor_label += 1;
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    fprintf(vvp_out, "f_%s.%u .force V_%s[%u], %s;\n",
-		    vvp_signal_label(lsig), idx,
+	    fprintf(vvp_out, "f_%u.%u .force V_%s[%u], %s;\n",
+		    force_functor_label, idx,
 		    vvp_signal_label(lsig), idx,
 		    draw_net_input(ivl_stmt_nexus(net, idx)));
       }
 
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    fprintf(vvp_out, "    %%force f_%s.%u, 1;\n",
-		    vvp_signal_label(lsig), idx);
+	    fprintf(vvp_out, "    %%force f_%u.%u, 1;\n",
+		    force_functor_label, idx);
       }
       return 0;
 }
@@ -1450,6 +1452,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.75  2002/11/17 18:31:09  steve
+ *  Generate unique labels for force functors.
+ *
  * Revision 1.74  2002/11/08 05:00:31  steve
  *  Use the vectorized %assign where appropriate.
  *
