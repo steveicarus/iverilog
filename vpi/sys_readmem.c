@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_readmem.c,v 1.1 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: sys_readmem.c,v 1.2 1999/12/15 04:02:38 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -111,8 +111,6 @@ static int sys_readmem_calltf(char*name)
 	    }
       }
 
-      vpi_printf("%s: task not implemented, yet.\n", name);
-
       if (item) vpi_free_object(words);
       free(value.value.vector);
       fclose(file);
@@ -134,6 +132,9 @@ void sys_readmem_register()
 
 /*
  * $Log: sys_readmem.c,v $
+ * Revision 1.2  1999/12/15 04:02:38  steve
+ *  Excess warning.
+ *
  * Revision 1.1  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *
