@@ -17,10 +17,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.cc,v 1.3 2000/03/25 05:02:25 steve Exp $"
+#ident "$Id: vvm_signal.cc,v 1.4 2000/03/26 16:55:41 steve Exp $"
 #endif
 
 # include  "vvm_signal.h"
+# include  <iostream.h>
+
+vvm_bitset_t::~vvm_bitset_t()
+{
+}
+
+unsigned vvm_bitset_t::as_unsigned() const
+{
+      unsigned result = 0;
+      unsigned width = get_width();
+      for (unsigned idx = width ;  idx > 0 ;  idx -= 1) {
+	    result <<= 1;
+
+	    if (B_IS1(get_bit(idx-1)))
+		  result |= 1;
+      }
+      return result;
+}
+
+ostream& operator << (ostream&os, const vvm_bitset_t&str)
+{
+      os << str.get_width() << "b'";
+      for (unsigned idx = str.get_width() ;  idx > 0 ;  idx -= 1)
+	    b_output(os, str.get_bit(idx));
+
+      return os;
+}
 
 vvm_signal_t::vvm_signal_t()
 {
@@ -55,6 +82,9 @@ vvm_ram_callback::~vvm_ram_callback()
 
 /*
  * $Log: vvm_signal.cc,v $
+ * Revision 1.4  2000/03/26 16:55:41  steve
+ *  Remove the vvm_bits_t abstract class.
+ *
  * Revision 1.3  2000/03/25 05:02:25  steve
  *  signal bits are referenced at run time by the vpiSignal struct.
  *

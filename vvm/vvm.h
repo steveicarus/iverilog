@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.34 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm.h,v 1.35 2000/03/26 16:55:41 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -92,18 +92,7 @@ inline vpip_bit_t B_NOT(vpip_bit_t l)
 
 extern bool posedge(vpip_bit_t from, vpip_bit_t to);
 
-
-class vvm_bits_t {
-    public:
-      virtual ~vvm_bits_t() =0;
-      virtual unsigned get_width() const =0;
-      virtual vpip_bit_t get_bit(unsigned idx) const =0;
-
-      unsigned as_unsigned() const;
-};
-
 extern ostream& b_output (ostream&os, vpip_bit_t);
-extern ostream& operator << (ostream&os, const vvm_bits_t&str);
 
 /*
  * Verilog events (update events and nonblocking assign) are derived
@@ -132,6 +121,9 @@ class vvm_event {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.35  2000/03/26 16:55:41  steve
+ *  Remove the vvm_bits_t abstract class.
+ *
  * Revision 1.34  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit

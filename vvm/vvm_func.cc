@@ -17,28 +17,28 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.5 2000/03/26 16:28:31 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.6 2000/03/26 16:55:41 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
 
-vpip_bit_t vvm_unop_and(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_and(const vvm_bitset_t&r)
 {
-      vpip_bit_t v = r.get_bit(0);
+      vpip_bit_t v = r[0];
 
       for (unsigned idx = 1 ;  idx < r.get_width() ;  idx += 1)
-	    v = B_AND(v, r.get_bit(idx));
+	    v = B_AND(v, r[idx]);
 
       return v;
 }
 
-vpip_bit_t vvm_unop_nand(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_nand(const vvm_bitset_t&r)
 {
       vpip_bit_t v = vvm_unop_and(r);
       return B_NOT(v);
 }
 
-vpip_bit_t vvm_unop_lnot(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_lnot(const vvm_bitset_t&r)
 {
       vpip_bit_t v = vvm_unop_or(r);
       return B_NOT(v);
@@ -51,7 +51,7 @@ void vvm_unop_not(vvm_bitset_t&v, const vvm_bitset_t&p)
 	    v[idx] = B_NOT(p[idx]);
 }
 
-vpip_bit_t vvm_unop_or(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_or(const vvm_bitset_t&r)
 {
       for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
 	    if (B_IS1(r.get_bit(idx)))
@@ -61,7 +61,7 @@ vpip_bit_t vvm_unop_or(const vvm_bits_t&r)
       return St0;
 }
 
-vpip_bit_t vvm_unop_nor(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_nor(const vvm_bitset_t&r)
 {
       vpip_bit_t v = vvm_unop_or(r);
       return B_NOT(v);
@@ -76,7 +76,7 @@ void vvm_unop_uminus(vvm_bitset_t&v, const vvm_bitset_t&l)
 
 }
 
-vpip_bit_t vvm_unop_xor(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_xor(const vvm_bitset_t&r)
 {
       vpip_bit_t v = St0;
 
@@ -87,7 +87,7 @@ vpip_bit_t vvm_unop_xor(const vvm_bits_t&r)
       return v;
 }
 
-vpip_bit_t vvm_unop_xnor(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_xnor(const vvm_bitset_t&r)
 {
       vpip_bit_t v = vvm_unop_xor(r);
       return B_NOT(v);
@@ -137,7 +137,7 @@ void vvm_binop_plus(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 
 void vvm_binop_shiftl(vvm_bitset_t&v,
 		      const vvm_bitset_t&l,
-		      const vvm_bits_t&r)
+		      const vvm_bitset_t&r)
 {
       assert(v.nbits == l.nbits);
       vvm_u32 s = r.as_unsigned();
@@ -147,7 +147,7 @@ void vvm_binop_shiftl(vvm_bitset_t&v,
 
 void vvm_binop_shiftr(vvm_bitset_t&v,
 		      const vvm_bitset_t&l,
-		      const vvm_bits_t&r)
+		      const vvm_bitset_t&r)
 {
       assert(v.nbits == l.nbits);
       vvm_u32 s = r.as_unsigned();
@@ -171,7 +171,7 @@ void vvm_binop_xor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 	    v[idx] = B_XOR(l[idx], r[idx]);
 }
 
-vpip_bit_t vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_eq(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
@@ -229,13 +229,13 @@ vpip_bit_t vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r)
       }
 }
 
-vpip_bit_t vvm_binop_ne(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_ne(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = vvm_binop_eq(l,r);
       return B_NOT(result);
 }
 
-vpip_bit_t vvm_binop_eeq(const vvm_bits_t&l,  const vvm_bits_t&r)
+vpip_bit_t vvm_binop_eeq(const vvm_bitset_t&l,  const vvm_bitset_t&r)
 {
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
@@ -263,13 +263,13 @@ vpip_bit_t vvm_binop_eeq(const vvm_bits_t&l,  const vvm_bits_t&r)
       return St1;
 }
 
-vpip_bit_t vvm_binop_nee(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_nee(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = vvm_binop_eeq(l,r);
       return B_NOT(result);
 }
 
-vpip_bit_t vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_xeq(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
@@ -312,7 +312,7 @@ vpip_bit_t vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r)
       return St1;
 }
 
-vpip_bit_t vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_zeq(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
@@ -352,7 +352,7 @@ vpip_bit_t vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r)
       return St1;
 }
 
-vpip_bit_t vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_lt(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result;
       result = St0;
@@ -375,7 +375,7 @@ vpip_bit_t vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r)
       return result;
 }
 
-vpip_bit_t vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_le(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = St1;
       const unsigned lwid = l.get_width();
@@ -396,7 +396,7 @@ vpip_bit_t vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r)
       return result;
 }
 
-vpip_bit_t vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_gt(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = St0;
 
@@ -420,7 +420,7 @@ vpip_bit_t vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r)
       return result;
 }
 
-vpip_bit_t vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_ge(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t result = St1;
 
@@ -443,14 +443,14 @@ vpip_bit_t vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r)
       return result;
 }
 
-vpip_bit_t vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_land(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t res1 = vvm_unop_or(l);
       vpip_bit_t res2 = vvm_unop_or(r);
       return B_AND(res1, res2);
 }
 
-vpip_bit_t vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r)
+vpip_bit_t vvm_binop_lor(const vvm_bitset_t&l, const vvm_bitset_t&r)
 {
       vpip_bit_t res1 = vvm_unop_or(l);
       vpip_bit_t res2 = vvm_unop_or(r);
@@ -486,6 +486,9 @@ void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.6  2000/03/26 16:55:41  steve
+ *  Remove the vvm_bits_t abstract class.
+ *
  * Revision 1.5  2000/03/26 16:28:31  steve
  *  vvm_bitset_t is no longer a template.
  *

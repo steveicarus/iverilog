@@ -19,29 +19,36 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.7 2000/03/26 16:28:31 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.8 2000/03/26 16:55:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  "vvm_nexus.h"
+class ostream;
 
 /*
- * The vvm_bitset_t is a fixed width array-like set of vpip_bit_t
- * items. A number is often times made up of bit sets instead of
- * single bits. The fixed array is used when possible because of the
- * more thorough type checking and (hopefully) better optimization.
+ * The vvm_bitset_t is a reference to an array of vpip_bit_t
+ * values. The space for the value is actually managed elsewhere, this
+ * object just references it, and attaches operations to it.
+ *
+ * The vvm_bitset_t is useful in behavioral situations, to operate on
+ * vpip_bit_t data vectors.
  */
-class vvm_bitset_t  : public vvm_bits_t {
+class vvm_bitset_t  {
 
     public:
       explicit vvm_bitset_t(vpip_bit_t*b, unsigned nb)
       : bits(b), nbits(nb) { }
+
+      ~vvm_bitset_t();
 
       vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
       vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
 
       unsigned get_width() const { return nbits; }
       vpip_bit_t get_bit(unsigned idx) const { return bits[idx]; }
+
+      unsigned as_unsigned() const;
 
     public:
       vpip_bit_t*bits;
@@ -51,6 +58,8 @@ class vvm_bitset_t  : public vvm_bits_t {
       vvm_bitset_t(const vvm_bitset_t&);
       vvm_bitset_t& operator= (const vvm_bitset_t&);
 };
+
+extern ostream& operator << (ostream&os, const vvm_bitset_t&str);
 
 /*
  * The vvm_signal_t template is the real object that handles the
@@ -145,6 +154,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.8  2000/03/26 16:55:41  steve
+ *  Remove the vvm_bits_t abstract class.
+ *
  * Revision 1.7  2000/03/26 16:28:31  steve
  *  vvm_bitset_t is no longer a template.
  *

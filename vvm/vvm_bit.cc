@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_bit.cc,v 1.10 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.11 2000/03/26 16:55:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -62,32 +62,6 @@ bool posedge(vpip_bit_t from, vpip_bit_t to)
       return false;
 }
 
-ostream& operator << (ostream&os, const vvm_bits_t&str)
-{
-      os << str.get_width() << "b'";
-      for (unsigned idx = str.get_width() ;  idx > 0 ;  idx -= 1)
-	    b_output(os, str.get_bit(idx));
-
-      return os;
-}
-
-vvm_bits_t::~vvm_bits_t()
-{
-}
-
-unsigned vvm_bits_t::as_unsigned() const
-{
-      unsigned result = 0;
-      unsigned width = get_width();
-      for (unsigned idx = width ;  idx > 0 ;  idx -= 1) {
-	    result <<= 1;
-
-	    if (B_IS1(get_bit(idx-1)))
-		  result |= 1;
-      }
-      return result;
-}
-
 vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 {
       unsigned li, ri, ci;
@@ -126,6 +100,9 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.11  2000/03/26 16:55:41  steve
+ *  Remove the vvm_bits_t abstract class.
+ *
  * Revision 1.10  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
