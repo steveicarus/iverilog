@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.11 2002/08/15 02:12:20 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.12 2002/11/17 22:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -460,6 +460,9 @@ static int sys_dumpfile_calltf(char*name)
 	    path = strdup("dumpfile.lxt");
       }
 
+      if (dump_file)
+	    close_dumpfile();
+
       assert(dump_file == 0);
       open_dumpfile(path);
 
@@ -814,6 +817,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.12  2002/11/17 22:28:42  steve
+ *  Close old file if $dumpfile is called again.
+ *
  * Revision 1.11  2002/08/15 02:12:20  steve
  *  add dumpvars_compiletf to check first argument.
  *

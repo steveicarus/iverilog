@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.38 2002/11/14 22:43:58 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.39 2002/11/17 22:28:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -449,6 +449,11 @@ static int sys_dumpfile_calltf(char*name)
 	    path = strdup("dumpfile.vcd");
       }
 
+      if (dump_file) {
+	    fclose(dump_file);
+	    dump_file = 0;
+      }
+
       assert(dump_file == 0);
       open_dumpfile(path);
 
@@ -844,6 +849,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.39  2002/11/17 22:28:42  steve
+ *  Close old file if $dumpfile is called again.
+ *
  * Revision 1.38  2002/11/14 22:43:58  steve
  *  Save vpiFullName results.
  *
