@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.7 1999/09/30 21:27:29 steve Exp $"
+#ident "$Id: t-null.cc,v 1.8 1999/10/05 03:26:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -33,6 +33,8 @@ static class target_null_t  : public target_t {
       void bufz(ostream&os, const NetBUFZ*) { }
       void memory(ostream&, const NetMemory*) { }
       void task_def(ostream&, const NetTaskDef*) { }
+      void net_assign(ostream&os, const NetAssign*) { }
+      void net_assign_nb(ostream&os, const NetAssignNB*) { }
       void net_esignal(ostream&, const NetESignal*) { }
       void net_event(ostream&, const NetNEvent*) { }
       bool proc_block(ostream&, const NetBlock*) { return true; }
@@ -49,6 +51,9 @@ static class target_null_t  : public target_t {
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.8  1999/10/05 03:26:37  steve
+ *  null target ignore assignment nodes.
+ *
  * Revision 1.7  1999/09/30 21:27:29  steve
  *  Ignore user task definitions.
  *
