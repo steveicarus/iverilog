@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.38 1999/11/23 02:49:04 steve Exp $"
+#ident "$Id: lexor.lex,v 1.39 1999/12/16 01:20:17 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -315,19 +315,17 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
       assert(tolower(*ptr) == 'b');
       verinum::V*bits = new verinum::V[size];
 
+      ptr += 1;
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
       unsigned idx = 0;
       const char*eptr = ptr + strlen(ptr) - 1;
-      while ((eptr > ptr) && (idx < size)) {
-
-	    if (*eptr == '_') {
-		  eptr -= 1;
-		  continue;
-	    }
+      while ((eptr >= ptr) && (idx < size)) {
 
 	    switch (*eptr) {
+		case '_':
+		  break;
 		case '0':
 		  bits[idx++] = verinum::V0;
 		  break;
@@ -349,7 +347,7 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 	// Zero-extend binary number, except that z or x is extended
 	// if it is the highest supplied digit.
       while (idx < size) {
-	    switch (ptr[1]) {
+	    switch (ptr[0]) {
 		case '0':
 		case '1':
 		  bits[idx++] = verinum::V0;
