@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.6 2001/03/25 03:24:10 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.7 2001/03/25 03:53:24 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -143,7 +143,7 @@ static void show_stmt_condit(ivl_statement_t net)
       lab_false = local_count++;
       lab_out = local_count++;
 
-      fprintf(vvp_out, "    %%jmp/0  T_%05d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0xz  T_%05d.%d, %u;\n",
 	      thread_count, lab_false, cond.base);
 
       show_statement(ivl_stmt_cond_true(net));
@@ -312,6 +312,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.7  2001/03/25 03:53:24  steve
+ *  Skip true clause if condition ix 0, x or z
+ *
  * Revision 1.6  2001/03/25 03:24:10  steve
  *  Draw signal inputs to system tasks.
  *
