@@ -1,5 +1,5 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM
-		Copyright 2000-2003 Stephen Williams
+		Copyright 2000-2004 Stephen Williams
 
 
 1.0 What is ICARUS Verilog?
