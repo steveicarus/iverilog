@@ -296,10 +296,6 @@ Verilog web page for the current state of support for Verilog, and in
 particular, browse the bug report database for reported unsupported
 constructs.
 
-  - real data types not supported. This includes real and
-    realtime. However, floating point constants in delay expressions
-    are supported so that `timescale works properly.
-
   - System functions are supported, but the compiler presumes that
     they return 32 bits. This is the typical case.
 
