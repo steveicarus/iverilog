@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.246 2002/04/24 17:40:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.247 2002/05/07 05:06:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1858,8 +1858,10 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	    des->add_node(po);
 
+	      /* We want to wait only if the expression is something
+		 other then 1 (0,x,z) . */
 	    NetESignal*ce = new NetESignal(ex);
-	    NetCondit*co = new NetCondit(new NetEUnary('!', ce), we, 0);
+	    NetCondit*co = new NetCondit(ce, 0, we);
 
 	    ev->set_line(*this);
 	    we->set_line(*this);
@@ -2524,6 +2526,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.247  2002/05/07 05:06:07  steve
+ *  Use else clause instead of ! to preface wait events.
+ *
  * Revision 1.246  2002/04/24 17:40:48  steve
  *  Agressively evalutate case expressions.
  *
