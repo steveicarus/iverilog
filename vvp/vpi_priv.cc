@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.33 2003/03/12 02:50:32 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.34 2003/03/13 04:34:18 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -154,6 +154,12 @@ int vpi_get(int property, vpiHandle ref)
 	    return vpip_get_global(property);
 
       if (property == vpiType) {
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %d\n",
+			  ref, ref->vpi_type->type_code);
+		  fflush(vpi_trace);
+	    }
+
 	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
 		  return vpiIntegerVar;
@@ -231,8 +237,12 @@ void vpi_set_vlog_info(int argc, char** argv)
     vpi_vlog_info.argc    = argc;
     vpi_vlog_info.argv    = argv;
 
-    if (const char*path = getenv("VPI_TRACE"))
-	  vpi_trace = fopen(path, "w");
+    if (const char*path = getenv("VPI_TRACE")) {
+	  if (strcmp(path,"-") == 0)
+		vpi_trace = stdout;
+	  else
+		vpi_trace = fopen(path, "w");
+    }
 }
 
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
@@ -244,25 +254,25 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 
 	    if (vpi_trace) switch (vp->format) {
 		case vpiStringVal:
-		  fprintf(vpi_trace, "vpi_get_value(%d...) -> string=%s\n",
-			  expr->vpi_type->type_code, vp->value.str);
+		  fprintf(vpi_trace, "vpi_get_value(%p=<%d>) -> string=\"%s\"\n",
+			  expr, expr->vpi_type->type_code, vp->value.str);
 		  fflush(vpi_trace);
 		  break;
 
 		case vpiBinStrVal:
-		  fprintf(vpi_trace, "vpi_get_value(%d...) -> binstr=%s\n",
+		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> binstr=%s\n",
 			  expr->vpi_type->type_code, vp->value.str);
 		  fflush(vpi_trace);
 		  break;
 
 		case vpiIntVal:
-		  fprintf(vpi_trace, "vpi_get_value(%d...) -> int=%d\n",
+		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> int=%d\n",
 			  expr->vpi_type->type_code, vp->value.integer);
 		  fflush(vpi_trace);
 		  break;
 
 		default:
-		  fprintf(vpi_trace, "vpi_get_value(%d...) -> <%d>=?\n",
+		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> <%d>=?\n",
 			  expr->vpi_type->type_code, vp->format);
 		  fflush(vpi_trace);
 	    }
@@ -270,7 +280,7 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
       }
 
       if (vpi_trace) {
-	    fprintf(vpi_trace, "vpi_get_value(%d...) -> <suppress>\n",
+	    fprintf(vpi_trace, "vpi_get_value(<%d>...) -> <suppress>\n",
 		    expr->vpi_type->type_code);
 	    fflush(vpi_trace);
       }
@@ -301,7 +311,15 @@ vpiHandle vpi_handle(int type, vpiHandle ref)
 	    return 0;
 
       assert(ref->vpi_type->handle_);
-      return (ref->vpi_type->handle_)(type, ref);
+      vpiHandle res = (ref->vpi_type->handle_)(type, ref);
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_handle(%d, %p) -> %p\n",
+		    type, ref, res);
+	    fflush(vpi_trace);
+      }
+
+      return res;
 }
 
 /*
@@ -349,7 +367,7 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
       return (ref->vpi_type->index_)(ref, idx);
 }
 
-static vpiHandle find_name(char *name, vpiHandle handle)
+static vpiHandle find_name(const char *name, vpiHandle handle)
 {
       vpiHandle rtn = 0;
       struct __vpiScope*ref = (struct __vpiScope*)handle;
@@ -383,7 +401,7 @@ static vpiHandle find_name(char *name, vpiHandle handle)
       return rtn;
 }
 
-static vpiHandle find_scope(char *name, vpiHandle handle, int depth)
+static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 {
       vpiHandle iter, hand, rtn = 0;
 
@@ -393,7 +411,7 @@ static vpiHandle find_scope(char *name, vpiHandle handle, int depth)
       while (iter && (hand = vpi_scan(iter))) {
 	    char *nm = vpi_get_str(vpiName, hand);
 	    int len = strlen(nm);
-	    char *cp = name + len;	/* hier separator */
+	    const char *cp = name + len;	/* hier separator */
 
 	    if (!handle && !strcmp(name, nm)) {
 		  /* root module */
@@ -412,11 +430,18 @@ static vpiHandle find_scope(char *name, vpiHandle handle, int depth)
       return rtn;
 }
 
-vpiHandle vpi_handle_by_name(char *name, vpiHandle scope)
+vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 {
       vpiHandle hand;
-      char *nm, *cp;
+      const char *nm, *cp;
       int len;
+
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_handle_by_name(%s, %p) -->\n",
+		    name, scope);
+	    fflush(vpi_trace);
+      }
 
       /* If scope provided, look in corresponding module; otherwise
        * traverse the hierarchy specified in name to find the leaf module
@@ -435,7 +460,8 @@ vpiHandle vpi_handle_by_name(char *name, vpiHandle scope)
 	    if (!strncmp(name, nm, len) && *cp == '.') name = cp + 1;
 
 	    /* Ok, time to burn some cycles */
-	    return find_name(name, hand);
+	    vpiHandle out = find_name(name, hand);
+	    return out;
       }
 
       return 0;
@@ -489,6 +515,10 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.34  2003/03/13 04:34:18  steve
+ *  Add VPI_TRACE tracing of VPI calls.
+ *  vpi_handle_by_name takes a const char*.
+ *
  * Revision 1.33  2003/03/12 02:50:32  steve
  *  Add VPI tracing.
  *

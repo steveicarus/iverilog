@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.21 2003/03/12 02:49:38 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.22 2003/03/13 04:34:35 steve Exp $"
 #endif
 
 
@@ -299,7 +299,7 @@ extern vpiHandle  vpi_handle(int type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
 extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
-extern vpiHandle  vpi_handle_by_name(char*name, vpiHandle scope);
+extern vpiHandle  vpi_handle_by_name(const char*name, vpiHandle scope);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern int   vpi_get(int property, vpiHandle ref);
@@ -374,6 +374,10 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.22  2003/03/13 04:34:35  steve
+ *  Add VPI_TRACE tracing of VPI calls.
+ *  vpi_handle_by_name takes a const char*.
+ *
  * Revision 1.21  2003/03/12 02:49:38  steve
  *  Move _vpiNexisId safely out of the way.
  *
