@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.40 2000/03/16 23:13:49 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.41 2000/03/17 02:22:03 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -182,119 +182,41 @@ class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       vpip_bit_t input_[WIDTH];
 };
 
-template <unsigned WIDTH, unsigned WDIST>
+/*
+ * This class implements LPM_CLSHIFT devices with specified data width
+ * and selector input width. The direction bit is a single bit input.
+ */
 class vvm_clshift  : public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_clshift()
-	    { dir_ = V0;
-	      dist_val_ = WIDTH;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		    data_[idx] = Vx;
-	      for (unsigned idx = 0 ;  idx < WDIST ;  idx += 1)
-		    dist_[idx] = Vx;
-	    }
+      vvm_clshift(unsigned wid, unsigned dwid);
+      ~vvm_clshift();
 
-      ~vvm_clshift() { }
+      void init_Data(unsigned idx, vpip_bit_t val);
+      void init_Distance(unsigned idx, vpip_bit_t val);
+      void init_Direction(unsigned, vpip_bit_t val);
 
-      void init_Data(unsigned idx, vpip_bit_t val)
-	    { data_[idx] = val;
-	    }
-      void init_Distance(unsigned idx, vpip_bit_t val)
-	    { dist_[idx] = val;
-	      calculate_dist_();
-	    }
-      void init_Direction(unsigned, vpip_bit_t val)
-	    { dir_ = val; }
+      vvm_nexus::drive_t* config_rout(unsigned idx);
 
-      vvm_nexus::drive_t* config_rout(unsigned idx)
-	    { return out_+idx; }
-
-      unsigned key_Data(unsigned idx) const { return idx; }
-      unsigned key_Distance(unsigned idx) const { return 0x10000+idx; }
-      unsigned key_Direction(unsigned) const { return 0x20000; }
+      unsigned key_Data(unsigned idx) const;
+      unsigned key_Distance(unsigned idx) const;
+      unsigned key_Direction(unsigned) const;
 
     private:
-      void take_value(unsigned key, vpip_bit_t val)
-      { unsigned code = key>>16;
-        unsigned idx = key & 0xffff;
-	switch (code) {
-	    case 0:
-	      set_Data(idx, val);
-	      break;
-	    case 1:
-	      set_Distance(idx, val);
-	      break;
-	    default:
-	      set_Direction(idx, val);
-	      break;
-	}
-      }
-
-      void set_Data(unsigned idx, vpip_bit_t val)
-	    { if (data_[idx] == val) return;
-	      data_[idx] = val;
-	      if ((dist_val_ + idx) >= WIDTH) return;
-	      if ((dist_val_ + idx) < 0) return;
-	      out_[dist_val_+idx].set_value(val);
-	    }
-
-      void set_Distance(unsigned idx, vpip_bit_t val)
-	    { if (dist_[idx] == val) return;
-	      dist_[idx] = val;
-	      calculate_dist_();
-	      compute_();
-	    }
-
-      void set_Direction(unsigned, vpip_bit_t val)
-	    { if (dir_ == val) return;
-	      dir_ = val;
-	      calculate_dist_();
-	      compute_();
-	    }
+      void take_value(unsigned key, vpip_bit_t val);
 
     private:
+      unsigned width_, wdist_;
       vpip_bit_t dir_;
-      vpip_bit_t data_[WIDTH];
-      vpip_bit_t dist_[WDIST];
-      vvm_nexus::drive_t out_[WIDTH];
       int dist_val_;
 
-      void calculate_dist_()
-	    { int tmp = 0;
-	      for (unsigned idx = 0 ;  idx < WDIST ;  idx += 1)
-		    switch (dist_[idx]) {
-			case V0:
-			  break;
-			case V1:
-			  tmp |= 1<<idx;
-			  break;
-			default:
-			  tmp = WIDTH;
-		    }
-	      if (tmp > WIDTH)
-		    tmp = WIDTH;
-	      else if (dir_ == V1)
-		    tmp = -tmp;
-	      dist_val_ = tmp;
-	    }
+      vpip_bit_t*ibits_;
+      vvm_nexus::drive_t*out_;
 
-      void compute_()
-	    { vvm_event*ev;
-	      if (dist_val_ == WIDTH) {
-		    for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-			  out_[idx].set_value(Vx);
-		    return;
-	      }
-	      for (int idx = 0 ;  idx < WIDTH ;  idx += 1) {
-		    vpip_bit_t val;
-		    if ((idx-dist_val_) >= WIDTH) val = V0;
-		    else if ((idx-dist_val_) < 0) val = V0;
-		    else val = data_[idx-dist_val_];
-		    out_[idx].set_value(val);
-	      }
-	    }
+      void calculate_dist_();
+      void compute_();
 };
+
 
 template <unsigned WIDTH> class vvm_compare {
 
@@ -1004,6 +926,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.41  2000/03/17 02:22:03  steve
+ *  vvm_clshift implementation without templates.
+ *
  * Revision 1.40  2000/03/16 23:13:49  steve
  *  Update LPM_MUX to nexus style.
  *
@@ -1036,47 +961,5 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
  *
  * Revision 1.31  1999/12/05 02:24:09  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.30  1999/12/02 16:58:58  steve
- *  Update case comparison (Eric Aardoom).
- *
- * Revision 1.29  1999/12/02 04:54:11  steve
- *  Handle mux sel of X, if inputs are equal.
- *
- * Revision 1.28  1999/11/25 01:34:04  steve
- *  Reduce more gate templates to use vvm_1bit_out (Eric Aardoom)
- *
- * Revision 1.27  1999/11/24 04:38:49  steve
- *  LT and GT fixes from Eric Aardoom.
- *
- * Revision 1.26  1999/11/22 00:30:52  steve
- *  Detemplate some and, or and nor methods.
- *
- * Revision 1.25  1999/11/21 01:16:51  steve
- *  Fix coding errors handling names of logic devices,
- *  and add support for buf device in vvm.
- *
- * Revision 1.24  1999/11/21 00:13:09  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.23  1999/11/15 00:42:31  steve
- *  Fixup to include right shift support.
- *
- * Revision 1.22  1999/11/14 23:43:46  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.21  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.20  1999/11/14 18:22:12  steve
- *  Fix NAND gate support to use named pins.
- *
- * Revision 1.19  1999/11/13 03:46:52  steve
- *  Support the LPM_MUX in vvm.
- *
- * Revision 1.18  1999/11/01 02:07:41  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
  */
 #endif

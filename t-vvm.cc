@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.110 2000/03/16 23:13:49 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.111 2000/03/17 02:22:03 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1072,9 +1072,9 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 
 void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
 {
-      os << "static vvm_clshift<" << gate->width() << "," <<
-	    gate->width_dist() << "> " << mangle(gate->name()) << ";"
-	 << endl;
+      os << "static vvm_clshift " << mangle(gate->name()) << "(" <<
+	    gate->width() << "," << gate->width_dist() << ");" <<
+	    endl;
 
 	/* Connect the Data input pins... */
       for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
@@ -1370,104 +1370,8 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
 
 }
 
-/*
- * The non-blocking assignment works by creating an event to do the
- * assignment at the right time. The value to be assigned is saved in
- * the event and the event function performs the actual assignment.
- *
- * The net part of the assign generates a type ot represent the
- * assignment. Creating instances of this event will be dealt with
- * later.
- */
 void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 {
-#ifdef REMOVE_ME_WHEN_NB_ASSIGN_IS_DONE
-      const string name = mangle(net->name());
-      unsigned iwid = net->pin_count();
-      os << "class " << name << " : public vvm_event {" << endl;
-      os << "    public:" << endl;
-
-      if (net->bmux()) {
-	    os << "      " << name << "(const vvm_bitset_t<"
-	       << iwid << ">&v, unsigned idx)" << endl;
-	    os << "      : value_(v), idx_(idx) { }" << endl;
-      } else {
-	    os << "      " << name << "(const vvm_bits_t&v)"
-	       << endl;
-	    os << "      : value_(v) { }" << endl;
-      }
-      os << "      void event_function();" << endl;
-
-      os << "    private:" << endl;
-      os << "      vvm_bitset_t<" << iwid << ">value_;" << endl;
-
-      if (net->bmux())
-	    os << "      unsigned idx_;" << endl;
-
-      os << "};" << endl;
-
-
-	/* Write the event_function to do the actual assignment. */
-
-      delayed << "void " << name << "::event_function()" << endl;
-      delayed << "{" << endl;
-
-      if (net->bmux()) {
-	      /* If the assignment is to a single bit (with a mux)
-		 then write a switch statement that selects which pins
-		 to write to. */
-	    delayed << "      switch (idx_) {" << endl;
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  const NetObj*cur;
-		  unsigned pin;
-
-		  delayed << "        case " << idx << ":" << endl;
-		  for (net->pin(idx).next_link(cur, pin)
-			     ; net->pin(idx) != cur->pin(pin)
-			     ; cur->pin(pin).next_link(cur, pin)) {
-
-			const NetObj::Link&lnk = cur->pin(pin);
-
-			  // Skip output only pins.
-			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			      continue;
-
-			delayed << "        " << mangle(cur->name())
-				<< ".set_" << lnk.get_name()
-				<< lnk.get_inst() << ", value_[0]);" << endl;
-		  }
-
-		  delayed << "          break;" << endl;
-	    }
-	    delayed << "      }" << endl;
-
-      } else {
-
-	      /* If there is no BMUX, then write all the bits of the
-		 value to all the pins. */
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  const NetObj*cur;
-		  unsigned pin;
-
-		  for (net->pin(idx).next_link(cur, pin)
-			     ; net->pin(idx) != cur->pin(pin)
-			     ; cur->pin(pin).next_link(cur, pin)) {
-
-			const NetObj::Link&lnk = cur->pin(pin);
-
-			  // Skip output only pins.
-			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			      continue;
-
-			delayed << "      " << mangle(cur->name()) <<
-			      ".set_" << lnk.get_name() << "("
-				<< lnk.get_inst() << ", value_[" <<
-			      idx << "]);" << endl;
-		  }
-	    }
-      }
-      delayed << "}" << endl;
-#endif
 }
 
 void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
@@ -1597,6 +1501,8 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
       if (net->bmux()) {
 
+	      //XXXX Not updated to nexus style??
+
 	      // This is a bit select. Assign the low bit of the rval
 	      // to the selected bit of the lval.
 	    string bval = emit_proc_rval(defn, 8, net->bmux());
@@ -1637,45 +1543,11 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    defn << "      }" << endl;
 
       } else {
-#if 0
-	      /* Not only is the lvalue signal assigned to, send the
-		 bits to all the other pins that are connected to this
-		 signal. */
-
-	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-		  const NetObj*cur;
-		  unsigned pin;
-		  map<string,bool> written;
-
-		  for (net->pin(idx).next_link(cur, pin)
-			     ; net->pin(idx) != cur->pin(pin)
-			     ; cur->pin(pin).next_link(cur, pin)) {
-
-			  // Skip output only pins.
-			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
-			      continue;
-
-			  // It is possible for a named device to show up
-			  // several times in a link. This is the classic
-			  // case with NetESignal objects, which are
-			  // repeated for each expression that uses it.
-			if (written[cur->name()])
-			      continue;
-
-			written[cur->name()] = true;
-			defn << "      " << mangle(cur->name()) <<
-			      ".set_" << cur->pin(pin).get_name() <<
-			      "(" << cur->pin(pin).get_inst() <<
-			      ", " << rval << "[" << idx << "]);" << endl;
-		  }
-	    }
-#else
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
 		  defn << "      " << nexus << "_nex.reg_assign(" <<
 			rval << "[" << idx << "]);" << endl;
 	    }
-#endif
       }
 }
 
@@ -1713,26 +1585,38 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 {
       string rval = emit_proc_rval(defn, 8, net->rval());
+      const unsigned long delay = net->rise_time();
 
       if (net->bmux()) {
+	      /* If the l-value has a bit select, set the output bit
+		 to only the desired bit. Evaluate the index and use
+		 that to drive a switch statement.
+
+		 XXXX I'm not fully satisfied with this, I might like
+		 better generating a demux device and doing the assign
+		 to the device input. Food for thought. */
+
 	    string bval = emit_proc_rval(defn, 8, net->bmux());
-	    defn << "      (new " << mangle(net->name()) << "("
-		 << rval << ", " << bval << ".as_unsigned())) "
-		 << "-> schedule(" << net->rise_time() << ");" << endl;
+	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
+
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
+
+		  defn << "      case " << idx << ":" << endl;
+		  defn << "        vvm_delyed_assign(" << nexus <<
+			"_nex, " << rval << ", " << delay << ");" << endl;
+		  defn << "        break;" << endl;
+	    }
+
+	    defn << "      }" << endl;
 
       } else {
-	    const unsigned long delay = net->rise_time();
 	    for (unsigned idx = 0 ; idx < net->pin_count() ;  idx += 1) {
 		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
 		  defn << "      vvm_delayed_assign(" << nexus <<
 			"_nex, " << rval << "[" << idx << "], " <<
 			delay << ");" << endl;
 	    }
-#ifdef REMOVE_ME_WHEN_NB_ASSIGN_IS_DONE
-	    defn << "      (new " << mangle(net->name()) << "("
-		 << rval << ")) -> schedule(" << net->rise_time() <<
-		  ");" << endl;
-#endif
       }
 }
 
@@ -2297,6 +2181,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.111  2000/03/17 02:22:03  steve
+ *  vvm_clshift implementation without templates.
+ *
  * Revision 1.110  2000/03/16 23:13:49  steve
  *  Update LPM_MUX to nexus style.
  *
