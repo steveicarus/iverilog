@@ -17,13 +17,111 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.34 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.35 2001/06/18 03:10:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
 # include  <malloc.h>
 # include  <string.h>
+
+/*
+ *  Escape non-symbol chararacters in ids, and quotes in strings.
+ */
+
+inline static char hex_digit(unsigned i)
+{
+      i &= 0xf;
+      return i>=10 ? i-10+'A' : i+'0';
+}
+
+const char *vvp_mangle_id(const char *id)
+{
+      static char *out = 0x0;
+      static size_t out_len;
+      
+      int nesc = 0;
+      int iout = 0;
+      const char *inp = id;
+
+      const char nosym[] = "!\"#%&'()*+,-/:;<=>?@[\\]^`{|}~";
+      
+      char *se = strpbrk(inp, nosym);
+      if (!se)
+	    return id;
+      
+      do {
+	    int n = se - inp;
+	    int nlen = strlen(id) + 4*(++nesc) + 1;
+	    if (out_len < nlen) {
+		  out = (char *) realloc(out, nlen);
+		  assert(out);
+		  out_len = nlen;
+	    }
+	    if (n) {
+		  strncpy(out+iout, inp, n);
+		  iout += n;
+	    }
+	    inp += n+1;
+	    out[iout++] = '\\';
+	    switch (*se) {
+		case '\\':
+		case '/':
+		case '<':
+		case '>':
+		  out[iout++] = *se;
+		  break;
+		default:
+		  out[iout++] = 'x';
+		  out[iout++] = hex_digit(*se >> 4);
+		  out[iout++] = hex_digit(*se);
+		  break;
+	    }
+
+	    se = strpbrk(inp, nosym);
+      } while (se);
+      
+      strcpy(out+iout, inp);
+      return out;
+}
+
+const char *vvp_mangle_name(const char *id)
+{
+      static char *out = 0x0;
+      static size_t out_len;
+      
+      int nesc = 0;
+      int iout = 0;
+      const char *inp = id;
+
+      const char nosym[] = "\"\\";
+      
+      char *se = strpbrk(inp, nosym);
+      if (!se)
+	    return id;
+      
+      do {
+	    int n = se - inp;
+	    int nlen = strlen(id) + 2*(++nesc) + 1;
+	    if (out_len < nlen) {
+		  out = (char *) realloc(out, nlen);
+		  assert(out);
+		  out_len = nlen;
+	    }
+	    if (n) {
+		  strncpy(out+iout, inp, n);
+		  iout += n;
+	    }
+	    inp += n+1;
+	    out[iout++] = '\\';
+	    out[iout++] = *se;
+
+	    se = strpbrk(inp, nosym);
+      } while (se);
+      
+      strcpy(out+iout, inp);
+      return out;
+}
 
 /*
  * The draw_scope function draws the major functional items within a
@@ -85,13 +183,13 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       }
 
       if (lptr && (nptr_pin == 0)) {
-	    sprintf(result, "L_%s", ivl_logic_name(lptr));
+	    sprintf(result, "L_%s", vvp_mangle_id(ivl_logic_name(lptr)));
 	    return result;
       }
 
       sptr = ivl_nexus_ptr_sig(nptr);
       if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-	    sprintf(result, "V_%s[%u]", ivl_signal_name(sptr),
+	    sprintf(result, "V_%s[%u]", vvp_mangle_id(ivl_signal_name(sptr)),
 		    nptr_pin);
 	    return result;
       }
@@ -110,7 +208,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 			sprintf(result, "L_%s/%u",
-				ivl_lpm_name(lpm), idx);
+				vvp_mangle_id(ivl_lpm_name(lpm)), idx);
 			return result;
 		  }
 	    break;
@@ -122,7 +220,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 			sprintf(result, "L_%s[%u]",
-				ivl_lpm_name(lpm), idx);
+				vvp_mangle_id(ivl_lpm_name(lpm)), idx);
 			return result;
 		  }
 
@@ -132,7 +230,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
-		  sprintf(result, "L_%s", ivl_lpm_name(lpm));
+		  sprintf(result, "L_%s", vvp_mangle_id(ivl_lpm_name(lpm)));
 		  return result;
 	    }
 	    break;
@@ -179,7 +277,9 @@ static const char* draw_net_input(ivl_nexus_t nex)
       assert(ndrivers <= 4);
 
 	/* Draw a resolver to combine the inputs. */
-      fprintf(vvp_out, "RS_%s .resolv tri, %s", ivl_nexus_name(nex),
+      fprintf(vvp_out, "RS_%s .resolv tri", 
+	      vvp_mangle_id(ivl_nexus_name(nex)));
+      fprintf(vvp_out, ", %s",
 	      draw_net_input_drive(nex, drivers[0]));
 
       for (idx = 1 ;  idx < ndrivers ;  idx += 1)
@@ -190,7 +290,7 @@ static const char* draw_net_input(ivl_nexus_t nex)
 
       fprintf(vvp_out, ";\n");
 
-      sprintf(result, "RS_%s", ivl_nexus_name(nex));
+      sprintf(result, "RS_%s", vvp_mangle_id(ivl_nexus_name(nex)));
       return result;
 }
 
@@ -229,7 +329,8 @@ void draw_input_from_net(ivl_nexus_t nex)
       }
 
       assert(sig);
-      fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sig), sig_pin);
+      fprintf(vvp_out, "V_%s[%u]", 
+	      vvp_mangle_id(ivl_signal_name(sig)), sig_pin);
 }
 
 /*
@@ -245,8 +346,8 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
 
       fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
-	      ivl_signal_name(sig), signed_flag,
-	      ivl_signal_basename(sig), msb, lsb);
+	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
+	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
 }
 
 /*
@@ -311,7 +412,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	    if (ptr) {
 		  char tmp[512];
 		  sprintf(tmp, "V_%s[%u]",
-			  ivl_signal_name(ivl_nexus_ptr_sig(ptr)),
+			  vvp_mangle_id(ivl_signal_name(ivl_nexus_ptr_sig(ptr))),
 			  ivl_nexus_ptr_pin(ptr));
 		  args[idx] = strdup(tmp);
 	    } else {
@@ -319,11 +420,13 @@ static void draw_net_in_scope(ivl_signal_t sig)
 	    }
       }
 
-      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d, %s",
-	      ivl_signal_name(sig), signed_flag,
-	      ivl_signal_basename(sig), msb, lsb, args[0]);
-      for (idx = 1 ;  idx < ivl_signal_pins(sig) ;  idx += 1)
+      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d",
+	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
+	      vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb);
+      for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
 	    fprintf(vvp_out, ", %s", args[idx]);
+	    free(args[idx]);
+      }
       fprintf(vvp_out, ";\n");
 
       free(args);
@@ -350,15 +453,15 @@ static void draw_udp_def(ivl_udp_t udp)
   if (ivl_udp_sequ(udp))
 	fprintf(vvp_out, 
 		"UDP_%s .udp/sequ \"%s\", %d, %d",
-		ivl_udp_name(udp),
-		ivl_udp_name(udp),
+		vvp_mangle_id(ivl_udp_name(udp)),
+		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp),
 		init );
   else
 	fprintf(vvp_out, 
 		"UDP_%s .udp/comb \"%s\", %d",
-		ivl_udp_name(udp),
-		ivl_udp_name(udp),
+		vvp_mangle_id(ivl_udp_name(udp)),
+		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp));
 
   for (i=0; i<ivl_udp_rows(udp); i++)
@@ -389,8 +492,10 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
       draw_udp_def(udp);
     }
 
-  fprintf(vvp_out, "L_%s .udp UDP_%s",
-	  ivl_logic_name(lptr), ivl_udp_name(udp));
+  fprintf(vvp_out, "L_%s .udp",
+	  vvp_mangle_id(ivl_logic_name(lptr)));
+  fprintf(vvp_out, " UDP_%s", 
+	  vvp_mangle_id(ivl_udp_name(udp)));
   
   for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) 
     {
@@ -404,10 +509,12 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 
 static void draw_logic_in_scope(ivl_net_logic_t lptr)
 {
-	    unsigned pdx;
+      unsigned pdx;
       const char*ltype = "?";
+      const char*lcasc = 0x0;
       char identity_val = '0';
-
+      int level;
+      int ninp;
 
       switch (ivl_logic_type(lptr)) {
 
@@ -446,11 +553,13 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_NAND:
 	    ltype = "NAND";
+	    lcasc = "AND";
 	    identity_val = '1';
 	    break;
 
 	  case IVL_LO_NOR:
 	    ltype = "NOR";
+	    lcasc = "OR";
 	    break;
 
 	  case IVL_LO_NOT:
@@ -463,6 +572,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 	  case IVL_LO_XNOR:
 	    ltype = "XNOR";
+	    lcasc = "XOR";
 	    break;
 
 	  case IVL_LO_XOR:
@@ -476,21 +586,46 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
       }
 
-      assert(ivl_logic_pins(lptr) <= 5);
+      if (!lcasc)
+	lcasc = ltype;
 
-      fprintf(vvp_out, "L_%s .functor %s", ivl_logic_name(lptr), ltype);
-
-      for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
-	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(nex);
+      level = 0;
+      ninp = ivl_logic_pins(lptr) - 1;
+      while (ninp) {
+	    int inst;
+	    for (inst = 0; inst < ninp; inst += 4) {
+		  if (ninp > 4)
+			fprintf(vvp_out, "L_%s/%d/%d .functor %s", 
+				vvp_mangle_id(ivl_logic_name(lptr)),
+				level, inst,
+				lcasc);
+		  else
+			fprintf(vvp_out, "L_%s .functor %s", 
+				vvp_mangle_id(ivl_logic_name(lptr)),
+				ltype);
+		  for (pdx = inst; pdx < ninp && pdx < inst+4 ; pdx += 1) {
+			if (level) {
+			      fprintf(vvp_out, ", L_%s/%d/%d",
+				      vvp_mangle_id(ivl_logic_name(lptr)),
+				      level - 1,
+				      pdx );
+			} else {
+			      ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
+			      fprintf(vvp_out, ", ");
+			      draw_input_from_net(nex);
+			}
+		  }
+		  for ( ;  pdx < inst+4 ;  pdx += 1) {
+			fprintf(vvp_out, ", C<%c>", identity_val);
+		  }
+		  
+		  fprintf(vvp_out, ";\n");
+	    }
+	    if (ninp > 4)
+		  ninp = (ninp+3) / 4;
+	    else
+		  ninp = 0;
       }
-
-      for ( ;  pdx < 5 ;  pdx += 1) {
-	    fprintf(vvp_out, ", C<%c>", identity_val);
-      }
-
-      fprintf(vvp_out, ";\n");
 }
 
 static void draw_event_in_scope(ivl_event_t obj)
@@ -515,7 +650,8 @@ static void draw_event_in_scope(ivl_event_t obj)
 	      /* If none are needed, then this is a named event. The
 		 code needed is easy. */
 	    fprintf(vvp_out, "E_%s .event \"%s\";\n",
-		    ivl_event_name(obj), ivl_event_basename(obj));
+		    vvp_mangle_id(ivl_event_name(obj)), 
+		    vvp_mangle_name(ivl_event_basename(obj)));
 
       } else if (cnt > 1) {
 	    unsigned idx;
@@ -525,8 +661,8 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  unsigned sub, top;
 
 		  fprintf(vvp_out, "E_%s/%u .event edge",
-			  ivl_event_name(obj), ecnt);
-
+			  vvp_mangle_id(ivl_event_name(obj)), ecnt);
+		  
 		  top = idx + 4;
 		  if (nany < top)
 			top = nany;
@@ -542,7 +678,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  unsigned sub, top;
 
 		  fprintf(vvp_out, "E_%s/%u .event negedge",
-			  ivl_event_name(obj), ecnt);
+			  vvp_mangle_id(ivl_event_name(obj)), ecnt);
 
 		  top = idx + 4;
 		  if (nneg < top)
@@ -559,7 +695,7 @@ static void draw_event_in_scope(ivl_event_t obj)
 		  unsigned sub, top;
 
 		  fprintf(vvp_out, "E_%s/%u .event posedge",
-			  ivl_event_name(obj), ecnt);
+			  vvp_mangle_id(ivl_event_name(obj)), ecnt);
 
 		  top = idx + 4;
 		  if (npos < top)
@@ -574,31 +710,35 @@ static void draw_event_in_scope(ivl_event_t obj)
 
 	    assert(ecnt == cnt);
 
-	    fprintf(vvp_out, "E_%s .event/or E_%s/0",
-		    ivl_event_name(obj), ivl_event_name(obj));
+	    fprintf(vvp_out, "E_%s .event/or",
+		    vvp_mangle_id(ivl_event_name(obj)));
+	    fprintf(vvp_out, " E_%s/0", 
+		    vvp_mangle_id(ivl_event_name(obj)));
 
 	    for (idx = 1 ;  idx < cnt ;  idx += 1)
-		  fprintf(vvp_out, ", E_%s/%u", ivl_event_name(obj), idx);
-
+		  fprintf(vvp_out, ", E_%s/%u", 
+			  vvp_mangle_id(ivl_event_name(obj)), idx);
+	    
 	    fprintf(vvp_out, ";\n");
-
+	    
       } else {
 	    unsigned idx;
-
-	    fprintf(vvp_out, "E_%s .event ", ivl_event_name(obj));
+	    
+	    fprintf(vvp_out, "E_%s .event ", 
+		    vvp_mangle_id(ivl_event_name(obj)));
 
 	    if (nany > 0) {
 		  assert((nneg + npos) == 0);
 		  assert(nany <= 4);
-
+		  
 		  fprintf(vvp_out, "edge");
-
+		  
 		  for (idx = 0 ;  idx < nany ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_any(obj, idx);
 			fprintf(vvp_out, ", ");
 			draw_input_from_net(nex);
 		  }
-
+		  
 	    } else if (nneg > 0) {
 		  assert((nany + npos) == 0);
 		  fprintf(vvp_out, "negedge");
@@ -608,18 +748,18 @@ static void draw_event_in_scope(ivl_event_t obj)
 			fprintf(vvp_out, ", ");
 			draw_input_from_net(nex);
 		  }
-
+		  
 	    } else {
 		  assert((nany + nneg) == 0);
 		  fprintf(vvp_out, "posedge");
-
+		  
 		  for (idx = 0 ;  idx < npos ;  idx += 1) {
 			ivl_nexus_t nex = ivl_event_pos(obj, idx);
 			fprintf(vvp_out, ", ");
 			draw_input_from_net(nex);
 		  }
 	    }
-
+	    
 	    fprintf(vvp_out, ";\n");
       }
 }
@@ -636,15 +776,17 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
       if (clk) {
 	    fprintf(vvp_out,
 		    "CLK_%s .event posedge, ",
-		    ivl_lpm_name(net));
+		    vvp_mangle_id(ivl_lpm_name(net)));
 	    draw_input_from_net(pin);
 	    fprintf(vvp_out, ";\n");
       }
 
       fprintf(vvp_out, 
-	      "L_%s .mem/port M_%s, %d,0, %d,\n  ", 
-	      ivl_lpm_name(net), 
-	      ivl_memory_name(mem),
+	      "L_%s .mem/port", 
+	      vvp_mangle_id(ivl_lpm_name(net)));
+      fprintf(vvp_out, 
+	      " M_%s, %d,0, %d,\n  ", 
+	      vvp_mangle_id(ivl_memory_name(mem)),
 	      width-1,
 	      awidth);
 
@@ -655,7 +797,8 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
       }
       
       if (clk) {
-	    fprintf(vvp_out, ",\n  CLK_%s, ", ivl_lpm_name(net));
+	    fprintf(vvp_out, ",\n  CLK_%s, ", 
+		    vvp_mangle_id(ivl_lpm_name(net)));
 	    pin = ivl_lpm_enable(net);
 	    if (pin)
 		  draw_input_from_net(pin);
@@ -717,7 +860,8 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s .arith/%s %u", ivl_lpm_name(net), type, width);
+      fprintf(vvp_out, "L_%s .arith/%s %u", 
+	      vvp_mangle_id(ivl_lpm_name(net)), type, width);
 
       draw_lpm_arith_a_b_inputs(net);
 
@@ -742,7 +886,8 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s .cmp/%s %u", ivl_lpm_name(net), type, width);
+      fprintf(vvp_out, "L_%s .cmp/%s %u", 
+	      vvp_mangle_id(ivl_lpm_name(net)), type, width);
 
       draw_lpm_arith_a_b_inputs(net);
 
@@ -765,7 +910,7 @@ static void draw_lpm_mux(ivl_lpm_t net)
 	    ivl_nexus_t a = ivl_lpm_data2(net, 0, idx);
 	    ivl_nexus_t b = ivl_lpm_data2(net, 1, idx);
 	    fprintf(vvp_out, "L_%s/%u .functor MUXZ, ",
-		    ivl_lpm_name(net), idx);
+		    vvp_mangle_id(ivl_lpm_name(net)), idx);
 	    draw_input_from_net(a);
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(b);
@@ -813,7 +958,8 @@ static void draw_mem_in_scope(ivl_memory_t net)
       int msb = ivl_memory_width(net) - 1;
       int lsb = 0;
       fprintf(vvp_out, "M_%s .mem \"%s\", %u,%u, %u,%u;\n",
-	      ivl_memory_name(net), ivl_memory_basename(net),
+	      vvp_mangle_id(ivl_memory_name(net)), 
+	      vvp_mangle_name(ivl_memory_basename(net)),
 	      msb, lsb, root, last);
 }
 
@@ -822,15 +968,18 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
 
-      if (parent)
-	    fprintf(vvp_out, "S_%s .scope \"%s\", S_%s;\n",
-		    ivl_scope_name(net), ivl_scope_name(net),
-		    ivl_scope_name(parent));
+      if (parent) {
+	    fprintf(vvp_out, "S_%s .scope \"%s\"",
+		    vvp_mangle_id(ivl_scope_name(net)), 
+		    vvp_mangle_name(ivl_scope_name(net)));
+	    fprintf(vvp_out, ", S_%s;\n",
+		    vvp_mangle_id(ivl_scope_name(parent)));
+      }
       else
 	    fprintf(vvp_out, "S_%s .scope \"%s\";\n",
-		    ivl_scope_name(net), ivl_scope_name(net));
-
-
+		    vvp_mangle_id(ivl_scope_name(net)), 
+		    vvp_mangle_name(ivl_scope_name(net)));
+      
 	/* Scan the scope for logic devices. For each device, draw out
 	   a functor that connects pin 0 to the output, and the
 	   remaining pins to inputs. */
@@ -884,6 +1033,12 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.35  2001/06/18 03:10:34  steve
+ *   1. Logic with more than 4 inputs
+ *   2. Id and name mangling
+ *   3. A memory leak in draw_net_in_scope()
+ *   (Stephan Boettcher)
+ *
  * Revision 1.34  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

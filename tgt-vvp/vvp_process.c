@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.35 2001/05/24 04:31:00 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.36 2001/06/18 03:10:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -79,7 +79,7 @@ static void set_to_nexus(ivl_nexus_t nex, unsigned bit)
 		  continue;
 
 	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-		    ivl_signal_name(sig), pin, bit);
+		    vvp_mangle_id(ivl_signal_name(sig)), pin, bit);
       }
 }
 
@@ -88,7 +88,7 @@ static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
       if (idx)
 	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
       fprintf(vvp_out, "    %%set/m M_%s, %u;\n",
-	      ivl_memory_name(mem), bit);
+	      vvp_mangle_id(ivl_memory_name(mem)), bit);
 }
 
 static void assign_to_nexus(ivl_nexus_t nex, unsigned bit, unsigned delay)
@@ -104,7 +104,7 @@ static void assign_to_nexus(ivl_nexus_t nex, unsigned bit, unsigned delay)
 		  continue;
 
 	    fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
-		    ivl_signal_name(sig), pin, delay, bit);
+		    vvp_mangle_id(ivl_signal_name(sig)), pin, delay, bit);
       }
 }
 
@@ -114,7 +114,7 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
       if (idx)
 	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
       fprintf(vvp_out, "    %%assign/m M_%s, %u, %u;\n",
-	      ivl_memory_name(mem), delay, bit);
+	      vvp_mangle_id(ivl_memory_name(mem)), delay, bit);
 }
 
 static int show_stmt_assign(ivl_statement_t net)
@@ -439,7 +439,8 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
 
       ivl_scope_t target = ivl_stmt_call(net);
-      fprintf(vvp_out, "    %%disable S_%s;\n", ivl_scope_name(target));
+      fprintf(vvp_out, "    %%disable S_%s;\n", 
+	      vvp_mangle_id(ivl_scope_name(target)));
 
       return rc;
 }
@@ -471,7 +472,8 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	   are implemented. */
       for (idx = 0 ;  idx < cnt-1 ;  idx += 1) {
 	    fprintf(vvp_out, "    %%fork t_%u, S_%s;\n",
-		    transient_id+idx, ivl_scope_name(sscope));
+		    transient_id+idx, 
+		    vvp_mangle_id(ivl_scope_name(sscope)));
       }
 
 	/* Draw code to execute the remaining thread in the current
@@ -532,7 +534,8 @@ static int show_stmt_trigger(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_event(net);
       assert(ev);
-      fprintf(vvp_out, "    %%set E_%s, 0;\n", ivl_event_name(ev));
+      fprintf(vvp_out, "    %%set E_%s, 0;\n", 
+	      vvp_mangle_id(ivl_event_name(ev)));
       return 0;
 }
 
@@ -540,8 +543,10 @@ static int show_stmt_utask(ivl_statement_t net)
 {
       ivl_scope_t task = ivl_stmt_call(net);
 
-      fprintf(vvp_out, "    %%fork TD_%s, S_%s;\n",
-	      ivl_scope_name(task), ivl_scope_name(task));
+      fprintf(vvp_out, "    %%fork TD_%s",
+	      vvp_mangle_id(ivl_scope_name(task)));
+      fprintf(vvp_out, ", S_%s;\n", 
+	      vvp_mangle_id(ivl_scope_name(task)));
       fprintf(vvp_out, "    %%join;\n");
       return 0;
 }
@@ -549,7 +554,8 @@ static int show_stmt_utask(ivl_statement_t net)
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_event_t ev = ivl_stmt_event(net);
-      fprintf(vvp_out, "    %%wait E_%s;\n", ivl_event_name(ev));
+      fprintf(vvp_out, "    %%wait E_%s;\n", 
+	      vvp_mangle_id(ivl_event_name(ev)));
 
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
 }
@@ -636,16 +642,18 @@ static int show_system_task_call(ivl_statement_t net)
 		}
 
 		case IVL_EX_SIGNAL:
-		  fprintf(vvp_out, ", V_%s", ivl_expr_name(expr));
+		  fprintf(vvp_out, ", V_%s", 
+			  vvp_mangle_id(ivl_expr_name(expr)));
 		  continue;
 
 		case IVL_EX_STRING:
-		  fprintf(vvp_out, ", \"%s\"", ivl_expr_string(expr));
+		  fprintf(vvp_out, ", \"%s\"", 
+			  ivl_expr_string(expr));
 		  continue;
 
 		case IVL_EX_SCOPE:
 		  fprintf(vvp_out, ", S_%s",
-			  ivl_scope_name(ivl_expr_scope(expr)));
+			  vvp_mangle_id(ivl_scope_name(ivl_expr_scope(expr))));
 		  continue;
 
 		case IVL_EX_SFUNC:
@@ -657,7 +665,8 @@ static int show_system_task_call(ivl_statement_t net)
 		  
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
-			fprintf(vvp_out, ", M_%s", ivl_expr_name(expr));
+			fprintf(vvp_out, ", M_%s", 
+				vvp_mangle_id(ivl_expr_name(expr)));
 			continue;
 		  }
 		  break;
@@ -787,7 +796,8 @@ int draw_process(ivl_process_t net, void*x)
       ivl_statement_t stmt = ivl_process_stmt(net);
 
       local_count = 0;
-      fprintf(vvp_out, "    .scope S_%s;\n", ivl_scope_name(scope));
+      fprintf(vvp_out, "    .scope S_%s;\n", 
+	      vvp_mangle_id(ivl_scope_name(scope)));
 
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
@@ -825,7 +835,7 @@ int draw_task_definition(ivl_scope_t scope)
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
 
-      fprintf(vvp_out, "TD_%s ;\n", ivl_scope_name(scope));
+      fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
 
       assert(def);
       rc += show_statement(def, scope);
@@ -841,7 +851,7 @@ int draw_func_definition(ivl_scope_t scope)
       int rc = 0;
       ivl_statement_t def = ivl_scope_def(scope);
 
-      fprintf(vvp_out, "TD_%s ;\n", ivl_scope_name(scope));
+      fprintf(vvp_out, "TD_%s ;\n", vvp_mangle_id(ivl_scope_name(scope)));
 
       assert(def);
       rc += show_statement(def, scope);
@@ -854,6 +864,12 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.36  2001/06/18 03:10:34  steve
+ *   1. Logic with more than 4 inputs
+ *   2. Id and name mangling
+ *   3. A memory leak in draw_net_in_scope()
+ *   (Stephan Boettcher)
+ *
  * Revision 1.35  2001/05/24 04:31:00  steve
  *  Attach noops to case labels.
  *

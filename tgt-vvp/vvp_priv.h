@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.10 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.11 2001/06/18 03:10:34 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -30,6 +30,12 @@
  * compiled design, and sets the vvp_out to the descripter.
  */
 extern FILE* vvp_out;
+
+/*
+ * Mangle all non-symbol characters in an identifier, quotes in names
+ */
+extern const char *vvp_mangle_id(const char *);
+extern const char *vvp_mangle_name(const char *);
 
 /*
  * This function draws a process (initial or always) into the output
@@ -81,6 +87,12 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.11  2001/06/18 03:10:34  steve
+ *   1. Logic with more than 4 inputs
+ *   2. Id and name mangling
+ *   3. A memory leak in draw_net_in_scope()
+ *   (Stephan Boettcher)
+ *
  * Revision 1.10  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *
