@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_memory.c,v 1.2 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.3 1999/12/15 04:15:17 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -96,6 +96,38 @@ static int memory_word_get(int code, vpiHandle ref)
       }
 }
 
+static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
+				 p_vpi_time tim, int flags)
+{
+      unsigned idx;
+      enum vpip_bit_t*base;
+      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
+      assert(ref->vpi_type->type_code==vpiMemoryWord);
+
+      base = rfp->mem->bits + rfp->index*rfp->mem->width;
+
+      assert(val->format == vpiVectorVal);
+      for (idx = 0 ;  idx < rfp->mem->width ;  idx += 1) {
+	    p_vpi_vecval cur = val->value.vector + (idx/32);
+	    int aval = cur->aval >> (idx%32);
+	    int bval = cur->bval >> (idx%32);
+
+	    if (bval & 1) {
+		  if (aval & 1)
+			*base = Vx;
+		  else
+			*base = Vz;
+	    } else {
+		  if (aval & 1)
+			*base = V1;
+		  else
+			*base = V0;
+	    }
+	    base += 1;
+      }
+      return 0;
+}
+
 static const struct __vpirt vpip_memory_rt = {
       vpiMemory,
       memory_get,
@@ -111,7 +143,7 @@ static const struct __vpirt vpip_memory_word_rt = {
       memory_word_get,
       0,
       0,
-      0,
+      memory_word_put,
       0,
       0
 };
@@ -139,6 +171,9 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.3  1999/12/15 04:15:17  steve
+ *  Implement vpi_put_value for memory words.
+ *
  * Revision 1.2  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *
