@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.8 2003/11/08 19:30:15 steve Exp $"
+#ident "$Id: Makefile.in,v 1.9 2004/02/10 19:25:00 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -38,13 +38,12 @@ vpidir = @libdir@/ivl/@vpidir1@
 strip_dynamic=@strip_dynamic@
 
 CC = @CC@
-CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = @CFLAGS@
+CPPFLAGS = @ident_support@ -I$(srcdir) -I$(srcdir)/.. -I.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
@@ -69,7 +68,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall -I$(srcdir) -I$(srcdir)/.. -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $<
 	mv $*.d dep
 
 O = cadpli.o

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.161 2003/12/12 04:36:48 steve Exp $"
+#ident "$Id: Makefile.in,v 1.162 2004/02/10 19:25:00 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,7 +43,6 @@ mandir = @mandir@
 libdir64 = @libdir64@
 
 dllib=@DLLIB@
-rdynamic=@rdynamic@
 strip_dynamic=@strip_dynamic@
 
 CC = @CC@
@@ -56,10 +55,10 @@ STRIP = @STRIP@
 LEX = @LEX@
 YACC = @YACC@
 
-CPPFLAGS = @CPPFLAGS@ @DEFS@
-CXXFLAGS = @CXXFLAGS@ -I. -I$(srcdir)
+CPPFLAGS = @ident_support@ @DEFS@ -I. -I$(srcdir) @CPPFLAGS@
+CXXFLAGS = -Wall @CXXFLAGS@
 PICFLAGS = @PICFLAG@
-LDFLAGS = @LDFLAGS@
+LDFLAGS = @rdynamic@ @LDFLAGS@
 
 # The TARGETS variable lists the target modules that can be build and
 # installed. Some of them depend on external things, so are only
@@ -149,7 +148,7 @@ ivl@EXEEXT@: $O ivl.def
 	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@	
 else
 ivl@EXEEXT@: $O
-	$(CXX) $(CXXFLAGS) $(rdynamic) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
+	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
 endif
 
 
@@ -169,7 +168,7 @@ dep:
 	mkdir dep
 
 %.o: %.cc
-	$(CXX) -Wall @ident_support@ $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 

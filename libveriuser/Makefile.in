@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.32 2004/01/15 20:52:32 steve Exp $"
+#ident "$Id: Makefile.in,v 1.33 2004/02/10 19:25:00 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -33,13 +33,13 @@ libdir = @libdir@
 libdir64 = @libdir64@
 includedir = $(prefix)/include
 
-CC = @CC@ -I. -I.. -I$(srcdir) -I$(srcdir)/..
+CC = @CC@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = @CFLAGS@
+CPPFLAGS = @ident_support@ -I. -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 RANLIB = @RANLIB@
@@ -84,7 +84,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall @ident_support@ $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 
@@ -112,7 +112,7 @@ bin32:
 	mkdir bin32
 
 bin32/%.o: %.c
-	$(CC) -m32 -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
+	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
 
 bin32/libveriuser.o: $(addprefix bin32/,$O)
 	$(LD) -melf_i386 -r -o $@ $(addprefix bin32/,$O)

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.58 2003/11/08 16:20:33 steve Exp $"
+#ident "$Id: Makefile.in,v 1.59 2004/02/10 19:25:01 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -36,7 +36,7 @@ libdir64 = @libdir64@
 
 CC = @CC@
 HOSTCC = @CC@
-CXX = @CXX@ -Wall
+CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -46,14 +46,12 @@ RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
 
-CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
-CXXFLAGS = @CXXFLAGS@
-CFLAGS = @CFLAGS@
-LDFLAGS = @LDFLAGS@
+CPPFLAGS = @ident_support@ -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
+CXXFLAGS = -Wall @CXXFLAGS@
+LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
 dllib=@DLLIB@
-rdynamic=@rdynamic@
 
 MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl/@vpidir1@\"
 ifneq (x@vpidir2@,x)
@@ -106,18 +104,18 @@ libvpi.a: libvpi.c
 	$(RANLIB) libvpi.a
 
 vvp: $O 
-	$(CXX) $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
+	$(CXX) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
 endif
 
 dep:
 	mkdir dep
 
 %.o: %.cc
-	$(CXX) @ident_support@ $(CPPFLAGS) $(CFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 %.o: %.c
-	$(CC) @ident_support@ $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
@@ -133,18 +131,18 @@ bin32:
 	mkdir bin32
 
 bin32/%.o: %.cc
-	$(CXX) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
+	$(CXX) -m32 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
 
 bin32/%.o: %.c
-	$(CC) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
+	$(CC) -m32 $(CPPFLAGS) $(MDIR2) $(CFLAGS) -MD -c $< -o $@
 
 bin32/lexor.o: lexor.cc parse.h
 
 vvp32: $(addprefix bin32/,$O) bin32/libvpi.a
-	$(CXX) -m32 $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp32 $(addprefix bin32/,$O) $(LIBS) $(dllib)
+	$(CXX) -m32 $(LDFLAGS) -o vvp32 $(addprefix bin32/,$O) $(LIBS) $(dllib)
 
 bin32/libvpi.a: libvpi.c
-	$(CC) -m32 -c -o bin32/libvpi.o $(srcdir)/libvpi.c
+	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -o bin32/libvpi.o -c $(srcdir)/libvpi.c
 	rm -f bin32/libvpi.a
 	ar cqv bin32/libvpi.a bin32/libvpi.o
 	$(RANLIB) bin32/libvpi.a

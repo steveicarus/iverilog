@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.15 2003/11/13 03:10:38 steve Exp $"
+#ident "$Id: Makefile.in,v 1.16 2004/02/10 19:25:01 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -40,9 +40,8 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
-CXXFLAGS = @CXXFLAGS@
-CFLAGS = @CFLAGS@
+CPPFLAGS = @ident_support@ -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: dep fpga.tgt
@@ -51,7 +50,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall @ident_support@ -I.. -I$(srcdir) -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 D = d-generic.o d-generic-edif.o d-lpm.o d-virtex.o d-virtex2.o

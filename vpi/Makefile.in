@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.52 2004/01/28 23:54:21 steve Exp $"
+#ident "$Id: Makefile.in,v 1.53 2004/02/10 19:25:01 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -38,13 +38,12 @@ vpidir = $(libdir)/ivl/@vpidir1@
 strip_dynamic=@strip_dynamic@
 
 CC = @CC@
-CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @ident_support@ @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = @CFLAGS@
+CPPFLAGS = @ident_support@ -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
@@ -61,7 +60,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall -I. -I$(srcdir)/.. -I$(srcdir) -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
@@ -92,7 +91,7 @@ bin32:
 	mkdir bin32
 
 bin32/%.o: %.c
-	$(CC) -m32 -Wall -I$(srcdir)/.. -I$(srcdir) -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
+	$(CC) -m32 $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $@
 
 bin32/system.vpi: $(addprefix bin32/,$O)
 	$(CC) -m32 @shared@ -o $@ $(addprefix bin32/,$O) -L../vvp/bin32 $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
