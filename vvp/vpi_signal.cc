@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.57 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.58 2003/08/15 18:23:56 steve Exp $"
 #endif
 
 /*
@@ -256,8 +256,8 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 			vp->value.integer |= 1<<idx;
 			break;
 		      default:
-			idx = wid;
-			vp->value.integer = 0;
+			  /* vpi_get_value of vpiIntVal treats x and z
+			     values as 0. */
 			break;
 		  }
 	    }
@@ -845,6 +845,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.58  2003/08/15 18:23:56  steve
+ *  vpiIntVal treats x and z bits as 0.
+ *
  * Revision 1.57  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
