@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.48 2004/12/11 02:31:29 steve Exp $
+ *  $Id: README.txt,v 1.49 2004/12/18 18:52:44 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -376,7 +376,7 @@ EVENT STATEMENTS
 Threads need to interact with the functors of a netlist synchronously,
 as well as asynchronously. There are cases where the web of functors
 needs to wake up a waiting thread. The web of functors signals threads
-through .event objects, that are declare like so:
+through .event objects, that are declared like so:
 
 	<label> .event <type>, <symbols_list>;
 	<label> .event "name";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.15 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: event.cc,v 1.16 2004/12/18 18:52:44 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -32,6 +32,16 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+
+void waitable_hooks_s::run_waiting_threads_()
+{
+      if (threads == 0)
+	    return;
+
+      vthread_t tmp = threads;
+      threads = 0;
+      vthread_schedule_list(tmp);
+}
 
 inline vvp_fun_edge::edge_t VVP_EDGE(vvp_bit4_t from, vvp_bit4_t to)
 {
@@ -69,20 +79,34 @@ vvp_fun_edge::~vvp_fun_edge()
 
 void vvp_fun_edge::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 {
-	// XXXX for now, only support first port.
-      assert(port.port() == 0);
-
 	/* See what kind of edge this represents. */
       edge_t mask = VVP_EDGE(bits_.value(0), bit.value(0));
 
 	/* Save the current input for the next time around. */
       bits_ = bit;
 
-      if (threads && (edge_ & mask)) {
-	    vthread_t tmp = threads;
-	    threads = 0;
-	    vthread_schedule_list(tmp);
+      if ((edge_ == vvp_edge_none) || (edge_ & mask)) {
+	    run_waiting_threads_();
+
+	    vvp_net_t*net = port.ptr();
+	    vvp_send_vec4(net->out, bit);
       }
+}
+
+vvp_named_event::vvp_named_event(struct __vpiHandle*h)
+{
+      handle_ = h;
+}
+
+vvp_named_event::~vvp_named_event()
+{
+}
+
+void vvp_named_event::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      run_waiting_threads_();
+      vvp_net_t*net = port.ptr();
+      vvp_send_vec4(net->out, bit);
 }
 
 /*
@@ -128,12 +152,12 @@ void compile_event(char*label, char*type,
  */
 void compile_named_event(char*label, char*name)
 {
-      fprintf(stderr, "XXXX compile_named_event not implemented\n");
+      vvp_net_t*ptr = new vvp_net_t;
 
-      vvp_net_t*fdx = 0;
+      vpiHandle obj = vpip_make_named_event(name, ptr);
+      ptr->fun = new vvp_named_event(obj);
 
-      vpiHandle obj = vpip_make_named_event(name, fdx);
-
+      define_functor_symbol(label, ptr);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -143,6 +167,9 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.16  2004/12/18 18:52:44  steve
+ *  Rework named events and event/or.
+ *
  * Revision 1.15  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
