@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: set_width.cc,v 1.1 1999/09/23 00:21:55 steve Exp $"
+#ident "$Id: set_width.cc,v 1.2 1999/09/23 02:27:50 steve Exp $"
 #endif
 
 /*
@@ -110,20 +110,13 @@ bool NetEBBits::set_width(unsigned w)
 
 /*
  * Comparison operators allow the subexpressions to have
- * their own natural width. However, I do need to make
- * sure that the subexpressions have the same width.
+ * their own natural width, but the comparison operator result has a
+ * fixed width of 1.
  */
 bool NetEBComp::set_width(unsigned w)
 {
       bool flag = true;
-
-      assert(w == 1);
-      expr_width(w);
-      flag = left_->set_width(right_->expr_width());
-      if (!flag)
-	    flag = right_->set_width(left_->expr_width());
-
-      return flag;
+      return (w == 1);
 }
 
 bool NetEBLogic::set_width(unsigned w)
@@ -246,6 +239,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.2  1999/09/23 02:27:50  steve
+ *  comparison parameter width is self determined.
+ *
  * Revision 1.1  1999/09/23 00:21:55  steve
  *  Move set_width methods into a single file,
  *  Add the NetEBLogic class for logic expressions,
