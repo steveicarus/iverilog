@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.10 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: udp.cc,v 1.11 2001/09/19 04:10:40 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -146,6 +146,8 @@ unsigned char vvp_udp_s::propagate_(vvp_ipoint_t uix)
     {
       invec <<= 2;
       invec |= (fu->oval&3);
+      if (edge_type == 0)
+           return fu->oval;
     }
 
   udp_vec_t inx  =  invec & 0xaaaaaaaaU; // all 'x'/'z'
@@ -364,6 +366,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.11  2001/09/19 04:10:40  steve
+ *  Change UDP output only if table matches.
+ *
  * Revision 1.10  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *
