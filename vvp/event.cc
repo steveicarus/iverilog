@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: event.cc,v 1.10 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: event.cc,v 1.11 2003/01/06 23:57:26 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -80,7 +80,7 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 		  vthread_t tmp = threads;
 		  threads = 0;
 		  vthread_schedule_list(tmp);
-		  
+
 		  if (out) {
 			functor_set(out, 0, St0, true);
 		  }
@@ -189,6 +189,12 @@ void compile_named_event(char*label, char*name)
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.11  2003/01/06 23:57:26  steve
+ *  Schedule wait lists of threads as a single event,
+ *  to save on events. Also, improve efficiency of
+ *  event_s allocation. Add some event statistics to
+ *  get an idea where performance is really going.
+ *
  * Revision 1.10  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

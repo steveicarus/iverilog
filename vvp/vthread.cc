@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.95 2002/11/22 00:01:50 steve Exp $"
+#ident "$Id: vthread.cc,v 1.96 2003/01/06 23:57:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -290,32 +290,43 @@ static void vthread_reap(vthread_t thr)
 
 void vthread_mark_scheduled(vthread_t thr)
 {
-      assert(thr->is_scheduled == 0);
-      thr->is_scheduled = 1;
+      while (thr != 0) {
+	    assert(thr->is_scheduled == 0);
+	    thr->is_scheduled = 1;
+	    thr = thr->wait_next;
+      }
 }
 
 /*
- * This function runs a thread by fetching an instruction,
- * incrementing the PC, and executing the instruction.
+ * This function runs each thread by fetching an instruction,
+ * incrementing the PC, and executing the instruction. The thread may
+ * be the head of a list, so each thread is run so far as possible.
  */
 void vthread_run(vthread_t thr)
 {
-      assert(thr->is_scheduled);
-      thr->is_scheduled = 0;
+      while (thr != 0) {
+	    vthread_t tmp = thr->wait_next;
+	    thr->wait_next = 0;
 
-      for (;;) {
-	    vvp_code_t cp = codespace_index(thr->pc);
-	    thr->pc += 1;
+	    assert(thr->is_scheduled);
+	    thr->is_scheduled = 0;
 
-	    assert(cp);
-	    assert(cp->opcode);
+	    for (;;) {
+		  vvp_code_t cp = codespace_index(thr->pc);
+		  thr->pc += 1;
 
-	      /* Run the opcode implementation. If the execution of
-		 the opcode returns false, then the thread is meant to
-		 be paused, so break out of the loop. */
-	    bool rc = (cp->opcode)(thr, cp);
-	    if (rc == false)
-		  return;
+		  assert(cp);
+		  assert(cp->opcode);
+
+		    /* Run the opcode implementation. If the execution of
+		       the opcode returns false, then the thread is meant to
+		       be paused, so break out of the loop. */
+		  bool rc = (cp->opcode)(thr, cp);
+		  if (rc == false)
+			break;
+	    }
+
+	    thr = tmp;
       }
 }
 
@@ -326,14 +337,12 @@ void vthread_run(vthread_t thr)
  */
 void vthread_schedule_list(vthread_t thr)
 {
-      while (thr) {
-	    vthread_t tmp = thr;
-	    thr = thr->wait_next;
-	    assert(tmp->waiting_for_event);
-	    tmp->waiting_for_event = 0;
-	    tmp->wait_next = 0;
-	    schedule_vthread(tmp, 0);
+      for (vthread_t cur = thr ;  cur ;  cur = cur->wait_next) {
+	    assert(cur->waiting_for_event);
+	    cur->waiting_for_event = 0;
       }
+
+      schedule_vthread(thr, 0);
 }
 
 
@@ -2496,6 +2505,12 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.96  2003/01/06 23:57:26  steve
+ *  Schedule wait lists of threads as a single event,
+ *  to save on events. Also, improve efficiency of
+ *  event_s allocation. Add some event statistics to
+ *  get an idea where performance is really going.
+ *
  * Revision 1.95  2002/11/22 00:01:50  steve
  *  Careful of left operands to shift that are constant.
  *

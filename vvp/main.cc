@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.31 2002/09/18 03:34:07 steve Exp $"
+#ident "$Id: main.cc,v 1.32 2003/01/06 23:57:26 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -273,6 +273,17 @@ int main(int argc, char*argv[])
 	    print_rusage(stderr, cycles+2, cycles+1);
 	    if (logfile && logfile != stderr)
 		  print_rusage(logfile, cycles+2, cycles+1);
+
+	    fprintf(stderr, "Event counts: (event pool = %lu)\n",
+		    count_event_pool);
+	    fprintf(stderr, "    %8lu thread schedule events\n",
+		    count_thread_events);
+	    fprintf(stderr, "    %8lu propagation events\n",
+		    count_prop_events);
+	    fprintf(stderr, "    %8lu assign events\n",
+		    count_assign_events);
+	    fprintf(stderr, "    %8lu other events\n",
+		    count_gen_events);
       }
 
       return 0;
@@ -280,6 +291,12 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.32  2003/01/06 23:57:26  steve
+ *  Schedule wait lists of threads as a single event,
+ *  to save on events. Also, improve efficiency of
+ *  event_s allocation. Add some event statistics to
+ *  get an idea where performance is really going.
+ *
  * Revision 1.31  2002/09/18 03:34:07  steve
  *  printf size warning.
  *

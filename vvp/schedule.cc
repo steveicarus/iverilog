@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.20 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: schedule.cc,v 1.21 2003/01/06 23:57:26 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -31,6 +31,13 @@
 # include  <assert.h>
 
 # include  <stdio.h>
+
+unsigned long count_assign_events = 0;
+unsigned long count_gen_events = 0;
+unsigned long count_prop_events = 0;
+unsigned long count_thread_events = 0;
+unsigned long count_event_pool = 0;
+
 /*
  * The event queue is arranged as a skip list, with the simulation
  * time the key to the list. The simulation time is stored in each
@@ -60,6 +67,9 @@ struct event_s {
 
       struct event_s*next;
       struct event_s*last;
+
+      void* operator new (size_t);
+      void operator delete(void*obj, size_t s);
 };
 const unsigned TYPE_GEN    = 0;
 const unsigned TYPE_THREAD = 1;
@@ -72,27 +82,35 @@ const unsigned TYPE_ASSIGN = 3;
 */
 
 static struct event_s* free_list = 0;
+static const unsigned CHUNK_COUNT = 8192 / sizeof(struct event_s);
 
-inline static struct event_s* e_alloc()
+inline void* event_s::operator new (size_t size)
 {
-  struct event_s* cur = free_list;
-  if (!cur)
-    {
-      cur = (struct event_s*) malloc(sizeof(struct event_s));
-      // cur = (struct event_s*) calloc(1, sizeof(struct event_s));
-    }
-  else
-    {
-      free_list = cur->next;
-      // memset(cur, 0, sizeof(struct event_s));
-    }
-  return cur;
+      assert(size == sizeof(struct event_s));
+
+      struct event_s* cur = free_list;
+      if (!cur) {
+	    cur = (struct event_s*)
+		  malloc(CHUNK_COUNT * sizeof(struct event_s));
+	    for (unsigned idx = 1 ;  idx < CHUNK_COUNT ;  idx += 1) {
+		  cur[idx].next = free_list;
+		  free_list = cur + idx;
+	    }
+
+	    count_event_pool += CHUNK_COUNT;
+
+      } else {
+	    free_list = cur->next;
+      }
+
+      return cur;
 }
 
-inline static void e_free(struct event_s* cur)
+inline void event_s::operator delete(void*obj, size_t size)
 {
-  cur->next = free_list;
-  free_list = cur;
+      struct event_s*cur = reinterpret_cast<event_s*>(obj);
+      cur->next = free_list;
+      free_list = cur;
 }
 
 /*
@@ -246,7 +264,7 @@ static struct event_s* pull_sync_event(void)
 
 void schedule_vthread(vthread_t thr, unsigned delay, bool push_flag)
 {
-      struct event_s*cur = e_alloc();
+      struct event_s*cur = new event_s;
 
       cur->delay = delay;
       cur->thr = thr;
@@ -267,7 +285,7 @@ void schedule_vthread(vthread_t thr, unsigned delay, bool push_flag)
 
 void functor_s::schedule(unsigned delay)
 {
-      struct event_s*cur = e_alloc();
+      struct event_s*cur = new event_s;
 
       cur->delay = delay;
       cur->funp = this;
@@ -280,7 +298,7 @@ void functor_s::schedule(unsigned delay)
 
 void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
 {
-      struct event_s*cur = e_alloc();
+      struct event_s*cur = new event_s;
 
       cur->delay = delay;
       cur->fun = fun;
@@ -292,7 +310,7 @@ void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
 
 void schedule_generic(vvp_gen_event_t obj, unsigned char val, unsigned delay)
 {
-      struct event_s*cur = e_alloc();
+      struct event_s*cur = new event_s;
 
       cur->delay = delay;
       cur->obj = obj;
@@ -339,7 +357,7 @@ void schedule_simulate(void)
 			      assert(sync_cur->obj->sync_flag);
 			      sync_cur->obj->run(sync_cur->obj, sync_cur->val);
 			}
-			e_free(sync_cur);
+			delete sync_cur;
 		  }
 
 
@@ -349,17 +367,20 @@ void schedule_simulate(void)
 
 	    switch (cur->type) {
 		case TYPE_THREAD:
+		  count_thread_events += 1;
 		  vthread_run(cur->thr);
-		  e_free(cur);
+		  delete cur;
 		  break;
 
 		case TYPE_PROP:
 		    //printf("Propagate %p\n", cur->fun);
+		  count_prop_events += 1;
 		  cur->funp->propagate(false);
-		  e_free(cur);
+		  delete(cur);
 		  break;
 
 		case TYPE_ASSIGN:
+		  count_assign_events += 1;
 		  switch (cur->val) {
 		      case 0:
 			functor_set(cur->fun, cur->val, St0, false);
@@ -374,14 +395,15 @@ void schedule_simulate(void)
 			functor_set(cur->fun, cur->val, HiZ, false);
 			break;
 		  }
-		  e_free(cur);
+		  delete(cur);
 		  break;
 
 		case TYPE_GEN:
+		  count_gen_events += 1;
 		  if (cur->obj && cur->obj->run) {
 			if (cur->obj->sync_flag == false) {
 			      cur->obj->run(cur->obj, cur->val);
-			      e_free(cur);
+			      delete (cur);
 
 			} else {
 			      postpone_sync_event(cur);
@@ -405,7 +427,7 @@ void schedule_simulate(void)
 		  sync_cur->obj->run(sync_cur->obj, sync_cur->val);
 	    }
 
-	    e_free(sync_cur);
+	    delete (sync_cur);
       }
 
 
@@ -415,6 +437,12 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.21  2003/01/06 23:57:26  steve
+ *  Schedule wait lists of threads as a single event,
+ *  to save on events. Also, improve efficiency of
+ *  event_s allocation. Add some event statistics to
+ *  get an idea where performance is really going.
+ *
  * Revision 1.20  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

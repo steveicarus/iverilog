@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.11 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: schedule.h,v 1.12 2003/01/06 23:57:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -90,9 +90,23 @@ extern vvp_time64_t schedule_simtime(void);
 extern void schedule_finish(int rc);
 extern bool schedule_finished(void);
 
+/*
+ * These are event counters for the sake of performance measurements.
+ */
+extern unsigned long count_assign_events;
+extern unsigned long count_gen_events;
+extern unsigned long count_prop_events;
+extern unsigned long count_thread_events;
+extern unsigned long count_event_pool;
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.12  2003/01/06 23:57:26  steve
+ *  Schedule wait lists of threads as a single event,
+ *  to save on events. Also, improve efficiency of
+ *  event_s allocation. Add some event statistics to
+ *  get an idea where performance is really going.
+ *
  * Revision 1.11  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
