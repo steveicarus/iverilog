@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.82 1999/11/28 01:16:19 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.83 1999/11/28 18:05:37 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -696,6 +696,10 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 
 
       os << "main()" << endl << "{" << endl;
+      string vpi_module_path = mod->get_flag("VPI_MODULE_PATH");
+      if (vpi_module_path.length() > 0)
+	    os << "      vvm_set_module_path(\"" << vpi_module_path <<
+		  "\");" << endl;
       os << "      vvm_load_vpi_module(\"system.vpi\");" << endl;
       os << "      vvm_simulation sim;" << endl;
       os << "      design_init(sim);" << endl;
@@ -1975,6 +1979,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.83  1999/11/28 18:05:37  steve
+ *  Set VPI_MODULE_PATH in the target code, if desired.
+ *
  * Revision 1.82  1999/11/28 01:16:19  steve
  *  gate outputs need to set signal values.
  *

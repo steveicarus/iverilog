@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.h,v 1.3 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm_calltf.h,v 1.4 1999/11/28 18:05:37 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -29,11 +29,15 @@
 /*
  * This function loads a vpi module by name.
  */
+extern void vvm_set_module_path(const char*path);
 extern void vvm_load_vpi_module(const char*path);
 
 
 /*
  * $Log: vvm_calltf.h,v $
+ * Revision 1.4  1999/11/28 18:05:37  steve
+ *  Set VPI_MODULE_PATH in the target code, if desired.
+ *
  * Revision 1.3  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

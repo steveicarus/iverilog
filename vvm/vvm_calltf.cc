@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_calltf.cc,v 1.8 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.9 1999/11/28 18:05:37 steve Exp $"
 #endif
 
 # include  "vvm_calltf.h"
@@ -34,6 +34,13 @@
 
 # define MAX_PATHLEN 1024
 
+static char*module_path = 0;
+
+void vvm_set_module_path(const char*path)
+{
+      if (module_path) free(module_path);
+      module_path = strdup(path);
+}
 
 /*
  * The load_vpi_module function attempts to locate and load the named
@@ -57,6 +64,7 @@ void vvm_load_vpi_module(const char*name)
 {
       void*mod = 0;
       const char*path = getenv("VPI_MODULE_PATH");
+      if (path == 0) path = module_path;
 
       if ((path == 0) || (strchr(name, '/'))) {
 	  mod = dlopen(name, RTLD_NOW);
@@ -108,6 +116,9 @@ void vvm_load_vpi_module(const char*name)
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.9  1999/11/28 18:05:37  steve
+ *  Set VPI_MODULE_PATH in the target code, if desired.
+ *
  * Revision 1.8  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

@@ -40,10 +40,10 @@ functors=""
 flags=""
 
 # If VPI module path aren't set up, warn at least
-if test -z "${VPI_MODULE_PATH}" ; then
-    echo "Missing environment variable VPI_MODULE_PATH.";
-    echo "To be able to execute, set VPI_MODULE_PATH to ${VPIModulePath}";
-fi
+#if test -z "${VPI_MODULE_PATH}" ; then
+#    echo "Missing environment variable VPI_MODULE_PATH.";
+#    echo "To be able to execute, set VPI_MODULE_PATH to ${VPIModulePath}";
+#fi
 
 # Try to extract given parameters
 parameter=`getopt D:I:Xxf:o:s:t: "$@"` 
@@ -67,6 +67,8 @@ done
 
 # The rest is filenames
 verilogFile=$@;
+
+flags="$flags -fVPI_MODULE_PATH=${VPIModulePath}"
 
 if test -z "${verilogFile}" ; then
     echo "Missing infile";
