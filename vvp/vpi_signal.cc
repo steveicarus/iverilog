@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.25 2001/09/30 05:18:46 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.26 2001/10/15 01:49:50 steve Exp $"
 #endif
 
 /*
@@ -101,6 +101,22 @@ static char* signal_get_str(int code, vpiHandle ref)
 
 	  case vpiName:
 	    return (char*)rfp->name;
+      }
+
+      return 0;
+}
+
+static vpiHandle signal_get_handle(int code, vpiHandle ref)
+{
+      assert((ref->vpi_type->type_code==vpiNet)
+	     || (ref->vpi_type->type_code==vpiReg));
+
+      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+
+      switch (code) {
+
+	  case vpiScope:
+	    return &rfp->scope->base;
       }
 
       return 0;
@@ -455,7 +471,7 @@ static const struct __vpirt vpip_reg_rt = {
       signal_get_str,
       signal_get_value,
       signal_put_value,
-      0,
+      signal_get_handle,
       0
 };
 
@@ -465,7 +481,7 @@ static const struct __vpirt vpip_net_rt = {
       signal_get_str,
       signal_get_value,
       signal_put_value,
-      0,
+      signal_get_handle,
       0
 };
 
@@ -505,6 +521,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.26  2001/10/15 01:49:50  steve
+ *  Support getting scope of scope, and scope of signals.
+ *
  * Revision 1.25  2001/09/30 05:18:46  steve
  *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
  *

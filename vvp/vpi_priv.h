@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.22 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.23 2001/10/15 01:49:50 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -81,6 +81,7 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
  */
 struct __vpiScope {
       struct __vpiHandle base;
+      struct __vpiScope *scope;
 	/* The scope has a name. */
       char*name;
       /* Keep an array of internal scope items. */
@@ -258,6 +259,9 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.23  2001/10/15 01:49:50  steve
+ *  Support getting scope of scope, and scope of signals.
+ *
  * Revision 1.22  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

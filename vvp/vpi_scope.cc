@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.8 2001/10/15 01:49:50 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -33,6 +33,7 @@ static char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
 
+      char *n, *nn;
 
       assert((obj->vpi_type->type_code == vpiModule)
 	     || (obj->vpi_type->type_code == vpiNamedBegin)
@@ -41,10 +42,39 @@ static char* scope_get_str(int code, vpiHandle obj)
       switch (code) {
 	  case vpiFullName:
 	    return ref->name;
+
+	  case vpiName:
+	    nn = n = ref->name;
+	    while (*n)
+		  if (*n=='\\' && *++n)
+			++n;
+		  else if (*n=='.')
+			nn = ++n;
+		  else 
+			++n;
+	    return nn;
+		  
 	  default:
 	    assert(0);
 	    return 0;
       }
+}
+
+static vpiHandle scope_get_handle(int code, vpiHandle obj)
+{
+      assert((obj->vpi_type->type_code == vpiModule)
+	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiTask));
+
+      struct __vpiScope*rfp = (struct __vpiScope*)obj;
+
+      switch (code) {
+
+	  case vpiScope:
+	    return &rfp->scope->base;
+      }
+
+      return 0;
 }
 
 static vpiHandle module_iter(int code, vpiHandle obj)
@@ -68,7 +98,7 @@ static const struct __vpirt vpip_scope_rt = {
       scope_get_str,
       0,
       0,
-      0,
+      scope_get_handle,
       module_iter
 };
 
@@ -115,6 +145,9 @@ void compile_scope_decl(char*label, char*name, char*parent)
 	    assert(obj);
 	    struct __vpiScope*sp = (struct __vpiScope*) obj;
 	    attach_to_scope_(sp, &scope->base);
+	    scope->scope = (struct __vpiScope*)obj;
+      } else {
+	    scope->scope = 0x0;
       }
 }
 
@@ -137,6 +170,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.8  2001/10/15 01:49:50  steve
+ *  Support getting scope of scope, and scope of signals.
+ *
  * Revision 1.7  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *
