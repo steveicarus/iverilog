@@ -58,8 +58,8 @@ AC_SUBST(DLLIB)
 # Darwin requires -no-cpp-precomp
 case "${host}" in
     *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp"
-	CFLAGS="-no-cpp-precomp"
+	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
+	CFLAGS="-no-cpp-precomp $CFLAGS"
 	;;
 esac
 
