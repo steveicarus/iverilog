@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.74 2000/10/15 21:02:08 steve Exp $"
+#ident "$Id: Makefile.in,v 1.75 2000/10/28 03:58:11 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -57,6 +57,12 @@ all: ivl@EXEEXT@
 	cd driver ; $(MAKE) all
 	cd tgt-verilog ; $(MAKE) all
 	cd tgt-stub ; $(MAKE) all
+
+# This rule rules the compiler in the trivial hello.vl program to make
+# sure the basics were compiled properly.
+check: all
+	driver/iverilog -Ccheck.conf -B./ivlpp examples/hello.vl
+	./a.out | grep 'Hello, World'
 
 clean:
 	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog iverilog@EXEEXT@
