@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.2 2000/03/11 03:25:52 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.3 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 /*
@@ -60,6 +60,13 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    scope->set_parameter((*cur).first, new NetEParam);
       }
 
+      for (mparm_it_t cur = localparams.begin()
+		 ; cur != localparams.end() ;  cur ++) {
+
+	    scope->set_parameter((*cur).first, new NetEParam);
+      }
+
+
 	// Now scan the parameters again, this time elaborating them
 	// for use as parameter values. This is after the previous
 	// scan so that local parameter names can be used in the
@@ -67,6 +74,18 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
+
+	    PExpr*ex = (*cur).second;
+	    assert(ex);
+
+	    NetExpr*val = ex->elaborate_pexpr(des, scope);
+	    val = scope->set_parameter((*cur).first, val);
+	    assert(val);
+	    delete val;
+      }
+
+      for (mparm_it_t cur = localparams.begin()
+		 ; cur != localparams.end() ;  cur ++) {
 
 	    PExpr*ex = (*cur).second;
 	    assert(ex);
@@ -372,6 +391,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.3  2000/03/12 17:09:41  steve
+ *  Support localparam.
+ *
  * Revision 1.2  2000/03/11 03:25:52  steve
  *  Locate scopes in statements.
  *

@@ -4,12 +4,10 @@
 #include "parse_misc.h"
 #include "parse.h"
 #include <string.h>
+#include "lexor_keyword.h"
 
 %}
-struct Keywords {
-  char *name;
-  int tokenType;
-} Keywords;
+struct lexor_keyword { const char*name; int tokenType; };
 %%
 always,		K_always
 and,		K_and
@@ -51,6 +49,7 @@ input,		K_input
 integer,	K_integer
 join,		K_join
 large,		K_large
+localparam,	K_localparam
 macromodule,	K_macromodule
 medium,		K_medium
 module,		K_module
@@ -110,3 +109,13 @@ wire,		K_wire
 wor,		K_wor
 xnor,		K_xnor
 xor,		K_xor
+%%
+
+int lexor_keyword_code(const char*str, unsigned nstr)
+{
+      const struct lexor_keyword*rc = check_identifier(str, nstr);
+      if (rc == 0)
+	  return IDENTIFIER;
+      else
+	  return rc->tokenType;
+}

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.107 2000/03/10 06:20:48 steve Exp $"
+#ident "$Id: netlist.cc,v 1.108 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2276,13 +2276,27 @@ NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
       return res;
 }
 
+NetExpr* NetScope::set_localparam(const string&key, NetExpr*expr)
+{
+      NetExpr*&ref = localparams_[key];
+      NetExpr* res = ref;
+      ref = expr;
+      return res;
+}
+
 const NetExpr* NetScope::get_parameter(const string&key) const
 {
-      map<string,NetExpr*>::const_iterator idx = parameters_.find(key);
-      if (idx == parameters_.end())
-	    return 0;
-      else
+      map<string,NetExpr*>::const_iterator idx;
+
+      idx = parameters_.find(key);
+      if (idx != parameters_.end())
 	    return (*idx).second;
+
+      idx = localparams_.find(key);
+      if (idx != localparams_.end())
+	    return (*idx).second;
+
+      return 0;
 }
 
 NetScope::TYPE NetScope::type() const
@@ -2632,6 +2646,9 @@ void NetUDP::set_initial(char val)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.108  2000/03/12 17:09:41  steve
+ *  Support localparam.
+ *
  * Revision 1.107  2000/03/10 06:20:48  steve
  *  Handle defparam to partial hierarchical names.
  *

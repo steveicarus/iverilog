@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.68 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.69 2000/03/12 17:09:40 steve Exp $"
 #endif
 
 /*
@@ -616,6 +616,12 @@ void NetScope::dump(ostream&o) const
 		  o << "    parameter " << (*pp).first << " = "  <<
 			*(*pp).second << ";" << endl;
 	    }
+
+	    for (pp = localparams_.begin()
+		       ; pp != localparams_.end() ;  pp ++) {
+		  o << "    localparam " << (*pp).first << " = "  <<
+			*(*pp).second << ";" << endl;
+	    }
       }
 
 	/* Dump the saved defparam assignments here. */
@@ -886,6 +892,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.69  2000/03/12 17:09:40  steve
+ *  Support localparam.
+ *
  * Revision 1.68  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

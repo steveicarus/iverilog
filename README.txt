@@ -42,6 +42,12 @@ on a UNIX-like system:
 
 	- bison
 
+	- gperf 2.7
+	  The lexical analyzer doesn't recognize keywords directly,
+	  but instead matches symbols and looks them up in a hash
+	  table in order to get the proper lexical code. The gperf
+	  program generates the lookup table.
+
 2.2 Compilation
 
 Unpack the tar-ball and cd into the verilog-######### directory

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.50 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.51 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 /*
@@ -609,6 +609,15 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
+      for (parm_iter_t cur = localparams.begin()
+		 ; cur != localparams.end() ; cur ++) {
+	    out << "    localparam " << (*cur).first << " = ";
+	    if ((*cur).second)
+		  out << *(*cur).second << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+
       for (parm_iter_t cur = defparms.begin()
 		 ; cur != defparms.end() ;  cur ++) {
 	    out << "    defparam " << (*cur).first << " = ";
@@ -711,6 +720,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.51  2000/03/12 17:09:41  steve
+ *  Support localparam.
+ *
  * Revision 1.50  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.37 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: Makefile.in,v 1.38 2000/03/12 17:09:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -118,6 +118,12 @@ parse.h parse.cc: $(srcdir)/parse.y
 
 lexor.cc: $(srcdir)/lexor.lex
 	flex -PVL -s -olexor.cc $(srcdir)/lexor.lex
+
+lexor_keyword.o dep/lexor_keyword.d: lexor_keyword.cc
+
+lexor_keyword.cc: lexor_keyword.gperf
+	gperf -o -i 1 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t lexor_keyword.gperf > lexor_keyword.cc
+
 
 install: all installdirs $(bindir)/verilog $(bindir)/gverilog $(libdir)/ivl/ivl $(mandir)/man1/verilog.1
 	cd vpi ; $(MAKE) install

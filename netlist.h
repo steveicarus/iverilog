@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.113 2000/03/11 03:25:52 steve Exp $"
+#ident "$Id: netlist.h,v 1.114 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 /*
@@ -1993,6 +1993,7 @@ class NetScope {
 	   previous expression, if there was one. */
 
       NetExpr* set_parameter(const string&name, NetExpr*val);
+      NetExpr* set_localparam(const string&name, NetExpr*val);
       const NetExpr*get_parameter(const string&name) const;
 
 
@@ -2024,6 +2025,7 @@ class NetScope {
       string name_;
 
       map<string,NetExpr*>parameters_;
+      map<string,NetExpr*>localparams_;
 
       NetScope*up_;
       NetScope*sib_;
@@ -2193,6 +2195,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.114  2000/03/12 17:09:41  steve
+ *  Support localparam.
+ *
  * Revision 1.113  2000/03/11 03:25:52  steve
  *  Locate scopes in statements.
  *

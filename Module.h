@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.15 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: Module.h,v 1.16 2000/03/12 17:09:40 steve Exp $"
 #endif
 
 # include  <list>
@@ -65,6 +65,7 @@ class Module {
 	   module is elaborated. During parsing, I put the parameters
 	   into this map. */
       map<string,PExpr*>parameters;
+      map<string,PExpr*>localparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
@@ -102,9 +103,9 @@ class Module {
       PWire* get_wire(const string&name) const;
       PGate* get_gate(const string&name);
 
-      const map<string,PWire*>& get_wires() const { return wires_; }
-      const list<PGate*>& get_gates() const { return gates_; }
-      const list<PProcess*>& get_behaviors() const { return behaviors_; }
+      const map<string,PWire*>& get_wires() const;
+      const list<PGate*>& get_gates() const;
+      const list<PProcess*>& get_behaviors() const;
 
       void dump(ostream&out) const;
       bool elaborate(Design*, NetScope*scope) const;
@@ -129,6 +130,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.16  2000/03/12 17:09:40  steve
+ *  Support localparam.
+ *
  * Revision 1.15  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

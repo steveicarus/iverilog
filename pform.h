@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.36 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: pform.h,v 1.37 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -133,6 +133,7 @@ extern void pform_set_attrib(const string&name, const string&key,
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
 extern void pform_set_parameter(const string&name, PExpr*expr);
+extern void pform_set_localparam(const string&name, PExpr*expr);
 extern void pform_set_defparam(const string&name, PExpr*expr);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 
@@ -181,6 +182,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.37  2000/03/12 17:09:41  steve
+ *  Support localparam.
+ *
  * Revision 1.36  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.55 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: pform.cc,v 1.56 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -732,6 +732,12 @@ void pform_set_parameter(const string&name, PExpr*expr)
       pform_cur_module->param_names.push_back(name);
 }
 
+void pform_set_localparam(const string&name, PExpr*expr)
+{
+      assert(expr);
+      pform_cur_module->localparams[name] = expr;
+}
+
 void pform_set_defparam(const string&name, PExpr*expr)
 {
       assert(expr);
@@ -827,6 +833,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.56  2000/03/12 17:09:41  steve
+ *  Support localparam.
+ *
  * Revision 1.55  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

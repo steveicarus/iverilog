@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.10 2000/02/23 02:56:53 steve Exp $"
+#ident "$Id: Module.cc,v 1.11 2000/03/12 17:09:40 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -126,9 +126,27 @@ PGate* Module::get_gate(const string&name)
       return 0;
 }
 
+const map<string,PWire*>& Module::get_wires() const
+{
+      return wires_;
+}
+
+const list<PGate*>& Module::get_gates() const
+{
+      return gates_;
+}
+
+const list<PProcess*>& Module::get_behaviors() const
+{
+      return behaviors_;
+}
+
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.11  2000/03/12 17:09:40  steve
+ *  Support localparam.
+ *
  * Revision 1.10  2000/02/23 02:56:53  steve
  *  Macintosh compilers do not support ident.
  *

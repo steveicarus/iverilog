@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.85 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: parse.y,v 1.86 2000/03/12 17:09:41 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -81,7 +81,8 @@ extern void lex_end_table();
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
 %token K_endprimitive K_endspecify K_endtable K_endtask K_event K_for
 %token K_force K_forever K_fork K_function K_highz0 K_highz1 K_if
-%token K_initial K_inout K_input K_integer K_join K_large K_macromodule
+%token K_initial K_inout K_input K_integer K_join K_large K_localparam
+%token K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
 %token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_primitive
 %token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
@@ -1096,6 +1097,7 @@ module_item
 		  delete $2;
 		}
 	| K_parameter parameter_assign_list ';'
+	| K_localparam localparam_assign_list ';'
 	| gatetype delay3_opt gate_instance_list ';'
 		{ pform_makegates($1, $2, $3);
 		}
@@ -1226,6 +1228,36 @@ parameter_assign_list
 		  delete $1;
 		}
 	| parameter_assign_list ',' parameter_assign
+	;
+
+
+  /* Localparam assignments and asignment lists are broken into
+     separate BNF so that I can call slightly different paramter
+     handling code. They parse the same as parameters, they just
+     behave differently when someone tries to override them. */
+
+localparam_assign
+	: IDENTIFIER '=' expression
+		{ PExpr*tmp = $3;
+		  if (!pform_expression_is_constant(tmp)) {
+			yyerror(@3, "error: parameter value "
+			            "must be constant.");
+			delete tmp;
+			tmp = 0;
+		  }
+		  pform_set_localparam($1, tmp);
+		  delete $1;
+		}
+	;
+
+localparam_assign_list
+	: localparam_assign
+	| range localparam_assign
+		{ yywarn(@1, "Ranges in localparam definition "
+		          "are not supported.");
+		  delete $1;
+		}
+	| localparam_assign_list ',' localparam_assign
 	;
 
 

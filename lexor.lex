@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.43 2000/03/05 06:14:10 steve Exp $"
+#ident "$Id: lexor.lex,v 1.44 2000/03/12 17:09:41 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -30,6 +30,7 @@
 # include  "parse.h"
 # include  <ctype.h>
 # include  <string.h>
+# include  "lexor_keyword.h"
 
 extern FILE*vl_input;
 extern string vl_file;
@@ -42,7 +43,6 @@ static void reset_lexor();
 static void line_directive();
 static void line_directive2();
 
-extern int check_identifier(const char*str, int len);
 static verinum*make_sized_binary(const char*txt);
 static verinum*make_sized_dec(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
@@ -131,13 +131,15 @@ W [ \t\b\f\r]+
 <UDPTABLE>[pPnN01\?\*\-] { return yytext[0]; }
 
 [a-zA-Z_][a-zA-Z0-9$_]* {
-      int rc = check_identifier(yytext, yyleng);
+      int rc = lexor_keyword_code(yytext, yyleng);
       if (rc == IDENTIFIER)
 	    yylval.text = strdup(yytext);
       else
 	    yylval.text = 0;
 
-      return rc; }
+      return rc;
+ }
+
 
 [a-zA-Z_][a-zA-Z0-9$_]*(\.[a-zA-Z_][a-zA-Z0-9$_]*)+ {
       yylval.text = strdup(yytext);
