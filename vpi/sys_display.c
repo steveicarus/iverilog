@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.15 2000/05/09 00:02:29 steve Exp $"
+#ident "$Id: sys_display.c,v 1.16 2000/05/31 02:15:43 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -448,7 +448,7 @@ static int sys_fdisplay_calltf(char *name)
       }
 
       type = vpi_get(vpiType, item);
-      if (type != vpiReg && type != vpiReadVal) {
+      if (type != vpiReg && type != vpiRealVal) {
 	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
 		       name, type);
 	    vpi_free_object(argv);
@@ -488,7 +488,7 @@ static int sys_fclose_calltf(char *name)
 	    return 0;
       }
       type = vpi_get(vpiType, item);
-      if (type != vpiReg && type != vpiReadVal) {
+      if (type != vpiReg && type != vpiRealVal) {
 	    vpi_printf("ERROR: %s mcd parameter must be of integral type, got vpiType=%d\n",
 		       name, type);
 	    vpi_free_object(argv);
@@ -578,6 +578,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.16  2000/05/31 02:15:43  steve
+ *  typo: fix vpiReadVal to vpiRealVal
+ *
  * Revision 1.15  2000/05/09 00:02:29  steve
  *  Remove test print.
  *
