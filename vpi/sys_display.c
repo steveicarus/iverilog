@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.8 1999/11/06 23:32:14 steve Exp $"
+#ident "$Id: sys_display.c,v 1.9 1999/11/07 02:25:07 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -110,8 +110,8 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 			cp += 1;
 			break;
 		      case 'm':
-			vpi_printf("%s",
-				   vpi_get_str(vpiFullName, argv[idx++]));
+			vpi_printf("%s", vpi_get_str(vpiFullName, argv[idx]));
+			idx += 1;
 			cp += 1;
 			break;
 		      case 'o':
@@ -178,7 +178,7 @@ static void do_display(struct strobe_cb_info*info)
 			vpi_get_value(item, &value);
 			idx += format_str(value.value.str,
 					  info->nitems-idx-1,
-					  info->items+1);
+					  info->items+idx+1);
 		  } else {
 			value.format = vpiBinStrVal;
 			vpi_get_value(item, &value);
@@ -275,16 +275,99 @@ static int sys_strobe_calltf(char*name)
       return 0;
 }
 
+/*
+ * The $monitor system task works by managing these static variables,
+ * and the cbValueChange callbacks associated with registers and
+ * nets. Note that it is proper to keep the state in static variables
+ * because there can only be one monitor at a time pending (even
+ * though that monitor may be watching many variables).
+ */
+
+static struct strobe_cb_info monitor_info = { 0, 0, 0 };
+static int monitor_scheduled = 0;
+static vpiHandle *monitor_callbacks = 0;
+
+static int monitor_cb_2(p_cb_data cb)
+{
+      do_display(&monitor_info);
+      vpi_printf("\n");
+      monitor_scheduled = 0;
+      return 0;
+}
+
+static int monitor_cb_1(p_cb_data cause)
+{
+      struct t_cb_data cb;
+      struct t_vpi_time time;
+
+	/* Reschedule this event so that it happens for the next
+	   trigger on this variable. */
+      cb = *cause;
+      vpi_register_cb(&cb);
+      
+      if (monitor_scheduled) return 0;
+
+	/* This this action caused the first trigger, then schedule
+	   the monitor to happen at the end of the time slice and mark
+	   it as scheduled. */
+      monitor_scheduled += 1;
+      time.type = vpiSimTime;
+      time.low = 0;
+      time.high = 0;
+
+      cb.reason = cbReadOnlySynch;
+      cb.cb_rtn = monitor_cb_2;
+      cb.time = &time;
+      cb.obj = 0;
+      vpi_register_cb(&cb);
+
+      return 0;
+}
+
 static int sys_monitor_calltf(char*name)
 {
+      unsigned idx;
       struct t_cb_data cb;
       struct t_vpi_time time;
 
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
+
+      if (monitor_callbacks) {
+	    for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1)
+		  if (monitor_callbacks[idx])
+			vpi_remove_cb(monitor_callbacks[idx]);
+
+	    free(monitor_callbacks);
+	    monitor_callbacks = 0;
+
+	    free(monitor_info.items);
+	    free(monitor_info.name);
+	    monitor_info.items = 0;
+	    monitor_info.nitems = 0;
+	    monitor_info.name = 0;
+      }
+
+      array_from_iterator(&monitor_info, argv);
+      monitor_info.name = strdup(name);
+
+      monitor_callbacks = calloc(monitor_info.nitems, sizeof(vpiHandle));
 
       time.type = vpiSuppressTime;
+      cb.reason = cbValueChange;
+      cb.cb_rtn = monitor_cb_1;
+      cb.time = &time;
+      for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1) {
+
+	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
+		case vpiNet:
+		case vpiReg:
+		  cb.obj = monitor_info.items[idx];
+		  monitor_callbacks[idx] = vpi_register_cb(&cb);
+		  break;
+
+	    }
+      }
 
       return 0;
 }
@@ -329,6 +412,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.9  1999/11/07 02:25:07  steve
+ *  Add the $monitor implementation.
+ *
  * Revision 1.8  1999/11/06 23:32:14  steve
  *  Unify display and strobe format routines.
  *

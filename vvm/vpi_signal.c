@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.c,v 1.3 1999/11/06 16:52:16 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.4 1999/11/07 02:25:08 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -27,6 +27,9 @@
 static char* signal_get_str(int code, vpiHandle ref)
 {
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+
+      assert((ref->vpi_type->type_code==vpiNet)
+	     || (ref->vpi_type->type_code==vpiReg));
 
       switch (code) {
 
@@ -40,6 +43,9 @@ static char* signal_get_str(int code, vpiHandle ref)
 static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      assert((ref->vpi_type->type_code==vpiNet)
+	     || (ref->vpi_type->type_code==vpiReg));
+
       vpip_bits_get_value(rfp->bits, rfp->nbits, vp);
 }
 
@@ -79,6 +85,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name)
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.4  1999/11/07 02:25:08  steve
+ *  Add the $monitor implementation.
+ *
  * Revision 1.3  1999/11/06 16:52:16  steve
  *  complete value retrieval for number constants.
  *

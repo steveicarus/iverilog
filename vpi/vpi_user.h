@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.4 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.5 1999/11/07 02:25:08 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -161,6 +161,7 @@ typedef struct t_cb_data {
 #define cbUnresolvedSystf   24
 
 extern vpiHandle vpi_register_cb(p_cb_data data);
+extern int vpi_remove_cb(vpiHandle ref);
 
 /*
  * This function allows a vpi application to control the simulation
@@ -203,6 +204,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.5  1999/11/07 02:25:08  steve
+ *  Add the $monitor implementation.
+ *
  * Revision 1.4  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler
