@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.195 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.196 2000/11/05 06:05:59 steve Exp $"
 #endif
 
 /*
@@ -467,26 +467,42 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// the pins, elaborate the expressions attached to them, and
 	// bind them to the port of the elaborated module.
 
+	// This can get rather complicated because the port can be
+	// unconnected (meaning an empty paramter is passed) connected
+	// to a concatenation, or connected to an internally
+	// unconnected port.
+
       for (unsigned idx = 0 ;  idx < pins->count() ;  idx += 1) {
-	      // Skip unconnected module ports.
+
+	      // Skip unconnected module ports. This happens when a
+	      // null parameter is passed in.
 	    if ((*pins)[idx] == 0)
 		  continue;
 
-	      // Inside the module, the port is one or more signals,
-	      // that were already elaborated. List all those signals,
-	      // and I will connect them up later.
+	      // Inside the module, the port is zero or more signals
+	      // that were already elaborated. List all those signals
+	      // and the NetNet equivilents.
 	    svector<PEIdent*> mport = rmod->get_port(idx);
 	    svector<NetNet*>prts (mport.count());
 
+	      // Count the internal pins of the port.
 	    unsigned prts_pin_count = 0;
 	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
 		  PEIdent*pport = mport[ldx];
+		  assert(pport);
 		  prts[ldx] = pport->elaborate_port(des, my_scope);
 		  if (prts[ldx] == 0)
 			continue;
 
 		  assert(prts[ldx]);
 		  prts_pin_count += prts[ldx]->pin_count();
+	    }
+
+	      // If I find that the port in unconnected inside the
+	      // module, then there is nothing to connect. Skip the
+	      // paramter.
+	    if (prts_pin_count == 0) {
+		  continue;
 	    }
 
 	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path,
@@ -499,6 +515,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    }
 
 	    assert(sig);
+
 
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths. Note that idx is 0
@@ -2283,6 +2300,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.196  2000/11/05 06:05:59  steve
+ *  Handle connectsion to internally unconnected modules (PR#38)
+ *
  * Revision 1.195  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

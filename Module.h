@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.20 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: Module.h,v 1.21 2000/11/05 06:05:59 steve Exp $"
 #endif
 
 # include  <list>
@@ -124,7 +124,10 @@ class Module {
     private:
       const string name_;
 
+	/* This is an array of port descriptors, which is in turn a
+	   named array of PEident pointers. */
       svector<port_t*> ports_;
+
       map<string,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
@@ -139,6 +142,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.21  2000/11/05 06:05:59  steve
+ *  Handle connectsion to internally unconnected modules (PR#38)
+ *
  * Revision 1.20  2000/07/22 22:09:03  steve
  *  Parse and elaborate timescale to scopes.
  *

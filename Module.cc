@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.12 2000/05/16 04:05:15 steve Exp $"
+#ident "$Id: Module.cc,v 1.13 2000/11/05 06:05:59 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -68,10 +68,19 @@ unsigned Module::port_count() const
       return ports_.count();
 }
 
+/*
+ * Return the array of PEIdent object that are at this port of the
+ * module. If the port is internally unconnected, return an empty
+ * array. 
+ */
 const svector<PEIdent*>& Module::get_port(unsigned idx) const
 {
       assert(idx < ports_.count());
-      return ports_[idx]->expr;
+
+      if (ports_[idx])
+	    return ports_[idx]->expr;
+      else
+	    return svector<PEIdent*>();
 }
 
 unsigned Module::find_port(const string&name) const
@@ -125,6 +134,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.13  2000/11/05 06:05:59  steve
+ *  Handle connectsion to internally unconnected modules (PR#38)
+ *
  * Revision 1.12  2000/05/16 04:05:15  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used
