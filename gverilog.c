@@ -121,15 +121,16 @@ void create_outputfilename(char *input, char *output)
   int spacepos=0;
   int i=0;
 
-  dotpos = strlen(input);
-  for(i=dotpos; i!=0; i--){
+  for(i=strlen(input); i!=0; i--){
     if ((dotpos == 0) && (input[i] == '.')) dotpos = i;
     if ((spacepos == 0) && (input[i] == ' ')) spacepos = i;
   }
   
-  if ((dotpos != 0) && (dotpos > spacepos)) {
-    output = strncpy(output, &input[spacepos+1], dotpos-spacepos-3);
+  if (dotpos == 0) {
+    dotpos = strlen(input);
   }
+
+  output = strncpy(output, &input[spacepos+1], dotpos-spacepos-1);
 
   return;
 }
