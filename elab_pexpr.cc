@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.1 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.2 2000/03/12 04:35:22 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -32,6 +32,27 @@ NetExpr*PExpr::elaborate_pexpr(Design*des, NetScope*sc) const
 }
 
 /*
+ * Parameter expressions may reference other parameters, but only in
+ * the current scope. Preserve the parameter reference in the
+ * parameter expression I'm generating, instead of evaluating it now,
+ * because the referenced parameter may yet be overridden.
+ */
+NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+      const NetExpr*ex = scope->get_parameter(text_);
+      if (ex == 0) {
+	    cerr << get_line() << ": error: identifier ``" << text_ <<
+		  "'' is not a parameter in " << scope->name() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetExpr*res = new NetEParam(des, scope, text_);
+      assert(res);
+      return res;
+}
+
+/*
  * Simple numbers can be elaborated by the elaborate_expr method.
  */
 NetExpr*PENumber::elaborate_pexpr(Design*des, NetScope*sc) const
@@ -42,6 +63,9 @@ NetExpr*PENumber::elaborate_pexpr(Design*des, NetScope*sc) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.2  2000/03/12 04:35:22  steve
+ *  Allow parameter identifiers in parameter expressions.
+ *
  * Revision 1.1  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

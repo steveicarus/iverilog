@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.30 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: PExpr.h,v 1.31 2000/03/12 04:35:22 steve Exp $"
 #endif
 
 # include  <string>
@@ -148,6 +148,7 @@ class PEIdent : public PExpr {
 				    unsigned long decay) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
@@ -336,6 +337,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.31  2000/03/12 04:35:22  steve
+ *  Allow parameter identifiers in parameter expressions.
+ *
  * Revision 1.30  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters
