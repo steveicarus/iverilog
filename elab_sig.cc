@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.18 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.19 2002/01/23 03:35:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -236,6 +236,17 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 {
       string fname = scope->basename();
       assert(scope->type() == NetScope::FUNC);
+
+	/* Make sure the function has at least one input port. If it
+	   fails this test, print an error message. Keep going so we
+	   can find more errors. */
+      if (ports_ == 0) {
+	    cerr << get_line() << ": error: Function " << fname
+		 << " has no ports." << endl;
+	    cerr << get_line() << ":      : Functions must have"
+		 << " at least one input port." << endl;
+	    des->errors += 1;
+      }
 
       svector<NetNet*>ports (ports_? ports_->count()+1 : 1);
 
@@ -484,6 +495,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.19  2002/01/23 03:35:17  steve
+ *  Detect incorrect function ports.
+ *
  * Revision 1.18  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.144 2002/01/12 04:03:39 steve Exp $"
+#ident "$Id: parse.y,v 1.145 2002/01/23 03:35:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -899,6 +899,20 @@ function_item
 			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
 						@1.text, @1.first_line);
 		  $$ = tmp;
+		}
+	| K_output range_opt list_of_variables ';'
+                { svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		  yyerror(@1, "Functions may not have output ports.");
+		}
+	| K_inout range_opt list_of_variables ';'
+                { svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
+						@1.text, @1.first_line);
+		  $$ = tmp;
+		  yyerror(@1, "Functions may not have inout ports.");
 		}
 	| block_item_decl
                 { $$ = 0; }
