@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.104 2003/08/03 03:53:38 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.105 2003/09/24 20:46:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1696,6 +1696,8 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
 	      thread_count, lab_out, tst.base);
 
+      clear_expression_lookaside();
+
       fprintf(vvp_out, "T_%d.%d ; End of true expr.\n",
 	      thread_count, lab_true);
 
@@ -2133,6 +2135,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.105  2003/09/24 20:46:20  steve
+ *  Clear expression lookaside after true cause of ternary.
+ *
  * Revision 1.104  2003/08/03 03:53:38  steve
  *  Subtract from constant values.
  *
