@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.37 2000/11/29 01:34:17 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.38 2000/11/29 02:54:49 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -539,7 +539,7 @@ void target_xnf::lpm_add_sub(const NetAddSub*gate)
  */
 void target_xnf::lpm_compare(const NetCompare*dev)
 {
-      if (dev->pin_AEB().is_linked()) {
+      if (dev->pin_AEB().is_linked() || dev->pin_ANEB().is_linked()) {
 	    lpm_compare_eq_(out_, dev);
 	    return;
       }
@@ -611,8 +611,20 @@ void target_xnf::lpm_compare_eq_(ostream&os, const NetCompare*dev)
 		  os << "END" << endl;
 	    }
 
-	    os << "SYM, " << mname << ", AND, LIBVER=2.0.0" << endl;
-	    draw_pin(os, "O", dev->pin_AEB());
+	      /* Draw an AND gate if this is an EQ result, or a NAND
+		 gate of this is a NEQ result. */
+
+	    if (dev->pin_AEB().is_linked()) {
+		  assert( ! dev->pin_ANEB().is_linked());
+		  os << "SYM, " << mname << ", AND, LIBVER=2.0.0" << endl;
+		  draw_pin(os, "O", dev->pin_AEB());
+
+	    } else {
+		  assert( dev->pin_ANEB().is_linked());
+		  os << "SYM, " << mname << ", NAND, LIBVER=2.0.0" << endl;
+		  draw_pin(os, "O", dev->pin_ANEB());
+	    }
+
 	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 5) {
 		  if ((idx+1) == dev->width())
 			os << "    PIN, I" << idx/5 << ", I, " << mname
@@ -624,8 +636,17 @@ void target_xnf::lpm_compare_eq_(ostream&os, const NetCompare*dev)
 	    os << "END" << endl;
 
       } else {
-	    os << "SYM, " << mname << ", AND, LIBVER=2.0.0" << endl;
-	    draw_pin(os, "O", dev->pin_AEB());
+	    if (dev->pin_AEB().is_linked()) {
+		  assert( ! dev->pin_ANEB().is_linked());
+		  os << "SYM, " << mname << ", AND, LIBVER=2.0.0" << endl;
+		  draw_pin(os, "O", dev->pin_AEB());
+
+	    } else {
+		  assert( dev->pin_ANEB().is_linked());
+		  os << "SYM, " << mname << ", NAND, LIBVER=2.0.0" << endl;
+		  draw_pin(os, "O", dev->pin_ANEB());
+	    }
+
 	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1) {
 		  os << "    PIN, I" << idx << ", I, " << mname << "/bit<"
 		     << idx << ">" << endl;
@@ -887,6 +908,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.38  2000/11/29 02:54:49  steve
+ *  Add XNF support for NE comparators.
+ *
  * Revision 1.37  2000/11/29 01:34:17  steve
  *  Typo writing I pins to AND gates in compare.
  *
