@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.23 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.24 2002/09/07 04:54:51 steve Exp $"
 #endif
 
 /*
@@ -249,6 +249,8 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
+      assert(cur->cb_data.cb_rtn != 0);
+
       assert(vpi_mode_flag == VPI_MODE_NONE);
       vpi_mode_flag = cb->sync_flag? VPI_MODE_ROSYNC : VPI_MODE_RWSYNC;
       (cur->cb_data.cb_rtn)(&cur->cb_data);
@@ -410,14 +412,19 @@ vpiHandle vpi_register_cb(p_cb_data data)
       return obj? &obj->base : 0;
 }
 
-
+/*
+ * Removing a callback doesn't really delete it right away. Instead,
+ * it clears the reference to the user callback function. This causes
+ * the callback to quietly reap itself.
+ */
 int vpi_remove_cb(vpiHandle ref)
 {
       assert(ref);
       assert(ref->vpi_type);
       assert(ref->vpi_type->type_code == vpiCallback);
 
-      fprintf(stderr, "vpi error: vpi_remove_cb not supported\n");
+      struct __vpiCallback*obj = (struct __vpiCallback*)ref;
+      obj->cb_data.cb_rtn = 0;
 
       return 0;
 }
@@ -427,6 +434,7 @@ void callback_execute(struct __vpiCallback*cur)
       const vpi_mode_t save_mode = vpi_mode_flag;
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
+      assert(cur->cb_data.cb_rtn);
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
       (cur->cb_data.cb_rtn)(&cur->cb_data);
@@ -443,23 +451,43 @@ void callback_execute(struct __vpiCallback*cur)
 void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 {
       struct __vpiCallback *next = cb_handle;
+      struct __vpiCallback *prev = 0;
 
       while (next) {
 	    struct __vpiCallback * cur = next;
 	    next = cur->next;
-	    if (cur->cb_data.value) {
-		  switch (cur->cb_data.value->format) {
-		  case vpiScalarVal:
-			cur->cb_data.value->value.scalar = val;
-			break;
-		  case vpiSuppressVal:
-			break;
-		  default:
-			fprintf(stderr, "vpi_callback: value format %d not supported\n", cur->cb_data.value->format);
+
+	    if (cur->cb_data.cb_rtn != 0) {
+		  if (cur->cb_data.value) {
+			switch (cur->cb_data.value->format) {
+			    case vpiScalarVal:
+			      cur->cb_data.value->value.scalar = val;
+			      break;
+			    case vpiSuppressVal:
+			      break;
+			    default:
+			      fprintf(stderr, "vpi_callback: value "
+				      "format %d not supported\n",
+				      cur->cb_data.value->format);
+			}
 		  }
+
+		  callback_execute(cur);
+		  prev = cur;
+
+	    } else if (prev == 0) {
+
+		  cb_handle = next;
+		  cur->next = 0;
+		  vpi_free_object(&cur->base);
+
+	    } else {
+		  assert(prev->next == cur);
+		  prev->next = next;
+		  cur->next = 0;
+		  vpi_free_object(&cur->base);
 	    }
 
-	    callback_execute(cur);
       }
 }
 
@@ -467,6 +495,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.24  2002/09/07 04:54:51  steve
+ *  Implement vpi_remove_cb for cbValueChange.
+ *
  * Revision 1.23  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *
@@ -510,39 +541,5 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
  *
  * Revision 1.11  2002/04/06 20:25:45  steve
  *  cbValueChange automatically replays.
- *
- * Revision 1.10  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.9  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.8  2001/10/25 04:19:53  steve
- *  VPI support for callback to return values.
- *
- * Revision 1.7  2001/10/12 03:00:09  steve
- *  M42 implementation of mode 2 (Stephan Boettcher)
- *
- * Revision 1.6  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.5  2001/08/08 01:05:06  steve
- *  Initial implementation of vvp_fvectors.
- *  (Stephan Boettcher)
- *
- * Revision 1.4  2001/07/13 03:02:34  steve
- *  Rewire signal callback support for fast lookup. (Stephan Boettcher)
- *
- * Revision 1.3  2001/07/11 02:27:21  steve
- *  Add support for REadOnlySync and monitors.
- *
- * Revision 1.2  2001/06/21 23:05:08  steve
- *  Some documentation of callback behavior.
- *
- * Revision 1.1  2001/06/21 22:54:12  steve
- *  Support cbValueChange callbacks.
- *
  */
 
