@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.26 2000/03/17 21:50:25 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.27 2000/03/20 17:54:10 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -198,10 +198,6 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    break;
       }
 
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
-	    delete tmp;
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
-	    delete tmp;
 
       return osig;
 }
@@ -1360,6 +1356,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.27  2000/03/20 17:54:10  steve
+ *  Remove dangerous tmp signal delete.
+ *
  * Revision 1.26  2000/03/17 21:50:25  steve
  *  Switch to control warnings.
  *
