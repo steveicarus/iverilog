@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2000/08/09 01:34:00 $" Version "$Date: 2000/08/09 01:34:00 $"
+.TH iverilog 1 "$Date: 2000/10/08 22:36:56 $" Version "$Date: 2000/10/08 22:36:56 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 

@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.22 2000/09/30 03:20:47 steve Exp $"
+#ident "$Id: main.c,v 1.1 2000/10/08 22:36:56 steve Exp $"
 #endif
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -46,6 +47,8 @@
 # define LIBVPIP ""
 #endif
 
+# include  "globals.h"
+
 const char*base = IVL_ROOT;
 const char*mtm  = 0;
 const char*opath = "a.out";
@@ -66,53 +69,29 @@ int verbose_flag = 0;
 
 char tmp[4096];
 
-static int t_null(char*cmd, unsigned ncmd)
+/*
+ * This is the default target type. It looks up the bits that are
+ * needed to run the command from the configuration file (which is
+ * already parsed for us) so we can handle must of the generic cases.
+ */
+static int t_default(char*cmd, unsigned ncmd)
 {
       int rc;
+      const char*pattern;
 
-      sprintf(tmp, " | %s/ivl %s", base, warning_flags);
-      rc = strlen(tmp);
-      cmd = realloc(cmd, ncmd+rc+1);
+      pattern = lookup_pattern("<ivl>");
+      if (pattern == 0) {
+	    fprintf(stderr, "No such target: %s\n", targ);
+	    return -1;
+      }
+
+      tmp[0] = ' ';
+      tmp[1] = '|';
+      tmp[2] = ' ';
+      rc = build_string(tmp+3, sizeof tmp - 3, pattern);
+      cmd = realloc(cmd, ncmd+3+rc+1);
       strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
 
-      if (start) {
-	    sprintf(tmp, " -s%s", start);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (npath) {
-	    sprintf(tmp, " -N%s", npath);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (mtm) {
-	    sprintf(tmp, " -T%s", mtm);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      if (verbose_flag) {
-	    sprintf(tmp, " -v");
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
-      }
-
-      sprintf(tmp, " -- -");
-      rc = strlen(tmp);
-      cmd = realloc(cmd, ncmd+rc+1);
-      strcpy(cmd+ncmd, tmp);
-      ncmd += rc;
 
       if (verbose_flag)
 	    printf("translate: %s\n", cmd);
@@ -309,17 +288,21 @@ static void process_warning_switch(const char*name)
 
 int main(int argc, char **argv)
 {
+      const char*config_path = 0;
       char*cmd;
       unsigned ncmd;
       int e_flag = 0;
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:D:Ef:I:m:N::o:Ss:T:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:D:Ef:I:m:N::o:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
 		  base = optarg;
+		  break;
+		case 'C':
+		  config_path = optarg;
 		  break;
 		case 'D':
 		  if (def_list == 0) {
@@ -424,6 +407,20 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
+	/* Load the iverilog.conf file to get our substitution
+	   strings. */
+      { char path[1024];
+        FILE*fd;
+	if (config_path) {
+	      strcpy(path, config_path);
+	} else {
+	      sprintf(path, "%s/iverilog.conf", base);
+	}
+	fd = fopen(path, "r");
+	reset_lexor(fd);
+	yyparse();
+      }
+
 	/* Start building the preprocess command line. */
 
       sprintf(tmp, "%s/ivlpp %s%s", base,
@@ -485,87 +482,21 @@ int main(int argc, char **argv)
 	    return 0;
       }
 
-      if (strcmp(targ,"null") == 0)
-	    return t_null(cmd, ncmd);
-      else if (strcmp(targ,"vvm") == 0)
+      if (strcmp(targ,"vvm") == 0)
 	    return t_vvm(cmd, ncmd);
       else if (strcmp(targ,"xnf") == 0)
 	    return t_xnf(cmd, ncmd);
       else {
-	    fprintf(stderr, "Unknown target: %s\n", targ);
-	    return 1;
+	    return t_default(cmd, ncmd);
       }
 
       return 0;
 }
 
 /*
- * $Log: iverilog.c,v $
- * Revision 1.22  2000/09/30 03:20:47  steve
- *  Cygwin port changes from Venkat
- *
- * Revision 1.21  2000/09/12 01:17:19  steve
- *  Oops, the -m flag takes a parameter and needs the :
- *
- * Revision 1.20  2000/08/09 01:34:00  steve
- *  Add the -N switch to the iverilog command.
- *
- * Revision 1.19  2000/07/29 17:58:20  steve
- *  Introduce min:typ:max support.
- *
- * Revision 1.18  2000/07/11 23:30:03  steve
- *  More detailed handling of exit status from commands.
- *
- * Revision 1.17  2000/06/30 04:42:23  steve
- *  Catch errors from compile that leave the low 8 bits empty.
- *
- * Revision 1.16  2000/06/16 19:00:06  steve
- *  Detect some hosts that do not support -rdynamic.
- *
- * Revision 1.15  2000/05/17 03:53:29  steve
- *  Add the module option to iverilog.
- *
- * Revision 1.14  2000/05/14 19:41:52  steve
- *  Fix -f flag handling.
- *
- * Revision 1.13  2000/05/13 20:55:47  steve
- *  Use yacc based synthesizer.
- *
- * Revision 1.12  2000/05/09 00:02:13  steve
- *  Parameterize LD lib in C++ command line.
- *
- * Revision 1.11  2000/05/05 01:07:42  steve
- *  Add the -I and -D switches to iverilog.
- *
- * Revision 1.10  2000/05/04 20:08:20  steve
- *  Tell ivlpp to generate line number directives.
- *
- * Revision 1.9  2000/05/03 22:14:31  steve
- *  More features of ivl available through iverilog.
- *
- * Revision 1.8  2000/05/01 23:55:22  steve
- *  Better inc and lib paths for iverilog.
- *
- * Revision 1.7  2000/04/29 01:20:14  steve
- *  The -f flag is now in place.
- *
- * Revision 1.6  2000/04/26 21:11:41  steve
- *  Mussed up command string mashing.
- *
- * Revision 1.5  2000/04/26 03:33:32  steve
- *  Do not set width too small to hold significant bits.
- *
- * Revision 1.4  2000/04/23 21:14:32  steve
- *  The -s flag.
- *
- * Revision 1.3  2000/04/21 22:54:47  steve
- *  module path in vvm target.
- *
- * Revision 1.2  2000/04/21 22:51:38  steve
- *  Support the -tnull target type.
- *
- * Revision 1.1  2000/04/21 06:41:03  steve
- *  Add the iverilog driver program.
+ * $Log: main.c,v $
+ * Revision 1.1  2000/10/08 22:36:56  steve
+ *  iverilog with an iverilog.conf configuration file.
  *
  */
 
