@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.58 2004/12/17 04:47:47 steve Exp $
+ *  $Id: opcodes.txt,v 1.59 2005/01/22 00:58:22 steve Exp $
  */
 
 
@@ -373,9 +373,10 @@ register.
 * %load/x <bit>, <functor-label>, <idx>
 
 This is an indexed load. It uses the contents of the specified index
-register to select a bit from an array based at <functor-label>. The
-bit is pulled from the addressed functor and loaded into the
-destination bit. This function does not do any bounds checking.
+register to select a bit from a vectur functor at <functor-label>. The
+bit is pulled from the indexed bit of the addressed functor and loaded
+into the destination thread bit. If the indexed value is beyond the
+width of the vector, then the result is X.
 
 
 * %loadi/wr <bit>, <mant>, <exp>

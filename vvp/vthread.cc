@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.125 2004/12/17 04:47:47 steve Exp $"
+#ident "$Id: vthread.cc,v 1.126 2005/01/22 00:58:22 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1747,17 +1747,34 @@ bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %load/x <bit>, <functor>, <index>
+ *
+ * <bit> is the destination thread bit and must be >= 4.
+ */
 bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 {
+	// <bit> is the thread bit to load
       assert(cp->bit_idx[0] >= 4);
-      assert(cp->bit_idx[1] <  4);
+      unsigned bit = cp->bit_idx[0];
 
-#if 0
-      vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->words[cp->bit_idx[1]].w_int);
-      thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
-#else
-      fprintf(stderr, "XXXX forgot how to implement %%load/x\n");
-#endif
+	// <index> is the index register to use. The actual index into
+	// the vector is the value of the index register.
+      unsigned index_idx = cp->bit_idx[1];
+      unsigned index = thr->words[index_idx].w_int;
+
+	// <functor> is converted to a vvp_net_t pointer from which we
+	// read our value.
+      vvp_net_t*net = cp->net;
+
+	// For the %load to work, the functor must actually be a
+	// signal functor. Only signals save their vector value.
+      vvp_fun_signal*sig = dynamic_cast<vvp_fun_signal*> (net->fun);
+      assert(sig);
+
+      vvp_bit4_t val = index >= sig->size()? BIT4_X : sig->value(index);
+      thr_put_bit(thr, bit, val);
+
       return true;
 }
 
@@ -3035,6 +3052,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.126  2005/01/22 00:58:22  steve
+ *  Implement the %load/x instruction.
+ *
  * Revision 1.125  2004/12/17 04:47:47  steve
  *  Replace single release with release/net and release/reg.
  *

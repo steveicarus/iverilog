@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.6 2005/01/16 04:19:08 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.7 2005/01/22 00:58:22 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -449,6 +449,16 @@ void vvp_fun_signal::recv_long(vvp_net_ptr_t ptr, long bit)
       }
 }
 
+unsigned vvp_fun_signal::size() const
+{
+      if (force_active_)
+	    return force_.size();
+      else if (type_is_vector8_())
+	    return bits8_.size();
+      else
+	    return bits4_.size();
+}
+
 vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 {
       if (force_active_)
@@ -725,6 +735,9 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.7  2005/01/22 00:58:22  steve
+ *  Implement the %load/x instruction.
+ *
  * Revision 1.6  2005/01/16 04:19:08  steve
  *  Reimplement comparators as vvp_vector4_t nodes.
  *
