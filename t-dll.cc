@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.71 2001/12/06 03:11:00 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.72 2001/12/14 02:05:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -247,7 +247,9 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
       nex->ptrs_[top-1].l.sig= net;
 }
 
-static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
+static ivl_nexus_ptr_t nexus_log_add(ivl_nexus_t nex,
+				     ivl_net_logic_t net,
+				     unsigned pin)
 {
       unsigned top = nex->nptr_ + 1;
       nex->ptrs_ = (struct ivl_nexus_ptr_s*)
@@ -259,6 +261,8 @@ static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
       nex->ptrs_[top-1].drive1 = (pin == 0)? IVL_DR_STRONG : IVL_DR_HiZ;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.log= net;
+
+      return nex->ptrs_ + top - 1;
 }
 
 static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
@@ -602,11 +606,52 @@ void dll_target::logic(const NetLogic*net)
 
       obj->npins_ = net->pin_count();
       obj->pins_ = new ivl_nexus_t[obj->npins_];
+
+      ivl_nexus_ptr_t out_ptr = 0;
+
       for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
 	    const Nexus*nex = net->pin(idx).nexus();
 	    assert(nex->t_cookie());
 	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_log_add(obj->pins_[idx], obj, idx);
+	    ivl_nexus_ptr_t tmp = nexus_log_add(obj->pins_[idx], obj, idx);
+	    if (idx == 0)
+		  out_ptr = tmp;
+      }
+
+      switch (net->pin(0).drive0()) {
+	  case Link::HIGHZ:
+	    out_ptr->drive0 = IVL_DR_HiZ;
+	    break;
+	  case Link::WEAK:
+	    out_ptr->drive0 = IVL_DR_WEAK;
+	    break;
+	  case Link::PULL:
+	    out_ptr->drive0 = IVL_DR_PULL;
+	    break;
+	  case Link::STRONG:
+	    out_ptr->drive0 = IVL_DR_STRONG;
+	    break;
+	  case Link::SUPPLY:
+	    out_ptr->drive0 = IVL_DR_SUPPLY;
+	    break;
+      }
+
+      switch (net->pin(0).drive1()) {
+	  case Link::HIGHZ:
+	    out_ptr->drive1 = IVL_DR_HiZ;
+	    break;
+	  case Link::WEAK:
+	    out_ptr->drive1 = IVL_DR_WEAK;
+	    break;
+	  case Link::PULL:
+	    out_ptr->drive1 = IVL_DR_PULL;
+	    break;
+	  case Link::STRONG:
+	    out_ptr->drive1 = IVL_DR_STRONG;
+	    break;
+	  case Link::SUPPLY:
+	    out_ptr->drive1 = IVL_DR_SUPPLY;
+	    break;
       }
 
       assert(net->scope());
@@ -1674,6 +1719,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.72  2001/12/14 02:05:13  steve
+ *  Parse and handle drive strengths of gates to vvp.
+ *
  * Revision 1.71  2001/12/06 03:11:00  steve
  *  Add ivl_logic_delay function to ivl_target.
  *

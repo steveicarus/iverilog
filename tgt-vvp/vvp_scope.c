@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.57 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.58 2001/12/14 02:05:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -524,6 +524,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       const char*ltype = "?";
       const char*lcasc = 0x0;
       char identity_val = '0';
+
+      ivl_drive_t str0, str1;
+
       int level;
       int ninp = ivl_logic_pins(lptr) - 1;
       typedef const char*const_charp;
@@ -632,6 +635,21 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
       }
 
+      { ivl_nexus_t nex = ivl_logic_pin(lptr, 0);
+        ivl_nexus_ptr_t nptr = 0;
+        unsigned idx;
+	for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	      nptr = ivl_nexus_ptr(nex,idx);
+	      if (ivl_nexus_ptr_log(nptr) != lptr)
+		    continue;
+	      if (ivl_nexus_ptr_pin(nptr) != 0)
+		    continue;
+	      break;
+	}
+        str0 = ivl_nexus_ptr_drive0(nptr);
+	str1 = ivl_nexus_ptr_drive1(nptr);
+      }
+
       if (!lcasc)
 	lcasc = ltype;
 
@@ -656,7 +674,12 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			fprintf(vvp_out, "L_%s .functor %s", 
 				vvp_mangle_id(ivl_logic_name(lptr)),
 				ltype);
+
 			draw_delay(lptr);
+
+			if (str0 != IVL_DR_STRONG || str1 != IVL_DR_STRONG)
+			      fprintf(vvp_out, " [%u %u]", str0, str1);
+
 		  }
 		  for (pdx = inst; pdx < ninp && pdx < inst+4 ; pdx += 1) {
 			if (level) {
@@ -1235,6 +1258,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.58  2001/12/14 02:05:13  steve
+ *  Parse and handle drive strengths of gates to vvp.
+ *
  * Revision 1.57  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

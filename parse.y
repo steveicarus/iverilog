@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.140 2001/12/07 05:03:13 steve Exp $"
+#ident "$Id: parse.y,v 1.141 2001/12/14 02:05:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,6 +36,7 @@ extern void lex_end_table();
  * net_decl_assigns can change them during specific statements.
  */
 static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
+static struct str_pair_t pull_strength = { PGate::PULL,   PGate::PULL };
 %}
 
 %union {
@@ -1260,10 +1261,10 @@ module_item
      strengths are limited. */
 
 	| K_pullup gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, decl_strength, 0, $2);
+		{ pform_makegates(PGBuiltin::PULLUP, pull_strength, 0, $2);
 		}
 	| K_pulldown gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, decl_strength, 0, $2);
+		{ pform_makegates(PGBuiltin::PULLDOWN, pull_strength, 0, $2);
 		}
 
 	| K_pullup '(' dr_strength1 ')' gate_instance_list ';'
