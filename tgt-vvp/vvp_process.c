@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.43 2001/08/26 23:00:13 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.44 2001/09/01 00:58:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -981,6 +981,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.44  2001/09/01 00:58:16  steve
+ *  dead comments.
+ *
  * Revision 1.43  2001/08/26 23:00:13  steve
  *  Generate code for l-value bit selects.
  *
@@ -1074,56 +1077,5 @@ int draw_func_definition(ivl_scope_t scope)
  *
  * Revision 1.17  2001/04/01 06:49:04  steve
  *  Generate code for while statements.
- *
- * Revision 1.16  2001/04/01 04:34:59  steve
- *  Generate code for casex and casez
- *
- * Revision 1.15  2001/03/31 19:08:22  steve
- *  Handle $time as system task parameter.
- *
- * Revision 1.14  2001/03/31 19:02:13  steve
- *  Clear results of condition expressions.
- *
- * Revision 1.13  2001/03/31 17:36:39  steve
- *  Generate vvp code for case statements.
- *
- * Revision 1.12  2001/03/30 05:49:53  steve
- *  Generate code for fork/join statements.
- *
- * Revision 1.11  2001/03/29 03:47:38  steve
- *  Behavioral trigger statements.
- *
- * Revision 1.10  2001/03/28 06:07:40  steve
- *  Add the ivl_event_t to ivl_target, and use that to generate
- *  .event statements in vvp way ahead of the thread that uses it.
- *
- * Revision 1.9  2001/03/27 06:27:41  steve
- *  Generate code for simple @ statements.
- *
- * Revision 1.8  2001/03/27 03:31:07  steve
- *  Support error code from target_t::end_design method.
- *
- * Revision 1.7  2001/03/25 03:53:24  steve
- *  Skip true clause if condition ix 0, x or z
- *
- * Revision 1.6  2001/03/25 03:24:10  steve
- *  Draw signal inputs to system tasks.
- *
- * Revision 1.5  2001/03/23 01:54:32  steve
- *  assignments with non-trival r-values.
- *
- * Revision 1.4  2001/03/22 05:06:21  steve
- *  Geneate code for conditional statements.
- *
- * Revision 1.3  2001/03/21 01:49:43  steve
- *  Scan the scopes of a design, and draw behavioral
- *  blocking  assignments of constants to vectors.
- *
- * Revision 1.2  2001/03/20 01:44:14  steve
- *  Put processes in the proper scope.
- *
- * Revision 1.1  2001/03/19 01:20:46  steve
- *  Add the tgt-vvp code generator target.
- *
  */
 
