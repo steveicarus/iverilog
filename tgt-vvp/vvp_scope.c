@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.101 2004/09/10 23:13:05 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.102 2004/09/25 21:04:25 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -254,6 +254,61 @@ const char*drive_string(ivl_drive_t drive)
  * nexus. This one then feeds to another net at the nexus, and so
  * on. The last net is selected as the output of the nexus.
  */
+
+/*
+ * This tests a bufz device against an output receiver, and determines
+ * if the device can be skipped. If this function returns true, then a
+ * gate will be generated for this node. Otherwise, the code generator
+ * will connect its input to its output and skip the gate.
+ */
+static int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
+{
+      ivl_nexus_t in_n;
+      unsigned idx;
+
+	/* These are the drives we expect. */
+      ivl_drive_t dr0 = ivl_nexus_ptr_drive0(nptr);
+      ivl_drive_t dr1 = ivl_nexus_ptr_drive1(nptr);
+      int drive_count = 0;
+
+	/* If the gate carries a delay, it must remain. */
+      if (ivl_logic_delay(net, 0) != 0)
+	    return 0;
+
+	/* If the input is connected to the output, then do not elide
+	   the gate. This is some sort of cycle. */
+      if (ivl_logic_pin(net, 0) == ivl_logic_pin(net, 1))
+	    return 0;
+
+      in_n = ivl_logic_pin(net, 1);
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(in_n) ;  idx += 1) {
+	    ivl_nexus_ptr_t in_np = ivl_nexus_ptr(in_n, idx);
+	    if (ivl_nexus_ptr_log(in_np) == net)
+		  continue;
+
+	      /* If the driver for the source does not match the
+		 expected drive, then we need to keep the bufz. This
+		 test also catches the case that the input device is
+		 really also an input, as that device will have a
+		 drive of HiZ. We need to keep BUFZ devices in that
+		 case in order to prevent back-flow of data. */
+	    if (ivl_nexus_ptr_drive0(in_np) != dr0)
+		  return 0;
+	    if (ivl_nexus_ptr_drive1(in_np) != dr1)
+		  return 0;
+
+	    drive_count += 1;
+      }
+
+	/* If the BUFZ input has multiple drivers on its input, then
+	   we need to keep this device in order to hide the
+	   resolution. */
+      if (drive_count != 1)
+	    return 0;
+
+      return 1;
+}
+
 /*
  * This function takes a nexus and looks for an input functor. It then
  * draws to the output a string that represents that functor. What we
@@ -274,16 +329,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       lptr = ivl_nexus_ptr_log(nptr);
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) && (nptr_pin == 0))
 	    do {
-		  if (ivl_nexus_ptr_drive0(nptr) != IVL_DR_STRONG)
-			break;
-
-		  if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
-			break;
-
-		  if (ivl_logic_delay(lptr, 0) != 0)
-			break;
-
-		  if (nex == ivl_logic_pin(lptr, 1))
+		  if (! can_elide_bufz(lptr, nptr))
 			break;
 
 		  return draw_net_input(ivl_logic_pin(lptr, 1));
@@ -740,27 +786,17 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    return;
 
           case IVL_LO_BUFZ: {
-		  /* Draw bufz objects, but only if the output drive
-		     is different from the input. */
+		  /* Draw bufz objects, but only if the gate cannot
+		     be elided. If I can elide it, then the
+		     draw_nex_input will take care of it for me. */
 		ivl_nexus_ptr_t nptr = ivl_logic_pin_ptr(lptr,0);
-		ivl_drive_t dr0 = ivl_nexus_ptr_drive0(nptr);
-		ivl_drive_t dr1 = ivl_nexus_ptr_drive1(nptr);
 
 		ltype = "BUFZ";
 
-		if (dr0 != IVL_DR_STRONG)
-			break;
+		if (can_elide_bufz(lptr, nptr))
+		      return;
 
-		if (dr1 != IVL_DR_STRONG)
-			break;
-
-		if (ivl_logic_delay(lptr, 0) != 0)
-		      break;
-
-		if (ivl_logic_pin(lptr, 0) == ivl_logic_pin(lptr, 1))
-		      break;
-
-		return;
+		break;
 	  }
 
 	  case IVL_LO_PULLDOWN:
@@ -1588,6 +1624,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.102  2004/09/25 21:04:25  steve
+ *  More carefull about eliding bufzs that carry strength.
+ *
  * Revision 1.101  2004/09/10 23:13:05  steve
  *  Compile cleanup of C code.
  *
