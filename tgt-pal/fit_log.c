@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_log.c,v 1.1 2000/12/14 23:37:47 steve Exp $"
+#ident "$Id: fit_log.c,v 1.2 2001/02/07 22:22:00 steve Exp $"
 #endif
 
-# include  <ivl_target.h>
+# include  "ivl_target.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
@@ -126,6 +126,9 @@ int fit_logic(void)
 
 /*
  * $Log: fit_log.c,v $
+ * Revision 1.2  2001/02/07 22:22:00  steve
+ *  ivl_target header search path fixes.
+ *
  * Revision 1.1  2000/12/14 23:37:47  steve
  *  Start support for fitting the logic.
  *

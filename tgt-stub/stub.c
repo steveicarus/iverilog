@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.28 2001/01/15 00:47:02 steve Exp $"
+#ident "$Id: stub.c,v 1.29 2001/02/07 22:22:00 steve Exp $"
 #endif
 
 /*
@@ -27,7 +27,7 @@
  * understand the behavior of the core as it uses a target module.
  */
 
-# include  <ivl_target.h>
+# include  "ivl_target.h"
 # include  <stdio.h>
 
 static FILE*out;
@@ -415,6 +415,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.29  2001/02/07 22:22:00  steve
+ *  ivl_target header search path fixes.
+ *
  * Revision 1.28  2001/01/15 00:47:02  steve
  *  Pass scope type information to the target module.
  *

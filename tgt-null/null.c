@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: null.c,v 1.1 2000/12/02 04:50:32 steve Exp $"
+#ident "$Id: null.c,v 1.2 2001/02/07 22:21:59 steve Exp $"
 #endif
 
 /*
  * This is a null target module. It does nothing.
  */
 
-# include  <ivl_target.h>
+# include  "ivl_target.h"
 
 
 int target_design(ivl_design_t des)
@@ -39,6 +39,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: null.c,v $
+ * Revision 1.2  2001/02/07 22:21:59  steve
+ *  ivl_target header search path fixes.
+ *
  * Revision 1.1  2000/12/02 04:50:32  steve
  *  Make the null target into a loadable target.
  *

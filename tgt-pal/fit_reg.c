@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_reg.c,v 1.3 2001/01/15 00:05:39 steve Exp $"
+#ident "$Id: fit_reg.c,v 1.4 2001/02/07 22:22:00 steve Exp $"
 #endif
 
-# include  <ivl_target.h>
+# include  "ivl_target.h"
 # include  <stdio.h>
 # include  <assert.h>
 # include  "priv.h"
@@ -136,6 +136,9 @@ int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
 
 /*
  * $Log: fit_reg.c,v $
+ * Revision 1.4  2001/02/07 22:22:00  steve
+ *  ivl_target header search path fixes.
+ *
  * Revision 1.3  2001/01/15 00:05:39  steve
  *  Add client data pointer for scope and process scanners.
  *
