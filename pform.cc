@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.118 2003/07/04 03:57:19 steve Exp $"
+#ident "$Id: pform.cc,v 1.119 2004/02/15 17:48:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -423,18 +423,34 @@ void pform_make_udp(const char*name, list<string>*parms,
 	    }
 	    if (pins[idx]->get_port_type() != NetNet::PINPUT) {
 		  cerr << file<<":"<<lineno << ": error: "
-		       << "Port " << (idx+1)
-		       << " of primitive " << name << " in an input port"
-		       << " with an output declaration." << endl;
+		       << "Input port " << (idx+1)
+		       << " of primitive " << name
+		       << " has an output (or missing) declaration." << endl;
 		  cerr << file<<":"<<lineno << ":      : "
-		       << "Try: input " << pin_names[idx] << ";"
+		       << "Note that only the first port can be an output."
+		       << endl;
+		  cerr << file<<":"<<lineno << ":      : "
+		       << "Try \"input " << name << ";\""
 		       << endl;
 		  error_count += 1;
 		  local_errors += 1;
 		  continue;
 	    }
-	    assert(pins[idx]->get_wire_type() != NetNet::REG);
+
+	    if (pins[idx]->get_wire_type() == NetNet::REG) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "Port " << (idx+1)
+		       << " of primitive " << name << " is an input port"
+		       << " with a reg declaration." << endl;
+		  cerr << file<<":"<<lineno << ":      : "
+		       << "primitive inputs cannot be reg."
+		       << endl;
+		  error_count += 1;
+		  local_errors += 1;
+		  continue;
+	    }
       }
+
       if (local_errors > 0) {
 	    delete parms;
 	    delete decl;
@@ -443,10 +459,21 @@ void pform_make_udp(const char*name, list<string>*parms,
 	    return;
       }
 
+      bool synchronous_flag = pins[0]->get_wire_type() == NetNet::REG;
+
 	/* Interpret and check the table entry strings, to make sure
 	   they correspond to the inputs, output and output type. Make
 	   up vectors for the fully interpreted result that can be
-	   placed in the PUdp object. */
+	   placed in the PUdp object.
+
+	   The table strings are made up by the parser to be two or
+	   three substrings seperated by ';', i.e.:
+
+	   0101:1:1  (synchronous device entry)
+	   0101:0    (combinational device entry)
+
+	   The parser doesn't check that we got the right kind here,
+	   so this loop must watch out. */
       svector<string> input   (table->size());
       svector<char>   current (table->size());
       svector<char>   output  (table->size());
@@ -455,19 +482,39 @@ void pform_make_udp(const char*name, list<string>*parms,
 		   ; cur != table->end()
 		   ; cur ++, idx += 1) {
 	      string tmp = *cur;
-	      assert(tmp.find(':') == (pins.count() - 1));
 
+		/* Pull the input values from the string. */
+	      assert(tmp.find(':') == (pins.count() - 1));
 	      input[idx] = tmp.substr(0, pins.count()-1);
 	      tmp = tmp.substr(pins.count()-1);
 
-	      if (pins[0]->get_wire_type() == NetNet::REG) {
-		    assert(tmp[0] == ':');
+	      assert(tmp[0] == ':');
+
+		/* If this is a synchronous device, get the current
+		   output string. */
+	      if (synchronous_flag) {
+		    if (tmp.size() != 4) {
+			  cerr << file<<":"<<lineno << ": error: "
+			       << "Invalid table format for"
+			       << " sequential primitive." << endl;
+			  error_count += 1;
+			  local_errors += 1;
+			  break;
+		    }
 		    assert(tmp.size() == 4);
 		    current[idx] = tmp[1];
 		    tmp = tmp.substr(2);
+
+	      } else if (tmp.size() != 2) {
+		  cerr << file<<":"<<lineno << ": error: "
+		       << "Invalid table format for"
+		       << " combinational primitive." << endl;
+		  error_count += 1;
+		  local_errors += 1;
+		  break;
 	      }
 
-	      assert(tmp[0] == ':');
+		/* Finally, extract the desired output. */
 	      assert(tmp.size() == 2);
 	      output[idx] = tmp[1];
 	}
@@ -1469,6 +1516,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.119  2004/02/15 17:48:28  steve
+ *  Better error checking of primitive tables.
+ *
  * Revision 1.118  2003/07/04 03:57:19  steve
  *  Allow attributes on Verilog 2001 port declarations.
  *
