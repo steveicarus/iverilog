@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.49 2003/09/03 23:31:36 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.50 2003/09/26 02:44:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -748,6 +748,10 @@ NetNet* NetETernary::synthesize(Design *des)
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
+	/* Make sure both value operands are the right width. */
+      tsig = pad_to_width(des, tsig, width);
+      fsig = pad_to_width(des, fsig, width);
+
       assert(width <= tsig->pin_count());
       assert(width <= fsig->pin_count());
 
@@ -817,6 +821,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.50  2003/09/26 02:44:27  steve
+ *  Assure ternary arguments are wide enough.
+ *
  * Revision 1.49  2003/09/03 23:31:36  steve
  *  Support synthesis of constant downshifts.
  *
