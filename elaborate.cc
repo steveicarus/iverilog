@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.245 2002/04/22 00:53:39 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.246 2002/04/24 17:40:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1238,6 +1238,18 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+	/* Try to evaluate the case expression. */
+      if (! dynamic_cast<NetEConst*>(expr)) {
+	    NetExpr*tmp = expr->eval_tree();
+	    if (tmp != 0) {
+		  delete expr;
+		  expr = tmp;
+	    }
+      }
+
+	/* Count the items in the case statement. Note that ther may
+	   be some cases that have multiple guards. Count each as a
+	   separate item. */
       unsigned icount = 0;
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
@@ -2512,6 +2524,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.246  2002/04/24 17:40:48  steve
+ *  Agressively evalutate case expressions.
+ *
  * Revision 1.245  2002/04/22 00:53:39  steve
  *  Do not allow implicit wires in sensitivity lists.
  *
