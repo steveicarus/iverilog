@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.3 1999/11/05 04:40:40 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.4 1999/11/19 03:00:59 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -195,7 +195,10 @@ NetNet* NetETernary::synthesize(Design *des)
 
 NetNet* NetESignal::synthesize(Design*des)
 {
-      NetNet*sig = new NetNet(name(), NetNet::WIRE, pin_count());
+	//NetNet*sig = new NetNet(name(), NetNet::WIRE, pin_count());
+      NetNet*sig = new NetNet(des->local_symbol(name()),
+			      NetNet::WIRE, pin_count());
+      sig->local_flag(true);
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
 	    connect(sig->pin(idx), pin(idx));
       des->add_signal(sig);
@@ -204,6 +207,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.4  1999/11/19 03:00:59  steve
+ *  Whoops, created a signal with a duplicate name.
+ *
  * Revision 1.3  1999/11/05 04:40:40  steve
  *  Patch to synthesize LPM_ADD_SUB from expressions,
  *  Thanks to Larry Doolittle. Also handle constants
