@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.179 2000/10/06 23:11:39 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.180 2000/10/26 00:29:10 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -257,6 +257,7 @@ class target_vvm : public target_t {
       map<string,bool>pevent_printed_flag;
 
       unsigned signal_bit_counter;
+      unsigned signal_counter;
 
       map<string,unsigned>nexus_wire_map;
       unsigned nexus_wire_counter;
@@ -919,6 +920,7 @@ bool target_vvm::start_design(const Design*mod)
       out << "# include \"vpi_priv.h\"" << endl;
 
       signal_bit_counter = 0;
+      signal_counter = 0;
       process_counter = 0;
       string_counter = 1;
       number_counter = 1;
@@ -990,6 +992,9 @@ void target_vvm::end_design(const Design*mod)
       if (nexus_wire_counter > 0)
 	    out << "static vvm_nexus nexus_wire_table[" <<
 		  nexus_wire_counter << "];" << endl;
+      if (signal_counter > 0)
+	    out << "static vvm_signal_t signal_table[" <<
+		  signal_counter << "];" << endl;
       if (signal_bit_counter > 0)
 	    out << "static vpip_bit_t signal_bit_table[" <<
 		  signal_bit_counter << "];" << endl;
@@ -1139,7 +1144,10 @@ void target_vvm::signal(const NetNet*sig)
 	    }
       }
 
-      out << "static vvm_signal_t " << net_name << ";" << endl;
+      out << "#define " << net_name << " (signal_table[" <<
+	    signal_counter << "])" << endl;
+
+      signal_counter += 1;
 
       init_code << "      vpip_make_reg(&" << net_name
 		<< ", \"" << sig->name() << "\", signal_bit_table+"
@@ -3385,6 +3393,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.180  2000/10/26 00:29:10  steve
+ *  Put signals into a signal_table
+ *
  * Revision 1.179  2000/10/06 23:11:39  steve
  *  Replace data references with function calls. (Venkat)
  *
