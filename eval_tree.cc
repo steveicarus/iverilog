@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_tree.cc,v 1.4 1999/09/23 03:56:57 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.5 1999/10/10 23:29:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -26,8 +26,8 @@ NetExpr* NetExpr::eval_tree()
 {
       return 0;
 }
-/*
 
+/*
  * Some of the derived classes can be evaluated by the compiler, this
  * method provides the common aid of evaluating the parameter
  * expressions.
@@ -46,8 +46,33 @@ void NetEBinary::eval_sub_tree_()
       }
 }
 
+NetEConst* NetEBAdd::eval_tree()
+{
+      eval_sub_tree_();
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      if (lc == 0) return 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (rc == 0) return 0;
 
-NetExpr* NetEBComp::eval_eqeq_()
+      verinum lval = lc->value();
+      verinum rval = rc->value();
+
+      verinum val;
+      switch (op_) {
+	  case '+':
+	    val = lval + rval;
+	    break;
+	  case '-':
+	    val = lval - rval;
+	    break;
+	  default:
+	    return 0;
+      }
+
+      return new NetEConst(val);
+}
+
+NetEConst* NetEBComp::eval_eqeq_()
 {
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -70,7 +95,7 @@ NetExpr* NetEBComp::eval_eqeq_()
 }
 
 
-NetExpr* NetEBComp::eval_leeq_()
+NetEConst* NetEBComp::eval_leeq_()
 {
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
@@ -90,7 +115,7 @@ NetExpr* NetEBComp::eval_leeq_()
 }
 
       
-NetExpr* NetEBComp::eval_tree()
+NetEConst* NetEBComp::eval_tree()
 {
       eval_sub_tree_();
 
@@ -106,7 +131,7 @@ NetExpr* NetEBComp::eval_tree()
       }
 }
 
-NetExpr* NetEBLogic::eval_tree()
+NetEConst* NetEBLogic::eval_tree()
 {
       eval_sub_tree_();
       return 0;
@@ -116,7 +141,7 @@ NetExpr* NetEBLogic::eval_tree()
  * Evaluate the shift operator if possible. For this to work, both
  * operands must be constant.
  */
-NetExpr* NetEBShift::eval_tree()
+NetEConst* NetEBShift::eval_tree()
 {
       eval_sub_tree_();
       NetEConst*re = dynamic_cast<NetEConst*>(right_);
@@ -236,6 +261,9 @@ NetExpr* NetEParam::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.5  1999/10/10 23:29:37  steve
+ *  Support evaluating + operator at compile time.
+ *
  * Revision 1.4  1999/09/23 03:56:57  steve
  *  Support shift operators.
  *

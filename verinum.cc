@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.9 1999/07/20 05:12:22 steve Exp $"
+#ident "$Id: verinum.cc,v 1.10 1999/10/10 23:29:37 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -308,8 +308,133 @@ bool operator == (const verinum&left, const verinum&right)
       return true;
 }
 
+static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c)
+{
+      unsigned sum = 0;
+      switch (c) {
+	  case verinum::Vx:
+	  case verinum::Vz:
+	    c = verinum::Vx;
+	    return verinum::Vx;
+	  case verinum::V0:
+	    break;
+	  case verinum::V1:
+	    sum += 1;
+      }
+
+      switch (l) {
+	  case verinum::Vx:
+	  case verinum::Vz:
+	    c = verinum::Vx;
+	    return verinum::Vx;
+	  case verinum::V0:
+	    break;
+	  case verinum::V1:
+	    sum += 1;
+	    break;
+      }
+
+      switch (r) {
+	  case verinum::Vx:
+	  case verinum::Vz:
+	    c = verinum::Vx;
+	    return verinum::Vx;
+	  case verinum::V0:
+	    break;
+	  case verinum::V1:
+	    sum += 1;
+	    break;
+      }
+
+      if (sum & 2)
+	    c = verinum::V1;
+      else
+	    c = verinum::V0;
+      if (sum & 1)
+	    return verinum::V1;
+      else
+	    return verinum::V0;
+}
+
+verinum not(const verinum&left)
+{
+      verinum val = left;
+      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+	    switch (val[idx]) {
+		case verinum::V0:
+		  val.set(idx, verinum::V1);
+		  break;
+		case verinum::V1:
+		  val.set(idx, verinum::V0);
+		  break;
+		default:
+		  val.set(idx, verinum::Vx);
+		  break;
+	    }
+
+      return val;
+}
+
+/*
+ * Addition works a bit at a time, from the least significant up to
+ * the most significant.
+ */
+verinum operator + (const verinum&left, const verinum&right)
+{
+      unsigned min = left.len();
+      if (right.len() < min) min = right.len();
+
+      unsigned max = left.len();
+      if (right.len() > max) max = right.len();
+
+      verinum val (verinum::V0, max);
+
+      verinum::V carry = verinum::V0;
+      for (unsigned idx = 0 ;  idx < min ;  idx += 1)
+	    val.set(idx, add_with_carry(left[idx], right[idx], carry));
+
+      if (left.len() > right.len()) {
+	    for (unsigned idx = min ;  idx < max ;  idx += 1)
+		  val.set(idx,add_with_carry(left[idx], verinum::V0, carry));
+      } else {
+	    for (unsigned idx = min ;  idx < max ;  idx += 1)
+		  val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
+      }
+
+      return val;
+}
+
+verinum operator - (const verinum&left, const verinum&r)
+{
+      verinum right = not(r);
+      unsigned min = left.len();
+      if (right.len() < min) min = right.len();
+
+      unsigned max = left.len();
+      if (right.len() > max) max = right.len();
+
+      verinum val (verinum::V0, max);
+
+      verinum::V carry = verinum::V1;
+      for (unsigned idx = 0 ;  idx < min ;  idx += 1)
+	    val.set(idx, add_with_carry(left[idx], right[idx], carry));
+
+      if (left.len() > right.len()) {
+	    for (unsigned idx = min ;  idx < max ;  idx += 1)
+		  val.set(idx,add_with_carry(left[idx], verinum::V0, carry));
+      } else {
+	    for (unsigned idx = min ;  idx < max ;  idx += 1)
+		  val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
+      }
+
+      return val;
+}
+
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.10  1999/10/10 23:29:37  steve
+ *  Support evaluating + operator at compile time.
+ *
  * Revision 1.9  1999/07/20 05:12:22  steve
  *  Implement the set method.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.5 1999/05/13 04:02:09 steve Exp $"
+#ident "$Id: verinum.h,v 1.6 1999/10/10 23:29:37 steve Exp $"
 #endif
 
 # include  <string>
@@ -91,9 +91,14 @@ extern ostream& operator<< (ostream&, const verinum&);
 extern ostream& operator<< (ostream&, verinum::V);
 
 extern bool operator == (const verinum&left, const verinum&right);
+extern verinum operator + (const verinum&left, const verinum&right);
+extern verinum operator - (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.6  1999/10/10 23:29:37  steve
+ *  Support evaluating + operator at compile time.
+ *
  * Revision 1.5  1999/05/13 04:02:09  steve
  *  More precise handling of verinum bit lengths.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.79 1999/10/10 01:59:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.80 1999/10/10 23:29:37 steve Exp $"
 #endif
 
 /*
@@ -396,6 +396,29 @@ class NetExpr  : public LineInfo {
     private: // not implemented
       NetExpr(const NetExpr&);
       NetExpr& operator=(const NetExpr&);
+};
+
+/*
+ * The expression constant is slightly special, and is sometimes
+ * retured from other classes that can be evaluated at compile
+ * time. This class represents constant values in expressions.
+ */
+class NetEConst  : public NetExpr {
+
+    public:
+      explicit NetEConst(const verinum&val);
+      ~NetEConst();
+
+      const verinum&value() const { return value_; }
+
+      virtual bool set_width(unsigned w);
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+      virtual NetEConst* dup_expr() const;
+
+    private:
+      verinum value_;
 };
 
 /*
@@ -1219,6 +1242,8 @@ class NetEBAdd : public NetEBinary {
       ~NetEBAdd();
 
       virtual bool set_width(unsigned w);
+      virtual NetEBAdd* dup_expr() const;
+      virtual NetEConst* eval_tree();
 };
 
 /*
@@ -1242,6 +1267,7 @@ class NetEBBits : public NetEBinary {
       ~NetEBBits();
 
       virtual bool set_width(unsigned w);
+      virtual NetEBBits* dup_expr() const;
 };
 
 /*
@@ -1265,11 +1291,12 @@ class NetEBComp : public NetEBinary {
       ~NetEBComp();
 
       virtual bool set_width(unsigned w);
-      virtual NetExpr* eval_tree();
+      virtual NetEBComp* dup_expr() const;
+      virtual NetEConst* eval_tree();
 
     private:
-      NetExpr*eval_eqeq_();
-      NetExpr*eval_leeq_();
+      NetEConst*eval_eqeq_();
+      NetEConst*eval_leeq_();
 
 };
 
@@ -1286,7 +1313,8 @@ class NetEBLogic : public NetEBinary {
       ~NetEBLogic();
 
       virtual bool set_width(unsigned w);
-      virtual NetExpr* eval_tree();
+      virtual NetEBLogic* dup_expr() const;
+      virtual NetEConst* eval_tree();
 
     private:
 };
@@ -1306,7 +1334,8 @@ class NetEBShift : public NetEBinary {
       ~NetEBShift();
 
       virtual bool set_width(unsigned w);
-      virtual NetExpr* eval_tree();
+      virtual NetEBShift* dup_expr() const;
+      virtual NetEConst* eval_tree();
 
     private:
 };
@@ -1343,24 +1372,6 @@ class NetEConcat  : public NetExpr {
     private:
       svector<NetExpr*>parms_;
       unsigned repeat_;
-};
-
-class NetEConst  : public NetExpr {
-
-    public:
-      explicit NetEConst(const verinum&val);
-      ~NetEConst();
-
-      const verinum&value() const { return value_; }
-
-      virtual bool set_width(unsigned w);
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void dump(ostream&) const;
-
-      virtual NetEConst* dup_expr() const;
-
-    private:
-      verinum value_;
 };
 
 /*
@@ -1733,6 +1744,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.80  1999/10/10 23:29:37  steve
+ *  Support evaluating + operator at compile time.
+ *
  * Revision 1.79  1999/10/10 01:59:55  steve
  *  Structural case equals device.
  *

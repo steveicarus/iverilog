@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.76 1999/10/10 01:59:55 steve Exp $"
+#ident "$Id: netlist.cc,v 1.77 1999/10/10 23:29:37 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -833,6 +833,13 @@ NetEBAdd::~NetEBAdd()
 {
 }
 
+NetEBAdd* NetEBAdd::dup_expr() const
+{
+      NetEBAdd*result = new NetEBAdd(op_, left_->dup_expr(),
+				     right_->dup_expr());
+      return result;
+}
+
 NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
@@ -865,6 +872,13 @@ NetEBBits::~NetEBBits()
 {
 }
 
+NetEBBits* NetEBBits::dup_expr() const
+{
+      NetEBBits*result = new NetEBBits(op_, left_->dup_expr(),
+				       right_->dup_expr());
+      return result;
+}
+
 NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
@@ -873,6 +887,13 @@ NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
 
 NetEBComp::~NetEBComp()
 {
+}
+
+NetEBComp* NetEBComp::dup_expr() const
+{
+      NetEBComp*result = new NetEBComp(op_, left_->dup_expr(),
+				       right_->dup_expr());
+      return result;
 }
 
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
@@ -901,6 +922,13 @@ NetEBLogic::~NetEBLogic()
 {
 }
 
+NetEBLogic* NetEBLogic::dup_expr() const
+{
+      NetEBLogic*result = new NetEBLogic(op_, left_->dup_expr(),
+					 right_->dup_expr());
+      return result;
+}
+
 NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
@@ -909,6 +937,13 @@ NetEBShift::NetEBShift(char op, NetExpr*l, NetExpr*r)
 
 NetEBShift::~NetEBShift()
 {
+}
+
+NetEBShift* NetEBShift::dup_expr() const
+{
+      NetEBShift*result = new NetEBShift(op_, left_->dup_expr(),
+					 right_->dup_expr());
+      return result;
 }
 
 NetEConcat::NetEConcat(unsigned cnt, unsigned r)
@@ -1754,6 +1789,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.77  1999/10/10 23:29:37  steve
+ *  Support evaluating + operator at compile time.
+ *
  * Revision 1.76  1999/10/10 01:59:55  steve
  *  Structural case equals device.
  *
