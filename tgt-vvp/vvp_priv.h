@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.19 2002/08/27 05:39:57 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.20 2002/09/13 03:12:50 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -83,14 +83,19 @@ extern void draw_input_from_net(ivl_nexus_t nex);
  * allocation. When the caller is done with the bits, it must release
  * the vector with clr_vector so that the code generator can reuse
  * those bits.
+ *
+ * The xz_ok_flag is normally false. Set it to true if the result is
+ * going to be further processed so that x and z values are treated
+ * identically.
  */
 struct vector_info {
       unsigned short base;
       unsigned short wid;
 };
 
-extern struct vector_info draw_eval_expr(ivl_expr_t exp);
-extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w);
+extern struct vector_info draw_eval_expr(ivl_expr_t exp, int xz_ok_flag);
+extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w,
+					     int xz_ok_flag);
 
 /*
  * This function draws code to evaluate the index expression exp for
@@ -115,6 +120,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.20  2002/09/13 03:12:50  steve
+ *  Optimize ==1 when in context where x vs z doesnt matter.
+ *
  * Revision 1.19  2002/08/27 05:39:57  steve
  *  Fix l-value indexing of memories and vectors so that
  *  an unknown (x) index causes so cell to be addresses.

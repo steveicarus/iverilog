@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.67 2002/09/01 00:19:35 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.68 2002/09/13 03:12:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -131,14 +131,14 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
  */
 static void calculate_into_x0(ivl_expr_t expr)
 {
-      struct vector_info vec = draw_eval_expr(expr);
+      struct vector_info vec = draw_eval_expr(expr, 0);
       fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", vec.base, vec.wid);
       clr_vector(vec);
 }
 
 static void calculate_into_x1(ivl_expr_t expr)
 {
-      struct vector_info vec = draw_eval_expr(expr);
+      struct vector_info vec = draw_eval_expr(expr, 0);
       fprintf(vvp_out, "    %%ix/get 1, %u, %u;\n", vec.base, vec.wid);
       clr_vector(vec);
 }
@@ -217,7 +217,7 @@ static int show_stmt_assign(ivl_statement_t net)
 	    return 0;
       }
 
-      { struct vector_info res = draw_eval_expr(rval);
+      { struct vector_info res = draw_eval_expr(rval, 0);
         unsigned wid = res.wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
@@ -374,7 +374,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       }
 
 
-      { struct vector_info res = draw_eval_expr(rval);
+      { struct vector_info res = draw_eval_expr(rval, 0);
         unsigned wid = res.wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
@@ -488,7 +488,7 @@ static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cond = draw_eval_expr(exp);
+      struct vector_info cond = draw_eval_expr(exp, 0);
       unsigned count = ivl_stmt_case_count(net);
 
       unsigned local_base = local_count;
@@ -531,7 +531,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	      /* Oh well, do this case the hard way. */
 
-	    cvec = draw_eval_expr_wid(cex, cond.wid);
+	    cvec = draw_eval_expr_wid(cex, cond.wid, 0);
 	    assert(cvec.wid == cond.wid);
 
 	    switch (ivl_statement_type(net)) {
@@ -651,7 +651,7 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_false, lab_out;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cond = draw_eval_expr(exp);
+      struct vector_info cond = draw_eval_expr(exp, 1);
 
       assert(cond.wid == 1);
 
@@ -714,7 +714,7 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
       ivl_expr_t exp = ivl_stmt_delay_expr(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
-      { struct vector_info del = draw_eval_expr(exp);
+      { struct vector_info del = draw_eval_expr(exp, 0);
         fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", del.base, del.wid);
 	clr_vector(del);
       }
@@ -868,7 +868,7 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
-      struct vector_info cnt = draw_eval_expr(exp);
+      struct vector_info cnt = draw_eval_expr(exp, 0);
 
 	/* Test that 0 < expr */
       fprintf(vvp_out, "T_%u.%u %%cmp/u 0, %u, %u;\n", thread_count,
@@ -960,7 +960,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
-      cvec = draw_eval_expr(ivl_stmt_cond_expr(net));
+      cvec = draw_eval_expr(ivl_stmt_cond_expr(net), 1);
       if (cvec.wid > 1)
 	    cvec = reduction_or(cvec);
 
@@ -1023,7 +1023,7 @@ static int show_system_task_call(ivl_statement_t net)
 
 	    vec = (struct vector_info *)
 		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
-	    vec[vecs] = draw_eval_expr(expr);
+	    vec[vecs] = draw_eval_expr(expr, 0);
 	    vecs++;
       }
       
@@ -1302,6 +1302,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.68  2002/09/13 03:12:50  steve
+ *  Optimize ==1 when in context where x vs z doesnt matter.
+ *
  * Revision 1.67  2002/09/01 00:19:35  steve
  *  Watch for x indices in l-value of non-blocking assignments.
  *
