@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.80 2002/10/23 04:39:35 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.81 2002/11/21 18:08:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1367,9 +1367,20 @@ static void draw_lpm_ff(ivl_lpm_t net)
 static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned idx, width, selects;
+      unsigned selwid;
 
       width = ivl_lpm_width(net);
       selects = ivl_lpm_selects(net);
+
+	/* The .shift device can only take as many select inputs as
+	   the width of the device.
+
+	   XXXX I should make some sort of overflow gate for this? If
+	   any high bits are set, then the shift is certain to be
+	   *way* beyond the width of the left shifted value. XXXX */
+      selwid = selects;
+      if (selwid > width)
+	    selwid = width;
 
       if (ivl_lpm_type(net) == IVL_LPM_SHIFTR)
 	    fprintf(vvp_out, "L_%s .shift/r %u", 
@@ -1383,9 +1394,13 @@ static void draw_lpm_shiftl(ivl_lpm_t net)
 	    draw_input_from_net(ivl_lpm_data(net, idx));
       }
 
-      for (idx = 0 ;  idx < selects ;  idx += 1) {
+      for (idx = 0 ;  idx < selwid ;  idx += 1) {
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(ivl_lpm_select(net, idx));
+      }
+
+      for (idx = selwid ;  idx < width ;  idx += 1) {
+	    fprintf(vvp_out, ", C<0>");
       }
 
       fprintf(vvp_out, ";\n");
@@ -1592,6 +1607,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.81  2002/11/21 18:08:09  steve
+ *  Better handling of select width of shifters.
+ *
  * Revision 1.80  2002/10/23 04:39:35  steve
  *  draw lpm ff with aset_expr taken into account.
  *
