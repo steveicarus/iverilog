@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.26 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: synth2.cc,v 1.27 2003/06/23 00:14:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -724,6 +724,11 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
       if (top->attribute("ivl_synthesis_off").as_ulong() != 0)
 	    return;
 
+	/* If the scope that contains this process as a cell attribute
+	   attached to it, then skip synthesis. */
+      if (top->scope()->attribute("ivl_synthesis_cell").len() > 0)
+	    return;
+
       if (top->is_synchronous()) do {
 	    bool flag = top->synth_sync(des);
 	    if (! flag) {
@@ -779,6 +784,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.27  2003/06/23 00:14:44  steve
+ *  ivl_synthesis_cell cuts off synthesis within a module.
+ *
  * Revision 1.26  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *
@@ -802,65 +810,5 @@ void synth2(Design*des)
  *
  * Revision 1.19  2002/11/09 20:22:57  steve
  *  Detect synthesis conflicts blocks statements share outputs.
- *
- * Revision 1.18  2002/11/06 03:22:28  steve
- *  More forgiving about assignment rval width mismatch.
- *
- * Revision 1.17  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.16  2002/10/21 01:42:09  steve
- *  Synthesizer support for synchronous begin-end blocks.
- *
- * Revision 1.15  2002/10/20 19:19:37  steve
- *  Handle conditional error cases better.
- *
- * Revision 1.14  2002/09/26 03:42:10  steve
- *  Remove excess debug messages.
- *
- * Revision 1.13  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.12  2002/09/26 01:13:14  steve
- *  Synthesize async set/reset is certain cases.
- *
- * Revision 1.11  2002/09/24 00:58:35  steve
- *  More detailed check of process edge events.
- *
- * Revision 1.10  2002/09/17 04:40:28  steve
- *  Connect output of block to net_out, instead of statement outputs.
- *
- * Revision 1.9  2002/09/16 00:30:33  steve
- *  Add to synth2 support for synthesis of
- *  synchronous logic. This includes DFF enables
- *  modeled by if/then/else.
- *
- * Revision 1.8  2002/08/18 22:07:16  steve
- *  Detect temporaries in sequential block synthesis.
- *
- * Revision 1.7  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2002/08/10 22:07:08  steve
- *  Observe attributes to control synthesis.
- *
- * Revision 1.5  2002/07/29 00:00:28  steve
- *  Asynchronous synthesis of sequential blocks.
- *
- * Revision 1.4  2002/07/16 04:40:48  steve
- *  Allow wide rvalues assigned to narrow nex_out.
- *
- * Revision 1.3  2002/07/07 22:32:15  steve
- *  Asynchronous synthesis of case statements.
- *
- * Revision 1.2  2002/07/01 00:54:21  steve
- *  synth_asych of if/else requires redirecting the target
- *  if sub-statements. Use NetNet objects to manage the
- *  situation.
- *
- * Revision 1.1  2002/06/30 02:21:32  steve
- *  Add structure for asynchronous logic synthesis.
- *
  */
 

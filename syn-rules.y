@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.25 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.26 2003/06/23 00:14:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -403,6 +403,11 @@ struct syn_rules_f  : public functor_t {
 
       void process(class Design*des, class NetProcTop*top)
       {
+	      /* If the scope that contains this process as a cell
+		 attribute attached to it, then skip synthesis. */
+	    if (top->scope()->attribute("ivl_synthesis_cell").len() > 0)
+		  return;
+
 	    syn_start_process(top);
 	    yyparse();
 	    syn_done_process();
