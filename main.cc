@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.26 1999/11/29 17:02:21 steve Exp $"
+#ident "$Id: main.cc,v 1.27 1999/12/30 17:37:14 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -81,7 +81,6 @@ extern Design* elaborate(const map<string,Module*>&modules,
 
 extern void cprop(Design*des);
 extern void propinit(Design*des);
-extern void sigfold(Design*des);
 extern void synth(Design*des);
 extern void nobufz(Design*des);
 extern void nodangle(Design*des);
@@ -97,7 +96,6 @@ static struct net_func_map {
       { "nobufz",  &nobufz },
       { "nodangle",&nodangle },
       { "propinit",&propinit },
-      { "sigfold", &sigfold },
       { "synth",   &synth },
       { "xnfio",   &xnfio },
       { "xnfsyn",  &xnfsyn },
@@ -284,6 +282,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.27  1999/12/30 17:37:14  steve
+ *  Remove the now useless sigfold functor.
+ *
  * Revision 1.26  1999/11/29 17:02:21  steve
  *  include getopt if present.
  *

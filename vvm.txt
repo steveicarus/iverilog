@@ -9,12 +9,12 @@ useful for batch simulation.
 
 Although none are required, these processing steps are recommended:
 	 nobufz
-	 sigfold
+	 nodangle
 	 propinit
 
 So a sample command line to compile a Verilog file to C++ would be:
 
-	ivl -F nobufz -F sigfold -F propinit -t vvm -o foo.cc foo.vl
+	ivl -F nobufz -F nodangle -F propinit -t vvm -o foo.cc foo.vl
 
 Once the program is compiled down to C++ code, it needs to be further
 compiled and linked into an executable image. The command for doing
@@ -110,8 +110,11 @@ bits are at:
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
- $Id: vvm.txt,v 1.3 1999/08/18 03:45:36 steve Exp $
+ $Id: vvm.txt,v 1.4 1999/12/30 17:37:14 steve Exp $
  $Log: vvm.txt,v $
+ Revision 1.4  1999/12/30 17:37:14  steve
+  Remove the now useless sigfold functor.
+
  Revision 1.3  1999/08/18 03:45:36  steve
   Update compile command line.
 
