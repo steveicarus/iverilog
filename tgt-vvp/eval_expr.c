@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.76 2002/09/13 03:12:50 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.77 2002/09/13 04:09:51 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -211,6 +211,12 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	    break;
 
 	  case 'n': /* != */
+	      /* If this is a single bit being compared to 0, and the
+		 output doesn't care about x vs z, then just return
+		 the value itself. */
+	    if (xz_ok_flag && (lv.wid == 1) && (imm == 0))
+		  break;
+
 	    fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 		    lv.base, imm, wid);
 	    clr_vector(lv);
@@ -233,6 +239,16 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 	    lv.wid = ewid;
 	    if (ewid > 1)
 		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, ewid-1);
+
+      } else if (lv.wid < ewid) {
+	    unsigned short base = allocate_vector(ewid);
+	    clr_vector(lv);
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", base,
+		    lv.base, lv.wid);
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    base+lv.wid, ewid-lv.wid);
+	    lv.base = base;
+	    lv.wid = ewid;
       }
 
       return lv;
@@ -1818,6 +1834,10 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int xz_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.77  2002/09/13 04:09:51  steve
+ *  single bit optimization for != in expressions,
+ *  and expand ++ and != results if needed.
+ *
  * Revision 1.76  2002/09/13 03:12:50  steve
  *  Optimize ==1 when in context where x vs z doesnt matter.
  *
