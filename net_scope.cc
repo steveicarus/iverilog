@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.20 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.21 2002/12/07 02:49:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -255,10 +255,10 @@ void NetScope::rem_event(NetEvent*ev)
 }
 
 
-NetEvent* NetScope::find_event(const hname_t&name)
+NetEvent* NetScope::find_event(const char*name)
 {
       for (NetEvent*cur = events_;  cur ;  cur = cur->snext_)
-	    if (strcmp(cur->name(), name.peek_tail_name()) == 0)
+	    if (strcmp(cur->name(), name) == 0)
 		  return cur;
 
       return 0;
@@ -432,6 +432,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.21  2002/12/07 02:49:24  steve
+ *  Named event triggers can take hierarchical names.
+ *
  * Revision 1.20  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.

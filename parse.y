@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.166 2002/11/26 03:56:10 steve Exp $"
+#ident "$Id: parse.y,v 1.167 2002/12/07 02:49:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2316,8 +2316,8 @@ statement
 		  delete $2;
 		  $$ = tmp;
 		}
-	| K_TRIGGER IDENTIFIER ';'
-		{ PTrigger*tmp = new PTrigger(hname_t($2));
+	| K_TRIGGER identifier ';'
+		{ PTrigger*tmp = new PTrigger(*$2);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  delete $2;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.29 2002/11/02 03:27:52 steve Exp $"
+#ident "$Id: net_design.cc,v 1.30 2002/12/07 02:49:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -501,24 +501,27 @@ NetScope* Design::find_task(const hname_t&key)
       return 0;
 }
 
-NetEvent* Design::find_event(NetScope*scope, const hname_t&path)
+NetEvent* Design::find_event(NetScope*scope, const hname_t&p)
 {
+      hname_t path = p;
       assert(scope);
 
+      char*key = path.remove_tail_name();
+      if (path.peek_name(0))
+	    scope = find_scope(scope, path);
+
       while (scope) {
-	    if (NetEvent*ev = scope->find_event(path)) {
+	    if (NetEvent*ev = scope->find_event(key)) {
+		  delete key;
 		  return ev;
 	    }
 
-	      // If this is a simple name, then do not scan up scopes
-	      // past a module scope. This is a Verilog scoping rule.
-	    if ((path.component_count() == 1)
-		&& (scope->type() == NetScope::MODULE))
+	    if (scope->type() == NetScope::MODULE)
 		  break;
-
 	    scope = scope->parent();
       }
 
+      delete key;
       return 0;
 }
 
@@ -597,6 +600,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.30  2002/12/07 02:49:24  steve
+ *  Named event triggers can take hierarchical names.
+ *
  * Revision 1.29  2002/11/02 03:27:52  steve
  *  Allow named events to be referenced by
  *  hierarchical names.
