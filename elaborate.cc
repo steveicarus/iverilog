@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.163 2000/04/28 16:50:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.164 2000/04/28 22:17:47 steve Exp $"
 #endif
 
 /*
@@ -1461,6 +1461,18 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       NetBlock*block = new NetBlock(NetBlock::SEQU);
 
 
+	/* Detect the case where the definition of the task is
+	   empty. In this case, we need not bother with calls to the
+	   task, all the assignments, etc. Just return a no-op. */
+
+      if (def->proc() == 0)
+	    return block;
+
+      if (const NetBlock*tp = dynamic_cast<const NetBlock*>(def->proc())) {
+	    if (tp->proc_first() == 0)
+		  return block;
+      }
+
 	/* Generate assignment statement statements for the input and
 	   INOUT ports of the task. These are managed by writing
 	   assignments with the task port the l-value and the passed
@@ -2341,6 +2353,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.164  2000/04/28 22:17:47  steve
+ *  Skip empty tasks.
+ *
  * Revision 1.163  2000/04/28 16:50:53  steve
  *  Catch memory word parameters to tasks.
  *
