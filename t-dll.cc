@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.20 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.21 2000/12/14 23:23:07 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -257,8 +257,17 @@ void dll_target::logic(const NetLogic*net)
 	  case NetLogic::BUFIF1:
 	    obj->type_ = IVL_LO_BUFIF1;
 	    break;
+	  case NetLogic::NAND:
+	    obj->type_ = IVL_LO_NAND;
+	    break;
+	  case NetLogic::NOR:
+	    obj->type_ = IVL_LO_NOR;
+	    break;
 	  case NetLogic::OR:
 	    obj->type_ = IVL_LO_OR;
+	    break;
+	  case NetLogic::XNOR:
+	    obj->type_ = IVL_LO_XNOR;
 	    break;
 	  case NetLogic::XOR:
 	    obj->type_ = IVL_LO_XOR;
@@ -608,6 +617,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.21  2000/12/14 23:23:07  steve
+ *  Support more logic gate types.
+ *
  * Revision 1.20  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *
