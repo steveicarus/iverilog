@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.35 2000/08/14 04:39:57 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.36 2000/11/22 21:18:20 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -690,7 +690,7 @@ void target_xnf::lpm_ff(const NetFF*net)
 	    else
 		  draw_pin(out_, "C", net->pin_Clock());
 
-	    if (count_outputs(net->pin_Enable()) > 0)
+	    if (net->pin_Enable().is_linked())
 		  draw_pin(out_, "CE", net->pin_Enable());
 
 	    out_ << "END" << endl;
@@ -887,6 +887,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.36  2000/11/22 21:18:20  steve
+ *  Connect the CE if it is linked at all.
+ *
  * Revision 1.35  2000/08/14 04:39:57  steve
  *  add th t-dll functions for net_const, net_bufz and processes.
  *
