@@ -100,8 +100,51 @@ declared at all, as in sample2) so module_item order is completely
 irrelevent. But a "declare before use" rule would infect module
 ordering, by requiring that modules that are used be first defined.
 
-$Id: ieee1364-notes.txt,v 1.1 2000/07/23 18:06:31 steve Exp $
+
+* TASK AND FUNCTION PARAMETERS CANNOT HAVE EXPLICIT TYPES
+
+Consider a function negate that wants to take a signed integer value
+and return its negative:
+
+	function integer negate;
+	    input [15:0] val;
+	    negate = -val;
+	endfunction
+
+This is not quite right, because the input is implicitly a reg type,
+which is unsigned. The result, then, will always be a negative value,
+even if a negative val is passed in.
+
+It is possible to fix up this specific example to work properly with
+the bit pattern of a 16bit number, but that is not the point. What's
+needed is clarification on whether an input can be declared in the
+port declaration as well as in the contained block declaration.
+
+As I understand the situation, this should be allowed:
+
+	function integer negate;
+	    input [15:0] val;
+	    reg signed [15:0] val;
+	    negate = -val;
+	endfunction
+
+In the -1995 standard, the variable is already implicitly a reg if
+declared within a function or task. However, in the -2000 standard
+there is now (as in this example) a reason why one might want to
+actually declare the type explicitly.
+
+I think that a port *cannot* be declared as an integer or time type
+(though the result can) because the range of the port declaration must
+match the range of the integer/time declaration, but the range of
+integers is unspecified. This, by the way, also applies to module
+ports.
+
+
+$Id: ieee1364-notes.txt,v 1.2 2000/11/19 22:03:04 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.2  2000/11/19 22:03:04  steve
+ Integer parameter comments.
+
 Revision 1.1  2000/07/23 18:06:31  steve
  Document ieee1364 issues.
 
