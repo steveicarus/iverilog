@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.98 2003/12/19 01:27:10 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.99 2004/06/16 23:33:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1194,98 +1194,26 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 static void draw_lpm_eq(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
-      unsigned idx;
+      const char*type = "";
 
-      const char*and = ivl_lpm_type(net) == IVL_LPM_CMP_NE? "NAND" : "AND";
-
-      ivl_nexus_t nex;
-
-      for (idx = 0 ;  idx < width ;  idx += 1) {
-	    fprintf(vvp_out, "L_%s.%s/L0C%u .functor XNOR, ",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
-
-	    nex = ivl_lpm_data(net, idx);
-	    draw_input_from_net(nex);
-
-	    fprintf(vvp_out, ", ");
-
-	    nex = ivl_lpm_datab(net, idx);
-	    draw_input_from_net(nex);
-
-	    fprintf(vvp_out, ", C<0>, C<0>;\n");
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_CMP_EQ:
+	    type = "eq";
+	    break;
+	  case IVL_LPM_CMP_NE:
+	    type = "ne";
+	    break;
+	  default:
+	    assert(0);
       }
 
-      if (width <= 4) {
-	    fprintf(vvp_out, "L_%s.%s .functor %s",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), and);
+      fprintf(vvp_out, "L_%s.%s .cmp/%s %u", 
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)), type, width);
 
-	    for (idx = 0 ;  idx < width ;  idx += 1)
-		  fprintf(vvp_out, ", L_%s.%s/L0C%u",
-			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
+      draw_lpm_arith_a_b_inputs(net);
 
-	    for (idx = width ;  idx < 4 ;  idx += 1)
-		  fprintf(vvp_out, ", C<1>");
-
-	    fprintf(vvp_out, ";\n");
-
-      } else {
-	    unsigned lwidth = width;
-	    unsigned level = 1;
-	    unsigned cnt;
-
-	    unsigned bit;
-	    unsigned first;
-	    unsigned last;
-
-	    cnt = (lwidth + 3) / 4;
-
-	    while (cnt > 1) {
-		  for (idx = 0 ;  idx < cnt ;  idx += 1) {
-			first = idx*4;
-			last = first + 4;
-			if (last > lwidth)
-			      last = lwidth;
-
-			fprintf(vvp_out, "L_%s.%s/L%uC%u .functor AND",
-				vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-				vvp_mangle_id(ivl_lpm_basename(net)),
-				level, idx);
-
-			for (bit = first ;  bit < last ;  bit += 1)
-			      fprintf(vvp_out, ", L_%s.%s/L%uC%u",
-				      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-				      vvp_mangle_id(ivl_lpm_basename(net)),
-				      level-1, bit);
-
-			for (bit = last ;  bit < (idx*4+4) ;  bit += 1)
-			      fprintf(vvp_out, ", C<1>");
-
-			fprintf(vvp_out, ";\n");
-		  }
-
-		  lwidth = cnt;
-		  level += 1;
-		  cnt = (lwidth + 3) / 4;
-	    }
-
-	    fprintf(vvp_out, "L_%s.%s .functor %s",
-		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-		    vvp_mangle_id(ivl_lpm_basename(net)), and);
-
-	    for (idx = 0 ;  idx < lwidth ;  idx += 1)
-		  fprintf(vvp_out, ", L_%s.%s/L%uC%u",
-			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-			  vvp_mangle_id(ivl_lpm_basename(net)),
-			  level-1, idx);
-
-	    for (idx = lwidth ;  idx < 4 ;  idx += 1)
-		  fprintf(vvp_out, ", C<1>");
-
-	    fprintf(vvp_out, ";\n");
-      }
+      fprintf(vvp_out, ";\n");
 }
 
 /*
@@ -1658,6 +1586,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.99  2004/06/16 23:33:42  steve
+ *  Generate .cmp/eq nodes instead of sea of gates.
+ *
  * Revision 1.98  2003/12/19 01:27:10  steve
  *  Fix various unsigned compare warnings.
  *
