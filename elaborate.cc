@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.225 2001/10/22 02:05:20 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.226 2001/10/22 23:26:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2326,8 +2326,10 @@ Design* elaborate(list<const char*>roots)
 	      // Look for the root module in the list.
 	    map<string,Module*>::const_iterator mod = pform_modules.find(*root);
 	    if (mod == pform_modules.end()) {
-		  cerr << "Unable to find root module \""
-		       << (*root) << "\"." << endl; 
+		  cerr << "error: Unable to find the root module \""
+		       << (*root) << "\" in the Verilog source." << endl; 
+		  cerr << "     : Perhaps ``-s " << (*root)
+		       << "'' is incorrect?" << endl;
 		  des->errors++;
 		  continue;
 	    }
@@ -2399,6 +2401,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.226  2001/10/22 23:26:37  steve
+ *  Better error message for mising root module.
+ *
  * Revision 1.225  2001/10/22 02:05:20  steve
  *  Handle activating tasks in another root.
  *
