@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.53 2002/04/14 02:56:19 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.54 2002/04/14 03:54:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -845,7 +845,8 @@ static int show_system_task_call(ivl_statement_t net)
 		      unsigned bit, wid = ivl_expr_width(expr);
 		      const char*bits = ivl_expr_bits(expr);
 
-		      fprintf(vvp_out, ", %u'b", wid);
+		      fprintf(vvp_out, ", %u'%sb", wid,
+			      ivl_expr_signed(expr)? "s" : "");
 		      for (bit = wid ;  bit > 0 ;  bit -= 1)
 			    fputc(bits[bit-1], vvp_out);
 		      continue;
@@ -1103,6 +1104,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.54  2002/04/14 03:54:40  steve
+ *  Vector constants to vpi_call can have sign.
+ *
  * Revision 1.53  2002/04/14 02:56:19  steve
  *  Support signed expressions through to VPI.
  *
