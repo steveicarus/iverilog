@@ -17,15 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.5 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: link_const.cc,v 1.6 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "netmisc.h"
 
+/*
+ * Scan the link for drivers. If there are only constant drivers, then
+ * the nexus has a known constant value. If there is a supply net,
+ * then the nexus again has a known constant value.
+ */
 bool link_drivers_constant(const Link&lnk)
 {
       const Nexus*nex = lnk.nexus();
+      bool flag = true;
+
       for (const Link*cur = nex->first_nlink()
 		 ; cur  ;  cur = cur->next_nlink()) {
 
@@ -43,53 +50,54 @@ bool link_drivers_constant(const Link&lnk)
 		  continue;
 
 	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
-		  return false;
+		  flag = false;
+
+	      /* If there is a supply net, then this nexus will have a
+		 constant value independent of any drivers. */
+	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
+		  switch (sig->type()) {
+		      case NetNet::SUPPLY0:
+		      case NetNet::SUPPLY1:
+			return true;
+		      default:
+			break;
+		  }
       }
 
-      return true;
+      return flag;
 }
 
 verinum::V driven_value(const Link&lnk)
 {
+      verinum::V val = verinum::Vx;
+
       const Nexus*nex = lnk.nexus();
       for (const Link*cur = nex->first_nlink()
 		 ; cur  ;  cur = cur->next_nlink()) {
 
 	    const NetConst*obj;
-	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj()))
-		  return obj->value(cur->get_pin());
+	    const NetNet*sig;
+	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj())) {
+		  val = obj->value(cur->get_pin());
+
+	    } else if (sig = dynamic_cast<const NetNet*>(cur->get_obj())) {
+
+		  if (sig->type() == NetNet::SUPPLY0)
+			return verinum::V0;
+
+		  if (sig->type() == NetNet::SUPPLY1)
+			return verinum::V1;
+	    }
       }
 
       return lnk.get_init();
 }
 
-NetConst* link_const_value(Link&pin, unsigned&idx)
-{
-      NetConst*robj = 0;
-      unsigned ridx = 0;
-
-      Nexus*nex = pin.nexus();
-      for (Link*cur = nex->first_nlink()
-		 ; cur  ;  cur = cur->next_nlink()) {
-
-	    NetConst*tmp;
-	    if ((tmp = dynamic_cast<NetConst*>(cur->get_obj())) == 0)
-		  continue;
-
-	    if (robj != 0)
-		  continue;
-
-	    robj = tmp;
-	    ridx = cur->get_pin();
-      }
-
-      idx = ridx;
-      return robj;
-}
-
-
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.6  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.5  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

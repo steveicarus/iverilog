@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.10 2000/10/23 00:32:48 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.11 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -276,6 +276,16 @@ vpip_bit_t vvm_resolution_wire(const vpip_bit_t*bits, unsigned nbits)
       return vpip_bits_resolve(bits, nbits);
 }
 
+vpip_bit_t vvm_resolution_sup0(const vpip_bit_t*, unsigned)
+{
+      return Su0;
+}
+
+vpip_bit_t vvm_resolution_sup1(const vpip_bit_t*, unsigned)
+{
+      return Su1;
+}
+
 vpip_bit_t vvm_resolution_tri0(const vpip_bit_t*bits, unsigned nbits)
 {
       if (nbits == 0) return Pu0;
@@ -317,6 +327,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.11  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.10  2000/10/23 00:32:48  steve
  *  Nexus value is initially unknown so that it propogates for sure.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.4 2000/09/07 22:37:48 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.5 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -343,15 +343,14 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_attributes(attributes);
-
-	    verinum::V iv = verinum::Vz;
-	    if (wtype == NetNet::REG)
-		  iv = verinum::Vx;
       }
 }
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.5  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.4  2000/09/07 22:37:48  steve
  *  ack, detect when lval fails.
  *

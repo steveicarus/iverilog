@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.9 2000/09/20 02:53:15 steve Exp $"
+#ident "$Id: netmisc.h,v 1.10 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -32,14 +32,6 @@
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
-
-/*
- * Check to see if the link has a constant value driven to it. If
- * there is only a NetConst driving this pin, the return a pointer to
- * that NetConst object. Also, return the index of the bit in that
- * constant through the idx parameter.
- */
-extern NetConst* link_const_value(Link&pin, unsigned&idx);
 
 /*
  * This local function returns true if all the the possible drivers of
@@ -65,6 +57,9 @@ extern unsigned count_lval_width(const class NetAssign_*first);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.10  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.9  2000/09/20 02:53:15  steve
  *  Correctly measure comples l-values of assignments.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.179 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: netlist.h,v 1.180 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 /*
@@ -313,7 +313,7 @@ class NetNet  : public NetObj, public LineInfo {
 
     public:
       enum Type { IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1, SUPPLY0,
-		  WAND, TRIAND, TRI0, SUPPLY1, WOR, TRIOR, REG,
+		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  INTEGER, TIME };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
@@ -2812,6 +2812,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.180  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.179  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1

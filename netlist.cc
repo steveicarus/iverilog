@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.145 2000/11/11 00:03:36 steve Exp $"
+#ident "$Id: netlist.cc,v 1.146 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -316,6 +316,12 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 	  case INTEGER:
 	    init_value = verinum::Vx;
 	    break;
+	  case SUPPLY0:
+	    init_value = verinum::V0;
+	    break;
+	  case SUPPLY1:
+	    init_value = verinum::V1;
+	    break;
 	  default:
 	    break;
       }
@@ -342,6 +348,12 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 	  case IMPLICIT_REG:
 	  case INTEGER:
 	    init_value = verinum::Vx;
+	    break;
+	  case SUPPLY0:
+	    init_value = verinum::V0;
+	    break;
+	  case SUPPLY1:
+	    init_value = verinum::V1;
 	    break;
 	  default:
 	    break;
@@ -2454,6 +2466,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.146  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.145  2000/11/11 00:03:36  steve
  *  Add support for the t-dll backend grabing flip-flops.
  *

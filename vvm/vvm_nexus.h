@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.h,v 1.5 2000/08/02 00:57:03 steve Exp $"
+#ident "$Id: vvm_nexus.h,v 1.6 2000/11/20 00:58:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -151,6 +151,8 @@ class vvm_nexus {
 
 
 extern vpip_bit_t vvm_resolution_wire(const vpip_bit_t*bits, unsigned nbits);
+extern vpip_bit_t vvm_resolution_sup0(const vpip_bit_t*bits, unsigned nbits);
+extern vpip_bit_t vvm_resolution_sup1(const vpip_bit_t*bits, unsigned nbits);
 extern vpip_bit_t vvm_resolution_tri0(const vpip_bit_t*bits, unsigned nbits);
 extern vpip_bit_t vvm_resolution_tri1(const vpip_bit_t*bits, unsigned nbits);
 
@@ -164,6 +166,9 @@ extern void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.h,v $
+ * Revision 1.6  2000/11/20 00:58:41  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.5  2000/08/02 00:57:03  steve
  *  tri01 support in vvm.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.16 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.17 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -319,13 +319,11 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 
 	/* Is the B side all constant? */
       for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1) {
-	    NetConst*cobj;
-	    unsigned cidx;
-	    cobj = link_const_value(dev->pin_DataB(idx), cidx);
-	    if (cobj == 0)
+
+	    if (! link_drivers_constant(dev->pin_DataB(idx)))
 		  return false;
 
-	    side.set(idx, cobj->value(cidx));
+	    side.set(idx, driven_value(dev->pin_DataB(idx)));
       }
 
 	/* Handle the special case of comparing A to 0. Use an N-input
@@ -365,6 +363,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.17  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.16  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *

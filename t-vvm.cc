@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.184 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.185 2000/11/20 00:58:40 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1124,6 +1124,16 @@ void target_vvm::signal(const NetNet*sig)
 		 handles the different semantics. */
 
 	    switch (sig->type()) {
+		case NetNet::SUPPLY0:
+		  init_code << "      nexus_wire_table[" << ncode
+			    << "].resolution_function = vvm_resolution_sup0;"
+			    << endl;
+		  break;
+		case NetNet::SUPPLY1:
+		  init_code << "      nexus_wire_table[" << ncode
+			    << "].resolution_function = vvm_resolution_sup1;"
+			    << endl;
+		  break;
 		case NetNet::TRI0:
 		  init_code << "      nexus_wire_table[" << ncode
 			    << "].resolution_function = vvm_resolution_tri0;"
@@ -3347,6 +3357,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.185  2000/11/20 00:58:40  steve
+ *  Add support for supply nets (PR#17)
+ *
  * Revision 1.184  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1
