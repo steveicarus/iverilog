@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.63 2004/02/15 18:03:30 steve Exp $"
+#ident "$Id: main.c,v 1.64 2004/03/10 04:51:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -368,10 +368,21 @@ void process_define(const char*name)
       }
 }
 
+/*
+ * This function is called while processing a file name in a command
+ * file, or a file name on the command line. Look to see if there is a
+ * .sft suffix, and if so pass that as a sys_func file. Otherwise, it
+ * is a Verilog source file to be written into the file list.
+ */
 void process_file_name(const char*name)
 {
-      fprintf(source_file, "%s\n", name);
-      source_count += 1;
+      if (strlen(name) > 4 && strcasecmp(".sft", name+strlen(name)-4) == 0) {
+	    fprintf(iconfig_file,"sys_func:%s\n", name);
+
+      } else {
+	    fprintf(source_file, "%s\n", name);
+	    source_count += 1;
+      }
 }
 
 int process_generation(const char*name)
@@ -714,6 +725,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.64  2004/03/10 04:51:25  steve
+ *  Add support for system function table files.
+ *
  * Revision 1.63  2004/02/15 18:03:30  steve
  *  Cleanup of warnings.
  *

@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.81 2004/02/18 17:11:56 steve Exp $"
+#ident "$Id: main.cc,v 1.82 2004/03/10 04:51:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -250,6 +250,9 @@ static void parm_to_flagmap(const string&flag)
  *    out:<path>
  *        Path to the output file.
  *
+ *    sys_func:<path>
+ *        Path to a system functions descriptor table
+ *
  *    root:<name>
  *        Specify a root module. There may be multiple of this.
  *
@@ -332,6 +335,9 @@ static void read_iconfig_file(const char*ipath)
 
 	    } else if (strcmp(buf, "out") == 0) {
 		  flags["-o"] = strdup(cp);
+
+	    } else if (strcmp(buf, "sys_func") == 0) {
+		  load_sys_func_table(cp);
 
 	    } else if (strcmp(buf, "root") == 0) {
 		  roots.push_back(lex_strings.make(cp));
@@ -716,6 +722,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.82  2004/03/10 04:51:24  steve
+ *  Add support for system function table files.
+ *
  * Revision 1.81  2004/02/18 17:11:56  steve
  *  Use perm_strings for named langiage items.
  *

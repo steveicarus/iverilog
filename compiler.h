@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.21 2004/03/09 04:29:42 steve Exp $"
+#ident "$Id: compiler.h,v 1.22 2004/03/10 04:51:24 steve Exp $"
 #endif
 
 # include  <list>
@@ -128,9 +128,13 @@ struct sfunc_return_type {
 };
 
 extern const struct sfunc_return_type* lookup_sys_func(const char*name);
+extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.22  2004/03/10 04:51:24  steve
+ *  Add support for system function table files.
+ *
  * Revision 1.21  2004/03/09 04:29:42  steve
  *  Separate out the lookup_sys_func table, for eventual
  *  support for function type tables.
@@ -154,11 +158,5 @@ extern const struct sfunc_return_type* lookup_sys_func(const char*name);
  *  scope names and system task/function names
  *  into this table. Also, permallocate event
  *  names from the beginning.
- *
- * Revision 1.15  2003/02/22 04:12:49  steve
- *  Add the portbind warning.
- *
- * Revision 1.14  2003/01/30 16:23:07  steve
- *  Spelling fixes.
  */
 #endif

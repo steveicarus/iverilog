@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2003/11/26 01:36:25 $" Version "$Date: 2003/11/26 01:36:25 $"
+.TH iverilog 1 "$Date: 2004/03/10 04:51:25 $" Version "$Date: 2004/03/10 04:51:25 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -211,6 +211,33 @@ directive. It detects if some modules have no timescale, or if modules
 inherit timescale from another file. Both probably mean that
 timescales are inconsistent, and simulation timing can be confusing
 and dependent on compilation order.
+
+.SH "SYSTEM FUNCTION TABLE FILES"
+If the source file name as a \fB.sft\fP suffix, then it is taken to be
+a system function table file. A System function table file is used to
+describe to the compiler the return types for system functions. This
+is necessary because the compiler needs this information to elaborate
+expressions that contain these system functions, but cannot run the
+sizetf functions since it has no run-time.
+
+The format of the table is ASCII, one function per line. Empty lines
+are ignored, and lines that start with the '\fI#\fP' character are
+comment lines. Each non-comment line starts with the function name,
+then the vpi type (i.e. vpiSysFuncReal). The following types are
+supported:
+
+.TP 8
+.B vpiSysFuncReal
+The function returns a real/realtime value.
+
+.TP 8
+.B vpiSysFuncInt
+The function returns an integer.
+
+.TP 8
+.B vpiSysFuncSized <wid> <signed|unsigned>
+The function returns a vector with the given width, and is signed or
+unsigned according to the flag.
 
 .SH "COMMAND FILES"
 The command file allows the user to place source file names and
