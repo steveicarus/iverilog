@@ -16,12 +16,12 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.99 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: Makefile.in,v 1.100 2001/08/03 17:06:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
 
-VERSION = 0.3
+VERSION = 0.5
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -69,6 +69,14 @@ all: ivl@EXEEXT@ libvpi.a
 	cd tgt-verilog ; $(MAKE) all
 	cd tgt-stub ; $(MAKE) all
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) all); done
+
+# In the windows world, the installer will need a dosify program to
+# dosify text files.
+ifeq (@WIN32@,yes)
+all: dosify.exe
+dosify.exe: dosify.c
+	$(CC) -o dosify.exe dosify.c
+endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
 # sure the basics were compiled properly.
@@ -172,8 +180,11 @@ lexor_keyword.o: lexor_keyword.cc
 lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
+ifeq (@WIN32@,yes)
+WIN32_INSTALL = $(prefix)/hello.v $(prefix)/sqrt.v $(prefix)/QUICK_START.txt
+endif
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(libdir)/libvpi.a
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/vpi_user.h $(libdir)/libvpi.a $(WIN32_INSTALL)
 	cd vvm ; $(MAKE) install
 	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
@@ -197,8 +208,22 @@ $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(includedir)/vpi_user.h
 
+# In windows installations, put a few examples and the quick_start
+# into the destination directory.
+ifeq (@WIN32@,yes)
+$(prefix)/hello.v: $(srcdir)/examples/hello.v
+	./dosify.exe $(srcdir)/examples/hello.v $(prefix)/hello.v
+
+$(prefix)/sqrt.v: $(srcdir)/examples/sqrt.v
+	./dosify.exe $(srcdir)/examples/sqrt.v $(prefix)/sqrt.v
+
+$(prefix)/QUICK_START.txt: $(srcdir)/QUICK_START.txt
+	./dosify.exe $(srcdir)/QUICK_START.txt $(prefix)/QUICK_START.txt
+endif
+
 installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl
+
 
 uninstall:
 	rm -f $(libdir)/ivl/ivl@EXEEXT@
