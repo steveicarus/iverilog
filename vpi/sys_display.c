@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.7 1999/11/06 22:16:50 steve Exp $"
+#ident "$Id: sys_display.c,v 1.8 1999/11/06 23:32:14 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -26,68 +26,28 @@
 # include  <ctype.h>
 # include  <stdlib.h>
 
-static void format_binary(vpiHandle argv, int fsize)
-{
-      s_vpi_value value;
-      vpiHandle item = vpi_scan(argv);
-      if (item == 0) return;
+struct strobe_cb_info {
+      char*name;
+      vpiHandle*items;
+      unsigned nitems;
+};
 
-      value.format = vpiBinStrVal;
-      vpi_get_value(item, &value);
-      vpi_printf("%s", value.value.str);
+static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
+{
+      vpiHandle item;
+      unsigned nitems = 1;
+      vpiHandle*items = malloc(sizeof(vpiHandle));
+      items[0] = vpi_scan(argv);
+      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
+	    items = realloc(items, (nitems+1)*sizeof(vpiHandle));
+	    items[nitems] = item;
+	    nitems += 1;
+      }
+
+      info->nitems = nitems;
+      info->items = items;
 }
 
-static void format_octal(vpiHandle argv, int fsize)
-{
-      s_vpi_value value;
-      vpiHandle item = vpi_scan(argv);
-      if (item == 0) return;
-
-      value.format = vpiOctStrVal;
-      vpi_get_value(item, &value);
-      vpi_printf("%s", value.value.str);
-}
-
-static void format_decimal(vpiHandle argv, int fsize)
-{
-      s_vpi_value value;
-      vpiHandle item = vpi_scan(argv);
-      if (item == 0) return;
-
-      value.format = vpiDecStrVal;
-      vpi_get_value(item, &value);
-      vpi_printf("%s", value.value.str);
-}
-
-static void format_hex(vpiHandle argv, int fsize)
-{
-      s_vpi_value value;
-      vpiHandle item = vpi_scan(argv);
-      if (item == 0) return;
-
-      value.format = vpiHexStrVal;
-      vpi_get_value(item, &value);
-      vpi_printf("%s", value.value.str);
-}
-
-static void format_m(vpiHandle argv, int fsize)
-{
-      vpiHandle item = vpi_scan(argv);
-      if (item == 0) return;
-
-      vpi_printf("%s", vpi_get_str(vpiFullName, item));
-}
-
-static void format_time(vpiHandle argv, int fsize)
-{
-      s_vpi_value value;
-      vpiHandle item = vpi_scan(argv);
-      if (item == 0) return;
-
-      value.format = vpiDecStrVal;
-      vpi_get_value(item, &value);
-      vpi_printf("%s", value.value.str);
-}
 
 /*
  * If $display discovers a string as a parameter, this function is
@@ -95,148 +55,6 @@ static void format_time(vpiHandle argv, int fsize)
  * well so that I can look for arguments as I move forward through the
  * string.
  */
-static void format(s_vpi_value*fmt, vpiHandle argv)
-{
-      char buf[256];
-      char*cp = fmt->value.str;
-      assert(fmt->value.str);
-
-      while (*cp) {
-	    size_t cnt = strcspn(cp, "%\\");
-	    if (cnt > 0) {
-		  if (cnt >= sizeof buf)
-			cnt = sizeof buf - 1;
-		  strncpy(buf, cp, cnt);
-		  buf[cnt] = 0;
-		  vpi_printf("%s", buf);
-		  cp += cnt;
-
-	    } else if (*cp == '%') {
-		  int fsize = -1;
-
-		  cp += 1;
-		  if (isdigit(*cp))
-			fsize = strtoul(cp, &cp, 10);
-
-		  switch (*cp) {
-		      case 0:
-			break;
-		      case 'b':
-		      case 'B':
-			format_binary(argv, fsize);
-			cp += 1;
-			break;
-		      case 'd':
-		      case 'D':
-			format_decimal(argv, fsize);
-			cp += 1;
-			break;
-		      case 'h':
-		      case 'H':
-		      case 'x':
-		      case 'X':
-			format_hex(argv, fsize);
-			cp += 1;
-			break;
-		      case 'm':
-			format_m(argv, fsize);
-			cp += 1;
-			break;
-		      case 'o':
-		      case 'O':
-			format_octal(argv, fsize);
-			cp += 1;
-			break;
-		      case 't':
-		      case 'T':
-			format_time(argv, fsize);
-			cp += 1;
-			break;
-		      case '%':
-			vpi_printf("%%");
-			cp += 1;
-			break;
-		      default:
-			vpi_printf("%c", *cp);
-			cp += 1;
-			break;
-		  }
-
-	    } else {
-
-		  cp += 1;
-		  switch (*cp) {
-		      case 0:
-			break;
-		      case 'n':
-			vpi_printf("\n");
-			cp += 1;
-			break;
-		      default:
-			vpi_printf("%c", *cp);
-			cp += 1;
-		  }
-	    }
-      }
-}
-
-static int sys_display_calltf(char *name)
-{
-      s_vpi_value value;
-      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
-
-      vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
-
-      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
-
-	    switch (vpi_get(vpiType, item)) {
-
-		case 0:
-		  vpi_printf(" ");
-		  break;
-
-		case vpiConstant:
-		  value.format = vpiObjTypeVal;
-		  vpi_get_value(item, &value);
-		  switch (value.format) {
-		      case vpiStringVal:
-			format(&value, argv);
-			break;
-		      case vpiSuppressVal:
-			break;
-		      default:
-			vpi_printf("?");
-			break;
-		  }
-		  break;
-
-		case vpiNet:
-		case vpiReg:
-		  value.format = vpiBinStrVal;
-		  vpi_get_value(item, &value);
-		  vpi_printf("%s", value.value.str);
-		  break;
-
-		case vpiTimeVar:
-		  value.format = vpiTimeVal;
-		  vpi_get_value(item, &value);
-		  vpi_printf("%u", value.value.time->low);
-		  break;
-
-		default:
-		  vpi_printf("?");
-		  break;
-	    }
-      }
-
-      if (strcmp(name,"$display") == 0)
-	    vpi_printf("\n");
-
-      return 0;
-}
-
-
 static int format_str(char*fmt, int argc, vpiHandle*argv)
 {
       s_vpi_value value;
@@ -340,25 +158,10 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
       return idx;
 }
 
-/*
- * The strobe implementation takes the parameter handles that are
- * passed to the calltf and puts them in to an array for safe
- * keeping. That array (and other bookkeeping) is passed, via the
- * struct_cb_info object, to the REadOnlySych function strobe_cb,
- * where it is use to perform the actual formatting and printing.
- */
-struct strobe_cb_info {
-      char*name;
-      vpiHandle*items;
-      unsigned nitems;
-};
-
-static int strobe_cb(p_cb_data cb)
+static void do_display(struct strobe_cb_info*info)
 {
       s_vpi_value value;
-      unsigned idx;
-      struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
-
+      int idx;
 
       for (idx = 0 ;  idx < info->nitems ;  idx += 1) {
 	    vpiHandle item = info->items[idx];
@@ -401,6 +204,40 @@ static int strobe_cb(p_cb_data cb)
 		  break;
 	    }
       }
+}
+
+static int sys_display_calltf(char *name)
+{
+      struct strobe_cb_info info;
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+
+      array_from_iterator(&info, argv);
+
+      do_display(&info);
+
+      free(info.items);
+
+      if (strcmp(name,"$display") == 0)
+	    vpi_printf("\n");
+
+      return 0;
+}
+
+/*
+ * The strobe implementation takes the parameter handles that are
+ * passed to the calltf and puts them in to an array for safe
+ * keeping. That array (and other bookkeeping) is passed, via the
+ * struct_cb_info object, to the REadOnlySych function strobe_cb,
+ * where it is use to perform the actual formatting and printing.
+ */
+
+static int strobe_cb(p_cb_data cb)
+{
+      struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
+
+      do_display(info);
 
       vpi_printf("\n");
 
@@ -415,27 +252,15 @@ static int sys_strobe_calltf(char*name)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
-      struct strobe_cb_info*info;
 
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
 
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item;
 
-      vpiHandle*items;
-      unsigned nitems = 1;
-      items = malloc(sizeof(vpiHandle));
-      items[0] = vpi_scan(argv);
-      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
-	    items = realloc(items, (nitems+1)*sizeof(vpiHandle));
-	    items[nitems] = item;
-	    nitems += 1;
-      }
+      struct strobe_cb_info*info = calloc(1, sizeof(struct strobe_cb_info));
 
-      info = calloc(1, sizeof(struct strobe_cb_info));
+      array_from_iterator(info, argv);
       info->name = strdup(name);
-      info->items = items;
-      info->nitems = nitems;
 
       time.type = vpiSimTime;
       time.low = 0;
@@ -460,16 +285,6 @@ static int sys_monitor_calltf(char*name)
       vpiHandle item;
 
       time.type = vpiSuppressTime;
-
-      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
-
-	    switch (vpi_get(vpiType, item)) {
-
-		default:
-		  break;
-	    }
-
-      }
 
       return 0;
 }
@@ -514,6 +329,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.8  1999/11/06 23:32:14  steve
+ *  Unify display and strobe format routines.
+ *
  * Revision 1.7  1999/11/06 22:16:50  steve
  *  Get the $strobe task working.
  *
