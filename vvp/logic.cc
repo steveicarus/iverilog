@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.7 2002/01/12 04:02:16 steve Exp $"
+#ident "$Id: logic.cc,v 1.8 2002/03/17 05:48:49 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -51,6 +51,7 @@ table_functor_s::~table_functor_s()
 
 void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 {
+	/* Load the new value into the standard ival vector. */
       put(ptr, v);
 
 	/* Locate the new output value in the table. */
@@ -58,7 +59,13 @@ void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
       val >>= 2 * (ival&0x03);
       val &= 0x03;
 
-      put_oval(val, push);
+	/* Send the output. Do *not* push the value, because logic
+	   devices in Verilog are supposed to suppress 0-time
+	   pulses. If we were to push the value, The gate on this
+	   device's output would receive every change that happened,
+	   thus allowing full transport propagation, instead of the
+	   proper ballistic propagation. */
+      put_oval(val, false);
 }
 
 /*
@@ -155,6 +162,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.8  2002/03/17 05:48:49  steve
+ *  Do not push values through logic gates.
+ *
  * Revision 1.7  2002/01/12 04:02:16  steve
  *  Support the BUFZ logic device.
  *
