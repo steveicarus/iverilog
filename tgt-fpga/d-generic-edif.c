@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic-edif.c,v 1.4 2001/09/09 22:23:28 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.5 2001/09/15 05:06:04 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -134,7 +134,7 @@ void edif_show_header_generic(ivl_design_t des, const char*library)
 	/* The root module is a cell in the library. */
       fprintf(xnf, "      (cell %s\n", ivl_scope_name(root));
       fprintf(xnf, "        (cellType GENERIC)\n");
-      fprintf(xnf, "        (view Netlist_representation\n");
+      fprintf(xnf, "        (view net\n");
       fprintf(xnf, "          (viewType NETLIST)\n");
       fprintf(xnf, "          (interface\n");
 
@@ -148,20 +148,20 @@ void edif_show_header_generic(ivl_design_t des, const char*library)
 static const char*external_library_text =
 "    (external VIRTEX (edifLevel 0) (technology (numberDefinition))\n"
 "      (cell AND2 (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I0 (direction INPUT))\n"
 "                 (port I1 (direction INPUT)))))\n"
 "      (cell BUF (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I (direction INPUT)))))\n"
 "      (cell FDCE (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port Q (direction OUTPUT))\n"
@@ -169,18 +169,18 @@ static const char*external_library_text =
 "                 (port C (direction INPUT))\n"
 "                 (port CE (direction INPUT)))))\n"
 "      (cell GND (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface (port G (direction OUTPUT)))))\n"
 "      (cell NOR2 (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I0 (direction INPUT))\n"
 "                 (port I1 (direction INPUT)))))\n"
 "      (cell NOR3 (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
@@ -188,7 +188,7 @@ static const char*external_library_text =
 "                 (port I1 (direction INPUT))\n"
 "                 (port I2 (direction INPUT)))))\n"
 "      (cell VCC (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface (port P (direction OUTPUT)))))\n"
 "    )\n"
@@ -232,7 +232,7 @@ static void edif_show_consts(ivl_design_t des)
 		  }
 
 		  fprintf(xnf, "(instance U%u "
-			  "(viewRef Netlist_representation"
+			  "(viewRef net"
 			  " (cellRef %s (libraryRef VIRTEX))))\n",
 			  edif_uref, name);
 
@@ -290,7 +290,7 @@ static void edif_show_logic(ivl_net_logic_t net)
 
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
 		    edif_uref, ivl_logic_name(net));
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef AND%u (libraryRef VIRTEX))))\n",
 		    ivl_logic_pins(net) - 1);
 
@@ -308,7 +308,7 @@ static void edif_show_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
 		    edif_uref, ivl_logic_name(net));
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef BUF (libraryRef VIRTEX))))\n");
 
 	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
@@ -324,7 +324,7 @@ static void edif_show_logic(ivl_net_logic_t net)
 
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
 		    edif_uref, ivl_logic_name(net));
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef NOR%u (libraryRef VIRTEX))))\n",
 		    ivl_logic_pins(net) - 1);
 
@@ -355,7 +355,7 @@ void edif_show_generic_dff(ivl_lpm_t net)
 
 	    fprintf(xnf, "(instance (rename U%u \"%s[%u]\")",
 		    edif_uref, ivl_lpm_name(net), idx);
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef FDCE (libraryRef VIRTEX))))\n");
 
 	    nex = ivl_lpm_q(net, idx);
@@ -392,6 +392,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.5  2001/09/15 05:06:04  steve
+ *  Support != in virtex code generator.
+ *
  * Revision 1.4  2001/09/09 22:23:28  steve
  *  Virtex support for mux devices and adders
  *  with carry chains. Also, make Virtex specific

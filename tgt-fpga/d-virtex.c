@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.6 2001/09/14 04:17:20 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.7 2001/09/15 05:06:04 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -56,13 +56,13 @@
 static const char*virtex_library_text =
 "    (external VIRTEX (edifLevel 0) (technology (numberDefinition))\n"
 "      (cell BUF (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I (direction INPUT)))))\n"
 "      (cell FDCE (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port Q (direction OUTPUT))\n"
@@ -70,24 +70,24 @@ static const char*virtex_library_text =
 "                 (port C (direction INPUT))\n"
 "                 (port CE (direction INPUT)))))\n"
 "      (cell GND (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface (port GROUND (direction OUTPUT)))))\n"
 "      (cell INV (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I (direction INPUT)))))\n"
 "      (cell LUT2 (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I0 (direction INPUT))\n"
 "                 (port I1 (direction INPUT)))))\n"
 "      (cell LUT3 (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
@@ -95,7 +95,7 @@ static const char*virtex_library_text =
 "                 (port I1 (direction INPUT))\n"
 "                 (port I2 (direction INPUT)))))\n"
 "      (cell LUT4 (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
@@ -104,7 +104,7 @@ static const char*virtex_library_text =
 "                 (port I2 (direction INPUT))\n"
 "                 (port I3 (direction INPUT)))))\n"
 "      (cell MUXCY (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
@@ -112,7 +112,7 @@ static const char*virtex_library_text =
 "                 (port DI (direction INPUT))\n"
 "                 (port CI (direction INPUT)))))\n"
 "      (cell MUXCY_L (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port LO (direction OUTPUT))\n"
@@ -120,11 +120,11 @@ static const char*virtex_library_text =
 "                 (port DI (direction INPUT))\n"
 "                 (port CI (direction INPUT)))))\n"
 "      (cell VCC (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface (port VCC (direction OUTPUT)))))\n"
 "      (cell XORCY (cellType GENERIC)\n"
-"            (view Netlist_representation\n"
+"            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
@@ -146,7 +146,7 @@ static void edif_show_lut2(const char*name, unsigned uref,
       char jbuf[1024];
 
       fprintf(xnf, "(instance (rename U%u \"%s\")"
-	      " (viewRef Netlist_representation"
+	      " (viewRef net"
 	      " (cellRef LUT2 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"%s\")))\n",
 	      uref, name, truth_table);
@@ -171,7 +171,7 @@ static void edif_show_lut3(const char*name, unsigned uref,
       char jbuf[1024];
 
       fprintf(xnf, "(instance (rename U%u \"%s\")"
-	      " (viewRef Netlist_representation"
+	      " (viewRef net"
 	      " (cellRef LUT3 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"%s\")))\n",
 	      uref, name, truth_table);
@@ -198,7 +198,7 @@ static void edif_show_lut4(const char*name, unsigned uref,
       char jbuf[1024];
 
       fprintf(xnf, "(instance (rename U%u \"%s\")"
-	      " (viewRef Netlist_representation"
+	      " (viewRef net"
 	      " (cellRef LUT4 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"%s\")))\n",
 	      uref, name, truth_table);
@@ -260,7 +260,7 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
 		    edif_uref, ivl_logic_name(net));
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef BUF (libraryRef VIRTEX))))\n");
 
 	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
@@ -303,7 +303,7 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 	    assert(ivl_logic_pins(net) == 2);
 	    fprintf(xnf, "(instance (rename U%u \"%s\")",
 		    edif_uref, ivl_logic_name(net));
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef INV (libraryRef VIRTEX))))\n");
 
 	    sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
@@ -406,9 +406,49 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
       }
 }
 
+/*
+ * This method handles both == and != operators, the identity
+ * comparison operators.
+ *
+ * If the identity compare is applied to small enough input vectors,
+ * it is shoved into a single LUT. Otherwise, it is strung out into a
+ * row of LUT devices chained together by carry muxes. The output of
+ * the comparison is the output of the last mux.
+ *
+ * When the compare is small, a LUT is generated with the appropriate
+ * truth table to cause an == or != result.
+ *
+ * When the compare is too wide for a single LUT, then it is made into
+ * a chain connected by a string of carry mux devices. Each LUT
+ * implements == for up to two pairs of bits, even if the final output
+ * is supposed to be !=. The LUT output is connected to an associated
+ * MUX select input. The CO output of each muxcy is passed up to the
+ * next higher order bits of the compare.
+ *
+ * For identity == compare, a != output from the LUT selects the DI
+ * input of the muxcy, generating a 0 output that is passed up. Since
+ * the next higher muxcy now gets a 0 input to both DI and CI, the
+ * output of the next higher muxcy is guaranteed to be 0, and so on to
+ * the final output of the carry chain. If the output from a LUT is ==,
+ * then the CI input of the muxcy is selected and the truth of this
+ * level depends on lower order bits. The least significan muxcy is
+ * connected to GND and VCC so that its CO follows the least
+ * significant LUT.
+ *
+ * Identity != is the same as == except that the output is
+ * inverted. To get that effect without putting an inverter on the
+ * output of the top muxcy pin CO (which would cost a LUT) the DI
+ * inputs are all connected to VCC instead of GND, and the CI of the
+ * least significant muxcy is connected to GND instead of VCC.
+ */
 static void edif_show_virtex_eq(ivl_lpm_t net)
 {
+	/* True if I'm implementing CMP_EQ instead of CMP_NE */
+      int eq = 1;
       assert(ivl_lpm_width(net) >= 1);
+
+      if (ivl_lpm_type(net) == IVL_LPM_CMP_NE)
+	    eq = 0;
 
       edif_uref += 1;
 
@@ -417,7 +457,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 	    edif_show_lut2(ivl_lpm_name(net), edif_uref,
 			   ivl_lpm_q(net, 0),
 			   ivl_lpm_data(net, 0),
-			   ivl_lpm_datab(net, 0), "9");
+			   ivl_lpm_datab(net, 0), eq? "9" : "6");
 	    break;
 
 	  case 2:
@@ -425,7 +465,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			   ivl_lpm_q(net, 0),
 			   ivl_lpm_data(net, 0), ivl_lpm_datab(net, 0),
 			   ivl_lpm_data(net, 1), ivl_lpm_datab(net, 1),
-			   "9009");
+			   eq? "9009" : "6FF6");
 	    break;
 
 	  default: {
@@ -434,37 +474,51 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 		unsigned pairs = ivl_lpm_width(net) / 2;
 		unsigned tail  = ivl_lpm_width(net) % 2;
 
+
 		if (tail == 0) {
 		      tail = 2;
 		      pairs -= 1;
 		}
 
 		fprintf(xnf, "(instance U%uL0"
-			" (viewRef Netlist_representation"
+			" (viewRef net"
 			" (cellRef LUT4 (libraryRef VIRTEX)))"
 			" (property INIT (string \"9009\")))\n",
 			edif_uref);
 		fprintf(xnf, "(instance U%uM0"
-			" (viewRef Netlist_representation"
+			" (viewRef net"
 			" (cellRef MUXCY_L (libraryRef VIRTEX))))\n",
 			edif_uref);
 		fprintf(xnf, "(instance U%uG0"
-			" (viewRef Netlist_representation"
+			" (viewRef net"
 			" (cellRef GND (libraryRef VIRTEX))))\n",
 			edif_uref);
+
 		fprintf(xnf, "(instance U%uV0"
-			" (viewRef Netlist_representation"
+			" (viewRef net"
 			" (cellRef VCC (libraryRef VIRTEX))))\n",
 			edif_uref);
 
-		fprintf(xnf, "(net U%uVM0 (joined"
-			" (portRef VCC (instanceRef U%uV0))"
-			" (portRef CI (instanceRef U%uM0))))\n",
-			edif_uref, edif_uref, edif_uref);
-		fprintf(xnf, "(net U%uGM0 (joined"
-			" (portRef GROUND (instanceRef U%uG0))"
-			" (portRef DI (instanceRef U%uM0))))\n",
-			edif_uref, edif_uref, edif_uref);
+		if (eq) {
+		      fprintf(xnf, "(net U%uVM0 (joined"
+			      " (portRef VCC (instanceRef U%uV0))"
+			      " (portRef CI (instanceRef U%uM0))))\n",
+			      edif_uref, edif_uref, edif_uref);
+		      fprintf(xnf, "(net U%uGM0 (joined"
+			      " (portRef GROUND (instanceRef U%uG0))"
+			      " (portRef DI (instanceRef U%uM0))))\n",
+			      edif_uref, edif_uref, edif_uref);
+		} else {
+		      fprintf(xnf, "(net U%uVM0 (joined"
+			      " (portRef VCC (instanceRef U%uV0))"
+			      " (portRef DI (instanceRef U%uM0))))\n",
+			      edif_uref, edif_uref, edif_uref);
+		      fprintf(xnf, "(net U%uGM0 (joined"
+			      " (portRef GROUND (instanceRef U%uG0))"
+			      " (portRef CI (instanceRef U%uM0))))\n",
+			      edif_uref, edif_uref, edif_uref);
+		}
+
 		fprintf(xnf, "(net U%uLM0 (joined"
 			" (portRef O (instanceRef U%uL0))"
 			" (portRef S (instanceRef U%uM0))))\n",
@@ -485,17 +539,13 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 
 		for (idx = 1 ;  idx < pairs ;  idx += 1) {
 		      fprintf(xnf, "(instance U%uL%u"
-			      " (viewRef Netlist_representation"
+			      " (viewRef net"
 			      " (cellRef LUT4 (libraryRef VIRTEX)))"
 			      " (property INIT (string \"9009\")))\n",
 			      edif_uref, idx);
 		      fprintf(xnf, "(instance U%uM%u"
-			      " (viewRef Netlist_representation"
+			      " (viewRef net"
 			      " (cellRef MUXCY_L (libraryRef VIRTEX))))\n",
-			      edif_uref, idx);
-		      fprintf(xnf, "(instance U%uG%u"
-			      " (viewRef Netlist_representation"
-			      " (cellRef GND (libraryRef VIRTEX))))\n",
 			      edif_uref, idx);
 
 		      fprintf(xnf, "(net U%uVM%u (joined"
@@ -503,11 +553,27 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			      " (portRef CI (instanceRef U%uM%u))))\n",
 			      edif_uref, idx, edif_uref, idx-1,
 			      edif_uref, idx);
-		      fprintf(xnf, "(net U%uGM%u (joined"
-			      " (portRef GROUND (instanceRef U%uG%u))"
-			      " (portRef DI (instanceRef U%uM%u))))\n",
-			      edif_uref, idx, edif_uref, idx,
-			      edif_uref, idx);
+		      if (eq) {
+			    fprintf(xnf, "(instance U%uG%u"
+				    " (viewRef net"
+				    " (cellRef GND (libraryRef VIRTEX))))\n",
+				    edif_uref, idx);
+			    fprintf(xnf, "(net U%uGM%u (joined"
+				    " (portRef GROUND (instanceRef U%uG%u))"
+				    " (portRef DI (instanceRef U%uM%u))))\n",
+				    edif_uref, idx, edif_uref, idx,
+				    edif_uref, idx);
+		      } else {
+			    fprintf(xnf, "(instance U%uG%u"
+				    " (viewRef net"
+				    " (cellRef VCC (libraryRef VIRTEX))))\n",
+				    edif_uref, idx);
+			    fprintf(xnf, "(net U%uGM%u (joined"
+				    " (portRef VCC (instanceRef U%uG%u))"
+				    " (portRef DI (instanceRef U%uM%u))))\n",
+				    edif_uref, idx, edif_uref, idx,
+				    edif_uref, idx);
+		      }
 		      fprintf(xnf, "(net U%uLM%u (joined"
 			      " (portRef O (instanceRef U%uL%u))"
 			      " (portRef S (instanceRef U%uM%u))))\n",
@@ -534,28 +600,41 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 
 		if (tail == 2) {
 		      fprintf(xnf, "(instance U%uL%u"
-			      " (viewRef Netlist_representation"
+			      " (viewRef net"
 			      " (cellRef LUT4 (libraryRef VIRTEX)))"
 			      " (property INIT (string \"9009\")))\n",
 			      edif_uref, pairs);
 		      fprintf(xnf, "(instance (rename U%uM%u \"%s\")"
-			      " (viewRef Netlist_representation"
+			      " (viewRef net"
 			      " (cellRef MUXCY (libraryRef VIRTEX))))\n",
 			      edif_uref, pairs, ivl_lpm_name(net));
-		      fprintf(xnf, "(instance U%uG%u"
-			      " (viewRef Netlist_representation"
-			      " (cellRef GND (libraryRef VIRTEX))))\n",
-			      edif_uref, pairs);
+
+		      if (eq) {
+			    fprintf(xnf, "(instance U%uG%u"
+				    " (viewRef net"
+				    " (cellRef GND (libraryRef VIRTEX))))\n",
+				    edif_uref, pairs);
+			    fprintf(xnf, "(net U%uGM%u (joined"
+				    " (portRef GROUND (instanceRef U%uG%u))"
+				    " (portRef DI (instanceRef U%uM%u))))\n",
+				    edif_uref, pairs, edif_uref, pairs,
+				    edif_uref, pairs);
+		      } else {
+			    fprintf(xnf, "(instance U%uG%u"
+				    " (viewRef net"
+				    " (cellRef VCC (libraryRef VIRTEX))))\n",
+				    edif_uref, pairs);
+			    fprintf(xnf, "(net U%uGM%u (joined"
+				    " (portRef VCC (instanceRef U%uG%u))"
+				    " (portRef DI (instanceRef U%uM%u))))\n",
+				    edif_uref, pairs, edif_uref, pairs,
+				    edif_uref, pairs);
+		      }
 
 		      fprintf(xnf, "(net U%uVM%u (joined"
 			      " (portRef LO (instanceRef U%uM%u))"
 			      " (portRef CI (instanceRef U%uM%u))))\n",
 			      edif_uref, pairs, edif_uref, pairs-1,
-			      edif_uref, pairs);
-		      fprintf(xnf, "(net U%uGM%u (joined"
-			      " (portRef GROUND (instanceRef U%uG%u))"
-			      " (portRef DI (instanceRef U%uM%u))))\n",
-			      edif_uref, pairs, edif_uref, pairs,
 			      edif_uref, pairs);
 		      fprintf(xnf, "(net U%uLM%u (joined"
 			      " (portRef O (instanceRef U%uL%u))"
@@ -583,28 +662,41 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 		      assert(tail == 1);
 
 		      fprintf(xnf, "(instance (rename U%uL%u \"%s\")"
-			      " (viewRef Netlist_representation"
+			      " (viewRef net"
 			      " (cellRef LUT2 (libraryRef VIRTEX)))"
 			      " (property INIT (string \"9\")))\n",
 			      edif_uref, pairs, ivl_lpm_name(net));
 		      fprintf(xnf, "(instance U%uM%u"
-			      " (viewRef Netlist_representation"
+			      " (viewRef net"
 			      " (cellRef MUXCY (libraryRef VIRTEX))))\n",
 			      edif_uref, pairs);
-		      fprintf(xnf, "(instance U%uG%u"
-			      " (viewRef Netlist_representation"
-			      " (cellRef GND (libraryRef VIRTEX))))\n",
-			      edif_uref, pairs);
+
+		      if (eq) {
+			    fprintf(xnf, "(instance U%uG%u"
+				    " (viewRef net"
+				    " (cellRef GND (libraryRef VIRTEX))))\n",
+				    edif_uref, pairs);
+			    fprintf(xnf, "(net U%uGM%u (joined"
+				    " (portRef GROUND (instanceRef U%uG%u))"
+				    " (portRef DI (instanceRef U%uM%u))))\n",
+				    edif_uref, pairs, edif_uref, pairs,
+				    edif_uref, pairs);
+		      } else {
+			    fprintf(xnf, "(instance U%uG%u"
+				    " (viewRef net"
+				    " (cellRef VCC (libraryRef VIRTEX))))\n",
+				    edif_uref, pairs);
+			    fprintf(xnf, "(net U%uGM%u (joined"
+				    " (portRef VCC (instanceRef U%uG%u))"
+				    " (portRef DI (instanceRef U%uM%u))))\n",
+				    edif_uref, pairs, edif_uref, pairs,
+				    edif_uref, pairs);
+		      }
 
 		      fprintf(xnf, "(net U%uVM%u (joined"
 			      " (portRef LO (instanceRef U%uM%u))"
 			      " (portRef CI (instanceRef U%uM%u))))\n",
 			      edif_uref, pairs, edif_uref, pairs-1,
-			      edif_uref, pairs);
-		      fprintf(xnf, "(net U%uGM%u (joined"
-			      " (portRef GROUND (instanceRef U%uG%u))"
-			      " (portRef DI (instanceRef U%uM%u))))\n",
-			      edif_uref, pairs, edif_uref, pairs,
 			      edif_uref, pairs);
 		      fprintf(xnf, "(net U%uLM%u (joined"
 			      " (portRef O (instanceRef U%uL%u))"
@@ -692,11 +784,11 @@ static void edif_show_virtex_add(ivl_lpm_t net)
       fprintf(xnf, "(instance (rename U%u_L0 \"%s\"[0])"
 	      " (property INIT (string \"6\"))", edif_uref,
 	      ivl_lpm_name(net));
-      fprintf(xnf, " (viewRef Netlist_representation"
+      fprintf(xnf, " (viewRef net"
 	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
       fprintf(xnf, "(instance U%u_M0", edif_uref);
-      fprintf(xnf, " (viewRef Netlist_representation"
+      fprintf(xnf, " (viewRef net"
 	      " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
 
       sprintf(jbuf, "(portRef I0 (instanceRef U%u_L0))", edif_uref);
@@ -719,16 +811,16 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 
 	    fprintf(xnf, "(instance U%u_L%u) (property INIT (string \"6\"))",
 		    edif_uref, idx);
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
 	    fprintf(xnf, "(instance U%u_M%u", edif_uref, idx);
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
 
 	    fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")",
 		    edif_uref, idx, ivl_lpm_name(net), idx);
-	    fprintf(xnf, " (viewRef Netlist_representation"
+	    fprintf(xnf, " (viewRef net"
 		    " (cellRef XORCY (libraryRef VIRTEX))))\n");
 
 	    fprintf(xnf, "(net U%uN%u (joined"
@@ -761,12 +853,12 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 
       fprintf(xnf, "(instance U%u_L%u) (property INIT (string \"6\"))",
 	      edif_uref, idx);
-      fprintf(xnf, " (viewRef Netlist_representation"
+      fprintf(xnf, " (viewRef net"
 	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
       fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")",
 	      edif_uref, idx, ivl_lpm_name(net), idx);
-      fprintf(xnf, " (viewRef Netlist_representation"
+      fprintf(xnf, " (viewRef net"
 	      " (cellRef XORCY (libraryRef VIRTEX))))\n");
 
       fprintf(xnf, "(net U%uN%u (joined"
@@ -798,7 +890,7 @@ const struct device_s d_virtex_edif = {
       edif_show_virtex_logic,
       edif_show_generic_dff,
       edif_show_virtex_eq,
-      0,
+      edif_show_virtex_eq,
       edif_show_virtex_mux,
       edif_show_virtex_add
 };
@@ -806,6 +898,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.7  2001/09/15 05:06:04  steve
+ *  Support != in virtex code generator.
+ *
  * Revision 1.6  2001/09/14 04:17:20  steve
  *  Add XOR and XNOR gates.
  *
