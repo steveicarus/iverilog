@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.17 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.18 2000/05/07 04:37:55 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -45,7 +45,9 @@ bool PExpr::is_constant(Module*) const
 NetNet* PExpr::elaborate_net(Design*des, const string&path, unsigned,
 			     unsigned long,
 			     unsigned long,
-			     unsigned long) const
+			     unsigned long,
+			     Link::strength_t,
+			     Link::strength_t) const
 {
       cerr << get_line() << ": error: Unable to elaborate `"
 	   << *this << "' as gates." << endl;
@@ -212,6 +214,14 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.18  2000/05/07 04:37:55  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.17  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

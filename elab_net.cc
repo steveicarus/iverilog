@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.33 2000/05/03 21:21:36 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.34 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -34,7 +34,9 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 				unsigned width,
 				unsigned long rise,
 				unsigned long fall,
-				unsigned long decay) const
+				unsigned long decay,
+				Link::strength_t drive0,
+				Link::strength_t drive1) const
 {
       switch (op_) {
 	  case '*':
@@ -805,7 +807,9 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 				unsigned,
 				unsigned long rise,
 				unsigned long fall,
-				unsigned long decay) const
+				unsigned long decay,
+				Link::strength_t drive0,
+				Link::strength_t drive1) const
 {
       NetScope*scope = des->find_scope(path);
       assert(scope);
@@ -883,7 +887,9 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 			       unsigned lwidth,
 			       unsigned long rise,
 			       unsigned long fall,
-			       unsigned long decay) const
+			       unsigned long decay,
+			       Link::strength_t drive0,
+			       Link::strength_t drive1) const
 {
       NetScope*scope = des->find_scope(path);
       NetNet*sig = des->find_signal(scope, text_);
@@ -1141,7 +1147,9 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 				unsigned lwidth,
 				unsigned long rise,
 				unsigned long fall,
-				unsigned long decay) const
+				unsigned long decay,
+				Link::strength_t drive0,
+				Link::strength_t drive1) const
 {
       NetScope*scope = des->find_scope(path);
       assert(scope);
@@ -1160,8 +1168,11 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 		  num.set(idx, value_->get(idx));
 
 	    NetConst*tmp = new NetConst(des->local_symbol(path), num);
-	    for (idx = 0 ;  idx < net->pin_count() ;  idx += 1)
+	    for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  tmp->pin(idx).drive0(drive0);
+		  tmp->pin(idx).drive1(drive1);
 		  connect(net->pin(idx), tmp->pin(idx));
+	    }
 
 	    des->add_node(tmp);
 	    return net;
@@ -1237,7 +1248,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 				 unsigned width,
 				 unsigned long rise,
 				 unsigned long fall,
-				 unsigned long decay) const
+				 unsigned long decay,
+				 Link::strength_t drive0,
+				 Link::strength_t drive1) const
 {
       NetScope*scope = des->find_scope(path);
       assert(scope);
@@ -1303,7 +1316,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 			       unsigned width,
 			       unsigned long rise,
 			       unsigned long fall,
-			       unsigned long decay) const
+			       unsigned long decay,
+			       Link::strength_t drive0,
+			       Link::strength_t drive1) const
 {
       NetScope*scope = des->find_scope(path);
       assert(scope);
@@ -1447,6 +1462,14 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.34  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.33  2000/05/03 21:21:36  steve
  *  Allow ternary result to be padded to result width.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.16 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.17 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /*
@@ -70,8 +70,20 @@ struct __vpirt;
  */
 typedef unsigned char vpip_bit_t;
 
+# define Su1 0xff
 # define St1 0xee
+# define Pu1 0xdd
+# define La1 0xcc
+# define We1 0xbb
+# define Me1 0xaa
+# define Sm1 0x99
+# define Su0 0x77
 # define St0 0x66
+# define Pu0 0x55
+# define La0 0x44
+# define We0 0x33
+# define Me0 0x22
+# define Sm0 0x11
 # define StX 0xe6
 # define HiZ 0x08
 
@@ -354,6 +366,14 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.17  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.16  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

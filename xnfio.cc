@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.13 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.14 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -70,7 +70,7 @@ static NetLogic* make_obuf(Design*des, NetNet*net)
 
 	/* Look for an existing OBUF connected to this signal. If it
 	   is there, then no need to add one. */
-      for (NetObj::Link*idx = net->pin(0).next_link()
+      for (Link*idx = net->pin(0).next_link()
 		 ; *idx != net->pin(0)  ; idx = idx->next_link()) {
 	    NetLogic*tmp;
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
@@ -161,7 +161,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
       if (buf->type() != NetLogic::BUF)
 	    return;
 
-      NetObj::Link*drv = find_next_output(&buf->pin(1));
+      Link*drv = find_next_output(&buf->pin(1));
       assert(drv);
 
 	/* Make sure the device is a FF with width 1. */
@@ -211,7 +211,7 @@ static void make_ibuf(Design*des, NetNet*net)
 
 	/* Look for an existing BUF connected to this signal and
 	   suitably connected that I can use it as an IBUF. */
-      for (NetObj::Link*idx = net->pin(0).next_link()
+      for (Link*idx = net->pin(0).next_link()
 		 ; *idx != net->pin(0)  ; idx = idx->next_link()) {
 	    NetLogic*tmp;
 	    if ((tmp = dynamic_cast<NetLogic*>(idx->get_obj())) == 0)
@@ -356,6 +356,14 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.14  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.13  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

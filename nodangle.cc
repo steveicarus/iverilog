@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.5 2000/04/28 21:00:29 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.6 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /*
@@ -67,8 +67,8 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 	   to every pin of this signal. */
       unsigned significant_flags = 0;
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
-	    NetObj::Link&lnk = sig->pin(idx);
-	    for (NetObj::Link*cur = lnk.next_link()
+	    Link&lnk = sig->pin(idx);
+	    for (Link*cur = lnk.next_link()
 		       ; cur != &lnk ;  cur = cur->next_link()) {
 		  NetNet*cursig = dynamic_cast<NetNet*>(cur->get_obj());
 		  if (cursig == 0)
@@ -94,6 +94,14 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.6  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.5  2000/04/28 21:00:29  steve
  *  Over agressive signal elimination in constant probadation.
  *

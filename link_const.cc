@@ -17,18 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.1 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: link_const.cc,v 1.2 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
 # include  "netmisc.h"
 
-NetConst* link_const_value(NetObj::Link&pin, unsigned&idx)
+NetConst* link_const_value(Link&pin, unsigned&idx)
 {
       NetConst*robj = 0;
       unsigned ridx = 0;
 
-      for (NetObj::Link*cur = pin.next_link()
+      for (Link*cur = pin.next_link()
 		 ; *cur != pin ;  cur = cur->next_link()) {
 
 	    NetConst*tmp;
@@ -49,6 +49,14 @@ NetConst* link_const_value(NetObj::Link&pin, unsigned&idx)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.2  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.1  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

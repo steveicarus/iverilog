@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.143 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.144 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -108,7 +108,7 @@ class target_vvm : public target_t {
       void end_process(ostream&os, const NetProcTop*);
 
     private:
-      void emit_init_value_(const NetObj::Link&lnk, verinum::V val);
+      void emit_init_value_(const Link&lnk, verinum::V val);
       void emit_gate_outputfun_(const NetNode*, unsigned);
       string defn_gate_outputfun_(ostream&os, const NetNode*, unsigned);
 
@@ -156,6 +156,51 @@ class target_vvm : public target_t {
 
       unsigned selector_counter;
 };
+
+static const char*vvm_val_name(verinum::V val,
+			       Link::strength_t drv0,
+			       Link::strength_t drv1)
+{
+      switch (val) {
+	  case verinum::V0:
+	    switch (drv0) {
+		case Link::HIGHZ:
+		  return "HiZ";
+		case Link::WEAK:
+		  return "We0";
+		case Link::PULL:
+		  return "Pu0";
+		case Link::STRONG:
+		  return "St0";
+		case Link::SUPPLY:
+		  return "Su0";
+	    }
+	    break;
+
+	  case verinum::V1:
+	    switch (drv1) {
+		case Link::HIGHZ:
+		  return "HiZ";
+		case Link::WEAK:
+		  return "We1";
+		case Link::PULL:
+		  return "Pu1";
+		case Link::STRONG:
+		  return "St1";
+		case Link::SUPPLY:
+		  return "Su1";
+	    }
+	    break;
+
+	  case verinum::Vx:
+	    return "StX";
+
+	  case verinum::Vz:
+	    return "HiZ";
+      }
+
+      return "";
+}
 
 
 target_vvm::target_vvm()
@@ -1038,14 +1083,15 @@ string target_vvm::defn_gate_outputfun_(ostream&os,
       return "";
 }
 
-void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
+void target_vvm::emit_init_value_(const Link&lnk, verinum::V val)
 {
       map<string,bool>written;
+      const char*val_name = vvm_val_name(val, lnk.drive0(), lnk.drive1());
 
-      for (const NetObj::Link*cur = lnk.next_link()
+      for (const Link*cur = lnk.next_link()
 		 ; (*cur) != lnk ;  cur = cur->next_link()) {
 
-	    if (cur->get_dir() == NetObj::Link::OUTPUT)
+	    if (cur->get_dir() == Link::OUTPUT)
 		  continue;
 
 	    if (! dynamic_cast<const NetObj*>(cur->get_obj()))
@@ -1064,22 +1110,7 @@ void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
 	    ostrstream line;
 	    line << "      " << mangle(cur->get_obj()->name())
 		 << ".init_" << cur->get_name() << "(" << cur->get_inst()
-		 << ", ";
-	    switch (val) {
-		case verinum::V0:
-		  line << "St0";
-		  break;
-		case verinum::V1:
-		  line << "St1";
-		  break;
-		case verinum::Vx:
-		  line << "StX";
-		  break;
-		case verinum::Vz:
-		  line << "HiZ";
-		  break;
-	    }
-	    line << ");" << endl << ends;
+		 << ", " << val_name << ");" << endl << ends;
 
 
 	      // Check to see if the line has already been
@@ -1757,8 +1788,29 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
  */
 void target_vvm::net_const(ostream&os, const NetConst*gate)
 {
+      const string mname = mangle(gate->name());
+
+      os << "static vvm_nexus::drive_t " << mname
+	 << "[" << gate->pin_count() << "];" << endl;
+
+      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&gate->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    const char*val_str = vvm_val_name(gate->value(idx),
+					      gate->pin(idx).drive0(),
+					      gate->pin(idx).drive1());
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << "["<<idx<<"]);" << endl;
+	    start_code << "      " << mname << "["<<idx<<"].set_value("
+		       << val_str << ");" << endl;
+      }
+
+#if 0
       for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1)
 	    emit_init_value_(gate->pin(idx), gate->value(idx));
+#endif
 }
 
 
@@ -2712,6 +2764,14 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.144  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.143  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

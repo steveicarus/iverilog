@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.36 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: PExpr.h,v 1.37 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  <string>
@@ -66,7 +66,10 @@ class PExpr : public LineInfo {
 				    unsigned lwidth,
 				    unsigned long rise,
 				    unsigned long fall,
-				    unsigned long decay) const;
+				    unsigned long decay,
+				    Link::strength_t drive0 =Link::STRONG,
+				    Link::strength_t drive1 =Link::STRONG)
+	    const;
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
@@ -107,7 +110,9 @@ class PEConcat : public PExpr {
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
-				    unsigned long decay) const;
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
       virtual bool is_constant(Module*) const;
 
@@ -159,7 +164,9 @@ class PEIdent : public PExpr {
 				    unsigned lwidth,
 				    unsigned long rise,
 				    unsigned long fall,
-				    unsigned long decay) const;
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
@@ -201,7 +208,9 @@ class PENumber : public PExpr {
 				    unsigned lwidth,
 				    unsigned long rise,
 				    unsigned long fall,
-				    unsigned long decay) const;
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
@@ -240,7 +249,9 @@ class PEUnary : public PExpr {
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
-				    unsigned long decay) const;
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
       virtual NetEUnary*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
@@ -262,7 +273,9 @@ class PEBinary : public PExpr {
 				    unsigned width,
 				    unsigned long rise,
 				    unsigned long fall,
-				    unsigned long decay) const;
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
       virtual NetEBinary*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
@@ -326,9 +339,11 @@ class PETernary : public PExpr {
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
 				    unsigned width,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
       virtual NetETernary*elaborate_expr(Design*des, NetScope*) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
@@ -360,6 +375,14 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.37  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.36  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

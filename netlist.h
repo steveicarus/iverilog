@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.135 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.136 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /*
@@ -35,6 +35,7 @@
 # include  "svector.h"
 
 class Design;
+class Link;
 class NetNode;
 class NetProc;
 class NetProcTop;
@@ -70,78 +71,6 @@ struct functor_t;
 class NetObj {
 
     public:
-      class Link {
-	    friend void connect(Link&, Link&);
-	    friend class NetObj;
-
-	  public:
-	    enum DIR { PASSIVE, INPUT, OUTPUT };
-	    Link();
-	    ~Link();
-
-	      // Manipulate the link direction.
-	    void set_dir(DIR d) { dir_ = d; }
-	    DIR get_dir() const { return dir_; }
-
-	    void cur_link(NetObj*&net, unsigned &pin)
-		  { net = node_;
-		    pin = pin_;
-		  }
-
-	    void next_link(NetObj*&net, unsigned&pin);
-	    void next_link(const NetObj*&net, unsigned&pin) const;
-
-	    Link* next_link();
-	    const Link* next_link() const;
-
-	      // Remove this link from the set of connected pins. The
-	      // destructor will automatically do this if needed.
-	    void unlink();
-
-	      // Return true if this link is connected to anything else.
-	    bool is_linked() const;
-
-	      // Return true if these pins are connected.
-	    bool is_linked(const NetObj::Link&that) const;
-
-	      // Return true if this link is connected to any pin of r.
-	    bool is_linked(const NetObj&r) const;
-
-	    bool is_equal(const NetObj::Link&that) const
-		  { return (node_ == that.node_) && (pin_ == that.pin_); }
-
-	      // Return information about the object that this link is
-	      // a part of.
-	    const NetObj*get_obj() const;
-	    NetObj*get_obj();
-	    unsigned get_pin() const;
-
-	    void set_name(const string&, unsigned inst =0);
-	    const string& get_name() const;
-	    unsigned get_inst() const;
-
-	  private:
-	      // The NetNode manages these. They point back to the
-	      // NetNode so that following the links can get me here.
-	    NetObj *node_;
-	    unsigned pin_;
-	    DIR dir_;
-
-	      // These members name the pin of the link. If the name
-	      // has width, then the ninst_ member is the index of the
-	      // pin.
-	    string   name_;
-	    unsigned inst_;
-
-	  private:
-	    Link *next_;
-	    Link *prev_;
-
-	  private: // not implemented
-	    Link(const Link&);
-	    Link& operator= (const Link&);
-      };
-
     public:
       explicit NetObj(const string&n, unsigned npins);
       virtual ~NetObj();
@@ -186,6 +115,86 @@ class NetObj {
       map<string,string> attributes_;
 
       bool mark_;
+};
+
+class Link {
+      friend void connect(Link&, Link&);
+      friend class NetObj;
+
+    public:
+      enum DIR { PASSIVE, INPUT, OUTPUT };
+
+      enum strength_t { HIGHZ, WEAK, PULL, STRONG, SUPPLY };
+
+      Link();
+      ~Link();
+
+	// Manipulate the link direction.
+      void set_dir(DIR d);
+      DIR get_dir() const;
+
+      void drive0(strength_t);
+      void drive1(strength_t);
+
+      strength_t drive0() const;
+      strength_t drive1() const;
+
+      void cur_link(NetObj*&net, unsigned &pin);
+
+      void next_link(NetObj*&net, unsigned&pin);
+      void next_link(const NetObj*&net, unsigned&pin) const;
+
+      Link* next_link();
+      const Link* next_link() const;
+
+	// Remove this link from the set of connected pins. The
+	// destructor will automatically do this if needed.
+      void unlink();
+
+	// Return true if this link is connected to anything else.
+      bool is_linked() const;
+
+	// Return true if these pins are connected.
+      bool is_linked(const Link&that) const;
+
+	// Return true if this link is connected to any pin of r.
+      bool is_linked(const NetObj&r) const;
+
+      bool is_equal(const Link&that) const
+      { return (node_ == that.node_) && (pin_ == that.pin_); }
+
+	// Return information about the object that this link is
+	// a part of.
+      const NetObj*get_obj() const;
+      NetObj*get_obj();
+      unsigned get_pin() const;
+
+      void set_name(const string&, unsigned inst =0);
+      const string& get_name() const;
+      unsigned get_inst() const;
+
+    private:
+	// The NetNode manages these. They point back to the
+	// NetNode so that following the links can get me here.
+      NetObj *node_;
+      unsigned pin_;
+
+      DIR dir_;
+      strength_t drive0_, drive1_;
+
+	// These members name the pin of the link. If the name
+	// has width, then the ninst_ member is the index of the
+	// pin.
+      string   name_;
+      unsigned inst_;
+
+    private:
+      Link *next_;
+      Link *prev_;
+
+    private: // not implemented
+      Link(const Link&);
+      Link& operator= (const Link&);
 };
 
 /*
@@ -310,21 +319,21 @@ class NetAddSub  : public NetNode {
 	// operands and results.)
       unsigned width() const;
 
-      NetObj::Link& pin_Aclr();
-      NetObj::Link& pin_Add_Sub();
-      NetObj::Link& pin_Clock();
-      NetObj::Link& pin_Cin();
-      NetObj::Link& pin_Cout();
-      NetObj::Link& pin_Overflow();
+      Link& pin_Aclr();
+      Link& pin_Add_Sub();
+      Link& pin_Clock();
+      Link& pin_Cin();
+      Link& pin_Cout();
+      Link& pin_Overflow();
 
-      NetObj::Link& pin_DataA(unsigned idx);
-      NetObj::Link& pin_DataB(unsigned idx);
-      NetObj::Link& pin_Result(unsigned idx);
+      Link& pin_DataA(unsigned idx);
+      Link& pin_DataB(unsigned idx);
+      Link& pin_Result(unsigned idx);
 
-      const NetObj::Link& pin_Cout() const;
-      const NetObj::Link& pin_DataA(unsigned idx) const;
-      const NetObj::Link& pin_DataB(unsigned idx) const;
-      const NetObj::Link& pin_Result(unsigned idx) const;
+      const Link& pin_Cout() const;
+      const Link& pin_DataA(unsigned idx) const;
+      const Link& pin_DataB(unsigned idx) const;
+      const Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -343,19 +352,19 @@ class NetCLShift  : public NetNode {
       unsigned width() const;
       unsigned width_dist() const;
 
-      NetObj::Link& pin_Direction();
-      NetObj::Link& pin_Underflow();
-      NetObj::Link& pin_Overflow();
-      NetObj::Link& pin_Data(unsigned idx);
-      NetObj::Link& pin_Result(unsigned idx);
-      NetObj::Link& pin_Distance(unsigned idx);
+      Link& pin_Direction();
+      Link& pin_Underflow();
+      Link& pin_Overflow();
+      Link& pin_Data(unsigned idx);
+      Link& pin_Result(unsigned idx);
+      Link& pin_Distance(unsigned idx);
 
-      const NetObj::Link& pin_Direction() const;
-      const NetObj::Link& pin_Underflow() const;
-      const NetObj::Link& pin_Overflow() const;
-      const NetObj::Link& pin_Data(unsigned idx) const;
-      const NetObj::Link& pin_Result(unsigned idx) const;
-      const NetObj::Link& pin_Distance(unsigned idx) const;
+      const Link& pin_Direction() const;
+      const Link& pin_Underflow() const;
+      const Link& pin_Overflow() const;
+      const Link& pin_Data(unsigned idx) const;
+      const Link& pin_Result(unsigned idx) const;
+      const Link& pin_Distance(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -380,29 +389,29 @@ class NetCompare  : public NetNode {
 
       unsigned width() const;
 
-      NetObj::Link& pin_Aclr();
-      NetObj::Link& pin_Clock();
-      NetObj::Link& pin_AGB();
-      NetObj::Link& pin_AGEB();
-      NetObj::Link& pin_AEB();
-      NetObj::Link& pin_ANEB();
-      NetObj::Link& pin_ALB();
-      NetObj::Link& pin_ALEB();
+      Link& pin_Aclr();
+      Link& pin_Clock();
+      Link& pin_AGB();
+      Link& pin_AGEB();
+      Link& pin_AEB();
+      Link& pin_ANEB();
+      Link& pin_ALB();
+      Link& pin_ALEB();
 
-      NetObj::Link& pin_DataA(unsigned idx);
-      NetObj::Link& pin_DataB(unsigned idx);
+      Link& pin_DataA(unsigned idx);
+      Link& pin_DataB(unsigned idx);
 
-      const NetObj::Link& pin_Aclr() const;
-      const NetObj::Link& pin_Clock() const;
-      const NetObj::Link& pin_AGB() const;
-      const NetObj::Link& pin_AGEB() const;
-      const NetObj::Link& pin_AEB() const;
-      const NetObj::Link& pin_ANEB() const;
-      const NetObj::Link& pin_ALB() const;
-      const NetObj::Link& pin_ALEB() const;
+      const Link& pin_Aclr() const;
+      const Link& pin_Clock() const;
+      const Link& pin_AGB() const;
+      const Link& pin_AGEB() const;
+      const Link& pin_AEB() const;
+      const Link& pin_ANEB() const;
+      const Link& pin_ALB() const;
+      const Link& pin_ALEB() const;
 
-      const NetObj::Link& pin_DataA(unsigned idx) const;
-      const NetObj::Link& pin_DataB(unsigned idx) const;
+      const Link& pin_DataA(unsigned idx) const;
+      const Link& pin_DataB(unsigned idx) const;
 
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -432,13 +441,13 @@ class NetDivide  : public NetNode {
       unsigned width_a() const;
       unsigned width_b() const;
 
-      NetObj::Link& pin_DataA(unsigned idx);
-      NetObj::Link& pin_DataB(unsigned idx);
-      NetObj::Link& pin_Result(unsigned idx);
+      Link& pin_DataA(unsigned idx);
+      Link& pin_DataB(unsigned idx);
+      Link& pin_Result(unsigned idx);
 
-      const NetObj::Link& pin_DataA(unsigned idx) const;
-      const NetObj::Link& pin_DataB(unsigned idx) const;
-      const NetObj::Link& pin_Result(unsigned idx) const;
+      const Link& pin_DataA(unsigned idx) const;
+      const Link& pin_DataB(unsigned idx) const;
+      const Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -462,22 +471,22 @@ class NetFF  : public NetNode {
 
       unsigned width() const;
 
-      NetObj::Link& pin_Clock();
-      NetObj::Link& pin_Enable();
-      NetObj::Link& pin_Aload();
-      NetObj::Link& pin_Aset();
-      NetObj::Link& pin_Aclr();
-      NetObj::Link& pin_Sload();
-      NetObj::Link& pin_Sset();
-      NetObj::Link& pin_Sclr();
+      Link& pin_Clock();
+      Link& pin_Enable();
+      Link& pin_Aload();
+      Link& pin_Aset();
+      Link& pin_Aclr();
+      Link& pin_Sload();
+      Link& pin_Sset();
+      Link& pin_Sclr();
 
-      NetObj::Link& pin_Data(unsigned);
-      NetObj::Link& pin_Q(unsigned);
+      Link& pin_Data(unsigned);
+      Link& pin_Q(unsigned);
 
-      const NetObj::Link& pin_Clock() const;
-      const NetObj::Link& pin_Enable() const;
-      const NetObj::Link& pin_Data(unsigned) const;
-      const NetObj::Link& pin_Q(unsigned) const;
+      const Link& pin_Clock() const;
+      const Link& pin_Enable() const;
+      const Link& pin_Data(unsigned) const;
+      const Link& pin_Q(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -560,21 +569,21 @@ class NetMult  : public NetNode {
       unsigned width_b() const; // DataB
       unsigned width_s() const; // Sum (my be 0)
 
-      NetObj::Link& pin_Aclr();
-      NetObj::Link& pin_Clock();
+      Link& pin_Aclr();
+      Link& pin_Clock();
 
-      NetObj::Link& pin_DataA(unsigned idx);
-      NetObj::Link& pin_DataB(unsigned idx);
-      NetObj::Link& pin_Result(unsigned idx);
-      NetObj::Link& pin_Sum(unsigned idx);
+      Link& pin_DataA(unsigned idx);
+      Link& pin_DataB(unsigned idx);
+      Link& pin_Result(unsigned idx);
+      Link& pin_Sum(unsigned idx);
 
-      const NetObj::Link& pin_Aclr() const;
-      const NetObj::Link& pin_Clock() const;
+      const Link& pin_Aclr() const;
+      const Link& pin_Clock() const;
 
-      const NetObj::Link& pin_DataA(unsigned idx) const;
-      const NetObj::Link& pin_DataB(unsigned idx) const;
-      const NetObj::Link& pin_Result(unsigned idx) const;
-      const NetObj::Link& pin_Sum(unsigned idx) const;
+      const Link& pin_DataA(unsigned idx) const;
+      const Link& pin_DataB(unsigned idx) const;
+      const Link& pin_Result(unsigned idx) const;
+      const Link& pin_Sum(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -608,19 +617,19 @@ class NetMux  : public NetNode {
       unsigned size() const;
       unsigned sel_width() const;
 
-      NetObj::Link& pin_Aclr();
-      NetObj::Link& pin_Clock();
+      Link& pin_Aclr();
+      Link& pin_Clock();
 
-      NetObj::Link& pin_Result(unsigned);
-      NetObj::Link& pin_Data(unsigned wi, unsigned si);
-      NetObj::Link& pin_Sel(unsigned);
+      Link& pin_Result(unsigned);
+      Link& pin_Data(unsigned wi, unsigned si);
+      Link& pin_Sel(unsigned);
 
-      const NetObj::Link& pin_Aclr() const;
-      const NetObj::Link& pin_Clock() const;
+      const Link& pin_Aclr() const;
+      const Link& pin_Clock() const;
 
-      const NetObj::Link& pin_Result(unsigned) const;
-      const NetObj::Link& pin_Data(unsigned, unsigned) const;
-      const NetObj::Link& pin_Sel(unsigned) const;
+      const Link& pin_Result(unsigned) const;
+      const Link& pin_Data(unsigned, unsigned) const;
+      const Link& pin_Sel(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -648,21 +657,21 @@ class NetRamDq  : public NetNode {
       unsigned size() const;
       const NetMemory*mem() const;
 
-      NetObj::Link& pin_InClock();
-      NetObj::Link& pin_OutClock();
-      NetObj::Link& pin_WE();
+      Link& pin_InClock();
+      Link& pin_OutClock();
+      Link& pin_WE();
 
-      NetObj::Link& pin_Address(unsigned idx);
-      NetObj::Link& pin_Data(unsigned idx);
-      NetObj::Link& pin_Q(unsigned idx);
+      Link& pin_Address(unsigned idx);
+      Link& pin_Data(unsigned idx);
+      Link& pin_Q(unsigned idx);
 
-      const NetObj::Link& pin_InClock() const;
-      const NetObj::Link& pin_OutClock() const;
-      const NetObj::Link& pin_WE() const;
+      const Link& pin_InClock() const;
+      const Link& pin_OutClock() const;
+      const Link& pin_WE() const;
 
-      const NetObj::Link& pin_Address(unsigned idx) const;
-      const NetObj::Link& pin_Data(unsigned idx) const;
-      const NetObj::Link& pin_Q(unsigned idx) const;
+      const Link& pin_Address(unsigned idx) const;
+      const Link& pin_Data(unsigned idx) const;
+      const Link& pin_Q(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -1438,7 +1447,7 @@ class NetForce  : public NetProc, public NetNode {
       explicit NetForce(const string&n, NetNet*l);
       ~NetForce();
 
-      const NetObj::Link& lval_pin(unsigned) const;
+      const Link& lval_pin(unsigned) const;
 
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(ostream&, struct target_t*) const;
@@ -2194,7 +2203,7 @@ class NetESignal  : public NetExpr {
 	// These methods actually reference the properties of the
 	// NetNet object that I point to.
       unsigned pin_count() const;
-      NetObj::Link& pin(unsigned idx);
+      Link& pin(unsigned idx);
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2460,18 +2469,18 @@ class Design {
 /* =======
  */
 
-inline bool operator == (const NetObj::Link&l, const NetObj::Link&r)
+inline bool operator == (const Link&l, const Link&r)
 { return l.is_equal(r); }
 
-inline bool operator != (const NetObj::Link&l, const NetObj::Link&r)
+inline bool operator != (const Link&l, const Link&r)
 { return ! l.is_equal(r); }
 
 /* Connect the pins of two nodes together. Either may already be
    connected to other things, connect is transitive. */
-extern void connect(NetObj::Link&, NetObj::Link&);
+extern void connect(Link&, Link&);
 
 /* Return true if l and r are connected. */
-inline bool connected(const NetObj::Link&l, const NetObj::Link&r)
+inline bool connected(const Link&l, const Link&r)
 { return l.is_linked(r); }
 
 /* Return true if l is fully connected to r. This means, every pin in
@@ -2481,12 +2490,12 @@ extern bool connected(const NetObj&l, const NetObj&r);
 
 /* return the number of links in the ring that are of the specified
    type. */
-extern unsigned count_inputs(const NetObj::Link&pin);
-extern unsigned count_outputs(const NetObj::Link&pin);
-extern unsigned count_signals(const NetObj::Link&pin);
+extern unsigned count_inputs(const Link&pin);
+extern unsigned count_outputs(const Link&pin);
+extern unsigned count_signals(const Link&pin);
 
 /* Find the next link that is an output into the nexus. */
-extern NetObj::Link* find_next_output(NetObj::Link*lnk);
+extern Link* find_next_output(Link*lnk);
 
 /* Find the signal connected to the given node pin. There should
    always be exactly one signal. The bidx parameter get filled with
@@ -2501,6 +2510,14 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.136  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.135  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

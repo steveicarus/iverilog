@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.8 2000/04/28 21:00:28 steve Exp $"
+#ident "$Id: cprop.cc,v 1.9 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -29,14 +29,14 @@
  * this link are constant. It will also return true if there are no
  * drivers at all.
  */
-static bool all_drivers_constant(const NetObj::Link&lnk)
+static bool all_drivers_constant(const Link&lnk)
 {
-      for (const NetObj::Link*cur = lnk.next_link()
+      for (const Link*cur = lnk.next_link()
 		 ; *cur != lnk ; cur = cur->next_link()) {
 
-	    if (cur->get_dir() == NetObj::Link::INPUT)
+	    if (cur->get_dir() == Link::INPUT)
 		  continue;
-	    if (cur->get_dir() == NetObj::Link::PASSIVE)
+	    if (cur->get_dir() == Link::PASSIVE)
 		  continue;
 	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
 		  return false;
@@ -50,9 +50,9 @@ static bool all_drivers_constant(const NetObj::Link&lnk)
  * or Vz if there is no constant. The results of this function are
  * only meaningful if all_drivers_constant(lnk) == true.
  */
-static verinum::V driven_value(const NetObj::Link&lnk)
+static verinum::V driven_value(const Link&lnk)
 {
-      for (const NetObj::Link*cur = lnk.next_link()
+      for (const Link*cur = lnk.next_link()
 		 ; *cur != lnk ; cur = cur->next_link()) {
 
 	    const NetConst*obj;
@@ -319,6 +319,14 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.9  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.8  2000/04/28 21:00:28  steve
  *  Over agressive signal elimination in constant probadation.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nexus_from_link.cc,v 1.2 2000/03/20 17:40:54 steve Exp $"
+#ident "$Id: nexus_from_link.cc,v 1.3 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "netmisc.h"
@@ -25,12 +25,12 @@
 # include  <string>
 # include  <typeinfo>
 
-string nexus_from_link(const NetObj::Link*lnk)
+string nexus_from_link(const Link*lnk)
 {
       const NetNet*sig = dynamic_cast<const NetNet*>(lnk->get_obj());
       unsigned pin = lnk->get_pin();
 
-      for (const NetObj::Link*cur = lnk->next_link()
+      for (const Link*cur = lnk->next_link()
 		 ;  cur != lnk ;  cur = cur->next_link()) {
 
 	    const NetNet*cursig = dynamic_cast<const NetNet*>(cur->get_obj());
@@ -82,6 +82,14 @@ string nexus_from_link(const NetObj::Link*lnk)
 
 /*
  * $Log: nexus_from_link.cc,v $
+ * Revision 1.3  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.2  2000/03/20 17:40:54  steve
  *  More complete error message about no signal.
  *

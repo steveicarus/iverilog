@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.122 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: netlist.cc,v 1.123 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -75,7 +75,7 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 }
 
 
-void connect(NetObj::Link&l, NetObj::Link&r)
+void connect(Link&l, Link&r)
 {
       assert(&l != &r);
       assert(l.next_->prev_ == &l);
@@ -83,9 +83,9 @@ void connect(NetObj::Link&l, NetObj::Link&r)
       assert(r.next_->prev_ == &r);
       assert(r.prev_->next_ == &r);
 
-      NetObj::Link* cur = &l;
+      Link* cur = &l;
       do {
-	    NetObj::Link*tmp = cur->next_;
+	    Link*tmp = cur->next_;
 
 	      // If I stumble on r in the nexus, then stop now because
 	      // we are already connected.
@@ -111,29 +111,66 @@ void connect(NetObj::Link&l, NetObj::Link&r)
       assert(r.prev_->next_ == &r);
 }
 
-NetObj::Link::Link()
-: dir_(PASSIVE), inst_(0), next_(this), prev_(this)
+Link::Link()
+: dir_(PASSIVE), drive0_(STRONG), drive1_(STRONG),
+  inst_(0), next_(this), prev_(this)
 {
 }
 
-NetObj::Link::~Link()
+Link::~Link()
 {
       unlink();
 }
 
-void NetObj::Link::unlink()
+void Link::set_dir(DIR d)
+{
+      dir_ = d;
+}
+
+Link::DIR Link::get_dir() const
+{
+      return dir_;
+}
+
+void Link::drive0(Link::strength_t str)
+{
+      drive0_ = str;
+}
+
+void Link::drive1(Link::strength_t str)
+{
+      drive1_ = str;
+}
+
+Link::strength_t Link::drive0() const
+{
+      return drive0_;
+}
+
+Link::strength_t Link::drive1() const
+{
+      return drive1_;
+}
+
+void Link::cur_link(NetObj*&net, unsigned &pin)
+{
+      net = node_;
+      pin = pin_;
+}
+
+void Link::unlink()
 {
       next_->prev_ = prev_;
       prev_->next_ = next_;
       next_ = prev_ = this;
 }
 
-bool NetObj::Link::is_linked() const
+bool Link::is_linked() const
 {
       return next_ != this;
 }
 
-bool NetObj::Link::is_linked(const NetObj&that) const
+bool Link::is_linked(const NetObj&that) const
 {
       for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
 	    if (idx->node_ == &that)
@@ -142,7 +179,7 @@ bool NetObj::Link::is_linked(const NetObj&that) const
       return false;
 }
 
-bool NetObj::Link::is_linked(const NetObj::Link&that) const
+bool Link::is_linked(const Link&that) const
 {
       for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
 	    if (idx->is_equal(that))
@@ -151,7 +188,7 @@ bool NetObj::Link::is_linked(const NetObj::Link&that) const
       return false;
 }
 
-void NetObj::Link::next_link(NetObj*&net, unsigned&pin)
+void Link::next_link(NetObj*&net, unsigned&pin)
 {
       assert(next_->prev_ == this);
       assert(prev_->next_ == this);
@@ -159,7 +196,7 @@ void NetObj::Link::next_link(NetObj*&net, unsigned&pin)
       pin = next_->pin_;
 }
 
-void NetObj::Link::next_link(const NetObj*&net, unsigned&pin) const
+void Link::next_link(const NetObj*&net, unsigned&pin) const
 {
       assert(next_->prev_ == this);
       assert(prev_->next_ == this);
@@ -167,47 +204,47 @@ void NetObj::Link::next_link(const NetObj*&net, unsigned&pin) const
       pin = next_->pin_;
 }
 
-NetObj::Link* NetObj::Link::next_link()
+Link* Link::next_link()
 {
       assert(next_->prev_ == this);
       assert(prev_->next_ == this);
       return next_;
 }
 
-const NetObj::Link* NetObj::Link::next_link() const
+const Link* Link::next_link() const
 {
       assert(next_->prev_ == this);
       assert(prev_->next_ == this);
       return next_;
 }
 
-const NetObj*NetObj::Link::get_obj() const
+const NetObj*Link::get_obj() const
 {
       return node_;
 }
 
-NetObj*NetObj::Link::get_obj()
+NetObj*Link::get_obj()
 {
       return node_;
 }
 
-unsigned NetObj::Link::get_pin() const
+unsigned Link::get_pin() const
 {
       return pin_;
 }
 
-void NetObj::Link::set_name(const string&n, unsigned i)
+void Link::set_name(const string&n, unsigned i)
 {
       name_ = n;
       inst_ = i;
 }
 
-const string& NetObj::Link::get_name() const
+const string& Link::get_name() const
 {
       return name_;
 }
 
-unsigned NetObj::Link::get_inst() const
+unsigned Link::get_inst() const
 {
       return inst_;
 }
@@ -221,14 +258,14 @@ bool connected(const NetObj&l, const NetObj&r)
       return true;
 }
 
-unsigned count_inputs(const NetObj::Link&pin)
+unsigned count_inputs(const Link&pin)
 {
-      unsigned count = (pin.get_dir() == NetObj::Link::INPUT)? 1 : 0;
+      unsigned count = (pin.get_dir() == Link::INPUT)? 1 : 0;
       const NetObj*cur;
       unsigned cpin;
       pin.next_link(cur, cpin);
       while (cur->pin(cpin) != pin) {
-	    if (cur->pin(cpin).get_dir() == NetObj::Link::INPUT)
+	    if (cur->pin(cpin).get_dir() == Link::INPUT)
 		  count += 1;
 	    cur->pin(cpin).next_link(cur, cpin);
       }
@@ -236,14 +273,14 @@ unsigned count_inputs(const NetObj::Link&pin)
       return count;
 }
 
-unsigned count_outputs(const NetObj::Link&pin)
+unsigned count_outputs(const Link&pin)
 {
-      unsigned count = (pin.get_dir() == NetObj::Link::OUTPUT)? 1 : 0;
+      unsigned count = (pin.get_dir() == Link::OUTPUT)? 1 : 0;
       const NetObj*cur;
       unsigned cpin;
       pin.next_link(cur, cpin);
       while (cur->pin(cpin) != pin) {
-	    if (cur->pin(cpin).get_dir() == NetObj::Link::OUTPUT)
+	    if (cur->pin(cpin).get_dir() == Link::OUTPUT)
 		  count += 1;
 	    cur->pin(cpin).next_link(cur, cpin);
       }
@@ -251,7 +288,7 @@ unsigned count_outputs(const NetObj::Link&pin)
       return count;
 }
 
-unsigned count_signals(const NetObj::Link&pin)
+unsigned count_signals(const Link&pin)
 {
       unsigned count = 0;
       if (dynamic_cast<const NetNet*>(pin.get_obj()))
@@ -288,11 +325,11 @@ const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
       return 0;
 }
 
-NetObj::Link* find_next_output(NetObj::Link*lnk)
+Link* find_next_output(Link*lnk)
 {
-      for (NetObj::Link*cur = lnk->next_link()
+      for (Link*cur = lnk->next_link()
 		 ;  cur != lnk ;  cur = cur->next_link())
-	    if (cur->get_dir() == NetObj::Link::OUTPUT)
+	    if (cur->get_dir() == Link::OUTPUT)
 		  return cur;
 
       return 0;
@@ -350,13 +387,13 @@ bool NetObj::has_compat_attributes(const NetObj&that) const
       return true;
 }
 
-NetObj::Link& NetObj::pin(unsigned idx)
+Link& NetObj::pin(unsigned idx)
 {
       assert(idx < npins_);
       return pins_[idx];
 }
 
-const NetObj::Link& NetObj::pin(unsigned idx) const
+const Link& NetObj::pin(unsigned idx) const
 {
       assert(idx < npins_);
       return pins_[idx];
@@ -530,78 +567,78 @@ unsigned NetFF::width() const
       return (pin_count() - 8) / 2;
 }
 
-NetObj::Link& NetFF::pin_Clock()
+Link& NetFF::pin_Clock()
 {
       return pin(0);
 }
 
-const NetObj::Link& NetFF::pin_Clock() const
+const Link& NetFF::pin_Clock() const
 {
       return pin(0);
 }
 
-NetObj::Link& NetFF::pin_Enable()
+Link& NetFF::pin_Enable()
 {
       return pin(1);
 }
 
-const NetObj::Link& NetFF::pin_Enable() const
+const Link& NetFF::pin_Enable() const
 {
       return pin(1);
 }
 
-NetObj::Link& NetFF::pin_Aload()
+Link& NetFF::pin_Aload()
 {
       return pin(2);
 }
 
-NetObj::Link& NetFF::pin_Aset()
+Link& NetFF::pin_Aset()
 {
       return pin(3);
 }
 
-NetObj::Link& NetFF::pin_Aclr()
+Link& NetFF::pin_Aclr()
 {
       return pin(4);
 }
 
-NetObj::Link& NetFF::pin_Sload()
+Link& NetFF::pin_Sload()
 {
       return pin(5);
 }
 
-NetObj::Link& NetFF::pin_Sset()
+Link& NetFF::pin_Sset()
 {
       return pin(6);
 }
 
-NetObj::Link& NetFF::pin_Sclr()
+Link& NetFF::pin_Sclr()
 {
       return pin(7);
 }
 
-NetObj::Link& NetFF::pin_Data(unsigned w)
+Link& NetFF::pin_Data(unsigned w)
 {
       unsigned pn = 8 + 2*w;
       assert(pn < pin_count());
       return pin(pn);
 }
 
-const NetObj::Link& NetFF::pin_Data(unsigned w) const
+const Link& NetFF::pin_Data(unsigned w) const
 {
       unsigned pn = 8 + 2*w;
       assert(pn < pin_count());
       return pin(pn);
 }
 
-NetObj::Link& NetFF::pin_Q(unsigned w)
+Link& NetFF::pin_Q(unsigned w)
 {
       unsigned pn = 9 + w*2;
       assert(pn < pin_count());
       return pin(pn);
 }
 
-const NetObj::Link& NetFF::pin_Q(unsigned w) const
+const Link& NetFF::pin_Q(unsigned w) const
 {
       unsigned pn = 9 + w*2;
       assert(pn < pin_count());
@@ -625,16 +662,16 @@ const NetObj::Link& NetFF::pin_Q(unsigned w) const
 NetAddSub::NetAddSub(const string&n, unsigned w)
 : NetNode(n, w*3+6)
 {
-      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Add_Sub", 0);
-      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Aclr", 0);
-      pin(2).set_dir(NetObj::Link::INPUT); pin(2).set_name("Clock", 0);
-      pin(3).set_dir(NetObj::Link::INPUT); pin(3).set_name("Cin", 0);
-      pin(4).set_dir(NetObj::Link::OUTPUT); pin(4).set_name("Cout", 0);
-      pin(5).set_dir(NetObj::Link::OUTPUT); pin(5).set_name("Overflow", 0);
+      pin(0).set_dir(Link::INPUT); pin(0).set_name("Add_Sub", 0);
+      pin(1).set_dir(Link::INPUT); pin(1).set_name("Aclr", 0);
+      pin(2).set_dir(Link::INPUT); pin(2).set_name("Clock", 0);
+      pin(3).set_dir(Link::INPUT); pin(3).set_name("Cin", 0);
+      pin(4).set_dir(Link::OUTPUT); pin(4).set_name("Cout", 0);
+      pin(5).set_dir(Link::OUTPUT); pin(5).set_name("Overflow", 0);
       for (unsigned idx = 0 ;  idx < w ;  idx += 1) {
-	    pin_DataA(idx).set_dir(NetObj::Link::INPUT);
-	    pin_DataB(idx).set_dir(NetObj::Link::INPUT);
-	    pin_Result(idx).set_dir(NetObj::Link::OUTPUT);
+	    pin_DataA(idx).set_dir(Link::INPUT);
+	    pin_DataB(idx).set_dir(Link::INPUT);
+	    pin_Result(idx).set_dir(Link::OUTPUT);
 	    pin_DataA(idx).set_name("DataA", idx);
 	    pin_DataB(idx).set_name("DataB", idx);
 	    pin_Result(idx).set_name("Result", idx);
@@ -650,52 +687,52 @@ unsigned NetAddSub::width()const
       return (pin_count() - 6) / 3;
 }
 
-NetObj::Link& NetAddSub::pin_Cout()
+Link& NetAddSub::pin_Cout()
 {
       return pin(4);
 }
 
-const NetObj::Link& NetAddSub::pin_Cout() const
+const Link& NetAddSub::pin_Cout() const
 {
       return pin(4);
 }
 
-NetObj::Link& NetAddSub::pin_DataA(unsigned idx)
+Link& NetAddSub::pin_DataA(unsigned idx)
 {
       idx = 6 + idx*3;
       assert(idx < pin_count());
       return pin(idx);
 }
 
-const NetObj::Link& NetAddSub::pin_DataA(unsigned idx) const
+const Link& NetAddSub::pin_DataA(unsigned idx) const
 {
       idx = 6 + idx*3;
       assert(idx < pin_count());
       return pin(idx);
 }
 
-NetObj::Link& NetAddSub::pin_DataB(unsigned idx)
+Link& NetAddSub::pin_DataB(unsigned idx)
 {
       idx = 7 + idx*3;
       assert(idx < pin_count());
       return pin(idx);
 }
 
-const NetObj::Link& NetAddSub::pin_DataB(unsigned idx) const
+const Link& NetAddSub::pin_DataB(unsigned idx) const
 {
       idx = 7 + idx*3;
       assert(idx < pin_count());
       return pin(idx);
 }
 
-NetObj::Link& NetAddSub::pin_Result(unsigned idx)
+Link& NetAddSub::pin_Result(unsigned idx)
 {
       idx = 8 + idx*3;
       assert(idx < pin_count());
       return pin(idx);
 }
 
-const NetObj::Link& NetAddSub::pin_Result(unsigned idx) const
+const Link& NetAddSub::pin_Result(unsigned idx) const
 {
       idx = 8 + idx*3;
       assert(idx < pin_count());
@@ -714,20 +751,20 @@ const NetObj::Link& NetAddSub::pin_Result(unsigned idx) const
 NetCLShift::NetCLShift(const string&n, unsigned width, unsigned width_dist)
 : NetNode(n, 3+2*width+width_dist), width_(width), width_dist_(width_dist)
 {
-      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Direction", 0);
-      pin(1).set_dir(NetObj::Link::OUTPUT); pin(1).set_name("Underflow", 0);
-      pin(2).set_dir(NetObj::Link::OUTPUT); pin(2).set_name("Overflow", 0);
+      pin(0).set_dir(Link::INPUT); pin(0).set_name("Direction", 0);
+      pin(1).set_dir(Link::OUTPUT); pin(1).set_name("Underflow", 0);
+      pin(2).set_dir(Link::OUTPUT); pin(2).set_name("Overflow", 0);
 
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    pin(3+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+idx).set_dir(Link::INPUT);
 	    pin(3+idx).set_name("Data", idx);
 
-	    pin(3+width_+idx).set_dir(NetObj::Link::OUTPUT);
+	    pin(3+width_+idx).set_dir(Link::OUTPUT);
 	    pin(3+width_+idx).set_name("Result", idx);
       }
 
       for (unsigned idx = 0 ;  idx < width_dist_ ;  idx += 1) {
-	    pin(3+2*width_+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+2*width_+idx).set_dir(Link::INPUT);
 	    pin(3+2*width_+idx).set_name("Distance", idx);
       }
 }
@@ -746,67 +783,67 @@ unsigned NetCLShift::width_dist() const
       return width_dist_;
 }
 
-NetObj::Link& NetCLShift::pin_Direction()
+Link& NetCLShift::pin_Direction()
 {
       return pin(0);
 }
 
-const NetObj::Link& NetCLShift::pin_Direction() const
+const Link& NetCLShift::pin_Direction() const
 {
       return pin(0);
 }
 
-NetObj::Link& NetCLShift::pin_Underflow()
+Link& NetCLShift::pin_Underflow()
 {
       return pin(1);
 }
 
-const NetObj::Link& NetCLShift::pin_Underflow() const
+const Link& NetCLShift::pin_Underflow() const
 {
       return pin(1);
 }
 
-NetObj::Link& NetCLShift::pin_Overflow()
+Link& NetCLShift::pin_Overflow()
 {
       return pin(2);
 }
 
-const NetObj::Link& NetCLShift::pin_Overflow() const
+const Link& NetCLShift::pin_Overflow() const
 {
       return pin(2);
 }
 
-NetObj::Link& NetCLShift::pin_Data(unsigned idx)
+Link& NetCLShift::pin_Data(unsigned idx)
 {
       assert(idx < width_);
       return pin(3+idx);
 }
 
-const NetObj::Link& NetCLShift::pin_Data(unsigned idx) const
+const Link& NetCLShift::pin_Data(unsigned idx) const
 {
       assert(idx < width_);
       return pin(3+idx);
 }
 
-NetObj::Link& NetCLShift::pin_Result(unsigned idx)
+Link& NetCLShift::pin_Result(unsigned idx)
 {
       assert(idx < width_);
       return pin(3+width_+idx);
 }
 
-const NetObj::Link& NetCLShift::pin_Result(unsigned idx) const
+const Link& NetCLShift::pin_Result(unsigned idx) const
 {
       assert(idx < width_);
       return pin(3+width_+idx);
 }
 
-NetObj::Link& NetCLShift::pin_Distance(unsigned idx)
+Link& NetCLShift::pin_Distance(unsigned idx)
 {
       assert(idx < width_dist_);
       return pin(3+2*width_+idx);
 }
 
-const NetObj::Link& NetCLShift::pin_Distance(unsigned idx) const
+const Link& NetCLShift::pin_Distance(unsigned idx) const
 {
       assert(idx < width_dist_);
       return pin(3+2*width_+idx);
@@ -815,18 +852,18 @@ const NetObj::Link& NetCLShift::pin_Distance(unsigned idx) const
 NetCompare::NetCompare(const string&n, unsigned wi)
 : NetNode(n, 8+2*wi), width_(wi)
 {
-      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr");
-      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Clock");
-      pin(2).set_dir(NetObj::Link::OUTPUT); pin(2).set_name("AGB");
-      pin(3).set_dir(NetObj::Link::OUTPUT); pin(3).set_name("AGEB");
-      pin(4).set_dir(NetObj::Link::OUTPUT); pin(4).set_name("AEB");
-      pin(5).set_dir(NetObj::Link::OUTPUT); pin(5).set_name("ANEB");
-      pin(6).set_dir(NetObj::Link::OUTPUT); pin(6).set_name("ALB");
-      pin(7).set_dir(NetObj::Link::OUTPUT); pin(7).set_name("ALEB");
+      pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr");
+      pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock");
+      pin(2).set_dir(Link::OUTPUT); pin(2).set_name("AGB");
+      pin(3).set_dir(Link::OUTPUT); pin(3).set_name("AGEB");
+      pin(4).set_dir(Link::OUTPUT); pin(4).set_name("AEB");
+      pin(5).set_dir(Link::OUTPUT); pin(5).set_name("ANEB");
+      pin(6).set_dir(Link::OUTPUT); pin(6).set_name("ALB");
+      pin(7).set_dir(Link::OUTPUT); pin(7).set_name("ALEB");
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    pin(8+idx).set_dir(NetObj::Link::INPUT);
+	    pin(8+idx).set_dir(Link::INPUT);
 	    pin(8+idx).set_name("DataA", idx);
-	    pin(8+width_+idx).set_dir(NetObj::Link::INPUT);
+	    pin(8+width_+idx).set_dir(Link::INPUT);
 	    pin(8+width_+idx).set_name("DataB", idx);
       }
 }
@@ -840,102 +877,102 @@ unsigned NetCompare::width() const
       return width_;
 }
 
-NetObj::Link& NetCompare::pin_Aclr()
+Link& NetCompare::pin_Aclr()
 {
       return pin(0);
 }
 
-const NetObj::Link& NetCompare::pin_Aclr() const
+const Link& NetCompare::pin_Aclr() const
 {
       return pin(0);
 }
 
-NetObj::Link& NetCompare::pin_Clock()
+Link& NetCompare::pin_Clock()
 {
       return pin(1);
 }
 
-const NetObj::Link& NetCompare::pin_Clock() const
+const Link& NetCompare::pin_Clock() const
 {
       return pin(1);
 }
 
-NetObj::Link& NetCompare::pin_AGB()
+Link& NetCompare::pin_AGB()
 {
       return pin(2);
 }
 
-const NetObj::Link& NetCompare::pin_AGB() const
+const Link& NetCompare::pin_AGB() const
 {
       return pin(2);
 }
 
-NetObj::Link& NetCompare::pin_AGEB()
+Link& NetCompare::pin_AGEB()
 {
       return pin(3);
 }
 
-const NetObj::Link& NetCompare::pin_AGEB() const
+const Link& NetCompare::pin_AGEB() const
 {
       return pin(3);
 }
 
-NetObj::Link& NetCompare::pin_AEB()
+Link& NetCompare::pin_AEB()
 {
       return pin(4);
 }
 
-const NetObj::Link& NetCompare::pin_AEB() const
+const Link& NetCompare::pin_AEB() const
 {
       return pin(4);
 }
 
-NetObj::Link& NetCompare::pin_ANEB()
+Link& NetCompare::pin_ANEB()
 {
       return pin(5);
 }
 
-const NetObj::Link& NetCompare::pin_ANEB() const
+const Link& NetCompare::pin_ANEB() const
 {
       return pin(5);
 }
 
-NetObj::Link& NetCompare::pin_ALB()
+Link& NetCompare::pin_ALB()
 {
       return pin(6);
 }
 
-const NetObj::Link& NetCompare::pin_ALB() const
+const Link& NetCompare::pin_ALB() const
 {
       return pin(6);
 }
 
-NetObj::Link& NetCompare::pin_ALEB()
+Link& NetCompare::pin_ALEB()
 {
       return pin(7);
 }
 
-const NetObj::Link& NetCompare::pin_ALEB() const
+const Link& NetCompare::pin_ALEB() const
 {
       return pin(7);
 }
 
-NetObj::Link& NetCompare::pin_DataA(unsigned idx)
+Link& NetCompare::pin_DataA(unsigned idx)
 {
       return pin(8+idx);
 }
 
-const NetObj::Link& NetCompare::pin_DataA(unsigned idx) const
+const Link& NetCompare::pin_DataA(unsigned idx) const
 {
       return pin(8+idx);
 }
 
-NetObj::Link& NetCompare::pin_DataB(unsigned idx)
+Link& NetCompare::pin_DataB(unsigned idx)
 {
       return pin(8+width_+idx);
 }
 
-const NetObj::Link& NetCompare::pin_DataB(unsigned idx) const
+const Link& NetCompare::pin_DataB(unsigned idx) const
 {
       return pin(8+width_+idx);
 }
@@ -946,15 +983,15 @@ NetDivide::NetDivide(const string&n, unsigned wr,
 {
       unsigned p = 0;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::OUTPUT);
+	    pin(p).set_dir(Link::OUTPUT);
 	    pin(p).set_name("Result", idx);
       }
       for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_dir(Link::INPUT);
 	    pin(p).set_name("DataA", idx);
       }
       for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_dir(Link::INPUT);
 	    pin(p).set_name("DataB", idx);
       }
 }
@@ -978,37 +1015,37 @@ unsigned NetDivide::width_b() const
       return width_b_;
 }
 
-NetObj::Link& NetDivide::pin_Result(unsigned idx)
+Link& NetDivide::pin_Result(unsigned idx)
 {
       assert(idx < width_r_);
       return pin(idx);
 }
 
-const NetObj::Link& NetDivide::pin_Result(unsigned idx) const
+const Link& NetDivide::pin_Result(unsigned idx) const
 {
       assert(idx < width_r_);
       return pin(idx);
 }
 
-NetObj::Link& NetDivide::pin_DataA(unsigned idx)
+Link& NetDivide::pin_DataA(unsigned idx)
 {
       assert(idx < width_a_);
       return pin(idx+width_r_);
 }
 
-const NetObj::Link& NetDivide::pin_DataA(unsigned idx) const
+const Link& NetDivide::pin_DataA(unsigned idx) const
 {
       assert(idx < width_a_);
       return pin(idx+width_r_);
 }
 
-NetObj::Link& NetDivide::pin_DataB(unsigned idx)
+Link& NetDivide::pin_DataB(unsigned idx)
 {
       assert(idx < width_b_);
       return pin(idx+width_r_+width_a_);
 }
 
-const NetObj::Link& NetDivide::pin_DataB(unsigned idx) const
+const Link& NetDivide::pin_DataB(unsigned idx) const
 {
       assert(idx < width_b_);
       return pin(idx+width_r_+width_a_);
@@ -1019,25 +1056,25 @@ NetMult::NetMult(const string&n, unsigned wr, unsigned wa, unsigned wb,
 : NetNode(n, 2+wr+wa+wb+ws), width_r_(wr), width_a_(wa), width_b_(wb),
     width_s_(ws)
 {
-      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr", 0);
-      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Clock", 0);
+      pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr", 0);
+      pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock", 0);
 
 
       unsigned p = 2;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::OUTPUT);
+	    pin(p).set_dir(Link::OUTPUT);
 	    pin(p).set_name("Result", idx);
       }
       for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_dir(Link::INPUT);
 	    pin(p).set_name("DataA", idx);
       }
       for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_dir(Link::INPUT);
 	    pin(p).set_name("DataB", idx);
       }
       for (unsigned idx = 0 ;  idx < width_s_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_dir(Link::INPUT);
 	    pin(p).set_name("Sum", idx);
       }
 }
@@ -1066,69 +1103,69 @@ unsigned NetMult::width_s() const
       return width_s_;
 }
 
-NetObj::Link& NetMult::pin_Aclr()
+Link& NetMult::pin_Aclr()
 {
       return pin(0);
 }
 
-const NetObj::Link& NetMult::pin_Aclr() const
+const Link& NetMult::pin_Aclr() const
 {
       return pin(0);
 }
 
-NetObj::Link& NetMult::pin_Clock()
+Link& NetMult::pin_Clock()
 {
       return pin(1);
 }
 
-const NetObj::Link& NetMult::pin_Clock() const
+const Link& NetMult::pin_Clock() const
 {
       return pin(1);
 }
 
-NetObj::Link& NetMult::pin_Result(unsigned idx)
+Link& NetMult::pin_Result(unsigned idx)
 {
       assert(idx < width_r_);
       return pin(idx+2);
 }
 
-const NetObj::Link& NetMult::pin_Result(unsigned idx) const
+const Link& NetMult::pin_Result(unsigned idx) const
 {
       assert(idx < width_r_);
       return pin(idx+2);
 }
 
-NetObj::Link& NetMult::pin_DataA(unsigned idx)
+Link& NetMult::pin_DataA(unsigned idx)
 {
       assert(idx < width_a_);
       return pin(idx+2+width_r_);
 }
 
-const NetObj::Link& NetMult::pin_DataA(unsigned idx) const
+const Link& NetMult::pin_DataA(unsigned idx) const
 {
       assert(idx < width_a_);
       return pin(idx+2+width_r_);
 }
 
-NetObj::Link& NetMult::pin_DataB(unsigned idx)
+Link& NetMult::pin_DataB(unsigned idx)
 {
       assert(idx < width_b_);
       return pin(idx+2+width_r_+width_a_);
 }
 
-const NetObj::Link& NetMult::pin_DataB(unsigned idx) const
+const Link& NetMult::pin_DataB(unsigned idx) const
 {
       assert(idx < width_b_);
       return pin(idx+2+width_r_+width_a_);
 }
 
-NetObj::Link& NetMult::pin_Sum(unsigned idx)
+Link& NetMult::pin_Sum(unsigned idx)
 {
       assert(idx < width_s_);
       return pin(idx+2+width_r_+width_a_+width_b_);
 }
 
-const NetObj::Link& NetMult::pin_Sum(unsigned idx) const
+const Link& NetMult::pin_Sum(unsigned idx) const
 {
       assert(idx < width_s_);
       return pin(idx+2+width_r_+width_a_+width_b_);
@@ -1146,11 +1183,11 @@ const NetObj::Link& NetMult::pin_Sum(unsigned idx) const
 NetMux::NetMux(const string&n, unsigned wi, unsigned si, unsigned sw)
 : NetNode(n, 2+wi+sw+wi*si), width_(wi), size_(si), swidth_(sw)
 {
-      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr",  0);
-      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Clock", 0);
+      pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr",  0);
+      pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock", 0);
 
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    pin_Result(idx).set_dir(NetObj::Link::OUTPUT);
+	    pin_Result(idx).set_dir(Link::OUTPUT);
 	    pin_Result(idx).set_name("Result", idx);
 
 	    for (unsigned jdx = 0 ;  jdx < size_ ;  jdx += 1) {
@@ -1184,58 +1221,58 @@ unsigned NetMux::sel_width() const
       return swidth_;
 }
 
-NetObj::Link& NetMux::pin_Aclr()
+Link& NetMux::pin_Aclr()
 {
       return pin(0);
 }
 
-const NetObj::Link& NetMux::pin_Aclr() const
+const Link& NetMux::pin_Aclr() const
 {
       return pin(0);
 }
 
-NetObj::Link& NetMux::pin_Clock()
+Link& NetMux::pin_Clock()
 {
       return pin(1);
 }
 
-const NetObj::Link& NetMux::pin_Clock() const
+const Link& NetMux::pin_Clock() const
 {
       return pin(1);
 }
 
-NetObj::Link& NetMux::pin_Result(unsigned w)
+Link& NetMux::pin_Result(unsigned w)
 {
       assert(w < width_);
       return pin(2+w);
 }
 
-const NetObj::Link& NetMux::pin_Result(unsigned w) const
+const Link& NetMux::pin_Result(unsigned w) const
 {
       assert(w < width_);
       return pin(2+w);
 }
 
-NetObj::Link& NetMux::pin_Sel(unsigned w)
+Link& NetMux::pin_Sel(unsigned w)
 {
       assert(w < swidth_);
       return pin(2+width_+w);
 }
 
-const NetObj::Link& NetMux::pin_Sel(unsigned w) const
+const Link& NetMux::pin_Sel(unsigned w) const
 {
       assert(w < swidth_);
       return pin(2+width_+w);
 }
 
-NetObj::Link& NetMux::pin_Data(unsigned w, unsigned s)
+Link& NetMux::pin_Data(unsigned w, unsigned s)
 {
       assert(w < width_);
       assert(s < size_);
       return pin(2+width_+swidth_+s*width_+w);
 }
 
-const NetObj::Link& NetMux::pin_Data(unsigned w, unsigned s) const
+const Link& NetMux::pin_Data(unsigned w, unsigned s) const
 {
       assert(w < width_);
       assert(s < size_);
@@ -1246,22 +1283,22 @@ const NetObj::Link& NetMux::pin_Data(unsigned w, unsigned s) const
 NetRamDq::NetRamDq(const string&n, NetMemory*mem, unsigned awid)
 : NetNode(n, 3+2*mem->width()+awid), mem_(mem), awidth_(awid)
 {
-      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("InClock", 0);
-      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("OutClock", 0);
-      pin(2).set_dir(NetObj::Link::INPUT); pin(2).set_name("WE", 0);
+      pin(0).set_dir(Link::INPUT); pin(0).set_name("InClock", 0);
+      pin(1).set_dir(Link::INPUT); pin(1).set_name("OutClock", 0);
+      pin(2).set_dir(Link::INPUT); pin(2).set_name("WE", 0);
 
       for (unsigned idx = 0 ;  idx < awidth_ ;  idx += 1) {
-	    pin(3+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+idx).set_dir(Link::INPUT);
 	    pin(3+idx).set_name("Address", idx);
       }
 
       for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-	    pin(3+awidth_+idx).set_dir(NetObj::Link::INPUT);
+	    pin(3+awidth_+idx).set_dir(Link::INPUT);
 	    pin(3+awidth_+idx).set_name("Data", idx);
       }
 
       for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-	    pin(3+awidth_+width()+idx).set_dir(NetObj::Link::OUTPUT);
+	    pin(3+awidth_+width()+idx).set_dir(Link::OUTPUT);
 	    pin(3+awidth_+width()+idx).set_name("Q", idx);
       }
 
@@ -1381,67 +1418,67 @@ void NetRamDq::absorb_partners()
       }
 }
 
-NetObj::Link& NetRamDq::pin_InClock()
+Link& NetRamDq::pin_InClock()
 {
       return pin(0);
 }
 
-const NetObj::Link& NetRamDq::pin_InClock() const
+const Link& NetRamDq::pin_InClock() const
 {
       return pin(0);
 }
 
-NetObj::Link& NetRamDq::pin_OutClock()
+Link& NetRamDq::pin_OutClock()
 {
       return pin(1);
 }
 
-const NetObj::Link& NetRamDq::pin_OutClock() const
+const Link& NetRamDq::pin_OutClock() const
 {
       return pin(1);
 }
 
-NetObj::Link& NetRamDq::pin_WE()
+Link& NetRamDq::pin_WE()
 {
       return pin(2);
 }
 
-const NetObj::Link& NetRamDq::pin_WE() const
+const Link& NetRamDq::pin_WE() const
 {
       return pin(2);
 }
 
-NetObj::Link& NetRamDq::pin_Address(unsigned idx)
+Link& NetRamDq::pin_Address(unsigned idx)
 {
       assert(idx < awidth_);
       return pin(3+idx);
 }
 
-const NetObj::Link& NetRamDq::pin_Address(unsigned idx) const
+const Link& NetRamDq::pin_Address(unsigned idx) const
 {
       assert(idx < awidth_);
       return pin(3+idx);
 }
 
-NetObj::Link& NetRamDq::pin_Data(unsigned idx)
+Link& NetRamDq::pin_Data(unsigned idx)
 {
       assert(idx < width());
       return pin(3+awidth_+idx);
 }
 
-const NetObj::Link& NetRamDq::pin_Data(unsigned idx) const
+const Link& NetRamDq::pin_Data(unsigned idx) const
 {
       assert(idx < width());
       return pin(3+awidth_+idx);
 }
 
-NetObj::Link& NetRamDq::pin_Q(unsigned idx)
+Link& NetRamDq::pin_Q(unsigned idx)
 {
       assert(idx < width());
       return pin(3+awidth_+width()+idx);
 }
 
-const NetObj::Link& NetRamDq::pin_Q(unsigned idx) const
+const Link& NetRamDq::pin_Q(unsigned idx) const
 {
       assert(idx < width());
       return pin(3+awidth_+width()+idx);
@@ -1455,7 +1492,7 @@ NetAssign_::NetAssign_(const string&n, unsigned w)
 : NetNode(n, w), rval_(0), bmux_(0)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(NetObj::Link::OUTPUT);
+	    pin(idx).set_dir(Link::OUTPUT);
 	    pin(idx).set_name("P", idx);
       }
 
@@ -1756,7 +1793,7 @@ NetForce::~NetForce()
 {
 }
 
-const NetObj::Link& NetForce::lval_pin(unsigned idx) const
+const Link& NetForce::lval_pin(unsigned idx) const
 {
       assert(idx < lval_->pin_count());
       return lval_->pin(idx);
@@ -2234,7 +2271,7 @@ unsigned NetESignal::pin_count() const
       return net_->pin_count();
 }
 
-NetObj::Link& NetESignal::pin(unsigned idx)
+Link& NetESignal::pin(unsigned idx)
 {
       return net_->pin(idx);
 }
@@ -2567,6 +2604,14 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.123  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.122  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

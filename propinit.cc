@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: propinit.cc,v 1.2 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: propinit.cc,v 1.3 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /*
@@ -61,7 +61,7 @@ static void prop_sequdp_output(NetUDP*udp)
 	/* Take the output value and write it to all the NetNet pins
 	   that are connected to the output pin. */
 
-      for (NetObj::Link*lnk = udp->pin(0).next_link()
+      for (Link*lnk = udp->pin(0).next_link()
 		 ; (*lnk) != udp->pin(0) ;  lnk = lnk->next_link()) {
 
 	    if (NetNet*sig = dynamic_cast<NetNet*>(lnk->get_obj()))
@@ -81,6 +81,14 @@ void propinit(Design*des)
 
 /*
  * $Log: propinit.cc,v $
+ * Revision 1.3  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.2  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

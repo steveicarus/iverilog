@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.5 2000/04/20 00:28:03 steve Exp $"
+#ident "$Id: netmisc.h,v 1.6 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -39,7 +39,7 @@ extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
  * signals that are not connected together will have a different nexus
  * name.
  */
-extern string nexus_from_link(const NetObj::Link*lnk);
+extern string nexus_from_link(const Link*lnk);
 
 /*
  * Check to see if the link has a constant value driven to it. If
@@ -47,10 +47,18 @@ extern string nexus_from_link(const NetObj::Link*lnk);
  * that NetConst object. Also, return the index of the bit in that
  * constant through the idx parameter.
  */
-extern NetConst* link_const_value(NetObj::Link&pin, unsigned&idx);
+extern NetConst* link_const_value(Link&pin, unsigned&idx);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.6  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.5  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
  *

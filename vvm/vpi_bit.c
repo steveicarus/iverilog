@@ -17,13 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_bit.c,v 1.2 2000/03/22 05:16:38 steve Exp $"
+#ident "$Id: vpi_bit.c,v 1.3 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdio.h>
 
-#define UNAMBIG(v) (((v)&0x0f) == ((v)>>4))
+/*
+ * A signal value is unambiguous if the top 4 bits and the bottom 4
+ * bits are identical. This means that the VSSSvsss bits of the 8bit
+ * value have V==v and SSS==sss.
+ */
+#define UNAMBIG(v) (((v)&0x0f) == (((v)>>4)&0x0f))
 
 
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
@@ -48,14 +53,28 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 	    if (UNAMBIG(res) && UNAMBIG(bits[idx])) {
 
 		    /* If both signals are unambiguous, simply choose
-		       the stronger. */
+		       the stronger. If they have the same strength
+		       but different values, then this becomes
+		       ambiguous. */
 
-		  if ((bits[idx]&0x77) > (res&0x77))
+		  if (bits[idx] == res) {
+
+			  /* values are equal. do nothing. */
+
+		  } else if ((bits[idx]&0x07) > (res&0x07)) {
+
+			  /* New value is stronger. Take it. */
 			res = bits[idx];
-		  else if (bits[idx]*0x77 == (res&0x77))
-			res = (res&0xf0) + (bits[idx]&0x0f);
-		  else
-			;
+
+		  } else if ((bits[idx]&0x77) == (res&0x77)) {
+
+			  /* Strengths are the same. Make value ambiguous. */
+			res = (res&0x70) | (bits[idx]&0x07) | 0x80;
+
+		  } else {
+
+			  /* Must be res is the stronger one. */
+		  }
 
 	    } else if (UNAMBIG(res) || UNAMBIG(bits[idx])) {
 
@@ -106,6 +125,14 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 
 /*
  * $Log: vpi_bit.c,v $
+ * Revision 1.3  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.2  2000/03/22 05:16:38  steve
  *  Integrate drive resolution function.
  *

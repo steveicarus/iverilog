@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.82 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.83 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /*
@@ -38,6 +38,30 @@ static ostream& operator<< (ostream&o, NetBlock::Type t)
 	  case NetBlock::PARA:
 	    o << "fork";
 	    break;
+      }
+      return o;
+}
+
+ostream& operator << (ostream&o, Link::strength_t str)
+{
+      switch (str) {
+	  case Link::HIGHZ:
+	    o << "highz";
+	    break;
+	  case Link::WEAK:
+	    o << "weak";
+	    break;
+	  case Link::PULL:
+	    o << "pull";
+	    break;
+	  case Link::STRONG:
+	    o << "strong";
+	    break;
+	  case Link::SUPPLY:
+	    o << "supply";
+	    break;
+	  default:
+	    assert(0);
       }
       return o;
 }
@@ -118,7 +142,9 @@ void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 		  o << " O";
 		  break;
 	    }
-	    o << ":";
+
+	    o << " (" << pin(idx).drive0() << "0 "
+	      << pin(idx).drive1() << "1):";
 
 	    unsigned cpin;
 	    const NetObj*cur;
@@ -929,6 +955,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.83  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.82  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.168 2000/05/02 16:27:38 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.169 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /*
@@ -41,6 +41,24 @@
 static const map<string,Module*>* modlist = 0;
 static const map<string,PUdp*>*   udplist = 0;
 
+static Link::strength_t drive_type(PGate::strength_t drv)
+{
+      switch (drv) {
+	  case PGate::HIGHZ:
+	    return Link::HIGHZ;
+	  case PGate::WEAK:
+	    return Link::WEAK;
+	  case PGate::PULL:
+	    return Link::PULL;
+	  case PGate::STRONG:
+	    return Link::STRONG;
+	  case PGate::SUPPLY:
+	    return Link::SUPPLY;
+	  default:
+	    assert(0);
+      }
+      return Link::STRONG;
+}
 
 
 void PGate::elaborate(Design*des, const string&path) const
@@ -58,6 +76,9 @@ void PGAssign::elaborate(Design*des, const string&path) const
       unsigned long rise_time, fall_time, decay_time;
       eval_delays(des, path, rise_time, fall_time, decay_time);
 
+      Link::strength_t drive0 = drive_type(strength0());
+      Link::strength_t drive1 = drive_type(strength1());
+
       assert(pin(0));
       assert(pin(1));
 
@@ -74,7 +95,8 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	   generated NetNet. */
       NetNet*rval = pin(1)->elaborate_net(des, path,
 					  lval->pin_count(),
-					  rise_time, fall_time, decay_time);
+					  rise_time, fall_time, decay_time,
+					  drive0, drive1);
       if (rval == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate r-value: "
 		 << *pin(1) << endl;
@@ -2328,6 +2350,14 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.169  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.168  2000/05/02 16:27:38  steve
  *  Move signal elaboration to a seperate pass.
  *

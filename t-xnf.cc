@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.26 2000/04/23 23:03:13 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.27 2000/05/07 04:37:56 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -99,9 +99,9 @@ class target_xnf  : public target_t {
 
     private:
       static string mangle(const string&);
-      static string choose_sig_name(const NetObj::Link*lnk);
+      static string choose_sig_name(const Link*lnk);
       static void draw_pin(ostream&os, const string&name,
-			   const NetObj::Link&lnk);
+			   const Link&lnk);
       static void draw_sym_with_lcaname(ostream&os, string lca,
 					const NetNode*net);
       static void draw_xor(ostream&os, const NetAddSub*, unsigned idx);
@@ -137,13 +137,13 @@ string target_xnf::mangle(const string&name)
  * nexus to decide which name to use if there are lots of attached
  * signals.
  */
-string target_xnf::choose_sig_name(const NetObj::Link*lnk)
+string target_xnf::choose_sig_name(const Link*lnk)
 {
       assert(lnk->is_linked());
       const NetNet*sig = dynamic_cast<const NetNet*>(lnk->get_obj());
       unsigned pin = lnk->get_pin();
 
-      for (const NetObj::Link*cur = lnk->next_link()
+      for (const Link*cur = lnk->next_link()
 		 ;  cur != lnk ;  cur = cur->next_link()) {
 
 	    const NetNet*cursig = dynamic_cast<const NetNet*>(cur->get_obj());
@@ -186,7 +186,7 @@ string target_xnf::choose_sig_name(const NetObj::Link*lnk)
 }
 
 void target_xnf::draw_pin(ostream&os, const string&name,
-			  const NetObj::Link&lnk)
+			  const Link&lnk)
 {
       bool inv = false;
       string use_name = name;
@@ -197,11 +197,11 @@ void target_xnf::draw_pin(ostream&os, const string&name,
 
       char type;
       switch (lnk.get_dir()) {
-	  case NetObj::Link::INPUT:
-	  case NetObj::Link::PASSIVE:
+	  case Link::INPUT:
+	  case Link::PASSIVE:
 	    type = 'I';
 	    break;
-	  case NetObj::Link::OUTPUT:
+	  case Link::OUTPUT:
 	    type = 'O';
 	    break;
       }
@@ -757,7 +757,7 @@ void target_xnf::net_const(ostream&os, const NetConst*c)
       for (unsigned idx = 0 ;  idx < c->pin_count() ;  idx += 1) {
 	    verinum::V v=c->value(idx);
 	    assert(v==verinum::V0 || v==verinum::V1);
-	    const NetObj::Link& lnk = c->pin(idx);
+	    const Link& lnk = c->pin(idx);
 	      // Code parallels draw_pin above, some smart c++ guru should
 	      // find a way to make a method out of this.
 	    unsigned cpin;
@@ -887,6 +887,14 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.27  2000/05/07 04:37:56  steve
+ *  Carry strength values from Verilog source to the
+ *  pform and netlist for gates.
+ *
+ *  Change vvm constants to use the driver_t to drive
+ *  a constant value. This works better if there are
+ *  multiple drivers on a signal.
+ *
  * Revision 1.26  2000/04/23 23:03:13  steve
  *  automatically generate macro interface code.
  *
