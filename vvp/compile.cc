@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.108 2001/10/16 02:47:37 steve Exp $"
+#ident "$Id: compile.cc,v 1.109 2001/10/18 17:30:25 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -680,6 +680,14 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       } else if (strcmp(type, "NMOS") == 0) {
 	    obj->obj = new vvp_nmos_s;
+	    obj->mode = M42;
+
+      } else if (strcmp(type, "RPMOS") == 0) {
+	    obj->obj = new vvp_rpmos_s;
+	    obj->mode = M42;
+
+      } else if (strcmp(type, "RNMOS") == 0) {
+	    obj->obj = new vvp_rnmos_s;
 	    obj->mode = M42;
 
       } else if (strcmp(type, "MUXZ") == 0) {
@@ -1594,6 +1602,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.109  2001/10/18 17:30:25  steve
+ *  Support rnpmos devices. (Philip Blundell)
+ *
  * Revision 1.108  2001/10/16 02:47:37  steve
  *  Add arith/div object.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.50 2001/10/16 02:19:27 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.51 2001/10/18 17:30:25 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -595,13 +595,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
 
 	  case IVL_LO_RPMOS:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type RPMOS\n");
-	    ltype = "?";
+	    ltype = "RPMOS";
 	    break;
 
 	  case IVL_LO_RNMOS:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic of type RNMOS\n");
-	    ltype = "?";
+	    ltype = "RNMOS";
 	    break;
 
 	  case IVL_LO_NOTIF0:
@@ -1213,6 +1211,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.51  2001/10/18 17:30:25  steve
+ *  Support rnpmos devices. (Philip Blundell)
+ *
  * Revision 1.50  2001/10/16 02:19:27  steve
  *  Support IVL_LPM_DIVIDE for structural divide.
  *
