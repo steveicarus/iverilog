@@ -6,6 +6,7 @@ ivl
 dep
 configure
 Makefile
+verilog
 config.status
 config.log
 config.cache

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.13 1999/08/15 02:20:06 steve Exp $"
+#ident "$Id: Makefile.in,v 1.14 1999/08/17 15:57:43 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -45,7 +45,7 @@ CPPFLAGS = @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: ivl
+all: ivl verilog
 	cd vpi ; make all
 	cd vvm ; make all
 	cd ivlpp ; make all
@@ -68,6 +68,14 @@ $(FF) $(TT)
 Makefile: Makefile.in config.status
 	./config.status
 
+# Make the actual verilog program from the script template. This
+# simply invloves editing the substitution strings in the script into
+# the configured copy.
+tmp1 = bindir
+tmp2 = libdir
+verilog: $(srcdir)/verilog.sh
+	sed -e 's;@$(tmp1)@;@bindir@;' -e 's;@$(tmp2)@;@libdir@;' < $< > $@
+
 ivl: $O
 	$(CXX) $(CXXFLAGS) -o ivl $O
 
@@ -88,10 +96,13 @@ parse.h parse.cc: parse.y
 lexor.cc: lexor.lex
 	flex -PVL -s -olexor.cc lexor.lex
 
-install: all installdirs $(bindir)/ivl
+install: all installdirs $(bindir)/verilog $(bindir)/ivl
 	cd vpi ; make install
 	cd vvm ; make install
 	cd ivlpp ; make install
+
+$(bindir)/verilog: ./verilog
+	$(INSTALL_PROGRAM) ./verilog $(bindir)/verilog
 
 $(bindir)/ivl: ivl
 	$(INSTALL_PROGRAM) ./ivl $(bindir)/ivl
@@ -101,6 +112,7 @@ installdirs: mkinstalldirs
 
 uninstall:
 	rm -f $(bindir)/ivl
+	rm -f $(bindir)/verilog
 	cd vpi ; make uninstall
 	cd vvm ; make uninstall
 	cd ivlpp ; make uninstall
