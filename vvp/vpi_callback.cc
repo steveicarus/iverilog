@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.6 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.7 2001/10/12 03:00:09 steve Exp $"
 #endif
 
 /*
@@ -107,11 +107,11 @@ struct vvp_cb_fobj_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 		  fu->mode = M42;
 		  fu->obj = obj;
 	    } else {
-		  fu->mode = edge ? 1 : 2;
+		  fu->mode = 1;
 		  fu->event = (struct vvp_event_s*) 
 			malloc(sizeof (struct vvp_event_s));
 		  fu->event->threads = 0;
-		  fu->event->ival = fu->ival;
+		  fu->old_ival = fu->ival;
 		  fu->event->vvp_edge_tab = edge;
 		  fu->out = ipoint_input_index(ipoint_index(fdx, nfun-1), 3);
 	    }
@@ -260,6 +260,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.7  2001/10/12 03:00:09  steve
+ *  M42 implementation of mode 2 (Stephan Boettcher)
+ *
  * Revision 1.6  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *

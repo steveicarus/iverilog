@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.26 2001/08/08 01:05:06 steve Exp $"
+#ident "$Id: functor.cc,v 1.27 2001/10/12 03:00:09 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -218,7 +218,7 @@ const unsigned char vvp_edge_anyedge[16] = {
  * have. The latter is to support wider event/or then a single functor
  * can support.
  */
-static void functor_set_mode1(functor_t fp)
+static void functor_set_mode1(vvp_ipoint_t iptr, functor_t fp)
 {
       vvp_event_t ep = fp->event;
 
@@ -227,44 +227,31 @@ static void functor_set_mode1(functor_t fp)
 
       if (ep->threads || fp->out) {
 
-	    for (unsigned idx = 0 ;  idx < 4 ;  idx += 1) {
-		  unsigned oval = (ep->ival >> 2*idx) & 3;
-		  unsigned nval = (fp->ival >> 2*idx) & 3;
-
+	    unsigned char edge_p = 1;
+	    
+	    if (ep->vvp_edge_tab) {
+		  
+		  vvp_ipoint_t idx = ipoint_port(iptr);
+		  
+		  unsigned oval = (fp->old_ival >> 2*idx) & 3;
+		  unsigned nval = (fp->ival     >> 2*idx) & 3;
+		  
 		  unsigned val = (oval << 2) | nval;
-		  unsigned char edge_p = ep->vvp_edge_tab[val];
+		  edge_p = ep->vvp_edge_tab[val];
+	    }
 
-		  if (edge_p) {
-			vthread_t tmp = ep->threads;
-			ep->threads = 0;
-			vthread_schedule_list(tmp);
-
-			if (fp->out)
-			      schedule_assign(fp->out, 0, 0);
-		  }
+	    if (edge_p) {
+		  vthread_t tmp = ep->threads;
+		  ep->threads = 0;
+		  vthread_schedule_list(tmp);
+		  
+		  if (fp->out)
+			schedule_assign(fp->out, 0, 0);
 	    }
       }
 
 	/* the new value is the new old value. */
-      ep->ival = fp->ival;
-}
-
-/*
- * A mode-2 functor is a named event. In this case, any set at all is
- * enough to trigger the blocked threads.
- */
-static void functor_set_mode2(functor_t fp)
-{
-      vvp_event_t ep = fp->event;
-
-      if (ep->threads) {
-	    vthread_t tmp = ep->threads;
-	    ep->threads = 0;
-	    vthread_schedule_list(tmp);
-      }
-
-      if (fp->out)
-	    schedule_assign(fp->out, 0, 0);
+      fp->old_ival = fp->ival;
 }
 
 /*
@@ -281,15 +268,14 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, unsigned str, bool push)
 	/* Store the value and strengths in the input bits. */
       functor_put_input(fp, pp, bit, str);
 
+      assert(fp->mode != 2);
+
       switch (fp->mode) {
 	  case 0:
 	    functor_set_mode0(ptr, fp, push);
 	    break;
 	  case 1:
-	    functor_set_mode1(fp);
-	    break;
-	  case 2:
-	    functor_set_mode2(fp);
+	    functor_set_mode1(ptr, fp);
 	    break;
           case M42:
             if (!fp->obj) {
@@ -370,6 +356,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.27  2001/10/12 03:00:09  steve
+ *  M42 implementation of mode 2 (Stephan Boettcher)
+ *
  * Revision 1.26  2001/08/08 01:05:06  steve
  *  Initial implementation of vvp_fvectors.
  *  (Stephan Boettcher)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.104 2001/10/12 02:53:47 steve Exp $"
+#ident "$Id: compile.cc,v 1.105 2001/10/12 03:00:08 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1180,7 +1180,7 @@ void compile_event(char*label, char*type,
 
       obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
       obj->event->threads = 0;
-      obj->event->ival = obj->ival;
+      obj->old_ival = obj->ival;
 
       if (strcmp(type,"posedge") == 0)
 	    obj->event->vvp_edge_tab = vvp_edge_posedge;
@@ -1206,7 +1206,7 @@ void compile_named_event(char*label, char*name)
       obj->oval = 2;
       obj->odrive0 = 6;
       obj->odrive1 = 6;
-      obj->mode = 2;
+      obj->mode = 1;
       obj->out  = 0;
 #if defined(WITH_DEBUG)
       obj->breakpoint = 0;
@@ -1214,7 +1214,8 @@ void compile_named_event(char*label, char*name)
 
       obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
       obj->event->threads = 0;
-      obj->event->ival = obj->ival;
+      obj->event->vvp_edge_tab = 0;
+      obj->old_ival = obj->ival;
 
       free(label);
       free(name);
@@ -1231,7 +1232,7 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
       obj->oval = 2;
       obj->odrive0 = 6;
       obj->odrive1 = 6;
-      obj->mode = 2;
+      obj->mode = 1;
       obj->out  = 0;
 #if defined(WITH_DEBUG)
       obj->breakpoint = 0;
@@ -1239,7 +1240,7 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 
       obj->event = new struct vvp_event_s;
       obj->event->threads = 0;
-      obj->event->ival = obj->ival;
+      obj->old_ival = obj->ival;
       obj->event->vvp_edge_tab = 0;
 
 	/* Link the outputs of the named events to me. */
@@ -1568,6 +1569,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.105  2001/10/12 03:00:08  steve
+ *  M42 implementation of mode 2 (Stephan Boettcher)
+ *
  * Revision 1.104  2001/10/12 02:53:47  steve
  *  functor lookup includes vpi signal search.
  *

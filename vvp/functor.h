@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.32 2001/10/09 16:57:47 steve Exp $"
+#ident "$Id: functor.h,v 1.33 2001/10/12 03:00:09 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -144,10 +144,12 @@ struct functor_s {
       unsigned breakpoint : 1;
 #endif
 
-	/* functor mode:  0 == table ;  1 == event ; 2 == named event */
+	/* functor mode:  0 == table ;  1 == event */
       unsigned mode       : 2;
+        /* General purpose flag for M42 functor's convenience */ 
+      unsigned flag42     : 1;
       union {
- 	    unsigned char old_ival; // mode 3
+ 	    unsigned char old_ival; // mode 1, UDP
       };
 };
 
@@ -202,7 +204,6 @@ extern const unsigned char vvp_edge_anyedge[16];
 
 struct vvp_event_s {
       vthread_t threads;
-      unsigned char ival;
       const unsigned char*vvp_edge_tab;
 };
 
@@ -319,6 +320,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.33  2001/10/12 03:00:09  steve
+ *  M42 implementation of mode 2 (Stephan Boettcher)
+ *
  * Revision 1.32  2001/10/09 16:57:47  steve
  *  Collect functor reference handling into a single function. (Stephan Boettcher)
  *
