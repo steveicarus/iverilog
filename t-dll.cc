@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.98 2002/11/03 20:47:23 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.99 2002/11/03 22:44:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -43,7 +43,7 @@ inline ivl_dll_t ivl_dlopen(const char *name)
 inline void * ivl_dlsym(ivl_dll_t dll, const char *nm)
 {
   FARPROC sym;
-  return GetProcAddress((HMODULE)dll, nm);
+  return (void*)GetProcAddress((HMODULE)dll, nm);
 }
 
 inline void ivl_dlclose(ivl_dll_t dll)
@@ -1979,6 +1979,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.99  2002/11/03 22:44:19  steve
+ *  Cast for gcc convenience.
+ *
  * Revision 1.98  2002/11/03 20:47:23  steve
  *  Slightly more verbose load fail message.
  *
