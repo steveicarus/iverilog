@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.1 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.2 1999/09/21 00:13:40 steve Exp $"
 #endif
 
 
@@ -40,7 +40,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	    if (dynamic_cast<const NetExpr*>(ex))
 		  tmp = ex->dup_expr();
 	    else
-		  tmp = new NetEParam(path, text_);
+		  tmp = new NetEParam(des, path, text_);
 
 	    tmp->set_line(*this);
 	    return tmp;
@@ -150,6 +150,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.2  1999/09/21 00:13:40  steve
+ *  Support parameters that reference other paramters.
+ *
  * Revision 1.1  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *

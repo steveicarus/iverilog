@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_tree.cc,v 1.1 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.2 1999/09/21 00:13:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -109,10 +109,20 @@ NetExpr* NetEBComp::eval_tree()
 NetExpr* NetEConcat::eval_tree()
 {
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
-	      // If this parameter is already a constant, go on.
+
+	      // Parameter not here? This is an error, but presumably
+	      // already caught and we are here just to catch more.
+	    if (parms_[idx] == 0)
+		  continue;
+
+	      // If this parameter is already a constant, all is well
+	      // so go on.
 	    if (dynamic_cast<NetEConst*>(parms_[idx]))
 		  continue;
 
+	      // Finally, try to evaluate the parameter expression
+	      // that is here. If I succeed, reset the parameter to
+	      // the evaluated value.
 	    assert(parms_[idx]);
 	    NetExpr*expr = parms_[idx]->eval_tree();
 	    if (expr) {
@@ -144,8 +154,41 @@ NetExpr* NetEConcat::eval_tree()
       return res;
 }
 
+NetExpr* NetEParam::eval_tree()
+{
+      if (des_ == 0)
+	    return 0;
+
+      const NetExpr*expr = des_->find_parameter(path_, name_);
+      assert(expr);
+
+      NetExpr*nexpr = expr->dup_expr();
+      assert(nexpr);
+
+	// If the parameter that I refer to is already evaluated, then
+	// return the constant value.
+      if (dynamic_cast<NetEConst*>(nexpr))
+	    return nexpr;
+
+	// Try to evaluate the expression. If I cannot, then the
+	// expression is not a constant expression and I fail here.
+      NetExpr*res = nexpr->eval_tree();
+      if (res == 0) {
+	    delete nexpr;
+	    return 0;
+      }
+
+	// The result can be saved as the value of the parameter for
+	// future reference, and return a copy to the caller.
+      des_->set_parameter(path_+"."+name_, res);
+      return res->dup_expr();
+}
+
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.2  1999/09/21 00:13:40  steve
+ *  Support parameters that reference other paramters.
+ *
  * Revision 1.1  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *

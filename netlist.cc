@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.66 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: netlist.cc,v 1.67 1999/09/21 00:13:40 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1061,11 +1061,12 @@ NetEMemory* NetEMemory::dup_expr() const
 }
 
 NetEParam::NetEParam()
+: des_(0)
 {
 }
 
-NetEParam::NetEParam(const string&p, const string&n)
-: path_(p), name_(n)
+NetEParam::NetEParam(Design*d, const string&p, const string&n)
+: des_(d), path_(p), name_(n)
 {
 }
 
@@ -1818,6 +1819,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.67  1999/09/21 00:13:40  steve
+ *  Support parameters that reference other paramters.
+ *
  * Revision 1.66  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *

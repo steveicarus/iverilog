@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.42 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.43 1999/09/21 00:13:40 steve Exp $"
 #endif
 
 /*
@@ -605,9 +605,17 @@ void NetEConcat::dump(ostream&o) const
       if (repeat_ != 1)
 	    o << repeat_;
 
-      o << "{" << *parms_[0];
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1)
-	    o << ", " << *parms_[idx];
+      if (parms_[0])
+	    o << "{" << *parms_[0];
+      else
+	    o << "{";
+
+      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    if (parms_[idx])
+		  o << ", " << *parms_[idx];
+	    else
+		  o << ", ";
+      }
       o << "}";
 }
 
@@ -753,6 +761,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.43  1999/09/21 00:13:40  steve
+ *  Support parameters that reference other paramters.
+ *
  * Revision 1.42  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.67 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: netlist.h,v 1.68 1999/09/21 00:13:40 steve Exp $"
 #endif
 
 /*
@@ -1288,16 +1288,18 @@ class NetEConst  : public NetExpr {
 class NetEParam  : public NetExpr {
     public:
       NetEParam();
-      NetEParam(const string&path, const string&name);
+      NetEParam(class Design*des, const string&path, const string&name);
       ~NetEParam();
 
       virtual bool set_width(unsigned w);
       virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetExpr* eval_tree();
       virtual NetEParam* dup_expr() const;
 
       virtual void dump(ostream&) const;
 
     private:
+      Design*des_;
       string path_;
       string name_;
 };
@@ -1611,6 +1613,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.68  1999/09/21 00:13:40  steve
+ *  Support parameters that reference other paramters.
+ *
  * Revision 1.67  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *
