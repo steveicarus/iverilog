@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.73 2002/06/06 18:57:18 steve Exp $"
+#ident "$Id: lexor.lex,v 1.74 2002/12/04 02:07:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -375,7 +375,7 @@ W [ \t\b\f\r]+
       if (isgraph(yytext[0]))
 	    cerr << yytext[0];
       else
-	    cerr << (unsigned)yytext[0];
+	    cerr << "hex " << hex << (0xffU & ((unsigned) (yytext[0])));
 
       cerr << ")" << endl; }
 
