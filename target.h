@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.45 2000/09/02 20:54:21 steve Exp $"
+#ident "$Id: target.h,v 1.46 2000/09/17 21:26:16 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -77,6 +77,7 @@ struct target_t {
       virtual void lpm_clshift(const NetCLShift*);
       virtual void lpm_compare(const NetCompare*);
       virtual void lpm_divide(const NetDivide*);
+      virtual void lpm_modulo(const NetModulo*);
       virtual void lpm_ff(const NetFF*);
       virtual void lpm_mult(const NetMult*);
       virtual void lpm_mux(const NetMux*);
@@ -159,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.46  2000/09/17 21:26:16  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.45  2000/09/02 20:54:21  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *

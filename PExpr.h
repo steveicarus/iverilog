@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.43 2000/09/09 15:21:26 steve Exp $"
+#ident "$Id: PExpr.h,v 1.44 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 # include  <string>
@@ -146,7 +146,7 @@ class PEEvent : public PExpr {
 
       edge_t type() const;
       PExpr* expr() const;
-
+ 
       virtual void dump(ostream&) const;
 
     private:
@@ -324,6 +324,11 @@ class PEBinary : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+      NetNet* elaborate_net_mod_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
       NetNet* elaborate_net_log_(Design*des, const string&path,
 				 unsigned lwidth,
 				 unsigned long rise,
@@ -392,6 +397,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.44  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.43  2000/09/09 15:21:26  steve
  *  move lval elaboration to PExpr virtual methods.
  *

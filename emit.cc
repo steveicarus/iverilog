@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.52 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: emit.cc,v 1.53 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 /*
@@ -109,6 +109,12 @@ bool NetFF::emit_node(struct target_t*tgt) const
 bool NetForce::emit_node(struct target_t*tgt) const
 {
       tgt->net_force(this);
+      return true;
+}
+
+bool NetModulo::emit_node(struct target_t*tgt) const
+{
+      tgt->lpm_modulo(this);
       return true;
 }
 
@@ -475,6 +481,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.53  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.52  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *

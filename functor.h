@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.16 2000/08/01 02:48:42 steve Exp $"
+#ident "$Id: functor.h,v 1.17 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 /*
@@ -63,6 +63,9 @@ struct functor_t {
 	/* This method is called for each structural constant. */
       virtual void lpm_divide(class Design*des, class NetDivide*);
 
+	/* This method is called for each structural constant. */
+      virtual void lpm_modulo(class Design*des, class NetModulo*);
+
 	/* This method is called for each FF in the design. */
       virtual void lpm_ff(class Design*des, class NetFF*);
 
@@ -91,6 +94,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.17  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.16  2000/08/01 02:48:42  steve
  *  Support <= in synthesis of DFF and ram devices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.64 2000/05/11 23:37:28 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.65 2000/09/17 21:26:16 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -336,6 +336,34 @@ class vvm_idiv  : public vvm_nexus::recvr_t {
     public:
       explicit vvm_idiv(unsigned rwid, unsigned awid, unsigned bwid);
       ~vvm_idiv();
+
+      void init_DataA(unsigned idx, vpip_bit_t val);
+      void init_DataB(unsigned idx, vpip_bit_t val);
+
+      vvm_nexus::drive_t* config_rout(unsigned idx);
+      unsigned key_DataA(unsigned idx) const;
+      unsigned key_DataB(unsigned idx) const;
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+
+      unsigned rwid_;
+      unsigned awid_;
+      unsigned bwid_;
+      vpip_bit_t*bits_;
+      vvm_nexus::drive_t*out_;
+};
+
+/*
+ * This class behaves like a combinational modulo operator. There isn't really
+ * such a practical device, but this is useful for simulating code
+ * that includes a / operator in structural contexts.
+ */
+class vvm_imod  : public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_imod(unsigned rwid, unsigned awid, unsigned bwid);
+      ~vvm_imod();
 
       void init_DataA(unsigned idx, vpip_bit_t val);
       void init_DataB(unsigned idx, vpip_bit_t val);
@@ -948,6 +976,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.65  2000/09/17 21:26:16  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.64  2000/05/11 23:37:28  steve
  *  Add support for procedural continuous assignment.
  *

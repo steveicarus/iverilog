@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_imod.cc,v 1.2 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: vvm_imod.cc,v 1.3 2000/09/17 21:26:16 steve Exp $"
 #endif
 
 
@@ -75,8 +75,77 @@ void vvm_binop_imod(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
 }
 
 
+vvm_imod::vvm_imod(unsigned rwid, unsigned awid, unsigned bwid)
+: rwid_(rwid), awid_(awid), bwid_(bwid)
+{
+      bits_ = new vpip_bit_t[rwid_+awid_+bwid_];
+      for (unsigned idx = 0 ;  idx < rwid_+awid_+bwid_ ;  idx += 1)
+	    bits_[idx] = StX;
+
+      out_ = new vvm_nexus::drive_t[rwid];
+}
+
+vvm_imod::~vvm_imod()
+{
+      delete[]out_;
+      delete[]bits_;
+}
+
+void vvm_imod::init_DataA(unsigned idx, vpip_bit_t val)
+{
+      assert(idx < awid_);
+      bits_[rwid_+idx] = val;
+}
+
+void vvm_imod::init_DataB(unsigned idx, vpip_bit_t val)
+{
+      assert(idx < bwid_);
+      bits_[rwid_+awid_+idx] = val;
+}
+
+vvm_nexus::drive_t* vvm_imod::config_rout(unsigned idx)
+{
+      assert(idx < rwid_);
+      return out_+idx;
+}
+
+unsigned vvm_imod::key_DataA(unsigned idx) const
+{
+      assert(idx < awid_);
+      return rwid_+idx;
+}
+
+unsigned vvm_imod::key_DataB(unsigned idx) const
+{
+      assert(idx < bwid_);
+      return rwid_+awid_+idx;
+}
+
+void vvm_imod::take_value(unsigned key, vpip_bit_t val)
+{
+      if (B_EQ(bits_[key], val)) {
+	    bits_[key] = val;
+	    return;
+      }
+
+      bits_[key] = val;
+
+      vvm_bitset_t r (bits_, rwid_);
+      vvm_bitset_t a (bits_+rwid_, awid_);
+      vvm_bitset_t b (bits_+rwid_+awid_, bwid_);
+      vvm_binop_imod(r, a, b);
+
+      for (unsigned idx = 0 ;  idx < rwid_ ;  idx += 1)
+	    out_[idx].set_value(bits_[idx]);
+
+}      
+
+
 /*
  * $Log: vvm_imod.cc,v $
+ * Revision 1.3  2000/09/17 21:26:16  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.2  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *

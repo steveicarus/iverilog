@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.96 2000/09/10 02:18:16 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.97 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 /*
@@ -293,6 +293,13 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	<< "," << fall_time() << "," << decay_time() << ") " << name()
 	<< endl;
 
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetModulo::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NET_MODULO (NetModulo): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -969,6 +976,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.97  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.96  2000/09/10 02:18:16  steve
  *  elaborate complex l-values
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.47 2000/09/03 17:57:53 steve Exp $"
+#ident "$Id: target.cc,v 1.48 2000/09/17 21:26:16 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -100,6 +100,12 @@ void target_t::lpm_divide(const NetDivide*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetDivide." << endl;
+}
+
+void target_t::lpm_modulo(const NetModulo*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetModulo." << endl;
 }
 
 void target_t::lpm_ff(const NetFF*)
@@ -388,6 +394,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.48  2000/09/17 21:26:16  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.47  2000/09/03 17:57:53  steve
  *  Slightly more helpful warning.
  *

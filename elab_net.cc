@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.46 2000/09/07 21:28:51 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.47 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -41,7 +41,8 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
       switch (op_) {
 	  case '*':
 	    return elaborate_net_mul_(des, path, width, rise, fall, decay);
-	      //case '%':
+	  case '%':
+	    return elaborate_net_mod_(des, path, width, rise, fall, decay);
 	  case '/':
 	    return elaborate_net_div_(des, path, width, rise, fall, decay);
 	  case '+':
@@ -571,6 +572,58 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
 
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 	    connect(div->pin_Result(idx), osig->pin(idx));
+
+	/* If the lvalue is larger then the result, then pad the
+	   output with constant 0. */
+      if (cnt < osig->pin_count()) {
+	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(tmp);
+	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
+		  connect(osig->pin(idx), tmp->pin(0));
+      }
+
+      return osig;
+}
+
+/*
+ * Elaborate a modulo gate.
+ */
+NetNet* PEBinary::elaborate_net_mod_(Design*des, const string&path,
+				     unsigned lwidth,
+				     unsigned long rise,
+				     unsigned long fall,
+				     unsigned long decay) const
+{
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+      NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lsig == 0) return 0;
+      NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (rsig == 0) return 0;
+
+      unsigned rwidth = lsig->pin_count();
+      if (rsig->pin_count() > rwidth)
+	    rwidth = rsig->pin_count();
+      NetModulo*mod = new NetModulo(des->local_symbol(path), rwidth,
+				    lsig->pin_count(),
+				    rsig->pin_count());
+      des->add_node(mod);
+
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
+	    connect(mod->pin_DataA(idx), lsig->pin(idx));
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
+	    connect(mod->pin_DataB(idx), rsig->pin(idx));
+
+      if (lwidth == 0) lwidth = rwidth;
+      NetNet*osig = new NetNet(scope, des->local_symbol(path),
+			       NetNet::IMPLICIT, lwidth);
+      osig->local_flag(true);
+
+      unsigned cnt = osig->pin_count();
+      if (cnt > rwidth) cnt = rwidth;
+
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+	    connect(mod->pin_Result(idx), osig->pin(idx));
 
 	/* If the lvalue is larger then the result, then pad the
 	   output with constant 0. */
@@ -1693,6 +1746,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.47  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.46  2000/09/07 21:28:51  steve
  *  more robust abut ternary bit widths.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.174 2000/09/16 21:28:14 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.175 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -156,6 +156,7 @@ class target_vvm : public target_t {
       virtual void lpm_clshift(const NetCLShift*);
       virtual void lpm_compare(const NetCompare*);
       virtual void lpm_divide(const NetDivide*);
+      virtual void lpm_modulo(const NetModulo*);
       virtual void lpm_ff(const NetFF*);
       virtual void lpm_mult(const NetMult*);
       virtual void lpm_mux(const NetMux*);
@@ -1502,6 +1503,44 @@ void target_vvm::lpm_divide(const NetDivide*mul)
       string mname = mangle(mul->name());
 
       out << "static vvm_idiv " << mname << "(" << mul->width_r() <<
+	    "," << mul->width_a() << "," << mul->width_b() << ");" << endl;
+
+
+	/* Connect the DataA inputs... */
+      for (unsigned idx = 0 ;  idx < mul->width_a() ;  idx += 1) {
+	    string nexus = mul->pin_DataA(idx).nexus()->name();
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_DataA("
+		      << idx << "));" << endl;
+      }
+
+	/* Connect the DataB inputs... */
+      for (unsigned idx = 0 ;  idx < mul->width_b() ;  idx += 1) {
+	    string nexus = mul->pin_DataB(idx).nexus()->name();
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_DataB("
+		      << idx << "));" << endl;
+      }
+
+	/* Connect the output pins... */
+      for (unsigned idx = 0 ;  idx < mul->width_r() ;  idx += 1) {
+	    string nexus = mul->pin_Result(idx).nexus()->name();
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
+      }
+}
+
+void target_vvm::lpm_modulo(const NetModulo*mul)
+{
+      string mname = mangle(mul->name());
+
+      out << "static vvm_imod " << mname << "(" << mul->width_r() <<
 	    "," << mul->width_a() << "," << mul->width_b() << ");" << endl;
 
 
@@ -3346,6 +3385,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.175  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.174  2000/09/16 21:28:14  steve
  *  full featured l-values for non-blocking assiginment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.21 2000/08/01 02:48:41 steve Exp $"
+#ident "$Id: functor.cc,v 1.22 2000/09/17 21:26:15 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -52,6 +52,10 @@ void functor_t::lpm_const(class Design*, class NetConst*)
 }
 
 void functor_t::lpm_divide(class Design*, class NetDivide*)
+{
+}
+
+void functor_t::lpm_modulo(class Design*, class NetModulo*)
 {
 }
 
@@ -172,6 +176,11 @@ void NetLogic::functor_node(Design*des, functor_t*fun)
       fun->lpm_logic(des, this);
 }
 
+void NetModulo::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_modulo(des, this);
+}
+
 void NetMult::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_mult(des, this);
@@ -265,6 +274,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.22  2000/09/17 21:26:15  steve
+ *  Add support for modulus (Eric Aardoom)
+ *
  * Revision 1.21  2000/08/01 02:48:41  steve
  *  Support <= in synthesis of DFF and ram devices.
  *
