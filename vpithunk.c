@@ -3,6 +3,26 @@
 #include "vpi_user.h"
 #include "vpithunk.h"
 
+/*
+ * This code is linked into the VPI module, not the simulator. The
+ * module uses the symbols defined in here to call implementations
+ * supplied by the simulator, which loaded this module with dlopen or
+ * the equivilent.
+ *
+ * The vpi_thunk_p pointer points to a table of function pointers that
+ * point to all the functions that a simulator is expected to provide.
+ * The vlog_register_sim is a function that the simulator is expected
+ * to call with a value for the vpi_thunk_p pointer. This is how the
+ * run time linkage to all the functions in the make program are made.
+ *
+ * In Icarus Verilog, the VPI module is also supposed to export a
+ * vlog_startup_routines table. This is something that the programmer
+ * does, so the libvpi library, and the vlog_register_sim function,
+ * are invisible to the user.
+ *
+ * The simulator is careful to call the vpi_register_sim function from
+ * a loaded module before executing the startup routines.
+ */
 static p_vpi_thunk vpi_thunk_p = 0;
 
 #define VPITV_CALL(fn,args) {						\
@@ -174,4 +194,3 @@ extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 {
   VPIT_CALL(vpi_get_vlog_info, 0, (vlog_info_p));
 }
-

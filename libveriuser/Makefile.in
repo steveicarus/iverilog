@@ -1,0 +1,83 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc.,
+#    59 Temple Place - Suite 330
+#    Boston, MA 02111-1307, USA
+#
+#ident "$Id: Makefile.in,v 1.1 2002/05/19 05:21:00 steve Exp $"
+#
+#
+SHELL = /bin/sh
+
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = $(prefix)/include
+
+CC = @CC@ -I$(srcdir) -I$(srcdir)/..
+CXX = @CXX@ -I$(srcdir) -I$(srcdir)/..
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CPPFLAGS = @CPPFLAGS@ @DEFS@
+CXXFLAGS = @CXXFLAGS@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+STRIP = @STRIP@
+
+O = finish.o
+
+all: libveriuser.a
+
+check: all
+
+Makefile: Makefile.in config.status
+	./config.status
+
+libveriuser.a: $O
+	rm -f $@
+	ar cvq $@ $O
+
+%.o: %.c
+	@[ -d dep ] || mkdir dep
+	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep
+
+
+clean:
+	rm -f *.o dep/*.d libveriuser.a
+
+distclean: clean
+	rm -f Makefile config.status config.log config.cache
+
+install:: all installdirs $(libdir)/libveriuser.a
+
+$(libdir)/libveriuser.a: ./libveriuser.a
+	$(INSTALL_DATA) ./libveriuser.a $(libdir)/libveriuser.a
+
+installdirs: mkinstalldirs
+	$(srcdir)/mkinstalldirs $(includedir) $(libdir)
+
+uninstall::
+	rm -f $(libdir)/libveriuser.a
+
+-include $(patsubst %.o, dep/%.d, $O $P)

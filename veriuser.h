@@ -1,0 +1,55 @@
+#ifndef __veriuser_H
+#define __veriuser_H
+/*
+ * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT) && !defined(macintosh)
+#ident "$Id: veriuser.h,v 1.1 2002/05/19 05:21:00 steve Exp $"
+#endif
+
+/*
+ * This header file contains the definitions and declarations needed
+ * by an Icarus Verilog user using tf_ routines.
+ *
+ * NOTE: Icarus Verilog does not support tf_ routines. This is just a
+ * stub. The functions that are implemented here are actually
+ * implemented using VPI routines.
+ */
+
+#ifdef __cplusplus
+# define EXTERN_C_START extern "C" {
+# define EXTERN_C_END }
+#else
+# define EXTERN_C_START
+# define EXTERN_C_END
+#endif
+
+EXTERN_C_START
+
+extern int tf_dofinish(void);
+extern int tf_dostop(void);
+
+EXTERN_C_END
+
+/*
+ * $Log: veriuser.h,v $
+ * Revision 1.1  2002/05/19 05:21:00  steve
+ *  Start the libveriuser library.
+ *
+ */
+#endif

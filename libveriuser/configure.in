@@ -1,0 +1,20 @@
+AC_INIT(Makefile.in)
+
+AC_PROG_CC
+AC_PROG_INSTALL
+
+AC_CYGWIN
+AC_EXEEXT
+
+# Darwin requires -no-cpp-precomp
+case "${host}" in
+    *-*-darwin*)
+	CPPFLAGS="-no-cpp-precomp"
+	CFLAGS="-no-cpp-precomp"
+	;;
+esac
+
+AC_SUBST(EXEEXT)
+AC_SUBST(EXTRALIBS)
+
+AC_OUTPUT(Makefile)
