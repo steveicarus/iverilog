@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.23 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.24 2002/08/24 05:02:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -100,7 +100,7 @@ start
 		{ make_initializer(des_, $1->top, $2->assign);
 		}
 
-
+	;
 %%
 
 
