@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.14 2001/03/25 03:54:26 steve Exp $"
+#ident "$Id: compile.cc,v 1.15 2001/03/25 19:38:23 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -232,6 +232,12 @@ void compile_functor(char*label, char*type, unsigned init,
 
       } else if (strcmp(type, "AND") == 0) {
 	    obj->table = ft_AND;
+
+      } else if (strcmp(type, "NOR") == 0) {
+	    obj->table = ft_NOR;
+
+      } else if (strcmp(type, "NOT") == 0) {
+	    obj->table = ft_NOT;
 
       } else {
 	    yyerror("invalid functor type.");
@@ -587,6 +593,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.15  2001/03/25 19:38:23  steve
+ *  Support NOR and NOT gates.
+ *
  * Revision 1.14  2001/03/25 03:54:26  steve
  *  Add JMP0XZ and postpone net inputs when needed.
  *

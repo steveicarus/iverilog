@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.4 2001/03/22 05:08:00 steve Exp $"
+#ident "$Id: functor.h,v 1.5 2001/03/25 19:38:23 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -108,11 +108,16 @@ extern void functor_dump(FILE*fd);
 
 
 extern const unsigned char ft_AND[];
+extern const unsigned char ft_NOR[];
+extern const unsigned char ft_NOT[];
 extern const unsigned char ft_OR[];
 extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.5  2001/03/25 19:38:23  steve
+ *  Support NOR and NOT gates.
+ *
  * Revision 1.4  2001/03/22 05:08:00  steve
  *  implement %load, %inv, %jum/0 and %cmp/u
  *
