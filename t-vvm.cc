@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.202 2001/02/13 04:11:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.203 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -203,7 +203,7 @@ class target_vvm : public target_t {
       virtual void proc_utask( const NetUTask*);
       virtual bool proc_wait( const NetEvWait*);
       virtual void proc_while(const NetWhile*);
-      virtual void end_design(const Design*);
+      virtual int  end_design(const Design*);
 
       void start_process(ostream&os, const NetProcTop*);
       void end_process(ostream&os, const NetProcTop*);
@@ -1047,7 +1047,7 @@ void target_vvm::event(const NetEvent*event)
 	 << event->get_line() << ": event " << event->full_name() << endl;
 }
 
-void target_vvm::end_design(const Design*mod)
+int target_vvm::end_design(const Design*mod)
 {
       if (string_counter > 0)
 	    out << "static struct __vpiStringConst string_table[" <<
@@ -1157,6 +1157,7 @@ void target_vvm::end_design(const Design*mod)
       out << "}" << endl;
       out.close();
 
+      return 0;
 }
 
 bool target_vvm::process(const NetProcTop*top)
@@ -3635,6 +3636,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.203  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.202  2001/02/13 04:11:24  steve
  *  Generate proper code for wide condition expressions.
  *

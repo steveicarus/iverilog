@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.7 2001/03/25 03:53:24 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.8 2001/03/27 03:31:07 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
 
-static void show_statement(ivl_statement_t net);
+static int show_statement(ivl_statement_t net);
 
 static unsigned local_count = 0;
 static unsigned thread_count = 0;
@@ -81,7 +81,7 @@ static void set_to_nexus(ivl_nexus_t nex, unsigned bit)
       }
 }
 
-static void show_stmt_assign(ivl_statement_t net)
+static int show_stmt_assign(ivl_statement_t net)
 {
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
@@ -106,7 +106,7 @@ static void show_stmt_assign(ivl_statement_t net)
 		  set_to_nexus(ivl_lval_pin(lval, idx),
 			       bitchar_to_idx(bits[idx]));
 
-	    return;
+	    return 0;
       }
 
       { struct vector_info res = draw_eval_expr(rval);
@@ -130,10 +130,12 @@ static void show_stmt_assign(ivl_statement_t net)
 	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
       }
 
+      return 0;
 }
 
-static void show_stmt_condit(ivl_statement_t net)
+static int show_stmt_condit(ivl_statement_t net)
 {
+      int rc = 0;
       unsigned lab_false, lab_out;
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
       struct vector_info cond = draw_eval_expr(exp);
@@ -146,19 +148,21 @@ static void show_stmt_condit(ivl_statement_t net)
       fprintf(vvp_out, "    %%jmp/0xz  T_%05d.%d, %u;\n",
 	      thread_count, lab_false, cond.base);
 
-      show_statement(ivl_stmt_cond_true(net));
+      rc += show_statement(ivl_stmt_cond_true(net));
 
       if (ivl_stmt_cond_false(net)) {
 	    fprintf(vvp_out, "    %%jmp T_%05d.%d;\n", thread_count, lab_out);
 	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_false);
 
-	    show_statement(ivl_stmt_cond_false(net));
+	    rc += show_statement(ivl_stmt_cond_false(net));
 
 	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_out);
 
       } else {
 	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_false);
       }
+
+      return rc;
 }
 
 /*
@@ -169,30 +173,34 @@ static void show_stmt_condit(ivl_statement_t net)
  *        ...
  *        #<delay> <stmt>;
  */
-static void show_stmt_delay(ivl_statement_t net)
+static int show_stmt_delay(ivl_statement_t net)
 {
+      int rc = 0;
       unsigned long delay = ivl_stmt_delay_val(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
       fprintf(vvp_out, "    %%delay %lu;\n", delay);
-      show_statement(stmt);
+      rc += show_statement(stmt);
+
+      return rc;
 }
 
 /*
  * noop statements are implemented by doing nothing.
  */
-static void show_stmt_noop(ivl_statement_t net)
+static int show_stmt_noop(ivl_statement_t net)
 {
+      return 0;
 }
 
-static void show_system_task_call(ivl_statement_t net)
+static int show_system_task_call(ivl_statement_t net)
 {
       unsigned idx;
       unsigned parm_count = ivl_stmt_parm_count(net);
 
       if (parm_count == 0) {
 	    fprintf(vvp_out, "    %%vpi_call \"%s\";\n", ivl_stmt_name(net));
-	    return;
+	    return 0;
       }
 
       fprintf(vvp_out, "    %%vpi_call \"%s\"", ivl_stmt_name(net));
@@ -216,6 +224,7 @@ static void show_system_task_call(ivl_statement_t net)
       }
 
       fprintf(vvp_out, ";\n");
+      return 0;
 }
 
 /*
@@ -223,14 +232,15 @@ static void show_system_task_call(ivl_statement_t net)
  * switches on the statement type and draws code based on the type and
  * further specifics.
  */
-static void show_statement(ivl_statement_t net)
+static int show_statement(ivl_statement_t net)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
+      int rc = 0;
 
       switch (code) {
 
 	  case IVL_ST_ASSIGN:
-	    show_stmt_assign(net);
+	    rc += show_stmt_assign(net);
 	    break;
 
 	      /* Begin-end blocks simply draw their contents. */
@@ -238,32 +248,35 @@ static void show_statement(ivl_statement_t net)
 		unsigned idx;
 		unsigned cnt = ivl_stmt_block_count(net);
 		for (idx = 0 ;  idx < cnt ;  idx += 1) {
-		      show_statement(ivl_stmt_block_stmt(net, idx));
+		      rc += show_statement(ivl_stmt_block_stmt(net, idx));
 		}
 		break;
 	  }
 
 	  case IVL_ST_CONDIT:
-	    show_stmt_condit(net);
+	    rc += show_stmt_condit(net);
 	    break;
 
 	  case IVL_ST_DELAY:
-	    show_stmt_delay(net);
+	    rc += show_stmt_delay(net);
 	    break;
 
 	  case IVL_ST_NOOP:
-	    show_stmt_noop(net);
+	    rc += show_stmt_noop(net);
 	    break;
 
 	  case IVL_ST_STASK:
-	    show_system_task_call(net);
+	    rc += show_system_task_call(net);
 	    break;
 
 	  default:
 	    fprintf(stderr, "vvp.tgt: Unable to draw statement type %u\n",
 		    code);
+	    rc += 1;
 	    break;
       }
+
+      return rc;
 }
 
 /*
@@ -274,6 +287,7 @@ static void show_statement(ivl_statement_t net)
 
 int draw_process(ivl_process_t net, void*x)
 {
+      int rc = 0;
       ivl_scope_t scope = ivl_process_scope(net);
 
       local_count = 0;
@@ -284,7 +298,7 @@ int draw_process(ivl_process_t net, void*x)
       fprintf(vvp_out, "T_%05d\n", thread_count);
 
 	/* Draw the contents of the thread. */
-      show_statement(ivl_process_stmt(net));
+      rc += show_statement(ivl_process_stmt(net));
 
 
 	/* Terminate the thread with either an %end instruction (initial
@@ -307,11 +321,14 @@ int draw_process(ivl_process_t net, void*x)
 
 
       thread_count += 1;
-      return 0;
+      return rc;
 }
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.8  2001/03/27 03:31:07  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.7  2001/03/25 03:53:24  steve
  *  Skip true clause if condition ix 0, x or z
  *

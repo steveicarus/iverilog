@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.28 2001/03/20 01:44:14 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.29 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -218,10 +218,11 @@ bool dll_target::start_design(const Design*des)
  * Here ivl is telling us that the design is scanned completely, and
  * here is where we call the API to process the constructed design.
  */
-void dll_target::end_design(const Design*)
+int dll_target::end_design(const Design*)
 {
-      (target_)(&des_);
+      int rc = (target_)(&des_);
       ivl_dlclose(dll_);
+      return rc;
 }
 
 /*
@@ -690,6 +691,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.29  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.28  2001/03/20 01:44:14  steve
  *  Put processes in the proper scope.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.55 2000/11/04 01:54:01 steve Exp $"
+#ident "$Id: emit.cc,v 1.56 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 /*
@@ -398,7 +398,9 @@ bool Design::emit(struct target_t*tgt) const
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
 	    rc = rc && idx->emit(tgt);
 
-      tgt->end_design(this);
+      if (tgt->end_design(this) != 0)
+	    rc = false;
+
       return rc;
 }
 
@@ -476,6 +478,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.56  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.55  2000/11/04 01:54:01  steve
  *  Modifications in support of gcc 2.96
  *

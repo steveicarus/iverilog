@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.3 2001/03/23 02:41:04 steve Exp $"
+#ident "$Id: vvp.c,v 1.4 2001/03/27 03:31:07 steve Exp $"
 #endif
 
 /*
@@ -50,6 +50,7 @@ static void draw_module_declarations(ivl_design_t des)
 
 int target_design(ivl_design_t des)
 {
+      int rc;
       ivl_scope_t root;
       const char*path = ivl_design_flag(des, "-o");
       assert(path);
@@ -65,11 +66,11 @@ int target_design(ivl_design_t des)
       root = ivl_design_root(des);
       draw_scope(root, 0);
 
-      ivl_design_process(des, draw_process, 0);
+      rc = ivl_design_process(des, draw_process, 0);
 
       fclose(vvp_out);
 
-      return 0;
+      return rc;
 }
 
 #ifdef __CYGWIN32__

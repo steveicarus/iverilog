@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.40 2001/02/10 03:22:49 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.41 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -95,7 +95,7 @@ class target_xnf  : public target_t {
 
     public:
       bool start_design(const Design*);
-      void end_design(const Design*);
+      int  end_design(const Design*);
       void memory(const NetMemory*);
       void signal(const NetNet*);
 
@@ -238,10 +238,11 @@ bool target_xnf::start_design(const Design*des)
       return true;
 }
 
-void target_xnf::end_design(const Design*)
+int target_xnf::end_design(const Design*)
 {
       out_ << "EOF" << endl;
       ncf_.close();
+      return 0;
 }
 
 void scrape_pad_info(string str, char&dir, unsigned&num)
@@ -922,6 +923,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.41  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.40  2001/02/10 03:22:49  steve
  *  Report errors when XNF code has constant X values. (PR#128)
  *

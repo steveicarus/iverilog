@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.48 2000/11/04 01:54:01 steve Exp $"
+#ident "$Id: target.h,v 1.49 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -121,8 +121,9 @@ struct target_t {
       virtual bool proc_wait(const NetEvWait*);
       virtual void proc_while(const NetWhile*);
 
-	/* Done with the design. */
-      virtual void end_design(const Design*);
+	/* Done with the design. The target returns !0 if there is
+	   some error in the code generation. */
+      virtual int end_design(const Design*);
 };
 
 /* This class is used by the NetExpr class to help with the scanning
@@ -159,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.49  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.48  2000/11/04 01:54:01  steve
  *  Modifications in support of gcc 2.96
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.49 2000/09/26 01:35:42 steve Exp $"
+#ident "$Id: target.cc,v 1.50 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -312,8 +312,9 @@ void target_t::proc_while(const NetWhile*net)
       net->dump(cerr, 6);
 }
 
-void target_t::end_design(const Design*)
+int target_t::end_design(const Design*)
 {
+      return 0;
 }
 
 expr_scan_t::~expr_scan_t()
@@ -388,6 +389,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.50  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.49  2000/09/26 01:35:42  steve
  *  Remove the obsolete NetEIdent class.
  *

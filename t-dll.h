@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.22 2001/03/20 01:44:14 steve Exp $"
+#ident "$Id: t-dll.h,v 1.23 2001/03/27 03:31:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -52,7 +52,7 @@ struct ivl_design_s {
 struct dll_target  : public target_t, public expr_scan_t {
 
       bool start_design(const Design*);
-      void end_design(const Design*);
+      int  end_design(const Design*);
 
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
@@ -369,6 +369,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.23  2001/03/27 03:31:06  steve
+ *  Support error code from target_t::end_design method.
+ *
  * Revision 1.22  2001/03/20 01:44:14  steve
  *  Put processes in the proper scope.
  *
