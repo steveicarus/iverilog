@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.18 2002/05/12 23:44:41 steve Exp $"
+#ident "$Id: schedule.cc,v 1.19 2002/07/31 03:22:44 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -392,12 +392,32 @@ void schedule_simulate(void)
 	    }
       }
 
+	/* Clean up lingering ReadOnlySync events. It is safe to do
+	   that out here because ReadOnlySync events are not allowed
+	   to create new events. */
+      for (struct event_s*sync_cur = pull_sync_event()
+		 ; sync_cur ;  sync_cur = pull_sync_event()) {
+
+	    assert(sync_cur->type == TYPE_GEN);
+
+	    if (sync_cur->obj && sync_cur->obj->run) {
+		  assert(sync_cur->obj->sync_flag);
+		  sync_cur->obj->run(sync_cur->obj, sync_cur->val);
+	    }
+
+	    e_free(sync_cur);
+      }
+
+
       // Execute post-simulation callbacks
       vpiPostsim();
 }
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.19  2002/07/31 03:22:44  steve
+ *  Account for the tail readonly callbacks.
+ *
  * Revision 1.18  2002/05/12 23:44:41  steve
  *  task calls and forks push the thread event in the queue.
  *
