@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.16 2000/05/11 01:37:33 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.17 2000/07/08 22:39:32 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -77,8 +77,12 @@ void vvm_1bit_out::output(vpip_bit_t val)
       else
 	    val = driveX_;
 
-      vvm_event*ev = new vvm_out_event(val, this);
-      ev -> schedule(delay_);
+      if (delay_) {
+	    vvm_event*ev = new vvm_out_event(val, this);
+	    ev -> schedule(delay_);
+      } else {
+	    set_value(val);
+      }
 }
 
 
@@ -350,6 +354,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.17  2000/07/08 22:39:32  steve
+ *  pass zero-delay values immediately.
+ *
  * Revision 1.16  2000/05/11 01:37:33  steve
  *  Calculate the X output value from drive0 and drive1
  *
