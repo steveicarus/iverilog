@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.6 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: parse.y,v 1.7 1998/11/25 02:35:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -30,6 +30,7 @@ extern void lex_end_table();
 %}
 
 %union {
+      char letter;
       string*text;
       list<string>*strings;
 
@@ -73,6 +74,13 @@ extern void lex_end_table();
 %token K_wor K_xnor K_xor
 
 %token KK_attribute
+
+%type <letter>  udp_input_sym udp_output_sym
+%type <text>    udp_input_list udp_sequ_entry udp_comb_entry
+%type <strings> udp_entry_list udp_comb_entry_list udp_sequ_entry_list
+%type <strings> udp_body udp_port_list
+%type <wires>   udp_port_decl udp_port_decls
+%type <statement> udp_initial udp_init_opt
 
 %type <text> identifier lvalue register_variable
 %type <strings> list_of_register_variables
@@ -622,46 +630,162 @@ statement_opt
 
 udp_body
 	: K_table { lex_start_table(); }
-	    udp_comb_entry_list
-	  K_endtable { lex_end_table(); }
+	    udp_entry_list
+	  K_endtable { lex_end_table(); $$ = $3; }
+	;
+
+udp_entry_list
+	: udp_comb_entry_list
+	| udp_sequ_entry_list
 	;
 
 udp_comb_entry
 	: udp_input_list ':' udp_output_sym ';'
+		{ string*tmp = $1;
+		  *tmp += ':';
+		  *tmp += $3;
+		  $$ = tmp;
+		}
 	;
 
 udp_comb_entry_list
 	: udp_comb_entry
+		{ list<string>*tmp = new list<string>;
+		  tmp->push_back(*$1);
+		  delete $1;
+		  $$ = tmp;
+		}
 	| udp_comb_entry_list udp_comb_entry
+		{ list<string>*tmp = $1;
+		  tmp->push_back(*$2);
+		  delete $2;
+		  $$ = tmp;
+		}
+	;
+
+udp_sequ_entry_list
+	: udp_sequ_entry
+		{ list<string>*tmp = new list<string>;
+		  tmp->push_back(*$1);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| udp_sequ_entry_list udp_sequ_entry
+		{ list<string>*tmp = $1;
+		  tmp->push_back(*$2);
+		  delete $2;
+		  $$ = tmp;
+		}
+	;
+
+udp_sequ_entry
+	: udp_input_list ':' udp_input_sym ':' udp_output_sym ';'
+		{ string*tmp = $1;
+		  *tmp += ':';
+		  *tmp += $3;
+		  *tmp += ':';
+		  *tmp += $5;
+		  $$ = tmp;
+		}
+	;
+
+udp_initial
+	: K_initial IDENTIFIER '=' NUMBER ';'
+		{ PExpr*etmp = new PENumber($4);
+		  PAssign*atmp = new PAssign(*$2, etmp);
+		  delete $2;
+		  $$ = atmp;
+		}
+	;
+
+udp_init_opt
+	: udp_initial  { $$ = $1; }
+	|              { $$ = 0; }
 	;
 
 udp_input_list
 	: udp_input_sym
+		{ string*tmp = new string;
+		  *tmp += $1;
+		  $$ = tmp;
+		}
 	| udp_input_list udp_input_sym
+		{ string*tmp = $1;
+		  *tmp += $2;
+		  $$ = tmp;
+		}
 	;
 
-udp_input_sym : '0' | '1' | 'x' | 'X' | '?' | 'b' | 'B' ;
-udp_output_sym : '0' | '1' | 'x' | 'X' ;
+udp_input_sym
+	: '0' { $$ = '0'; }
+	| '1' { $$ = '1'; }
+	| 'x' { $$ = 'x'; }
+	| '?' { $$ = '?'; }
+	| 'b' { $$ = 'b'; }
+	| '*' { $$ = '*'; }
+	| 'f' { $$ = 'f'; }
+	| 'r' { $$ = 'f'; }
+	;
+
+udp_output_sym
+	: '0' { $$ = '0'; }
+	| '1' { $$ = '1'; }
+	| 'x' { $$ = 'x'; }
+	| '-' { $$ = '-'; }
+	;
 
 udp_port_decl
 	: K_input list_of_variables ';'
+		{ $$ = pform_make_udp_input_ports($2); }
 	| K_output IDENTIFIER ';'
+		{ PWire*pp = new PWire(*$2);
+		  pp->port_type = NetNet::POUTPUT;
+		  list<PWire*>*tmp = new list<PWire*>;
+		  tmp->push_back(pp);
+		  delete $2;
+		  $$ = tmp;
+		}
+	| K_reg IDENTIFIER ';'
+		{ PWire*pp = new PWire(*$2, NetNet::REG);
+		  pp->port_type = NetNet::PIMPLICIT;
+		  list<PWire*>*tmp = new list<PWire*>;
+		  tmp->push_back(pp);
+		  delete $2;
+		  $$ = tmp;
+		}
 	;
 
 udp_port_decls
 	: udp_port_decl
+		{ $$ = $1; }
 	| udp_port_decls udp_port_decl
+		{ list<PWire*>*tmp = $1;
+		  tmp->merge(*$2);
+		  delete $2;
+		  $$ = tmp;
+		}
 	;
 
 udp_port_list
-	: IDENTIFIER { ; }
-	| udp_port_list ',' IDENTIFIER { ; }
+	: IDENTIFIER
+		{ list<string>*tmp = new list<string>;
+		  tmp->push_back(*$1);
+		  delete $1;
+		  $$ = tmp;
+		}
+	| udp_port_list ',' IDENTIFIER
+		{ list<string>*tmp = $1;
+		  tmp->push_back(*$3);
+		  delete $3;
+		  $$ = tmp;
+		}
 	;
 
 udp_primitive
 	: K_primitive IDENTIFIER '(' udp_port_list ')' ';'
 	    udp_port_decls
+	    udp_init_opt
 	    udp_body
 	  K_endprimitive
-		{ yyerror(@1, "Sorry, UDP primitives not supported."); }
+		{ pform_make_udp($2, $4, $7, $9, $8); }
 	;

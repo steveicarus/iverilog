@@ -17,12 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.4 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: pform.cc,v 1.5 1998/11/25 02:35:53 steve Exp $"
 #endif
 
 # include  "pform.h"
 # include  "parse_misc.h"
+# include  "PUdp.h"
 # include  <list>
+# include  <map>
 # include  <assert.h>
 # include  <typeinfo>
 
@@ -31,6 +33,7 @@ extern int VLparse();
 static Module*cur_module = 0;
 
 static list<Module*>*vl_modules = 0;
+static map<string,PUdp*> vl_primitives;
 
 /*
  * This function evaluates delay expressions. The result should be a
@@ -73,6 +76,151 @@ void pform_endmodule(const string&name)
       assert(name == cur_module->get_name());
       cur_module = 0;
 }
+
+void pform_make_udp(string*name, list<string>*parms,
+		    list<PWire*>*decl, list<string>*table,
+		    Statement*init_expr)
+{
+      assert(parms->size() > 0);
+
+	/* Put the declarations into a map, so that I can check them
+	   off with the parameters in the list. I will rebuild a list
+	   of parameters for the PUdp object. */
+      map<string,PWire*> defs;
+      for (list<PWire*>::iterator cur = decl->begin()
+		 ; cur != decl->end()
+		 ; cur ++ )
+
+	    if (defs[(*cur)->name] == 0) {
+		  defs[(*cur)->name] = *cur;
+
+	    } else switch ((*cur)->port_type) {
+
+		case NetNet::PIMPLICIT:
+		case NetNet::POUTPUT:
+		  assert(defs[(*cur)->name]->port_type != NetNet::PINPUT);
+		    // OK, merge the output definitions.
+		  defs[(*cur)->name]->port_type = NetNet::POUTPUT;
+		  if ((*cur)->type == NetNet::REG)
+			defs[(*cur)->name]->type = NetNet::REG;
+		  break;
+
+		case NetNet::PINPUT:
+		    // Allow duplicate input declarations.
+		  assert(defs[(*cur)->name]->port_type == NetNet::PINPUT);
+		  delete *cur;
+		  break;
+
+		default:
+		  assert(0);
+	    }
+
+
+	/* Put the parameters into a vector of wire descriptions. Look
+	   in the map for the definitions of the name. */
+      vector<PWire*> pins (parms->size());
+      { list<string>::iterator cur;
+        unsigned idx;
+        for (cur = parms->begin(), idx = 0
+		   ; cur != parms->end()
+		   ; idx++, cur++) {
+	      pins[idx] = defs[*cur];
+	}
+      }
+
+	/* Check that the output is an output and the inputs are
+	   inputs. I can also make sure that only the single output is
+	   declared a register, if anything. */
+      assert(pins.size() > 0);
+      assert(pins[0]);
+      assert(pins[0]->port_type == NetNet::POUTPUT);
+      for (unsigned idx = 1 ;  idx < pins.size() ;  idx += 1) {
+	    assert(pins[idx]);
+	    assert(pins[idx]->port_type == NetNet::PINPUT);
+	    assert(pins[idx]->type != NetNet::REG);
+      }
+
+	/* Interpret and check the table entry strings, to make sure
+	   they correspond to the inputs, output and output type. Make
+	   up vectors for the fully interpreted result that can be
+	   placed in the PUdp object. */
+      vector<string> input   (table->size());
+      vector<char>   current (table->size());
+      vector<char>   output  (table->size());
+      { unsigned idx = 0;
+        for (list<string>::iterator cur = table->begin()
+		   ; cur != table->end()
+		   ; cur ++, idx += 1) {
+	      string tmp = *cur;
+	      assert(tmp.find(':') == (pins.size() - 1));
+
+	      input[idx] = tmp.substr(0, pins.size()-1);
+	      tmp = tmp.substr(pins.size()-1);
+
+	      if (pins[0]->type == NetNet::REG) {
+		    assert(tmp[0] == ':');
+		    assert(tmp.size() == 4);
+		    current[idx] = tmp[1];
+		    tmp = tmp.substr(2);
+	      }
+
+	      assert(tmp[0] == ':');
+	      assert(tmp.size() == 2);
+	      output[idx] = tmp[1];
+	}
+      }
+
+	/* Verify the "initial" statement, if present, to be sure that
+	   it only assignes to the output and the output is
+	   registered. Then save the initial value that I get. */
+      verinum::V init = verinum::Vx;
+      if (init_expr) {
+	      // XXXX
+	    assert(pins[0]->type == NetNet::REG);
+
+	    PAssign*pa = dynamic_cast<PAssign*>(init_expr);
+	    assert(pa);
+
+	      // XXXX
+	    assert(pa->lval() == pins[0]->name);
+
+	    const PENumber*np = dynamic_cast<const PENumber*>(pa->get_expr());
+	    assert(np);
+
+	    init = np->value()[0];
+      }
+
+	// Put the primitive into the primitives table
+      if (vl_primitives[*name]) {
+	    VLerror("UDP primitive already exists.");
+
+      } else {
+	    PUdp*udp = new PUdp(*name, parms->size());
+
+	      // Detect sequential udp.
+	    if (pins[0]->type == NetNet::REG)
+		  udp->sequential = true;
+
+	      // Make the port list for the UDP
+	    for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1)
+		  udp->ports[idx] = pins[idx]->name;
+
+	    udp->tinput   = input;
+	    udp->tcurrent = current;
+	    udp->toutput  = output;
+	    udp->initial  = init;
+
+	    vl_primitives[*name] = udp;
+      }
+
+	/* Delete the excess tables and lists from the parser. */
+      delete name;
+      delete parms;
+      delete decl;
+      delete table;
+      delete init_expr;
+}
+
 
 void pform_makegate(PGBuiltin::Type type,
 		    const string&name,
@@ -249,6 +397,22 @@ void pform_set_net_range(list<string>*names, list<PExpr*>*range)
       }
 }
 
+list<PWire*>* pform_make_udp_input_ports(list<string>*names)
+{
+      list<PWire*>*out = new list<PWire*>;
+
+      for (list<string>::const_iterator cur = names->begin()
+		 ; cur != names->end()
+		 ; cur ++ ) {
+	    PWire*pp = new PWire(*cur);
+	    pp->port_type = NetNet::PINPUT;
+	    out->push_back(pp);
+      }
+
+      delete names;
+      return out;
+}
+
 void pform_make_behavior(PProcess::Type type, Statement*st)
 {
       PProcess*pp = new PProcess(type, st);
@@ -284,7 +448,7 @@ Statement* pform_make_calltask(string*name, list<PExpr*>*parms)
 }
 
 FILE*vl_input = 0;
-int pform_parse(FILE*input, list<Module*>&modules)
+int pform_parse(FILE*input, list<Module*>&modules, map<string,PUdp*>&prim)
 {
       vl_input = input;
       vl_modules = &modules;
@@ -294,12 +458,17 @@ int pform_parse(FILE*input, list<Module*>&modules)
       if (rc) {
 	    cerr << "I give up." << endl;
       }
+
+      prim = vl_primitives;
       return error_count;
 }
 
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.5  1998/11/25 02:35:53  steve
+ *  Parse UDP primitives all the way to pform.
+ *
  * Revision 1.4  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

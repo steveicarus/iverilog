@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.5 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.6 1998/11/25 02:35:54 steve Exp $"
 #endif
 
 /*
@@ -332,9 +332,42 @@ void pform_dump(ostream&out, Module*mod)
       out << "endmodule" << endl;
 }
 
+void PUdp::dump(ostream&out) const
+{
+      out << "primitive " << name_ << "(" << ports[0];
+      for (unsigned idx = 1 ;  idx < ports.size() ;  idx += 1)
+	    out << ", " << ports[idx];
+      out << ");" << endl;
+
+      if (sequential)
+	    out << "    reg " << ports[0] << ";" << endl;
+
+      out << "    table" << endl;
+      for (unsigned idx = 0 ;  idx < tinput.size() ;  idx += 1) {
+	    out << "     ";
+	    for (unsigned chr = 0 ;  chr < tinput[idx].length() ;  chr += 1)
+		  out << " " << tinput[idx][chr];
+
+	    if (sequential)
+		  out << " : " << tcurrent[idx];
+
+	    out << " : " << toutput[idx] << " ;" << endl;
+      }
+      out << "    endtable" << endl;
+
+      if (sequential)
+	    out << "    initial " << ports[0] << " = 1'b" << initial
+		<< ";" << endl;
+
+      out << "endprimitive" << endl;
+}
+
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.6  1998/11/25 02:35:54  steve
+ *  Parse UDP primitives all the way to pform.
+ *
  * Revision 1.5  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

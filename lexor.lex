@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.4 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: lexor.lex,v 1.5 1998/11/25 02:35:53 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -55,7 +55,7 @@ static verinum*make_sized_hex(const char*txt);
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
 
-"//".* { ; }
+<*>"//".* { ; }
 
 "/*" { BEGIN(CCOMMENT); }
 <CCOMMENT>.    { yymore(); }
@@ -82,7 +82,14 @@ static verinum*make_sized_hex(const char*txt);
 		return STRING; }
 <CSTRING>.    { yymore(); }
 
-<UDPTABLE>[xXbB01\?] { return yytext[0]; }
+<UDPTABLE>\(\?\?\) { return '*'; }
+<UDPTABLE>\(01\)   { return 'r'; }
+<UDPTABLE>\(10\)   { return 'f'; }
+<UDPTABLE>[bB]     { return 'b'; }
+<UDPTABLE>[fF]     { return 'f'; }
+<UDPTABLE>[rR]     { return 'r'; }
+<UDPTABLE>[xX]     { return 'x'; }
+<UDPTABLE>[pPnN01\?\*\-] { return yytext[0]; }
 
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = check_identifier(yytext);
@@ -103,13 +110,13 @@ static verinum*make_sized_hex(const char*txt);
       yylval.text = new string(yytext);
       return SYSTEM_IDENTIFIER; }
 
-([0-9][0-9_])?\'d[0-9][0-9_]*    { yylval.number = 0;
+[0-9][0-9_]*\'d[0-9][0-9_]*    { yylval.number = 0;
 				   return NUMBER; }
-([0-9][0-9_])?\'[bB][0-1xz_]+    { yylval.number = make_sized_binary(yytext);
+[0-9][0-9_]*\'[bB][0-1xz_]+    { yylval.number = make_sized_binary(yytext);
 				   return NUMBER; }
-([0-9][0-9_])?\'[oO][0-7xz_]+    { yylval.number = make_sized_octal(yytext);
+[0-9][0-9_]*\'[oO][0-7xz_]+    { yylval.number = make_sized_octal(yytext);
 				   return NUMBER; }
-([0-9][0-9_])?\'[hH][0-9a-fA-Fxz_]+ { yylval.number = make_sized_hex(yytext);
+[0-9][0-9_]*\'[hH][0-9a-fA-Fxz_]+ { yylval.number = make_sized_hex(yytext);
 				      return NUMBER; }
 
 [0-9][0-9_]*		 {
@@ -275,7 +282,7 @@ static verinum*make_sized_binary(const char*txt)
 
       verinum::V*bits = new verinum::V[size];
 
-      unsigned idx = size;
+      unsigned idx = 0;
       char*eptr = ptr + strlen(ptr) - 1;
       while ((eptr > ptr) && (idx < size)) {
 
@@ -306,7 +313,7 @@ static verinum*make_sized_binary(const char*txt)
 
 	// Zero-extend binary number, except that z or x is extended
 	// if it is the highest supplied digit.
-      while (idx > 0) {
+      while (idx < size) {
 	    switch (ptr[1]) {
 		case '0':
 		case '1':
@@ -336,7 +343,7 @@ static verinum*make_sized_octal(const char*txt)
 
       verinum::V*bits = new verinum::V[size];
 
-      unsigned idx = size;
+      unsigned idx = 0;
       char*eptr = ptr + strlen(ptr);
 
       while ((eptr > ptr) && (idx < (size-3))) {
@@ -363,7 +370,7 @@ static verinum*make_sized_octal(const char*txt)
       }
 
 	// zero extend octal numbers
-      while (idx > 0) switch (ptr[1]) {
+      while (idx < size) switch (ptr[1]) {
 	  case 'x':
 	    bits[idx++] = verinum::Vx;
 	    break;
@@ -387,7 +394,7 @@ static verinum*make_sized_hex(const char*txt)
 
       verinum::V*bits = new verinum::V[size];
 
-      unsigned idx = size;
+      unsigned idx = 0;
       char*eptr = ptr + strlen(ptr);
 
       while ((eptr > ptr) && (idx < (size-4))) {
@@ -428,7 +435,7 @@ static verinum*make_sized_hex(const char*txt)
       }
 
 	// zero extend octal numbers
-      while (idx > 0) switch (ptr[1]) {
+      while (idx < size) switch (ptr[1]) {
 	  case 'x':
 	    bits[idx++] = verinum::Vx;
 	    break;

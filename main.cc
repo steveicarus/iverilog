@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.5 1998/11/18 04:25:22 steve Exp $"
+#ident "$Id: main.cc,v 1.6 1998/11/25 02:35:53 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -155,7 +155,8 @@ int main(int argc, char*argv[])
 
 	/* Parse the input. Make the pform. */
       list<Module*>modules;
-      int rc = pform_parse(input, modules);
+      map<string,PUdp*>primitives;
+      int rc = pform_parse(input, modules, primitives);
 
       if (rc) {
 	    return rc;
@@ -163,11 +164,17 @@ int main(int argc, char*argv[])
 
       if (dump_flag) {
 	    ofstream out ("a.pf");
-	    out << "PFORM DUMP:" << endl;
+	    out << "PFORM DUMP MODULES:" << endl;
 	    for (list<Module*>::iterator mod = modules.begin()
 		       ; mod != modules.end()
 		       ; mod ++ ) {
 		  pform_dump(out, *mod);
+	    }
+	    out << "PFORM DUMP PRIMITIVES:" << endl;
+	    for (map<string,PUdp*>::iterator idx = primitives.begin()
+		       ; idx != primitives.end()
+		       ; idx ++ ) {
+		  (*idx).second->dump(out);
 	    }
       }
 
@@ -219,6 +226,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.6  1998/11/25 02:35:53  steve
+ *  Parse UDP primitives all the way to pform.
+ *
  * Revision 1.5  1998/11/18 04:25:22  steve
  *  Add -f flags for generic flag key/values.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.2 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: pform.h,v 1.3 1998/11/25 02:35:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -27,6 +27,7 @@
 # include  "Statement.h"
 # include  "PGate.h"
 # include  "PExpr.h"
+# include  "PUdp.h"
 # include  "PWire.h"
 # include  "verinum.h"
 # include  <iostream.h>
@@ -77,6 +78,10 @@ struct lgate {
 extern void pform_startmodule(const string&, list<PWire*>*ports);
 extern void pform_endmodule(const string&);
 
+extern void pform_make_udp(string*name, list<string>*parms,
+			   list<PWire*>*decl, list<string>*table,
+			   Statement*init);
+
 /*
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
@@ -91,6 +96,8 @@ extern void pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_assignment(string*t, PExpr*e);
 extern Statement* pform_make_calltask(string*t, list<PExpr*>* =0);
+
+extern list<PWire*>* pform_make_udp_input_ports(list<string>*);
 
 /*
  * The makegate function creates a new gate (which need not have a
@@ -117,11 +124,14 @@ extern void pform_make_pgassign(const string&lval, PExpr*sel, PExpr*rval);
  * parses the source file and places all the modules it finds into the
  * mod list. The dump function dumps a module to the output stream.
  */
-extern int  pform_parse(FILE*, list<Module*>&mod);
+extern int  pform_parse(FILE*, list<Module*>&mod, map<string,PUdp*>&prim);
 extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.3  1998/11/25 02:35:53  steve
+ *  Parse UDP primitives all the way to pform.
+ *
  * Revision 1.2  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,
