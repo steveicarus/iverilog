@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.13 2003/08/22 04:27:10 steve Exp $"
+#ident "$Id: Makefile.in,v 1.14 2003/10/27 06:12:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -27,6 +27,7 @@ VERSION = 0.0
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
+mandir = @mandir@
 
 VPATH = $(srcdir)
 
@@ -68,6 +69,13 @@ endif
 fpga.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
 
+iverilog-fpga.ps: $(srcdir)/iverilog-fpga.man
+	man -t $(srcdir)/iverilog-fpga.man > iverilog-fpga.ps
+
+iverilog-fpga.pdf: iverilog-fpga.ps
+	ps2pdf iverilog-fpga.ps iverilog-fpga.pdf
+
+
 Makefile: Makefile.in config.status
 	./config.status
 
@@ -79,17 +87,32 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(libdir)/ivl/fpga.tgt
+ifeq (@WIN32@,yes)
+INSTALL_DOC = $(prefix)/iverilog-fpga.pdf $(mandir)/man1/iverilog-fpga.1
+INSTALL_DOCDIR = $(mandir)/man1
+all: iverilog-fpga.pdf
+else
+INSTALL_DOC = $(mandir)/man1/iverilog-fpga.1
+INSTALL_DOCDIR = $(mandir)/man1
+endif
+
+install: all installdirs $(libdir)/ivl/fpga.tgt $(INSTALL_DOC)
 
 $(libdir)/ivl/fpga.tgt: ./fpga.tgt
 	$(INSTALL_PROGRAM) ./fpga.tgt $(libdir)/ivl/fpga.tgt
 
+
+$(mandir)/man1/iverilog-fpga.1: $(srcdir)/iverilog-fpga.man
+	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man $(mandir)/man1/iverilog-fpga.1
+
+$(prefix)/iverilog-fpga.pdf: iverilog-fpga.pdf
+	$(INSTALL_DATA) iverilog-fpga.pdf $(prefix)/iverilog-fpga.pdf
 
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(libdir)/ivl
 
 uninstall:
 	rm -f $(libdir)/ivl/fpga.tgt
-
+	rm -f $(INSTALL_DOC)
 
 -include $(patsubst %.o, dep/%.d, $O)
