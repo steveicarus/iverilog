@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.38 2000/05/26 05:26:11 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.39 2000/06/03 02:13:15 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -181,7 +181,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	    rsig = pad_to_width(des, path, rsig, width);
 
 	// Make the adder as wide as the widest operand
-      osig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE, owidth);
+      osig = new NetTmp(scope, des->local_symbol(path), owidth);
       NetAddSub*adder = new NetAddSub(name, width);
 
 	// Connect the adder to the various parts.
@@ -1578,6 +1578,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.39  2000/06/03 02:13:15  steve
+ *  Output signal of + is a temporary.
+ *
  * Revision 1.38  2000/05/26 05:26:11  steve
  *  Handle wide conditions in ternary operator.
  *
