@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.21 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.22 2001/06/15 04:14:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -167,7 +167,7 @@ NetNet* NetEBComp::synthesize(Design*des)
       }
 
 
-      NetCompare*dev = new NetCompare(des->local_symbol(path), width);
+      NetCompare*dev = new NetCompare(scope, des->local_symbol(path), width);
       des->add_node(dev);
 
       for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
@@ -447,6 +447,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.22  2001/06/15 04:14:18  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.21  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

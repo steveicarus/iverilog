@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.46 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: t-dll.h,v 1.47 2001/06/15 04:14:19 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -62,6 +62,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void logic(const NetLogic*);
       void udp(const NetUDP*);
       void lpm_add_sub(const NetAddSub*);
+      void lpm_compare(const NetCompare*);
       void lpm_ff(const NetFF*);
       void lpm_mux(const NetMux*);
       void net_assign(const NetAssign_*);
@@ -528,6 +529,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.47  2001/06/15 04:14:19  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.46  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

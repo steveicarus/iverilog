@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.207 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.208 2001/06/15 04:14:18 steve Exp $"
 #endif
 
 /*
@@ -470,7 +470,7 @@ class NetCLShift  : public NetNode {
 class NetCompare  : public NetNode {
 
     public:
-      NetCompare(const string&n, unsigned width);
+      NetCompare(NetScope*scope, const string&n, unsigned width);
       ~NetCompare();
 
       unsigned width() const;
@@ -2809,6 +2809,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.208  2001/06/15 04:14:18  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.207  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

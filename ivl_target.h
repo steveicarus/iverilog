@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.65 2001/06/07 03:09:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.66 2001/06/15 04:14:18 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -202,6 +202,8 @@ typedef enum ivl_logic_e {
 /* This is the type of an LPM object. */
 typedef enum ivl_lpm_type_e {
       IVL_LPM_ADD,
+      IVL_LPM_CMP_GE,
+      IVL_LPM_CMP_GT,
       IVL_LPM_FF,
       IVL_LPM_MUX,
       IVL_LPM_SUB
@@ -873,6 +875,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.66  2001/06/15 04:14:18  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.65  2001/06/07 03:09:37  steve
  *  support subtraction in tgt-vvp.
  *

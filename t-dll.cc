@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.45 2001/06/07 04:20:10 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.46 2001/06/15 04:14:19 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -673,6 +673,64 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+void dll_target::lpm_compare(const NetCompare*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->name = strdup(net->name());
+      assert(net->scope());
+      obj->scope = find_scope(des_.root_, net->scope());
+      assert(obj->scope);
+
+      obj->u_.arith.width = net->width();
+
+      obj->u_.arith.q = new ivl_nexus_t[1 + 2 * obj->u_.arith.width];
+      obj->u_.arith.a = obj->u_.arith.q + 1;
+      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
+
+      if (net->pin_AGEB().is_linked()) {
+	    const Nexus*nex = net->pin_AGEB().nexus();
+	    obj->type = IVL_LPM_CMP_GE;
+
+	    assert(nex->t_cookie());
+	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+      } else if (net->pin_AGB().is_linked()) {
+	    const Nexus*nex = net->pin_AGB().nexus();
+	    obj->type = IVL_LPM_CMP_GT;
+
+	    assert(nex->t_cookie());
+	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+      } else {
+	    assert(0);
+      }
+
+      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
+	    const Nexus*nex;
+
+	    nex = net->pin_DataA(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    nex = net->pin_DataB(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+
+      scope_add_lpm(obj->scope, obj);
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1087,6 +1145,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.46  2001/06/15 04:14:19  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.45  2001/06/07 04:20:10  steve
  *  Account for carry out on add devices.
  *
@@ -1118,102 +1179,5 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
  *
  * Revision 1.36  2001/04/26 05:12:02  steve
  *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.35  2001/04/24 02:23:58  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.34  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.33  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.32  2001/04/01 01:48:21  steve
- *  Redesign event information to support arbitrary edge combining.
- *
- * Revision 1.31  2001/03/30 06:10:15  steve
- *  Initialize the event_ list of new scopes.
- *
- * Revision 1.30  2001/03/28 06:07:39  steve
- *  Add the ivl_event_t to ivl_target, and use that to generate
- *  .event statements in vvp way ahead of the thread that uses it.
- *
- * Revision 1.29  2001/03/27 03:31:06  steve
- *  Support error code from target_t::end_design method.
- *
- * Revision 1.28  2001/03/20 01:44:14  steve
- *  Put processes in the proper scope.
- *
- * Revision 1.27  2001/01/15 22:08:32  steve
- *  Add missing NetLogic gate types to ::logic method.
- *
- * Revision 1.26  2001/01/15 00:47:02  steve
- *  Pass scope type information to the target module.
- *
- * Revision 1.25  2001/01/06 06:31:59  steve
- *  declaration initialization for time variables.
- *
- * Revision 1.24  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.23  2000/12/15 18:06:47  steve
- *  A dlerror implementatin that HP/UX might like.
- *
- * Revision 1.22  2000/12/15 05:45:25  steve
- *  Autoconfigure the dlopen functions.
- *
- * Revision 1.21  2000/12/14 23:23:07  steve
- *  Support more logic gate types.
- *
- * Revision 1.20  2000/12/05 06:29:33  steve
- *  Make signal attributes available to ivl_target API.
- *
- * Revision 1.19  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.18  2000/11/09 22:19:34  steve
- *  Initialize scope when creating it.
- *
- * Revision 1.17  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.16  2000/10/21 16:49:45  steve
- *  Reduce the target entry points to the target_design.
- *
- * Revision 1.15  2000/10/15 04:46:23  steve
- *  Scopes and processes are accessible randomly from
- *  the design, and signals and logic are accessible
- *  from scopes. Remove the target calls that are no
- *  longer needed.
- *
- *  Add the ivl_nexus_ptr_t and the means to get at
- *  them from nexus objects.
- *
- *  Give names to methods that manipulate the ivl_design_t
- *  type more consistent names.
- *
- * Revision 1.14  2000/10/13 03:39:27  steve
- *  Include constants in nexus targets.
- *
- * Revision 1.13  2000/10/08 04:01:55  steve
- *  Back pointers in the nexus objects into the devices
- *  that point to it.
- *
- *  Collect threads into a list in the design.
- *
- * Revision 1.12  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.11  2000/10/06 23:46:51  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.10  2000/10/05 05:03:01  steve
- *  xor and constant devices.
- *
- * Revision 1.9  2000/09/30 02:18:15  steve
- *  ivl_expr_t support for binary operators,
- *  Create a proper ivl_scope_t object.
  */
 

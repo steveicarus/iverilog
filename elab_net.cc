@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.67 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.68 2001/06/15 04:14:18 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -398,7 +398,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	  case 'L':
 	  case 'G': {
 		NetCompare*cmp = new
-		      NetCompare(des->local_symbol(path), dwidth);
+		      NetCompare(scope, des->local_symbol(path), dwidth);
 		for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 		      connect(cmp->pin_DataA(idx), lsig->pin(idx));
 		for (unsigned idx = lsig->pin_count(); idx < dwidth ; idx += 1)
@@ -1901,6 +1901,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.68  2001/06/15 04:14:18  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.67  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.27 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: cprop.cc,v 1.28 2001/06/15 04:14:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -228,7 +228,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
       if (top == obj->width())
 	    return;
 
-      NetCompare*tmp = new NetCompare(obj->name(), top);
+      NetCompare*tmp = new NetCompare(obj->scope(), obj->name(), top);
       connect(tmp->pin_AEB(), obj->pin_AEB());
       for (unsigned idx = 0 ;  idx < top ;  idx += 1) {
 	    connect(tmp->pin_DataA(idx), obj->pin_DataA(idx));
@@ -937,6 +937,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.28  2001/06/15 04:14:18  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.27  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.48 2001/06/07 03:09:37 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.49 2001/06/15 04:14:19 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -450,6 +450,8 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.a[idx];
@@ -473,6 +475,8 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
       switch (net->type) {
 
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.b[idx];
@@ -512,6 +516,11 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.q[idx];
+
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
+	    assert(idx == 0);
+	    return net->u_.arith.q[0];
 
 	  case IVL_LPM_FF:
 	    assert(idx < net->u_.ff.width);
@@ -585,6 +594,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
 	  default:
@@ -1175,6 +1186,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.49  2001/06/15 04:14:19  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.48  2001/06/07 03:09:37  steve
  *  support subtraction in tgt-vvp.
  *

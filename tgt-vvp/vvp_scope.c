@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.31 2001/06/07 04:20:10 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.32 2001/06/15 04:14:19 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -113,6 +113,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 				ivl_lpm_name(lpm), idx);
 			return result;
 		  }
+	    break;
 
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
@@ -122,6 +123,17 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 				ivl_lpm_name(lpm), idx);
 			return result;
 		  }
+
+	    break;
+
+
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
+	    if (ivl_lpm_q(lpm, 0) == nex) {
+		  sprintf(result, "L_%s", ivl_lpm_name(lpm));
+		  return result;
+	    }
+	    break;
 
       }
 
@@ -607,26 +619,10 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
-static void draw_lpm_add(ivl_lpm_t net)
+static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
 {
-      unsigned idx, width;
-      const char*type = "";
-
-      width = ivl_lpm_width(net);
-
-      switch (ivl_lpm_type(net)) {
-	  case IVL_LPM_ADD:
-	    type = "sum";
-	    break;
-	  case IVL_LPM_SUB:
-	    type = "sub";
-	    break;
-	  default:
-	    assert(0);
-      }
-
-      fprintf(vvp_out, "L_%s .arith/%s %u", ivl_lpm_name(net), type, width);
-
+      unsigned width = ivl_lpm_width(net);
+      unsigned idx;
       for (idx = 0 ;  idx < width ;  idx += 1) {
 	    ivl_nexus_t a = ivl_lpm_data(net, idx);
 	    if (a) {
@@ -646,6 +642,54 @@ static void draw_lpm_add(ivl_lpm_t net)
 		  fprintf(vvp_out, ", C<0>");
 	    }
       }
+}
+
+static void draw_lpm_add(ivl_lpm_t net)
+{
+      unsigned width;
+      const char*type = "";
+
+      width = ivl_lpm_width(net);
+
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_ADD:
+	    type = "sum";
+	    break;
+	  case IVL_LPM_SUB:
+	    type = "sub";
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      fprintf(vvp_out, "L_%s .arith/%s %u", ivl_lpm_name(net), type, width);
+
+      draw_lpm_arith_a_b_inputs(net);
+
+      fprintf(vvp_out, ";\n");
+}
+
+static void draw_lpm_cmp(ivl_lpm_t net)
+{
+      unsigned width;
+      const char*type = "";
+
+      width = ivl_lpm_width(net);
+
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_CMP_GE:
+	    type = "ge";
+	    break;
+	  case IVL_LPM_CMP_GT:
+	    type = "gt";
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      fprintf(vvp_out, "L_%s .cmp/%s %u", ivl_lpm_name(net), type, width);
+
+      draw_lpm_arith_a_b_inputs(net);
 
       fprintf(vvp_out, ";\n");
 }
@@ -683,6 +727,11 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
 	    draw_lpm_add(net);
+	    return;
+
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
+	    draw_lpm_cmp(net);
 	    return;
 
 	  case IVL_LPM_MUX:
@@ -774,6 +823,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.32  2001/06/15 04:14:19  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.31  2001/06/07 04:20:10  steve
  *  Account for carry out on add devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.161 2001/06/07 02:12:43 steve Exp $"
+#ident "$Id: netlist.cc,v 1.162 2001/06/15 04:14:18 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -810,8 +810,8 @@ const Link& NetCLShift::pin_Distance(unsigned idx) const
       return pin(3+2*width_+idx);
 }
 
-NetCompare::NetCompare(const string&n, unsigned wi)
-: NetNode(n, 8+2*wi), width_(wi)
+NetCompare::NetCompare(NetScope*s, const string&n, unsigned wi)
+: NetNode(s, n, 8+2*wi), width_(wi)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr");
       pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock");
@@ -2323,6 +2323,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.162  2001/06/15 04:14:18  steve
+ *  Generate vvp code for GT and GE comparisons.
+ *
  * Revision 1.161  2001/06/07 02:12:43  steve
  *  Support structural addition.
  *
