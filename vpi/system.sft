@@ -1,0 +1,7 @@
+#
+# This is the system function descriptor table for the
+# builtin (system) functions.
+#
+
+$random        vpiSysFuncInt
+$dist_uniform  vpiSysFuncInt

@@ -68,6 +68,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib64/libvpi.a
 %attr(-,root,root) /usr/lib64/libveriuser.a
 %endif
+%attr(-,root,root) /usr/lib/ivl/system.sft
 %attr(-,root,root) /usr/lib/ivl/system.vpi
 %attr(-,root,root) /usr/lib/ivl/cadpli.vpl
 %attr(-,root,root) /usr/lib/libvpi.a

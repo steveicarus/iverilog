@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.64 2004/03/10 04:51:25 steve Exp $"
+#ident "$Id: main.c,v 1.65 2004/06/17 14:47:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -492,6 +492,10 @@ int main(int argc, char **argv)
 
 	    switch (opt) {
 		case 'B':
+		    /* Undocumented feature: The preprocessor itself
+		       may be located at a different location. If the
+		       base starts with a 'P', set this special base
+		       instead of the main base. */
 		  if (optarg[0] == 'P') {
 			pbase = optarg+1;
 		  } else {
@@ -604,6 +608,12 @@ int main(int argc, char **argv)
 
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
+
+	/* Tell the core where to find the system.sft. This file
+	   describes the system functions so that elaboration knows
+	   how to handle them. */
+      fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
+
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
       fprintf(iconfig_file, "warnings:%s\n", warning_flags);
@@ -725,6 +735,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.65  2004/06/17 14:47:22  steve
+ *  Add a .sft file for the system functions.
+ *
  * Revision 1.64  2004/03/10 04:51:25  steve
  *  Add support for system function table files.
  *
