@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.6 1999/12/05 02:24:08 steve Exp $"
+#ident "$Id: functor.cc,v 1.7 1999/12/17 06:18:16 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -35,7 +35,15 @@ void functor_t::process(class Design*, class NetProcTop*)
 {
 }
 
+void functor_t::lpm_const(class Design*, class NetConst*)
+{
+}
+
 void functor_t::lpm_ff(class Design*, class NetFF*)
+{
+}
+
+void functor_t::lpm_logic(class Design*, class NetLogic*)
 {
 }
 
@@ -75,9 +83,19 @@ void NetNode::functor_node(Design*, functor_t*)
 {
 }
 
+void NetConst::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_const(des, this);
+}
+
 void NetFF::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_ff(des, this);
+}
+
+void NetLogic::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_logic(des, this);
 }
 
 proc_match_t::~proc_match_t()
@@ -131,6 +149,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.7  1999/12/17 06:18:16  steve
+ *  Rewrite the cprop functor to use the functor_t interface.
+ *
  * Revision 1.6  1999/12/05 02:24:08  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.7 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.8 1999/12/17 06:18:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -83,6 +83,7 @@ NetNet* NetEBBits::synthesize(Design*des)
 
       assert(lsig->pin_count() == rsig->pin_count());
       NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, lsig->pin_count());
+      osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
 	    string oname = des->local_symbol(path);
@@ -125,6 +126,7 @@ NetNet* NetEConst::synthesize(Design*des)
       unsigned width=expr_width();
 
       NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
+      osig->local_flag(true);
       NetConst*con = new NetConst(des->local_symbol(path), value());
       for (unsigned idx = 0 ;  idx < width;  idx += 1)
 	    connect(osig->pin(idx), con->pin(idx));
@@ -144,6 +146,7 @@ NetNet* NetEUBits::synthesize(Design*des)
       NetNet*isig = expr_->synthesize(des);
 
       NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, isig->pin_count());
+      osig->local_flag(true);
 
       for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
 	    string oname = des->local_symbol(path);
@@ -178,6 +181,7 @@ NetNet* NetETernary::synthesize(Design *des)
       assert(tsig->pin_count() == fsig->pin_count());
       unsigned width=tsig->pin_count();
       NetNet*osig = new NetNet(0, path, NetNet::IMPLICIT, width);
+      osig->local_flag(true);
 
       string oname = des->local_symbol(path);
       NetMux *mux = new NetMux(oname, width, 2, 1);
@@ -199,6 +203,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.8  1999/12/17 06:18:15  steve
+ *  Rewrite the cprop functor to use the functor_t interface.
+ *
  * Revision 1.7  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *

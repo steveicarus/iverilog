@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.4 1999/12/05 02:24:08 steve Exp $"
+#ident "$Id: functor.h,v 1.5 1999/12/17 06:18:16 steve Exp $"
 #endif
 
 /*
@@ -42,8 +42,14 @@ struct functor_t {
 	/* This method is called for each process in the design. */
       virtual void process(class Design*des, class NetProcTop*);
 
+	/* This method is called for each structural constant. */
+      virtual void lpm_const(class Design*des, class NetConst*);
+
 	/* This method is called for each FF in the design. */
       virtual void lpm_ff(class Design*des, class NetFF*);
+
+	/* Handle LPM combinational logic devices. */
+      virtual void lpm_logic(class Design*des, class NetLogic*);
 };
 
 struct proc_match_t {
@@ -58,6 +64,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.5  1999/12/17 06:18:16  steve
+ *  Rewrite the cprop functor to use the functor_t interface.
+ *
  * Revision 1.4  1999/12/05 02:24:08  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

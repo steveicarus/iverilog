@@ -17,11 +17,51 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: cprop.cc,v 1.3 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: cprop.cc,v 1.4 1999/12/17 06:18:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  "functor.h"
 # include  <assert.h>
+
+/*
+ * This local function returns true if all the the possible drivers of
+ * this link are constant. It will also return true if there are no
+ * drivers at all.
+ */
+static bool all_drivers_constant(const NetObj::Link&lnk)
+{
+      for (const NetObj::Link*cur = lnk.next_link()
+		 ; *cur != lnk ; cur = cur->next_link()) {
+
+	    if (cur->get_dir() == NetObj::Link::INPUT)
+		  continue;
+	    if (cur->get_dir() == NetObj::Link::PASSIVE)
+		  continue;
+	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
+		  return false;
+      }
+
+      return true;
+}
+
+/*
+ * This function returns the value of the constant driving this link,
+ * or Vz if there is no constant. The results of this function are
+ * only meaningful if all_drivers_constant(lnk) == true.
+ */
+static verinum::V driven_value(const NetObj::Link&lnk)
+{
+      for (const NetObj::Link*cur = lnk.next_link()
+		 ; *cur != lnk ; cur = cur->next_link()) {
+
+	    const NetConst*obj;
+	    if (obj = dynamic_cast<const NetConst*>(cur->get_obj()))
+		  return obj->value(cur->get_pin());
+      }
+
+      return verinum::Vz;
+}
 
 /*
  * The cprop function below invokes constant propogation where
@@ -30,124 +70,69 @@
  * may even be able to replace nets with a new constant.
  */
 
-static bool is_a_const_node(const NetNode*obj)
+struct cprop_functor  : public functor_t {
+
+      virtual void lpm_logic(Design*des, NetLogic*obj);
+};
+
+void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 {
-      return dynamic_cast<const NetConst*>(obj);
-}
+      switch (obj->type()) {
 
-static bool const_into_xnor(Design*des, verinum::V cval,
-			    NetLogic*log, unsigned pin)
-{
-      assert(pin > 0);
-
-	/* if this is the last input pin of the XNOR device, then
-	   the device is simply buffering the constant value. */
-      if (log->pin_count() == 2) {
-	    cerr << "cprop: delete gate " << log->name() <<
-		  " and propogate " << cval << "." << endl;
-
-	    assert(pin == 1);
-	    connect(log->pin(0), log->pin(1));
-
-	    delete log;
-	    return true;
-      }
-
-	/* If this is a constant 0, then replace the gate with one
-	   1-pin smaller. Skip this pin. */
-      if (cval == verinum::V0) {
-	    cerr << "cprop: disconnect pin " << pin << " from gate "
-		 << log->name() << "." << endl;
-
-	    NetLogic*tmp = new NetLogic(log->name(),
-					log->pin_count()-1,
-					NetLogic::XNOR);
-	    connect(log->pin(0), tmp->pin(0));
-	    unsigned idx, jdx;
-	    for (idx = 1, jdx = 1 ;  idx < log->pin_count() ;  idx += 1) {
-		  if (idx == pin) continue;
-		  connect(log->pin(idx), tmp->pin(jdx));
-		  jdx += 1;
+	  case NetLogic::AND:
+	      // If there is one zero input to an AND gate, we know
+	      // the resulting output is going to be zero and can
+	      // elininate the gate.
+	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
+		  if (! all_drivers_constant(obj->pin(idx)))
+			continue;
+		  if (driven_value(obj->pin(idx)) == verinum::V0) {
+			connect(obj->pin(0), obj->pin(idx));
+			delete obj;
+			return;
+		  }
 	    }
 
-	    delete log;
-	    des->add_node(tmp);
-	    return true;
-      }
-
-	/* If this is a constant 1, then replace the gate with an XOR
-	   that is 1-pin smaller. Removing the constant 1 causes the
-	   sense of the output to change. */
-      if (cval == verinum::V1) {
-	    cerr << "cprop: disconnect pin " << pin << " from gate "
-		 << log->name() << "." << endl;
-
-	    NetLogic*tmp = new NetLogic(log->name(),
-					log->pin_count()-1,
-					NetLogic::XOR);
-	    connect(log->pin(0), tmp->pin(0));
-	    unsigned idx, jdx;
-	    for (idx = 1, jdx = 1 ;  idx < log->pin_count() ;  idx += 1) {
-		  if (idx == pin) continue;
-		  connect(log->pin(idx), tmp->pin(jdx));
-		  jdx += 1;
+	      // There are no zero constant drivers. If there are any
+	      // non-constant drivers, give up.
+	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
+		  if (! all_drivers_constant(obj->pin(idx)))
+			return;
 	    }
 
-	    delete log;
-	    des->add_node(tmp);
-	    return true;
-      }
-
-	/* If this is a constant X or Z, then the gate is certain to
-	   generate an X. Replace the gate with a constant X. This may
-	   cause other signals all over to become dangling. */
-      if ((cval == verinum::Vx) || (cval == verinum::Vz)) {
-	    cerr << "cprop: replace gate " << log->name() << " with "
-		  "a constant X." << endl;
-
-	    NetConst*tmp = new NetConst(log->name(), verinum::Vx);
-	    connect(log->pin(0), tmp->pin(0));
-	    delete log;
-	    des->add_node(tmp);
-	    return true;
-      }
-
-      return false;
-}
-
-static void look_for_core_logic(Design*des, NetConst*obj, unsigned cpin)
-{
-      NetObj*cur = obj;
-      unsigned pin = 0;
-      for (obj->pin(cpin).next_link(cur, pin)
-		 ; cur != obj
-		 ; cur->pin(pin).next_link(cur, pin)) {
-
-	    NetLogic*log = dynamic_cast<NetLogic*>(cur);
-	    if (log == 0)
-		  continue;
-
-	    bool flag = false;
-	    switch (log->type()) {
-		case NetLogic::XNOR:
-		  flag = const_into_xnor(des, obj->value(cpin), log, pin);
-		  break;
-		default:
-		  break;
+	      // If there are any non-1 values (Vx or Vz) then the
+	      // result is Vx.
+	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
+		  if (driven_value(obj->pin(idx)) != verinum::V1) {
+			connect(obj->pin(0), obj->pin(idx));
+			delete obj;
+			return;
+		  }
 	    }
 
-	      /* If the optimization test tells me that a link was
-		 deleted, restart the scan. */
-	    if (flag) obj->pin(0).next_link(cur, pin);
+	      // What's left? The inputs are all 1's, return the first
+	      // input as the output value and remove the gate.
+	    connect(obj->pin(0), obj->pin(1));
+	    delete obj;
+	    return;
+
+	  default:
+	    break;
       }
 }
 
 /*
- * This function looks to see if the constant is connected to nothing
+ * This functor looks to see if the constant is connected to nothing
  * but signals. If that is the case, delete the dangling constant and
- * the now useless signals.
+ * the now useless signals. This functor is applied after the regular
+ * functor to clean up dangling constants that might be left behind.
  */
-static void dangling_const(Design*des, NetConst*obj)
+struct cprop_dc_functor  : public functor_t {
+
+      virtual void lpm_const(Design*des, NetConst*obj);
+};
+
+void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 {
 	// If there are any links that take input, abort this
 	// operation.
@@ -175,21 +160,21 @@ static void dangling_const(Design*des, NetConst*obj)
       delete obj;
 }
 
+
 void cprop(Design*des)
 {
-      des->clear_node_marks();
-      while (NetNode*obj = des->find_node(&is_a_const_node)) {
-	    NetConst*cur = dynamic_cast<NetConst*>(obj);
-	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
-		  look_for_core_logic(des, cur, idx);
-	    cur->set_mark();
-	    dangling_const(des, cur);
-      }
+      cprop_functor prop;
+      des->functor(&prop);
 
+      cprop_dc_functor dc;
+      des->functor(&dc);
 }
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.4  1999/12/17 06:18:15  steve
+ *  Rewrite the cprop functor to use the functor_t interface.
+ *
  * Revision 1.3  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *

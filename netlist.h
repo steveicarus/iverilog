@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.103 1999/12/17 03:38:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.104 1999/12/17 06:18:16 steve Exp $"
 #endif
 
 /*
@@ -725,6 +725,7 @@ class NetConst  : public NetNode {
       verinum::V value(unsigned idx) const;
 
       virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
@@ -747,6 +748,7 @@ class NetLogic  : public NetNode {
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*, functor_t*);
 
     private:
       const TYPE type_;
@@ -2078,6 +2080,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.104  1999/12/17 06:18:16  steve
+ *  Rewrite the cprop functor to use the functor_t interface.
+ *
  * Revision 1.103  1999/12/17 03:38:46  steve
  *  NetConst can now hold wide constants.
  *
