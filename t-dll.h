@@ -19,11 +19,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.19 2000/12/05 06:29:33 steve Exp $"
+#ident "$Id: t-dll.h,v 1.20 2000/12/15 05:45:25 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
+
+#if defined(HAVE_DLFCN_H)
+# include  <dlfcn.h>
+typedef void* ivl_dll_t;
+#elif defined(HAVE_DL_H)
+# include  <dl.h>
+typedef shl_t ivl_dll_t;
+#endif
 
 struct ivl_design_s {
 
@@ -58,7 +66,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void scope(const NetScope*);
       void signal(const NetNet*);
 
-      void*dll_;
+      ivl_dll_t dll_;
       string dll_path_;
 
       ivl_design_s des_;
@@ -355,6 +363,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.20  2000/12/15 05:45:25  steve
+ *  Autoconfigure the dlopen functions.
+ *
  * Revision 1.19  2000/12/05 06:29:33  steve
  *  Make signal attributes available to ivl_target API.
  *

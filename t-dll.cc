@@ -17,13 +17,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.21 2000/12/14 23:23:07 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.22 2000/12/15 05:45:25 steve Exp $"
 #endif
 
 # include  "compiler.h"
 # include  "t-dll.h"
-# include  <dlfcn.h>
 # include  <malloc.h>
+
+#if defined(HAVE_DLFCN_H)
+inline ivl_dll_t ivl_dlopen(const char*name)
+{ return dlopen(name,RTLD_NOW); }
+
+inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
+{ return dlsym(dll, nm); }
+
+inline void ivl_dlclose(ivl_dll_t dll)
+{ dlclose(dll); }
+
+#elif defined(HAVE_DL_H)
+inline ivl_dll_t ivl_dlopen(const char*name)
+{ return shl_load(name, BIND_IMMEDIATE, 0); }
+
+inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
+{
+      void*sym;
+      int rc = shl_findsym(&dll, nm, TYPE_PROCEDURE, &sym);
+      return (rc == 0) ? sym : 0;
+}
+
+inline void ivl_dlclose(ivl_dll_t dll)
+{ shl_unload(dll); }
+#endif
 
 static struct dll_target dll_target_obj;
 
@@ -149,7 +173,7 @@ static void scope_add_lpm(ivl_scope_t scope, ivl_lpm_t net)
 bool dll_target::start_design(const Design*des)
 {
       dll_path_ = des->get_flag("DLL");
-      dll_ = dlopen(dll_path_.c_str(), RTLD_NOW);
+      dll_ = ivl_dlopen(dll_path_.c_str());
       if (dll_ == 0) {
 	    cerr << dll_path_ << ": " << dlerror() << endl;
 	    return false;
@@ -170,7 +194,7 @@ bool dll_target::start_design(const Design*des)
       des_.root_->nlpm_ = 0;
       des_.root_->lpm_ = 0;
 
-      target_ = (target_design_f)dlsym(dll_, LU "target_design" TU);
+      target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
 	    cerr << dll_path_ << ": error: target_design entry "
 		  "point is missing." << endl;
@@ -187,7 +211,7 @@ bool dll_target::start_design(const Design*des)
 void dll_target::end_design(const Design*)
 {
       (target_)(&des_);
-      dlclose(dll_);
+      ivl_dlclose(dll_);
 }
 
 /*
@@ -617,6 +641,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.22  2000/12/15 05:45:25  steve
+ *  Autoconfigure the dlopen functions.
+ *
  * Revision 1.21  2000/12/14 23:23:07  steve
  *  Support more logic gate types.
  *
