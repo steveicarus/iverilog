@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.10 2002/05/23 03:34:46 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.11 2002/05/24 19:05:30 steve Exp $"
 #endif
 
 
@@ -35,6 +35,11 @@
 #else
 # define EXTERN_C_START
 # define EXTERN_C_END
+#endif
+
+#ifndef __GNUC__
+# undef  __attribute__
+# define __attribute__(x)
 #endif
 
 EXTERN_C_START
@@ -200,7 +205,9 @@ typedef struct t_vpi_value {
 
 /* VPI FUNCTIONS */
 extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
-extern void vpi_printf(const char*fmt, ...);
+extern void vpi_printf(const char*fmt, ...)
+      __attribute__((format (printf,1,2)));
+
   /* vpi_vprintf is non-standard. */
 extern void vpi_vprintf(const char*fmt, va_list ap);
 
@@ -208,7 +215,8 @@ extern unsigned int vpi_mcd_close(unsigned int mcd);
 extern char *vpi_mcd_name(unsigned int mcd);
 extern unsigned int vpi_mcd_open(char *name);
 extern unsigned int vpi_mcd_open_x(char *name, char *mode);
-extern int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
+extern int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
+      __attribute__((format (printf,2,3)));
 extern int vpi_mcd_fputc(unsigned int mcd, unsigned char x);
 extern int vpi_mcd_fgetc(unsigned int mcd);
 
@@ -317,6 +325,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.11  2002/05/24 19:05:30  steve
+ *  support GCC __attributes__ for printf formats.
+ *
  * Revision 1.10  2002/05/23 03:34:46  steve
  *  Export the vpi_vprintf function.
  *

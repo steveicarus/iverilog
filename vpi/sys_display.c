@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.36 2002/04/06 20:25:45 steve Exp $"
+#ident "$Id: sys_display.c,v 1.37 2002/05/24 19:05:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -290,7 +290,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			} else {
 			      vpi_get_value(argv[idx], &value);
 			      if (value.format == vpiSuppressVal){
-				  vpi_printf("\nERROR: parameter does not have a printable value!\n", fmt);
+				  vpi_printf("\nERROR: parameter does not have a printable value!\n");
 				  goto bail_out;
 			      }
 
@@ -1111,6 +1111,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.37  2002/05/24 19:05:30  steve
+ *  support GCC __attributes__ for printf formats.
+ *
  * Revision 1.36  2002/04/06 20:25:45  steve
  *  cbValueChange automatically replays.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.2 2002/05/23 03:35:42 steve Exp $"
+#ident "$Id: veriuser.h,v 1.3 2002/05/24 19:05:30 steve Exp $"
 #endif
 
 /*
@@ -39,9 +39,15 @@
 # define EXTERN_C_END
 #endif
 
+#ifndef __GNUC__
+# undef  __attribute__
+# define __attribute__(x)
+#endif
+
 EXTERN_C_START
 
-extern void io_printf (const char *, ...);
+extern void io_printf (const char *, ...)
+      __attribute__((format (printf,1,2)));
 
 extern int tf_dofinish(void);
 extern int tf_dostop(void);
@@ -50,6 +56,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.3  2002/05/24 19:05:30  steve
+ *  support GCC __attributes__ for printf formats.
+ *
  * Revision 1.2  2002/05/23 03:35:42  steve
  *  Add the io_printf function to libveriuser.
  *
