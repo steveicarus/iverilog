@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.187 2005/02/14 01:50:23 steve Exp $"
+#ident "$Id: compile.cc,v 1.188 2005/02/19 01:32:53 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -880,14 +880,13 @@ void compile_arith_div(char*label, long wid, bool signed_flag,
 {
       assert( wid > 0 );
 
-      if ((long)argc != 2*wid) {
+      if (argc != 2) {
 	    fprintf(stderr, "%s; .arith/div has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
 
       vvp_arith_ *arith = new vvp_arith_div(wid, signed_flag);
-
       make_arith(arith, label, wid, argc, argv);
 }
 
@@ -1618,6 +1617,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.188  2005/02/19 01:32:53  steve
+ *  Implement .arith/div.
+ *
  * Revision 1.187  2005/02/14 01:50:23  steve
  *  Signals may receive part vectors from %set/x0
  *  instructions. Re-implement the %set/x0 to do

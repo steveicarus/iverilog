@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.38 2005/02/04 05:13:02 steve Exp $"
+#ident "$Id: arith.cc,v 1.39 2005/02/19 01:32:52 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -58,15 +58,60 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 // Division
 
-inline void vvp_arith_div::wide(vvp_ipoint_t base, bool push)
+vvp_arith_div::vvp_arith_div(unsigned wid, bool signed_flag)
+: vvp_arith_(wid), signed_flag_(signed_flag)
+{
+}
+
+vvp_arith_div::~vvp_arith_div()
+{
+}
+
+void vvp_arith_div::wide_(vvp_net_ptr_t ptr)
 {
       assert(0);
 }
 
+void vvp_arith_div::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
+{
+      dispatch_operand_(ptr, bit);
 
+      if (wid_ > 8 * sizeof(unsigned long)) {
+	    wide_(ptr);
+	    return ;
+      }
+
+      unsigned long a;
+      if (! vector4_to_value(op_a_, a)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      unsigned long b;
+      if (! vector4_to_value(op_b_, b)) {
+	    vvp_send_vec4(ptr.ptr()->out, x_val_);
+	    return;
+      }
+
+      unsigned long val = a / b;
+      assert(wid_ <= 8*sizeof(val));
+
+      vvp_vector4_t vval (wid_);
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    if (val & 1)
+		  vval.set_bit(idx, BIT4_1);
+	    else
+		  vval.set_bit(idx, BIT4_0);
+
+	    val >>= 1;
+      }
+
+      vvp_send_vec4(ptr.ptr()->out, vval);
+}
+
+#if 0
 void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 {
-#if 0
       put(i, val);
       vvp_ipoint_t base = ipoint_make(i,0);
 
@@ -119,10 +164,8 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    result = 0 - result;
 
       output_val_(base, push, result);
-#else
-      fprintf(stderr, "XXXX forgot how to implement vvp_arith_div::set\n");
-#endif
 }
+#endif
 
 inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
 {
@@ -673,6 +716,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.39  2005/02/19 01:32:52  steve
+ *  Implement .arith/div.
+ *
  * Revision 1.38  2005/02/04 05:13:02  steve
  *  Add wide .arith/mult, and vvp_vector2_t vectors.
  *

@@ -1,7 +1,7 @@
 #ifndef __arith_H
 #define __arith_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.25 2005/02/04 05:13:02 steve Exp $"
+#ident "$Id: arith.h,v 1.26 2005/02/19 01:32:52 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -56,13 +56,11 @@ class vvp_arith_  : public vvp_net_fun_t {
 class vvp_arith_div : public vvp_arith_ {
 
     public:
-      explicit vvp_arith_div(unsigned wid, bool signed_flag)
-      : vvp_arith_(wid), signed_flag_(signed_flag) {}
-
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      void wide(vvp_ipoint_t base, bool push);
-
+      explicit vvp_arith_div(unsigned wid, bool signed_flag);
+      ~vvp_arith_div();
+      void recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit);
     private:
+      void wide_(vvp_net_ptr_t ptr);
       bool signed_flag_;
 };
 
@@ -191,6 +189,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.26  2005/02/19 01:32:52  steve
+ *  Implement .arith/div.
+ *
  * Revision 1.25  2005/02/04 05:13:02  steve
  *  Add wide .arith/mult, and vvp_vector2_t vectors.
  *
