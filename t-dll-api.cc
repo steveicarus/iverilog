@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.71 2001/11/01 04:25:31 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.72 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1285,6 +1285,8 @@ extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
 
 	  case IVL_ST_CASSIGN:
 	  case IVL_ST_DEASSIGN:
+	  case IVL_ST_FORCE:
+	  case IVL_ST_RELEASE:
 	    assert(idx < net->u_.cassign_.lvals);
 	    return net->u_.cassign_.lval + idx;
 
@@ -1303,6 +1305,8 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 
 	  case IVL_ST_CASSIGN:
 	  case IVL_ST_DEASSIGN:
+	  case IVL_ST_FORCE:
+	  case IVL_ST_RELEASE:
 	    return net->u_.cassign_.lvals;
 
 	  default:
@@ -1353,6 +1357,7 @@ extern "C" ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
 	  case IVL_ST_CASSIGN:
+	  case IVL_ST_FORCE:
 	    assert(idx < net->u_.cassign_.npins);
 	    return net->u_.cassign_.pins[idx];
 	  default:
@@ -1366,6 +1371,7 @@ extern "C" unsigned ivl_stmt_nexus_count(ivl_statement_t net)
 {
       switch (net->type_) {
 	  case IVL_ST_CASSIGN:
+	  case IVL_ST_FORCE:
 	    return net->u_.cassign_.npins;
 	  default:
 	    assert(0);
@@ -1434,6 +1440,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.72  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.71  2001/11/01 04:25:31  steve
  *  ivl_target support for cassign.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.87 2001/11/01 04:25:31 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.88 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -927,15 +927,17 @@ extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_WAIT */
 extern ivl_event_t   ivl_stmt_event(ivl_statement_t net);
-  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN */
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
+     IVL_ST_FORCE IVL_ST_RELEASE */
 extern ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx);
-  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN */
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_CASSIGN IVL_ST_DEASSIGN
+     IVL_ST_FORCE IVL_ST_RELEASE */
 extern unsigned ivl_stmt_lvals(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
-  /* IVL_ST_CASSIGN */
+  /* IVL_ST_CASSIGN IVL_ST_FORCE */
 extern ivl_nexus_t ivl_stmt_nexus(ivl_statement_t net, unsigned idx);
 extern unsigned    ivl_stmt_nexus_count(ivl_statement_t net);
   /* IVL_ST_STASK */
@@ -974,6 +976,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.88  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.87  2001/11/01 04:25:31  steve
  *  ivl_target support for cassign.
  *

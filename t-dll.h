@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.70 2001/11/04 05:03:21 steve Exp $"
+#ident "$Id: t-dll.h,v 1.71 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -80,6 +80,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_ram_dq(const NetRamDq*);
       void net_assign(const NetAssign_*);
       bool net_cassign(const NetCAssign*);
+      bool net_force(const NetForce*);
       bool net_const(const NetConst*);
       void net_probe(const NetEvProbe*);
 
@@ -110,7 +111,9 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_deassign(const NetDeassign*);
       bool proc_delay(const NetPDelay*);
       bool proc_disable(const NetDisable*);
+      bool proc_force(const NetForce*);
       void proc_forever(const NetForever*);
+      bool proc_release(const NetRelease*);
       void proc_repeat(const NetRepeat*);
       void proc_stask(const NetSTask*);
       bool proc_trigger(const NetEvTrig*);
@@ -584,6 +587,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.71  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.70  2001/11/04 05:03:21  steve
  *  MacOSX 10.1 updates.
  *

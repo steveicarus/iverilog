@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.69 2001/10/30 02:52:07 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.70 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -653,6 +653,11 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
 bool dll_target::net_cassign(const NetCAssign*)
 {
       return false;
+}
+
+bool dll_target::net_force(const NetForce*net)
+{
+      return true;
 }
 
 void dll_target::udp(const NetUDP*net)
@@ -1661,6 +1666,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.70  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.69  2001/10/30 02:52:07  steve
  *  Stubs for assign/deassign for t-dll.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.48 2001/11/01 19:31:40 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.49 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -585,6 +585,12 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+static int show_stmt_force(ivl_statement_t net)
+{
+      fprintf(vvp_out, "    %%force ????;\n");
+      return 0;
+}
+
 static int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
@@ -643,6 +649,12 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
  */
 static int show_stmt_noop(ivl_statement_t net)
 {
+      return 0;
+}
+
+static int show_stmt_release(ivl_statement_t net)
+{
+      fprintf(vvp_out, "    %%release ????;\n");
       return 0;
 }
 
@@ -909,6 +921,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    rc += show_stmt_disable(net, sscope);
 	    break;
 
+	  case IVL_ST_FORCE:
+	    rc += show_stmt_force(net);
+	    break;
+
 	  case IVL_ST_FOREVER:
 	    rc += show_stmt_forever(net, sscope);
 	    break;
@@ -919,6 +935,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_NOOP:
 	    rc += show_stmt_noop(net);
+	    break;
+
+	  case IVL_ST_RELEASE:
+	    rc += show_stmt_release(net);
 	    break;
 
 	  case IVL_ST_REPEAT:
@@ -1037,6 +1057,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.49  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.48  2001/11/01 19:31:40  steve
  *  make fork label into complete statemnt.
  *

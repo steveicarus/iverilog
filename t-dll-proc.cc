@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.39 2001/11/01 04:25:31 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.40 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -519,6 +519,40 @@ bool dll_target::proc_disable(const NetDisable*net)
       return true;
 }
 
+bool dll_target::proc_force(const NetForce*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_FORCE;
+
+      stmt_cur_->u_.cassign_.lvals = 1;
+      stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
+	    calloc(1, sizeof(struct ivl_lval_s));
+
+      const NetNet*lsig = net->lval();
+      ivl_signal_t sig = find_signal(des_, lsig);
+      assert(sig);
+      assert(sig->type_ == IVL_SIT_REG);
+
+      stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
+      stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
+      stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
+      stmt_cur_->u_.cassign_.lval[0].idx    = 0;
+      stmt_cur_->u_.cassign_.lval[0].n.sig  = sig;
+
+      stmt_cur_->u_.cassign_.npins = net->pin_count();
+      stmt_cur_->u_.cassign_.pins = (ivl_nexus_t*)
+	    calloc(stmt_cur_->u_.cassign_.npins, sizeof(ivl_nexus_t));
+
+      ivl_nexus_t*ntmp = stmt_cur_->u_.cassign_.pins;
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    ntmp[idx] = (ivl_nexus_t)net->pin(idx).nexus()->t_cookie();
+	    assert(ntmp[idx]);
+      }
+
+      return true;
+}
 
 void dll_target::proc_forever(const NetForever*net)
 {
@@ -537,6 +571,31 @@ void dll_target::proc_forever(const NetForever*net)
 
       save_cur_->u_.forever_.stmt_ = stmt_cur_;
       stmt_cur_ = save_cur_;
+}
+
+bool dll_target::proc_release(const NetRelease*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_RELEASE;
+
+      stmt_cur_->u_.cassign_.lvals = 1;
+      stmt_cur_->u_.cassign_.lval = (struct ivl_lval_s*)
+	    calloc(1, sizeof(struct ivl_lval_s));
+
+      const NetNet*lsig = net->lval();
+      ivl_signal_t sig = find_signal(des_, lsig);
+      assert(sig);
+      assert(sig->type_ == IVL_SIT_REG);
+
+      stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
+      stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
+      stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
+      stmt_cur_->u_.cassign_.lval[0].idx    = 0;
+      stmt_cur_->u_.cassign_.lval[0].n.sig  = sig;
+
+      return true;
 }
 
 void dll_target::proc_repeat(const NetRepeat*net)
@@ -725,6 +784,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.40  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.39  2001/11/01 04:25:31  steve
  *  ivl_target support for cassign.
  *

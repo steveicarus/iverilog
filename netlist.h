@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.223 2001/11/09 03:43:26 steve Exp $"
+#ident "$Id: netlist.h,v 1.224 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 /*
@@ -1698,6 +1698,8 @@ class NetForce  : public NetProc, public NetNode {
 
       const Link& lval_pin(unsigned) const;
 
+      const NetNet*lval() const;
+
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -2859,6 +2861,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.224  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.223  2001/11/09 03:43:26  steve
  *  Spelling errors.
  *

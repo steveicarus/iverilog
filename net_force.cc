@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.5 2001/10/31 05:24:52 steve Exp $"
+#ident "$Id: net_force.cc,v 1.6 2001/11/14 03:28:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -105,6 +105,11 @@ const Link& NetForce::lval_pin(unsigned idx) const
       return lval_->pin(idx);
 }
 
+const NetNet* NetForce::lval() const
+{
+      return lval_;
+}
+
 NetRelease::NetRelease(NetNet*l)
 : lval_(l)
 {
@@ -122,6 +127,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.6  2001/11/14 03:28:49  steve
+ *  DLL target support for force and release.
+ *
  * Revision 1.5  2001/10/31 05:24:52  steve
  *  ivl_target support for assign/deassign.
  *
