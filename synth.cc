@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.8 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: synth.cc,v 1.9 2000/04/16 22:57:34 steve Exp $"
 #endif
 
 /*
@@ -51,7 +51,7 @@ class do_expr  : public proc_match_t {
       virtual int assign(NetAssign*);
       virtual int event_wait(NetEvWait*);
 	//virtual int assign_mem(NetAssignMem*);
-	//virtual int condit(NetCondit*);
+      virtual int condit(NetCondit*);
 };
 
 
@@ -66,6 +66,29 @@ int do_expr::assign(NetAssign*stmt)
 
       NetESignal*tmpe = new NetESignal(tmp);
       stmt->set_rval(tmpe);
+
+      return 0;
+}
+
+int do_expr::condit(NetCondit*stmt)
+{
+	/* synthesize the condition expression, if necessary. */
+      if (! dynamic_cast<NetESignal*>(stmt->expr())) {
+	    NetNet*tmp = stmt->expr()->synthesize(des_);
+
+	    if (tmp) {
+		  NetESignal*tmpe = new NetESignal(tmp);
+		  stmt->set_expr(tmpe);
+	    }
+
+      }
+
+	/* Now recurse through the if and else clauses. */
+      if (NetProc*tmp = stmt->if_clause())
+	    tmp->match_proc(this);
+
+      if (NetProc*tmp = stmt->else_clause())
+	    tmp->match_proc(this);
 
       return 0;
 }
@@ -323,6 +346,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.9  2000/04/16 22:57:34  steve
+ *  Catch expressions that are part of conditionals.
+ *
  * Revision 1.8  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,
