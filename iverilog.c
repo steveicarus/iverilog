@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.20 2000/08/09 01:34:00 steve Exp $"
+#ident "$Id: iverilog.c,v 1.21 2000/09/12 01:17:19 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:D:Ef:I:mN::o:Ss:T:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:D:Ef:I:m:N::o:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -491,6 +491,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.21  2000/09/12 01:17:19  steve
+ *  Oops, the -m flag takes a parameter and needs the :
+ *
  * Revision 1.20  2000/08/09 01:34:00  steve
  *  Add the -N switch to the iverilog command.
  *
