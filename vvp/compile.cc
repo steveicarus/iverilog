@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.91 2001/07/28 03:12:39 steve Exp $"
+#ident "$Id: compile.cc,v 1.92 2001/07/30 03:53:01 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -931,6 +931,7 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
       obj->event = new struct vvp_event_s;
       obj->event->threads = 0;
       obj->event->ival = obj->ival;
+      obj->event->vvp_edge_tab = 0;
 
 	/* Link the outputs of the named events to me. */
 
@@ -943,6 +944,7 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 	    tmp = ipoint_index(tmp, argv[idx].idx);
 
 	    functor_t fport = functor_index(tmp);
+	    assert(fport);
 	    assert(fport->out == 0);
 	    fport->out = fdx;
 
@@ -1565,6 +1567,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.92  2001/07/30 03:53:01  steve
+ *  Initialize initial functor tables.
+ *
  * Revision 1.91  2001/07/28 03:12:39  steve
  *  Support C<su0> and C<su1> special symbols.
  *

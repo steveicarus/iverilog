@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.24 2001/07/16 18:06:01 steve Exp $"
+#ident "$Id: functor.cc,v 1.25 2001/07/30 03:53:01 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -69,7 +69,11 @@ static struct functor_index1*functor_table[functor_index2_size] = { 0 };
 void functor_init(void)
 {
       functor_table[0] = new struct functor_index1;
+      memset(functor_table[0], 0, sizeof(struct functor_index1));
+
       functor_table[0]->table[0] = new struct functor_index0;
+      memset(functor_table[0]->table[0], 0, sizeof(struct functor_index0));
+
       functor_count = 1;
 }
 
@@ -371,6 +375,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.25  2001/07/30 03:53:01  steve
+ *  Initialize initial functor tables.
+ *
  * Revision 1.24  2001/07/16 18:06:01  steve
  *  Initialize allocated functors (Stephan Boettcher)
  *
