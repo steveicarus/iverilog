@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.56 2003/08/01 02:12:30 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.57 2003/09/04 01:52:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1155,14 +1155,51 @@ NetExpr* NetEParam::eval_tree()
 	// future reference, and return a copy to the caller.
       scope_->replace_parameter(name_.peek_name(0), res);
 
-      NetEConst*tmp = dynamic_cast<NetEConst*>(res);
-      assert(tmp);
+	/* Return as a result a NetEConstParam or NetECRealParam
+	   object, depending on the type of the expression. */
 
-      verinum val = tmp->value();
-      const char*name = lex_strings.add(name_.peek_name(0));
-      NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
+      switch (res->expr_type()) {
 
-      return ptmp;
+	  case NetExpr::ET_VECTOR:
+	    { NetEConst*tmp = dynamic_cast<NetEConst*>(res);
+	      if (tmp == 0) {
+		    cerr << get_line() << ": internal error: parameter "
+			 << name_ << " evaluates to incomprehensible "
+			 << *res << "." << endl;
+		    return 0;
+	      }
+
+	      assert(tmp);
+
+	      verinum val = tmp->value();
+	      const char*name = lex_strings.add(name_.peek_name(0));
+	      NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
+
+	      return ptmp;
+	    }
+
+	  case NetExpr::ET_REAL:
+	    { NetECReal*tmp = dynamic_cast<NetECReal*>(res);
+	      if (tmp == 0) {
+		    cerr << get_line() << ": internal error: parameter "
+			 << name_ << " evaluates to incomprehensible "
+			 << *res << "." << endl;
+		    return 0;
+	      }
+
+	      assert(tmp);
+
+	      verireal val = tmp->value();
+	      const char*name = lex_strings.add(name_.peek_name(0));
+	      NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
+
+	      return ptmp;
+	    }
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 NetEConst* NetESelect::eval_tree()
@@ -1458,6 +1495,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.57  2003/09/04 01:52:50  steve
+ *  Evaluate real parameter expressions that contain real parameters.
+ *
  * Revision 1.56  2003/08/01 02:12:30  steve
  *  Fix || with true case on the right.
  *
