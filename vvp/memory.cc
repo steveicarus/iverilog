@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.25 2005/03/06 17:07:48 steve Exp $"
+#ident "$Id: memory.cc,v 1.26 2005/03/09 04:52:40 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -51,30 +51,10 @@ struct vvp_memory_s
       vvp_vector4_t*words;
 
 	// List of ports into this memory.
-      vvp_memory_port_t port_list;
+      class vvp_fun_memport* port_list;
 };
 
 #define VVP_MEMORY_NO_ADDR ((int)0x80000000)
-
-#if 0
-struct vvp_memory_port_s : public functor_s
-{
-      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-
-      vvp_memory_t mem;
-      vvp_ipoint_t ix;
-
-      unsigned naddr;
-
-      vvp_memory_port_t next;
-      int cur_addr;
-      vvp_memory_bits_t cur_bits;
-      unsigned bitoff;
-      unsigned nbits;
-
-      bool writable;
-};
-#endif
 
 // Compilation
 
@@ -209,51 +189,11 @@ void memory_set_word(vvp_memory_t mem, unsigned addr, vvp_vector4_t val)
 {
       memory_init_word(mem, addr, val);
 
-      if (mem->port_list)
-	    fprintf(stderr, "XXXX memory_set_word(%u, ...)"
-		    " not fully implemented\n", addr);
-}
-
-#if 0
-vvp_ipoint_t memory_port_new(vvp_memory_t mem,
-			     unsigned nbits, unsigned bitoff,
-			     unsigned naddr, bool writable)
-{
-  unsigned nfun = naddr;
-  if (writable)
-	nfun += 2 + nbits;
-  nfun = (nfun+3)/4;
-  if (nfun < nbits)
-    nfun = nbits;
-
-  vvp_memory_port_t a = new struct vvp_memory_port_s;
-
-  a->mem = mem;
-  a->naddr = naddr;
-  a->writable = writable;
-  a->nbits = nbits;
-  a->bitoff = bitoff;
-  a->next = mem->addr_root;
-  mem->addr_root = a;
-
-  a->ix = functor_allocate(nfun);
-  functor_define(a->ix, a);
-
-  if (nfun > 1)
-    {
-      extra_ports_functor_s *fu = new extra_ports_functor_s[nfun-1];
-      for (unsigned i = 0; i< nfun - 1; i++) {
-	fu[i].base_ = a->ix;
-	functor_define(ipoint_index(a->ix, i+1), fu+i);
+      for (vvp_fun_memport*cur = mem->port_list
+		 ; cur ;  cur = cur->next_) {
+	    cur->check_word_change(addr);
       }
-    }
-
-  a->cur_addr = VVP_MEMORY_NO_ADDR;
-  a->cur_bits = 0x0;
-
-  return a->ix;
 }
-#endif
 
 void schedule_memory(vvp_memory_t mem, unsigned addr,
 		     vvp_vector4_t val, unsigned long delay)
@@ -261,279 +201,58 @@ void schedule_memory(vvp_memory_t mem, unsigned addr,
       fprintf(stderr, "XXXX Forgot how to schedule memory write.\n");
 }
 
-// Utilities
-#if 0
-inline static
-vvp_memory_bits_t get_word_ix(vvp_memory_t mem, unsigned idx)
+vvp_fun_memport::vvp_fun_memport(vvp_memory_t mem, vvp_net_t*net)
+: mem_(mem), net_(net)
 {
-  return mem->bits + idx*mem->fwidth;
-}
-#endif
-#if 0
-inline static
-vvp_memory_bits_t get_word(vvp_memory_t mem, int addr)
-{
-  assert(mem->a_idxs==1);
-  unsigned waddr = addr - mem->a_idx[0].first;
-
-  if (waddr >= mem->size)
-    return 0x0;
-
-  return get_word_ix(mem, waddr);
-}
-#endif
-#if 0
-inline static
-bool set_bit(vvp_memory_bits_t bits, int bit, unsigned char val)
-{
-  int ix =    bit/4;
-  int ip = 2*(bit%4);
-  bool r = ((bits[ix] >> ip) & 3) != val;
-  bits[ix] = (bits[ix] &~ (3<<ip)) | ((val&3) << ip);
-  return r;
-}
-#endif
-#if 0
-inline static
-unsigned char get_nibble(vvp_memory_bits_t bits, int bit)
-{
-  if (!bits)
-    return 0xaa;
-  int ix = bit/4;
-  return bits[ix];
-}
-#endif
-#if 0
-inline static
-unsigned char get_bit(vvp_memory_bits_t bits, int bit)
-{
-  return (get_nibble(bits, bit) >> (2*(bit&3))) & 3;
-}
-#endif
-#if 0
-inline static
-unsigned char functor_get_inputs(vvp_ipoint_t ip)
-{
-  functor_t fp = functor_index(ip);
-  assert(fp);
-  return fp->ival;
-}
-#endif
-#if 0
-inline static
-unsigned char functor_get_input(vvp_ipoint_t ip)
-{
-  unsigned char bits = functor_get_inputs(ip);
-  return (bits >> (2*ipoint_port(ip))) & 3;
-}
-#endif
-#if 0
-static
-bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
-{
-  unsigned abit = ip - addr->ix;
-
-  assert(abit >= 0  &&  abit < addr->naddr);
-
-  int old = addr->cur_addr;
-
-  int abval = functor_get_input(ip);
-  if (abval>1)
-    addr->cur_addr = VVP_MEMORY_NO_ADDR;
-  else if (addr->cur_addr == VVP_MEMORY_NO_ADDR)
-    update_addr(addr);
-  else if (abval)
-    addr->cur_addr |=  (1<<abit);
-  else
-    addr->cur_addr &=~ (1<<abit);
-
-  addr->cur_bits = get_word(addr->mem, addr->cur_addr);
-
-  return addr->cur_addr != old;
-}
-#endif
-
-#if 0
-static
-void update_addr(vvp_memory_port_t addr)
-{
-  addr->cur_addr = 0;
-  for (unsigned i=0; i < addr->naddr; i++)
-    {
-      update_addr_bit(addr, addr->ix+i);
-      if (addr->cur_addr == VVP_MEMORY_NO_ADDR)
-	break;
-    }
-}
-#endif
-
-#if 0
-inline static
-void update_data(vvp_memory_port_t data)
-{
-  assert(data);
-  for (unsigned i=0; i < data->nbits; i++)
-    {
-      vvp_ipoint_t dx = ipoint_index(data->ix, i);
-      functor_t df = functor_index(dx);
-      unsigned char out = get_bit(data->cur_bits, i + data->bitoff);
-      df->put_oval(out, true);
-    }
-}
-#endif
-
-#if 0
-static
-void update_data_ports(vvp_memory_t mem, vvp_memory_bits_t bits, int bit,
-		       unsigned char val)
-{
-  if (!bits)
-    return;
-
-  vvp_memory_port_t a = mem->addr_root;
-  while (a)
-    {
-      if (bits == a->cur_bits)
-	{
-	  unsigned i = bit - a->bitoff;
-	  if (i < a->nbits)
-	    {
-	      vvp_ipoint_t ix = ipoint_index(a->ix, i);
-	      functor_t df = functor_index(ix);
-	      df->put_oval(val, true);
-	    }
-	}
-      a = a->next;
-    }
-}
-#endif
-
-#if 0
-static inline
-void write_event(vvp_memory_port_t p)
-{
-  if (!p->cur_bits)
-    return;
-
-  unsigned we = functor_get_input(p->ix + p->naddr + 1);
-  if (!we)
-    return;
-
-  for (unsigned i=0; i < p->nbits; i++)
-    {
-      unsigned val = functor_get_input(p->ix + p->naddr + 2 + i);
-      if (set_bit(p->cur_bits, i + p->bitoff, val))
-	{
-	  // if a write would change the memory bit, but <we> is
-	  // undefined (x or z), set the bit to x.
-	  if (we > 1)
-	    {
-	      set_bit(p->cur_bits, i + p->bitoff, 2);
-	      val = 2;
-	    }
-	  update_data_ports(p->mem, p->cur_bits, i + p->bitoff, val);
-	}
-    }
-}
-#endif
-
-#if 0
-void vvp_memory_port_s::set(vvp_ipoint_t i, bool, unsigned val, unsigned)
-{
-  // !attention! "i" may not correspond to "this"
-  functor_t ifu = functor_index(i);
-  ifu->put(i, val);
-
-  if (i < ix+naddr)
-    {
-      if (update_addr_bit(this, i))
-	update_data(this);
-    }
-
-  // port ix+naddr is the write clock.  If its input value is
-  // undefined, we do asynchronous write.  Else any event on ix+naddr
-  // is a valid write clock edge.  Connect an appropriate edge event
-  // functor.
-
-  if (i == ix+naddr
-      || (writable && functor_get_input(ix+naddr) == 3))
-    {
-      assert(writable);
-      write_event(this);
-    }
-}
-#endif
-
-
-// %set/mem
-#if 0
-void memory_set(vvp_memory_t mem, unsigned idx, unsigned char val)
-{
-  if (idx/4 >= (mem->size * mem->fwidth))
-    return;
-
-  if (!set_bit(mem->bits, idx, val))
-    return;
-
-  unsigned widx = idx/(4*mem->fwidth);
-  unsigned bidx = idx%(4*mem->fwidth);
-
-  update_data_ports(mem, get_word_ix(mem, widx), bidx, val);
-}
-#endif
-
-// %load/mem
-#if 0
-unsigned memory_get(vvp_memory_t mem, unsigned idx)
-{
-  if (idx/4 >= (mem->size * mem->fwidth))
-    return 2;
-
-  return get_bit(mem->bits, idx);
-}
-#endif
-// %assign/mem event scheduling
-
-struct mem_assign_s: public vvp_gen_event_s
-{
-  union
-  {
-    vvp_memory_t mem;
-    struct mem_assign_s *next;
-  };
-  unsigned long idx;
-};
-
-static struct mem_assign_s* ma_free_list = 0;
-
-inline static struct mem_assign_s* ma_alloc()
-{
-  struct mem_assign_s* cur = ma_free_list;
-  if (!cur)
-    cur = (struct mem_assign_s*) malloc(sizeof(struct mem_assign_s));
-  else
-    ma_free_list = cur->next;
-
-  return cur;
+      addr_ = 0;
+      next_ = mem_->port_list;
+      mem_->port_list = this;
 }
 
-inline static void ma_free(struct mem_assign_s* cur)
+vvp_fun_memport::~vvp_fun_memport()
 {
-  cur->next = ma_free_list;
-  ma_free_list = cur;
 }
 
-#if 0
-static void run_mem_assign(vvp_gen_event_t obj, unsigned char val)
+void vvp_fun_memport::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
 {
-  struct mem_assign_s *e = (struct mem_assign_s *) obj;
-  memory_set(e->mem, e->idx, val);
-  ma_free(e);
+      bool addr_valid_flag;
+
+      switch (port.port()) {
+
+	  case 0: // Address input
+	    addr_valid_flag = vector4_to_value(bit, addr_);
+	    if (! addr_valid_flag)
+		  addr_ = memory_word_count(mem_);
+	    bit = memory_get_word(mem_, addr_);
+	    vvp_send_vec4(port.ptr()->out, bit);
+	    break;
+
+	  default:
+	    fprintf(stdout, "XXXX write ports not implemented.\n");
+	    assert(0);
+      }
 }
-#endif
+
+/*
+ * This function is called by the memory itself to tell this port that
+ * the given address had a content change. The device itself figures
+ * out what to do with that information.
+ */
+void vvp_fun_memport::check_word_change(unsigned long addr)
+{
+      if (addr != addr_)
+	    return;
+
+      vvp_vector4_t bit = memory_get_word(mem_, addr_);
+      vvp_send_vec4(net_->out, bit);
+}
+
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.26  2005/03/09 04:52:40  steve
+ *  reimplement memory ports.
+ *
  * Revision 1.25  2005/03/06 17:07:48  steve
  *  Non blocking assign to memory words.
  *

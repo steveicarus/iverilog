@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.h,v 1.8 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: memory.h,v 1.9 2005/03/09 04:52:40 steve Exp $"
 #endif
 
 #include "vvp_net.h"
@@ -84,12 +84,6 @@ void schedule_memory(vvp_memory_t mem, unsigned addr,
  */
 extern vvp_vector4_t memory_get_word(vvp_memory_t mem, unsigned idx);
 
-#if 0
-vvp_ipoint_t memory_port_new(vvp_memory_t mem,
-			     unsigned nbits, unsigned bitoff,
-			     unsigned naddr, bool writable);
-#endif
-
 
   /* Number of words in the memory. */
 unsigned memory_word_count(vvp_memory_t mem);
@@ -102,6 +96,47 @@ long memory_right_range(vvp_memory_t mem, unsigned ix);
   /* Get the user defined geometry for the memory *word*. */
 long memory_word_left_range(vvp_memory_t mem);
 long memory_word_right_range(vvp_memory_t mem);
+
+/* vvp_fun_memport
+ * The vvp_fum_memport is a structural port into a vvp_memory_t
+ * object. The output is the word that is read from the addressed
+ * memory, and the inputs are the address and optional write controls.
+ *
+ * 0  -- Address
+ * This addresses the word in the memory. The output follows this
+ * address as it changes, and also follows the value of the addressed
+ * word.
+ *
+ * 1  -- Write event
+ *
+ * 2  -- Write enable
+ *
+ * 3  -- Write data
+ *
+ * NOTE: This functor is unique in that it needs to store the
+ * vvp_net_t pointer associated with it. It needs this because it can
+ * received input from other then its ports. Notably, the memory
+ * itself reports word changes.
+ */
+class vvp_fun_memport  : public vvp_net_fun_t {
+
+    public:
+      explicit vvp_fun_memport(vvp_memory_t mem, vvp_net_t*net);
+      ~vvp_fun_memport();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      vvp_memory_t mem_;
+
+      friend void memory_set_word(vvp_memory_t, unsigned, vvp_vector4_t);
+      void check_word_change(unsigned long address);
+      class vvp_fun_memport*next_;
+
+      unsigned long addr_;
+
+      vvp_net_t*net_;
+};
 
 /*
 **  Access to the memory symbol table.
@@ -117,6 +152,9 @@ vvp_memory_t memory_create(char *label);
 
 /*
  * $Log: memory.h,v $
+ * Revision 1.9  2005/03/09 04:52:40  steve
+ *  reimplement memory ports.
+ *
  * Revision 1.8  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

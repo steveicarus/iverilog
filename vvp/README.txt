@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.58 2005/03/03 04:33:10 steve Exp $
+ *  $Id: README.txt,v 1.59 2005/03/09 04:52:40 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -306,42 +306,36 @@ allowed for multidimensional indexing. This statement creates the
 memory array and makes it available to procedural code.
 
 Procedural access to the memory references the memory as single array
-of words.
+of words, with the base address==0, and the last address the size (in
+words) of the memory -1. It is up to the compiler to convert Verilog
+index sets to a cannonical address. The multi-dimensional index set is
+available for VPI use.
 
 Structural read access is implemented in terms of address and data
 ports.  The addresses applied to the address port are expected to be
-within the ranges specified, not based at zero.
+in cannonical form.
 
-A read port is a vector of functors that is wide enough to accept all
-provided address bits and at least as wide as the requested subset of
-the data port.
+A read port is a functor that takes a single input, the read address,
+and outputs the word value at the given (cannonical) address.
 
-	<label> .mem/port <memid>, <msb>,<lsb>, <aw>, <addr_bits> ;
+	<label> .mem/port <memid>, <address> ;
 
 <label> identifies the vector of output functors, to allow connections
-to the data output.  <memid> is the label of the memory. <msb>,<lsb>
-select a part of the data width.  These are not relative to the data
-port range defined for the memory.  The LSB of the data word is here
-referred to as 0, regardless to the range specified in the memory
-definition.  <addr_bits> is a list of symbols, which connect to the
-address inputs of this port.  There are <aw> address bits (<aw> may
-become a list of numbers, when multi-index memory ports become
-supported).
+to the data output.  <memid> is the label of the memory.
 
-Any address change, or any change in the addressed memory contents is
-immediately propagated to the port outputs.
+Any address inputchange, or any change in the addressed memory
+contents, is immediately propagated to the port output.
 
-A write port is a superset of a read port.  It is a vector of functors
-that is wide enough to accept the address bits, an event input, a
-write enable input, and the data inputs.
+A write port is a superset of a read port.  It is a 4-input functor
+that accepts the word address, an event input, a write enable input,
+and the data input.
 
-	<label> .mem/port <memid>, <msb>,<lsb>, <aw>, <addr_bits>,
-                          <event>, <we>, <data> ;
+	<label> .mem/port <memid>, <address>, <event>, <we>, <data> ;
 
 <event> is an event functor that triggers a write, if the <we> input
-is true.  <data> is a list of symbols that connect to the data input
+is true.  <data> is the input that connect to the data input
 port.  For asynchronous transparent write operation, connect
-<event> to C<z>, the RAM will transparently follow any changes on
+<event> to C4<z>, the RAM will transparently follow any changes on
 address and data lines, while <we> is true.
 
 There is no Verilog construct that calls for a structural write port

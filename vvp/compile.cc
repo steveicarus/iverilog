@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.189 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: compile.cc,v 1.190 2005/03/09 04:52:40 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1273,33 +1273,21 @@ void compile_memory(char *label, char *name, int msb, int lsb,
 }
 
 void compile_memory_port(char *label, char *memid,
-			 unsigned msb, unsigned lsb,
-			 unsigned naddr,
 			 unsigned argc, struct symb_s *argv)
 {
-#if 0
-  vvp_memory_t mem = memory_find(memid);
-  free(memid);
-  assert(mem);
+      vvp_memory_t mem = memory_find(memid);
+      free(memid);
+      assert(mem);
 
-  // This is not a Verilog bit range.
-  // This is a data port bit range.
-  assert (lsb >= 0  &&  lsb<=msb);
-  assert (msb < memory_data_width(mem));
-  unsigned nbits = msb-lsb+1;
+      vvp_net_t*ptr = new vvp_net_t;
+      vvp_fun_memport*fun = new vvp_fun_memport(mem, ptr);
+      ptr->fun = fun;
 
-  bool writable = argc >= (naddr + 2 + nbits);
+      define_functor_symbol(label, ptr);
+      free(label);
 
-  vvp_ipoint_t ix = memory_port_new(mem, nbits, lsb, naddr, writable);
-
-  define_functor_symbol(label, ix);
-  free(label);
-
-  inputs_connect(ix, argc, argv);
-  free(argv);
-#else
-  fprintf(stderr, "XXXX compile_memory_port not implemented.\n");
-#endif
+      inputs_connect(ptr, argc, argv);
+      free(argv);
 }
 
 /*
@@ -1657,6 +1645,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.190  2005/03/09 04:52:40  steve
+ *  reimplement memory ports.
+ *
  * Revision 1.189  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

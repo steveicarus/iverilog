@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.63 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: compile.h,v 1.64 2005/03/09 04:52:40 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -200,8 +200,6 @@ extern void compile_memory(char *label, char *name, int lsb, int msb,
 			   unsigned idxs, long *idx);
 
 extern void compile_memory_port(char *label, char *memid,
-				unsigned lsb, unsigned msb,
-				unsigned naddr,
 				unsigned argc, struct symb_s *argv);
 
 extern void compile_memory_init(char *memid, unsigned idx, long val);
@@ -297,6 +295,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.64  2005/03/09 04:52:40  steve
+ *  reimplement memory ports.
+ *
  * Revision 1.63  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

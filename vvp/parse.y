@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.67 2005/03/03 04:33:10 steve Exp $"
+#ident "$Id: parse.y,v 1.68 2005/03/09 04:52:40 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -159,8 +159,8 @@ statement
         | T_LABEL K_MEM T_STRING ',' T_NUMBER ',' T_NUMBER ',' numbers ';'
 		{ compile_memory($1, $3, $5, $7, $9.cnt, $9.nvec); }
 
-        | T_LABEL K_MEM_P T_SYMBOL ',' T_NUMBER ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
-		{ compile_memory_port($1, $3, $5, $7, $9, $11.cnt, $11.vect); }
+        | T_LABEL K_MEM_P T_SYMBOL ',' symbols ';'
+		{ compile_memory_port($1, $3, $5.cnt, $5.vect); }
 
 	| mem_init_stmt
 
@@ -673,6 +673,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.68  2005/03/09 04:52:40  steve
+ *  reimplement memory ports.
+ *
  * Revision 1.67  2005/03/03 04:33:10  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
