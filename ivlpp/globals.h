@@ -19,12 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: globals.h,v 1.1 1999/07/03 20:03:47 steve Exp $"
+#ident "$Id: globals.h,v 1.2 1999/09/05 22:33:18 steve Exp $"
 #endif
 
 # include  <stdio.h>
 
-extern void reset_lexor(FILE*out, const char*ipath);
+extern void reset_lexor(FILE*out, char*paths[]);
 extern void define_macro(const char*name, const char*value);
 
 /* These variables contain the include directories to be searched when
@@ -40,6 +40,9 @@ extern int yyparse();
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.2  1999/09/05 22:33:18  steve
+ *  Take multiple source files on the command line.
+ *
  * Revision 1.1  1999/07/03 20:03:47  steve
  *  Add include path and line directives.
  *

@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.2 1999/07/03 20:03:47 steve Exp $"
+#ident "$Id: main.c,v 1.3 1999/09/05 22:33:18 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -109,7 +109,7 @@ int main(int argc, char*argv[])
 	    flag_errors += 1;
 
       if (flag_errors) {
-	    fprintf(stderr, "\nUsage: %s [-v][-L][-I<dir>][-D<def>] <file>\n"
+	    fprintf(stderr, "\nUsage: %s [-v][-L][-I<dir>][-D<def>] <file>...\n"
 		    "    -D<def> - Predefine a value.\n"
 		    "    -I<dir> - Add an include file search directory\n"
 		    "    -L      - Emit line number directives\n"
@@ -129,12 +129,20 @@ int main(int argc, char*argv[])
 	    out = stdout;
       }
 
-      reset_lexor(out, argv[optind]);
+      if (argv[optind] == 0) {
+	    fprintf(stderr, "%s: No input files given.\n", argv[0]);
+	    return 1;
+      }
+
+      reset_lexor(out, argv+optind);
       return yyparse();
 }
 
 /*
  * $Log: main.c,v $
+ * Revision 1.3  1999/09/05 22:33:18  steve
+ *  Take multiple source files on the command line.
+ *
  * Revision 1.2  1999/07/03 20:03:47  steve
  *  Add include path and line directives.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.11 1999/07/25 00:03:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.12 1999/09/05 22:33:18 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -60,6 +60,7 @@ struct include_stack_t {
       struct include_stack_t*next;
 };
 
+static struct include_stack_t*file_queue = 0;
 static struct include_stack_t*istack  = 0;
 static struct include_stack_t*standby = 0;
 
@@ -469,12 +470,18 @@ static void do_include()
 	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
 }
 
+/*
+ * The lexical analyzer calls this function when the current file
+ * ends. Here I pop the include stack and resume the previous file. If
+ * there is no previous file, then the main input is ended.
+ */
 static int yywrap()
 {
       int line_mask_flag = 0;
       struct include_stack_t*isp = istack;
       istack = isp->next;
 
+	/* Delete the current input buffers, and free the cell. */
       yy_delete_buffer(YY_CURRENT_BUFFER);
       if (isp->file) {
 	    fclose(isp->file);
@@ -492,13 +499,41 @@ static int yywrap()
       }
       free(isp);
 
-      if (istack == 0)
-	    return 1;
+	/* If I am out if include stack, the main input is
+	   done. Look for another file to process in the input
+	   queue. If none are there, give up. Otherwise, open the file
+	   and continue parsing. */
+      if (istack == 0) {
+	    if (file_queue == 0)
+		  return 1;
+
+	    istack = file_queue;
+	    file_queue = file_queue->next;
+	    istack->next = 0;
+	    istack->lineno = 0;
+
+	    istack->file = fopen(istack->path, "r");
+	    if (istack->file == 0) {
+		  perror(istack->path);
+		  exit(1);
+	    }
+
+	    if (line_direct_flag)
+		  fprintf(yyout, "#line \"%s\" 0\n", istack->path);
+
+	    yyrestart(isp->file);
+	    return 0;
+      }
+
+
+	/* Otherwise, resume the input buffer that is the new stack
+	   top. If I need to print a line directive, do so. */
 
       yy_switch_to_buffer(istack->yybs);
 
       if (line_direct_flag && istack->path && !line_mask_flag)
 	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
+
       return 0;
 }
 
@@ -507,14 +542,16 @@ static int yywrap()
  * opened, and the lexor is initialized. The include stack is cleared
  * and ready to go.
  */
-void reset_lexor(FILE*out, const char*path)
+void reset_lexor(FILE*out, char*paths[])
 {
+      unsigned idx;
+      struct include_stack_t*tail = 0;
       struct include_stack_t*isp = malloc(sizeof(struct include_stack_t));
-      isp->path = strdup(path);
-      isp->file = fopen(path, "r");
+      isp->path = strdup(paths[0]);
+      isp->file = fopen(paths[0], "r");
       isp->str  = 0;
       if (isp->file == 0) {
-	    perror(path);
+	    perror(paths[0]);
 	    exit(1);
       }
 
@@ -525,4 +562,20 @@ void reset_lexor(FILE*out, const char*path)
       assert(istack == 0);
       istack = isp;
       isp->next = 0;
+
+	/* Now build up a queue of all the remaining file names, so
+	   that yywrap can pull them when needed. */
+      file_queue = 0;
+      for (idx = 1 ;  paths[idx] ;  idx += 1) {
+	    isp = malloc(sizeof(struct include_stack_t));
+	    isp->path = strdup(paths[idx]);
+	    isp->str = 0;
+	    isp->next = 0;
+	    if (tail)
+		  tail->next = isp;
+	    else
+		  file_queue = isp;
+
+	    tail = isp;
+      }
 }
