@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.89 1999/09/17 02:06:25 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.90 1999/09/18 01:53:08 steve Exp $"
 #endif
 
 /*
@@ -1441,6 +1441,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 		  assert(msb_);
 		  verinum*lsn = lsb_->eval_const(des, path);
 		  verinum*msn = msb_->eval_const(des, path);
+		  assert(lsn);
+		  assert(msn);
 		  unsigned long lsv = lsn->as_ulong();
 		  unsigned long msv = msn->as_ulong();
 		  unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
@@ -2333,7 +2335,23 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       body->append(step);
 
-      NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path), body);
+
+	/* Elaborate the condition expression. Try to evaluate it too,
+	   in case it is a constant. This is an interesting case
+	   worthy of a warning. */
+      NetExpr*ce = cond_->elaborate_expr(des, path);
+      if (NetExpr*tmp = ce->eval_tree()) {
+	    if (dynamic_cast<NetEConst*>(tmp))
+		  cerr << get_line() << ": warning: condition expression "
+			"is constant." << endl;
+
+	    ce = tmp;
+      }
+
+
+	/* All done, build up the loop. */
+
+      NetWhile*loop = new NetWhile(ce, body);
       top->append(loop);
       return top;
 }
@@ -2600,6 +2618,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.90  1999/09/18 01:53:08  steve
+ *  Detect constant lessthen-equal expressions.
+ *
  * Revision 1.89  1999/09/17 02:06:25  steve
  *  Handle unconnected module ports.
  *

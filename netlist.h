@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.65 1999/09/16 04:18:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.66 1999/09/18 01:53:08 steve Exp $"
 #endif
 
 /*
@@ -1146,22 +1146,17 @@ class NetEBinary  : public NetExpr {
 
       virtual bool set_width(unsigned w);
 
-	// If both of my subexpressions are constants, then I can
-	// probably evaluate this part of the expression at compile
-	// time.
-      virtual NetExpr* eval_tree();
-
       virtual NetEBinary* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
-      NetExpr*eval_eqeq();
-
     protected:
       char op_;
       NetExpr* left_;
       NetExpr* right_;
+
+      virtual void eval_sub_tree_();
 };
 
 /*
@@ -1222,6 +1217,12 @@ class NetEBComp : public NetEBinary {
       ~NetEBComp();
 
       virtual bool set_width(unsigned w);
+      virtual NetExpr* eval_tree();
+
+    private:
+      NetExpr*eval_eqeq_();
+      NetExpr*eval_leeq_();
+
 };
 
 /*
@@ -1584,6 +1585,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.66  1999/09/18 01:53:08  steve
+ *  Detect constant lessthen-equal expressions.
+ *
  * Revision 1.65  1999/09/16 04:18:15  steve
  *  elaborate concatenation repeats.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.64 1999/09/16 04:18:15 steve Exp $"
+#ident "$Id: netlist.cc,v 1.65 1999/09/18 01:53:08 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -920,7 +920,27 @@ NetEBinary* NetEBinary::dup_expr() const
       assert(0);
 }
 
-NetExpr* NetEBinary::eval_eqeq()
+/*
+ * Some of the derived classes can be evaluated by the compiler, this
+ * method provides the common aid of evaluating the parameter
+ * expressions.
+ */
+void NetEBinary::eval_sub_tree_()
+{
+      NetExpr*tmp = left_->eval_tree();
+      if (tmp) {
+	    delete left_;
+	    left_ = tmp;
+      }
+      tmp = right_->eval_tree();
+      if (tmp){
+	    delete right_;
+	    right_ = tmp;
+      }
+}
+
+
+NetExpr* NetEBComp::eval_eqeq_()
 {
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
@@ -942,22 +962,36 @@ NetExpr* NetEBinary::eval_eqeq()
       return new NetEConst(result);
 }
 
-NetExpr* NetEBinary::eval_tree()
+NetExpr* NetEBComp::eval_leeq_()
 {
-      NetExpr*tmp = left_->eval_tree();
-      if (tmp) {
-	    delete left_;
-	    left_ = tmp;
+      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      if (r == 0) return 0;
+
+      verinum rv = r->value();
+
+	/* Detect the case where the right side is greater that or
+	   equal to the largest value the left side can possibly
+	   have. */
+      unsigned long lv = (1 << left_->expr_width()) - 1;
+      if (lv <= rv.as_ulong()) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
       }
-      tmp = right_->eval_tree();
-      if (tmp){
-	    delete right_;
-	    right_ = tmp;
-      }
+
+      return 0;
+}
+
+      
+NetExpr* NetEBComp::eval_tree()
+{
+      eval_sub_tree_();
 
       switch (op_) {
 	  case 'e':
-	    return eval_eqeq();
+	    return eval_eqeq_();
+
+	  case 'L':
+	    return eval_leeq_();
 
 	  default:
 	    return 0;
@@ -1836,6 +1870,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.65  1999/09/18 01:53:08  steve
+ *  Detect constant lessthen-equal expressions.
+ *
  * Revision 1.64  1999/09/16 04:18:15  steve
  *  elaborate concatenation repeats.
  *
