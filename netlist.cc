@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.48 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: netlist.cc,v 1.49 1999/07/31 03:16:54 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -561,6 +561,89 @@ NetExpr* NetExpr::eval_tree()
       return 0;
 }
 
+NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+}
+
+NetEBAdd::~NetEBAdd()
+{
+}
+
+/*
+ * The bitwise logical operators have operands the same size as the
+ * result. Anything else is a mess.
+ */
+bool NetEBAdd::set_width(unsigned w)
+{
+      bool flag = true;
+
+      if (left_->expr_width() > right_->expr_width())
+	    right_->set_width(left_->expr_width());
+      else
+	    left_->set_width(right_->expr_width());
+
+      if (left_->expr_width() == w)
+	    expr_width(w);
+      else if (left_->expr_width() == (w-1))
+	    expr_width(w);
+      else
+	    flag = false;
+
+      return flag;
+}
+
+NetEBBits::NetEBBits(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+}
+
+NetEBBits::~NetEBBits()
+{
+}
+
+/*
+ * The bitwise logical operators have operands the same size as the
+ * result. Anything else is a mess.
+ */
+bool NetEBBits::set_width(unsigned w)
+{
+      bool flag = true;
+
+      flag = left_->set_width(w) && flag;
+      flag = right_->set_width(w) && flag;
+      expr_width(w);
+
+      return flag;
+}
+
+NetEBComp::NetEBComp(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+}
+
+NetEBComp::~NetEBComp()
+{
+}
+
+/*
+ * Comparison operators allow the subexpressions to have
+ * their own natural width. However, I do need to make
+ * sure that the subexpressions have the same width.
+ */
+bool NetEBComp::set_width(unsigned w)
+{
+      bool flag = true;
+
+      assert(w == 1);
+      expr_width(w);
+      flag = left_->set_width(right_->expr_width());
+      if (!flag)
+	    flag = right_->set_width(left_->expr_width());
+
+      return flag;
+}
+
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
@@ -601,34 +684,14 @@ bool NetEBinary::set_width(unsigned w)
       bool flag = true;
       switch (op_) {
 	  case 'a': // logical and (&&)
+	  case 'o': // logical or (||)
 	    assert(w == 1);
 	    expr_width(w);
-	    break;
-
-	      /* Comparison operators allow the subexpressions to have
-		 their own natural width. However, I do need to make
-		 sure that the subexpressions have the same width. */
-	  case 'E': /* === */
-	  case 'e': /* ==  */
-	  case 'N': /* !== */
-	  case 'n': /* !=  */
-	  case '<': /* < */
-	  case '>': /* > */
-	    assert(w == 1);
-	    expr_width(w);
-	    flag = left_->set_width(right_->expr_width());
-	    if (!flag)
-		  flag = right_->set_width(left_->expr_width());
 	    break;
 
 	  case 'l': // left shift  (<<)
 	  case 'r': // right shift (>>)
 	    flag = left_->set_width(w);
-	    expr_width(w);
-	    break;
-
-	  case 'o': // logical or (||)
-	    assert(w == 1);
 	    expr_width(w);
 	    break;
 
@@ -642,25 +705,6 @@ bool NetEBinary::set_width(unsigned w)
 		  op_ << "." << endl;
 	    flag = false;
 
-	  case '+':
-	  case '-':
-	    flag = true;
-	    if (left_->expr_width() > right_->expr_width())
-		  right_->set_width(left_->expr_width());
-	    else
-		  left_->set_width(right_->expr_width());
-
-	    if (left_->expr_width() == w)
-		  expr_width(w);
-	    else if (left_->expr_width() == (w-1))
-		  expr_width(w);
-	    else
-		  flag = false;
-	    break;
-
-	  case '^':
-	  case '&':
-	  case '|':
 	  case '%':
 	  case '/':
 	    flag = left_->set_width(w) && flag;
@@ -1483,6 +1527,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.49  1999/07/31 03:16:54  steve
+ *  move binary operators to derived classes.
+ *
  * Revision 1.48  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *

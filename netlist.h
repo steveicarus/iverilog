@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.51 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: netlist.h,v 1.52 1999/07/31 03:16:54 steve Exp $"
 #endif
 
 /*
@@ -987,6 +987,8 @@ class NetProcTop  : public LineInfo {
  *   %  -- Arithmetic modulus
  *   &  -- Bit-wise AND
  *   |  -- Bit-wise OR
+ *   <  -- Less then
+ *   >  -- Greater then
  *   e  -- Logical equality (==)
  *   E  -- Case equality (===)
  *   L  -- Less or equal
@@ -1023,10 +1025,70 @@ class NetEBinary  : public NetExpr {
 
       NetExpr*eval_eqeq();
 
-    private:
+    protected:
       char op_;
       NetExpr* left_;
       NetExpr* right_;
+};
+
+/*
+ * The addition operators have slightly more complex width
+ * calculations because there is the optional carry bit that can be
+ * used. The operators covered by this class are:
+ *   +  -- Arithmetic add
+ *   -  -- Arithmetic minus
+ */
+class NetEBAdd : public NetEBinary {
+
+    public:
+      NetEBAdd(char op, NetExpr*l, NetExpr*r);
+      ~NetEBAdd();
+
+      virtual bool set_width(unsigned w);
+};
+
+/*
+ * The bitwise binary operators are represented by this class. This is
+ * a specialization of the binary operator, so is derived from
+ * NetEBinary. The particular constraints on these operators are that
+ * operand and result widths match exactly, and each bit slice of the
+ * operation can be represented by a simple gate. The operators
+ * covered by this class are:
+ *
+ *   ^  -- Bit-wise exclusive OR
+ *   &  -- Bit-wise AND
+ *   |  -- Bit-wise OR
+ */
+class NetEBBits : public NetEBinary {
+
+    public:
+      NetEBBits(char op, NetExpr*l, NetExpr*r);
+      ~NetEBBits();
+
+      virtual bool set_width(unsigned w);
+};
+
+/*
+ * The binary comparison operators are handled by this class. This
+ * this case the bit width of the expression is 1 bit, and the
+ * operands take their natural widths. The supported operators are:
+ *
+ *   <  -- Less then
+ *   >  -- Greater then
+ *   e  -- Logical equality (==)
+ *   E  -- Case equality (===)
+ *   L  -- Less or equal (<=)
+ *   G  -- Greater or equal (>=)
+ *   n  -- Logical inequality (!=)
+ *   N  -- Case inequality (!==)
+ */
+class NetEBComp : public NetEBinary {
+
+    public:
+      NetEBComp(char op, NetExpr*l, NetExpr*r);
+      ~NetEBComp();
+
+      virtual bool set_width(unsigned w);
 };
 
 /*
@@ -1375,6 +1437,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.52  1999/07/31 03:16:54  steve
+ *  move binary operators to derived classes.
+ *
  * Revision 1.51  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *

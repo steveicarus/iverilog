@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.61 1999/07/28 03:46:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.62 1999/07/31 03:16:54 steve Exp $"
 #endif
 
 /*
@@ -899,13 +899,36 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 	    return 0;
       }
 
-      NetEBinary*tmp = new NetEBinary(op_, lp, rp);
-      tmp->set_line(*this);
+      NetEBinary*tmp;
       switch (op_) {
-	  case 'e':
-	  case 'n':
+	  default:
+	    tmp = new NetEBinary(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case '^':
+	  case '&':
+	  case '|':
+	    tmp = new NetEBBits(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case '+':
+	  case '-':
+	    tmp = new NetEBAdd(op_, lp, rp);
+	    tmp->set_line(*this);
+	    break;
+
+	  case 'e': /* == */
+	  case 'E': /* === */
+	  case 'n': /* != */
+	  case 'N': /* !== */
+	  case 'L': /* <= */
+	  case 'G': /* >= */
 	  case '<':
 	  case '>':
+	    tmp = new NetEBComp(op_, lp, rp);
+	    tmp->set_line(*this);
 	    flag = tmp->set_width(1);
 	    if (flag == false) {
 		  cerr << get_line() << ": expression bit width"
@@ -913,9 +936,8 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 		  des->errors += 1;
 	    }
 	    break;
-	  default:
-	    ;
       }
+
       return tmp;
 }
 
@@ -1969,6 +1991,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.62  1999/07/31 03:16:54  steve
+ *  move binary operators to derived classes.
+ *
  * Revision 1.61  1999/07/28 03:46:57  steve
  *  Handle no ports at all for tasks.
  *
