@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.68 2002/04/23 03:53:59 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.69 2002/04/23 05:06:31 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1238,7 +1238,7 @@ static void draw_lpm_mux_bitwide(ivl_lpm_t net)
       unsigned seldx, idx;
       ivl_nexus_t s;
 
-      assert(size == (1 << sel));
+      assert(size <= (1 << sel));
 
       s = ivl_lpm_select(net, 0);
 
@@ -1246,16 +1246,24 @@ static void draw_lpm_mux_bitwide(ivl_lpm_t net)
 	   net. These also use up the least significant bit of the
 	   select vector. */
       for (idx = 0 ;  idx < size ;  idx += 2) {
-	    ivl_nexus_t a = ivl_lpm_data2(net, idx+0, 0);
-	    ivl_nexus_t b = ivl_lpm_data2(net, idx+1, 0);
 
 	    fprintf(vvp_out, "L_%s/0/%u/%u .functor MUXZ, ",
 		    vvp_mangle_id(ivl_lpm_name(net)), sel, idx);
 
-	    draw_input_from_net(a);
-	    fprintf(vvp_out, ", ");
-	    draw_input_from_net(b);
-	    fprintf(vvp_out, ", ");
+	    {
+		  ivl_nexus_t a = ivl_lpm_data2(net, idx+0, 0);
+		  draw_input_from_net(a);
+		  fprintf(vvp_out, ", ");
+	    }
+
+	    if ((idx+1) < size) {
+		  ivl_nexus_t b = ivl_lpm_data2(net, idx+1, 0);
+		  draw_input_from_net(b);
+		  fprintf(vvp_out, ", ");
+	    } else {
+		  fprintf(vvp_out, "C<x>, ");
+	    }
+
 	    draw_input_from_net(s);
 	    fprintf(vvp_out, ", C<1>;\n");
       }
@@ -1275,9 +1283,13 @@ static void draw_lpm_mux_bitwide(ivl_lpm_t net)
 			  vvp_mangle_id(ivl_lpm_name(net)),
 			  level+1, idx);
 
-		  fprintf(vvp_out, "L_%s/0/%u/%u, ",
-			  vvp_mangle_id(ivl_lpm_name(net)),
-			  level+1, idx+span/2);
+		  if ((idx + span/2) < size) {
+			fprintf(vvp_out, "L_%s/0/%u/%u, ",
+				vvp_mangle_id(ivl_lpm_name(net)),
+				level+1, idx+span/2);
+		  } else {
+			fprintf(vvp_out, "C<x>, ");
+		  }
 
 		  draw_input_from_net(s);
 		  fprintf(vvp_out, ", C<1>;\n");
@@ -1291,9 +1303,14 @@ static void draw_lpm_mux_bitwide(ivl_lpm_t net)
 
       fprintf(vvp_out, "L_%s/0/2/0, ", vvp_mangle_id(ivl_lpm_name(net)));
 
-      fprintf(vvp_out, "L_%s/0/2/%u, ",
-	      vvp_mangle_id(ivl_lpm_name(net)),
-	      size/2);
+
+      if ((2 << (sel-1)) < size) {
+	    fprintf(vvp_out, "L_%s/0/2/%u, ",
+		    vvp_mangle_id(ivl_lpm_name(net)),
+		    (2 << (sel-1))/2);
+      } else {
+	    fprintf(vvp_out, "C<x>, ");
+      }
 
       draw_input_from_net(s);
       fprintf(vvp_out, ", C<1>;\n");
@@ -1555,6 +1572,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.69  2002/04/23 05:06:31  steve
+ *  Handle bitsel muxes of odd shaped outputs.
+ *
  * Revision 1.68  2002/04/23 03:53:59  steve
  *  Add support for non-constant bit select.
  *
