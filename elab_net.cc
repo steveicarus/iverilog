@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.83 2001/12/30 21:32:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.84 2001/12/31 04:23:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -783,12 +783,45 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 				       unsigned long fall,
 				       unsigned long decay) const
 {
+      verinum*lnum = left_->eval_const(des, scope);
+      verinum*rnum = right_->eval_const(des, scope);
+
+	/* Detect and handle the special case that both the operands
+	   of the multiply are constant expressions. Evalulate the
+	   value and make this a simple constant. */
+      if (lnum && rnum) {
+	    verinum prod = *lnum * *rnum;
+	    if (lwidth == 0)
+		  lwidth = prod.len();
+
+	    verinum res (verinum::V0, lwidth);
+	    for (unsigned idx = 0
+		       ;  idx < prod.len() && idx < lwidth
+		       ;  idx += 1) {
+		  res.set(idx, prod.get(idx));
+	    }
+
+	    NetConst*odev = new NetConst(scope, scope->local_hsymbol(), res);
+	    NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
+				     NetNet::IMPLICIT, lwidth);
+	    for (unsigned idx = 0 ;  idx < lwidth ;  idx += 1)
+		  connect(odev->pin(idx), osig->pin(idx));
+
+	    des->add_node(odev);
+	    osig->local_flag(true);
+	    return osig;
+      }
+
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
       NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (rsig == 0) return 0;
 
       unsigned rwidth = lwidth;
+      if (rwidth == 0) {
+	    rwidth = lsig->pin_count() + rsig->pin_count();
+      }
+
       NetMult*mult = new NetMult(scope, scope->local_hsymbol(), rwidth,
 				 lsig->pin_count(),
 				 rsig->pin_count());
@@ -1941,6 +1974,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.84  2001/12/31 04:23:59  steve
+ *  Elaborate multiply nets with constant operands ad NetConst.
+ *
  * Revision 1.83  2001/12/30 21:32:03  steve
  *  Support elaborate_net for PEString objects.
  *
