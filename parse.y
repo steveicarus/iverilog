@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.134 2001/11/03 04:09:10 steve Exp $"
+#ident "$Id: parse.y,v 1.135 2001/11/06 02:52:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -84,6 +84,7 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 };
 
 %token <text>   HIDENTIFIER IDENTIFIER PORTNAME SYSTEM_IDENTIFIER STRING
+%token <text>   PATHPULSE_IDENTIFIER
 %token <number> NUMBER
 %token <realtime> REALTIME
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_SG
@@ -1932,6 +1933,15 @@ specparam
 		  delete $3;
 		  delete $5;
 		  delete $7;
+		}
+	| PATHPULSE_IDENTIFIER '=' '(' expression ')'
+		{ delete $1;
+		  delete $4;
+		}
+	| PATHPULSE_IDENTIFIER '=' '(' expression ',' expression ')'
+		{ delete $1;
+		  delete $4;
+		  delete $6;
 		}
 	;
 
