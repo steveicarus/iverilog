@@ -110,6 +110,24 @@ program and include a GPL license statement if you can. Your test
 program may find its way into the test suite, and the notices will
 make it all nice and legal.
 
+RESEARCHING EXISTING/PAST BUGS, AND FILING REPORTS
+
+The URL <http://www.icarus.com/cgi-bin/ivl-bugs> is the main bug
+tracking system. Once you believe you have found a bug, you may browse
+the bugs database for existing bugs that may be related to yours. You
+might find that your bug has already been fixed in a later release or
+snapshot. If that's the case, then you are set.
+
+The bug database supports basic keyword searches, and you can
+optionally limit your search to active bugs, or fixed bugs. You may
+also browse the bug database, just to get an idea what is still
+broken. You may for example find a related bug that explains your
+symptom.
+
+The root page of the bug report database describes how to submit your
+completed bug report. You may submit it via the web form, or via
+e-mail.
+
 HOW TO SEND PATCHES
 
 Bug reports with patches are very welcome, especially if they are
@@ -130,7 +148,7 @@ patch is for, I will ask for clarification before applying it.)
 
 COPYRIGHT ISSUES
 
-Icarus Verilog is Copyright (c) 1998-1999 Stephen Williams except
+Icarus Verilog is Copyright (c) 1998-2003 Stephen Williams except
 where otherwise noted. Minor patches are covered as derivative works
 (or editorial comment or whatever the appropriate legal term is) and
 folded into the rest of ivl. However, if a submission can reasonably
@@ -141,8 +159,12 @@ then falls under the "otherwise noted" category.
 I must insist that any copyright material submitted for inclusion
 include the GPL license notice as shown in the rest of the source.
 
-$Id: BUGS.txt,v 1.3 2003/01/30 16:23:07 steve Exp $
+
+$Id: BUGS.txt,v 1.4 2003/02/19 04:36:31 steve Exp $
 $Log: BUGS.txt,v $
+Revision 1.4  2003/02/19 04:36:31  steve
+ Notes on hte bug database.
+
 Revision 1.3  2003/01/30 16:23:07  steve
  Spelling fixes.
 
