@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: _pli_types.h.in,v 1.3 2003/10/02 21:30:06 steve Exp $"
+#ident "$Id: _pli_types.h.in,v 1.4 2003/10/29 03:23:12 steve Exp $"
 #endif
 
 # undef HAVE_INTTYPES_H
@@ -44,6 +44,8 @@ typedef signed short   PLI_INT16;
 typedef unsigned short PLI_UINT16;
 typedef signed char    PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
+
+# define TIME_FMT PRIu64
 
 #else
 
@@ -88,6 +90,9 @@ typedef unsigned char  PLI_UBYTE8;
 
 /*
  * $Log: _pli_types.h.in,v $
+ * Revision 1.4  2003/10/29 03:23:12  steve
+ *  Portably handle time format of VCD prints.
+ *
  * Revision 1.3  2003/10/02 21:30:06  steve
  *  Use configured TIME_FMT in vcd dump printf.
  *
