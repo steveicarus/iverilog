@@ -263,6 +263,9 @@ current state of support for Verilog.
 
   - event data type is not supported.
 
+  - system functions are not supported. (User defined functions are
+    supported.)
+
 Specify blocks are parsed but ignored in general.
 
 
