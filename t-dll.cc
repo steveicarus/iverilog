@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.80 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.81 2002/04/22 03:15:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -570,6 +570,10 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       obj->name_ = strdup(net->name());
       logic_attributes(obj, net);
+
+      obj->delay[0] = net->rise_time();
+      obj->delay[1] = net->fall_time();
+      obj->delay[2] = net->decay_time();
 
       scope_add_logic(scope, obj);
 
@@ -1929,6 +1933,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.81  2002/04/22 03:15:25  steve
+ *  Keep delays applied to BUFZ devices.
+ *
  * Revision 1.80  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.54 2002/04/22 02:40:32 steve Exp $"
+#ident "$Id: stub.c,v 1.55 2002/04/22 03:15:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -520,7 +520,9 @@ static void show_logic(ivl_net_logic_t net)
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_BUFZ:
-	    fprintf(out, "  bufz %s (%s", name,
+	    fprintf(out, "  bufz #(%u) %s (%s",
+		    ivl_logic_delay(net, 0),
+		    name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_OR:
@@ -616,6 +618,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.55  2002/04/22 03:15:25  steve
+ *  Keep delays applied to BUFZ devices.
+ *
  * Revision 1.54  2002/04/22 02:40:32  steve
  *  Dump the while loop expression.
  *

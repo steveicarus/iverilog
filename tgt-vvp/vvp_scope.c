@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.66 2002/03/18 00:18:50 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.67 2002/04/22 03:15:25 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -248,6 +248,9 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 			break;
 
 		  if (ivl_nexus_ptr_drive1(nptr) != IVL_DR_STRONG)
+			break;
+
+		  if (ivl_logic_delay(lptr, 0) != 0)
 			break;
 
 		  return draw_net_input(ivl_logic_pin(lptr, 1));
@@ -693,6 +696,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 		if (dr1 != IVL_DR_STRONG)
 			break;
+
+		if (ivl_logic_delay(lptr, 0) != 0)
+		      break;
 
 		return;
 	  }
@@ -1476,6 +1482,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.67  2002/04/22 03:15:25  steve
+ *  Keep delays applied to BUFZ devices.
+ *
  * Revision 1.66  2002/03/18 00:18:50  steve
  *  Generate port information in the .ufunc statement.
  *
