@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.26 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.27 2001/05/12 03:31:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -30,6 +30,8 @@
  * scope. This includes the scopes themselves, of course. All the
  * other functions in this file are in support of that task.
  */
+
+static const char* draw_net_input(ivl_nexus_t nex);
 
 /*
  * NEXUS
@@ -51,99 +53,118 @@
  * nexus. This one then feeds to another net at the nexus, and so
  * on. The last net is selected as the output of the nexus.
  */
-
 /*
  * This function takes a nexus and looks for an input functor. It then
  * draws to the output a string that represents that functor. What we
  * are trying to do here is find the input to the net that is attached
  * to this nexus.
- *
- * XXXX This function does not yet support multiple drivers.
  */
-void draw_net_input(ivl_nexus_t nex)
+
+static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 {
+      static char result[2048];
+      unsigned idx;
+      unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
       ivl_net_const_t cptr;
       ivl_net_logic_t lptr;
       ivl_signal_t sptr;
       ivl_lpm_t lpm;
-      unsigned idx, ndx;
 
-      ivl_nexus_ptr_t driver = 0;
-
-      for (ndx = 0 ;  ndx < ivl_nexus_ptrs(nex) ;  ndx += 1) {
-	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, ndx);
-	    unsigned nptr_pin = ivl_nexus_ptr_pin(nptr);
-
-	    lptr = ivl_nexus_ptr_log(nptr);
-	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) &&
-		(nptr_pin == 0)) {
-		  draw_net_input(ivl_logic_pin(lptr, 1));
-
-		  assert(driver == 0);
-		  driver = nptr;
-		  continue;
-	    }
-
-	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
-		  fprintf(vvp_out, "C<0>");
-		  assert(driver == 0);
-		  driver = nptr;
-		  continue;
-	    }
-
-	    if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
-		  fprintf(vvp_out, "C<1>");
-		  assert(driver == 0);
-		  driver = nptr;
-		  continue;
-	    }
-
-	    if (lptr && (nptr_pin == 0)) {
-		  fprintf(vvp_out, "L_%s", ivl_logic_name(lptr));
-
-		  assert(driver == 0);
-		  driver = nptr;
-		  continue;
-	    }
-
-	    sptr = ivl_nexus_ptr_sig(nptr);
-	    if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-		  fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sptr),
-			  nptr_pin);
-
-		  assert(driver == 0);
-		  driver = nptr;
-		  continue;
-	    }
-
-	    cptr = ivl_nexus_ptr_con(nptr);
-	    if (cptr) {
-		  const char*bits = ivl_const_bits(cptr);
-		  fprintf(vvp_out, "C<%c>", bits[nptr_pin]);
-		  driver = nptr;
-		  continue;
-	    }
-
-	    lpm = ivl_nexus_ptr_lpm(nptr);
-	    if (lpm) switch (ivl_lpm_type(lpm)) {
-
-		case IVL_LPM_MUX:
-		  for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
-			if (ivl_lpm_q(lpm, idx) == nex) {
-			      fprintf(vvp_out, "L_%s/%u",
-				      ivl_lpm_name(lpm), idx);
-
-			      assert(driver == 0);
-			      driver = nptr;
-			      continue;
-			}
-
-	    }
-
-	    assert(ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ);
-	    assert(ivl_nexus_ptr_drive1(nptr) == IVL_DR_HiZ);
+      lptr = ivl_nexus_ptr_log(nptr);
+      if (lptr && (ivl_logic_type(lptr) == IVL_LO_BUFZ) &&
+	  (nptr_pin == 0)) {
+	    return draw_net_input(ivl_logic_pin(lptr, 1));
       }
+
+      if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
+	    return "C<0>";
+      }
+
+      if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
+	    return "C<1>";
+      }
+
+      if (lptr && (nptr_pin == 0)) {
+	    sprintf(result, "L_%s", ivl_logic_name(lptr));
+	    return result;
+      }
+
+      sptr = ivl_nexus_ptr_sig(nptr);
+      if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
+	    sprintf(result, "V_%s[%u]", ivl_signal_name(sptr),
+		    nptr_pin);
+	    return result;
+      }
+
+      cptr = ivl_nexus_ptr_con(nptr);
+      if (cptr) {
+	    const char*bits = ivl_const_bits(cptr);
+	    sprintf(result, "C<%c>", bits[nptr_pin]);
+	    return result;
+      }
+
+      lpm = ivl_nexus_ptr_lpm(nptr);
+      if (lpm) switch (ivl_lpm_type(lpm)) {
+
+	  case IVL_LPM_MUX:
+	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
+		  if (ivl_lpm_q(lpm, idx) == nex) {
+			sprintf(result, "L_%s/%u",
+				ivl_lpm_name(lpm), idx);
+			return result;
+		  }
+
+      }
+
+      assert(0);
 }
+
+static const char* draw_net_input(ivl_nexus_t nex)
+{
+      static char result[512];
+      unsigned idx;
+      ivl_nexus_ptr_t drivers[4];
+      unsigned ndrivers = 0;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
+
+	      /* Skip input only pins. */
+	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ)
+		&& (ivl_nexus_ptr_drive1(nptr) == IVL_DR_HiZ))
+		  continue;
+
+	      /* Save this driver. */
+	    drivers[ndrivers] = nptr;
+	    ndrivers += 1;
+      }
+
+	/* If the nexus has no drivers, then send a constant HiZ into
+	   the net. */
+      if (ndrivers == 0)
+	    return "C<z>";
+
+
+	/* If the nexus has exactly one driver, then simply draw it. */
+      if (ndrivers == 1)
+	    return draw_net_input_drive(nex, drivers[0]);
+
+
+      assert(ndrivers <= 4);
+
+	/* Draw a resolver to combine the inputs. */
+      fprintf(vvp_out, "RS_%s .resolv %s", ivl_nexus_name(nex),
+	      draw_net_input_drive(nex, drivers[0]));
+      for (idx = 1 ;  idx < ndrivers ;  idx += 1) {
+	    fprintf(vvp_out, ", %s", draw_net_input_drive(nex, drivers[idx]));
+      }
+      fprintf(vvp_out, ";\n");
+
+      sprintf(result, "RS_%s", ivl_nexus_name(nex));
+      return result;
+}
+
+
 
 /*
  * This function looks at the nexus in search for the net to attach
@@ -245,31 +266,37 @@ static void draw_net_in_scope(ivl_signal_t sig)
       unsigned idx;
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
+      char**args;
 
       const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
 
-      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d",
-	      ivl_signal_name(sig), signed_flag,
-	      ivl_signal_basename(sig), msb, lsb);
+      args = (char**)calloc(ivl_signal_pins(sig), sizeof(char*));
 
 	/* Connect all the pins of the signal to something. */
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
 	    ivl_nexus_ptr_t ptr;
 	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
 
-	    fprintf(vvp_out, ", ");
-
 	    ptr = find_net_just_after(nex, sig);
 	    if (ptr) {
-		  fprintf(vvp_out, "V_%s[%u]",
+		  char tmp[512];
+		  sprintf(tmp, "V_%s[%u]",
 			  ivl_signal_name(ivl_nexus_ptr_sig(ptr)),
 			  ivl_nexus_ptr_pin(ptr));
+		  args[idx] = strdup(tmp);
 	    } else {
-		  draw_net_input(nex);
+		  args[idx] = strdup(draw_net_input(nex));
 	    }
       }
 
+      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d, %s",
+	      ivl_signal_name(sig), signed_flag,
+	      ivl_signal_basename(sig), msb, lsb, args[0]);
+      for (idx = 1 ;  idx < ivl_signal_pins(sig) ;  idx += 1)
+	    fprintf(vvp_out, ", %s", args[idx]);
       fprintf(vvp_out, ";\n");
+
+      free(args);
 }
 
 static void draw_udp_def(ivl_udp_t udp)
@@ -686,6 +713,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.27  2001/05/12 03:31:01  steve
+ *  Generate resolvers for multiple drivers.
+ *
  * Revision 1.26  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
