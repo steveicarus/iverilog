@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.114 2005/01/28 05:37:48 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.115 2005/02/15 07:12:55 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1551,11 +1551,42 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_select_signal(ivl_expr_t sube,
+					     ivl_expr_t bit_idx,
+					     unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(sube);
+      struct vector_info shiv;
+      struct vector_info res;
+      unsigned idx;
+
+      shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ);
+
+      fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
+      if (shiv.base >= 8)
+	    clr_vector(shiv);
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      for (idx = 0 ;  idx < res.wid ;  idx += 1) {
+	    fprintf(vvp_out, "   %%load/x %u, V_$%p, 0;\n",
+		    res.base+idx, sig);
+	    if ((idx+1) < res.wid)
+		  fprintf(vvp_out, "   %%ix/add 0, 1;\n");
+      }
+
+      return res;
+}
+
 static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info subv, shiv, res;
       ivl_expr_t sube  = ivl_expr_oper1(exp);
       ivl_expr_t shift = ivl_expr_oper2(exp);
+
+      if (ivl_expr_type(sube) == IVL_EX_SIGNAL)
+	    return draw_select_signal(sube, shift, wid);
 
 	/* Evaluate the sub-expression. */
       subv = draw_eval_expr(sube, 0);
@@ -2099,6 +2130,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.115  2005/02/15 07:12:55  steve
+ *  Support constant part select writes to l-values, and large part select reads from signals.
+ *
  * Revision 1.114  2005/01/28 05:37:48  steve
  *  Special handling of constant shift 0.
  *

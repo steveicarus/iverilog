@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.100 2005/02/14 05:00:11 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.101 2005/02/15 07:12:55 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -78,10 +78,30 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
       unsigned part_off = ivl_lval_part_off(lval);
 
       assert(idx == 0);
-      assert(part_off == 0); // XXXX Forgot how to support part/bit writes.
 
       if (ivl_lval_mux(lval)) {
+	    unsigned skip_set = transient_id++;
+
+	      /* There is a mux expression, so this must be a write to
+		 a bit-select leval. Presumably, the x0 index register
+		 has been loaded wit the result of the evaluated
+		 ivl_lval_mux expression. */
 	    assert(wid == 1);
+
+	    draw_eval_expr_into_integer(ivl_lval_mux(lval), 0);
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+
+	    fprintf(vvp_out, "    %%set/x0 V_%s, %u;\n",
+		    vvp_signal_label(sig), bit);
+	    fprintf(vvp_out, "t_%u ;\n", skip_set);
+
+      } else if (part_off > 0) {
+	      /* There is no mux expression, but a constant part
+		 offset. Load that into index x0 and generate a
+		 single-bit set instruction. */
+	    assert(wid == 1);
+
+	    fprintf(vvp_out, "    %%ix/load 0, %u;\n", part_off);
 	    fprintf(vvp_out, "    %%set/x0 V_%s, %u;\n",
 		    vvp_signal_label(sig), bit);
 
@@ -210,16 +230,13 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 	    unsigned bit_limit = wid - cur_rbit;
 	    lval = ivl_stmt_lval(net, lidx);
 
-	      /* If there is a mux for the lval, calculate the
-		 value and write it into index0. */
-	    if (ivl_lval_mux(lval)) {
-		  calculate_into_x0(ivl_lval_mux(lval));
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		  skip_set_flag = 1;
-	    }
 
 	    mem = ivl_lval_mem(lval);
 	    if (mem) {
+		    /* If a memory, then the idx expression is the
+		       memory index, and the ivl_lval_mux should be
+		       absent. */
+		  assert(! ivl_lval_mux(lval));
 		  draw_memory_index_expr(mem, ivl_lval_idx(lval));
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 		  skip_set_flag = 1;
@@ -308,18 +325,12 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 		  unsigned bit_limit = wid - cur_rbit;
 		  lval = ivl_stmt_lval(net, lidx);
 
-		    /* If there is a mux for the lval, calculate the
-		       value and write it into index0. */
-		  if (ivl_lval_mux(lval)) {
-			calculate_into_x0(ivl_lval_mux(lval));
-			  /* Generate code to skip around the set
-			     if the index has X values. */
-			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-			skip_set_flag = 1;
-		  }
-
 		  mem = ivl_lval_mem(lval);
 		  if (mem) {
+			  /* Memory index is the ivl_lval_idx
+			     expression, ivl_lval_mux should be
+			     clear. */
+			assert(! ivl_lval_mux(lval));
 			draw_memory_index_expr(mem, ivl_lval_idx(lval));
 			  /* Generate code to skip around the set
 			     if the index has X values. */
@@ -1549,6 +1560,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.101  2005/02/15 07:12:55  steve
+ *  Support constant part select writes to l-values, and large part select reads from signals.
+ *
  * Revision 1.100  2005/02/14 05:00:11  steve
  *  Handle bitmux lvalues for constant r-values.
  *
