@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.18 2001/06/29 00:42:39 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.19 2001/07/16 18:53:16 steve Exp $"
 #endif
 
 /*
@@ -356,10 +356,12 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		case vpiNamedBegin:
 		case vpiTask:
 		case vpiFunction:
-		  sublist = vpi_iterate(vpiInternalScope, item);
-		  if (sublist && (depth > 0)) {
-			vcd_info_post_process();
-			scan_scope(depth-1, sublist);
+		  if (depth > 0) {
+			sublist = vpi_iterate(vpiInternalScope, item);
+			if (sublist) {
+			      vcd_info_post_process();
+			      scan_scope(depth-1, sublist);
+			}
 		  }
 		  break;
 
@@ -476,6 +478,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.19  2001/07/16 18:53:16  steve
+ *  Cut off scope iteration when depth runs out.
+ *
  * Revision 1.18  2001/06/29 00:42:39  steve
  *  Get a private copy of the object name.
  *
