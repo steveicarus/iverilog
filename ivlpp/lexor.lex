@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.33 2002/09/11 19:42:37 steve Exp $"
+#ident "$Id: lexor.lex,v 1.34 2002/09/19 20:33:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -206,7 +206,7 @@ W [ \t\b\f]+
      condition that stacks on top of the IFDEF_FALSE so that output is
      not accidentally turned on within nested ifdefs. */
 
-^{W}?`ifdef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+`ifdef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
       char*name = strchr(yytext, '`');
       assert(name);
       name += 6;
@@ -219,7 +219,7 @@ W [ \t\b\f]+
       }
   }
 
-^{W}?`ifndef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
+`ifndef{W}[a-zA-Z_][a-zA-Z0-9_$]* {
       char*name = strchr(yytext, '`');
       assert(name);
       name += 7;
@@ -232,17 +232,17 @@ W [ \t\b\f]+
       }
   }
 
-<IFDEF_FALSE,IFDEF_SUPR>^{W}?`ifdef{W}.* { yy_push_state(IFDEF_SUPR); }
-<IFDEF_FALSE,IFDEF_SUPR>^{W}?`ifndef{W}.* { yy_push_state(IFDEF_SUPR); }
+<IFDEF_FALSE,IFDEF_SUPR>`ifdef{W}.* { yy_push_state(IFDEF_SUPR); }
+<IFDEF_FALSE,IFDEF_SUPR>`ifndef{W}.* { yy_push_state(IFDEF_SUPR); }
 
-<IFDEF_TRUE>{W}?`else  { BEGIN(IFDEF_FALSE); }
-<IFDEF_FALSE>{W}?`else { BEGIN(IFDEF_TRUE); }
-<IFDEF_SUPR>{W}?`else  {  }
+<IFDEF_TRUE>`else  { BEGIN(IFDEF_FALSE); }
+<IFDEF_FALSE>`else { BEGIN(IFDEF_TRUE); }
+<IFDEF_SUPR>`else  {  }
 
 <IFDEF_FALSE,IFDEF_SUPR>.  {  }
 <IFDEF_FALSE,IFDEF_SUPR>\n { istack->lineno += 1; fputc('\n', yyout); }
 
-<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>^{W}?`endif {
+<IFDEF_FALSE,IFDEF_TRUE,IFDEF_SUPR>`endif {
       yy_pop_state();
   }
 
