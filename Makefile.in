@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.130 2002/07/03 23:20:12 steve Exp $"
+#ident "$Id: Makefile.in,v 1.131 2002/08/04 19:13:16 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -139,7 +139,7 @@ set_width.o \
 verinum.o verireal.o target.o targets.o \
 Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o \
 PExpr.o PGate.o \
-PTask.o PFunction.o PWire.o Statement.o \
+PTask.o PFunction.o PWire.o Statement.o StringHeap.o \
 $(FF) $(TT)
 
 Makefile: Makefile.in config.h.in config.status

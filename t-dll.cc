@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.92 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.93 2002/08/04 19:13:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -147,10 +147,10 @@ ivl_attribute_s* dll_target::fill_in_attributes(const Attrib*net)
 
       for (unsigned idx = 0 ;  idx < nattr ;  idx += 1) {
 	    verinum tmp = net->attr_value(idx);
-	    attr[idx].key = strdup(net->attr_key(idx));
+	    attr[idx].key = strings_.add(net->attr_key(idx));
 	    if (tmp.is_string()) {
 		  attr[idx].type = IVL_ATT_STR;
-		  attr[idx].val.str = strdup(tmp.as_string().c_str());
+		  attr[idx].val.str = strings_.add(tmp.as_string().c_str());
 
 	    } else if (tmp == verinum()) {
 		  attr[idx].type = IVL_ATT_VOID;
@@ -411,7 +411,7 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
       const char *name = s->name().c_str();
-      root_->name_ = strdup(name);
+      root_->name_ = strings_.add(name);
       root_->child_ = 0;
       root_->sibling_ = 0;
       root_->parent = 0;
@@ -487,11 +487,11 @@ int dll_target::end_design(const Design*)
       return rc;
 }
 
-static void logic_attributes(struct ivl_net_logic_s *obj,
-			     const NetNode*net)
+void dll_target::logic_attributes(struct ivl_net_logic_s *obj,
+				  const NetNode*net)
 {
       obj->nattr = net->attr_cnt();
-      obj->attr = dll_target::fill_in_attributes(net);
+      obj->attr  = fill_in_attributes(net);
 }
 
 /*
@@ -571,7 +571,7 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       obj->scope_ = scope;
 
-      obj->name_ = strdup(net->name());
+      obj->name_ = strings_.add(net->name());
       logic_attributes(obj, net);
 
       obj->delay[0] = net->rise_time();
@@ -588,7 +588,7 @@ void dll_target::event(const NetEvent*net)
       struct ivl_event_s *obj = new struct ivl_event_s;
 
       ivl_scope_t scope = find_scope(des_, net->scope());
-      obj->name = strdup(net->full_name().c_str());
+      obj->name = strings_.add(net->full_name().c_str());
       obj->scope = scope;
       scope_add_event(scope, obj);
 
@@ -745,7 +745,7 @@ void dll_target::logic(const NetLogic*net)
       assert(scope);
 
       obj->scope_= scope;
-      obj->name_ = strdup(net->name());
+      obj->name_ = strings_.add(net->name());
 
       logic_attributes(obj, net);
 
@@ -780,7 +780,7 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       ivl_scope_t scope = des_.roots_[0];
 
       obj->scope_= scope;
-      obj->name_ = strdup(net->name());
+      obj->name_ = strings_.add(net->name());
 
       obj->delay[0] = net->rise_time();
       obj->delay[1] = net->fall_time();
@@ -809,7 +809,7 @@ bool dll_target::net_function(const NetUserFunc*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_UFUNC;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -869,14 +869,14 @@ void dll_target::udp(const NetUDP*net)
 	{
 	  u = new struct ivl_udp_s;
 	  u->nrows = net->rows();
-	  u->table = (char**)malloc((u->nrows+1)*sizeof(char*));
+	  u->table = (ivl_udp_s::ccharp_t*)malloc((u->nrows+1)*sizeof(char*));
 	  assert(u->table);
 	  u->table[u->nrows] = 0x0;
 	  u->nin = net->nin();
 	  u->sequ = net->is_sequential();
 	  if (u->sequ)
 	    u->init = net->get_initial();
-	  u->name = strdup(net->udp_name().c_str());
+	  u->name = strings_.add(net->udp_name().c_str());
 	  string inp;
 	  char out;
 	  int i = 0;
@@ -884,7 +884,7 @@ void dll_target::udp(const NetUDP*net)
 	    do
 	      {
 		string tt = inp+out;
-		u->table[i++] = strdup(tt.c_str());
+		u->table[i++] = strings_.add(tt.c_str());
 	      } while (net->next(inp, out));
 	  assert(i==u->nrows);
 
@@ -912,7 +912,7 @@ void dll_target::udp(const NetUDP*net)
       assert(scope);
 
       obj->scope_= scope;
-      obj->name_ = strdup(net->name());
+      obj->name_ = strings_.add(net->name());
 
       obj->delay[0] = net->rise_time();
       obj->delay[1] = net->fall_time();
@@ -924,7 +924,7 @@ void dll_target::udp(const NetUDP*net)
 void dll_target::memory(const NetMemory*net)
 {
       ivl_memory_t obj = new struct ivl_memory_s;
-      obj->name_  = strdup(net->name());
+      obj->name_  = strings_.add(net->name());
       obj->scope_ = find_scope(des_, net->scope());
       obj->width_ = net->width();
       obj->signed_ = 0;
@@ -941,7 +941,7 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
 	    obj->type = IVL_LPM_SUB;
       else
 	    obj->type = IVL_LPM_ADD;
-      obj->name = strdup(net->name());
+      obj->name = strings_.add(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1010,7 +1010,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_SHIFTL;
-      obj->name = strdup(net->name());
+      obj->name = strings_.add(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1086,7 +1086,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 void dll_target::lpm_compare(const NetCompare*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->name = strdup(net->name());
+      obj->name = strings_.add(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1198,7 +1198,7 @@ void dll_target::lpm_divide(const NetDivide*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_DIVIDE;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1256,7 +1256,7 @@ void dll_target::lpm_modulo(const NetModulo*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MOD;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1323,7 +1323,7 @@ void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_FF;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -1389,7 +1389,7 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_RAM;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       obj->u_.ff.mem = find_memory(des_, net->mem());
       assert(obj->u_.ff.mem);
       obj->scope = find_scope(des_, net->mem()->scope());
@@ -1503,7 +1503,7 @@ void dll_target::lpm_mult(const NetMult*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MULT;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
@@ -1565,7 +1565,7 @@ void dll_target::lpm_mux(const NetMux*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_MUX;
-      obj->name  = strdup(net->name());
+      obj->name  = strings_.add(net->name());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
@@ -1727,7 +1727,7 @@ void dll_target::scope(const NetScope*net)
 
       } else {
 	    scope = new struct ivl_scope_s;
-	    scope->name_ = strdup(net->name().c_str());
+	    scope->name_ = strings_.add(net->name().c_str());
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
 	    scope->parent = find_scope(des_, net->parent());
@@ -1749,11 +1749,11 @@ void dll_target::scope(const NetScope*net)
 		  break;
 		case NetScope::TASK:
 		  scope->type_ = IVL_SCT_TASK;
-		  scope->tname_ = strdup(net->task_def()->name().c_str());
+		  scope->tname_ = strings_.add(net->task_def()->name().c_str());
 		  break;
 		case NetScope::FUNC:
 		  scope->type_ = IVL_SCT_FUNCTION;
-		  scope->tname_ = strdup(net->func_def()->name().c_str());
+		  scope->tname_ = strings_.add(net->func_def()->name().c_str());
 		  break;
 		case NetScope::BEGIN_END:
 		  scope->type_ = IVL_SCT_BEGIN;
@@ -1776,7 +1776,7 @@ void dll_target::signal(const NetNet*net)
 {
       ivl_signal_t obj = new struct ivl_signal_s;
 
-      obj->name_ = strdup(net->name());
+      obj->name_ = strings_.add(net->name());
 
 	/* Attach the signal to the ivl_scope_t object that contains
 	   it. This involves growing the sigs_ array in the scope
@@ -1909,7 +1909,7 @@ void dll_target::signal(const NetNet*net)
 
 	    } else {
 		  ivl_nexus_t tmp = nexus_sig_make(obj, 0);
-		  tmp->name_ = strdup(nex->name());
+		  tmp->name_ = strings_.add(nex->name());
 		  nex->t_cookie(tmp);
 		  obj->n.pin_ = tmp;
 	    }
@@ -1928,7 +1928,7 @@ void dll_target::signal(const NetNet*net)
 
 		  } else {
 			ivl_nexus_t tmp = nexus_sig_make(obj, idx);
-			tmp->name_ = strdup(nex->name());
+			tmp->name_ = strings_.add(nex->name());
 			nex->t_cookie(tmp);
 			obj->n.pins_[idx] = tmp;
 		  }
@@ -1941,6 +1941,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.93  2002/08/04 19:13:16  steve
+ *  dll uses StringHeap for named items.
+ *
  * Revision 1.92  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.88 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: t-dll.h,v 1.89 2002/08/04 19:13:16 steve Exp $"
 #endif
 
 # include  "target.h"
 # include  "ivl_target.h"
+# include  <StringHeap.h>
 
 #if defined(__MINGW32__)
 #include <windows.h>
@@ -140,9 +141,12 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
 
-      static ivl_attribute_s* fill_in_attributes(const Attrib*net);
+      ivl_attribute_s* fill_in_attributes(const Attrib*net);
+      void logic_attributes(struct ivl_net_logic_s *obj, const NetNode*net);
 
     private:
+      StringHeap strings_;
+
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
       static ivl_memory_t find_memory(ivl_design_s &des, const NetMemory*net);
@@ -157,7 +161,7 @@ struct dll_target  : public target_t, public expr_scan_t {
  */
 
 struct ivl_event_s {
-      char*name;
+      const char*name;
       ivl_scope_t scope;
       unsigned short nany, nneg, npos;
       ivl_nexus_t*pins;
@@ -255,7 +259,7 @@ struct ivl_expr_s {
 struct ivl_lpm_s {
       ivl_lpm_type_t type;
       ivl_scope_t scope;
-      char* name;
+      const char* name;
 
       union {
 	    struct ivl_lpm_ff_s {
@@ -365,7 +369,7 @@ struct ivl_net_logic_s {
       ivl_logic_t type_;
       ivl_udp_t udp;
 
-      char* name_;
+      const char* name_;
       ivl_scope_t scope_;
 
       unsigned npins_;
@@ -382,12 +386,13 @@ struct ivl_net_logic_s {
  * UDP definition.
  */
 struct ivl_udp_s {
-      char* name;
+      const char* name;
       unsigned nin;
       unsigned short sequ;
       char init;
       unsigned nrows;
-      char **table; // zero terminated array of pointers
+      typedef const char*ccharp_t;
+      ccharp_t*table; // zero terminated array of pointers
 };
 
 /*
@@ -422,7 +427,7 @@ struct ivl_nexus_ptr_s {
 struct ivl_nexus_s {
       unsigned nptr_;
       struct ivl_nexus_ptr_s*ptrs_;
-      char*name_;
+      const char*name_;
       void*private_data;
 };
 
@@ -431,7 +436,7 @@ struct ivl_nexus_s {
  * Memory.
  */
 struct ivl_memory_s {
-      char*name_;
+      const char*name_;
       ivl_scope_t scope_;
       unsigned width_  :24;
       unsigned signed_ : 1;
@@ -465,7 +470,7 @@ struct ivl_process_s {
 struct ivl_scope_s {
       ivl_scope_t child_, sibling_, parent;
 
-      char* name_;
+      const char* name_;
       const char* tname_;
       ivl_scope_type_t type_;
 
@@ -511,7 +516,7 @@ struct ivl_signal_s {
       signed lsb_index :24;
       signed lsb_dist  : 8;
 
-      char*name_;
+      const char*name_;
       ivl_scope_t scope_;
 
       union {
@@ -611,6 +616,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.89  2002/08/04 19:13:16  steve
+ *  dll uses StringHeap for named items.
+ *
  * Revision 1.88  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not
@@ -653,45 +661,5 @@ struct ivl_statement_s {
  *
  *  Divide signal reference counts between rval
  *  and lval references.
- *
- * Revision 1.78  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.77  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.76  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.75  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.74  2002/01/19 19:02:08  steve
- *  Pass back target errors processing conditionals.
- *
- * Revision 1.73  2002/01/03 04:19:01  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.72  2001/12/06 03:11:01  steve
- *  Add ivl_logic_delay function to ivl_target.
- *
- * Revision 1.71  2001/11/14 03:28:49  steve
- *  DLL target support for force and release.
- *
- * Revision 1.70  2001/11/04 05:03:21  steve
- *  MacOSX 10.1 updates.
- *
- * Revision 1.69  2001/11/01 04:25:31  steve
- *  ivl_target support for cassign.
- *
- * Revision 1.68  2001/10/31 05:24:52  steve
- *  ivl_target support for assign/deassign.
  */
 #endif
