@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.17 2000/01/02 22:07:09 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.18 2000/01/11 04:20:57 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -246,7 +246,10 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 }
 
 /*
- * Elaborate the various binary comparison operators.
+ * Elaborate the various binary comparison operators. The comparison
+ * operators return a single bit result, no matter what, so the left
+ * and right values can have their own size. The only restriction is
+ * that they have the same size.
  */
 NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 				     unsigned lwidth,
@@ -269,6 +272,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	    return 0;
       }
 
+#if 0
       if (lsig->pin_count() != rsig->pin_count()) {
 	    cerr << get_line() << ": internal error: Cannot match "
 		  "structural net widths " << lsig->pin_count() <<
@@ -278,24 +282,42 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	    des->errors += 1;
 	    return 0;
       }
+#endif
+
+      unsigned dwidth = lsig->pin_count();
+      if (rsig->pin_count() > dwidth) dwidth = rsig->pin_count();
+
+      NetNet*zero = 0;
+      if (lsig->pin_count() != rsig->pin_count()) {
+	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(tmp);
+	    zero = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
+	    des->add_signal(zero);
+	    connect(tmp->pin(0), zero->pin(0));
+      }
 
       NetNet*osig = new NetNet(0, des->local_symbol(path), NetNet::WIRE);
       osig->local_flag(true);
 
       NetNode*gate;
-      NetNode*gate_t;
+	//NetNode*gate_t;
 
       switch (op_) {
 	  case '<':
 	  case '>':
 	  case 'L':
 	  case 'G': {
-		NetCompare*cmp = new NetCompare(des->local_symbol(path),
-						lsig->pin_count());
-		for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		NetCompare*cmp = new
+		      NetCompare(des->local_symbol(path), dwidth);
+		for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 		      connect(cmp->pin_DataA(idx), lsig->pin(idx));
+		for (unsigned idx = lsig->pin_count(); idx < dwidth ; idx += 1)
+		      connect(cmp->pin_DataA(idx), zero->pin(0));
+		for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
 		      connect(cmp->pin_DataB(idx), rsig->pin(idx));
-		}
+		for (unsigned idx = rsig->pin_count(); idx < dwidth ; idx += 1)
+		      connect(cmp->pin_DataB(idx), zero->pin(0));
+
 		switch (op_) {
 		    case '<':
 		      connect(cmp->pin_ALB(), osig->pin(0));
@@ -321,18 +343,27 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 				1+lsig->pin_count(),
 				NetLogic::AND);
 	    connect(gate->pin(0), osig->pin(0));
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  gate_t = new NetCaseCmp(des->local_symbol(path));
-		  connect(gate_t->pin(1), lsig->pin(idx));
-		  connect(gate_t->pin(2), rsig->pin(idx));
-		  connect(gate_t->pin(0), gate->pin(idx+1));
-		  des->add_node(gate_t);
+	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
+		  NetCaseCmp*cmp = new NetCaseCmp(des->local_symbol(path));
+
+		  if (idx < lsig->pin_count())
+			connect(cmp->pin(1), lsig->pin(idx));
+		  else
+			connect(cmp->pin(1), zero->pin(0));
+
+		  if (idx < rsig->pin_count())
+			connect(cmp->pin(2), rsig->pin(idx));
+		  else
+			connect(cmp->pin(2), zero->pin(0));
+
+		  connect(cmp->pin(0), gate->pin(idx+1));
+		  des->add_node(cmp);
 
 		    // Attach a label to this intermediate wire
 		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
 					  NetNet::WIRE);
 		  tmp->local_flag(true);
-		  connect(gate_t->pin(0), tmp->pin(0));
+		  connect(cmp->pin(0), tmp->pin(0));
 		  des->add_signal(tmp);
 	    }
 	    break;
@@ -340,31 +371,57 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 
 	  case 'e': // ==
 	    gate = new NetLogic(des->local_symbol(path),
-				1+lsig->pin_count(),
-				NetLogic::AND);
+				1+dwidth,NetLogic::AND);
 	    connect(gate->pin(0), osig->pin(0));
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  gate_t = new NetLogic(des->local_symbol(path), 3,
-				        NetLogic::XNOR);
-		  connect(gate_t->pin(1), lsig->pin(idx));
-		  connect(gate_t->pin(2), rsig->pin(idx));
-		  connect(gate_t->pin(0), gate->pin(idx+1));
-		  des->add_node(gate_t);
+	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
+		  NetLogic*cmp = new NetLogic(des->local_symbol(path),
+					      3, NetLogic::XNOR);
+		  if (idx < lsig->pin_count())
+			connect(cmp->pin(1), lsig->pin(idx));
+		  else
+			connect(cmp->pin(1), zero->pin(0));
+
+		  if (idx < rsig->pin_count())
+			connect(cmp->pin(2), rsig->pin(idx));
+		  else
+			connect(cmp->pin(2), zero->pin(0));
+
+		  connect(cmp->pin(0), gate->pin(idx+1));
+		  des->add_node(cmp);
+
+		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
+					  NetNet::WIRE);
+		  tmp->local_flag(true);
+		  connect(cmp->pin(0), tmp->pin(0));
+		  des->add_signal(tmp);
 	    }
 	    break;
 
 	  case 'n': // !=
 	    gate = new NetLogic(des->local_symbol(path),
-				1+lsig->pin_count(),
-				NetLogic::OR);
+				1+dwidth, NetLogic::OR);
 	    connect(gate->pin(0), osig->pin(0));
 	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  gate_t = new NetLogic(des->local_symbol(path), 3,
-				        NetLogic::XOR);
-		  connect(gate_t->pin(1), lsig->pin(idx));
-		  connect(gate_t->pin(2), rsig->pin(idx));
-		  connect(gate_t->pin(0), gate->pin(idx+1));
-		  des->add_node(gate_t);
+		  NetLogic*cmp = new NetLogic(des->local_symbol(path), 3,
+					      NetLogic::XOR);
+		  if (idx < lsig->pin_count())
+			connect(cmp->pin(1), lsig->pin(idx));
+		  else
+			connect(cmp->pin(1), zero->pin(0));
+
+		  if (idx < rsig->pin_count())
+			connect(cmp->pin(2), rsig->pin(idx));
+		  else
+			connect(cmp->pin(2), zero->pin(0));
+
+		  connect(cmp->pin(0), gate->pin(idx+1));
+		  des->add_node(cmp);
+
+		  NetNet*tmp = new NetNet(0, des->local_symbol(path),
+					  NetNet::WIRE);
+		  tmp->local_flag(true);
+		  connect(cmp->pin(0), tmp->pin(0));
+		  des->add_signal(tmp);
 	    }
 	    break;
 
@@ -899,14 +956,73 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 				unsigned long fall,
 				unsigned long decay) const
 {
+	/* If we are constrained by a l-value size, then just make a
+	   number constant with the correct size and set as many bits
+	   in that constant as make sense. Pad excess with zeros. */
+      if (lwidth > 0) {
+	    NetNet*net = new NetNet(0, des->local_symbol(path),
+				    NetNet::IMPLICIT, lwidth);
+	    net->local_flag(true);
+
+	    verinum num(verinum::V0, net->pin_count());
+	    unsigned idx;
+	    for (idx = 0 ;  idx < num.len() && idx < value_->len(); idx += 1)
+		  num.set(idx, value_->get(idx));
+
+	    NetConst*tmp = new NetConst(des->local_symbol(path), num);
+	    for (idx = 0 ;  idx < net->pin_count() ;  idx += 1)
+		  connect(net->pin(idx), tmp->pin(idx));
+
+	    des->add_node(tmp);
+	    des->add_signal(net);
+	    return net;
+      }
+
+	/* If the number has a length, then use that to size the
+	   number. Generate a constant object of exactly the user
+	   specified size. */
+      if (value_->has_len()) {
+	    NetNet*net = new NetNet(0, des->local_symbol(path),
+				    NetNet::IMPLICIT, value_->len());
+	    net->local_flag(true);
+	    NetConst*tmp = new NetConst(des->local_symbol(path), *value_);
+	    for (unsigned idx = 0 ;  idx < value_->len() ;  idx += 1)
+		  connect(net->pin(idx), tmp->pin(idx));
+
+	    des->add_node(tmp);
+	    des->add_signal(net);
+	    return net;
+      }
+
+	/* None of the above tight constraints are present, so make a
+	   plausible choice for the width. Try to reduce the width as
+	   much as possible by eliminating high zeros of unsigned
+	   numbers. */
       unsigned width = value_->len();
-      if ((lwidth > 0) && (lwidth < width))
-	    width = lwidth;
+
+      if (value_->has_sign() && (value_->get(width-1) == verinum::V0)) {
+
+	      /* If the number is signed, but known to be positive,
+		 then reduce it down as if it were unsigned.  */
+	    while (width > 1) {
+		  if (value_->get(width-1) != verinum::V0)
+			break;
+		  width -= 1;
+	    }
+
+      } else if (value_->has_sign() == false) {
+	    while ( (width > 1) && (value_->get(width-1) == verinum::V0))
+		  width -= 1;
+      }
+
+      verinum num (verinum::V0, width);
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+	    num.set(idx, value_->get(idx));
 
       NetNet*net = new NetNet(0, des->local_symbol(path),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
-      NetConst*tmp = new NetConst(des->local_symbol(path), *value_);
+      NetConst*tmp = new NetConst(des->local_symbol(path), num);
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    connect(net->pin(idx), tmp->pin(idx));
 
@@ -1108,6 +1224,13 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.18  2000/01/11 04:20:57  steve
+ *  Elaborate net widths of constants to as small
+ *  as is possible, obeying context constraints.
+ *
+ *  Comparison operators can handle operands with
+ *  different widths.
+ *
  * Revision 1.17  2000/01/02 22:07:09  steve
  *  Add a signal to nexus of padding constant.
  *
