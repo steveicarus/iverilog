@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.h,v 1.10 2004/12/31 06:00:06 steve Exp $"
+#ident "$Id: resolv.h,v 1.11 2005/01/01 02:12:34 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -33,7 +33,9 @@
  * attached.
  *
  * This node takes in vvp_vector8_t values, and emits a vvp_vector8_t
- * value.
+ * value. It also takes in vvp_vector4_t values, which it treats as
+ * strong values (or HiZ) for the sake of resolution. In any case, the
+ * propagated value is a vvp_vector8_t value.
  */
 class resolv_functor : public vvp_net_fun_t {
 
@@ -51,6 +53,9 @@ class resolv_functor : public vvp_net_fun_t {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.11  2005/01/01 02:12:34  steve
+ *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
+ *
  * Revision 1.10  2004/12/31 06:00:06  steve
  *  Implement .resolv functors, and stub signals recv_vec8 method.
  *

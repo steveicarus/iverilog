@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.3 2004/12/31 06:00:06 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.4 2005/01/01 02:12:34 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -326,6 +326,11 @@ vvp_fun_signal::vvp_fun_signal(unsigned wid)
       force_active_ = false;
 }
 
+bool vvp_fun_signal::type_is_vector8_() const
+{
+      return bits8_.size() > 0;
+}
+
 /*
  * Nets simply reflect their input to their output.
  */
@@ -334,7 +339,7 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       switch (ptr.port()) {
 	  case 0: // Normal input (feed from net, or set from process)
 	    if (! continuous_assign_active_) {
-		  bits_ = bit;
+		  bits4_ = bit;
 		  vvp_send_vec4(ptr.ptr()->out, bit);
 		  run_vpi_callbacks();
 	    }
@@ -342,8 +347,13 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 	  case 1: // Continuous assign value
 	    continuous_assign_active_ = true;
-	    bits_ = bit;
-	    vvp_send_vec4(ptr.ptr()->out, bit);
+	    if (type_is_vector8_()) {
+		  bits8_ = vvp_vector8_t(bit,6);
+		  vvp_send_vec8(ptr.ptr()->out, bits8_);
+	    } else {
+		  bits4_ = bit;
+		  vvp_send_vec4(ptr.ptr()->out, bits4_);
+	    }
 	    run_vpi_callbacks();
 	    break;
 
@@ -362,9 +372,14 @@ void vvp_fun_signal::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 
 void vvp_fun_signal::recv_vec8(vvp_net_ptr_t ptr, vvp_vector8_t bit)
 {
-      fprintf(stderr, "internal error: vvp_fun_signal "
-	      "reducing vector8 input.\n");
-      recv_vec4(ptr, reduce4(bit));
+	// Only port-0 supports vector8_t inputs.
+      assert(ptr.port() == 0);
+
+      if (! continuous_assign_active_) {
+	    bits8_ = bit;
+	    vvp_send_vec8(ptr.ptr()->out, bit);
+	    run_vpi_callbacks();
+      }
 }
 
 void vvp_fun_signal::deassign()
@@ -376,10 +391,10 @@ void vvp_fun_signal::release(vvp_net_ptr_t ptr, bool net)
 {
       force_active_ = false;
       if (net) {
-	    vvp_send_vec4(ptr.ptr()->out, bits_);
+	    vvp_send_vec4(ptr.ptr()->out, bits4_);
 	    run_vpi_callbacks();
       } else {
-	    bits_ = force_;
+	    bits4_ = force_;
       }
 }
 
@@ -417,8 +432,10 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
 {
       if (force_active_)
 	    return force_.value(idx);
+      else if (type_is_vector8_())
+	    return bits8_.value(idx).value();
       else
-	    return bits_.value(idx);
+	    return bits4_.value(idx);
 }
 
 /* **** vvp_scaler_t methods **** */
@@ -627,6 +644,9 @@ vvp_vector4_t reduce4(const vvp_vector8_t&that)
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.4  2005/01/01 02:12:34  steve
+ *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
+ *
  * Revision 1.3  2004/12/31 06:00:06  steve
  *  Implement .resolv functors, and stub signals recv_vec8 method.
  *

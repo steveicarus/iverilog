@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.4 2004/12/31 06:00:06 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.5 2005/01/01 02:12:34 steve Exp $"
 
 # include  <assert.h>
 
@@ -367,8 +367,11 @@ class vvp_fun_part  : public vvp_net_fun_t {
 
 /* vvp_fun_signal
  * This node is the place holder in a vvp network for signals,
- * including nets of various sort. The output from a signal is always
- * a vector4, use drivers if the context needs vector8 values.
+ * including nets of various sort. The output from a signal follows
+ * the type of its port-0 input. If vvp_vector4_t values come in
+ * through port-0, then vvp_vector4_t values are propagated. If
+ * vvp_vector8_t values come in through port-0, then vvp_vector8_t
+ * values are propaged. Thus, this node is sloghtly polymorphic.
  *
  * If the signal is a net (i.e. a wire or tri) then this node will
  * have an input that is the data source. The data source will connect
@@ -436,7 +439,10 @@ class vvp_fun_signal  : public vvp_net_fun_t {
       struct __vpiCallback*vpi_callbacks;
 
     private:
-      vvp_vector4_t bits_;
+      vvp_vector4_t bits4_;
+      vvp_vector8_t bits8_;
+      bool type_is_vector8_() const;
+
       bool continuous_assign_active_;
 
       vvp_vector4_t force_;
@@ -448,6 +454,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.5  2005/01/01 02:12:34  steve
+ *  vvp_fun_signal propagates vvp_vector8_t vectors when appropriate.
+ *
  * Revision 1.4  2004/12/31 06:00:06  steve
  *  Implement .resolv functors, and stub signals recv_vec8 method.
  *
