@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.102 2002/11/09 19:20:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.103 2002/12/06 03:08:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1538,18 +1538,17 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 
 	/* Don't allow registers as assign l-values. */
       if (sig->type() == NetNet::REG) {
-	    cerr << get_line() << ": error: registers (" << sig->name()
-		 << ") cannot be l-values in continuous"
+	    cerr << get_line() << ": error: reg " << sig->name()
+		 << "; cannot be an L-value in continuous"
 		 << " assignments." << endl;
 	    return 0;
       }
 
       if (sig->port_type() == NetNet::PINPUT) {
-	    cerr << get_line() << ": warning: assign l-value ``"
-		 << sig->name() << "'' is also an input to "
-		 << sig->scope()->name() << "." << endl;
-	    cerr << sig->get_line() << ": warning: input ``"
-		 << sig->name() << "'' is coerced to inout." << endl;
+	    cerr << get_line() << ": warning: L-value ``"
+		 << sig->name() << "'' is also an input port." << endl;
+	    cerr << sig->get_line() << ": warning: input "
+		 << sig->name() << "; is coerced to inout." << endl;
 	    sig->port_type(NetNet::PINOUT);
       }
 
@@ -2279,6 +2278,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.103  2002/12/06 03:08:19  steve
+ *  Reword some error messages for clarity.
+ *
  * Revision 1.102  2002/11/09 19:20:48  steve
  *  Port expressions for output ports are lnets, not nets.
  *
