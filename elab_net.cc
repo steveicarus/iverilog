@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.65 2001/04/14 22:50:39 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.66 2001/05/17 03:34:47 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1158,7 +1158,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, path);
 	    if (mval == 0) {
-		  cerr << get_line() << ": index of " << text_ <<
+		  cerr << get_line() << ": error: index of " << text_ <<
 			" needs to be constant in this context." <<
 			endl;
 		  des->errors += 1;
@@ -1167,7 +1167,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	    assert(mval);
 	    unsigned idx = sig->sb_to_idx(mval->as_long());
 	    if (idx >= sig->pin_count()) {
-		  cerr << get_line() << ": index " << sig->name() <<
+		  cerr << get_line() << ": error: index " << sig->name() <<
 			"[" << mval->as_long() << "] out of range." << endl;
 		  des->errors += 1;
 		  idx = 0;
@@ -1313,7 +1313,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, path);
 	    if (mval == 0) {
-		  cerr << get_line() << ": index of " << text_ <<
+		  cerr << get_line() << ": error: index of " << text_ <<
 			" needs to be constant in l-value of assignment." <<
 			endl;
 		  des->errors += 1;
@@ -1901,6 +1901,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.66  2001/05/17 03:34:47  steve
+ *  Make error message include error: prefix.
+ *
  * Revision 1.65  2001/04/14 22:50:39  steve
  *  Less picky about ternary operands.
  *
