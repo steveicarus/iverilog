@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.24 2001/02/07 21:47:13 steve Exp $"
+#ident "$Id: verinum.cc,v 1.25 2001/02/08 05:38:18 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -267,6 +267,59 @@ bool verinum::is_defined() const
 	    if (bits_[idx] == Vz) return false;
       }
       return true;
+}
+
+/*
+ * This function returns a version of the verinum that has only as
+ * many bits as are needed to accurately represent the value. It takes
+ * into account the signedness of the value.
+ *
+ * If the input value has a definite length, then that value is just
+ * returned as is.
+ */
+static verinum trim_vnum(const verinum&that)
+{
+      unsigned tlen;
+
+      if (that.has_len())
+	    return that;
+
+      if (that.len() < 2)
+	    return that;
+
+      if (that.has_sign()) {
+	    unsigned top = that.len()-1;
+	    verinum::V sign = that.get(top);
+
+	    while ((top > 0) && (that.get(top) == sign))
+		  top -= 1;
+
+	      /* top points to the first digit that is not the
+		 sign. Set the length to include this and one proper
+		 sign bit. */
+
+	    if (that.get(top) != sign)
+		  top += 1;
+
+	    tlen = top+1;
+
+      } else {
+
+	      /* If the result is unsigned and has an indefinite
+		 length, then trim off leading zeros. */
+	    tlen = 1;
+	    for (unsigned idx = tlen ;  idx < that.len() ;  idx += 1)
+		  if (that.get(idx) != verinum::V0)
+			tlen = idx;
+
+      }
+
+      verinum tmp (verinum::V0, tlen, false);
+      tmp.has_sign(that.has_sign());
+      for (unsigned idx = 0 ;  idx < tmp.len() ;  idx += 1)
+	    tmp.set(idx, that.get(idx));
+
+      return tmp;
 }
 
 ostream& operator<< (ostream&o, verinum::V v)
@@ -537,6 +590,7 @@ verinum operator * (const verinum&left, const verinum&right)
       }
 
       verinum result(verinum::V0, left.len() + right.len(), has_len_flag);
+      result.has_sign(left.has_sign() || right.has_sign());
 
       for (unsigned rdx = 0 ;  rdx < right.len() ;  rdx += 1) {
 
@@ -551,8 +605,7 @@ verinum operator * (const verinum&left, const verinum&right)
 	    }
       }
 
-      result.has_sign(left.has_sign() || right.has_sign());
-      return result;
+      return trim_vnum(result);
 }
 
 /*
@@ -609,7 +662,7 @@ verinum operator / (const verinum&left, const verinum&right)
 	    }
       }
 
-      return result;
+      return trim_vnum(result);
 }
 
 verinum operator % (const verinum&left, const verinum&right)
@@ -690,6 +743,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.25  2001/02/08 05:38:18  steve
+ *  trim the length of unsized numbers.
+ *
  * Revision 1.24  2001/02/07 21:47:13  steve
  *  Fix expression widths for rvalues and parameters (PR#131,132)
  *
