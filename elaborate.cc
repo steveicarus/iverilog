@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.267 2002/12/21 19:42:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.268 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,7 +30,7 @@
  */
 
 # include  <typeinfo>
-# include  <strstream>
+# include  <sstream>
 # include  <list>
 # include  "pform.h"
 # include  "PEvent.h"
@@ -314,14 +314,14 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   a unique name, and set the delay times. */
 
       for (unsigned idx = 0 ;  idx < count ;  idx += 1) {
-	    strstream tmp;
+	    ostringstream tmp;
 	    unsigned index;
 	    if (low < high)
 		  index = low + idx;
 	    else
 		  index = low - idx;
 
-	    tmp << name << "<" << index << ">" << ends;
+	    tmp << name << "<" << index << ">";
 	    const string inm = tmp.str();
 
 	    switch (type()) {
@@ -2513,6 +2513,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.268  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.267  2002/12/21 19:42:17  steve
  *  Account for local units in calculated delays.
  *

@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.21 2002/12/07 02:49:24 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.22 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "netlist.h"
-# include  <strstream>
+# include  <sstream>
 
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
@@ -419,8 +419,8 @@ const NetScope* NetScope::parent() const
 
 string NetScope::local_symbol()
 {
-      strstream res;
-      res << "_s" << (lcounter_++) << ends;
+      ostringstream res;
+      res << "_s" << (lcounter_++);
       return res.str();
 }
 
@@ -432,6 +432,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.22  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.21  2002/12/07 02:49:24  steve
  *  Named event triggers can take hierarchical names.
  *

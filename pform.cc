@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.103 2003/01/10 03:08:13 steve Exp $"
+#ident "$Id: pform.cc,v 1.104 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,7 +32,7 @@
 # include  <map>
 # include  <assert.h>
 # include  <typeinfo>
-# include  <strstream>
+# include  <sstream>
 
 map<string,Module*> pform_modules;
 map<string,PUdp*> pform_primitives;
@@ -820,11 +820,11 @@ void pform_module_define_port(const struct vlltype&li,
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur) {
-	    strstream msg;
+	    ostringstream msg;
 	    msg << name << " definition conflicts with "
 		<< "definition at " << cur->get_line()
-		<< "." << ends;
-	    VLerror(msg.str());
+		<< ".";
+	    VLerror(msg.str().c_str());
 	    return;
       }
 
@@ -874,18 +874,18 @@ void pform_makewire(const vlltype&li, const char*nm,
       if (cur) {
 	    if ((cur->get_wire_type() != NetNet::IMPLICIT)
 		&& (cur->get_wire_type() != NetNet::IMPLICIT_REG)) {
-		  strstream msg;
+		  ostringstream msg;
 		  msg << name << " previously defined at " <<
-			cur->get_line() << "." << ends;
-		  VLerror(msg.str());
+			cur->get_line() << ".";
+		  VLerror(msg.str().c_str());
 	    } else {
 		  bool rc = cur->set_wire_type(type);
 		  if (rc == false) {
-			strstream msg;
+			ostringstream msg;
 			msg << name << " definition conflicts with "
 			    << "definition at " << cur->get_line()
-			    << "." << ends;
-			VLerror(msg.str());
+			    << ".";
+			VLerror(msg.str().c_str());
 		  }
 	    }
 
@@ -1360,6 +1360,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.104  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.103  2003/01/10 03:08:13  steve
  *  Spelling fixes.
  *

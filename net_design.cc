@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.30 2002/12/07 02:49:24 steve Exp $"
+#ident "$Id: net_design.cc,v 1.31 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,7 +31,7 @@
 
 # include  "netlist.h"
 # include  "util.h"
-# include  <strstream>
+# include  <sstream>
 
 Design:: Design()
 : errors(0), nodes_(0), procs_(0), lcounter_(0)
@@ -48,10 +48,11 @@ Design::~Design()
 
 string Design::local_symbol(const string&path)
 {
-      strstream res;
-      res << "_L" << (lcounter_++) << ends;
+      ostringstream res;
+      res << path << "." << "_L" << lcounter_;
+      lcounter_ += 1;
 
-      return path + "." + res.str();
+      return res.str();
 }
 
 void Design::set_precision(int val)
@@ -600,6 +601,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.31  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.30  2002/12/07 02:49:24  steve
  *  Named event triggers can take hierarchical names.
  *

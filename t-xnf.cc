@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-xnf.cc,v 1.45 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.46 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -77,7 +77,7 @@
 # include  "netlist.h"
 # include  "target.h"
 # include  <fstream>
-# include  <strstream>
+# include  <sstream>
 
 verinum::V link_get_ival(const Link&lnk)
 {
@@ -765,8 +765,8 @@ void target_xnf::lpm_ram_dq(const NetRamDq*ram)
 	    draw_pin(out_, "WE", ram->pin_WE());
 	    draw_pin(out_, "WCLK", ram->pin_InClock());
 	    for (unsigned adr = 0 ;  adr < ram->awidth() ;  adr += 1) {
-		  strstream tmp;
-		  tmp << "A" << adr << ends;
+		  ostringstream tmp;
+		  tmp << "A" << adr;
 		  draw_pin(out_, tmp.str(), ram->pin_Address(adr));
 	    }
 
@@ -927,6 +927,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.46  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.45  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

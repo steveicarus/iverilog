@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.12 2002/10/21 01:42:08 steve Exp $"
+#ident "$Id: net_link.cc,v 1.13 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,7 +25,7 @@
 # include  <iostream>
 
 # include  "netlist.h"
-# include  <strstream>
+# include  <sstream>
 # include  <string>
 # include  <typeinfo>
 #ifdef HAVE_MALLOC_H
@@ -363,14 +363,14 @@ const char* Nexus::name() const
 
       }
       assert(sig);
-      ostrstream tmp;
+      ostringstream tmp;
       tmp << sig->name();
       if (sig->pin_count() > 1)
 	    tmp << "<" << pin << ">";
-      tmp << ends;
 
-      name_ = new char[strlen(tmp.str()) + 1];
-      strcpy(name_, tmp.str());
+      const string tmps = tmp.str();
+      name_ = new char[strlen(tmps.c_str()) + 1];
+      strcpy(name_, tmps.c_str());
       return name_;
 }
 
@@ -499,6 +499,9 @@ bool NexusSet::intersect(const NexusSet&that) const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.13  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.12  2002/10/21 01:42:08  steve
  *  Synthesizer support for synchronous begin-end blocks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.23 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.24 2003/01/14 21:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,7 +27,6 @@
 # include  "functor.h"
 # include  "netlist.h"
 # include  "netmisc.h"
-# include  <strstream>
 
 class xnfio_f  : public functor_t {
 
@@ -363,6 +362,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.24  2003/01/14 21:16:18  steve
+ *  Move strstream to ostringstream for compatibility.
+ *
  * Revision 1.23  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *
