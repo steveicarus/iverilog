@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.4 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: net_design.cc,v 1.5 2000/04/28 16:50:53 steve Exp $"
 #endif
 
 /*
@@ -26,21 +26,8 @@
  */
 
 # include  "netlist.h"
+# include  "util.h"
 # include  <strstream>
-
-static string parse_first_name(string&path)
-{
-      unsigned pos = path.find('.');
-      if (pos > path.length()) {
-	    string res = path;
-	    path = "";
-	    return res;
-      }
-
-      string res = path.substr(0, pos);
-      path = path.substr(pos+1, path.length());
-      return res;
-}
 
 static string parse_last_name(string&path)
 {
@@ -365,6 +352,47 @@ NetMemory* Design::find_memory(const string&path, const string&name)
       return 0;
 }
 
+void Design::find_symbol(const NetScope*scope, const string&key,
+			 NetNet*&sig, NetMemory*&mem)
+{
+      sig = 0;
+      mem = 0;
+
+      for (;;) {
+	      /* Form the full heirarchical name for lookups. */
+	    string fulname = scope? (scope->name() + "." + key) : key;
+
+	      /* Is this a signal? If so, we are done. */
+	    if (signals_) {
+		  NetNet*cur = signals_;
+		  do {
+			if (cur->name() == fulname) {
+			      sig = cur;
+			      return;
+			}
+
+			cur = cur->sig_prev_;
+		  } while (cur != signals_);
+	    }
+
+	      /* Is this a memory? If so, we are again done. */
+	    map<string,NetMemory*>::const_iterator cur
+		  = memories_.find(fulname);
+
+	    if (cur != memories_.end()) {
+		  mem = (*cur).second;
+		  return;
+	    }
+
+	      /* Neither a signal nor memory are found, so go up a
+		 scope level and try again. */
+	    if (scope == 0)
+		  return;
+
+	    scope = scope->parent();
+      }
+}
+
 void Design::add_function(const string&key, NetFuncDef*def)
 {
       funcs_[key] = def;
@@ -548,6 +576,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.5  2000/04/28 16:50:53  steve
+ *  Catch memory word parameters to tasks.
+ *
  * Revision 1.4  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

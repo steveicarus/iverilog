@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.130 2000/04/23 21:17:31 steve Exp $"
+#ident "$Id: netlist.h,v 1.131 2000/04/28 16:50:53 steve Exp $"
 #endif
 
 /*
@@ -2333,6 +2333,11 @@ class Design {
       void add_memory(NetMemory*);
       NetMemory* find_memory(const string&path, const string&name);
 
+	/* This is a more general lookup that finds the named signal
+	   or memory, whichever is first in the search path. */
+      void find_symbol(const NetScope*,const string&key,
+		       NetNet*&sig, NetMemory*&mem);
+
 	// Functions
       void add_function(const string&n, NetFuncDef*);
       NetFuncDef* find_function(const string&path, const string&key);
@@ -2446,6 +2451,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.131  2000/04/28 16:50:53  steve
+ *  Catch memory word parameters to tasks.
+ *
  * Revision 1.130  2000/04/23 21:17:31  steve
  *  Better comments about bufif devices.
  *

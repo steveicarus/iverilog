@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.162 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.163 2000/04/28 16:50:53 steve Exp $"
 #endif
 
 /*
@@ -33,13 +33,14 @@
 # include  "PEvent.h"
 # include  "netlist.h"
 # include  "netmisc.h"
-
+# include  "util.h"
 
   // Urff, I don't like this global variable. I *will* figure out a
   // way to get rid of it. But, for now the PGModule::elaborate method
   // needs it to find the module definition.
 static const map<string,Module*>* modlist = 0;
 static const map<string,PUdp*>*   udplist = 0;
+
 
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
@@ -50,6 +51,21 @@ static const map<string,PUdp*>*   udplist = 0;
  */
 void PWire::elaborate(Design*des, NetScope*scope) const
 {
+	/* The parser may produce hierarchical names for wires. I here
+	   follow the scopes down to the base where I actually want to
+	   elaborate the NetNet object. */
+      string basename = name_;
+      for (;;) {
+	    string p = parse_first_name(basename);
+	    if (basename == "") {
+		  basename = p;
+		  break;
+	    }
+
+	    scope = scope->child(p);
+	    assert(scope);
+      }
+
       const string path = scope->name();
       NetNet::Type wtype = type_;
       if (wtype == NetNet::IMPLICIT)
@@ -100,7 +116,7 @@ void PWire::elaborate(Design*des, NetScope*scope) const
 			cerr << get_line() << ": error: Inconsistent width, "
 			      "[" << mnum[idx] << ":" << lnum[idx] << "]"
 			      " vs. [" << mnum[0] << ":" << lnum[0] << "]"
-			      " for signal ``" << name_ << "''" << endl;
+			      " for signal ``" << basename << "''" << endl;
 			des->errors += 1;
 			return;
 		  }
@@ -130,13 +146,13 @@ void PWire::elaborate(Design*des, NetScope*scope) const
 	    long rnum = rval->as_long();
 	    delete lval;
 	    delete rval;
-	    NetMemory*sig = new NetMemory(path+"."+name_, wid, lnum, rnum);
+	    NetMemory*sig = new NetMemory(path+"."+basename, wid, lnum, rnum);
 	    sig->set_attributes(attributes);
 	    des->add_memory(sig);
 
       } else {
 
-	    NetNet*sig = new NetNet(scope, path + "." + name_, wtype, msb, lsb);
+	    NetNet*sig = new NetNet(scope, path + "." +basename, wtype, msb, lsb);
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_attributes(attributes);
@@ -745,6 +761,12 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       assert(rv);
 
       rv->set_width(mem->width());
+      if (ix == 0) {
+	    cerr << get_line() << ": internal error: No index in lval "
+		 << "of assignment to memory?" << endl;
+	    return 0;
+      }
+
       assert(ix);
       NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
       assert(idx);
@@ -884,6 +906,10 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
+	    NetNet*net = des->find_signal(path, id->name());
+	    if (net && (net->scope() == scope))
+		  break;
+
 	    if (NetMemory*mem = des->find_memory(path, id->name()))
 		  return assign_to_memory_(mem, id->msb_, des, path);
 
@@ -927,7 +953,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    delete rv;
 	    rv = tmp;
       }
-      
+
       NetAssign*cur;
 
 	/* Rewrite delayed assignments as assignments that are
@@ -1434,10 +1460,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 
       NetBlock*block = new NetBlock(NetBlock::SEQU);
 
+
 	/* Generate assignment statement statements for the input and
 	   INOUT ports of the task. These are managed by writing
 	   assignments with the task port the l-value and the passed
-	   expression the r-value. */
+	   expression the r-value. We know by definition that the port
+	   is a reg type, so this elaboration is pretty obvious. */
+
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 
 	    NetNet*port = def->port(idx);
@@ -1457,27 +1486,67 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       cur = new NetUTask(def);
       block->append(cur);
 
-	/* Generate assignment statement statements for the output and
-	   INOUT ports of the task. The l-value in this case is the
+
+	/* Generate assignment statements for the output and INOUT
+	   ports of the task. The l-value in this case is the
 	   expression passed as a parameter, and the r-value is the
-	   port to be copied out. */
+	   port to be copied out.
+
+	   We know by definition that the r-value of this copy-out is
+	   the port, which is a reg. The l-value, however, may be any
+	   expression that can be a target to a procedural
+	   assignment, including a memory word. */
+
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 
 	    NetNet*port = def->port(idx);
+
+	      /* Skip input ports. */
 	    assert(port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::PINPUT)
 		  continue;
 
+	    const PEIdent*id;
+	    NetNet*val = 0;
+	    NetMemory*mem = 0;
+	    if ( (id = dynamic_cast<const PEIdent*>(parms_[idx])) )
+		  des->find_symbol(scope, id->name(), val, mem);
+
+	      /* Catch the case of memory words passed as an out
+		 parameter. Generate an assignment to memory instead
+		 of a normal assignment. */
+	    if (mem != 0) {
+		  assert(id->msb_);
+		  NetNet*ix = id->msb_->elaborate_net(des, path,
+						      0, 0, 0, 0);
+		  assert(ix);
+
+		  NetExpr*rv = new NetESignal(port);
+		  if (rv->expr_width() < mem->width())
+			rv = pad_to_width(rv, mem->width());
+
+		  NetAssignMem*am = new NetAssignMem(mem, ix, rv);
+		  am->set_line(*this);
+		  block->append(am);
+		  continue;
+	    }
+
+
 	      /* Elaborate the parameter expression as a net so that
 		 it can be used as an l-value. Then check that the
-		 parameter width match up. */
-	    NetNet*val = parms_[idx]->elaborate_net(des, path,
-						    0, 0, 0, 0);
+		 parameter width match up.
+
+		 XXXX FIXME XXXX This goes nuts if the parameter is a
+		 memory word. that must be handled by generating
+		 NetAssignMem objects instead. */
+	    if (val == 0)
+		  val = parms_[idx]->elaborate_net(des, path,
+						   0, 0, 0, 0);
 	    assert(val);
 
 
 	      /* Make an expression out of the actual task port. If
-		 the port is smaller then the expression to redeive
+		 the port is smaller then the expression to receive
 		 the result, then expand the port by padding with
 		 zeros. */
 	    NetESignal*sig = new NetESignal(port);
@@ -2031,6 +2100,9 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  */
 void PTask::elaborate_1(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
 	/* Translate the wires that are ports to NetNet pointers by
 	   presuming that the name is already elaborated, and look it
 	   up in the design. Then save that pointer for later use by
@@ -2040,6 +2112,7 @@ void PTask::elaborate_1(Design*des, const string&path) const
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
 	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
 
+	    assert(tmp->scope() == scope);
 	    ports[idx] = tmp;
       }
 
@@ -2268,6 +2341,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.163  2000/04/28 16:50:53  steve
+ *  Catch memory word parameters to tasks.
+ *
  * Revision 1.162  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *
