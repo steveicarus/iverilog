@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.289 2003/09/20 01:05:35 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.290 2003/09/20 06:00:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -268,7 +268,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 {
       unsigned count = 1;
-      unsigned low = 0, high = 0;
+      long low = 0, high = 0;
       string name = get_name();
 
       if (name == "")
@@ -278,30 +278,39 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	   gates, then I am expected to make more then one
 	   gate. Figure out how many are desired. */
       if (msb_) {
-	    verinum*msb = msb_->eval_const(des, scope);
-	    verinum*lsb = lsb_->eval_const(des, scope);
+	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_);
+	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_);
 
-	    if (msb == 0) {
+	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
+	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
+
+	    if (msb_con == 0) {
 		  cerr << get_line() << ": error: Unable to evaluate "
 			"expression " << *msb_ << endl;
 		  des->errors += 1;
 		  return;
 	    }
 
-	    if (lsb == 0) {
+	    if (lsb_con == 0) {
 		  cerr << get_line() << ": error: Unable to evaluate "
 			"expression " << *lsb_ << endl;
 		  des->errors += 1;
 		  return;
 	    }
 
-	    if (msb->as_long() > lsb->as_long())
-		  count = msb->as_long() - lsb->as_long() + 1;
-	    else
-		  count = lsb->as_long() - msb->as_long() + 1;
+	    verinum msb = msb_con->value();
+	    verinum lsb = lsb_con->value();
 
-	    low = lsb->as_long();
-	    high = msb->as_long();
+	    delete msb_exp;
+	    delete lsb_exp;
+
+	    if (msb.as_long() > lsb.as_long())
+		  count = msb.as_long() - lsb.as_long() + 1;
+	    else
+		  count = lsb.as_long() - msb.as_long() + 1;
+
+	    low = lsb.as_long();
+	    high = msb.as_long();
       }
 
 
@@ -2623,6 +2632,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.290  2003/09/20 06:00:37  steve
+ *  Evaluate gate array index constants using elab_and_eval.
+ *
  * Revision 1.289  2003/09/20 01:05:35  steve
  *  Obsolete find_symbol and find_event from the Design class.
  *
@@ -2655,103 +2667,5 @@ Design* elaborate(list<const char*>roots)
  *
  * Revision 1.279  2003/04/24 05:25:55  steve
  *  Include port name in port assignment error message.
- *
- * Revision 1.278  2003/03/29 05:51:25  steve
- *  Sign extend NetMult inputs if result is signed.
- *
- * Revision 1.277  2003/03/26 06:16:38  steve
- *  Some better internal error messages.
- *
- * Revision 1.276  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.275  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.274  2003/02/22 04:12:49  steve
- *  Add the portbind warning.
- *
- * Revision 1.273  2003/02/08 19:49:21  steve
- *  Calculate delay statement delays using elaborated
- *  expressions instead of pre-elaborated expression
- *  trees.
- *
- *  Remove the eval_pexpr methods from PExpr.
- *
- * Revision 1.272  2003/02/07 02:49:24  steve
- *  Rewrite delay statement elaboration of handle real expressions.
- *
- * Revision 1.271  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.270  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.269  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.268  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.267  2002/12/21 19:42:17  steve
- *  Account for local units in calculated delays.
- *
- * Revision 1.266  2002/12/05 04:15:14  steve
- *  precalculate r-values of nb assignments and task arguments.
- *
- * Revision 1.265  2002/11/26 03:35:13  steve
- *  Do not set width if width is already OK.
- *
- * Revision 1.264  2002/11/09 19:20:48  steve
- *  Port expressions for output ports are lnets, not nets.
- *
- * Revision 1.263  2002/08/28 18:54:36  steve
- *  Evaluate nonblocking assign r-values.
- *
- * Revision 1.262  2002/08/15 02:11:54  steve
- *  Handle special case of empty system task argument list.
- *
- * Revision 1.261  2002/08/13 05:35:00  steve
- *  Do not elide named blocks.
- *
- * Revision 1.260  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.259  2002/07/31 23:55:38  steve
- *  Add port name to pin size error message.
- *
- * Revision 1.258  2002/07/24 16:22:59  steve
- *  Save event matching for nodangle.
- *
- * Revision 1.257  2002/07/18 02:06:37  steve
- *  Need driver for sure in assign feedback and other cases.
- *
- * Revision 1.256  2002/07/18 00:24:22  steve
- *  Careful with assign to self.
- *
- * Revision 1.255  2002/07/03 05:34:59  steve
- *  Fix scope search for events.
- *
- * Revision 1.254  2002/06/19 04:20:03  steve
- *  Remove NetTmp and add NetSubnet class.
- *
- * Revision 1.253  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.252  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.251  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
  */
 
