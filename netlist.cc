@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.39 1999/06/24 04:24:18 steve Exp $"
+#ident "$Id: netlist.cc,v 1.40 1999/06/24 05:02:36 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1108,7 +1108,7 @@ NetNet* Design::find_signal(const string&path, const string&name)
 	    return 0;
 
       string root = path;
-      while (root.size() > 0) {
+      for (;;) {
 
 	    string fulname = root + "." + name;
 	    NetNet*cur = signals_;
@@ -1120,6 +1120,9 @@ NetNet* Design::find_signal(const string&path, const string&name)
 	    } while (cur != signals_);
 
 	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
 	    root = root.substr(0, pos);
       }
 
@@ -1247,6 +1250,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.40  1999/06/24 05:02:36  steve
+ *  Properly terminate signal matching scan.
+ *
  * Revision 1.39  1999/06/24 04:24:18  steve
  *  Handle expression widths for EEE and NEE operators,
  *  add named blocks and scope handling,
