@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.12 2003/06/25 01:46:44 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.13 2003/06/25 01:49:06 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -181,7 +181,7 @@ static void virtex2_show_footer(ivl_design_t des)
 }
 
 /*
- * Make (or retreive) a cell in the external library that reflects the
+ * Make (or retrieve) a cell in the external library that reflects the
  * scope with its ports.
  */
 static void virtex2_show_scope(ivl_scope_t scope)
@@ -832,7 +832,7 @@ static void virtex2_add(ivl_lpm_t net)
  * output of the next higher muxcy is guaranteed to be 0, and so on to
  * the final output of the carry chain. If the output from a LUT is ==,
  * then the CI input of the muxcy is selected and the truth of this
- * level depends on lower order bits. The least significan muxcy is
+ * level depends on lower order bits. The least significant muxcy is
  * connected to GND and VCC so that its CO follows the least
  * significant LUT.
  *
@@ -1139,6 +1139,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.13  2003/06/25 01:49:06  steve
+ *  Spelling fixes.
+ *
  * Revision 1.12  2003/06/25 01:46:44  steve
  *  Virtex support for NOT gates.
  *

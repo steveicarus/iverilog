@@ -43,7 +43,6 @@ warning.)
 
 (* ivl_synthesis_cell *)
 
-    [XXX implementation is started but not complete]
     If this value is attached to a module during synthesis, that
     module will be considered a target architecture primitive, and
     its interior will not be synthesized further.  The module can

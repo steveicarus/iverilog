@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.23 2003/06/24 03:55:00 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.24 2003/06/25 01:49:06 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -908,7 +908,7 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
  * output of the next higher muxcy is guaranteed to be 0, and so on to
  * the final output of the carry chain. If the output from a LUT is ==,
  * then the CI input of the muxcy is selected and the truth of this
- * level depends on lower order bits. The least significan muxcy is
+ * level depends on lower order bits. The least significant muxcy is
  * connected to GND and VCC so that its CO follows the least
  * significant LUT.
  *
@@ -1941,6 +1941,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.24  2003/06/25 01:49:06  steve
+ *  Spelling fixes.
+ *
  * Revision 1.23  2003/06/24 03:55:00  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *

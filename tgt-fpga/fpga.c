@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fpga.c,v 1.7 2003/06/24 03:55:00 steve Exp $"
+#ident "$Id: fpga.c,v 1.8 2003/06/25 01:49:06 steve Exp $"
 #endif
 
 # include "config.h"
 
 /*
- * This is a null target module. It does nothing.
+ * This is the FPGA target module.
  */
 
 # include  <ivl_target.h>
@@ -45,7 +45,6 @@ int scope_has_attribute(ivl_scope_t s, const char *name)
       const struct ivl_attribute_s *a;
       for (i=0; i<ivl_scope_attr_cnt(s); i++) {
 	      a = ivl_scope_attr_val(s, i);
-	      fprintf(stderr, "scope attribute key %s\n", a->key);
 	      if (strcmp(a->key,name) == 0)
 		    return 1;
       }
@@ -145,6 +144,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.8  2003/06/25 01:49:06  steve
+ *  Spelling fixes.
+ *
  * Revision 1.7  2003/06/24 03:55:00  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *
