@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.38 2001/07/07 03:01:06 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.39 2001/07/09 15:38:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -614,7 +614,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			      fprintf(vvp_out, ", L_%s/%d/%d",
 				      vvp_mangle_id(ivl_logic_name(lptr)),
 				      level - 1,
-				      pdx );
+				      pdx*4 );
 			} else {
 			      ivl_nexus_t nex = ivl_logic_pin(lptr, pdx+1);
 			      fprintf(vvp_out, ", ");
@@ -631,6 +631,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 		  ninp = (ninp+3) / 4;
 	    else
 		  ninp = 0;
+	    level += 1;
       }
 }
 
@@ -1071,6 +1072,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.39  2001/07/09 15:38:35  steve
+ *  Properly step through wide inputs. (Stephan Boettcher)
+ *
  * Revision 1.38  2001/07/07 03:01:06  steve
  *  Generate code for right shift.
  *

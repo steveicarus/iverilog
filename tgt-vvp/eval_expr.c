@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.35 2001/07/07 20:20:10 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.36 2001/07/09 15:38:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -820,7 +820,6 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
       unsigned parm_count = ivl_expr_parms(exp);
       struct vector_info res;
 
-      fprintf(stderr, "XXXX %s(%u)\n", ivl_expr_name(exp), parm_count);
 
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */
@@ -1126,6 +1125,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.36  2001/07/09 15:38:35  steve
+ *  Properly step through wide inputs. (Stephan Boettcher)
+ *
  * Revision 1.35  2001/07/07 20:20:10  steve
  *  Pass parameters to system functions.
  *
