@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.5 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: schedule.h,v 1.6 2001/05/02 01:38:13 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -46,8 +46,14 @@ extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
 extern void schedule_assign(vvp_ipoint_t fun, unsigned char val,
 			    unsigned delay);
 
+
 /*
- * Create an abstract event.
+ * Create a generic event. This supports scheduled events that are not
+ * any of the specific types above. The vvp_get_event_t points to a
+ * function to be executed when the scheduler gets to the event. It is
+ * up to the user to allocate/free the vvp_get_event_s object. The
+ * object is never referenced by the scheduler after the run method is
+ * called.
  */
 
 typedef struct vvp_gen_event_s *vvp_gen_event_t;
@@ -88,6 +94,9 @@ extern bool schedule_finished(void);
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.6  2001/05/02 01:38:13  steve
+ *  Describe a generic event a bit.
+ *
  * Revision 1.5  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
