@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.58 2002/04/14 03:55:25 steve Exp $"
+#ident "$Id: PExpr.h,v 1.59 2002/04/23 03:53:59 steve Exp $"
 #endif
 
 # include  <string>
@@ -261,6 +261,15 @@ class PEIdent : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+
+      NetNet* elaborate_net_bitmux_(Design*des, NetScope*scope,
+				    NetNet*sig,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay,
+				    Link::strength_t drive0,
+				    Link::strength_t drive1) const;
+
 };
 
 class PENumber : public PExpr {
@@ -487,6 +496,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.59  2002/04/23 03:53:59  steve
+ *  Add support for non-constant bit select.
+ *
  * Revision 1.58  2002/04/14 03:55:25  steve
  *  Precalculate unary - if possible.
  *

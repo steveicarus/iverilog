@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.88 2002/04/22 00:53:39 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.89 2002/04/23 03:53:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1163,6 +1163,41 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       return osig;
 }
 
+/*
+ * This provate method handles the special case that we have a
+ * non-constant bit-select of an identifier. We already know that the
+ * signal that is represented is "sig".
+ */
+NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
+				       NetNet*sig,
+				       unsigned long rise,
+				       unsigned long fall,
+				       unsigned long decay,
+				       Link::strength_t drive0,
+				       Link::strength_t drive1) const
+{
+	/* Elaborate the selector. */
+      NetNet*sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
+
+      NetMux*mux = new NetMux(scope, scope->local_hsymbol(), 1,
+			      sig->pin_count(),
+			      sel->pin_count());
+
+      for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1)
+	    connect(mux->pin_Data(0, idx), sig->pin(idx));
+
+      for (unsigned idx = 0 ;  idx < sel->pin_count() ;  idx += 1)
+	    connect(mux->pin_Sel(idx), sel->pin(idx));
+
+      NetNet*out = new NetNet(scope, scope->local_hsymbol(),
+			      NetNet::IMPLICIT, 1);
+      connect(mux->pin_Result(0), out->pin(0));
+
+      des->add_node(mux);
+      out->local_flag(true);
+      return out;
+}
+
 NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 			       unsigned lwidth,
 			       unsigned long rise,
@@ -1288,12 +1323,10 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
-		  cerr << get_line() << ": error: index of " << path_ <<
-			" needs to be constant in this context." <<
-			endl;
-		  des->errors += 1;
-		  return 0;
+		  return elaborate_net_bitmux_(des, scope, sig, rise,
+					       fall, decay, drive0, drive1);
 	    }
+
 	    assert(mval);
 	    unsigned idx = sig->sb_to_idx(mval->as_long());
 	    if (idx >= sig->pin_count()) {
@@ -2069,6 +2102,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.89  2002/04/23 03:53:59  steve
+ *  Add support for non-constant bit select.
+ *
  * Revision 1.88  2002/04/22 00:53:39  steve
  *  Do not allow implicit wires in sensitivity lists.
  *
