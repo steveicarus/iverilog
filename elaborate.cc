@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.152 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.153 2000/04/01 22:14:19 steve Exp $"
 #endif
 
 /*
@@ -1548,6 +1548,13 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 
       NetPEvent*pe = new NetPEvent(des->local_symbol(path), enet);
       for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
+	    if (expr_[idx]->expr() == 0) {
+		  cerr << get_line() << ": sorry: block on named events "
+		       << "not supported." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
 	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path,
 							    0, 0, 0, 0);
 	    if (expr == 0) {
@@ -2011,6 +2018,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.153  2000/04/01 22:14:19  steve
+ *  detect unsupported block on named events.
+ *
  * Revision 1.152  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *
