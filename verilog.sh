@@ -116,7 +116,7 @@ case "${target}" in
 
     "xnf") mv ${tmpCCFile} ${outputFile} ;;
 
-    "vvm")  ${execCpp} -rdynamic -I${includedir} -L${libdir} ${tmpCCFile} -o ${outputFile} -lvvm @dlllib@ ;
+    "vvm")  ${execCpp} -rdynamic -I${includedir} -L${libdir} ${tmpCCFile} -o ${outputFile} -lvvm @dllib@ ;
 	    if test $? -ne 0 ; then
 	     echo "C++ compilation failed. Terminating compilation."
 	     rm -f ${tmpCCFile}
