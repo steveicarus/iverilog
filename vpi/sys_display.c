@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.45 2002/09/06 04:56:28 steve Exp $"
+#ident "$Id: sys_display.c,v 1.46 2002/11/09 06:01:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -609,6 +609,29 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			cp += 1;
 			break;
 			
+		      case '0':
+		      case '1':
+		      case '2':
+		      case '3':
+		      case '4':
+		      case '5':
+		      case '6':
+		      case '7':
+			if (isdigit(cp[0])
+			    && isdigit(cp[1])
+			    && isdigit(cp[2])) {
+			        /* handle octal escapes (e.g. "\015" is CR)*/
+			      vpi_mcd_printf(mcd, "%c",
+					     (cp[2] - '0') +
+					     8 * ((cp[1] - '0') +
+						  8 * (cp[0] - '0')));
+			      cp += 3;
+			} else {
+			      vpi_mcd_printf(mcd, "%c", *cp);
+			      cp += 1;
+			}
+			break;
+
 		      default:
 			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
@@ -1461,6 +1484,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.46  2002/11/09 06:01:11  steve
+ *  display octal escapes properly.
+ *
  * Revision 1.45  2002/09/06 04:56:28  steve
  *  Add support for %v is the display system task.
  *  Change the encoding of H and L outputs from
