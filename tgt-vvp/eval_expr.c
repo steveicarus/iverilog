@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.21 2001/04/30 05:11:18 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.22 2001/05/01 02:07:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -48,9 +48,21 @@ static inline void clr_bit(unsigned addr)
       allocation_map[addr] &= ~(1 << bit);
 }
 
+/*
+ * This clears a vector that was previously allocated by
+ * allocate_vector. That is, it unmarks all the bits of the map that
+ * represent this vector.
+ *
+ * If the vector is based in one of 4 constant bit values, then there
+ * are no bits to clear. If the vector is based in the 4-8 result
+ * area, then someone is broken.
+ */
 void clr_vector(struct vector_info vec)
 {
       unsigned idx;
+      if (vec.base < 4)
+	    return;
+      assert(vec.base >= 8);
       for (idx = 0 ;  idx < vec.wid ;  idx += 1)
 	    clr_bit(vec.base + idx);
 }
@@ -140,6 +152,15 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp)
 
 	  default:
 	    assert(0);
+      }
+
+	/* Move the result out out the 4-7 bit that the compare
+	   uses. This is because that bit may be clobbered by other
+	   expressions. */
+      { unsigned short base = allocate_vector(1);
+        fprintf(vvp_out, "    %%mov %u, %u, 1;\n", base, lv.base);
+	lv.base = base;
+	lv.wid = 1;
       }
 
       return lv;
@@ -284,8 +305,15 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
       clr_vector(lv);
       clr_vector(rv);
 
-      lv.base = 5;
-      lv.wid = 1;
+	/* Move the result out out the 4-7 bit that the compare
+	   uses. This is because that bit may be clobbered by other
+	   expressions. */
+      { unsigned short base = allocate_vector(1);
+        fprintf(vvp_out, "    %%mov %u, 5, 1;\n", base);
+	lv.base = base;
+	lv.wid = 1;
+      }
+
       assert(wid == 1);
 
       return lv;
@@ -855,6 +883,11 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.22  2001/05/01 02:07:34  steve
+ *  Comparisons cant leave their results in the opcode
+ *  result area or their values will be clobbered by other
+ *  parts of a complex expression.
+ *
  * Revision 1.21  2001/04/30 05:11:18  steve
  *  OR is %or. Get this right.
  *
