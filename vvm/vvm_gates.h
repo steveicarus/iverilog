@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.27 1999/11/24 04:38:49 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.28 1999/11/25 01:34:04 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -472,40 +472,28 @@ template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
 	    }
 };
 
-template <unsigned WIDTH, unsigned long DELAY> class vvm_or {
+template <unsigned WIDTH, unsigned long DELAY> 
+class vvm_or : private vvm_1bit_out {
 
     public:
       explicit vvm_or(vvm_out_event::action_t o)
-      : output_(o) { }
+      : vvm_1bit_out(o,DELAY) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim,
-					       compute_or(input_,WIDTH),
-					       output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
+	    { output(sim, compute_or(input_,WIDTH)); }
 
       void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
 		  return;
 	      input_[idx] = val;
-
-	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
+	      output(sim, compute_or(input_,WIDTH));
 	    }
 
     private:
       vpip_bit_t input_[WIDTH];
-      vvm_out_event::action_t output_;
 };
 
 template <unsigned WIDTH, unsigned long DELAY>
@@ -647,51 +635,27 @@ template <unsigned long DELAY> class vvm_bufif1 {
 	    }
 };
 
-template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
+template <unsigned WIDTH, unsigned long DELAY> 
+class vvm_nand : private vvm_1bit_out {
 
     public:
       explicit vvm_nand(vvm_out_event::action_t o)
-      : output_(o)
-	    { for (unsigned idx = 0 ; idx < WIDTH ;  idx += 1)
-		  input_[idx] = V0;
-	    }
+      : vvm_1bit_out(o, DELAY) { }
 
-      void init_I(unsigned idx, vpip_bit_t val) { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
+	    { output(sim, compute_nand(input_,WIDTH)); }
 
-	// Set an input of the NAND gate causes a new output value to
-	// be calculated and an event generated to make the output
-	// happen. The input pins are numbered from 1 - WIDTH.
       void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		    return;
+	    { if (input_[idx] == val) return;
 	      input_[idx] = val;
-
-	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
+	      output(sim, compute_nand(input_,WIDTH));
 	    }
 
     private:
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval & input_[i];
-	      outval = not(outval);
-	      return outval;
-	    }
-
       vpip_bit_t input_[WIDTH];
-      vvm_out_event::action_t output_;
 };
 
 /*
@@ -712,83 +676,50 @@ template <unsigned long DELAY> class vvm_not  : private vvm_1bit_out {
     private:
 };
 
-template <unsigned WIDTH, unsigned long DELAY> class vvm_xnor {
+template <unsigned WIDTH, unsigned long DELAY> 
+class vvm_xnor : private vvm_1bit_out {
 
     public:
       explicit vvm_xnor(vvm_out_event::action_t o)
-      : output_(o) { }
+      : vvm_1bit_out(o,DELAY) { }
 
       void init_I(unsigned idx, vpip_bit_t val) { input_[idx] = val; }
+
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
-
-
+	    { output(sim,compute_xnor(input_,WIDTH)); }
 
       void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
 		    return;
 	      input_[idx] = val;
-	      vpip_bit_t outval = compute_();
-	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
+	      output(sim,compute_xnor(input_,WIDTH));
 	    }
 
     private:
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval ^ input_[i];
-
-	      outval = not(outval);
-	      return outval;
-	    }
       vpip_bit_t input_[WIDTH];
-      vvm_out_event::action_t output_;
 };
 
-template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
+template <unsigned WIDTH, unsigned long DELAY> 
+class vvm_xor : private vvm_1bit_out {
 
     public:
       explicit vvm_xor(vvm_out_event::action_t o)
-      : output_(o) { }
+      : vvm_1bit_out(o,DELAY) { }
 
       void init_I(unsigned idx, vpip_bit_t val)
 	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
-	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
-	      if (DELAY > 0)
-		    sim->insert_event(DELAY, ev);
-	      else
-		    sim->active_event(ev);
-	    }
+	    { output(sim,compute_xor(input_,WIDTH)); }
 
       void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (input_[idx] == val)
 		    return;
 	      input_[idx] = val;
-	      start(sim);
-	    }
+	      output(sim,compute_xor(input_,WIDTH)); }
 
     private:
-
-      vpip_bit_t compute_() const
-	    { vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval ^ input_[i];
-	      return outval;
-	    }
-
       vpip_bit_t input_[WIDTH];
-      vvm_out_event::action_t output_;
 };
 
 /*
@@ -982,6 +913,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.28  1999/11/25 01:34:04  steve
+ *  Reduce more gate templates to use vvm_1bit_out (Eric Aardoom)
+ *
  * Revision 1.27  1999/11/24 04:38:49  steve
  *  LT and GT fixes from Eric Aardoom.
  *
