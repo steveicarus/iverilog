@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.164 2004/03/11 06:13:58 steve Exp $"
+#ident "$Id: Makefile.in,v 1.165 2004/03/17 17:06:44 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -200,7 +200,7 @@ INSTALL_DOC = $(mandir)/man1/iverilog-vpi.1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-ifeq (@WIN32@,yes)
+ifeq (@MINGW32@,yes)
 WIN32_INSTALL = $(prefix)/hello.vl $(prefix)/sqrt.vl $(prefix)/sqrt-virtex.v $(prefix)/QUICK_START.txt
 else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
@@ -250,7 +250,7 @@ $(prefix)/iverilog-vpi.pdf: iverilog-vpi.pdf
 
 # In windows installations, put a few examples and the quick_start
 # into the destination directory.
-ifeq (@WIN32@,yes)
+ifeq (@MINGW32@,yes)
 $(prefix)/hello.vl: $(srcdir)/examples/hello.vl
 	./dosify.exe $(srcdir)/examples/hello.vl tmp.vl
 	mv tmp.vl $(prefix)/hello.vl
