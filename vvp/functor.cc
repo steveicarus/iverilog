@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.35 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: functor.cc,v 1.36 2001/12/14 01:59:28 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -47,7 +47,7 @@
 
 functor_t **functor_list = 0x0;
 static unsigned functor_count = 0; 
-static unsigned functors_allocated = 0; 
+static unsigned functor_chunk_count = 0;
 
 /*
  * This function initializes the functor address space by creating the
@@ -71,26 +71,27 @@ vvp_ipoint_t functor_allocate(unsigned wid)
       vvp_ipoint_t idx = functor_count*4;
       functor_count += wid;
 
-      if (functor_count > functors_allocated*functor_chunks) {
+      if (functor_count > functor_chunk_count*functor_chunk_size) {
 
 	      // enlarge the list of chunks
-	    unsigned fa = (functor_count + functor_chunks - 1)/functor_chunks;
+	    unsigned fa = (functor_count + functor_chunk_size - 1)
+		  / functor_chunk_size;
+
 	    functor_list = (functor_t **)
 		  realloc(functor_list, fa*sizeof(functor_t*));
 	    assert(functor_list);
 
 	      // allocate the chunks of functor pointers.
-	    while (fa > functors_allocated) {
+	    while (fa > functor_chunk_count) {
 
-		  functor_list[functors_allocated] = (functor_t *)
-			malloc(functor_chunks * sizeof(functor_t));
-		  assert(functor_list[functors_allocated]);
+		  functor_list[functor_chunk_count] = (functor_t *)
+			malloc(functor_chunk_size * sizeof(functor_t));
+		  assert(functor_list[functor_chunk_count]);
 
-		  memset(functor_list[functors_allocated],
-			 0,
-			 functor_chunks * sizeof(functor_t));
+		  memset(functor_list[functor_chunk_count], 0,
+			 functor_chunk_size * sizeof(functor_t));
 
-		  functors_allocated += 1;
+		  functor_chunk_count += 1;
 	    }
       }
 
@@ -99,8 +100,8 @@ vvp_ipoint_t functor_allocate(unsigned wid)
 
 void functor_define(vvp_ipoint_t point, functor_t obj)
 {
-      unsigned index1 = point/4/functor_chunks;
-      unsigned index2 = (point/4) % functor_chunks;
+      unsigned index1 = point/4/functor_chunk_size;
+      unsigned index2 = (point/4) % functor_chunk_size;
       functor_list[index1][index2] = obj;
 }
 
@@ -171,6 +172,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.36  2001/12/14 01:59:28  steve
+ *  Better variable names for functor chunks.
+ *
  * Revision 1.35  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)

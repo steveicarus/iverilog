@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.40 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: functor.h,v 1.41 2001/12/14 01:59:28 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -119,12 +119,12 @@ extern vvp_ipoint_t functor_allocate(unsigned wid);
  */
 
 extern functor_t **functor_list;
-static const unsigned functor_chunks = 0x400;
+static const unsigned functor_chunk_size = 0x400;
 
 inline static functor_t functor_index(vvp_ipoint_t point)
 {
-      unsigned index1 = point/4/functor_chunks;
-      unsigned index2 = (point/4) % functor_chunks;
+      unsigned index1 = point/4/functor_chunk_size;
+      unsigned index2 = (point/4) % functor_chunk_size;
 
       return functor_list[index1][index2];
 }
@@ -375,6 +375,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.41  2001/12/14 01:59:28  steve
+ *  Better variable names for functor chunks.
+ *
  * Revision 1.40  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)
