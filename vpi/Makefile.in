@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.1 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: Makefile.in,v 1.2 1999/08/15 02:20:06 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -74,8 +74,8 @@ $(includedir)/veriuser.h: $(srcdir)/veriuser.h
 	$(INSTALL_DATA) $(srcdir)/veriuser.h $(includedir)/veriuser.h
 
 
-installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
+installdirs: ../mkinstalldirs
+	$(srcdir)/../mkinstalldirs $(includedir) $(bindir) $(libdir)/ivl
 
 uninstall:
 	rm -f $(libdir)/ivl/system.vpi
