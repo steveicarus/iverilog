@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.14 2001/12/06 03:31:25 steve Exp $"
+#ident "$Id: udp.cc,v 1.15 2002/01/06 17:35:01 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -129,9 +129,9 @@ unsigned char vvp_udp_s::propagate(functor_t fu, vvp_ipoint_t uix)
   if (sequ)
     {
       if (edge_type == 0)
-           return fu->get();
+           return fu->get_oval();
       invec <<= 2;
-      invec |= (fu->get() & 3);
+      invec |= (fu->get_oval() & 3);
     }
 
   udp_vec_t inx  =  invec & 0xaaaaaaaaU; // all 'x'/'z'
@@ -350,6 +350,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.15  2002/01/06 17:35:01  steve
+ *  Feedback output, not propagated output. (Stephan Boettcher)
+ *
  * Revision 1.14  2001/12/06 03:31:25  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)
