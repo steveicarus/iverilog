@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.97 2002/10/23 01:47:18 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.98 2002/11/03 20:47:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,7 +54,6 @@ inline void ivl_dlclose(ivl_dll_t dll)
 const char *dlerror(void)
 {
   static char msg[255];
-
   FormatMessage( 
 		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
@@ -448,6 +447,7 @@ bool dll_target::start_design(const Design*des)
       dll_path_ = des->get_flag("DLL");
       dll_ = ivl_dlopen(dll_path_.c_str());
       if (dll_ == 0) {
+	    cerr << "error: " << dll_path_ << " failed to load." << endl;
 	    cerr << dll_path_ << ": " << dlerror() << endl;
 	    return false;
       }
@@ -1979,6 +1979,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.98  2002/11/03 20:47:23  steve
+ *  Slightly more verbose load fail message.
+ *
  * Revision 1.97  2002/10/23 01:47:18  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.
