@@ -10,6 +10,8 @@ ivl.exp
 dep
 configure
 Makefile
+check
+check.cc
 config.status
 config.log
 config.cache
