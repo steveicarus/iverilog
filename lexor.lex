@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.49 2000/10/14 04:07:54 steve Exp $"
+#ident "$Id: lexor.lex,v 1.50 2000/10/14 16:48:59 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -335,11 +335,6 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
       unsigned idx = 0;
       const char*eptr = ptr + strlen(ptr) - 1;
 
-      if ((strlen(ptr) * 1) > size)
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric binary constant ``" << ptr <<
-           "'' truncated to " << size << " bits." << endl;
-
       while ((eptr >= ptr) && (idx < size)) {
 
 	    switch (*eptr) {
@@ -363,6 +358,18 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 
 	    eptr -= 1;
       }
+
+
+	/* If we filled up the expected number of bits, but there are
+	   still characters of the number part left, then report a
+	   warning that we are truncating. */
+
+      if ((idx >= size) && (eptr >= ptr))
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric binary constant ``" << ptr <<
+           "'' truncated to " << size << " bits." << endl;
+
+
 	// Zero-extend binary number, except that z or x is extended
 	// if it is the highest supplied digit.
       while (idx < size) {
@@ -640,11 +647,6 @@ static verinum*make_sized_hex(const char*txt)
       unsigned idx = 0;
       char*eptr = ptr + strlen(ptr) - 1;
 
-      if ((strlen(ptr) * 4) > ((size+3)/4) * 4)
-        cerr << yylloc.text << ":" << yylloc.first_line <<
-          ": warning: Numeric hex constant ``" << ptr <<
-           "'' truncated to " << size << " bits." << endl;
-
       while ((eptr >= ptr) && (idx < size)) {
 	    switch (*eptr) {
 		case 'x': case 'X':
@@ -688,7 +690,15 @@ static verinum*make_sized_hex(const char*txt)
 	    eptr -= 1;
       }
 
-	// zero extend octal numbers
+	/* If we filled up the expected number of bits, but there are
+	   still characters of the number part left, then report a
+	   warning that we are truncating. */
+      if ((idx >= size) && (eptr >= ptr))
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric hex constant ``" << ptr <<
+           "'' truncated to " << size << " bits." << endl;
+
+	// zero extend hex numbers
       while (idx < size) switch (ptr[1]) {
 	  case 'x': case 'X':
 	    bits[idx++] = verinum::Vx;
