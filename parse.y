@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.125 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: parse.y,v 1.126 2001/07/28 22:00:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1759,7 +1759,7 @@ range
 		  (*tmp)[0] = $2;
 
 		  if (!pform_expression_is_constant($4))
-			yyerror(@4, "error: msb of range must be constant.");
+			yyerror(@4, "error: lsb of range must be constant.");
 
 		  (*tmp)[1] = $4;
 
