@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.43 2002/07/14 23:32:31 steve Exp $"
+#ident "$Id: main.c,v 1.44 2002/07/15 00:33:50 steve Exp $"
 
 # include "config.h"
 
@@ -44,6 +44,7 @@ const char HELP[] =
 
 #ifdef __MINGW32__
 #include <windows.h>
+#include <libiberty.h>
 #endif
 
 #if HAVE_GETOPT_H
@@ -134,9 +135,18 @@ static const char*my_tempfile(const char*str, FILE**fout)
 	    tmpdir = getenv("TMPDIR");
       if (tmpdir == 0)
 	    tmpdir = getenv("TEMP");
+#ifdef __MINGW32__
+      if (tmpdir == 0)
+	    tmpdir = "C:\TEMP";
+#else
+      if (tmpdir == 0)
+	    tmpdir = "/tmp";
+#endif
+
       assert(tmpdir);
       assert((strlen(tmpdir) + strlen(str)) < sizeof pathbuf - 10);
 
+      srand(getpid());
       retry = 100;
       file = NULL;
       while ((retry > 0) && (file == NULL)) {
@@ -746,6 +756,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.44  2002/07/15 00:33:50  steve
+ *  Improve temporary file name guess.
+ *
  * Revision 1.43  2002/07/14 23:32:31  steve
  *  No longer need the .exe on generated files.
  *
