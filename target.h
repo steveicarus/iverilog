@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.32 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: target.h,v 1.33 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -92,6 +92,7 @@ struct target_t {
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_event(ostream&os, const NetNEvent*);
+      virtual void net_probe(ostream&os, const NetEvProbe*);
 
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */
@@ -154,6 +155,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.33  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.32  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.118 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.119 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 /*
@@ -1262,6 +1262,11 @@ class NetCondit  : public NetProc {
  * The NetEvTrig class represents trigger statements. Executing this
  * statement causes the referenced event to be triggered, which it
  * turn awakens the waiting threads.
+ *
+ * The NetEvProbe class is the structural equivilent of the NetEvTrig,
+ * in that it is a node and watches bit values that it receives. It
+ * checks for edges then if appropriate triggers the associated
+ * NetEvent.
  */
 class NetEvent : public LineInfo {
 
@@ -1319,6 +1324,26 @@ class NetEvWait  : public NetProc {
     private:
       NetEvent*event_;
       NetProc*statement_;
+};
+
+class NetEvProbe  : public NetNode {
+
+    public:
+      enum edge_t { ANYEDGE, POSEDGE, NEGEDGE };
+
+      explicit NetEvProbe(const string&n, NetEvent*tgt,
+			  edge_t t, unsigned p);
+      ~NetEvProbe();
+
+      edge_t edge() const;
+      const NetEvent* event() const;
+
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+    private:
+      NetEvent*event_;
+      edge_t edge_;
 };
 
 /*
@@ -2181,6 +2206,10 @@ class NetScope {
       void run_defparams(class Design*);
       void evaluate_parameters(class Design*);
 
+	/* This method generates a non-hierarchical name that is
+	   guaranteed to be unique within this scope. */
+      string local_symbol();
+
       void dump(ostream&) const;
       void emit_scope(ostream&o, struct target_t*tgt) const;
 
@@ -2203,6 +2232,8 @@ class NetScope {
       NetScope*up_;
       NetScope*sib_;
       NetScope*sub_;
+
+      unsigned lcounter_;
 };
 
 /*
@@ -2368,6 +2399,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.119  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.118  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.156 2000/04/09 17:44:30 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.157 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 /*
@@ -33,13 +33,6 @@
 # include  "PEvent.h"
 # include  "netlist.h"
 # include  "netmisc.h"
-
-string Design::local_symbol(const string&path)
-{
-      strstream res;
-      res << "_L" << (lcounter_++) << ends;
-      return path + "." + res.str();
-}
 
 
   // Urff, I don't like this global variable. I *will* figure out a
@@ -1529,14 +1522,30 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 }
 
 /*
- * An event statement gets elaborated as a gate net that drives a
- * special node, the NetPEvent. The NetPEvent is also a NetProc class
- * because execution flows through it. Thus, the NetPEvent connects
- * the structural and the behavioral.
+ * An event statement is an event delay of some sort, attached to a
+ * statement. Some Verilog examples are:
  *
- * Note that it is possible for the statement_ pointer to be 0. This
- * happens when the source has something like "@(E) ;". Note the null
- * statement.
+ *      @(posedge CLK) $display("clock rise");
+ *      @event_1 $display("event triggered.");
+ *      @(data or negedge clk) $display("data or clock fall.");
+ *
+ * The elaborated netlist uses the NetEvent, NetEvWait and NetEvProbe
+ * classes. The NetEvWait class represents the part of the netlist
+ * that is executed by behavioral code. The process starts waiting on
+ * the NetEvent when it executes the NetEvWait step. Net NetEvProbe
+ * and NetEvTrig are structural and behavioral equivilents that
+ * trigger the event, and awakens any processes blocking in the
+ * associated wait.
+ *
+ * The basic data structure is:
+ *
+ *       NetEvWait ---/--->  NetEvent  <----\---- NetEvProbe
+ *        ...         |                     |         ...
+ *       NetEvWait ---+                     +-----NetEvProbe
+ *
+ * That is, many NetEvWait statements may wait on a single NetEvent
+ * object, and Many NetEvProbe objects may trigger the NetEvent
+ * object.
  */
 NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 				    NetProc*enet) const
@@ -1544,11 +1553,62 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
       NetScope*scope = des->find_scope(path);
       assert(scope);
 
-	/* Handle as a special case the block on an event. In this
-	   case I generate a NetEvWait object to represent me.
 
-	   XXXX Do I want to move all event handling to NetEvent style
-	   event support? I think I do. */
+	/* The Verilog wait (<expr>) <statement> statement is a level
+	   sensitive wait. Handle this special case by elaborating
+	   something like this:
+
+	       begin
+	         if (! <expr>) @(posedge <expr>)
+	         <statement>
+	       end
+
+	   This is equivilent, and uses the existing capapilities of
+	   the netlist format. The resulting netlist should look like
+	   this:
+
+	       NetBlock ---+---> NetCondit --+--> <expr>
+	                   |                 |
+			   |     	     +--> NetEvWait--> NetEvent
+			   |
+			   +---> <statement>
+
+	   This is quite a mouthful */
+
+
+      if ((expr_.count() == 1) && (expr_[0]->type() == NetNEvent::POSITIVE)) {
+
+	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
+
+	    NetNet*ex = expr_[0]->expr()->elaborate_net(des, path,
+							1, 0, 0, 0);
+	    if (ex == 0) {
+		  expr_[0]->dump(cerr);
+		  cerr << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    NetEvent*ev = new NetEvent(scope->local_symbol());
+	    scope->add_event(ev);
+
+	    NetEvWait*we = new NetEvWait(ev, 0);
+
+	    NetEvProbe*po = new NetEvProbe(path+"."+scope->local_symbol(),
+					   ev, NetEvProbe::POSEDGE, 1);
+	    connect(po->pin(0), ex->pin(0));
+
+	    des->add_node(po);
+
+	    NetESignal*ce = new NetESignal(ex);
+	    NetCondit*co = new NetCondit(new NetEUnary('!', ce), we, 0);
+	    bl->append(co);
+	    bl->append(enet);
+	    return bl;
+      }
+
+	/* Handle as a special case the block on an event. In this
+	   case I generate a NetEvWait object to represent me. */
 
       if ((expr_.count() == 1) && (expr_[0]->expr() == 0)) {
 	    string ename = expr_[0]->name();
@@ -1577,12 +1637,16 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    }
       }
 
-	/* Create a single NetPEvent, and a unique NetNEvent for each
-	   conjuctive event. An NetNEvent can have many pins only if
-	   it is an ANYEDGE detector. Otherwise, only connect to the
-	   least significant bit of the expression. */
+	/* Create A single NetEvent and NetEvWait. Then, create a
+	   NetEvProbe for each conjunctive event in the event
+	   list. The NetEvProbe object al refer back to the NetEvent
+	   object. */
 
-      NetPEvent*pe = new NetPEvent(des->local_symbol(path), enet);
+      NetEvent*ev = new NetEvent(scope->local_symbol());
+      scope->add_event(ev);
+
+      NetEvWait*wa = new NetEvWait(ev, enet);
+
       for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
 	    if (expr_[idx]->expr() == 0) {
 		  cerr << get_line() << ": sorry: block on named events "
@@ -1604,7 +1668,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path,
 							    0, 0, 0, 0);
 	    if (expr == 0) {
-		  expr_[0]->dump(cerr);
+		  expr_[idx]->dump(cerr);
 		  cerr << endl;
 		  des->errors += 1;
 		  continue;
@@ -1613,16 +1677,35 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 
 	    unsigned pins = (expr_[idx]->type() == NetNEvent::ANYEDGE)
 		  ? expr->pin_count() : 1;
-	    NetNEvent*ne = new NetNEvent(des->local_symbol(path),
-					 pins, expr_[idx]->type(), pe);
 
-	    for (unsigned p = 0 ;  p < pins ;  p += 1)
-		  connect(ne->pin(p), expr->pin(p));
+	    NetEvProbe*pr;
+	    switch (expr_[idx]->type()) {
+		case NetNEvent::POSEDGE:
+		  pr = new NetEvProbe(des->local_symbol(path), ev,
+				      NetEvProbe::POSEDGE, pins);
+		  break;
 
-	    des->add_node(ne);
+		case NetNEvent::NEGEDGE:
+		  pr = new NetEvProbe(des->local_symbol(path), ev,
+				      NetEvProbe::NEGEDGE, pins);
+		  break;
+
+		case NetNEvent::ANYEDGE:
+		  pr = new NetEvProbe(des->local_symbol(path), ev,
+				      NetEvProbe::ANYEDGE, pins);
+		  break;
+
+		default:
+		  assert(0);
+	    }
+
+	    for (unsigned p = 0 ;  p < pr->pin_count() ; p += 1)
+		  connect(pr->pin(p), expr->pin(p));
+
+	    des->add_node(pr);
       }
 
-      return pe;
+      return wa;
 }
 
 NetProc* PEventStatement::elaborate(Design*des, const string&path) const
@@ -2078,6 +2161,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.157  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.156  2000/04/09 17:44:30  steve
  *  Catch event declarations during scope elaborate.
  *

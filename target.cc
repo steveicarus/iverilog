@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.33 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: target.cc,v 1.34 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -159,6 +159,13 @@ void target_t::net_event(ostream&os, const NetNEvent*net)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled EVENT net node." << endl;
+      net->dump_node(cerr, 4);
+}
+
+void target_t::net_probe(ostream&os, const NetEvProbe*net)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled probe trigger node" << endl;
       net->dump_node(cerr, 4);
 }
 
@@ -346,6 +353,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.34  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.33  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

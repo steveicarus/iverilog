@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.131 2000/04/09 16:55:42 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.132 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -81,6 +81,7 @@ class target_vvm : public target_t {
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_event(ostream&os, const NetNEvent*);
+      virtual void net_probe(ostream&os, const NetEvProbe*);
       virtual bool process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
@@ -1760,6 +1761,7 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
  */
 void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 {
+      string gname = mangle(gate->name());
       string pevent = mangle(gate->pevent()->name());
       os << "  /* " << gate->name() << " */" << endl;
 
@@ -1769,21 +1771,28 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 	    os << "static vvm_sync " << pevent << ";" << endl;
       }
 
-      os << "static vvm_pevent<" << gate->pin_count() << "> " <<
-	    mangle(gate->name()) << "(&" << pevent << ", ";
       switch (gate->type()) {
+
 	  case NetNEvent::POSEDGE:
 	  case NetNEvent::POSITIVE:
-	    os << "vvm_pevent<" << gate->pin_count() << ">::POSEDGE";
+	    assert(gate->pin_count() == 1);
+	    os << "static vvm_posedge " << gname
+	       << "(&" << pevent << ");" << endl;
 	    break;
+
 	  case NetNEvent::NEGEDGE:
-	    os << "vvm_pevent<"<<  gate->pin_count() << ">::NEGEDGE";
+	    assert(gate->pin_count() == 1);
+	    os << "static vvm_negedge " << gname
+	       << "(&" << pevent << ");" << endl;
 	    break;
+
+
 	  case NetNEvent::ANYEDGE:
-	    os << "vvm_pevent<" << gate->pin_count() << ">::ANYEDGE";
+	    assert(gate->pin_count() == 1);
+	    os << "static vvm_anyedge " << gname
+	       << "(&" << pevent << ");" << endl;
 	    break;
       }
-      os << ");" << endl;
 
 
 	/* Connect this device as a receiver to the nexus that is my
@@ -1795,6 +1804,44 @@ void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 
 	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
 		  mangle(gate->name()) << ", " << idx << ");" << endl;
+      }
+}
+
+void target_vvm::net_probe(ostream&os, const NetEvProbe*net)
+{
+      string mname = mangle(net->name());
+      string mevent = mangle(net->event()->full_name());
+
+      switch (net->edge()) {
+	  case NetEvProbe::POSEDGE:
+	    assert(net->pin_count() == 1);
+	    os << "static vvm_posedge " << mname
+	       << "(&" << mevent << ");" << endl;
+	    break;
+
+	  case NetNEvent::NEGEDGE:
+	    assert(net->pin_count() == 1);
+	    os << "static vvm_negedge " << mname
+	       << "(&" << mevent << ");" << endl;
+	    break;
+
+
+	  case NetNEvent::ANYEDGE:
+	    os << "static vvm_anyedge " << mname
+	       << "(&" << mevent << ", " << net->pin_count() << ");" << endl;
+	    break;
+      }
+
+
+	/* Connect this device as a receiver to the nexus that is my
+	   source. Write the connect calls into the init code. */
+
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&net->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
+		  mangle(net->name()) << ", " << idx << ");" << endl;
       }
 }
 
@@ -2582,6 +2629,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.132  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.131  2000/04/09 16:55:42  steve
  *  Donot create tables that have no entries.
  *
@@ -2624,49 +2674,5 @@ extern const struct target tgt_vvm = {
  *
  * Revision 1.119  2000/03/20 17:40:33  steve
  *  Do not link adder pins that ar unconnected.
- *
- * Revision 1.118  2000/03/18 23:22:37  steve
- *  Update the FF device to nexus style.
- *
- * Revision 1.117  2000/03/18 02:26:02  steve
- *  Update bufz to nexus style.
- *
- * Revision 1.116  2000/03/18 01:26:59  steve
- *  Generate references into a table of nexus objects instead of
- *  generating lots of isolated nexus objects. Easier on linkers
- *  and compilers,
- *
- *  Add missing nexus support for l-value bit selects,
- *
- *  Detemplatize the vvm_mux type.
- *
- *  Fix up the vvm_nexus destructor to disconnect from drivers.
- *
- * Revision 1.115  2000/03/17 20:21:14  steve
- *  Detemplatize the vvm_signal_t class.
- *
- * Revision 1.114  2000/03/17 19:23:59  steve
- *  nor2 and and2 optimized gates.
- *
- * Revision 1.113  2000/03/17 17:25:53  steve
- *  Adder and comparator in nexus style.
- *
- * Revision 1.112  2000/03/17 03:05:13  steve
- *  Update vvm_mult to nexus style.
- *
- * Revision 1.111  2000/03/17 02:22:03  steve
- *  vvm_clshift implementation without templates.
- *
- * Revision 1.110  2000/03/16 23:13:49  steve
- *  Update LPM_MUX to nexus style.
- *
- * Revision 1.109  2000/03/16 21:47:27  steve
- *  Update LMP_CLSHIFT to use nexus interface.
- *
- * Revision 1.108  2000/03/16 19:03:03  steve
- *  Revise the VVM backend to use nexus objects so that
- *  drivers and resolution functions can be used, and
- *  the t-vvm module doesn't need to write a zillion
- *  output functions.
  */
 

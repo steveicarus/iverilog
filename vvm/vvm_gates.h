@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.55 2000/04/08 05:49:59 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.56 2000/04/10 05:26:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -793,13 +793,8 @@ class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_nexus::drive_t {
 
 /*
  * Threads use the vvm_sync to wait for something to happen. This
- * class cooperates with the vvm_pevent class that is the actual gates
- * that receive signals. By handling the suspension and the awakening
- * separately, I can trivially handle event OR expressions.
- *
- * When there is an event expression in the source, the elaborator
- * makes NetNEvent objects, which are approximately represented by the
- * vvm_pevent class.
+ * class cooperates with the various event source classes that receive
+ * events and trigger the associated vvm_sync object.
  */
 class vvm_sync {
 
@@ -817,56 +812,70 @@ class vvm_sync {
       vvm_sync& operator= (const vvm_sync&);
 };
 
-template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
+class vvm_anyedge  : public vvm_nexus::recvr_t {
+
     public:
-      enum EDGE { ANYEDGE, POSEDGE, NEGEDGE };
+      explicit vvm_anyedge(vvm_sync*tgt, unsigned n);
+      ~vvm_anyedge();
 
-      explicit vvm_pevent(vvm_sync*tgt, EDGE e)
-      : target_(tgt), edge_(e)
-	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  value_[idx] = HiZ;
-	    }
-
-      vpip_bit_t get(unsigned idx) const { return value_[idx]; }
-
-      void init_P(int idx, vpip_bit_t val)
-	    { assert(idx < WIDTH);
-	      value_[idx] = val;
-	    }
+      void init_P(unsigned idx, vpip_bit_t val);
 
     private:
-      void take_value(unsigned key, vpip_bit_t val) { set_P(key, val); }
+      void take_value(unsigned key, vpip_bit_t val);
 
-      void set_P(unsigned idx, vpip_bit_t val)
-	    { if (value_[idx] == val) return;
-	      switch (edge_) {
-		  case ANYEDGE:
-		    target_->wakeup();
-		    break;
-		  case POSEDGE:
-		    if (B_IS1(val))
-			  target_->wakeup();
-		    break;
-		  case NEGEDGE:
-		    if (B_IS0(val))
-			  target_->wakeup();
-		    break;
-	      }
-	      value_[idx] = val;
-	    }
+      vpip_bit_t*val_;
+      unsigned nval_;
 
-    private:
-      vvm_sync*target_;
-      vpip_bit_t value_[WIDTH];
-      EDGE edge_;
+      vvm_sync*sync_;
 
     private: // not implemented
-      vvm_pevent(const vvm_pevent&);
-      vvm_pevent& operator= (const vvm_pevent&);
+      vvm_anyedge(const vvm_anyedge&);
+      vvm_anyedge& operator= (const vvm_anyedge&);
+};
+
+class vvm_negedge  : public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_negedge(vvm_sync*tgt);
+      ~vvm_negedge();
+
+      void init_P(int idx, vpip_bit_t val);
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+      vpip_bit_t val_;
+
+      vvm_sync*sync_;
+
+    private: // not implemented
+      vvm_negedge(const vvm_negedge&);
+      vvm_negedge& operator= (const vvm_negedge&);
+};
+
+class vvm_posedge  : public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_posedge(vvm_sync*tgt);
+      ~vvm_posedge();
+
+      void init_P(int idx, vpip_bit_t val);
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+      vpip_bit_t val_;
+
+      vvm_sync*sync_;
+
+    private: // not implemented
+      vvm_posedge(const vvm_posedge&);
+      vvm_posedge& operator= (const vvm_posedge&);
 };
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.56  2000/04/10 05:26:07  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.55  2000/04/08 05:49:59  steve
  *  Fix memory object compile problems.
  *
@@ -890,70 +899,5 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
  *  values, including strengths.
- *
- * Revision 1.48  2000/03/18 23:22:37  steve
- *  Update the FF device to nexus style.
- *
- * Revision 1.47  2000/03/18 02:26:02  steve
- *  Update bufz to nexus style.
- *
- * Revision 1.46  2000/03/18 01:27:00  steve
- *  Generate references into a table of nexus objects instead of
- *  generating lots of isolated nexus objects. Easier on linkers
- *  and compilers,
- *
- *  Add missing nexus support for l-value bit selects,
- *
- *  Detemplatize the vvm_mux type.
- *
- *  Fix up the vvm_nexus destructor to disconnect from drivers.
- *
- * Revision 1.45  2000/03/17 19:24:00  steve
- *  nor2 and and2 optimized gates.
- *
- * Revision 1.44  2000/03/17 17:25:53  steve
- *  Adder and comparator in nexus style.
- *
- * Revision 1.43  2000/03/17 03:36:07  steve
- *  Remove some useless template parameters.
- *
- * Revision 1.42  2000/03/17 03:05:13  steve
- *  Update vvm_mult to nexus style.
- *
- * Revision 1.41  2000/03/17 02:22:03  steve
- *  vvm_clshift implementation without templates.
- *
- * Revision 1.40  2000/03/16 23:13:49  steve
- *  Update LPM_MUX to nexus style.
- *
- * Revision 1.39  2000/03/16 21:47:27  steve
- *  Update LMP_CLSHIFT to use nexus interface.
- *
- * Revision 1.38  2000/03/16 19:03:04  steve
- *  Revise the VVM backend to use nexus objects so that
- *  drivers and resolution functions can be used, and
- *  the t-vvm module doesn't need to write a zillion
- *  output functions.
- *
- * Revision 1.37  2000/02/23 04:43:43  steve
- *  Some compilers do not accept the not symbol.
- *
- * Revision 1.36  2000/02/23 02:56:57  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.35  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.34  1999/12/19 20:57:07  steve
- *  Proper init_ method prototype.
- *
- * Revision 1.33  1999/12/16 02:42:15  steve
- *  Simulate carry output on adders.
- *
- * Revision 1.32  1999/12/12 19:47:54  steve
- *  Remove the useless vvm_simulation class.
- *
- * Revision 1.31  1999/12/05 02:24:09  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
  */
 #endif

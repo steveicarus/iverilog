@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_pevent.cc,v 1.5 2000/02/23 02:56:57 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.6 2000/04/10 05:26:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -43,8 +43,96 @@ void vvm_sync::wakeup()
 }
 
 
+vvm_posedge::vvm_posedge(vvm_sync*tgt)
+: sync_(tgt)
+{
+      val_ = StX;
+}
+
+vvm_posedge::~vvm_posedge()
+{
+}
+
+void vvm_posedge::init_P(int, vpip_bit_t val)
+{
+      val_ = val;
+}
+
+void vvm_posedge::take_value(unsigned, vpip_bit_t val)
+{
+      if (val == val_)
+	    return;
+
+      if (posedge(val_, val))
+	    sync_->wakeup();
+
+      val_ = val;
+}
+
+
+vvm_negedge::vvm_negedge(vvm_sync*tgt)
+: sync_(tgt)
+{
+      val_ = StX;
+}
+
+vvm_negedge::~vvm_negedge()
+{
+}
+
+void vvm_negedge::init_P(int, vpip_bit_t val)
+{
+      val_ = val;
+}
+
+void vvm_negedge::take_value(unsigned, vpip_bit_t val)
+{
+      if (val == val_)
+	    return;
+
+      if (negedge(val_, val))
+	    sync_->wakeup();
+
+      val_ = val;
+}
+
+vvm_anyedge::vvm_anyedge(vvm_sync*tgt, unsigned n)
+: nval_(n), sync_(tgt)
+{
+      val_ = new vpip_bit_t[nval_];
+      for (unsigned idx = 0 ;  idx < nval_ ;  idx += 1)
+	    val_[idx] = StX;
+}
+
+vvm_anyedge::~vvm_anyedge()
+{
+      delete[]val_;
+}
+
+void vvm_anyedge::init_P(unsigned key, vpip_bit_t val)
+{
+      assert(key < nval_);
+      val_[key] = val;
+}
+
+void vvm_anyedge::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < nval_);
+      if (val == val_[key])
+	    return;
+
+      if (! B_EQ(val, val_[key]))
+	    sync_->wakeup();
+
+      val_[key] = val;
+}
+
+
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.6  2000/04/10 05:26:07  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.5  2000/02/23 02:56:57  steve
  *  Macintosh compilers do not support ident.
  *

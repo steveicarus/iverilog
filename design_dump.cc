@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.73 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.74 2000/04/10 05:26:05 steve Exp $"
 #endif
 
 /*
@@ -527,6 +527,26 @@ void NetCondit::dump(ostream&o, unsigned ind) const
       }
 }
 
+void NetEvProbe::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "";
+
+      switch (edge_) {
+	  case ANYEDGE:
+	    o << "anyedge ";
+	    break;
+	  case POSEDGE:
+	    o << "posedge ";
+	    break;
+	  case NEGEDGE:
+	    o << "negedge ";
+	    break;
+      }
+      o << setw(ind) << "" << "-> " << event_->full_name() << "; " << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetEvTrig::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "-> " << event_->name() << "; "
@@ -928,6 +948,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.74  2000/04/10 05:26:05  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.73  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

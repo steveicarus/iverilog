@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.3 2000/03/11 03:25:52 steve Exp $"
+#ident "$Id: net_design.cc,v 1.4 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 /*
@@ -26,6 +26,7 @@
  */
 
 # include  "netlist.h"
+# include  <strstream>
 
 static string parse_first_name(string&path)
 {
@@ -62,6 +63,14 @@ Design:: Design()
 
 Design::~Design()
 {
+}
+
+string Design::local_symbol(const string&path)
+{
+      strstream res;
+      res << "_L" << (lcounter_++) << ends;
+
+      return path + "." + res.str();
 }
 
 NetScope* Design::make_root_scope(const string&root)
@@ -539,6 +548,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.4  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.3  2000/03/11 03:25:52  steve
  *  Locate scopes in statements.
  *

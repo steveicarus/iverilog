@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.35 2000/03/26 16:55:41 steve Exp $"
+#ident "$Id: vvm.h,v 1.36 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -90,6 +90,11 @@ inline vpip_bit_t B_NOT(vpip_bit_t l)
       return StX;
 }
 
+/*
+ * These functions return true if the transition from A to B is a
+ * Verilog type of negedge of posedge.
+ */
+extern bool negedge(vpip_bit_t from, vpip_bit_t to);
 extern bool posedge(vpip_bit_t from, vpip_bit_t to);
 
 extern ostream& b_output (ostream&os, vpip_bit_t);
@@ -121,6 +126,9 @@ class vvm_event {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.36  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.35  2000/03/26 16:55:41  steve
  *  Remove the vvm_bits_t abstract class.
  *

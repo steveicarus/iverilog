@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.2 2000/04/09 17:04:56 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.3 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  <strstream>
 
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
@@ -34,6 +35,7 @@ NetScope::NetScope(const string&n)
 : type_(NetScope::MODULE), name_(n), up_(0), sib_(0), sub_(0)
 {
       events_ = 0;
+      lcounter_ = 0;
 }
 
 NetScope::NetScope(NetScope*up, const string&n, NetScope::TYPE t)
@@ -48,6 +50,7 @@ NetScope::~NetScope()
 {
       assert(sib_ == 0);
       assert(sub_ == 0);
+      lcounter_ = 0;
 }
 
 NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
@@ -151,9 +154,19 @@ const NetScope* NetScope::parent() const
       return up_;
 }
 
+string NetScope::local_symbol()
+{
+      strstream res;
+      res << "_l" << (lcounter_++) << ends;
+      return res.str();
+}
+
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.3  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.2  2000/04/09 17:04:56  steve
  *  uninitialized event_ list.
  *

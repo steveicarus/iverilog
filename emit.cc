@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.37 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: emit.cc,v 1.38 2000/04/10 05:26:06 steve Exp $"
 #endif
 
 /*
@@ -248,6 +248,11 @@ void NetCondit::emit_recurse_else(ostream&o, struct target_t*tgt) const
 	    else_->emit_proc(o, tgt);
 }
 
+void NetEvProbe::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_probe(o, this);
+}
+
 bool NetEvTrig::emit_proc(ostream&o, struct target_t*tgt) const
 {
       return tgt->proc_trigger(o, this);
@@ -260,6 +265,7 @@ bool NetEvWait::emit_proc(ostream&o, struct target_t*tgt) const
 
 bool NetEvWait::emit_recurse(ostream&o, struct target_t*tgt) const
 {
+      if (!statement_) return true;
       return statement_->emit_proc(o, tgt);
 }
 
@@ -426,6 +432,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.38  2000/04/10 05:26:06  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.37  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

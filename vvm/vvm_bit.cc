@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_bit.cc,v 1.11 2000/03/26 16:55:41 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.12 2000/04/10 05:26:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -46,6 +46,20 @@ ostream& b_output (ostream&os, vpip_bit_t bit)
       }
 
       return os;
+}
+
+bool negedge(vpip_bit_t from, vpip_bit_t to)
+{
+      if (B_IS0(from))
+	    return false;
+
+      if (B_ISX(from) || B_ISZ(from))
+	    return B_IS0(to);
+
+      if (B_IS1(from))
+	    return ! B_IS1(to);
+
+      return false;
 }
 
 bool posedge(vpip_bit_t from, vpip_bit_t to)
@@ -100,6 +114,9 @@ vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.12  2000/04/10 05:26:07  steve
+ *  All events now use the NetEvent class.
+ *
  * Revision 1.11  2000/03/26 16:55:41  steve
  *  Remove the vvm_bits_t abstract class.
  *
