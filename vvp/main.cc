@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.17 2001/07/16 18:40:19 steve Exp $"
+#ident "$Id: main.cc,v 1.18 2001/07/21 21:18:55 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -84,10 +84,23 @@ int main(int argc, char*argv[])
       char *logfile_name = 0x0;
       FILE *logfile = 0x0;
 
-      while ((opt = getopt(argc, argv, "dl:M:m:v")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "dhl:M:m:v")) != EOF) switch (opt) {
 	  case 'd':
 	    debug_flag = true;
 	    break;
+         case 'h':
+           fprintf(stderr,
+                   "Usage: vvp [options] input-file\n"
+                   "Options:\n"
+#if defined(WITH_DEBUG)
+                   " -d\t\t"       "Enter the debugger.\n"
+#endif
+                   " -h\t\t"       "Print this help message.\n"
+                   " -l file\t"    "Logfile, '-' for <stderr>.\n"
+                   " -M path\t"    "VPI module directory path.\n"
+                   " -m module\t"  "Load vpi module.\n"
+                   " -v\t\t"       "Verbose progress messages.\n" );
+           exit(0);
 	  case 'l':
 	    logfile_name = optarg;
 	    break;
@@ -132,6 +145,8 @@ int main(int argc, char*argv[])
       if (verbose_flag) {
 	    times(cycles+0);
 	    fprintf(stderr, "Compiling VVP ...\n");
+           if (logfile && logfile != stderr)
+                 fprintf(logfile, "Compiling VVP ...\n");
       }
 
       vpi_mcd_init(logfile);
@@ -153,11 +168,19 @@ int main(int argc, char*argv[])
 		    " ... %G seconds\n"
 		    "Running ...\n", 
 		    cycles_diff(cycles+1, cycles+0));
+           if (logfile && logfile != stderr)
+                 fprintf(logfile, 
+                         " ... %G seconds\n"
+                         "Running ...\n", 
+                         cycles_diff(cycles+1, cycles+0));
       }
        
       if (compile_errors > 0) {
 	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
 		    design_path, compile_errors);
+           if (logfile && logfile != stderr)
+                 fprintf(logfile, "%s: Program not runnable, %u errors.\n",
+                         design_path, compile_errors);
 	    return compile_errors;
       }
 
@@ -172,6 +195,9 @@ int main(int argc, char*argv[])
 	    times(cycles+2);
 	    fprintf(stderr, " ... %G seconds\n", 
 		    cycles_diff(cycles+2, cycles+1));
+           if (logfile && logfile != stderr)
+                 fprintf(logfile, " ... %G seconds\n", 
+                         cycles_diff(cycles+2, cycles+1));
       }
 
       return 0;
@@ -179,6 +205,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.18  2001/07/21 21:18:55  steve
+ *  Add the -h flag for help. (Stephan Boettcher)
+ *
  * Revision 1.17  2001/07/16 18:40:19  steve
  *  Add a stdlog output for vvp, and vvp options
  *  to direct them around. (Stephan Boettcher.)
