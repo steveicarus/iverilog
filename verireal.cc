@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.11 2003/02/07 06:13:44 steve Exp $"
+#ident "$Id: verireal.cc,v 1.12 2003/03/05 02:36:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,7 @@
 # include  <iostream>
 # include  <math.h>
 # include  <assert.h>
+# include  <stdio.h>
 
 verireal::verireal()
 {
@@ -36,58 +37,23 @@ verireal::verireal()
 
 verireal::verireal(const char*txt)
 {
-      unsigned long mant = 0;
-      bool sign = false;
-      signed int exp10 = 0;
+      char*buf = new char[strlen(txt)+1];
+      char*cp = buf;
 
-      const char*ptr = txt;
-      for (  ; *ptr ;  ptr += 1) {
-	    if (*ptr == '.') break;
-	    if (*ptr == 'e') break;
-	    if (*ptr == 'E') break;
-	    if (*ptr == '_') continue;
-
-	    assert(isdigit(*ptr));
-
-	    mant *= 10;
-	    mant += *ptr - '0';
+      /* filter out Verilog-isms */
+      for (unsigned i = 0; txt[i]; i += 1) {
+	    if (txt[i] == '_') { continue; }
+	    *cp = txt[i]; cp++;
       }
 
-      if (*ptr == '.') {
-	    ptr += 1;
-	    for ( ; *ptr ; ptr += 1) {
-		  if (*ptr == 'e') break;
-		  if (*ptr == 'E') break;
-		  if (*ptr == '_') continue;
+      *cp = '\0';
 
-		  assert(isdigit(*ptr));
-
-		  mant *= 10;
-		  mant += *ptr - '0';
-		  exp10 -= 1;
-	    }
+      if (sscanf(buf, "%lf", &value_) != 1) {
+	 fprintf(stderr, "PANIC: Unable to sscanf(%s)\n", txt);
+         assert(0);
       }
 
-      if ((*ptr == 'e') || (*ptr == 'E')) {
-	    ptr += 1;
-	    long tmp = 0;
-	    bool sflag = false;
-	    if (*ptr == '+') {ptr += 1; sflag = false;}
-	    if (*ptr == '-') {ptr += 1; sflag = true;}
-
-	    for ( ; *ptr ;  ptr += 1) {
-		  if (*ptr == '_') continue;
-		  assert(isdigit(*ptr));
-		  tmp *= 10;
-		  tmp += *ptr - '0';
-	    }
-
-	    exp10 += sflag? -tmp : +tmp;
-      }
-
-      assert(*ptr == 0);
-
-      value_ = pow(10.0,exp10) * mant * (sign? -1.0 : 1.0);
+      delete[]buf;
 }
 
 verireal::verireal(long val)
@@ -164,6 +130,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.12  2003/03/05 02:36:05  steve
+ *  Use sscanf to make doubles from strings.
+ *
  * Revision 1.11  2003/02/07 06:13:44  steve
  *  Store real values as native double.
  *
