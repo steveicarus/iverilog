@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.32 2000/07/14 06:12:58 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.33 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -95,23 +95,23 @@ class target_xnf  : public target_t {
 
     public:
       void start_design(ostream&os, const Design*);
-      void end_design(ostream&os, const Design*);
-      void memory(ostream&os, const NetMemory*);
-      void signal(ostream&os, const NetNet*);
+      void end_design(const Design*);
+      void memory(const NetMemory*);
+      void signal(const NetNet*);
 
-      void lpm_add_sub(ostream&os, const NetAddSub*);
-      void lpm_compare(ostream&os, const NetCompare*);
+      void lpm_add_sub(const NetAddSub*);
+      void lpm_compare(const NetCompare*);
       void lpm_compare_eq_(ostream&os, const NetCompare*);
       void lpm_compare_ge_(ostream&os, const NetCompare*);
       void lpm_compare_le_(ostream&os, const NetCompare*);
-      void lpm_ff(ostream&os, const NetFF*);
-      void lpm_mux(ostream&os, const NetMux*);
-      void lpm_ram_dq(ostream&os, const NetRamDq*);
+      void lpm_ff(const NetFF*);
+      void lpm_mux(const NetMux*);
+      void lpm_ram_dq(const NetRamDq*);
 
-      void net_const(ostream&os, const NetConst*);
-      void logic(ostream&os, const NetLogic*);
-      void bufz(ostream&os, const NetBUFZ*);
-      void udp(ostream&os,  const NetUDP*);
+      void net_const(const NetConst*);
+      void logic(const NetLogic*);
+      void bufz(const NetBUFZ*);
+      void udp(const NetUDP*);
 
     private:
       static string mangle(const string&);
@@ -125,6 +125,8 @@ class target_xnf  : public target_t {
       static void draw_carry(ostream&os, const NetAddSub*, unsigned idx,
 			     enum adder_type);
 
+      ostream*out_;
+#define OS (*out_)
       ofstream ncf_;
 };
 
@@ -233,9 +235,9 @@ void target_xnf::start_design(ostream&os, const Design*des)
       }
 }
 
-void target_xnf::end_design(ostream&os, const Design*)
+void target_xnf::end_design(const Design*)
 {
-      os << "EOF" << endl;
+      OS << "EOF" << endl;
       ncf_.close();
 }
 
@@ -282,7 +284,7 @@ void scrape_pad_info(string str, char&dir, unsigned&num)
  * Memories are handled by the lpm_ram_dq method, so there is nothing
  * to do here.
  */
-void target_xnf::memory(ostream&, const NetMemory*)
+void target_xnf::memory(const NetMemory*)
 {
 }
 
@@ -297,7 +299,7 @@ void target_xnf::memory(ostream&, const NetMemory*)
  * descriptions, that enumerate the pins from most significant to
  * least significant.
  */
-void target_xnf::signal(ostream&os, const NetNet*net)
+void target_xnf::signal(const NetNet*net)
 {
 
 	/* Look for signals that are ports to the root module. If they
@@ -316,11 +318,11 @@ void target_xnf::signal(ostream&os, const NetNet*net)
 	    string pname = mname.substr(mname.find('/')+1, mname.length());
 
 	    if (net->pin_count() == 1) {
-		  os << "SIG, " << mangle(net->name()) << ", PIN="
+		  OS << "SIG, " << mangle(net->name()) << ", PIN="
 		     << pname << endl;
 
 	    } else for (unsigned idx = 0; idx < net->pin_count(); idx += 1) {
-		  os << "SIG, " << mangle(net->name()) << "<" << idx
+		  OS << "SIG, " << mangle(net->name()) << "<" << idx
 		     << ">, PIN=" << pname << idx << endl;
 	    }
 
@@ -343,7 +345,7 @@ void target_xnf::signal(ostream&os, const NetNet*net)
       char dir;
       unsigned num;
       scrape_pad_info(pad, dir, num);
-      os << "EXT, " << mangle(net->name()) << ", " << dir
+      OS << "EXT, " << mangle(net->name()) << ", " << dir
 	 << ", " << num << endl;
 
       ncf_ << "# Assignment to pin " << num << " (DIR=" << dir <<
@@ -469,7 +471,7 @@ void target_xnf::draw_carry(ostream &os, const NetAddSub*gate, unsigned idx,
  *    Application note XAPP013
  *    Xilinx Libraries Guide, Chapter 12
  */
-void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
+void target_xnf::lpm_add_sub(const NetAddSub*gate)
 {
       unsigned width = gate->width();
 
@@ -477,13 +479,13 @@ void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
 	   bits of the carry chain. Label this with the width instead
 	   of the bit position so that symbols don't clash. */
 
-      draw_carry(os, gate, width+1, FORCE0);
+      draw_carry(OS, gate, width+1, FORCE0);
 
 
 	/* Now make the 2 bit adders that chain from the cin
 	   initializer and up. Save the tail bits for later. */
       for (unsigned idx = 0 ;  idx < width-2 ;  idx += 2)
-	    draw_carry(os, gate, idx, DOUBLE);
+	    draw_carry(OS, gate, idx, DOUBLE);
 
 	/* Always have one or two tail bits. The situation gets a
 	   little tricky if we want the carry output, so handle that
@@ -507,23 +509,23 @@ void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
 
       if (gate->pin_Cout().is_linked()) {
 	    if (width%2 == 0) {
-		  draw_carry(os, gate, width-2, DOUBLE);
-		  draw_carry(os, gate, width, EXAMINE_CI);
+		  draw_carry(OS, gate, width-2, DOUBLE);
+		  draw_carry(OS, gate, width, EXAMINE_CI);
 	    } else {
-		  draw_carry(os, gate, width-1, LOWER_W_CO);
+		  draw_carry(OS, gate, width-1, LOWER_W_CO);
 	    }
 
       } else {
 	    if (width%2 == 0)
-		  draw_carry(os, gate, width-2, LOWER);
+		  draw_carry(OS, gate, width-2, LOWER);
 	    else
-		  draw_carry(os, gate, width-1, LOWER);
+		  draw_carry(OS, gate, width-1, LOWER);
       }
 
 	/* Now draw all the single bit (plus carry in) adders from XOR
 	   gates. This puts the F and G units to use. */
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    draw_xor(os, gate, idx);
+	    draw_xor(OS, gate, idx);
 
 }
 
@@ -532,20 +534,20 @@ void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
  * comparator being implemented. So, here we dispatch to the correct
  * code generator.
  */
-void target_xnf::lpm_compare(ostream&os, const NetCompare*dev)
+void target_xnf::lpm_compare(const NetCompare*dev)
 {
       if (dev->pin_AEB().is_linked()) {
-	    lpm_compare_eq_(os, dev);
+	    lpm_compare_eq_(OS, dev);
 	    return;
       }
 
       if (dev->pin_AGEB().is_linked()) {
-	    lpm_compare_ge_(os, dev);
+	    lpm_compare_ge_(OS, dev);
 	    return;
       }
 
       if (dev->pin_ALEB().is_linked()) {
-	    lpm_compare_le_(os, dev);
+	    lpm_compare_le_(OS, dev);
 	    return;
       }
 
@@ -639,7 +641,7 @@ void target_xnf::lpm_compare_le_(ostream&os, const NetCompare*dev)
       cerr << "XXXX LE not supported yet" << endl;
 }
 
-void target_xnf::lpm_ff(ostream&os, const NetFF*net)
+void target_xnf::lpm_ff(const NetFF*net)
 {
       string type = net->attribute("LPM_FFType");
       if (type == "") type = "DFF";
@@ -649,7 +651,7 @@ void target_xnf::lpm_ff(ostream&os, const NetFF*net)
 
       string lcaname = net->attribute("XNF-LCA");
       if (lcaname != "") {
-	    draw_sym_with_lcaname(os, lcaname, net);
+	    draw_sym_with_lcaname(OS, lcaname, net);
 	    return;
       }
 
@@ -665,30 +667,30 @@ void target_xnf::lpm_ff(ostream&os, const NetFF*net)
 
 	    verinum::V ival = link_get_ival(net->pin_Q(idx));
 
-	    os << "SYM, " << mangle(net->name()) << "<" << idx << ">, DFF, ";
+	    OS << "SYM, " << mangle(net->name()) << "<" << idx << ">, DFF, ";
 
 	    switch (ival) {
 		case verinum::V0:
-		  os << "INIT=R, ";
+		  OS << "INIT=R, ";
 		  break;
 		case verinum::V1:
-		  os << "INIT=S, ";
+		  OS << "INIT=S, ";
 		  break;
 	    }
 
-	    os << "LIBVER=2.0.0" << endl;
-	    draw_pin(os, "Q", net->pin_Q(idx));
-	    draw_pin(os, "D", net->pin_Data(idx));
+	    OS << "LIBVER=2.0.0" << endl;
+	    draw_pin(OS, "Q", net->pin_Q(idx));
+	    draw_pin(OS, "D", net->pin_Data(idx));
 
 	    if (net->attribute("Clock:LPM_Polarity") == "INVERT")
-		  draw_pin(os, "~C", net->pin_Clock());
+		  draw_pin(OS, "~C", net->pin_Clock());
 	    else
-		  draw_pin(os, "C", net->pin_Clock());
+		  draw_pin(OS, "C", net->pin_Clock());
 
 	    if (count_outputs(net->pin_Enable()) > 0)
-		  draw_pin(os, "CE", net->pin_Enable());
+		  draw_pin(OS, "CE", net->pin_Enable());
 
-	    os << "END" << endl;
+	    OS << "END" << endl;
       }
 }
 
@@ -699,51 +701,51 @@ void target_xnf::lpm_ff(ostream&os, const NetFF*net)
  *   devices that have a single select input. These are typically
  *   generated from ?: expressions.
  */
-void target_xnf::lpm_mux(ostream&os, const NetMux*net)
+void target_xnf::lpm_mux(const NetMux*net)
 {
       assert(net->sel_width() == 1);
       assert(net->size() == 2);
 
       for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
 
-	    os << "SYM, " << mangle(net->name()) << "<" << idx << ">,"
+	    OS << "SYM, " << mangle(net->name()) << "<" << idx << ">,"
 	       << " EQN, EQN=(I0 * I2) + (~I0 * I1)" << endl;
 
-	    draw_pin(os, "I0", net->pin_Sel(0));
-	    draw_pin(os, "I1", net->pin_Data(idx,0));
-	    draw_pin(os, "I2", net->pin_Data(idx,1));
-	    draw_pin(os, "O",  net->pin_Result(idx));
+	    draw_pin(OS, "I0", net->pin_Sel(0));
+	    draw_pin(OS, "I1", net->pin_Data(idx,0));
+	    draw_pin(OS, "I2", net->pin_Data(idx,1));
+	    draw_pin(OS, "O",  net->pin_Result(idx));
 
-	    os << "END" << endl;
+	    OS << "END" << endl;
       }
 
 }
 
-void target_xnf::lpm_ram_dq(ostream&os, const NetRamDq*ram)
+void target_xnf::lpm_ram_dq(const NetRamDq*ram)
 {
       assert(ram->count_partners() == 1);
 
       const NetMemory*mem = ram->mem();
 
       for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
-	    os << "SYM, " << mangle(ram->name())
+	    OS << "SYM, " << mangle(ram->name())
 	       << "<" << idx << ">, RAMS" << endl;
 
-	    draw_pin(os, "O", ram->pin_Q(idx));
-	    draw_pin(os, "D", ram->pin_Data(idx));
-	    draw_pin(os, "WE", ram->pin_WE());
-	    draw_pin(os, "WCLK", ram->pin_InClock());
+	    draw_pin(OS, "O", ram->pin_Q(idx));
+	    draw_pin(OS, "D", ram->pin_Data(idx));
+	    draw_pin(OS, "WE", ram->pin_WE());
+	    draw_pin(OS, "WCLK", ram->pin_InClock());
 	    for (unsigned adr = 0 ;  adr < ram->awidth() ;  adr += 1) {
 		  strstream tmp;
 		  tmp << "A" << adr << ends;
-		  draw_pin(os, tmp.str(), ram->pin_Address(adr));
+		  draw_pin(OS, tmp.str(), ram->pin_Address(adr));
 	    }
 
-	    os << "END" << endl;
+	    OS << "END" << endl;
       }
 }
 
-void target_xnf::net_const(ostream&os, const NetConst*c)
+void target_xnf::net_const(const NetConst*c)
 {
       for (unsigned idx = 0 ;  idx < c->pin_count() ;  idx += 1) {
 	    verinum::V v=c->value(idx);
@@ -754,7 +756,7 @@ void target_xnf::net_const(ostream&os, const NetConst*c)
 	    unsigned cpin;
 	    const NetObj*cur;
 
-	    os << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
+	    OS << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
       }
 }
 
@@ -762,54 +764,54 @@ void target_xnf::net_const(ostream&os, const NetConst*c)
  * The logic gates I know so far can be translated directly into XNF
  * standard symbol types. This is a fairly obvious transformation.
  */
-void target_xnf::logic(ostream&os, const NetLogic*net)
+void target_xnf::logic(const NetLogic*net)
 {
 	// The XNF-LCA attribute overrides anything I might guess
 	// about this object.
       string lca = net->attribute("XNF-LCA");
       if (lca != "") {
-	    draw_sym_with_lcaname(os, lca, net);
+	    draw_sym_with_lcaname(OS, lca, net);
 	    return;
       }
 
-      os << "SYM, " << mangle(net->name()) << ", ";
+      OS << "SYM, " << mangle(net->name()) << ", ";
       switch (net->type()) {
 	  case NetLogic::AND:
-	    os << "AND";
+	    OS << "AND";
 	    break;
 	  case NetLogic::BUF:
-	    os << "BUF";
+	    OS << "BUF";
 	    break;
 	  case NetLogic::NAND:
-	    os << "NAND";
+	    OS << "NAND";
 	    break;
 	  case NetLogic::NOR:
-	    os << "NOR";
+	    OS << "NOR";
 	    break;
 	  case NetLogic::NOT:
-	    os << "INV";
+	    OS << "INV";
 	    break;
 	  case NetLogic::OR:
-	    os << "OR";
+	    OS << "OR";
 	    break;
 	  case NetLogic::XNOR:
-	    os << "XNOR";
+	    OS << "XNOR";
 	    break;
 	  case NetLogic::XOR:
-	    os << "XOR";
+	    OS << "XOR";
 	    break;
 	  case NetLogic::BUFIF0:
 	  case NetLogic::BUFIF1:
-	    os << "TBUF";
+	    OS << "TBUF";
 	    break;
 	  default:
 	    cerr << "internal error: XNF: Unhandled logic type." << endl;
 	    break;
       }
-      os << ", LIBVER=2.0.0" << endl;
+      OS << ", LIBVER=2.0.0" << endl;
 
 	/* All of these kinds of devices have an output on pin 0. */
-      draw_pin(os, "O", net->pin(0));
+      draw_pin(OS, "O", net->pin(0));
 
 	/* Most devices have inputs called I<N> for all the remaining
 	   pins. The TBUF devices are slightly different, but
@@ -818,32 +820,32 @@ void target_xnf::logic(ostream&os, const NetLogic*net)
 
 	  case NetLogic::BUFIF0:
 	    assert(net->pin_count() == 3);
-	    draw_pin(os,  "I", net->pin(1));
-	    draw_pin(os, "~T", net->pin(2));
+	    draw_pin(OS,  "I", net->pin(1));
+	    draw_pin(OS, "~T", net->pin(2));
 	    break;
 
 	  case NetLogic::BUFIF1:
 	    assert(net->pin_count() == 3);
-	    draw_pin(os, "I", net->pin(1));
-	    draw_pin(os, "T", net->pin(2));
+	    draw_pin(OS, "I", net->pin(1));
+	    draw_pin(OS, "T", net->pin(2));
 	    break;
 
 	  default:
 	    if (net->pin_count() == 2) {
-		  draw_pin(os, "I", net->pin(1));
+		  draw_pin(OS, "I", net->pin(1));
 	    } else for (unsigned idx = 1; idx < net->pin_count(); idx += 1) {
 		  string name = "I";
 		  assert(net->pin_count() <= 11);
 		  name += (char)('0'+idx-1);
-		  draw_pin(os, name, net->pin(idx));
+		  draw_pin(OS, name, net->pin(idx));
 	    }
 	    break;
       }
 
-      os << "END" << endl;
+      OS << "END" << endl;
 }
 
-void target_xnf::bufz(ostream&os, const NetBUFZ*net)
+void target_xnf::bufz(const NetBUFZ*net)
 {
       static int warned_once=0;
       if (!warned_once) {
@@ -851,14 +853,14 @@ void target_xnf::bufz(ostream&os, const NetBUFZ*net)
 		 << endl;
 	    warned_once=1;
       }
-      os << "SYM, " << mangle(net->name()) << ", BUF, LIBVER=2.0.0" << endl;
+      OS << "SYM, " << mangle(net->name()) << ", BUF, LIBVER=2.0.0" << endl;
       assert(net->pin_count() == 2);
-      draw_pin(os, "O", net->pin(0));
-      draw_pin(os, "I", net->pin(1));
-      os << "END" << endl;
+      draw_pin(OS, "O", net->pin(0));
+      draw_pin(OS, "I", net->pin(1));
+      OS << "END" << endl;
 }
 
-void target_xnf::udp(ostream&os, const NetUDP*net)
+void target_xnf::udp(const NetUDP*net)
 {
       string lca = net->attribute("XNF-LCA");
 
@@ -869,7 +871,7 @@ void target_xnf::udp(ostream&os, const NetUDP*net)
 	    return;
       }
 
-      draw_sym_with_lcaname(os, lca, net);
+      draw_sym_with_lcaname(OS, lca, net);
 }
 
 static target_xnf target_xnf_obj;
@@ -878,6 +880,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.33  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.32  2000/07/14 06:12:58  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

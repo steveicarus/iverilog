@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-verilog.cc,v 1.11 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.12 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 /*
@@ -39,16 +39,23 @@ extern const struct target tgt_verilog;
 class target_verilog : public target_t {
     public:
       virtual void start_design(ostream&os, const Design*);
-      virtual void signal(ostream&os, const NetNet*);
-      virtual void logic(ostream&os, const NetLogic*);
-      virtual void bufz(ostream&os, const NetBUFZ*);
-      virtual void start_process(ostream&os, const NetProcTop*);
-      virtual bool proc_block(ostream&os, const NetBlock*);
-      virtual bool proc_delay(ostream&os, const NetPDelay*);
-      virtual void proc_stask(ostream&os, const NetSTask*);
-      virtual void end_design(ostream&os, const Design*);
+      virtual void signal(const NetNet*);
+      virtual void logic(const NetLogic*);
+      virtual void bufz(const NetBUFZ*);
+
+      virtual bool process(const NetProcTop*);
+      virtual bool proc_block(const NetBlock*);
+      virtual bool proc_delay(const NetPDelay*);
+      virtual void proc_stask(const NetSTask*);
+      virtual void end_design(const Design*);
+
     private:
+      void start_process(const NetProcTop*);
+      void end_process(const NetProcTop*);
       unsigned indent_;
+
+      ostream*out_;
+# define OS (*out_)
 
       void emit_expr_(ostream&os, const NetExpr*);
 };
@@ -64,6 +71,7 @@ void target_verilog::start_design(ostream&os, const Design*)
 {
       indent_ = 0;
       os << "module " << "main" << ";" << endl;
+      out_ = &os;
 }
 
 /*
@@ -71,83 +79,95 @@ void target_verilog::start_design(ostream&os, const Design*)
  * chance to declare signal variables before the network is assembled
  * or behaviors are written.
  */
-void target_verilog::signal(ostream&os, const NetNet*net)
+void target_verilog::signal(const NetNet*net)
 {
-      os << "    " << net->type();
+      OS << "    " << net->type();
       if (net->pin_count() > 1)
-	    os << " [" << net->msb() << ":" << net->lsb() << "]";
+	    OS << " [" << net->msb() << ":" << net->lsb() << "]";
 
       if (net->rise_time())
-	    os << " #" << net->rise_time();
+	    OS << " #" << net->rise_time();
 
-      os << " " << mangle(net->name()) << ";" << endl;
+      OS << " " << mangle(net->name()) << ";" << endl;
 }
 
-void target_verilog::logic(ostream&os, const NetLogic*net)
+void target_verilog::logic(const NetLogic*net)
 {
       switch (net->type()) {
 
 	  case NetLogic::AND:
-	    os << "    and";
+	    OS << "    and";
 	    break;
 	  case NetLogic::NAND:
-	    os << "    nand";
+	    OS << "    nand";
 	    break;
 	  case NetLogic::NOR:
-	    os << "    nor";
+	    OS << "    nor";
 	    break;
 	  case NetLogic::NOT:
-	    os << "    not";
+	    OS << "    not";
 	    break;
 	  case NetLogic::OR:
-	    os << "    or";
+	    OS << "    or";
 	    break;
 	  case NetLogic::XNOR:
-	    os << "    xnor";
+	    OS << "    xnor";
 	    break;
 	  case NetLogic::XOR:
-	    os << "    xor";
+	    OS << "    xor";
 	    break;
       }
 
-      os << " #" << net->rise_time() << " " << mangle(net->name()) << "(";
+      OS << " #" << net->rise_time() << " " << mangle(net->name()) << "(";
 
       unsigned sidx;
       const NetNet*sig = find_link_signal(net, 0, sidx);
-      os << mangle(sig->name()) << "[" << sidx << "]";
+      OS << mangle(sig->name()) << "[" << sidx << "]";
       for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
 	    sig = find_link_signal(net, idx, sidx);
 	    assert(sig);
-	    os << ", " << mangle(sig->name()) << "[" << sidx << "]";
+	    OS << ", " << mangle(sig->name()) << "[" << sidx << "]";
       }
-      os << ");" << endl;
+      OS << ");" << endl;
 }
 
-void target_verilog::bufz(ostream&os, const NetBUFZ*net)
+void target_verilog::bufz(const NetBUFZ*net)
 {
       assert( net->pin_count() == 2 );
-      os << "    assign ";
+      OS << "    assign ";
 
       unsigned sidx;
       const NetNet*sig = find_link_signal(net, 0, sidx);
-      os << mangle(sig->name()) << "[" << sidx << "] = ";
+      OS << mangle(sig->name()) << "[" << sidx << "] = ";
 
       sig = find_link_signal(net, 1, sidx);
-      os << mangle(sig->name()) << "[" << sidx << "];" << endl;
+      OS << mangle(sig->name()) << "[" << sidx << "];" << endl;
 }
 
-void target_verilog::start_process(ostream&os, const NetProcTop*proc)
+bool target_verilog::process(const NetProcTop*top)
+{
+      start_process(top);
+      bool rc = top->statement()->emit_proc(this);
+      end_process(top);
+      return rc;
+}
+
+void target_verilog::start_process(const NetProcTop*proc)
 {
       switch (proc->type()) {
 	  case NetProcTop::KINITIAL:
-	    os << "    initial" << endl;
+	    OS << "    initial" << endl;
 	    break;
 	  case NetProcTop::KALWAYS:
-	    os << "    always" << endl;
+	    OS << "    always" << endl;
 	    break;
       }
 
       indent_ = 6;
+}
+
+void target_verilog::end_process(const NetProcTop*)
+{
 }
 
 void target_verilog::emit_expr_(ostream&os, const NetExpr*expr)
@@ -172,22 +192,22 @@ void target_verilog::emit_expr_(ostream&os, const NetExpr*expr)
       }
 }
 
-bool target_verilog::proc_block(ostream&os, const NetBlock*net)
+bool target_verilog::proc_block(const NetBlock*net)
 {
-      os << setw(indent_) << "" << "begin" << endl;
+      OS << setw(indent_) << "" << "begin" << endl;
       indent_ += 4;
-      net->emit_recurse(os, this);
+      net->emit_recurse(this);
       indent_ -= 4;
-      os << setw(indent_) << "" << "end" << endl;
+      OS << setw(indent_) << "" << "end" << endl;
       return true;
 }
 
-bool target_verilog::proc_delay(ostream&os, const NetPDelay*net)
+bool target_verilog::proc_delay(const NetPDelay*net)
 {
-      os << setw(indent_) << "" << "#" << net->delay() << endl;
+      OS << setw(indent_) << "" << "#" << net->delay() << endl;
 
       indent_ += 4;
-      bool flag = net->emit_proc_recurse(os, this);
+      bool flag = net->emit_proc_recurse(this);
       indent_ -= 4;
       return flag;
 }
@@ -208,20 +228,20 @@ static void vtask_parm(ostream&os, const NetExpr*ex)
       }
 }
 
-void target_verilog::proc_stask(ostream&os, const NetSTask*net)
+void target_verilog::proc_stask(const NetSTask*net)
 {
-      os << setw(indent_) << "" << net->name();
+      OS << setw(indent_) << "" << net->name();
       if (net->nparms() > 0) {
-	    os << "(";
-	    vtask_parm(os, net->parm(0));
+	    OS << "(";
+	    vtask_parm(OS, net->parm(0));
 	    for (unsigned idx = 1 ;  idx < net->nparms() ;  idx += 1) {
-		  os << ", ";
-		  vtask_parm(os, net->parm(idx));
+		  OS << ", ";
+		  vtask_parm(OS, net->parm(idx));
 	    }
-	    os << ")";
+	    OS << ")";
       }
 
-      os << ";" << endl;
+      OS << ";" << endl;
 }
 
 
@@ -229,9 +249,9 @@ void target_verilog::proc_stask(ostream&os, const NetSTask*net)
  * All done with the design. Flush any output that I've been holding
  * off, and write the footers for the target.
  */
-void target_verilog::end_design(ostream&os, const Design*)
+void target_verilog::end_design(const Design*)
 {
-      os << "endmodule" << endl;
+      OS << "endmodule" << endl;
 }
 
 static target_verilog tgt_verilog_obj;
@@ -243,6 +263,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.12  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.11  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

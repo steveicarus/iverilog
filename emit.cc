@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.48 2000/07/30 18:25:43 steve Exp $"
+#ident "$Id: emit.cc,v 1.49 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 /*
@@ -30,220 +30,220 @@
 # include  <typeinfo>
 # include  <cassert>
 
-void NetNode::emit_node(ostream&o, struct target_t*tgt) const
+void NetNode::emit_node(struct target_t*tgt) const
 {
       cerr << "EMIT: Gate type? " << typeid(*this).name() << endl;
 }
 
-void NetLogic::emit_node(ostream&o, struct target_t*tgt) const
+void NetLogic::emit_node(struct target_t*tgt) const
 {
-      tgt->logic(o, this);
+      tgt->logic(this);
 }
 
-void NetUDP_COMB::emit_node(ostream&o, struct target_t*tgt) const
+void NetUDP_COMB::emit_node(struct target_t*tgt) const
 {
-      tgt->udp_comb(o, this);
+      tgt->udp_comb(this);
 }
 
-void NetUDP::emit_node(ostream&o, struct target_t*tgt) const
+void NetUDP::emit_node(struct target_t*tgt) const
 {
-      tgt->udp(o, this);
+      tgt->udp(this);
 }
 
-void NetAddSub::emit_node(ostream&o, struct target_t*tgt) const
+void NetAddSub::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_add_sub(o, this);
+      tgt->lpm_add_sub(this);
 }
 
-void NetAssign::emit_node(ostream&o, struct target_t*tgt) const
+void NetAssign::emit_node(struct target_t*tgt) const
 {
-      tgt->net_assign(o, this);
+      tgt->net_assign(this);
 }
 
-void NetAssignNB::emit_node(ostream&o, struct target_t*tgt) const
+void NetAssignNB::emit_node(struct target_t*tgt) const
 {
-      tgt->net_assign_nb(o, this);
+      tgt->net_assign_nb(this);
 }
 
-void NetCaseCmp::emit_node(ostream&o, struct target_t*tgt) const
+void NetCaseCmp::emit_node(struct target_t*tgt) const
 {
-      tgt->net_case_cmp(o, this);
+      tgt->net_case_cmp(this);
 }
 
-void NetCAssign::emit_node(ostream&o, struct target_t*tgt) const
+void NetCAssign::emit_node(struct target_t*tgt) const
 {
-      tgt->net_cassign(o, this);
+      tgt->net_cassign(this);
 }
 
-void NetCLShift::emit_node(ostream&o, struct target_t*tgt) const
+void NetCLShift::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_clshift(o, this);
+      tgt->lpm_clshift(this);
 }
 
-void NetCompare::emit_node(ostream&o, struct target_t*tgt) const
+void NetCompare::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_compare(o, this);
+      tgt->lpm_compare(this);
 }
 
-void NetConst::emit_node(ostream&o, struct target_t*tgt) const
+void NetConst::emit_node(struct target_t*tgt) const
 {
-      tgt->net_const(o, this);
+      tgt->net_const(this);
 }
 
-void NetDivide::emit_node(ostream&o, struct target_t*tgt) const
+void NetDivide::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_divide(o, this);
+      tgt->lpm_divide(this);
 }
 
-void NetFF::emit_node(ostream&o, struct target_t*tgt) const
+void NetFF::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_ff(o, this);
+      tgt->lpm_ff(this);
 }
 
-void NetForce::emit_node(ostream&o, struct target_t*tgt) const
+void NetForce::emit_node(struct target_t*tgt) const
 {
-      tgt->net_force(o, this);
+      tgt->net_force(this);
 }
 
-void NetMult::emit_node(ostream&o, struct target_t*tgt) const
+void NetMult::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_mult(o, this);
+      tgt->lpm_mult(this);
 }
 
-void NetMux::emit_node(ostream&o, struct target_t*tgt) const
+void NetMux::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_mux(o, this);
+      tgt->lpm_mux(this);
 }
 
-void NetRamDq::emit_node(ostream&o, struct target_t*tgt) const
+void NetRamDq::emit_node(struct target_t*tgt) const
 {
-      tgt->lpm_ram_dq(o, this);
+      tgt->lpm_ram_dq(this);
 }
 
-void NetBUFZ::emit_node(ostream&o, struct target_t*tgt) const
+void NetBUFZ::emit_node(struct target_t*tgt) const
 {
-      tgt->bufz(o, this);
+      tgt->bufz(this);
 }
 
-bool NetProcTop::emit(ostream&o, struct target_t*tgt) const
+bool NetProcTop::emit(struct target_t*tgt) const
 {
-      return tgt->process(o, this);
+      return tgt->process(this);
 }
 
-bool NetProc::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetProc::emit_proc(struct target_t*tgt) const
 {
       cerr << "EMIT: Proc type? " << typeid(*this).name() << endl;
       return false;
 }
 
-bool NetAssign::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssign::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_assign(o, this);
+      tgt->proc_assign(this);
       return true;
 }
 
-bool NetAssignNB::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssignNB::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_assign_nb(o, this);
+      tgt->proc_assign_nb(this);
       return true;
 }
 
-bool NetAssignMem::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssignMem::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_assign_mem(o, this);
+      tgt->proc_assign_mem(this);
       return true;
 }
 
-bool NetAssignMemNB::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetAssignMemNB::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_assign_mem_nb(o, this);
+      tgt->proc_assign_mem_nb(this);
       return true;
 }
 
-bool NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetBlock::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_block(o, this);
+      return tgt->proc_block(this);
 }
 
-bool NetCase::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetCase::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_case(o, this);
+      tgt->proc_case(this);
       return true;
 }
 
-bool NetCAssign::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetCAssign::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_cassign(o, this);
+      return tgt->proc_cassign(this);
 }
 
-bool NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetCondit::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_condit(o, this);
+      tgt->proc_condit(this);
       return true;
 }
 
-bool NetDeassign::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetDeassign::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_deassign(o, this);
+      return tgt->proc_deassign(this);
 }
 
-bool NetDisable::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetDisable::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_disable(o, this);
+      return tgt->proc_disable(this);
 }
 
-bool NetForce::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetForce::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_force(o, this);
+      return tgt->proc_force(this);
 }
 
-bool NetForever::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetForever::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_forever(o, this);
+      tgt->proc_forever(this);
       return true;
 }
 
-bool NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetPDelay::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_delay(o, this);
+      return tgt->proc_delay(this);
 }
 
-bool NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
+bool NetPDelay::emit_proc_recurse(struct target_t*tgt) const
 {
-      if (statement_) return statement_->emit_proc(o, tgt);
+      if (statement_) return statement_->emit_proc(tgt);
       return true;
 }
 
-bool NetRelease::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetRelease::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_release(o, this);
+      return tgt->proc_release(this);
 }
 
-bool NetRepeat::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetRepeat::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_repeat(o, this);
+      tgt->proc_repeat(this);
       return true;
 }
 
-bool NetSTask::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetSTask::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_stask(o, this);
+      tgt->proc_stask(this);
       return true;
 }
 
-bool NetUTask::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetUTask::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_utask(o, this);
+      tgt->proc_utask(this);
       return true;
 }
 
-bool NetWhile::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetWhile::emit_proc(struct target_t*tgt) const
 {
-      tgt->proc_while(o, this);
+      tgt->proc_while(this);
       return true;
 }
 
-void NetBlock::emit_recurse(ostream&o, struct target_t*tgt) const
+void NetBlock::emit_recurse(struct target_t*tgt) const
 {
       if (last_ == 0)
 	    return;
@@ -251,69 +251,69 @@ void NetBlock::emit_recurse(ostream&o, struct target_t*tgt) const
       NetProc*cur = last_;
       do {
 	    cur = cur->next_;
-	    cur->emit_proc(o, tgt);
+	    cur->emit_proc(tgt);
       } while (cur != last_);
 }
 
-void NetCondit::emit_recurse_if(ostream&o, struct target_t*tgt) const
+void NetCondit::emit_recurse_if(struct target_t*tgt) const
 {
       if (if_)
-	    if_->emit_proc(o, tgt);
+	    if_->emit_proc(tgt);
 }
 
-void NetCondit::emit_recurse_else(ostream&o, struct target_t*tgt) const
+void NetCondit::emit_recurse_else(struct target_t*tgt) const
 {
       if (else_)
-	    else_->emit_proc(o, tgt);
+	    else_->emit_proc(tgt);
 }
 
-void NetEvProbe::emit_node(ostream&o, struct target_t*tgt) const
+void NetEvProbe::emit_node(struct target_t*tgt) const
 {
-      tgt->net_probe(o, this);
+      tgt->net_probe(this);
 }
 
-bool NetEvTrig::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetEvTrig::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_trigger(o, this);
+      return tgt->proc_trigger(this);
 }
 
-bool NetEvWait::emit_proc(ostream&o, struct target_t*tgt) const
+bool NetEvWait::emit_proc(struct target_t*tgt) const
 {
-      return tgt->proc_wait(o, this);
+      return tgt->proc_wait(this);
 }
 
-bool NetEvWait::emit_recurse(ostream&o, struct target_t*tgt) const
+bool NetEvWait::emit_recurse(struct target_t*tgt) const
 {
       if (!statement_) return true;
-      return statement_->emit_proc(o, tgt);
+      return statement_->emit_proc(tgt);
 }
 
-void NetForever::emit_recurse(ostream&o, struct target_t*tgt) const
+void NetForever::emit_recurse(struct target_t*tgt) const
 {
       if (statement_)
-	    statement_->emit_proc(o, tgt);
+	    statement_->emit_proc(tgt);
 }
 
-void NetRepeat::emit_recurse(ostream&o, struct target_t*tgt) const
+void NetRepeat::emit_recurse(struct target_t*tgt) const
 {
       if (statement_)
-	    statement_->emit_proc(o, tgt);
+	    statement_->emit_proc(tgt);
 }
 
-void NetScope::emit_scope(ostream&o, struct target_t*tgt) const
+void NetScope::emit_scope(struct target_t*tgt) const
 {
-      tgt->scope(o, this);
+      tgt->scope(this);
 
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
-	    tgt->event(o, cur);
+	    tgt->event(cur);
 
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-	    cur->emit_scope(o, tgt);
+	    cur->emit_scope(tgt);
 
       if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
 	    do {
-		  tgt->signal(o, cur);
+		  tgt->signal(cur);
 		  cur = cur->sig_next_;
 	    } while (cur != signals_->sig_next_);
       }
@@ -321,34 +321,34 @@ void NetScope::emit_scope(ostream&o, struct target_t*tgt) const
       if (memories_) {
 	    NetMemory*cur = memories_->snext_;
 	    do {
-		  tgt->memory(o, cur);
+		  tgt->memory(cur);
 		  cur = cur->snext_;
 	    } while (cur != memories_->snext_);
       }
 }
 
-void NetScope::emit_defs(ostream&o, struct target_t*tgt) const
+void NetScope::emit_defs(struct target_t*tgt) const
 {
 
       switch (type_) {
 	  case MODULE:
 	    for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
-		  cur->emit_defs(o, tgt);
+		  cur->emit_defs(tgt);
 	    break;
 
 	  case FUNC:
-	    tgt->func_def(o, this->func_def());
+	    tgt->func_def(this->func_def());
 	    break;
 	  case TASK:
-	    tgt->task_def(o, this->task_def());
+	    tgt->task_def(this->task_def());
 	    break;
       }
 
 }
 
-void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
+void NetWhile::emit_proc_recurse(struct target_t*tgt) const
 {
-      proc_->emit_proc(o, tgt);
+      proc_->emit_proc(tgt);
 }
 
 bool Design::emit(ostream&o, struct target_t*tgt) const
@@ -357,28 +357,28 @@ bool Design::emit(ostream&o, struct target_t*tgt) const
       tgt->start_design(o, this);
 
 	// enumerate the scopes
-      root_scope_->emit_scope(o, tgt);
+      root_scope_->emit_scope(tgt);
 
 
 	// emit nodes
       if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
 	    do {
-		  cur->emit_node(o, tgt);
+		  cur->emit_node(tgt);
 		  cur = cur->node_next_;
 	    } while (cur != nodes_->node_next_);
       }
 
 
 	// emit task and function definitions
-      root_scope_->emit_defs(o, tgt);
+      root_scope_->emit_defs(tgt);
 
 
 	// emit the processes
       for (const NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
-	    rc = rc && idx->emit(o, tgt);
+	    rc = rc && idx->emit(tgt);
 
-      tgt->end_design(o, this);
+      tgt->end_design(this);
       return rc;
 }
 
@@ -461,6 +461,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.49  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.48  2000/07/30 18:25:43  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.165 2000/08/02 00:57:02 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.166 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -145,62 +145,65 @@ class target_vvm : public target_t {
       ~target_vvm();
 
       virtual void start_design(ostream&os, const Design*);
-      virtual void scope(ostream&os, const NetScope*);
-      virtual void event(ostream&os, const NetEvent*);
-      virtual void signal(ostream&os, const NetNet*);
-      virtual void memory(ostream&os, const NetMemory*);
-      virtual void task_def(ostream&os, const NetTaskDef*);
-      virtual void func_def(ostream&os, const NetFuncDef*);
+      virtual void scope(const NetScope*);
+      virtual void event(const NetEvent*);
+      virtual void signal(const NetNet*);
+      virtual void memory(const NetMemory*);
+      virtual void task_def(const NetTaskDef*);
+      virtual void func_def(const NetFuncDef*);
 
-      virtual void lpm_add_sub(ostream&os, const NetAddSub*);
-      virtual void lpm_clshift(ostream&os, const NetCLShift*);
-      virtual void lpm_compare(ostream&os, const NetCompare*);
-      virtual void lpm_divide(ostream&os, const NetDivide*);
-      virtual void lpm_ff(ostream&os, const NetFF*);
-      virtual void lpm_mult(ostream&os, const NetMult*);
-      virtual void lpm_mux(ostream&os, const NetMux*);
-      virtual void lpm_ram_dq(ostream&os, const NetRamDq*);
+      virtual void lpm_add_sub(const NetAddSub*);
+      virtual void lpm_clshift(const NetCLShift*);
+      virtual void lpm_compare(const NetCompare*);
+      virtual void lpm_divide(const NetDivide*);
+      virtual void lpm_ff(const NetFF*);
+      virtual void lpm_mult(const NetMult*);
+      virtual void lpm_mux(const NetMux*);
+      virtual void lpm_ram_dq(const NetRamDq*);
 
-      virtual void logic(ostream&os, const NetLogic*);
-      virtual void bufz(ostream&os, const NetBUFZ*);
-      virtual void udp(ostream&os, const NetUDP*);
-      virtual void udp_comb(ostream&os, const NetUDP_COMB*);
+      virtual void logic(const NetLogic*);
+      virtual void bufz(const NetBUFZ*);
+      virtual void udp(const NetUDP*);
+      virtual void udp_comb(const NetUDP_COMB*);
               void udp_sequ_(ostream&os, const NetUDP*);
-      virtual void net_assign_nb(ostream&os, const NetAssignNB*);
-      virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
-      virtual bool net_cassign(ostream&os, const NetCAssign*);
-      virtual void net_const(ostream&os, const NetConst*);
-      virtual bool net_force(ostream&os, const NetForce*);
-      virtual void net_probe(ostream&os, const NetEvProbe*);
-      virtual bool process(ostream&os, const NetProcTop*);
-      virtual void proc_assign(ostream&os, const NetAssign*);
-      virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
-      virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
-      virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
-      virtual bool proc_block(ostream&os, const NetBlock*);
-      virtual void proc_case(ostream&os, const NetCase*net);
+      virtual void net_assign_nb(const NetAssignNB*);
+      virtual void net_case_cmp(const NetCaseCmp*);
+      virtual bool net_cassign(const NetCAssign*);
+      virtual void net_const(const NetConst*);
+      virtual bool net_force(const NetForce*);
+      virtual void net_probe(const NetEvProbe*);
+      virtual bool process(const NetProcTop*);
+      virtual void proc_assign(const NetAssign*);
+      virtual void proc_assign_mem(const NetAssignMem*);
+      virtual void proc_assign_nb(const NetAssignNB*);
+      virtual void proc_assign_mem_nb(const NetAssignMemNB*);
+      virtual bool proc_block(const NetBlock*);
+      virtual void proc_case(const NetCase*net);
               void proc_case_fun(ostream&os, const NetCase*net);
-      virtual bool proc_cassign(ostream&os, const NetCAssign*);
-      virtual void proc_condit(ostream&os, const NetCondit*);
+      virtual bool proc_cassign(const NetCAssign*);
+      virtual void proc_condit(const NetCondit*);
               void proc_condit_fun(ostream&os, const NetCondit*);
-      virtual bool proc_deassign(ostream&os, const NetDeassign*);
-      virtual bool proc_force(ostream&os, const NetForce*);
-      virtual void proc_forever(ostream&os, const NetForever*);
-      virtual bool proc_release(ostream&os, const NetRelease*);
-      virtual void proc_repeat(ostream&os, const NetRepeat*);
-      virtual void proc_stask(ostream&os, const NetSTask*);
-      virtual bool proc_trigger(ostream&os, const NetEvTrig*);
-      virtual void proc_utask(ostream&os, const NetUTask*);
-      virtual bool proc_wait(ostream&os, const NetEvWait*);
-      virtual void proc_while(ostream&os, const NetWhile*);
-      virtual bool proc_delay(ostream&os, const NetPDelay*);
-      virtual void end_design(ostream&os, const Design*);
+      virtual bool proc_deassign(const NetDeassign*);
+      virtual bool proc_delay(const NetPDelay*);
+      virtual bool proc_force(const NetForce*);
+      virtual void proc_forever(const NetForever*);
+      virtual bool proc_release(const NetRelease*);
+      virtual void proc_repeat(const NetRepeat*);
+      virtual void proc_stask(const NetSTask*);
+      virtual bool proc_trigger(const NetEvTrig*);
+      virtual void proc_utask( const NetUTask*);
+      virtual bool proc_wait( const NetEvWait*);
+      virtual void proc_while(const NetWhile*);
+      virtual void end_design(const Design*);
 
       void start_process(ostream&os, const NetProcTop*);
       void end_process(ostream&os, const NetProcTop*);
 
 
       NumberTable bits_table;
+
+      ostream*out_;
+# define OS (*out_)
 
 	// Method definitions go into this file.
       char*defn_name;
@@ -892,6 +895,8 @@ static string emit_parm_rval(target_vvm*tgt, const NetExpr*expr)
 
 void target_vvm::start_design(ostream&os, const Design*mod)
 {
+      out_ = &os;
+
       defn_name = tempnam(0, "ivldf");
       defn.open(defn_name, ios::in | ios::out | ios::trunc);
 
@@ -928,11 +933,11 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       start_code << "{" << endl;
 }
 
-void target_vvm::scope(ostream&os, const NetScope*scope)
+void target_vvm::scope(const NetScope*scope)
 {
       string hname = mangle(scope->name()) + "_scope";
-      os << "// SCOPE: " << scope->name() << endl;
-      os << "static struct __vpiScope " << hname << ";" << endl;
+      OS << "// SCOPE: " << scope->name() << endl;
+      OS << "static struct __vpiScope " << hname << ";" << endl;
 
       string type_code;
       switch (scope->type()) {
@@ -963,96 +968,96 @@ void target_vvm::scope(ostream&os, const NetScope*scope)
       }
 }
 
-void target_vvm::event(ostream&os, const NetEvent*event)
+void target_vvm::event(const NetEvent*event)
 {
       string mname = mangle(event->full_name());
-      os << "static vvm_sync " << mname << "; // "
+      OS << "static vvm_sync " << mname << "; // "
 	 << event->get_line() << ": event " << event->full_name() << endl;
 }
 
-void target_vvm::end_design(ostream&os, const Design*mod)
+void target_vvm::end_design(const Design*mod)
 {
       if (string_counter > 0)
-	    os << "static struct __vpiStringConst string_table[" <<
+	    OS << "static struct __vpiStringConst string_table[" <<
 		  string_counter+1 << "];" << endl;
       if (number_counter > 0)
-	    os << "static struct __vpiNumberConst number_table[" <<
+	    OS << "static struct __vpiNumberConst number_table[" <<
 		  number_counter+1 << "];" << endl;
       if (nexus_wire_counter > 0)
-	    os << "static vvm_nexus nexus_wire_table[" <<
+	    OS << "static vvm_nexus nexus_wire_table[" <<
 		  nexus_wire_counter << "];" << endl;
       if (signal_bit_counter > 0)
-	    os << "static vpip_bit_t signal_bit_table[" <<
+	    OS << "static vpip_bit_t signal_bit_table[" <<
 		  signal_bit_counter << "];" << endl;
 
       if (bits_table.count() > 0) {
-	    os << "static vpip_bit_t const_bits_table[" << bits_table.count()
+	    OS << "static vpip_bit_t const_bits_table[" << bits_table.count()
 	       << "] = {";
 
 	    for (unsigned idx = 0 ;  idx < bits_table.count() ;  idx += 1) {
-		  if (idx%16 == 0) os << endl;
+		  if (idx%16 == 0) OS << endl;
 		  switch (bits_table.bit(idx)) {
 		      case verinum::V0:
-			os << " St0,";
+			OS << " St0,";
 			break;
 		      case verinum::V1:
-			os << " St1,";
+			OS << " St1,";
 			break;
 		      case verinum::Vx:
-			os << " StX,";
+			OS << " StX,";
 			break;
 		      case verinum::Vz:
-			os << " HiZ,";
+			OS << " HiZ,";
 			break;
 		      default:
-			os << "    ,";
+			OS << "    ,";
 			break;
 		  }
 	    }
 
-	    os << endl << "};" << endl;
+	    OS << endl << "};" << endl;
       }
 
       defn.close();
 
-      os << "// **** Definition code" << endl;
+      OS << "// **** Definition code" << endl;
       { ifstream rdefn (defn_name);
-        os << rdefn.rdbuf();
+        OS << rdefn.rdbuf();
       }
       unlink(defn_name);
       free(defn_name);
       defn_name = 0;
-      os << "// **** end definition code" << endl;
+      OS << "// **** end definition code" << endl;
 
 
-      os << "// **** init_code" << endl;
+      OS << "// **** init_code" << endl;
       init_code << "}" << endl;
       init_code.close();
       { ifstream rinit_code (init_code_name);
-        os << rinit_code.rdbuf();
+        OS << rinit_code.rdbuf();
       }
       unlink(init_code_name);
       free(init_code_name);
       init_code_name = 0;
-      os << "// **** end init_code" << endl;
+      OS << "// **** end init_code" << endl;
 
 
-      os << "// **** start_code" << endl;
+      OS << "// **** start_code" << endl;
       start_code << "}" << endl;
       start_code.close();
       { ifstream rstart_code (start_code_name);
-        os << rstart_code.rdbuf();
+        OS << rstart_code.rdbuf();
       }
       unlink(start_code_name);
       free(start_code_name);
       start_code_name = 0;
-      os << "// **** end start_code" << endl;
+      OS << "// **** end start_code" << endl;
 
 
-      os << "main()" << endl << "{" << endl;
+      OS << "main()" << endl << "{" << endl;
       string vpi_module_path = mod->get_flag("VPI_MODULE_PATH");
       if (vpi_module_path.length() > 0)
-	    os << "      vvm_set_module_path(\"" << vpi_module_path <<
+	    OS << "      vvm_set_module_path(\"" << vpi_module_path <<
 		  "\");" << endl;
 
       string vpi_module_list = mod->get_flag("VPI_MODULE_LIST");
@@ -1066,23 +1071,23 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 		  name = vpi_module_list;
 		  vpi_module_list = "";
 	    }
-	    os << "      vvm_load_vpi_module(\"" << name << ".vpi\");" << endl;
+	    OS << "      vvm_load_vpi_module(\"" << name << ".vpi\");" << endl;
       }
-      os << "      design_init();" << endl;
-      os << "      design_start();" << endl;
-      os << "      vpip_simulation_run();" << endl;
-      os << "}" << endl;
+      OS << "      design_init();" << endl;
+      OS << "      design_start();" << endl;
+      OS << "      vpip_simulation_run();" << endl;
+      OS << "}" << endl;
 }
 
-bool target_vvm::process(ostream&os, const NetProcTop*top)
+bool target_vvm::process(const NetProcTop*top)
 {
-      start_process(os, top);
-      bool rc = top->statement()->emit_proc(os, this);
-      end_process(os, top);
+      start_process(OS, top);
+      bool rc = top->statement()->emit_proc(this);
+      end_process(OS, top);
       return rc;
 }
 
-void target_vvm::signal(ostream&os, const NetNet*sig)
+void target_vvm::signal(const NetNet*sig)
 {
       string net_name = mangle(sig->name());
 
@@ -1125,7 +1130,7 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    }
       }
 
-      os << "static vvm_signal_t " << net_name << ";" << endl;
+      OS << "static vvm_signal_t " << net_name << ";" << endl;
 
       init_code << "      vpip_make_reg(&" << net_name
 		<< ", \"" << sig->name() << "\", signal_bit_table+"
@@ -1169,10 +1174,10 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
       }
 }
 
-void target_vvm::memory(ostream&os, const NetMemory*mem)
+void target_vvm::memory(const NetMemory*mem)
 {
       const string mname = mangle(mem->name());
-      os << "static vvm_memory_t<" << mem->width() << ", " <<
+      OS << "static vvm_memory_t<" << mem->width() << ", " <<
 	    mem->count() << "> " << mname << ";"
 	    " /* " << mem->name() << " */" << endl;
       init_code << "      vpip_make_memory(&" << mname << ", \"" <<
@@ -1180,18 +1185,18 @@ void target_vvm::memory(ostream&os, const NetMemory*mem)
 	    mem->count() << ");" << endl;
 }
 
-void target_vvm::task_def(ostream&os, const NetTaskDef*def)
+void target_vvm::task_def(const NetTaskDef*def)
 {
       thread_step_ = 0;
       const string name = mangle(def->name());
       const string save_thread_class = thread_class_;
       thread_class_ = name;
 
-      os << "static bool " << name << "_step_0_(vvm_thread*thr);" << endl;
+      OS << "static bool " << name << "_step_0_(vvm_thread*thr);" << endl;
 
       defn << "static bool " << name << "_step_0_(vvm_thread*thr) {" << endl;
 
-      def->proc()->emit_proc(os, this);
+      def->proc()->emit_proc(this);
 
       defn << "      thr->back_ -> thread_yield();" << endl;
       defn << "      return false;" << endl;
@@ -1208,7 +1213,7 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
  * writes the result) then the caller copies the result out of the
  * magic result register.
  */
-void target_vvm::func_def(ostream&os, const NetFuncDef*def)
+void target_vvm::func_def(const NetFuncDef*def)
 {
       thread_step_ = 0;
       const string name = mangle(def->name());
@@ -1218,13 +1223,13 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
       assert(! function_def_flag_);
       function_def_flag_ = true;
 
-      os << "// Function " << def->name() << endl;
-      os << "static void " << name << "();" << endl;
+      OS << "// Function " << def->name() << endl;
+      OS << "static void " << name << "();" << endl;
 
       defn << "// Function " << def->name() << endl;
       defn << "static void " << name << "()" << endl;
       defn << "{" << endl;
-      def->proc()->emit_proc(os, this);
+      def->proc()->emit_proc(this);
       defn << "}" << endl;
 
       assert(function_def_flag_);
@@ -1299,9 +1304,9 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
       assert(0);
 }
 
-void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
+void target_vvm::lpm_add_sub(const NetAddSub*gate)
 {
-      os << "static vvm_add_sub " <<
+      OS << "static vvm_add_sub " <<
 	    mangle(gate->name()) << "(" << gate->width() << ");" << endl;
 
 	/* Connect the DataA inputs. */
@@ -1369,11 +1374,11 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
       start_code << "      " << mangle(gate->name()) << ".start();" << endl;
 }
 
-void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
+void target_vvm::lpm_clshift(const NetCLShift*gate)
 {
       string mname = mangle(gate->name());
 
-      os << "static vvm_clshift " << mname << "(" <<
+      OS << "static vvm_clshift " << mname << "(" <<
 	    gate->width() << "," << gate->width_dist() << ");" <<
 	    endl;
 
@@ -1417,11 +1422,11 @@ void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
       }
 }
 
-void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
+void target_vvm::lpm_compare(const NetCompare*gate)
 {
       string mname = mangle(gate->name());
 
-      os << "static vvm_compare " << mname << "(" << gate->width() <<
+      OS << "static vvm_compare " << mname << "(" << gate->width() <<
 	    ");" << endl;
 
 	/* Connect DataA inputs... */
@@ -1478,11 +1483,11 @@ void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
       }
 }
 
-void target_vvm::lpm_divide(ostream&os, const NetDivide*mul)
+void target_vvm::lpm_divide(const NetDivide*mul)
 {
       string mname = mangle(mul->name());
 
-      os << "static vvm_idiv " << mname << "(" << mul->width_r() <<
+      OS << "static vvm_idiv " << mname << "(" << mul->width_r() <<
 	    "," << mul->width_a() << "," << mul->width_b() << ");" << endl;
 
 
@@ -1516,13 +1521,13 @@ void target_vvm::lpm_divide(ostream&os, const NetDivide*mul)
       }
 }
 
-void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
+void target_vvm::lpm_ff( const NetFF*gate)
 {
       string nexus;
       unsigned ncode;
       string mname = mangle(gate->name());
 
-      os << "static vvm_ff " << mname << "(" << gate->width() << ");" << endl;
+      OS << "static vvm_ff " << mname << "(" << gate->width() << ");" << endl;
 
 	/* Connect the clock input... */
 
@@ -1555,11 +1560,11 @@ void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
       }
 }
 
-void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
+void target_vvm::lpm_mult(const NetMult*mul)
 {
       string mname = mangle(mul->name());
 
-      os << "static vvm_mult " << mname << "(" << mul->width_r() <<
+      OS << "static vvm_mult " << mname << "(" << mul->width_r() <<
 	    "," << mul->width_a() << "," << mul->width_b() << "," <<
 	    mul->width_s() << ");" << endl;
 
@@ -1594,11 +1599,11 @@ void target_vvm::lpm_mult(ostream&os, const NetMult*mul)
       }
 }
 
-void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
+void target_vvm::lpm_mux(const NetMux*mux)
 {
       string mname = mangle(mux->name());
 
-      os << "static vvm_mux " << mname << "(" << mux->width() << ","
+      OS << "static vvm_mux " << mname << "(" << mux->width() << ","
 	 << mux->size() << "," << mux->sel_width() << ");" << endl;
 
 	/* Connect the select inputs... */
@@ -1634,11 +1639,11 @@ void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
       }
 }
 
-void target_vvm::lpm_ram_dq(ostream&os, const NetRamDq*ram)
+void target_vvm::lpm_ram_dq(const NetRamDq*ram)
 {
       string mname = mangle(ram->name());
 
-      os << "static vvm_ram_dq<" << ram->width() << "," <<
+      OS << "static vvm_ram_dq<" << ram->width() << "," <<
 	    ram->awidth() << "," << ram->size() << "> " << mname <<
 	    "(&" << mangle(ram->mem()->name()) << ");" << endl;
 
@@ -1700,7 +1705,7 @@ void target_vvm::lpm_ram_dq(ostream&os, const NetRamDq*ram)
 
 }
 
-void target_vvm::logic(ostream&os, const NetLogic*gate)
+void target_vvm::logic(const NetLogic*gate)
 {
       const string mname = mangle(gate->name());
 
@@ -1711,46 +1716,46 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
       switch (gate->type()) {
 	  case NetLogic::AND:
 	    if ((gate->pin_count()-1) == 2)
-		  os << "static vvm_and2 ";
+		  OS << "static vvm_and2 ";
 	    else
-		  os << "static vvm_and" << "<" << gate->pin_count()-1 << "> ";
+		  OS << "static vvm_and" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::BUF:
-	    os << "static vvm_buf ";
+	    OS << "static vvm_buf ";
 	    break;
 	  case NetLogic::BUFIF0:
-	    os << "static vvm_bufif0 ";
+	    OS << "static vvm_bufif0 ";
 	    break;
 	  case NetLogic::BUFIF1:
-	    os << "static vvm_bufif1 ";
+	    OS << "static vvm_bufif1 ";
 	    break;
 	  case NetLogic::NAND:
-	    os << "static vvm_nand" << "<" << gate->pin_count()-1 << "> ";
+	    OS << "static vvm_nand" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::NOR:
 	    if ((gate->pin_count()-1) == 2)
-		  os << "static vvm_nor2 ";
+		  OS << "static vvm_nor2 ";
 	    else
-		  os << "static vvm_nor" << "<" << gate->pin_count()-1 << "> ";
+		  OS << "static vvm_nor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::NOT:
-	    os << "static vvm_not ";
+	    OS << "static vvm_not ";
 	    break;
 	  case NetLogic::OR:
-	    os << "static vvm_or" << "<" << gate->pin_count()-1 << "> ";
+	    OS << "static vvm_or" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::XNOR:
-	    os << "static vvm_xnor" << "<" << gate->pin_count()-1 << "> ";
+	    OS << "static vvm_xnor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::XOR:
-	    os << "static vvm_xor" << "<" << gate->pin_count()-1 << "> ";
+	    OS << "static vvm_xor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  default:
-	    os << "#error \"internal ivl error:bad gate type for " <<
+	    OS << "#error \"internal ivl error:bad gate type for " <<
 		  gate->name() << "\"" << endl;
       }
 
-      os << mname << " (" << gate->rise_time() << ");" << endl;
+      OS << mname << " (" << gate->rise_time() << ");" << endl;
 
 	/* Write the code to invoke startup for this object. */
 
@@ -1800,13 +1805,13 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
       }
 }
 
-void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
+void target_vvm::bufz(const NetBUFZ*gate)
 {
       string mname = mangle(gate->name());
       string nexus;
       unsigned ncode;
 
-      os << "static vvm_bufz " << mname << ";" << endl;
+      OS << "static vvm_bufz " << mname << ";" << endl;
 
       nexus = gate->pin(0).nexus()->name();
       ncode = nexus_wire_map[nexus];
@@ -1843,25 +1848,25 @@ void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 
 }
 
-void target_vvm::udp_comb(ostream&os, const NetUDP_COMB*gate)
+void target_vvm::udp_comb(const NetUDP_COMB*gate)
 {
       string mname = mangle(gate->name());
       string nexus;
       unsigned ncode;
 
 
-      os << "static const char*" << mname << "_ctab =" << endl;
+      OS << "static const char*" << mname << "_ctab =" << endl;
 
       string inp;
-      char out;
-      for (bool rc = gate->first(inp, out)
-		 ;  rc ;  rc = gate->next(inp,out)) {
+      char outc;
+      for (bool rc = gate->first(inp, outc)
+		 ;  rc ;  rc = gate->next(inp,outc)) {
 
-	    os << "    \"" << inp << out << "\"" << endl;
+	    OS << "    \"" << inp << outc << "\"" << endl;
       }
-      os << "    ;" << endl;
+      OS << "    ;" << endl;
 
-      os << "static vvm_udp_comb " << mname << "("
+      OS << "static vvm_udp_comb " << mname << "("
 	 << (gate->pin_count()-1) << ", " << mname<<"_ctab);" << endl;
 
 	/* Connect the output of the device... */
@@ -1897,10 +1902,10 @@ static string state_to_string(unsigned state, unsigned npins)
       return res;
 }
 
-void target_vvm::udp(ostream&os, const NetUDP*gate)
+void target_vvm::udp(const NetUDP*gate)
 {
       assert(gate->is_sequential());
-      udp_sequ_(os, gate);
+      udp_sequ_(OS, gate);
 }
 
 void target_vvm::udp_sequ_(ostream&os, const NetUDP*gate)
@@ -1961,18 +1966,18 @@ void target_vvm::udp_sequ_(ostream&os, const NetUDP*gate)
 
 }
 
-void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
+void target_vvm::net_assign_nb(const NetAssignNB*net)
 {
 }
 
-void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
+void target_vvm::net_case_cmp(const NetCaseCmp*gate)
 {
       string mname = mangle(gate->name());
       string nexus;
       unsigned ncode;
 
       assert(gate->pin_count() == 3);
-      os << "static vvm_eeq " << mname << "(" <<
+      OS << "static vvm_eeq " << mname << "(" <<
 	    gate->rise_time() << ");" << endl;
 
 	/* Connect the output pin */
@@ -2002,11 +2007,11 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
  * so similar. I'll be using different methods to tickle this device,
  * but it receives values the same as force.
  */
-bool target_vvm::net_cassign(ostream&os, const NetCAssign*dev)
+bool target_vvm::net_cassign(const NetCAssign*dev)
 {
       string mname = mangle(dev->name());
 
-      os << "static vvm_force " << mname << "(" << dev->pin_count()
+      OS << "static vvm_force " << mname << "(" << dev->pin_count()
 	 << ");" << endl;
 
       for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1) {
@@ -2026,11 +2031,11 @@ bool target_vvm::net_cassign(ostream&os, const NetCAssign*dev)
  * has its input connected to nothing but is initialized to the
  * desired constant value.
  */
-void target_vvm::net_const(ostream&os, const NetConst*gate)
+void target_vvm::net_const(const NetConst*gate)
 {
       const string mname = mangle(gate->name());
 
-      os << "static vvm_nexus::drive_t " << mname
+      OS << "static vvm_nexus::drive_t " << mname
 	 << "[" << gate->pin_count() << "];" << endl;
 
       for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1) {
@@ -2050,11 +2055,11 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
 }
 
 
-bool target_vvm::net_force(ostream&os, const NetForce*dev)
+bool target_vvm::net_force(const NetForce*dev)
 {
       string mname = mangle(dev->name());
 
-      os << "static vvm_force " << mname << "(" << dev->pin_count()
+      OS << "static vvm_force " << mname << "(" << dev->pin_count()
 	 << ");" << endl;
 
       for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1) {
@@ -2068,7 +2073,7 @@ bool target_vvm::net_force(ostream&os, const NetForce*dev)
       return true;
 }
 
-void target_vvm::net_probe(ostream&os, const NetEvProbe*net)
+void target_vvm::net_probe(const NetEvProbe*net)
 {
       string mname = mangle(net->name());
       string mevent = mangle(net->event()->full_name());
@@ -2076,19 +2081,19 @@ void target_vvm::net_probe(ostream&os, const NetEvProbe*net)
       switch (net->edge()) {
 	  case NetEvProbe::POSEDGE:
 	    assert(net->pin_count() == 1);
-	    os << "static vvm_posedge " << mname
+	    OS << "static vvm_posedge " << mname
 	       << "(&" << mevent << ");" << endl;
 	    break;
 
 	  case NetEvProbe::NEGEDGE:
 	    assert(net->pin_count() == 1);
-	    os << "static vvm_negedge " << mname
+	    OS << "static vvm_negedge " << mname
 	       << "(&" << mevent << ");" << endl;
 	    break;
 
 
 	  case NetEvProbe::ANYEDGE:
-	    os << "static vvm_anyedge " << mname
+	    OS << "static vvm_anyedge " << mname
 	       << "(&" << mevent << ", " << net->pin_count() << ");" << endl;
 	    break;
       }
@@ -2135,7 +2140,7 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
  * a signal, but the assignment should generate code to go to all the
  * connected devices/events.
  */
-void target_vvm::proc_assign(ostream&os, const NetAssign*net)
+void target_vvm::proc_assign(const NetAssign*net)
 {
 
 	/* Detect the very special (and very common) case that the
@@ -2281,7 +2286,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
  * expression to be evaluated (run-time) and the index used as the
  * location to store the value.
  */
-void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
+void target_vvm::proc_assign_mem(const NetAssignMem*amem)
 {
 	/* make a temporary to reference the index signal. */
       string index = emit_proc_rval(this, amem->index());
@@ -2306,7 +2311,7 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 
 }
 
-void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
+void target_vvm::proc_assign_nb(const NetAssignNB*net)
 {
       string rval = emit_proc_rval(this, net->rval());
       const unsigned long delay = net->rise_time();
@@ -2347,7 +2352,7 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
       }
 }
 
-void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
+void target_vvm::proc_assign_mem_nb(const NetAssignMemNB*amem)
 {
 	/* make a temporary to reference the index signal. */
       string index = emit_proc_rval(this, amem->index());
@@ -2368,10 +2373,10 @@ void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
 	    ")) -> schedule();" << endl;
 }
 
-bool target_vvm::proc_block(ostream&os, const NetBlock*net)
+bool target_vvm::proc_block(const NetBlock*net)
 {
       if (net->type() == NetBlock::SEQU) {
-	    net->emit_recurse(os, this);
+	    net->emit_recurse(this);
 	    return true;
       }
 
@@ -2385,7 +2390,7 @@ bool target_vvm::proc_block(ostream&os, const NetBlock*net)
 
 	// Declare the exit step...
 
-      os << "static bool " << thread_class_ << "_step_" << exit_step
+      OS << "static bool " << thread_class_ << "_step_" << exit_step
 	 << "_(vvm_thread*thr);" << endl;
 
 
@@ -2394,7 +2399,7 @@ bool target_vvm::proc_block(ostream&os, const NetBlock*net)
 
       for (cur = net->proc_first() ;  cur ;  cur = net->proc_next(cur)) {
 	    cnt += 1;
-	    os << "static bool " << thread_class_ << "_step_"
+	    OS << "static bool " << thread_class_ << "_step_"
 	       << (exit_step+cnt) << "_(vvm_thread*thr);" << endl;
       }
 
@@ -2428,7 +2433,7 @@ bool target_vvm::proc_block(ostream&os, const NetBlock*net)
 	    defn << "static bool " << thread_class_ << "_step_"
 		 << (exit_step+idx+1) << "_(vvm_thread*thr) {" << endl;
 
-	    cur->emit_proc(os, this);
+	    cur->emit_proc(this);
 
 	    defn << "      thr->back_->ncallee_ -= 1;" << endl;
 	    defn << "      if (thr->back_->ncallee_ == 0)" << endl;
@@ -2463,10 +2468,10 @@ bool target_vvm::proc_block(ostream&os, const NetBlock*net)
  * each branch to Z when they finish. X, Y and Z all generate at least
  * one step.
  */
-void target_vvm::proc_case(ostream&os, const NetCase*net)
+void target_vvm::proc_case(const NetCase*net)
 {
       if (function_def_flag_) {
-	    proc_case_fun(os, net);
+	    proc_case_fun(OS, net);
 	    return;
       }
 
@@ -2545,13 +2550,13 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
 	    step_num += 1;
 
-	    os << "static bool " << thread_class_ << "_step_"
+	    OS << "static bool " << thread_class_ << "_step_"
 		 << step_num << "_(vvm_thread*thr);" << endl;
 
 	    defn << "static bool " << thread_class_ << "_step_"
 		 << step_num << "_(vvm_thread*thr) {" << endl;
 	    if (net->stat(idx))
-		  net->stat(idx)->emit_proc(os, this);
+		  net->stat(idx)->emit_proc(this);
 	    defn << "      thr->step_ = &" << thread_class_ << "_step_" <<
 		  exit_step << "_;" << endl;
 	    defn << "      return true;" << endl;
@@ -2562,13 +2567,13 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
       if (default_idx < net->nitems()) {
 	    step_num += 1;
 
-	    os << "static bool " << thread_class_ << "_step_"
+	    OS << "static bool " << thread_class_ << "_step_"
 	       << step_num << "_(vvm_thread*thr);" << endl;
 
 	    defn << "static bool " << thread_class_ << "_step_"
 		 << step_num << "_(vvm_thread*thr) {" << endl;
 	    if (net->stat(default_idx))
-		  net->stat(default_idx)->emit_proc(os, this);
+		  net->stat(default_idx)->emit_proc(this);
 	    defn << "      thr->step_ = &" << thread_class_ << "_step_" <<
 		  exit_step << "_;" << endl;
 	    defn << "      return true;" << endl;
@@ -2577,7 +2582,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
 	/* Finally, start the exit step. */
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << exit_step << "_(vvm_thread*thr);" << endl;
 
       defn << "static bool " << thread_class_ << "_step_"
@@ -2626,12 +2631,12 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 	    defn << "      if (B_IS1(" << test_func << "(" <<
 		  guard << "," << expr << "))) {" << endl;
 	    if (net->stat(idx))
-		  net->stat(idx)->emit_proc(os, this);
+		  net->stat(idx)->emit_proc(this);
 	    defn << "      break; }" << endl;
       }
 
       if ((default_idx < net->nitems()) && net->stat(default_idx)) {
-	    net->stat(default_idx)->emit_proc(os, this);
+	    net->stat(default_idx)->emit_proc(this);
       }
 
       defn << "      /* " << net->get_line() << ": end case (" <<
@@ -2639,7 +2644,7 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
       defn << "      } while(0);" << endl;
 }
 
-bool target_vvm::proc_cassign(ostream&os, const NetCAssign*dev)
+bool target_vvm::proc_cassign(const NetCAssign*dev)
 {
       const string mname = mangle(dev->name());
 
@@ -2654,10 +2659,10 @@ bool target_vvm::proc_cassign(ostream&os, const NetCAssign*dev)
       return true;
 }
 
-void target_vvm::proc_condit(ostream&os, const NetCondit*net)
+void target_vvm::proc_condit(const NetCondit*net)
 {
       if (function_def_flag_) {
-	    proc_condit_fun(os, net);
+	    proc_condit_fun(OS, net);
 	    return;
       }
 
@@ -2669,13 +2674,13 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 
 	/* Declare new steps that I am going to create. */
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << if_step << "_(vvm_thread*thr);" << endl;
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << else_step << "_(vvm_thread*thr);" << endl;
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << out_step << "_(vvm_thread*thr);" << endl;
 
       defn << "      if (B_IS1(" << expr << "[0]))" << endl;
@@ -2689,7 +2694,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 
       defn << "static bool " << thread_class_ << "_step_" << if_step <<
 	    "_(vvm_thread*thr) {" << endl;
-      net->emit_recurse_if(os, this);
+      net->emit_recurse_if(this);
       defn << "      thr->step_ = &" << thread_class_ << "_step_" <<
 	    out_step << "_;" << endl;
       defn << "      return true;" << endl;
@@ -2697,7 +2702,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 
       defn << "static bool " << thread_class_ << "_step_" << else_step <<
 	    "_(vvm_thread*thr) {" << endl;
-      net->emit_recurse_else(os, this);
+      net->emit_recurse_else(this);
       defn << "      thr->step_ = &" << thread_class_ << "_step_" <<
 	    out_step << "_;" << endl;
       defn << "      return true;" << endl;
@@ -2714,13 +2719,13 @@ void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
       defn << "      // " << net->get_line() << ": conditional (if-else)"
 	   << endl;
       defn << "      if (B_IS1(" << expr << "[0])) {" << endl;
-      net->emit_recurse_if(os, this);
+      net->emit_recurse_if(this);
       defn << "      } else {" << endl;
-      net->emit_recurse_else(os, this);
+      net->emit_recurse_else(this);
       defn << "      }" << endl;
 }
 
-bool target_vvm::proc_deassign(ostream&os, const NetDeassign*dev)
+bool target_vvm::proc_deassign(const NetDeassign*dev)
 {
       const NetNet*lval = dev->lval();
       for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1) {
@@ -2734,7 +2739,7 @@ bool target_vvm::proc_deassign(ostream&os, const NetDeassign*dev)
       return true;
 }
 
-bool target_vvm::proc_force(ostream&os, const NetForce*dev)
+bool target_vvm::proc_force(const NetForce*dev)
 {
       const string mname = mangle(dev->name());
 
@@ -2756,7 +2761,7 @@ bool target_vvm::proc_force(ostream&os, const NetForce*dev)
  * loop, elaborating the contents of the loop, then returning to the
  * top step after the loop contents.
  */
-void target_vvm::proc_forever(ostream&os, const NetForever*net)
+void target_vvm::proc_forever(const NetForever*net)
 {
       unsigned top_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
@@ -2766,13 +2771,13 @@ void target_vvm::proc_forever(ostream&os, const NetForever*net)
       defn << "      return true;" << endl;
       defn << "}" << endl;
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << top_step << "_(vvm_thread*thr);" << endl;
 
       defn << "static bool " << thread_class_ << "_step_"
 	   << top_step << "_(vvm_thread*thr) {" << endl;
 
-      net->emit_recurse(os, this);
+      net->emit_recurse(this);
       defn << "      thr->step_ = &" << thread_class_ << "_step_" <<
 	    top_step << "_;" << endl;
       defn << "      return true;" << endl;
@@ -2781,14 +2786,14 @@ void target_vvm::proc_forever(ostream&os, const NetForever*net)
 	/* Generate a loop out step to catch unreachable stuff afer
 	   the loop. */
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << out_step << "_(vvm_thread*thr);" << endl;
      
       defn << "static bool " << thread_class_ << "_step_"
 	   << out_step << "_(vvm_thread*thr) {" << endl;
 }
 
-bool target_vvm::proc_release(ostream&os, const NetRelease*dev)
+bool target_vvm::proc_release(const NetRelease*dev)
 {
       const NetNet*lval = dev->lval();
       for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1) {
@@ -2802,7 +2807,7 @@ bool target_vvm::proc_release(ostream&os, const NetRelease*dev)
       return true;
 }
 
-void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
+void target_vvm::proc_repeat( const NetRepeat*net)
 {
       unsigned top_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
@@ -2822,15 +2827,15 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
       }
 
 	/* Declare a variable to use as a loop index. */
-      os << "static unsigned " << thread_class_ << "_step_"
+      OS << "static unsigned " << thread_class_ << "_step_"
 	 << top_step << "_idx_;" << endl;
 
 	/* Declare the top step. */
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << top_step << "_(vvm_thread*thr);" << endl;
 
 	/* Declare the exit step. */
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << out_step << "_(vvm_thread*thr);" << endl;
 
 
@@ -2853,7 +2858,7 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
       defn << "      " << thread_class_ << "_step_"
 	   << top_step << "_idx_ -= 1;" << endl;
 
-      net->emit_recurse(os,this);
+      net->emit_recurse(this);
 
       defn << "      thr->step_ = &" << thread_class_ << "_step_"
 	   << top_step << "_;" << endl;
@@ -2870,7 +2875,7 @@ void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
  * task and that I need to generate an external call. Calls to user
  * defined tasks are handled elsewhere.
  */
-void target_vvm::proc_stask(ostream&os, const NetSTask*net)
+void target_vvm::proc_stask(const NetSTask*net)
 {
 	/* Handle the special case of a system task without any
 	   parameters. we don't need a parameter array for this. */
@@ -2904,7 +2909,7 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
       defn << "      if (vpip_finished()) return false;" << endl;
 }
 
-bool target_vvm::proc_trigger(ostream&os, const NetEvTrig*trig)
+bool target_vvm::proc_trigger(const NetEvTrig*trig)
 {
       const NetEvent*ev = trig->event();
       assert(ev);
@@ -2917,12 +2922,12 @@ bool target_vvm::proc_trigger(ostream&os, const NetEvTrig*trig)
       return true;
 }
 
-void target_vvm::proc_utask(ostream&os, const NetUTask*net)
+void target_vvm::proc_utask(const NetUTask*net)
 {
       unsigned out_step = ++thread_step_;
       const string name = mangle(net->name());
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << out_step << "_(vvm_thread*thr);" << endl;
 
       defn << "      assert(thr->callee_ == 0);" << endl;
@@ -2941,7 +2946,7 @@ void target_vvm::proc_utask(ostream&os, const NetUTask*net)
       defn << "      thr->callee_ = 0;" << endl;
 }
 
-bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
+bool target_vvm::proc_wait(const NetEvWait*wait)
 {
       unsigned out_step = ++thread_step_;
 
@@ -2962,7 +2967,7 @@ bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
 		 source vvm_sync objects. Then, wait on the selector
 		 object instead. */
 	    unsigned id = selector_counter++;
-	    os << "static vvm_sync selector_" << id << ";" << endl;
+	    OS << "static vvm_sync selector_" << id << ";" << endl;
 
 	    for (unsigned idx = 0 ;  idx < wait->nevents() ;  idx+= 1) {
 		  const NetEvent*ev = wait->event(idx);
@@ -2981,13 +2986,13 @@ bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
       defn << "      return false;" << endl;
       defn << "}" << endl;
 
-      os << "static bool " << thread_class_ << "_step_" << out_step
+      OS << "static bool " << thread_class_ << "_step_" << out_step
 	 << "_(vvm_thread*thr);" << endl;
 
       defn << "bool " << thread_class_ << "_step_" << out_step
 	   << "_(vvm_thread*thr) {" << endl;
 
-      return wait->emit_recurse(os, this);
+      return wait->emit_recurse(this);
 }
 
 /*
@@ -3003,15 +3008,15 @@ bool target_vvm::proc_wait(ostream&os, const NetEvWait*wait)
  *
  *    out_step:
  */
-void target_vvm::proc_while(ostream&os, const NetWhile*net)
+void target_vvm::proc_while(const NetWhile*net)
 {
       unsigned head_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << head_step << "_(vvm_thread*thr);" << endl;
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << out_step << "_(vvm_thread*thr);" << endl;
 
       defn << "      thr->step_ = &" << thread_class_ << "_step_"
@@ -3034,7 +3039,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
       defn << "          return true;" << endl;
       defn << "      }" << endl;
 
-      net->emit_proc_recurse(os, this);
+      net->emit_proc_recurse(this);
 
       defn << "// " << net->expr()->get_line() <<
 	    ": end of while loop." << endl;
@@ -3053,7 +3058,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
  * is an expression expresion, evaluate it at run time and use the
  * unsigned interpretation of it as the actual delay.
  */
-bool target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
+bool target_vvm::proc_delay(const NetPDelay*proc)
 {
       thread_step_ += 1;
 
@@ -3075,13 +3080,13 @@ bool target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 	    defn << "}" << endl;
       }
 
-      os << "static bool " << thread_class_ << "_step_"
+      OS << "static bool " << thread_class_ << "_step_"
 	 << thread_step_ << "_(vvm_thread*thr);" << endl;
 
       defn << "static bool " << thread_class_ << "_step_" << thread_step_
 	   << "_(vvm_thread*thr) {" << endl;
 
-      return proc->emit_proc_recurse(os, this);
+      return proc->emit_proc_recurse(this);
 }
 
 void target_vvm::end_process(ostream&os, const NetProcTop*proc)
@@ -3107,6 +3112,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.166  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.165  2000/08/02 00:57:02  steve
  *  tri01 support in vvm.
  *

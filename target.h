@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.40 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: target.h,v 1.41 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -52,77 +52,78 @@ struct target {
 struct target_t {
       virtual ~target_t();
 
-	/* Start the design. */
+	/* Start the design. This sets the main output file stream
+	   that the target should use. */
       virtual void start_design(ostream&os, const Design*);
 
 	/* This is called once for each scope in the design, before
 	   anything else is called. */
-      virtual void scope(ostream&os, const NetScope*);
+      virtual void scope(const NetScope*);
 
 	/* Output an event object. Called for each named event in the scope. */
-      virtual void event(ostream&os, const NetEvent*);
+      virtual void event(const NetEvent*);
 
 	/* Output a signal (called for each signal) */
-      virtual void signal(ostream&os, const NetNet*);
+      virtual void signal(const NetNet*);
 
 	/* Output a memory (called for each memory object) */
-      virtual void memory(ostream&os, const NetMemory*);
+      virtual void memory(const NetMemory*);
 
 	/* Output a defined task. */
-      virtual void task_def(ostream&, const NetTaskDef*);
-      virtual void func_def(ostream&, const NetFuncDef*);
+      virtual void task_def(const NetTaskDef*);
+      virtual void func_def(const NetFuncDef*);
 
 	/* LPM style components are handled here. */
-      virtual void lpm_add_sub(ostream&os, const NetAddSub*);
-      virtual void lpm_clshift(ostream&os, const NetCLShift*);
-      virtual void lpm_compare(ostream&os, const NetCompare*);
-      virtual void lpm_divide(ostream&os, const NetDivide*);
-      virtual void lpm_ff(ostream&os, const NetFF*);
-      virtual void lpm_mult(ostream&os, const NetMult*);
-      virtual void lpm_mux(ostream&os, const NetMux*);
-      virtual void lpm_ram_dq(ostream&os, const NetRamDq*);
+      virtual void lpm_add_sub(const NetAddSub*);
+      virtual void lpm_clshift(const NetCLShift*);
+      virtual void lpm_compare(const NetCompare*);
+      virtual void lpm_divide(const NetDivide*);
+      virtual void lpm_ff(const NetFF*);
+      virtual void lpm_mult(const NetMult*);
+      virtual void lpm_mux(const NetMux*);
+      virtual void lpm_ram_dq(const NetRamDq*);
 
 	/* Output a gate (called for each gate) */
-      virtual void logic(ostream&os, const NetLogic*);
-      virtual void bufz(ostream&os, const NetBUFZ*);
-      virtual void udp(ostream&os,  const NetUDP*);
-      virtual void udp_comb(ostream&os,  const NetUDP_COMB*);
-      virtual void net_assign(ostream&os, const NetAssign*);
-      virtual void net_assign_nb(ostream&os, const NetAssignNB*);
-      virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
-      virtual bool net_cassign(ostream&os, const NetCAssign*);
-      virtual void net_const(ostream&os, const NetConst*);
-      virtual bool net_force(ostream&os, const NetForce*);
-      virtual void net_probe(ostream&os, const NetEvProbe*);
+      virtual void logic(const NetLogic*);
+      virtual void bufz(const NetBUFZ*);
+      virtual void udp(const NetUDP*);
+      virtual void udp_comb(const NetUDP_COMB*);
+      virtual void net_assign(const NetAssign*);
+      virtual void net_assign_nb(const NetAssignNB*);
+      virtual void net_case_cmp(const NetCaseCmp*);
+      virtual bool net_cassign(const NetCAssign*);
+      virtual void net_const(const NetConst*);
+      virtual bool net_force(const NetForce*);
+      virtual void net_probe(const NetEvProbe*);
 
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */
-      virtual bool process(ostream&os, const NetProcTop*);
+      virtual bool process(const NetProcTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
-      virtual void proc_assign(ostream&os, const NetAssign*);
-      virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
-      virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
-      virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
-      virtual bool proc_block(ostream&os, const NetBlock*);
-      virtual void proc_case(ostream&os,  const NetCase*);
-      virtual bool proc_cassign(ostream&os, const NetCAssign*);
-      virtual void proc_condit(ostream&os, const NetCondit*);
-      virtual bool proc_deassign(ostream&os, const NetDeassign*);
-      virtual bool proc_disable(ostream&os, const NetDisable*);
-      virtual bool proc_force(ostream&os, const NetForce*);
-      virtual void proc_forever(ostream&os, const NetForever*);
-      virtual bool proc_release(ostream&os, const NetRelease*);
-      virtual void proc_repeat(ostream&os, const NetRepeat*);
-      virtual bool proc_trigger(ostream&os, const NetEvTrig*);
-      virtual void proc_stask(ostream&os, const NetSTask*);
-      virtual void proc_utask(ostream&os, const NetUTask*);
-      virtual bool proc_wait(ostream&os,  const NetEvWait*);
-      virtual void proc_while(ostream&os, const NetWhile*);
-      virtual bool proc_delay(ostream&os, const NetPDelay*);
+      virtual void proc_assign(const NetAssign*);
+      virtual void proc_assign_mem(const NetAssignMem*);
+      virtual void proc_assign_nb(const NetAssignNB*);
+      virtual void proc_assign_mem_nb(const NetAssignMemNB*);
+      virtual bool proc_block(const NetBlock*);
+      virtual void proc_case(const NetCase*);
+      virtual bool proc_cassign(const NetCAssign*);
+      virtual void proc_condit(const NetCondit*);
+      virtual bool proc_deassign(const NetDeassign*);
+      virtual bool proc_delay(const NetPDelay*);
+      virtual bool proc_disable(const NetDisable*);
+      virtual bool proc_force(const NetForce*);
+      virtual void proc_forever(const NetForever*);
+      virtual bool proc_release(const NetRelease*);
+      virtual void proc_repeat(const NetRepeat*);
+      virtual bool proc_trigger(const NetEvTrig*);
+      virtual void proc_stask(const NetSTask*);
+      virtual void proc_utask(const NetUTask*);
+      virtual bool proc_wait(const NetEvWait*);
+      virtual void proc_while(const NetWhile*);
 
 	/* Done with the design. */
-      virtual void end_design(ostream&os, const Design*);
+      virtual void end_design(const Design*);
 };
 
 /* This class is used by the NetExpr class to help with the scanning
@@ -160,6 +161,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.41  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.40  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

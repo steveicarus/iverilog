@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-null.cc,v 1.13 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: t-null.cc,v 1.14 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -30,30 +30,32 @@
 static class target_null_t  : public target_t {
 
     public:
-      void bufz(ostream&os, const NetBUFZ*) { }
-      void event(ostream&, const NetEvent*) { }
-      void func_def(ostream&, const NetFuncDef*) { }
-      void memory(ostream&, const NetMemory*) { }
-      void task_def(ostream&, const NetTaskDef*) { }
-      void net_assign(ostream&os, const NetAssign*) { }
-      void net_assign_nb(ostream&os, const NetAssignNB*) { }
-      void net_const(ostream&, const NetConst*) { }
-      void net_esignal(ostream&, const NetESignal*) { }
-      void net_probe(ostream&, const NetEvProbe*) { }
-      bool proc_block(ostream&, const NetBlock*) { return true; }
-      void proc_condit(ostream&, const NetCondit*) { }
-      bool proc_delay(ostream&, const NetPDelay*) { return true; }
-      void proc_forever(ostream&, const NetForever*) { }
-      void proc_repeat(ostream&, const NetRepeat*) { }
-      void proc_stask(ostream&, const NetSTask*) { }
-      void proc_utask(ostream&os, const NetUTask*) { }
-      bool proc_wait(ostream&os, const NetEvWait*) { return true; }
+      void bufz(const NetBUFZ*) { }
+      void event(const NetEvent*) { }
+      void func_def(const NetFuncDef*) { }
+      void memory(const NetMemory*) { }
+      void task_def(const NetTaskDef*) { }
+      void net_assign(const NetAssign*) { }
+      void net_assign_nb(const NetAssignNB*) { }
+      void net_const(const NetConst*) { }
+      void net_probe(const NetEvProbe*) { }
+      bool proc_block(const NetBlock*) { return true; }
+      void proc_condit(const NetCondit*) { }
+      bool proc_delay(const NetPDelay*) { return true; }
+      void proc_forever(const NetForever*) { }
+      void proc_repeat(const NetRepeat*) { }
+      void proc_stask(const NetSTask*) { }
+      void proc_utask(const NetUTask*) { }
+      bool proc_wait(const NetEvWait*) { return true; }
 
 } target_null_obj;
 
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.14  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.13  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

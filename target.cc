@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.41 2000/07/29 16:21:08 steve Exp $"
+#ident "$Id: target.cc,v 1.42 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -31,209 +31,209 @@ void target_t::start_design(ostream&os, const Design*)
 {
 }
 
-void target_t::scope(ostream&, const NetScope*)
+void target_t::scope(const NetScope*)
 {
 }
 
-void target_t::event(ostream&, const NetEvent*ev)
+void target_t::event(const NetEvent*ev)
 {
       cerr << ev->get_line() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event <" << ev->full_name() << ">." << endl;
 }
 
-void target_t::signal(ostream&os, const NetNet*)
+void target_t::signal(const NetNet*)
 {
 }
 
-void target_t::memory(ostream&os, const NetMemory*)
+void target_t::memory(const NetMemory*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled memory." << endl;
 }
 
-void target_t::func_def(ostream&os, const NetFuncDef*)
+void target_t::func_def(const NetFuncDef*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled function definition." << endl;
 }
 
-void target_t::task_def(ostream&os, const NetTaskDef*)
+void target_t::task_def(const NetTaskDef*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled task definition." << endl;
 }
 
-void target_t::logic(ostream&os, const NetLogic*)
+void target_t::logic(const NetLogic*)
 {
 }
 
-void target_t::bufz(ostream&os, const NetBUFZ*)
+void target_t::bufz(const NetBUFZ*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled continuous assign (BUFZ)." << endl;
 }
 
-void target_t::udp(ostream&os, const NetUDP*)
+void target_t::udp(const NetUDP*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled UDP." << endl;
 }
 
-void target_t::udp_comb(ostream&os, const NetUDP_COMB*)
+void target_t::udp_comb(const NetUDP_COMB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled combinational primitive." << endl;
 }
 
-void target_t::lpm_add_sub(ostream&, const NetAddSub*)
+void target_t::lpm_add_sub(const NetAddSub*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetAddSub." << endl;
 }
 
-void target_t::lpm_clshift(ostream&, const NetCLShift*)
+void target_t::lpm_clshift(const NetCLShift*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetCLShift." << endl;
 }
 
-void target_t::lpm_compare(ostream&, const NetCompare*)
+void target_t::lpm_compare(const NetCompare*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetCompare." << endl;
 }
 
-void target_t::lpm_divide(ostream&, const NetDivide*)
+void target_t::lpm_divide(const NetDivide*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetDivide." << endl;
 }
 
-void target_t::lpm_ff(ostream&, const NetFF*)
+void target_t::lpm_ff(const NetFF*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetFF." << endl;
 }
 
-void target_t::lpm_mult(ostream&, const NetMult*)
+void target_t::lpm_mult(const NetMult*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetMult." << endl;
 }
 
-void target_t::lpm_mux(ostream&, const NetMux*)
+void target_t::lpm_mux(const NetMux*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetMux." << endl;
 }
 
-void target_t::lpm_ram_dq(ostream&, const NetRamDq*)
+void target_t::lpm_ram_dq(const NetRamDq*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetRamDq." << endl;
 }
 
-void target_t::net_assign(ostream&os, const NetAssign*)
+void target_t::net_assign(const NetAssign*)
 {
 }
 
-void target_t::net_assign_nb(ostream&os, const NetAssignNB*)
+void target_t::net_assign_nb(const NetAssignNB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled non-blocking assignment node." << endl;
 }
 
-void target_t::net_case_cmp(ostream&os, const NetCaseCmp*)
+void target_t::net_case_cmp(const NetCaseCmp*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled case compare node." << endl;
 }
 
-bool target_t::net_cassign(ostream&os, const NetCAssign*dev)
+bool target_t::net_cassign(const NetCAssign*dev)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetCAssign node." << endl;
       return false;
 }
 
-void target_t::net_const(ostream&os, const NetConst*)
+void target_t::net_const(const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled CONSTANT node." << endl;
 }
 
-bool target_t::net_force(ostream&os, const NetForce*dev)
+bool target_t::net_force(const NetForce*dev)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetForce node." << endl;
       return false;
 }
 
-void target_t::net_probe(ostream&os, const NetEvProbe*net)
+void target_t::net_probe(const NetEvProbe*net)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled probe trigger node" << endl;
       net->dump_node(cerr, 4);
 }
 
-bool target_t::process(ostream&os, const NetProcTop*top)
+bool target_t::process(const NetProcTop*top)
 {
-      return top->statement()->emit_proc(os, this);
+      return top->statement()->emit_proc(this);
 }
 
-void target_t::proc_assign(ostream&os, const NetAssign*)
+void target_t::proc_assign(const NetAssign*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled procedural assignment." << endl;
 }
 
-void target_t::proc_assign_mem(ostream&os, const NetAssignMem*)
+void target_t::proc_assign_mem(const NetAssignMem*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled memory assignment." << endl;
 }
 
-void target_t::proc_assign_nb(ostream&os, const NetAssignNB*)
+void target_t::proc_assign_nb(const NetAssignNB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled non-blocking assignment." << endl;
 }
 
-void target_t::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*)
+void target_t::proc_assign_mem_nb(const NetAssignMemNB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled non-blocking memory assignment." << endl;
 }
 
-bool target_t::proc_block(ostream&os, const NetBlock*)
+bool target_t::proc_block(const NetBlock*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_block." << endl;
       return false;
 }
 
-void target_t::proc_case(ostream&os, const NetCase*cur)
+void target_t::proc_case(const NetCase*cur)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled case:" << endl;
       cur->dump(cerr, 6);
 }
 
-bool target_t::proc_cassign(ostream&os, const NetCAssign*dev)
+bool target_t::proc_cassign(const NetCAssign*dev)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_cassign." << endl;
       return false;
 }
 
-void target_t::proc_condit(ostream&os, const NetCondit*condit)
+void target_t::proc_condit(const NetCondit*condit)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled conditional:" << endl;
       condit->dump(cerr, 6);
 }
 
-bool target_t::proc_deassign(ostream&os, const NetDeassign*dev)
+bool target_t::proc_deassign(const NetDeassign*dev)
 {
       cerr << dev->get_line() << ": internal error: "
 	   << "target (" << typeid(*this).name() <<  "): "
@@ -241,14 +241,14 @@ bool target_t::proc_deassign(ostream&os, const NetDeassign*dev)
       return false;
 }
 
-bool target_t::proc_delay(ostream&os, const NetPDelay*)
+bool target_t::proc_delay(const NetPDelay*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_delay." << endl;
       return false;
 }
 
-bool target_t::proc_disable(ostream&os, const NetDisable*obj)
+bool target_t::proc_disable(const NetDisable*obj)
 {
       cerr << obj->get_line() << ": internal error: "
 	   << "target (" << typeid(*this).name() << "): "
@@ -256,20 +256,20 @@ bool target_t::proc_disable(ostream&os, const NetDisable*obj)
       return false;
 }
 
-bool target_t::proc_force(ostream&os, const NetForce*dev)
+bool target_t::proc_force(const NetForce*dev)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_force." << endl;
       return false;
 }
 
-void target_t::proc_forever(ostream&os, const NetForever*)
+void target_t::proc_forever(const NetForever*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_forever." << endl;
 }
 
-bool target_t::proc_release(ostream&os, const NetRelease*dev)
+bool target_t::proc_release(const NetRelease*dev)
 {
       cerr << dev->get_line() << ": internal error: "
 	   << "target (" << typeid(*this).name() <<  "): "
@@ -277,46 +277,46 @@ bool target_t::proc_release(ostream&os, const NetRelease*dev)
       return false;
 }
 
-void target_t::proc_repeat(ostream&os, const NetRepeat*)
+void target_t::proc_repeat(const NetRepeat*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_repeat." << endl;
 }
 
-bool target_t::proc_trigger(ostream&os, const NetEvTrig*tr)
+bool target_t::proc_trigger(const NetEvTrig*tr)
 {
       cerr << tr->get_line() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event trigger." << endl;
       return false;
 }
 
-void target_t::proc_stask(ostream&os, const NetSTask*)
+void target_t::proc_stask(const NetSTask*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_stask." << endl;
 }
 
-void target_t::proc_utask(ostream&os, const NetUTask*)
+void target_t::proc_utask(const NetUTask*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_utask." << endl;
 }
 
-bool target_t::proc_wait(ostream&os, const NetEvWait*tr)
+bool target_t::proc_wait(const NetEvWait*tr)
 {
       cerr << tr->get_line() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled event wait." << endl;
       return false;
 }
 
-void target_t::proc_while(ostream&os, const NetWhile*net)
+void target_t::proc_while(const NetWhile*net)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled while:" << endl;
       net->dump(cerr, 6);
 }
 
-void target_t::end_design(ostream&os, const Design*)
+void target_t::end_design(const Design*)
 {
 }
 
@@ -398,6 +398,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.42  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.41  2000/07/29 16:21:08  steve
  *  Report code generation errors through proc_delay.
  *

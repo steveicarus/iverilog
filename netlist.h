@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.153 2000/08/02 14:48:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.154 2000/08/08 01:50:42 steve Exp $"
 #endif
 
 /*
@@ -263,7 +263,7 @@ class NetNode  : public NetObj {
 	// connected to the same of my own pins.
       NetNode*next_node();
 
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned) const;
 
 	// This is used to scan a modifiable netlist, one node at a time.
@@ -388,7 +388,7 @@ class NetAddSub  : public NetNode {
       const Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 };
 
@@ -419,7 +419,7 @@ class NetCLShift  : public NetNode {
       const Link& pin_Distance(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
@@ -467,7 +467,7 @@ class NetCompare  : public NetNode {
 
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
@@ -502,7 +502,7 @@ class NetDivide  : public NetNode {
       const Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
@@ -541,7 +541,7 @@ class NetFF  : public NetNode {
       const Link& pin_Q(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 };
 
@@ -638,7 +638,7 @@ class NetMult  : public NetNode {
       const Link& pin_Sum(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
@@ -684,7 +684,7 @@ class NetMux  : public NetNode {
       const Link& pin_Sel(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
@@ -727,7 +727,7 @@ class NetRamDq  : public NetNode {
       const Link& pin_Q(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 
 	// Use this method to absorb other NetRamDq objects that are
 	// connected to the same memory, and have compatible pin
@@ -849,7 +849,7 @@ class NetBUFZ  : public NetNode {
       ~NetBUFZ();
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 };
 
 /*
@@ -870,7 +870,7 @@ class NetCaseCmp  : public NetNode {
       ~NetCaseCmp();
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 };
 
 /*
@@ -890,7 +890,7 @@ class NetConst  : public NetNode {
 
       verinum::V value(unsigned idx) const;
 
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
 
@@ -919,7 +919,7 @@ class NetLogic  : public NetNode {
       TYPE type() const { return type_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
 
     private:
@@ -985,7 +985,7 @@ class NetUDP  : public NetNode {
     public:
       explicit NetUDP(const string&n, unsigned pins, bool sequ =false);
 
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node( struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
 	/* return false if the entry conflicts with an existing
@@ -1045,7 +1045,7 @@ class NetUDP_COMB  : public NetNode {
     public:
       explicit NetUDP_COMB(const string&n, unsigned pins);
 
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
 	/* append a new truth table row. */
@@ -1088,7 +1088,7 @@ class NetProc : public LineInfo {
 
 	// This method is called to emit the statement to the
 	// target. The target returns true if OK, false for errors.
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
 
 	// This method is called by functors that want to scan a
 	// process in search of matchable patterns.
@@ -1152,8 +1152,8 @@ class NetAssign  : public NetAssign_ {
 			 NetExpr*mux, NetExpr*rv);
       ~NetAssign();
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1172,8 +1172,8 @@ class NetAssignNB  : public NetAssign_ {
       ~NetAssignNB();
 
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1214,7 +1214,7 @@ class NetAssignMem : public NetAssignMem_ {
       ~NetAssignMem();
 
       virtual int match_proc(struct proc_match_t*);
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1227,7 +1227,7 @@ class NetAssignMemNB : public NetAssignMem_ {
       ~NetAssignMemNB();
 
       virtual int match_proc(struct proc_match_t*);
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1259,9 +1259,9 @@ class NetBlock  : public NetProc {
 	// This version of emit_recurse scans all the statements of
 	// the begin-end block sequentially. It is typically of use
 	// for sequential blocks.
-      void emit_recurse(ostream&, struct target_t*) const;
+      void emit_recurse(struct target_t*) const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1298,7 +1298,7 @@ class NetCase  : public NetProc {
       const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
       const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1334,9 +1334,9 @@ class NetCAssign  : public NetProc, public NetNode {
       const Link& lval_pin(unsigned) const;
 
       virtual void dump(ostream&, unsigned ind) const;
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 
     private:
       NetNet*lval_;
@@ -1364,10 +1364,10 @@ class NetCondit  : public NetProc {
 	// Replace the condition expression.
       void set_expr(NetExpr*ex);
 
-      void emit_recurse_if(ostream&, struct target_t*) const;
-      void emit_recurse_else(ostream&, struct target_t*) const;
+      void emit_recurse_if(struct target_t*) const;
+      void emit_recurse_else(struct target_t*) const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1391,7 +1391,7 @@ class NetDeassign : public NetProc {
 
       const NetNet*lval() const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1419,7 +1419,7 @@ class NetDisable  : public NetProc {
 
       const NetScope*target() const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1529,7 +1529,7 @@ class NetEvTrig  : public NetProc {
 
       const NetEvent*event() const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1553,8 +1553,8 @@ class NetEvWait  : public NetProc {
 
       NetProc*statement();
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
-      bool emit_recurse(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
+      bool emit_recurse(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1580,7 +1580,7 @@ class NetEvProbe  : public NetNode {
       NetEvent* event();
       const NetEvent* event() const;
 
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
@@ -1609,9 +1609,9 @@ class NetForce  : public NetProc, public NetNode {
       const Link& lval_pin(unsigned) const;
 
       virtual void dump(ostream&, unsigned ind) const;
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void emit_node(struct target_t*) const;
 
     private:
       NetNet*lval_;
@@ -1627,9 +1627,9 @@ class NetForever : public NetProc {
       explicit NetForever(NetProc*s);
       ~NetForever();
 
-      void emit_recurse(ostream&, struct target_t*) const;
+      void emit_recurse(struct target_t*) const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1689,10 +1689,10 @@ class NetPDelay  : public NetProc {
       unsigned long delay() const;
       const NetExpr*expr() const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
-      bool emit_proc_recurse(ostream&, struct target_t*) const;
+      bool emit_proc_recurse(struct target_t*) const;
 
     private:
       unsigned long delay_;
@@ -1710,9 +1710,9 @@ class NetRepeat : public NetProc {
       ~NetRepeat();
 
       const NetExpr*expr() const;
-      void emit_recurse(ostream&, struct target_t*) const;
+      void emit_recurse(struct target_t*) const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1734,7 +1734,7 @@ class NetRelease : public NetProc {
 
       const NetNet*lval() const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1760,7 +1760,7 @@ class NetSTask  : public NetProc {
 
       const NetExpr* parm(unsigned idx) const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1858,7 +1858,7 @@ class NetUTask  : public NetProc {
 
       const string& name() const { return task_->name(); }
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1878,9 +1878,9 @@ class NetWhile  : public NetProc {
 
       const NetExpr*expr() const { return cond_; }
 
-      void emit_proc_recurse(ostream&, struct target_t*) const;
+      void emit_proc_recurse(struct target_t*) const;
 
-      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1907,7 +1907,7 @@ class NetProcTop  : public LineInfo {
       const NetProc*statement() const;
 
       void dump(ostream&, unsigned ind) const;
-      bool emit(ostream&, struct target_t*tgt) const;
+      bool emit(struct target_t*tgt) const;
 
     private:
       const Type type_;
@@ -2522,8 +2522,8 @@ class NetScope {
       string local_symbol();
 
       void dump(ostream&) const;
-      void emit_scope(ostream&o, struct target_t*tgt) const;
-      void emit_defs(ostream&o, struct target_t*tgt) const;
+      void emit_scope(struct target_t*tgt) const;
+      void emit_defs(struct target_t*tgt) const;
 
 	/* This method runs the functor on me. Recurse through the
 	   children of this node as well. */
@@ -2722,6 +2722,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.154  2000/08/08 01:50:42  steve
+ *  target methods need not take a file stream.
+ *
  * Revision 1.153  2000/08/02 14:48:15  steve
  *  cleanup.
  *
