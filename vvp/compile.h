@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.52 2003/05/29 02:21:45 steve Exp $"
+#ident "$Id: compile.h,v 1.53 2003/09/04 20:26:31 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -250,7 +250,7 @@ extern void compile_scope_recall(char*sym);
  * The parser uses this function to declare a thread. The start_sym is
  * the start instruction, and must already be defined.
  */
-extern void compile_thread(char*start_sym);
+extern void compile_thread(char*start_sym, char*flag);
 
 /*
  * This function is called to create a var vector with the given name.
@@ -264,6 +264,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.53  2003/09/04 20:26:31  steve
+ *  Add $push flag for threads.
+ *
  * Revision 1.52  2003/05/29 02:21:45  steve
  *  Implement acc_fetch_defname and its infrastructure in vvp.
  *

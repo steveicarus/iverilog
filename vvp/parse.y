@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.55 2003/08/22 23:14:27 steve Exp $"
+#ident "$Id: parse.y,v 1.56 2003/09/04 20:26:31 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -345,10 +345,14 @@ statement
 		{ compile_timescale(-$3); }
 
   /* Thread statements declare a thread with its starting address. The
-     starting address must already be defined. */
+     starting address must already be defined. The .thread statement
+     may also take an optional flag word. */
 
 	|         K_THREAD T_SYMBOL ';'
-		{ compile_thread($2); }
+		{ compile_thread($2, 0); }
+
+	|         K_THREAD T_SYMBOL ',' T_SYMBOL ';'
+		{ compile_thread($2, $4); }
 
   /* Var statements declare a bit of a variable. This also implicitly
      creates a functor with the same name that acts as the output of
@@ -613,6 +617,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.56  2003/09/04 20:26:31  steve
+ *  Add $push flag for threads.
+ *
  * Revision 1.55  2003/08/22 23:14:27  steve
  *  Preserve variable ranges all the way to the vpi.
  *

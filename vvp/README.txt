@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.44 2003/04/11 05:15:38 steve Exp $
+ *  $Id: README.txt,v 1.45 2003/09/04 20:26:30 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -537,13 +537,22 @@ Thread statements create the initial threads for a simulation. These
 represent the initial and always blocks, and possibly other causes to
 create threads at startup.
 
-	.thread <symbol>
+	.thread <symbol> [, <flag>]
 
 This statement creates a thread with a starting address at the
-instruction given by <symbol>.
+instruction given by <symbol>. When the simulation starts, a thread is
+created for the .thread statement, and it starts at the <symbol>
+addressed instruction.
 
+The <flag> modifies the creation/execution behavior of the
+thread. Supported flags are:
 
-THREADS IN GENERAL:
+	$push -- Cause the thread to be pushed in the scheduler. This
+		 only effects startup (time 0) by arranging for pushed
+		 threads to be started before non-pushed threads. This
+		 is useful for resolving time-0 races.
+
+* Threads in general
 
 Thread statements create the initial threads of a design. These
 include the ``initial'' and ``always'' statements of the original
@@ -575,7 +584,7 @@ parent, and %end in the child. Without this proper matching, the
 hierarchical relationships can get confused. The behavior of erroneous
 code is undefined.
 
-THREADS AND SCOPES:
+* Threads and scopes
 
 The Verilog ``disable'' statement deserves some special mention
 because of how it interacts with threads. In particular, threads

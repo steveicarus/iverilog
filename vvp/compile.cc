@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.169 2003/07/30 01:13:28 steve Exp $"
+#ident "$Id: compile.cc,v 1.170 2003/09/04 20:26:31 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1456,8 +1456,10 @@ void compile_vpi_func_call(char*label, char*name,
  * with the start address referenced by the program symbol passed to
  * me.
  */
-void compile_thread(char*start_sym)
+void compile_thread(char*start_sym, char*flag)
 {
+      bool push_flag = false;
+
       symbol_value_t tmp = sym_get_value(sym_codespace, start_sym);
       vvp_code_t pc = reinterpret_cast<vvp_code_t>(tmp.ptr);
       if (pc == 0) {
@@ -1465,9 +1467,15 @@ void compile_thread(char*start_sym)
 	    return;
       }
 
+      if (flag && (strcmp(flag,"$push") == 0))
+	    push_flag = true;
+
       vthread_t thr = vthread_new(pc, vpip_peek_current_scope());
-      schedule_vthread(thr, 0);
+      schedule_vthread(thr, 0, push_flag);
+
       free(start_sym);
+      if (flag != 0)
+	    free(flag);
 }
 
 /*
@@ -1539,6 +1547,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.170  2003/09/04 20:26:31  steve
+ *  Add $push flag for threads.
+ *
  * Revision 1.169  2003/07/30 01:13:28  steve
  *  Add support for triand and trior.
  *
