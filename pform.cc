@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.18 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: pform.cc,v 1.19 1999/05/20 04:31:45 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -304,13 +304,14 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
       delete gates;
 }
 
-void pform_make_pgassign(PExpr*lval, PExpr*rval)
+PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval)
 {
       svector<PExpr*> wires (2);
       wires[0] = lval;
       wires[1] = rval;
       PGAssign*cur = new PGAssign(wires);
       cur_module->add_gate(cur);
+      return cur;
 }
 
 void pform_makewire(const string&name, NetNet::Type type)
@@ -516,6 +517,11 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.19  1999/05/20 04:31:45  steve
+ *  Much expression parsing work,
+ *  mark continuous assigns with source line info,
+ *  replace some assertion failures with Sorry messages.
+ *
  * Revision 1.18  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.

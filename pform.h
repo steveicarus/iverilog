@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.14 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: pform.h,v 1.15 1999/05/20 04:31:45 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -126,7 +126,7 @@ extern void pform_makegates(PGBuiltin::Type type,
 extern void pform_make_modgates(const string&type, svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
-extern void pform_make_pgassign(PExpr*lval, PExpr*rval);
+extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval);
 
 /*
  * These are functions that the outside-the-parser code uses the do
@@ -140,6 +140,11 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.15  1999/05/20 04:31:45  steve
+ *  Much expression parsing work,
+ *  mark continuous assigns with source line info,
+ *  replace some assertion failures with Sorry messages.
+ *
  * Revision 1.14  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.

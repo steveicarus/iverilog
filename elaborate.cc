@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.26 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.27 1999/05/20 04:31:45 steve Exp $"
 #endif
 
 /*
@@ -179,6 +179,21 @@ void PGAssign::elaborate(Design*des, const string&path) const
 {
       NetNet*lval = pin(0)->elaborate_net(des, path);
       NetNet*rval = pin(1)->elaborate_net(des, path);
+
+      if (lval == 0) {
+	    cerr << get_line() << ": Unable to elaborate l-value: " <<
+		  *pin(0) << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      if (rval == 0) {
+	    cerr << get_line() << ": Unable to elaborate r-value: " <<
+		  *pin(1) << endl;
+	    des->errors += 1;
+	    return;
+      }
+
       assert(lval && rval);
 
       do_assign(des, path, lval, rval);
@@ -752,7 +767,11 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
       if (NetNet*net = des->find_signal(name)) {
 	    NetESignal*node = des->get_esignal(net);
 	    assert(idx_ == 0);
-	    assert(lsb_ == 0);
+	    if (lsb_) {
+		  cerr << get_line() << ": Sorry, I cannot yet elaborate "
+			"bit ranges in this context." << endl;
+		  des->errors += 1;
+	    }
 	    if (msb_) {
 		  NetExpr*ex = msb_->elaborate_expr(des, path);
 		  NetESubSignal*ss = new NetESubSignal(node, ex);
@@ -1150,6 +1169,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.27  1999/05/20 04:31:45  steve
+ *  Much expression parsing work,
+ *  mark continuous assigns with source line info,
+ *  replace some assertion failures with Sorry messages.
+ *
  * Revision 1.26  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.26 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: parse.y,v 1.27 1999/05/20 04:31:45 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -71,7 +71,8 @@ extern void lex_end_table();
 %token K_initial K_inout K_input K_integer K_join K_large K_macromodule
 %token K_medium K_module K_nand K_negedge K_nmos K_nor K_not K_notif0
 %token K_notif1 K_or K_output K_parameter K_pmos K_posedge K_primitive
-%token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_reg K_release K_repeat
+%token K_pull0 K_pull1 K_pulldown K_pullup K_rcmos K_real K_realtime
+%token K_reg K_release K_repeat
 %token K_rnmos K_rpmos K_rtran K_rtranif0 K_rtranif1 K_scalered
 %token K_small K_specify
 %token K_specparam K_strong0 K_strong1 K_supply0 K_supply1 K_table K_task
@@ -115,6 +116,7 @@ extern void lex_end_table();
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
 
+%left '?' ':'
 %left K_LOR
 %left K_LAND
 %left '|'
@@ -191,6 +193,9 @@ delay
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		  delete $3;
+		}
+	| '#' '(' expression ')'
+		{ $$ = $3;
 		}
 	;
 
@@ -271,14 +276,26 @@ expression
 		  delete $2;
 		  $$ = tmp;
 		}
-	| '~' expression %prec UNARY_PREC
+	| '+' expr_primary %prec UNARY_PREC
+		{ $$ = new PEUnary('+', $2);
+		}
+	| '-' expr_primary %prec UNARY_PREC
+		{ $$ = new PEUnary('-', $2);
+		}
+	| '~' expr_primary %prec UNARY_PREC
 		{ $$ = new PEUnary('~', $2);
 		}
-	| '&' expression %prec UNARY_PREC
+	| '&' expr_primary %prec UNARY_PREC
 		{ $$ = new PEUnary('&', $2);
 		}
-	| '!' expression %prec UNARY_PREC
+	| '!' expr_primary %prec UNARY_PREC
 		{ $$ = new PEUnary('!', $2);
+		}
+	| '|' expr_primary %prec UNARY_PREC
+		{ $$ = new PEUnary('|', $2);
+		}
+	| '^' expr_primary %prec UNARY_PREC
+		{ $$ = new PEUnary('^', $2);
 		}
 	| expression '^' expression
 		{ $$ = new PEBinary('^', $1, $3);
@@ -339,6 +356,10 @@ expression
 		}
 	| expression K_LAND expression
 		{ $$ = new PEBinary('a', $1, $3);
+		}
+	| expression '?' expression ':' expression
+		{ yyerror(@2, "Sorry, ?: operator not supported.");
+		  $$ = 0;
 		}
 	;
 
@@ -667,7 +688,10 @@ module_item
 		  delete $1;
 		}
 	| K_assign lavalue '=' expression ';'
-		{ pform_make_pgassign($2, $4); }
+		{ PGAssign*tmp = pform_make_pgassign($2, $4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		}
 	| K_assign error '=' expression ';'
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
@@ -681,6 +705,9 @@ module_item
 		}
 	| K_task IDENTIFIER ';' statement K_endtask
 		{ yyerror(@1, "Sorry, task declarations not supported.");
+		}
+	| K_function range_or_type_opt  IDENTIFIER ';' statement K_endfunction
+		{ yyerror(@1, "Sorry, function declarations not supported.");
 		}
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
 		{ pform_set_attrib(*$3, *$5, *$7);
@@ -816,6 +843,14 @@ range_opt
 	| { $$ = 0; }
 	;
 
+range_or_type_opt
+	: range { }
+	| K_integer
+	| K_real
+	| K_realtime
+	| K_time
+	|
+	;
   /* The register_variable rule is matched only when I am parsing
      variables in a "reg" definition. I therefore know that I am
      creating registers and I do not need to let the containing rule
