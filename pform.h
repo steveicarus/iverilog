@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.10 1999/05/06 04:09:28 steve Exp $"
+#ident "$Id: pform.h,v 1.11 1999/05/06 04:37:17 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -63,7 +63,7 @@ class PExpr;
  */
 
 struct lgate {
-      lgate()
+      lgate(int =0)
       : parms(0), lineno(0)
       { range[0] = 0;
         range[1] = 0;
@@ -121,9 +121,9 @@ extern list<PWire*>* pform_make_udp_input_ports(list<string>*);
  */
 extern void pform_makegates(PGBuiltin::Type type,
 			    PExpr*delay,
-			    list<lgate>*gates);
+			    svector<lgate>*gates);
 
-extern void pform_make_modgates(const string&type, list<lgate>*gates);
+extern void pform_make_modgates(const string&type, svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
 extern void pform_make_pgassign(const string&lval, PExpr*rval);
@@ -141,6 +141,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.11  1999/05/06 04:37:17  steve
+ *  Get rid of list<lgate> types.
+ *
  * Revision 1.10  1999/05/06 04:09:28  steve
  *  Parse more constant expressions.
  *

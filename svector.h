@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: svector.h,v 1.2 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: svector.h,v 1.3 1999/05/06 04:37:17 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -35,7 +35,7 @@
 template <class TYPE> class svector {
 
     public:
-      svector(unsigned size) : nitems_(size), items_(new TYPE[size])
+      explicit svector(unsigned size) : nitems_(size), items_(new TYPE[size])
 	    { for (unsigned idx = 0 ;  idx < size ;  idx += 1)
 		  items_[idx] = 0;
 	    }
@@ -53,6 +53,13 @@ template <class TYPE> class svector {
 
 	      for (unsigned idx = 0 ;  idx < r.nitems_ ;  idx += 1)
 		    items_[l.nitems_+idx] = r[idx];
+	    }
+
+      svector(const svector<TYPE>&l, TYPE r)
+            : nitems_(l.nitems_ + 1), items_(new TYPE[nitems_])
+	    { for (unsigned idx = 0 ;  idx < l.nitems_ ;  idx += 1)
+		    items_[idx] = l[idx];
+	      items_[nitems_-1] = r;
 	    }
 
       ~svector() { delete[]items_; }
@@ -80,6 +87,9 @@ template <class TYPE> class svector {
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.3  1999/05/06 04:37:17  steve
+ *  Get rid of list<lgate> types.
+ *
  * Revision 1.2  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.21 1999/05/06 04:09:28 steve Exp $"
+#ident "$Id: parse.y,v 1.22 1999/05/06 04:37:17 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -38,7 +38,7 @@ extern void lex_end_table();
       list<PCase::Item*>*citems;
 
       lgate*gate;
-      list<lgate>*gates;
+      svector<lgate>*gates;
 
       PExpr*expr;
       list<PExpr*>*exprs;
@@ -446,14 +446,16 @@ gate_instance
 
 gate_instance_list
 	: gate_instance_list ',' gate_instance
-		{ list<lgate>*tmp = $1;
-		  tmp->push_back(*$3);
-		  delete $3;
-		  $$ = tmp;
+		{ svector<lgate>*tmp1 = $1;
+		  lgate*tmp2 = $3;
+		  svector<lgate>*out = new svector<lgate> (*tmp1, *tmp2);
+		  delete tmp1;
+		  delete tmp2;
+		  $$ = out;
 		}
 	| gate_instance
-		{ list<lgate>*tmp = new list<lgate>;
-		  tmp->push_back(*$1);
+		{ svector<lgate>*tmp = new svector<lgate>(1);
+		  (*tmp)[0] = *$1;
 		  delete $1;
 		  $$ = tmp;
 		}

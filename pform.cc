@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.13 1999/05/06 04:09:28 steve Exp $"
+#ident "$Id: pform.cc,v 1.14 1999/05/06 04:37:17 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -254,16 +254,13 @@ void pform_makegate(PGBuiltin::Type type,
 }
 
 void pform_makegates(PGBuiltin::Type type,
-		     PExpr*delay, list<lgate>*gates)
+		     PExpr*delay, svector<lgate>*gates)
 {
       unsigned long delay_val = delay? evaluate_delay(delay) : 0;
       delete delay;
 
-      while (! gates->empty()) {
-	    lgate cur = gates->front();
-	    gates->pop_front();
-
-	    pform_makegate(type, delay_val, cur);
+      for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 0) {
+	    pform_makegate(type, delay_val, (*gates)[idx]);
       }
 
       delete gates;
@@ -287,11 +284,10 @@ void pform_make_modgate(const string&type,
       cur_module->add_gate(cur);
 }
 
-void pform_make_modgates(const string&type, list<lgate>*gates)
+void pform_make_modgates(const string&type, svector<lgate>*gates)
 {
-      while (! gates->empty()) {
-	    lgate cur = gates->front();
-	    gates->pop_front();
+      for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
+	    lgate cur = (*gates)[idx];
 
 	    vector<PExpr*>wires (cur.parms->size());
 	    for (unsigned idx = 0 ;  idx < wires.size() ;  idx += 1) {
@@ -548,6 +544,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.14  1999/05/06 04:37:17  steve
+ *  Get rid of list<lgate> types.
+ *
  * Revision 1.13  1999/05/06 04:09:28  steve
  *  Parse more constant expressions.
  *
