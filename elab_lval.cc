@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.20 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.21 2002/11/02 01:10:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -277,6 +277,21 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
 					NetMemory*mem) const
 {
+      if (msb_ == 0) {
+	    cerr << get_line() << ": error: Assign to memory \""
+		 << mem->name() << "\" requires a word select index."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (msb_ && lsb_) {
+	    cerr << get_line() << ": error: Cannot use part select on "
+		 << "memory \"" << mem->name() << ".\"" << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       assert(msb_ && !lsb_);
 
       NetExpr*ix = msb_->elaborate_expr(des, scope);
@@ -299,6 +314,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.21  2002/11/02 01:10:49  steve
+ *  Detect memories without work index in l-value.
+ *
  * Revision 1.20  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
