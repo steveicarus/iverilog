@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.6 2001/06/29 01:20:20 steve Exp $"
+#ident "$Id: arith.cc,v 1.7 2001/06/29 01:21:48 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -114,7 +114,7 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 
       unsigned page = 0;
       unsigned pbit = 0;
-      unsigned carry = 0;
+      unsigned long carry = 0;
 
       sum_[0] = 0;
 
@@ -129,7 +129,7 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 	    }
 
 	      // Accumulate the sum of the input bits.
-	    unsigned tmp = 0;
+	    unsigned long tmp = 0;
 	    if (ival & 0x01)
 		  tmp += 1;
 	    if (ival & 0x04)
@@ -321,6 +321,9 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.7  2001/06/29 01:21:48  steve
+ *  Relax limit on width of structural sum.
+ *
  * Revision 1.6  2001/06/29 01:20:20  steve
  *  Relax limit on width of structural sum.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.4 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: arith.h,v 1.5 2001/06/29 01:20:20 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -63,8 +63,12 @@ class vvp_arith_sum  : public vvp_arith_ {
 
     public:
       explicit vvp_arith_sum(vvp_ipoint_t b, unsigned wid);
+      virtual ~vvp_arith_sum();
 
       void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private:
+      unsigned long*sum_;
 
     private: // not implemented
       vvp_arith_sum(const vvp_arith_sum&);
@@ -108,6 +112,9 @@ class vvp_cmp_gt  : public vvp_arith_ {
 };
 /*
  * $Log: arith.h,v $
+ * Revision 1.5  2001/06/29 01:20:20  steve
+ *  Relax limit on width of structural sum.
+ *
  * Revision 1.4  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
