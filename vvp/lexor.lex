@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.18 2001/05/20 00:46:12 steve Exp $"
+#ident "$Id: lexor.lex,v 1.19 2001/06/05 03:05:41 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -65,6 +65,7 @@
 
 
   /* These are some keywords that are recognized. */
+".arith/sum" { return K_ARITH_SUM; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
 ".functor"  { return K_FUNCTOR; }
@@ -140,6 +141,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.19  2001/06/05 03:05:41  steve
+ *  Add structural addition.
+ *
  * Revision 1.18  2001/05/20 00:46:12  steve
  *  Add support for system function calls.
  *

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.25 2001/05/09 02:53:25 steve Exp $
+ *  $Id: README.txt,v 1.26 2001/06/05 03:05:41 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -375,7 +375,7 @@ single symbol for the addressed bit. However, if there are several
 events of the same edge in an event OR expression, the compiler may
 combine up to 4 into a single event.
 
-If many more events need to be conbined together (for example due to
+If many more events need to be combined together (for example due to
 an event or expression in the Verilog) then this form can be used:
 
 	<label> .event/or <symbols_list>;
@@ -395,6 +395,26 @@ resolution function.
 	<label> .resolv tri,  <symbols_list>;
 	<label> .resolv tri0, <symbols_list>;
 	<label> .resolv tri1, <symbols_list>;
+
+
+STRUCTURAL ARITHMETIC STATEMENTS:
+
+The various Verilog arithmetic opeators (+-*/%) are available to
+structural contexts even though they do not fit into nice neat
+functors. These operators are not in general bitwise, so special
+measures are needed to make them work in a functor environment. We
+create special statement types for the various arithmetic operators.
+
+	<label> .arith/sum  <wid>, <symbols_list>;
+
+Addition is represented by the .arith/sum statement. This creates an
+array of functors based at the label. The width of the array is given
+by <wid>, and the <symbols_list> connects the inputs.
+
+The sum can add together up to 4 operands, specified in the
+<symbols_list> one bit at a time. All the bits of the first operand
+(lsb first) are listed, then the bits of the second, and so on. The
+number of symbols must be an even multiple of the width of the operator.
 
 
 THREAD STATEMENTS:

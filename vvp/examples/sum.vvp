@@ -1,0 +1,61 @@
+:vpi_module "system";
+
+; Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+;
+;    This source code is free software; you can redistribute it
+;    and/or modify it in source code form under the terms of the GNU
+;    General Public License as published by the Free Software
+;    Foundation; either version 2 of the License, or (at your option)
+;    any later version.
+;
+;    This program is distributed in the hope that it will be useful,
+;    but WITHOUT ANY WARRANTY; without even the implied warranty of
+;    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;    GNU General Public License for more details.
+;
+;    You should have received a copy of the GNU General Public License
+;    along with this program; if not, write to the Free Software
+;    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+
+; This example shows how to wire up a simple adder. The code below is
+; like what might be generated from the Verilog:
+;
+;    module main;
+;      reg [3:0] A, B;
+;      wire [3:0] Q = A + B;
+:
+:      initial begin
+;        A = 2;
+;        B = 3;
+;        #1 $display("%b  %b = %b", A, B, Q);
+;      end
+;    endmodule
+;
+; Notice the use of the .arith/sum statment, including the specification
+; of the width (4 bits) and the order that the bits of the operands are
+; passed to the statement.
+
+
+S_main .scope "main";
+
+A    .var	"A", 3, 0;
+B    .var	"B", 3, 0;
+
+add  .arith/sum	4, A[0], A[1], A[2], A[3], B[0], B[1], B[2], B[3];
+
+Q   .net	"Q", 3, 0, add[0], add[1], add[2], add[3];
+
+start	%set	A[0], 0;
+	%set	A[1], 1;
+	%set	A[2], 0;
+	%set	A[3], 0;
+	%set	B[0], 1;
+	%set	B[1], 1;
+	%set	B[2], 0;
+	%set	B[3], 0;
+
+	%delay	1;
+
+	%vpi_call "$display", "%b + %b == %b", A, B, Q;
+	%end;
+	.thread start;

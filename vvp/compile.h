@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.23 2001/05/20 00:46:12 steve Exp $"
+#ident "$Id: compile.h,v 1.24 2001/06/05 03:05:41 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -68,6 +68,12 @@ extern void compile_functor(char*label, char*type,
  */
 extern void compile_resolver(char*label, char*type,
 			     unsigned argc, struct symb_s*argv);
+
+/*
+ * This is called by the parser to make an adder.
+ */
+extern void compile_arith_sum(char*label, long width,
+			      unsigned argc, struct symb_s*argv);
 
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
@@ -182,6 +188,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.24  2001/06/05 03:05:41  steve
+ *  Add structural addition.
+ *
  * Revision 1.23  2001/05/20 00:46:12  steve
  *  Add support for system function calls.
  *

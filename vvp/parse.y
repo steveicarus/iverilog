@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.27 2001/05/20 00:46:12 steve Exp $"
+#ident "$Id: parse.y,v 1.28 2001/06/05 03:05:41 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -54,7 +54,8 @@ extern FILE*yyin;
 };
 
 
-%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_RESOLV K_SCOPE K_THREAD
+%token K_ARITH_SUM K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
+%token K_RESOLV K_SCOPE K_THREAD
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_vpi_call K_vpi_func K_disable K_fork
@@ -150,6 +151,14 @@ statement
 	| T_LABEL K_RESOLV T_SYMBOL ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_resolver($1, $3, obj.cnt, obj.vect);
+		}
+
+  /* Arithmetic statements generate functor arrays of a given width
+     that take like size input vectors. */
+
+	| T_LABEL K_ARITH_SUM T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_sum($1, $3, obj.cnt, obj.vect);
 		}
 
 
@@ -444,6 +453,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.28  2001/06/05 03:05:41  steve
+ *  Add structural addition.
+ *
  * Revision 1.27  2001/05/20 00:46:12  steve
  *  Add support for system function calls.
  *
