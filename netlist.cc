@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.75 1999/10/07 05:25:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.76 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -599,6 +599,18 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 	    items_[idx].guard->set_width(expr_->expr_width());
 }
 
+NetCaseCmp::NetCaseCmp(const string&n)
+: NetNode(n, 3)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(2).set_dir(Link::INPUT);
+}
+
+NetCaseCmp::~NetCaseCmp()
+{
+}
+
 NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 : expr_(ex), if_(i), else_(e)
 {
@@ -629,6 +641,16 @@ NetProc* NetCondit::if_clause()
 NetProc* NetCondit::else_clause()
 {
       return else_;
+}
+
+NetConst::NetConst(const string&n, verinum::V v)
+: NetNode(n, 1), value_(v)
+{
+      pin(0).set_dir(Link::OUTPUT);
+}
+
+NetConst::~NetConst()
+{
 }
 
 NetFuncDef::NetFuncDef(const string&n, const svector<NetNet*>&po)
@@ -1732,6 +1754,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.76  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.75  1999/10/07 05:25:34  steve
  *  Add non-const bit select in l-value of assignment.
  *

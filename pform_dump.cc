@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.44 1999/09/30 02:43:02 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.45 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 /*
@@ -132,6 +132,9 @@ void PEBinary::dump(ostream&out) const
 {
       out << "(" << *left_ << ")";
       switch (op_) {
+	  case 'a':
+	    out << "&&";
+	    break;
 	  case 'e':
 	    out << "==";
 	    break;
@@ -672,6 +675,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.45  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.44  1999/09/30 02:43:02  steve
  *  Elaborate ~^ and ~| operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.49 1999/10/08 02:00:35 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.50 1999/10/10 01:59:54 steve Exp $"
 #endif
 
 /*
@@ -150,6 +150,12 @@ void NetAssignNB::dump_node(ostream&o, unsigned ind) const
 void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetBUFZ: " << name() << endl;
+      dump_node_pins(o, ind+4);
+}
+
+void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "case compare === : " << name() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -789,6 +795,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.50  1999/10/10 01:59:54  steve
+ *  Structural case equals device.
+ *
  * Revision 1.49  1999/10/08 02:00:35  steve
  *  Fix dump of sase statements.
  *

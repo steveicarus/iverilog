@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.23 1999/09/22 16:57:23 steve Exp $"
+#ident "$Id: emit.cc,v 1.24 1999/10/10 01:59:54 steve Exp $"
 #endif
 
 /*
@@ -58,6 +58,11 @@ void NetAssign::emit_node(ostream&o, struct target_t*tgt) const
 void NetAssignNB::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_assign_nb(o, this);
+}
+
+void NetCaseCmp::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_case_cmp(o, this);
 }
 
 void NetConst::emit_node(ostream&o, struct target_t*tgt) const
@@ -352,6 +357,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.24  1999/10/10 01:59:54  steve
+ *  Structural case equals device.
+ *
  * Revision 1.23  1999/09/22 16:57:23  steve
  *  Catch parallel blocks in vvm emit.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.13 1999/10/09 19:24:36 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.14 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -347,6 +347,47 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
 };
 
 /*
+ * This gate has only 3 pins, the output at pin 0 and two inputs. The
+ * output is 1 or 0 if the two inputs are exactly equal or not.
+ */
+template <unsigned long DELAY> class vvm_eeq {
+
+    public:
+      explicit vvm_eeq(vvm_out_event::action_t o)
+      : output_(o) { }
+
+      void init(unsigned idx, vvm_bit_t val)
+	    { input_[idx-1] = val; }
+
+      void start(vvm_simulation*sim)
+	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
+	      if (DELAY > 0)
+		    sim->insert_event(DELAY, ev);
+	      else
+		    sim->active_event(ev);
+	    }
+
+      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
+	    { if (input_[idx-1] == val)
+		    return;
+	      input_[idx-1] = val;
+	      start(sim);
+	    }
+
+    private:
+
+      vvm_bit_t compute_() const
+	    { vvm_bit_t outval = V0;
+	      if (input_[0] == input_[1])
+		    outval = V1;
+	      return outval;
+	    }
+
+      vvm_bit_t input_[2];
+      vvm_out_event::action_t output_;
+};
+
+/*
  * A Sequential UDP has a more complex truth table, and handles
  * edges. Pin 0 is an output, and all the remaining pins are
  * input. The WIDTH is the number of input pins.
@@ -496,6 +537,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.14  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.13  1999/10/09 19:24:36  steve
  *  NOR device.
  *

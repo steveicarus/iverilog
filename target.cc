@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.20 1999/09/22 16:57:24 steve Exp $"
+#ident "$Id: target.cc,v 1.21 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -83,6 +83,12 @@ void target_t::net_assign_nb(ostream&os, const NetAssignNB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled non-blocking assignment node." << endl;
+}
+
+void target_t::net_case_cmp(ostream&os, const NetCaseCmp*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled case compare node." << endl;
 }
 
 void target_t::net_const(ostream&os, const NetConst*)
@@ -269,6 +275,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.21  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.20  1999/09/22 16:57:24  steve
  *  Catch parallel blocks in vvm emit.
  *

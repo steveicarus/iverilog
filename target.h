@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.19 1999/09/22 16:57:24 steve Exp $"
+#ident "$Id: target.h,v 1.20 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -74,6 +74,7 @@ struct target_t {
       virtual void udp(ostream&os,  const NetUDP*);
       virtual void net_assign(ostream&os, const NetAssign*);
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
+      virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
@@ -136,6 +137,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.20  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.19  1999/09/22 16:57:24  steve
  *  Catch parallel blocks in vvm emit.
  *

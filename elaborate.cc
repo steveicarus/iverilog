@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.115 1999/10/09 21:30:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.116 1999/10/10 01:59:54 steve Exp $"
 #endif
 
 /*
@@ -718,6 +718,76 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 		  des->add_node(gate);
 	    }
 	    des->add_signal(osig);
+	    break;
+
+	  case 'a': // && (logical AND)
+	    gate = new NetLogic(des->local_symbol(path), 3, NetLogic::AND);
+
+	      // The first OR gate returns 1 if the left value is true...
+	    if (lsig->pin_count() > 1) {
+		  gate_t = new NetLogic(des->local_symbol(path),
+					1+lsig->pin_count(), NetLogic::OR);
+		  for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
+			connect(gate_t->pin(idx+1), lsig->pin(idx));
+		  connect(gate->pin(1), gate_t->pin(0));
+		  des->add_node(gate_t);
+	    } else {
+		  connect(gate->pin(1), lsig->pin(0));
+	    }
+
+	      // The second OR gate returns 1 if the right value is true...
+	    if (rsig->pin_count() > 1) {
+		  gate_t = new NetLogic(des->local_symbol(path),
+					1+rsig->pin_count(), NetLogic::OR);
+		  for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
+			connect(gate_t->pin(idx+1), rsig->pin(idx));
+		  connect(gate->pin(2), gate_t->pin(0));
+		  des->add_node(gate_t);
+	    } else {
+		  connect(gate->pin(2), rsig->pin(0));
+	    }
+
+	      // The output is the AND of the two logic values.
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    connect(gate->pin(0), osig->pin(0));
+	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    des->add_node(gate);
+	    break;
+
+	  case 'E': // === (Case equals)
+
+	      // The comparison generates gates to bitwise compare
+	      // each pair, and AND all the comparison results.
+	    assert(lsig->pin_count() == rsig->pin_count());
+	    osig = new NetNet(des->local_symbol(path), NetNet::WIRE);
+	    osig->local_flag(true);
+	    gate = new NetLogic(des->local_symbol(path),
+				1+lsig->pin_count(),
+				NetLogic::AND);
+	    connect(gate->pin(0), osig->pin(0));
+	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		  gate_t = new NetCaseCmp(des->local_symbol(path));
+		  connect(gate_t->pin(1), lsig->pin(idx));
+		  connect(gate_t->pin(2), rsig->pin(idx));
+		  connect(gate_t->pin(0), gate->pin(idx+1));
+		  des->add_node(gate_t);
+
+		    // Attach a label to this intermediate wire
+		  NetNet*tmp = new NetNet(des->local_symbol(path),
+					  NetNet::WIRE);
+		  tmp->local_flag(true);
+		  connect(gate_t->pin(0), tmp->pin(0));
+		  des->add_signal(tmp);
+	    }
+	    des->add_signal(osig);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+	    des->add_node(gate);
 	    break;
 
 	  case 'e': // ==
@@ -2614,6 +2684,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.116  1999/10/10 01:59:54  steve
+ *  Structural case equals device.
+ *
  * Revision 1.115  1999/10/09 21:30:16  steve
  *  Support parameters in continuous assignments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.61 1999/10/08 02:00:48 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.62 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -55,6 +55,7 @@ class target_vvm : public target_t {
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
+      virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
@@ -1008,6 +1009,22 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
       delayed << "}" << endl;
 }
 
+void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
+{
+      os << "static void " << mangle(gate->name()) <<
+	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+
+      assert(gate->pin_count() == 3);
+      os << "static vvm_eeq" << "<" << gate->rise_time() << "> "
+	 << mangle(gate->name()) << "(&" << mangle(gate->name()) <<
+	    "_output_fun);" << endl;
+
+      emit_gate_outputfun_(gate);
+
+      start_code << "      " << mangle(gate->name()) <<
+	    ".start(&sim);" << endl;
+}
+
 /*
  * The NetConst is a synthetic device created to represent constant
  * values. I represent them in the output as a vvm_bufz object that
@@ -1727,6 +1744,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.62  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.61  1999/10/08 02:00:48  steve
  *  vvm supports unary | operator.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.78 1999/10/07 05:25:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.79 1999/10/10 01:59:55 steve Exp $"
 #endif
 
 /*
@@ -431,11 +431,33 @@ class NetBUFZ  : public NetNode {
       virtual void emit_node(ostream&, struct target_t*) const;
 };
 
+/*
+ * This node is used to represent case equality in combinational
+ * logic. Although this is not normally synthesizeable, it makes sense
+ * to support an abstract gate that can compare x and z.
+ *
+ * This pins are assigned as:
+ *
+ *     0   -- Output (always returns 0 or 1)
+ *     1   -- Input
+ *     2   -- Input
+ */
+class NetCaseCmp  : public NetNode {
+
+    public:
+      explicit NetCaseCmp(const string&n);
+      ~NetCaseCmp();
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+};
+
+
 class NetConst  : public NetNode {
 
     public:
-      explicit NetConst(const string&n, verinum::V v)
-      : NetNode(n, 1), value_(v) { pin(0).set_dir(Link::OUTPUT); }
+      explicit NetConst(const string&n, verinum::V v);
+      ~NetConst();
 
       verinum::V value() const { return value_; }
 
@@ -1711,6 +1733,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.79  1999/10/10 01:59:55  steve
+ *  Structural case equals device.
+ *
  * Revision 1.78  1999/10/07 05:25:34  steve
  *  Add non-const bit select in l-value of assignment.
  *
