@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.6 1999/01/31 18:15:55 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.7 1999/02/15 05:52:50 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -88,6 +88,41 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
 
       vvm_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
+};
+
+template <unsigned long DELAY> class vvm_bufif1 {
+
+    public:
+      explicit vvm_bufif1(vvm_out_event::action_t o)
+      : output_(o)
+	    { input_[0] = Vx;
+	      input_[1] = Vx;
+	    }
+
+      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
+	    { if (input_[idx-1] == val)
+		  return;
+	      input_[idx-1] = val;
+	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
+	      if (DELAY > 0)
+		    sim->insert_event(DELAY, ev);
+	      else
+		    sim->active_event(ev);
+	    }
+
+      void start(vvm_simulation*sim)
+	    {
+	    }
+
+    private:
+      vvm_bit_t input_[2];
+      vvm_out_event::action_t output_;
+
+      vvm_bit_t compute_() const
+	    { if (input_[1] != V1) return Vz;
+	      if (input_[0] == Vz) return Vx;
+	      return input_[0];
+	    }
 };
 
 template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
@@ -328,6 +363,9 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.7  1999/02/15 05:52:50  steve
+ *  Mangle that handles device instance numbers.
+ *
  * Revision 1.6  1999/01/31 18:15:55  steve
  *  Missing start methods.
  *
