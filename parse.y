@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.73 1999/09/30 02:43:02 steve Exp $"
+#ident "$Id: parse.y,v 1.74 1999/10/15 05:03:33 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -163,6 +163,9 @@ extern void lex_end_table();
 %nonassoc K_else
 
 %%
+
+  /* A degenerate source file can be completely empty. */
+main : source_file | ;
 
 source_file
 	: description
