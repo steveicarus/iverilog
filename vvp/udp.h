@@ -20,12 +20,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.h,v 1.4 2001/04/26 15:52:22 steve Exp $"
+#ident "$Id: udp.h,v 1.5 2001/04/28 20:09:05 steve Exp $"
 #endif
 
 #include "pointers.h"
 #include "functor.h"
-#include "udp.h"
 
 struct vvp_udp_s : public vvp_fobj_s
 {
@@ -42,6 +41,9 @@ unsigned char udp_propagate(vvp_ipoint_t);
 
 /*
  * $Log: udp.h,v $
+ * Revision 1.5  2001/04/28 20:09:05  steve
+ *  Excessive header include.
+ *
  * Revision 1.4  2001/04/26 15:52:22  steve
  *  Add the mode-42 functor concept to UDPs.
  *
