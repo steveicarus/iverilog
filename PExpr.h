@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.42 2000/09/07 22:38:13 steve Exp $"
+#ident "$Id: PExpr.h,v 1.43 2000/09/09 15:21:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -75,6 +75,10 @@ class PExpr : public LineInfo {
 	// restricted for use as l-values of continuous assignments.
       virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
 
+	// Expressions that can be in the l-value of procedural
+	// assignments can be elaborated with this method.
+      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
+
 	// This attempts to evaluate a constant expression, and return
 	// a verinum as a result. If the expression cannot be
 	// evaluated, return 0.
@@ -115,6 +119,7 @@ class PEConcat : public PExpr {
 				    Link::strength_t drive1) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
       virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
+      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
       virtual bool is_constant(Module*) const;
 
     private:
@@ -159,6 +164,9 @@ class PEIdent : public PExpr {
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
+
+	// Identifiers are also allowed as procedural assignment l-values.
+      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
 
 	// Structural r-values are OK.
       virtual NetNet* elaborate_net(Design*des, const string&path,
@@ -384,6 +392,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.43  2000/09/09 15:21:26  steve
+ *  move lval elaboration to PExpr virtual methods.
+ *
  * Revision 1.42  2000/09/07 22:38:13  steve
  *  Support unary + and - in constants.
  *

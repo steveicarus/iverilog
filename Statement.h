@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.28 2000/09/03 17:58:35 steve Exp $"
+#ident "$Id: Statement.h,v 1.29 2000/09/09 15:21:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -94,11 +94,6 @@ class PAssign_  : public Statement {
       const PExpr* rval() const  { return rval_; }
 
     protected:
-#if 0
-      NetNet*elaborate_lval(Design*, const string&path,
-			    unsigned&lsb, unsigned&msb,
-			    NetExpr*&mux) const;
-#endif
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;
 
       PDelays delay_;
@@ -458,6 +453,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.29  2000/09/09 15:21:26  steve
+ *  move lval elaboration to PExpr virtual methods.
+ *
  * Revision 1.28  2000/09/03 17:58:35  steve
  *  Change elaborate_lval to return NetAssign_ objects.
  *
