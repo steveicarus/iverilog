@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.32 2001/04/14 05:10:56 steve Exp $"
+#ident "$Id: compile.cc,v 1.33 2001/04/15 04:07:56 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -88,6 +88,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
+      { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { 0, of_NOOP, 0, {OA_NONE, OA_NONE, OA_NONE} }
 };
 
@@ -758,6 +759,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.33  2001/04/15 04:07:56  steve
+ *  Add support for behavioral xnor.
+ *
  * Revision 1.32  2001/04/14 05:10:56  steve
  *  support the .event/or statement.
  *

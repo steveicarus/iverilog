@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.11 2001/04/01 22:25:33 steve Exp $
+ *  $Id: opcodes.txt,v 1.12 2001/04/15 04:07:56 steve Exp $
  */
 
 
@@ -191,6 +191,17 @@ sensitive list for the addressed functor. The functor holds all the
 threads that await the functor. When the defined sort of event occurs
 on the functor, a thread schedule event is created for all the threads
 in its list and the list is cleared.
+
+* %xnor <dst>, <src>, <wid>
+
+This does a bitwise exclusive nor (~^) of the <src> and <dst> vector,
+and leaves the result in the <dst> vector. xnor is this:
+
+	0 xnor 0 --> 1
+	0 xnor 1 --> 0
+	1 xnor 0 --> 0
+	1 xnor 1 --> 1
+	otherwise    x
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

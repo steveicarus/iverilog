@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.24 2001/04/14 05:10:05 steve Exp $"
+#ident "$Id: vthread.cc,v 1.25 2001/04/15 04:07:56 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -690,6 +690,43 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 }
 
 
+bool of_XNOR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned idx1 = cp->bit_idx1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned lb = thr_get_bit(thr, idx1);
+	    unsigned rb = thr_get_bit(thr, idx2);
+
+	    if ((lb == 1) && (rb == 1)) {
+		  thr_put_bit(thr, idx1, 1);
+
+	    } else if ((lb == 0) && (rb == 0)) {
+		  thr_put_bit(thr, idx1, 1);
+
+	    } else if ((lb == 1) && (rb == 0)) {
+		  thr_put_bit(thr, idx1, 0);
+
+	    } else if ((lb == 0) && (rb == 1)) {
+		  thr_put_bit(thr, idx1, 0);
+
+	    } else {
+		  thr_put_bit(thr, idx1, 2);
+	    }
+
+	    idx1 += 1;
+	    if (idx2 >= 4)
+		  idx2 += 1;
+      }
+
+      return true;
+}
+
+
 bool of_ZOMBIE(vthread_t, vvp_code_t)
 {
       return false;
@@ -697,6 +734,9 @@ bool of_ZOMBIE(vthread_t, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.25  2001/04/15 04:07:56  steve
+ *  Add support for behavioral xnor.
+ *
  * Revision 1.24  2001/04/14 05:10:05  steve
  *  Initialize the waiting_for_event member.
  *

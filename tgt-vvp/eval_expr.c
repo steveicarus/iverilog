@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.14 2001/04/06 02:28:03 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.15 2001/04/15 04:07:56 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -259,6 +259,26 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
 
+	/* The result goes into the left operand, and that is returned
+	   as the result. The instructions do not allow the lv value
+	   to be a constant bit, so we either switch the operands, or
+	   copy the vector into a new area. */
+      if (lv.base < 4) {
+	    if (rv.base > 4) {
+		  struct vector_info tmp = lv;
+		  lv = rv;
+		  rv = tmp;
+
+	    } else {
+		  struct vector_info tmp;
+		  tmp.base = allocate_vector(lv.wid);
+		  tmp.wid = lv.wid;
+		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+			  tmp.base, lv.base, tmp.wid);
+		  lv = tmp;
+	    }
+      }
+
       switch (ivl_expr_opcode(exp)) {
 
 	  case '&':
@@ -268,6 +288,11 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t exp,
 
 	  case '|':
 	    fprintf(vvp_out, "   %%or %u, %u, %u;\n",
+		    lv.base, rv.base, wid);
+	    break;
+
+	  case 'X': /* exclusive nor (~^) */
+	    fprintf(vvp_out, "    %%xnor %u, %u, %u;\n",
 		    lv.base, rv.base, wid);
 	    break;
 
@@ -330,6 +355,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 
 	  case '&':
 	  case '|':
+	  case 'X':
 	    rv = draw_binary_expr_logic(exp, wid);
 	    break;
 
@@ -637,6 +663,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.15  2001/04/15 04:07:56  steve
+ *  Add support for behavioral xnor.
+ *
  * Revision 1.14  2001/04/06 02:28:03  steve
  *  Generate vvp code for functions with ports.
  *
