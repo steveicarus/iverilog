@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.3 2000/10/28 03:47:25 steve Exp $"
+#ident "$Id: main.c,v 1.4 2000/10/28 17:28:16 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -39,12 +39,6 @@
 
 #ifndef RDYNAMIC
 # define RDYNAMIC "-rdynamic"
-#endif
-
-#ifdef USE_LIBVPIP
-# define LIBVPIP "-lvpip"
-#else
-# define LIBVPIP ""
 #endif
 
 # include  "globals.h"
@@ -145,7 +139,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
       }
 
       sprintf(tmp, "%s -O " RDYNAMIC " -fno-exceptions -o %s -I%s "
-	      "-L%s %s.cc -lvvm " LIBVPIP "%s", CXX, opath, IVL_INC, IVL_LIB,
+	      "-L%s %s.cc -lvvm -lvpip %s", CXX, opath, IVL_INC, IVL_LIB,
 	      opath, DLLIB);
 
       if (verbose_flag)
@@ -456,6 +450,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.4  2000/10/28 17:28:16  steve
+ *  Split vpip for everybody.
+ *
  * Revision 1.3  2000/10/28 03:47:25  steve
  *  Use the conf file to generate the vvm ivl string.
  *

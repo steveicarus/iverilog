@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.37 2000/10/06 23:11:39 steve Exp $"
+#ident "$Id: Makefile.in,v 1.38 2000/10/28 17:27:59 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -60,27 +60,25 @@ vpi_mcd.o vpi_vlog_info.o
 
 
 ifeq (@CYGWIN@,yes)
-# In the DOS world, we need to split out the vpip object file.
+# In the DOS world, we make libvpip differently.
 all: libvvm.a libvpip.a vpip.dll
-
-libvvm.a: $O
-	rm -f $@
-	ar cvq $@ $O
 
 libvpip.a vpip.dll: $P vpip.def
 	$(CC) -shared -Wl,--enable-auto-image-base,--out-implib,libvpip.a -o vpip.dll vpip.def $P
 
 else
 
-all: libvvm.a
+all: libvvm.a libvpip.a
 
-libvvm.a: $O vpip.o
+libvpip.a: $P
+	ld -r -o vpip.o $P
 	rm -f $@
-	ar cvq $@ $O vpip.o
-
-vpip.o : $P
-	ld -r -o $@ $P	
+	ar cvq $@ vpip.o
 endif
+
+libvvm.a: $O
+	rm -f $@
+	ar cvq $@ $O
 
 %.o: %.cc
 	@[ -d dep ] || mkdir dep
@@ -98,6 +96,7 @@ clean:
 
 install:: all installdirs \
 	$(libdir)/libvvm.a \
+	$(libdir)/libvpip.a \
 	$(includedir)/vvm.h \
 	$(includedir)/vpi_priv.h \
 	$(includedir)/vvm_func.h \
@@ -110,16 +109,16 @@ install:: all installdirs \
 $(libdir)/libvvm.a: ./libvvm.a
 	$(INSTALL_DATA) ./libvvm.a $(libdir)/libvvm.a
 
-ifeq (@CYGWIN@,yes)
-install :: $(libdir)/libvpip.a \
-	$(bindir)/vpip.dll
-
 $(libdir)/libvpip.a: ./libvpip.a
 	$(INSTALL_DATA) ./libvpip.a $(libdir)/libvpip.a
+
+ifeq (@CYGWIN@,yes)
+install :: $(bindir)/vpip.dll
 
 $(bindir)/vpip.dll: ./vpip.dll
 	$(INSTALL_PROGRAM) ./vpip.dll $(bindir)/vpip.dll
 	$(STRIP) $(bindir)/vpip.dll
+
 endif
 
 $(includedir)/vvm.h: $(srcdir)/vvm.h
@@ -149,8 +148,9 @@ $(includedir)/vpi_priv.h: $(srcdir)/vpi_priv.h
 installdirs: mkinstalldirs
 	$(srcdir)/mkinstalldirs $(includedir) $(libdir)
 
-uninstall:
+uninstall::
 	rm -f $(libdir)/libvvm.a
+	rm -f $(libdir)/libvpip.a
 	rm -f $(includedir)/vvm.h
 	rm -f $(includedir)/vvm_calltf.h
 	rm -f $(includedir)/vvm_func.h
@@ -160,5 +160,9 @@ uninstall:
 	rm -f $(includedir)/vvm_thread.h
 	rm -f $(includedir)/vpi_priv.h
 
+ifeq (@CYGWIN@,yes)
+uninstall::
+	rm -f $(bindir)/vpip.dll
+endif
 
 -include $(patsubst %.o, dep/%.d, $O $P)

@@ -40,7 +40,6 @@ PICFLAG=-fPIC
 
 if test ! -z "$CYGWIN" ; then
   PICFLAG=
-  AC_DEFINE(USE_LIBVPIP)
 fi
 
 AC_SUBST(CYGWIN)
