@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.3 2003/03/30 03:43:44 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.4 2003/03/31 00:04:21 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -999,144 +999,125 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
 	    return;
       }
 
+	/* Handle the case where the device is two slices
+	   wide. In this case, we can use a LUT4 to do all
+	   the calculation. Use this truth table:
+
+	      Q   AA BB
+	      --+------
+	      1 | 00 00
+	      0 | 00 01
+	      0 | 00 10
+	      0 | 00 11
+	      1 | 01 00
+	      1 | 01 01
+	      0 | 01 10
+	      0 | 01 11
+	      1 | 10 00
+	      1 | 10 01
+	      1 | 10 10
+	      0 | 10 11
+	      1 | 11 xx
+
+	   The I3-I0 inputs are A1 A0 B1 B0 in that order. */
+
+      check_cell_lut4();
+
+      lut = edif_cellref_create(edf, cell_lut4);
+      edif_cellref_pstring(lut, "INIT", "F731");
+
+      jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 0));
+      edif_add_to_joint(jnt, lut, LUT_I2);
+
+      jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 0));
+      edif_add_to_joint(jnt, lut, LUT_I0);
+
+      jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 1));
+      edif_add_to_joint(jnt, lut, LUT_I3);
+
+      jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 1));
+      edif_add_to_joint(jnt, lut, LUT_I1);
+
+	/* There are only two slices, so this is all we need. */
       if (ivl_lpm_width(net) == 2) {
-
-	      /* Handle the case where the device is two slices
-		 wide. In this case, we can use a LUT4 to do all
-		 the calculation. Use this truth table:
-
-		 Q   AA BB
-		 --+------
-		 1 | 00 00
-		 0 | 00 01
-		 0 | 00 10
-		 0 | 00 11
-		 1 | 01 00
-		 1 | 01 01
-		 0 | 01 10
-		 0 | 01 11
-		 1 | 10 00
-		 1 | 10 01
-		 1 | 10 10
-		 0 | 10 11
-		 1 | 11 xx
-
-	        The I3-I0 inputs are A1 A0 B1 B0 in that order. */
-
-	    check_cell_lut4();
-
-	    lut = edif_cellref_create(edf, cell_lut4);
-	    edif_cellref_pstring(lut, "INIT", "F731");
-
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
 	    edif_add_to_joint(jnt, lut, LUT_O);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 0));
-	    edif_add_to_joint(jnt, lut, LUT_I2);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 0));
-	    edif_add_to_joint(jnt, lut, LUT_I0);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, 1));
-	    edif_add_to_joint(jnt, lut, LUT_I3);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, 1));
-	    edif_add_to_joint(jnt, lut, LUT_I1);
 	    return;
       }
 
-	/* The general case is more complicated, but we can take
-	   advantage of the MULTAND and MUXCY devices to pack two bit
-	   slices of input into each LUT4 device. The logic works like
-	   this:
+	/* The general case requires that we make the >= comparator
+	   from slices. This is an iterative design. Each slice has
+	   the truth table:
 
-	   The goal is to calculate:
+	      An Bn | A >= B
+	      ------+-------
+	      0  0  |   CI
+	      0  1  |   0
+	      1  0  |   1
+	      1  1  |   CI
 
-	      A >= B.
+	   The CI for each slice is the output of the compare of the
+	   next less significant bits. We get this truth table by
+	   connecting a LUT2 to the S input of a MUXCY. When the S
+	   input is (1), it propagates its CI. This suggests that the
+	   init value for the LUT be "9" (XNOR).
 
-	   This is the same as the expression:
+	   When the MUXCY S input is 0, it propagates a local
+	   input. We connect to that input An, and we get the desired
+	   and complete truth table for a slice.
 
-	      ~(A < B)
+	   This iterative definition needs to terminate at the least
+	   significant bits. In fact, we have a non-iterative was to
+	   deal with the two least significant slices. We take the
+	   output of the LUT4 device for the least significant bits,
+	   and use that to generate the initial CI for the chain. */
 
-	   so the problem is changed to calculating A < B an inverting
-	   the result. In fact, A<B can be further transformed to the
-	   expression:
+      check_cell_lut2();
+      check_cell_muxcy();
+      check_cell_muxcy_l();
 
-	      B-A > 0
+      muxcy_prev = edif_cellref_create(edf, cell_muxcy_l);
+      jnt = edif_joint_create(edf);
 
-	   This can in fact be implemented using carry chain
-	   arithmetic. Each bit slice of a normal subtractor uses a
-	   LUT2, a MUXCY and an XORCY. However, since we do not care
-	   about the result of the subtract (only whether it
-	   overflows) then we can skip the XORCY.
+      edif_add_to_joint(jnt, lut, LUT_O);
+      edif_add_to_joint(jnt, muxcy_prev, MUXCY_S);
+      { edif_cellref_t p0 = edif_cellref_create(edf, cell_0);
+        edif_cellref_t p1 = edif_cellref_create(edf, cell_0);
+	jnt = edif_joint_create(edf);
+	edif_add_to_joint(jnt, p0, 0);
+	edif_add_to_joint(jnt, muxcy_prev, MUXCY_DI);
+	jnt = edif_joint_create(edf);
+	edif_add_to_joint(jnt, p1, 0);
+	edif_add_to_joint(jnt, muxcy_prev, MUXCY_CI);
+      }
 
-	   Furthermore, pairs of LUT2 and MUXCY devices can be reduced
-	   to a single LUT4, MUXCY and MULTAND device. */
+      for (idx = 2 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    edif_cellref_t muxcy;
 
-	/* For now, only support even widths. */
-      assert(ivl_lpm_width(net)%2 == 0);
-
-      muxcy_prev = 0;
-      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 2) {
-	    edif_cellref_t muxcy, multand;
-
-	    check_cell_lut4();
-	    check_cell_muxcy();
-	    check_cell_mult_and();
-
-	    lut = edif_cellref_create(edf, cell_lut4);
+	    lut = edif_cellref_create(edf, cell_lut2);
 	    muxcy = edif_cellref_create(edf, cell_muxcy);
-	    multand = edif_cellref_create(edf, cell_mult_and);
-	    edif_cellref_pstring(lut, "INIT", "8421");
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, idx+0));
-	    edif_add_to_joint(jnt, lut, LUT_I2);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, idx+1));
-	    edif_add_to_joint(jnt, lut, LUT_I3);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, idx+0));
-	    edif_add_to_joint(jnt, lut, LUT_I0);
-	    edif_add_to_joint(jnt, multand, MULT_AND_I0);
-
-	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, idx+1));
-	    edif_add_to_joint(jnt, lut, LUT_I1);
-	    edif_add_to_joint(jnt, multand, MULT_AND_I1);
+	    edif_cellref_pstring(lut, "INIT", "9");
 
 	    jnt = edif_joint_create(edf);
-	    edif_add_to_joint(jnt, lut, LUT_O);
+	    edif_add_to_joint(jnt, lut,   LUT_O);
 	    edif_add_to_joint(jnt, muxcy, MUXCY_S);
 
 	    jnt = edif_joint_create(edf);
-	    edif_add_to_joint(jnt, multand, MULT_AND_LO);
-	    edif_add_to_joint(jnt, muxcy,   MUXCY_DI);
+	    edif_add_to_joint(jnt, muxcy, MUXCY_CI);
+	    edif_add_to_joint(jnt, muxcy_prev, MUXCY_O);
 
-	    if (idx == 0) {
-		  muxcy_prev = edif_cellref_create(edf, cell_1);
-		  jnt = edif_joint_create(edf);
-		  edif_add_to_joint(jnt, muxcy_prev, 0);
-		  edif_add_to_joint(jnt, muxcy, MUXCY_CI);
-	    } else {
-		  jnt = edif_joint_create(edf);
-		  edif_add_to_joint(jnt, muxcy_prev, MUXCY_O);
-		  edif_add_to_joint(jnt, muxcy, MUXCY_CI);
-	    }
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data(net, idx));
+	    edif_add_to_joint(jnt, lut, LUT_I0);
+	    edif_add_to_joint(jnt, muxcy, MUXCY_DI);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, idx));
+	    edif_add_to_joint(jnt, lut, LUT_I1);
 
 	    muxcy_prev = muxcy;
       }
 
-	/* At this point, muxcy_prev[MUXCY_O] in the truth of the
-	   expression B-A > 0. Connect an inverter to this and we get
-	   our desired result. */
-
-      check_cell_inv();
-      lut = edif_cellref_create(edf, cell_inv);
-      jnt = edif_joint_create(edf);
-      edif_add_to_joint(jnt, muxcy_prev, MUXCY_O);
-      edif_add_to_joint(jnt, lut, BUF_I);
-
       jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, 0));
-      edif_add_to_joint(jnt, lut, BUF_O);
+      edif_add_to_joint(jnt, muxcy_prev, MUXCY_O);
 }
 
 const struct device_s d_virtex2_edif = {
@@ -1158,6 +1139,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.4  2003/03/31 00:04:21  steve
+ *  Proper sliced >= comparator.
+ *
  * Revision 1.3  2003/03/30 03:43:44  steve
  *  Handle wide ports of macros.
  *
