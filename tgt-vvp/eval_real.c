@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.1 2003/01/26 21:16:00 steve Exp $"
+#ident "$Id: eval_real.c,v 1.2 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 /*
@@ -139,6 +139,19 @@ static int draw_realnum_real(ivl_expr_t exp)
       return res;
 }
 
+static int draw_sfunc_real(ivl_expr_t exp)
+{
+      int res;
+      assert(ivl_expr_parms(exp) == 0);
+      assert(ivl_expr_value(exp) == IVL_VT_REAL);
+
+      res = allocate_word();
+      fprintf(vvp_out, "    %%vpi_func/r \"%s\", %d;\n",
+	      ivl_expr_name(exp), res);
+
+      return res;
+}
+
 /*
  * The real value of a signal is the integer value of a signal
  * converted to real.
@@ -178,6 +191,10 @@ int draw_eval_real(ivl_expr_t exp)
 	    res = draw_variable_real(exp);
 	    break;
 
+	  case IVL_EX_SFUNC:
+	    res = draw_sfunc_real(exp);
+	    break;
+
 	  case IVL_EX_SIGNAL:
 	    res = draw_signal_real(exp);
 	    break;
@@ -194,6 +211,10 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.2  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.1  2003/01/26 21:16:00  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

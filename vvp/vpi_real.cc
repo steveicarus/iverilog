@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.1 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.2 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -39,6 +39,7 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
+      static char buf[64];
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
 
       switch (vp->format) {
@@ -47,6 +48,11 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiRealVal:
 	    vp->value.real = rfp->value;
 	    break;
+	  case vpiDecStrVal:
+	    sprintf(buf, "%0.0f", rfp->value);
+	    vp->value.str = buf;
+	    break;
+
 	  default:
 	    fprintf(stderr, "ERROR: Unsupported format code: %d\n",
 		    vp->format);
@@ -100,6 +106,10 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.2  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.1  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.149 2003/01/26 18:16:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.150 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -439,6 +439,12 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
       }
 
       if (strcmp(label, "$stime") == 0) {
+	    *handle = vpip_sim_time(vpip_peek_current_scope());
+	    free(label);
+	    return;
+      }
+
+      if (strcmp(label, "$realtime") == 0) {
 	    *handle = vpip_sim_time(vpip_peek_current_scope());
 	    free(label);
 	    return;
@@ -1409,7 +1415,7 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 }
 
 void compile_vpi_func_call(char*label, char*name,
-			   unsigned vbit, unsigned vwid,
+			   unsigned vbit, int vwid,
 			   unsigned argc, vpiHandle*argv)
 {
       if (label) 
@@ -1507,6 +1513,10 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.150  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.149  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.47 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: compile.h,v 1.48 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -224,8 +224,12 @@ extern void compile_disable(char*label, struct symb_s symb);
 extern void compile_vpi_call(char*label, char*name,
 			     unsigned argc, vpiHandle*argv);
 
+/* Compile a function call. The vbit and vwid encode the return
+   type. If the vwid >0, the return type is a vector. If the vwid is
+   <0, the return type is -vpiRealConst or some other constant subtype
+   code that represents the function type. */
 extern void compile_vpi_func_call(char*label, char*name,
-				  unsigned vbit, unsigned vwid,
+				  unsigned vbit, int vwid,
 				  unsigned argc, vpiHandle*argv);
 
 extern void compile_fork(char*label, struct symb_s targ_s,
@@ -257,6 +261,10 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.48  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.47  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

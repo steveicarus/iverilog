@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.5 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: sys_time.c,v 1.6 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,6 +89,49 @@ static int sys_time_calltf(char*name)
       return 0;
 }
 
+static int sys_realtime_calltf(char*name)
+{
+      s_vpi_value val;
+      s_vpi_time  now;
+      vpiHandle call_handle;
+      vpiHandle mod;
+      int units, prec;
+      double scale;
+
+      call_handle = vpi_handle(vpiSysTfCall, 0);
+      assert(call_handle);
+
+      mod = module_of_function(call_handle);
+
+      now.type = vpiSimTime;
+      vpi_get_time(0, &now);
+
+	/* All the variants but $simtime return the time in units of
+	   the local scope. The $simtime function returns the
+	   simulation time. */
+      if (strcmp(name, "$simtime") == 0)
+	    units = vpi_get(vpiTimePrecision, 0);
+      else
+	    units = vpi_get(vpiTimeUnit, mod);
+
+      prec  = vpi_get(vpiTimePrecision, 0);
+      scale = 1;
+      while (units > prec) {
+	    scale *= 10;
+	    units -= 1;
+      }
+
+      val.format = vpiRealVal;
+      val.value.real = now.low;
+      assert(now.high == 0);
+
+      val.value.real /= scale;
+
+      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+
+      return 0;
+}
+
 void sys_time_register()
 {
       s_vpi_systf_data tf_data;
@@ -99,6 +142,14 @@ void sys_time_register()
       tf_data.compiletf = 0;
       tf_data.sizetf    = sys_time_sizetf;
       tf_data.user_data = "$time";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.tfname    = "$realtime";
+      tf_data.calltf    = sys_realtime_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$realtime";
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysFunc;
@@ -120,6 +171,10 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.6  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.5  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

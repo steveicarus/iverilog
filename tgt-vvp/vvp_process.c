@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.77 2003/01/26 21:16:00 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.78 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1313,9 +1313,11 @@ static int show_system_task_call(ivl_statement_t net)
 		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
 			fprintf(vvp_out, ", $time");
 		  else if (strcmp("$stime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $time");
+			fprintf(vvp_out, ", $stime");
+		  else if (strcmp("$realtime", ivl_expr_name(expr)) == 0)
+			fprintf(vvp_out, ", $realtime");
 		  else
-			fprintf(vvp_out, ", ?");
+			fprintf(vvp_out, ", ?%s?", ivl_expr_name(expr));
 		  continue;
 		  
 		case IVL_EX_MEMORY:
@@ -1563,6 +1565,10 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.78  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.77  2003/01/26 21:16:00  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

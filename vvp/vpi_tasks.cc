@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.18 2003/01/09 04:09:44 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.19 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 /*
@@ -118,7 +118,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
 	    
 	  case vpiIntVal: {
 		long val = vp->value.integer;
-		for (unsigned idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
+		for (int idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
 		      vthread_put_bit(vpip_current_vthread,
 				      rfp->vbit+idx, val&1);
 		      val >>= 1;
@@ -150,7 +150,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
 
 		unsigned long aval = vp->value.vector->aval;
 		unsigned long bval = vp->value.vector->bval;
-		for (unsigned idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
+		for (int idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
 		      int bit = (aval&1) | (((bval^aval)<<1)&2);
 
 		      vthread_put_bit(vpip_current_vthread,
@@ -169,6 +169,34 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
       return 0;
 }
 
+static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp,
+				   p_vpi_time t, int flags)
+{
+      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+
+	/* delays are not allowed. */
+      assert(flags == vpiNoDelay);
+	/* Make sure this is a real valued function. */
+      assert(rfp->vwid == -vpiRealConst);
+
+      double val = 0.0;
+
+      switch (vp->format) {
+
+	  case vpiRealVal:
+	    val = vp->value.real;
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      vthread_put_real(vpip_current_vthread, rfp->vbit, val);
+      return 0;
+}
+
 
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
@@ -176,6 +204,16 @@ static const struct __vpirt vpip_sysfunc_rt = {
       0,
       0,
       sysfunc_put_value,
+      systask_handle,
+      systask_iter
+};
+
+static const struct __vpirt vpip_sysfunc_real_rt = {
+      vpiSysFuncCall,
+      0,
+      0,
+      0,
+      sysfunc_put_real_value,
       systask_handle,
       systask_iter
 };
@@ -225,7 +263,7 @@ static struct __vpiUserSystf* vpip_find_systf(const char*name)
  * describes the call, and return it. The %vpi_call instruction will
  * store this handle for when it is executed.
  */
-vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
+vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 			      unsigned argc, vpiHandle*argv)
 {
       struct __vpiUserSystf*defn = vpip_find_systf(name);
@@ -237,7 +275,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
 
       switch (defn->info.type) {
 	  case vpiSysTask:
-	    if (vwid > 0) {
+	    if (vwid != 0) {
 		  fprintf(stderr, "%s: This is a system Task, "
 			  "you cannot call it as a Function\n", name);
 		  return 0;
@@ -251,7 +289,6 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
 			  "you cannot call it as a Task\n", name);
 		  return 0;
 	    }
-	    assert(vwid > 0);
 	    break;
 
 	  default:
@@ -266,7 +303,19 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
 	    break;
 	    
 	  case vpiSysFunc:
-	    obj->base.vpi_type = &vpip_sysfunc_rt;
+	    if (vwid > 0) {
+		  obj->base.vpi_type = &vpip_sysfunc_rt;
+
+	    } else switch (vwid) {
+
+		case -vpiRealConst:
+		  obj->base.vpi_type = &vpip_sysfunc_real_rt;
+		  break;
+
+		default:
+		  assert(0);
+		  obj->base.vpi_type = &vpip_sysfunc_rt;
+	    }
 	    break;
       }
 
@@ -365,6 +414,10 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.19  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.18  2003/01/09 04:09:44  steve
  *  Add vpi_put_userdata
  *

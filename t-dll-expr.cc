@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.30 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.31 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -328,7 +328,18 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_SFUNC;
-      expr->value_= IVL_VT_VECTOR;
+      switch (net->expr_type()) {
+	  case NetExpr::ET_VECTOR:
+	    expr->value_= IVL_VT_VECTOR;
+	    break;
+	  case NetExpr::ET_REAL:
+	    expr->value_= IVL_VT_REAL;
+	    break;
+	  case NetExpr::ET_VOID:
+	    assert(0);
+	    expr->value_= IVL_VT_VECTOR;
+	    break;
+      }
       expr->width_= net->expr_width();
       expr->u_.sfunc_.name_ = strdup(net->name());
 
@@ -550,6 +561,10 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.31  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.30  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.44 2003/01/26 18:16:22 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.45 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -248,7 +248,8 @@ struct __vpiSysTaskCall {
 	/* Support for vpi_get_userdata. */
       void*userdata;
 	/* These represent where in the vthread to put the return value. */
-      unsigned short vbit, vwid;
+      unsigned short vbit;
+      signed short   vwid;
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -321,7 +322,7 @@ extern unsigned vpip_module_path_cnt;
  * not be released by the caller.
  */
 extern vpiHandle vpip_build_vpi_call(const char*name,
-				     unsigned vbit, unsigned vwid,
+				     unsigned vbit, int vwid,
 				     unsigned argc,
 				     vpiHandle*argv);
 
@@ -392,6 +393,10 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.45  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.44  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.

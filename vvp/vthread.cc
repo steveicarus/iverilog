@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.98 2003/01/26 18:16:22 steve Exp $"
+#ident "$Id: vthread.cc,v 1.99 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -185,6 +185,11 @@ void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
 double vthread_get_real(struct vthread_s*thr, unsigned addr)
 {
       return thr->words[addr].w_real;
+}
+
+void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
+{
+      thr->words[addr].w_real = val;
 }
 
 static unsigned long* vector_to_array(struct vthread_s*thr,
@@ -2603,6 +2608,10 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.99  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.98  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.

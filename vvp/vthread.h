@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.h,v 1.9 2003/01/26 18:16:22 steve Exp $"
+#ident "$Id: vthread.h,v 1.10 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 /*
@@ -72,9 +72,14 @@ extern unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr);
 extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit);
 
 extern double vthread_get_real(struct vthread_s*thr, unsigned addr);
+extern void vthread_put_real(struct vthread_s*thr, unsigned addr, double val);
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.10  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.9  2003/01/26 18:16:22  steve
  *  Add %cvt/ir and %cvt/ri instructions, and support
  *  real values passed as arguments to VPI tasks.

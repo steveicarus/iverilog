@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.49 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: parse.y,v 1.50 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -64,7 +64,8 @@ extern FILE*yyin;
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
 %token K_FORCE  K_WORD
-%token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_disable K_fork
+%token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_vpi_func_r
+%token K_disable K_fork
 %token K_vpi_module K_vpi_time_precision
 
 %token <text> T_INSTR
@@ -276,6 +277,10 @@ statement
 	| label_opt K_vpi_func T_STRING ',' 
 	  T_NUMBER ',' T_NUMBER argument_opt ';'
 		{ compile_vpi_func_call($1, $3, $5, $7, $8.argc, $8.argv); }
+
+	| label_opt K_vpi_func_r T_STRING ',' T_NUMBER argument_opt ';'
+		{ compile_vpi_func_call($1, $3, $5, -vpiRealConst,
+					$6.argc, $6.argv); }
 
   /* %disable statements are instructions that takes a scope reference
      as an operand. It therefore is parsed uniquely. */
@@ -564,6 +569,10 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.50  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.49  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

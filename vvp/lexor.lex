@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.36 2003/01/25 23:48:06 steve Exp $"
+#ident "$Id: lexor.lex,v 1.37 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -120,6 +120,7 @@
 
 "%vpi_call" { return K_vpi_call; }
 "%vpi_func" { return K_vpi_func; }
+"%vpi_func/r" { return K_vpi_func_r; }
 "%disable"  { return K_disable; }
 "%fork"     { return K_fork; }
 
@@ -175,6 +176,10 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.37  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.36  2003/01/25 23:48:06  steve
  *  Add thread word array, and add the instructions,
  *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.

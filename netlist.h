@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.272 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: netlist.h,v 1.273 2003/01/27 00:14:37 steve Exp $"
 #endif
 
 /*
@@ -2640,6 +2640,7 @@ class NetESFunc  : public NetExpr {
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
 
+      virtual TYPE expr_type() const;
       virtual NexusSet* nex_input();
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
@@ -3190,6 +3191,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.273  2003/01/27 00:14:37  steve
+ *  Support in various contexts the $realtime
+ *  system task.
+ *
  * Revision 1.272  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
