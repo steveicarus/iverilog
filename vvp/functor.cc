@@ -17,17 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.31 2001/11/04 05:03:21 steve Exp $"
+#ident "$Id: functor.cc,v 1.32 2001/11/06 03:07:22 steve Exp $"
 #endif
 
 # include  "functor.h"
-# include  "schedule.h"
-# include  "vthread.h"
-# include  "vpi_priv.h"
 # include  "debug.h"
 # include  <assert.h>
 # include  <string.h>
-# include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -107,59 +103,33 @@ void functor_define(vvp_ipoint_t point, functor_t obj)
       functor_list[index1][index2] = obj;
 }
 
-void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
+
+functor_s::functor_s()
 {
-      put(ptr, v);
-
-	/* Locate the new output value in the table. */
-      unsigned char val = table[ival >> 2];
-      val >>= 2 * (ival&0x03);
-      val &= 0x03;
-
-      put_oval(ptr, push, val);
+      out = 0;
+      port[0] = 0;
+      port[1] = 0;
+      port[2] = 0;
+      port[3] = 0;
+      ival = 0xaa;
+      oval = 2;
+      odrive0 = 6;
+      odrive1 = 6;
+      ostr = StX;
+      inhibit = 0;
+#if defined(WITH_DEBUG)
+      breakpoint = 0;
+#endif
 }
 
-/*
- * An event functor is a probe of some sort that is looking for an edge
- * of some specified type on any of its inputs. If it finds the right
- * kind of edge, then it awakens all the threads that are waiting on
- * this functor *and* it schedules an assign for any output it might
- * have. The latter is to support wider event/or then a single functor
- * can support.
- */
-
-void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
+functor_s::~functor_s()
 {
-      old_ival = ival;
-      put(ptr, val);
-	/* Only go through the effort if there is someone interested
-	   in the results... */
-      if (threads || out) {
-
-	    bool edge_p = true;
-
-	    if (edge) {
-		  
-		  unsigned pp = ipoint_port(ptr);
-		  
-		  unsigned oval = (old_ival >> 2*pp) & 3;
-		  unsigned nval = (ival     >> 2*pp) & 3;
-		  
-		  unsigned val = (oval << 2) | nval;
-		  edge_p = ((edge>>val) & 1) != 0;
-	    }
-
-	    if (edge_p) {
-		  vthread_t tmp = threads;
-		  threads = 0;
-		  vthread_schedule_list(tmp);
-		  
-		  if (out)
-			// only one output?  Why not propagate?
-			schedule_assign(out, 0, 0);
-	    }
-      }
 }
+
+//          Special infrastructure functor types
+
+extra_outputs_functor_s::~extra_outputs_functor_s()
+{}
 
 void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push, 
 				  unsigned val, unsigned)
@@ -170,12 +140,18 @@ void extra_outputs_functor_s::set(vvp_ipoint_t i, bool push,
       base->set(base_, push, val);
 }
 
+extra_ports_functor_s::~extra_ports_functor_s()
+{}
+
 void extra_ports_functor_s::set(vvp_ipoint_t i, bool push, 
 			       unsigned val, unsigned str)
 {
       functor_t base = functor_index(base_);
       base->set(i, push, val, str);
 }
+
+extra_inputs_functor_s::~extra_inputs_functor_s()
+{}
 
 void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push, 
 				 unsigned val, unsigned)
@@ -186,9 +162,14 @@ void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
       base->set(ipoint_make(out,0), push, val);
 }
 
+edge_inputs_functor_s::~edge_inputs_functor_s()
+{}
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.32  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.31  2001/11/04 05:03:21  steve
  *  MacOSX 10.1 updates.
  *

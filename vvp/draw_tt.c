@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.10 2001/10/09 02:28:17 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.11 2001/11/06 03:07:22 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -594,7 +594,7 @@ static void draw_oct_table()
 
 main()
 {
-      printf("# include  \"functor.h\"\n");
+      printf("# include  \"logic.h\"\n");
       draw_AND();
       draw_BUF();
       draw_BUFIF0();
@@ -616,6 +616,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.11  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.10  2001/10/09 02:28:17  steve
  *  Add the PMOS and NMOS functor types.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.36 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: compile.h,v 1.37 2001/11/06 03:07:22 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -38,6 +38,18 @@
 extern void compile_init(void);
 
 extern void compile_cleanup(void);
+
+/*
+ *  Connect a list of symbols to a contiguous set of ipoints.
+ *  Constants C<?> are handled by setting the ival of the ipoint.
+ */
+extern void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv);
+
+/*
+ *  Add a functor to the symbol table
+ */
+extern void define_functor_symbol(const char*label, vvp_ipoint_t ipt);
+
 
 /*
  * This is a count of errors encountered during compilation. If this
@@ -208,6 +220,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.37  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.36  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

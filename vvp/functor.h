@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.36 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: functor.h,v 1.37 2001/11/06 03:07:22 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -32,11 +32,6 @@
 extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
 
 /*
- *
- * The major mode is selected by the mode parameter.
- *
- * MODE 0: TABLE MODE FUNCTORS
- *
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
  * select the port of the referenced functor, and the remaining 30
  * index the functor itself. All together, the 32 bits can completely
@@ -55,22 +50,9 @@ extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
  *	1'bx  : 10
  *	1'bz  : 11
  *
- * The function of the functor is defined by the table/event
- * union. Normally, the truth table is the behavior and the functor
- * output value is picked from the lookup table that the table pointer
- * points to.
- *
- * MODE 42: LIFE, THE UNIVERSE AND EVERYTHING ELSE
- *
- * These functors are and escape for all other behaviors. This mode
- * supports arbitrary complex behavior by replacing the truth table
- * with a struct vvp_fobj_s pointer. This abstract class has virtual
- * methods for receiving and retrieving values. See the vvp_fobj_s
- * definition below.
- *
  * DRIVE STRENGTHS:
  *
- * The normal functor (modes 0) is not aware of strengths. It
+ * The normal functor is not aware of strengths. It
  * generates strength simply by virtue of having strength
  * specifications. The drive strength specification includes a drive0
  * and drive1 strength, each with 8 possible values (that can be
@@ -168,6 +150,7 @@ extern void functor_define(vvp_ipoint_t point, functor_t obj);
 
 struct functor_s {
       functor_s();
+      virtual ~functor_s();
 	/* This is the output for the device. */
       vvp_ipoint_t out;
 	/* These are the input ports. */
@@ -206,24 +189,6 @@ struct functor_s {
       void propagate(bool push);
       void force(unsigned val, unsigned str);
 };
-
-inline functor_s::functor_s()
-{
-      out = 0;
-      port[0] = 0;
-      port[1] = 0;
-      port[2] = 0;
-      port[3] = 0;
-      ival = 0xaa;
-      oval = 2;
-      odrive0 = 6;
-      odrive1 = 6;
-      ostr = StX;
-      inhibit = 0;
-#if defined(WITH_DEBUG)
-      breakpoint = 0;
-#endif
-}
 
 /*
  *  Set the ival for input port ptr to value val.
@@ -340,12 +305,16 @@ unsigned functor_get(vvp_ipoint_t ptr)
  * the inputs it is connected to, creating new propagation event on
  * the way.
  */
-static inline
+inline static
 void functor_propagate(vvp_ipoint_t ptr, bool push=true)
 {
       functor_t fp = functor_index(ptr);
       fp->propagate(push);
 }
+
+
+//          Special infrastructure functor types
+
 
 // The extra_outputs_functor_s class is for devices that require 
 // multiple inputs and outputs.
@@ -353,6 +322,7 @@ void functor_propagate(vvp_ipoint_t ptr, bool push=true)
 
 struct extra_outputs_functor_s: public functor_s {
       extra_outputs_functor_s(vvp_ipoint_t b = 0) : base_(b) {}
+      virtual ~extra_outputs_functor_s();
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
       unsigned base_;
@@ -365,6 +335,7 @@ struct extra_outputs_functor_s: public functor_s {
 struct extra_ports_functor_s : public extra_outputs_functor_s
 {
       extra_ports_functor_s(vvp_ipoint_t b = 0) : extra_outputs_functor_s(b) {}
+      virtual ~extra_ports_functor_s();
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
@@ -374,6 +345,7 @@ struct extra_ports_functor_s : public extra_outputs_functor_s
 
 struct extra_inputs_functor_s: public functor_s {
       extra_inputs_functor_s(vvp_ipoint_t b = 0) { out = b; }
+      virtual ~extra_inputs_functor_s();
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
@@ -383,77 +355,10 @@ struct extra_inputs_functor_s: public functor_s {
 struct edge_inputs_functor_s: public extra_inputs_functor_s
 {
       edge_inputs_functor_s() : old_ival(2) {}
+      virtual ~edge_inputs_functor_s();
       unsigned char old_ival;
 };
 
-/*
- *  Table driven functor.  oval = table[ival];
- */
-
-struct table_functor_s: public functor_s {
-      typedef const unsigned char *truth_t;
-      explicit table_functor_s(truth_t t) : table(t) {}
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      truth_t table;
-};
-
-// table functor types
-
-extern const unsigned char ft_AND[];
-extern const unsigned char ft_BUF[];
-extern const unsigned char ft_BUFIF0[];
-extern const unsigned char ft_BUFIF1[];
-extern const unsigned char ft_PMOS[];
-extern const unsigned char ft_NMOS[];
-extern const unsigned char ft_MUXZ[];
-extern const unsigned char ft_EEQ[];
-extern const unsigned char ft_NAND[];
-extern const unsigned char ft_NOR[];
-extern const unsigned char ft_NOT[];
-extern const unsigned char ft_OR[];
-extern const unsigned char ft_XNOR[];
-extern const unsigned char ft_XOR[];
-extern const unsigned char ft_var[];
-
-
-/*
- *  Event / edge detection functors
- */
-
-struct event_functor_s: public edge_inputs_functor_s {
-      typedef unsigned short edge_t;
-      explicit event_functor_s(edge_t e) : edge(e), threads(0) {}
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-      edge_t edge;
-      vthread_t threads;
-};
-
-#define VVP_EDGE(a,b) (1<<(((a)<<2)|(b)))
-
-const event_functor_s::edge_t vvp_edge_posedge 
-      = VVP_EDGE(0,1)
-      | VVP_EDGE(0,2)
-      | VVP_EDGE(0,3)
-      | VVP_EDGE(2,1)
-      | VVP_EDGE(3,1)
-      ;
-
-const event_functor_s::edge_t vvp_edge_negedge 
-      = VVP_EDGE(1,0)
-      | VVP_EDGE(1,2)
-      | VVP_EDGE(1,3)
-      | VVP_EDGE(2,0)
-      | VVP_EDGE(3,0)
-      ;
-
-const event_functor_s::edge_t vvp_edge_anyedge = 0x7bde;
-const event_functor_s::edge_t vvp_edge_none = 0;
-
-/*
- * Callback functors.
- */
-struct callback_functor_s *vvp_fvector_make_callback
-                    (vvp_fvector_t, event_functor_s::edge_t = vvp_edge_none);
 /*
  * Vectors of functors
  */
@@ -468,6 +373,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.37  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.36  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

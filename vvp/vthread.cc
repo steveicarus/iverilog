@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.63 2001/11/01 03:00:20 steve Exp $"
+#ident "$Id: vthread.cc,v 1.64 2001/11/06 03:07:22 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -25,6 +25,7 @@
 # include  "debug.h"
 # include  "schedule.h"
 # include  "functor.h"
+# include  "event.h"
 # include  "vpi_priv.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -1671,6 +1672,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.64  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.63  2001/11/01 03:00:20  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

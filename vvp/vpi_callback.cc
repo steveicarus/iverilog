@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.9 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.10 2001/11/06 03:07:22 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  "functor.h"
+# include  "event.h"
 # include  <stdio.h>
 # include  <assert.h>
 #ifdef HAVE_MALLOC_H
@@ -100,11 +101,19 @@ inline static void free_vpi_callback(struct __vpiCallback* obj)
  */
 
 struct callback_functor_s: public functor_s {
-      callback_functor_s() : permanent(0) {}
+      callback_functor_s();
+      virtual ~callback_functor_s();
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
       struct __vpiCallback *cb_handle;
       unsigned permanent : 1;
 };
+
+inline callback_functor_s::callback_functor_s() 
+      : permanent(0) 
+{}
+
+callback_functor_s::~callback_functor_s()
+{}
 
 struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 						     event_functor_s::edge_t edge)
@@ -300,6 +309,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.10  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.9  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

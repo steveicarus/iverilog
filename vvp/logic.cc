@@ -1,0 +1,143 @@
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#if !defined(WINNT)
+#ident "$Id: logic.cc,v 1.1 2001/11/06 03:07:22 steve Exp $"
+#endif
+
+# include  "logic.h"
+# include  "compile.h"
+# include  "bufif.h"
+# include  "npmos.h"
+
+# include  <string.h>
+# include  <assert.h>
+#ifdef HAVE_MALLOC_H
+# include  <malloc.h>
+#endif
+
+/*
+ *   Implementation of the table functor, which provides logic with up
+ *   to 4 inputs.
+ */
+
+inline table_functor_s::table_functor_s(truth_t t) 
+  : table(t) 
+{}
+
+table_functor_s::~table_functor_s() 
+{}
+
+void table_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
+{
+      put(ptr, v);
+
+	/* Locate the new output value in the table. */
+      unsigned char val = table[ival >> 2];
+      val >>= 2 * (ival&0x03);
+      val &= 0x03;
+
+      put_oval(ptr, push, val);
+}
+
+/*
+ * The parser calls this function to create a logic functor. I allocate a
+ * functor, and map the name to the vvp_ipoint_t address for the
+ * functor. Also resolve the inputs to the functor.
+ */
+
+void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
+{
+      functor_t obj;
+
+      if (strcmp(type, "OR") == 0) {
+	    obj = new table_functor_s(ft_OR);
+
+      } else if (strcmp(type, "AND") == 0) {
+	    obj = new table_functor_s(ft_AND);
+
+      } else if (strcmp(type, "BUF") == 0) {
+	    obj = new table_functor_s(ft_BUF);
+
+      } else if (strcmp(type, "BUFIF0") == 0) {
+	    obj = new vvp_bufif0_s;
+
+      } else if (strcmp(type, "BUFIF1") == 0) {
+	    obj = new vvp_bufif1_s;
+
+      } else if (strcmp(type, "PMOS") == 0) {
+	    obj = new vvp_pmos_s;
+
+      } else if (strcmp(type, "NMOS") == 0) {
+	    obj= new vvp_nmos_s;
+
+      } else if (strcmp(type, "RPMOS") == 0) {
+	    obj = new vvp_rpmos_s;
+
+      } else if (strcmp(type, "RNMOS") == 0) {
+	    obj = new vvp_rnmos_s;
+
+      } else if (strcmp(type, "MUXZ") == 0) {
+	    obj = new table_functor_s(ft_MUXZ);
+
+      } else if (strcmp(type, "EEQ") == 0) {
+	    obj = new table_functor_s(ft_EEQ);
+
+      } else if (strcmp(type, "NAND") == 0) {
+	    obj = new table_functor_s(ft_NAND);
+
+      } else if (strcmp(type, "NOR") == 0) {
+	    obj = new table_functor_s(ft_NOR);
+
+      } else if (strcmp(type, "NOT") == 0) {
+	    obj = new table_functor_s(ft_NOT);
+
+      } else if (strcmp(type, "XNOR") == 0) {
+	    obj = new table_functor_s(ft_XNOR);
+
+      } else if (strcmp(type, "XOR") == 0) {
+	    obj = new table_functor_s(ft_XOR);
+
+      } else {
+	    yyerror("invalid functor type.");
+	    free(type);
+	    free(argv);
+	    free(label);
+	    return;
+      }
+
+      free(type);
+
+      assert(argc <= 4);
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_define(fdx, obj);
+      define_functor_symbol(label, fdx);
+      free(label);
+
+      inputs_connect(fdx, argc, argv);
+      free(argv);
+}
+
+
+/*
+ * $Log: logic.cc,v $
+ * Revision 1.1  2001/11/06 03:07:22  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
+ */
+

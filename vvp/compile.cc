@@ -17,12 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.112 2001/11/01 04:42:39 steve Exp $"
+#ident "$Id: compile.cc,v 1.113 2001/11/06 03:07:21 steve Exp $"
 #endif
 
 # include  "arith.h"
-# include  "bufif.h"
-# include  "npmos.h"
 # include  "compile.h"
 # include  "functor.h"
 # include  "resolv.h"
@@ -33,7 +31,6 @@
 # include  "codes.h"
 # include  "schedule.h"
 # include  "vpi_priv.h"
-# include  "vthread.h"
 # include  "parse_misc.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
@@ -184,7 +181,7 @@ static symbol_table_t sym_vpi = 0;
  *  Add a functor to the symbol table
  */
 
-static void define_functor_symbol(const char*label, vvp_ipoint_t ipt)
+void define_functor_symbol(const char*label, vvp_ipoint_t ipt)
 {
       symbol_value_t val;
       val.num = ipt;
@@ -518,7 +515,7 @@ void compile_vpi_time_precision(long pre)
  * and skip the symbol lookup.
  */
 
-static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
+void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 {
 
       for (unsigned idx = 0;  idx < argc;  idx += 1) {
@@ -624,86 +621,6 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
       }
 
       free(lab);
-}
-
-/*
- * The parser calls this function to create a functor. I allocate a
- * functor, and map the name to the vvp_ipoint_t address for the
- * functor. Also resolve the inputs to the functor.
- */
-
-void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
-{
-      functor_t obj;
-
-      if (strcmp(type, "OR") == 0) {
-	    obj = new table_functor_s(ft_OR);
-
-      } else if (strcmp(type, "AND") == 0) {
-	    obj = new table_functor_s(ft_AND);
-
-      } else if (strcmp(type, "BUF") == 0) {
-	    obj = new table_functor_s(ft_BUF);
-
-      } else if (strcmp(type, "BUFIF0") == 0) {
-	    obj = new vvp_bufif0_s;
-
-      } else if (strcmp(type, "BUFIF1") == 0) {
-	    obj = new vvp_bufif1_s;
-
-      } else if (strcmp(type, "PMOS") == 0) {
-	    obj = new vvp_pmos_s;
-
-      } else if (strcmp(type, "NMOS") == 0) {
-	    obj= new vvp_nmos_s;
-
-      } else if (strcmp(type, "RPMOS") == 0) {
-	    obj = new vvp_rpmos_s;
-
-      } else if (strcmp(type, "RNMOS") == 0) {
-	    obj = new vvp_rnmos_s;
-
-      } else if (strcmp(type, "MUXZ") == 0) {
-	    obj = new table_functor_s(ft_MUXZ);
-
-      } else if (strcmp(type, "EEQ") == 0) {
-	    obj = new table_functor_s(ft_EEQ);
-
-      } else if (strcmp(type, "NAND") == 0) {
-	    obj = new table_functor_s(ft_NAND);
-
-      } else if (strcmp(type, "NOR") == 0) {
-	    obj = new table_functor_s(ft_NOR);
-
-      } else if (strcmp(type, "NOT") == 0) {
-	    obj = new table_functor_s(ft_NOT);
-
-      } else if (strcmp(type, "XNOR") == 0) {
-	    obj = new table_functor_s(ft_XNOR);
-
-      } else if (strcmp(type, "XOR") == 0) {
-	    obj = new table_functor_s(ft_XOR);
-
-      } else {
-	    yyerror("invalid functor type.");
-	    free(type);
-	    free(argv);
-	    free(label);
-	    return;
-      }
-
-      free(type);
-
-      assert(argc <= 4);
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_define(fdx, obj);
-      define_functor_symbol(label, fdx);
-      free(label);
-
-	/* Connect the inputs of this functor to the given symbols. If
-	   there are C<X> inputs, set the ival appropriately. */
-      inputs_connect(fdx, argc, argv);
-      free(argv);
 }
 
 static void make_extra_outputs(vvp_ipoint_t fdx, unsigned wid)
@@ -1096,64 +1013,6 @@ void compile_memory_init(char *memid, unsigned i, unsigned char val)
 }
 
 /*
-**  Create an event functor
-**  edge:  compile_event(label, type, argc, argv)
-**  or:    compile_event(label, NULL, argc, argv)
-**  name:  compile_event(label, name, NULL, NULL)
-*/
-
-void compile_event(char*label, char*type,
-		   unsigned argc, struct symb_s*argv)
-{
-      event_functor_s::edge_t edge = vvp_edge_none;
-
-      if (argc && type) {
-	    if (strcmp(type,"posedge") == 0)
-		  edge = vvp_edge_posedge;
-	    else if (strcmp(type,"negedge") == 0)
-		  edge = vvp_edge_negedge;
-	    else if (strcmp(type,"edge") == 0)
-		  edge = vvp_edge_anyedge;
-
-	    assert(argc <= 4 || edge == vvp_edge_none);
-      }
-      
-      if (!argc && type) {
-	    // "type" is the name of the named event
-      }
-
-      free(type);
-
-      functor_t obj = new event_functor_s(edge);
-
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_define(fdx, obj);
-      define_functor_symbol(label, fdx);
-      free(label);
-
-	/* Run through the arguments looking for the functors that are
-	   connected to my input ports. For each source functor that I
-	   find, connect the output of that functor to the indexed
-	   input by inserting myself (complete with the port number in
-	   the vvp_ipoint_t) into the list that the source heads.
-
-	   If the source functor is not declared yet, then don't do
-	   the link yet. Save the reference to be resolved later. */
-      
-      if (edge != vvp_edge_none)
-	    inputs_connect(fdx, argc, argv);
-      else
-	    // Are we sure that we have those .event/or 
-	    // drivers exclusively?
-	    for (unsigned i=0; i<argc; i++) {
-		  inputs_connect(fdx, 1, argv+i);
-	    }
-
-      free(argv);
-}
-
-
-/*
  * The parser uses this function to compile and link an executable
  * opcode. I do this by looking up the opcode in the opcode_table. The
  * table gives the operand structure that is acceptible, so I can
@@ -1482,6 +1341,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.113  2001/11/06 03:07:21  steve
+ *  Code rearrange. (Stephan Boettcher)
+ *
  * Revision 1.112  2001/11/01 04:42:39  steve
  *  Handle procedural constant functor pointers.
  *
