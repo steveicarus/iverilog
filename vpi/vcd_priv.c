@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.c,v 1.3 2003/04/28 01:03:11 steve Exp $"
+#ident "$Id: vcd_priv.c,v 1.4 2003/11/10 20:18:02 steve Exp $"
 #endif
 
 # include  "vcd_priv.h"
+# include  "config.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -169,6 +170,9 @@ void set_nexus_ident(int nex, const char *id)
 
 /*
  * $Log: vcd_priv.c,v $
+ * Revision 1.4  2003/11/10 20:18:02  steve
+ *  Missing config.h.
+ *
  * Revision 1.3  2003/04/28 01:03:11  steve
  *  Fix stringheap list management failure.
  *
