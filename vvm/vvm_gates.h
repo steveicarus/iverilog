@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.19 1999/11/13 03:46:52 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.20 1999/11/14 18:22:12 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -406,20 +406,25 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
 		  input_[idx] = V0;
 	    }
 
-      void init(unsigned idx, vpip_bit_t val) { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val) { input_[idx] = val; }
+
+      void start(vvm_simulation*sim)
+	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
+	      if (DELAY > 0)
+		    sim->insert_event(DELAY, ev);
+	      else
+		    sim->active_event(ev);
+	    }
 
 	// Set an input of the NAND gate causes a new output value to
 	// be calculated and an event generated to make the output
 	// happen. The input pins are numbered from 1 - WIDTH.
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		    return;
-	      input_[idx-1] = val;
-	      vpip_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval & input_[i];
+	      input_[idx] = val;
 
-	      vvm_event*ev = new vvm_out_event(sim, not(outval), output_);
+	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
 		    sim->insert_event(DELAY, ev);
 	      else
@@ -427,6 +432,14 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nand {
 	    }
 
     private:
+      vpip_bit_t compute_() const
+	    { vpip_bit_t outval = input_[0];
+	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
+		    outval = outval & input_[i];
+	      outval = not(outval);
+	      return outval;
+	    }
+
       vpip_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
 };
@@ -727,6 +740,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.20  1999/11/14 18:22:12  steve
+ *  Fix NAND gate support to use named pins.
+ *
  * Revision 1.19  1999/11/13 03:46:52  steve
  *  Support the LPM_MUX in vvm.
  *
