@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.13 2002/05/04 03:03:17 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.14 2002/05/04 03:17:29 steve Exp $"
 #endif
 
 /*
@@ -39,6 +39,15 @@
 #endif
 # include  <stdlib.h>
 
+static int free_simple_callback(vpiHandle ref)
+{
+      assert(ref);
+      assert(ref->vpi_type);
+      assert(ref->vpi_type->type_code == vpiCallback);
+      delete ref;
+      return 0;
+}
+
 const struct __vpirt callback_rt = {
       vpiCallback,
 
@@ -49,7 +58,9 @@ const struct __vpirt callback_rt = {
 
       0,
       0,
-      0
+      0,
+
+      &free_simple_callback
 };
 
 /*
@@ -96,11 +107,6 @@ inline static struct __vpiCallback* new_vpi_callback()
       obj->cb_sync = 0;
       obj->next    = 0;
       return obj;
-}
-
-inline static void free_vpi_callback(struct __vpiCallback* obj)
-{
-      delete obj;
 }
 
 /*
@@ -229,7 +235,7 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
-      free_vpi_callback(cur);
+      vpi_free_object(&cur->base);
 }
 
 static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
@@ -283,13 +289,21 @@ void vpiPresim() {
       struct __vpiCallback* cur;
 
       /*
-       * Walk the list of register callbacks
+       * Walk the list of register callbacks, executing them and
+       * freeing them when done.
        */
-      for (cur = EndOfCompile; cur != NULL; cur = cur->next) {
-	  (cur->cb_data.cb_rtn)(&cur->cb_data);
+      while (EndOfCompile) {
+	    cur = EndOfCompile;
+	    EndOfCompile = cur->next;
+	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    vpi_free_object(&cur->base);
       }
-      for (cur = StartOfSimulation; cur != NULL; cur = cur->next) {
-	  (cur->cb_data.cb_rtn)(&cur->cb_data);
+
+      while (StartOfSimulation) {
+	    cur = StartOfSimulation;
+	    StartOfSimulation = cur->next;
+	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    vpi_free_object(&cur->base);
       }
 }
 
@@ -299,8 +313,11 @@ void vpiPostsim() {
       /*
        * Walk the list of register callbacks
        */
-      for (cur = EndOfSimulation; cur != NULL; cur = cur->next) {
-	  (cur->cb_data.cb_rtn)(&cur->cb_data);
+      while (EndOfSimulation) {
+	    cur = EndOfSimulation;
+	    EndOfSimulation = cur->next;
+	    (cur->cb_data.cb_rtn)(&cur->cb_data);
+	    vpi_free_object(&cur->base);
       }
 }
 
@@ -409,6 +426,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.14  2002/05/04 03:17:29  steve
+ *  Properly free vpi callback objects.
+ *
  * Revision 1.13  2002/05/04 03:03:17  steve
  *  Add simulator event callbacks.
  *
