@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.73 2002/07/08 04:04:07 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.74 2002/07/18 02:06:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -251,6 +251,9 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 			break;
 
 		  if (ivl_logic_delay(lptr, 0) != 0)
+			break;
+
+		  if (nex == ivl_logic_pin(lptr, 1))
 			break;
 
 		  return draw_net_input(ivl_logic_pin(lptr, 1));
@@ -703,6 +706,9 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			break;
 
 		if (ivl_logic_delay(lptr, 0) != 0)
+		      break;
+
+		if (ivl_logic_pin(lptr, 0) == ivl_logic_pin(lptr, 1))
 		      break;
 
 		return;
@@ -1460,6 +1466,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.74  2002/07/18 02:06:37  steve
+ *  Need driver for sure in assign feedback and other cases.
+ *
  * Revision 1.73  2002/07/08 04:04:07  steve
  *  Generate code for wide muxes.
  *
