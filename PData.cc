@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PData.cc,v 1.1 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: PData.cc,v 1.2 2003/11/10 20:11:01 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "PData.h"
 
 PData::PData(const hname_t&h)
@@ -38,6 +39,9 @@ const hname_t&PData::name() const
 
 /*
  * $Log: PData.cc,v $
+ * Revision 1.2  2003/11/10 20:11:01  steve
+ *  missing include of config.h
+ *
  * Revision 1.1  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
