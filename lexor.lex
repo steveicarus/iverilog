@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.44 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: lexor.lex,v 1.45 2000/06/27 04:36:29 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -107,6 +107,7 @@ W [ \t\b\f\r]+
 <CSTRING>\n   { BEGIN(0);
                 yylval.text = strdup(yytext);
 		VLerror(yylloc, "Missing close quote of string.");
+		yylloc.first_line += 1;
 		return STRING; }
 <CSTRING>\"   { BEGIN(0);
                 yylval.text = strdup(yytext);
@@ -238,11 +239,11 @@ W [ \t\b\f\r]+
 ^`endcelldefine{W}?.*        {  }
 ^`endprotect{W}?.*           {  }
 ^`nosuppress_faults{W}?.*    {  }
-^`nounconnected_drive{W}?*   {  }
+^`nounconnected_drive{W}?.*  {  }
 ^`protect{W}?.*              {  }
 ^`resetall{W}?.*             {  }
 ^`suppress_faults{W}?.*      {  }
-^`unconnected_drive{W}?*     {  }
+^`unconnected_drive{W}?.*    {  }
 ^`uselib{W}?.*               {  }
 
 
