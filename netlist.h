@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.26 1999/04/25 22:52:32 steve Exp $"
+#ident "$Id: netlist.h,v 1.27 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  <string>
 # include  <map>
 # include  "verinum.h"
+# include  "sref.h"
 # include  "LineInfo.h"
 
 class NetNode;
@@ -715,31 +716,53 @@ class NetPDelay  : public NetProc {
 };
 
 /*
- * The NetPEvent is a NetNode that connects to the structural part of
- * the design. It has only inputs, which cause the side effect of
- * triggering an event that the procedural part of the design can use.
+ * The NetPEvent is associated with NetNEvents. The NetPEvent receives
+ * eventss from any one of the associated NetNEvents and in response
+ * causes the attached statement to be executed. Objects of this type
+ * are not nodes, but require a name anyhow so that backends can
+ * generate objects to refer to it.
  */
-class NetPEvent  : public NetProc, public NetNode {
+class NetNEvent;
+class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
 
     public:
-      enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
+      NetPEvent(const string&n, NetProc*st)
+      : name_(n), statement_(st) { }
 
-    public:
-      NetPEvent(const string&ev, Type ed, NetProc*st)
-      : NetNode(ev, 1), edge_(ed), statement_(st) { }
-
-      Type   edge() const  { return edge_; }
+      string name() const { return name_; }
 
       virtual void emit_proc(ostream&, struct target_t*) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
 
       void emit_proc_recurse(ostream&, struct target_t*) const;
 
     private:
-      Type edge_;
+      string name_;
       NetProc*statement_;
+};
+
+/*
+ * The NetNEvent is a NetNode that connects to the structural part of
+ * the design. It has only inputs, which cause the side effect of
+ * triggering an event that the procedural part of the design can use.
+ */
+class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
+
+    public:
+      enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
+
+      NetNEvent(const string&ev, Type e, NetPEvent*pe)
+      : NetNode(ev, 1), sref<NetPEvent,NetNEvent>(pe), edge_(e) { }
+
+      Type type() const { return edge_; }
+
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+      void dump_proc(ostream&) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+    private:
+      Type edge_;
 };
 
 
@@ -1129,6 +1152,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.27  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.26  1999/04/25 22:52:32  steve
  *  Generate SubSignal refrences in vvm.
  *

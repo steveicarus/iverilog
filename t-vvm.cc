@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.17 1999/04/25 22:52:32 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.18 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -47,7 +47,7 @@ class target_vvm : public target_t {
       virtual void udp(ostream&os, const NetUDP*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
-      virtual void net_pevent(ostream&os, const NetPEvent*);
+      virtual void net_event(ostream&os, const NetNEvent*);
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
@@ -584,7 +584,7 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 }
 
 /*
- * The net_pevent device is a synthetic device type--a fabrication of
+ * The net_event device is a synthetic device type--a fabrication of
  * the elaboration phase. An event device receives value changes from
  * the attached signal. It is an input only device, its only value
  * being the side-effects that threads waiting on events can be
@@ -593,10 +593,32 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
  * The proc_event method handles the other half of this, the process
  * that blocks on the event.
  */
-void target_vvm::net_pevent(ostream&os, const NetPEvent*gate)
+void target_vvm::net_event(ostream&os, const NetNEvent*gate)
 {
-      os << "static vvm_pevent " << mangle(gate->name()) << ";"
-	    " /* " << gate->name() << " */" << endl;
+      string pevent = mangle(gate->fore_ptr()->name());
+      os << "  /* " << gate->name() << " */" << endl;
+
+      os << "#ifndef PEVENT_" << pevent << endl;
+      os << "#define PEVENT_" << pevent << endl;
+      os << "static vvm_sync " << pevent << ";" << endl;
+      os << "#endif" << endl;
+
+      os << "static vvm_pevent " << mangle(gate->name()) << "(&" <<
+	    pevent << ", ";
+      switch (gate->type()) {
+	  case NetNEvent::POSEDGE:
+	    os << "vvm_pevent::POSEDGE";
+	    break;
+	  case NetNEvent::NEGEDGE:
+	    os << "vvm_pevent::NEGEDGE";
+	    break;
+	  case NetNEvent::ANYEDGE:
+	    os << "vvm_pevent::ANYEDGE";
+	    break;
+	  default:
+	    assert(0);
+      }
+      os << ");" << endl;
 }
 
 void target_vvm::start_process(ostream&os, const NetProcTop*proc)
@@ -829,6 +851,7 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
       thread_step_ += 1;
       os << "        step_ = &step_" << thread_step_ << "_;" << endl;
 
+#if 0
 	/* POSITIVE is for the wait construct, and needs to be handled
 	   specially. The structure of the generated code is:
 
@@ -879,7 +902,18 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
       os << "      }" << endl;
       os << "      bool step_" << thread_step_ << "_()" << endl;
       os << "      {" << endl;
-
+#else
+	/* The canonical wait for an edge puts the thread into the
+	   correct wait object, then returns false from the thread to
+	   suspend execution. When things are ready to proceed, the
+	   correct vvm_pevent will send a wakeup to start the next
+	   basic block. */
+      os << "        " << mangle(proc->name()) << ".wait(this);" << endl;
+      os << "        return false;" << endl;
+      os << "      }" << endl;
+      os << "      bool step_" << thread_step_ << "_()" << endl;
+      os << "      {" << endl;
+#endif
       proc->emit_proc_recurse(os, this);
 }
 
@@ -923,6 +957,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.18  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.17  1999/04/25 22:52:32  steve
  *  Generate SubSignal refrences in vvm.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.13 1999/04/29 02:16:26 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.14 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 /*
@@ -45,15 +45,15 @@ void PExpr::dump(ostream&out) const
 void PEEvent::dump(ostream&out) const
 {
       switch (type_) {
-	  case NetPEvent::ANYEDGE:
+	  case NetNEvent::ANYEDGE:
 	    break;
-	  case NetPEvent::POSEDGE:
+	  case NetNEvent::POSEDGE:
 	    out << "posedge ";
 	    break;
-	  case NetPEvent::NEGEDGE:
+	  case NetNEvent::NEGEDGE:
 	    out << "negedge ";
 	    break;
-	  case NetPEvent::POSITIVE:
+	  case NetNEvent::POSITIVE:
 	    out << "positive ";
 	    break;
       }
@@ -434,6 +434,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.14  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.13  1999/04/29 02:16:26  steve
  *  Parse OR of event expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.7 1999/02/15 05:52:50 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.8 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -341,20 +341,45 @@ class vvm_bufz {
       vvm_out_event::action_t output_;
 };
 
+/*
+ * Threads use the vvm_sync to wait for something to happen. This
+ * class cooperates with the vvm_pevent class that is the actual gates
+ * that receive signals. By handling the suspension and the awakening
+ * separately, I can trivially handle event OR expressions.
+ *
+ * When there is an event expression in the source, the elaborator
+ * makes NetNEvent objects, which are approximately represented by the
+ * vvm_pevent class.
+ */
+class vvm_sync {
+
+    public:
+      vvm_sync();
+
+      void wait(vvm_thread*);
+      void wakeup(vvm_simulation*sim);
+
+    private:
+      vvm_thread*hold_;
+
+    private: // not implemented
+      vvm_sync(const vvm_sync&);
+      vvm_sync& operator= (const vvm_sync&);
+};
+
 class vvm_pevent {
     public:
       enum EDGE { ANYEDGE, POSEDGE, NEGEDGE };
 
-      explicit vvm_pevent();
-      void wait(EDGE, vvm_thread*);
+      explicit vvm_pevent(vvm_sync*tgt, EDGE e);
 
       void set(vvm_simulation*sim, unsigned, vvm_bit_t val);
       vvm_bit_t get() const { return value_; }
 
     private:
+      vvm_sync*target_;
       vvm_bit_t value_;
-      vvm_thread*hold_;
-      EDGE hold_edge_;
+      EDGE edge_;
 
     private: // not implemented
       vvm_pevent(const vvm_pevent&);
@@ -363,6 +388,9 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.8  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.7  1999/02/15 05:52:50  steve
  *  Mangle that handles device instance numbers.
  *

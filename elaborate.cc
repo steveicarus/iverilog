@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.21 1999/04/29 02:16:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.22 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 /*
@@ -882,29 +882,28 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 		  return 0;
       }
 
-      if (expr_.count() != 1) {
-	    cerr << get_line() << ": Sorry, unable to elaborate event "
-		  "OR expressions." << endl;
-	    des->errors += 1;
-	    return 0;
+	/* Create a single NetPEvent, and a unique NetNEvent for each
+	   conjuctive event. */
+
+      NetPEvent*pe = new NetPEvent(des->local_symbol(path), enet);
+      for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
+	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path);
+	    if (expr == 0) {
+		  cerr << get_line() << ": Failed to elaborate expression: ";
+		  expr_[0]->dump(cerr);
+		  cerr << endl;
+		  delete pe;
+		  return 0;
+	    }
+	    assert(expr);
+	    NetNEvent*ne = new NetNEvent(des->local_symbol(path),
+					 expr_[idx]->type(), pe);
+
+	    connect(ne->pin(0), expr->pin(0));
+	    des->add_node(ne);
       }
 
-      NetPEvent*ev = new NetPEvent(des->local_symbol(path),
-				   expr_[0]->type(), enet);
-
-      NetNet*expr = expr_[0]->expr()->elaborate_net(des, path);
-      if (expr == 0) {
-	    cerr << get_line() << ": Failed to elaborate expression: ";
-	    expr_[0]->dump(cerr);
-	    cerr << endl;
-	    delete ev;
-	    return 0;
-      }
-      assert(expr);
-      connect(ev->pin(0), expr->pin(0));
-
-      des->add_node(ev);
-      return ev;
+      return pe;
 }
 
 /*
@@ -1051,6 +1050,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.22  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.21  1999/04/29 02:16:26  steve
  *  Parse OR of event expressions.
  *

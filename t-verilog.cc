@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.3 1998/12/01 00:42:15 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.4 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 /*
@@ -222,21 +222,25 @@ void target_verilog::proc_event(ostream&os, const NetPEvent*net)
 {
       os << setw(indent_) << "" << "@";
 
+#if 0
       unsigned sidx;
       const NetNet*sig = find_link_signal(net, 0, sidx);
 
       switch (net->edge()) {
-	  case NetPEvent::ANYEDGE:
+	  case NetNEvent::ANYEDGE:
 	    os << mangle(sig->name()) << "[" << sidx << "]";
 	    break;
-	  case NetPEvent::POSEDGE:
+	  case NetNEvent::POSEDGE:
 	    os << "(posedge " << mangle(sig->name()) << "[" << sidx << "])";
 	    break;
-	  case NetPEvent::NEGEDGE:
+	  case NetNEvent::NEGEDGE:
 	    os << "(negedge " << mangle(sig->name()) << "[" << sidx << "])";
 	    break;
       }
-
+#else
+      os << endl;
+      os << "#error \"proc_event temporarily out of order\"";
+#endif
       os << endl;
 
       indent_ += 4;
@@ -294,6 +298,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.4  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.3  1998/12/01 00:42:15  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

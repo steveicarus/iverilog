@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.18 1999/04/29 02:16:26 steve Exp $"
+#ident "$Id: parse.y,v 1.19 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -241,7 +241,7 @@ event_control
 
 event_expression
 	: K_posedge expression
-		{ PEEvent*tmp = new PEEvent(NetPEvent::POSEDGE, $2);
+		{ PEEvent*tmp = new PEEvent(NetNEvent::POSEDGE, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
@@ -249,7 +249,7 @@ event_expression
 		  $$ = tl;
 		}
 	| K_negedge expression
-		{ PEEvent*tmp = new PEEvent(NetPEvent::NEGEDGE, $2);
+		{ PEEvent*tmp = new PEEvent(NetNEvent::NEGEDGE, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
@@ -257,7 +257,7 @@ event_expression
 		  $$ = tl;
 		}
 	| expression
-		{ PEEvent*tmp = new PEEvent(NetPEvent::ANYEDGE, $1);
+		{ PEEvent*tmp = new PEEvent(NetNEvent::ANYEDGE, $1);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
@@ -776,7 +776,7 @@ statement
 		}
 	| K_wait '(' expression ')' statement_opt
 		{ PEventStatement*tmp;
-		  PEEvent*etmp = new PEEvent(NetPEvent::POSITIVE, $3);
+		  PEEvent*etmp = new PEEvent(NetNEvent::POSITIVE, $3);
 		  tmp = new PEventStatement(etmp);
 		  tmp->set_statement($5);
 		  $$ = tmp;

@@ -17,52 +17,49 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_pevent.cc,v 1.1 1998/11/09 23:44:11 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.2 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  "vvm_gates.h"
 
-vvm_pevent::vvm_pevent()
-: value_(V0), hold_(0)
+vvm_sync::vvm_sync()
+: hold_(0)
 {
 }
 
-void vvm_pevent::wait(EDGE edge, vvm_thread*thr)
+void vvm_sync::wait(vvm_thread*thr)
 {
       assert(hold_ == 0);
       hold_ = thr;
-      hold_edge_ = edge;
+}
+
+void vvm_sync::wakeup(vvm_simulation*sim)
+{
+      vvm_thread*tmp = hold_;
+      hold_ = 0;
+      if (tmp) sim->thread_active(tmp);
+}
+
+vvm_pevent::vvm_pevent(vvm_sync*tgt, EDGE e)
+: target_(tgt), value_(V0), edge_(e)
+{
 }
 
 void vvm_pevent::set(vvm_simulation*sim, unsigned, vvm_bit_t val)
 {
-      if (hold_ == 0) {
-	    value_ = val;
-	    return;
-      }
-
       if (value_ != val) {
-	    vvm_thread*tmp;
-	    switch (hold_edge_) {
+	    switch (edge_) {
 		case ANYEDGE:
-		  tmp = hold_;
-		  hold_ = 0;
-		  sim->thread_active(tmp);
+		  target_->wakeup(sim);
 		  break;
 		case POSEDGE:
-		  if (val == V1) {
-			tmp = hold_;
-			hold_ = 0;
-			sim->thread_active(tmp);
-		  }
+		  if (val == V1)
+			target_->wakeup(sim);
 		  break;
 		case NEGEDGE:
-		  if (val == V0) {
-			tmp = hold_;
-			hold_ = 0;
-			sim->thread_active(tmp);
-		  }
+		  if (val == V0)
+			target_->wakeup(sim);
 		  break;
 	    }
 	    value_ = val;
@@ -71,6 +68,9 @@ void vvm_pevent::set(vvm_simulation*sim, unsigned, vvm_bit_t val)
 
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.2  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.1  1998/11/09 23:44:11  steve
  *  Add vvm library.
  *

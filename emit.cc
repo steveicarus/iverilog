@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.8 1999/04/25 00:44:10 steve Exp $"
+#ident "$Id: emit.cc,v 1.9 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 /*
@@ -55,9 +55,9 @@ void NetConst::emit_node(ostream&o, struct target_t*tgt) const
       tgt->net_const(o, this);
 }
 
-void NetPEvent::emit_node(ostream&o, struct target_t*tgt) const
+void NetNEvent::emit_node(ostream&o, struct target_t*tgt) const
 {
-      tgt->net_pevent(o, this);
+      tgt->net_event(o, this);
 }
 
 void NetBUFZ::emit_node(ostream&o, struct target_t*tgt) const
@@ -253,6 +253,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.9  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.8  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
  *

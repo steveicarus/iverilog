@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.6 1999/04/29 02:16:26 steve Exp $"
+#ident "$Id: PExpr.h,v 1.7 1999/05/01 02:57:52 steve Exp $"
 #endif
 
 # include  <string>
@@ -64,17 +64,17 @@ ostream& operator << (ostream&, const PExpr&);
 class PEEvent : public PExpr {
 
     public:
-      PEEvent(NetPEvent::Type t, PExpr*e)
+      PEEvent(NetNEvent::Type t, PExpr*e)
       : type_(t), expr_(e)
       { }
 
-      NetPEvent::Type type() const { return type_; }
+      NetNEvent::Type type() const { return type_; }
       PExpr*          expr() const { return expr_; }
 
       virtual void dump(ostream&) const;
 
     private:
-      NetPEvent::Type type_;
+      NetNEvent::Type type_;
       PExpr*expr_;
 };
 
@@ -169,6 +169,9 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.7  1999/05/01 02:57:52  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.6  1999/04/29 02:16:26  steve
  *  Parse OR of event expressions.
  *

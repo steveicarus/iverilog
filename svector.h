@@ -1,8 +1,7 @@
 #ifndef __svector_H
 #define __svector_H
 /*
- * Copyright (c) 1999 Picture Elements, Inc.
- *    Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,15 +19,9 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
- *  ---
- *    You should also have recieved a copy of the Picture Elements
- *    Binary Software License offer along with the source. This offer
- *    allows you to obtain the right to redistribute the software in
- *    binary (compiled) form. If you have not received it, contact
- *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: svector.h,v 1.1 1999/04/29 02:16:26 steve Exp $"
+#ident "$Id: svector.h,v 1.2 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -87,6 +80,9 @@ template <class TYPE> class svector {
 
 /*
  * $Log: svector.h,v $
+ * Revision 1.2  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.1  1999/04/29 02:16:26  steve
  *  Parse OR of event expressions.
  *

@@ -17,19 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: targets.cc,v 1.3 1999/01/24 01:35:36 steve Exp $"
+#ident "$Id: targets.cc,v 1.4 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include "target.h"
 
 extern const struct target tgt_null;
-extern const struct target tgt_verilog;
+//extern const struct target tgt_verilog;
 extern const struct target tgt_vvm;
 extern const struct target tgt_xnf;
 
 const struct target *target_table[] = {
       &tgt_null,
-      &tgt_verilog,
+	//&tgt_verilog,
       &tgt_vvm,
       &tgt_xnf,
       0
@@ -37,6 +37,9 @@ const struct target *target_table[] = {
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.4  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.3  1999/01/24 01:35:36  steve
  *  Support null target for generating no output.
  *

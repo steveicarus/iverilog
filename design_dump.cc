@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.18 1999/04/25 00:44:10 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.19 1999/05/01 02:57:52 steve Exp $"
 #endif
 
 /*
@@ -246,7 +246,7 @@ void NetUDP::dump_node(ostream&o, unsigned ind) const
 	    dump_comb_(o, ind);
 }
 
-void NetPEvent::dump_node(ostream&o, unsigned ind) const
+void NetNEvent::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "event: ";
       switch (edge_) {
@@ -360,21 +360,15 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
 
 void NetPEvent::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" ;
-      switch (edge_) {
-	  case NEGEDGE:
-	    o << "@" << "(negedge " << name() << ")";
-	    break;
-	  case POSEDGE:
-	    o << "@" << "(posedge " << name() << ")";
-	    break;
-	  case ANYEDGE:
-	    o << "@" << name();
-	    break;
-	  case POSITIVE:
-	    o << "wait (" << name() << ")";
-	    break;
+      o << setw(ind) << "" << "@(";
+      svector<const NetNEvent*>*list = back_list();
+      (*list)[0]->dump_proc(o);
+      for (unsigned idx = 1 ;  idx < list->count() ;  idx += 1) {
+	    o << " or ";
+	    (*list)[idx]->dump_proc(o);
       }
+      delete list;
+      o << ") /* " << name_ << " */";
 
       if (statement_) {
 	    o << endl;
@@ -384,7 +378,24 @@ void NetPEvent::dump(ostream&o, unsigned ind) const
       }
 }
 
-
+void NetNEvent::dump_proc(ostream&o) const
+{
+      switch (edge_) {
+	  case ANYEDGE:
+	    o << "anyedge ";
+	    break;
+	  case POSEDGE:
+	    o << "posedge ";
+	    break;
+	  case NEGEDGE:
+	    o << "negedge ";
+	    break;
+	  case POSITIVE:
+	    o << "positive ";
+	    break;
+      }
+      o << name();
+}
 
 void NetTask::dump(ostream&o, unsigned ind) const
 {
@@ -551,6 +562,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.19  1999/05/01 02:57:52  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.18  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
  *

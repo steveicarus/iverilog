@@ -1,7 +1,7 @@
 #ifndef __target_H
 #define __target_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.7 1999/04/25 00:44:10 steve Exp $"
+#ident "$Id: target.h,v 1.8 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -68,7 +68,7 @@ struct target_t {
       virtual void net_assign(ostream&os, const NetAssign*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
-      virtual void net_pevent(ostream&os, const NetPEvent*);
+      virtual void net_event(ostream&os, const NetNEvent*);
 
 	/* Output a process (called for each process) */
       virtual void start_process(ostream&os, const NetProcTop*);
@@ -121,6 +121,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.8  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.7  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
  *

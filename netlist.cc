@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.21 1999/04/25 00:44:10 steve Exp $"
+#ident "$Id: netlist.cc,v 1.22 1999/05/01 02:57:53 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -480,6 +480,7 @@ void NetEBinary::set_width(unsigned w)
 
 	  case '+':
 	  case '-':
+	  case '^':
 	    left_->set_width(w);
 	    right_->set_width(w);
 	    expr_width(w);
@@ -532,6 +533,11 @@ NetESignal::~NetESignal()
 
 void NetESignal::set_width(unsigned w)
 {
+      if (w != pin_count()) {
+	    cerr << "Width of " << w << " does not match " << *this <<
+		  endl;
+	    abort();
+      }
       assert(w == pin_count());
       expr_width(w);
 }
@@ -553,7 +559,15 @@ NetEUnary::~NetEUnary()
 
 void NetEUnary::set_width(unsigned w)
 {
-      expr_->set_width(w);
+      switch (op_) {
+	  case '&':
+	    assert(w == 1);
+	    break;
+	  default:
+	  case '~':
+	    expr_->set_width(w);
+	    break;
+      }
       expr_width(w);
 }
 
@@ -1026,6 +1040,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.22  1999/05/01 02:57:53  steve
+ *  Handle much more complex event expressions.
+ *
  * Revision 1.21  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
  *
