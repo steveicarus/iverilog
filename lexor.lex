@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.7 1998/12/18 05:16:25 steve Exp $"
+#ident "$Id: lexor.lex,v 1.8 1999/02/15 05:52:08 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -417,7 +417,7 @@ static verinum*make_sized_hex(const char*txt)
       verinum::V*bits = new verinum::V[size];
 
       unsigned idx = 0;
-      char*eptr = ptr + strlen(ptr);
+      char*eptr = ptr + strlen(ptr) - 1;
 
       while ((eptr > ptr) && (idx < (size-4))) {
 	    switch (*eptr) {
@@ -443,14 +443,18 @@ static verinum*make_sized_hex(const char*txt)
 			  bits[idx++] = (val&8)? verinum::V1 : verinum::V0;
 			  break;
 		    }
-		default:
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
 		    {
 			  unsigned val = *eptr - '0';
 			  bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
 			  bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
 			  bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
 			  bits[idx++] = (val&8)? verinum::V1 : verinum::V0;
+			  break;
 		    }
+		default:
+		  assert(0);
 	    }
 
 	    eptr -= 1;
