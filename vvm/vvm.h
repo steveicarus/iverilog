@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.10 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: vvm.h,v 1.11 1999/09/28 01:13:15 steve Exp $"
 #endif
 
 # include  <vector>
@@ -77,6 +77,15 @@ inline vvm_bit_t less_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
       if (r == Vx) return Vx;
       if (l > r) return V0;
       if (l < r) return V1;
+      return c;
+}
+
+inline vvm_bit_t greater_with_cascade(vvm_bit_t l, vvm_bit_t r, vvm_bit_t c)
+{
+      if (l == Vx) return Vx;
+      if (r == Vx) return Vx;
+      if (l > r) return V1;
+      if (l < r) return V0;
       return c;
 }
 
@@ -280,6 +289,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.11  1999/09/28 01:13:15  steve
+ *  Support in vvm > and >= behavioral operators.
+ *
  * Revision 1.10  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *

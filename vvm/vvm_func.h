@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.9 1999/09/23 04:39:52 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.10 1999/09/28 01:13:16 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -323,11 +323,53 @@ vvm_bitset_t<1> vvm_binop_le(const vvm_bitset_t<LW>&l,
 	    result[0] = less_with_cascade(l[idx], r[idx], result[0]);
 
       if (LW > RW) {
+	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
+		  result[0] = less_with_cascade(l[idx], V0, result[0]);
+      } else {
 	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
-		  if (l[idx] != V0) {
-			result[0] = V0;
-			break;
-		  }
+		  result[0] = less_with_cascade(V0, r[idx], result[0]);
+      }
+
+      return result;
+}
+
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_gt(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> result;
+      result[0] = V0;
+      const unsigned common = (LW < RW)? LW : RW;
+      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
+	    result[0] = greater_with_cascade(l[idx], r[idx], result[0]);
+
+      if (LW > RW) {
+	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
+		  result[0] = greater_with_cascade(l[idx], V0, result[0]);
+      } else {
+	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
+		  result[0] = greater_with_cascade(V0, r[idx], result[0]);
+      }
+
+      return result;
+}
+
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_ge(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> result;
+      result[0] = V1;
+      const unsigned common = (LW < RW)? LW : RW;
+      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
+	    result[0] = greater_with_cascade(l[idx], r[idx], result[0]);
+
+      if (LW > RW) {
+	    for (unsigned idx = RW ;  idx < LW ;  idx += 1)
+		  result[0] = greater_with_cascade(l[idx], V0, result[0]);
+      } else {
+	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
+		  result[0] = greater_with_cascade(V0, r[idx], result[0]);
       }
 
       return result;
@@ -369,6 +411,9 @@ vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.10  1999/09/28 01:13:16  steve
+ *  Support in vvm > and >= behavioral operators.
+ *
  * Revision 1.9  1999/09/23 04:39:52  steve
  *  The <= operator takes different width operands.
  *

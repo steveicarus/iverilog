@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.45 1999/09/23 03:56:57 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.46 1999/09/28 01:13:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -319,6 +319,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_eq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
+	  case 'G': // >=
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_ge("
+		<< lres << "," << rres << ");" << endl;
+	    break;
 	  case 'l': // left shift(<<)
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftl("
 		<< lres << "," << rres << ");" << endl;
@@ -337,6 +341,10 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    break;
 	  case '<':
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_lt("
+		<< lres << "," << rres << ");" << endl;
+	    break;
+	  case '>':
+	    os_ << setw(indent_) << "" << result << " = vvm_binop_gt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'o': // logical or (||)
@@ -1458,6 +1466,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.46  1999/09/28 01:13:15  steve
+ *  Support in vvm > and >= behavioral operators.
+ *
  * Revision 1.45  1999/09/23 03:56:57  steve
  *  Support shift operators.
  *
