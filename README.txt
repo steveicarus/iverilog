@@ -281,6 +281,7 @@ especially testing from many people, including (in alphabetical order):
 	Ales Hvezda <ahvezda@seul.org>
         James Lee <jml@seva.com>
 	Peter Monta <pmonta@halibut.imedia.com>
+	Daniel H. Nelsen <dhn@qedinc.com>
 	Stefan Petersen <spe@geda.seul.org>
 	Jason Schonberg <schon@mips.com>
 	Stuart Sutherland <stuart@sutherland.com>

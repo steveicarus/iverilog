@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.34 1999/09/13 03:08:52 steve Exp $"
+#ident "$Id: lexor.lex,v 1.35 1999/09/29 01:50:35 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -41,7 +41,7 @@ extern YYLTYPE yylloc;
 static void reset_lexor();
 static void line_directive();
 
-static int check_identifier(const char*name);
+extern int check_identifier(const char*str, int len);
 static verinum*make_sized_binary(const char*txt);
 static verinum*make_sized_dec(const char*txt);
 static verinum*make_unsized_dec(const char*txt);
@@ -128,7 +128,7 @@ W [ \t\b\f\r]+
 <UDPTABLE>[pPnN01\?\*\-] { return yytext[0]; }
 
 [a-zA-Z_][a-zA-Z0-9$_]* {
-      int rc = check_identifier(yytext);
+      int rc = check_identifier(yytext, yyleng);
       if (rc == IDENTIFIER)
 	    yylval.text = strdup(yytext);
       else
@@ -303,118 +303,6 @@ void lex_start_table()
 void lex_end_table()
 {
       BEGIN(INITIAL);
-}
-
-static const struct { const char*name; int code; } key_table[] = {
-      { "always", K_always },
-      { "and", K_and },
-      { "assign", K_assign },
-      { "begin", K_begin },
-      { "buf", K_buf },
-      { "bufif0", K_bufif0 },
-      { "bufif1", K_bufif1 },
-      { "case", K_case },
-      { "casex", K_casex },
-      { "casez", K_casez },
-      { "cmos", K_cmos },
-      { "deassign", K_deassign },
-      { "default", K_default },
-      { "defparam", K_defparam },
-      { "disable", K_disable },
-      { "edge", K_edge },
-      { "else", K_else },
-      { "end", K_end },
-      { "endcase", K_endcase },
-      { "endfunction", K_endfunction },
-      { "endmodule", K_endmodule },
-      { "endprimitive", K_endprimitive },
-      { "endspecify", K_endspecify },
-      { "endtable", K_endtable },
-      { "endtask", K_endtask },
-      { "event", K_event },
-      { "for", K_for },
-      { "force", K_force },
-      { "forever", K_forever },
-      { "fork", K_fork },
-      { "function", K_function },
-      { "highz0", K_highz0 },
-      { "highz1", K_highz1 },
-      { "if", K_if },
-      { "initial", K_initial },
-      { "inout", K_inout },
-      { "input", K_input },
-      { "integer", K_integer },
-      { "join", K_join },
-      { "large", K_large },
-      { "macromodule", K_macromodule },
-      { "medium", K_medium },
-      { "module", K_module },
-      { "nand", K_nand },
-      { "negedge", K_negedge },
-      { "nmos", K_nmos },
-      { "nor", K_nor },
-      { "not", K_not },
-      { "notif0", K_notif0 },
-      { "notif1", K_notif1 },
-      { "or", K_or },
-      { "output", K_output },
-      { "parameter", K_parameter },
-      { "pmos", K_pmos },
-      { "posedge", K_posedge },
-      { "primitive", K_primitive },
-      { "pull0", K_pull0 },
-      { "pull1", K_pull1 },
-      { "pulldown", K_pulldown },
-      { "pullup", K_pullup },
-      { "rcmos", K_rcmos },
-      { "reg", K_reg },
-      { "release", K_release },
-      { "repeat", K_repeat },
-      { "rnmos", K_rnmos },
-      { "rpmos", K_rpmos },
-      { "rtran", K_rtran },
-      { "rtranif0", K_rtranif0 },
-      { "rtranif1", K_rtranif1 },
-      { "scalered", K_scalered },
-      { "small", K_small },
-      { "specify", K_specify },
-      { "specparam", K_specparam },
-      { "strong0", K_strong0 },
-      { "strong1", K_strong1 },
-      { "supply0", K_supply0 },
-      { "supply1", K_supply1 },
-      { "table", K_table },
-      { "task", K_task },
-      { "time", K_time },
-      { "tran", K_tran },
-      { "tranif0", K_tranif0 },
-      { "tranif1", K_tranif1 },
-      { "tri", K_tri },
-      { "tri0", K_tri0 },
-      { "tri1", K_tri1 },
-      { "triand", K_triand },
-      { "trior", K_trior },
-      { "trireg", K_trireg },
-      { "vectored", K_vectored },
-      { "wait", K_wait },
-      { "wand", K_wand },
-      { "weak0", K_weak0 },
-      { "weak1", K_weak1 },
-      { "while", K_while },
-      { "wire", K_wire },
-      { "wor", K_wor },
-      { "xnor", K_xnor },
-      { "xor", K_xor },
-      { 0, IDENTIFIER }
-};
-
-static int check_identifier(const char*name)
-{
-      for (unsigned idx = 0 ;  key_table[idx].name ;  idx += 1)
-	    if (strcmp(key_table[idx].name, name) == 0)
-		  return key_table[idx].code;
-
-      return IDENTIFIER;
 }
 
 static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
