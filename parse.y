@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.46 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: parse.y,v 1.47 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -57,7 +57,7 @@ extern void lex_end_table();
 
       PEventStatement*event_statement;
       Statement*statement;
-      list<Statement*>*statement_list;
+      svector<Statement*>*statement_list;
 
       verinum* number;
 
@@ -148,6 +148,21 @@ extern void lex_end_table();
 source_file
 	: description
 	| source_file description
+	;
+
+block_item_decl
+	: K_reg range_opt register_variable_list ';'
+	| K_integer list_of_variables ';'
+	;
+
+block_item_decls
+	: block_item_decl
+	| block_item_decls block_item_decl
+	;
+
+block_item_decls_opt
+	: block_item_decls
+	|
 	;
 
 case_item
@@ -1247,10 +1262,35 @@ statement
 		  $$ = 0;
 		}
 	| K_begin statement_list K_end
-		{ $$ = pform_make_block(PBlock::BL_SEQ, $2); }
-	| K_begin ':' IDENTIFIER statement_list K_end
-		{ yyerror(@3, "Sorry, block identifiers not supported.");
-		  $$ = pform_make_block(PBlock::BL_SEQ, $4);
+		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ, *$2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $2;
+		  $$ = tmp;
+		}
+	| K_begin ':' IDENTIFIER
+		{ pform_push_scope(*$3); }
+	  block_item_decls_opt
+	  statement_list K_end
+		{ pform_pop_scope();
+		  PBlock*tmp = new PBlock(*$3, PBlock::BL_SEQ, *$6);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $3;
+		  delete $6;
+		  $$ = tmp;
+		}
+	| K_begin K_end
+		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| K_begin ':' IDENTIFIER K_end
+		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_begin error K_end
 		{ yyerrok; }
@@ -1274,7 +1314,12 @@ statement
 		  $$ = tmp;
 		}
 	| K_fork statement_list K_join
-		{ $$ = pform_make_block(PBlock::BL_PAR, $2); }
+		{ PBlock*tmp = new PBlock(PBlock::BL_PAR, *$2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $2;
+		  $$ = tmp;
+		}
 	| K_release lavalue ';'
 		{ yyerror(@1, "Sorry, release not supported.");
 		  $$ = 0;
@@ -1285,12 +1330,12 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_begin K_end
-		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
-	| K_begin ':' IDENTIFIER K_end
-		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
 	| K_fork K_join
-		{ $$ = pform_make_block(PBlock::BL_PAR, 0); }
+		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
 	| K_case '(' expression ')' case_items K_endcase
 		{ PCase*tmp = new PCase($3, $5);
 		  tmp->set_file(@1.text);
@@ -1438,13 +1483,13 @@ statement
 
 statement_list
 	: statement_list statement
-		{ list<Statement*>*tmp = $1;
-		  tmp->push_back($2);
+		{ svector<Statement*>*tmp = new svector<Statement*>(*$1, $2);
+		  delete $1;
 		  $$ = tmp;
 		}
 	| statement
-		{ list<Statement*>*tmp = new list<Statement*>();
-		  tmp->push_back($1);
+		{ svector<Statement*>*tmp = new svector<Statement*>(1);
+		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	;
@@ -1459,10 +1504,10 @@ task_body
 	;
 
 task_item
-	: K_input range_opt list_of_variables ';'
+	: block_item_decl
+	| K_input range_opt list_of_variables ';'
 	| K_output range_opt list_of_variables ';'
 	| K_inout range_opt list_of_variables ';'
-	| K_reg range_opt list_of_variables ';'
 	;
 
 task_item_list

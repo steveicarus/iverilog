@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.10 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: Statement.cc,v 1.11 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -56,24 +56,25 @@ PAssignNB::~PAssignNB()
 {
 }
 
-PBlock::PBlock(BL_TYPE t, const list<Statement*>&st)
+PBlock::PBlock(const string&n, BL_TYPE t, const svector<Statement*>&st)
+: name_(n), bl_type_(t), list_(st)
+{
+}
+
+PBlock::PBlock(BL_TYPE t, const svector<Statement*>&st)
+: bl_type_(t), list_(st)
+{
+}
+
+PBlock::PBlock(BL_TYPE t)
 : bl_type_(t)
 {
-      nlist_ = st.size();
-      list_ = new Statement*[nlist_];
-
-      list<Statement*>::const_iterator s = st.begin();
-      for (unsigned idx = 0 ; s != st.end() ;  s ++, idx += 1 ) {
-	    list_[idx] = *s;
-      }
 }
 
 PBlock::~PBlock()
 {
-      for (unsigned idx = 0 ;  idx < nlist_ ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
 	    delete list_[idx];
-
-      delete[]list_;
 }
 
 PCallTask::PCallTask(const string&n, const svector<PExpr*>&p)
@@ -136,6 +137,11 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.11  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.10  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

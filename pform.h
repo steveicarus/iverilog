@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.20 1999/06/15 03:44:53 steve Exp $"
+#ident "$Id: pform.h,v 1.21 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -102,6 +102,12 @@ extern void pform_make_udp(string*name, list<string>*parms,
 			   Statement*init);
 
 /*
+ * Enter/exit name scopes.
+ */
+extern void pform_push_scope(const string&name);
+extern void pform_pop_scope();
+
+/*
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
@@ -119,7 +125,6 @@ extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
 extern void pform_set_parameter(const string&name, PExpr*expr);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
-extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_calltask(string*t, svector<PExpr*>* =0);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<string>*);
@@ -151,6 +156,11 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.21  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.20  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *

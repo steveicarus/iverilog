@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.29 1999/06/21 01:02:16 steve Exp $"
+#ident "$Id: pform.cc,v 1.30 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -38,6 +38,43 @@ string vl_file = "";
 extern int VLparse();
 
 static Module*cur_module = 0;
+
+/*
+ * The scope stack and the following functions handle the processing
+ * of scope. As I enter a scope, the push function is called, and as I
+ * leave a scope the opo function is called.
+ */
+struct scope_name_t {
+      string name;
+      struct scope_name_t*next;
+};
+static scope_name_t*scope_stack  = 0;
+
+void pform_push_scope(const string&name)
+{
+      scope_name_t*cur = new scope_name_t;
+      cur->name = name;
+      cur->next = scope_stack;
+      scope_stack = cur;
+}
+
+void pform_pop_scope()
+{
+      assert(scope_stack);
+      scope_name_t*cur = scope_stack;
+      scope_stack = cur->next;
+      delete cur;
+}
+
+static string scoped_name(string name)
+{
+      scope_name_t*cur = scope_stack;
+      while (cur) {
+	    name = cur->name + "." + name;
+	    cur = cur->next;
+      }
+      return name;
+}
 
 static map<string,Module*> vl_modules;
 static map<string,PUdp*>   vl_primitives;
@@ -344,9 +381,10 @@ PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval)
       return cur;
 }
 
-void pform_makewire(const vlltype&li, const string&name,
+void pform_makewire(const vlltype&li, const string&nm,
 		    NetNet::Type type)
 {
+      const string name = scoped_name(nm);
       PWire*cur = cur_module->get_wire(name);
       if (cur) {
 	    if (cur->get_wire_type() != NetNet::IMPLICIT) {
@@ -512,16 +550,6 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st)
       return pp;
 }
 
-Statement* pform_make_block(PBlock::BL_TYPE type, list<Statement*>*sl)
-{
-      if (sl == 0)
-	    sl = new list<Statement*>;
-
-      PBlock*bl = new PBlock(type, *sl);
-      delete sl;
-      return bl;
-}
-
 Statement* pform_make_calltask(string*name, svector<PExpr*>*parms)
 {
       if (parms == 0)
@@ -559,6 +587,11 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.30  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.29  1999/06/21 01:02:16  steve
  *  Fix merging of UDP port type in decls.
  *

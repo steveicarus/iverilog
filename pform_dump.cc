@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.24 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.25 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 /*
@@ -275,10 +275,13 @@ void PAssignNB::dump(ostream&out, unsigned ind) const
 
 void PBlock::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "begin" << endl;
+      out << setw(ind) << "" << "begin";
+      if (name_.length())
+	    out << " : " << name_;
+      out << endl;
 
-      for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
-	    stat(idx)->dump(out, ind+2);
+      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
+	    list_[idx]->dump(out, ind+2);
       }
 
       out << setw(ind) << "" << "end" << endl;
@@ -501,6 +504,11 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.25  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.24  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

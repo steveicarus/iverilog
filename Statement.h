@@ -19,11 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.12 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: Statement.h,v 1.13 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 # include  <string>
-# include  <list>
 # include  "svector.h"
 # include  "PExpr.h"
 # include  "LineInfo.h"
@@ -132,21 +131,23 @@ class PBlock  : public Statement {
     public:
       enum BL_TYPE { BL_SEQ, BL_PAR };
 
-      explicit PBlock(BL_TYPE t, const list<Statement*>&st);
+      explicit PBlock(const string&n, BL_TYPE t, const svector<Statement*>&st);
+      explicit PBlock(BL_TYPE t, const svector<Statement*>&st);
+      explicit PBlock(BL_TYPE t);
       ~PBlock();
 
       BL_TYPE bl_type() const { return bl_type_; }
 
-      unsigned size() const { return nlist_; }
-      const Statement*stat(unsigned idx) const { return list_[idx]; }
+	//unsigned size() const { return list_.count(); }
+	//const Statement*stat(unsigned idx) const { return list_[idx]; }
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
 
     private:
+      string name_;
       const BL_TYPE bl_type_;
-      unsigned nlist_;
-      Statement**list_;
+      svector<Statement*>list_;
 };
 
 class PCallTask  : public Statement {
@@ -326,6 +327,11 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.13  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.12  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.38 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.39 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -425,6 +425,11 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 	    items_[idx].guard->set_width(expr_->expr_width());
 }
 
+NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
+: expr_(ex), if_(i), else_(e)
+{
+}
+
 NetTask::~NetTask()
 {
       for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
@@ -468,8 +473,10 @@ bool NetEBinary::set_width(unsigned w)
 	      /* Comparison operators allow the subexpressions to have
 		 their own natural width. However, I do need to make
 		 sure that the subexpressions have the same width. */
-	  case 'e': /* == */
-	  case 'n': /* != */
+	  case 'E': /* === */
+	  case 'e': /* ==  */
+	  case 'N': /* !== */
+	  case 'n': /* !=  */
 	  case '<': /* < */
 	  case '>': /* > */
 	    assert(w == 1);
@@ -1091,18 +1098,30 @@ void Design::del_signal(NetNet*net)
       net->design_ = 0;
 }
 
-NetNet* Design::find_signal(const string&name)
+/*
+ * This method looks for a string given a current context as a
+ * starting point.
+ */
+NetNet* Design::find_signal(const string&path, const string&name)
 {
       if (signals_ == 0)
 	    return 0;
 
-      NetNet*cur = signals_;
-      do {
-	    if (cur->name() == name)
-		  return cur;
+      string root = path;
+      while (root.size() > 0) {
 
-	    cur = cur->sig_prev_;
-      } while (cur != signals_);
+	    string fulname = root + "." + name;
+	    NetNet*cur = signals_;
+	    do {
+		  if (cur->name() == fulname)
+			return cur;
+
+		  cur = cur->sig_prev_;
+	    } while (cur != signals_);
+
+	    unsigned pos = root.rfind('.');
+	    root = root.substr(0, pos);
+      }
 
       return 0;
 }
@@ -1228,6 +1247,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.39  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.38  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

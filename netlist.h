@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.41 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.42 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 /*
@@ -712,8 +712,7 @@ class NetCase  : public NetProc {
 class NetCondit  : public NetProc {
 
     public:
-      NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
-      : expr_(ex), if_(i), else_(e) { }
+      explicit NetCondit(NetExpr*ex, NetProc*i, NetProc*e);
 
       const NetExpr*expr() const { return expr_; }
       void emit_recurse_if(ostream&, struct target_t*) const;
@@ -1188,7 +1187,7 @@ class Design {
 	// SIGNALS
       void add_signal(NetNet*);
       void del_signal(NetNet*);
-      NetNet*find_signal(const string&name);
+      NetNet*find_signal(const string&path, const string&name);
 
 	// Memories
       void add_memory(NetMemory*);
@@ -1291,6 +1290,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.42  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.41  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.

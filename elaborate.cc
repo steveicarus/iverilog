@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.47 1999/06/19 21:06:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.48 1999/06/24 04:24:18 steve Exp $"
 #endif
 
 /*
@@ -450,8 +450,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    }
 
 	    assert(sig);
-	    NetNet*prt = des->find_signal(my_name + "." +
-					  rmod->ports[idx]->name());
+	    NetNet*prt = des->find_signal(my_name, rmod->ports[idx]->name());
 	    assert(prt);
 
 	      // Check that the parts have matching pin counts. If
@@ -739,7 +738,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
 
 NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 {
-      NetNet*sig = des->find_signal(path+"."+text_);
+      NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
 	    cerr << get_line() << ": Unable to find signal ``" <<
 		  text_ << "''" << endl;
@@ -938,7 +937,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
-      if (NetNet*net = des->find_signal(name)) {
+      if (NetNet*net = des->find_signal(path, text_)) {
 	    NetESignal*node = des->get_esignal(net);
 	    assert(idx_ == 0);
 	    if (lsb_) {
@@ -1034,11 +1033,11 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 
 	/* Get the signal referenced by the identifier, and make sure
 	   it is a register. */
-      NetNet*reg = des->find_signal(path+"."+id->name());
+      NetNet*reg = des->find_signal(path, id->name());
 
       if (reg == 0) {
-	    cerr << get_line() << ": Could not match signal: " <<
-		  id->name() << endl;
+	    cerr << get_line() << ": Could not match signal ``" <<
+		  id->name() << "'' in ``" << path << "''" << endl;
 	    return 0;
       }
       assert(reg);
@@ -1212,15 +1211,17 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetBlock*cur = new NetBlock(NetBlock::SEQU);
       bool fail_flag = false;
 
+      string npath = name_.length()? (path+"."+name_) : path;
+
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
-      if (size() == 1) {
-	    NetProc*tmp = stat(0)->elaborate(des, path);
+      if (list_.count() == 1) {
+	    NetProc*tmp = list_[0]->elaborate(des, npath);
 	    return tmp;
       }
 
-      for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
-	    NetProc*tmp = stat(idx)->elaborate(des, path);
+      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
+	    NetProc*tmp = list_[idx]->elaborate(des, npath);
 	    if (tmp == 0) {
 		  fail_flag = true;
 		  continue;
@@ -1328,7 +1329,15 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 	    else
 		  return new NetBlock(NetBlock::SEQU);
       }
-					  
+
+      if (! expr->set_width(1)) {
+	    cerr << get_line() << ": Unable to set expression width to 1."
+		 << endl;
+	    des->errors += 1;
+	    delete expr;
+	    return 0;
+      }
+
 	// Well, I actually need to generate code to handle the
 	// conditional, so elaborate.
       NetProc*i = if_->elaborate(des, path);
@@ -1447,7 +1456,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       assert(id2);
 
       NetBlock*top = new NetBlock(NetBlock::SEQU);
-      NetNet*sig = des->find_signal(path+"."+id1->name());
+      NetNet*sig = des->find_signal(path, id1->name());
       if (sig == 0) {
 	    cerr << id1->get_line() << ": register ``" << id1->name()
 		 << "'' unknown in this context." << endl;
@@ -1466,7 +1475,7 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 
       body->append(statement_->elaborate(des, path));
 
-      sig = des->find_signal(path+"."+id2->name());
+      sig = des->find_signal(path, id2->name());
       assert(sig);
       NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
 				     expr2_->elaborate_expr(des, path));
@@ -1629,6 +1638,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.48  1999/06/24 04:24:18  steve
+ *  Handle expression widths for EEE and NEE operators,
+ *  add named blocks and scope handling,
+ *  add registers declared in named blocks.
+ *
  * Revision 1.47  1999/06/19 21:06:16  steve
  *  Elaborate and supprort to vvm the forever
  *  and repeat statements.
