@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.45 2001/06/07 04:20:10 steve Exp $"
+#ident "$Id: stub.c,v 1.46 2001/07/01 23:44:19 steve Exp $"
 #endif
 
 /*
@@ -180,6 +180,30 @@ static void show_lpm(ivl_lpm_t net)
       }
 }
 
+static void show_assign_lval(ivl_lval_t lval, unsigned ind)
+{
+      ivl_memory_t mem;
+
+      if ( (mem = ivl_lval_mem(lval)) ) {
+
+	    fprintf(out, "%*s%s[", ind, "", ivl_memory_name(mem));
+	    fprintf(out, "]\n");
+
+      } else {
+	    unsigned pp;
+	    ivl_nexus_t nex = ivl_lval_pin(lval, 0);
+
+	    fprintf(out, "%*s{%s", ind, "", ivl_nexus_name(nex));
+	    fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
+	    for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
+		  nex = ivl_lval_pin(lval, pp);
+		  fprintf(out, ", %s", ivl_nexus_name(nex));
+		  fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
+	    }
+	    fprintf(out, "}\n");
+      }
+}
+
 static void show_statement(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
@@ -190,20 +214,9 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_ASSIGN:
 	    fprintf(out, "%*sASSIGN <lwidth=%u>\n", ind, "",
 		    ivl_stmt_lwidth(net));
-	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1) {
-		  unsigned pp;
-		  ivl_lval_t lval = ivl_stmt_lval(net, idx);
-		  ivl_nexus_t nex = ivl_lval_pin(lval, 0);
 
-		  fprintf(out, "%*s{%s", ind+4, "", ivl_nexus_name(nex));
-		  fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
-		  for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
-			nex = ivl_lval_pin(lval, pp);
-			fprintf(out, ", %s", ivl_nexus_name(nex));
-			fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
-		  }
-		  fprintf(out, "}\n");
-	    }
+	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
+		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
 
 	    if (ivl_stmt_rval(net))
 		  show_expression(ivl_stmt_rval(net), ind+4);
@@ -212,20 +225,9 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_ASSIGN_NB:
 	    fprintf(out, "%*sASSIGN_NB <lwidth=%u>\n", ind, "",
 		    ivl_stmt_lwidth(net));
-	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1) {
-		  unsigned pp;
-		  ivl_lval_t lval = ivl_stmt_lval(net, idx);
-		  ivl_nexus_t nex = ivl_lval_pin(lval, 0);
 
-		  fprintf(out, "%*s{%s", ind+4, "", ivl_nexus_name(nex));
-		  fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
-		  for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
-			nex = ivl_lval_pin(lval, pp);
-			fprintf(out, ", %s", ivl_nexus_name(nex));
-			fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
-		  }
-		  fprintf(out, "}\n");
-	    }
+	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
+		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
 
 	    if (ivl_stmt_rval(net))
 		  show_expression(ivl_stmt_rval(net), ind+4);
@@ -585,6 +587,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.46  2001/07/01 23:44:19  steve
+ *  Print memory l-values.
+ *
  * Revision 1.45  2001/06/07 04:20:10  steve
  *  Account for carry out on add devices.
  *
