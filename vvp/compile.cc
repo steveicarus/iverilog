@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.24 2001/04/01 06:12:13 steve Exp $"
+#ident "$Id: compile.cc,v 1.25 2001/04/01 06:40:45 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -482,6 +482,17 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       free(mnem);
 }
 
+void compile_codelabel(char*label)
+{
+      symbol_value_t val;
+      vvp_cpoint_t ptr = codespace_next();
+
+      val.num = ptr;
+      sym_set_value(sym_codespace, label, val);
+
+      free(label);
+}
+
 void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 {
       vvp_cpoint_t ptr = codespace_allocate();
@@ -696,6 +707,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.25  2001/04/01 06:40:45  steve
+ *  Support empty statements for hanging labels.
+ *
  * Revision 1.24  2001/04/01 06:12:13  steve
  *  Add the bitwise %and instruction.
  *

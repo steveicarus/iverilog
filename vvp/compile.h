@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.12 2001/03/29 03:46:36 steve Exp $"
+#ident "$Id: compile.h,v 1.13 2001/04/01 06:40:45 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -104,6 +104,7 @@ typedef struct comp_operands_s*comp_operands_t;
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_vpi_call(char*label, char*name,
 			     unsigned argc, vpiHandle*argv);
+extern void compile_codelabel(char*label);
 
 /*
  * The parser uses these functions to compile .scope statements.
@@ -134,6 +135,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.13  2001/04/01 06:40:45  steve
+ *  Support empty statements for hanging labels.
+ *
  * Revision 1.12  2001/03/29 03:46:36  steve
  *  Support named events as mode 2 functors.
  *

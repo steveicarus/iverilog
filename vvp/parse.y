@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.14 2001/03/29 03:46:36 steve Exp $"
+#ident "$Id: parse.y,v 1.15 2001/04/01 06:40:45 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -123,9 +123,10 @@ statement
      on the specific instruction. */
 
 	| label_opt T_INSTR operands_opt ';'
-		{ compile_code($1, $2, $3);
-		}
+		{ compile_code($1, $2, $3); }
 
+	| T_LABEL ';'
+		{ compile_codelabel($1); }
 
   /* %vpi_call statements are instructions that have unusual operand
      requirements so are handled by their own rules. */
@@ -307,6 +308,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.15  2001/04/01 06:40:45  steve
+ *  Support empty statements for hanging labels.
+ *
  * Revision 1.14  2001/03/29 03:46:36  steve
  *  Support named events as mode 2 functors.
  *

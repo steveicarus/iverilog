@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.5 2001/03/22 05:28:41 steve Exp $"
+#ident "$Id: codes.cc,v 1.6 2001/04/01 06:40:44 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -74,6 +74,11 @@ vvp_cpoint_t codespace_allocate(void)
       return res;
 }
 
+vvp_cpoint_t codespace_next(void)
+{
+      return code_count;
+}
+
 vvp_code_t codespace_index(vvp_cpoint_t point)
 {
       assert(point < code_count);
@@ -121,6 +126,9 @@ void codespace_dump(FILE*fd)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.6  2001/04/01 06:40:44  steve
+ *  Support empty statements for hanging labels.
+ *
  * Revision 1.5  2001/03/22 05:28:41  steve
  *  Add code label forward references.
  *

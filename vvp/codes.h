@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.12 2001/04/01 06:12:13 steve Exp $"
+#ident "$Id: codes.h,v 1.13 2001/04/01 06:40:44 steve Exp $"
 #endif
 
 
@@ -87,6 +87,9 @@ extern void codespace_init(void);
  */
 extern vvp_cpoint_t codespace_allocate(void);
 
+extern vvp_cpoint_t codespace_next(void);
+
+
 /*
  * Return a pointer to the indexed instruction in the codespace. The
  * ptr must be a value returned from codespace_allocate. The compiler
@@ -100,6 +103,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.13  2001/04/01 06:40:44  steve
+ *  Support empty statements for hanging labels.
+ *
  * Revision 1.12  2001/04/01 06:12:13  steve
  *  Add the bitwise %and instruction.
  *
