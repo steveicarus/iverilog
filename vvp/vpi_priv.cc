@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.23 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.24 2002/08/24 05:02:58 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -71,7 +71,7 @@ const char *vpip_string(const char*str)
 
 int vpi_chk_error(p_vpi_error_info info)
 {
-      if (vpip_last_error.state = 0)
+      if (vpip_last_error.state == 0)
 	    return 0;
 
       info->state = vpip_last_error.state;
@@ -363,6 +363,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.24  2002/08/24 05:02:58  steve
+ *  Fix = vs == error.
+ *
  * Revision 1.23  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *
