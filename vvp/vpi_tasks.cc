@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.8 2001/06/25 03:12:06 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.9 2001/08/03 06:50:44 steve Exp $"
 #endif
 
 /*
@@ -232,35 +232,47 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, unsigned vwid,
 	    return 0;
       }
 
+      switch (defn->info.type) {
+	  case vpiSysTask:
+	    if (vwid > 0) {
+		  fprintf(stderr, "%s: This is a system Task, "
+			  "you cannot call it as a Function\n", name);
+		  return 0;
+	    }
+	    assert(vbit == 0);
+	    break;
+
+	  case vpiSysFunc:
+	    if (vwid == 0) {
+		  fprintf(stderr, "%s: This is a system Function, "
+			  "you cannot call it as a Task\n", name);
+		  return 0;
+	    }
+	    assert(vwid > 0);
+	    break;
+
+	  default:
+	    assert(0);
+      }
 
       struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
 
       switch (defn->info.type) {
 	  case vpiSysTask:
 	    obj->base.vpi_type = &vpip_systask_rt;
-	    assert(vbit == 0);
-	    assert(vwid == 0);
-	    obj->vbit = 0;
-	    obj->vwid = 0;
 	    break;
-
+	    
 	  case vpiSysFunc:
 	    obj->base.vpi_type = &vpip_sysfunc_rt;
-	    assert(vbit >= 4);
-	    assert(vwid > 0);
-	    obj->vbit = vbit;
-	    obj->vwid = vwid;
 	    break;
-
-	  default:
-	    assert(0);
-
       }
 
       obj->scope = vpip_peek_current_scope();
       obj->defn  = defn;
       obj->nargs = argc;
       obj->args  = argv;
+      obj->vbit  = vbit;
+      obj->vwid  = vwid;
 
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf)
@@ -317,6 +329,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.9  2001/08/03 06:50:44  steve
+ *  Detect system function used as a task.
+ *
  * Revision 1.8  2001/06/25 03:12:06  steve
  *  Give task/function definitions a vpi type object.
  *
