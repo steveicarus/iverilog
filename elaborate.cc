@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.292 2003/09/25 00:25:14 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.293 2003/10/26 04:49:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2116,6 +2116,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       assert(id2);
 
       NetBlock*top = new NetBlock(NetBlock::SEQU, 0);
+      top->set_line(*this);
 
 	/* make the expression, and later the initial assignment to
 	   the condition variable. The statement in the for loop is
@@ -2136,10 +2137,12 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       etmp->set_width(lv->lwidth());
 
       NetAssign*init = new NetAssign(lv, etmp);
+      init->set_line(*this);
 
       top->append(init);
 
       NetBlock*body = new NetBlock(NetBlock::SEQU, 0);
+      body->set_line(*this);
 
 	/* Elaborate the statement that is contained in the for
 	   loop. If there is an error, this will return 0 and I should
@@ -2162,6 +2165,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       etmp = expr2_->elaborate_expr(des, scope);
       etmp->set_width(lv->lwidth());
       NetAssign*step = new NetAssign(lv, etmp);
+      step->set_line(*this);
 
       body->append(step);
 
@@ -2187,6 +2191,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* All done, build up the loop. */
 
       NetWhile*loop = new NetWhile(ce, body);
+      loop->set_line(*this);
       top->append(loop);
       return top;
 }
@@ -2607,6 +2612,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.293  2003/10/26 04:49:51  steve
+ *  Attach line number information to for loop parts.
+ *
  * Revision 1.292  2003/09/25 00:25:14  steve
  *  Summary list of missing modules.
  *
