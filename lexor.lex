@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.64 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: lexor.lex,v 1.65 2001/10/30 21:46:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1047,6 +1047,8 @@ static void line_directive2()
       char*cp = yytext + strlen("`line");
       cp += strspn(cp, " ");
       yylloc.first_line = strtoul(cp,&cp,10);
+
+      yylloc.first_line -= 1;
 
       cp += strspn(cp, " ");
       if (*cp == 0) return;
