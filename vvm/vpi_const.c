@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.12 2000/08/20 17:49:05 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.13 2000/09/23 16:34:47 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -25,6 +25,45 @@
 # include  <string.h>
 # include  <stdio.h>
 
+unsigned vpip_bits_to_dec_str(const vpip_bit_t*bits, unsigned nbits,
+			      char*buf, unsigned nbuf)
+{
+      unsigned idx, len;
+      unsigned count_x = 0, count_z = 0;
+      unsigned long val = 0;
+
+      for (idx = 0 ;  idx < nbits ;  idx += 1) {
+	    val *= 2;
+	    if (B_ISZ(bits[nbits-idx-1]))
+		  count_z += 1;
+	    else if (B_ISX(bits[nbits-idx-1]))
+		  count_x += 1;
+	    else if (B_IS1(bits[nbits-idx-1]))
+		  val += 1;
+      }
+
+      if (count_x == nbits) {
+	    len = 1;
+	    buf[0] = 'x';
+	    buf[1] = 0;
+      } else if (count_x > 0) {
+	    len = 1;
+	    buf[0] = 'X';
+	    buf[1] = 0;
+      } else if (count_z == nbits) {
+	    len = 1;
+	    buf[0] = 'z';
+	    buf[1] = 0;
+      } else if (count_z > 0) {
+	    len = 1;
+	    buf[0] = 'Z';
+	    buf[1] = 0;
+      } else {
+	    sprintf(buf, "%lu", val);
+	    len = strlen(buf);
+      }
+      return len;
+}
 
 /*
  * This function is used in a couple places to interpret a bit string
@@ -59,15 +98,7 @@ void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    val = 0;
-	    for (idx = 0 ;  idx < nbits ;  idx += 1) {
-		  val *= 2;
-		  if (B_IS1(bits[nbits-idx-1]))
-			val += 1;
-	    }
-	    sprintf(cp, "%u", val);
-	    cp += strlen(cp);
-	    *cp++ = 0;
+	    cp += vpip_bits_to_dec_str(bits, nbits, cp, 1024-(cp-buff));
 	    break;
 
 	  case vpiOctStrVal:
@@ -393,6 +424,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.13  2000/09/23 16:34:47  steve
+ *  Handle unknowns in decimal strings.
+ *
  * Revision 1.12  2000/08/20 17:49:05  steve
  *  Clean up warnings and portability issues.
  *
