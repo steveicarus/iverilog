@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.77 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.78 2003/06/10 04:29:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -679,7 +679,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    verinum*msn;
 	    if (msb_ && (msn = msb_->eval_const(des, scope))) {
 		  assert(idx_ == 0);
-		  unsigned long msv = msn->as_ulong();
+		  long msv = msn->as_long();
 		  unsigned idx = net->sb_to_idx(msv);
 
 		  if (idx >= net->pin_count()) {
@@ -961,6 +961,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.78  2003/06/10 04:29:57  steve
+ *  PR735: bit select indices are signed constants.
+ *
  * Revision 1.77  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and
