@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.64 2001/02/15 06:59:36 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.65 2001/04/14 22:50:39 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1604,8 +1604,6 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       if (width == 0)
 	    width = iwidth;
 
-      assert(width >= tru_sig->pin_count());
-
 	/* If the expression has width, then generate a boolean result
 	   by connecting an OR gate to calculate the truth value of
 	   the result. In the end, the result needs to be a single bit. */
@@ -1903,6 +1901,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.65  2001/04/14 22:50:39  steve
+ *  Less picky about ternary operands.
+ *
  * Revision 1.64  2001/02/15 06:59:36  steve
  *  FreeBSD port has a maintainer now.
  *
