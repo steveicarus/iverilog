@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.310 2004/12/12 18:13:39 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.311 2004/12/15 17:09:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2229,6 +2229,11 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       if (rexp == 0)
 	    return 0;
 
+      unsigned lwid = count_lval_width(lval);
+
+      rexp->set_width(lwid);
+      rexp = pad_to_width(rexp, lwid);
+
       dev = new NetForce(lval, rexp);
 
       if (debug_elaborate) {
@@ -2762,6 +2767,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.311  2004/12/15 17:09:11  steve
+ *  Force r-value padded to width.
+ *
  * Revision 1.310  2004/12/12 18:13:39  steve
  *  Fix r-value width of continuous assign.
  *
