@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.83 2000/12/02 04:50:32 steve Exp $"
+#ident "$Id: Makefile.in,v 1.84 2000/12/02 05:30:08 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -137,9 +137,9 @@ endif
 	mv $*.d dep/$*.d
 
 
-lexor.o dep/lexor.d: lexor.cc parse.h
+lexor.o: lexor.cc parse.h
 
-parse.o dep/parse.d: parse.cc
+parse.o: parse.cc
 
 parse.h parse.cc: $(srcdir)/parse.y
 	bison --verbose -t -p VL -d $(srcdir)/parse.y -o parse.cc
@@ -151,7 +151,7 @@ syn-rules.cc: $(srcdir)/syn-rules.y
 lexor.cc: $(srcdir)/lexor.lex
 	flex -PVL -s -olexor.cc $(srcdir)/lexor.lex
 
-lexor_keyword.o dep/lexor_keyword.d: lexor_keyword.cc
+lexor_keyword.o: lexor_keyword.cc
 
 lexor_keyword.cc: lexor_keyword.gperf
 	gperf -o -i 7 -C -k 1-3,$$ -L ANSI-C -H keyword_hash -N check_identifier -t lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
