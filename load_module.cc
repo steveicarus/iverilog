@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.3 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: load_module.cc,v 1.4 2001/11/20 23:36:34 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -51,6 +51,8 @@ bool load_module(const char*type)
 		  }
 
 		  pform_parse(path, file);
+
+		  fclose(file);
 		  return true;
 	    }
       }
@@ -60,6 +62,9 @@ bool load_module(const char*type)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.4  2001/11/20 23:36:34  steve
+ *  Close library files after parsing.
+ *
  * Revision 1.3  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
  *
