@@ -347,7 +347,7 @@ especially testing from many people, including (in alphabetical order):
 	Peter Monta <pmonta@halibut.imedia.com>
 	Daniel H. Nelsen <dhn@qedinc.com>
 	Stefan Petersen <spe@geda.seul.org>
-	Jason Schonberg <schon@mips.com>
+	Jason Schonberg <schonm@yahoo.com>
 	Stuart Sutherland <stuart@sutherland.com>
 	Stephen Tell <tell@cs.unc.edu>
         Stefan Theide <Stefan.Thiede@sv.sc.philips.com>
