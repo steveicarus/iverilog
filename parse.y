@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.120 2001/04/28 22:56:15 steve Exp $"
+#ident "$Id: parse.y,v 1.121 2001/04/29 20:18:34 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1311,9 +1311,10 @@ module_item
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
 
-	| error
+	| error ';'
 		{ yyerror(@1, "error: invalid module item. "
 			  "Did you forget an initial or always?");
+		  yyerrok;
 		}
 
 	| K_assign error '=' expression ';'
