@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.3 2004/12/18 18:55:08 steve Exp $"
+#ident "$Id: statement.c,v 1.4 2005/02/14 01:51:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -52,7 +52,10 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 		    ivl_signal_width(sig),
 		    ivl_lval_part_off(lval),
 		    ivl_lval_width(lval));
-
+	    if (ivl_lval_mux(lval)) {
+		  fprintf(out, "%*sBit select expression:\n", ind+4, "");
+		  show_expression(ivl_lval_mux(lval), ind+8);
+	    }
 	    wid = ivl_lval_width(lval);
       }
 

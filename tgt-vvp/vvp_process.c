@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.98 2005/01/28 19:39:03 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.99 2005/02/14 01:51:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -82,18 +82,8 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx,
 
       if (ivl_lval_mux(lval)) {
 	    assert(wid == 1);
-	    if ((ivl_signal_pins(sig)-1) <= 0xffffU) {
-		  fprintf(vvp_out, "    %%set/x0 V_%s, %u, %u;\n",
-			  vvp_signal_label(sig), bit, ivl_signal_pins(sig)-1);
-	    } else {
-		    /* If the target bound is too big for the %set/x0
-		       instruction, then use the %set/x0/x instruction
-		       instead. */
-		  fprintf(vvp_out, "    %%ix/load 3, %u;\n",
-			  ivl_signal_pins(sig)-1);
-		  fprintf(vvp_out, "    %%set/x0/x V_%s, %u, 3;\n",
-			  vvp_signal_label(sig), bit);
-	    }
+	    fprintf(vvp_out, "    %%set/x0 V_%s, %u;\n",
+		    vvp_signal_label(sig), bit);
 
       } else {
 	    fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
@@ -1560,6 +1550,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.99  2005/02/14 01:51:39  steve
+ *  Handle bit selects in l-values to assignments.
+ *
  * Revision 1.98  2005/01/28 19:39:03  steve
  *  Integrate fixes from 0.8 branch.
  *

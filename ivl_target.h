@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.141 2005/02/13 01:15:07 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.142 2005/02/14 01:51:39 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -921,6 +921,18 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    If the l-value is a memory, this method returns an
  *    ivl_expr_t that represents the index expression.  Otherwise, it
  *    returns 0.
+ *
+ * SEMANTIC NOTES
+ * The ivl_lval_width is not necessarily the same as the width of the
+ * signal or memory word it represents. It is the width of the vector
+ * it receives and assigns. This may be less then the width of the
+ * signal (or even 1) if only a part of the l-value signal is to be
+ * assigned.
+ *
+ * The ivl_lval_part_off is the cannonical base of a constant part or
+ * bit select. If the bit select base is non-constant, then the
+ * ivl_lval_mux will contain an expression. If there is a mux
+ * expression, then the ivl_lval_part_off result can be ignored.
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
@@ -1504,6 +1516,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.142  2005/02/14 01:51:39  steve
+ *  Handle bit selects in l-values to assignments.
+ *
  * Revision 1.141  2005/02/13 01:15:07  steve
  *  Replace supply nets with wires connected to pullup/down supply devices.
  *
