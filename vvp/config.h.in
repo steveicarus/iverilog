@@ -19,11 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: config.h.in,v 1.16 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: config.h.in,v 1.17 2004/05/18 18:45:11 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
+#ifndef SIZEOF_UNSIGNED_LONG
 # define SIZEOF_UNSIGNED_LONG 0
+#endif
 # define SIZEOF_UNSIGNED 0
 
 # undef NEED_LU
@@ -94,6 +96,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.17  2004/05/18 18:45:11  steve
+ *  Handle explicit set of unsigned long width. For -m32
+ *
  * Revision 1.16  2003/08/26 16:26:02  steve
  *  ifdef idents correctly.
  *

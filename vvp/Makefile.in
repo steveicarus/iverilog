@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.59 2004/02/10 19:25:01 steve Exp $"
+#ident "$Id: Makefile.in,v 1.60 2004/05/18 18:45:11 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -131,7 +131,7 @@ bin32:
 	mkdir bin32
 
 bin32/%.o: %.cc
-	$(CXX) -m32 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
+	$(CXX) -m32 -DSIZEOF_UNSIGNED_LONG=4 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
 
 bin32/%.o: %.c
 	$(CC) -m32 $(CPPFLAGS) $(MDIR2) $(CFLAGS) -MD -c $< -o $@
