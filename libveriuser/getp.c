@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getp.c,v 1.4 2003/05/29 03:46:21 steve Exp $"
+#ident "$Id: getp.c,v 1.5 2003/05/30 04:22:13 steve Exp $"
 #endif
 
 # include  <assert.h>
+# include  <ctype.h>
 # include  <veriuser.h>
 # include  <vpi_user.h>
 # include  "priv.h"
@@ -127,8 +128,68 @@ double tf_getrealp(PLI_INT32 n)
 }
 
 
+char *tf_istrgetp(PLI_INT32 n, PLI_INT32 fmt, void *obj)
+{
+      vpiHandle sys_h, sys_i, arg_h = 0;
+      s_vpi_value value;
+      char *rtn = 0;
+
+      assert(n > 0);
+
+      /* get task/func handle */
+      sys_h = (vpiHandle)obj;
+      sys_i = vpi_iterate(vpiArgument, sys_h);
+
+      /* find nth arg */
+      while (n > 0) {
+	    if (!(arg_h = vpi_scan(sys_i))) { goto out; }
+	    n--;
+      }
+
+      if (vpi_get(vpiType, arg_h) == vpiConstant &&
+	  vpi_get(vpiConstType, arg_h) == vpiStringConst)
+      {
+	    value.format = vpiStringVal;
+	    vpi_get_value(arg_h, &value);
+	    rtn = value.value.str;
+      } else {
+	    value.format = -1;
+	    switch (tolower(fmt)) {
+		  case 'b': value.format = vpiBinStrVal; break;
+		  case 'o': value.format = vpiOctStrVal; break;
+		  case 'd': value.format = vpiDecStrVal; break;
+		  case 'h': value.format = vpiHexStrVal; break;
+	    }
+	    if (value.format > 0) { 
+		  vpi_get_value(arg_h, &value);
+		  rtn = value.value.str;
+	    }
+      }
+
+      vpi_free_object(sys_i);
+
+out:
+      if (pli_trace) {
+	    fprintf(pli_trace, "tf_istrgetp(n=%d, fmt=%c, obj=%p) --> \"%s\"\n",
+		  n, fmt, obj, rtn);
+	    fflush(pli_trace);
+      }
+
+      return rtn;
+}
+
+char *tf_strgetp(PLI_INT32 n, PLI_INT32 fmt)
+{
+      char *rtn = tf_istrgetp(n, fmt, vpi_handle(vpiSysTfCall, 0));
+
+      return rtn;
+}
+
 /*
  * $Log: getp.c,v $
+ * Revision 1.5  2003/05/30 04:22:13  steve
+ *  Add tf_strgetp functions.
+ *
  * Revision 1.4  2003/05/29 03:46:21  steve
  *  Add tf_getp/putp support for integers
  *  and real valued arguments.

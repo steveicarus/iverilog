@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.29 2003/05/29 03:46:21 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.30 2003/05/30 04:22:13 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -414,6 +414,15 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		break;
 	  }
 
+	  case vpiOctStrVal: {
+		unsigned nchar = (rfp->nbits+2)/3;
+	        rbuf = need_result_buf(nchar + 1, RBUF_VAL);
+		vpip_bits_to_oct_str(rfp->bits, rfp->nbits,
+				     rbuf, nchar+1, rfp->signed_flag);
+		vp->value.str = rbuf;
+		break;
+	  }
+
 	  case vpiIntVal: {
 		vp->value.integer = bits2int(rfp);
 		break;
@@ -641,6 +650,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.30  2003/05/30 04:22:13  steve
+ *  Add tf_strgetp functions.
+ *
  * Revision 1.29  2003/05/29 03:46:21  steve
  *  Add tf_getp/putp support for integers
  *  and real valued arguments.

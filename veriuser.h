@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.30 2003/05/30 04:18:31 steve Exp $"
+#ident "$Id: veriuser.h,v 1.31 2003/05/30 04:22:13 steve Exp $"
 #endif
 
 /*
@@ -257,6 +257,9 @@ extern PLI_INT32 tf_igetp(PLI_INT32, void*);
 extern double tf_getrealp(PLI_INT32);
 extern double tf_igetrealp(PLI_INT32, void*);
 
+extern char *tf_strgetp(PLI_INT32, PLI_INT32);
+extern char *tf_istrgetp(PLI_INT32, PLI_INT32, void*);
+
 extern char *tf_strgettime(void);
 extern PLI_INT32 tf_gettime(void);
 
@@ -329,6 +332,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.31  2003/05/30 04:22:13  steve
+ *  Add tf_strgetp functions.
+ *
  * Revision 1.30  2003/05/30 04:18:31  steve
  *  Add acc_next function.
  *
