@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.101 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.102 2003/01/16 21:43:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1768,6 +1768,7 @@ void dll_target::scope(const NetScope*net)
 	    scope->child_ = 0;
 	    scope->sibling_ = 0;
 	    scope->parent = find_scope(des_, net->parent());
+	    assert(scope->parent);
 	    scope->nsigs_ = 0;
 	    scope->sigs_ = 0;
 	    scope->nlog_ = 0;
@@ -1785,10 +1786,18 @@ void dll_target::scope(const NetScope*net)
 		  scope->type_ = IVL_SCT_MODULE;
 		  scope->tname_ = net->module_name();
 		  break;
-		case NetScope::TASK:
-		  scope->type_ = IVL_SCT_TASK;
-		  scope->tname_ = strings_.add(net->task_def()->name().c_str());
-		  break;
+		case NetScope::TASK: {
+		      const NetTaskDef*def = net->task_def();
+		      if (def == 0) {
+			    cerr <<  "?:?" << ": internal error: "
+				 << "task " << scope->name_
+				 << " has no definition." << endl;
+		      }
+		      assert(def);
+		      scope->type_ = IVL_SCT_TASK;
+		      scope->tname_ = strings_.add(def->name().c_str());
+		      break;
+		}
 		case NetScope::FUNC:
 		  scope->type_ = IVL_SCT_FUNCTION;
 		  scope->tname_ = strings_.add(net->func_def()->name().c_str());
@@ -1984,6 +1993,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.102  2003/01/16 21:43:52  steve
+ *  Assert some task definition sanity.
+ *
  * Revision 1.101  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal
