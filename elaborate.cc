@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.69 1999/08/06 04:05:28 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.70 1999/08/08 20:06:06 steve Exp $"
 #endif
 
 /*
@@ -244,7 +244,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 void PGBuiltin::elaborate(Design*des, const string&path) const
 {
       unsigned count = 1;
-      unsigned low, high;
+      unsigned low = 0, high = 0;
       string name = get_name();
       if (name == "")
 	    name = des->local_symbol(path);
@@ -2051,6 +2051,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.70  1999/08/08 20:06:06  steve
+ *  Uninitialized low and high indices for single gate syntax
+ *
  * Revision 1.69  1999/08/06 04:05:28  steve
  *  Handle scope of parameters.
  *
