@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.34 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: parse.y,v 1.35 1999/06/10 04:03:53 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -289,13 +289,6 @@ event_expression
 expression
 	: expr_primary
 		{ $$ = $1; }
-	| '{' expression_list '}'
-		{ PEConcat*tmp = new PEConcat(*$2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
-		  delete $2;
-		  $$ = tmp;
-		}
 	| '+' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('+', $2);
 		  tmp->set_file(@2.text);
@@ -459,8 +452,10 @@ expression
 		  $$ = tmp;
 		}
 	| expression '?' expression ':' expression
-		{ yyerror(@2, "Sorry, ?: operator not supported.");
-		  $$ = 0;
+		{ PETernary*tmp = new PETernary($1, $3, $5);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| IDENTIFIER '(' expression_list ')'
 		{ yyerror(@2, "Sorry, function calls not supported.");
@@ -546,6 +541,27 @@ expr_primary
 		  $$ = $4;
 		  delete $2;
 		  delete $6;
+		}
+	| '{' expression_list '}'
+		{ PEConcat*tmp = new PEConcat(*$2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  delete $2;
+		  $$ = tmp;
+		}
+	| '{' expression '{' expression_list '}' '}'
+		{ PExpr*rep = $2;
+		  if (!pform_expression_is_constant($2)) {
+			yyerror(@2, "Repeat expression must be constant.");
+			delete rep;
+			delete $2;
+			rep = 0;
+		  }
+		  PEConcat*tmp = new PEConcat(*$4, rep);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $4;
+		  $$ = tmp;
 		}
 	;
 
@@ -770,12 +786,13 @@ lpvalue
 		  $$ = tmp;
 		}
 	| identifier '[' expression ':' expression ']'
-		{ yyerror(@1, "Sorry, part selects"
-		          " not supported in lvalue.");
-		  $$ = 0;
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->msb_ = $3;
+		  tmp->lsb_ = $5;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  delete $1;
-		  delete $3;
-		  delete $5;
+		  $$ = tmp;
 		}
 	| '{' expression_list '}'
 		{ yyerror(@1, "Sorry, concatenation expressions"
@@ -1100,7 +1117,7 @@ register_variable_list
 
 statement
 	: K_assign lavalue '=' expression ';'
-		{ yyerror(@1, "Sorry, proceedural continuous assign not supported.");
+		{ yyerror(@1, "Sorry, procedural continuous assign not supported.");
 		  $$ = 0;
 		}
 	| K_begin statement_list K_end
@@ -1117,12 +1134,30 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
+	| K_casex '(' expression ')' case_items K_endcase
+		{ PCase*tmp = new PCase($3, $5);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  yywarn(@1, "casex not properly supported, using case.");
+		  $$ = tmp;
+		}
+	| K_casez '(' expression ')' case_items K_endcase
+		{ PCase*tmp = new PCase($3, $5);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  yywarn(@1, "casez not properly supported, using case.");
+		  $$ = tmp;
+		}
 	| K_if '(' expression ')' statement_opt
 		{ PCondit*tmp = new PCondit($3, $5, 0);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
 	| K_if '(' expression ')' statement_opt K_else statement_opt
 		{ PCondit*tmp = new PCondit($3, $5, $7);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
 	| K_if '(' error ')' statement_opt
@@ -1135,7 +1170,9 @@ statement
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  lpvalue '=' expression ')' statement
-		{ $$ = new PForStatement($3, $5, $7, $9, $11, $13);
+		{ PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11, $13);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement

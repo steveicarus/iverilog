@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.38 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.39 1999/06/10 04:03:53 steve Exp $"
 #endif
 
 /*
@@ -178,6 +178,8 @@ void PGate::elaborate(Design*des, const string&path) const
    assign.) Elaborate the lvalue and rvalue, and do the assignment. */
 void PGAssign::elaborate(Design*des, const string&path) const
 {
+      assert(pin(0));
+      assert(pin(1));
       NetNet*lval = pin(0)->elaborate_net(des, path);
       NetNet*rval = pin(1)->elaborate_net(des, path);
 
@@ -545,7 +547,7 @@ void PGModule::elaborate(Design*des, const string&path) const
 	    return;
       }
 
-      cerr << "Unknown module: " << type_ << endl;
+      cerr << get_line() << ": Unknown module: " << type_ << endl;
 }
 
 NetNet* PExpr::elaborate_net(Design*des, const string&path) const
@@ -666,11 +668,31 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
 {
       svector<NetNet*>nets (parms_.count());
       unsigned pins = 0;
+      unsigned errors = 0;
+
+      if (repeat_) {
+	    cerr << get_line() << ": Sorry, I do not know how to"
+		  " elaborate repeat concatenation nets." << endl;
+	    return 0;
+      }
 
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 	    nets[idx] = parms_[idx]->elaborate_net(des, path);
-	    pins += nets[idx]->pin_count();
+	    if (nets[idx] == 0)
+		  errors += 1;
+	    else
+		  pins += nets[idx]->pin_count();
+      }
+
+	/* If any of the sub expressions failed to elaborate, then
+	   delete all those that did and abort myself. */
+      if (errors) {
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  if (nets[idx]) delete nets[idx];
+	    }
+	    des->errors += 1;
+	    return 0;
       }
 
 	/* Make the temporary signal that connects to all the
@@ -696,6 +718,14 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
 NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 {
       NetNet*sig = des->find_signal(path+"."+text_);
+      if (sig == 0) {
+	    cerr << get_line() << ": Unable to find signal ``" <<
+		  text_ << "''" << endl;
+	    des->errors+= 1;
+	    return 0;
+      }
+
+      assert(sig);
 
       if (msb_ && lsb_) {
 	    verinum*mval = msb_->eval_const(des, path);
@@ -757,6 +787,10 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path) const
 NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
 {
       NetNet* sub_sig = expr_->elaborate_net(des, path);
+      if (sub_sig == 0) {
+	    des->errors += 1;
+	    return 0;
+      }
       assert(sub_sig);
 
       NetNet* sig;
@@ -801,8 +835,15 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
 NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 {
       bool flag;
-      NetEBinary*tmp = new NetEBinary(op_, left_->elaborate_expr(des, path),
-				      right_->elaborate_expr(des, path));
+      NetExpr*lp = left_->elaborate_expr(des, path);
+      NetExpr*rp = right_->elaborate_expr(des, path);
+      if ((lp == 0) || (rp == 0)) {
+	    delete lp;
+	    delete rp;
+	    return 0;
+      }
+
+      NetEBinary*tmp = new NetEBinary(op_, lp, rp);
       tmp->set_line(*this);
       switch (op_) {
 	  case 'e':
@@ -824,6 +865,12 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 
 NetExpr* PEConcat::elaborate_expr(Design*des, const string&path) const
 {
+      if (repeat_) {
+	    cerr << get_line() << ": Sorry, I do not know how to"
+		  " elaborate repeat concatenation expressions." << endl;
+	    return 0;
+      }
+
       NetEConcat*tmp = new NetEConcat(parms_.count());
       tmp->set_line(*this);
 
@@ -961,6 +1008,13 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       if (NetMemory*mem = des->find_memory(path+"."+id->name()))
 	    return assign_to_memory_(mem, id->msb_, des, path);
 
+
+      if (id->lsb_ || id->msb_) {
+	    cerr << get_line() << ": Sorry, cannot elaborate part/bit"
+		  " selects in l-value." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       NetNet*reg = des->find_signal(path+"."+id->name());
 
@@ -1114,6 +1168,12 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
 NetProc* PCase::elaborate(Design*des, const string&path) const
 {
       NetExpr*expr = expr_->elaborate_expr(des, path);
+      if (expr == 0) {
+	    cerr << get_line() << ": Unable to elaborate the case"
+		  " expression." << endl;
+	    return 0;
+      }
+
       NetCase*res = new NetCase(expr, items_->count());
 
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
@@ -1135,6 +1195,12 @@ NetProc* PCondit::elaborate(Design*des, const string&path) const
 {
 	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = expr_->elaborate_expr(des, path);
+      if (expr == 0) {
+	    cerr << get_line() << ": Unable to elaborate"
+		  " condition expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
       NetExpr*tmp = expr->eval_tree();
       if (tmp) {
 	    delete expr;
@@ -1396,6 +1462,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.39  1999/06/10 04:03:53  steve
+ *  Add support for the Ternary operator,
+ *  Add support for repeat concatenation,
+ *  Correct some seg faults cause by elaboration
+ *  errors,
+ *  Parse the casex anc casez statements.
+ *
  * Revision 1.38  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *

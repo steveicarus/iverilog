@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.3 1999/05/16 05:08:42 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.4 1999/06/10 04:03:52 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -36,6 +36,11 @@ bool PExpr::is_the_same(const PExpr*that) const
 bool PExpr::is_constant(Module*) const
 {
       return false;
+}
+
+PEConcat::~PEConcat()
+{
+      delete repeat_;
 }
 
 /*
@@ -67,8 +72,19 @@ bool PEString::is_constant(Module*) const
       return true;
 }
 
+PETernary::~PETernary()
+{
+}
+
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.4  1999/06/10 04:03:52  steve
+ *  Add support for the Ternary operator,
+ *  Add support for repeat concatenation,
+ *  Correct some seg faults cause by elaboration
+ *  errors,
+ *  Parse the casex anc casez statements.
+ *
  * Revision 1.3  1999/05/16 05:08:42  steve
  *  Redo constant expression detection to happen
  *  after parsing.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.18 1999/06/06 20:45:39 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.19 1999/06/10 04:03:53 steve Exp $"
 #endif
 
 /*
@@ -44,6 +44,9 @@ void PExpr::dump(ostream&out) const
 
 void PEConcat::dump(ostream&out) const
 {
+      if (repeat_)
+	    out << "{" << *repeat_;
+
       if (parms_.count() == 0) {
 	    out << "{}";
 	    return;
@@ -54,6 +57,8 @@ void PEConcat::dump(ostream&out) const
 	    out << ", " << *parms_[idx];
 
       out << "}";
+
+      if (repeat_) out << "}";
 }
 
 void PEEvent::dump(ostream&out) const
@@ -475,6 +480,13 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.19  1999/06/10 04:03:53  steve
+ *  Add support for the Ternary operator,
+ *  Add support for repeat concatenation,
+ *  Correct some seg faults cause by elaboration
+ *  errors,
+ *  Parse the casex anc casez statements.
+ *
  * Revision 1.18  1999/06/06 20:45:39  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.10 1999/06/09 03:00:05 steve Exp $"
+#ident "$Id: PExpr.h,v 1.11 1999/06/10 04:03:52 steve Exp $"
 #endif
 
 # include  <string>
@@ -71,7 +71,9 @@ ostream& operator << (ostream&, const PExpr&);
 class PEConcat : public PExpr {
 
     public:
-      PEConcat(const svector<PExpr*>&p) : parms_(p) { }
+      PEConcat(const svector<PExpr*>&p, PExpr*r =0)
+      : parms_(p), repeat_(r) { }
+      ~PEConcat();
 
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
@@ -79,6 +81,7 @@ class PEConcat : public PExpr {
 
     private:
       svector<PExpr*>parms_;
+      PExpr*repeat_;
 };
 
 class PEEvent : public PExpr {
@@ -196,7 +199,31 @@ class PEBinary : public PExpr {
 };
 
 /*
+ * This class supports the ternary (?:) operator. The operator takes
+ * three expressions, the test, the true result and the false result.
+ */
+class PETernary : public PExpr {
+
+    public:
+      explicit PETernary(PExpr*e, PExpr*t, PExpr*f)
+      : expr_(e), tru_(t), fal_(f) { }
+      ~PETernary();
+
+    private:
+      PExpr*expr_;
+      PExpr*tru_;
+      PExpr*fal_;
+};
+
+/*
  * $Log: PExpr.h,v $
+ * Revision 1.11  1999/06/10 04:03:52  steve
+ *  Add support for the Ternary operator,
+ *  Add support for repeat concatenation,
+ *  Correct some seg faults cause by elaboration
+ *  errors,
+ *  Parse the casex anc casez statements.
+ *
  * Revision 1.10  1999/06/09 03:00:05  steve
  *  Add support for procedural concatenation expression.
  *
