@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.125 2002/05/28 05:21:30 steve Exp $"
+#ident "$Id: Makefile.in,v 1.126 2002/06/05 18:52:14 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -283,17 +283,21 @@ $(prefix)/QUICK_START.txt: $(srcdir)/QUICK_START.txt
 endif
 
 installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl
-
+	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl \
+	    $(mandir) $(mandir)/man1
 
 uninstall:
-	rm -f $(libdir)/ivl/ivl@EXEEXT@
+	rm -f $(libdir)/ivl/iverilog.conf
+	-rmdir $(libdir)/ivl
+	rm -f $(libdir)/libvpi.a
 	rm -f $(bindir)/verilog
+	rm -f $(bindir)/iverilog-vpi
 	rm -f $(bindir)/gverilog@EXEEXT@
 	rm -f $(includedir)/ivl_target.h
 	rm -f $(includedir)/vpi_user.h
 	rm -f $(includedir)/acc_user.h
 	rm -f $(includedir)/veriuser.h
+	rm -f $(mandir)/man1/iverilog-vpi.1
 	cd driver ; $(MAKE) uninstall
 	cd vpi ; $(MAKE) uninstall
 	cd ivlpp ; $(MAKE) uninstall
