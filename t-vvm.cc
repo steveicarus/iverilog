@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.145 2000/05/07 18:20:07 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.146 2000/05/07 19:40:26 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1260,6 +1260,16 @@ void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
 	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
 		      << mname << ", " << mname
 		      << ".key_Distance(" << idx << "));" << endl;
+      }
+
+	/* Connect the Direction pin... */
+      if (gate->pin_Direction().is_linked()) {
+	    string nexus = nexus_from_link(&gate->pin_Direction());
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname
+		      << ".key_Direction(0));" << endl;
       }
 
 	/* Connect the output drivers to the nexus nodes. */
@@ -2792,6 +2802,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.146  2000/05/07 19:40:26  steve
+ *  Fix connection of Direction of LMP_CLSHIFT
+ *  to constant values. Remember to add a signal
+ *  to the nexus and connect the receiver in vvm.
+ *
  * Revision 1.145  2000/05/07 18:20:07  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

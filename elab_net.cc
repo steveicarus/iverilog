@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.34 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.35 2000/05/07 19:40:26 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -789,8 +789,10 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 	    connect(rsig->pin(idx), gate->pin_Distance(idx));
 
       if (op_ == 'r') {
+	    NetTmp*tmp = new NetTmp(scope, des->local_symbol(path));
 	    NetConst*dir = new NetConst(des->local_symbol(path), verinum::V1);
 	    connect(dir->pin(0), gate->pin_Direction());
+	    connect(tmp->pin(0), gate->pin_Direction());
 	    des->add_node(dir);
       }
 
@@ -1462,6 +1464,11 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.35  2000/05/07 19:40:26  steve
+ *  Fix connection of Direction of LMP_CLSHIFT
+ *  to constant values. Remember to add a signal
+ *  to the nexus and connect the receiver in vvm.
+ *
  * Revision 1.34  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

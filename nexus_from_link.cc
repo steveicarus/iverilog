@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nexus_from_link.cc,v 1.3 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: nexus_from_link.cc,v 1.4 2000/05/07 19:40:26 steve Exp $"
 #endif
 
 # include  "netmisc.h"
@@ -69,6 +69,7 @@ string nexus_from_link(const Link*lnk)
 		  obj->name() << " pin " << pin << "(" <<
 		  lnk->get_name() << "<" << lnk->get_inst() << ">)"
 		  " type=" << typeid(*obj).name() << "?" << endl;
+
       }
       assert(sig);
       ostrstream tmp;
@@ -82,6 +83,11 @@ string nexus_from_link(const Link*lnk)
 
 /*
  * $Log: nexus_from_link.cc,v $
+ * Revision 1.4  2000/05/07 19:40:26  steve
+ *  Fix connection of Direction of LMP_CLSHIFT
+ *  to constant values. Remember to add a signal
+ *  to the nexus and connect the receiver in vvm.
+ *
  * Revision 1.3  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.
