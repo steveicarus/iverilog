@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.128 2002/06/14 21:38:41 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.129 2002/06/19 04:20:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -115,6 +115,13 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	      << " " << nex->name() << endl;
       }
       dump_obj_attr(o, ind+4);
+}
+
+void NetSubnet::dump_net(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "** " << name() << " is a NetSubnet **"
+	<< endl;
+      NetNet::dump_net(o, ind);
 }
 
 void NetMemory::dump(ostream&o, unsigned ind) const
@@ -977,6 +984,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.129  2002/06/19 04:20:03  steve
+ *  Remove NetTmp and add NetSubnet class.
+ *
  * Revision 1.128  2002/06/14 21:38:41  steve
  *  Fix expression width for repeat concatenations.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.253 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.254 2002/06/19 04:20:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -409,7 +409,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 	    }
 
-	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
+	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
 		  delete tmp;
       }
 }
@@ -656,7 +656,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 
 
-	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
+	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
 		  delete tmp;
       }
 }
@@ -719,7 +719,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    connect(sig->pin(0), net->pin(idx));
 
 	      // Delete excess holding signal.
-	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
+	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
 		  delete tmp;
       }
       
@@ -2464,6 +2464,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.254  2002/06/19 04:20:03  steve
+ *  Remove NetTmp and add NetSubnet class.
+ *
  * Revision 1.253  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

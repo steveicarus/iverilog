@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.90 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.91 2002/06/19 04:20:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -138,9 +138,9 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	    osig = 0;
       }
 
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
+      if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(lsig))
 	    delete tmp;
-      if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
+      if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(rsig))
 	    delete tmp;
 
       return osig;
@@ -744,7 +744,9 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
-	    NetNet*tmp = new NetTmp(scope, scope->local_hsymbol());
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::IMPLICIT, 1);
+	    tmp->local_flag(true);
 	    connect(gate->pin(1), tmp->pin(0));
 
 	    des->add_node(gate_t);
@@ -763,7 +765,9 @@ NetNet* PEBinary::elaborate_net_log_(Design*des, NetScope*scope,
 
 	      /* The reduced logical value is a new nexus, create a
 		 temporary signal to represent it. */
-	    NetNet*tmp = new NetTmp(scope, scope->local_hsymbol());
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::IMPLICIT, 1);
+	    tmp->local_flag(true);
 	    connect(gate->pin(2), tmp->pin(0));
 
 	    des->add_node(gate_t);
@@ -944,7 +948,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       if (lsig->pin_count() < lwidth) {
 	    NetConst*zero = new NetConst(scope, scope->local_hsymbol(),
 					 verinum::V0);
-	    NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol());
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::IMPLICIT, 1);
+	    tmp->local_flag(true);
 	    des->add_node(zero);
 	    connect(zero->pin(0), tmp->pin(0));
 	    for (unsigned idx = lsig->pin_count() ; idx < lwidth ;  idx += 1)
@@ -957,7 +963,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    connect(rsig->pin(idx), gate->pin_Distance(idx));
 
       if (op_ == 'r') {
-	    NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol());
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::IMPLICIT, 1);
+	    tmp->local_flag(true);
 	    NetConst*dir = new NetConst(scope, scope->local_hsymbol(),
 					verinum::V1);
 	    connect(dir->pin(0), gate->pin_Direction());
@@ -1298,15 +1306,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  lidx = tmp;
 	    }
 
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
-				    sig->type(), midx-lidx+1);
-	    tmp->local_flag(true);
+	    unsigned part_count = midx-lidx+1;
 
 	      /* Check that the bit or part select of the signal is
 		 within the range of the part. The lidx is the
 		 normalized index of the LSB, so that plus the desired
 		 width must be <= the width of the references signal. */
-	    if ((lidx + tmp->pin_count()) > sig->pin_count()) {
+	    if ((lidx + part_count) > sig->pin_count()) {
 		  cerr << get_line() << ": error: bit/part select ["
 		       << mval->as_long() << ":" << lval->as_long()
 		       << "] out of range for " << sig->name() << endl;
@@ -1314,8 +1320,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  return sig;
 	    }
 
-	    for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
-		  connect(tmp->pin(idx-lidx), sig->pin(idx));
+	    NetSubnet*tmp = new NetSubnet(sig, lidx, part_count);
 
 	    sig = tmp;
 
@@ -1336,14 +1341,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  idx = 0;
 	    }
 
-	      /* This is a bit select, create a compatible NetNet with
-		 a single bit that links to the selected bit of the
-		 expression. */
-	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
-				    sig->type(), 1);
-	    tmp->local_flag(true);
-
-	    connect(tmp->pin(0), sig->pin(idx));
+	    NetSubnet*tmp = new NetSubnet(sig, idx, 1);
 	    sig = tmp;
       }
 
@@ -1447,24 +1445,21 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
 
 	    if (midx >= lidx) {
-		  NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol(),
-					  midx-lidx+1);
-		  if (tmp->pin_count() > sig->pin_count()) {
+		  unsigned subnet_wid = midx-lidx+1;
+		  if (subnet_wid > sig->pin_count()) {
 			cerr << get_line() << ": bit select out of "
 			     << "range for " << sig->name() << endl;
 			return sig;
 		  }
 
-		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
-			connect(tmp->pin(idx-lidx), sig->pin(idx));
+		  NetSubnet*tmp = new NetSubnet(sig, lidx, subnet_wid);
 
 		  sig = tmp;
 
 	    } else {
-		  NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol(),
-					  lidx-midx+1);
+		  unsigned subnet_wid = midx-lidx+1;
 
-		  if (tmp->pin_count() > sig->pin_count()) {
+		  if (subnet_wid > sig->pin_count()) {
 			cerr << get_line() << ": error: "
 			     << "part select out of range for "
 			     << sig->name() << "." << endl;
@@ -1472,9 +1467,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 			return sig;
 		  }
 
-		  assert(tmp->pin_count() <= sig->pin_count());
-		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
-			connect(tmp->pin(idx-midx), sig->pin(idx));
+		  NetSubnet*tmp = new NetSubnet(sig, lidx, subnet_wid);
 
 		  sig = tmp;
 	    }
@@ -1496,8 +1489,8 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  idx = 0;
 	    }
-	    NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol(), 1);
-	    connect(tmp->pin(0), sig->pin(idx));
+
+	    NetSubnet*tmp = new NetSubnet(sig, idx, 1);
 	    sig = tmp;
       }
 
@@ -1562,24 +1555,26 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    unsigned lidx = sig->sb_to_idx(lval->as_long());
 
 	    if (midx >= lidx) {
-		  NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol(),
-					  midx-lidx+1);
-		  if (tmp->pin_count() > sig->pin_count()) {
+		  unsigned part_count = midx-lidx+1;
+		  if (part_count > sig->pin_count()) {
 			cerr << get_line() << ": bit select out of "
 			     << "range for " << sig->name() << endl;
 			return sig;
 		  }
 
+		  NetSubnet*tmp = new NetSubnet(sig, lidx, part_count);
 		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
 			connect(tmp->pin(idx-lidx), sig->pin(idx));
 
 		  sig = tmp;
 
 	    } else {
-		  NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol(),
-					  lidx-midx+1);
-		  assert(tmp->pin_count() <= sig->pin_count());
-		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
+		    /* XXXX Signals reversed?? */
+		  unsigned part_count = lidx-midx+1;
+		  assert(part_count <= sig->pin_count());
+
+		  NetSubnet*tmp = new NetSubnet(sig, midx, part_count);
+		  for (unsigned idx = midx ;  idx >= lidx ;  idx -= 1)
 			connect(tmp->pin(idx-midx), sig->pin(idx));
 
 		  sig = tmp;
@@ -1602,7 +1597,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  idx = 0;
 	    }
-	    NetTmp*tmp = new NetTmp(scope, scope->local_hsymbol(), 1);
+	    NetSubnet*tmp = new NetSubnet(sig, idx, 1);
 	    connect(tmp->pin(0), sig->pin(idx));
 	    sig = tmp;
       }
@@ -1817,7 +1812,8 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	    for (unsigned idx = 0;  idx < expr_sig->pin_count(); idx += 1)
 		  connect(log->pin(idx+1), expr_sig->pin(idx));
 
-	    NetNet*tmp = new NetTmp(scope, scope->local_hsymbol());
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::IMPLICIT, 1);
 	    tmp->local_flag(true);
 	    connect(tmp->pin(0), log->pin(0));
 	    des->add_node(log);
@@ -2102,6 +2098,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.91  2002/06/19 04:20:03  steve
+ *  Remove NetTmp and add NetSubnet class.
+ *
  * Revision 1.90  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

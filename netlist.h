@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.242 2002/06/08 23:42:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.243 2002/06/19 04:20:03 steve Exp $"
 #endif
 
 /*
@@ -964,17 +964,16 @@ class NetEConst  : public NetExpr {
 };
 
 /*
- * The NetTmp object is a network that is only used momentarily by
- * elaboration to carry links around. A completed netlist should not
- * have any of these within. This is a kind of wire, so it is NetNet
- * type. The constructor for this class also marks the NetNet as
- * local, so that it is not likely to suppress a real symbol.
+ * This is a special, magical NetNet object. It represents a constant
+ * bit or part select of another NetNet, so is used to return that
+ * selection from elaborate function. None of these should remain once
+ * the elaboration is complete.
  */
-class NetTmp  : public NetNet {
+class NetSubnet  : public NetNet {
 
     public:
-      explicit NetTmp(NetScope*s, const string&name, unsigned npins =1);
-
+      explicit NetSubnet(NetNet*sig, unsigned off, unsigned wid);
+      virtual void dump_net(ostream&, unsigned) const;
 };
 
 /*
@@ -2925,6 +2924,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.243  2002/06/19 04:20:03  steve
+ *  Remove NetTmp and add NetSubnet class.
+ *
  * Revision 1.242  2002/06/08 23:42:46  steve
  *  Add NetRamDq synthsesis from memory l-values.
  *

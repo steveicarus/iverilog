@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.190 2002/06/05 03:44:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.191 2002/06/19 04:20:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -439,9 +439,12 @@ unsigned NetNet::get_refs() const
 }
 
 
-NetTmp::NetTmp(NetScope*s, const string&name, unsigned npins)
-: NetNet(s, name, IMPLICIT, npins)
+NetSubnet::NetSubnet(NetNet*sig, unsigned off, unsigned wid)
+: NetNet(sig->scope(), sig->scope()->local_hsymbol(), sig->type(), wid)
 {
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+	    connect(sig->pin(idx+off), pin(idx));
+
       local_flag(true);
 }
 
@@ -2329,6 +2332,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.191  2002/06/19 04:20:03  steve
+ *  Remove NetTmp and add NetSubnet class.
+ *
  * Revision 1.190  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special
