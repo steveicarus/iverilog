@@ -308,10 +308,12 @@ Usage: ivl <options>... file
 	options/parameters to optimization functions, if any are defined.
 
 -s <module>
-	Normally, ivl will elaborate the only module in the source
-	file. If there are multiple modules, use this option to select
-	the module to be used as the top-level module.
-
+        Normally, ivl will locate all the modules that are defined but
+        never instantiated, and use these as the design roots for 
+        elaboration. This flag allows the choice of root module(s) to 
+        be manually overridden. It can be used more than once on the
+        command line if multiple root modules are needed.
+        
 -T [min|typ|max]
 	Normally, ivl will select typ values from min:type:max
 	expressions and print a warning. This flag tells the compiler
@@ -326,6 +328,13 @@ Usage: ivl <options>... file
 
 -V
 	Print version and copyright information for ivl, and exit.
+
+-y <dir>
+	Add the specified directory to the library search path. If
+	missing modules are discovered during elaboration, ivl will
+	attempt to locate an implementation by searching the library
+	directories for a Verilog source file with the same name as
+	the module.
 
 4.2 EXAMPLES
 
