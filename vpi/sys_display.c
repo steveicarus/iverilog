@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.14 2000/05/07 18:20:07 steve Exp $"
+#ident "$Id: sys_display.c,v 1.15 2000/05/09 00:02:29 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -499,7 +499,6 @@ static int sys_fclose_calltf(char *name)
       vpi_get_value(item, &value);
       mcd = value.value.integer;
 
-      vpi_printf("in fclose_calltf mcd=%d type=%d\n", mcd, value.format);
       vpi_mcd_close(mcd);
       return 0;
 }
@@ -579,6 +578,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.15  2000/05/09 00:02:29  steve
+ *  Remove test print.
+ *
  * Revision 1.14  2000/05/07 18:20:07  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.
@@ -612,19 +614,5 @@ void sys_display_register()
  *  persistent, rewrite the simulation scheduler
  *  in C (to interface with VPI) and add VPI support
  *  for callbacks.
- *
- * Revision 1.4  1999/10/10 14:50:50  steve
- *  Add Octal dump format.
- *
- * Revision 1.3  1999/10/08 17:47:49  steve
- *  Add the %t formatting escape.
- *
- * Revision 1.2  1999/09/29 01:41:18  steve
- *  Support the $write system task, and have the
- *  vpi_scan function free iterators as needed.
- *
- * Revision 1.1  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
  */
 
