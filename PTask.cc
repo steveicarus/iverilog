@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.cc,v 1.4 2001/01/13 22:20:08 steve Exp $"
+#ident "$Id: PTask.cc,v 1.5 2001/04/19 03:04:47 steve Exp $"
 #endif
 
 # include  "PTask.h"
@@ -40,13 +40,15 @@ void PTask::set_ports(svector<PWire*>*p)
 void PTask::set_statement(Statement*s)
 {
       assert(statement_ == 0);
-      assert(s != 0);
       statement_ = s;
 }
 
 
 /*
  * $Log: PTask.cc,v $
+ * Revision 1.5  2001/04/19 03:04:47  steve
+ *  Spurious assert of empty statemnt.
+ *
  * Revision 1.4  2001/01/13 22:20:08  steve
  *  Parse parameters within nested scopes.
  *
