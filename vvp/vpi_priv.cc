@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.31 2003/02/21 03:40:35 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.32 2003/03/06 04:32:00 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -69,6 +69,39 @@ const char *vpip_string(const char*str)
       return res;
 }
 
+static unsigned hash_string(const char*text)
+{
+      unsigned h = 0;
+
+      while (*text) {
+	    h = (h << 4) ^ (h >> 28) ^ *text;
+	    text += 1;
+      }
+      return h;
+}
+
+const char* vpip_name_string(const char*text)
+{
+      const unsigned HASH_SIZE = 4096;
+      static const char*hash_table[HASH_SIZE] = {0};
+
+      unsigned hash_value = hash_string(text) % HASH_SIZE;
+
+	/* If we easily find the string in the hash table, then return
+	   that and be done. */
+      if (hash_table[hash_value]
+	  && (strcmp(hash_table[hash_value], text) == 0)) {
+	    return hash_table[hash_value];
+      }
+
+	/* The existing hash entry is not a match. Replace it with the
+	   newly allocated value, and return the new pointer as the
+	   result to the add. */
+      const char*res = vpip_string(text);
+      hash_table[hash_value] = res;
+
+      return res;
+}
 int vpi_chk_error(p_vpi_error_info info)
 {
       if (vpip_last_error.state == 0)
@@ -399,6 +432,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.32  2003/03/06 04:32:00  steve
+ *  Use hashed name strings for identifiers.
+ *
  * Revision 1.31  2003/02/21 03:40:35  steve
  *  Add vpiStop and interactive mode.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.6 2003/02/28 21:20:34 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.7 2003/03/06 04:32:00 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -169,7 +169,7 @@ vpiHandle vpip_make_real_var(const char*name)
 	    malloc(sizeof(struct __vpiRealVar));
 
       obj->base.vpi_type = &vpip_real_var_rt;
-      obj->name = vpip_string(name);
+      obj->name = vpip_name_string(name);
       obj->value = 0.0;
       obj->cb = 0;
 
@@ -178,6 +178,9 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.7  2003/03/06 04:32:00  steve
+ *  Use hashed name strings for identifiers.
+ *
  * Revision 1.6  2003/02/28 21:20:34  steve
  *  Allow read of realvar as int.
  *

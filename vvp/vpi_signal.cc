@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.53 2003/02/16 23:40:05 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.54 2003/03/06 04:32:00 steve Exp $"
 #endif
 
 /*
@@ -761,7 +761,7 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 {
       struct __vpiSignal*obj = allocate_vpiSignal();
       obj->base.vpi_type = &vpip_net_rt;
-      obj->name = vpip_string(name);
+      obj->name = vpip_name_string(name);
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
@@ -779,6 +779,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.54  2003/03/06 04:32:00  steve
+ *  Use hashed name strings for identifiers.
+ *
  * Revision 1.53  2003/02/16 23:40:05  steve
  *  Permanent allocate vpiSignals more efficiently.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_event.cc,v 1.6 2003/02/02 01:40:24 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.7 2003/03/06 04:32:00 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -92,7 +92,7 @@ vpiHandle vpip_make_named_event(const char*name)
 	    malloc(sizeof(struct __vpiNamedEvent));
 
       obj->base.vpi_type = &vpip_named_event_rt;
-      obj->name = vpip_string(name);
+      obj->name = vpip_name_string(name);
       obj->scope = vpip_peek_current_scope();
       obj->callbacks = 0;
 
@@ -115,6 +115,9 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.7  2003/03/06 04:32:00  steve
+ *  Use hashed name strings for identifiers.
+ *
  * Revision 1.6  2003/02/02 01:40:24  steve
  *  Five vpi_free_object a default behavior.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.27 2003/03/03 01:47:50 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.28 2003/03/06 04:32:00 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -390,7 +390,7 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
 
       assert(scope->base.vpi_type);
 
-      scope->name = vpip_string(name);
+      scope->name = vpip_name_string(name);
       scope->intern = 0;
       scope->nintern = 0;
       scope->threads = 0;
@@ -460,6 +460,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.28  2003/03/06 04:32:00  steve
+ *  Use hashed name strings for identifiers.
+ *
  * Revision 1.27  2003/03/03 01:47:50  steve
  *  .scope directives store only the base names.
  *

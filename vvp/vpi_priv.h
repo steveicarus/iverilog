@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.50 2003/02/24 06:35:45 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.51 2003/03/06 04:32:00 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -354,7 +354,16 @@ extern void vpip_set_time_precision(int pres);
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 
+/*
+ * These functions are used mostly as compile time to strings into
+ * permallocated memory. The vpip_string function is the most general,
+ * it allocates a fresh string no matter what. The vpip_name_string
+ * allocates a string and keeps a pointer in the hash, and tries to
+ * reuse it if it can. This us useful for handle names, which may be
+ * reused in different scopes.
+ */
 extern const char* vpip_string(const char*str);
+extern const char* vpip_name_string(const char*str);
 
 /*
 **  Functions defined in vpi_scope.cc, to keep track of functor scope.
@@ -403,6 +412,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.51  2003/03/06 04:32:00  steve
+ *  Use hashed name strings for identifiers.
+ *
  * Revision 1.50  2003/02/24 06:35:45  steve
  *  Interactive task calls take string arguments.
  *
