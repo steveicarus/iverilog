@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.14 2003/06/17 03:47:41 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.15 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -459,6 +459,7 @@ void edif_show_generic_dff(ivl_lpm_t net)
 const struct device_s d_generic_edif = {
       edif_show_header,
       edif_show_footer,
+      0, /* show_cell_scope not implemented. */
       0, /* draw_pad not implemented */
       edif_show_logic,
       edif_show_generic_dff,
@@ -475,6 +476,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.15  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.14  2003/06/17 03:47:41  steve
  *  Handle bufz as buf in generic fpga/edif target.
  *

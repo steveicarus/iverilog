@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fpga.c,v 1.6 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: fpga.c,v 1.7 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,6 +27,7 @@
  */
 
 # include  <ivl_target.h>
+# include  <string.h>
 # include  "fpga_priv.h"
 
 
@@ -38,8 +39,29 @@ const char*part = 0;
 const char*arch = 0;
 device_t device = 0;
 
+int scope_has_attribute(ivl_scope_t s, const char *name)
+{
+      int i;
+      const struct ivl_attribute_s *a;
+      for (i=0; i<ivl_scope_attr_cnt(s); i++) {
+	      a = ivl_scope_attr_val(s, i);
+	      fprintf(stderr, "scope attribute key %s\n", a->key);
+	      if (strcmp(a->key,name) == 0)
+		    return 1;
+      }
+      return 0;
+}
+
 static int show_process(ivl_process_t net, void*x)
 {
+      ivl_scope_t scope = ivl_process_scope(net);
+
+	/* Ignore processes that are within scopes that are cells. The
+	   cell_scope will generate a cell to represent the entire
+	   scope. */
+      if (scope_has_attribute(scope, "ivl_synthesis_cell"))
+	    return 0;
+
       fprintf(stderr, "fpga target: unsynthesized behavioral code\n");
       return 0;
 }
@@ -123,6 +145,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.7  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.6  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *

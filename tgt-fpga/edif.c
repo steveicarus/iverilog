@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.4 2003/04/04 04:59:03 steve Exp $"
+#ident "$Id: edif.c,v 1.5 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -197,6 +197,45 @@ edif_cell_t edif_xlibrary_findcell(edif_xlibrary_t xlib,
 	    }
 
       return 0;
+}
+
+edif_cell_t edif_xlibrary_scope_cell(edif_xlibrary_t xlib,
+				     ivl_scope_t scope)
+{
+      unsigned port_count, idx;
+      edif_cell_t cur;
+
+	/* Check to see if the cell is already somehow defined. */
+      cur = edif_xlibrary_findcell(xlib, ivl_scope_tname(scope));
+      if (cur) return cur;
+
+	/* Count the ports of the scope. */
+      port_count = 0;
+      for (idx = 0 ;  idx < ivl_scope_sigs(scope) ;  idx += 1) {
+	    ivl_signal_t sig = ivl_scope_sig(scope, idx);
+
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	    port_count += 1;
+      }
+
+      cur = edif_xcell_create(xlib, ivl_scope_tname(scope), port_count);
+
+      port_count = 0;
+      for (idx = 0 ;  idx < ivl_scope_sigs(scope) ;  idx += 1) {
+	    ivl_signal_t sig = ivl_scope_sig(scope, idx);
+
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	    edif_cell_portconfig(cur, port_count,
+				 ivl_signal_basename(sig),
+				 ivl_signal_port(sig));
+	    port_count += 1;
+      }
+
+      return cur;
 }
 
 edif_cell_t edif_xcell_create(edif_xlibrary_t xlib, const char*name,
@@ -491,6 +530,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.5  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.4  2003/04/04 04:59:03  steve
  *  Add xlibrary celltable.
  *

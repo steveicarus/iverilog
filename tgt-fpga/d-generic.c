@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic.c,v 1.12 2002/10/28 02:05:56 steve Exp $"
+#ident "$Id: d-generic.c,v 1.13 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -498,6 +498,7 @@ static void generic_show_add(ivl_lpm_t net)
 const struct device_s d_generic = {
       generic_show_header,
       generic_show_footer,
+      0, /* show_scope */
       0, /* show_pad not implemented */
       generic_show_logic,
       generic_show_dff,
@@ -514,6 +515,9 @@ const struct device_s d_generic = {
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.13  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.12  2002/10/28 02:05:56  steve
  *  Add Virtex code generators for left shift,
  *  subtraction, and GE comparators.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.22 2003/02/26 01:24:42 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.23 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -1924,6 +1924,7 @@ static void virtex_show_shiftl(ivl_lpm_t net)
 const struct device_s d_virtex_edif = {
       edif_show_header,
       edif_show_footer,
+      0, /* show_scope not implemented */
       edif_show_virtex_pad,
       edif_show_virtex_logic,
       edif_show_generic_dff,
@@ -1940,6 +1941,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.23  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.22  2003/02/26 01:24:42  steve
  *  ivl_lpm_name is obsolete.
  *

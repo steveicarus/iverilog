@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fpga_priv.h,v 1.6 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: fpga_priv.h,v 1.7 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -36,6 +36,11 @@ extern device_t device;
 
 extern const char*part;
 extern const char*arch;
+
+/*
+ * Attribute lookup, should this be provided in ivl_target.h?
+ */
+int scope_has_attribute(ivl_scope_t s, const char *name);
 
 /*
  * These are mangle functions.
@@ -83,6 +88,9 @@ extern unsigned edif_uref;
 
 /*
  * $Log: fpga_priv.h,v $
+ * Revision 1.7  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.6  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

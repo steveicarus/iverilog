@@ -1,7 +1,7 @@
 #ifndef __device_H
 #define __device_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: device.h,v 1.10 2002/10/28 02:05:56 steve Exp $"
+#ident "$Id: device.h,v 1.11 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -41,6 +41,8 @@ struct device_s {
 	/* These methods draw leading and trailing format text. */
       void (*show_header)(ivl_design_t des);
       void (*show_footer)(ivl_design_t des);
+	/* Draw scopes marked by ivl_synthesis_cell */
+      void (*show_cell_scope)(ivl_scope_t net);
 	/* Draw pads connected to the specified signal. */
       void (*show_pad)(ivl_signal_t sig, const char*str);
 	/* Draw basic logic devices. */
@@ -73,6 +75,9 @@ extern device_t device_from_arch(const char*arch);
 
 /*
  * $Log: device.h,v $
+ * Revision 1.11  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.10  2002/10/28 02:05:56  steve
  *  Add Virtex code generators for left shift,
  *  subtraction, and GE comparators.

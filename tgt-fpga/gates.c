@@ -17,12 +17,23 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.10 2002/10/28 02:05:56 steve Exp $"
+#ident "$Id: gates.c,v 1.11 2003/06/24 03:55:01 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
 # include  <assert.h>
+
+static void show_cell_scope(ivl_scope_t scope)
+{
+      if (device->show_cell_scope == 0) {
+	    fprintf(stderr, "fpga.tgt: ivl_synthesis_cell(scope)"
+		    " not supported by this target.\n");
+	    return;
+      }
+
+      device->show_cell_scope(scope);
+}
 
 static void show_gate_logic(ivl_net_logic_t net)
 {
@@ -125,6 +136,11 @@ int show_scope_gates(ivl_scope_t net, void*x)
 {
       unsigned idx;
 
+      if (scope_has_attribute(net, "ivl_synthesis_cell")) {
+	    show_cell_scope(net);
+	    return 0;
+      }
+
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1)
 	    show_gate_logic(ivl_scope_log(net, idx));
 
@@ -136,6 +152,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.11  2003/06/24 03:55:01  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.10  2002/10/28 02:05:56  steve
  *  Add Virtex code generators for left shift,
  *  subtraction, and GE comparators.
@@ -156,21 +175,5 @@ int show_scope_gates(ivl_scope_t net, void*x)
  *  so that non-XNF code generation is also possible.
  *
  *  Start into the virtex EDIF output driver.
- *
- * Revision 1.5  2001/09/01 04:30:44  steve
- *  Generic ADD code.
- *
- * Revision 1.4  2001/09/01 02:28:42  steve
- *  Generate code for MUX devices.
- *
- * Revision 1.3  2001/09/01 02:01:30  steve
- *  identity compare, and PWR records for constants.
- *
- * Revision 1.2  2001/08/30 04:31:04  steve
- *  Mangle nexus names.
- *
- * Revision 1.1  2001/08/28 04:14:20  steve
- *  Add the fpga target.
- *
  */
 

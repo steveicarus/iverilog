@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.10 2003/04/05 05:53:34 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.11 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -49,7 +49,10 @@ static edif_cell_t cell_1 = 0;
 static edif_cell_t cell_ipad = 0;
 static edif_cell_t cell_opad = 0;
 
-
+/*
+ * This is a table of cell types that are accessible via the cellref
+ * attribute to a gate.
+ */
 const static struct edif_xlib_celltable virtex2_celltable[] = {
       { "BUFG",     xilinx_cell_bufg },
       { "MULT_AND", xilinx_cell_mult_and },
@@ -175,6 +178,33 @@ static void virtex2_show_footer(ivl_design_t des)
       }
 
       edif_print(xnf, edf);
+}
+
+/*
+ * Make (or retreive) a cell in the external library that reflects the
+ * scope with its ports.
+ */
+static void virtex2_show_scope(ivl_scope_t scope)
+{
+      edif_cell_t cell;
+      edif_cellref_t ref;
+
+      unsigned port, idx;
+
+      cell = edif_xlibrary_scope_cell(xlib, scope);
+      ref = edif_cellref_create(edf, cell);
+
+      for (idx = 0 ;  idx < ivl_scope_sigs(scope) ;  idx += 1) {
+	    edif_joint_t jnt;
+	    ivl_signal_t sig = ivl_scope_sig(scope, idx);
+
+	    if (ivl_signal_port(sig) == IVL_SIP_NONE)
+		  continue;
+
+	    port = edif_cell_port_byname(cell, ivl_signal_basename(sig));
+	    jnt = edif_joint_of_nexus(edf, ivl_signal_pin(sig, 0));
+	    edif_add_to_joint(jnt, ref, port);
+      }
 }
 
 static void virtex2_pad(ivl_signal_t sig, const char*str)
@@ -1080,6 +1110,7 @@ static void virtex2_cmp_ge(ivl_lpm_t net)
 const struct device_s d_virtex2_edif = {
       virtex2_show_header,
       virtex2_show_footer,
+      virtex2_show_scope,
       virtex2_pad,
       virtex2_logic,
       virtex2_generic_dff,
@@ -1096,6 +1127,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.11  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.10  2003/04/05 05:53:34  steve
  *  Move library cell management to common file.
  *

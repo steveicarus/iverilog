@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.3 2003/04/04 04:59:03 steve Exp $"
+#ident "$Id: edif.h,v 1.4 2003/06/24 03:55:00 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -150,6 +150,11 @@ extern void edif_xlibrary_set_celltable(edif_xlibrary_t lib,
 extern edif_cell_t edif_xlibrary_findcell(edif_xlibrary_t lib,
 					  const char*cell_name);
 
+/* Similar to the above, but it gets the information it needs from the
+   ivl_scope_t object. */
+extern edif_cell_t edif_xlibrary_scope_cell(edif_xlibrary_t xlib,
+					    ivl_scope_t scope);
+
 /* Create a new cell, attached to the external library. Specify the
    number of ports that the cell has. The edif_cell_portconfig
    function is then used to assign name and direction to each of the
@@ -211,6 +216,9 @@ extern void edif_print(FILE*fd, edif_t design);
 
 /*
  * $Log: edif.h,v $
+ * Revision 1.4  2003/06/24 03:55:00  steve
+ *  Add ivl_synthesis_cell support for virtex2.
+ *
  * Revision 1.3  2003/04/04 04:59:03  steve
  *  Add xlibrary celltable.
  *
