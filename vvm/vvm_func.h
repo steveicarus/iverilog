@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.10 1999/09/28 01:13:16 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.11 1999/09/29 18:36:04 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -239,6 +239,10 @@ vvm_bitset_t<1> vvm_binop_eq(const vvm_bitset_t<LW>&l,
       }
 }
 
+/*
+ * This function return true if all the bits are the same. Even x and
+ * z bites are compared for equality.
+ */
 template <unsigned LW, unsigned RW>
 vvm_bitset_t<1> vvm_binop_eeq(const vvm_bitset_t<LW>&l,
 			     const vvm_bitset_t<RW>&r)
@@ -272,6 +276,112 @@ vvm_bitset_t<1> vvm_binop_eeq(const vvm_bitset_t<LW>&l,
 			return result;
 		  }
 		  
+      }
+
+      return result;
+}
+
+/*
+ * This function return true if all the bits are the same. The x and z
+ * bits are don't care, s don't make the result false.
+ */
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_xeq(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> result;
+      result[0] = V1;
+
+      if (LW <= RW) {
+	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
+		  if ((l[idx] == Vz) || (r[idx] == Vz))
+			continue;
+		  if ((l[idx] == Vx) || (r[idx] == Vx))
+			continue;
+		  if (l[idx] != r[idx]) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+	    for (unsigned idx = LW ;  idx < RW ;  idx += 1) {
+		  if ((r[idx] == Vx) || (r[idx] == Vz))
+			continue;
+		  if (r[idx] != V0) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+		  
+      } else {
+	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
+		  if ((l[idx] == Vz) || (r[idx] == Vz))
+			continue;
+		  if ((l[idx] == Vx) || (r[idx] == Vx))
+			continue;
+		  if (l[idx] != r[idx]) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+	    for (unsigned idx = RW ;  idx < LW ;  idx += 1) {
+		  if ((l[idx] == Vx) || (l[idx] == Vz))
+			continue;
+		  if (l[idx] != V0) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+      }
+
+      return result;
+}
+
+/*
+ * This function return true if all the bits are the same. The z
+ * bits are don't care, so don't make the result false.
+ */
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_zeq(const vvm_bitset_t<LW>&l,
+			     const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> result;
+      result[0] = V1;
+
+      if (LW <= RW) {
+	    for (unsigned idx = 0 ;  idx < LW ;  idx += 1) {
+		  if ((l[idx] == Vz) || (r[idx] == Vz))
+			continue;
+		  if (l[idx] != r[idx]) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+	    for (unsigned idx = LW ;  idx < RW ;  idx += 1) {
+		  if (r[idx] == Vz)
+			continue;
+		  if (r[idx] != V0) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+		  
+      } else {
+	    for (unsigned idx = 0 ;  idx < RW ;  idx += 1) {
+		  if ((l[idx] == Vz) || (r[idx] == Vz))
+			continue;
+		  if (l[idx] != r[idx]) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
+	    for (unsigned idx = RW ;  idx < LW ;  idx += 1) {
+		  if (l[idx] == Vz)
+			continue;
+		  if (l[idx] != V0) {
+			result[0] = V0;
+			return result;
+		  }
+	    }
       }
 
       return result;
@@ -411,6 +521,9 @@ vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.11  1999/09/29 18:36:04  steve
+ *  Full case support
+ *
  * Revision 1.10  1999/09/28 01:13:16  steve
  *  Support in vvm > and >= behavioral operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.51 1999/09/29 00:42:25 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.52 1999/09/29 18:36:04 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1198,6 +1198,19 @@ bool target_vvm::proc_block(ostream&os, const NetBlock*net)
  */
 void target_vvm::proc_case(ostream&os, const NetCase*net)
 {
+      string test_func = "";
+      switch (net->type()) {
+	  case NetCase::EQ:
+	    test_func = "vvm_binop_eeq";
+	    break;
+	  case NetCase::EQX:
+	    test_func = "vvm_binop_xeq";
+	    break;
+	  case NetCase::EQZ:
+	    test_func = "vvm_binop_zeq";
+	    break;
+      }
+
       os << "        /* case (" << *net->expr() << ") */" << endl;
       string expr = emit_proc_rval(os, 8, net->expr());
 
@@ -1223,8 +1236,8 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 
 	    thread_step_ += 1;
 
-	    os << "        if (" << expr << ".eequal(" << guard <<
-		  ")) {" << endl;
+	    os << "        if (V1 == " << test_func << "(" << guard << ","
+	       << expr << ")[0]) {" << endl;
 	    os << "            step_ = &" << thread_class_ <<
 		  "::step_" << thread_step_ << "_;" << endl;
 	    os << "            return true;" << endl;
@@ -1563,6 +1576,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.52  1999/09/29 18:36:04  steve
+ *  Full case support
+ *
  * Revision 1.51  1999/09/29 00:42:25  steve
  *  Comment on where binary operator came from.
  *

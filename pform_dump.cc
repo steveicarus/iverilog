@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.39 1999/09/17 02:06:26 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.40 1999/09/29 18:36:04 steve Exp $"
 #endif
 
 /*
@@ -361,8 +361,19 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 
 void PCase::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "case (" << *expr_ << ") /* " <<
-	    get_line() << " */" << endl;
+      out << setw(ind) << "";
+      switch (type_) {
+	  case NetCase::EQ:
+	    out << "case";
+	    break;
+	  case NetCase::EQX:
+	    out << "casex";
+	    break;
+	  case NetCase::EQZ:
+	    out << "casez";
+	    break;
+      }
+      out << " (" << *expr_ << ") /* " << get_line() << " */" << endl;
 
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
@@ -645,6 +656,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.40  1999/09/29 18:36:04  steve
+ *  Full case support
+ *
  * Revision 1.39  1999/09/17 02:06:26  steve
  *  Handle unconnected module ports.
  *

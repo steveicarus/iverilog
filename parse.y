@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.67 1999/09/25 02:57:30 steve Exp $"
+#ident "$Id: parse.y,v 1.68 1999/09/29 18:36:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1490,23 +1490,21 @@ statement
 		  $$ = tmp;
 		}
 	| K_case '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase($3, $5);
+		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
 	| K_casex '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase($3, $5);
+		{ PCase*tmp = new PCase(NetCase::EQX, $3, $5);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  yywarn(@1, "casex not properly supported, using case.");
 		  $$ = tmp;
 		}
 	| K_casez '(' expression ')' case_items K_endcase
-		{ PCase*tmp = new PCase($3, $5);
+		{ PCase*tmp = new PCase(NetCase::EQZ, $3, $5);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  yywarn(@1, "casez not properly supported, using case.");
 		  $$ = tmp;
 		}
 	| K_case '(' expression ')' error K_endcase

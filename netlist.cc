@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.70 1999/09/28 03:11:29 steve Exp $"
+#ident "$Id: netlist.cc,v 1.71 1999/09/29 18:36:03 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -292,6 +292,11 @@ unsigned NetNet::sb_to_idx(long sb) const
 	    return lsb_ - sb;
 }
 
+NetProc::NetProc()
+: next_(0)
+{
+}
+
 NetProc::~NetProc()
 {
 }
@@ -511,8 +516,8 @@ void NetBlock::append(NetProc*cur)
       }
 }
 
-NetCase::NetCase(NetExpr*ex, unsigned cnt)
-: expr_(ex), nitems_(cnt)
+NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
+: type_(c), expr_(ex), nitems_(cnt)
 {
       assert(expr_);
       items_ = new Item[nitems_];
@@ -529,6 +534,11 @@ NetCase::~NetCase()
 	    if (items_[idx].statement) delete items_[idx].statement;
       }
       delete[]items_;
+}
+
+NetCase::TYPE NetCase::type() const
+{
+      return type_;
 }
 
 void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
@@ -1647,6 +1657,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.71  1999/09/29 18:36:03  steve
+ *  Full case support
+ *
  * Revision 1.70  1999/09/28 03:11:29  steve
  *  Get the bit widths of unary operators that return one bit.
  *

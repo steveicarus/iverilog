@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.11 1999/09/28 01:13:15 steve Exp $"
+#ident "$Id: vvm.h,v 1.12 1999/09/29 18:36:04 steve Exp $"
 #endif
 
 # include  <vector>
@@ -132,13 +132,6 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 
       unsigned get_width() const { return WIDTH; }
       vvm_bit_t get_bit(unsigned idx) const { return bits_[idx]; }
-
-      bool eequal(const vvm_bitset_t<WIDTH>&that) const
-	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  if (bits_[idx] != that.bits_[idx])
-			return false;
-	      return true;
-	    }
 
       unsigned as_unsigned() const
 	    { unsigned result = 0;
@@ -289,6 +282,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.12  1999/09/29 18:36:04  steve
+ *  Full case support
+ *
  * Revision 1.11  1999/09/28 01:13:15  steve
  *  Support in vvm > and >= behavioral operators.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.73 1999/09/28 03:11:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.74 1999/09/29 18:36:03 steve Exp $"
 #endif
 
 /*
@@ -583,10 +583,10 @@ class NetUDP  : public NetNode {
  * linked into the netlist. However, elaborating a process may cause
  * special nodes to be created to handle things like events.
  */
-class NetProc {
+class NetProc  : public LineInfo {
 
     public:
-      explicit NetProc() : next_(0) { }
+      explicit NetProc();
       virtual ~NetProc();
 
 	// This method is called to emit the statement to the
@@ -613,7 +613,7 @@ class NetProc {
  * should know that this is not a guarantee.
  */
 
-class NetAssign_ : public NetProc, public NetNode, public LineInfo {
+class NetAssign_ : public NetProc, public NetNode {
 
     protected:
       NetAssign_(const string&n, unsigned w);
@@ -675,7 +675,7 @@ class NetAssignNB  : public NetAssign_ {
  * regular assign, and the NetAssignMem_ base class takes care of all
  * the common stuff.
  */
-class NetAssignMem_ : public NetProc, public LineInfo {
+class NetAssignMem_ : public NetProc {
 
     public:
       explicit NetAssignMem_(NetMemory*, NetExpr*idx, NetExpr*rv);
@@ -743,18 +743,27 @@ class NetBlock  : public NetProc {
       NetProc*last_;
 };
 
-/* A CASE statement in the verilog source leads, eventually, to one of
-   these. This is different from a simple conditional because of the
-   way the comparisons are performed. Also, it is likely that the
-   target may be able to optimize differently. */
+/*
+ * A CASE statement in the verilog source leads, eventually, to one of
+ * these. This is different from a simple conditional because of the
+ * way the comparisons are performed. Also, it is likely that the
+ * target may be able to optimize differently.
+ *
+ * Case cane be one of three types:
+ *    EQ  -- All bits must exactly match
+ *    EQZ -- z bits are don't care
+ *    EQX -- x and z bits are don't care.
+ */
 class NetCase  : public NetProc {
 
     public:
-      NetCase(NetExpr*ex, unsigned cnt);
+      enum TYPE { EQ, EQX, EQZ };
+      NetCase(TYPE c, NetExpr*ex, unsigned cnt);
       ~NetCase();
 
       void set_case(unsigned idx, NetExpr*ex, NetProc*st);
 
+      TYPE type() const;
       const NetExpr*expr() const { return expr_; }
       unsigned nitems() const { return nitems_; }
 
@@ -765,6 +774,8 @@ class NetCase  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
+
+      TYPE type_;
 
       struct Item {
 	    NetExpr*guard;
@@ -1689,6 +1700,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.74  1999/09/29 18:36:03  steve
+ *  Full case support
+ *
  * Revision 1.73  1999/09/28 03:11:30  steve
  *  Get the bit widths of unary operators that return one bit.
  *

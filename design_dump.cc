@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.43 1999/09/21 00:13:40 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.44 1999/09/29 18:36:03 steve Exp $"
 #endif
 
 /*
@@ -406,7 +406,14 @@ void NetBlock::dump(ostream&o, unsigned ind) const
 
 void NetCase::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
+      switch (type_) {
+	  case EQ:
+	    o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
+	  case EQX:
+	    o << setw(ind) << "" << "casex (" << *expr_ << ")" << endl;
+	  case EQZ:
+	    o << setw(ind) << "" << "casez (" << *expr_ << ")" << endl;
+      }
 
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 	    o << setw(ind+2) << "";
@@ -761,6 +768,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.44  1999/09/29 18:36:03  steve
+ *  Full case support
+ *
  * Revision 1.43  1999/09/21 00:13:40  steve
  *  Support parameters that reference other paramters.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.19 1999/09/22 02:00:48 steve Exp $"
+#ident "$Id: Statement.h,v 1.20 1999/09/29 18:36:02 steve Exp $"
 #endif
 
 # include  <string>
@@ -200,13 +200,14 @@ class PCase  : public Statement {
 	    Statement*stat;
       };
 
-      PCase(PExpr*ex, svector<Item*>*);
+      PCase(NetCase::TYPE, PExpr*ex, svector<Item*>*);
       ~PCase();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
+      NetCase::TYPE type_;
       PExpr*expr_;
 
       svector<Item*>*items_;
@@ -346,6 +347,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.20  1999/09/29 18:36:02  steve
+ *  Full case support
+ *
  * Revision 1.19  1999/09/22 02:00:48  steve
  *  assignment with blocking event delay.
  *

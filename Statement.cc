@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.15 1999/09/22 02:00:48 steve Exp $"
+#ident "$Id: Statement.cc,v 1.16 1999/09/29 18:36:02 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -108,8 +108,8 @@ PCallTask::PCallTask(const string&n, const svector<PExpr*>&p)
 {
 }
 
-PCase::PCase(PExpr*ex, svector<PCase::Item*>*l)
-: expr_(ex), items_(l)
+PCase::PCase(NetCase::TYPE t, PExpr*ex, svector<PCase::Item*>*l)
+: type_(t), expr_(ex), items_(l)
 {
 }
 
@@ -163,6 +163,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.16  1999/09/29 18:36:02  steve
+ *  Full case support
+ *
  * Revision 1.15  1999/09/22 02:00:48  steve
  *  assignment with blocking event delay.
  *

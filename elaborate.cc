@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.101 1999/09/29 00:42:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.102 1999/09/29 18:36:03 steve Exp $"
 #endif
 
 /*
@@ -1845,7 +1845,8 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 		  icount += cur->expr.count();
       }
 
-      NetCase*res = new NetCase(expr, icount);
+      NetCase*res = new NetCase(type_, expr, icount);
+      res->set_line(*this);
 
       unsigned inum = 0;
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
@@ -2572,6 +2573,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.102  1999/09/29 18:36:03  steve
+ *  Full case support
+ *
  * Revision 1.101  1999/09/29 00:42:50  steve
  *  Allow expanding of additive operators.
  *
