@@ -21,7 +21,7 @@ compiled and linked into an executable image. The command for doing
 this is highly dependent on the system where you use Icarus
 Verilog. For Linux, the compile command is typically:
 
-	c++ -o foo foo.cc -lvvm -ldl
+	c++ -rdynamic -o foo foo.cc -lvvm -ldl
 
 On any system, the compiled program requires that the VPI_MODULE_PATH
 be set to a ':' separated list of directories to search for vpi files,
@@ -110,8 +110,11 @@ bits are at:
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
- $Id: vvm.txt,v 1.2 1999/08/15 01:23:56 steve Exp $
+ $Id: vvm.txt,v 1.3 1999/08/18 03:45:36 steve Exp $
  $Log: vvm.txt,v $
+ Revision 1.3  1999/08/18 03:45:36  steve
+  Update compile command line.
+
  Revision 1.2  1999/08/15 01:23:56  steve
   Convert vvm to implement system tasks with vpi.
 
