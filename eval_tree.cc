@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.30 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.31 2001/12/30 00:39:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -911,6 +911,23 @@ NetEConst* NetEUnary::eval_tree()
 
       switch (op_) {
 
+	  case '+':
+	      /* Unary + is a no-op. */
+	    return new NetEConst(val);
+
+	  case '-': {
+		if (val.is_defined()) {
+		      
+		      verinum tmp (verinum::V0, val.len());
+		      val = tmp - val;
+
+		} else {
+		      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+			    val.set(idx, verinum::Vx);
+		}
+
+		return new NetEConst(val);
+	  }
 
 	  case '~': {
 		  /* Bitwise not is even simpler then logical
@@ -1002,6 +1019,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.31  2001/12/30 00:39:25  steve
+ *  Evaluate constant unary minus.
+ *
  * Revision 1.30  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
