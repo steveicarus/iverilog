@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.127 1999/11/21 17:35:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.128 1999/11/21 20:03:24 steve Exp $"
 #endif
 
 /*
@@ -1067,9 +1067,21 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
 	/* Elaborate the r-value expression. */
       assert(rval());
-      NetExpr*rv = rval()->elaborate_expr(des, path);
-      if (rv == 0)
+
+      NetExpr*rv;
+
+      if (verinum*val = rval()->eval_const(des,path)) {
+	    rv = new NetEConst(*val);
+	    delete val;
+
+      } else if (rv = rval()->elaborate_expr(des, path)) {
+
+	      /* OK, go on. */
+
+      } else {
+	      /* Unable to elaborate expression. Retreat. */
 	    return 0;
+      }
 
       assert(rv);
 
@@ -2133,6 +2145,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.128  1999/11/21 20:03:24  steve
+ *  Handle multiply in constant expressions.
+ *
  * Revision 1.127  1999/11/21 17:35:37  steve
  *  Memory name lookup handles scopes.
  *

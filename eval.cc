@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.9 1999/10/08 17:48:09 steve Exp $"
+#ident "$Id: eval.cc,v 1.10 1999/11/21 20:03:24 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -42,15 +42,43 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
 
       switch (op_) {
 	  case '+': {
+		assert(l->is_defined());
+		assert(r->is_defined());
 		long lv = l->as_long();
 		long rv = r->as_long();
 		res = new verinum(lv+rv, l->len());
 		break;
 	  }
 	  case '-': {
+		assert(l->is_defined());
+		assert(r->is_defined());
 		long lv = l->as_long();
 		long rv = r->as_long();
 		res = new verinum(lv-rv, l->len());
+		break;
+	  }
+	  case '*': {
+		assert(l->is_defined());
+		assert(r->is_defined());
+		long lv = l->as_long();
+		long rv = r->as_long();
+		res = new verinum(lv * rv, l->len());
+		break;
+	  }
+	  case '/': {
+		assert(l->is_defined());
+		assert(r->is_defined());
+		long lv = l->as_long();
+		long rv = r->as_long();
+		res = new verinum(lv / rv, l->len());
+		break;
+	  }
+	  case '%': {
+		assert(l->is_defined());
+		assert(r->is_defined());
+		long lv = l->as_long();
+		long rv = r->as_long();
+		res = new verinum(lv % rv, l->len());
 		break;
 	  }
 	  default:
@@ -98,6 +126,9 @@ verinum* PETernary::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.10  1999/11/21 20:03:24  steve
+ *  Handle multiply in constant expressions.
+ *
  * Revision 1.9  1999/10/08 17:48:09  steve
  *  Support + in constant expressions.
  *
