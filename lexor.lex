@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.33 1999/07/17 18:25:38 steve Exp $"
+#ident "$Id: lexor.lex,v 1.34 1999/09/13 03:08:52 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -540,47 +540,77 @@ static verinum*make_sized_octal(const char*txt)
       ptr += 1;
       assert(tolower(*ptr) == 'o');
 
+	/* We know from the size number how bit to make the verinom
+	   array, so make it now. */
       verinum::V*bits = new verinum::V[size];
 
+	/* skip white space between size and the base token. */
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
-      unsigned idx = 0;
+	/* Find the end of the digits. ptr already points to the start. */
       char*eptr = ptr + strlen(ptr);
 
-      while ((eptr > ptr) && (idx < (size-3))) {
-	    switch (*eptr) {
+	/* From the last digit and forward, build up the number, least
+	   significant bit first. This loop will not get the last few
+	   bits if the size is not a multiple of 3. */
+      unsigned idx = 0;
+      while ((eptr > ptr) && ((idx/3) < (size/3))) switch (*--eptr) {
+
 		case 'x': case 'X':
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  bits[idx++] = verinum::Vx;
 		  break;
+
 		case 'z': case 'Z': case '?':
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
 		  bits[idx++] = verinum::Vz;
 		  break;
+
 		default: {
 			unsigned val = *eptr - '0';
 			bits[idx++] = (val&1)? verinum::V1 : verinum::V0;
 			bits[idx++] = (val&2)? verinum::V1 : verinum::V0;
 			bits[idx++] = (val&4)? verinum::V1 : verinum::V0;
 		  }
-	    }
-
-	    eptr -= 1;
       }
 
-	// zero extend octal numbers
-      while (idx < size) switch (ptr[1]) {
+      if ((eptr > ptr) && (idx < size)) switch (*--eptr) {
+
 	  case 'x': case 'X':
-	    bits[idx++] = verinum::Vx;
+	    for ( ;  idx < size ;  idx += 1)
+		  bits[idx] = verinum::Vx;
 	    break;
+
 	  case 'z': case 'Z': case '?':
-	    bits[idx++] = verinum::Vz;
+	    for ( ;  idx < size ;  idx += 1)
+		  bits[idx] = verinum::Vz;
 	    break;
-	  default:
-	    bits[idx++] = verinum::V0;
+
+	  default: {
+		  unsigned val = *eptr - '0';
+		  for ( ;  idx < size ;  idx += 1) {
+			bits[idx] = (val&1)? verinum::V1 : verinum::V0;
+			val >>= 1;
+		  }
+		  break;
+	    }
+
+      } else {
+
+	      // zero extend octal numbers
+	    while (idx < size) switch (ptr[1]) {
+		case 'x': case 'X':
+		  bits[idx++] = verinum::Vx;
+		  break;
+		case 'z': case 'Z': case '?':
+		  bits[idx++] = verinum::Vz;
+		  break;
+		default:
+		  bits[idx++] = verinum::V0;
+	    }
       }
 
       return new verinum(bits, size, true);
