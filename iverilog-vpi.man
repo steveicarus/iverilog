@@ -1,4 +1,4 @@
-.TH iverilog-vpi 1 "$Date: 2002/07/05 17:17:20 $" Version "$Date: 2002/07/05 17:17:20 $"
+.TH iverilog-vpi 1 "$Date: 2002/11/23 00:51:53 $" Version "$Date: 2002/11/23 00:51:53 $"
 .SH NAME
 iverilog-vpi - Compile front end for VPI modules
 
@@ -32,13 +32,37 @@ VPI modules to further reference external libraries.
 Normally, the output VPI module will be named after the first source
 file passed to the command. This flag sets the name (without the .vpi
 suffix) of the output vpi module.
+
+.SH "PC-ONLY OPTIONS"
+
+The PC port of \fIiverilog-vpi\fP includes two special flags needed to
+support the more intractable development environment. These flags help
+the program locate parts that it needs.
+
+.TP 8
+.B -mingw=\fIpath\fP
+Tell the program the root of the Mingw compiler tool suite. The
+\fBvvp\fP runtime is compiled with this compiler, and this is the
+compiler that \fIiverilog-vpi\fP expects to use to compile your source
+code. This is notmally not needed, and if you do use it, it is only
+needed once. The compiler will save the \fIpath\fP in the registry for
+use later.
+
+.TP 8
+.B -ivl=\fIpath\fP
+Set for the use during compilation the root if the Icarus Verilog
+install. This is the place where you installed Icarus Verilog when you
+ran the installer. This flag is also only needed once, and the path is
+stored in the registry for future use.
+
 .SH "AUTHOR"
 .nf
 Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 iverilog(1), vvp(1),
-.BR "<http://www.icarus.com/eda/verilog/>"
+.BR "<http://www.icarus.com/eda/verilog/>",
+.BR "<http://www.mingw.org>",
 
 .SH COPYRIGHT
 .nf
