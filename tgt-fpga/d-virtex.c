@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.5 2001/09/12 04:35:25 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.6 2001/09/14 04:17:20 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -338,6 +338,64 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3),
 				 ivl_logic_pin(net, 4), "FFFE");
+		  break;
+	    }
+	    break;
+
+	  case IVL_LO_XNOR:
+	    assert(ivl_logic_pins(net) <= 5);
+	    assert(ivl_logic_pins(net) >= 3);
+
+	    switch (ivl_logic_pins(net)) {
+		case 3:
+		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+				 ivl_logic_pin(net, 0),
+				 ivl_logic_pin(net, 1),
+				 ivl_logic_pin(net, 2), "9");
+		  break;
+		case 4:
+		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+				 ivl_logic_pin(net, 0),
+				 ivl_logic_pin(net, 1),
+				 ivl_logic_pin(net, 2),
+				 ivl_logic_pin(net, 3), "69");
+		  break;
+		case 5:
+		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+				 ivl_logic_pin(net, 0),
+				 ivl_logic_pin(net, 1),
+				 ivl_logic_pin(net, 2),
+				 ivl_logic_pin(net, 3),
+				 ivl_logic_pin(net, 4), "9669");
+		  break;
+	    }
+	    break;
+
+	  case IVL_LO_XOR:
+	    assert(ivl_logic_pins(net) <= 5);
+	    assert(ivl_logic_pins(net) >= 3);
+
+	    switch (ivl_logic_pins(net)) {
+		case 3:
+		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+				 ivl_logic_pin(net, 0),
+				 ivl_logic_pin(net, 1),
+				 ivl_logic_pin(net, 2), "6");
+		  break;
+		case 4:
+		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+				 ivl_logic_pin(net, 0),
+				 ivl_logic_pin(net, 1),
+				 ivl_logic_pin(net, 2),
+				 ivl_logic_pin(net, 3), "96");
+		  break;
+		case 5:
+		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+				 ivl_logic_pin(net, 0),
+				 ivl_logic_pin(net, 1),
+				 ivl_logic_pin(net, 2),
+				 ivl_logic_pin(net, 3),
+				 ivl_logic_pin(net, 4), "6996");
 		  break;
 	    }
 	    break;
@@ -748,6 +806,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.6  2001/09/14 04:17:20  steve
+ *  Add XOR and XNOR gates.
+ *
  * Revision 1.5  2001/09/12 04:35:25  steve
  *  Xilinx uses GROUND and VCC as pin names for the
  *  GND and VCC devices.
