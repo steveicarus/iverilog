@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.119 2003/09/19 03:50:12 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.120 2003/09/23 03:31:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -28,6 +28,15 @@
 # include  "compiler.h"
 
 # include  <iostream>
+
+/*
+ * This is a state flag that determines whether an elaborate_net must
+ * report an error when it encounters an unsized number. Normally, it
+ * is fine to make an unsized number as small as it can be, but there
+ * are a few cases where the size must be fully self-determined. For
+ * example, within a {...} (concatenation) operator.
+ */
+static bool must_be_self_determined_flag = false;
 
 NetNet* PExpr::elaborate_net(Design*des, NetScope*scope, unsigned,
 			     unsigned long,
@@ -615,9 +624,9 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 				     unsigned long fall,
 				     unsigned long decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
-      NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*rsig = right_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (rsig == 0) return 0;
 
 
@@ -1174,6 +1183,12 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    }
       }
 
+	/* The operands of the concatenation must contain all
+	   self-determined arguments. Set this flag to force an error
+	   message if this is not the case. */
+      const bool save_flag = must_be_self_determined_flag;
+      must_be_self_determined_flag = true;
+
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
 
@@ -1205,6 +1220,8 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	    else
 		  pins += nets[idx]->pin_count();
       }
+
+      must_be_self_determined_flag = save_flag;
 
 	/* If any of the sub expressions failed to elaborate, then
 	   delete all those that did and abort myself. */
@@ -1879,6 +1896,13 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	   plausible choice for the width. Try to reduce the width as
 	   much as possible by eliminating high zeros of unsigned
 	   numbers. */
+
+      if (must_be_self_determined_flag) {
+	    cerr << get_line() << ": error: No idea how wide to make "
+		 << "the unsized constant " << *value_ << "." << endl;
+	    des->errors += 1;
+      }
+
       unsigned width = value_->len();
 
       if (value_->has_sign() && (value_->get(width-1) == verinum::V0)) {
@@ -2363,6 +2387,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.120  2003/09/23 03:31:28  steve
+ *  Catch unsized expressions in continuous assigns.
+ *
  * Revision 1.119  2003/09/19 03:50:12  steve
  *  Remove find_memory method from Design class.
  *
