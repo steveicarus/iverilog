@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.36 2002/04/27 03:17:15 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.37 2002/04/27 05:03:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -743,19 +743,28 @@ NetEConst* NetEConcat::eval_tree()
       unsigned gap = expr_width() / repeat_;
       verinum val (verinum::Vx, repeat_ * gap);
 
-
 	// build up the result from least significant to most.
 
       unsigned cur = 0;
+      bool is_string_flag = true;
       for (unsigned idx = parms_.count() ;  idx > 0 ;  idx -= 1) {
 	    NetEConst*expr = dynamic_cast<NetEConst*>(parms_[idx-1]);
 	    if (expr == 0)
 		  return 0;
 
 	    verinum tmp = expr->value();
-	    for (unsigned bit = 0 ;  bit < tmp.len() ;  bit += 1, cur += 1)
+	    for (unsigned bit = 0;  bit < tmp.len(); bit += 1, cur += 1)
 		  for (unsigned rep = 0 ;  rep < repeat_ ;  rep += 1)
 			val.set(rep*gap+cur, tmp[bit]);
+
+	    is_string_flag = is_string_flag && tmp.is_string();
+      }
+
+	/* If all the values were strings, then re-stringify this
+	   constant. This might be useful information in the code
+	   generator or other optimizer steps. */
+      if (is_string_flag) {
+	    val = verinum(val.as_string());
       }
 
       NetEConst*res = new NetEConst(val);
@@ -1070,6 +1079,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.37  2002/04/27 05:03:46  steve
+ *  Preserve stringiness string part select and concatenation.
+ *
  * Revision 1.36  2002/04/27 03:17:15  steve
  *  Fixup eval of signed constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.56 2002/04/27 02:38:04 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.57 2002/04/27 05:03:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -442,6 +442,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  for (long idx = lsb ;  idx <= msb ;  idx += 1) {
 			if (idx < exl.len())
 			      result.set(idx-lsb, exl.get(idx));
+		        else if (exl.is_string())
+			      result.set(idx-lsb, verinum::V0);
 		        else if (exl.has_len())
 			      result.set(idx-lsb, verinum::Vx);
 		        else if (exl.has_sign())
@@ -449,6 +451,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		        else
 			      result.set(idx-lsb, verinum::V0);
 		  }
+
+		    /* If the input is a string, and the part select
+		       is working on byte boundaries, then the result
+		       can be made into a string. */
+		  if (exl.is_string()
+		      && (lsb%8 == 0)
+		      && (result.len()%8 == 0))
+		      result = verinum(result.as_string());
 
 		  delete tmp;
 		  tmp = new NetEConst(result);
@@ -832,6 +842,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.57  2002/04/27 05:03:46  steve
+ *  Preserve stringiness string part select and concatenation.
+ *
  * Revision 1.56  2002/04/27 02:38:04  steve
  *  Support selecting bits from parameters.
  *
