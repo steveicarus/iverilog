@@ -31,7 +31,7 @@
   *  file "hello" which is compiled, linked and ready to run. Run this
   *  program like so:
   *  
-  *      ./hello
+  *      vvp hello
   *  
   *  and the program will print the message to its output. Easy! For
   *  more on how to make the iverilog command work, see the iverilog
