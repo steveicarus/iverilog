@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.54 2005/03/06 17:25:03 steve Exp $"
+#ident "$Id: functor.h,v 1.55 2005/04/03 06:13:34 steve Exp $"
 #endif
 
 /* NOTE: THIS FILE IS BEOING PHASED OUT. IT'S FUNCTIONALITY IS OBSOLETE. */
@@ -277,50 +277,7 @@ unsigned functor_get(vvp_ipoint_t ptr)
 }
 
 //          Special infrastructure functor types
-
-// The extra_outputs_functor_s class is for devices that require
-// multiple inputs and outputs.
-// ->set redirects the job to the base_, who knows what shall be done.
-
-struct extra_outputs_functor_s: public functor_s {
-      extra_outputs_functor_s(vvp_ipoint_t b = 0) : base_(b) {}
-      virtual ~extra_outputs_functor_s();
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-
-      unsigned base_;
-};
-
-// extra_ports_functor_s redirects to base without setting the inputs.
-// But base must be aware that i may not match this.  This is used by
-// memory ports.
-
-struct extra_ports_functor_s : public extra_outputs_functor_s
-{
-      extra_ports_functor_s(vvp_ipoint_t b = 0) : extra_outputs_functor_s(b) {}
-      virtual ~extra_ports_functor_s();
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-};
-
-// The extra_inputs_functor_s class is for devices that require
-// multiple inputs but only one output
-// ->set redirects the job to ->out, that knows what shall be done.
-
-struct extra_inputs_functor_s: public functor_s {
-      extra_inputs_functor_s(vvp_ipoint_t b = 0) { out = b; }
-      virtual ~extra_inputs_functor_s();
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
-};
-
-// edge_inputs_functor_s provides an old_ival
-// it's up to the set() method to use it (UDP).
-// The default set() is inherited from extra_inputs_functor_s.
-struct edge_inputs_functor_s: public extra_inputs_functor_s
-{
-      edge_inputs_functor_s() : old_ival(2) {}
-      virtual ~edge_inputs_functor_s();
-      unsigned char old_ival;
-};
-
+#if 0
 /*
  * Vectors of functors
  */
@@ -331,10 +288,13 @@ extern void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p);
 extern vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i);
 extern vvp_fvector_t vvp_fvector_new(unsigned size);
 extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
-
+#endif
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.55  2005/04/03 06:13:34  steve
+ *  Remove dead fvectors class.
+ *
  * Revision 1.54  2005/03/06 17:25:03  steve
  *  Remove dead code from scheduler.
  *
