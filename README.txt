@@ -73,7 +73,7 @@ configure script that modify its behavior:
 
 	--without-ipal
 	    This turns off support for Icarus PAL, whether ipal
-	    libaries are installed or not.
+	    libraries are installed or not.
 
 	--prefix=<root>
 	    The default is /usr/local, which causes the tool suite to
@@ -81,8 +81,9 @@ configure script that modify its behavior:
 	    /usr/local/share/ivl, etc.
 
 	    I recommend that if you are configuring for precompiled
-	    binaries, use --prefix=/usr. On Solaris systems, it is
-	    common to use --prefix=/opt.
+	    binaries, use --prefix=/usr.  On Solaris systems, it is
+	    common to use --prefix=/opt.  You can configure for a non-root
+	    install with --prefix=$HOME.
 
 2.3 (Optional) Testing
 
@@ -91,7 +92,7 @@ To run a simple test before installation, execute
   make check
 
 The commands printed by this run might help you in running Icarus
-Verilog on your own verilog sources before the package is installed
+Verilog on your own Verilog sources before the package is installed
 by root.
 
 2.4 Installation
@@ -127,7 +128,7 @@ only sees a single input file. See ivlpp/ivlpp.txt for details.
 
 3.2 Parse
 
-The verilog compiler starts by parsing the verilog source file. The
+The Verilog compiler starts by parsing the Verilog source file. The
 output of the parse in a list of Module objects in PFORM. The pform
 (see pform.h) is mostly a direct reflection of the compilation
 step. There may be dangling references, and it is not yet clear which
@@ -186,7 +187,7 @@ some useful transformations would be,
 
 	- eliminate null effect circuitry,
 	- combinational reduction
-	- Constant propagation
+	- constant propagation
 
 The actual functions performed are specified on the ivl command line by
 the -F flags (See below).
@@ -206,7 +207,7 @@ command line.
 
 3.6 ATTRIBUTES
 
-The parser accepts as an extension to Verilog the $attribute module
+The parser accepts, as an extension to Verilog, the $attribute module
 item. The syntax of the $attribute item is:
 
 	$attribute (<identifier>, <key>, <value>);
@@ -275,7 +276,7 @@ Usage: ivl <options>... file
 
 	This list can also be set with -fVPI_MODULE_LIST=<list> which
 	sets the list completely. Then, -m after this will append
-	module names to the list sp specified. The default list
+	module names to the list specified. The default list
 	includes "system".
 
 -N <file>
@@ -374,7 +375,7 @@ by the compiler. See the iverilog(1) man page.
 
 Icarus Verilog is in development - as such it still only supports a
 (growing) subset of Verilog.  Below is a description of some of the
-currently unsupported verilog features. This list is not exhaustive,
+currently unsupported Verilog features. This list is not exhaustive,
 and does not account for errors in the compiler. See the Icarus
 Verilog web page for the current state of support for Verilog, and in
 particular, browse the bug report database for reported unsupported
