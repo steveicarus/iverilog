@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.12 2003/10/14 00:31:32 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.13 2003/10/14 18:05:18 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -35,7 +35,7 @@ INSTDIR64="@VPIDIR1@"
 INSTDIR32="@VPIDIR2@"
 if test x$INSTDIR32 = x
 then
-    $INSTDIR32=$INSTDIR64
+    INSTDIR32=$INSTDIR64
 fi
 
 INSTDIR="$INSTDIR64"
