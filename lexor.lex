@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.54 2000/12/12 06:13:44 steve Exp $"
+#ident "$Id: lexor.lex,v 1.55 2001/02/07 01:08:21 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -159,8 +159,10 @@ W [ \t\b\f\r]+
 <UDPTABLE>\(\?\?\)  { return '*'; }
 <UDPTABLE>\(01\)    { return 'r'; }
 <UDPTABLE>\(0[xX]\) { return 'P'; }
+<UDPTABLE>\(0\?\)   { return 'p'; }
 <UDPTABLE>\(10\)    { return 'f'; }
 <UDPTABLE>\(1[xX]\) { return 'N'; }
+<UDPTABLE>\(1\?\)   { return 'n'; }
 <UDPTABLE>\([xX]0\) { return 'F'; }
 <UDPTABLE>\([xX]1\) { return 'R'; }
 <UDPTABLE>[bB]     { return 'b'; }
