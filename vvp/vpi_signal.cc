@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.42 2002/07/09 03:24:37 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.43 2002/07/19 00:36:36 steve Exp $"
 #endif
 
 /*
@@ -454,32 +454,29 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	    }
 	    break;
 
-	  case vpiVectorVal: {
-		assert(wid <= sizeof (unsigned long));
-
-		unsigned long aval = vp->value.vector->aval;
-		unsigned long bval = vp->value.vector->bval;
-		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      int bit = (aval&1) | ((bval<<1)&2);
-		      switch (bit) {
-			  case 0: /* zero */
-			    functor_poke(rfp,idx, 0, St0);
-			    break;
-			  case 1: /* one */
-			    functor_poke(rfp,idx, 1, St1);
-			    break;
-			  case 2: /* z */
-			    functor_poke(rfp,idx, 3, HiZ);
-			    break;
-			  case 3: /* x */
-			    functor_poke(rfp,idx, 2, StX);
-			    break;
-		      }
-		      aval >>= 1;
-		      bval >>= 1;
-		}
-		break;
-	  }
+	  case vpiVectorVal:
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  unsigned long aval = vp->value.vector[idx/32].aval;
+		  unsigned long bval = vp->value.vector[idx/32].bval;
+		  aval >>= idx%32;
+		  bval >>= idx%32;
+		  int bit = (aval&1) | ((bval<<1)&2);
+		  switch (bit) {
+		      case 0: /* zero */
+			functor_poke(rfp,idx, 0, St0);
+			break;
+		      case 1: /* one */
+			functor_poke(rfp,idx, 1, St1);
+			break;
+		      case 2: /* z */
+			functor_poke(rfp,idx, 3, HiZ);
+			break;
+		      case 3: /* x */
+			functor_poke(rfp,idx, 2, StX);
+			break;
+		  }
+	    }
+	    break;
 
 	  case vpiBinStrVal: {
 		unsigned char*bits = new unsigned char[(wid+3) / 4];
@@ -675,6 +672,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.43  2002/07/19 00:36:36  steve
+ *  Support put of wide vpiVectorVal to signal.
+ *
  * Revision 1.42  2002/07/09 03:24:37  steve
  *  Dynamic resizevpi result buf in more places.
  *
