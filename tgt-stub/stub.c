@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.83 2003/12/03 02:46:24 steve Exp $"
+#ident "$Id: stub.c,v 1.84 2003/12/03 04:27:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -484,8 +484,8 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_WAIT: {
-		fprintf(out, "%*s@(", ind, "");
 		const char*comma = "";
+		fprintf(out, "%*s@(", ind, "");
 
 		for (idx = 0 ;  idx < ivl_stmt_nevent(net) ;  idx += 1) {
 		      ivl_event_t evnt = ivl_stmt_events(net, idx);
@@ -892,6 +892,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.84  2003/12/03 04:27:10  steve
+ *  Pre-gcc3 compile error.
+ *
  * Revision 1.83  2003/12/03 02:46:24  steve
  *  Add support for wait on list of named events.
  *
