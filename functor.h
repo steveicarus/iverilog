@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.18 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: functor.h,v 1.19 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 /*
@@ -84,7 +84,6 @@ struct proc_match_t {
 
       virtual int assign(class NetAssign*);
       virtual int assign_nb(class NetAssignNB*);
-      virtual int assign_mem_nb(class NetAssignMemNB*);
       virtual int condit(class NetCondit*);
       virtual int event_wait(class NetEvWait*);
       virtual int block(class NetBlock*);
@@ -93,6 +92,11 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.19  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.18  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special
@@ -112,32 +116,5 @@ struct proc_match_t {
  *
  * Revision 1.13  2000/04/20 00:28:03  steve
  *  Catch some simple identity compareoptimizations.
- *
- * Revision 1.12  2000/04/18 04:50:19  steve
- *  Clean up unneeded NetEvent objects.
- *
- * Revision 1.11  2000/04/12 20:02:53  steve
- *  Finally remove the NetNEvent and NetPEvent classes,
- *  Get synthesis working with the NetEvWait class,
- *  and get started supporting multiple events in a
- *  wait in vvm.
- *
- * Revision 1.10  2000/04/01 21:40:22  steve
- *  Add support for integer division.
- *
- * Revision 1.9  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.8  2000/02/13 04:35:43  steve
- *  Include some block matching from Larry.
- *
- * Revision 1.7  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.6  1999/12/30 04:19:12  steve
- *  Propogate constant 0 in low bits of adders.
- *
- * Revision 1.5  1999/12/17 06:18:16  steve
- *  Rewrite the cprop functor to use the functor_t interface.
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.12 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: synth.cc,v 1.13 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,7 +46,6 @@ class do_expr  : public proc_match_t {
       virtual int assign(NetAssign*);
       virtual int assign_nb(NetAssignNB*);
       virtual int event_wait(NetEvWait*);
-	//virtual int assign_mem(NetAssignMem*);
       virtual int condit(NetCondit*);
 };
 
@@ -163,6 +162,11 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.13  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.12  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

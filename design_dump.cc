@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.125 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.126 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -475,16 +475,6 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 #endif
       o << *rval() << ";" << endl;
 
-}
-
-void NetAssignMemNB::dump(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "";
-      o << "/* " << get_line() << " */" << endl;
-      o << setw(ind) << "";
-      o << memory()->name() << "[" << *index() << "] <= ";
-      rval()->dump(o);
-      o << ";" << endl;
 }
 
 /* Dump a block statement */
@@ -975,6 +965,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.126  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.125  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.240 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: netlist.h,v 1.241 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 /*
@@ -1316,47 +1316,6 @@ class NetAssignNB  : public NetAssignBase {
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
-      virtual void dump(ostream&, unsigned ind) const;
-
-    private:
-};
-
-/*
- * Assignment to memory is handled separately because memory is
- * not a node. There are blocking and non-blocking variants, just like
- * regular assign, and the NetAssignMem_ base class takes care of all
- * the common stuff.
- */
-class NetAssignMem_ : public NetProc {
-
-    public:
-      explicit NetAssignMem_(NetMemory*, NetExpr*idx, NetExpr*rv);
-      ~NetAssignMem_();
-
-      NetMemory*memory() { return mem_; }
-      NetExpr*index()    { return index_; }
-      NetExpr*rval()     { return rval_; }
-
-      const NetMemory*memory()const { return mem_; }
-      const NetExpr*index()const    { return index_; }
-      const NetExpr*rval()const     { return rval_; }
-
-      virtual NexusSet* nex_input();
-
-    private:
-      NetMemory*mem_;
-      NetExpr* index_;
-      NetExpr* rval_;
-};
-
-class NetAssignMemNB : public NetAssignMem_ {
-
-    public:
-      explicit NetAssignMemNB(NetMemory*, NetExpr*idx, NetExpr*rv);
-      ~NetAssignMemNB();
-
-      virtual int match_proc(struct proc_match_t*);
-      virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -2965,6 +2924,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.241  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.240  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

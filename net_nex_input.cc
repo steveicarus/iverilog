@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_nex_input.cc,v 1.2 2002/04/21 17:43:12 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.3 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -173,15 +173,6 @@ NexusSet* NetAssignBase::nex_input()
       return result;
 }
 
-NexusSet* NetAssignMem_::nex_input()
-{
-      NexusSet*result = rval_->nex_input();
-      NexusSet*tmp = index_->nex_input();
-      result->add(*tmp);
-      delete tmp;
-      return result;
-}
-
 NexusSet* NetBlock::nex_input()
 {
       if (last_ == 0)
@@ -326,6 +317,11 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.3  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.2  2002/04/21 17:43:12  steve
  *  implement nex_input for behavioral statements.
  *

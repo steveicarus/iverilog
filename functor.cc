@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.27 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: functor.cc,v 1.28 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -234,16 +234,6 @@ int NetAssignNB::match_proc(proc_match_t*that)
       return that->assign_nb(this);
 }
 
-int proc_match_t::assign_mem_nb(NetAssignMemNB*)
-{
-      return 0;
-}
-
-int NetAssignMemNB::match_proc(proc_match_t*that)
-{
-      return that->assign_mem_nb(this);
-}
-
 int proc_match_t::block(NetBlock*)
 {
       cerr << "default (failing) match for block" << endl;
@@ -278,6 +268,11 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.28  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.27  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

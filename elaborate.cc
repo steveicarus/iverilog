@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.252 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.253 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1051,36 +1051,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
- * I do not really know how to elaborate mem[x] <= expr, so this
- * method pretends it is a blocking assign and elaborates
- * that. However, I report an error so that the design isn't actually
- * executed by anyone.
- */
-NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
-				      Design*des, NetScope*scope) const
-{
-      assert(scope);
-
-	/* Elaborate the r-value expression, ... */
-      NetExpr*rv = rval()->elaborate_expr(des, scope);
-      if (rv == 0)
-	    return 0;
-
-      assert(rv);
-      rv->set_width(mem->width());
-
-	/* Elaborate the expression to calculate the index, ... */
-      NetExpr*idx = ix->elaborate_expr(des, scope);
-      assert(idx);
-
-	/* And connect them together in an assignment NetProc. */
-      NetAssignMemNB*am = new NetAssignMemNB(mem, idx, rv);
-      am->set_line(*this);
-
-      return am;
-}
-
-/*
  * The l-value of a procedural assignment is a very much constrained
  * expression. To wit, only identifiers, bit selects and part selects
  * are allowed. I therefore can elaborate the l-value by hand, without
@@ -1091,18 +1061,6 @@ NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
 NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
-
-	/* Catch the case where the lvalue is a reference to a memory
-	   item. These are handled differently. */
-      do {
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
-	    if (id == 0) break;
-
-	    if (NetMemory*mem = des->find_memory(scope, id->path()))
-		  return assign_to_memory_(mem, id->msb_, des, scope);
-
-      } while(0);
-
 
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
@@ -2506,6 +2464,11 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.253  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.252  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

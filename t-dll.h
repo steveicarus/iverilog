@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.82 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: t-dll.h,v 1.83 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -104,7 +104,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       struct ivl_statement_s*stmt_cur_;
       void proc_assign(const NetAssign*);
       void proc_assign_nb(const NetAssignNB*);
-      void proc_assign_mem_nb(const NetAssignMemNB*net);
       bool proc_block(const NetBlock*);
       void proc_case(const NetCase*);
       bool proc_cassign(const NetCAssign*);
@@ -604,6 +603,11 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.83  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.82  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

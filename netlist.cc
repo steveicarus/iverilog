@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.189 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: netlist.cc,v 1.190 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1456,25 +1456,6 @@ const Link& NetRamDq::pin_Q(unsigned idx) const
       return pin(3+awidth_+width()+idx);
 }
 
-NetAssignMem_::NetAssignMem_(NetMemory*m, NetExpr*i, NetExpr*r)
-: mem_(m), index_(i), rval_(r)
-{
-}
-
-NetAssignMem_::~NetAssignMem_()
-{
-}
-
-NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetExpr*i, NetExpr*r)
-: NetAssignMem_(m, i, r)
-{
-}
-
-NetAssignMemNB::~NetAssignMemNB()
-{
-}
-
-
 NetBlock::NetBlock(Type t, NetScope*ss)
 : type_(t), subscope_(ss), last_(0)
 {
@@ -2348,6 +2329,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.190  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.189  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

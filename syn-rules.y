@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.19 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.20 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -43,7 +43,6 @@ struct syn_token_t {
       int token;
 
       NetAssignBase*assign;
-      NetAssignMem_*assign_mem;
       NetProcTop*top;
       NetEvWait*evwait;
       NetEvent*event;
@@ -59,8 +58,6 @@ static Design*des_;
 
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn);
-static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssignMem_*asn);
 static void make_initializer(Design*des, NetProcTop*top, NetAssignBase*asn);
 
 %}
@@ -103,32 +100,6 @@ start
 		{ make_initializer(des_, $1->top, $2->assign);
 		}
 
-
-  /* These rules match RAM devices. They are similar to DFF, except
-     that there is an index for the word. The typical Verilog that get
-     these are:
-
-     always @(posedge CLK) M[a] = D
-     always @(negedge CLK) M[a] = D
-
-     always @(posedge CLK) if (CE) M[a] = D;
-     always @(negedge CLK) if (CE) M[a] = D;
-
-     The width of Q and D cause a wide register to be created. The
-     code generators generally implement that as an array of
-     flip-flops. */
-
-	| S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN_MEM ';'
-		{ make_RAM_CE(des_, $1->top, $2->evwait, $4->event,
-			      0, $6->assign_mem);
-		}
-
-	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN_MEM ';' ';'
-		{ make_RAM_CE(des_, $1->top, $2->evwait, $4->event,
-			      $7->expr, $8->assign_mem);
-		}
-
-	;
 
 %%
 
@@ -201,44 +172,6 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
       des->delete_process(top);
 }
 
-static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssignMem_*asn)
-{
-      NetMemory*mem = asn->memory();
-      NetExpr*adr_e = asn->index();
-
-      NetNet*adr = adr_e->synthesize(des);
-      assert(adr);
-
-      NetScope*scope = adr->scope();
-      assert(scope);
-
-      NetEvProbe*pclk = eclk->probe(0);
-      NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
-      NetNet*ce = cexp? cexp->synthesize(des) : 0;
-
-      assert(d);
-
-      NetRamDq*ram = new NetRamDq(scope, des->local_symbol(mem->name()),
-				  mem, adr->pin_count());
-
-      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
-	    connect(adr->pin(idx), ram->pin_Address(idx));
-
-      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1)
-	    connect(ram->pin_Data(idx), d->bit(idx));
-
-      if (ce) connect(ram->pin_WE(), ce->pin(0));
-
-      assert(pclk->edge() == NetEvProbe::POSEDGE);
-      connect(ram->pin_InClock(), pclk->pin(0));
-
-      ram->absorb_partners();
-
-      des->add_node(ram);
-      des->delete_process(top);
-}
-
 /*
  * An assignment in an initial statement is the same as giving the
  * nexus an initial value. For synthesized netlists, we can just set
@@ -298,18 +231,6 @@ struct tokenize : public proc_match_t {
 	    cur = new syn_token_t;
 	    cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
 	    cur->assign = dev;
-	    cur->next_ = 0;
-	    last_->next_ = cur;
-	    last_ = cur;
-	    return 0;
-      }
-
-      int assign_mem_nb(NetAssignMemNB*dev)
-      {
-	    syn_token_t*cur;
-	    cur = new syn_token_t;
-	    cur->token = S_ASSIGN_MEM;
-	    cur->assign_mem = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;
 	    last_ = cur;

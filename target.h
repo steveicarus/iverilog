@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.58 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: target.h,v 1.59 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -101,7 +101,6 @@ struct target_t {
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(const NetAssign*);
       virtual void proc_assign_nb(const NetAssignNB*);
-      virtual void proc_assign_mem_nb(const NetAssignMemNB*);
       virtual bool proc_block(const NetBlock*);
       virtual void proc_case(const NetCase*);
       virtual bool proc_cassign(const NetCAssign*);
@@ -163,6 +162,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.59  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.58  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special
@@ -195,54 +199,5 @@ extern const struct target *target_table[];
  *
  * Revision 1.52  2001/04/22 23:09:46  steve
  *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.51  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.50  2001/04/02 02:28:13  steve
- *  Generate code for task calls.
- *
- * Revision 1.49  2001/03/27 03:31:06  steve
- *  Support error code from target_t::end_design method.
- *
- * Revision 1.48  2000/11/04 01:54:01  steve
- *  Modifications in support of gcc 2.96
- *
- * Revision 1.47  2000/09/26 01:35:43  steve
- *  Remove the obsolete NetEIdent class.
- *
- * Revision 1.46  2000/09/17 21:26:16  steve
- *  Add support for modulus (Eric Aardoom)
- *
- * Revision 1.45  2000/09/02 20:54:21  steve
- *  Rearrange NetAssign to make NetAssign_ separate.
- *
- * Revision 1.44  2000/08/27 15:51:51  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.43  2000/08/14 04:39:57  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.42  2000/08/09 03:43:45  steve
- *  Move all file manipulation out of target class.
- *
- * Revision 1.41  2000/08/08 01:50:42  steve
- *  target methods need not take a file stream.
- *
- * Revision 1.40  2000/07/29 16:21:08  steve
- *  Report code generation errors through proc_delay.
- *
- * Revision 1.39  2000/07/27 05:13:44  steve
- *  Support elaboration of disable statements.
- *
- * Revision 1.38  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.37  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
  */
 #endif

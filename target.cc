@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.61 2002/06/04 05:38:44 steve Exp $"
+#ident "$Id: target.cc,v 1.62 2002/06/05 03:44:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -187,12 +187,6 @@ void target_t::proc_assign_nb(const NetAssignNB*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled non-blocking assignment." << endl;
-}
-
-void target_t::proc_assign_mem_nb(const NetAssignMemNB*)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled non-blocking memory assignment." << endl;
 }
 
 bool target_t::proc_block(const NetBlock*)
@@ -391,6 +385,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.62  2002/06/05 03:44:25  steve
+ *  Add support for memory words in l-value of
+ *  non-blocking assignments, and remove the special
+ *  NetAssignMem_ and NetAssignMemNB classes.
+ *
  * Revision 1.61  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special
