@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.46 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: lexor.lex,v 1.47 2000/08/01 02:14:34 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -893,7 +893,7 @@ static void process_timescale(const char*txt)
 
       cp = tmp;
       cp += strspn(cp, " \t");
-      ctmp = cp + strcspn(cp, " \t");
+      ctmp = cp + strcspn(cp, " \t\r");
 
       if (strncmp("s", cp, ctmp-cp) == 0) {
 	    prec -= 0;
