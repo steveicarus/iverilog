@@ -655,8 +655,8 @@ if((lt)&&(lt->numfacs))
 		lt->zfacname_predec_size = lt->zpackcount;
 
 		gzclose(lt->zhandle);
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
 		lt->zfacname_size = lt->position - lt->zfacname_size;
 
 		lt->zhandle = gzdopen(dup(fileno(lt->handle)), "wb9");
@@ -681,8 +681,8 @@ if((lt)&&(lt->numfacs))
 			}
 
 		gzclose(lt->zhandle);
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
 		lt->zfacgeometry_size = lt->position - lt->facgeometry_offset;
 
 		if(is_interlaced_trace)
@@ -696,8 +696,8 @@ if((lt)&&(lt->numfacs))
 				}
 
 			gzclose(lt->zhandle); lt->zhandle = NULL;
-			fseek(lt->handle, 0L, SEEK_END);
-			lt->position=ftell(lt->handle);
+			fseeko(lt->handle, 0L, SEEK_END);
+			lt->position=ftello(lt->handle);
 			lt->zsync_table_size = lt->position - lt->sync_table_offset;
 			}
 		}
@@ -706,7 +706,7 @@ if((lt)&&(lt->numfacs))
 
 
 /*
- * initialize the trace and get back and lt context
+ * initialize the trace and get back an lt context
  */
 struct lt_trace *lt_init(const char *name)
 {
@@ -1002,8 +1002,8 @@ for(i=0;i<lt->num_dict_entries;i++)
 	}
 
 gzclose(lt->zhandle);
-fseek(lt->handle, 0L, SEEK_END);
-lt->position=ftell(lt->handle);
+fseeko(lt->handle, 0L, SEEK_END);
+lt->position=ftello(lt->handle);
 lt->zdictionary_size = lt->position - lt->zdictionary_size;
 
 free(lt->sorted_dict); lt->sorted_dict = NULL;
@@ -1057,8 +1057,8 @@ if(lt)
 			case LT_ZMODE_BZIP2:	BZ2_bzclose(lt->zhandle); break;
 			}
 		lt->zhandle = NULL;
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
 
 		lt_set_zmode(lt, LT_ZMODE_NONE);
 		lt->zchg_table_size = lt->position - lt->change_field_offset;
@@ -1132,8 +1132,8 @@ if(lt)
 			}
 
 		gzclose(lt->zhandle); lt->zhandle = NULL;
-		fseek(lt->handle, 0L, SEEK_END);
-		lt->position=ftell(lt->handle);
+		fseeko(lt->handle, 0L, SEEK_END);
+		lt->position=ftello(lt->handle);
 		lt->ztime_table_size = lt->position - lt->ztime_table_size;
 		}
 
@@ -1609,7 +1609,7 @@ int i;
 
 len--;
 
-for(i=0;i<len;i++)
+for(i=0;i<=len;i++)
 	{
 	*(p++) = '0' | ((value & (1<<(len-i)))!=0);
 	}
@@ -1642,11 +1642,15 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 	if((len>1)&&(len<=32))
 		{
 		int ivalue = value;
+		int delta1, delta2;
 		s->clk_mask <<= 1;
 		s->clk_mask |= 1;
 
-		if(((s->clk_mask&0x1f)==0x1f) && ((ivalue - s->clk_prevval1)==(s->clk_prevval1 - s->clk_prevval3)) &&
-			((s->clk_prevval - s->clk_prevval2)==(s->clk_prevval2 - s->clk_prevval4)))
+		if(     ((s->clk_mask&0x1f)==0x1f) && 
+			( (delta1=(ivalue         - s->clk_prevval1) & lt_optimask[s->len]) == ((s->clk_prevval1 - s->clk_prevval3) & lt_optimask[s->len]) ) &&
+			( (delta2=(s->clk_prevval - s->clk_prevval2) & lt_optimask[s->len]) == ((s->clk_prevval2 - s->clk_prevval4) & lt_optimask[s->len]) ) &&
+			( (delta1==delta2) || ((!delta1)&&(!delta2)) )
+			)
 			{
 			if(s->clk_prevtrans==ULLDescriptor(~0))
 				{
@@ -2247,6 +2251,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 		int ivalue = 0;
 		int i;
 		char *pnt = value;
+		int delta1, delta2;
 
 		for(i=0;i<len;i++)
 			{
@@ -2271,8 +2276,11 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 		s->clk_mask <<= 1;
 		s->clk_mask |= legal;
 
-		if(((s->clk_mask&0x1f)==0x1f) && ((ivalue - s->clk_prevval1)==(s->clk_prevval1 - s->clk_prevval3)) &&
-			((s->clk_prevval - s->clk_prevval2)==(s->clk_prevval2 - s->clk_prevval4)))
+		if(     ((s->clk_mask&0x1f)==0x1f) && 
+			( (delta1=(ivalue         - s->clk_prevval1) & lt_optimask[s->len]) == ((s->clk_prevval1 - s->clk_prevval3) & lt_optimask[s->len]) ) &&
+			( (delta2=(s->clk_prevval - s->clk_prevval2) & lt_optimask[s->len]) == ((s->clk_prevval2 - s->clk_prevval4) & lt_optimask[s->len]) ) &&
+			( (delta1==delta2) || ((!delta1)&&(!delta2)) )
+			)
 			{
 			if(s->clk_prevtrans==ULLDescriptor(~0))
 				{
