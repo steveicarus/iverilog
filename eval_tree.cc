@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.50 2003/04/14 03:40:21 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.51 2003/04/15 05:06:56 steve Exp $"
 #endif
 
 # include "config.h"
@@ -290,6 +290,24 @@ NetEConst* NetEBComp::eval_leeq_()
 
 NetEConst* NetEBComp::eval_gt_()
 {
+      if ((left_->expr_type() == NetExpr::ET_REAL)
+	  && (right_->expr_type() == NetExpr::ET_REAL)) {
+
+	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
+	    if (tmpl == 0)
+		  return 0;
+
+	    NetECReal*tmpr = dynamic_cast<NetECReal*>(right_);
+	    if (tmpr == 0)
+		  return 0;
+
+	    double ll = tmpl->value().as_double();
+	    double rr = tmpr->value().as_double();
+
+	    verinum result ((ll > rr)? verinum::V1 : verinum::V0, 1, true);
+	    return new NetEConst(result);
+      }
+
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
 
@@ -308,6 +326,19 @@ NetEConst* NetEBComp::eval_gt_()
 		  verinum result(verinum::V1, 1);
 		  return new NetEConst(result);
 	    }
+      }
+
+	/* Compare with a real value. Do it as double precision. */
+      if (right_->expr_type() == NetExpr::ET_REAL) {
+	    NetECReal*tmp = dynamic_cast<NetECReal*>(right_);
+	    if (tmp == 0)
+		  return 0;
+
+	     double rr = tmp->value().as_double();
+	     double ll = lv.has_sign()? lv.as_long() : lv.as_ulong();
+
+	     verinum result ((ll > rr)? verinum::V1 : verinum::V0, 1, true);
+	     return new NetEConst(result);
       }
 
 	/* Now go on to the normal test of the values. */
@@ -335,6 +366,24 @@ NetEConst* NetEBComp::eval_gt_()
 
 NetEConst* NetEBComp::eval_gteq_()
 {
+      if ((left_->expr_type() == NetExpr::ET_REAL)
+	  && (right_->expr_type() == NetExpr::ET_REAL)) {
+
+	    NetECReal*tmpl = dynamic_cast<NetECReal*>(left_);
+	    if (tmpl == 0)
+		  return 0;
+
+	    NetECReal*tmpr = dynamic_cast<NetECReal*>(right_);
+	    if (tmpr == 0)
+		  return 0;
+
+	    double ll = tmpl->value().as_double();
+	    double rr = tmpr->value().as_double();
+
+	    verinum result ((ll >= rr)? verinum::V1 : verinum::V0, 1, true);
+	    return new NetEConst(result);
+      }
+
       NetEConst*l = dynamic_cast<NetEConst*>(left_);
       if (l == 0) return 0;
 
@@ -346,17 +395,32 @@ NetEConst* NetEBComp::eval_gteq_()
 
 	/* Detect the case where the left side is greater than the
 	   largest value the right side can possibly have. */
-      assert(right_->expr_width() > 0);
-      verinum rv (verinum::V1, right_->expr_width());
-      if (lv >= rv) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
+      if (right_->expr_type() == NetExpr::ET_VECTOR) {
+	    assert(right_->expr_width() > 0);
+	    verinum rv (verinum::V1, right_->expr_width());
+	    if (lv >= rv) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
+      }
+
+	/* Compare with a real value. Do it as double precision. */
+      if (right_->expr_type() == NetExpr::ET_REAL) {
+	    NetECReal*tmp = dynamic_cast<NetECReal*>(right_);
+	    if (tmp == 0)
+		  return 0;
+
+	     double rr = tmp->value().as_double();
+	     double ll = lv.has_sign()? lv.as_long() : lv.as_ulong();
+
+	     verinum result ((ll >= rr)? verinum::V1 : verinum::V0, 1, true);
+	     return new NetEConst(result);
       }
 
 	/* Now go on to the normal test of the values. */
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
-      rv = r->value();
+      verinum rv = r->value();
       if (! rv.is_defined()) {
 	    verinum result(verinum::Vx, 1);
 	    return new NetEConst(result);
@@ -1251,6 +1315,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.51  2003/04/15 05:06:56  steve
+ *  Handle real constants evaluation > and >=.
+ *
  * Revision 1.50  2003/04/14 03:40:21  steve
  *  Make some effort to preserve bits while
  *  operating on constant values.
