@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.61 2003/11/18 06:31:46 steve Exp $"
+#ident "$Id: main.c,v 1.62 2003/12/12 04:36:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,6 +99,7 @@ const char sep = '/';
 extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
+const char*pbase = 0;
 const char*mtm  = 0;
 const char*opath = "a.out";
 const char*npath = 0;
@@ -477,7 +478,11 @@ int main(int argc, char **argv)
 
 	    switch (opt) {
 		case 'B':
-		  base = optarg;
+		  if (optarg[0] == 'P') {
+			pbase = optarg+1;
+		  } else {
+			base=optarg;
+		  }
 		  break;
  		case 'c':
 		  command_filename = malloc(strlen(optarg)+1);
@@ -567,6 +572,9 @@ int main(int argc, char **argv)
 	    }
       }
 
+      if (pbase == 0)
+	    pbase = base;
+
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " ($Name:  $)\n");
 	    printf("Copyright 1998-2003 Stephen Williams\n");
@@ -624,7 +632,7 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s%civlpp %s%s -D__ICARUS__=1 -f%s ", base,sep,
+      sprintf(tmp, "%s%civlpp %s%s -D__ICARUS__=1 -f%s ", pbase,sep,
 	      verbose_flag?" -v":"",
 	      e_flag?"":" -L", source_path);
 
@@ -689,7 +697,7 @@ int main(int argc, char **argv)
 	   single file. This may be used to preprocess library
 	   files. */
       fprintf(iconfig_file, "ivlpp:%s%civlpp -D__ICARUS__ -L %s %s\n",
-	      base, sep,
+	      pbase, sep,
 	      inc_list? inc_list : "",
 	      def_list? def_list : "");
 
@@ -703,6 +711,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.62  2003/12/12 04:36:48  steve
+ *  Fix make check to support -tconf configuration method.
+ *
  * Revision 1.61  2003/11/18 06:31:46  steve
  *  Remove the iverilog.conf file.
  *
