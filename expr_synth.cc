@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.36 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.37 2002/11/17 23:37:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -192,6 +192,33 @@ NetNet* NetEBComp::synthesize(Design*des)
 		  gate = new NetLogic(scope, des->local_symbol(path),
 				      lsig->pin_count()+1, NetLogic::OR);
 		  break;
+
+		case '>':
+		    /* sig > 0 is true if any bit in sig is set. This
+		       is very much like sig != 0. (0 > sig) shouldn't
+		       happen. */
+		  if (rcon) {
+			gate = new NetLogic(scope, des->local_symbol(path),
+					    lsig->pin_count()+1, NetLogic::OR);
+		  } else {
+			assert(0);
+			gate = new NetLogic(scope, des->local_symbol(path),
+				      lsig->pin_count()+1, NetLogic::NOR);
+		  }
+		  break;
+
+		case '<':
+		    /* 0 < sig is handled like sig > 0. */
+		  if (! rcon) {
+			gate = new NetLogic(scope, des->local_symbol(path),
+					    lsig->pin_count()+1, NetLogic::OR);
+		  } else {
+			assert(0);
+			gate = new NetLogic(scope, des->local_symbol(path),
+				      lsig->pin_count()+1, NetLogic::NOR);
+		  }
+		  break;
+
 		default:
 		  assert(0);
 	    }
@@ -608,6 +635,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.37  2002/11/17 23:37:55  steve
+ *  Magnitude compare to 0.
+ *
  * Revision 1.36  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
