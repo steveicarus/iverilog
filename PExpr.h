@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-1999 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.5 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: PExpr.h,v 1.6 1999/04/29 02:16:26 steve Exp $"
 #endif
 
 # include  <string>
+# include  "netlist.h"
 # include  "verinum.h"
 # include  "LineInfo.h"
 
@@ -59,6 +60,23 @@ class PExpr : public LineInfo {
 };
 
 ostream& operator << (ostream&, const PExpr&);
+
+class PEEvent : public PExpr {
+
+    public:
+      PEEvent(NetPEvent::Type t, PExpr*e)
+      : type_(t), expr_(e)
+      { }
+
+      NetPEvent::Type type() const { return type_; }
+      PExpr*          expr() const { return expr_; }
+
+      virtual void dump(ostream&) const;
+
+    private:
+      NetPEvent::Type type_;
+      PExpr*expr_;
+};
 
 class PEIdent : public PExpr {
 
@@ -151,6 +169,9 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.6  1999/04/29 02:16:26  steve
+ *  Parse OR of event expressions.
+ *
  * Revision 1.5  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.20 1999/04/25 00:44:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.21 1999/04/29 02:16:26 steve Exp $"
 #endif
 
 /*
@@ -882,12 +882,20 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 		  return 0;
       }
 
-      NetPEvent*ev = new NetPEvent(des->local_symbol(path), type_, enet);
+      if (expr_.count() != 1) {
+	    cerr << get_line() << ": Sorry, unable to elaborate event "
+		  "OR expressions." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
-      NetNet*expr = expr_->elaborate_net(des, path);
+      NetPEvent*ev = new NetPEvent(des->local_symbol(path),
+				   expr_[0]->type(), enet);
+
+      NetNet*expr = expr_[0]->expr()->elaborate_net(des, path);
       if (expr == 0) {
 	    cerr << get_line() << ": Failed to elaborate expression: ";
-	    expr_->dump(cerr);
+	    expr_[0]->dump(cerr);
 	    cerr << endl;
 	    delete ev;
 	    return 0;
@@ -1043,6 +1051,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.21  1999/04/29 02:16:26  steve
+ *  Parse OR of event expressions.
+ *
  * Revision 1.20  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
  *

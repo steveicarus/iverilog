@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.12 1999/04/19 01:59:37 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.13 1999/04/29 02:16:26 steve Exp $"
 #endif
 
 /*
@@ -40,6 +40,24 @@ ostream& operator << (ostream&out, const PExpr&obj)
 void PExpr::dump(ostream&out) const
 {
       out << typeid(*this).name();
+}
+
+void PEEvent::dump(ostream&out) const
+{
+      switch (type_) {
+	  case NetPEvent::ANYEDGE:
+	    break;
+	  case NetPEvent::POSEDGE:
+	    out << "posedge ";
+	    break;
+	  case NetPEvent::NEGEDGE:
+	    out << "negedge ";
+	    break;
+	  case NetPEvent::POSITIVE:
+	    out << "positive ";
+	    break;
+      }
+      out << *expr_;
 }
 
 void PENumber::dump(ostream&out) const
@@ -286,21 +304,13 @@ void PDelayStatement::dump(ostream&out, unsigned ind) const
 
 void PEventStatement::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "@(";
-      switch (type_) {
-	  case NetPEvent::ANYEDGE:
-	    break;
-	  case NetPEvent::POSEDGE:
-	    out << "posedge ";
-	    break;
-	  case NetPEvent::NEGEDGE:
-	    out << "negedge ";
-	    break;
-	  case NetPEvent::POSITIVE:
-	    out << "positive ";
-	    break;
-      }
-      out << *expr_ << ")";
+      out << setw(ind) << "" << "@(" << *(expr_[0]);
+      if (expr_.count() > 1)
+	    for (unsigned idx = 1 ;  idx < expr_.count() ;  idx += 1)
+		  out << " or " << *(expr_[idx]);
+
+      out << ")";
+
 
       if (statement_) {
 	    out << endl;
@@ -424,6 +434,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.13  1999/04/29 02:16:26  steve
+ *  Parse OR of event expressions.
+ *
  * Revision 1.12  1999/04/19 01:59:37  steve
  *  Add memories to the parse and elaboration phases.
  *

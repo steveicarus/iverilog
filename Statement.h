@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.6 1999/02/03 04:20:11 steve Exp $"
+#ident "$Id: Statement.h,v 1.7 1999/04/29 02:16:26 steve Exp $"
 #endif
 
 # include  <string>
 # include  <list>
-# include  "netlist.h"
+# include  "svector.h"
+# include  "PExpr.h"
 # include  "LineInfo.h"
 class PExpr;
 class Statement;
@@ -212,8 +213,11 @@ class PEventStatement  : public Statement {
 
     public:
 
-      PEventStatement(NetPEvent::Type t, PExpr*ee)
-      : type_(t), expr_(ee), statement_(0) { }
+      PEventStatement(const svector<PEEvent*>&ee)
+      : expr_(ee), statement_(0) { }
+
+      PEventStatement(PEEvent*ee)
+      : expr_(1), statement_(0) { expr_[0] = ee; }
 
       void set_statement(Statement*st) { statement_ = st; }
 
@@ -221,8 +225,7 @@ class PEventStatement  : public Statement {
       virtual NetProc* elaborate(Design*des, const string&path) const;
 
     private:
-      NetPEvent::Type type_;
-      PExpr*expr_;
+      svector<PEEvent*>expr_;
       Statement*statement_;
 };
 
@@ -273,6 +276,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.7  1999/04/29 02:16:26  steve
+ *  Parse OR of event expressions.
+ *
  * Revision 1.6  1999/02/03 04:20:11  steve
  *  Parse and elaborate the Verilog CASE statement.
  *

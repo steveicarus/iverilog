@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.17 1999/04/19 01:59:37 steve Exp $"
+#ident "$Id: parse.y,v 1.18 1999/04/29 02:16:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -42,6 +42,8 @@ extern void lex_end_table();
 
       PExpr*expr;
       list<PExpr*>*exprs;
+
+      svector<PEEvent*>*event_expr;
 
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
@@ -107,7 +109,8 @@ extern void lex_end_table();
 %type <gatetype> gatetype
 %type <porttype> port_type
 
-%type <event_statement> event_control event_expression
+%type <event_expr> event_expression
+%type <event_statement> event_control
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
 
@@ -224,16 +227,48 @@ event_control
 		  $$ = 0;
 		}
 	| '@' '(' event_expression ')'
-		{ $$ = $3;
+		{ PEventStatement*tmp = new PEventStatement(*$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $3;
+		  $$ = tmp;
+		}
+	| '@' '(' error ')'
+		{ yyerror(@1, "Malformed event control expression.");
+		  $$ = 0;
 		}
 	;
 
 event_expression
 	: K_posedge expression
-		{ $$ = new PEventStatement(NetPEvent::POSEDGE, $2);
+		{ PEEvent*tmp = new PEEvent(NetPEvent::POSEDGE, $2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
+		  (*tl)[0] = tmp;
+		  $$ = tl;
 		}
 	| K_negedge expression
-		{ $$ = new PEventStatement(NetPEvent::NEGEDGE, $2);
+		{ PEEvent*tmp = new PEEvent(NetPEvent::NEGEDGE, $2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
+		  (*tl)[0] = tmp;
+		  $$ = tl;
+		}
+	| expression
+		{ PEEvent*tmp = new PEEvent(NetPEvent::ANYEDGE, $1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  svector<PEEvent*>*tl = new svector<PEEvent*>(1);
+		  (*tl)[0] = tmp;
+		  $$ = tl;
+		}
+	| event_expression K_or event_expression
+		{ svector<PEEvent*>*tmp = new svector<PEEvent*>(*$1, *$3);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
 		}
 	;
 
@@ -721,8 +756,13 @@ statement
 		}
 	| event_control statement_opt
 		{ PEventStatement*tmp = $1;
-		  tmp->set_statement($2);
-		  $$ = tmp;
+		  if (tmp == 0) {
+			yyerror(@1, "Invalid event control.");
+			$$ = 0;
+		  } else {
+			tmp->set_statement($2);
+			$$ = tmp;
+		  }
 		}
 	| lvalue '=' expression ';'
 		{ Statement*tmp = pform_make_assignment($1, $3);
@@ -736,7 +776,8 @@ statement
 		}
 	| K_wait '(' expression ')' statement_opt
 		{ PEventStatement*tmp;
-		  tmp = new PEventStatement(NetPEvent::POSITIVE, $3);
+		  PEEvent*etmp = new PEEvent(NetPEvent::POSITIVE, $3);
+		  tmp = new PEventStatement(etmp);
 		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
