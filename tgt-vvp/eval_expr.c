@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.103 2003/07/26 03:34:43 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.104 2003/08/03 03:53:38 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -905,6 +905,7 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
 {
       struct vector_info lv;
       unsigned long imm;
+      unsigned tmp;
 
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       assert(lv.wid == wid);
@@ -912,7 +913,24 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
       imm = get_number_immediate(re);
       assert( (imm & ~0xffff) == 0 );
 
-      fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+      switch (lv.base) {
+	  case 0:
+	  case 1:
+	    tmp = allocate_vector(wid);
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", tmp, lv.base, wid);
+	    lv.base = tmp;
+	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+	    return lv;
+
+	  case 2:
+	  case 3:
+	    lv.base = 2;
+	    return lv;
+
+	  default:
+	    fprintf(vvp_out, "    %%subi %u, %lu, %u;\n", lv.base, imm, wid);
+      }
+
 
       return lv;
 }
@@ -2115,6 +2133,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.104  2003/08/03 03:53:38  steve
+ *  Subtract from constant values.
+ *
  * Revision 1.103  2003/07/26 03:34:43  steve
  *  Start handling pad of expressions in code generators.
  *
