@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.113 2003/04/28 17:50:57 steve Exp $"
+#ident "$Id: pform.cc,v 1.114 2003/06/13 00:27:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1121,6 +1121,7 @@ void pform_set_port_type(const char*nm, NetNet::PortType pt,
  * no output or inout ports.
  */
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+				      bool signed_flag,
 				      svector<PExpr*>*range,
 				      list<char*>*names,
 				      const char* file,
@@ -1145,6 +1146,8 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		  curw->set_lineno(lineno);
 		  pform_cur_module->add_wire(curw);
 	    }
+
+	    curw->set_signed(signed_flag);
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range)
@@ -1466,6 +1469,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.114  2003/06/13 00:27:09  steve
+ *  Task/functions can have signed ports.
+ *
  * Revision 1.113  2003/04/28 17:50:57  steve
  *  More 2001 port declaration support.
  *

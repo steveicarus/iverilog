@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.70 2003/04/28 17:50:57 steve Exp $"
+#ident "$Id: pform.h,v 1.71 2003/06/13 00:27:09 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -264,6 +264,7 @@ extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
 extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+					     bool signed_flag,
 					     svector<PExpr*>*range,
 					     list<char*>*names,
 					     const char* file,
@@ -280,6 +281,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.71  2003/06/13 00:27:09  steve
+ *  Task/functions can have signed ports.
+ *
  * Revision 1.70  2003/04/28 17:50:57  steve
  *  More 2001 port declaration support.
  *
