@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.195 2000/12/16 16:57:43 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.196 2000/12/16 23:55:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1158,6 +1158,33 @@ void target_vvm::signal(const NetNet*sig)
 {
       string net_name = mangle(sig->name());
 
+      unsigned*ncode_table = new unsigned [sig->pin_count()];
+      const char*resolution_function = 0;
+
+	/* By default, the nexus object uses a resolution
+	   function that is suitable for simulating wire and tri
+	   signals. If the signal is some other sort, the write
+	   a resolution function into the nexus that properly
+	   handles the different semantics. */
+
+      switch (sig->type()) {
+	  case NetNet::SUPPLY0:
+	    resolution_function = "vvm_resolution_sup0";
+	    break;
+	  case NetNet::SUPPLY1:
+	    resolution_function = "vvm_resolution_sup1";
+	    break;
+	  case NetNet::TRI0:
+	    resolution_function = "vvm_resolution_tri0";
+	    break;
+	  case NetNet::TRI1:
+	    resolution_function = "vvm_resolution_tri1";
+	    break;
+      }
+
+	/* Scan the signals of the vector, getting an array of all the
+	   nexus numbers. Do any nexus init if necessary. */
+
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
 	    bool new_nexus_flag = false;
 	    string nexus = sig->pin(idx).nexus()->name();
@@ -1168,37 +1195,8 @@ void target_vvm::signal(const NetNet*sig)
 		  new_nexus_flag = true;
 	    }
 
-	    init_code << "      nexus_wire_table[" << ncode <<
-		  "].connect(&" << net_name << ", " << idx << ");" << endl;
+	    ncode_table[idx] = ncode;
 
-	      /* By default, the nexus object uses a resolution
-		 function that is suitable for simulating wire and tri
-		 signals. If the signal is some other sort, the write
-		 a resolution function into the nexus that properly
-		 handles the different semantics. */
-
-	    switch (sig->type()) {
-		case NetNet::SUPPLY0:
-		  init_code << "      nexus_wire_table[" << ncode
-			    << "].resolution_function = vvm_resolution_sup0;"
-			    << endl;
-		  break;
-		case NetNet::SUPPLY1:
-		  init_code << "      nexus_wire_table[" << ncode
-			    << "].resolution_function = vvm_resolution_sup1;"
-			    << endl;
-		  break;
-		case NetNet::TRI0:
-		  init_code << "      nexus_wire_table[" << ncode
-			    << "].resolution_function = vvm_resolution_tri0;"
-			    << endl;
-		  break;
-		case NetNet::TRI1:
-		  init_code << "      nexus_wire_table[" << ncode
-			    << "].resolution_function = vvm_resolution_tri1;"
-			    << endl;
-		  break;
-	    }
 
 	      // Propogate the initial value to inputs throughout.
 	    if (new_nexus_flag) {
@@ -1206,6 +1204,50 @@ void target_vvm::signal(const NetNet*sig)
 		  emit_init_value_(sig->pin(idx), init);
 	    }
       }
+
+	/* Check to see if all the nexus numbers are increasing by one
+	   for each bit of the signal. This is a common case and we
+	   can generate optimal code for the situation. */
+      bool increasing_flag = true;
+      for (unsigned idx = 1 ;  idx < sig->pin_count() ;  idx += 1)
+	    if (ncode_table[idx] != (ncode_table[idx-1] + 1))
+		  increasing_flag = false;
+
+      if (increasing_flag) {
+
+	    unsigned base = ncode_table[0];
+	    init_code << "      for (unsigned idx = 0 ;  idx < "
+		      << sig->pin_count() << " ;  idx += 1) {" << endl;
+
+	    init_code << "        nexus_wire_table[idx+"<<base
+			    <<"].connect(&" << net_name << ", idx);"
+			    << endl;
+
+	    if (resolution_function)
+		  init_code << "        nexus_wire_table[idx+" << base
+			    << "].resolution_function = "
+			    << resolution_function << ";" << endl;
+
+	    init_code << "      }" << endl;
+
+      } else {
+
+	    for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
+		  unsigned ncode = ncode_table[idx];
+
+		  init_code << "      nexus_wire_table[" << ncode
+			    <<"].connect(&" << net_name << ", " << idx << ");"
+			    << endl;
+
+		  if (resolution_function)
+			init_code << "      nexus_wire_table[" << ncode
+				  << "].resolution_function = "
+				  << resolution_function << ";" << endl;
+
+	    }
+      }
+
+      delete [] ncode_table;
 
       out << "#define " << net_name << " (signal_table[" <<
 	    signal_counter << "])" << endl;
@@ -1229,13 +1271,25 @@ void target_vvm::signal(const NetNet*sig)
       }
 
 
-	/* Scan the signals of the vector, passing the initial value
-	   to the inputs of all the connected devices. */
-      for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
+	/* Look at the initial values of the vector and see if they
+	   can be assigned in a for loop. For this to work, all the
+	   values must be the same. */
+      verinum::V init = sig->pin(0).nexus()->get_init();
+      bool uniform_flag = true;
+      for (unsigned idx = 1 ;  idx < sig->pin_count() ;  idx += 1)
+	    if (init != sig->pin(idx).nexus()->get_init())
+		  uniform_flag = false;
 
-	    verinum::V init = sig->pin(idx).nexus()->get_init();
-	    init_code << "      " << mangle(sig->name()) << ".init_P("
-		      << idx << ", ";
+      if (sig->pin_count() < 2)
+	    uniform_flag = false;
+
+
+      if (uniform_flag) {
+	      /* Generate the short form. Assign all the initial
+		 values of the vector using a for loop. */
+	    init_code << "      for (unsigned idx = 0 ;  idx < "
+		      << sig->pin_count() << " ;  idx += 1)" << endl;
+	    init_code << "        " << mangle(sig->name())<<".init_P(idx, ";
 	    switch (init) {
 		case verinum::V0:
 		  init_code << "St0";
@@ -1251,6 +1305,31 @@ void target_vvm::signal(const NetNet*sig)
 		  break;
 	    }
 	    init_code << ");" << endl;
+
+      } else {
+	      /* Scan the signals of the vector, passing the initial
+		 value to the inputs of all the connected devices. */
+	    for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
+
+		  init = sig->pin(idx).nexus()->get_init();
+		  init_code << "      " << mangle(sig->name())
+			    << ".init_P(" << idx << ", ";
+		  switch (init) {
+		      case verinum::V0:
+			init_code << "St0";
+			break;
+		      case verinum::V1:
+			init_code << "St1";
+			break;
+		      case verinum::Vx:
+			init_code << "StX";
+			break;
+		      case verinum::Vz:
+			init_code << "HiZ";
+			break;
+		  }
+		  init_code << ");" << endl;
+	    }
       }
 }
 
@@ -2261,13 +2340,96 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	/* We've handled the case of bit selects, so here we know that
 	   we are doing a good ol' assignment to an l-value. So for
 	   the entire width of the l-value, assign constant bit values
-	   to the appropriate nexus. */
+	   to the appropriate nexus.
+
+	   First make a map of the nexa that are going to receive the
+	   constant value. In the process, check to se if the value is
+	   uniform and the nexa are sequential.
+
+	   If the nexa are sequential and uniform, write a for loop
+	   that does the assignment. This is an optimization that
+	   reduces the size of the generated C++. */
+
+      unsigned*nexus_map = new unsigned[lv->pin_count()];
+
+      bool sequential_flag = true;
+      bool uniform_flag = true;
+      verinum::V val = off < value.len() 
+		  ? value.get(off)
+		  : verinum::V0;
+      unsigned zeros_start = 0;
 
       for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
 	    string nexus = lv->pin(idx).nexus()->name();
-	    unsigned ncode = nexus_wire_map[nexus];
+	    nexus_map[idx] = nexus_wire_map[nexus];
 
-	    verinum::V val = (idx+off) < value.len() 
+	    verinum::V tmp = (idx+off) < value.len() 
+		  ? value.get(idx+off)
+		  : verinum::V0;
+
+	    if (tmp != verinum::V0)
+		  zeros_start = idx + 1;
+
+	    if (idx > 0) {
+		  if (nexus_map[idx] != (nexus_map[idx-1] + 1))
+			sequential_flag = false;
+
+		  if (tmp != val)
+			uniform_flag = false;
+	    }
+      }
+
+
+      if (sequential_flag && uniform_flag && (lv->pin_count() > 1)) {
+
+	    const char*rval = vvm_val_name(val, Link::STRONG, Link::STRONG);
+	    unsigned base = nexus_map[0];
+
+	    defn << "      for (unsigned idx = 0 ;  idx < "
+		 << lv->pin_count() << " ;  idx += 1)" << endl;
+
+	    defn << "        nexus_wire_table[idx+" <<base<< "]"
+		 << ".reg_assign(" << rval << ");" << endl;
+
+      } else if (sequential_flag && (zeros_start < lv->pin_count())) {
+
+	      /* If the nexa are sequential and the high bits are all
+		 zeros, then we can write simple reg_assign statements
+		 to take care of the low bits, then write a for loop
+		 to fill in all the high zero bits.
+
+		 This is interesting as it is common to assign small
+		 integers to wide vectors. */
+
+	    const char*rval;
+
+	    for (unsigned idx = 0 ;  idx < zeros_start ;  idx += 1) {
+		  unsigned ncode = nexus_map[idx];
+
+		  val = (idx+off) < value.len() 
+			? value.get(idx+off)
+			: verinum::V0;
+		  rval = vvm_val_name(val, Link::STRONG, Link::STRONG);
+
+		  defn << "      nexus_wire_table[" <<ncode<< "]"
+		       << ".reg_assign(" << rval << ");" << endl;
+	    }
+
+	    rval = vvm_val_name(verinum::V0, Link::STRONG, Link::STRONG);
+
+	    unsigned base = nexus_map[zeros_start];
+
+	    defn << "      for (unsigned idx = 0 ;  idx < "
+		 << (lv->pin_count()-zeros_start) << " ;  idx += 1)" << endl;
+
+	    defn << "        nexus_wire_table[idx+" <<base<< "]"
+		 << ".reg_assign(" << rval << ");" << endl;
+
+
+      } else for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1) {
+	    unsigned ncode = nexus_map[idx];
+
+	    val = (idx+off) < value.len() 
 		  ? value.get(idx+off)
 		  : verinum::V0;
 	    const char*rval = vvm_val_name(val, Link::STRONG, Link::STRONG);
@@ -2275,6 +2437,8 @@ void target_vvm::proc_assign_rval(const NetAssign_*lv,
 	    defn << "      nexus_wire_table[" <<ncode<< "]"
 		 << ".reg_assign(" << rval << ");" << endl;
       }
+
+      delete[]nexus_map;
 }
 
 /*
@@ -3419,6 +3583,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.196  2000/12/16 23:55:24  steve
+ *  Generate loops to initialize vectors or constants.
+ *
  * Revision 1.195  2000/12/16 16:57:43  steve
  *  Observe delays in non-blocking assignments (PR#83)
  *
