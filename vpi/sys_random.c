@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_random.c,v 1.2 2000/07/08 22:41:07 steve Exp $"
+#ident "$Id: sys_random.c,v 1.3 2001/02/16 00:26:38 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -26,84 +26,10 @@
 # include  <math.h>
 # include  <limits.h>
 
-#if 0
-double uniform(long*seed, long start, long end)
-{
-      union u_s {
-	    float s;
-	    unsigned stemp;
-      } u;
+extern void sgenrand(unsigned long seed);
+extern unsigned long genrand(void);
 
-      double d = 0.00000011920928955078125;
-      double a, b, c;
 
-      if ((*seed) == 0)
-	    *seed = 259341593;
-
-      if (start >= end) {
-	    a = 0.0;
-	    b = 2147483647.0;
-
-      } else {
-	    a = (double) start;
-	    b = (double) end;
-      }
-
-      *seed = 69069 * (*seed) + 1;
-      u.stemp = *seed;
-
-      u.stemp = (u.stemp >> 9) | 0x3f800000;
-
-      c = (double) u.s;
-      c = c + (c*d);
-      c = ((b - a) * (c - 1.0)) + a;
-      return c;
-}
-#endif
-
-#if 0
-static long rtl_dist_uniform(long*seed, long start, long end)
-{
-      double r;
-      long i;
-
-      if (start >= end)
-	    return start;
-
-      if (end != LONG_MAX) {
-	    end += 1;
-	    r = uniform(seed, start, end);
-	    if (r >= 0)
-		  i = (long) r;
-	    else
-		  i = (long) (r-1);
-
-	    if (i < start) i = start;
-	    if (i >= end) i = end - 1;
-
-      } else if (start != LONG_MIN) {
-	    start -= 1;
-	    r = uniform(seed, start, end);
-	    if (r >= 0)
-		  i = (long) r;
-	    else
-		  i = (long) (r-1);
-
-	    if (i <= start) i = start;
-	    if (i >  end) i = end;
-
-      } else {
-	    r = (uniform(seed, start, end) + 2147483648.0) / 4294967295.0;
-	    r = r * 4294967296.0 - 2147483648.0;
-	    if (r >= 0)
-		  i = (long) r;
-	    else
-		  i = (long) (r-1);
-      }
-
-      return i;
-}
-#else
 static long rtl_dist_uniform(long*seed, long start, long end)
 {
       if (start >= end)
@@ -116,7 +42,6 @@ static long rtl_dist_uniform(long*seed, long start, long end)
 	    return random();
       }
 }
-#endif
 
 
 static int sys_dist_uniform_calltf(char*name)
@@ -174,12 +99,11 @@ static int sys_dist_uniform_sizetf(char*x)
 }
 
 /*
- * Implement the $random system function. For now, ignore any
- * parameters and only produce a random number.
+ * Implement the $random system function using the ``Mersenne
+ * Twister'' random number generator MT19937.
  */
 static int sys_random_calltf(char*name)
 {
-      static long i_seed = 0;
       s_vpi_value val;
       vpiHandle call_handle;
       vpiHandle argv;
@@ -188,6 +112,8 @@ static int sys_random_calltf(char*name)
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
 
+	/* Get the argument list and look for a seed. If it is there,
+	   get the value and reseed the random number generator. */
       argv = vpi_iterate(vpiArgument, call_handle);
       if (argv) {
 	    seed = vpi_scan(argv);
@@ -195,19 +121,21 @@ static int sys_random_calltf(char*name)
 
 	    val.format = vpiIntVal;
 	    vpi_get_value(seed, &val);
-	    i_seed = val.value.integer;
+	    sgenrand(val.value.integer);
       }
 
       val.format = vpiIntVal;
-      val.value.integer = rtl_dist_uniform(&i_seed, LONG_MIN, LONG_MAX);
+      val.value.integer = genrand();
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
+#if 0
       if (seed) {
 	    val.format = vpiIntVal;
 	    val.value.integer = i_seed;
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
+#endif
 
       return 0;
 }
@@ -240,6 +168,10 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.3  2001/02/16 00:26:38  steve
+ *  Use Mersenne Twister 19937 pseudo-random number generator
+ *  for the $random system task, and support the seed paramter.
+ *
  * Revision 1.2  2000/07/08 22:41:07  steve
  *  Add the dist_uniform function.
  *
