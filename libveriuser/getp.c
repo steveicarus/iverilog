@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getp.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: getp.c,v 1.3 2003/03/15 05:42:39 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -58,11 +58,16 @@ int tf_getp(int n)
 	    rtn = value.value.integer;
       }
 
+      vpi_free_object(sys_i);
+
       return rtn;
 }
 
 /*
  * $Log: getp.c,v $
+ * Revision 1.3  2003/03/15 05:42:39  steve
+ *  free argument iterators.
+ *
  * Revision 1.2  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getlongp.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: getlongp.c,v 1.3 2003/03/15 05:42:39 steve Exp $"
 #endif
 
 #include  <stdlib.h>
@@ -67,11 +67,16 @@ int tf_getlongp(int *highvalue, int n)
 	    rtn = (int) strtoul(value.value.str, end, 16);
       }
 
+      vpi_free_object(sys_i);
+
       return rtn;
 }
 
 /*
  * $Log: getlongp.c,v $
+ * Revision 1.3  2003/03/15 05:42:39  steve
+ *  free argument iterators.
+ *
  * Revision 1.2  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
