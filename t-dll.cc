@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.40 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.41 2001/05/12 03:18:45 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -126,9 +126,21 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 	    malloc(sizeof(struct ivl_nexus_ptr_s));
       tmp->ptrs_[0].pin_   = pin;
       tmp->ptrs_[0].type_  = __NEXUS_PTR_SIG;
-      tmp->ptrs_[0].drive0 = IVL_DR_HiZ;
-      tmp->ptrs_[0].drive1 = IVL_DR_HiZ;
       tmp->ptrs_[0].l.sig  = net;
+
+      ivl_drive_t drive = IVL_DR_HiZ;
+      switch (ivl_signal_type(net)) {
+	  case IVL_SIT_REG:
+	    drive = IVL_DR_STRONG;
+	    break;
+	  case IVL_SIT_SUPPLY0:
+	  case IVL_SIT_SUPPLY1:
+	    drive = IVL_DR_SUPPLY;
+	    break;
+      }
+      tmp->ptrs_[0].drive0 = drive;
+      tmp->ptrs_[0].drive1 = drive;
+
       return tmp;
 }
 
@@ -139,9 +151,20 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
 	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
       nex->nptr_ = top;
 
+      ivl_drive_t drive = IVL_DR_HiZ;
+      switch (ivl_signal_type(net)) {
+	  case IVL_SIT_REG:
+	    drive = IVL_DR_STRONG;
+	    break;
+	  case IVL_SIT_SUPPLY0:
+	  case IVL_SIT_SUPPLY1:
+	    drive = IVL_DR_SUPPLY;
+	    break;
+      }
+
       nex->ptrs_[top-1].type_= __NEXUS_PTR_SIG;
-      nex->ptrs_[top-1].drive0 = IVL_DR_HiZ;
-      nex->ptrs_[top-1].drive1 = IVL_DR_HiZ;
+      nex->ptrs_[top-1].drive0 = drive;
+      nex->ptrs_[top-1].drive1 = drive;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.sig= net;
 }
@@ -174,7 +197,8 @@ static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
       nex->ptrs_[top-1].l.con= net;
 }
 
-static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin)
+static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin,
+			  ivl_drive_t drive0, ivl_drive_t drive1)
 {
       unsigned top = nex->nptr_ + 1;
       nex->ptrs_ = (struct ivl_nexus_ptr_s*)
@@ -182,6 +206,8 @@ static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin)
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_LPM;
+      nex->ptrs_[top-1].drive0 = drive0;
+      nex->ptrs_[top-1].drive1 = drive0;
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.lpm= net;
 }
@@ -566,18 +592,19 @@ void dll_target::lpm_ff(const NetFF*net)
       assert(nex->t_cookie());
       obj->u_.ff.clk = (ivl_nexus_t) nex->t_cookie();
       assert(obj->u_.ff.clk);
-      nexus_lpm_add(obj->u_.ff.clk, obj, 0);
+      nexus_lpm_add(obj->u_.ff.clk, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0);
+	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
 
 	    nex = net->pin_Data(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0);
+	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       } else {
 	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
@@ -587,12 +614,14 @@ void dll_target::lpm_ff(const NetFF*net)
 		  nex = net->pin_Q(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0);
+		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
 
 		  nex = net->pin_Data(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0);
+		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
       }
 }
@@ -618,7 +647,8 @@ void dll_target::lpm_mux(const NetMux*net)
 	    nex = net->pin_Result(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->u_.mux.q.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.mux.q.pin, obj, 0);
+	    nexus_lpm_add(obj->u_.mux.q.pin, obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
 
       } else {
 	    obj->u_.mux.q.pins = new ivl_nexus_t [obj->u_.mux.width];
@@ -627,7 +657,8 @@ void dll_target::lpm_mux(const NetMux*net)
 		  nex = net->pin_Result(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->u_.mux.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.mux.q.pins[idx], obj, 0);
+		  nexus_lpm_add(obj->u_.mux.q.pins[idx], obj, 0,
+				IVL_DR_STRONG, IVL_DR_STRONG);
 	    }
       }
 
@@ -636,7 +667,8 @@ void dll_target::lpm_mux(const NetMux*net)
 	    nex = net->pin_Sel(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->u_.mux.s.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.mux.s.pin, obj, 0);
+	    nexus_lpm_add(obj->u_.mux.s.pin, obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
 
       } else {
 	    obj->u_.mux.s.pins = new ivl_nexus_t [obj->u_.mux.swid];
@@ -645,7 +677,8 @@ void dll_target::lpm_mux(const NetMux*net)
 		  nex = net->pin_Sel(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->u_.mux.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.mux.s.pins[idx], obj, 0);
+		  nexus_lpm_add(obj->u_.mux.s.pins[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
       }
 
@@ -659,7 +692,7 @@ void dll_target::lpm_mux(const NetMux*net)
 		  nex = net->pin_Data(ddx, sdx).nexus();
 		  ivl_nexus_t tmp = (ivl_nexus_t) nex->t_cookie();
 		  obj->u_.mux.d[sdx*width + ddx] = tmp;
-		  nexus_lpm_add(tmp, obj, 0);
+		  nexus_lpm_add(tmp, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 	    }
 
 }
@@ -953,6 +986,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.41  2001/05/12 03:18:45  steve
+ *  Make sure LPM devices have drives on outputs.
+ *
  * Revision 1.40  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)

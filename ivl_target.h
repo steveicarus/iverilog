@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.60 2001/05/08 23:59:33 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.61 2001/05/12 03:18:44 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -578,6 +578,18 @@ extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
  *    If this is a pointer to a magic constant device, then this
  *    returns the net_const object.
  *
+ * ivl_nexus_ptr_drive0
+ * ivl_nexus_ptr_drive1
+ *    These are the 0 and 1 strength values for the devices. For most
+ *    devices, these values are fixed by the description in the
+ *    original source, with the default as IVL_DR_STRONG. For pins
+ *    that are input only, drive0 and drive1 are both IVL_DR_HiZ.
+ *
+ *    The strength of strength-aware devices (such as nmos devices)
+ *    does not really matter, as long at the output is not
+ *    IVL_DR_HiZ. Testing for HiZ drivers is how code generators
+ *    detect inputs.
+ *
  * ivl_nexus_ptr_log
  *    If the target object is an ivl_net_logic_t, this method returns
  *    the object. Otherwise, this method returns 0.
@@ -839,6 +851,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.61  2001/05/12 03:18:44  steve
+ *  Make sure LPM devices have drives on outputs.
+ *
  * Revision 1.60  2001/05/08 23:59:33  steve
  *  Add ivl and vvp.tgt support for memories in
  *  expressions and l-values. (Stephan Boettcher)
