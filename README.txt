@@ -321,6 +321,9 @@ constructs.
     supported. Named events are otherwise supported, and lists of
     other kinds of events are also supported.
 
+  - Macro arguments are not supported. `define macros are supported,
+    but they cannot take arguments.
+
 5.1 Nonstandard Constructs or Behaviors
 
 Icarus Verilog includes some features that are not part of the
