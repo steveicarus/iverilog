@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.22 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.23 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -33,16 +33,9 @@ template <unsigned WIDTH>
 vvm_bitset_t<WIDTH> vvm_unop_not(const vvm_bitset_t<WIDTH>&p)
 {
       vvm_bitset_t<WIDTH> result;
-      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) switch (p[idx]) {
-	  case V0:
-	    result[idx] = V1;
-	    break;
-	  case V1:
-	    result[idx] = V0;
-	    break;
-	  default:
-	    result[idx] = Vx;
-      }
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+	    result[idx] = B_NOT(p[idx]);
+
       return result;
 }
 
@@ -73,9 +66,9 @@ vvm_bitset_t<WIDTH> vvm_unop_uminus(const vvm_bitset_t<WIDTH>&l)
 {
       vvm_bitset_t<WIDTH> res;
       res = vvm_unop_not(l);
-      vpip_bit_t carry = V1;
+      vpip_bit_t carry = St1;
       for (int i = 0; i < WIDTH; i++)
-	    res[i] = add_with_carry(res[i], V0, carry);
+	    res[i] = add_with_carry(res[i], St0, carry);
 
       return res;
 }
@@ -90,7 +83,7 @@ vvm_bitset_t<WIDTH> vvm_binop_and(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = l[idx] & r[idx];
+	    result[idx] = B_AND(l[idx], r[idx]);
 
       return result;
 }
@@ -105,7 +98,7 @@ vvm_bitset_t<WIDTH> vvm_binop_or(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = l[idx] | r[idx];
+	    result[idx] = B_OR(l[idx], r[idx]);
 
       return result;
 }
@@ -116,7 +109,7 @@ vvm_bitset_t<WIDTH> vvm_binop_nor(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = v_not(l[idx] | r[idx]);
+	    result[idx] = B_NOT(B_OR(l[idx], r[idx]));
 
       return result;
 }
@@ -131,7 +124,7 @@ vvm_bitset_t<WIDTH> vvm_binop_plus(const vvm_bitset_t<WIDTH>&l,
 				   const vvm_bitset_t<WIDTH>&r)
 {
       vvm_bitset_t<WIDTH> result;
-      vpip_bit_t carry = V0;
+      vpip_bit_t carry = St0;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 	    result[idx] = add_with_carry(l[idx], r[idx], carry);
 
@@ -149,7 +142,7 @@ vvm_bitset_t<WIDTH> vvm_binop_minus(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> res;
       res = vvm_unop_not(r);
-      vpip_bit_t carry = V1;
+      vpip_bit_t carry = St1;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 	    res[idx] = add_with_carry(l[idx], res[idx], carry);
 
@@ -184,7 +177,7 @@ vvm_bitset_t<WIDTH> vvm_binop_xor(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = l[idx] ^ r[idx];
+	    result[idx] = B_XOR(l[idx], r[idx]);
 
       return result;
 }
@@ -195,7 +188,7 @@ vvm_bitset_t<WIDTH> vvm_binop_xnor(const vvm_bitset_t<WIDTH>&l,
 {
       vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = v_not(l[idx] ^ r[idx]);
+	    result[idx] = B_NOT(B_XOR(l[idx], r[idx]));
 
       return result;
 }
@@ -212,7 +205,7 @@ vvm_bitset_t<WIDTH> vvm_binop_shiftl(const vvm_bitset_t<WIDTH>&l,
       vvm_bitset_t<WIDTH> result;
       vvm_u32 s = r.as_unsigned();
       for (unsigned idx = 0; idx < WIDTH; idx++)
-	    result[idx] = (idx < s) ? V0 : l[idx-s];
+	    result[idx] = (idx < s) ? St0 : l[idx-s];
  
       return result;
 }
@@ -229,7 +222,7 @@ vvm_bitset_t<WIDTH> vvm_binop_shiftr(const vvm_bitset_t<WIDTH>&l,
       vvm_bitset_t<WIDTH> result;
       vvm_u32 s = r.as_unsigned();
       for (unsigned idx = 0; idx < WIDTH; idx++)
-	    result[idx] = (idx < (WIDTH-s)) ? l[idx+s] : V0;
+	    result[idx] = (idx < (WIDTH-s)) ? l[idx+s] : St0;
 
       return result;
 }
@@ -286,18 +279,28 @@ template <unsigned W>
 vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
 			    const vvm_bitset_t<W>&f)
 {
-      switch (c) {
-	  case V0:
+      if (B_IS0(c))
 	    return f;
-	  case V1:
+      if (B_IS1(c))
 	    return t;
-	  default:
-	    return f;
+
+      vvm_bitset_t<W> res;
+      for (unsigned idx = 0 ;  idx < W ;  idx += 1) {
+	    if (B_EQ(t[idx], f[idx]))
+		  res[idx] = t[idx];
+	    else
+		  res[idx] = StX;
       }
+      return res;
 }
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.23  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.22  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

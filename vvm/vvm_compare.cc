@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_compare.cc,v 1.1 2000/03/17 17:25:53 steve Exp $"
+#ident "$Id: vvm_compare.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -26,12 +26,12 @@
 vvm_compare::vvm_compare(unsigned wid)
 : width_(wid)
 {
-      gt_ = Vx;
-      lt_ = Vx;
+      gt_ = StX;
+      lt_ = StX;
 
       ibits_ = new vpip_bit_t[2*width_];
       for (unsigned idx = 0 ;  idx < 2*width_ ;  idx += 1)
-	    ibits_[idx] = Vx;
+	    ibits_[idx] = StX;
 }
 
 vvm_compare::~vvm_compare()
@@ -94,8 +94,8 @@ void vvm_compare::take_value(unsigned key, vpip_bit_t val)
 
 void vvm_compare::compute_()
 {
-      vpip_bit_t gt = V0;
-      vpip_bit_t lt = V0;
+      vpip_bit_t gt = St0;
+      vpip_bit_t lt = St0;
 
       vpip_bit_t*a = ibits_;
       vpip_bit_t*b = ibits_+width_;
@@ -109,13 +109,18 @@ void vvm_compare::compute_()
       gt_ = gt;
       lt_ = lt;
       out_lt_.set_value(lt_);
-      out_le_.set_value(v_not(gt_));
+      out_le_.set_value(B_NOT(gt_));
       out_gt_.set_value(gt_);
-      out_ge_.set_value(v_not(lt_));
+      out_ge_.set_value(B_NOT(lt_));
 }
 
 /*
  * $Log: vvm_compare.cc,v $
+ * Revision 1.2  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.1  2000/03/17 17:25:53  steve
  *  Adder and comparator in nexus style.
  *

@@ -17,42 +17,48 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_bit.cc,v 1.9 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm_bit.cc,v 1.10 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  <iostream>
 
-ostream& operator << (ostream&os, vpip_bit_t bit)
+ostream& b_output (ostream&os, vpip_bit_t bit)
 {
-      switch (bit) {
-	  case V0:
+      if (B_IS0(bit)) {
 	    os << "0";
-	    break;
-	  case V1:
-	    os << "1";
-	    break;
-	  case Vx:
-	    os << "x";
-	    break;
-	  case Vz:
-	    os << "z";
-	    break;
+	    return os;
       }
+
+      if (B_IS1(bit)) {
+	    os << "1";
+	    return os;
+      }
+
+      if (B_ISX(bit)) {
+	    os << "x";
+	    return os;
+      }
+
+      if (B_ISZ(bit)) {
+	    os << "z";
+	    return os;
+      }
+
       return os;
 }
 
 bool posedge(vpip_bit_t from, vpip_bit_t to)
 {
-      switch (from) {
-	  case V1:
+      if (B_IS1(from))
 	    return false;
-	  case V0:
-	    return from != to;
-	  case Vx:
-	  case Vz:
-	    return to == V1;
-      }
+
+      if (B_ISX(from) || B_ISZ(from))
+	    return B_IS1(to);
+
+      if (B_IS0(from))
+	    return ! B_IS0(to);
+
       return false;
 }
 
@@ -60,7 +66,7 @@ ostream& operator << (ostream&os, const vvm_bits_t&str)
 {
       os << str.get_width() << "b'";
       for (unsigned idx = str.get_width() ;  idx > 0 ;  idx -= 1)
-	    os << str.get_bit(idx);
+	    b_output(os, str.get_bit(idx));
 
       return os;
 }
@@ -75,15 +81,9 @@ unsigned vvm_bits_t::as_unsigned() const
       unsigned width = get_width();
       for (unsigned idx = width ;  idx > 0 ;  idx -= 1) {
 	    result <<= 1;
-	    switch (get_bit(idx-1)) {
-		case V0:
-		case Vx:
-		case Vz:
-		  break;
-		case V1:
+
+	    if (B_IS1(get_bit(idx-1)))
 		  result |= 1;
-		  break;
-	    }
       }
       return result;
 }
@@ -91,49 +91,46 @@ unsigned vvm_bits_t::as_unsigned() const
 vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry)
 {
       unsigned li, ri, ci;
-      switch (l) {
-	  case V0:
-	    li = 0;
-	    break;
-	  case V1:
+
+      if (B_IS1(l)) {
 	    li = 1;
-	    break;
-	  default:
-	    carry = Vx;
-	    return Vx;
+      } else if (B_IS0(l)) {
+	    li = 0;
+      } else {
+	    carry = StX;
+	    return StX;
       }
 
-      switch (r) {
-	  case V0:
-	    ri = 0;
-	    break;
-	  case V1:
+      if (B_IS1(r)) {
 	    ri = 1;
-	    break;
-	  default:
-	    carry = Vx;
-	    return Vx;
+      } else if (B_IS0(r)) {
+	    ri = 0;
+      } else {
+	    carry = StX;
+	    return StX;
       }
 
-      switch (carry) {
-	  case V0:
-	    ci = 0;
-	    break;
-	  case V1:
+      if (B_IS1(carry)) {
 	    ci = 1;
-	    break;
-	  default:
-	    carry = Vx;
-	    return Vx;
+      } else if (B_IS0(carry)) {
+	    ci = 0;
+      } else {
+	    carry = StX;
+	    return StX;
       }
 
       unsigned sum = li + ri + ci;
-      carry = (sum & 2)? V1 : V0;
-      return (sum & 1)? V1 : V0;
+      carry = (sum & 2)? St1 : St0;
+      return (sum & 1)? St1 : St0;
 }
 
 /*
  * $Log: vvm_bit.cc,v $
+ * Revision 1.10  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.9  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

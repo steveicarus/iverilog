@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_ff.cc,v 1.1 2000/03/18 23:22:37 steve Exp $"
+#ident "$Id: vvm_ff.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -28,7 +28,7 @@ vvm_ff::vvm_ff(unsigned w)
       out_ = new vvm_nexus::drive_t[width_];
       bits_ = new vpip_bit_t[width_*2];
       for (unsigned idx = 0 ;  idx < width_*2 ;  idx += 1)
-	    bits_[idx] = Vx;
+	    bits_[idx] = StX;
 }
 
 vvm_ff::~vvm_ff()
@@ -96,6 +96,11 @@ void vvm_ff::latch_()
 
 /*
  * $Log: vvm_ff.cc,v $
+ * Revision 1.2  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.1  2000/03/18 23:22:37  steve
  *  Update the FF device to nexus style.
  *

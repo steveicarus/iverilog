@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.11 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.12 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 /*
@@ -35,9 +35,59 @@ extern "C" {
 #endif
 
 struct __vpirt;
-enum vpip_bit_t { V0 = 0, V1, Vx, Vz };
 
-extern void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits,
+/*
+ * The simulation engine internally carries the strengths along with
+ * the bit values, and that includes ambiguous strengths. The complete
+ * bit value (including ambiguity) is encoded in 8 bits like so:
+ *
+ *     VSSSvsss
+ *
+ * The V and v bits encode the bit logic values, and the SSS and sss
+ * bits encode the strength range. The logic values are like so:
+ *
+ *     0SSS0sss  - Logic 0
+ *     1SSS1sss  - Logic 1
+ *     1xxx0xxx  - Logic X
+ *     00001000  - Logic Z
+ *
+ * So as you can see, logic values can be quickly compared by masking
+ * the strength bits.
+ *
+ * If the value is unambiguous, then the SSS and sss bits have the
+ * same value, and encode the strength of the driven value. If the
+ * value is logic X, then "unambiguous" in this context means the
+ * strength is well known, even though the logic value is
+ * not. However, it is treated as ambiguous by the resolver.
+ *
+ * If the strength is ambiguous, then the high 4 bits are always
+ * arithmetically larger then the low 4 bits. For logic 0 and logic 1
+ * values, this means that the SSS value is >= the sss value. For
+ * logic X values, the 'V' bit is set and SSS is the strength toward 1,
+ * and the 'v' bit is 0 and sss is the strength toward 0.
+ */
+typedef unsigned char vpip_bit_t;
+
+# define St1 0xee
+# define St0 0x66
+# define StX 0xe6
+# define HiZ 0x08
+
+      /* Compare the logic values of two vpip_bit_t variables, or test
+	 the logical value of the bit. */
+# define B_EQ(l,r) (((l)&0x88) == ((r)&0x88))
+# define B_IS0(v)  (((v)&0x88) == 0x00)
+# define B_IS1(v)  (((v)&0x88) == 0x88)
+# define B_ISX(v)  (((v)&0x88) == 0x80)
+# define B_ISZ(v)  ((v) == HiZ)
+# define B_ISXZ(v) (1 & (((v)>>7) ^ ((v)>>3)))
+
+      /* Take as input an array of bits, and return the resolved
+	 value. The result accounts for the strengths involved. */
+extern vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits);
+
+
+extern void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits,
 				s_vpi_value*vp);
 
 /*
@@ -102,7 +152,7 @@ struct __vpiMemory {
       struct __vpiHandle base;
 	/* The signal has a name (this points to static memory.) */
       const char*name;
-      enum vpip_bit_t*bits;
+      vpip_bit_t*bits;
       struct __vpiMemoryWord*words;
       vpiHandle*args;
       unsigned width;
@@ -152,7 +202,7 @@ struct __vpiSignal {
 	/* The signal has a name (this points to static memory.) */
       const char*name;
 	/* The signal has a value and dimension. */
-      enum vpip_bit_t*bits;
+      vpip_bit_t*bits;
       unsigned nbits;
 	/* monitors are added here. */
       struct __vpiCallback*monitor;
@@ -197,7 +247,7 @@ struct __vpiStringConst {
 struct __vpiNumberConst {
       struct __vpiHandle base;
 
-      enum vpip_bit_t*bits;
+      vpip_bit_t*bits;
       unsigned nbits;
 };
 
@@ -215,7 +265,7 @@ extern vpiHandle vpip_make_scope(struct __vpiScope*ref,
 extern vpiHandle vpip_make_string_const(struct __vpiStringConst*ref,
 					const char*val);
 extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
-					const enum vpip_bit_t*bits,
+					const vpip_bit_t*bits,
 					unsigned nbits);
 extern vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 				  unsigned width, unsigned size);
@@ -285,6 +335,11 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.12  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.11  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

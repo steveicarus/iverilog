@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_clshift.cc,v 1.1 2000/03/17 02:22:03 steve Exp $"
+#ident "$Id: vvm_clshift.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -36,10 +36,10 @@ vvm_clshift::vvm_clshift(unsigned wid, unsigned wid_dist)
       ibits_ = new vpip_bit_t[width_ + wdist_];
       out_ = new vvm_nexus::drive_t[width_];
       dist_val_ = width_;
-      dir_ = V0;
+      dir_ = St0;
 
       for (unsigned idx = 0 ;  idx < width_+wdist_ ;  idx += 1)
-	    ibits_[idx] = Vx;
+	    ibits_[idx] = StX;
 }
 
 vvm_clshift::~vvm_clshift()
@@ -116,14 +116,14 @@ void vvm_clshift::compute_()
 
       if (dist_val_ == (int)width_) {
 	    for (unsigned idx = 0 ;  idx < width_ ;  idx += 1)
-		  out_[idx].set_value(Vx);
+		  out_[idx].set_value(StX);
 	    return;
       }
 
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
 	    vpip_bit_t val;
-	    if ((idx-dist_val_) >= width_) val = V0;
-	    else if ((idx-dist_val_) < 0) val = V0;
+	    if ((idx-dist_val_) >= width_) val = St0;
+	    else if ((idx-dist_val_) < 0) val = St0;
 	    else val = ibits_[idx-dist_val_];
 	    out_[idx].set_value(val);
       }
@@ -132,16 +132,16 @@ void vvm_clshift::compute_()
 void vvm_clshift::calculate_dist_()
 {
       int tmp = 0;
-      for (unsigned idx = 0 ;  idx < wdist_ ;  idx += 1)
-	    switch (ibits_[width_+idx]) {
-		case V0:
-		  break;
-		case V1:
-		  tmp |= 1<<idx;
-		  break;
-		default:
+      for (unsigned idx = 0 ;  idx < wdist_ ;  idx += 1) {
+	    if (B_ISX(ibits_[width_+idx]) || B_ISZ(ibits_[width_+idx])) {
 		  tmp = width_;
+		  break;
 	    }
+
+	    if (B_IS1(ibits_[width_+idx]))
+		  tmp |= 1<<idx;
+
+      }
 
 	/* If the shift amount is too large (no matter the direction)
 	   then set it to exactly width_ and the compute_ function
@@ -150,13 +150,18 @@ void vvm_clshift::calculate_dist_()
 
       if (tmp > (int)width_)
 	    tmp = width_;
-      else if (dir_ == V1)
+      else if (B_IS1(dir_))
 	    tmp = -tmp;
       dist_val_ = tmp;
 }
 
 /*
  * $Log: vvm_clshift.cc,v $
+ * Revision 1.2  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.1  2000/03/17 02:22:03  steve
  *  vvm_clshift implementation without templates.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.3 2000/03/18 01:27:00 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.4 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -29,7 +29,7 @@ vvm_nexus::vvm_nexus()
       recvrs_ = 0;
       ival_ = 0;
       nival_ = 0;
-      value_ = Vz;
+      value_ = HiZ;
 }
 
 vvm_nexus::~vvm_nexus()
@@ -167,7 +167,7 @@ void vvm_nexus::run_values()
 
 vvm_nexus::drive_t::drive_t()
 {
-      value_ = Vx;
+      value_ = StX;
       nexus_ = 0;
 }
 
@@ -208,7 +208,7 @@ vvm_nexus_wire::~vvm_nexus_wire()
 vpip_bit_t vvm_nexus_wire::resolution_function(const vpip_bit_t*bits,
 					       unsigned nbits) const
 {
-      if (nbits == 0) return Vz;
+      if (nbits == 0) return HiZ;
       return bits[0];
 }
 
@@ -233,6 +233,11 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.4  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.3  2000/03/18 01:27:00  steve
  *  Generate references into a table of nexus objects instead of
  *  generating lots of isolated nexus objects. Easier on linkers

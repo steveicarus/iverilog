@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.6 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.7 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,7 +30,7 @@
  * This function is used in a couple places to interpret a bit string
  * as a value.
  */
-void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
+void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 {
       static char buff[1024];
       char*cp;
@@ -42,20 +42,15 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	  case vpiBinStrVal:
-	    for (idx = 0 ;  idx < nbits ;  idx += 1)
-		  switch (bits[nbits-idx-1]) {
-		      case V0:
+	    for (idx = 0 ;  idx < nbits ;  idx += 1) {
+		  if (B_IS0(bits[nbits-idx-1]))
 			*cp++ = '0';
-			break;
-		      case V1:
+		  else if (B_IS1(bits[nbits-idx-1]))
 			*cp++ = '1';
-			break;
-		      case Vx:
-			*cp++ = 'x';
-			break;
-		      case Vz:
+		  else if (B_ISZ(bits[nbits-idx-1]))
 			*cp++ = 'z';
-			break;
+		  else
+			*cp++ = 'x';
 		  }
 	    vp->format = vpiBinStrVal;
 	    break;
@@ -64,15 +59,8 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 	    val = 0;
 	    for (idx = 0 ;  idx < nbits ;  idx += 1) {
 		  val *= 2;
-		  switch (bits[nbits-idx-1]) {
-		      case V0:
-		      case Vx:
-		      case Vz:
-			break;
-		      case V1:
+		  if (B_IS1(bits[nbits-idx-1]))
 			val += 1;
-			break;
-		  }
 	    }
 	    sprintf(cp, "%u", val);
 	    cp += strlen(cp);
@@ -86,19 +74,14 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  unsigned i;
 		  for (i = 0 ;  i < nbits%3 ;  i += 1) {
 			v *= 2;
-			switch (bits[nbits-i-1]) {
-			    case V0:
-			      break;
-			    case V1:
+			if (B_IS0(bits[nbits-i-1]))
+			      ;
+			else if (B_IS1(bits[nbits-i-1]))
 			      v += 1;
-			      break;
-			    case Vx:
+			else if (B_ISX(bits[nbits-i-1]))
 			      x += 1;
-			      break;
-			    case Vz:
+			else if (B_ISZ(bits[nbits-i-1]))
 			      z += 1;
-			      break;
-			}
 		  }
 		  if (x == nbits%3)
 			*cp++ = 'x';
@@ -119,19 +102,15 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  unsigned i;
 		  for (i = idx ;  i < idx+3 ;  i += 1) {
 			v *= 2;
-			switch (bits[nbits-i-1]) {
-			    case V0:
-			      break;
-			    case V1:
+			if (B_IS0(bits[nbits-i-1]))
+			      ;
+			else if (B_IS1(bits[nbits-i-1]))
 			      v += 1;
-			      break;
-			    case Vx:
+			else if (B_ISX(bits[nbits-i-1]))
 			      x += 1;
-			      break;
-			    case Vz:
+			else if (B_ISZ(bits[nbits-i-1]))
 			      z += 1;
-			      break;
-			}
+
 		  }
 		  if (x == 3)
 			*cp++ = 'x';
@@ -154,19 +133,15 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  unsigned i;
 		  for (i = 0 ;  i < nbits%4 ;  i += 1) {
 			v *= 2;
-			switch (bits[nbits-i-1]) {
-			    case V0:
-			      break;
-			    case V1:
+			if (B_IS0(bits[nbits-i-1]))
+			      ;
+			else if (B_IS1(bits[nbits-i-1]))
 			      v += 1;
-			      break;
-			    case Vx:
+			else if (B_ISX(bits[nbits-i-1]))
 			      x += 1;
-			      break;
-			    case Vz:
+			else if (B_ISZ(bits[nbits-i-1]))
 			      z += 1;
-			      break;
-			}
+
 		  }
 		  if (x == nbits%4)
 			*cp++ = 'x';
@@ -187,19 +162,16 @@ void vpip_bits_get_value(enum vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  unsigned i;
 		  for (i = idx ;  i < idx+4 ;  i += 1) {
 			v *= 2;
-			switch (bits[nbits-i-1]) {
-			    case V0:
-			      break;
-			    case V1:
+			if (B_IS0(bits[nbits-i-1]))
+			      ;
+			else if (B_IS1(bits[nbits-i-1]))
 			      v += 1;
-			      break;
-			    case Vx:
+			else if (B_ISX(bits[nbits-i-1]))
 			      x += 1;
-			      break;
-			    case Vz:
+			else if (B_ISZ(bits[nbits-i-1]))
 			      z += 1;
-			      break;
-			}
+
+
 		  }
 		  if (x == 4)
 			*cp++ = 'x';
@@ -308,7 +280,7 @@ vpiHandle vpip_make_string_const(struct __vpiStringConst*ref, const char*val)
 }
 
 vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
-				 const enum vpip_bit_t*bits,
+				 const vpip_bit_t*bits,
 				 unsigned nbits)
 {
       ref->base.vpi_type = &vpip_number_rt;
@@ -319,6 +291,11 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.7  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.6  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.c,v 1.6 2000/02/29 01:41:32 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.7 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -117,7 +117,7 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
 				 p_vpi_time tim, int flags)
 {
       unsigned idx;
-      enum vpip_bit_t*base;
+      vpip_bit_t*base;
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(ref->vpi_type->type_code==vpiMemoryWord);
 
@@ -131,14 +131,14 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
 
 	    if (bval & 1) {
 		  if (aval & 1)
-			*base = Vx;
+			*base = StX;
 		  else
-			*base = Vz;
+			*base = HiZ;
 	    } else {
 		  if (aval & 1)
-			*base = V1;
+			*base = St1;
 		  else
-			*base = V0;
+			*base = St0;
 	    }
 	    base += 1;
       }
@@ -183,7 +183,7 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 
       ref->base.vpi_type = &vpip_memory_rt;
       ref->name = name;
-      ref->bits = calloc(wid*siz, sizeof(enum vpip_bit_t));
+      ref->bits = calloc(wid*siz, sizeof(vpip_bit_t));
       ref->words = calloc(siz, sizeof(struct __vpiMemoryWord));
       ref->args = 0;
       ref->width = wid;
@@ -199,6 +199,11 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.7  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.6  2000/02/29 01:41:32  steve
  *  Fix warning and typo.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_mult.cc,v 1.4 2000/03/17 03:05:13 steve Exp $"
+#ident "$Id: vvm_mult.cc,v 1.5 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -34,26 +34,22 @@ void vvm_binop_mult(vpip_bit_t*r, unsigned nr,
       unsigned long av = 0, bv = 0;
       unsigned long rv;
 
-      for (unsigned idx = 0 ;  idx < na ;  idx += 1) switch (a[idx]) {
+      for (unsigned idx = 0 ;  idx < na ;  idx += 1) {
 
-	  case V0:
-	    break;
-	  case V1:
-	    av |= 1 << idx;
-	    break;
-	  default:
-	    goto unknown_result;
+	    if (B_ISXZ(a[idx]))
+		  goto unknown_result;
+
+	    if (B_IS1(a[idx]))
+		  av |= 1 << idx;
       }
 
-      for (unsigned idx = 0 ;  idx < nb ;  idx += 1) switch (b[idx]) {
+      for (unsigned idx = 0 ;  idx < nb ;  idx += 1) {
 
-	  case V0:
-	    break;
-	  case V1:
-	    bv |= 1 << idx;
-	    break;
-	  default:
-	    goto unknown_result;
+	    if (B_ISXZ(b[idx]))
+		  goto unknown_result;
+
+	    if (B_IS1(b[idx]))
+		  bv |= 1 << idx;
       }
 
       rv = av * bv;
@@ -61,9 +57,9 @@ void vvm_binop_mult(vpip_bit_t*r, unsigned nr,
       for (unsigned idx = 0 ;  idx < nr ;  idx += 1) {
 
 	    if (rv & 1)
-		  r[idx] = V1;
+		  r[idx] = St1;
 	    else
-		  r[idx] = V0;
+		  r[idx] = St0;
 
 	    rv >>= 1;
       }
@@ -72,7 +68,7 @@ void vvm_binop_mult(vpip_bit_t*r, unsigned nr,
 
  unknown_result:
       for (unsigned idx= 0 ;  idx < nr ;  idx += 1)
-	    r[idx] = Vx;
+	    r[idx] = StX;
 }
 
 vvm_mult::vvm_mult(unsigned rwid, unsigned awid,
@@ -83,7 +79,7 @@ vvm_mult::vvm_mult(unsigned rwid, unsigned awid,
       out_ = new vvm_nexus::drive_t[rwid_];
 
       for (unsigned idx = 0 ;  idx < rwid_+awid_+bwid_+swid_ ;  idx += 1)
-	    bits_[idx] = Vx;
+	    bits_[idx] = StX;
 }
 
 vvm_mult::~vvm_mult()
@@ -134,6 +130,11 @@ void vvm_mult::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_mult.cc,v $
+ * Revision 1.5  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.4  2000/03/17 03:05:13  steve
  *  Update vvm_mult to nexus style.
  *

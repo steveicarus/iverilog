@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_mux.cc,v 1.1 2000/03/18 01:27:00 steve Exp $"
+#ident "$Id: vvm_mux.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -36,7 +36,7 @@ vvm_mux::vvm_mux(unsigned w, unsigned s, unsigned sw)
       out_  = new vvm_nexus::drive_t[width_];
 
       for (unsigned idx = 0 ;  idx < width_*size_+selwid_+width_ ;  idx += 1)
-	    bits_[idx] = Vx;
+	    bits_[idx] = StX;
 }
 
 vvm_mux::~vvm_mux()
@@ -107,23 +107,21 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
 		 const vpip_bit_t*dat, unsigned size)
 {
       unsigned tmp = 0;
-      for (unsigned idx = 0 ;  idx < swid ;  idx += 1)
-	    switch (sel[idx]) {
-		case V0:
-		  break;
-		case V1:
-		  tmp |= (1<<idx);
-		  break;
-		default:
+      for (unsigned idx = 0 ;  idx < swid ;  idx += 1) {
+	    if (B_ISXZ(sel[idx])) {
 		  tmp = size;
 		  break;
 	    }
+
+	    if (B_IS1(sel[idx]))
+		  tmp |= (1<<idx);
+      }
 
       if (tmp >= size) {
 
 	    if (swid > 1) {
 		  for (unsigned idx = 0; idx < wid ;  idx += 1)
-			out[idx] = Vx;
+			out[idx] = StX;
 	    } else {
 		  const unsigned b0 = 0;
 		  const unsigned b1 = wid;
@@ -131,7 +129,7 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
 			if (dat[idx+b0] == dat[idx+b1])
 			      out[idx] = dat[idx+b0];
 			else
-			      out[idx] = Vx;
+			      out[idx] = StX;
 		  }
 	    }
 
@@ -144,6 +142,11 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
 
 /*
  * $Log: vvm_mux.cc,v $
+ * Revision 1.2  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.1  2000/03/18 01:27:00  steve
  *  Generate references into a table of nexus objects instead of
  *  generating lots of isolated nexus objects. Easier on linkers

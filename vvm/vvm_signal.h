@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.2 2000/03/17 20:21:14 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.3 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -36,7 +36,7 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
     public:
       vvm_bitset_t()
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  bits[idx] = Vz;
+		  bits[idx] = HiZ;
 	    }
 
       vvm_bitset_t(const vvm_bits_t&that)
@@ -46,7 +46,7 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		    bits[idx] = that.get_bit(idx);
 	      for (unsigned idx = wid ;  idx < WIDTH ;  idx += 1)
-		    bits[idx] = V0;
+		    bits[idx] = St0;
 	    }
 	    
 
@@ -155,6 +155,11 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.3  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.2  2000/03/17 20:21:14  steve
  *  Detemplatize the vvm_signal_t class.
  *

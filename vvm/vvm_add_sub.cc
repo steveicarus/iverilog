@@ -17,21 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_add_sub.cc,v 1.1 2000/03/17 17:25:53 steve Exp $"
+#ident "$Id: vvm_add_sub.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
 # include  <assert.h>
 
 vvm_add_sub::vvm_add_sub(unsigned wid)
-: width_(wid), ndir_(V0)
+: width_(wid), ndir_(St0)
 {
       ibits_ = new vpip_bit_t[width_*3];
       ro_ = new vvm_nexus::drive_t[width_];
 
-      c_ = Vx;
+      c_ = StX;
       for (unsigned idx = 0 ;  idx < width_*3 ;  idx += 1)
-	    ibits_[idx] = Vx;
+	    ibits_[idx] = StX;
 }
 
 vvm_add_sub::~vvm_add_sub()
@@ -77,7 +77,7 @@ void vvm_add_sub::init_DataB(unsigned idx, vpip_bit_t val)
 
 void vvm_add_sub::init_Add_Sub(unsigned, vpip_bit_t val)
 {
-      ndir_ = v_not(val);
+      ndir_ = B_NOT(val);
 }
 
 void vvm_add_sub::start()
@@ -102,7 +102,7 @@ void vvm_add_sub::compute_()
 
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
 	    vpip_bit_t val;
-	    val = add_with_carry(a[idx], b[idx] ^ ndir_, carry);
+	    val = add_with_carry(a[idx], B_XOR(b[idx],ndir_), carry);
 	    if (val == r[idx]) continue;
 	    r[idx] = val;
 	    vvm_event*ev = new vvm_out_event(val, ro_+idx);
@@ -114,6 +114,11 @@ void vvm_add_sub::compute_()
 
 /*
  * $Log: vvm_add_sub.cc,v $
+ * Revision 1.2  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.1  2000/03/17 17:25:53  steve
  *  Adder and comparator in nexus style.
  *

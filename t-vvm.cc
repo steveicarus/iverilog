@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.119 2000/03/20 17:40:33 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.120 2000/03/22 04:26:40 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -235,16 +235,16 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
 	    os_ << setw(indent_) << "" << tname << "[" << idx << "] = ";
 	    switch (expr->value().get(idx)) {
 		case verinum::V0:
-		  os_ << "V0";
+		  os_ << "St0";
 		  break;
 		case verinum::V1:
-		  os_ << "V1";
+		  os_ << "St1";
 		  break;
 		case verinum::Vx:
-		  os_ << "Vx";
+		  os_ << "StX";
 		  break;
 		case verinum::Vz:
-		  os_ << "Vz";
+		  os_ << "HiZ";
 		  break;
 	    }
 	    os_ << ";" << endl;
@@ -561,16 +561,16 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
 		  tgt_->init_code << "        bits[" << idx << "] = ";
 		  switch(expr->value().get(idx)) {
 		      case verinum::V0:
-			tgt_->init_code << "V0;" << endl;
+			tgt_->init_code << "St0;" << endl;
 			break;
 		      case verinum::V1:
-			tgt_->init_code << "V1;" << endl;
+			tgt_->init_code << "St1;" << endl;
 			break;
 		      case verinum::Vx:
-			tgt_->init_code << "Vx;" << endl;
+			tgt_->init_code << "StX;" << endl;
 			break;
 		      case verinum::Vz:
-			tgt_->init_code << "Vz;" << endl;
+			tgt_->init_code << "HiZ;" << endl;
 			break;
 		  }
 	    }
@@ -826,8 +826,22 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 		  continue;
 
 	    init_code << "      " << mangle(sig->name()) << ".init_P("
-		      << idx << ", V" << sig->get_ival(idx) << ");"
-		      << endl;
+		      << idx << ", ";
+	    switch (sig->get_ival(idx)) {
+		case verinum::V0:
+		  init_code << "St0";
+		  break;
+		case verinum::V1:
+		  init_code << "St1";
+		  break;
+		case verinum::Vx:
+		  init_code << "StX";
+		  break;
+		case verinum::Vz:
+		  init_code << "HiZ";
+		  break;
+	    }
+	    init_code << ");" << endl;
 
 	      // Propogate the initial value to inputs throughout.
 	    emit_init_value_(sig->pin(idx), sig->get_ival(idx));
@@ -932,9 +946,24 @@ void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
 	      // Build an init statement for the link, that writes the
 	      // value.
 	    ostrstream line;
-	    line << "      " << mangle(cur->get_obj()->name()) <<
-		  ".init_" << cur->get_name() << "(" <<
-		  cur->get_inst() << ", V" << val << ");" << endl << ends;
+	    line << "      " << mangle(cur->get_obj()->name())
+		 << ".init_" << cur->get_name() << "(" << cur->get_inst()
+		 << ", ";
+	    switch (val) {
+		case verinum::V0:
+		  line << "St0";
+		  break;
+		case verinum::V1:
+		  line << "St1";
+		  break;
+		case verinum::Vx:
+		  line << "StX";
+		  break;
+		case verinum::Vz:
+		  line << "HiZ";
+		  break;
+	    }
+	    line << ");" << endl << ends;
 
 
 	      // Check to see if the line has already been
@@ -1019,11 +1048,11 @@ void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 
       if (gate->attribute("LPM_Direction") == "ADD") {
 	    init_code << "      " <<  mangle(gate->name()) <<
-		  ".init_Add_Sub(0, V1);" << endl;
+		  ".init_Add_Sub(0, St1);" << endl;
 
       } else if (gate->attribute("LPM_Direction") == "SUB") {
 	    init_code << "      " <<  mangle(gate->name()) <<
-		  ".init_Add_Sub(0, V0);" << endl;
+		  ".init_Add_Sub(0, St0);" << endl;
 
       }
 
@@ -1581,16 +1610,16 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 		  defn << "      nexus_wire_table[" <<ncode<< "].reg_assign(";
 		  switch (value.get(idx)) {
 		      case verinum::V0:
-			defn << "V0";
+			defn << "St0";
 			break;
 		      case verinum::V1:
-			defn << "V1";
+			defn << "St1";
 			break;
 		      case verinum::Vx:
-			defn << "Vx";
+			defn << "StX";
 			break;
 		      case verinum::Vz:
-			defn << "Vz";
+			defn << "HiZ";
 			break;
 		  }
 		  defn << ");" << endl;
@@ -1807,8 +1836,8 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 	    defn << "      /* " << *net->expr(idx) << " */" << endl;
 	    string guard = emit_proc_rval(defn, 8, net->expr(idx));
 
-	    defn << "      if (V1 == " << test_func << "(" << guard << ","
-	       << expr << ")[0]) {" << endl;
+	    defn << "      if (B_IS1(" << test_func << "(" << guard << ","
+	       << expr << ")[0])) {" << endl;
 	    defn << "          step_ = &" << thread_class_ <<
 		  "::step_" << thread_step_ << "_;" << endl;
 	    defn << "          return true;" << endl;
@@ -1919,8 +1948,8 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 
 	    string guard = emit_proc_rval(defn, 6, net->expr(idx));
 
-	    defn << "      if (V1 == " << test_func << "(" <<
-		  guard << "," << expr << ")[0]) {" << endl;
+	    defn << "      if (B_IS1(" << test_func << "(" <<
+		  guard << "," << expr << ")[0])) {" << endl;
 	    if (net->stat(idx))
 		  net->stat(idx)->emit_proc(os, this);
 	    defn << "      break; }" << endl;
@@ -1948,7 +1977,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
       unsigned else_step = ++thread_step_;
       unsigned out_step  = ++thread_step_;
 
-      defn << "      if (" << expr << "[0] == V1)" << endl;
+      defn << "      if (B_IS1(" << expr << "[0]))" << endl;
       defn << "        step_ = &" << thread_class_ << "::step_" <<
 	    if_step << "_;" << endl;
       defn << "      else" << endl;
@@ -1989,7 +2018,7 @@ void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
 
       defn << "      // " << net->get_line() << ": conditional (if-else)"
 	   << endl;
-      defn << "      if (" << expr << "[0] == V1) {" << endl;
+      defn << "      if (B_IS1(" << expr << "[0])) {" << endl;
       net->emit_recurse_if(os, this);
       defn << "      } else {" << endl;
       net->emit_recurse_else(os, this);
@@ -2142,7 +2171,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
 
       defn << "// " << net->expr()->get_line() <<
 	    ": test while condition." << endl;
-      defn << "      if (" << expr << "[0] != V1) {" << endl;
+      defn << "      if (!B_IS1(" << expr << "[0])) {" << endl;
       defn << "          step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
       defn << "          return true;" << endl;
@@ -2195,8 +2224,8 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 
       svector<const NetNEvent*>*list = proc->back_list();
       if ((list->count()==1) && ((*list)[0]->type() == NetNEvent::POSITIVE)) {
-	    defn << "      if (" << mangle((*list)[0]->name()) <<
-		  ".get()[0]==V1) {" << endl;
+	    defn << "      if (B_IS1(" << mangle((*list)[0]->name()) <<
+		  ".get()[0])) {" << endl;
 	    defn << "         return true;" << endl;
 	    defn << "      } else {" << endl;
 	    defn << "         " << mangle(proc->name()) <<
@@ -2268,6 +2297,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.120  2000/03/22 04:26:40  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.119  2000/03/20 17:40:33  steve
  *  Do not link adder pins that ar unconnected.
  *

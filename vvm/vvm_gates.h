@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.48 2000/03/18 23:22:37 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.49 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -759,7 +759,7 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
       explicit vvm_pevent(vvm_sync*tgt, EDGE e)
       : target_(tgt), edge_(e)
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  value_[idx] = Vz;
+		  value_[idx] = HiZ;
 	    }
 
       vvm_bitset_t<WIDTH> get() const { return value_; }
@@ -779,11 +779,11 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 		    target_->wakeup();
 		    break;
 		  case POSEDGE:
-		    if (val == V1)
+		    if (B_IS1(val))
 			  target_->wakeup();
 		    break;
 		  case NEGEDGE:
-		    if (val == V0)
+		    if (B_IS0(val))
 			  target_->wakeup();
 		    break;
 	      }
@@ -802,6 +802,11 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.49  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.48  2000/03/18 23:22:37  steve
  *  Update the FF device to nexus style.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.11 2000/03/18 02:26:02 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.12 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -56,7 +56,7 @@ vpip_bit_t compute_and(const vpip_bit_t*inp, unsigned count)
 {
       vpip_bit_t outval = inp[0];
       for (unsigned i = 1 ;  i < count ;  i += 1)
-	    outval = outval & inp[i];
+	    outval = B_AND(outval, inp[i]);
       return outval;
 }
 
@@ -64,7 +64,7 @@ vpip_bit_t compute_or(const vpip_bit_t*inp, unsigned count)
 {
       vpip_bit_t outval = inp[0];
       for (unsigned i = 1 ;  i < count ;  i += 1)
-	    outval = outval | inp[i];
+	    outval = B_OR(outval, inp[i]);
       return outval;
 }
 
@@ -72,26 +72,26 @@ vpip_bit_t compute_nor(const vpip_bit_t*inp, unsigned count)
 {
       vpip_bit_t outval = inp[0];
       for (unsigned i = 1 ;  i < count ;  i += 1)
-	    outval = outval | inp[i];
-      return v_not(outval);
+	    outval = B_OR(outval, inp[i]);
+      return B_NOT(outval);
 }
 
 vpip_bit_t compute_xor(const vpip_bit_t*inp, unsigned count)
 {
       vpip_bit_t outval = inp[0];
       for (unsigned i = 1; i < count; i++)
-	    outval = outval ^ inp[i];
+	    outval = B_XOR(outval, inp[i]);
       return outval;
 }
 
 vpip_bit_t compute_nand(const vpip_bit_t*inp, unsigned count)
 {
-      return v_not(compute_and(inp,count));
+      return B_NOT(compute_and(inp,count));
 }
 
 vpip_bit_t compute_xnor(const vpip_bit_t*inp, unsigned count)
 {
-      return v_not(compute_xor(inp,count));
+      return B_NOT(compute_xor(inp,count));
 }
 
 vvm_and2::vvm_and2(unsigned long d)
@@ -111,7 +111,7 @@ void vvm_and2::init_I(unsigned idx, vpip_bit_t val)
 
 void vvm_and2::start()
 {
-      output(input_[0] & input_[1]);
+      output(B_AND(input_[0], input_[1]));
 }
 
 void vvm_and2::take_value(unsigned key, vpip_bit_t val)
@@ -120,7 +120,7 @@ void vvm_and2::take_value(unsigned key, vpip_bit_t val)
 	    return;
 
       input_[key] = val;
-      output(input_[0] & input_[1]);
+      output(B_AND(input_[0], input_[1]));
 }
 
 
@@ -140,15 +140,20 @@ void vvm_buf::init_I(unsigned, vpip_bit_t)
 void vvm_buf::take_value(unsigned, vpip_bit_t val)
 {
       vpip_bit_t outval = val;
-      if (val == Vz) outval = Vx;
+      if (B_ISXZ(val))
+	    outval = StX;
+      else if (B_IS1(val))
+	    outval = St1;
+      else
+	    outval = St0;
       output(outval);
 }
 
 vvm_bufif1::vvm_bufif1(unsigned long d)
 : vvm_1bit_out(d)
 {
-      input_[0] = Vx;
-      input_[1] = Vx;
+      input_[0] = StX;
+      input_[1] = StX;
 }
 
 vvm_bufif1::~vvm_bufif1()
@@ -164,9 +169,14 @@ void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
       if (input_[key] == val) return;
       input_[key] = val;
 
-      if (input_[1] != V1) output(Vz);
-      else if (input_[0] == Vz) output(Vx);
-      else output(input_[0]);
+      if (! B_IS1(input_[1]))
+	    output(HiZ);
+      else if (B_ISXZ(input_[0]))
+	    output(StX);
+      else if (B_IS1(val))
+	    output(St1);
+      else
+	    output(St0);
 }
 
 vvm_bufz::vvm_bufz()
@@ -215,9 +225,9 @@ void vvm_eeq::take_value(unsigned key, vpip_bit_t val)
 
 vpip_bit_t vvm_eeq::compute_() const
 {
-      vpip_bit_t outval = V0;
-      if (input_[0] == input_[1])
-	    outval = V1;
+      vpip_bit_t outval = St0;
+      if (B_EQ(input_[0], input_[1]))
+	    outval = St1;
       return outval;
 }
 
@@ -238,7 +248,7 @@ void vvm_nor2::init_I(unsigned idx, vpip_bit_t val)
 
 void vvm_nor2::start()
 {
-      output(v_not(input_[0] | input_[1]));
+      output(B_NOT(B_OR(input_[0], input_[1])));
 }
 
 void vvm_nor2::take_value(unsigned key, vpip_bit_t val)
@@ -247,7 +257,7 @@ void vvm_nor2::take_value(unsigned key, vpip_bit_t val)
 	    return;
 
       input_[key] = val;
-      output(v_not(input_[0] | input_[1]));
+      output(B_NOT(B_OR(input_[0], input_[1])));
 }
 
 vvm_not::vvm_not(unsigned long d)
@@ -269,12 +279,17 @@ void vvm_not::start()
 
 void vvm_not::take_value(unsigned, vpip_bit_t val)
 {
-      output(v_not(val));
+      output(B_NOT(val));
 }
 
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.12  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.11  2000/03/18 02:26:02  steve
  *  Update bufz to nexus style.
  *

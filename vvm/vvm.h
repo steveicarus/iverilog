@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.33 2000/03/16 19:03:04 steve Exp $"
+#ident "$Id: vvm.h,v 1.34 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -37,62 +37,57 @@ class vvm_thread;
 class ostream;
 
 
-inline vpip_bit_t operator & (vpip_bit_t l, vpip_bit_t r)
+inline vpip_bit_t B_AND(vpip_bit_t l, vpip_bit_t r)
 {
-      if (l == V0) return V0;
-      if (r == V0) return V0;
-      if ((l == V1) && (r == V1)) return V1;
-      return Vx;
+      if (B_IS0(l)) return St0;
+      if (B_IS0(r)) return St0;
+      if (B_IS1(l) && B_IS1(r)) return St1;
+      return StX;
 }
 
-inline vpip_bit_t operator | (vpip_bit_t l, vpip_bit_t r)
+inline vpip_bit_t B_OR(vpip_bit_t l, vpip_bit_t r)
 {
-      if (l == V1) return V1;
-      if (r == V1) return V1;
-      if ((l == V0) && (r == V0)) return V0;
-      return Vx;
+      if (B_IS1(l)) return St1;
+      if (B_IS1(r)) return St1;
+      if (B_IS0(l) && B_IS0(r)) return St0;
+      return StX;
 }
 
-inline vpip_bit_t operator ^ (vpip_bit_t l, vpip_bit_t r)
+inline vpip_bit_t B_XOR(vpip_bit_t l, vpip_bit_t r)
 {
-      if (l == Vx) return Vx;
-      if (l == Vz) return Vx;
-      if (r == Vx) return Vx;
-      if (r == Vz) return Vx;
-      if (l == V0) return r;
-      return (r == V0)? V1 : V0;
+      if (B_ISZ(l)) return StX;
+      if (B_ISZ(r)) return StX;
+      if (B_ISX(l)) return StX;
+      if (B_ISX(r)) return StX;
+      if (B_IS0(l)) return r;
+      return B_IS0(r)? St1 : St0;
 }
 
 inline vpip_bit_t less_with_cascade(vpip_bit_t l, vpip_bit_t r, vpip_bit_t c)
 {
-      if (l == Vx) return Vx;
-      if (r == Vx) return Vx;
-      if (l > r) return V0;
-      if (l < r) return V1;
+      if (B_ISXZ(l)) return StX;
+      if (B_ISXZ(r)) return StX;
+      if ((l&0x80) > (r&0x80)) return St0;
+      if ((l&0x80) < (r&0x80)) return St1;
       return c;
 }
 
 inline vpip_bit_t greater_with_cascade(vpip_bit_t l, vpip_bit_t r, vpip_bit_t c)
 {
-      if (l == Vx) return Vx;
-      if (r == Vx) return Vx;
-      if (l > r) return V1;
-      if (l < r) return V0;
+      if (B_ISXZ(l)) return StX;
+      if (B_ISXZ(r)) return StX;
+      if ((l&0x80) > (r&0x80)) return St1;
+      if ((l&0x80) < (r&0x80)) return St0;
       return c;
 }
 
 extern vpip_bit_t add_with_carry(vpip_bit_t l, vpip_bit_t r, vpip_bit_t&carry);
 
-inline vpip_bit_t v_not(vpip_bit_t l)
+inline vpip_bit_t B_NOT(vpip_bit_t l)
 {
-      switch (l) {
-	  case V0:
-	    return V1;
-	  case V1:
-	    return V0;
-	  default:
-	    return Vx;
-      }
+      if (B_IS0(l)) return St1;
+      if (B_IS1(l)) return St0;
+      return StX;
 }
 
 extern bool posedge(vpip_bit_t from, vpip_bit_t to);
@@ -107,7 +102,7 @@ class vvm_bits_t {
       unsigned as_unsigned() const;
 };
 
-extern ostream& operator << (ostream&os, vpip_bit_t);
+extern ostream& b_output (ostream&os, vpip_bit_t);
 extern ostream& operator << (ostream&os, const vvm_bits_t&str);
 
 /*
@@ -137,6 +132,11 @@ class vvm_event {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.34  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.33  2000/03/16 19:03:04  steve
  *  Revise the VVM backend to use nexus objects so that
  *  drivers and resolution functions can be used, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.1 2000/03/13 00:02:34 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -28,7 +28,7 @@ vvm_bitset_t<1> vvm_unop_and(const vvm_bits_t&r)
       res[0] = r.get_bit(0);
 
       for (unsigned idx = 1 ;  idx < r.get_width() ;  idx += 1)
-	    res[0] = res[0] & r.get_bit(idx);
+	    res[0] = B_AND(res[0], r.get_bit(idx));
 
       return res;
 }
@@ -36,39 +36,39 @@ vvm_bitset_t<1> vvm_unop_and(const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_unop_nand(const vvm_bits_t&r)
 {
       vvm_bitset_t<1>res = vvm_unop_and(r);
-      res[0] = v_not(res[0]);
+      res[0] = B_NOT(res[0]);
       return res;
 }
 
 vvm_bitset_t<1> vvm_unop_or(const vvm_bits_t&r)
 {
       vvm_bitset_t<1> res;
-      res[0] = V1;
+      res[0] = St1;
 
       for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
-	    if (r.get_bit(idx) == V1)
+	    if (B_IS1(r.get_bit(idx)))
 		  return res;
       }
 
-      res[0] = V0;
+      res[0] = St0;
       return res;
 }
 
 vvm_bitset_t<1> vvm_unop_nor(const vvm_bits_t&r)
 {
       vvm_bitset_t<1>res = vvm_unop_or(r);
-      res[0] = v_not(res[0]);
+      res[0] = B_NOT(res[0]);
       return res;
 }
 
 vvm_bitset_t<1> vvm_unop_xor(const vvm_bits_t&r)
 {
       vvm_bitset_t<1> res;
-      res[0] = V0;
+      res[0] = St0;
 
       for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
-	    if (r.get_bit(idx) == V1)
-		  res[0] = v_not(res[0]);
+	    if (B_IS1(r.get_bit(idx)))
+		  res[0] = B_NOT(res[0]);
       }
 
       return res;
@@ -77,73 +77,77 @@ vvm_bitset_t<1> vvm_unop_xor(const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_unop_xnor(const vvm_bits_t&r)
 {
       vvm_bitset_t<1>res = vvm_unop_xor(r);
-      res[0] = v_not(res[0]);
+      res[0] = B_NOT(res[0]);
       return res;
 }
 
 vvm_bitset_t<1> vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V1;
+      result[0] = St1;
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
 
       if (lwid <= rwid) {
 	    for (unsigned idx = 0 ;  idx < lwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vx) || (l.get_bit(idx) == Vz)) {
-			result[0] = Vx;
+		  if (B_ISXZ(l.get_bit(idx))) {
+			result[0] = StX;
 			return result;
 		  }
-		  if ((r.get_bit(idx) == Vx) || (r.get_bit(idx) == Vz)) {
-			result[0] = Vx;
+		  if (B_ISXZ(r.get_bit(idx))) {
+			result[0] = StX;
 			return result;
 		  }
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
-	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-		  switch (r.get_bit(idx)) {
-		      case V0:
-			break;
-		      case V1:
-			result[0] = V0;
-			return result;
-		      case Vx:
-		      case Vz:
-			result[0] = Vx;
+
+	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1) {
+
+		  if (B_IS0(r.get_bit(idx)))
+			continue;
+
+		  if (B_IS1(r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
+
+		  result[0] = StX;
+		  return result;
+	    }
 		  
 	    return result;
+
       } else {
 	    for (unsigned idx = 0 ;  idx < rwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vx) || (l.get_bit(idx) == Vz)) {
-			result[0] = Vx;
+		  if (B_ISXZ(l.get_bit(idx))) {
+			result[0] = StX;
 			return result;
 		  }
-		  if ((r.get_bit(idx) == Vx) || (r.get_bit(idx) == Vz)) {
-			result[0] = Vx;
+		  if (B_ISXZ(r.get_bit(idx))) {
+			result[0] = StX;
 			return result;
 		  }
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
-	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
-		  switch (l.get_bit(idx)) {
-		      case V0:
-			break;
-		      case V1:
-			result[0] = V0;
-			return result;
-		      case Vx:
-		      case Vz:
-			result[0] = Vx;
+	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1) {
+
+		  if (B_IS0(l.get_bit(idx)))
+			continue;
+
+		  if (B_IS1(l.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
+
+		  result[0] = StX;
+		  return result;
+	    }
 		  
 	    return result;
       }
@@ -152,40 +156,40 @@ vvm_bitset_t<1> vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_ne(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result = vvm_binop_eq(l,r);
-      result[0] = v_not(result[0]);
+      result[0] = B_NOT(result[0]);
       return result;
 }
 
 vvm_bitset_t<1> vvm_binop_eeq(const vvm_bits_t&l,  const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V1;
+      result[0] = St1;
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
 
       if (lwid <= rwid) {
-	    for (unsigned idx = 0 ;  idx < lwid ;  idx += 1) {
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+	    for (unsigned idx = 0 ;  idx < lwid ;  idx += 1)
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
-	    }
+
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-		  if (r.get_bit(idx) != V0) {
-			result[0] = V0;
+		  if (! B_IS0(r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 		  
       } else {
-	    for (unsigned idx = 0 ;  idx < rwid ;  idx += 1) {
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+	    for (unsigned idx = 0 ;  idx < rwid ;  idx += 1)
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
-	    }
+
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
-		  if (l.get_bit(idx) != V0) {
-			result[0] = V0;
+		  if (! B_IS0(l.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 		  
@@ -197,53 +201,53 @@ vvm_bitset_t<1> vvm_binop_eeq(const vvm_bits_t&l,  const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_nee(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result = vvm_binop_eeq(l,r);
-      result[0] = v_not(result[0]);
+      result[0] = B_NOT(result[0]);
       return result;
 }
 
 vvm_bitset_t<1> vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V1;
+      result[0] = St1;
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
 
       if (lwid <= rwid) {
 	    for (unsigned idx = 0 ;  idx < lwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vz) || (r.get_bit(idx) == Vz))
+		  if (B_ISXZ(l.get_bit(idx)))
 			continue;
-		  if ((l.get_bit(idx) == Vx) || (r.get_bit(idx) == Vx))
+		  if (B_ISXZ(r.get_bit(idx)))
 			continue;
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1) {
-		  if ((r.get_bit(idx) == Vx) || (r.get_bit(idx) == Vz))
+		  if (B_ISXZ(r.get_bit(idx)))
 			continue;
-		  if (r.get_bit(idx) != V0) {
-			result[0] = V0;
+		  if (! B_IS0(r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
 		  
       } else {
 	    for (unsigned idx = 0 ;  idx < rwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vz) || (r.get_bit(idx) == Vz))
+		  if (B_ISXZ(l.get_bit(idx)))
 			continue;
-		  if ((l.get_bit(idx) == Vx) || (r.get_bit(idx) == Vx))
+		  if (B_ISXZ(r.get_bit(idx)))
 			continue;
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vx) || (l.get_bit(idx) == Vz))
+		  if (B_ISXZ(l.get_bit(idx)))
 			continue;
-		  if (l.get_bit(idx) != V0) {
-			result[0] = V0;
+		  if (! B_IS0(l.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
@@ -255,42 +259,42 @@ vvm_bitset_t<1> vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V1;
+      result[0] = St1;
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
 
       if (lwid <= rwid) {
 	    for (unsigned idx = 0 ;  idx < lwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vz) || (r.get_bit(idx) == Vz))
+		  if (B_ISZ(l.get_bit(idx)) || B_ISZ(r.get_bit(idx)))
 			continue;
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1) {
-		  if (r.get_bit(idx) == Vz)
+		  if (B_ISZ(r.get_bit(idx)))
 			continue;
-		  if (r.get_bit(idx) != V0) {
-			result[0] = V0;
+		  if (! B_IS0(r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
 		  
       } else {
 	    for (unsigned idx = 0 ;  idx < rwid ;  idx += 1) {
-		  if ((l.get_bit(idx) == Vz) || (r.get_bit(idx) == Vz))
+		  if (B_ISZ(l.get_bit(idx)) || B_ISZ(r.get_bit(idx)))
 			continue;
-		  if (l.get_bit(idx) != r.get_bit(idx)) {
-			result[0] = V0;
+		  if (! B_EQ(l.get_bit(idx), r.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1) {
-		  if (l.get_bit(idx) == Vz)
+		  if (B_ISZ(l.get_bit(idx)))
 			continue;
-		  if (l.get_bit(idx) != V0) {
-			result[0] = V0;
+		  if (! B_IS0(l.get_bit(idx))) {
+			result[0] = St0;
 			return result;
 		  }
 	    }
@@ -302,7 +306,7 @@ vvm_bitset_t<1> vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V0;
+      result[0] = St0;
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
 
@@ -316,11 +320,11 @@ vvm_bitset_t<1> vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r)
       if (lwid > rwid) {
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
 		  result[0] = less_with_cascade(l.get_bit(idx),
-						V0,
+						St0,
 						result[0]);
       } else {
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-		  result[0] = less_with_cascade(V0,
+		  result[0] = less_with_cascade(St0,
 						r.get_bit(idx),
 						result[0]);
       }
@@ -331,7 +335,7 @@ vvm_bitset_t<1> vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V1;
+      result[0] = St1;
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
       const unsigned common = (lwid < rwid)? lwid : rwid;
@@ -344,11 +348,11 @@ vvm_bitset_t<1> vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r)
       if (lwid > rwid) {
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
 		  result[0] = less_with_cascade(l.get_bit(idx),
-						V0,
+						St0,
 						result[0]);
       } else {
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-		  result[0] = less_with_cascade(V0,
+		  result[0] = less_with_cascade(St0,
 						r.get_bit(idx),
 						result[0]);
       }
@@ -359,7 +363,7 @@ vvm_bitset_t<1> vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V0;
+      result[0] = St0;
 
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
@@ -373,11 +377,11 @@ vvm_bitset_t<1> vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r)
       if (lwid > rwid) {
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
 		  result[0] = greater_with_cascade(l.get_bit(idx),
-						   V0,
+						   St0,
 						   result[0]);
       } else {
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-		  result[0] = greater_with_cascade(V0,
+		  result[0] = greater_with_cascade(St0,
 						   r.get_bit(idx),
 						   result[0]);
       }
@@ -388,7 +392,7 @@ vvm_bitset_t<1> vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r)
 vvm_bitset_t<1> vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> result;
-      result[0] = V1;
+      result[0] = St1;
 
       const unsigned lwid = l.get_width();
       const unsigned rwid = r.get_width();
@@ -402,11 +406,11 @@ vvm_bitset_t<1> vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r)
       if (lwid > rwid) {
 	    for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
 		  result[0] = greater_with_cascade(l.get_bit(idx),
-						   V0,
+						   St0,
 						   result[0]);
       } else {
 	    for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-		  result[0] = greater_with_cascade(V0,
+		  result[0] = greater_with_cascade(St0,
 						   r.get_bit(idx),
 						   result[0]);
       }
@@ -418,7 +422,7 @@ vvm_bitset_t<1> vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> res1 = vvm_unop_or(l);
       vvm_bitset_t<1> res2 = vvm_unop_or(r);
-      res1[0] = res1[0] & res2[0];
+      res1[0] = B_AND(res1[0], res2[0]);
       return res1;
 }
 
@@ -426,7 +430,7 @@ vvm_bitset_t<1> vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r)
 {
       vvm_bitset_t<1> res1 = vvm_unop_or(l);
       vvm_bitset_t<1> res2 = vvm_unop_or(r);
-      res1[0] = res1[0] | res2[0];
+      res1[0] = B_OR(res1[0], res2[0]);
       return res1;
 }
 
@@ -439,6 +443,11 @@ vvm_bitset_t<1> vvm_unop_lnot(const vvm_bits_t&r)
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.2  2000/03/22 04:26:41  steve
+ *  Replace the vpip_bit_t with a typedef and
+ *  define values for all the different bit
+ *  values, including strengths.
+ *
  * Revision 1.1  2000/03/13 00:02:34  steve
  *  Remove unneeded templates.
  *
