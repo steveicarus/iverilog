@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.75 2001/04/28 23:18:08 steve Exp $"
+#ident "$Id: pform.cc,v 1.76 2001/05/20 15:03:25 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -158,7 +158,7 @@ PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
 	  case MAX:
 	    res = max;
 	    delete min;
-	    delete max;
+	    delete typ;
 	    break;
       }
 
@@ -996,6 +996,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.76  2001/05/20 15:03:25  steve
+ *  Deleted wrong time when -Tmax is selected.
+ *
  * Revision 1.75  2001/04/28 23:18:08  steve
  *  UDP instances need not have user supplied names.
  *
