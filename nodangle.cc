@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: nodangle.cc,v 1.18 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.19 2003/06/25 04:46:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,6 +81,11 @@ void nodangle_f::signal(Design*des, NetNet*sig)
 
       if ((sig->port_type() != NetNet::NOT_A_PORT)
 	  && (sig->scope()->type() == NetScope::FUNC))
+	    return;
+
+	/* Can't delete ports of cells. */
+      if ((sig->port_type() != NetNet::NOT_A_PORT)
+	  && (sig->scope()->attribute("ivl_synthesis_cell") != verinum()))
 	    return;
 
 	/* Check to see if the signal is completely unconnected. If
@@ -164,6 +169,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.19  2003/06/25 04:46:03  steve
+ *  Do not elide ports of cells.
+ *
  * Revision 1.18  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *
