@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.71 2002/08/27 05:39:57 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.72 2002/08/28 17:15:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -880,8 +880,18 @@ static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
       res.base = allocate_vector(wid);
       res.wid = wid;
 
-      fprintf(vvp_out, "    %%load/x %u, V_%s, 0;\n", res.base,
-	      vvp_signal_label(sig));
+      switch (ivl_signal_type(sig)) {
+	  case IVL_SIT_TRI:
+	  case IVL_SIT_TRI0:
+	  case IVL_SIT_TRI1:
+	    fprintf(vvp_out, "    %%load/nx %u, V_%s, 0;\n", res.base,
+		    vvp_signal_label(sig));
+	    break;
+	  default:
+	    fprintf(vvp_out, "    %%load/x %u, V_%s, 0;\n", res.base,
+		    vvp_signal_label(sig));
+	    break;
+      }
 
       return res;
 }
@@ -1750,6 +1760,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.72  2002/08/28 17:15:35  steve
+ *  Generate %load/nx for indexed load of nets.
+ *
  * Revision 1.71  2002/08/27 05:39:57  steve
  *  Fix l-value indexing of memories and vectors so that
  *  an unknown (x) index causes so cell to be addresses.
