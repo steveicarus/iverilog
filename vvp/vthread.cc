@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.27 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: vthread.cc,v 1.28 2001/04/18 05:04:19 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -543,11 +543,12 @@ bool of_END(vthread_t thr, vvp_code_t)
 
 
 	/* If I have a parent who is waiting for me, then mark that I
-	   have ended, and schedule that parent. The parent will reap
-	   me with a %join, so don't do it here. */
+	   have ended, and schedule that parent. Also, finish the
+	   %join for the parent. */
       if (thr->schedule_parent_on_end) {
 	    assert(thr->parent);
 	    schedule_vthread(thr->parent, 0);
+	    vthread_reap(thr);
 	    return false;
       }
 
@@ -871,6 +872,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.28  2001/04/18 05:04:19  steve
+ *  %end complete the %join for the parent.
+ *
  * Revision 1.27  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
