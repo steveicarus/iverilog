@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.3 2001/05/09 04:23:19 steve Exp $"
+#ident "$Id: symbols.cc,v 1.4 2001/11/02 04:48:03 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -83,9 +83,85 @@ symbol_table_t new_symbol_table(void)
       return tbl;
 }
 
+/* Do as split_leaf_ do, but for nodes. */
 static void split_node_(struct tree_node_*cur)
 {
-      assert(0);
+	unsigned int idx, idx1, idx2, tmp;
+	struct tree_node_ *new_node;
+
+	assert(!cur->leaf_flag);
+	if (cur->parent)  assert(! cur->parent->leaf_flag);
+
+	while (cur->count == node_width)
+	{
+		/* Create a new node to hold half the data from the old node. */
+		new_node = new struct tree_node_;
+		new_node->leaf_flag = false;
+		new_node->count = cur->count / 2;
+		if (cur->parent) 
+			/* cur is not root; new_node becomes sibling. */
+			new_node->parent = cur->parent;
+		else
+			/* cur is root; new_node becomes child. */
+			/* And. move the first half of child to another new
+				node later */
+			new_node->parent = cur;
+
+		/* Move the last half of the data from the end of the old node
+		   to the beggining of the new node. At the same time, reduce
+		   the size of the old node. */
+		idx1 = new_node->count;
+		idx2 = cur->count;
+		while (idx1 > 0) {
+			idx1 -= 1;
+			idx2 -= 1;
+			new_node->child[idx1] = cur->child[idx2];
+			new_node->child[idx1]->parent = new_node;
+			cur->count -= 1;
+		}
+
+		assert(new_node->count > 0);
+		assert(cur->count > 0);
+
+		if (cur->parent == 0)
+		{
+			/* cur is root. Move first half of children to
+				another new node, and put the two
+				new nodes in cur. */ 
+			cur->child[cur->count] /* used as tmep var */ = new_node;
+			new_node = new struct tree_node_;
+			new_node->leaf_flag = false;
+			new_node->count = cur->count;
+			for (idx = 0; idx < cur->count; idx ++)
+			{
+				new_node->child[idx] = cur->child[idx];
+				new_node->child[idx]->parent = new_node;
+			}
+			cur->child[0] = new_node;
+			cur->child[1] = cur->child[cur->count];
+			cur->count = 2;
+			/* no more ancestors, stop the while loop */
+			break; 
+		}
+		
+		/* cur is not root. hook new_node to cur->parent. */ 
+		idx = 0;
+		while (cur->parent->child[idx] != cur) {
+			assert(idx < cur->parent->count);
+			idx += 1;
+		}
+
+		idx += 1;
+
+		for (tmp = cur->parent->count ;  tmp > idx ;  tmp -= 1)
+			cur->parent->child[tmp] = cur->parent->child[tmp-1];
+
+		cur->parent->child[idx] = new_node;
+		cur->parent->count += 1;
+
+		/* check the ancestor */
+		cur = cur->parent;
+	}
 }
 
 /*
@@ -271,6 +347,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.4  2001/11/02 04:48:03  steve
+ *  Implement split_node for symbol table (hendrik)
+ *
  * Revision 1.3  2001/05/09 04:23:19  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.
