@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.192 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: netlist.cc,v 1.193 2002/07/02 03:02:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -362,6 +362,35 @@ NetNet::Type NetNet::type() const
 {
       return type_;
 }
+
+void NetNet::type(NetNet::Type t)
+{
+      if (type_ == t)
+	    return;
+
+      Link::DIR dir = Link::PASSIVE;
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY0:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY1:
+	    dir = Link::OUTPUT;
+	    break;
+	  default:
+	    break;
+      }
+
+      type_ = t;
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
+	    pin(idx).set_dir(dir);
+      }
+	    
+}
+
 
 NetNet::PortType NetNet::port_type() const
 {
@@ -2342,6 +2371,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.193  2002/07/02 03:02:57  steve
+ *  Change the signal to a net when assignments go away.
+ *
  * Revision 1.192  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *

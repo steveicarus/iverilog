@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.249 2002/07/01 00:54:21 steve Exp $"
+#ident "$Id: netlist.h,v 1.250 2002/07/02 03:02:57 steve Exp $"
 #endif
 
 /*
@@ -365,6 +365,7 @@ class NetNet  : public NetObj, public LineInfo {
       virtual ~NetNet();
 
       Type type() const;
+      void type(Type t);
 
       PortType port_type() const;
       void port_type(PortType t);
@@ -2993,6 +2994,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.250  2002/07/02 03:02:57  steve
+ *  Change the signal to a net when assignments go away.
+ *
  * Revision 1.249  2002/07/01 00:54:21  steve
  *  synth_asych of if/else requires redirecting the target
  *  if sub-statements. Use NetNet objects to manage the

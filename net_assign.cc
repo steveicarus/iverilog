@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.12 2002/06/08 23:42:46 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.13 2002/07/02 03:02:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,7 +57,12 @@ NetAssign_::NetAssign_(NetMemory*s)
 
 NetAssign_::~NetAssign_()
 {
-      if (sig_) sig_->decr_lref();
+      if (sig_) {
+	    sig_->decr_lref();
+	    if (sig_->peek_lref() == 0)
+		  sig_->type(NetNet::WIRE);
+      }
+
       assert( more == 0 );
       if (bmux_) delete bmux_;
 }
@@ -236,6 +241,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.13  2002/07/02 03:02:57  steve
+ *  Change the signal to a net when assignments go away.
+ *
  * Revision 1.12  2002/06/08 23:42:46  steve
  *  Add NetRamDq synthsesis from memory l-values.
  *
