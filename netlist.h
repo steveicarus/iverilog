@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.227 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.228 2001/12/31 00:08:14 steve Exp $"
 #endif
 
 /*
@@ -847,7 +847,8 @@ class NetExpr  : public LineInfo {
 
 	// This method returns true if the expression is
 	// signed. Unsigned expressions return false.
-      virtual bool has_sign() const;
+      bool has_sign() const;
+      void cast_signed(bool flag);
 
 	// This returns true if the expression has a definite
 	// width. This is generally true, but in some cases the
@@ -880,6 +881,7 @@ class NetExpr  : public LineInfo {
 
     private:
       unsigned width_;
+      bool signed_flag_;
 
     private: // not implemented
       NetExpr(const NetExpr&);
@@ -901,7 +903,6 @@ class NetEConst  : public NetExpr {
 
       virtual bool set_width(unsigned w);
 
-      virtual bool has_sign() const;
       virtual bool has_width() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -2501,10 +2502,6 @@ class NetESignal  : public NetExpr {
       NetESignal(NetNet*n, unsigned msi, unsigned lsi);
       ~NetESignal();
 
-	// a NetESignal expression is signed if the NetNet that it
-	// refers to is signed.
-      bool has_sign() const;
-
       string name() const;
       virtual bool set_width(unsigned);
 
@@ -2867,6 +2864,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.228  2001/12/31 00:08:14  steve
+ *  Support $signed cast of expressions.
+ *
  * Revision 1.227  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

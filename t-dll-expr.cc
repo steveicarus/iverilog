@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.20 2001/10/23 04:22:41 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.21 2001/12/31 00:08:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -127,7 +127,7 @@ void dll_target::expr_const(const NetEConst*net)
 	    char*bits;
 	    expr_->type_ = IVL_EX_NUMBER;
 	    expr_->width_= net->expr_width();
-	    expr_->signed_ = val.has_sign()? 1 : 0;
+	    expr_->signed_ = net->has_sign()? 1 : 0;
 	    expr_->u_.number_.bits_ = bits = (char*)malloc(expr_->width_);
 	    for (idx = 0 ;  idx < expr_->width_ ;  idx += 1)
 		  switch (val.get(idx)) {
@@ -347,6 +347,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.21  2001/12/31 00:08:14  steve
+ *  Support $signed cast of expressions.
+ *
  * Revision 1.20  2001/10/23 04:22:41  steve
  *  Support bit selects of non-0 lsb for vectors.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.178 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: netlist.cc,v 1.179 2001/12/31 00:08:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1789,7 +1789,7 @@ const NetScope* NetUTask::task() const
 }
 
 NetExpr::NetExpr(unsigned w)
-: width_(w)
+: width_(w), signed_flag_(false)
 {
 }
 
@@ -1799,7 +1799,12 @@ NetExpr::~NetExpr()
 
 bool NetExpr::has_sign() const
 {
-      return false;
+      return signed_flag_;
+}
+
+void NetExpr::cast_signed(bool flag)
+{
+      signed_flag_ = flag;
 }
 
 bool NetExpr::has_width() const
@@ -2046,6 +2051,7 @@ NetEConcat* NetEConcat::dup_expr() const
 NetEConst::NetEConst(const verinum&val)
 : NetExpr(val.len()), value_(val)
 {
+      cast_signed(value_.has_sign());
 }
 
 NetEConst::~NetEConst()
@@ -2055,11 +2061,6 @@ NetEConst::~NetEConst()
 const verinum& NetEConst::value() const
 {
       return value_;
-}
-
-bool NetEConst::has_sign() const
-{
-      return value_.has_sign();
 }
 
 bool NetEConst::has_width() const
@@ -2214,6 +2215,7 @@ NetESignal::NetESignal(NetNet*n)
       lsi_ = 0;
       net_->incr_eref();
       set_line(*n);
+      cast_signed(net_->get_signed());
 }
 
 NetESignal::NetESignal(NetNet*n, unsigned m, unsigned l)
@@ -2224,6 +2226,7 @@ NetESignal::NetESignal(NetNet*n, unsigned m, unsigned l)
       lsi_ = l;
       net_->incr_eref();
       set_line(*n);
+      cast_signed(net_->get_signed());
 }
 
 NetESignal::~NetESignal()
@@ -2234,11 +2237,6 @@ NetESignal::~NetESignal()
 string NetESignal::name() const
 {
       return net_->name();
-}
-
-bool NetESignal::has_sign() const
-{
-      return net_->get_signed();
 }
 
 unsigned NetESignal::bit_count() const
@@ -2407,6 +2405,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.179  2001/12/31 00:08:14  steve
+ *  Support $signed cast of expressions.
+ *
  * Revision 1.178  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

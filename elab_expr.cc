@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.47 2001/12/29 20:41:30 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.48 2001/12/31 00:08:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -162,6 +162,26 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
  */
 NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 {
+
+	/* Catch the special case that the system function is the
+	   $signed function. This function is special, in that it does
+	   not lead to executable code but takes the single parameter
+	   and makes it into a signed expression. No bits are changed,
+	   it just changes the interpretation. */
+      if (strcmp(path_.peek_name(0), "$signed") == 0) {
+	    if ((parms_.count() != 1) || (parms_[0] == 0)) {
+		  cerr << get_line() << ": error: The $signed() function "
+		       << "takes exactly one(1) argument." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    PExpr*expr = parms_[0];
+	    NetExpr*sub = expr->elaborate_expr(des, scope);
+	    sub->cast_signed(true);
+	    return sub;
+      }
+
       unsigned wid = 32;
 
       if (strcmp(path_.peek_name(0), "$time") == 0)
@@ -651,6 +671,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.48  2001/12/31 00:08:14  steve
+ *  Support $signed cast of expressions.
+ *
  * Revision 1.47  2001/12/29 20:41:30  steve
  *  Allow escaped $ in identifiers.
  *
