@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.22 2002/01/09 03:15:23 steve Exp $"
+#ident "$Id: main.cc,v 1.23 2002/03/01 05:43:14 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -219,7 +219,21 @@ int main(int argc, char*argv[])
 
       if (int rc = compile_design(design_path))
 	    return rc;
+
+      if (verbose_flag) {
+	    fprintf(stderr, "Compile cleanup...\n");
+      }
+
       compile_cleanup();
+
+      if (compile_errors > 0) {
+	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
+		    design_path, compile_errors);
+	    if (logfile && logfile != stderr)
+		  fprintf(logfile, "%s: Program not runnable, %u errors.\n",
+			  design_path, compile_errors);
+	    return compile_errors;
+      }
 
       if (verbose_flag) {
 	    my_getrusage(cycles+1);
@@ -231,15 +245,6 @@ int main(int argc, char*argv[])
 	    }
       }
        
-      if (compile_errors > 0) {
-	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
-		    design_path, compile_errors);
-	    if (logfile && logfile != stderr)
-		  fprintf(logfile, "%s: Program not runnable, %u errors.\n",
-			  design_path, compile_errors);
-	    return compile_errors;
-      }
-
 #if defined(WITH_DEBUG)
       if (debug_flag)
 	    breakpoint();
@@ -259,6 +264,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.23  2002/03/01 05:43:14  steve
+ *  Add cleanup to verbose messages.
+ *
  * Revision 1.22  2002/01/09 03:15:23  steve
  *  Add vpi_get_vlog_info support.
  *
