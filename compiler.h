@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.9 2002/04/22 00:53:39 steve Exp $"
+#ident "$Id: compiler.h,v 1.10 2002/05/24 01:13:00 steve Exp $"
 #endif
 
 # include  <list>
@@ -79,8 +79,22 @@ extern bool verbose_flag;
 extern list<const char*>library_dirs;
 extern list<const char*>library_suff;
 
+/* This is the generation of Verilog that the compiler is asked to
+   support. */
+enum generation_t {
+      GN_VER1995  = 1,
+      GN_VER2001  = 2,
+      GN_SYSVER30 = 3,
+      GN_DEFAULT  = 3
+};
+
+extern generation_t generation_flag;
+
 /*
  * $Log: compiler.h,v $
+ * Revision 1.10  2002/05/24 01:13:00  steve
+ *  Support language generation flag -g.
+ *
  * Revision 1.9  2002/04/22 00:53:39  steve
  *  Do not allow implicit wires in sensitivity lists.
  *

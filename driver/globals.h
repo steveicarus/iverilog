@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.11 2002/04/04 05:26:13 steve Exp $"
+#ident "$Id: globals.h,v 1.12 2002/05/24 01:13:00 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -54,6 +54,9 @@ extern int synth_flag;
   /* This is the name of the selected target. */
 extern const char*targ;
 
+  /* This is the language generation flag. */
+extern const char*generation;
+
   /* Add the name to the list of source files. */
 extern void process_file_name(const char*name);
 
@@ -82,6 +85,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.12  2002/05/24 01:13:00  steve
+ *  Support language generation flag -g.
+ *
  * Revision 1.11  2002/04/04 05:26:13  steve
  *  Add dependency generation.
  *

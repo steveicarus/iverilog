@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.54 2002/04/22 00:53:39 steve Exp $"
+#ident "$Id: main.cc,v 1.55 2002/05/24 01:13:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -76,6 +76,8 @@ const char VERSION[] = "$Name:  $ $State: Exp $";
 
 const char*target = "null";
 
+generation_t generation_flag = GN_DEFAULT;
+
 map<string,string> flags;
 
 list<const char*> library_dirs;
@@ -112,6 +114,20 @@ static void parm_to_flagmap(const string&flag)
       flags[key] = value;
 }
 
+static void process_generation_flag(const char*gen)
+{
+      if (strcmp(gen,"1") == 0)
+	    generation_flag = GN_VER1995;
+
+      else if (strcmp(gen,"2") == 0)
+	    generation_flag = GN_VER2001;
+
+      else if (strcmp(gen,"3.0") == 0)
+	    generation_flag = GN_SYSVER30;
+
+      else
+	    generation_flag = GN_DEFAULT;
+}
 
 extern Design* elaborate(list <const char*>root);
 
@@ -195,7 +211,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:M:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:g:hm:M:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -209,6 +225,9 @@ int main(int argc, char*argv[])
 	  }
 	  case 'f':
 	    parm_to_flagmap(optarg);
+	    break;
+	  case 'g':
+	    process_generation_flag(optarg);
 	    break;
 	  case 'h':
 	    help_flag = true;
@@ -348,7 +367,21 @@ int main(int argc, char*argv[])
       if (verbose_flag) {
 	    if (times_flag)
 		  times(cycles+0);
-	    cout << "PARSING INPUT ..." << endl;
+
+	    cout << "Using language generation: ";
+	    switch (generation_flag) {
+		case GN_VER1995:
+		  cout << "IEEE1364-1995";
+		  break;
+		case GN_VER2001:
+		  cout << "IEEE1364-2001";
+		  break;
+		case GN_SYSVER30:
+		  cout << "SystemVerilog 3.0";
+		  break;
+	    }
+
+	    cout << endl << "PARSING INPUT ..." << endl;
       }
 
 	/* Parse the input. Make the pform. */
@@ -496,6 +529,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.55  2002/05/24 01:13:00  steve
+ *  Support language generation flag -g.
+ *
  * Revision 1.54  2002/04/22 00:53:39  steve
  *  Do not allow implicit wires in sensitivity lists.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.7 2002/04/04 05:26:13 steve Exp $"
+#ident "$Id: build_string.c,v 1.8 2002/05/24 01:13:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -70,6 +70,12 @@ int build_string(char*output, size_t olen, const char*pattern)
 			strcpy(output, base);
 			output += strlen(base);
 			olen -= strlen(base);
+			break;
+
+		      case 'g':
+			strcpy(output, generation);
+			output += strlen(generation);
+			olen -= strlen(generation);
 			break;
 
 		      case 'f':
@@ -169,6 +175,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.8  2002/05/24 01:13:00  steve
+ *  Support language generation flag -g.
+ *
  * Revision 1.7  2002/04/04 05:26:13  steve
  *  Add dependency generation.
  *

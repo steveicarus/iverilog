@@ -16,13 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.36 2002/04/24 02:02:31 steve Exp $"
+#ident "$Id: main.c,v 1.37 2002/05/24 01:13:00 steve Exp $"
 
 # include "config.h"
 
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-C path] [-c cmdfile]\n"
+"Usage: iverilog [-ESvV] [-B base] [-C path] [-c cmdfile] [-g1|-g2|-g3.0]\n"
 "                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
@@ -88,6 +88,8 @@ const char*opath = "a.out" EXEEXT;
 const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
+
+const char*generation = "-g3.0";
 
 char warning_flags[16] = "";
 char *library_flags = 0;
@@ -358,6 +360,30 @@ void process_file_name(const char*name)
       source_count += 1;
 }
 
+int process_generation(const char*name)
+{
+      if (strcmp(name,"1") == 0)
+	    generation = "-g1";
+
+      else if (strcmp(name,"2") == 0)
+	    generation = "-g2";
+
+      else if (strcmp(name,"3.0") == 0)
+	    generation = "-g3.0";
+
+      else {
+	    fprintf(stderr, "Unknown/Unsupported Language generation "
+		    "%s\n", name);
+	    fprintf(stderr, "Supported generations are:\n");
+	    fprintf(stderr, "    1   -- IEEE1364-1995 (Verilog 1)\n"
+		            "    2   -- IEEE1364-2001 (Verilog 2001)\n"
+		            "    3.0 -- SystemVerilog 3.0\n");
+	    return 1;
+      }
+
+      return 0;
+}
+
 int main(int argc, char **argv)
 {
       const char*config_path = 0;
@@ -365,7 +391,7 @@ int main(int argc, char **argv)
       unsigned ncmd;
       int e_flag = 0;
       int version_flag = 0;
-      int opt, idx;
+      int opt, idx, rc;
       char*cp;
 
 #ifdef __MINGW32__
@@ -415,7 +441,7 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
-      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:g:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -450,6 +476,11 @@ int main(int argc, char **argv)
 		  }
 		  break;
 
+		case 'g':
+		  rc = process_generation(optarg);
+		  if (rc != 0)
+			return -1;
+		  break;
  		case 'h':
  		  fprintf(stderr, "%s\n", HELP);
  		  return 1;
@@ -669,6 +700,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.37  2002/05/24 01:13:00  steve
+ *  Support language generation flag -g.
+ *
  * Revision 1.36  2002/04/24 02:02:31  steve
  *  add -Wno- arguments to the driver.
  *
