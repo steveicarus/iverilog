@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.64 2000/09/13 16:32:26 steve Exp $"
+#ident "$Id: pform.cc,v 1.65 2000/10/31 17:00:04 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -324,10 +324,47 @@ void pform_make_udp(const char*name, list<string>*parms,
 }
 
 /*
+ * This function attaches a range to a given name. The function is
+ * only called by the parser within the scope of the net declaration,
+ * and the name that I receive only has the tail component.
+ */
+static void pform_set_net_range(const char*name, const svector<PExpr*>*range)
+{
+      assert(range);
+      assert(range->count() == 2);
+
+      PWire*cur = pform_cur_module->get_wire(scoped_name(name));
+      if (cur == 0) {
+	    VLerror(" error: name is not a valid net.");
+	    return;
+      }
+
+      assert((*range)[0]);
+      assert((*range)[1]);
+      cur->set_range((*range)[0], (*range)[1]);
+}
+
+void pform_set_net_range(list<char*>*names, svector<PExpr*>*range)
+{
+      assert(range->count() == 2);
+
+      for (list<char*>::iterator cur = names->begin()
+		 ; cur != names->end()
+		 ; cur ++ ) {
+	    char*txt = *cur;
+	    pform_set_net_range(txt, range);
+	    free(txt);
+      }
+
+      delete names;
+      delete range;
+}
+
+/*
  * This is invoked to make a named event. This is the declaration of
  * the event, and not necessarily the use of it.
  */
-static void pform_make_event(const string&name, const string&fn, unsigned ln)
+static void pform_make_event(const char*name, const string&fn, unsigned ln)
 {
       PEvent*event = new PEvent(name);
       event->set_file(fn);
@@ -335,11 +372,16 @@ static void pform_make_event(const string&name, const string&fn, unsigned ln)
       pform_cur_module->events[name] = event;
 }
 
-void pform_make_events(const list<string>*names, const string&fn, unsigned ln)
+void pform_make_events(list<char*>*names, const string&fn, unsigned ln)
 {
-      list<string>::const_iterator cur;
-      for (cur = names->begin() ;  cur != names->end() ;  cur++)
-	    pform_make_event(*cur, fn, ln);
+      list<char*>::iterator cur;
+      for (cur = names->begin() ;  cur != names->end() ;  cur++) {
+	    char*txt = *cur;
+	    pform_make_event(txt, fn, ln);
+	    free(txt);
+      }
+
+      delete names;
 }
 
 /*
@@ -623,14 +665,24 @@ void pform_makewire(const vlltype&li, const string&nm,
       pform_cur_module->add_wire(cur);
 }
 
-void pform_makewire(const vlltype&li, const list<string>*names,
+void pform_makewire(const vlltype&li,
+		    svector<PExpr*>*range,
+		    list<char*>*names,
 		    NetNet::Type type)
 {
-      for (list<string>::const_iterator cur = names->begin()
+      for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
-		 ; cur ++ )
-	    pform_makewire(li, *cur, type);
+		 ; cur ++ ) {
+	    char*txt = *cur;
+	    pform_makewire(li, txt, type);
+	    if (range)
+		  pform_set_net_range(txt, range);
+	    free(txt);
+      }
 
+      delete names;
+      if (range)
+	    delete range;
 }
 
 void pform_set_port_type(const string&nm, NetNet::PortType pt)
@@ -686,17 +738,18 @@ void pform_set_port_type(const string&nm, NetNet::PortType pt)
  * no output or inout ports.
  */
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
-				      const svector<PExpr*>*range,
-				      const list<string>*names,
+				      svector<PExpr*>*range,
+				      list<char*>*names,
 				      const string& file,
 				      unsigned lineno)
 {
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
-      for (list<string>::const_iterator cur = names->begin()
+      for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end() ; cur ++ ) {
 
-	    string name = scoped_name(*cur);
+	    char*txt = *cur;
+	    string name = scoped_name(txt);
 
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
@@ -715,10 +768,15 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		  curw->set_range((*range)[0], (*range)[1]);
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
+
+	    free(txt);
 	    delete res;
 	    res = tmp;
       }
 
+      if (range)
+	    delete range;
+      delete names;
       return res;
 }
 
@@ -791,38 +849,6 @@ void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
       cur->set_memory_idx(l, r);
 }
 
-/*
- * This function attaches a range to a given name. The function is
- * only called by the parser within the scope of the net declaration,
- * and the name that I receive only has the tail component.
- */
-static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
-{
-      assert(range);
-      assert(range->count() == 2);
-
-      PWire*cur = pform_cur_module->get_wire(scoped_name(name));
-      if (cur == 0) {
-	    VLerror(" error: name is not a valid net.");
-	    return;
-      }
-
-      assert((*range)[0]);
-      assert((*range)[1]);
-      cur->set_range((*range)[0], (*range)[1]);
-}
-
-void pform_set_net_range(list<string>*names, const svector<PExpr*>*range)
-{
-      assert(range->count() == 2);
-
-      for (list<string>::const_iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
-	    pform_set_net_range(*cur, range);
-      }
-}
-
 void pform_set_parameter(const string&name, PExpr*expr)
 {
       assert(expr);
@@ -842,16 +868,26 @@ void pform_set_defparam(const string&name, PExpr*expr)
       pform_cur_module->defparms[name] = expr;
 }
 
-void pform_set_port_type(list<string>*names, NetNet::PortType pt)
+void pform_set_port_type(list<char*>*names,
+			 svector<PExpr*>*range,
+			 NetNet::PortType pt)
 {
-      for (list<string>::const_iterator cur = names->begin()
+      for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    pform_set_port_type(*cur, pt);
+	    char*txt = *cur;
+	    pform_set_port_type(txt, pt);
+	    if (range)
+		  pform_set_net_range(txt, range);
+	    free(txt);
       }
+
+      delete names;
+      if (range)
+	    delete range;
 }
 
-static void pform_set_reg_integer(const string&nm)
+static void pform_set_reg_integer(const char*nm)
 {
       string name = scoped_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
@@ -868,26 +904,31 @@ static void pform_set_reg_integer(const string&nm)
 		     new PENumber(new verinum(0UL, INTEGER_WIDTH)));
 }
 
-void pform_set_reg_integer(list<string>*names)
+void pform_set_reg_integer(list<char*>*names)
 {
-      for (list<string>::const_iterator cur = names->begin()
+      for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    pform_set_reg_integer(*cur);
+	    char*txt = *cur;
+	    pform_set_reg_integer(txt);
+	    free(txt);
       }
+      delete names;
 }
 
-svector<PWire*>* pform_make_udp_input_ports(list<string>*names)
+svector<PWire*>* pform_make_udp_input_ports(list<char*>*names)
 {
       svector<PWire*>*out = new svector<PWire*>(names->size());
 
       unsigned idx = 0;
-      for (list<string>::const_iterator cur = names->begin()
+      for (list<char*>::iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
-	    PWire*pp = new PWire(*cur, NetNet::IMPLICIT, NetNet::PINPUT);
+	    char*txt = *cur;
+	    PWire*pp = new PWire(txt, NetNet::IMPLICIT, NetNet::PINPUT);
 	    (*out)[idx] = pp;
 	    idx += 1;
+	    free(txt);
       }
 
       delete names;
@@ -932,6 +973,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.65  2000/10/31 17:00:04  steve
+ *  Remove C++ string from variable lists.
+ *
  * Revision 1.64  2000/09/13 16:32:26  steve
  *  Error message for invalid variable list.
  *

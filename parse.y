@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.107 2000/10/14 02:23:02 steve Exp $"
+#ident "$Id: parse.y,v 1.108 2000/10/31 17:00:04 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -38,7 +38,11 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 
 %union {
       char letter;
+	/* text items are C strings allocated by the lexor using
+	   strdup. They can be put into lists with the texts type. */
       char*text;
+      list<char*>*texts;
+
       list<string>*strings;
 
       struct str_pair_t drive;
@@ -115,11 +119,10 @@ static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %type <statement> udp_initial udp_init_opt
 
 %type <text> identifier register_variable
-%type <strings> register_variable_list
-%type <strings> list_of_variables
+%type <texts> register_variable_list list_of_variables
 
 %type <text> net_decl_assign
-%type <strings> net_decl_assigns
+%type <texts> net_decl_assigns
 
 %type <mport> port port_opt port_reference port_reference_list
 %type <mports> list_of_ports list_of_ports_opt
@@ -193,15 +196,11 @@ source_file
 block_item_decl
 	: K_reg range register_variable_list ';'
 		{ pform_set_net_range($3, $2);
-		  delete $2;
-		  delete $3;
 		}
 	| K_reg register_variable_list ';'
 		{ delete $2; }
 	| K_reg K_signed range register_variable_list ';'
 		{ pform_set_net_range($4, $3);
-		  delete $3;
-		  delete $4;
 		  yyerror(@2, "sorry: signed reg not supported.");
 		}
 	| K_reg K_signed register_variable_list ';'
@@ -210,7 +209,6 @@ block_item_decl
 		}
 	| K_integer list_of_variables ';'
 		{ pform_set_reg_integer($2);
-		  delete $2;
 		}
 	;
 
@@ -843,8 +841,6 @@ function_item
                 { svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, $2, $3,
 						@1.text, @1.first_line);
-		  delete $2;
-		  delete $3;
 		  $$ = tmp;
 		}
 	| block_item_decl
@@ -994,15 +990,13 @@ list_of_ports_opt
 
 list_of_variables
 	: IDENTIFIER
-		{ list<string>*tmp = new list<string>;
+		{ list<char*>*tmp = new list<char*>;
 		  tmp->push_back($1);
-		  delete $1;
 		  $$ = tmp;
 		}
 	| list_of_variables ',' IDENTIFIER
-		{ list<string>*tmp = $1;
+		{ list<char*>*tmp = $1;
 		  tmp->push_back($3);
-		  delete $3;
 		  $$ = tmp;
 		}
 	;
@@ -1130,30 +1124,19 @@ module
 
 module_item
 	: net_type range_opt list_of_variables ';'
-		{ pform_makewire(@1, $3, $1);
-		  if ($2) {
-			pform_set_net_range($3, $2);
-			delete $2;
-		  }
-		  delete $3;
+		{ pform_makewire(@1, $2, $3, $1);
 		}
 	| net_type range_opt net_decl_assigns ';'
-		{ pform_makewire(@1, $3, $1);
-		  if ($2) {
-			pform_set_net_range($3, $2);
-			delete $2;
-		  }
-		  delete $3;
+		{ pform_makewire(@1, $2, $3, $1);
 		}
 	| net_type drive_strength { decl_strength = $2;} net_decl_assigns ';'
-		{ pform_makewire(@1, $4, $1);
+		{ pform_makewire(@1, 0, $4, $1);
 		    /* The strengths are handled in the
 		       net_decl_assigns using the decl_strength that I
 		       set in the rule. Right here, just restore the
 		       defaults for other rules. */
 		  decl_strength.str0 = PGate::STRONG;
 		  decl_strength.str1 = PGate::STRONG;
-		  delete $4;
 		}
 	| K_trireg charge_strength_opt range_opt delay3_opt list_of_variables ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
@@ -1161,12 +1144,7 @@ module_item
 		}
 
 	| port_type range_opt list_of_variables ';'
-		{ pform_set_port_type($3, $1);
-		  if ($2) {
-			pform_set_net_range($3, $2);
-			delete $2;
-		  }
-		  delete $3;
+		{ pform_set_port_type($3, $2, $1);
 		}
 	| port_type range_opt error ';'
 		{ yyerror(@3, "error: Invalid variable list"
@@ -1178,7 +1156,6 @@ module_item
 	| K_defparam defparam_assign_list ';'
 	| K_event list_of_variables ';'
 		{ pform_make_events($2, @1.text, @1.first_line);
-		  delete $2;
 		}
 	| K_parameter parameter_assign_list ';'
 	| K_localparam localparam_assign_list ';' { }
@@ -1299,9 +1276,14 @@ module_item_list
 	| module_item
 	;
 
+
   /* A net declaration assignment allows the programmer to combine the
      net declaration and the continuous assignment into a single
-     statement. */
+     statement.
+
+     Note that the continuous assignment statement is generated as a
+     side effect, and all I pass up is the name of the l-value. */
+
 net_decl_assign
 	: IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($1);
@@ -1322,15 +1304,13 @@ net_decl_assign
 
 net_decl_assigns
 	: net_decl_assigns ',' net_decl_assign
-		{ list<string>*tmp = $1;
+		{ list<char*>*tmp = $1;
 		  tmp->push_back($3);
-		  delete $3;
 		  $$ = tmp;
 		}
 	| net_decl_assign
-		{ list<string>*tmp = new list<string>;
+		{ list<char*>*tmp = new list<char*>;
 		  tmp->push_back($1);
-		  delete $1;
 		  $$ = tmp;
 		}
 	;
@@ -1738,15 +1718,13 @@ register_variable
 
 register_variable_list
 	: register_variable
-		{ list<string>*tmp = new list<string>;
+		{ list<char*>*tmp = new list<char*>;
 		  tmp->push_back($1);
-		  delete $1;
 		  $$ = tmp;
 		}
 	| register_variable_list ',' register_variable
-		{ list<string>*tmp = $1;
+		{ list<char*>*tmp = $1;
 		  tmp->push_back($3);
-		  delete $3;
 		  $$ = tmp;
 		}
 	;
@@ -2160,24 +2138,18 @@ task_item
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINPUT, $2,
 						$3, @1.text, @1.first_line);
-		  delete $2;
-		  delete $3;
 		  $$ = tmp;
 		}
 	| K_output range_opt list_of_variables ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::POUTPUT, $2, $3,
 						@1.text, @1.first_line);
-		  delete $2;
-		  delete $3;
 		  $$ = tmp;
 		}
 	| K_inout range_opt list_of_variables ';'
 		{ svector<PWire*>*tmp
 			= pform_make_task_ports(NetNet::PINOUT, $2, $3,
 						@1.text, @1.first_line);
-		  delete $2;
-		  delete $3;
 		  $$ = tmp;
 		}
 	;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.41 2000/07/29 17:58:21 steve Exp $"
+#ident "$Id: pform.h,v 1.42 2000/10/31 17:00:05 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -129,14 +129,17 @@ extern void pform_pop_scope();
  */
 extern void pform_makewire(const struct vlltype&li, const string&name,
 			   NetNet::Type type = NetNet::IMPLICIT);
-extern void pform_makewire(const struct vlltype&li, const list<string>*names,
+extern void pform_makewire(const struct vlltype&li,
+			   svector<PExpr*>*range,
+			   list<char*>*names,
 			   NetNet::Type type);
 extern void pform_make_reginit(const struct vlltype&li,
 			       const string&name, PExpr*expr);
-extern void pform_set_port_type(list<string>*names, NetNet::PortType);
-extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
+extern void pform_set_port_type(list<char*>*names, svector<PExpr*>*,
+				NetNet::PortType);
+extern void pform_set_net_range(list<char*>*names, svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
-extern void pform_set_reg_integer(list<string>*names);
+extern void pform_set_reg_integer(list<char*>*names);
 extern void pform_set_task(const string&, PTask*);
 extern void pform_set_function(const string&, svector<PExpr*>*, PFunction*);
 extern void pform_set_attrib(const string&name, const string&key,
@@ -148,11 +151,11 @@ extern void pform_set_localparam(const string&name, PExpr*expr);
 extern void pform_set_defparam(const string&name, PExpr*expr);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 
-extern svector<PWire*>* pform_make_udp_input_ports(list<string>*);
+extern svector<PWire*>* pform_make_udp_input_ports(list<char*>*);
 
 extern bool pform_expression_is_constant(const PExpr*);
 
-extern void pform_make_events(const list<string>*names,
+extern void pform_make_events(list<char*>*names,
 			      const string&file, unsigned lineno);
 
 /*
@@ -181,8 +184,8 @@ extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
 extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
-					     const svector<PExpr*>*range,
-					     const list<string>*names,
+					     svector<PExpr*>*range,
+					     list<char*>*names,
 					     const string& file,
 					     unsigned lineno);
 
@@ -199,6 +202,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.42  2000/10/31 17:00:05  steve
+ *  Remove C++ string from variable lists.
+ *
  * Revision 1.41  2000/07/29 17:58:21  steve
  *  Introduce min:typ:max support.
  *
