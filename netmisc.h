@@ -19,10 +19,27 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.17 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: netmisc.h,v 1.18 2003/09/19 03:30:05 steve Exp $"
 #endif
 
 # include  "netlist.h"
+
+/*
+ * Search for a symbol using the "start" scope as the starting
+ * point. If the path includes a scope part, then locate the
+ * scope first.
+ *
+ * The return value is the scope where the symbol was found.
+ * If the symbol was not found, return 0. The output arguments
+ * get 0 except for the pointer to the object that represents
+ * the located symbol.
+ */
+extern NetScope* symbol_search(Design*des, NetScope*start, hname_t path,
+			       NetNet*&net,       /* net/reg */
+			       NetMemory*&mem,    /* memory */
+			       NetVariable*&var,  /* real/realtime */
+			       const NetExpr*&par,/* parameter */
+			       NetEvent*&eve       /* named event */);
 
 /*
  * This function transforms an expression by padding the high bits
@@ -57,6 +74,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.18  2003/09/19 03:30:05  steve
+ *  Fix name search in elab_lval.
+ *
  * Revision 1.17  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *

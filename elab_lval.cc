@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.26 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.27 2003/09/19 03:30:05 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "PExpr.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 
 # include  <iostream>
 
@@ -138,25 +139,27 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 /*
  * Handle the ident as an l-value. This includes bit and part selects
  * of that ident.
- *
- * XXXX FIXME: The search order looks for signals all the way up the
- * scope tree, then looks for memories then variables. It should be
- * looking for signals, memories and variables in parallel.
  */
 NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 {
-      NetNet*reg = des->find_signal(scope, path_);
+      NetNet*       reg = 0;
+      NetMemory*    mem = 0;
+      NetVariable*  var = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(des, scope, path_, reg, mem, var, par, eve);
+
+      if (mem) {
+	    return elaborate_mem_lval_(des, scope, mem);
+      }
+
+      if (var) {
+	    NetAssign_*cur = new NetAssign_(var);
+	    return cur;
+      }
 
       if (reg == 0) {
-	    if (NetMemory*mem = des->find_memory(scope, path_)) {
-		  return elaborate_mem_lval_(des, scope, mem);
-	    }
-
-	    if (NetVariable*var = des->find_variable(scope, path_)) {
-		  NetAssign_*cur = new NetAssign_(var);
-		  return cur;
-	    }
-
 	    cerr << get_line() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope->name() <<
 		  "''" << endl;
@@ -347,6 +350,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.27  2003/09/19 03:30:05  steve
+ *  Fix name search in elab_lval.
+ *
  * Revision 1.26  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

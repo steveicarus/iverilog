@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.299 2003/09/13 01:01:52 steve Exp $"
+#ident "$Id: netlist.h,v 1.300 2003/09/19 03:30:05 steve Exp $"
 #endif
 
 /*
@@ -3233,9 +3233,6 @@ class Design {
         // Events
       NetEvent* find_event(NetScope*scope, const hname_t&path);
 
-	// Variables
-      NetVariable* find_variable(NetScope*scope, const hname_t&path);
-
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);
@@ -3322,6 +3319,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.300  2003/09/19 03:30:05  steve
+ *  Fix name search in elab_lval.
+ *
  * Revision 1.299  2003/09/13 01:01:52  steve
  *  Spelling fixes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.80 2003/06/24 01:38:02 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.81 2003/09/19 03:30:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -462,15 +462,22 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 bool sys_task_arg) const
 {
       assert(scope);
-      NetScope*found_in;
+
+      NetNet*       net = 0;
+      NetMemory*    mem = 0;
+      NetVariable*  var = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      NetScope*found_in = symbol_search(des, scope, path_,
+					net, mem, var, par, eve);
 
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
-      if (const NetExpr*ex = des->find_parameter(scope, path_, found_in)) {
+      if (par != 0) {
 	    NetExpr*tmp;
 
-	    assert(ex);
-	    tmp = ex->dup_expr();
+	    tmp = par->dup_expr();
 
 	    if (msb_ && lsb_) {
 		    /* If the parameter has a part select, we support
@@ -606,7 +613,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
-      if (NetNet*net = des->find_signal(scope, path_)) {
+      if (net != 0) {
 
 	      // If this is a part select of a signal, then make a new
 	      // temporary signal that is connected to just the
@@ -730,7 +737,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// If the identifier names a memory, then this is a
 	// memory reference and I must generate a NetEMemory
 	// object to handle it.
-      if (NetMemory*mem = des->find_memory(scope, path_)) {
+      if (mem != 0) {
 	    if (msb_ == 0) {
 
 		    // If this memory is an argument to a system task,
@@ -774,8 +781,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier names a variable of some sort, then this
 	// is a variable reference.
-      if (NetVariable*var = des->find_variable(scope, path_)) {
-
+      if (var != 0) {
 	    NetEVariable*node = new NetEVariable(var);
 	    node->set_line(*this);
 	    return node;
@@ -783,8 +789,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// If the identifier is a named event.
 	// is a variable reference.
-      if (NetEvent*nev = des->find_event(scope, path_)) {
-	    NetEEvent*tmp = new NetEEvent(nev);
+      if (eve != 0) {
+	    NetEEvent*tmp = new NetEEvent(eve);
 	    tmp->set_line(*this);
 	    return tmp;
       }
@@ -964,6 +970,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.81  2003/09/19 03:30:05  steve
+ *  Fix name search in elab_lval.
+ *
  * Revision 1.80  2003/06/24 01:38:02  steve
  *  Various warnings fixed.
  *
