@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.13 2000/01/06 05:57:06 steve Exp $"
+#ident "$Id: verinum.cc,v 1.14 2000/01/07 03:45:49 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -25,12 +25,12 @@
 # include  <cassert>
 
 verinum::verinum()
-: bits_(0), nbits_(0), has_len_(false), string_flag_(false)
+: bits_(0), nbits_(0), has_len_(false), has_sign_(false), string_flag_(false)
 {
 }
 
 verinum::verinum(const V*bits, unsigned nbits, bool has_len)
-: has_len_(has_len), string_flag_(false)
+: has_len_(has_len), has_sign_(false), string_flag_(false)
 {
       nbits_ = nbits;
       bits_ = new V [nbits];
@@ -40,7 +40,7 @@ verinum::verinum(const V*bits, unsigned nbits, bool has_len)
 }
 
 verinum::verinum(const string&str)
-: has_len_(true), string_flag_(true)
+: has_len_(true), has_sign_(false), string_flag_(true)
 {
       nbits_ = str.length() * 8;
       bits_ = new V [nbits_];
@@ -61,7 +61,7 @@ verinum::verinum(const string&str)
 }
 
 verinum::verinum(verinum::V val, unsigned n)
-: has_len_(true), string_flag_(false)
+: has_len_(true), has_sign_(false), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -70,7 +70,7 @@ verinum::verinum(verinum::V val, unsigned n)
 }
 
 verinum::verinum(unsigned long val, unsigned n)
-: has_len_(true), string_flag_(false)
+: has_len_(true), has_sign_(false), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -86,6 +86,7 @@ verinum::verinum(const verinum&that)
       nbits_ = that.nbits_;
       bits_ = new V[nbits_];
       has_len_ = that.has_len_;
+      has_sign_ = that.has_sign_;
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
 }
@@ -97,6 +98,7 @@ verinum::verinum(const verinum&that, unsigned nbits)
       nbits_ = nbits;
       bits_ = new V[nbits_];
       has_len_ = true;
+      has_sign_ = false;
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
 }
@@ -116,6 +118,7 @@ verinum& verinum::operator= (const verinum&that)
 	    bits_[idx] = that.bits_[idx];
 
       has_len_ = that.has_len_;
+      has_sign_ = that.has_sign_;
       string_flag_ = that.string_flag_;
       return *this;
 }
@@ -164,9 +167,9 @@ signed long verinum::as_long() const
 
       signed long val = 0;
 
-	// Extend the sign bit to fill the long. (but only for unsized
+	// Extend the sign bit to fill the long. (But only for signed
 	// numbers.)
-      if ((has_len_ == false) && (bits_[nbits_-1] == V1))
+      if (has_sign_ && (bits_[nbits_-1] == V1))
 	    val = -1;
 
       for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 1) {
@@ -468,6 +471,9 @@ verinum operator - (const verinum&left, const verinum&r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.14  2000/01/07 03:45:49  steve
+ *  Initial support for signed constants.
+ *
  * Revision 1.13  2000/01/06 05:57:06  steve
  *  Only sign-extend unsized numbers.
  *

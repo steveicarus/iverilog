@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.40 1999/12/31 03:24:30 steve Exp $"
+#ident "$Id: lexor.lex,v 1.41 2000/01/07 03:45:49 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -160,26 +160,26 @@ W [ \t\b\f\r]+
       yylval.text = strdup(cp);
       return PORTNAME; }
 
-[0-9][0-9_]*[ \t]*\'[dD][ \t]*[0-9][0-9_]* {
+[0-9][0-9_]*[ \t]*\'[sS]?[dD][ \t]*[0-9][0-9_]* {
       yylval.number = make_sized_dec(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[bB][ \t]*[0-1xzXZ_\?]+ {
+[0-9][0-9_]*[ \t]*\'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ {
       yylval.number = make_sized_binary(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[oO][ \t]*[0-7xzXZ_\?]+ {
+[0-9][0-9_]*[ \t]*\'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ {
       yylval.number = make_sized_octal(yytext);
       return NUMBER; }
-[0-9][0-9_]*[ \t]*\'[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ {
+[0-9][0-9_]*[ \t]*\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ {
       yylval.number = make_sized_hex(yytext);
       return NUMBER; }
 
-\'d[ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
-                         return NUMBER; }
-\'[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
+\'[sS]?[dD][ \t]*[0-9][0-9_]*  { yylval.number = make_unsized_dec(yytext);
+                            return NUMBER; }
+\'[sS]?[bB][ \t]*[0-1xzXZ_\?]+ { yylval.number = make_unsized_binary(yytext);
                         return NUMBER; }
-\'[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
+\'[sS]?[oO][ \t]*[0-7xzXZ_\?]+ { yylval.number = make_unsized_octal(yytext);
                         return NUMBER; }
-\'[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
+\'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
                               return NUMBER; }
 
 [0-9][0-9_]*		 {
@@ -199,6 +199,7 @@ W [ \t\b\f\r]+
       }
 
       yylval.number = new verinum(bits, nbits, false);
+      yylval.number->has_sign(true);
       delete[]bits;
       return NUMBER; }
 
@@ -313,10 +314,16 @@ void lex_end_table()
 
 static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 {
-      assert(tolower(*ptr) == 'b');
+      bool sign_flag = false;
       verinum::V*bits = new verinum::V[size];
 
+      if (tolower(ptr[0]) == 's') {
+	    ptr += 1;
+	    sign_flag = true;
+      }
+      assert(tolower(*ptr) == 'b');
       ptr += 1;
+
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
@@ -364,7 +371,10 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 	    }
       }
 
-      return new verinum(bits, size, fixed);
+      verinum*out = new verinum(bits, size, fixed);
+      delete[]bits;
+      out->has_sign(sign_flag);
+      return out;
 }
 
 static verinum*make_sized_binary(const char*txt)
@@ -375,16 +385,21 @@ static verinum*make_sized_binary(const char*txt)
 	    ptr += 1;
       assert(*ptr == '\'');
       ptr += 1;
-      assert(tolower(*ptr) == 'b');
 
       return make_binary_with_size(size, true, ptr);
 }
 
 static verinum*make_unsized_binary(const char*txt)
 {
+      bool sign_flag = false;
       const char*ptr = txt;
       assert(*ptr == '\'');
       ptr += 1;
+
+      if (tolower(*ptr) == 's') {
+	    sign_flag = true;
+	    ptr += 1;
+      }
       assert(tolower(*ptr) == 'b');
       while (*ptr && ((*ptr == 'b') || (*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
@@ -419,17 +434,27 @@ static verinum*make_unsized_binary(const char*txt)
 	    ptr += 1;
       }
 
-      return new verinum(bits, size);
+      verinum*out = new verinum(bits, size);
+      out->has_sign(sign_flag);
+      delete[]bits;
+      return out;
 }
 
 static verinum*make_sized_octal(const char*txt)
 {
+      bool sign_flag = false;
       char*ptr;
+
       unsigned size = strtoul(txt,&ptr,10);
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
       assert(*ptr == '\'');
       ptr += 1;
+
+      if (tolower(*ptr) == 's') {
+	    sign_flag = true;
+	    ptr += 1;
+      }
       assert(tolower(*ptr) == 'o');
 
 	/* We know from the size number how bit to make the verinom
@@ -505,14 +530,24 @@ static verinum*make_sized_octal(const char*txt)
 	    }
       }
 
-      return new verinum(bits, size, true);
+      verinum*out = new verinum(bits, size, true);
+      delete[]bits;
+      out->has_sign(sign_flag);
+      return out;
 }
 
 static verinum*make_unsized_octal(const char*txt)
 {
+      bool sign_flag = false;
       const char*ptr = txt;
       assert(*ptr == '\'');
       ptr += 1;
+
+      if (tolower(*ptr) == 's') {
+	    sign_flag = true;
+	    ptr += 1;
+      }
+
       assert(tolower(*ptr) == 'o');
       ptr += 1;
 
@@ -554,11 +589,15 @@ static verinum*make_unsized_octal(const char*txt)
 	    ptr += 1;
       }
 
-      return new verinum(bits, size);
+      verinum*out = new verinum(bits, size);
+      out->has_sign(sign_flag);
+      delete[]bits;
+      return out;
 }
 
 static verinum*make_sized_hex(const char*txt)
 {
+      bool sign_flag = false;
       char*ptr;
       unsigned size = strtoul(txt,&ptr,10);
 
@@ -567,6 +606,12 @@ static verinum*make_sized_hex(const char*txt)
 
       assert(*ptr == '\'');
       ptr += 1;
+
+      if (tolower(*ptr) == 's') {
+	    sign_flag = true;
+	    ptr += 1;
+      }
+
       assert(tolower(*ptr) == 'h');
 
       ptr += 1;
@@ -633,14 +678,23 @@ static verinum*make_sized_hex(const char*txt)
 	    bits[idx++] = verinum::V0;
       }
 
-      return new verinum(bits, size, true);
+      verinum*out = new verinum(bits, size, true);
+      out->has_sign(sign_flag);
+      delete[]bits;
+      return out;
 }
 
 static verinum*make_unsized_hex(const char*txt)
 {
+      bool sign_flag = false;
       const char*ptr = txt;
       assert(*ptr == '\'');
       ptr += 1;
+
+      if (tolower(*ptr) == 's') {
+	    sign_flag = true;
+	    ptr += 1;
+      }
       assert(tolower(*ptr) == 'h');
 
       ptr += 1;
@@ -693,7 +747,10 @@ static verinum*make_unsized_hex(const char*txt)
 	    ptr += 1;
       }
 
-      return new verinum(bits, size);
+      verinum*out = new verinum(bits, size);
+      out->has_sign(sign_flag);
+      delete[]bits;
+      return out;
 }
 
 /*
@@ -702,6 +759,11 @@ static verinum*make_unsized_hex(const char*txt)
  */
 static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
 {
+      bool signed_flag = false;
+      if (tolower(*ptr) == 's') {
+	    signed_flag = true;
+	    ptr += 1;
+      }
       assert(tolower(*ptr) == 'd');
 
       ptr += 1;
@@ -725,7 +787,10 @@ static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
 	    value /= 2;
       }
 
-      return new verinum(bits, size, fixed);
+      verinum*out = new verinum(bits, size, fixed);
+      out->has_sign(signed_flag);
+      delete[]bits;
+      return out;
 }
 
 static verinum*make_sized_dec(const char*txt)
@@ -738,7 +803,6 @@ static verinum*make_sized_dec(const char*txt)
 
       assert(*ptr == '\'');
       ptr += 1;
-      assert(tolower(*ptr) == 'd');
 
       return make_dec_with_size(size, true, ptr);
 }

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.h,v 1.8 1999/11/06 16:00:17 steve Exp $"
+#ident "$Id: verinum.h,v 1.9 2000/01/07 03:45:49 steve Exp $"
 #endif
 
 # include  <string>
@@ -56,6 +56,9 @@ class verinum {
 	// in some way.
       bool has_len() const { return has_len_; }
 
+      bool has_sign(bool flag) { has_sign_ = flag; return has_sign_; }
+      bool has_sign() const { return has_sign_; }
+
 	// A number is "defined" if there are no x or z bits in its value.
       bool is_defined() const;
 
@@ -82,6 +85,7 @@ class verinum {
       V* bits_;
       unsigned nbits_;
       bool has_len_;
+      bool has_sign_;
 
 	// These are some convenience flags that help us do a better
 	// job of pretty-printing values.
@@ -100,6 +104,9 @@ extern verinum operator - (const verinum&left, const verinum&right);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.9  2000/01/07 03:45:49  steve
+ *  Initial support for signed constants.
+ *
  * Revision 1.8  1999/11/06 16:00:17  steve
  *  Put number constants into a static table.
  *
