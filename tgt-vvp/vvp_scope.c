@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.104 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.105 2004/12/29 23:52:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -180,6 +180,21 @@ ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
 
       return out;
 }
+
+unsigned width_of_nexus(ivl_nexus_t nex)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig != 0)
+		  return ivl_signal_width(sig);
+      }
+
+      return 0;
+}
+
 
 ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
 {
@@ -431,7 +446,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	    break;
 
-
+	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
@@ -771,6 +786,8 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
       const char*lcasc = 0x0;
       char identity_val = '0';
 
+      unsigned vector_width = width_of_nexus(ivl_logic_pin(lptr, 0));
+
       ivl_drive_t str0, str1;
 
       int level;
@@ -950,7 +967,11 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 			}
 		  }
 		  for ( ;  pdx < inst+4 ;  pdx += 1) {
-			fprintf(vvp_out, ", C4<%c>", identity_val);
+			unsigned wdx;
+			fprintf(vvp_out, ", C4<");
+			for (wdx = 0 ; wdx < vector_width ;  wdx += 1)
+			      fprintf(vvp_out, "%c", identity_val);
+			fprintf(vvp_out, ">");
 		  }
 
 		  fprintf(vvp_out, ";\n");
@@ -1179,6 +1200,31 @@ static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
       fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
 }
 
+static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned ndata)
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < ndata ;  idx += 1) {
+	    unsigned width = ivl_lpm_width(net);
+	    unsigned pdx;
+
+	    assert(width > 0);
+	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
+	    ivl_signal_t sig = 0;
+
+	    ivl_nexus_ptr_t np;
+	    for (pdx = 0 ;  pdx < ivl_nexus_ptrs(nex) ;  pdx += 1) {
+		  np = ivl_nexus_ptr(nex,pdx);
+		  sig = ivl_nexus_ptr_sig(np);
+		  if (sig != 0)
+			break;
+	    }
+
+	    assert(sig != 0);
+
+	    fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
+      }
+}
+
 static void draw_lpm_add(ivl_lpm_t net)
 {
       unsigned width;
@@ -1241,6 +1287,34 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	      signed_string, width);
 
       draw_lpm_arith_a_b_inputs(net);
+
+      fprintf(vvp_out, ";\n");
+}
+
+static void draw_lpm_concat(ivl_lpm_t net)
+{
+      unsigned idx;
+      unsigned icnt = ivl_lpm_selects(net);
+
+	/* XXXX For now, only handle concatenation of 4 values. */
+      assert(icnt <= 4);
+
+      fprintf(vvp_out, "L_%s.%s .concat [",
+	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+	      vvp_mangle_id(ivl_lpm_basename(net)));
+
+      for (idx = 0 ;  idx < icnt ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_lpm_data(net, idx);
+	    unsigned nexus_width = width_of_nexus(nex);
+	    fprintf(vvp_out, " %u", nexus_width);
+      }
+
+      for ( ;  idx < 4 ;  idx += 1)
+	    fpritnf(vvp_out, " 0");
+
+      fprintf(vvp_out, "]");
+
+      draw_lpm_data_inputs(net, icnt);
 
       fprintf(vvp_out, ";\n");
 }
@@ -1515,6 +1589,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_part(net);
 	    return;
 
+	  case IVL_LPM_CONCAT:
+	    draw_lpm_concat(net);
+	    return;
+
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	    draw_lpm_eq(net);
@@ -1665,6 +1743,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.105  2004/12/29 23:52:09  steve
+ *  Generate code for the .concat functors, from NetConcat objects.
+ *  Generate C<> constants of correct widths for functor arguments.
+ *
  * Revision 1.104  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
@@ -1672,83 +1754,5 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
  *
  * Revision 1.103  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
- *
- * Revision 1.102  2004/09/25 21:04:25  steve
- *  More carefull about eliding bufzs that carry strength.
- *
- * Revision 1.101  2004/09/10 23:13:05  steve
- *  Compile cleanup of C code.
- *
- * Revision 1.100  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.99  2004/06/16 23:33:42  steve
- *  Generate .cmp/eq nodes instead of sea of gates.
- *
- * Revision 1.98  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.97  2003/10/09 23:45:03  steve
- *  Emit .event inputs before the .event statement.
- *
- * Revision 1.96  2003/08/22 23:14:26  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.95  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.94  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.93  2003/05/13 01:56:15  steve
- *  Allow primitives to hvae unconnected input ports.
- *
- * Revision 1.92  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.91  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.90  2003/03/13 06:07:11  steve
- *  Use %p name for all LPM functors.
- *
- * Revision 1.89  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.88  2003/03/06 01:17:46  steve
- *  Use number for event labels.
- *
- * Revision 1.87  2003/03/06 00:27:09  steve
- *  Use numbers for functor labels.
- *
- * Revision 1.86  2003/03/03 23:05:49  steve
- *  Printed nexus names need not use ivl_nexus_name.
- *
- * Revision 1.85  2003/03/03 01:48:41  steve
- *  Only give scope basename to .scope directives.
- *
- * Revision 1.84  2003/02/25 03:40:45  steve
- *  Eliminate use of ivl_lpm_name function.
- *
- * Revision 1.83  2003/01/26 21:16:00  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.82  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.81  2002/11/21 18:08:09  steve
- *  Better handling of select width of shifters.
- *
- * Revision 1.80  2002/10/23 04:39:35  steve
- *  draw lpm ff with aset_expr taken into account.
- *
- * Revision 1.79  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
  */
 
