@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.97 1999/09/23 00:21:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.98 1999/09/23 02:28:27 steve Exp $"
 #endif
 
 /*
@@ -1364,8 +1364,8 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 	    tmp->set_line(*this);
 	    flag = tmp->set_width(1);
 	    if (flag == false) {
-		  cerr << get_line() << ": expression bit width"
-			" is ambiguous." << endl;
+		  cerr << get_line() << ": internal error: "
+			"expression bit width of comparison != 1." << endl;
 		  des->errors += 1;
 	    }
 	    break;
@@ -2631,6 +2631,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.98  1999/09/23 02:28:27  steve
+ *  internal error message for funky comparison width.
+ *
  * Revision 1.97  1999/09/23 00:21:54  steve
  *  Move set_width methods into a single file,
  *  Add the NetEBLogic class for logic expressions,
