@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.60 2001/01/24 02:52:30 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.61 2001/01/25 02:05:16 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1700,6 +1700,30 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 	    break;
       }
 
+      NetNet* sig;
+      NetLogic*gate;
+
+	// Handle the special case of a 2's complement of a constant
+	// value. This can be reduced to a no-op on a precalculated
+	// result.
+      if (op_ == '-') do {
+	    verinum*val = expr_->eval_const(des, path);
+	    if (val == 0)
+		  break;
+
+	    sig = new NetNet(scope, des->local_symbol(path),
+			     NetNet::WIRE, width);
+	    sig->local_flag(true);
+
+	    verinum tmp(v_not(*val) + verinum(1UL, width), width);
+	    NetConst*con = new NetConst(des->local_symbol(path), tmp);
+	    for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		  connect(sig->pin(idx), con->pin(idx));
+
+	    des->add_node(con);
+	    return sig;
+      } while (0);
+
       NetNet* sub_sig = expr_->elaborate_net(des, path, owidth, 0, 0, 0);
       if (sub_sig == 0) {
 	    des->errors += 1;
@@ -1707,8 +1731,6 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
       }
       assert(sub_sig);
 
-      NetNet* sig;
-      NetLogic*gate;
       switch (op_) {
 	  case '~': // Bitwise NOT
 	    sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE,
@@ -1880,6 +1902,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.61  2001/01/25 02:05:16  steve
+ *  Handle wide net constants with unary minus.
+ *
  * Revision 1.60  2001/01/24 02:52:30  steve
  *  Handle some special cases of unary 2's complement,
  *  and improve netlist expression width handling.
