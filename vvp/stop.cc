@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.1 2003/02/21 03:40:35 steve Exp $"
+#ident "$Id: stop.cc,v 1.2 2003/02/22 06:32:36 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,8 @@
 # include  "config.h"
 
 
+# include  "vpi_priv.h"
+# include  "vthread.h"
 # include  "schedule.h"
 # include  <stdio.h>
 #ifdef HAVE_LIBREADLINE
@@ -46,6 +48,20 @@ static bool interact_flag = true;
 static void invoke_systf(const char*txt)
 {
       printf("**** System invocation not supported yet.\n");
+}
+
+static void cmd_call(unsigned argc, char*argv[])
+{
+      if (argc <= 1)
+	    return;
+
+      vpiHandle call_handle = vpip_build_vpi_call(argv[1], 0, 0, 0, 0);
+      if (call_handle == 0)
+	    return;
+
+      vpip_execute_vpi_call(0, call_handle);
+
+      vpi_free_object(call_handle);
 }
 
 static void cmd_cont(unsigned, char*[])
@@ -79,6 +95,8 @@ struct {
       void (*proc)(unsigned argc, char*argv[]);
       const char*summary;
 } cmd_table[] = {
+      { "call",   &cmd_call,
+        "Call a system task"},
       { "cont",   &cmd_cont,
         "Resume (continue) the simulation"},
       { "finish", &cmd_finish,
@@ -172,6 +190,9 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.2  2003/02/22 06:32:36  steve
+ *  Basic support for system task calls.
+ *
  * Revision 1.1  2003/02/21 03:40:35  steve
  *  Add vpiStop and interactive mode.
  *
