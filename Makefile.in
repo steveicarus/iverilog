@@ -18,12 +18,12 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.30 1999/11/29 17:02:21 steve Exp $"
+#ident "$Id: Makefile.in,v 1.31 1999/12/18 04:15:01 steve Exp $"
 #
 #
 SHELL = /bin/sh
 
-VERSION = 0.0
+VERSION = 0.2PRE
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -47,7 +47,7 @@ CPPFLAGS = @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@ -I$(srcdir)
 LDFLAGS = @LDFLAGS@
 
-all: ivl verilog
+all: ivl verilog gverilog
 	cd vpi ; $(MAKE) all
 	cd vvm ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
@@ -96,6 +96,9 @@ verilog: $(srcdir)/verilog.sh
 ivl: $O
 	$(CXX) $(CXXFLAGS) -o ivl $O
 
+gverilog: gverilog.c
+	$(CC) $(CPPFLAGS) -o gverilog -DLIBDIR='"@libdir@"' -DINCDIR='"@includedir@"' gverilog.c
+
 %.o dep/%.d: %.cc
 	@[ -d dep ] || mkdir dep
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
@@ -113,13 +116,16 @@ parse.h parse.cc: $(srcdir)/parse.y
 lexor.cc: $(srcdir)/lexor.lex
 	flex -PVL -s -olexor.cc $(srcdir)/lexor.lex
 
-install: all installdirs $(bindir)/verilog $(bindir)/ivl $(mandir)/man1/verilog.1
+install: all installdirs $(bindir)/verilog $(bindir)/gverilog $(bindir)/ivl $(mandir)/man1/verilog.1
 	cd vpi ; $(MAKE) install
 	cd vvm ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 
 $(bindir)/verilog: ./verilog
 	$(INSTALL_PROGRAM) ./verilog $(bindir)/verilog
+
+$(bindir)/gverilog: ./gverilog
+	$(INSTALL_PROGRAM) ./gverilog $(bindir)/gverilog
 
 $(bindir)/ivl: ivl
 	$(INSTALL_PROGRAM) ./ivl $(bindir)/ivl
