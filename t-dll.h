@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.5 2000/09/24 02:21:53 steve Exp $"
+#ident "$Id: t-dll.h,v 1.6 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -73,6 +73,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void proc_condit(const NetCondit*);
       bool proc_delay(const NetPDelay*);
       void proc_stask(const NetSTask*);
+      bool proc_trigger(const NetEvTrig*);
       bool proc_wait(const NetEvWait*);
       void proc_while(const NetWhile*);
 
@@ -93,9 +94,15 @@ struct dll_target  : public target_t, public expr_scan_t {
  */
 struct ivl_expr_s {
       ivl_expr_type_t type_;
-      unsigned width_;
+
+      unsigned width_  :24;
+      unsigned signed_ : 1;
 
       union {
+	    struct {
+		  char*bits_;
+	    } number_;
+
 	    struct {
 		  char*value_;
 	    } string_;
@@ -154,6 +161,10 @@ struct ivl_statement_s {
 		  ivl_expr_t*parms_;
 	    } stask_;
 
+	    struct { /* IVL_ST_TRIGGER */
+		  ivl_net_event_t event_;
+	    } trig_;
+
 	    struct { /* IVL_ST_WAIT */
 		  int cond_; /* XXXX */
 		  ivl_statement_t stmt_;
@@ -168,6 +179,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.6  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.5  2000/09/24 02:21:53  steve
  *  Add support for signal expressions.
  *

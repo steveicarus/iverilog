@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.3 2000/09/24 15:46:00 steve Exp $"
+#ident "$Id: verilog.c,v 1.4 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 /*
@@ -119,6 +119,17 @@ static void show_expression(ivl_expr_t net)
 	    return;
 
       switch (ivl_expr_type(net)) {
+
+	  case IVL_EX_NUMBER: {
+		int sigflag     = ivl_expr_signed(net);
+		unsigned idx, width  = ivl_expr_width(net);
+		const char*bits = ivl_expr_bits(net);
+
+		fprintf(out, "%u'%sb", width, sigflag? "s" : "");
+		for (idx = width ;  idx > 0 ;  idx -= 1)
+		      fprintf(out, "%c", bits[idx-1]);
+		break;
+	  }
 
 	  case IVL_EX_STRING:
 	    fprintf(out, "\"%s\"", ivl_expr_string(net));
@@ -230,6 +241,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.4  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.3  2000/09/24 15:46:00  steve
  *  API access to signal type and port type.
  *

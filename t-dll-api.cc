@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.6 2000/09/24 15:46:00 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.7 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -41,10 +41,22 @@ extern "C" const char*ivl_get_root_name(ivl_design_t des)
       return ((const Design*)des)->find_root_scope()->name().c_str();
 }
 
+extern "C" const char* ivl_expr_bits(ivl_expr_t net)
+{
+      assert(net && (net->type_ == IVL_EX_NUMBER));
+      return net->u_.number_.bits_;
+}
+
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_SIGNAL);
       return net->u_.subsig_.name_;
+}
+
+extern "C" int ivl_expr_signed(ivl_expr_t net)
+{
+      assert(net);
+      return net->signed_;
 }
 
 extern "C" const char* ivl_expr_string(ivl_expr_t net)
@@ -263,6 +275,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.7  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.6  2000/09/24 15:46:00  steve
  *  API access to signal type and port type.
  *

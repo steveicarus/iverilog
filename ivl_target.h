@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.12 2000/09/24 15:46:00 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.13 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -146,6 +146,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_DELAY,
       IVL_ST_DELAYX,
       IVL_ST_STASK,
+      IVL_ST_TRIGGER,
       IVL_ST_WAIT,
       IVL_ST_WHILE
 } ivl_statement_type_t;
@@ -174,7 +175,9 @@ extern const char* ivl_get_root_name(ivl_design_t net);
  */
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 
+extern const char* ivl_expr_bits(ivl_expr_t net);
 extern const char* ivl_expr_name(ivl_expr_t net);
+extern int         ivl_expr_signed(ivl_expr_t net);
 extern const char* ivl_expr_string(ivl_expr_t net);
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
@@ -369,6 +372,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.13  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.12  2000/09/24 15:46:00  steve
  *  API access to signal type and port type.
  *

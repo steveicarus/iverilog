@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.2 2000/09/24 02:21:53 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.3 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 # include  "t-dll.h"
 # include  "netlist.h"
 # include  <assert.h>
-
+# include  <malloc.h>
 
 void dll_target::expr_const(const NetEConst*net)
 {
@@ -38,8 +38,30 @@ void dll_target::expr_const(const NetEConst*net)
 	    expr_->u_.string_.value_ =strdup(net->value().as_string().c_str());
 
       } else {
+	    verinum val = net->value();
+	    unsigned idx;
+	    char*bits;
 	    expr_->type_ = IVL_EX_NUMBER;
 	    expr_->width_= net->expr_width();
+	    expr_->signed_ = val.has_sign()? 1 : 0;
+	    expr_->u_.number_.bits_ = bits = (char*)malloc(expr_->width_);
+	    for (idx = 0 ;  idx < expr_->width_ ;  idx += 1)
+		  switch (val.get(idx)) {
+		      case verinum::V0:
+			bits[idx] = '0';
+			break;
+		      case verinum::V1:
+			bits[idx] = '1';
+			break;
+		      case verinum::Vx:
+			bits[idx] = 'x';
+			break;
+		      case verinum::Vz:
+			bits[idx] = 'z';
+			break;
+		      default:
+			assert(0);
+		  }
 
       }
 }
@@ -58,6 +80,9 @@ void dll_target::expr_signal(const NetESignal*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.3  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.2  2000/09/24 02:21:53  steve
  *  Add support for signal expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.11 2000/09/24 15:46:00 steve Exp $"
+#ident "$Id: stub.c,v 1.12 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 /*
@@ -146,13 +146,33 @@ static void show_expression(ivl_expr_t net, unsigned ind)
       const ivl_expr_type_t code = ivl_expr_type(net);
 
       switch (code) {
+
+	  case IVL_EX_NUMBER: {
+		const char*bits = ivl_expr_bits(net);
+		unsigned width = ivl_expr_width(net);
+		unsigned idx;
+
+		fprintf(out, "%*s<number=%u'b", ind, "", width);
+		for (idx = width ;  idx > 0 ;  idx -= 1)
+		      fprintf(out, "%c", bits[idx-1]);
+
+		fprintf(out, ", %s>\n", ivl_expr_signed(net)? "signed"
+			: "unsigned");
+		break;
+	  }
+
 	  case IVL_EX_STRING:
-	    fprintf(out, "%*s<string=%s, width=%u>\n", ind, "",
+	    fprintf(out, "%*s<string=\"%s\", width=%u>\n", ind, "",
 		    ivl_expr_string(net), ivl_expr_width(net));
 	    break;
-	  default:
+
+	  case IVL_EX_SIGNAL:
 	    fprintf(out, "%*s<signal=%s, width=%u>\n", ind, "",
 		    ivl_expr_name(net), ivl_expr_width(net));
+	    break;
+
+	  default:
+	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
 	    break;
       }
 }
@@ -214,6 +234,11 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_ST_TRIGGER:
+	    fprintf(out, "%*s-> ...\n", ind, "");
+	    break;
+
+
 	  case IVL_ST_WAIT:
 	    fprintf(out, "%*s@(...)\n", ind, "");
 	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
@@ -247,6 +272,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.12  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.11  2000/09/24 15:46:00  steve
  *  API access to signal type and port type.
  *

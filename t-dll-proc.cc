@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.4 2000/09/23 05:15:07 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.5 2000/09/26 00:30:07 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -214,6 +214,15 @@ void dll_target::proc_stask(const NetSTask*net)
 
 }
 
+bool dll_target::proc_trigger(const NetEvTrig*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      stmt_cur_->type_ = IVL_ST_TRIGGER;
+      return true;
+}
+
 bool dll_target::proc_wait(const NetEvWait*net)
 {
       assert(stmt_cur_);
@@ -254,6 +263,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.5  2000/09/26 00:30:07  steve
+ *  Add EX_NUMBER and ST_TRIGGER to dll-api.
+ *
  * Revision 1.4  2000/09/23 05:15:07  steve
  *  Add enough tgt-verilog code to support hello world.
  *
