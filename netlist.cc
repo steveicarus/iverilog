@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.126 2000/05/19 01:43:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.127 2000/05/27 19:33:23 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -163,6 +163,11 @@ void Link::unlink()
       next_->prev_ = prev_;
       prev_->next_ = next_;
       next_ = prev_ = this;
+}
+
+bool Link::is_equal(const Link&that) const
+{
+      return (node_ == that.node_) && (pin_ == that.pin_);
 }
 
 bool Link::is_linked() const
@@ -399,10 +404,37 @@ const Link& NetObj::pin(unsigned idx) const
       return pins_[idx];
 }
 
+NetNode::NetNode(const string&n, unsigned npins)
+: NetObj(n, npins), node_next_(0), node_prev_(0), design_(0)
+{
+}
+
 NetNode::~NetNode()
 {
       if (design_)
 	    design_->del_node(this);
+}
+
+NetNode* NetNode::next_node()
+{
+      for (Link*pin0 = pin(0).next_link()
+		 ; *pin0 != pin(0) ;  pin0 = pin0->next_link()) {
+	    NetNode*cur = dynamic_cast<NetNode*>(pin0->get_obj());
+	    if (cur == 0)
+		  continue;
+	    if (cur->pin_count() != pin_count())
+		  continue;
+
+
+	    bool flag = true;
+	    for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
+		  flag = flag && pin(idx).is_linked(cur->pin(idx));
+
+	    if (flag == true)
+		  return cur;
+      }
+
+      return 0;
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
@@ -2604,6 +2636,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.127  2000/05/27 19:33:23  steve
+ *  Merge similar probes within a module.
+ *
  * Revision 1.126  2000/05/19 01:43:16  steve
  *  Accept different widths for add operands.
  *

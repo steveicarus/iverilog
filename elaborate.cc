@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.173 2000/05/16 04:05:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.174 2000/05/27 19:33:23 steve Exp $"
 #endif
 
 /*
@@ -1832,8 +1832,17 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	   expression (and not a named event) then add this
 	   event. Otherwise, we didn't use it so delete it. */
       if (expr_count > 0) {
-	    scope->add_event(ev);
-	    wa->add_event(ev);
+	    if (NetEvent*match = ev->find_similar_event()) {
+		  cerr << "XXXX Found similar event for " <<
+			ev->name() << endl;
+		  delete ev;
+		  wa->add_event(match);
+
+	    } else {
+
+		  scope->add_event(ev);
+		  wa->add_event(ev);
+	    }
       } else {
 	    delete ev;
       }
@@ -2429,6 +2438,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.174  2000/05/27 19:33:23  steve
+ *  Merge similar probes within a module.
+ *
  * Revision 1.173  2000/05/16 04:05:16  steve
  *  Module ports are really special PEIdent
  *  expressions, because a name can be used

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.138 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: netlist.h,v 1.139 2000/05/27 19:33:23 steve Exp $"
 #endif
 
 /*
@@ -160,8 +160,9 @@ class Link {
 	// Return true if this link is connected to any pin of r.
       bool is_linked(const NetObj&r) const;
 
-      bool is_equal(const Link&that) const
-      { return (node_ == that.node_) && (pin_ == that.pin_); }
+	// Return true if this is the same pin of the same object of
+	// that link.
+      bool is_equal(const Link&that) const;
 
 	// Return information about the object that this link is
 	// a part of.
@@ -205,10 +206,13 @@ class Link {
 class NetNode  : public NetObj {
 
     public:
-      explicit NetNode(const string&n, unsigned npins)
-      : NetObj(n, npins), node_next_(0), node_prev_(0), design_(0) { }
+      explicit NetNode(const string&n, unsigned npins);
 
       virtual ~NetNode();
+
+	// This method locates the next node that has all its pins
+	// connected to the same of my own pins.
+      NetNode*next_node();
 
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump_node(ostream&, unsigned) const;
@@ -1401,6 +1405,8 @@ class NetEvent : public LineInfo {
       NetScope* scope();
       const NetScope* scope() const;
 
+      NetEvent* find_similar_event();
+
     private:
       string name_;
 
@@ -1479,6 +1485,7 @@ class NetEvProbe  : public NetNode {
       ~NetEvProbe();
 
       edge_t edge() const;
+      NetEvent* event();
       const NetEvent* event() const;
 
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -2575,6 +2582,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.139  2000/05/27 19:33:23  steve
+ *  Merge similar probes within a module.
+ *
  * Revision 1.138  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *

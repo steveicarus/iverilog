@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.6 2000/04/18 04:50:20 steve Exp $"
+#ident "$Id: net_event.cc,v 1.7 2000/05/27 19:33:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -93,6 +93,73 @@ unsigned NetEvent::nwait() const
       return waitref_;
 }
 
+NetEvent* NetEvent::find_similar_event()
+{
+      if (probes_ == 0)
+	    return 0;
+#define NCAND 256
+      NetEvent*cand[NCAND];
+      bool cflg[NCAND];
+      unsigned ncand = 0;
+
+      NetEvProbe*cur = probes_;
+
+	/* First locate all the canditate events from the probe
+	   objects that are connected to them. */
+
+      for (NetNode*idx = cur->next_node()
+		 ; idx && (idx != cur) ;  idx = idx->next_node()) {
+	    NetEvProbe*tmp = dynamic_cast<NetEvProbe*>(idx);
+	    if (tmp == 0)
+		  continue;
+	    if (tmp->edge() != cur->edge())
+		  continue;
+
+	    cand[ncand++] = tmp->event();
+	    assert(ncand <= NCAND);
+      }
+
+      for (cur = cur->enext_ ;  cur && ncand ;  cur = cur->enext_) {
+	    for (unsigned idx = 0 ;  idx < ncand ;  idx += 1)
+		  cflg[idx] = false;
+
+	    for (NetNode*idx = cur->next_node()
+		       ; idx && (idx != cur) ;  idx = idx->next_node()) {
+		  NetEvProbe*tmp = dynamic_cast<NetEvProbe*>(idx);
+		  if (tmp == 0)
+			continue;
+		  if (tmp->edge() != cur->edge())
+			continue;
+
+		  for (unsigned srch = 0 ;  srch < ncand ;  srch += 1)
+			if (cand[srch] == tmp->event()) {
+			      cflg[srch] = true;
+			      break;
+			}
+	    }
+
+	    for (unsigned idx = 0 ;  idx < ncand ;  ) {
+		  if (cflg[idx]) {
+			idx += 1;
+			continue;
+		  }
+
+		  for (unsigned tmp = idx ;  idx+1 < ncand ;  idx += 1) {
+			cflg[tmp] = cflg[tmp+1];
+			cand[tmp] = cand[tmp+1];
+		  }
+		  ncand -= 1;
+	    }
+      }
+
+      for (unsigned idx = 0 ;  idx < ncand ;  idx += 1) {
+	    if (cand[idx]->nprobe() == nprobe())
+		  return cand[idx];
+      }
+
+      return 0;
+}
+
 NetEvTrig::NetEvTrig(NetEvent*ev)
 : event_(ev)
 {
@@ -153,6 +220,11 @@ NetEvProbe::~NetEvProbe()
 NetEvProbe::edge_t NetEvProbe::edge() const
 {
       return edge_;
+}
+
+NetEvent* NetEvProbe::event()
+{
+      return event_;
 }
 
 const NetEvent* NetEvProbe::event() const
@@ -225,6 +297,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.7  2000/05/27 19:33:23  steve
+ *  Merge similar probes within a module.
+ *
  * Revision 1.6  2000/04/18 04:50:20  steve
  *  Clean up unneeded NetEvent objects.
  *
