@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.41 2003/06/17 16:55:08 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.42 2003/06/22 04:19:26 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -413,6 +413,10 @@ vpiHandle vpi_handle(int type, vpiHandle ref)
 	    return &vpip_cur_task->base;
       }
 
+      if (ref == 0) {
+	    fprintf(stderr, "internal error: vpi_handle(type=%d, ref=0)\n",
+		    type);
+      }
       assert(ref);
 
       if (ref->vpi_type->handle_ == 0) {
@@ -640,6 +644,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.42  2003/06/22 04:19:26  steve
+ *  vpi_handle diagnostic message.
+ *
  * Revision 1.41  2003/06/17 16:55:08  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens
