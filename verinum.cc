@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.42 2004/02/17 06:52:55 steve Exp $"
+#ident "$Id: verinum.cc,v 1.43 2004/05/18 18:43:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -45,6 +45,22 @@ verinum::verinum(const string&str)
 : has_len_(true), has_sign_(false), string_flag_(true)
 {
       nbits_ = str.length() * 8;
+
+	// Special case: The string "" is 8 bits of 0.
+      if (nbits_ == 0) {
+	    nbits_ = 8;
+	    bits_ = new V [nbits_];
+	    bits_[0] = V0;
+	    bits_[1] = V0;
+	    bits_[2] = V0;
+	    bits_[3] = V0;
+	    bits_[4] = V0;
+	    bits_[5] = V0;
+	    bits_[6] = V0;
+	    bits_[7] = V0;
+	    return;
+      }
+
       bits_ = new V [nbits_];
 
       unsigned idx, cp;
@@ -926,6 +942,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.43  2004/05/18 18:43:15  steve
+ *  Handle null string as a single nul character.
+ *
  * Revision 1.42  2004/02/17 06:52:55  steve
  *  Support unsigned divide of huge numbers.
  *
