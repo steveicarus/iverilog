@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.10 2001/11/02 05:43:11 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.11 2002/01/06 00:48:39 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -28,6 +28,14 @@
 #endif
 # include  <stdlib.h>
 # include  <assert.h>
+
+static vpiHandle *vpip_root_table_ptr = 0;
+static unsigned   vpip_root_table_cnt = 0;
+
+vpiHandle vpip_make_root_iterator(void)
+{
+      return vpip_make_iterator(vpip_root_table_cnt, vpip_root_table_ptr);
+}
 
 static char* scope_get_str(int code, vpiHandle obj)
 {
@@ -216,6 +224,12 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
 	    scope->scope = (struct __vpiScope*)obj;
       } else {
 	    scope->scope = 0x0;
+
+	    unsigned cnt = vpip_root_table_cnt + 1;
+	    vpip_root_table_ptr = (vpiHandle*)
+		  realloc(vpip_root_table_ptr, cnt * sizeof(vpiHandle));
+	    vpip_root_table_ptr[vpip_root_table_cnt] = &scope->base;
+	    vpip_root_table_cnt = cnt;
       }
 }
 
@@ -238,6 +252,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.11  2002/01/06 00:48:39  steve
+ *  VPI access to root module scopes.
+ *
  * Revision 1.10  2001/11/02 05:43:11  steve
  *  Comment the scope type parser.
  *
@@ -252,22 +269,5 @@ void vpip_attach_to_current_scope(vpiHandle obj)
  *
  * Revision 1.6  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
- *
- * Revision 1.5  2001/06/10 16:47:49  steve
- *  support scan of scope from VPI.
- *
- * Revision 1.4  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.3  2001/04/03 03:46:14  steve
- *  VPI access time as a decimal string, and
- *  stub vpi access to the scopes.
- *
- * Revision 1.2  2001/03/21 05:13:03  steve
- *  Allow var objects as vpiHandle arguments to %vpi_call.
- *
- * Revision 1.1  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
  */
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.24 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.25 2002/01/06 00:48:39 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -93,6 +93,7 @@ struct __vpiScope {
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
+extern vpiHandle vpip_make_root_iterator(void);
 
 /*
  * Signals include the variable types (reg, integer, time) and are
@@ -241,6 +242,9 @@ extern void vpip_set_time_precision(int pres);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.25  2002/01/06 00:48:39  steve
+ *  VPI access to root module scopes.
+ *
  * Revision 1.24  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

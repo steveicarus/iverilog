@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.10 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.11 2002/01/06 00:48:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -122,8 +122,24 @@ vpiHandle vpi_handle(int type, vpiHandle ref)
  * the specified reference. It is up to the iterate_ method to
  * allocate a properly formed iterator.
  */
+static vpiHandle vpi_iterate_global(int type)
+{
+      switch (type) {
+	  case vpiModule:
+	    return vpip_make_root_iterator();
+
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
 vpiHandle vpi_iterate(int type, vpiHandle ref)
 {
+      if (ref == 0)
+	    return vpi_iterate_global(type);
+
       assert(ref->vpi_type->iterate_);
       return (ref->vpi_type->iterate_)(type, ref);
 }
@@ -154,6 +170,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.11  2002/01/06 00:48:39  steve
+ *  VPI access to root module scopes.
+ *
  * Revision 1.10  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.
