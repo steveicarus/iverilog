@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.30 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.31 2001/06/18 01:09:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -950,6 +950,18 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
       ivl_expr_t sub = ivl_expr_oper1(exp);
+      const char *rop;
+      int inv = 0;
+
+      switch (ivl_expr_opcode(exp)) {
+	  case '!': rop = "nor";  break;
+	  case '&': rop = "and";  break;
+	  case '|': rop = "or";   break;
+	  case '^': rop = "xor";  break;
+	  case 'A': rop = "nand"; break;
+	  case 'N': rop = "nor";  break;
+	  case 'X': rop = "xnor"; break;
+      }
 
       switch (ivl_expr_opcode(exp)) {
 	  case '~':
@@ -958,7 +970,13 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '!':
-	  case 'N': /* Reduction NOR ~| */
+	  case 'N':
+	  case 'A':
+	  case 'X':
+	    inv = 1;
+	  case '&':
+	  case '|':
+	  case '^':
 	    res = draw_eval_expr(sub);
 	    if (res.wid > 1) {
 		    /* a ! on a vector is implemented with a reduction
@@ -969,11 +987,12 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 		  assert(res.base >= 4);
 		  tmp.base = res.base+1;
 		  tmp.wid = res.wid - 1;
-		  fprintf(vvp_out, "    %%nor/r %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%%s/r %u, %u, %u;\n",
+			  rop,
 			  res.base, res.base, res.wid);
 		  clr_vector(tmp);
 		  res.wid = 1;
-	    } else {
+	    } else if (inv) {
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
 	    }
 	    break;
@@ -1048,6 +1067,10 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.31  2001/06/18 01:09:32  steve
+ *  More behavioral unary reduction operators.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.30  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.43 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: vthread.cc,v 1.44 2001/06/18 01:09:32 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -869,12 +869,84 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
 
+      unsigned lb = 1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == 1) {
+		  lb = 0;
+		  break;
+	    }
+
+	    if (rb != 0)
+		  lb = 2;
+      }
+
+      thr_put_bit(thr, cp->bit_idx1, lb);
+
+      return true;
+}
+
+bool of_ANDR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned lb = 1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == 0) {
+		  lb = 0;
+		  break;
+	    }
+
+	    if (rb != 1)
+		  lb = 2;
+      }
+
+      thr_put_bit(thr, cp->bit_idx1, lb);
+
+      return true;
+}
+
+bool of_NANDR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
       unsigned lb = 0;
       unsigned idx2 = cp->bit_idx2;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    unsigned rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == 0) {
+		  lb = 1;
+		  break;
+	    }
+
+	    if (rb != 1)
+		  lb = 2;
+      }
+
+      thr_put_bit(thr, cp->bit_idx1, lb);
+
+      return true;
+}
+
+bool of_ORR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned lb = 0;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned rb = thr_get_bit(thr, idx2+idx);
 	    if (rb == 1) {
 		  lb = 1;
 		  break;
@@ -886,6 +958,52 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
 
       thr_put_bit(thr, cp->bit_idx1, lb);
 
+      return true;
+}
+
+bool of_XORR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned lb = 0;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == 1)
+		  lb ^= 1;
+	    else if (rb != 0) {
+		  lb = 2;
+		  break;
+	    }
+      }
+      
+      thr_put_bit(thr, cp->bit_idx1, lb);
+      
+      return true;
+}
+
+bool of_XNORR(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+
+      unsigned lb = 1;
+      unsigned idx2 = cp->bit_idx2;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+
+	    unsigned rb = thr_get_bit(thr, idx2+idx);
+	    if (rb == 1)
+		  lb ^= 1;
+	    else if (rb != 0) {
+		  lb = 2;
+		  break;
+	    }
+      }
+      
+      thr_put_bit(thr, cp->bit_idx1, lb);
+      
       return true;
 }
 
@@ -1087,6 +1205,10 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.44  2001/06/18 01:09:32  steve
+ *  More behavioral unary reduction operators.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.43  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both

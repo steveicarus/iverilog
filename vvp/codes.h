@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.28 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: codes.h,v 1.29 2001/06/18 01:09:32 steve Exp $"
 #endif
 
 
@@ -37,6 +37,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  */
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
+extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
@@ -64,16 +65,20 @@ extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
+extern bool of_NANDR(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
+extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_XNOR(vthread_t thr, vvp_code_t code);
+extern bool of_XNORR(vthread_t thr, vvp_code_t code);
 extern bool of_XOR(vthread_t thr, vvp_code_t code);
+extern bool of_XORR(vthread_t thr, vvp_code_t code);
 
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
@@ -129,6 +134,10 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.29  2001/06/18 01:09:32  steve
+ *  More behavioral unary reduction operators.
+ *  (Stephan Boettcher)
+ *
  * Revision 1.28  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
