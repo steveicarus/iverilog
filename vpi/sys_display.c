@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.30 2001/10/25 04:19:53 steve Exp $"
+#ident "$Id: sys_display.c,v 1.31 2001/11/02 05:56:47 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,13 +87,16 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		  cp += cnt;
 
 	    } else if (*cp == '%') {
-		  int fsize = -1;
+		  int fsize = -1, ffsize = -1;
 		  int do_num = 0;
 
 		  cp += 1;
 		  if (isdigit(*cp))
 			fsize = strtoul(cp, &cp, 10);
-
+		  if (*cp == '.') {
+			cp += 1;
+			ffsize = strtoul(cp, &cp, 10);
+		  }
 		  switch (*cp) {
 		      case 0:
 			break;
@@ -109,6 +112,13 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			value.format = vpiDecStrVal;
 			cp += 1;
 			break;
+#if 0
+		      case 'f':
+			do_num = 1;
+			value.format = vpiDecStrVal;
+			cp += 1;
+			break;
+#endif
 		      case 'h':
 		      case 'H':
 		      case 'x':
@@ -518,6 +528,7 @@ static int sys_fdisplay_calltf(char *name)
       int type;
       s_vpi_value value;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle scope = vpi_handle(vpiScope, sys);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
 
@@ -538,6 +549,8 @@ static int sys_fdisplay_calltf(char *name)
       vpi_get_value(item, &value);
       mcd = value.value.integer;
 
+      assert(scope);
+      info.scope = scope;
       array_from_iterator(&info, argv);
       do_display(mcd, &info);
       free(info.items);
@@ -745,6 +758,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.31  2001/11/02 05:56:47  steve
+ *  initialize scope for %m in $fdisplay.
+ *
  * Revision 1.30  2001/10/25 04:19:53  steve
  *  VPI support for callback to return values.
  *
