@@ -16,7 +16,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.3 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: vector.c,v 1.4 2003/07/03 17:44:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -27,7 +27,7 @@
  * wider operatons will need to be partitioned. For example
  * shift operations on WIDE (say > 64k bit) registers.
  */
-#define MAX_VEC	(128*1024)
+#define MAX_VEC	(256*1024)
 
 static struct allocation_score_s {
       ivl_expr_t exp;
@@ -211,6 +211,9 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 
 /*
  * $Log: vector.c,v $
+ * Revision 1.4  2003/07/03 17:44:10  steve
+ *  Wider thread vector limit.
+ *
  * Revision 1.3  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *
