@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.h,v 1.2 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: priv.h,v 1.3 2005/03/05 05:47:42 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -39,6 +39,8 @@ extern int stub_errors;
  * Show the details of the expression.
  */
 extern void show_expression(ivl_expr_t net, unsigned ind);
+
+extern void show_memory(ivl_memory_t mem);
 
 /*
  * Show the statement.

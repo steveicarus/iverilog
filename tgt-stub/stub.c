@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.112 2005/03/03 04:34:42 steve Exp $"
+#ident "$Id: stub.c,v 1.113 2005/03/05 05:47:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -48,6 +48,14 @@ unsigned width_of_nexus(ivl_nexus_t nex)
 	/* ERROR: A nexus should have at least one signal to carry
 	   properties like width. */
       return 0;
+}
+
+void show_memory_expression(ivl_expr_t net, unsigned ind)
+{
+      unsigned width = ivl_expr_width(net);
+
+      fprintf(out, "%*s<memory width=%u>\n", ind, "",
+	      width);
 }
 
 /*
@@ -116,6 +124,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    for (idx = 0 ;  idx < ivl_expr_parms(net) ;  idx += 1)
 		  show_expression(ivl_expr_parm(net, idx), ind+3);
 
+	    break;
+
+	  case IVL_EX_MEMORY:
+	    show_memory_expression(net, ind);
 	    break;
 
 	  case IVL_EX_NUMBER: {
@@ -1125,6 +1137,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.113  2005/03/05 05:47:42  steve
+ *  Handle memory words in l-value concatenations.
+ *
  * Revision 1.112  2005/03/03 04:34:42  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

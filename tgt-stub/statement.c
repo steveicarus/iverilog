@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: statement.c,v 1.4 2005/02/14 01:51:39 steve Exp $"
+#ident "$Id: statement.c,v 1.5 2005/03/05 05:47:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -33,11 +33,20 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
       if ( (mem = ivl_lval_mem(lval)) ) {
 
 	    ivl_scope_t scope = ivl_memory_scope(mem);
-	    fprintf(out, "%*s%s . %s[\n", ind, "",
+	    fprintf(out, "%*s{ %s . %s [\n", ind, "",
 		    ivl_scope_name(scope),
 		    ivl_memory_basename(mem));
 	    show_expression(ivl_lval_idx(lval), ind+4);
-	    fprintf(out, "%*s]\n", ind, "");
+	    fprintf(out, "%*s] width=%u }\n", ind, "", ivl_lval_width(lval));
+
+	      /* When the l-value is a memory word, the lval_width
+		 must exactly match the word width. */
+	    if (ivl_lval_width(lval) != ivl_memory_width(mem)) {
+		  fprintf(out, "%*sERROR: l-value width mismatch with "
+			  " memory word width=%u\n", ind, "",
+			  ivl_memory_width(mem));
+		  stub_errors += 1;
+	    }
 
       } else if ( (var = ivl_lval_var(lval)) ) {
 

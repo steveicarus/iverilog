@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.144 2005/03/03 04:34:42 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.145 2005/03/05 05:47:42 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -954,6 +954,13 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  * bit select. If the bit select base is non-constant, then the
  * ivl_lval_mux will contain an expression. If there is a mux
  * expression, then the ivl_lval_part_off result can be ignored.
+ *
+ * - Memory words
+ * If the l-value is a memory word, the ivl_lval_mem function returns
+ * a non-nil value. The ivl_lval_idx function will return an
+ * expression that calculates an address for the memory. The compiler
+ * will assure that the ivl_lval_width will exactly match the
+ * ivl_memory_width of the memory word.
  */
 
 extern unsigned    ivl_lval_width(ivl_lval_t net);
@@ -1537,6 +1544,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.145  2005/03/05 05:47:42  steve
+ *  Handle memory words in l-value concatenations.
+ *
  * Revision 1.144  2005/03/03 04:34:42  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *

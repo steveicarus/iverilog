@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.102 2005/03/03 04:34:42 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.103 2005/03/05 05:47:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -110,17 +110,6 @@ static void set_to_lvariable(ivl_lval_t lval,
 
       }
 }
-
-#if 0
-/* OBSOLETE */
-static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
-{
-      if (idx)
-	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
-      fprintf(vvp_out, "    %%set/m M_%s, %u;\n",
-	      vvp_memory_label(mem), bit);
-}
-#endif
 
 /*
  * This function writes the code to set a vector to a memory word. The
@@ -241,6 +230,7 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	    unsigned skip_set = transient_id++;
 	    unsigned skip_set_flag = 0;
+	    unsigned bidx;
 	    unsigned bit_limit = wid - cur_rbit;
 	    lval = ivl_stmt_lval(net, lidx);
 
@@ -256,21 +246,24 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 		  skip_set_flag = 1;
 	    }
 
+	      /* Reduce bit_limit to the width of this l-value. */
 	    if (bit_limit > ivl_lval_width(lval))
 		  bit_limit = ivl_lval_width(lval);
 
+	      /* This is the address within the larger r-value of the
+		 bit that this l-value takes. */
+	    bidx = res.base < 4? res.base : (res.base+cur_rbit);
+
 	    if (mem) {
-		  set_to_memory_word(mem, 3, res.base, res.wid);
+		  set_to_memory_word(mem, 3, bidx, bit_limit);
 
 	    } else {
-
-		  unsigned bidx = res.base < 4
-			? res.base
-			: (res.base+cur_rbit);
 		  set_to_lvariable(lval, bidx, bit_limit);
-		  cur_rbit += bit_limit;
 	    }
 
+	      /* Now we've consumed this many r-value bits for the
+		 current l-value. */
+	    cur_rbit += bit_limit;
 
 	    if (skip_set_flag) {
 		  fprintf(vvp_out, "t_%u ;\n", skip_set);
@@ -281,9 +274,7 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
-      ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
-      ivl_memory_t mem;
 
 	/* Handle the special case that the expression is a real
 	   value. Evaluate the real expression, then convert the
@@ -311,102 +302,6 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    return 0;
       }
 
-	/* Handle the special case that the r-value is a constant. We
-	   can generate the %set statement directly, without any worry
-	   about generating code to evaluate the r-value expressions. */
-
-      if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
-	    unsigned lidx;
-	    const char*bits = ivl_expr_bits(rval);
-	    unsigned wid = ivl_expr_width(rval);
-	    unsigned cur_rbit = 0;
-
-	    for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
-		  unsigned skip_set = transient_id++;
-		  unsigned skip_set_flag = 0;
-		  unsigned idx;
-		  unsigned bit_limit = wid - cur_rbit;
-		  lval = ivl_stmt_lval(net, lidx);
-
-		  mem = ivl_lval_mem(lval);
-		  if (mem) {
-			  /* Memory index is the ivl_lval_idx
-			     expression, ivl_lval_mux should be
-			     clear. */
-			assert(! ivl_lval_mux(lval));
-			draw_memory_index_expr(mem, ivl_lval_idx(lval));
-			  /* Generate code to skip around the set
-			     if the index has X values. */
-			fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-			skip_set_flag = 1;
-		  }
-
-		  if (bit_limit > ivl_lval_width(lval))
-			bit_limit = ivl_lval_width(lval);
-
-		  if (mem) {
-#if 0
-			for (idx = 0 ;  idx < bit_limit ;  idx += 1) {
-			      set_to_memory(mem, idx,
-					    bitchar_to_idx(bits[cur_rbit]));
-
-			      cur_rbit += 1;
-			}
-
-			for (idx = bit_limit
-				   ; idx < ivl_lval_width(lval) ; idx += 1)
-			      set_to_memory(mem, idx, 0);
-#else
-			assert(0);
-#endif
-
-		  } else {
-			  /* Here we have the case of a blocking
-			     assign of a number to a signal:
-
-			     <lval> = NUMBER;
-
-			     Collect the number value into thread
-			     bits, and use a %set/v to write the reg
-			     variable. */
-
-			struct vector_info vect;
-			vect.wid  = ivl_lval_width(lval);
-			vect.base = allocate_vector(vect.wid);
-
-			  /* This loop makes the value into thread
-			     bits. Use the constant thread bits 0-3 to
-			     generate the values of the vector. */
-			idx = 0;
-			while (idx < bit_limit) {
-			      unsigned cnt = 1;
-			      while (((idx + cnt) < bit_limit)
-				     && (bits[cur_rbit] == bits[cur_rbit+cnt]))
-				    cnt += 1;
-
-			      fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
-				      vect.base+idx,
-				      bitchar_to_idx(bits[cur_rbit]),
-				      cnt);
-
-			      cur_rbit += cnt;
-			      idx += cnt;
-			}
-
-			  /* write out the value into the .var. */
-			set_to_lvariable(lval, vect.base, vect.wid);
-
-			clr_vector(vect);
-		  }
-
-		  if (skip_set_flag) {
-			fprintf(vvp_out, "t_%u ;\n", skip_set);
-			clear_expression_lookaside();
-		  }
-	    }
-
-	    return 0;
-      }
 
       { struct vector_info res = draw_eval_expr(rval, 0);
         set_vec_to_lval(net, res);
@@ -1566,6 +1461,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.103  2005/03/05 05:47:42  steve
+ *  Handle memory words in l-value concatenations.
+ *
  * Revision 1.102  2005/03/03 04:34:42  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
