@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: concat.cc,v 1.1 2005/01/22 00:01:09 steve Exp $"
+#ident "$Id: concat.cc,v 1.2 2005/02/07 22:42:42 steve Exp $"
 
 # include  "compile.h"
 # include  "vvp_net.h"
@@ -81,9 +81,51 @@ void compile_concat(char*label, unsigned w0, unsigned w1,
       inputs_connect(net, argc, argv);
 }
 
+vvp_fun_repeat::vvp_fun_repeat(unsigned width, unsigned repeat)
+: wid_(width), rep_(repeat)
+{
+}
+
+vvp_fun_repeat::~vvp_fun_repeat()
+{
+}
+
+void vvp_fun_repeat::recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit)
+{
+      assert(bit.size() == wid_/rep_);
+
+      vvp_vector4_t val (wid_);
+
+      for (unsigned rdx = 0 ;  rdx < rep_ ;  rdx += 1) {
+	    unsigned off = rdx * bit.size();
+
+	    for (unsigned idx = 0 ; idx < bit.size() ;  idx += 1)
+		  val.set_bit(off+idx, bit.value(idx));
+
+      }
+
+      vvp_send_vec4(port.ptr()->out, val);
+}
+
+void compile_repeat(char*label, long width, long repeat, struct symb_s arg)
+{
+      vvp_fun_repeat*fun = new vvp_fun_repeat(width, repeat);
+
+      vvp_net_t*net = new vvp_net_t;
+      net->fun = fun;
+
+      define_functor_symbol(label, net);
+      free(label);
+
+      input_connect(net, 0, arg.text);
+}
+
 
 /*
  * $Log: concat.cc,v $
+ * Revision 1.2  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.1  2005/01/22 00:01:09  steve
  *  Add missing concat.cc to cvs
  *

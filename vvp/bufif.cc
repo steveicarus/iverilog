@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,90 +17,79 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.9 2002/09/06 04:56:28 steve Exp $"
+#ident "$Id: bufif.cc,v 1.10 2005/02/07 22:42:42 steve Exp $"
 #endif
 
 # include  "bufif.h"
-# include  "functor.h"
 # include  "schedule.h"
 # include  "statistics.h"
+# include  <stdio.h>
+# include  <assert.h>
 
-vvp_bufif_s::vvp_bufif_s(bool en_invert, bool out_invert,
-			 unsigned str0, unsigned str1)
+vvp_fun_bufif::vvp_fun_bufif(bool en_invert, bool out_invert,
+			     unsigned str0, unsigned str1)
 : pol_(en_invert? 1 : 0), inv_(out_invert? 1 : 0)
 {
-      odrive0 = str0;
-      odrive1 = str1;
+      drive0_ = str0;
+      drive1_ = str1;
       count_functors_bufif += 1;
 }
 
-void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
+void vvp_fun_bufif::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
-      put(ptr, v);
-
-      unsigned in0 = ival & 0x03;
-      unsigned in1 = (ival >> 2) & 0x03;
-
-      unsigned char out0 = 0x00 | (odrive0<<0) | (odrive0<<4);
-      unsigned char out1 = 0x88 | (odrive1<<0) | (odrive1<<4);
-      unsigned char outX = 0x80 | (odrive0<<0) | (odrive1<<4);
-      unsigned char outH = 0x80 | (0)          | (odrive1<<4);
-      unsigned char outL = 0x80 | (odrive0<<0) | (0);
-
-      unsigned val;
-      unsigned str;
-
-      switch (in1 ^ pol_) {
-
-	  case 1:
-	    switch (in0 ^ inv_) {
-		case 0:
-		  val = 0;
-		  str = out0;
-		  break;
-		case 1:
-		  val = 1;
-		  str = out1;
-		  break;
-		default:
-		  val = 2;
-		  str = outX;
-		  break;
-	    }
-	    break;
-
+      switch (ptr.port()) {
 	  case 0:
-	    val = 3;
-	    str = HiZ;
+	    bit_ = bit;
 	    break;
-
-	      /* The control input is x or z, so the output is H or
-		 L, depending on the (possibly inverted) input. This
-		 is not the same as X, as it is a combination of the
-		 drive strength of the output and HiZ. */
+	  case 1:
+	    en_ = pol_? ~bit : bit;
+	    break;
 	  default:
-	    switch (in0 ^ inv_) {
-		case 0:
-		  val = 2;
-		  str = outL;
-		  break;
-		case 1:
-		  val = 2;
-		  str = outH;
-		  break;
-		default:
-		  val = 2;
-		  str = outX;
-		  break;
-	    }
-	    break;
+	    return;
       }
 
-      put_ostr(val, str, push);
+      vvp_vector8_t out (bit.size());
+
+      for (unsigned idx = 0 ;  idx < bit.size() ;  idx += 1) {
+	    vvp_bit4_t b_en  = en_.value(idx);
+	    vvp_bit4_t b_bit = bit_.value(idx);
+
+	    switch (b_en) {
+		case BIT4_0:
+		  out.set_bit(idx, vvp_scaler_t(BIT4_Z,drive0_,drive1_));
+		  break;
+		case BIT4_1:
+		  if (bit4_is_xz(b_bit))
+			out.set_bit(idx, vvp_scaler_t(BIT4_X,drive0_,drive1_));
+		  else
+			out.set_bit(idx, vvp_scaler_t(b_bit,drive0_,drive1_));
+		  break;
+
+		default:
+		  switch (b_bit) {
+		      case BIT4_0:
+			out.set_bit(idx, vvp_scaler_t(BIT4_X,drive0_,0));
+			break;
+		      case BIT4_1:
+			out.set_bit(idx, vvp_scaler_t(BIT4_X,0,drive1_));
+			break;
+		      default:
+			out.set_bit(idx, vvp_scaler_t(BIT4_X,drive0_,drive1_));
+			break;
+		  }
+		  break;
+	    }
+      }
+
+      vvp_send_vec8(ptr.ptr()->out, out);
 }
+
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.10  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.9  2002/09/06 04:56:28  steve
  *  Add support for %v is the display system task.
  *  Change the encoding of H and L outputs from
@@ -108,31 +97,5 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
  *
  * Revision 1.8  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.6  2001/12/19 23:43:03  steve
- *  clarify bufif output strenghts.
- *
- * Revision 1.5  2001/12/14 06:03:17  steve
- *  Arrange bufif to support notif as well.
- *
- * Revision 1.4  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.3  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.2  2001/10/31 04:27:46  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.1  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
  */
 

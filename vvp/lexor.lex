@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.48 2005/02/03 04:55:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.49 2005/02/07 22:42:42 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -111,6 +111,7 @@
 ".reduce/nand" { return K_REDUCE_NAND; }
 ".reduce/nor"  { return K_REDUCE_NOR; }
 ".reduce/xnor" { return K_REDUCE_XNOR; }
+".repeat"   { return K_REPEAT; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".shift/l"  { return K_SHIFTL; }
@@ -192,6 +193,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.49  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.48  2005/02/03 04:55:13  steve
  *  Add support for reduction logic gates.
  *

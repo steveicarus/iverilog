@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.13 2005/02/04 05:13:02 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.14 2005/02/07 22:42:42 steve Exp $"
 
 # include  <assert.h>
 
@@ -93,6 +93,8 @@ class vvp_vector4_t {
       };
 };
 
+extern vvp_vector4_t operator ~ (const vvp_vector4_t&that);
+
 extern vvp_bit4_t compare_gtge(const vvp_vector4_t&a,
 			       const vvp_vector4_t&b,
 			       vvp_bit4_t val_if_equal);
@@ -164,6 +166,7 @@ class vvp_scaler_t {
 
 	// Make an unambiguous value.
       explicit vvp_scaler_t(vvp_bit4_t val, unsigned str);
+      explicit vvp_scaler_t(vvp_bit4_t val, unsigned str0, unsigned str1);
 
 	// Get the vvp_bit4_t version of the value
       vvp_bit4_t value() const;
@@ -191,6 +194,9 @@ class vvp_vector8_t {
       explicit vvp_vector8_t(unsigned size =0);
 	// Make a vvp_vector8_t from a vector4 and a specified strength.
       explicit vvp_vector8_t(const vvp_vector4_t&that, unsigned str);
+      explicit vvp_vector8_t(const vvp_vector4_t&that,
+			     unsigned str0,
+			     unsigned str1);
 
       ~vvp_vector8_t();
 
@@ -392,6 +398,25 @@ class vvp_fun_concat  : public vvp_net_fun_t {
       vvp_vector4_t val_;
 };
 
+/* vvp_fun_repeat
+ * This node function create vectors by repeating the input. The width
+ * is the width of the output vector, and the repeat is the number of
+ * times to repeat the input. The width of the input vector is
+ * implicit from these values.
+ */
+class vvp_fun_repeat  : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_repeat(unsigned width, unsigned repeat);
+      ~vvp_fun_repeat();
+
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
+
+    private:
+      unsigned wid_;
+      unsigned rep_;
+};
+
 /* vvp_fun_drive
  * This node function takes an input vvp_vector4_t as input, and
  * repeats that value as a vvp_vector8_t with all the bits given the
@@ -542,6 +567,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.14  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.13  2005/02/04 05:13:02  steve
  *  Add wide .arith/mult, and vvp_vector2_t vectors.
  *

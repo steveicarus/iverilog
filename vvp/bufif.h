@@ -1,7 +1,7 @@
 #ifndef __bufif_H
 #define __bufif_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,26 +19,43 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.h,v 1.6 2002/09/06 04:56:29 steve Exp $"
+#ident "$Id: bufif.h,v 1.7 2005/02/07 22:42:42 steve Exp $"
 #endif
 
-# include  "functor.h"
+# include  "vvp_net.h"
 
-class vvp_bufif_s  : public functor_s {
+/*
+ * The vvp_fun_bufif functor implements the logic of bufif0/1 and
+ * notif0/1 gates. Input 0 is the value to be buffered, and input 1 is
+ * the enable. The gate processes vectors as bit slices handled by an
+ * array of gates.
+ *
+ * The output from the gate is a vvp_vector8_t. The gate adds
+ * strengths to the buffered value, and sends H/L in response to
+ * unknown enable bits.
+ */
+class vvp_fun_bufif  : public vvp_net_fun_t {
 
     public:
-      vvp_bufif_s(bool en_invert, bool out_invert,
-		  unsigned str0, unsigned str1);
+      vvp_fun_bufif(bool en_invert, bool out_invert,
+		    unsigned str0, unsigned str1);
 
-      virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      void recv_vec4(vvp_net_ptr_t port, vvp_vector4_t bit);
 
     private:
+      vvp_vector4_t bit_;
+      vvp_vector4_t en_;
       unsigned pol_ : 1;
       unsigned inv_ : 1;
+      unsigned drive0_ : 8;
+      unsigned drive1_ : 8;
 };
 
 /*
  * $Log: bufif.h,v $
+ * Revision 1.7  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.6  2002/09/06 04:56:29  steve
  *  Add support for %v is the display system task.
  *  Change the encoding of H and L outputs from

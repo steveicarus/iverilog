@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.56 2005/02/03 04:55:13 steve Exp $
+ *  $Id: README.txt,v 1.57 2005/02/07 22:42:42 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -482,6 +482,19 @@ The initial output value is (W+X+Y+Z) bits of 'bx. As input values are
 propagated, the bits are placed in the correct place in the output
 vector value, and a new output value is propagated.
 
+
+REPEAT VECTOR STATEMENTS:
+
+The repeat vector statement is similar to the concatenation statement,
+expect that the input is repeated a constant number of times. The
+format of the repeat vector statement is:
+
+        <label> .repeat <wid>, <rept count>, <symbol> ;
+
+In this statement, the <wid> is a decimal number that is the width of
+the *output* vector. The <rept count> is the number of time the input
+vector value is repeated to make the output width. The input width is
+implicit from these numbers. The <symbol> is then the input source.
 
 REDUCTION LOGIC
 

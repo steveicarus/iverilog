@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.17 2005/01/29 17:52:06 steve Exp $"
+#ident "$Id: logic.cc,v 1.18 2005/02/07 22:42:42 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -168,13 +168,13 @@ void compile_functor(char*label, char*type,
 
       } else if (strcmp(type, "BUF") == 0) {
 	    obj = new vvp_fun_buf();
-#if 0
+
       } else if (strcmp(type, "BUFIF0") == 0) {
-	    obj = new vvp_bufif_s(true,false, ostr0, ostr1);
+	    obj = new vvp_fun_bufif(true,false, ostr0, ostr1);
 
       } else if (strcmp(type, "BUFIF1") == 0) {
-	    obj = new vvp_bufif_s(false,false, ostr0, ostr1);
-#endif
+	    obj = new vvp_fun_bufif(false,false, ostr0, ostr1);
+
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new vvp_fun_bufz();
 #if 0
@@ -244,6 +244,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.18  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.17  2005/01/29 17:52:06  steve
  *  move AND to buitin instead of table.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.65 2005/02/03 04:55:13 steve Exp $"
+#ident "$Id: parse.y,v 1.66 2005/02/07 22:42:42 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -63,7 +63,7 @@ extern FILE*yyin;
 %token K_CONCAT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
 %token K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
-%token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR
+%token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
@@ -289,6 +289,9 @@ statement
 
         | T_LABEL K_REDUCE_XNOR symbol ';'
                 { compile_reduce_xnor($1, $3); }
+
+        | T_LABEL K_REPEAT T_NUMBER ',' T_NUMBER ',' symbol ';'
+                { compile_repeat($1, $3, $5, $7); }
 
 	| T_LABEL K_SHIFTL T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
@@ -669,6 +672,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.66  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.65  2005/02/03 04:55:13  steve
  *  Add support for reduction logic gates.
  *

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.13 2005/02/04 05:13:02 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.14 2005/02/07 22:42:42 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -744,7 +744,7 @@ vvp_bit4_t vvp_fun_signal::value(unsigned idx) const
  *    STRONG = 6,
  *    SUPPLY = 7
  *
- * The vvp_signal_t value, however, is a combination of value and
+ * The vvp_scaler_t value, however, is a combination of value and
  * strength, used in strength-aware contexts.
  *
  * OUTPUT STRENGTHS:
@@ -782,6 +782,27 @@ vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str)
 	    value_ = str | (str<<4) | 0x80;
 	  case BIT4_Z:
 	    value_ = 0;
+	    break;
+      }
+}
+
+vvp_scaler_t::vvp_scaler_t(vvp_bit4_t val, unsigned str0, unsigned str1)
+{
+      assert(str0 <= 7);
+      assert(str1 <= 7);
+
+      switch (val) {
+	  case BIT4_0:
+	    value_ = str0 | (str0<<4);
+	    break;
+	  case BIT4_1:
+	    value_ = str1 | (str1<<4) | 0x88;
+	    break;
+	  case BIT4_X:
+	    value_ = str0 | (str1<<4) | 0x80;
+	    break;
+	  case BIT4_Z:
+	    value_ = 0x00;
 	    break;
       }
 }
@@ -988,6 +1009,15 @@ vvp_bit4_t compare_gtge(const vvp_vector4_t&lef, const vvp_vector4_t&rig,
       return out_if_equal;
 }
 
+vvp_vector4_t operator ~ (const vvp_vector4_t&that)
+{
+      vvp_vector4_t res (that.size());
+      for (unsigned idx = 0 ;  idx < res.size() ;  idx += 1)
+	    res.set_bit(idx, ~ that.value(idx));
+
+      return res;
+}
+
 vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 			       const vvp_vector4_t&b,
 			       vvp_bit4_t out_if_equal)
@@ -1032,6 +1062,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.14  2005/02/07 22:42:42  steve
+ *  Add .repeat functor and BIFIF functors.
+ *
  * Revision 1.13  2005/02/04 05:13:02  steve
  *  Add wide .arith/mult, and vvp_vector2_t vectors.
  *
