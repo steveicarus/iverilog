@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.11 2004/06/09 22:14:10 steve Exp $"
+#ident "$Id: sys_random.c,v 1.12 2004/06/10 02:14:42 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -63,17 +63,23 @@ long rtl_dist_uniform(long*seed, long start, long end)
 
 	if (start >= end) return(start);
 
+	  /* NOTE: The cast of r to i can overflow and generate
+	     strange values, so cast to unsigned long
+	     first. This eliminates the underflow and gets the
+	     twos complement value. That in turn can be cast
+	     to the long value that is expected. */
+
 	if (end != UNIFORM_MAX)
 	{
 		end++;
 		r = uniform( seed, start, end );
 		if (r >= 0)
 		{
-			i = (long) r;
+			i = (unsigned long) r;
 		}
 		else
 		{
-			i = (long) (r-1);
+			i = (unsigned long) (r-1);
 		}
 		if (i<start) i = start;
 		if (i>=end) i = end-1;
@@ -84,11 +90,11 @@ long rtl_dist_uniform(long*seed, long start, long end)
 		r = uniform( seed, start, end) + 1.0;
 		if (r>=0)
 		{
-			i = (long) r;
+			i = (unsigned long) r;
 		}
 		else
 		{
-			i = (long) (r-1);
+			i = (unsigned long) (r-1);
 		}
 		if (i<=start) i = start+1;
 		if (i>end) i = end;
@@ -97,13 +103,14 @@ long rtl_dist_uniform(long*seed, long start, long end)
 	{
 		r = (uniform(seed,start,end)+2147483648.0)/4294967295.0;
 		r = r*4294967296.0-2147483648.0;
+
 		if (r>=0)
 		{
-			i = (long) r;
+			i = (unsigned long) r;
 		}
 		else
 		{
-			i = (long) (r-1);
+			i = (unsigned long) (r-1);
 		}
 	}
 
@@ -160,7 +167,7 @@ static double uniform(long *seed, long start, long end )
 
 
 	c = c + (c*d);
-	c = ((b - a) * c - 1.0) + a;
+	c = ((b - a) * (c - 1.0)) + a;
 
 	return c;
 }
@@ -355,6 +362,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.12  2004/06/10 02:14:42  steve
+ *  Fix transcription error scaling c in uniform range.
+ *
  * Revision 1.11  2004/06/09 22:14:10  steve
  *  Move Mersenne Twister to $mti_random, and make
  *  the standard $random standard. Also, add $dist_poisson.
