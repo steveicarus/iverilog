@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.16 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: PExpr.h,v 1.17 1999/08/01 21:18:55 steve Exp $"
 #endif
 
 # include  <string>
@@ -47,7 +47,10 @@ class PExpr : public LineInfo {
       virtual ~PExpr();
 
       virtual void dump(ostream&) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
 	// This attempts to evaluate a constant expression, and return
@@ -77,7 +80,10 @@ class PEConcat : public PExpr {
       ~PEConcat();
 
       virtual void dump(ostream&) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual bool is_constant(Module*) const;
 
@@ -110,7 +116,10 @@ class PEIdent : public PExpr {
       : text_(s), msb_(0), lsb_(0), idx_(0) { }
 
       virtual void dump(ostream&) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
@@ -141,7 +150,10 @@ class PENumber : public PExpr {
       const verinum& value() const { return *value_; }
 
       virtual void dump(ostream&) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
@@ -175,7 +187,10 @@ class PEUnary : public PExpr {
       : op_(op), expr_(ex) { }
 
       virtual void dump(ostream&out) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
     private:
@@ -192,7 +207,10 @@ class PEBinary : public PExpr {
       virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream&out) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
@@ -215,7 +233,10 @@ class PETernary : public PExpr {
       virtual bool is_constant(Module*) const;
 
       virtual void dump(ostream&out) const;
-      virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned long rise =0,
+				    unsigned long fall =0,
+				    unsigned long decay =0) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
@@ -241,6 +262,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.17  1999/08/01 21:18:55  steve
+ *  elaborate rise/fall/decay for continuous assign.
+ *
  * Revision 1.16  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *

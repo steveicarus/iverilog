@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.7 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: PGate.h,v 1.8 1999/08/01 21:18:55 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -53,7 +53,10 @@ class PGate : public LineInfo {
 
       const string& get_name() const { return name_; }
 
-      const PExpr* get_delay(unsigned idx) const;
+      void eval_delays(Design*des, const string&path,
+		       unsigned long&rise_time,
+		       unsigned long&fall_time,
+		       unsigned long&decay_time) const;
 
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
@@ -175,6 +178,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.8  1999/08/01 21:18:55  steve
+ *  elaborate rise/fall/decay for continuous assign.
+ *
  * Revision 1.7  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial

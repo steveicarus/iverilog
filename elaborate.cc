@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.63 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.64 1999/08/01 21:18:55 steve Exp $"
 #endif
 
 /*
@@ -200,10 +200,14 @@ void PGate::elaborate(Design*des, const string&path) const
    assign.) Elaborate the lvalue and rvalue, and do the assignment. */
 void PGAssign::elaborate(Design*des, const string&path) const
 {
+      unsigned long rise_time, fall_time, decay_time;
+      eval_delays(des, path, rise_time, fall_time, decay_time);
+
       assert(pin(0));
       assert(pin(1));
       NetNet*lval = pin(0)->elaborate_net(des, path);
-      NetNet*rval = pin(1)->elaborate_net(des, path);
+      NetNet*rval = pin(1)->elaborate_net(des, path, rise_time,
+					  fall_time, decay_time);
 
       if (lval == 0) {
 	    cerr << get_line() << ": Unable to elaborate l-value: " <<
@@ -233,11 +237,6 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
       do_assign(des, path, lval, rval);
 
-      if (get_delay(0)) {
-	    cerr << get_line() << ": Sorry, elaboration does not support"
-		  " delayed continuous assignments." << endl;
-	    des->errors += 1;
-      }
 }
 
 /*
@@ -300,42 +299,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 	   of the rise and fall times. Finally, if all three
 	   values are given, they are taken as specified. */
 
-      verinum*dv;
       unsigned long rise_time, fall_time, decay_time;
-
-      if (get_delay(0)) {
-	    dv = get_delay(0)->eval_const(des, path);
-	    assert(dv);
-	    rise_time = dv->as_ulong();
-	    delete dv;
-
-	    if (get_delay(1)) {
-		  dv = get_delay(1)->eval_const(des, path);
-		  assert(dv);
-		  fall_time = dv->as_ulong();
-		  delete dv;
-
-		  if (get_delay(2)) {
-			dv = get_delay(2)->eval_const(des, path);
-			assert(dv);
-			decay_time = dv->as_ulong();
-			delete dv;
-		  } else {
-			if (rise_time < fall_time)
-			      decay_time = rise_time;
-			else
-			      decay_time = fall_time;
-		  }
-	    } else {
-		  assert(get_delay(2) == 0);
-		  fall_time = rise_time;
-		  decay_time = rise_time;
-	    }
-      } else {
-	    rise_time = 0;
-	    fall_time = 0;
-	    decay_time = 0;
-      }
+      eval_delays(des, path, rise_time, fall_time, decay_time);
 
 	/* Now make as many gates as the bit count dictates. Give each
 	   a unique name, and set the delay times. */
@@ -642,7 +607,10 @@ void PGModule::elaborate(Design*des, const string&path) const
       cerr << get_line() << ": Unknown module: " << type_ << endl;
 }
 
-NetNet* PExpr::elaborate_net(Design*des, const string&path) const
+NetNet* PExpr::elaborate_net(Design*des, const string&path,
+			     unsigned long,
+			     unsigned long,
+			     unsigned long) const
 {
       cerr << "Don't know how to elaborate `" << *this << "' as gates." << endl;
       return 0;
@@ -653,7 +621,10 @@ NetNet* PExpr::elaborate_net(Design*des, const string&path) const
  * left and right expressions, then making an output wire and
  * connecting the lot together with the right kind of gate.
  */
-NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
+NetNet* PEBinary::elaborate_net(Design*des, const string&path,
+				unsigned long rise,
+				unsigned long fall,
+				unsigned long decay) const
 {
       NetNet*lsig = left_->elaborate_net(des, path),
 	    *rsig = right_->elaborate_net(des, path);
@@ -747,6 +718,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
 	    osig = 0;
       }
 
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
+
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(lsig))
 	    delete tmp;
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(rsig))
@@ -759,7 +734,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path) const
  * The concatenation operator, as a net, is a wide signal that is
  * connected to all the pins of the elaborated expression nets.
  */
-NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
+NetNet* PEConcat::elaborate_net(Design*des, const string&path,
+				unsigned long rise,
+				unsigned long fall,
+				unsigned long decay) const
 {
       svector<NetNet*>nets (parms_.count());
       unsigned pins = 0;
@@ -773,7 +751,7 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
 
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    nets[idx] = parms_[idx]->elaborate_net(des, path);
+	    nets[idx] = parms_[idx]->elaborate_net(des, path, rise,fall,decay);
 	    if (nets[idx] == 0)
 		  errors += 1;
 	    else
@@ -810,7 +788,10 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path) const
       return osig;
 }
 
-NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
+NetNet* PEIdent::elaborate_net(Design*des, const string&path,
+			       unsigned long rise,
+			       unsigned long fall,
+			       unsigned long decay) const
 {
       NetNet*sig = des->find_signal(path, text_);
       if (sig == 0) {
@@ -866,7 +847,10 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path) const
 
 /*
  */
-NetNet* PENumber::elaborate_net(Design*des, const string&path) const
+NetNet* PENumber::elaborate_net(Design*des, const string&path,
+				unsigned long rise,
+				unsigned long fall,
+				unsigned long decay) const
 {
       unsigned width = value_->len();
       NetNet*net = new NetNet(des->local_symbol(path),
@@ -883,7 +867,8 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path) const
       return net;
 }
 
-NetNet* PETernary::elaborate_net(Design*des, const string&) const
+NetNet* PETernary::elaborate_net(Design*des, const string&, unsigned long,
+				 unsigned long, unsigned long) const
 {
       cerr << get_line() << ": Sorry, I cannot elaborate ?: as a net."
 	   << endl;
@@ -901,7 +886,10 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
       return res;
 }
 
-NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
+NetNet* PEUnary::elaborate_net(Design*des, const string&path,
+			       unsigned long rise,
+			       unsigned long fall,
+			       unsigned long decay) const
 {
       NetNet* sub_sig = expr_->elaborate_net(des, path);
       if (sub_sig == 0) {
@@ -942,6 +930,10 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
 	    cerr << "Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
+
+      gate->rise_time(rise);
+      gate->fall_time(fall);
+      gate->decay_time(decay);
 
       if (NetTmp*tmp = dynamic_cast<NetTmp*>(sub_sig))
 	    delete tmp;
@@ -2052,6 +2044,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.64  1999/08/01 21:18:55  steve
+ *  elaborate rise/fall/decay for continuous assign.
+ *
  * Revision 1.63  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial
