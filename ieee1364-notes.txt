@@ -161,8 +161,47 @@ output_symbol characters. The standard is self contradictory. So I
 take it that x is allowed, as that is what Verilog-XL does.
 
 
-$Id: ieee1364-notes.txt,v 1.3 2000/12/15 00:21:46 steve Exp $
+* REPEAT LOOPS vs. REPEAT EVENT CONTROL
+
+There seems to be ambiguity in how code like this should be parsed:
+
+	repeat (5) @(posedge clk) <statment>;
+
+There are two valid interpretations of this code, from the
+IEEE1364-1995 standard. One looks like this:
+
+    procedural_timing_control_statement ::=
+          delay_or_event_control  statement_or_null
+
+    delay_or_event_control ::=
+          event_control
+          | repeat ( expression ) event_control
+
+If this interpretation is used, then the statement <statement> should
+be executed after the 5th posedge of clk. However, there is also this
+interpretation:
+
+    loop_statement ::=
+         repeat ( expression ) statement
+
+If *this* interpretation is used, then <statement> should be executed
+5 times on the posedge of clk. The way the -1995 standard is written,
+these are both equally valid interpretations of the example, yet they
+produce very different results. The standard offers no guidance on how
+to resolve this conflict, and the IEEE1364-2000 DRAFT does not improve
+the situation.
+
+Practice suggests that a repeat followed by an event control should be
+interpreted as a procedural_timing_control_statement in preference to
+to loop_statement interpretation, but the standard does not say this.
+
+
+
+$Id: ieee1364-notes.txt,v 1.4 2001/01/01 19:12:35 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.4  2001/01/01 19:12:35  steve
+ repeat loops ambiguity.
+
 Revision 1.3  2000/12/15 00:21:46  steve
  rounding of time and x in primitives.
 
