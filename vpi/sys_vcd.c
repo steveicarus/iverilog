@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.37 2002/08/15 02:12:20 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.38 2002/11/14 22:43:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,7 +146,7 @@ inline static void vcd_names_add(const char *name)
       struct vcd_names_s *nl = (struct vcd_names_s *)
 	    malloc(sizeof(struct vcd_names_s));
       assert(nl);
-      nl->name = name;
+      nl->name = strdup(name);
       nl->next = vcd_names_list;
       vcd_names_list = nl;
       listed_names ++;
@@ -844,6 +844,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.38  2002/11/14 22:43:58  steve
+ *  Save vpiFullName results.
+ *
  * Revision 1.37  2002/08/15 02:12:20  steve
  *  add dumpvars_compiletf to check first argument.
  *
