@@ -42,14 +42,8 @@ if test -z "${VPI_MODULE_PATH}" ; then
     echo "To be able to execute, set VPI_MODULE_PATH to ${VPIModulePath}";
 fi
 
-if test -z "$*" ; then
-    echo "Missing infile";
-    echo "verilog [-Dmacro[=defn]] [-Iincludepath] [-X] [-o outputfilename] [-s topmodule] sourcefile[s]" ;
-    exit -1;
-fi
-
 # Try to extract given parameters
-parameter=`getopt -o D:I:Xo:s: -- "$@"` 
+parameter=`getopt D:I:Xxo:s: "$@"` 
 eval set -- "${parameter}" 
 while true ; do 
 
@@ -59,6 +53,7 @@ while true ; do
       -X) targetSuffix=".xnf" ; target=${xnfTarget} ; shift ;;
       -o) outputFile=$2 ; shift 2 ;;
       -s) topModule="-s $2 " ; shift 2 ;;
+      -x) execute="true"; shift ;;
       --) shift ; break ;;
        *) echo "Internal error! Arg is $1 " ; exit 1 ;;
     esac
@@ -68,20 +63,26 @@ done
 # The rest is filenames
 verilogFile=$@;
 
+if test -z "${verilogFile}" ; then
+    echo "Missing infile";
+    echo "verilog [-Dmacro[=defn]] [-Iincludepath] [-X] [-x] [-o outputfilename] [-s topmodule] sourcefile[s]" ;
+    exit 1;
+fi
+
+
 # If no output file is given should we guess one or...?
 # Assumes a few silly things if several files are given
 if test -z "${outputFile}" ; then 
-    outputFile=`echo ${verilogFile} | sed -e 's;\(.* \+\)*\(.*\)\..*;\2;'`;
+    outputFile=`echo ${verilogFile} | sed -e 's;.* ;;' | sed -e 's;\..*$;;'`
     outputFile="${outputFile}${targetSuffix}" ;
 fi
-
 
 # Preprocess
 ${execIVLPP} ${extDefines} ${extIncPath} -L -o ${tmpPPFile} ${verilogFile}
 if test $? -ne 0 ; then
     echo "Preprocessing failed. Terminating compilation."
     rm -f ${tmpPPFile}
-    exit -1
+    exit 1
 fi
 
 
@@ -90,7 +91,7 @@ ${execIVL} ${target} -o ${tmpCCFile} ${topModule} ${tmpPPFile}
 if test $? -ne  0 ; then
     echo "Verilog compilation failed. Terminating compilation."
     rm -f ${tmpCCFile}
-    exit -1
+    exit 1
 fi
 rm -f ${tmpPPFile}
 
@@ -103,10 +104,14 @@ case "${targetSuffix}" in
          if test $? -ne 0 ; then
 	     echo "C++ compilation failed. Terminating compilation."
 	     rm -f ${tmpCCFile}
-	     exit -1
+	     exit 1
           fi
           rm -f ${tmpCCFile} ;;
 
     *) echo "Internal error in target compilation." ; exit 1
 
 esac
+
+if test ${execute} ; then
+  ./${outputFile}
+fi
