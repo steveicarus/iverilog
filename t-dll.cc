@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.31 2001/03/30 06:10:15 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.32 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -298,29 +298,32 @@ void dll_target::event(const NetEvent*net)
       obj->scope = scope;
       scope_add_event(scope, obj);
 
-      assert(net->nprobe() <= 1);
+      obj->nany = 0;
+      obj->nneg = 0;
+      obj->npos = 0;
 
-      if (net->nprobe() == 1) {
-	    const NetEvProbe*pr = net->probe(0);
-	    switch (pr->edge()) {
-		case NetEvProbe::ANYEDGE:
-		  obj->edge = IVL_EDGE_ANY;
-		  break;
-		case NetEvProbe::NEGEDGE:
-		  obj->edge = IVL_EDGE_NEG;
-		  break;
-		case NetEvProbe::POSEDGE:
-		  obj->edge = IVL_EDGE_POS;
-		  break;
+      if (net->nprobe() >= 1) {
+
+	    for (unsigned idx = 0 ;  idx < net->nprobe() ;  idx += 1) {
+		  const NetEvProbe*pr = net->probe(0);
+		  switch (pr->edge()) {
+		      case NetEvProbe::ANYEDGE:
+			obj->nany += pr->pin_count();
+			break;
+		      case NetEvProbe::NEGEDGE:
+			obj->nneg += pr->pin_count();
+			break;
+		      case NetEvProbe::POSEDGE:
+			obj->npos += pr->pin_count();
+			break;
+		  }
 	    }
 
-	    obj->npins = pr->pin_count();
-	    obj->pins = (ivl_nexus_t*)calloc(obj->npins, sizeof(ivl_nexus_t));
+	    unsigned npins = obj->nany + obj->nneg + obj->npos;
+	    obj->pins = (ivl_nexus_t*)calloc(npins, sizeof(ivl_nexus_t));
 
       } else {
-	    obj->npins = 0;
 	    obj->pins  = 0;
-	    obj->edge = IVL_EDGE_NONE;
       }
 
 }
@@ -743,6 +746,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.32  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.31  2001/03/30 06:10:15  steve
  *  Initialize the event_ list of new scopes.
  *

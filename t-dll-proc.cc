@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.17 2001/03/31 17:36:39 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.18 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -361,18 +361,41 @@ bool dll_target::proc_wait(const NetEvWait*net)
 	   pins. This wasn't done during the ::event method because
 	   the signals weren't scanned yet. */
 
-      if (ev->nprobe() == 1) {
+      if (ev->nprobe() >= 1) {
 	    const NetEvProbe*pr = ev->probe(0);
 	    ivl_event_t evnt = stmt_cur_->u_.wait_.event_;
 
-	    assert(pr->pin_count() == evnt->npins);
+	    unsigned iany = 0;
+	    unsigned ineg = evnt->nany;
+	    unsigned ipos = ineg + evnt->nneg;
 
-	    for (unsigned idx = 0 ;  idx < evnt->npins ;  idx += 1) {
-		  ivl_nexus_t nex = (ivl_nexus_t)
-			pr->pin(idx).nexus()->t_cookie();
-		  assert(nex);
-		  evnt->pins[idx] = nex;
+	    for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
+		  const NetEvProbe*pr = ev->probe(idx);
+		  unsigned base = 0;
+
+		  switch (pr->edge()) {
+		      case NetEvProbe::ANYEDGE:
+			base = iany;
+			iany += pr->pin_count();
+			break;
+		      case NetEvProbe::NEGEDGE:
+			base = ineg;
+			ineg += pr->pin_count();
+			break;
+		      case NetEvProbe::POSEDGE:
+			base = ipos;
+			ipos += pr->pin_count();
+			break;
+		  }
+
+		  for (unsigned bit = 0;  bit < pr->pin_count(); bit += 1) {
+			ivl_nexus_t nex = (ivl_nexus_t)
+			      pr->pin(bit).nexus()->t_cookie();
+			assert(nex);
+			evnt->pins[base+bit] = nex;
+		  }
 	    }
+
       }	    
 
 	/* The ivl_statement_t for the wait statement is not complete
@@ -412,6 +435,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.18  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.17  2001/03/31 17:36:39  steve
  *  Generate vvp code for case statements.
  *

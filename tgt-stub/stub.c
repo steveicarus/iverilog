@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.33 2001/03/31 17:36:39 steve Exp $"
+#ident "$Id: stub.c,v 1.34 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 /*
@@ -273,25 +273,22 @@ static int show_process(ivl_process_t net, void*x)
 
 static void show_event(ivl_event_t net)
 {
-      ivl_edge_type_t edge = ivl_event_edge(net);
+      unsigned idx;
+      fprintf(out, "  event %s;\n", ivl_event_name(net));
 
-      switch (edge) {
-	  case IVL_EDGE_NONE:
-	    fprintf(out, "  event %s;\n", ivl_event_name(net));
-	    break;
+      for (idx = 0 ;  idx < ivl_event_nany(net) ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_event_any(net, idx);
+	    fprintf(out, "      ANYEDGE: %s\n", ivl_nexus_name(nex));
+      }
 
-	  case IVL_EDGE_ANY:
-	    fprintf(out, "  event %s @(", ivl_event_name(net));
-	    fprintf(out, ");\n");
-	    break;
-	  case IVL_EDGE_NEG:
-	    fprintf(out, "  event %s @(negedge ", ivl_event_name(net));
-	    fprintf(out, ");\n");
-	    break;
-	  case IVL_EDGE_POS:
-	    fprintf(out, "  event %s @(posedge ", ivl_event_name(net));
-	    fprintf(out, ");\n");
-	    break;
+      for (idx = 0 ;  idx < ivl_event_nneg(net) ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_event_neg(net, idx);
+	    fprintf(out, "      NEGEDGE: %s\n", ivl_nexus_name(nex));
+      }
+
+      for (idx = 0 ;  idx < ivl_event_npos(net) ;  idx += 1) {
+	    ivl_nexus_t nex = ivl_event_pos(net, idx);
+	    fprintf(out, "      POSEDGE: %s\n", ivl_nexus_name(nex));
       }
 }
 
@@ -483,6 +480,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.34  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.33  2001/03/31 17:36:39  steve
  *  Generate vvp code for case statements.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.40 2001/03/31 17:36:38 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.41 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -149,13 +149,14 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * changes and additions to the enumerations.
  */
 
-
+#if 0
 typedef enum ivl_edge_type_e {
       IVL_EDGE_NONE = 0,
       IVL_EDGE_ANY  = 1,
       IVL_EDGE_POS  = 2,
       IVL_EDGE_NEG  = 3
 } ivl_edge_type_t;
+#endif
 
 /* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
@@ -322,18 +323,18 @@ extern int         ivl_const_signed(ivl_net_const_t net);
  * ivl_event_edge
  *    Return the edge type for the event. If this is a named event
  *    that has no network input, then the edge is IVL_EDGE_NONE.
- *
- * ivl_event_pins
- * ivl_event_pin
- *    Events of edge other then NONE have pins that are the connection
- *    of the event to the net.
  */
 extern const char*     ivl_event_name(ivl_event_t net);
 extern const char*     ivl_event_basename(ivl_event_t net);
-extern ivl_edge_type_t ivl_event_edge(ivl_event_t net);
 
-extern unsigned    ivl_event_pins(ivl_event_t net);
-extern ivl_nexus_t ivl_event_pin(ivl_event_t net, unsigned idx);
+extern unsigned    ivl_event_nany(ivl_event_t net);
+extern ivl_nexus_t ivl_event_any(ivl_event_t net, unsigned idx);
+
+extern unsigned    ivl_event_nneg(ivl_event_t net);
+extern ivl_nexus_t ivl_event_neg(ivl_event_t net, unsigned idx);
+
+extern unsigned    ivl_event_npos(ivl_event_t net);
+extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
 
 
 /* EXPRESSIONS
@@ -730,6 +731,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.41  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.40  2001/03/31 17:36:38  steve
  *  Generate vvp code for case statements.
  *

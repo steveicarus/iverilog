@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.28 2001/03/31 17:36:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.29 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -105,8 +105,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 struct ivl_event_s {
       char*name;
       ivl_scope_t scope;
-      ivl_edge_type_t edge;
-      unsigned npins;
+      unsigned short nany, nneg, npos;
       ivl_nexus_t*pins;
 };
 
@@ -395,6 +394,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.29  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.28  2001/03/31 17:36:39  steve
  *  Generate vvp code for case statements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.9 2001/03/31 19:29:23 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.10 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -160,35 +160,49 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 
 static void draw_event_in_scope(ivl_event_t obj)
 {
-      ivl_edge_type_t edge = ivl_event_edge(obj);
-
-      if (edge == IVL_EDGE_NONE) {
+      unsigned nany = ivl_event_nany(obj);
+      unsigned nneg = ivl_event_nneg(obj);
+      unsigned npos = ivl_event_npos(obj);
+      if ((nany + nneg + npos) == 0) {
 	    fprintf(vvp_out, "E_%s .event \"%s\";\n",
 		    ivl_event_name(obj), ivl_event_basename(obj));
 
       } else {
 	    unsigned idx;
-	    unsigned pins = ivl_event_pins(obj);
-	    assert(pins <= 4);
-	    fprintf(vvp_out, "E_%s .event ", ivl_event_name(obj));
-	    switch (edge) {
-		case IVL_EDGE_POS:
-		  fprintf(vvp_out, "posedge");
-		  break;
-		case IVL_EDGE_NEG:
-		  fprintf(vvp_out, "posedge");
-		  break;
-		case IVL_EDGE_ANY:
-		  fprintf(vvp_out, "edge");
-		  break;
-		case IVL_EDGE_NONE:
-		  assert(0);
-	    }
 
-	    for (idx = 0 ;  idx < pins ;  idx += 1) {
-		  ivl_nexus_t nex = ivl_event_pin(obj, idx);
-		  fprintf(vvp_out, ", ");
-		  draw_nexus_input(nex);
+	    fprintf(vvp_out, "E_%s .event ", ivl_event_name(obj));
+
+	    if (nany > 0) {
+		  assert((nneg + npos) == 0);
+		  assert(nany <= 4);
+
+		  fprintf(vvp_out, "edge");
+
+		  for (idx = 0 ;  idx < nany ;  idx += 1) {
+			ivl_nexus_t nex = ivl_event_any(obj, idx);
+			fprintf(vvp_out, ", ");
+			draw_nexus_input(nex);
+		  }
+
+	    } else if (nneg > 0) {
+		  assert((nany + npos) == 0);
+		  fprintf(vvp_out, "negedge");
+
+		  for (idx = 0 ;  idx < nneg ;  idx += 1) {
+			ivl_nexus_t nex = ivl_event_neg(obj, idx);
+			fprintf(vvp_out, ", ");
+			draw_nexus_input(nex);
+		  }
+
+	    } else {
+		  assert((nany + nneg) == 0);
+		  fprintf(vvp_out, "posedge");
+
+		  for (idx = 0 ;  idx < npos ;  idx += 1) {
+			ivl_nexus_t nex = ivl_event_pos(obj, idx);
+			fprintf(vvp_out, ", ");
+			draw_nexus_input(nex);
+		  }
 	    }
 
 	    fprintf(vvp_out, ";\n");
@@ -245,6 +259,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.10  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.9  2001/03/31 19:29:23  steve
  *  Fix compilation warnings.
  *

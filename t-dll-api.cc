@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.28 2001/03/31 17:36:38 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.29 2001/04/01 01:48:21 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -99,23 +99,44 @@ extern "C" const char* ivl_event_basename(ivl_event_t net)
       return nam;
 }
 
-extern "C" ivl_edge_type_t ivl_event_edge(ivl_event_t net)
+
+extern "C" unsigned ivl_event_nany(ivl_event_t net)
 {
       assert(net);
-      return net->edge;
+      return net->nany;
 }
 
-extern "C" unsigned ivl_event_pins(ivl_event_t net)
+extern "C" ivl_nexus_t ivl_event_any(ivl_event_t net, unsigned idx)
 {
       assert(net);
-      return net->npins;
-}
-
-extern "C" ivl_nexus_t ivl_event_pin(ivl_event_t net, unsigned idx)
-{
-      assert(net);
-      assert(idx < net->npins);
+      assert(idx < net->nany);
       return net->pins[idx];
+}
+
+extern "C" unsigned ivl_event_nneg(ivl_event_t net)
+{
+      assert(net);
+      return net->nneg;
+}
+
+extern "C" ivl_nexus_t ivl_event_neg(ivl_event_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nneg);
+      return net->pins[net->nany + idx];
+}
+
+extern "C" unsigned ivl_event_npos(ivl_event_t net)
+{
+      assert(net);
+      return net->npos;
+}
+
+extern "C" ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->npos);
+      return net->pins[net->nany + net->nneg + idx];
 }
 
 extern "C" const char* ivl_expr_bits(ivl_expr_t net)
@@ -781,6 +802,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.29  2001/04/01 01:48:21  steve
+ *  Redesign event information to support arbitrary edge combining.
+ *
  * Revision 1.28  2001/03/31 17:36:38  steve
  *  Generate vvp code for case statements.
  *
