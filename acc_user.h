@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.14 2003/05/29 02:21:45 steve Exp $"
+#ident "$Id: acc_user.h,v 1.15 2003/05/29 02:35:41 steve Exp $"
 #endif
 
 /*
@@ -59,6 +59,8 @@ typedef struct __vpiHandle *handle;
 #define accReg       30
 #define accStringParam 204
 #define accParameter   220
+#define accTopModule      224
+#define accModuleInstance 226
 #define accIntegerVar  281
 #define accIntVar      281
 #define accScalar    300
@@ -245,6 +247,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.15  2003/05/29 02:35:41  steve
+ *  acc_fetch_type supports module.
+ *
  * Revision 1.14  2003/05/29 02:21:45  steve
  *  Implement acc_fetch_defname and its infrastructure in vvp.
  *
