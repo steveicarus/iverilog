@@ -1,59 +1,21 @@
-dnl Process this file with autoconf to produce a configure script.
-AC_INIT(netlist.h)
-AC_CONFIG_HEADER(config.h)
+AC_INIT(Makefile.in)
 
-dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
 AC_CHECK_TOOL(STRIP, strip, true)
-AC_CHECK_PROGS(XGPERF,gperf,none)
-if test "$XGPERF" = "none"
-then
-        echo "*** Error: No suitable gperf found. ***"
-        echo "    Please install the 'gperf' package."
-        exit 1
-fi
 
-AC_CHECK_PROGS(LEX,flex,none)
-if test "$LEX" = "none"
-then
-	echo "*** Error: No suitable flex found. ***"
-        echo "    Please install the 'flex' package."
-        exit 1
-fi
+AC_CYGWIN
+AC_EXEEXT
+AC_MINGW32
+AC_SUBST(EXEEXT)
 
-AC_CHECK_PROGS(YACC,bison,none)
-if test "$YACC" = "none"
-then
-	echo "*** Error: No suitable bison found. ***"
-        echo "    Please install the 'bison' package."
-        exit 1
-fi
+AC_PROG_INSTALL
 
-AC_LANG_CPLUSPLUS
+AC_CHECK_HEADERS(malloc.h)
 
-AC_CHECK_HEADERS(getopt.h malloc.h libiberty.h iosfwd sys/wait.h)
-
-AC_MSG_CHECKING(for sys/times)
-AC_TRY_LINK(
-#include <unistd.h>
-#include <sys/times.h>
-,{clock_t a = times(0)/sysconf(_SC_CLK_TCK);},
-do_times=yes
-AC_DEFINE(HAVE_TIMES,1),
-do_times=no
-)
-AC_MSG_RESULT($do_times)
-
-AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
-AC_ARG_WITH(ipal,
-    [  --with-ipal             enable PAL target],
-if test "$with_ipal" = no; then
-       echo Disabling ipal support
-       HAVE_IPAL=
-fi
-)
-AC_SUBST(HAVE_IPAL)
+AC_CHECK_SIZEOF(unsigned long long)
+AC_CHECK_SIZEOF(unsigned long)
+AC_CHECK_SIZEOF(unsigned)
 
 # --
 # Look for a dl library to use. First look for the standard dlopen
@@ -68,12 +30,14 @@ AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
 fi
 AC_SUBST(DLLIB)
 
-AC_PROG_INSTALL
 
-AC_LANG_C
-
-AC_CANONICAL_HOST
-# $host
+# Darwin requires -no-cpp-precomp
+case "${host}" in
+    *-*-darwin*)
+	CPPFLAGS="-no-cpp-precomp"
+	CFLAGS="-no-cpp-precomp"
+	;;
+esac
 
 # The -fPIC flag is used to tell the compiler to make position
 # independent code. It is needed when making shared objects.
@@ -94,30 +58,9 @@ esac
 AC_SUBST(PICFLAG)
 AC_MSG_RESULT($PICFLAG)
 
-
-# mingw needs to link with libiberty.a, cygwin can tolerate it
-
-AC_MSG_CHECKING("for extra libs needed")
-EXTRALIBS=
-case "${host}" in
-     *-*-cygwin*)
-	EXTRALIBS="-liberty"
-	;;
-esac
-AC_SUBST(EXTRALIBS)
-AC_MSG_RESULT($EXTRALIBS)
-   
-# Darwin requires -no-cpp-precomp
-case "${host}" in
-    *-*-darwin*)
-	CPPFLAGS="-no-cpp-precomp"
-	CFLAGS="-no-cpp-precomp"
-	;;
-esac
-
 # The -rdynamic flag is used by iverilog when compiling the target,
 # to know how to export symbols of the main program to loadable modules
-# that are brought in by -ldl
+# that are brought in by -ldl. VPI support requires this.
 AC_MSG_CHECKING("for -rdynamic compiler flag")
 
 rdynamic=-rdynamic
@@ -141,14 +84,11 @@ case "${host}" in
 
     *-*-darwin*)
 	rdynamic="-Wl,-all_load"
-	strip_dynamic="-SX"
 	;;
 
 esac
 AC_SUBST(rdynamic)
 AC_MSG_RESULT($rdynamic)
-AC_SUBST(strip_dynamic)
-AC_MSG_RESULT($strip_dynamic)
 
 AC_MSG_CHECKING("for shared library link flag")
 shared=-shared
@@ -174,8 +114,18 @@ esac
 AC_SUBST(shared)
 AC_MSG_RESULT($shared)
 
+AC_MSG_CHECKING("for extra libs needed")
+EXTRALIBS=
+case "${host}" in
+     *-*-cygwin*)
+	EXTRALIBS="-liberty"
+	;;
+esac
+AC_SUBST(EXTRALIBS)
+AC_MSG_RESULT($EXTRALIBS)
+
 #######################
-## test for underscores. The vpi module loader needs to know this
+## test for underscores. The vpi module loader in vvm needs to know this
 ## in order to know the name of the start symbol for the .vpi module.
 #######################
 
@@ -190,8 +140,6 @@ if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
 then
     WIN32=yes
 fi
-
-AC_SUBST(MINGW32)
 AC_SUBST(WIN32)
 AC_MSG_RESULT($WIN32)
 AC_SUBST(EXEEXT)
@@ -201,8 +149,7 @@ AC_MSG_CHECKING("for leading and/or trailing underscores")
 cat << EOF > underscore.c
        void underscore(void){}
 EOF
-
-$CC $shared -c underscore.c > /dev/null 2>&1
+$CC -shared -c underscore.c > /dev/null 2>&1
 
 CC_LEADING_UNDERSCORE=no
 CC_TRAILING_UNDERSCORE=no
@@ -212,6 +159,8 @@ if test ! -z "$output" -a "$CYGWIN" != "yes" -a "$MINGW32" != "yes"; then
   CC_LEADING_UNDERSCORE=yes
   AC_DEFINE(NEED_LU)
 fi
+
+
 
 output=`nm underscore.o|grep underscore_ 2>&1`
 if test ! -z "$output"; then
@@ -234,6 +183,8 @@ AC_MSG_RESULT("$CC_LEADING_UNDERSCORE $CC_TRAILING_UNDERSCORE")
 ## end of test for underscores
 #######################
 
+
+
 AC_MSG_CHECKING("for ident support in C compiler")
 ident_support='-DHAVE_CVS_IDENT=1'
 case "${host}" in
@@ -254,7 +205,4 @@ esac
 AC_SUBST(ident_support)
 AC_MSG_RESULT($ident_support)
 
-
-AC_CONFIG_SUBDIRS(vvp tgt-vvp tgt-fpga libveriuser cadpli)
-
-AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
+AC_OUTPUT(Makefile)
