@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.7 2001/07/07 02:57:33 steve Exp $"
+#ident "$Id: arith.h,v 1.8 2001/07/13 00:38:57 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -79,8 +79,12 @@ class vvp_arith_sub  : public vvp_arith_ {
 
     public:
       explicit vvp_arith_sub(vvp_ipoint_t b, unsigned wid);
+      virtual ~vvp_arith_sub();
 
       void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private:
+      unsigned long*sum_;
 
     private: // not implemented
       vvp_arith_sub(const vvp_arith_sub&);
@@ -143,6 +147,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.8  2001/07/13 00:38:57  steve
+ *  Remove width restriction on subtraction.
+ *
  * Revision 1.7  2001/07/07 02:57:33  steve
  *  Add the .shift/r functor.
  *

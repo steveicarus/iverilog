@@ -17,14 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.10 2001/07/11 02:27:21 steve Exp $"
+#ident "$Id: arith.cc,v 1.11 2001/07/13 00:38:57 steve Exp $"
 #endif
 
 # include  "arith.h"
 # include  "schedule.h"
+# include  <limits.h>
 # include  <assert.h>
 
-# include  <stdio.h>
+
 
 vvp_arith_::vvp_arith_(vvp_ipoint_t b, unsigned w)
 : base_(b), wid_(w)
@@ -138,6 +139,7 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 		  tmp += 1;
 
 	      // Add in the carry carried over.
+	    assert(tmp < (ULONG_MAX/2));
 	    tmp += carry;
 	      // Put the next bit into the sum,
 	    sum_[page] |= ((tmp&1) << pbit);
@@ -181,13 +183,31 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 vvp_arith_sub::vvp_arith_sub(vvp_ipoint_t b, unsigned w)
 : vvp_arith_(b, w)
 {
+      sum_ = new unsigned long[(w+1) / 8*sizeof(unsigned long) + 1];
 }
 
+vvp_arith_sub::~vvp_arith_sub()
+{
+      delete[]sum_;
+}
+
+/*
+ * Subtraction works by adding the 2s complement of the B, C and D
+ * inputs from the A input. The 2s complement is the 1s complement
+ * plus one, so we further reduce the operation to adding in the
+ * inverted value and adding a correction.
+ */
 void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 {
-      assert(wid_ <= 8*sizeof(unsigned long));
+      unsigned page = 0;
+      unsigned pbit = 0;
 
-      unsigned long sum = 0;
+	/* There are 3 values subtracted from the first parameter, so
+	   there are three 2s complements, so three ~X +1. That's why
+	   the carry starts with 3. */
+      unsigned long carry = 3;
+
+      sum_[0] = 0;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
@@ -199,25 +219,47 @@ void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 		  return;
 	    }
 
-	    unsigned tmp = 0;
+	      // Accumulate the sum of the input bits. Add in the
+	      // first value, and the ones complement of the other values.
+	    unsigned long tmp = 0;
 	    if (ival & 0x01)
 		  tmp += 1;
-	    if (ival & 0x04)
-		  tmp -= 1;
-	    if (ival & 0x10)
-		  tmp -= 1;
-	    if (ival & 0x40)
-		  tmp -= 1;
+	    if (! (ival & 0x04))
+		  tmp += 1;
+	    if (! (ival & 0x10))
+		  tmp += 1;
+	    if (! (ival & 0x40))
+		  tmp += 1;
 
-	    sum += (tmp << idx);
+	      // Add in the carry carried over.
+	    assert(tmp < (ULONG_MAX/2));
+	    tmp += carry;
+	      // Put the next bit into the sum,
+	    sum_[page] |= ((tmp&1) << pbit);
+	      // ... and carry the remaining bits.
+	    carry = tmp >> 1;
+
+	    pbit += 1;
+	    if (pbit == 8 * sizeof sum_[page]) {
+		  pbit = 0;
+		  page += 1;
+		  sum_[page] = 0;
+	    }
       }
-	    
+
+      page = 0;
+      pbit = 0;
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned oval = sum & 1;
-	    sum >>= 1;
+	    unsigned oval = (sum_[page] >> pbit) & 1;
+
+	    pbit += 1;
+	    if (pbit == 8 * sizeof sum_[page]) {
+		  pbit = 0;
+		  page += 1;
+	    }
 
 	    if (obj->oval == oval)
 		  continue;
@@ -229,6 +271,7 @@ void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
 	    else
 		  schedule_functor(ptr, 0);
       }
+
 }
 
 vvp_cmp_ge::vvp_cmp_ge(vvp_ipoint_t b, unsigned w)
@@ -466,6 +509,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.11  2001/07/13 00:38:57  steve
+ *  Remove width restriction on subtraction.
+ *
  * Revision 1.10  2001/07/11 02:27:21  steve
  *  Add support for REadOnlySync and monitors.
  *
