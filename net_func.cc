@@ -17,11 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: net_func.cc,v 1.1 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: net_func.cc,v 1.2 2002/03/31 04:07:40 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "netlist.h"
 # include  "PExpr.h"
+# include  <iostream>
 
 static unsigned count_def_pins(const NetFuncDef*def)
 {
@@ -143,6 +145,9 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
 /*
  * $Log: net_func.cc,v $
+ * Revision 1.2  2002/03/31 04:07:40  steve
+ *  Update for gcc 3.0
+ *
  * Revision 1.1  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *
