@@ -334,8 +334,8 @@ Verilog web page for the current state of support for Verilog, and in
 particular, browse the bug report database for reported unsupported
 constructs.
 
-  - System functions are supported, but the compiler presumes that
-    they return 32 bits. This is the typical case.
+  - System functions are supported, but the return value is a little
+    tricky. See SYSTEM FUNCTION TABLE FILES in the iverilog man page.
 
   - Specify blocks are parsed but ignored in general.
 
