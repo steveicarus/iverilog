@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.32 2002/02/03 07:05:37 steve Exp $"
+#ident "$Id: main.c,v 1.33 2002/03/15 23:27:42 steve Exp $"
 
 # include "config.h"
 
@@ -389,10 +389,15 @@ int main(int argc, char **argv)
       base = ivl_root;
 #endif
 
-      source_path = strdup(tmpnam(0));
+      source_path = strdup(tempnam(NULL, "ivrlg"));
       assert(source_path);
       source_file = fopen(source_path, "w");
-      assert(source_file);
+      if (NULL == source_file) {
+	    fprintf(stderr, "%s: Error opening temporary file %s\n",
+		    argv[0], source_path);
+	    fprintf(stderr, "%s: Please check TMP or TMPDIR.\n", argv[0]);
+	    return 1;
+      }
 
       while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vVW:y:")) != EOF) {
 
@@ -638,6 +643,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.33  2002/03/15 23:27:42  steve
+ *  Patch to allow user to set place for temporary files.
+ *
  * Revision 1.32  2002/02/03 07:05:37  steve
  *  Support print of version number.
  *
