@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.8 2001/05/09 04:23:18 steve Exp $"
+#ident "$Id: codes.cc,v 1.9 2002/03/01 05:43:59 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -47,7 +47,7 @@ static struct code_index1*code_table[code_index2_size] = { 0 };
 void codespace_init(void)
 {
       code_table[0] = new struct code_index1;
-      memset(code_table[0], 0, sizeof code_table[0]);
+      memset(code_table[0], 0, sizeof (struct code_index1));
       code_table[0]->table[0] = new struct code_index0;
       memset(code_table[0]->table[0], 0, sizeof(struct code_index0));
 
@@ -70,7 +70,7 @@ vvp_cpoint_t codespace_allocate(void)
 
       if (code_table[idx] == 0) {
 	    code_table[idx] = new struct code_index1;
-	    memset(code_table[idx], 0, sizeof code_table[idx]);
+	    memset(code_table[idx], 0, sizeof(struct code_index1));
       }
 
       if (code_table[idx]->table[index1] == 0) {
@@ -105,6 +105,9 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.9  2002/03/01 05:43:59  steve
+ *  Initialize all the codes tables.
+ *
  * Revision 1.8  2001/05/09 04:23:18  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.
