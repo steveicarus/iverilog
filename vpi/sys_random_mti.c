@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random_mti.c,v 1.1 2004/06/09 22:14:10 steve Exp $"
+#ident "$Id: sys_random_mti.c,v 1.2 2004/10/04 00:14:08 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -28,6 +28,25 @@
 # include  <math.h>
 # include  <limits.h>
 
+/*
+ * Implement the $random system function using the ``Mersenne
+ * Twister'' random number generator MT19937.
+ */
+
+/* make sure this matches N+1 in mti19937int.c */
+#define NP1	624+1
+
+/* Icarus seed cookie */
+#define COOKIE	0x1ca1ca1c
+
+static struct context_s global_context = {
+#if defined(__GCC__)
+    .mti =
+#else
+    // For MSVC simply use the fact that mti is located first
+#endif
+        NP1 };
+
 static long mti_dist_uniform(long*seed, long start, long end)
 {
       if (start >= end)
@@ -35,9 +54,9 @@ static long mti_dist_uniform(long*seed, long start, long end)
 
       if ((start > LONG_MIN) || (end < LONG_MAX)) {
 	    long range = end - start;
-	    return start + random()%range;
+	    return start + genrand(&global_context)%range;
       } else {
-	    return random();
+	    return genrand(&global_context);
       }
 }
 
@@ -95,25 +114,6 @@ static int sys_mti_dist_uniform_sizetf(char*x)
 {
       return 32;
 }
-
-/*
- * Implement the $random system function using the ``Mersenne
- * Twister'' random number generator MT19937.
- */
-
-/* make sure this matches N+1 in mti19937int.c */
-#define NP1	624+1
-
-/* Icarus seed cookie */
-#define COOKIE	0x1ca1ca1c
-
-static struct context_s global_context = {
-#if defined(__GCC__)
-    .mti =
-#else
-    // For MSVC simply use the fact that mti is located first
-#endif
-        NP1 };
 
 static int sys_mti_random_calltf(char*name)
 {
@@ -202,6 +202,9 @@ void sys_random_mti_register()
 
 /*
  * $Log: sys_random_mti.c,v $
+ * Revision 1.2  2004/10/04 00:14:08  steve
+ *  MTI functions only user Mersene Twister
+ *
  * Revision 1.1  2004/06/09 22:14:10  steve
  *  Move Mersenne Twister to $mti_random, and make
  *  the standard $random standard. Also, add $dist_poisson.
