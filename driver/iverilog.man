@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/11/17 17:45:37 $" Version "$Date: 2001/11/17 17:45:37 $"
+.TH iverilog 1 "$Date: 2001/12/08 04:13:07 $" Version "$Date: 2001/12/08 04:13:07 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -221,6 +221,17 @@ on to the next library directory.
 .B +define+\fINAME\fP=\fIvalue\fP
 The \fB+define+\fP token is the same as the \fB-D\fP option on the
 command line. The value part of the token is optional.
+
+.TP 8
+.B +toupper-filename\fP
+This token causes file names after this in the command file to be
+translated to uppercase. This helps with situations where a directory
+has passed through a DOS machine, and in the process the file names
+become munged.
+
+.TP 8
+.B +tolower-filename\fP
+This is similar to the \fB+toupper-filename\fP hack described above.
 
 .SH EXAMPLES 
 These examples assume that you have a Verilog source file called hello.v in

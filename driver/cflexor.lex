@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cflexor.lex,v 1.4 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: cflexor.lex,v 1.5 2001/12/08 04:13:07 steve Exp $"
 #endif
 
 # include  "cfparse.h"
@@ -61,7 +61,7 @@ static int comment_enter;
 ^"#".* { ; }
 
   /* Skip white space. */
-[ \t\f] { ; }
+[ \t\f\r] { ; }
   /* Skip line ends, but also count the line. */
 \n { yylloc.first_line += 1; }
 

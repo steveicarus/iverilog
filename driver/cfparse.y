@@ -18,11 +18,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.4 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: cfparse.y,v 1.5 2001/12/08 04:13:07 steve Exp $"
 #endif
 
 
 # include  "globals.h"
+# include  <ctype.h>
+
+/*
+ * This flag is set to 0, 1 or 2 if file names are to be translated to
+ * uppercase(1) or lowercase(2).
+ */
+static int setcase_filename_flag = 0;
+static void translate_file_name(char*text)
+{
+      switch (setcase_filename_flag) {
+	  case 0:
+	    break;
+	  case 1:
+	    while (*text) {
+		  *text = toupper(*text);
+		  text += 1;
+	    }
+	    break;
+	  case 2:
+	    while (*text) {
+		  *text = tolower(*text);
+		  text += 1;
+	    }
+	    break;
+      }
+}
 
 %}
 
@@ -51,7 +77,8 @@ item
      of a source file. Add the file to the file list. */
 
 	: TOK_STRING
-		{ process_file_name($1);
+		{ translate_file_name($1);
+		  process_file_name($1);
 		  free($1);
 		}
 
@@ -63,7 +90,8 @@ item
      as an ordinary source file. */
 
         | TOK_Dv TOK_STRING
-		{ process_file_name($2);
+		{ translate_file_name($2);
+		  process_file_name($2);
 		  fprintf(stderr, "%s:%u: Ignoring -v in front of %s\n",
 			  @1.text, @1.first_line, $2);
 		  free($2);
@@ -103,8 +131,14 @@ item
 		  free($1);
 		}
 	| TOK_PLUSWORD
-		{ fprintf(stderr, "%s:%u: Ignoring %s\n",
-			  @1.text, @1.first_line, $1);
+		{ if (strcmp($1, "+toupper-filenames") == 0) {
+		        setcase_filename_flag = 1;
+		  } else if (strcmp($1, "+tolower-filenames") == 0) {
+			setcase_filename_flag = 2;
+		  } else {
+			fprintf(stderr, "%s:%u: Ignoring %s\n",
+				@1.text, @1.first_line, $1);
+		  }
 		  free($1);
 		}
 	;
