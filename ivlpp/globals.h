@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.5 2000/09/13 22:33:13 steve Exp $"
+#ident "$Id: globals.h,v 1.6 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -37,11 +37,16 @@ extern int line_direct_flag;
 
 extern unsigned error_count;
 
+extern FILE *depend_file;
+
 /* This is the entry to the parser. */
 extern int yyparse();
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.6  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.5  2000/09/13 22:33:13  steve
  *  undefined macros are null (with warnings.)
  *

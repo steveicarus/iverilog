@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.4 2001/11/20 23:36:34 steve Exp $"
+#ident "$Id: load_module.cc,v 1.5 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -28,6 +28,7 @@
 
 
 const char dir_character = '/';
+extern FILE *depend_file;
 
 bool load_module(const char*type)
 {
@@ -45,7 +46,10 @@ bool load_module(const char*type)
 		  FILE*file = fopen(path, "r");
 		  if (file == 0)
 			continue;
-
+		  if(depend_file) {
+			  fprintf(depend_file, "%s\n", path);
+		  }
+		  
 		  if (verbose_flag) {
 			cerr << "Loading library file " << path << "." << endl;
 		  }
@@ -62,6 +66,9 @@ bool load_module(const char*type)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.5  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.4  2001/11/20 23:36:34  steve
  *  Close library files after parsing.
  *

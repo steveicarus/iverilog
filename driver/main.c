@@ -16,14 +16,14 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.33 2002/03/15 23:27:42 steve Exp $"
+#ident "$Id: main.c,v 1.34 2002/04/04 05:26:13 steve Exp $"
 
 # include "config.h"
 
 
 const char HELP[] =
 "Usage: iverilog [-ESvV] [-B base] [-C path] [-c cmdfile]\n"
-"                [-D macro[=defn]] [-I includedir] [-m module]\n"
+"                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
 "                [-W class] [-y dir] [-Y suf] source_file(s)\n"
@@ -87,6 +87,7 @@ const char*mtm  = 0;
 const char*opath = "a.out" EXEEXT;
 const char*npath = 0;
 const char*targ  = "vvp";
+const char*depfile = 0;
 
 char warning_flags[16] = "";
 char *library_flags = 0;
@@ -399,7 +400,7 @@ int main(int argc, char **argv)
 	    return 1;
       }
 
-      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vVW:y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:M:m:N::o:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -440,6 +441,10 @@ int main(int argc, char **argv)
 
 		case 'I':
 		  process_include_dir(optarg);
+		  break;
+
+		case 'M':
+		  depfile = optarg;
 		  break;
 
 		case 'm':
@@ -601,6 +606,12 @@ int main(int argc, char **argv)
 	    ncmd += strlen(def_list);
       }
 
+      if (depfile) {
+	    cmd = realloc(cmd, ncmd + strlen(depfile) + 5);
+	    strcat(cmd, " -M ");
+	    strcat(cmd, depfile);
+	    ncmd += strlen(depfile) + 4;
+      }
 
 	/* If the -E flag was given on the command line, then all we
 	   do is run the preprocessor and put the output where the
@@ -643,6 +654,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.34  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.33  2002/03/15 23:27:42  steve
  *  Patch to allow user to set place for temporary files.
  *

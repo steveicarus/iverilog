@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.31 2002/03/09 06:37:49 steve Exp $"
+#ident "$Id: lexor.lex,v 1.32 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -66,6 +66,8 @@ struct include_stack_t {
 
       struct include_stack_t*next;
 };
+
+static void emit_pathline(struct include_stack_t *isp);
 
 static struct include_stack_t*file_queue = 0;
 static struct include_stack_t*istack  = 0;
@@ -135,6 +137,7 @@ W [ \t\b\f]+
 
 ^{W}?`include { yy_push_state(PPINCLUDE); }
 
+<PPINCLUDE>`[a-zA-Z][a-zA-Z0-9_]* { def_match(); }
 <PPINCLUDE>\"[^\"]*\" { include_filename(); }
 
 <PPINCLUDE>[ \t\b\f] { ; }
@@ -156,9 +159,9 @@ W [ \t\b\f]+
   /* Anything that is not matched by the above is an error of some
      sort. Print and error message and absorb the rest of the line. */
 <PPINCLUDE>. {
-      fprintf(stderr, "%s:%u: error: malformed `include directive."
-	      " Did you quote the file name?\n", istack->path,
-	      istack->lineno+1);
+      emit_pathline(istack);
+      fprintf(stderr, "error: malformed `include directive."
+	      " Did you quote the file name?\n");
       error_count += 1;
       BEGIN(ERROR_LINE); }
 
@@ -319,9 +322,9 @@ static void def_match()
 	    yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
       } else {
-	    fprintf(stderr, "%s:%u: warning: macro %s undefined "
-		    "(and assumed null) at this point.\n",
-		    istack->path, istack->lineno, yytext);
+	    emit_pathline(istack);
+	    fprintf(stderr, "warning: macro %s undefined "
+		    "(and assumed null) at this point.\n", yytext);
       }
 }
 
@@ -580,7 +583,11 @@ static void output_init()
 
 static void include_filename()
 {
-      assert(standby == 0);
+      if(standby) {
+	      emit_pathline(istack);
+	      fprintf(stderr, "error: malformed `include directive. Extra junk on line?\n");
+              exit(1);
+      }
       standby = malloc(sizeof(struct include_stack_t));
       standby->path = strdup(yytext+1);
       standby->path[strlen(standby->path)-1] = 0;
@@ -592,7 +599,9 @@ static void do_include()
 
       if (standby->path[0] == '/') {
 	    standby->file = fopen(standby->path, "r");
-
+	    if(depend_file && standby->file) {
+		    fprintf(depend_file, "%s\n", istack->path);
+	    }
       } else {
 	    unsigned idx = 0;
 	    standby->file = 0;
@@ -600,9 +609,12 @@ static void do_include()
 		  char path[4096];
 		  sprintf(path, "%s/%s", include_dir[idx], standby->path);
 		  standby->file = fopen(path, "r");
-		  if (standby->file)
+		  if (standby->file) {
+			if(depend_file) {
+			    fprintf(depend_file, "%s\n", path);
+			}
 			break;
-
+		  }
 	    }
       }
 
@@ -622,6 +634,22 @@ static void do_include()
       if (line_direct_flag && istack->path)
 	    fprintf(yyout, "\n`line %u \"%s\" 1\n",
 		    istack->lineno+1, istack->path);
+}
+
+/* walk the include stack until we find an entry with a valid pathname,
+ * and print the file and line from that entry for use in an error message.
+ * The istack entries created by def_match() for macro expansions do not
+ * contain pathnames.   This finds instead the real file in which the outermost
+ * macro was used.
+ */
+static void emit_pathline(struct include_stack_t*isp)
+{
+	while(isp && (isp->path == NULL)) {
+		isp = isp->next;
+	}
+	assert(isp);
+	fprintf(stderr, "%s:%u: ",
+		isp->path, isp->lineno+1);
 }
 
 /*
@@ -674,6 +702,9 @@ static int yywrap()
 
 	    if (line_direct_flag)
 		  fprintf(yyout, "\n`line 1 \"%s\" 0\n", istack->path);
+	    if(depend_file) {
+		  fprintf(depend_file, "%s\n", istack->path);
+	    }
 
 	    yyrestart(istack->file);
 	    return 0;
@@ -708,6 +739,9 @@ void reset_lexor(FILE*out, char*paths[])
       if (isp->file == 0) {
 	    perror(paths[0]);
 	    exit(1);
+      }
+      if(depend_file) {
+	      fprintf(depend_file, "%s\n", paths[0]);
       }
 
       yyout = out;

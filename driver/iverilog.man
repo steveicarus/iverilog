@@ -1,12 +1,12 @@
-.TH iverilog 1 "$Date: 2002/02/16 03:18:54 $" Version "$Date: 2002/02/16 03:18:54 $"
+.TH iverilog 1 "$Date: 2002/04/04 05:26:13 $" Version "$Date: 2002/04/04 05:26:13 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
 [-ESVv] [-Cpath] [-ccmdfile] [-Dmacro[=defn]] [-pflag=value]
-[-Iincludedir] [-mmodule] [-Nfile] [-ooutputfilename] [-stopmodule]
-[-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
+[-Iincludedir] [-mmodule] [-Mfile] [-Nfile] [-ooutputfilename]
+[-stopmodule] [-ttype] [-Tmin/typ/max] [-Wclass] [-ypath] sourcefile
 
 .SH DESCRIPTION
 .PP
@@ -60,6 +60,13 @@ Append directory \fIincludedir\fP to list of directories searched
 for Verilog include files. The \fB-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
+.TP 8
+.B -M\fIpath\fP
+Write into the file specified by path a list of files that contribute
+to the compilation of the design. This includes files that are
+included by include directives and files that are automatically loaded
+by library support. The output is one file name per line, with no
+leading or trailing space.
 .TP 8
 .B -m\fImodule\fP
 Add this module to the list of VPI modules to be loaded by the

@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.14 2001/11/21 02:59:27 steve Exp $"
+#ident "$Id: main.c,v 1.15 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,6 +86,7 @@ unsigned include_cnt = 0;
 int line_direct_flag = 0;
 
 unsigned error_count = 0;
+FILE *depend_file = NULL;
 
 /*
  * This function reads from a file a list of file names. Each name
@@ -125,6 +126,7 @@ int main(int argc, char*argv[])
       const char*flist_path = 0;
       unsigned flag_errors = 0;
       char*out_path = 0;
+      char *dep_path = NULL;
       FILE*out;
 
 	/* Define preprocessor keywords that I plan to just pass. */
@@ -150,7 +152,7 @@ int main(int argc, char*argv[])
       include_dir[0] = strdup(".");
       include_cnt = 1;
 
-      while ((opt = getopt(argc, argv, "D:f:I:K:Lo:v")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "D:f:I:K:LM:o:v")) != EOF) switch (opt) {
 
 	  case 'D': {
 		char*tmp = strdup(optarg);
@@ -192,6 +194,14 @@ int main(int argc, char*argv[])
 	    line_direct_flag = 1;
 	    break;
 
+	  case 'M':
+	    if (dep_path) {
+		  fprintf(stderr, "duplicate -M flag.\n");
+	    } else {
+		  dep_path = optarg;
+	    }
+	    break;
+
 	  case 'o':
 	    if (out_path) {
 		  fprintf(stderr, "duplicate -o flag.\n");
@@ -219,6 +229,7 @@ int main(int argc, char*argv[])
 		    "    -I<dir> - Add an include file search directory\n"
 		    "    -K<def> - Define a keyword macro that I just pass\n"
 		    "    -L      - Emit line number directives\n"
+		    "    -M<fil> - Write dependencies to <fil>\n"
 		    "    -o<fil> - Send the output to <fil>\n"
 		    "    -v      - Print version information\n",
 		    argv[0]);
@@ -250,6 +261,14 @@ int main(int argc, char*argv[])
 	    out = stdout;
       }
 
+      if(dep_path) {
+	      depend_file = fopen(dep_path, "w");
+	      if (depend_file == 0) {
+		  perror(dep_path);
+		  exit(1);
+	      }
+      }
+
       if (source_cnt == 0) {
 	    fprintf(stderr, "%s: No input files given.\n", argv[0]);
 	    return 1;
@@ -260,11 +279,18 @@ int main(int argc, char*argv[])
       reset_lexor(out, source_list);
       if (yyparse()) return -1;
 
+      if(depend_file) {
+	      fclose(depend_file);
+      }
+
       return error_count;
 }
 
 /*
  * $Log: main.c,v $
+ * Revision 1.15  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.14  2001/11/21 02:59:27  steve
  *  Remove diag print.
  *

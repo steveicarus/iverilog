@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.51 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: main.cc,v 1.52 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,6 +81,7 @@ map<string,string> flags;
 list<const char*> library_dirs;
 list<const char*> library_suff;
 
+FILE *depend_file = NULL;
 /*
  * These are the warning enable flags.
  */
@@ -182,6 +183,7 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
       list<const char*> roots;
+      const char* depfile_name = NULL;
 
       struct tms cycles[5];
 
@@ -190,7 +192,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hm:M:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -210,6 +212,9 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'm':
 	    flags["VPI_MODULE_LIST"] = flags["VPI_MODULE_LIST"]+","+optarg;
+	    break;
+	  case 'M':
+	    depfile_name = optarg;
 	    break;
 	  case 'N':
 	    net_path = optarg;
@@ -310,6 +315,14 @@ int main(int argc, char*argv[])
 	    cerr << "No input files." << endl;
 	    return 1;
       }
+
+      if( depfile_name ) {
+	      depend_file = fopen(depfile_name, "a");
+	      if(! depend_file) {
+		      perror(depfile_name);
+	      }
+      }
+	      
 
 	/* If there were no -Y flags, then create a minimal library
 	   suffix search list. */
@@ -477,6 +490,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.52  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.51  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
  *

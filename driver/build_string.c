@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.6 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: build_string.c,v 1.7 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,6 +54,7 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 			    if (((*pattern == 's') && start)
 				|| ((*pattern == 'v') && verbose_flag)
+				|| ((*pattern == 'M') && depfile)
 				|| ((*pattern == 'N') && npath)
 				|| ((*pattern == 'T') && mtm)) {
 				  int rc = build_string(output, olen,
@@ -84,6 +85,14 @@ int build_string(char*output, size_t olen, const char*pattern)
 			      strcpy(output, mod_list);
 			      output += strlen(mod_list);
 			      olen -= strlen(mod_list);
+			}
+			break;
+
+		      case 'M':
+			if (depfile) {
+			      strcpy(output, depfile);
+			      output += strlen(depfile);
+			      olen -= strlen(depfile);
 			}
 			break;
 
@@ -160,6 +169,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.7  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.6  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
  *

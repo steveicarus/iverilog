@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.10 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: globals.h,v 1.11 2002/04/04 05:26:13 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -35,6 +35,9 @@ extern char*mod_list;
 
   /* This is the optional -Tmin|typ|max setting. */
 extern const char*mtm;
+
+  /* Ths is the optional -M<dependfile> value, if one was supplied. */
+extern const char*depfile;
 
   /* Ths is the optional -N<path> value, if one was supplied. */
 extern const char*npath;
@@ -79,6 +82,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.11  2002/04/04 05:26:13  steve
+ *  Add dependency generation.
+ *
  * Revision 1.10  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
  *
