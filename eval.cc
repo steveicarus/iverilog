@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.25 2001/12/29 00:43:55 steve Exp $"
+#ident "$Id: eval.cc,v 1.26 2001/12/29 22:10:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -46,43 +46,53 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 
       switch (op_) {
 	  case '+': {
-		assert(l->is_defined());
-		assert(r->is_defined());
-		long lv = l->as_long();
-		long rv = r->as_long();
-		res = new verinum(lv+rv, l->len());
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv+rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
 		break;
 	  }
 	  case '-': {
-		assert(l->is_defined());
-		assert(r->is_defined());
-		long lv = l->as_long();
-		long rv = r->as_long();
-		res = new verinum(lv-rv, l->len());
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv-rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
 		break;
 	  }
 	  case '*': {
-		assert(l->is_defined());
-		assert(r->is_defined());
-		long lv = l->as_long();
-		long rv = r->as_long();
-		res = new verinum(lv * rv, l->len());
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv * rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
 		break;
 	  }
 	  case '/': {
-		assert(l->is_defined());
-		assert(r->is_defined());
-		long lv = l->as_long();
-		long rv = r->as_long();
-		res = new verinum(lv / rv, l->len());
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv / rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
 		break;
 	  }
 	  case '%': {
-		assert(l->is_defined());
-		assert(r->is_defined());
-		long lv = l->as_long();
-		long rv = r->as_long();
-		res = new verinum(lv % rv, l->len());
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv % rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
 		break;
 	  }
 	  case 'l': { // left shift (<<)
@@ -207,6 +217,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.26  2001/12/29 22:10:10  steve
+ *  constant eval of arithmetic with x and z.
+ *
  * Revision 1.25  2001/12/29 00:43:55  steve
  *  Evaluate constant right shifts.
  *
