@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.103 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.104 2000/02/24 01:57:10 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -667,8 +667,10 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       string_counter = 1;
       number_counter = 1;
 
+#if 0
       os << "static struct __vpiStringConst string_table[];" << endl;
       os << "static struct __vpiNumberConst number_table[];" << endl;
+#endif
 
       init_code << "static void design_init()" << endl;
       init_code << "{" << endl;
@@ -2169,6 +2171,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.104  2000/02/24 01:57:10  steve
+ *  I no longer need to declare string and number tables early.
+ *
  * Revision 1.103  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *
