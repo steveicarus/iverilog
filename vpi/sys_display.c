@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.29 2001/08/16 03:26:04 steve Exp $"
+#ident "$Id: sys_display.c,v 1.30 2001/10/25 04:19:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -318,6 +318,7 @@ static int sys_strobe_calltf(char*name)
       cb.cb_rtn = strobe_cb;
       cb.time = &time;
       cb.obj = 0;
+      cb.value = 0;
       cb.user_data = (char*)info;
       vpi_register_cb(&cb);
       return 0;
@@ -358,6 +359,7 @@ static int monitor_cb_1(p_cb_data cause)
       cb.cb_rtn = monitor_cb_1;
       cb.time = &time;
       cb.obj  = cause->obj;
+      cb.value = 0;
       cb.user_data = cause->user_data;
       *cbh = vpi_register_cb(&cb);
       
@@ -375,6 +377,7 @@ static int monitor_cb_1(p_cb_data cause)
       cb.cb_rtn = monitor_cb_2;
       cb.time = &time;
       cb.obj = 0;
+      cb.value = 0;
       vpi_register_cb(&cb);
 
       return 0;
@@ -415,6 +418,7 @@ static int sys_monitor_calltf(char*name)
       cb.reason = cbValueChange;
       cb.cb_rtn = monitor_cb_1;
       cb.time = &time;
+      cb.value = NULL;
       for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1) {
 
 	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
@@ -741,6 +745,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.30  2001/10/25 04:19:53  steve
+ *  VPI support for callback to return values.
+ *
  * Revision 1.29  2001/08/16 03:26:04  steve
  *  Add some missing print escape sequences.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.60 2001/10/23 03:49:13 steve Exp $"
+#ident "$Id: vthread.cc,v 1.61 2001/10/25 04:19:53 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -142,7 +142,6 @@ unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr)
 
 void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
 {
-      thr_check_addr(thr, addr);
       thr_put_bit(thr, addr, bit);
 }
 
@@ -1673,6 +1672,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.61  2001/10/25 04:19:53  steve
+ *  VPI support for callback to return values.
+ *
  * Revision 1.60  2001/10/23 03:49:13  steve
  *  Fix carry between works for %add instruction.
  *

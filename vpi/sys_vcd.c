@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.24 2001/10/15 01:50:23 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.25 2001/10/25 04:19:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -570,6 +570,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  cb.time      = &info->time;
 		  cb.user_data = (char*)info;
+		  cb.value     = NULL;
 		  cb.obj       = item;
 		  cb.reason    = cbValueChange;
 		  cb.cb_rtn    = variable_cb;
@@ -781,6 +782,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.25  2001/10/25 04:19:53  steve
+ *  VPI support for callback to return values.
+ *
  * Revision 1.24  2001/10/15 01:50:23  steve
  *  Include scope information in VCD output.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.7 2001/10/12 03:00:09 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.8 2001/10/25 04:19:53 steve Exp $"
 #endif
 
 /*
@@ -243,6 +243,17 @@ void vvp_cb_fobj_s::set(vvp_ipoint_t i, functor_t f, bool push)
       while (next) {
 	    struct __vpiCallback * cur = next;
 	    next = cur->next;
+	    if (cur->cb_data.value) {
+		  switch (cur->cb_data.value->format) {
+		  case vpiScalarVal:
+			cur->cb_data.value->value.scalar = f->ival & 3;
+			break;
+		  case vpiSuppressVal:
+			break;
+		  default:
+			fprintf(stderr, "vpi_callback: value format %d not supported\n", cur->cb_data.value->format);
+		  }
+	    }
 	    cur->cb_data.time->type = vpiSimTime;
 	    cur->cb_data.time->low = schedule_simtime();
 	    cur->cb_data.time->high = 0;
@@ -260,6 +271,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.8  2001/10/25 04:19:53  steve
+ *  VPI support for callback to return values.
+ *
  * Revision 1.7  2001/10/12 03:00:09  steve
  *  M42 implementation of mode 2 (Stephan Boettcher)
  *
