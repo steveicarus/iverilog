@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.193 2004/03/08 00:10:29 steve Exp $"
+#ident "$Id: parse.y,v 1.194 2004/05/25 03:42:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2728,6 +2728,8 @@ statement
 		{ PEventStatement*tmp;
 		  PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
 		  tmp = new PEventStatement(etmp);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
