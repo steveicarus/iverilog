@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.50 2002/11/25 23:33:45 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.51 2003/01/07 18:07:50 steve Exp $"
 #endif
 
 /*
@@ -57,6 +57,8 @@ extern const char oct_digits[256];
  */
 char *need_result_buf(unsigned cnt, vpi_rbuf_t type)
 {
+      cnt = (cnt + 0x0fff) & ~0x0fff;
+
       static char*result_buf[2] = {0, 0};
       static size_t result_buf_size[2] = {0, 0};
 
@@ -761,6 +763,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.51  2003/01/07 18:07:50  steve
+ *  Allocate res-buf in bigger chunks
+ *
  * Revision 1.50  2002/11/25 23:33:45  steve
  *  Support put of vpiStringVal to signals.
  *
