@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.c,v 1.1 2003/02/11 05:21:33 steve Exp $"
+#ident "$Id: vcd_priv.c,v 1.2 2003/02/13 18:13:28 steve Exp $"
 #endif
 
 # include  "vcd_priv.h"
@@ -28,6 +28,9 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  "stringheap.h"
+
+struct stringheap_s name_heap = {0, 0};
 
 struct vcd_names_s {
       const char *name;
@@ -39,7 +42,7 @@ void vcd_names_add(struct vcd_names_list_s*tab, const char *name)
       struct vcd_names_s *nl = (struct vcd_names_s *)
 	    malloc(sizeof(struct vcd_names_s));
       assert(nl);
-      nl->name = strdup(name);
+      nl->name = strdup_sh(&name_heap, name);
       nl->next = tab->vcd_names_list;
       tab->vcd_names_list = nl;
       tab->listed_names ++;
@@ -166,6 +169,9 @@ void set_nexus_ident(int nex, const char *id)
 
 /*
  * $Log: vcd_priv.c,v $
+ * Revision 1.2  2003/02/13 18:13:28  steve
+ *  Make lxt use stringheap to perm-allocate strings.
+ *
  * Revision 1.1  2003/02/11 05:21:33  steve
  *  Support dump of vpiRealVar objects.
  *

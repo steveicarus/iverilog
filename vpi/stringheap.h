@@ -1,5 +1,5 @@
-#ifndef __vcd_priv_H
-#define __vcd_priv_H
+#ifndef __stringheap_H
+#define __stringheap_H
 /*
  * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
  *
@@ -19,36 +19,25 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.h,v 1.2 2003/02/13 18:13:28 steve Exp $"
+#ident "$Id: stringheap.h,v 1.1 2003/02/13 18:13:28 steve Exp $"
 #endif
 
-struct vcd_names_s;
-extern struct stringheap_s name_heap;
+struct stringheap_cell;
 
-struct vcd_names_list_s {
-      struct vcd_names_s *vcd_names_list;
-      const char **vcd_names_sorted;
-      int listed_names, sorted_names;
+struct stringheap_s {
+      struct stringheap_cell*cell_lst;
+      unsigned cell_off;
 };
 
-extern void vcd_names_add(struct vcd_names_list_s*tab, const char *name);
-
-extern const char *vcd_names_search(struct vcd_names_list_s*tab,
-				    const char *key);
-
-extern void vcd_names_sort(struct vcd_names_list_s*tab);
-
-
-extern const char*find_nexus_ident(int nex);
-extern void       set_nexus_ident(int nex, const char *id);
+/*
+ * Allocate the string from the heap.
+ */
+const char*strdup_sh(struct stringheap_s*hp, const char*str);
 
 /*
- * $Log: vcd_priv.h,v $
- * Revision 1.2  2003/02/13 18:13:28  steve
+ * $Log: stringheap.h,v $
+ * Revision 1.1  2003/02/13 18:13:28  steve
  *  Make lxt use stringheap to perm-allocate strings.
- *
- * Revision 1.1  2003/02/11 05:21:33  steve
- *  Support dump of vpiRealVar objects.
  *
  */
 #endif

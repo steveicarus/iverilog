@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.15 2003/02/12 05:28:01 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.16 2003/02/13 18:13:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,6 +39,8 @@
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
+# include  "stringheap.h"
+
 
 /*
  * The lxt_scope head and current pointers are used to keep a scope
@@ -125,7 +127,7 @@ static char *create_full_name(const char *name)
       n2 += strlen(n2);
       assert( (n2 - n + 1) == len );
 
-      return(n);
+      return n;
 }
 
 
@@ -475,7 +477,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    }
 	    
 	    if (!ident) {
-		  ident = create_full_name(name);
+		  char*tmp = create_full_name(name);
+		  ident = strdup_sh(&name_heap, tmp);
+		  free(tmp);
 		  
 		  if (nexus_id)
 			set_nexus_ident(nexus_id, ident);
@@ -513,8 +517,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  break;
 
 	    name = vpi_get_str(vpiName, item);
-	    ident = create_full_name(name);
-
+	    { char*tmp = create_full_name(name);
+	      ident = strdup_sh(&name_heap, tmp);
+	      free(tmp);
+	    }
 	    info = malloc(sizeof(*info));
 
 	    info->time.type = vpiSimTime;
@@ -730,6 +736,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.16  2003/02/13 18:13:28  steve
+ *  Make lxt use stringheap to perm-allocate strings.
+ *
  * Revision 1.15  2003/02/12 05:28:01  steve
  *  Set dumpoff of real variables to NaN.
  *
