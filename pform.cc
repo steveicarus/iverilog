@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.82 2001/10/21 01:55:24 steve Exp $"
+#ident "$Id: pform.cc,v 1.83 2001/10/31 03:11:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -109,7 +109,8 @@ static unsigned long evaluate_delay(PExpr*delay)
       return pp->value().as_ulong();
 }
 
-void pform_startmodule(const char*name, svector<Module::port_t*>*ports)
+void pform_startmodule(const char*name, svector<Module::port_t*>*ports,
+		       const char*file, unsigned lineno)
 {
       assert( pform_cur_module == 0 );
 
@@ -124,6 +125,10 @@ void pform_startmodule(const char*name, svector<Module::port_t*>*ports)
       pform_cur_module = new Module(name, ports);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
+
+      pform_cur_module->set_file(file);
+      pform_cur_module->set_lineno(lineno);
+
       delete ports;
 }
 
@@ -1097,6 +1102,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.83  2001/10/31 03:11:15  steve
+ *  detect module ports not declared within the module.
+ *
  * Revision 1.82  2001/10/21 01:55:24  steve
  *  Error messages for missing UDP port declarations.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.49 2001/10/21 01:55:25 steve Exp $"
+#ident "$Id: pform.h,v 1.50 2001/10/31 03:11:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -110,7 +110,8 @@ struct lgate {
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
  */
-extern void pform_startmodule(const char*, svector<Module::port_t*>*);
+extern void pform_startmodule(const char*, svector<Module::port_t*>*,
+			      const char*file, unsigned lineno);
 extern void pform_endmodule(const char*);
 
 extern void pform_make_udp(const char*name, list<string>*parms,
@@ -201,6 +202,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.50  2001/10/31 03:11:15  steve
+ *  detect module ports not declared within the module.
+ *
  * Revision 1.49  2001/10/21 01:55:25  steve
  *  Error messages for missing UDP port declarations.
  *

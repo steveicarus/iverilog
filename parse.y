@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.132 2001/10/26 03:22:56 steve Exp $"
+#ident "$Id: parse.y,v 1.133 2001/10/31 03:11:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1154,7 +1154,7 @@ assign_list
 
 module
 	: module_start IDENTIFIER list_of_ports_opt ';'
-		{ pform_startmodule($2, $3);
+		{ pform_startmodule($2, $3, @1.text, @1.first_line);
 		}
 	  module_item_list
 	  K_endmodule
@@ -1162,7 +1162,7 @@ module
 		  delete $2;
 		}
 	| module_start IDENTIFIER list_of_ports_opt ';'
-		{ pform_startmodule($2, $3);
+		{ pform_startmodule($2, $3, @1.text, @1.first_line);
 		}
 	  K_endmodule
 		{ pform_endmodule($2);

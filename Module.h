@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.22 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: Module.h,v 1.23 2001/10/31 03:11:15 steve Exp $"
 #endif
 
 # include  <list>
 # include  <map>
 # include  "svector.h"
 # include  "named.h"
+# include  "LineInfo.h"
 # include  <string>
 class PEvent;
 class PExpr;
@@ -44,7 +45,7 @@ class NetScope;
  * therefore the handle for grasping the described circuit.
  */
 
-class Module {
+class Module : public LineInfo {
 
 	/* The module ports are in general a vector of port_t
 	   objects. Each port has a name and an ordered list of
@@ -143,6 +144,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.23  2001/10/31 03:11:15  steve
+ *  detect module ports not declared within the module.
+ *
  * Revision 1.22  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

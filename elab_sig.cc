@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.14 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.15 2001/10/31 03:11:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -69,6 +69,27 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	// start the signals list with them.
       const map<string,PWire*>&wl = get_wires();
 
+	// Scan all the ports of the module, and make sure that each
+	// is connected to wires that have port declarations.
+      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
+	    Module::port_t*pp = ports_[idx];
+	    if (pp == 0)
+		  continue;
+
+	    map<string,PWire*>::const_iterator wt;
+	    for (unsigned cc = 0 ;  cc < pp->expr.count() ;  cc += 1) {
+		  wt = wl.find(pp->expr[cc]->name());
+
+		  if (wt == wl.end()) {
+			cerr << get_line() << ": error: "
+			     << "Port " << pp->expr[cc]->name() << " ("
+			     << (idx+1) << ") of module " << name_
+			     << " is not declared within module." << endl;
+			des->errors += 1;
+		  }
+	    }
+      }
+
       for (map<string,PWire*>::const_iterator wt = wl.begin()
 		 ; wt != wl.end()
 		 ; wt ++ ) {
@@ -92,6 +113,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 	    }
+
 
 	      /* If the signal is an input and is also declared as a
 		 reg, then report an error. */
@@ -444,6 +466,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.15  2001/10/31 03:11:15  steve
+ *  detect module ports not declared within the module.
+ *
  * Revision 1.14  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
