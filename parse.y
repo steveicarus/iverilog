@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.171 2003/02/02 19:02:39 steve Exp $"
+#ident "$Id: parse.y,v 1.172 2003/02/07 23:16:09 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "parse_misc.h"
 # include  "pform.h"
+# include  <sstream>
 
 extern void lex_start_table();
 extern void lex_end_table();
@@ -159,7 +160,8 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
 
-%type <mport> port port_opt port_reference port_reference_list port_declaration
+%type <mport> port port_opt port_reference port_reference_list
+%type <mport> port_declaration port_declaration_error
 %type <mports> list_of_ports list_of_ports_opt list_of_port_declarations
 
 %type <wires> task_item task_item_list task_item_list_opt
@@ -185,7 +187,7 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <exprs> assign assign_list
 
 %type <exprs> range range_opt
-%type <nettype>  net_type var_type
+%type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype
 %type <porttype> port_type
 %type <parmvalue> parameter_value_opt
@@ -1183,10 +1185,20 @@ list_of_port_declarations
 		  delete $1;
 		  $$ = tmp;
 		}
+	| list_of_port_declarations ',' port_declaration_error
+		{ svector<Module::port_t*>*tmp;
+		  if ($3) {
+			tmp = new svector<Module::port_t*>(*$1, $3);
+			delete $1;
+			$$ = tmp;
+		  } else {
+			$$ = $1;
+		  }
+		}
         ;
 
 port_declaration
-	: K_input net_type signed_opt range_opt IDENTIFIER
+	: K_input net_type_opt signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
 		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
@@ -1195,7 +1207,7 @@ port_declaration
 		  delete $5;
 		  $$ = ptmp;
 		}
-	| K_inout  net_type signed_opt range_opt IDENTIFIER
+	| K_inout  net_type_opt signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
 		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
@@ -1204,7 +1216,7 @@ port_declaration
 		  delete $5;
 		  $$ = ptmp;
 		}
-	| K_output net_type signed_opt range_opt IDENTIFIER
+	| K_output net_type_opt signed_opt range_opt IDENTIFIER
 		{ Module::port_t*ptmp;
 		  ptmp = pform_module_port_reference($5, @1.text,
 						     @1.first_line);
@@ -1222,6 +1234,33 @@ port_declaration
 		  delete $5;
 		  $$ = ptmp;
 		}
+	;
+
+  /* Detect some ways the port declaration can be messed up. */
+port_declaration_error
+	: net_type_opt signed_opt range_opt IDENTIFIER
+		{ ostringstream msg1, msg2;
+		  msg1 << "error: Port " << $4 << " in declaration "
+		      << "list requires a direction keyword.";
+		  yyerror(@4, msg1.str().c_str());
+
+		  msg2 << "error: Do you mean ``inout " << $4 << "''?";
+		  yyerror(@4, msg2.str().c_str());
+
+		  Module::port_t*ptmp;
+		  ptmp = pform_module_port_reference($4, @4.text,
+						     @4.first_line);
+		  pform_module_define_port(@4, $4, NetNet::PINOUT,
+					   $1, $2, $3);
+		  delete $4;
+		  $$ = ptmp;
+		}
+	;
+
+
+net_type_opt
+	: net_type { $$ = $1; }
+	| { $$ = NetNet::IMPLICIT; }
 	;
 
 list_of_ports_opt
