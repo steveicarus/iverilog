@@ -53,9 +53,15 @@ ivl_lpm_size
 ivl_lpm_type
 ivl_lpm_width
 
+ivl_lval_idx
+ivl_lval_mem
 ivl_lval_mux
 ivl_lval_pin
 ivl_lval_pins
+
+ivl_memort_name
+ivl_memory_root
+ivl_memory_width
 
 ivl_nexus_name
 ivl_nexus_ptrs
@@ -77,6 +83,8 @@ ivl_scope_logs
 ivl_scope_log
 ivl_scope_lpms
 ivl_scope_lpm
+ivl_scope_mem
+ivl_scope_mems
 ivl_scope_name
 ivl_scope_port
 ivl_scope_ports
