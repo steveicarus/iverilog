@@ -26,8 +26,7 @@ the make phase.  All steps are in the verilog directory.
 If gcc dies saying virtual memory exhausted while compiling parse.c 
   then recompile with -O1 or without -O flag and do these steps to
   continue
-     o c++ -DHAVE_GETOPT_H=1 -DUSE_LIBVPIP=1  -g -I. -MD -c parse.cc -o parse.o
-     o mv parse.d dep/parse.d
+     o make CXXFLAGS='' parse.o
      o make
 
 2.
