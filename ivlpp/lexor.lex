@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.8 1999/07/15 03:39:17 steve Exp $"
+#ident "$Id: lexor.lex,v 1.9 1999/07/15 22:53:47 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -459,6 +459,7 @@ static void do_include()
 
 static int yywrap()
 {
+      int line_mask_flag = 0;
       struct include_stack_t*isp = istack;
       istack = isp->next;
 
@@ -470,8 +471,12 @@ static int yywrap()
 	      /* If I am printing line directives and I just finished
 		 macro substitution, I should terminate the line and
 		 arrange for a new directive to be printed. */
-	    if (line_direct_flag && istack->path)
+	    if (line_direct_flag
+		&& istack && istack->path
+		&& strchr(isp->str, '\n'))
 		  fprintf(yyout, "\n");
+	    else
+		  line_mask_flag = 1;
       }
       free(isp);
 
@@ -480,7 +485,7 @@ static int yywrap()
 
       yy_switch_to_buffer(istack->yybs);
 
-      if (line_direct_flag && istack->path)
+      if (line_direct_flag && istack->path && !line_mask_flag)
 	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
       return 0;
 }
