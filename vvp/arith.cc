@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.5 2001/06/16 23:45:05 steve Exp $"
+#ident "$Id: arith.cc,v 1.6 2001/06/29 01:20:20 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -100,13 +100,23 @@ void vvp_arith_mult::set(vvp_ipoint_t i, functor_t f, bool push)
 vvp_arith_sum::vvp_arith_sum(vvp_ipoint_t b, unsigned w)
 : vvp_arith_(b, w)
 {
+      sum_ = new unsigned long[(w+1) / 8*sizeof(unsigned long) + 1];
+}
+
+vvp_arith_sum::~vvp_arith_sum()
+{
+      delete[]sum_;
 }
 
 void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 {
       assert(wid_ <= 8*sizeof(unsigned long));
 
-      unsigned long sum = 0;
+      unsigned page = 0;
+      unsigned pbit = 0;
+      unsigned carry = 0;
+
+      sum_[0] = 0;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
@@ -118,6 +128,7 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 		  return;
 	    }
 
+	      // Accumulate the sum of the input bits.
 	    unsigned tmp = 0;
 	    if (ival & 0x01)
 		  tmp += 1;
@@ -128,15 +139,34 @@ void vvp_arith_sum::set(vvp_ipoint_t i, functor_t f, bool push)
 	    if (ival & 0x40)
 		  tmp += 1;
 
-	    sum += (tmp << idx);
+	      // Add in the carry carried over.
+	    tmp += carry;
+	      // Put the next bit into the sum,
+	    sum_[page] |= ((tmp&1) << pbit);
+	      // ... and carry the remaining bits.
+	    carry = tmp >> 1;
+
+	    pbit += 1;
+	    if (pbit == 8 * sizeof sum_[page]) {
+		  pbit = 0;
+		  page += 1;
+		  sum_[page] = 0;
+	    }
       }
-	    
+
+      page = 0;
+      pbit = 0;
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
 	    functor_t obj = functor_index(ptr);
 
-	    unsigned oval = sum & 1;
-	    sum >>= 1;
+	    unsigned oval = (sum_[page] >> pbit) & 1;
+
+	    pbit += 1;
+	    if (pbit == 8 * sizeof sum_[page]) {
+		  pbit = 0;
+		  page += 1;
+	    }
 
 	    if (obj->oval == oval)
 		  continue;
@@ -291,6 +321,9 @@ void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.6  2001/06/29 01:20:20  steve
+ *  Relax limit on width of structural sum.
+ *
  * Revision 1.5  2001/06/16 23:45:05  steve
  *  Add support for structural multiply in t-dll.
  *  Add code generators and vvp support for both
