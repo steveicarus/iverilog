@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.99 2000/02/13 19:18:27 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.100 2000/02/13 19:59:33 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -599,7 +599,12 @@ void vvm_parm_rval::expr_memory(const NetEMemory*mem)
 	    result = res.str();
 
       } else {
-	    assert(0);
+
+	      /* Otherwise, evaluate the index at run time and use
+		 that to select the memory word. */
+	    string rval = emit_proc_rval(tgt_->defn, 6, mem->index());
+	    result = "vpi_handle_by_index(&" + mangle(mem->name()) +
+		  ".base, " + rval + ".as_unsigned())";
       }
 }
 
@@ -2059,6 +2064,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.100  2000/02/13 19:59:33  steve
+ *  Handle selecting memory words at run time.
+ *
  * Revision 1.99  2000/02/13 19:18:27  steve
  *  Accept memory words as parameter to $display.
  *
