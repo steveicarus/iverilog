@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.57 1999/08/03 04:14:49 steve Exp $"
+#ident "$Id: parse.y,v 1.58 1999/08/03 04:48:51 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1143,6 +1143,7 @@ port
 	| PORTNAME '(' port_reference ')'
 		{ Module::port_t*tmp = $3;
 		  tmp->name = $1;
+		  delete $1;
 		  $$ = tmp;
 		}
 	| '{' port_reference_list '}'
@@ -1153,6 +1154,7 @@ port
 	| PORTNAME '(' '{' port_reference_list '}' ')'
 		{ Module::port_t*tmp = $4;
 		  tmp->name = $1;
+		  delete $1;
 		  $$ = tmp;
 		}
 	;
@@ -1221,7 +1223,7 @@ port_reference_list
 port_name
 	: PORTNAME '(' expression ')'
 		{ portname_t*tmp = new portname_t;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parm = $3;
 		  delete $1;
 		  $$ = tmp;
@@ -1229,14 +1231,14 @@ port_name
 	| PORTNAME '(' error ')'
 		{ yyerror(@3, "invalid port connection expression.");
 		  portname_t*tmp = new portname_t;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parm = 0;
 		  delete $1;
 		  $$ = tmp;
 		}
 	| PORTNAME '(' ')'
 		{ portname_t*tmp = new portname_t;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parm = 0;
 		  delete $1;
 		  $$ = tmp;
