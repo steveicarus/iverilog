@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.73 2001/12/06 03:11:00 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.74 2002/01/03 04:19:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -564,6 +564,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -599,6 +600,7 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -637,6 +639,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
       switch (net->type) {
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -756,6 +759,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
 	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
@@ -1446,6 +1450,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.74  2002/01/03 04:19:01  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.73  2001/12/06 03:11:00  steve
  *  Add ivl_logic_delay function to ivl_target.
  *

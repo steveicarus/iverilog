@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.11 2001/10/31 04:27:46 steve Exp $"
+#ident "$Id: arith.h,v 1.12 2002/01/03 04:19:02 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -75,6 +75,15 @@ class vvp_arith_div : public vvp_arith_ {
       void wide(vvp_ipoint_t base, bool push);
 };
 
+class vvp_arith_mod : public vvp_arith_ {
+
+    public:
+      explicit vvp_arith_mod(unsigned wid) : vvp_arith_(wid) {}
+
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+      void wide(vvp_ipoint_t base, bool push);
+};
+
 class vvp_arith_sum  : public vvp_wide_arith_ {
 
     public:
@@ -125,6 +134,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.12  2002/01/03 04:19:02  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.11  2001/10/31 04:27:46  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.72 2001/12/06 03:11:01 steve Exp $"
+#ident "$Id: t-dll.h,v 1.73 2002/01/03 04:19:01 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -75,6 +75,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_compare(const NetCompare*);
       void lpm_divide(const NetDivide*);
       void lpm_ff(const NetFF*);
+      void lpm_modulo(const NetModulo*);
       void lpm_mult(const NetMult*);
       void lpm_mux(const NetMux*);
       void lpm_ram_dq(const NetRamDq*);
@@ -589,6 +590,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.73  2002/01/03 04:19:01  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.72  2001/12/06 03:11:01  steve
  *  Add ivl_logic_delay function to ivl_target.
  *

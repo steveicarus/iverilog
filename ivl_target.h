@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.90 2001/12/15 02:13:17 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.91 2002/01/03 04:19:01 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -210,6 +210,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_NE = 11,
       IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
+      IVL_LPM_MOD    = 13,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
       IVL_LPM_SHIFTL =  6,
@@ -976,6 +977,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.91  2002/01/03 04:19:01  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.90  2001/12/15 02:13:17  steve
  *  The IVL_SIT_WIRE type does not exist, it is a
  *  synonym for IVL_SIT_TRI.

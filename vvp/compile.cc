@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.117 2001/12/15 02:11:51 steve Exp $"
+#ident "$Id: compile.cc,v 1.118 2002/01/03 04:19:02 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -675,6 +675,22 @@ void compile_arith_div(char*label, long wid,
       }
 
       vvp_arith_ *arith = new vvp_arith_div(wid);
+
+      make_arith(arith, label, wid, argc, argv);
+}
+
+void compile_arith_mod(char*label, long wid,
+		       unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if ((long)argc != 2*wid) {
+	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_arith_mod(wid);
 
       make_arith(arith, label, wid, argc, argv);
 }
@@ -1350,6 +1366,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.118  2002/01/03 04:19:02  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.117  2001/12/15 02:11:51  steve
  *  Give tri0 and tri1 their proper strengths.
  *

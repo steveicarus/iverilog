@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.42 2001/12/14 02:04:49 steve Exp $"
+#ident "$Id: parse.y,v 1.43 2002/01/03 04:19:02 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -57,7 +57,8 @@ extern FILE*yyin;
 };
 
 
-%token K_ARITH_DIV K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM K_CMP_GE K_CMP_GT
+%token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
+%token K_CMP_GE K_CMP_GT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD
 %token K_UDP K_UDP_C K_UDP_S
@@ -180,6 +181,11 @@ statement
 	| T_LABEL K_ARITH_DIV T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_div($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_ARITH_MOD T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_arith_mod($1, $3, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_ARITH_MULT T_NUMBER ',' symbols ';'
@@ -532,6 +538,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.43  2002/01/03 04:19:02  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.42  2001/12/14 02:04:49  steve
  *  Support strength syntax on functors.
  *

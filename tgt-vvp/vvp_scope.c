@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.60 2001/12/15 02:13:33 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.61 2002/01/03 04:19:01 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -247,6 +247,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 			sprintf(result, "L_%s[%u]",
@@ -1003,6 +1004,9 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_DIVIDE:
 	    type = "div";
 	    break;
+	  case IVL_LPM_MOD:
+	    type = "mod";
+	    break;
 	  default:
 	    assert(0);
       }
@@ -1202,6 +1206,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
 	    draw_lpm_add(net);
 	    return;
 
@@ -1321,6 +1326,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.61  2002/01/03 04:19:01  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.60  2001/12/15 02:13:33  steve
  *  Support all 3 TRI net types.
  *

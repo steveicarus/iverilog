@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.38 2001/11/01 03:00:19 steve Exp $
+ *  $Id: README.txt,v 1.39 2002/01/03 04:19:01 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -433,6 +433,7 @@ create special statement types for the various arithmetic operators.
 	<label> .arith/sum  <wid>, <symbols_list>;
 	<label> .arith/mult <wid>, <symbols_list>;
 	<label> .arith/div  <wid>, <symbols_list>;
+	<label> .arith/mod  <wid>, <symbols_list>;
 
 Addition is represented by the .arith/sum statement. This creates an
 array of functors based at the label. The width of the array is given

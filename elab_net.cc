@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.84 2001/12/31 04:23:59 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.85 2002/01/03 04:19:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -654,9 +654,12 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
       NetNet*rsig = right_->elaborate_net(des, scope, 0, 0, 0, 0);
       if (rsig == 0) return 0;
 
-      unsigned rwidth = lsig->pin_count();
-      if (rsig->pin_count() > rwidth)
-	    rwidth = rsig->pin_count();
+      unsigned rwidth = lwidth;
+      if (rwidth == 0) {
+	    rwidth = lsig->pin_count();
+	    if (rsig->pin_count() > rwidth)
+		  rwidth = rsig->pin_count();
+      }
       NetModulo*mod = new NetModulo(scope, scope->local_hsymbol(), rwidth,
 				    lsig->pin_count(),
 				    rsig->pin_count());
@@ -1974,6 +1977,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.85  2002/01/03 04:19:01  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.84  2001/12/31 04:23:59  steve
  *  Elaborate multiply nets with constant operands ad NetConst.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.39 2001/12/14 02:04:49 steve Exp $"
+#ident "$Id: compile.h,v 1.40 2002/01/03 04:19:02 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -96,6 +96,8 @@ extern void compile_force(char*label, struct symb_s signal,
  * comparison functors.
  */
 extern void compile_arith_div(char*label, long width,
+			      unsigned argc, struct symb_s*argv);
+extern void compile_arith_mod(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_mult(char*label, long width,
 			       unsigned argc, struct symb_s*argv);
@@ -223,6 +225,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.40  2002/01/03 04:19:02  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.39  2001/12/14 02:04:49  steve
  *  Support strength syntax on functors.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.28 2001/11/01 03:00:19 steve Exp $"
+#ident "$Id: lexor.lex,v 1.29 2002/01/03 04:19:02 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -67,6 +67,7 @@
 
   /* These are some keywords that are recognized. */
 ".arith/div"  { return K_ARITH_DIV; }
+".arith/mod"  { return K_ARITH_MOD; }
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sum"  { return K_ARITH_SUM; }
@@ -150,6 +151,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.29  2002/01/03 04:19:02  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.28  2001/11/01 03:00:19  steve
  *  Add force/cassign/release/deassign support. (Stephan Boettcher)
  *

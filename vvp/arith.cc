@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.21 2001/12/06 03:31:24 steve Exp $"
+#ident "$Id: arith.cc,v 1.22 2002/01/03 04:19:02 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -126,6 +126,47 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       }
 
       output_val_(base, push, a/b);
+}
+
+inline void vvp_arith_mod::wide(vvp_ipoint_t base, bool push)
+{
+      assert(0);
+}
+
+void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+{
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
+      if(wid_ > 8*sizeof(unsigned long)) {
+	    wide(base, push);
+	    return;
+      }
+
+      unsigned long a = 0, b = 0;
+      
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base,idx);
+	    functor_t obj = functor_index(ptr);
+	    
+	    unsigned val = obj->ival;
+	    if (val & 0xaa) {
+		  output_x_(base, push);
+		  return;
+	    }
+	    
+	    if (val & 0x01)
+		  a += 1 << idx;
+	    if (val & 0x04)
+		  b += 1 << idx;
+      }
+
+      if (b == 0) {
+	    output_x_(base, push);
+	    return;
+      }
+
+      output_val_(base, push, a%b);
 }
 
 // Multiplication
@@ -508,6 +549,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.22  2002/01/03 04:19:02  steve
+ *  Add structural modulus support down to vvp.
+ *
  * Revision 1.21  2001/12/06 03:31:24  steve
  *  Support functor delays for gates and UDP devices.
  *  (Stephan Boettcher)
