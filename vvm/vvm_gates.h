@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.18 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.19 1999/11/13 03:46:52 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -199,6 +199,84 @@ template <unsigned WIDTH> class vvm_ff {
 							   out_[idx]);
 			  sim->active_event(ev);
 		    }
+	    }
+};
+
+/*
+ * This class supports mux devices. The width is the width of the data
+ * (or bus) path, SIZE is the number of alternative inputs and SELWID
+ * is the size (in bits) of the selector input.
+ */
+template <unsigned WIDTH, unsigned SIZE, unsigned SELWID> class vvm_mux {
+
+    public:
+      explicit vvm_mux()
+	    { sel_val_ = SIZE;
+	      for (unsigned idx = 0;idx < WIDTH; idx += 1)
+		    out_[idx] = 0;
+	    }
+
+      void init_Sel(unsigned idx, vpip_bit_t val)
+	    { sel_[idx] = val; }
+
+      void init_Data(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
+
+      void set_Sel(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (sel_[idx] == val) return;
+	      sel_[idx] = val;
+	      evaluate_(sim);
+	    }
+
+      void set_Data(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val) return;
+	      input_[idx] = val;
+	      unsigned sel = idx / WIDTH;
+	      if (sel != sel_val_) return;
+	      unsigned off = idx % WIDTH;
+	      vvm_event*ev = new vvm_out_event(sim, val, out_[off]);
+	      sim->active_event(ev);
+	    }
+
+      void config_rout(unsigned idx, vvm_out_event::action_t o)
+	    { out_[idx] = o; }
+
+    private:
+      vpip_bit_t sel_[SELWID];
+      vpip_bit_t input_[WIDTH * SIZE];
+      vvm_out_event::action_t out_[WIDTH];
+
+      unsigned sel_val_;
+      void evaluate_(vvm_simulation*sim)
+	    { unsigned tmp = 0;
+	      for (unsigned idx = 0 ;  idx < SELWID ;  idx += 1)
+		    switch (sel_[idx]) {
+			case V0:
+			  break;
+			case V1:
+			  tmp |= (1<<idx);
+			  break;
+			default:
+			  tmp = SIZE;
+			  break;
+		    }
+	      if (tmp > SIZE) tmp = SIZE;
+	      if (tmp == sel_val_) return;
+	      sel_val_ = tmp;
+	      if (sel_val_ == SIZE) {
+		    for (unsigned idx = 0; idx < WIDTH ;  idx += 1) {
+			  vvm_event*ev = new vvm_out_event(sim, Vx, out_[idx]);
+			  sim->active_event(ev);
+		    }
+	      } else {
+		    unsigned b = sel_val_ * WIDTH;
+		    for (unsigned idx = 0; idx < WIDTH ;  idx += 1) {
+			  vvm_event*ev = new vvm_out_event(sim,
+							   input_[idx+b],
+							   out_[idx]);
+			  sim->active_event(ev);
+		    }
+	      }
 	    }
 };
 
@@ -649,6 +727,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.19  1999/11/13 03:46:52  steve
+ *  Support the LPM_MUX in vvm.
+ *
  * Revision 1.18  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

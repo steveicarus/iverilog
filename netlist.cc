@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.83 1999/11/05 04:40:40 steve Exp $"
+#ident "$Id: netlist.cc,v 1.84 1999/11/13 03:46:52 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -603,7 +603,7 @@ NetMux::NetMux(const string&n, unsigned wi, unsigned si, unsigned sw)
 : NetNode(n, 2+wi+sw+wi*si), width_(wi), size_(si), swidth_(sw)
 {
       pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr",  0);
-      pin(1).set_dir(NetObj::Link::INPUT); pin(0).set_name("Clock", 0);
+      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Clock", 0);
 
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
 	    pin_Result(idx).set_dir(NetObj::Link::OUTPUT);
@@ -2104,6 +2104,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.84  1999/11/13 03:46:52  steve
+ *  Support the LPM_MUX in vvm.
+ *
  * Revision 1.83  1999/11/05 04:40:40  steve
  *  Patch to synthesize LPM_ADD_SUB from expressions,
  *  Thanks to Larry Doolittle. Also handle constants

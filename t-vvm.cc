@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.73 1999/11/10 02:52:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.74 1999/11/13 03:46:52 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -61,6 +61,7 @@ class target_vvm : public target_t {
 
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
       virtual void lpm_ff(ostream&os, const NetFF*);
+      virtual void lpm_mux(ostream&os, const NetMux*);
 
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
@@ -879,6 +880,21 @@ void target_vvm::lpm_ff(ostream&os, const NetFF*gate)
 	    init_code << "      " << mangle(gate->name()) <<
 		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
 	    emit_gate_outputfun_(gate, pin);
+      }
+}
+
+void target_vvm::lpm_mux(ostream&os, const NetMux*mux)
+{
+      string mname = mangle(mux->name());
+      os << "static vvm_mux<" << mux->width() << "," << mux->size() <<
+	    "," << mux->sel_width() << "> " << mname << ";" << endl;
+
+      for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
+	    unsigned pin = mux->pin_Result(idx).get_pin();
+	    string outfun = defn_gate_outputfun_(os, mux, pin);
+	    init_code << "      " << mangle(mux->name()) <<
+		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(mux, pin);
       }
 }
 
@@ -1847,6 +1863,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.74  1999/11/13 03:46:52  steve
+ *  Support the LPM_MUX in vvm.
+ *
  * Revision 1.73  1999/11/10 02:52:24  steve
  *  Create the vpiMemory handle type.
  *
