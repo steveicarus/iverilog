@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.89 2002/09/21 23:47:30 steve Exp $"
+#ident "$Id: vthread.cc,v 1.90 2002/11/05 03:46:44 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1632,9 +1632,15 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
 	    unsigned addr2 = (test_addr) / (CPU_WORD_BITS/2);
 	    if (addr1 == addr2) {
 		  unsigned sh1 = cp->bit_idx[0] % (CPU_WORD_BITS/2);
-		  unsigned sh2 = (test_addr+1)  % (CPU_WORD_BITS/2);
+		  unsigned sh2 = (test_addr % (CPU_WORD_BITS/2)) + 1;
 
-		  unsigned long mask = ULONG_MAX << ((sh2 - sh1) * 2UL);
+		  unsigned long mask;
+
+		  if ( (sh2-sh1) == CPU_WORD_BITS/2)
+			mask = 0UL;
+		  else
+			mask = ULONG_MAX << ((sh2 - sh1) * 2UL);
+
 		  mask = (~mask) << sh1*2UL;
 
 		  cp->number = ~mask;
@@ -2422,6 +2428,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.90  2002/11/05 03:46:44  steve
+ *  Fix mask calculate when MOV_b is right on the word boundary.
+ *
  * Revision 1.89  2002/09/21 23:47:30  steve
  *  Remove some now useless asserts.
  *
