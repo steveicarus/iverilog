@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.16 2000/06/16 19:00:06 steve Exp $"
+#ident "$Id: iverilog.c,v 1.17 2000/06/30 04:42:23 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -140,8 +140,8 @@ static int t_vvm(char*cmd, unsigned ncmd)
 
       rc = system(cmd);
       if (rc != 0) {
-	    fprintf(stderr, "errors translating Verilog program.\n");
-	    return rc;
+	    fprintf(stderr, "errors translating Verilog program. (%d)\n",rc);
+	    return (rc & 0xff)? rc : -1;
       }
 
       sprintf(tmp, "%s -O " RDYNAMIC " -fno-exceptions -o %s -I%s "
@@ -380,6 +380,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.17  2000/06/30 04:42:23  steve
+ *  Catch errors from compile that leave the low 8 bits empty.
+ *
  * Revision 1.16  2000/06/16 19:00:06  steve
  *  Detect some hosts that do not support -rdynamic.
  *
