@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.3 1999/07/07 01:07:57 steve Exp $"
+#ident "$Id: lexor.lex,v 1.4 1999/07/07 01:18:57 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -97,14 +97,14 @@ static struct include_stack_t*standby = 0;
      directive and the name, go into PPDEFINE mode and prepare to
      collect the defined value. */
 
-^`define[ \t]+[a-zA-Z][a-zA-Z0-9]*[ \t]+ { BEGIN(PPDEFINE); def_start(); }
+^`define[ \t]+[a-zA-Z][a-zA-Z0-9_]*[ \t]+ { BEGIN(PPDEFINE); def_start(); }
 
 <PPDEFINE>.* { do_define(); }
 
 <PPDEFINE>\n { istack->lineno += 1; BEGIN(0); ECHO; }
 
   /* This pattern notices macros and arranges for it to be replaced. */
-`[a-zA-Z][a-zA-Z0-9]* { def_match(); }
+`[a-zA-Z][a-zA-Z0-9_]* { def_match(); }
 
   /* Any text that is not a directive just gets passed through to the
      output. Very easy. */
