@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.35 2003/03/14 05:02:34 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.36 2003/04/27 04:19:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,6 +30,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  <math.h>
 
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 FILE*vpi_trace = 0;
@@ -253,14 +254,54 @@ char* vpi_get_str(int property, vpiHandle ref)
       return res;
 }
 
+static int time_units_from_handle(vpiHandle obj)
+{
+      struct __vpiSysTaskCall*task;
+      struct __vpiScope*scope;
+
+      if (obj == 0)
+	    return vpip_get_time_precision();
+
+      switch (obj->vpi_type->type_code) {
+	  case vpiSysTaskCall:
+	    task = (struct __vpiSysTaskCall*)obj;
+	    return task->scope->time_units;
+
+	  case vpiModule:
+	    scope = (struct __vpiScope*)obj;
+	    return scope->time_units;
+
+	  default:
+	    fprintf(stderr, "ERROR: vpi_get_time called with object "
+		    "handle type=%u\n", obj->vpi_type->type_code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
+      int units;
+
       assert(vp);
 
-	// Only vpiSimTime is supported, for now.
-      assert(vp->type == vpiSimTime);
-      vp->high = 0;
-      vp->low = schedule_simtime();
+      switch (vp->type) {
+          case vpiSimTime:
+	    vp->high = 0;
+	    vp->low = schedule_simtime();
+	    break;
+
+          case vpiScaledRealTime:
+	    units = time_units_from_handle(obj);
+            vp->real = pow(10, vpip_get_time_precision() - units);
+            vp->real *= schedule_simtime();
+	    break;
+
+          default:
+            fprintf(stderr, "vpi_get_time: unknown type: %d\n", vp->type);
+            assert(0);
+	    break;
+      }
 }
 
 int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
@@ -590,6 +631,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.36  2003/04/27 04:19:24  steve
+ *  Support vpiScaledRealTime.
+ *
  * Revision 1.35  2003/03/14 05:02:34  steve
  *  More detail in vpi tracing.
  *
