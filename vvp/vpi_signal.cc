@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.13 2001/05/15 15:09:08 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.14 2001/05/22 04:08:49 steve Exp $"
 #endif
 
 /*
@@ -142,11 +142,17 @@ static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       }
 
       if (rfp->signed_flag) {
-	    long tmp = -1;
-	    assert(sizeof(tmp) == sizeof(val));
-	    tmp <<= wid;
-	    tmp |= val;
-	    sprintf(buf, "%ld", tmp);
+	    long tmp;
+            assert(sizeof(tmp) == sizeof(val));
+	    if (val & (1<<(wid-1))  &&  wid < 8*sizeof(tmp)) {
+		  tmp = -1;
+		  tmp <<= wid;
+		  tmp |= val;
+	    } else {
+		  tmp = val;
+	    }
+            sprintf(buf, "%ld", tmp);
+
       } else {
 	    sprintf(buf, "%lu", val);
       }
@@ -426,6 +432,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.14  2001/05/22 04:08:49  steve
+ *  correctly interpret signed decimal values.
+ *
  * Revision 1.13  2001/05/15 15:09:08  steve
  *  Add the glossary file.
  *
