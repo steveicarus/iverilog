@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_callback.c,v 1.2 1999/10/28 04:47:57 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -33,7 +33,11 @@ static struct __vpirt vpip_callback_rt = {
       0
 };
 
-
+/*
+ * This function is called by the scheduler to execute an event of
+ * some sort. The parameter is a vpiHandle of the callback that is to
+ * be executed.
+ */
 static void vpip_call_callback(void*cp)
 {
       struct __vpiCallback*rfp = (struct __vpiCallback*)cp;
@@ -43,11 +47,11 @@ static void vpip_call_callback(void*cp)
 }
 
 /*
- * XXXX This currently does not support (or pay any attention to) the
- * delay parameter. Yikes!
+ * Register callbacks. This supports a variety of callback reasons.
  */
 vpiHandle vpi_register_cb(p_cb_data data)
 {
+      unsigned long tim;
       struct __vpiCallback*rfp = calloc(1, sizeof(struct  __vpiCallback));
       rfp->base.vpi_type = &vpip_callback_rt;
       rfp->cb_data = *data;
@@ -56,9 +60,9 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	  case cbReadOnlySynch:
 	    assert(data->time);
 	    assert(data->time->type == vpiSimTime);
-	    assert(data->time->low == 0);
 	    assert(data->time->high == 0);
-	    rfp->ev = vpip_sim_insert_event(0, rfp, vpip_call_callback, 1);
+	    tim = data->time->low;
+	    rfp->ev = vpip_sim_insert_event(tim, rfp, vpip_call_callback, 1);
 	    break;
 
 	  default:
@@ -80,6 +84,9 @@ int vpi_remove_cb(vpiHandle ref)
 
 /*
  * $Log: vpi_callback.c,v $
+ * Revision 1.2  1999/10/28 04:47:57  steve
+ *  Support delay in constSync callback.
+ *
  * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler
