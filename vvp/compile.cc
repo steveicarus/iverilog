@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.73 2001/06/10 16:47:49 steve Exp $"
+#ident "$Id: compile.cc,v 1.74 2001/06/10 17:12:51 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -181,17 +181,19 @@ static void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
 
 
 /*
- * Instructions may make forward references to labels. In this case,
- * the compile makes one of these to remember to retry the
- * resolution.
+ * Instructions may make forward references to labels or functors. In
+ * this case, the reference is short is a llist or flist (depending on
+ * the type) and resolved during cleanup.
  */
 struct cresolv_list_s {
       struct cresolv_list_s*next;
       struct vvp_code_s*cp;
       char*lab;
+      unsigned idx;
 };
 
-static struct cresolv_list_s*cresolv_list = 0;
+static struct cresolv_list_s*cresolv_llist = 0;
+static struct cresolv_list_s*cresolv_flist = 0;
 
 void compile_vpi_symbol(const char*label, vpiHandle obj)
 {
@@ -855,8 +857,8 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			      calloc(1, sizeof(struct cresolv_list_s));
 			res->cp = code;
 			res->lab = opa->argv[idx].symb.text;
-			res->next = cresolv_list;
-			cresolv_list = res;
+			res->next = cresolv_llist;
+			cresolv_llist = res;
 
 		  } else {
 
@@ -866,6 +868,9 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  break;
 
 		case OA_FUNC_PTR:
+		    /* The operand is a functor. Resolve the label to
+		       a functor pointer, or postpone the resolution
+		       if it is not defined yet. */
 		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;
@@ -873,9 +878,15 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 
 		  tmp = sym_get_value(sym_functors, opa->argv[idx].symb.text);
 		  if (tmp.num == 0) {
-			yyerror("functor undefined");
+			struct cresolv_list_s*res = new struct cresolv_list_s;
+			res->cp  = code;
+			res->lab = opa->argv[idx].symb.text;
+			res->idx = opa->argv[idx].symb.idx;
+			res->next = cresolv_flist;
+			cresolv_flist = res;
 			break;
 		  }
+
 		  code->iptr = ipoint_index(tmp.num, opa->argv[idx].symb.idx);
 
 		  free(opa->argv[idx].symb.text);
@@ -981,8 +992,8 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 	    struct cresolv_list_s*res = new cresolv_list_s;
 	    res->cp = code;
 	    res->lab = dest.text;
-	    res->next = cresolv_list;
-	    cresolv_list = res;
+	    res->next = cresolv_llist;
+	    cresolv_llist = res;
 	    dest.text = 0;
       }
 
@@ -1257,8 +1268,8 @@ void compile_cleanup(void)
 	    }
       }
 
-      struct cresolv_list_s*tmp_clist = cresolv_list;
-      cresolv_list = 0;
+      struct cresolv_list_s*tmp_clist = cresolv_llist;
+      cresolv_llist = 0;
 
       while (tmp_clist) {
 	    struct cresolv_list_s*res = tmp_clist;
@@ -1279,8 +1290,31 @@ void compile_cleanup(void)
 	    } else {
 		  compile_errors += 1;
 		  fprintf(stderr, "unresolved code label: %s\n", res->lab);
-		  res->next = cresolv_list;
-		  cresolv_list = res;
+		  res->next = cresolv_llist;
+		  cresolv_llist = res;
+	    }
+      }
+
+      tmp_clist = cresolv_flist;
+      cresolv_flist = 0;
+
+      while (tmp_clist) {
+	    struct cresolv_list_s*res = tmp_clist;
+	    tmp_clist = res->next;
+
+	    symbol_value_t val = sym_get_value(sym_functors, res->lab);
+	    vvp_ipoint_t tmp = val.num;
+
+	    if (tmp != 0) {
+		  res->cp->iptr = ipoint_index(tmp, res->idx);
+		  free(res->lab);
+		  
+	    } else {
+		  compile_errors += 1;
+		  fprintf(stderr, "unresolved code reference "
+			  "to functor: %s\n", res->lab);
+		  res->next = cresolv_llist;
+		  cresolv_flist = res;
 	    }
       }
 }
@@ -1301,6 +1335,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.74  2001/06/10 17:12:51  steve
+ *  Instructions can forward reference functors.
+ *
  * Revision 1.73  2001/06/10 16:47:49  steve
  *  support scan of scope from VPI.
  *
