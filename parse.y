@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.27 1999/05/20 04:31:45 steve Exp $"
+#ident "$Id: parse.y,v 1.28 1999/05/27 03:31:29 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -277,85 +277,166 @@ expression
 		  $$ = tmp;
 		}
 	| '+' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('+', $2);
+		{ PEUnary*tmp = new PEUnary('+', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| '-' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('-', $2);
+		{ PEUnary*tmp = new PEUnary('-', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| '~' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('~', $2);
+		{ PEUnary*tmp = new PEUnary('~', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| '&' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('&', $2);
+		{ PEUnary*tmp = new PEUnary('&', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| '!' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('!', $2);
+		{ PEUnary*tmp = new PEUnary('!', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| '|' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('|', $2);
+		{ PEUnary*tmp = new PEUnary('|', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| '^' expr_primary %prec UNARY_PREC
-		{ $$ = new PEUnary('^', $2);
+		{ PEUnary*tmp = new PEUnary('^', $2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '^' expression
-		{ $$ = new PEBinary('^', $1, $3);
+		{ PEBinary*tmp = new PEBinary('^', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '*' expression
-		{ $$ = new PEBinary('*', $1, $3);
+		{ PEBinary*tmp = new PEBinary('*', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '/' expression
-		{ $$ = new PEBinary('/', $1, $3);
+		{ PEBinary*tmp = new PEBinary('/', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '%' expression
-		{ $$ = new PEBinary('%', $1, $3);
+		{ PEBinary*tmp = new PEBinary('%', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '+' expression
-		{ $$ = new PEBinary('+', $1, $3);
+		{ PEBinary*tmp = new PEBinary('+', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '-' expression
-		{ $$ = new PEBinary('-', $1, $3);
+		{ PEBinary*tmp = new PEBinary('-', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '&' expression
-		{ $$ = new PEBinary('&', $1, $3);
+		{ PEBinary*tmp = new PEBinary('&', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '|' expression
-		{ $$ = new PEBinary('|', $1, $3);
+		{ PEBinary*tmp = new PEBinary('|', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '<' expression
-		{ $$ = new PEBinary('<', $1, $3);
+		{ PEBinary*tmp = new PEBinary('<', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '>' expression
-		{ $$ = new PEBinary('>', $1, $3);
+		{ PEBinary*tmp = new PEBinary('>', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_LS expression
-		{ $$ = new PEBinary('l', $1, $3);
+		{ PEBinary*tmp = new PEBinary('l', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_RS expression
-		{ $$ = new PEBinary('r', $1, $3);
+		{ PEBinary*tmp = new PEBinary('r', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_EQ expression
-		{ $$ = new PEBinary('e', $1, $3);
+		{ PEBinary*tmp = new PEBinary('e', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_CEQ expression
-		{ $$ = new PEBinary('E', $1, $3);
+		{ PEBinary*tmp = new PEBinary('E', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_LE expression
-		{ $$ = new PEBinary('L', $1, $3);
+		{ PEBinary*tmp = new PEBinary('L', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_GE expression
-		{ $$ = new PEBinary('G', $1, $3);
+		{ PEBinary*tmp = new PEBinary('G', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_NE expression
-		{ $$ = new PEBinary('n', $1, $3);
+		{ PEBinary*tmp = new PEBinary('n', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_CNE expression
-		{ $$ = new PEBinary('N', $1, $3);
+		{ PEBinary*tmp = new PEBinary('N', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_LOR expression
-		{ $$ = new PEBinary('o', $1, $3);
+		{ PEBinary*tmp = new PEBinary('o', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression K_LAND expression
-		{ $$ = new PEBinary('a', $1, $3);
+		{ PEBinary*tmp = new PEBinary('a', $1, $3);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
 		}
 	| expression '?' expression ':' expression
 		{ yyerror(@2, "Sorry, ?: operator not supported.");
@@ -396,7 +477,10 @@ expr_primary
 		  }
 		}
 	| STRING
-		{ $$ = new PEString(*$1);
+		{ PEString*tmp = new PEString(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		  delete $1;
 		}
 	| identifier
@@ -407,7 +491,10 @@ expr_primary
 		  delete $1;
 		}
 	| SYSTEM_IDENTIFIER
-		{ $$ = new PEIdent(*$1);
+		{ PEIdent*tmp = new PEIdent(*$1);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		  delete $1;
 		}
 	| identifier '[' expression ']'
