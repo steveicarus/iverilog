@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.8 2001/07/30 02:44:05 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.9 2001/10/14 18:42:46 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -56,8 +56,14 @@ void vpip_load_module(const char*name)
 	    dll = ivl_dlopen(name);
 
 	    if (dll == 0) {
-		  fprintf(stderr, "%s: Unable to link this module\n", name);
-		  return;
+		  char buf[4096];
+		  sprintf(buf, "%s.vpi", name);
+		  dll = ivl_dlopen(buf);
+
+		  if (dll == 0) {
+			fprintf(stderr, "%s: Unable to link module\n", name);
+			return;
+		  }
 	    }
 
       } else {
@@ -109,6 +115,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.9  2001/10/14 18:42:46  steve
+ *  Try appending .vpi to module names with directories.
+ *
  * Revision 1.8  2001/07/30 02:44:05  steve
  *  Cleanup defines and types for mingw compile.
  *
