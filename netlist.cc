@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.187 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: netlist.cc,v 1.188 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1484,6 +1484,11 @@ NetAssignMemNB::~NetAssignMemNB()
 }
 
 
+NetBlock::NetBlock(Type t, NetScope*ss)
+: type_(t), subscope_(ss), last_(0)
+{
+}
+
 NetBlock::~NetBlock()
 {
 }
@@ -2352,6 +2357,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.188  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.187  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

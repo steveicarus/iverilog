@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.43 2002/05/26 01:39:03 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.44 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -325,6 +325,11 @@ bool dll_target::proc_block(const NetBlock*net)
       stmt_cur_->u_.block_.nstmt_ = count;
       stmt_cur_->u_.block_.stmt_ = (struct ivl_statement_s*)
 	    calloc(count, sizeof(struct ivl_statement_s));
+
+      if (net->subscope())
+	    stmt_cur_->u_.block_.scope = lookup_scope_(net->subscope());
+      else
+	    stmt_cur_->u_.block_.scope = 0;
 
       struct ivl_statement_s*save_cur_ = stmt_cur_;
       unsigned idx = 0;
@@ -808,6 +813,11 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.44  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.43  2002/05/26 01:39:03  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.57 2002/04/22 02:41:30 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.58 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -32,6 +32,8 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope);
 
 unsigned local_count = 0;
 unsigned thread_count = 0;
+
+static unsigned transient_id = 0;
 
 /*
  * This file includes the code needed to generate VVP code for
@@ -388,6 +390,34 @@ static int show_stmt_block(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+/*
+ * This draws an invocation of a named block. This is a little
+ * different because a subscope is created. We do that by creating
+ * a thread to deal with this.
+ */
+static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
+{
+      int rc;
+      int out_id, sub_id;
+      ivl_scope_t subscope = ivl_stmt_block_scope(net);
+
+      out_id = transient_id++;
+      sub_id = transient_id++;
+
+      fprintf(vvp_out, "    %%fork t_%u, S_%s;\n",
+	      sub_id, vvp_mangle_id(ivl_scope_name(subscope)));
+      fprintf(vvp_out, "    %%jmp t_%u;\n", out_id);
+      fprintf(vvp_out, "t_%u ;\n", sub_id);
+
+      rc = show_stmt_block(net, subscope);
+      fprintf(vvp_out, "    %%end;\n");
+
+      fprintf(vvp_out, "t_%u %%join;\n", out_id);
+
+      return rc;
+}
+
+
 static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       ivl_expr_t exp = ivl_stmt_cond_expr(net);
@@ -661,10 +691,9 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 {
       unsigned idx;
       int rc = 0;
-      static int transient_id = 0;
       unsigned cnt = ivl_stmt_block_count(net);
 
-      int out = transient_id++;
+      unsigned out = transient_id++;
 
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
@@ -999,7 +1028,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    break;
 
 	  case IVL_ST_BLOCK:
-	    rc += show_stmt_block(net, sscope);
+	    if (ivl_stmt_block_scope(net))
+		  rc += show_stmt_block_named(net, sscope);
+	    else
+		  rc += show_stmt_block(net, sscope);
 	    break;
 
 	  case IVL_ST_CASE:
@@ -1168,6 +1200,11 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.58  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.57  2002/04/22 02:41:30  steve
  *  Reduce the while loop expression if needed.
  *

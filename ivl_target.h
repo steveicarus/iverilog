@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.97 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.98 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -968,10 +968,17 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
  * make up the statement. Many of these functions apply to more then
  * one type of statement, so the comment in front of them tells which
  * statement types can be passed to the function.
+ *
+ * ivl_stmt_block_scope
+ *    If the block is named, then there is a scope associated with
+ *    this. The code generator may need to know this in order to
+ *    handle disable statements.
  */
 
   /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
+  /* IVL_ST_BLOCK, IVL_ST_FORK */
+extern ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net);
   /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_UTASK IVL_ST_DISABLE */
@@ -1043,6 +1050,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.98  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.97  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

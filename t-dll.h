@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.79 2002/05/26 01:39:03 steve Exp $"
+#ident "$Id: t-dll.h,v 1.80 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -534,6 +534,7 @@ struct ivl_statement_s {
 	    struct { /* IVL_ST_BLOCK, IVL_ST_FORK */
 		  struct ivl_statement_s*stmt_;
 		  unsigned nstmt_;
+		  ivl_scope_t scope;
 	    } block_;
 
 	    struct { /* IVL_ST_CASE, IVL_ST_CASEX, IVL_ST_CASEZ */
@@ -603,6 +604,11 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.80  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.79  2002/05/26 01:39:03  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

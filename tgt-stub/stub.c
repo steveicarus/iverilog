@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.60 2002/05/26 01:39:03 steve Exp $"
+#ident "$Id: stub.c,v 1.61 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -273,7 +273,13 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_BLOCK: {
 		unsigned cnt = ivl_stmt_block_count(net);
-		fprintf(out, "%*sbegin\n", ind, "");
+		ivl_scope_t sscope = ivl_stmt_block_scope(net);
+		if (sscope)
+		      fprintf(out, "%*sbegin : %s\n", ind, "",
+			      ivl_scope_name(sscope));
+		else
+		      fprintf(out, "%*sbegin\n", ind, "");
+
 		for (idx = 0 ;  idx < cnt ;  idx += 1) {
 		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
 		      show_statement(cur, ind+4);
@@ -682,6 +688,11 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.61  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.60  2002/05/26 01:39:03  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.238 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.239 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 /*
@@ -1385,10 +1385,11 @@ class NetBlock  : public NetProc {
     public:
       enum Type { SEQU, PARA };
 
-      NetBlock(Type t) : type_(t), last_(0) { }
+      NetBlock(Type t, NetScope*subscope);
       ~NetBlock();
 
-      const Type type() const { return type_; }
+      Type type() const    { return type_; }
+      NetScope* subscope() const { return subscope_; }
 
       void append(NetProc*);
 
@@ -1407,6 +1408,7 @@ class NetBlock  : public NetProc {
 
     private:
       const Type type_;
+      NetScope*subscope_;
 
       NetProc*last_;
 };
@@ -2973,6 +2975,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.239  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.238  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

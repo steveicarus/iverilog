@@ -140,6 +140,7 @@ ivl_process_type
 ivl_statement_type
 
 ivl_stmt_block_count
+ivl_stmt_block_scope
 ivl_stmt_block_stmt
 ivl_stmt_call
 ivl_stmt_case_count

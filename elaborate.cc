@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.250 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.251 2002/05/27 00:08:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1078,7 +1078,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    }
 
 	      /* And build up the complex statement. */
-	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
+	    NetBlock*bl = new NetBlock(NetBlock::SEQU, 0);
 	    bl->append(a1);
 	    bl->append(st);
 
@@ -1194,10 +1194,8 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       NetBlock::Type type = (bl_type_==PBlock::BL_PAR)
 	    ? NetBlock::PARA
 	    : NetBlock::SEQU;
-      NetBlock*cur = new NetBlock(type);
-      bool fail_flag = false;
 
-      NetScope*nscope;
+      NetScope*nscope = 0;
       if (name_.length()) {
 	    nscope = scope->child(name_);
 	    if (nscope == 0) {
@@ -1205,15 +1203,18 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 			"unable to find block scope " << scope->name()
 		       << "<" << name_ << ">" << endl;
 		  des->errors += 1;
-		  delete cur;
 		  return 0;
 	    }
 
 	    assert(nscope);
 
-      } else {
-	    nscope = scope;
       }
+
+      NetBlock*cur = new NetBlock(type, nscope);
+      bool fail_flag = false;
+
+      if (nscope == 0)
+	    nscope = scope;
 
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
@@ -1370,7 +1371,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    else if (else_)
 		  return else_->elaborate(des, scope);
 	    else
-		  return new NetBlock(NetBlock::SEQU);
+		  return new NetBlock(NetBlock::SEQU, 0);
       }
 
 	// If the condition expression is more then 1 bits, then
@@ -1503,7 +1504,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    return cur;
       }
 
-      NetBlock*block = new NetBlock(NetBlock::SEQU);
+      NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
 
 
 	/* Detect the case where the definition of the task is known
@@ -1899,7 +1900,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		 block to join the wait and the statement. */
 
 	    if (enet) {
-		  NetBlock*bl = new NetBlock(NetBlock::SEQU);
+		  NetBlock*bl = new NetBlock(NetBlock::SEQU, 0);
 		  bl->set_line(*this);
 		  bl->append(co);
 		  bl->append(enet);
@@ -2126,7 +2127,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       const PEIdent*id2 = dynamic_cast<const PEIdent*>(name2_);
       assert(id2);
 
-      NetBlock*top = new NetBlock(NetBlock::SEQU);
+      NetBlock*top = new NetBlock(NetBlock::SEQU, 0);
 
 	/* make the expression, and later the initial assignment to
 	   the condition variable. The statement in the for loop is
@@ -2150,7 +2151,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
       top->append(init);
 
-      NetBlock*body = new NetBlock(NetBlock::SEQU);
+      NetBlock*body = new NetBlock(NetBlock::SEQU, 0);
 
 	/* Elaborate the statement that is contained in the for
 	   loop. If there is an error, this will return 0 and I should
@@ -2280,7 +2281,7 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 		case 0:
 		  delete expr;
 		  delete stat;
-		  return new NetBlock(NetBlock::SEQU);
+		  return new NetBlock(NetBlock::SEQU, 0);
 		case 1:
 		  delete expr;
 		  return stat;
@@ -2331,7 +2332,7 @@ void PTask::elaborate(Design*des, NetScope*task) const
       NetProc*st;
       if (statement_ == 0) {
 	    cerr << get_line() << ": warning: task has no statement." << endl;
-	    st = new NetBlock(NetBlock::SEQU);
+	    st = new NetBlock(NetBlock::SEQU, 0);
 
       } else {
 
@@ -2568,6 +2569,11 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.251  2002/05/27 00:08:45  steve
+ *  Support carrying the scope of named begin-end
+ *  blocks down to the code generator, and have
+ *  the vvp code generator use that to support disable.
+ *
  * Revision 1.250  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.
