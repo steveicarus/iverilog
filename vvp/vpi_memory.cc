@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.18 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.19 2002/09/11 16:06:57 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -109,20 +109,23 @@ static char* memory_get_str(int code, vpiHandle ref)
 
       struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
 
-      char *bn = vpi_get_str(vpiFullName, &rfp->scope->base);
+      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
       char *nm = memory_name(rfp->mem);
 
-      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, RBUF_STR);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 2, RBUF_STR);
 
       switch (code) {
 	  case vpiFullName:
 	    sprintf(rbuf, "%s.%s", bn, nm);
+	    free(bn);
 	    return rbuf;
 	  case vpiName:
 	    strcpy(rbuf, nm);
+	    free(bn);
 	    return rbuf;
       }
 
+      free(bn);
       return 0;
 }
 
@@ -580,6 +583,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.19  2002/09/11 16:06:57  steve
+ *  Fix wrecked rbuf in vpi_get_str of signals and memories.
+ *
  * Revision 1.18  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

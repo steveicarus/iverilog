@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.48 2002/09/10 02:27:11 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.49 2002/09/11 16:06:57 steve Exp $"
 #endif
 
 /*
@@ -110,22 +110,25 @@ static char* signal_get_str(int code, vpiHandle ref)
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
-      char *bn = vpi_get_str(vpiFullName, &rfp->scope->base);
+      char *bn = strdup(vpi_get_str(vpiFullName, &rfp->scope->base));
       char *nm = (char*)rfp->name;
 
-      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, RBUF_STR);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 2, RBUF_STR);
 
       switch (code) {
 
 	  case vpiFullName:
 	    sprintf(rbuf, "%s.%s", bn, nm);
+	    free(bn);
 	    return rbuf;
 
 	  case vpiName:
 	    strcpy(rbuf, nm);
+	    free(bn);
 	    return rbuf;
       }
 
+      free(bn);
       return 0;
 }
 
@@ -719,6 +722,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.49  2002/09/11 16:06:57  steve
+ *  Fix wrecked rbuf in vpi_get_str of signals and memories.
+ *
  * Revision 1.48  2002/09/10 02:27:11  steve
  *  Actually set strength pointer when getting strength val.
  *
