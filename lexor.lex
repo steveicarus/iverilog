@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.60 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: lexor.lex,v 1.61 2001/08/30 22:40:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -196,7 +196,7 @@ W [ \t\b\f\r]+
       return HIDENTIFIER; }
 
 \\[^ \t\b\f\r]+         {
-      yylval.text = strdup(yytext);
+      yylval.text = strdup(yytext+1);
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
@@ -215,10 +215,12 @@ W [ \t\b\f\r]+
       yylval.text = strdup(yytext);
       return SYSTEM_IDENTIFIER; }
 
-\.{W}?[a-zA-Z_][a-zA-Z0-9$_]* {
+\.{W}?(([a-zA-Z_][a-zA-Z0-9$_]*)|(\\[^ \t\b\f\r]+)) {
       char*cp = yytext+1;
-      while (! (isalpha(*cp) || (*cp == '_')))
+      while ( (!(isalpha(*cp) || (*cp == '_'))) && (*cp != '\\'))
 	    cp += 1;
+      if (*cp == '\\')
+	  cp++;
       yylval.text = strdup(cp);
       return PORTNAME; }
 
