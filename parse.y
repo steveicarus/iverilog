@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.51 1999/07/12 00:59:36 steve Exp $"
+#ident "$Id: parse.y,v 1.52 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -107,6 +107,7 @@ extern void lex_end_table();
 
 %type <wire> port
 %type <wires> list_of_ports list_of_ports_opt
+%type <wires> task_item task_item_list task_item_list_opt
 
 %type <portname> port_name
 %type <portnames> port_name_list
@@ -1542,32 +1543,53 @@ statement_opt
 
 task_body
 	: task_item_list_opt statement_opt
-		{ PTask*tmp = new PTask($2);
+		{ PTask*tmp = new PTask($1, $2);
 		  $$ = tmp;
 		}
 	;
 
 task_item
 	: block_item_decl
+	    { $$ = 0; }
 	| K_input range_opt list_of_variables ';'
-		{ yyerror(@1, "Sorry, task input ports not implemented.");
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, $2, $3);
+		  delete $2;
+		  delete $3;
+		  $$ = tmp;
 		}
 	| K_output range_opt list_of_variables ';'
-		{ yyerror(@1, "Sorry, task output ports not implemented.");
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::POUTPUT, $2, $3);
+		  delete $2;
+		  delete $3;
+		  $$ = tmp;
 		}
 	| K_inout range_opt list_of_variables ';'
-		{ yyerror(@1, "Sorry, task inout ports not implemented.");
+		{ svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINOUT, $2, $3);
+		  delete $2;
+		  delete $3;
+		  $$ = tmp;
 		}
 	;
 
 task_item_list
 	: task_item_list task_item
+		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
+		  delete $1;
+		  delete $2;
+		  $$ = tmp;
+		}
 	| task_item
+		{ $$ = $1; }
 	;
 
 task_item_list_opt
 	: task_item_list
+		{ $$ = $1; }
 	|
+		{ $$ = 0; }
 	;
 
 udp_body

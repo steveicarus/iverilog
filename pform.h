@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.23 1999/07/10 01:03:18 steve Exp $"
+#ident "$Id: pform.h,v 1.24 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -145,6 +145,14 @@ extern void pform_make_modgates(const string&type, svector<lgate>*gates);
 /* Make a continuous assignment node, with optional bit- or part- select. */
 extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval);
 
+
+/* Given a port type and a list of names, make a list of wires that
+   can be used as task port information. */
+extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+					     const svector<PExpr*>*range,
+					     const list<string>*names);
+
+
 /*
  * These are functions that the outside-the-parser code uses the do
  * interesting things to the verilog. The parse function reads and
@@ -157,6 +165,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.24  1999/07/24 02:11:20  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.23  1999/07/10 01:03:18  steve
  *  remove string from lexical phase.
  *

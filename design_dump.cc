@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.32 1999/07/17 19:50:59 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.33 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 /*
@@ -196,7 +196,28 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 void NetTaskDef::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "task " << name_ << ";" << endl;
+
+      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
+	    o << setw(ind+4) << "";
+	    switch (ports_[idx]->port_type()) {
+		case NetNet::PINPUT:
+		  o << "input ";
+		  break;
+		case NetNet::POUTPUT:
+		  o << "output ";
+		  break;
+		case NetNet::PINOUT:
+		  o << "input ";
+		  break;
+		default:
+		  o << "NOT_A_PORT ";
+		  break;
+	    }
+	    o << ports_[idx]->name() << ";" << endl;
+      }
+
       proc_->dump(o, ind+4);
+
       o << setw(ind) << "" << "endtask" << endl;
 }
 
@@ -480,22 +501,7 @@ void NetSTask::dump(ostream&o, unsigned ind) const
 
 void NetUTask::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << task_->name();
-
-      if (parms_.count() > 0) {
-	    o << "(";
-	    if (parms_[0])
-		  parms_[0]->dump(o);
-
-	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
-		  o << ", ";
-		  if (parms_[idx])
-			parms_[idx]->dump(o);
-	    }
-
-	    o << ")";
-      }
-      o << ";" << endl;
+      o << setw(ind) << "" << task_->name() << ";" << endl;
 }
 
 void NetWhile::dump(ostream&o, unsigned ind) const
@@ -684,6 +690,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.33  1999/07/24 02:11:20  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.32  1999/07/17 19:50:59  steve
  *  netlist support for ternary operator.
  *

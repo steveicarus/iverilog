@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.32 1999/07/10 01:03:18 steve Exp $"
+#ident "$Id: pform.cc,v 1.33 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -426,6 +426,63 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
 	    VLerror("error setting port direction.");
 }
 
+/*
+ * This function is called by the parser to create task ports. The
+ * resulting wire (which should be a register) is put into a list to
+ * be packed into the task parameter list.
+ *
+ * It is possible that the wire (er, register) was already created,
+ * but we know that if the name matches it is a part of the current
+ * task, so in that case I just assign direction to it.
+ *
+ * The following example demonstrates some if the issues:
+ *
+ *   task foo;
+ *      input a;
+ *      reg a, b;
+ *      input b;
+ *      [...]
+ *   endtask
+ *
+ * This function is called when the parser matches the "input a" and
+ * the "input b" statements. For ``a'', this function is called before
+ * the wire is declared as a register, so I create the foo.a
+ * wire. For ``b'', I will find that there is already a foo.b and I
+ * just set the port direction. In either case, the ``reg a, b''
+ * statement is caught by the block_item non-terminal and processed there.
+ */
+svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+				      const svector<PExpr*>*range,
+				      const list<string>*names)
+{
+      svector<PWire*>*res = new svector<PWire*>(0);
+      for (list<string>::const_iterator cur = names->begin()
+		 ; cur != names->end() ; cur ++ ) {
+
+	    string name = scoped_name(*cur);
+
+	      /* Look for a preexisting wire. If it exists, set the
+		 port direction. If not, create it. */
+	    PWire*curw = pform_cur_module->get_wire(name);
+	    if (curw) {
+		  curw->set_port_type(pt);
+	    } else {
+		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt);
+		  pform_cur_module->add_wire(curw);
+	    }
+
+	      /* If there is a range involved, it needs to be set. */
+	    if (range)
+		  curw->set_range((*range)[0], (*range)[1]);
+
+	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
+	    delete res;
+	    res = tmp;
+      }
+
+      return res;
+}
+
 void pform_set_task(const string&name, PTask*task)
 {
       pform_cur_module->add_task(name, task);
@@ -554,18 +611,6 @@ PProcess* pform_make_behavior(PProcess::Type type, Statement*st)
       return pp;
 }
 
-#if 0
-Statement* pform_make_calltask(string*name, svector<PExpr*>*parms)
-{
-      if (parms == 0)
-	    parms = new svector<PExpr*>(0);
-
-      PCallTask*ct = new PCallTask(*name, *parms);
-      delete name;
-      delete parms;
-      return ct;
-}
-#endif
 
 FILE*vl_input = 0;
 int pform_parse(const char*path, map<string,Module*>&modules,
@@ -593,6 +638,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.33  1999/07/24 02:11:20  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.32  1999/07/10 01:03:18  steve
  *  remove string from lexical phase.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.58 1999/07/18 21:17:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.59 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 /*
@@ -103,6 +103,8 @@ void PWire::elaborate(Design*des, const string&path) const
       NetNet::Type wtype = type_;
       if (wtype == NetNet::IMPLICIT)
 	    wtype = NetNet::WIRE;
+      if (wtype == NetNet::IMPLICIT_REG)
+	    wtype = NetNet::REG;
 
       unsigned wid = 1;
 
@@ -1533,15 +1535,36 @@ NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
       return cur;
 }
 
+/*
+ * A call to a user defined task is different from a call to a system
+ * task because a user task in a netlist has no parameters: the
+ * assignments are done by the calling thread. For example:
+ *
+ *  task foo;
+ *    input a;
+ *    output b;
+ *    [...]
+ *  endtask;
+ *
+ *  [...] foo(x, y);
+ *
+ * is really:
+ *
+ *  task foo;
+ *    reg a;
+ *    reg b;
+ *    [...]
+ *  endtask;
+ *
+ *  [...]
+ *  begin
+ *    a = x;
+ *    foo;
+ *    y = b;
+ *  end
+ */
 NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 {
-      svector<NetExpr*>eparms (nparms());
-
-      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
-	    PExpr*ex = parm(idx);
-	    eparms[idx] = ex? ex->elaborate_expr(des, path) : 0;
-      }
-
       NetTaskDef*def = des->find_task(path + "." + name_);
       if (def == 0) {
 	    cerr << get_line() << ": Enable of unknown task ``" <<
@@ -1550,8 +1573,60 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    return 0;
       }
 
-      NetUTask*cur = new NetUTask(def, eparms);
-      return cur;
+      if (nparms() != def->port_count()) {
+	    cerr << get_line() << ": Port count mismatch in call to ``"
+		 << name_ << "''." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetUTask*cur;
+
+	/* Handle tasks with no parameters specially. There is no need
+	   to make a sequential block to hold the generated code. */
+      if (nparms() == 0) {
+	    cur = new NetUTask(def);
+	    return cur;
+      }
+
+      NetBlock*block = new NetBlock(NetBlock::SEQU);
+
+	/* Generate assignment statement statements for the input and
+	   INOUT ports of the task. */
+      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+
+	    NetNet*port = def->port(idx);
+	    assert(port->port_type() != NetNet::NOT_A_PORT);
+	    if (port->port_type() == NetNet::POUTPUT)
+		  continue;
+
+	    NetExpr*rv = parms_[idx]->elaborate_expr(des, path);
+	    NetAssign*pr = new NetAssign("@", des, port->pin_count(), rv);
+	    for (unsigned pi = 0 ;  pi < port->pin_count() ;  pi += 1)
+		  connect(port->pin(pi), pr->pin(pi));
+	    des->add_node(pr);
+	    block->append(pr);
+      }
+
+	/* Generate the task call proper... */
+      cur = new NetUTask(def);
+      block->append(cur);
+
+	/* Generate assignment statement statements for the output and
+	   INOUT ports of the task. */
+      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+
+	    NetNet*port = def->port(idx);
+	    assert(port->port_type() != NetNet::NOT_A_PORT);
+	    if (port->port_type() == NetNet::PINPUT)
+		  continue;
+
+	    cerr << get_line() << ": Sorry, output ports not yet "
+		  "implemented." << endl;
+	    des->errors += 1;
+      }
+
+      return block;
 }
 
 NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
@@ -1725,7 +1800,9 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
 
 /*
  * A task definition is elaborated by elaborating the statement that
- * it contains, and ... XXXX
+ * it contains, and connecting its ports to NetNet objects. The
+ * netlist doesn't really need the array of parameters once elaboration
+ * is complete, but this is the best place to store them.
  */
 void PTask::elaborate(Design*des, const string&path) const
 {
@@ -1737,8 +1814,19 @@ void PTask::elaborate(Design*des, const string&path) const
 	    return;
       }
 
-      NetTaskDef*def = new NetTaskDef(path, st);
+	/* Translate the wires that are ports to NetNet pointers by
+	   presuming that the name is already elaborated, and look it
+	   up in the design. Then save that pointer for later use by
+	   calls to the task. (Remember, the task itself does not need
+	   these ports.) */
+      svector<NetNet*>ports (ports_->count());
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
 
+	    ports[idx] = tmp;
+      }
+
+      NetTaskDef*def = new NetTaskDef(path, st, ports);
       des->add_task(path, def);
 }
 
@@ -1862,6 +1950,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.59  1999/07/24 02:11:20  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.58  1999/07/18 21:17:50  steve
  *  Add support for CE input to XNF DFF, and do
  *  complete cleanup of replaced design nodes.

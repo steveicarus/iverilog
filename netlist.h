@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.50 1999/07/18 21:17:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.51 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 /*
@@ -217,8 +217,8 @@ class NetNode  : public NetObj {
 class NetNet  : public NetObj, public LineInfo {
 
     public:
-      enum Type { IMPLICIT, WIRE, TRI, TRI1, SUPPLY0, WAND, TRIAND,
-		  TRI0, SUPPLY1, WOR, TRIOR, REG, INTEGER };
+      enum Type { IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1, SUPPLY0,
+		  WAND, TRIAND, TRI0, SUPPLY1, WOR, TRIOR, REG, INTEGER };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
@@ -885,17 +885,21 @@ class NetSTask  : public NetProc {
 class NetTaskDef {
 
     public:
-      NetTaskDef(const string&n, NetProc*p);
+      NetTaskDef(const string&n, NetProc*p, const svector<NetNet*>&po);
       ~NetTaskDef();
 
       const string& name() const { return name_; }
       const NetProc*proc() const { return proc_; }
+
+      unsigned port_count() const { return ports_.count(); }
+      NetNet*port(unsigned idx);
 
       void dump(ostream&, unsigned) const;
 
     private:
       string name_;
       NetProc*proc_;
+      svector<NetNet*>ports_;
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);
@@ -903,26 +907,21 @@ class NetTaskDef {
 };
 
 /*
- * A call to a user defined task is elaborated into this object. I
- * save the parameters and the pointer to the task definition.
+ * A call to a user defined task is elaborated into this object.
  */
 class NetUTask  : public NetProc {
 
     public:
-      NetUTask(NetTaskDef*, const svector<NetExpr*>&);
+      NetUTask(NetTaskDef*);
       ~NetUTask();
 
       const string& name() const { return task_->name(); }
-      unsigned nparms() const { return parms_.count(); }
-
-      const NetExpr* parm(unsigned idx) const;
 
       virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
       NetTaskDef*task_;
-      svector<NetExpr*>parms_;
 };
 
 /*
@@ -1376,6 +1375,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.51  1999/07/24 02:11:20  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.50  1999/07/18 21:17:50  steve
  *  Add support for CE input to XNF DFF, and do
  *  complete cleanup of replaced design nodes.

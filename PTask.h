@@ -19,12 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PTask.h,v 1.1 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: PTask.h,v 1.2 1999/07/24 02:11:19 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
+# include  "svector.h"
 # include  <string>
 class Design;
+class PWire;
 class Statement;
 
 /*
@@ -33,13 +35,14 @@ class Statement;
 class PTask  : public LineInfo {
 
     public:
-      explicit PTask(Statement*s);
+      explicit PTask(svector<PWire*>*p, Statement*s);
       ~PTask();
 
       virtual void elaborate(Design*des, const string&path) const;
       void dump(ostream&, unsigned) const;
 
     private:
+      svector<PWire*>*ports_;
       Statement*statement_;
 
     private: // Not implemented
@@ -49,6 +52,9 @@ class PTask  : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.2  1999/07/24 02:11:19  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.1  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *

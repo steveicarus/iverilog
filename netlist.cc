@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.47 1999/07/18 21:17:50 steve Exp $"
+#ident "$Id: netlist.cc,v 1.48 1999/07/24 02:11:20 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -535,15 +535,13 @@ const NetExpr* NetSTask::parm(unsigned idx) const
       return parms_[idx];
 }
 
-NetUTask::NetUTask(NetTaskDef*def, const svector<NetExpr*>&p)
-: task_(def), parms_(p)
+NetUTask::NetUTask(NetTaskDef*def)
+: task_(def)
 {
 }
 
 NetUTask::~NetUTask()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
-	    delete parms_[idx];
 }
 
 NetExpr::~NetExpr()
@@ -968,14 +966,20 @@ const NetExpr* NetRepeat::expr() const
       return expr_;
 }
 
-NetTaskDef::NetTaskDef(const string&n, NetProc*p)
-: name_(n), proc_(p)
+NetTaskDef::NetTaskDef(const string&n, NetProc*p, const svector<NetNet*>&po)
+: name_(n), proc_(p), ports_(po)
 {
 }
 
 NetTaskDef::~NetTaskDef()
 {
       delete proc_;
+}
+
+NetNet* NetTaskDef::port(unsigned idx)
+{
+      assert(idx < ports_.count());
+      return ports_[idx];
 }
 
 NetUDP::NetUDP(const string&n, unsigned pins, bool sequ)
@@ -1479,6 +1483,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.48  1999/07/24 02:11:20  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.47  1999/07/18 21:17:50  steve
  *  Add support for CE input to XNF DFF, and do
  *  complete cleanup of replaced design nodes.

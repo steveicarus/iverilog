@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PTask.cc,v 1.1 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: PTask.cc,v 1.2 1999/07/24 02:11:19 steve Exp $"
 #endif
 
 # include  "PTask.h"
 
-PTask::PTask(Statement*s)
-: statement_(s)
+PTask::PTask(svector<PWire*>*p, Statement*s)
+: ports_(p), statement_(s)
 {
 }
 
@@ -33,6 +33,9 @@ PTask::~PTask()
 
 /*
  * $Log: PTask.cc,v $
+ * Revision 1.2  1999/07/24 02:11:19  steve
+ *  Elaborate task input ports.
+ *
  * Revision 1.1  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *
