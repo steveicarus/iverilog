@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.45 1999/06/19 03:21:21 steve Exp $"
+#ident "$Id: parse.y,v 1.46 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1268,9 +1268,10 @@ statement
 		  $$ = 0;
 		}
 	| K_forever statement
-		{ yyerror(@1, "Sorry, forever statements not supported.");
-		  delete $2;
-		  $$ = 0;
+		{ PForever*tmp = new PForever($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_fork statement_list K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, $2); }
@@ -1279,10 +1280,10 @@ statement
 		  $$ = 0;
 		}
 	| K_repeat '(' expression ')' statement
-		{ yyerror(@1, "Sorry, repeat statements not supported.");
-		  delete $3;
-		  delete $5;
-		  $$ = 0;
+		{ PRepeat*tmp = new PRepeat($3, $5);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_begin K_end
 		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }

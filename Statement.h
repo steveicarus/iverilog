@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.11 1999/06/15 05:38:39 steve Exp $"
+#ident "$Id: Statement.h,v 1.12 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  <string>
@@ -254,6 +254,18 @@ class PEventStatement  : public Statement {
       Statement*statement_;
 };
 
+class PForever : public Statement {
+    public:
+      explicit PForever(Statement*s);
+      ~PForever();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      Statement*statement_;
+};
+
 class PForStatement  : public Statement {
 
     public:
@@ -284,6 +296,19 @@ class PNoop  : public Statement {
       PNoop() { }
 };
 
+class PRepeat : public Statement {
+    public:
+      explicit PRepeat(PExpr*expr, Statement*s);
+      ~PRepeat();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*expr_;
+      Statement*statement_;
+};
+
 class PWhile  : public Statement {
 
     public:
@@ -301,6 +326,10 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.12  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.11  1999/06/15 05:38:39  steve
  *  Support case expression lists.
  *

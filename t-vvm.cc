@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.24 1999/06/10 04:03:43 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.25 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -56,6 +56,8 @@ class target_vvm : public target_t {
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
+      virtual void proc_forever(ostream&os, const NetForever*);
+      virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_task(ostream&os, const NetTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
       virtual void proc_event(ostream&os, const NetPEvent*);
@@ -973,6 +975,61 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
       os << "      {" << endl;
 }
 
+/*
+ * The forever loop is implemented by starting a basic block, handing
+ * the statement, and putting in a goto to the beginning of the block.
+ */
+void target_vvm::proc_forever(ostream&os, const NetForever*net)
+{
+      unsigned top_step = ++thread_step_;
+      unsigned out_step = ++thread_step_;
+
+      os << "        step_ = &step_" << top_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+      os << "      bool step_" << top_step << "_()" << endl;
+      os << "      {" << endl;
+      net->emit_recurse(os, this);
+      os << "        step_ = &step_" << top_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      bool step_" << out_step << "_()" << endl;
+      os << "      {" << endl;
+}
+
+void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
+{
+      string expr = emit_proc_rval(os, 8, net->expr());
+      unsigned top_step = ++thread_step_;
+      unsigned out_step = ++thread_step_;
+
+      os << "        step_" << top_step << "_idx_ = " << expr <<
+	    ".as_unsigned();" << endl;
+      os << "        step_ = &step_" << top_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      unsigned step_" << top_step << "_idx_;" << endl;
+
+      os << "      bool step_" << top_step << "_()" << endl;
+      os << "      {" << endl;
+      os << "        if (step_" << top_step << "_idx_ == 0) {" << endl;
+      os << "          step_ = &step_" << out_step << "_;" << endl;
+      os << "          return true;" << endl;
+      os << "        }" << endl;
+      os << "        step_" << top_step << "_idx_ -= 1;" << endl;
+
+      net->emit_recurse(os,this);
+
+      os << "        step_ = &step_" << top_step << "_;" << endl;
+      os << "        return true;" << endl;
+      os << "      }" << endl;
+
+      os << "      bool step_" << out_step << "_()" << endl;
+      os << "      {" << endl;
+}
+
 void target_vvm::proc_task(ostream&os, const NetTask*net)
 {
       if (net->name()[0] == '$') {
@@ -1136,6 +1193,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.25  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.24  1999/06/10 04:03:43  steve
  *  Do not bother trying to print lvalue name in comment.
  *

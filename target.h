@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.11 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: target.h,v 1.12 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -81,6 +81,8 @@ struct target_t {
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
+      virtual void proc_forever(ostream&os, const NetForever*);
+      virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_task(ostream&os, const NetTask*);
       virtual void proc_while(ostream&os, const NetWhile*);
 
@@ -125,6 +127,10 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.12  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.11  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *

@@ -149,6 +149,9 @@ Usage: ivl <options>... file
 	Select the output format for the compiled result. Use the
 	"ivl -h" command to get a list of configured targets.
 
+-v
+	Print version and copyright information for ivl.
+
 ATTRIBUTES
 
 The parser accepts as an extension to Verilog the $attribute module
@@ -245,9 +248,6 @@ verilog features.
 
   - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
 
-  - Inversion of a vector with a bit operator:
-    Example: reg [7:0] a;   a = !(8'h01);  
-
   - The "!==" operator:  Example: if( a !== b) do = 1;
 
   - Expansion of a string into a larger variable:
@@ -262,10 +262,6 @@ verilog features.
 
   - Bit ranges within IF. Example: if (a[2:3])  do = 1;
  
-  - Forever key word.
-
-  - Repeat key word.
-
   - Assignment timing delay: Example: a = #1 0;   #1 a = #2 ~a;
 
   - Bit Ranges within $write, $display.
@@ -274,3 +270,10 @@ verilog features.
 
   - Task declarations/calls.
 
+  - Specify blocks
+
+  - Named port parameters.
+    Example: module foo(.x(r[0])) ;  reg r[7:0]; endmodule
+
+    Note that binding to a port by name does work from the outside.
+    i.e. ``foo foogate(.x(n[0]))'' is OK.

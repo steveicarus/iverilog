@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.46 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.47 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 /*
@@ -1413,6 +1413,21 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 }
 
 /*
+ * Forever statements are represented directly in the netlist. It is
+ * theoretically possible to use a while structure with a constant
+ * expression to represent the loop, but why complicate the code
+ * generators so?
+ */
+NetProc* PForever::elaborate(Design*des, const string&path) const
+{
+      NetProc*stat = statement_->elaborate(des, path);
+      if (stat == 0) return 0;
+
+      NetForever*proc = new NetForever(stat);
+      return proc;
+}
+
+/*
  * elaborate the for loop as the equivilent while loop. This eases the
  * task for the target code generator. The structure is:
  *
@@ -1463,6 +1478,45 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, path), body);
       top->append(loop);
       return top;
+}
+
+NetProc* PRepeat::elaborate(Design*des, const string&path) const
+{
+      NetExpr*expr = expr_->elaborate_expr(des, path);
+      if (expr == 0) {
+	    cerr << get_line() << ": Unable to elaborate"
+		  " repeat expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      NetExpr*tmp = expr->eval_tree();
+      if (tmp) {
+	    delete expr;
+	    expr = tmp;
+      }
+
+      NetProc*stat = statement_->elaborate(des, path);
+      if (stat == 0) return 0;
+
+	// If the expression is a constant, handle certain special
+	// iteration counts.
+      if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
+	    verinum val = ce->value();
+	    switch (val.as_ulong()) {
+		case 0:
+		  delete expr;
+		  delete stat;
+		  return new NetBlock(NetBlock::SEQU);
+		case 1:
+		  delete expr;
+		  return stat;
+		default:
+		  break;
+	    }
+      }
+
+      NetRepeat*proc = new NetRepeat(expr, stat);
+      return proc;
 }
 
 /*
@@ -1575,6 +1629,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.47  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.46  1999/06/17 05:34:42  steve
  *  Clean up interface of the PWire class,
  *  Properly match wire ranges.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.29 1999/06/15 05:38:15 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.30 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 /*
@@ -389,6 +389,12 @@ void NetCondit::dump(ostream&o, unsigned ind) const
       }
 }
 
+void NetForever::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "forever" << endl;
+      statement_->dump(o, ind+2);
+}
+
 void NetPDelay::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "#" << delay_;
@@ -457,6 +463,12 @@ void NetTask::dump(ostream&o, unsigned ind) const
 	    o << ")";
       }
       o << ";" << endl;
+}
+
+void NetRepeat::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
+      statement_->dump(o, ind+2);
 }
 
 void NetWhile::dump(ostream&o, unsigned ind) const
@@ -630,6 +642,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.30  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.29  1999/06/15 05:38:15  steve
  *  Handle total lack of signals or nodes.
  *

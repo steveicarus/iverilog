@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.13 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: emit.cc,v 1.14 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 /*
@@ -115,6 +115,11 @@ void NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
       tgt->proc_condit(o, this);
 }
 
+void NetForever::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_forever(o, this);
+}
+
 void NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_delay(o, this);
@@ -133,6 +138,11 @@ void NetPEvent::emit_proc(ostream&o, struct target_t*tgt) const
 void NetPEvent::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
       if (statement_) statement_->emit_proc(o, tgt);
+}
+
+void NetRepeat::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_repeat(o, this);
 }
 
 void NetTask::emit_proc(ostream&o, struct target_t*tgt) const
@@ -167,6 +177,18 @@ void NetCondit::emit_recurse_else(ostream&o, struct target_t*tgt) const
 {
       if (else_)
 	    else_->emit_proc(o, tgt);
+}
+
+void NetForever::emit_recurse(ostream&o, struct target_t*tgt) const
+{
+      if (statement_)
+	    statement_->emit_proc(o, tgt);
+}
+
+void NetRepeat::emit_recurse(ostream&o, struct target_t*tgt) const
+{
+      if (statement_)
+	    statement_->emit_proc(o, tgt);
 }
 
 void NetWhile::emit_proc_recurse(ostream&o, struct target_t*tgt) const
@@ -273,6 +295,10 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.14  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.13  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.2 1999/06/06 20:33:30 steve Exp $"
+#ident "$Id: t-null.cc,v 1.3 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -35,12 +35,18 @@ static class target_null_t  : public target_t {
       void net_event(ostream&, const NetNEvent*) { }
       void proc_delay(ostream&, const NetPDelay*) { }
       void proc_event(ostream&, const NetPEvent*) { }
+      void proc_forever(ostream&, const NetForever*) { }
+      void proc_repeat(ostream&, const NetRepeat*) { }
 
 } target_null_obj;
 
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.3  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.2  1999/06/06 20:33:30  steve
  *  implement some null-target code generation.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.23 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.24 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 /*
@@ -375,11 +375,23 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
       }
 }
 
+void PForever::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "forever /* " << get_line() << " */" << endl;
+      statement_->dump(out, ind+3);
+}
+
 void PForStatement::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "for (" << *name1_ << " = " << *expr1_
 	  << "; " << *cond_ << "; " << *name2_ << " = " << *expr2_ <<
 	    ")" << endl;
+      statement_->dump(out, ind+3);
+}
+
+void PRepeat::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
       statement_->dump(out, ind+3);
 }
 
@@ -489,6 +501,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.24  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.23  1999/06/17 05:34:42  steve
  *  Clean up interface of the PWire class,
  *  Properly match wire ranges.
@@ -553,46 +569,5 @@ void PUdp::dump(ostream&out) const
  *  Elaborate prints errors about port vector
  *  width mismatch
  *  Emit better handles null statements.
- *
- * Revision 1.7  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.6  1998/11/25 02:35:54  steve
- *  Parse UDP primitives all the way to pform.
- *
- * Revision 1.5  1998/11/23 00:20:23  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.4  1998/11/11 03:13:04  steve
- *  Handle while loops.
- *
- * Revision 1.3  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:05:06  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:04  steve
- *  Introduce verilog to CVS.
- *
  */
 

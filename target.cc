@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.11 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: target.cc,v 1.12 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -135,6 +135,18 @@ void target_t::proc_event(ostream&os, const NetPEvent*)
 	    "Unhandled proc_event." << endl;
 }
 
+void target_t::proc_forever(ostream&os, const NetForever*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_forever." << endl;
+}
+
+void target_t::proc_repeat(ostream&os, const NetRepeat*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_repeat." << endl;
+}
+
 void target_t::proc_task(ostream&os, const NetTask*)
 {
 }
@@ -208,6 +220,10 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.12  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.11  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.37 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.38 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -733,12 +733,38 @@ NetEUnary* NetEUnary::dup_expr() const
       assert(0);
 }
 
+NetForever::NetForever(NetProc*p)
+: statement_(p)
+{
+}
+
+NetForever::~NetForever()
+{
+      delete statement_;
+}
+
 NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
 : NetNode(n, pins), type_(t)
 {
       pin(0).set_dir(Link::OUTPUT);
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
 	    pin(idx).set_dir(Link::INPUT);
+}
+
+NetRepeat::NetRepeat(NetExpr*e, NetProc*p)
+: expr_(e), statement_(p)
+{
+}
+
+NetRepeat::~NetRepeat()
+{
+      delete expr_;
+      delete statement_;
+}
+
+const NetExpr* NetRepeat::expr() const
+{
+      return expr_;
 }
 
 NetUDP::NetUDP(const string&n, unsigned pins, bool sequ)
@@ -1202,6 +1228,10 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.38  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.37  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *

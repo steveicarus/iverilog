@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.40 1999/06/13 23:51:16 steve Exp $"
+#ident "$Id: netlist.h,v 1.41 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 /*
@@ -728,6 +728,25 @@ class NetCondit  : public NetProc {
       NetProc*else_;
 };
 
+/*
+ * A forever statement is executed over and over again forever. Or
+ * until its block is disabled.
+ */
+class NetForever : public NetProc {
+
+    public:
+      explicit NetForever(NetProc*s);
+      ~NetForever();
+
+      void emit_recurse(ostream&, struct target_t*) const;
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetProc*statement_;
+};
+
 class NetPDelay  : public NetProc {
 
     public:
@@ -799,6 +818,26 @@ class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
       Type edge_;
 };
 
+
+/*
+ * A repeat statement is executed some fixed number of times.
+ */
+class NetRepeat : public NetProc {
+
+    public:
+      explicit NetRepeat(NetExpr*e, NetProc*s);
+      ~NetRepeat();
+
+      const NetExpr*expr() const;
+      void emit_recurse(ostream&, struct target_t*) const;
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetExpr*expr_;
+      NetProc*statement_;
+};
 
 /* The elaborator should expand all the user defined tasks in line, so
    this leaves the NetTask to represent activations of system tasks,
@@ -1252,6 +1291,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.41  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.40  1999/06/13 23:51:16  steve
  *  l-value part select for procedural assignments.
  *

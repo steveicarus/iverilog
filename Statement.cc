@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.9 1999/06/15 05:38:39 steve Exp $"
+#ident "$Id: Statement.cc,v 1.10 1999/06/19 21:06:16 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -102,8 +102,29 @@ PCondit::~PCondit()
       delete else_;
 }
 
+PForever::PForever(Statement*s)
+: statement_(s)
+{
+}
+
+PForever::~PForever()
+{
+      delete statement_;
+}
+
 PProcess::~PProcess()
 {
+      delete statement_;
+}
+
+PRepeat::PRepeat(PExpr*e, Statement*s)
+: expr_(e), statement_(s)
+{
+}
+
+PRepeat::~PRepeat()
+{
+      delete expr_;
       delete statement_;
 }
 
@@ -115,6 +136,10 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.10  1999/06/19 21:06:16  steve
+ *  Elaborate and supprort to vvm the forever
+ *  and repeat statements.
+ *
  * Revision 1.9  1999/06/15 05:38:39  steve
  *  Support case expression lists.
  *
