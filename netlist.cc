@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.56 1999/09/03 04:28:38 steve Exp $"
+#ident "$Id: netlist.cc,v 1.57 1999/09/04 01:57:15 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -327,6 +327,11 @@ NetAddSub::NetAddSub(const string&n, unsigned w)
 
 NetAddSub::~NetAddSub()
 {
+}
+
+unsigned NetAddSub::width()const
+{
+      return (pin_count() - 6) / 3;
 }
 
 NetObj::Link& NetAddSub::pin_DataA(unsigned idx)
@@ -1749,6 +1754,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.57  1999/09/04 01:57:15  steve
+ *  Generate fake adder code in vvm.
+ *
  * Revision 1.56  1999/09/03 04:28:38  steve
  *  elaborate the binary plus operator.
  *

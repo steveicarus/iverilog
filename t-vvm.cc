@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.37 1999/09/01 20:46:19 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.38 1999/09/04 01:57:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -44,6 +44,9 @@ class target_vvm : public target_t {
       virtual void memory(ostream&os, const NetMemory*);
       virtual void task_def(ostream&os, const NetTaskDef*);
       virtual void func_def(ostream&os, const NetFuncDef*);
+
+      virtual void lpm_add_sub(ostream&os, const NetAddSub*);
+
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
@@ -605,6 +608,13 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate)
       }
 
       delayed << "}" << endl;
+}
+
+void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
+{
+      os << "#error \"adders not yet supported in vvm.\"" << endl;
+      os << "static vvm_add_sub<" << gate->width() << "> " <<
+	    mangle(gate->name()) << ";" << endl;
 }
 
 void target_vvm::logic(ostream&os, const NetLogic*gate)
@@ -1401,6 +1411,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.38  1999/09/04 01:57:15  steve
+ *  Generate fake adder code in vvm.
+ *
  * Revision 1.37  1999/09/01 20:46:19  steve
  *  Handle recursive functions and arbitrary function
  *  references to other functions, properly pass
