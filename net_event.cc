@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.13 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: net_event.cc,v 1.14 2001/03/29 02:52:19 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -77,6 +77,16 @@ unsigned NetEvent::nprobe() const
 }
 
 NetEvProbe* NetEvent::probe(unsigned idx)
+{
+      NetEvProbe*cur = probes_;
+      while (cur && idx) {
+	    cur = cur->enext_;
+	    idx -= 1;
+      }
+      return cur;
+}
+
+const NetEvProbe* NetEvent::probe(unsigned idx) const
 {
       NetEvProbe*cur = probes_;
       while (cur && idx) {
@@ -439,6 +449,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.14  2001/03/29 02:52:19  steve
+ *  Add const probe method to NetEvent.
+ *
  * Revision 1.13  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.

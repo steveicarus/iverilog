@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.199 2001/02/15 06:59:36 steve Exp $"
+#ident "$Id: netlist.h,v 1.200 2001/03/29 02:52:01 steve Exp $"
 #endif
 
 /*
@@ -1600,6 +1600,7 @@ class NetEvent : public LineInfo {
 	// Get information about probes connected to me.
       unsigned nprobe() const;
       NetEvProbe* probe(unsigned);
+      const NetEvProbe* probe(unsigned) const;
 
 	// Return the number of NetEvWait nodes that reference me.
       unsigned nwait() const;
@@ -2869,6 +2870,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.200  2001/03/29 02:52:01  steve
+ *  Add const probe method to NetEvent.
+ *
  * Revision 1.199  2001/02/15 06:59:36  steve
  *  FreeBSD port has a maintainer now.
  *
