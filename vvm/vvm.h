@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.4 1999/02/08 03:55:55 steve Exp $"
+#ident "$Id: vvm.h,v 1.5 1999/03/16 04:43:46 steve Exp $"
 #endif
 
 # include  <vector>
@@ -50,6 +50,14 @@ inline vvm_bit_t operator & (vvm_bit_t l, vvm_bit_t r)
       if (l == V0) return V0;
       if (r == V0) return V0;
       if ((l == V1) && (r == V1)) return V1;
+      return Vx;
+}
+
+inline vvm_bit_t operator | (vvm_bit_t l, vvm_bit_t r)
+{
+      if (l == V1) return V1;
+      if (r == V1) return V1;
+      if ((l == V0) && (r == V0)) return V0;
       return Vx;
 }
 
@@ -241,6 +249,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.5  1999/03/16 04:43:46  steve
+ *  Add some logical operators.
+ *
  * Revision 1.4  1999/02/08 03:55:55  steve
  *  Do not generate code for signals,
  *  instead use the NetESignal node to

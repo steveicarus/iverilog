@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.2 1999/03/15 02:42:44 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.3 1999/03/16 04:43:46 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -43,6 +43,31 @@ vvm_bitset_t<WIDTH> vvm_unop_not(const vvm_bitset_t<WIDTH>&p)
 	    result[idx] = Vx;
       }
       return result;
+}
+
+/*
+ * The unary OR is the reduction OR. It returns a single bit.
+ */
+template <unsigned WIDTH>
+vvm_bitset_t<1> vvm_unop_or(const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<1> res;
+      res[0] = V1;
+
+      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
+	    if (r[idx] == V1)
+		  return res;
+      }
+
+      res[0] = V0;
+      return res;
+}
+
+template <unsigned WIDTH>
+vvm_bitset_t<1> vvm_unop_lnot(const vvm_bitset_t<WIDTH>&r)
+{
+      vvm_bitset_t<1> res = vvm_unop_or(r);
+      return vvm_unop_not(res);
 }
 
 /*
@@ -193,8 +218,31 @@ vvm_bitset_t<1> vvm_binop_ne(const vvm_bitset_t<LW>&l,
       return result;
 }
 
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_land(const vvm_bitset_t<LW>&l,
+			       const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> res1 = vvm_unop_or(l);
+      vvm_bitset_t<1> res2 = vvm_unop_or(r);
+      res1[0] = res1[0] & res2[0];
+      return res1;
+}
+
+template <unsigned LW, unsigned RW>
+vvm_bitset_t<1> vvm_binop_lor(const vvm_bitset_t<LW>&l,
+			       const vvm_bitset_t<RW>&r)
+{
+      vvm_bitset_t<1> res1 = vvm_unop_or(l);
+      vvm_bitset_t<1> res2 = vvm_unop_or(r);
+      res1[0] = res1[0] | res2[0];
+      return res1;
+}
+
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.3  1999/03/16 04:43:46  steve
+ *  Add some logical operators.
+ *
  * Revision 1.2  1999/03/15 02:42:44  steve
  *  Add the AND and OR bitwise operators.
  *
