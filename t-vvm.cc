@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.33 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.34 1999/08/02 00:19:16 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -442,11 +442,23 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    if (sig->get_ival(idx) == verinum::Vz)
 		  continue;
 
+	    map<string,bool>written;
+
 	    for (const NetObj::Link*lnk = sig->pin(idx).next_link()
 		       ; (*lnk) != sig->pin(idx) ;  lnk = lnk->next_link()) {
 
 		  if (lnk->get_dir() == NetObj::Link::OUTPUT)
 			continue;
+
+		    // Check to see if the name has already been
+		    // written to. This can happen if the object is a
+		    // NetESignal, because there can be many of them
+		    // with the same name.
+		  if (written[lnk->get_obj()->name()])
+			continue;
+
+		  written[lnk->get_obj()->name()] = true;
+
 
 		  const NetNode*net;
 		  if ((net = dynamic_cast<const NetNode*>(lnk->get_obj()))) {
@@ -886,6 +898,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    const NetObj*cur;
 	    unsigned pin;
+	    map<string,bool> written;
 
 	    for (net->pin(idx).next_link(cur, pin)
 		       ; net->pin(idx) != cur->pin(pin)
@@ -900,6 +913,14 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 		  if (dynamic_cast<const NetNet*>(cur))
 			continue;
 
+		    // It is possible for a named device to show up
+		    // several times in a link. This is the classic
+		    // case with NetESignal objects, which are
+		    // repeated for each expression that uses it.
+		  if (written[cur->name()])
+			continue;
+
+		  written[cur->name()] = true;
 		  os << "        " << mangle(cur->name()) <<
 			".set(sim_, " << pin << ", " <<
 			rval << "[" << idx << "]);" << endl;
@@ -1287,6 +1308,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.34  1999/08/02 00:19:16  steve
+ *  Get rid of excess set/init of NetESignal objects.
+ *
  * Revision 1.33  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial
