@@ -1,6 +1,7 @@
 AC_INIT(Makefile.in)
 
 AC_PROG_CC
+AC_CHECK_TOOL(STRIP, strip, true)
 AC_PROG_INSTALL
 
 AC_CYGWIN
