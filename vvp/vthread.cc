@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.112 2003/07/03 20:03:36 steve Exp $"
+#ident "$Id: vthread.cc,v 1.113 2003/07/21 02:39:15 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -1874,8 +1874,8 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       unsigned long lv = 0, rv = 0;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+	    unsigned long lb = thr_get_bit(thr, idx1);
+	    unsigned long rb = thr_get_bit(thr, idx2);
 
 	    if ((lb | rb) & 2)
 		  goto x_out;
@@ -2756,6 +2756,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.113  2003/07/21 02:39:15  steve
+ *  Overflow of unsigned when calculating unsigned long value.
+ *
  * Revision 1.112  2003/07/03 20:03:36  steve
  *  Remove the vvp_cpoint_t indirect code pointer.
  *
