@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.67 2001/10/19 21:53:24 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.68 2001/10/22 02:05:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,6 +107,8 @@ static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 
       if (const NetScope*par = cur->parent()) {
 	    parent = find_scope_from_root(root, par);
+	    if (parent == 0)
+		  return 0;
 
 	    for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
 		  if (strcmp(tmp->name_, cur->name().c_str()) == 0)
@@ -1654,6 +1656,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.68  2001/10/22 02:05:21  steve
+ *  Handle activating tasks in another root.
+ *
  * Revision 1.67  2001/10/19 21:53:24  steve
  *  Support multiple root modules (Philip Blundell)
  *

@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.1 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: load_module.cc,v 1.2 2001/10/22 02:05:21 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
@@ -54,6 +55,9 @@ bool load_module(const char*type)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.2  2001/10/22 02:05:21  steve
+ *  Handle activating tasks in another root.
+ *
  * Revision 1.1  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

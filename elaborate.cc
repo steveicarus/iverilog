@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.224 2001/10/21 00:42:47 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.225 2001/10/22 02:05:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1142,11 +1142,13 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
 	// Handle the special case that the block contains only one
 	// statement. There is no need to keep the block node.
       if (list_.count() == 1) {
+	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, npath);
 	    return tmp;
       }
 
       for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
+	    assert(list_[idx]);
 	    NetProc*tmp = list_[idx]->elaborate(des, npath);
 	    if (tmp == 0) {
 		  fail_flag = true;
@@ -1376,7 +1378,16 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       }
 
       assert(task);
+      assert(task->type() == NetScope::TASK);
       NetTaskDef*def = task->task_def();
+      if (def == 0) {
+	    cerr << get_line() << ": internal error: task " << name_
+		 << " doesn't have a definition in " << scope->name()
+		 << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+      assert(def);
 
       if (nparms() != def->port_count()) {
 	    cerr << get_line() << ": error: Port count mismatch in call to ``"
@@ -2353,20 +2364,26 @@ Design* elaborate(list<const char*>roots)
 	// constants.
       des->evaluate_parameters();
 
+	// With the parameters evaluated down to constants, we have
+	// what we need to elaborate signals and memories. This pass
+	// creates all the NetNet and NetMemory objects for declared
+	// objects.
       for (i = 0; i < root_elems.count(); i++) {
 	    Module *rmod = root_elems[i]->mod;
 	    NetScope *scope = root_elems[i]->scope;
 
-	    // With the parameters evaluated down to constants, we have
-	    // what we need to elaborate signals and memories. This pass
-	    // creates all the NetNet and NetMemory objects for declared
-	    // objects.
 	    if (! rmod->elaborate_sig(des, scope)) {
 		  delete des;
 		  return 0;
 	    }
-	    // Now that the structure and parameters are taken care of,
-	    // run through the pform again and generate the full netlist.
+      }
+
+	// Now that the structure and parameters are taken care of,
+	// run through the pform again and generate the full netlist.
+      for (i = 0; i < root_elems.count(); i++) {
+	    Module *rmod = root_elems[i]->mod;
+	    NetScope *scope = root_elems[i]->scope;
+
 	    rc &= rmod->elaborate(des, scope);
       }
 
@@ -2382,6 +2399,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.225  2001/10/22 02:05:20  steve
+ *  Handle activating tasks in another root.
+ *
  * Revision 1.224  2001/10/21 00:42:47  steve
  *  Module types in pform are char* instead of string.
  *
