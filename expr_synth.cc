@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.45 2003/06/24 01:38:02 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.46 2003/07/26 03:34:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -643,6 +643,44 @@ NetNet* NetEUReduce::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetESelect::synthesize(Design *des)
+{
+	// XXXX For now, only support pad form
+      assert(base_ == 0);
+
+      NetNet*sub = expr_->synthesize(des);
+      if (sub == 0)
+	    return 0;
+
+      NetScope*scope = sub->scope();
+      NetNet*net = new NetNet(scope, scope->local_symbol(),
+			      NetNet::IMPLICIT, expr_width());
+      if (has_sign()) {
+	    unsigned idx;
+
+	    for (idx = 0 ;  idx < sub->pin_count() ;  idx += 1)
+		  connect(sub->pin(idx), net->pin(idx));
+
+	    for ( ;  idx < net->pin_count(); idx += 1)
+		  connect(sub->pin(sub->pin_count()-1), net->pin(idx));
+
+      } else {
+	    unsigned idx;
+	    for (idx = 0 ;  idx < sub->pin_count() ;  idx += 1)
+		  connect(sub->pin(idx), net->pin(idx));
+
+	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
+					verinum::V0);
+
+	    for ( ;  idx < net->pin_count() ;  idx += 1)
+		  connect(net->pin(idx), tmp->pin(0));
+
+	    des->add_node(tmp);
+      }
+
+      return net;
+}
+
 /*
  * Synthesize a ?: operator an a NetMux device. Connect the condition
  * expression to the select input, then connect the true and false
@@ -732,6 +770,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.46  2003/07/26 03:34:42  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.45  2003/06/24 01:38:02  steve
  *  Various warnings fixed.
  *

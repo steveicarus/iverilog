@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.32 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: set_width.cc,v 1.33 2003/07/26 03:34:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -93,14 +93,14 @@ bool NetEBAdd::set_width(unsigned w)
       right_->set_width(wid);
 
       if (left_->expr_width() < wid) {
-	    NetExpr*tmp = pad_to_width(left_, wid);
-	    assert(tmp);
+	    NetExpr*tmp = new NetESelect(left_, 0, wid);
+	    tmp->cast_signed(left_->has_sign());
 	    left_ = tmp;
       }
 
       if (right_->expr_width() < wid) {
-	    NetExpr*tmp = pad_to_width(right_, wid);
-	    assert(tmp);
+	    NetExpr*tmp = new NetESelect(right_, 0, wid);
+	    tmp->cast_signed(right_->has_sign());
 	    right_ = tmp;
       }
 
@@ -411,6 +411,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.33  2003/07/26 03:34:42  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.32  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *

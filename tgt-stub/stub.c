@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.80 2003/06/23 01:25:44 steve Exp $"
+#ident "$Id: stub.c,v 1.81 2003/07/26 03:34:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,10 +95,18 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  }
 
 	  case IVL_EX_SELECT:
-	    fprintf(out, "%*s<bit select, width=%u, %s>\n", ind, "",
-		    width, sign);
-	    show_expression(ivl_expr_oper1(net), ind+3);
-	    show_expression(ivl_expr_oper2(net), ind+3);
+	      /* The SELECT expression can be used to express part
+		 select, or if the base is null vector extension. */
+	    if (ivl_expr_oper2(net)) {
+		  fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
+			  width, sign);
+		  show_expression(ivl_expr_oper1(net), ind+3);
+		  show_expression(ivl_expr_oper2(net), ind+3);
+	    } else {
+		  fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
+			  width, sign);
+		  show_expression(ivl_expr_oper1(net), ind+3);
+	    }
 	    break;
 
 	  case IVL_EX_STRING:
@@ -870,6 +878,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.81  2003/07/26 03:34:43  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.80  2003/06/23 01:25:44  steve
  *  Module attributes make it al the way to ivl_target.
  *

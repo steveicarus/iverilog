@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.37 2003/06/24 01:38:03 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.38 2003/07/26 03:34:43 steve Exp $"
 #endif
 
 # include "config.h"
@@ -344,7 +344,9 @@ void dll_target::expr_select(const NetESelect*net)
       ivl_expr_t left = expr_;
 
       expr_ = 0;
-      net->select()->expr_scan(this);
+      if (net->select())
+	    net->select()->expr_scan(this);
+
       ivl_expr_t rght = expr_;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
@@ -601,6 +603,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.38  2003/07/26 03:34:43  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.37  2003/06/24 01:38:03  steve
  *  Various warnings fixed.
  *

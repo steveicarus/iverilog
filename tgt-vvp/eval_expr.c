@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.102 2003/06/18 03:55:19 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.103 2003/07/26 03:34:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1325,6 +1325,45 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+/*
+ * The PAD expression takes a smaller node and pads it out to a larger
+ * value. It will zero extend or sign extend depending on the
+ * signedness of the expression.
+ */
+static struct vector_info draw_pad_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info subv;
+      struct vector_info res;
+
+      subv = draw_eval_expr(ivl_expr_oper1(exp), 0);
+      if (wid == subv.wid) {
+	    if (subv.base >= 8)
+		  save_expression_lookaside(subv.base, exp, wid);
+	    return subv;
+      }
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+	      res.base, subv.base, subv.wid);
+
+      assert(wid > subv.wid);
+
+      if (ivl_expr_signed(exp)) {
+	    unsigned idx;
+	    for (idx = subv.wid ;  idx < res.wid ;  idx += 1)
+		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
+			  res.base+idx, subv.base+subv.wid-1);
+      } else {
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    res.base+subv.wid, res.wid - subv.wid);
+      }
+
+      save_expression_lookaside(res.base, exp, wid);
+      return res;
+}
+
 static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
@@ -2031,7 +2070,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    break;
 
 	  case IVL_EX_SELECT:
-	    res = draw_select_expr(exp, wid);
+	    if (ivl_expr_oper2(exp) == 0)
+		  res = draw_pad_expr(exp, wid);
+	    else
+		  res = draw_select_expr(exp, wid);
 	    break;
 
 	  case IVL_EX_SIGNAL:
@@ -2073,6 +2115,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.103  2003/07/26 03:34:43  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.102  2003/06/18 03:55:19  steve
  *  Add arithmetic shift operators.
  *

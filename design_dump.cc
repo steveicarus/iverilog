@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.143 2003/07/05 20:42:08 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.144 2003/07/26 03:34:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -941,6 +941,25 @@ void NetEScope::dump(ostream&o) const
       o << "<scope=" << scope_->name() << ">";
 }
 
+void NetESelect::dump(ostream&o) const
+{
+      o << "<select";
+      if (has_sign())
+	    o << "+=";
+      else
+	    o << "=";
+
+      expr_->dump(o);
+      o << "[";
+
+      if (base_)
+	    base_->dump(o);
+      else
+	    o << "(0)";
+
+      o << "+:" << expr_width() << "]>";
+}
+
 void NetESFunc::dump(ostream&o) const
 {
       o << name_ << "(";
@@ -1049,6 +1068,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.144  2003/07/26 03:34:42  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.143  2003/07/05 20:42:08  steve
  *  Fix some enumeration warnings.
  *

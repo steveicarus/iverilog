@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.9 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.10 2003/07/26 03:34:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -114,7 +114,7 @@ NexusSet* NetEScope::nex_input()
 
 NexusSet* NetESelect::nex_input()
 {
-      NexusSet*result = base_->nex_input();
+      NexusSet*result = base_? base_->nex_input() : new NexusSet();
       NexusSet*tmp = expr_->nex_input();
       result->add(*tmp);
       delete tmp;
@@ -377,6 +377,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.10  2003/07/26 03:34:42  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.9  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

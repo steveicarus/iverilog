@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.294 2003/07/15 03:49:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.295 2003/07/26 03:34:42 steve Exp $"
 #endif
 
 /*
@@ -2661,6 +2661,10 @@ class NetEParam  : public NetExpr {
  * selected from it. The base is the expression that identifies the
  * lsb of the expression, and the wid is the width of the part select,
  * or 1 for a bit select.
+ *
+ * If the base expression is null, then this expression node can be
+ * used to express width expansion, signed or unsigned depending on
+ * the has_sign() flag.
  */
 class NetESelect  : public NetExpr {
 
@@ -2677,6 +2681,8 @@ class NetESelect  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree();
       virtual NetESelect* dup_expr() const;
+      virtual NetNet*synthesize(Design*des);
+      virtual void dump(ostream&) const;
 
     private:
       NetExpr*expr_;
@@ -3309,6 +3315,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.295  2003/07/26 03:34:42  steve
+ *  Start handling pad of expressions in code generators.
+ *
  * Revision 1.294  2003/07/15 03:49:22  steve
  *  Spelling fixes.
  *
