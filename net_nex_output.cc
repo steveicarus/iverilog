@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.7 2003/10/26 04:51:39 steve Exp $"
+#ident "$Id: net_nex_output.cc,v 1.8 2003/12/20 00:59:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,15 +38,22 @@ void NetProc::nex_output(NexusSet&out)
 
 void NetAssignBase::nex_output(NexusSet&out)
 {
-      NetNet*lsig = lval_->sig();
-      assert(lsig);
-      assert(lval_->more == 0);
-
-      for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
-	    unsigned off = lval_->get_loff() + idx;
-	    out.add(lsig->pin(off).nexus());
+      if (NetNet*lsig = lval_->sig()) {
+	    assert(lval_->more == 0);
+	    for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
+		  unsigned off = lval_->get_loff() + idx;
+		  out.add(lsig->pin(off).nexus());
+	    }
+      } else {
+	    /* Quoting from netlist.h comments for class NetMemory:
+	     * "This is not a node because memory objects can only be
+	     * accessed by behavioral code."
+	     */
+	    cerr << get_line() << ": internal error: "
+		 << "NetAssignBase::nex_output on unsupported lval ";
+	    dump_lval(cerr);
+	    cerr << endl;
       }
-
 }
 
 void NetBlock::nex_output(NexusSet&out)
@@ -93,6 +100,9 @@ void NetWhile::nex_output(NexusSet&out)
 
 /*
  * $Log: net_nex_output.cc,v $
+ * Revision 1.8  2003/12/20 00:59:31  steve
+ *  Synthesis debug messages.
+ *
  * Revision 1.7  2003/10/26 04:51:39  steve
  *  Output of While is output of while substatement.
  *

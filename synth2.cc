@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.33 2003/12/17 16:52:39 steve Exp $"
+#ident "$Id: synth2.cc,v 1.34 2003/12/20 00:59:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -84,10 +84,21 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       assert(rsig);
 
       NetNet*lsig = lval_->sig();
-      assert(lsig);
+      if (!lsig) {
+	    cerr << get_line() << ": error: NetAssignBase::synth_async on unsupported lval ";
+	    dump_lval(cerr);
+	    cerr << endl;
+	    DEBUG_SYNTH2_EXIT("NetAssignBase",false)
+	    return false;
+      }
       assert(lval_->more == 0);
 
-      assert(lval_->lwidth() == nex_map->pin_count());
+      if (lval_->lwidth() != nex_map->pin_count()) {
+	    cerr << get_line() << ": error: NetAssignBase::synth_async pin count mismatch, "
+	         << lval_->lwidth() << " != " << nex_map->pin_count() << endl;
+	    DEBUG_SYNTH2_EXIT("NetAssignBase",false)
+	    return false;
+      }
       assert(nex_map->pin_count() <= rsig->pin_count());
 
       for (unsigned idx = 0 ;  idx < lval_->lwidth() ;  idx += 1) {
@@ -242,7 +253,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    statement_map[sel_idx] = items_[item].statement;
       }
 
-	/* Now that statements matches with mux inputs, synthesize the
+	/* Now that statements match with mux inputs, synthesize the
 	   sub-statements. If I get to an input that has no statement,
 	   then use the default statement there. */
       NetNet*default_sig = 0;
@@ -266,7 +277,12 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  default_sig = sig;
 	    }
 
-	    assert(statement_map[item]);
+	    if (statement_map[item] == 0) {
+		  /* Missing case and no default; this could still be
+		   * synthesizable with synchronous logic, but not here. */
+		  DEBUG_SYNTH2_EXIT("NetCase", false)
+		  return false;
+	    }
 	    statement_map[item]->synth_async(des, scope, nex_map, sig);
 
 	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1)
@@ -305,13 +321,25 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 			       NetNet::WIRE, nex_map->pin_count());
       asig->local_flag(true);
 
-      if_->synth_async(des, scope, nex_map, asig);
-
+      bool flag;
+      flag = if_->synth_async(des, scope, nex_map, asig);
+      if (!flag) {
+	    delete asig;
+	    DEBUG_SYNTH2_EXIT("NetCondit",false)
+	    return false;
+      }
+      
       NetNet*bsig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
       bsig->local_flag(true);
 
-      else_->synth_async(des, scope, nex_map, bsig);
+      flag = else_->synth_async(des, scope, nex_map, bsig);
+      if (!flag) {
+	    delete asig;
+	    delete bsig;
+	    DEBUG_SYNTH2_EXIT("NetCondit",false)
+	    return false;
+      }
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(), 2, 1);
@@ -635,36 +663,41 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    asig->local_flag(true);
 	    bool flag = if_->synth_async(des, scope, nex_map, asig);
 
-	    assert(asig->pin_count() == ff->width());
-
-	      /* Collect the set/reset value into a verinum. If
-		 this turns out to be entirely 0 values, then
-		 use the Sclr input. Otherwise, use the Aset
-		 input and save the set value. */
-	    verinum tmp (verinum::V0, ff->width());
-	    for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
-
-		  assert(asig->pin(bit).nexus()->drivers_constant());
-		  tmp.set(bit, asig->pin(bit).nexus()->driven_value());
-	    }
-
-	    assert(tmp.is_defined());
-	    if (tmp.is_zero()) {
-		  connect(ff->pin_Sclr(), rst->pin(0));
-
+	    if (!flag) {
+		  /* This path leads nowhere */
+		  delete asig;
 	    } else {
-		  connect(ff->pin_Sset(), rst->pin(0));
-		  ff->sset_value(tmp);
+		  assert(asig->pin_count() == ff->width());
+
+		    /* Collect the set/reset value into a verinum. If
+		       this turns out to be entirely 0 values, then
+		       use the Sclr input. Otherwise, use the Aset
+		       input and save the set value. */
+		  verinum tmp (verinum::V0, ff->width());
+		  for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
+
+			assert(asig->pin(bit).nexus()->drivers_constant());
+			tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+		  }
+
+		  assert(tmp.is_defined());
+		  if (tmp.is_zero()) {
+			connect(ff->pin_Sclr(), rst->pin(0));
+
+		  } else {
+			connect(ff->pin_Sset(), rst->pin(0));
+			ff->sset_value(tmp);
+		  }
+
+		  delete a_set;
+
+		  assert(else_ != 0);
+		  flag = else_->synth_sync(des, scope, ff, nex_map,
+					   nex_out, svector<NetEvProbe*>(0))
+			&& flag;
+		  DEBUG_SYNTH2_EXIT("NetCondit",flag)
+		  return flag;
 	    }
-
-	    delete a_set;
-
-	    assert(else_ != 0);
-	    flag = else_->synth_sync(des, scope, ff, nex_map,
-				     nex_out, svector<NetEvProbe*>(0))
-		  && flag;
-            DEBUG_SYNTH2_EXIT("NetCondit",flag)
-	    return flag;
       }
 
       delete a_set;
@@ -929,6 +962,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.34  2003/12/20 00:59:31  steve
+ *  Synthesis debug messages.
+ *
  * Revision 1.33  2003/12/17 16:52:39  steve
  *  Debug dumps for synth2.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.27 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.28 2003/12/20 00:59:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,7 +146,7 @@ static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
 	    connect(ram->pin_Data(idx), d->bit(idx+rval_pinoffset));
       }
 
-	/* Connect the Address pins from the adr net discovered by the
+	/* Connect the Address pins from the addr net discovered by the
 	   caller. */
       for (unsigned idx = 0 ;  idx < ram->awidth() ;  idx += 1) {
 	    connect(ram->pin_Address(idx), adr->pin(idx));
@@ -155,8 +155,9 @@ static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
 	/* Connect the input clock and the WE of the RAM. */
       assert(pclk);
       connect(ram->pin_InClock(), pclk->pin(0));
-      assert(ce);
-      connect(ram->pin_WE(), ce->pin(0));
+      if (ce) {
+	    connect(ram->pin_WE(), ce->pin(0));
+      } /* XXX does ram CE default to true if not connected? */
 
 	/* This notices any other NetRamDq objects connected to the
 	   same NetMemory, that have the same address pins and are
