@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.18 2000/03/12 18:22:11 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.19 2000/03/20 16:57:22 steve Exp $"
 #endif
 
 
@@ -300,10 +300,19 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	    if (msb_ && (msn = msb_->eval_const(des, scope->name()))) {
 		  assert(idx_ == 0);
 		  unsigned long msv = msn->as_ulong();
+		  unsigned idx = net->sb_to_idx(msv);
+
+		  if (idx >= net->pin_count()) {
+			cerr << get_line() << ": internal error: "
+			     << "bit " << msv << " out of range of net "
+			     << net->name() << "[" << net->msb()
+			     << ":" << net->lsb() << "]." << endl;
+			return 0;
+		  }
 
 		  string tname = des->local_symbol(scope->name());
 		  NetTmp*tsig = new NetTmp(tname);
-		  connect(tsig->pin(0), net->pin(msv));
+		  connect(tsig->pin(0), net->pin(idx));
 		  NetESignal*tmp = new NetESignal(tsig);
 		  tmp->set_line(*this);
 
@@ -440,6 +449,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.19  2000/03/20 16:57:22  steve
+ *  select correct bit when reg has non-zero lsb.
+ *
  * Revision 1.18  2000/03/12 18:22:11  steve
  *  Binary and unary operators in parameter expressions.
  *
