@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.111 2003/05/13 01:56:15 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.112 2003/05/13 16:30:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1029,8 +1029,10 @@ void dll_target::udp(const NetUDP*net)
 
 	      /* Skip unconnected input pins. These will take on HiZ
 		 values by the code generators. */
-	    if (nex->t_cookie() == 0)
+	    if (nex->t_cookie() == 0) {
+		  obj->pins_[idx] = 0;
 		  continue;
+	    }
 
 	    assert(nex->t_cookie());
 	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
@@ -2126,6 +2128,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.112  2003/05/13 16:30:39  steve
+ *  Clear pin pointers if pin is not connected.
+ *
  * Revision 1.111  2003/05/13 01:56:15  steve
  *  Allow primitives to hvae unconnected input ports.
  *
