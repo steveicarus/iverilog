@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.1 1998/11/03 23:28:52 steve Exp $"
+#ident "$Id: Module.h,v 1.2 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 # include  <list>
@@ -57,7 +57,7 @@ class Module {
       const list<PGate*>& get_gates() const { return gates_; }
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
-      void elaborate(Design*, const string&path) const;
+      bool elaborate(Design*, const string&path) const;
 
     private:
       const string name_;
@@ -74,6 +74,18 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.2  1999/01/25 05:45:56  steve
+ *  Add the LineInfo class to carry the source file
+ *  location of things. PGate, Statement and PProcess.
+ *
+ *  elaborate handles module parameter mismatches,
+ *  missing or incorrect lvalues for procedural
+ *  assignment, and errors are propogated to the
+ *  top of the elaboration call tree.
+ *
+ *  Attach line numbers to processes, gates and
+ *  assignment statements.
+ *
  * Revision 1.1  1998/11/03 23:28:52  steve
  *  Introduce verilog to CVS.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.5 1998/12/09 04:02:47 steve Exp $"
+#ident "$Id: pform.h,v 1.6 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -63,8 +63,13 @@ class PExpr;
  */
 
 struct lgate {
+      lgate() : parms(0), lineno(0) { }
+
       string name;
       list<PExpr*>*parms;
+
+      string file;
+      unsigned lineno;
 };
 
 
@@ -94,7 +99,7 @@ extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
-extern void pform_make_behavior(PProcess::Type, Statement*);
+extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_assignment(string*t, PExpr*e);
 extern Statement* pform_make_calltask(string*t, list<PExpr*>* =0);
@@ -132,6 +137,18 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.6  1999/01/25 05:45:56  steve
+ *  Add the LineInfo class to carry the source file
+ *  location of things. PGate, Statement and PProcess.
+ *
+ *  elaborate handles module parameter mismatches,
+ *  missing or incorrect lvalues for procedural
+ *  assignment, and errors are propogated to the
+ *  top of the elaboration call tree.
+ *
+ *  Attach line numbers to processes, gates and
+ *  assignment statements.
+ *
  * Revision 1.5  1998/12/09 04:02:47  steve
  *  Support the include directive.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.10 1998/12/18 05:16:25 steve Exp $"
+#ident "$Id: parse.y,v 1.11 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -271,6 +271,8 @@ gate_instance
 		{ lgate*tmp = new lgate;
 		  tmp->name = *$1;
 		  tmp->parms = $3;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
 		  delete $1;
 		  $$ = tmp;
 		}
@@ -278,6 +280,8 @@ gate_instance
 		{ lgate*tmp = new lgate;
 		  tmp->name = "";
 		  tmp->parms = $2;
+		  tmp->file  = @1.text;
+		  tmp->lineno = @1.first_line;
 		  $$ = tmp;
 		}
 	;
@@ -446,10 +450,14 @@ module_item
 		  delete $3;
 		}
 	| K_always statement
-		{ pform_make_behavior(PProcess::PR_ALWAYS, $2);
+		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		}
 	| K_initial statement
-		{ pform_make_behavior(PProcess::PR_INITIAL, $2);
+		{ PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL, $2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		}
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
 		{ pform_set_attrib(*$3, *$5, *$7);
@@ -592,7 +600,10 @@ statement
 		  $$ = tmp;
 		}
 	| lvalue '=' expression ';'
-		{ $$ = pform_make_assignment($1, $3);
+		{ Statement*tmp = pform_make_assignment($1, $3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| lvalue K_LE expression ';'
 		{ $$ = pform_make_assignment($1, $3);
@@ -699,6 +710,8 @@ udp_initial
 	: K_initial IDENTIFIER '=' NUMBER ';'
 		{ PExpr*etmp = new PENumber($4);
 		  PAssign*atmp = new PAssign(*$2, etmp);
+		  atmp->set_file(@2.text);
+		  atmp->set_lineno(@2.first_line);
 		  delete $2;
 		  $$ = atmp;
 		}

@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.4 1998/11/11 03:13:04 steve Exp $"
+#ident "$Id: Statement.h,v 1.5 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 # include  <string>
 # include  <list>
 # include  "netlist.h"
+# include  "LineInfo.h"
 class PExpr;
 class Statement;
 
@@ -34,13 +35,15 @@ class Statement;
  * pointer to the single statement that is the process. A module may
  * have several concurrent processes.
  */
-class PProcess {
+class PProcess : public LineInfo {
 
     public:
       enum Type { PR_INITIAL, PR_ALWAYS };
 
       PProcess(Type t, Statement*st)
       : type_(t), statement_(st) { }
+
+      virtual ~PProcess();
 
       Type type() const { return type_; }
       Statement*statement() { return statement_; }
@@ -57,7 +60,7 @@ class PProcess {
  * fact, the Statement class is abstract and represents all the
  * possible kinds of statements that exist in Verilog.
  */
-class Statement {
+class Statement : public LineInfo {
 
     public:
       Statement() { }
@@ -245,6 +248,18 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.5  1999/01/25 05:45:56  steve
+ *  Add the LineInfo class to carry the source file
+ *  location of things. PGate, Statement and PProcess.
+ *
+ *  elaborate handles module parameter mismatches,
+ *  missing or incorrect lvalues for procedural
+ *  assignment, and errors are propogated to the
+ *  top of the elaboration call tree.
+ *
+ *  Attach line numbers to processes, gates and
+ *  assignment statements.
+ *
  * Revision 1.4  1998/11/11 03:13:04  steve
  *  Handle while loops.
  *

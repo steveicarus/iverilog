@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.7 1998/12/09 04:02:47 steve Exp $"
+#ident "$Id: pform.cc,v 1.8 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -27,6 +27,7 @@
 # include  <map>
 # include  <assert.h>
 # include  <typeinfo>
+# include  <strstream>
 
 /*
  * The lexor accesses the vl_* variables.
@@ -261,9 +262,12 @@ void pform_makegates(PGBuiltin::Type type,
 
 void pform_make_modgate(const string&type,
 			const string&name,
-			const vector<PExpr*>&wires)
+			const vector<PExpr*>&wires,
+			const string&fn, unsigned ln)
 {
       PGate*cur = new PGModule(type, name, wires);
+      cur->set_file(fn);
+      cur->set_lineno(ln);
       cur_module->add_gate(cur);
 }
 
@@ -281,7 +285,7 @@ void pform_make_modgates(const string&type, list<lgate>*gates)
 		  wires[idx] = ep;
 	    }
 
-	    pform_make_modgate(type, cur.name, wires);
+	    pform_make_modgate(type, cur.name, wires, cur.file, cur.lineno);
       }
 
       delete gates;
@@ -311,9 +315,11 @@ void pform_makewire(const string&name, NetNet::Type type)
 {
       PWire*cur = cur_module->get_wire(name);
       if (cur) {
-	    if (cur->type != NetNet::IMPLICIT)
-		  VLerror("Extra definition of wire.");
-
+	    if (cur->type != NetNet::IMPLICIT) {
+		  strstream msg;
+		  msg << "Duplicate definition of " << name << ".";
+		  VLerror(msg.str());
+	    }
 	    cur->type = type;
 	    return;
       }
@@ -433,10 +439,11 @@ list<PWire*>* pform_make_udp_input_ports(list<string>*names)
       return out;
 }
 
-void pform_make_behavior(PProcess::Type type, Statement*st)
+PProcess* pform_make_behavior(PProcess::Type type, Statement*st)
 {
       PProcess*pp = new PProcess(type, st);
       cur_module->add_behavior(pp);
+      return pp;
 }
 
 Statement* pform_make_block(PBlock::BL_TYPE type, list<Statement*>*sl)
@@ -493,6 +500,18 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.8  1999/01/25 05:45:56  steve
+ *  Add the LineInfo class to carry the source file
+ *  location of things. PGate, Statement and PProcess.
+ *
+ *  elaborate handles module parameter mismatches,
+ *  missing or incorrect lvalues for procedural
+ *  assignment, and errors are propogated to the
+ *  top of the elaboration call tree.
+ *
+ *  Attach line numbers to processes, gates and
+ *  assignment statements.
+ *
  * Revision 1.7  1998/12/09 04:02:47  steve
  *  Support the include directive.
  *

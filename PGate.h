@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.2 1998/12/01 00:42:13 steve Exp $"
+#ident "$Id: PGate.h,v 1.3 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 # include  <vector>
+# include  "LineInfo.h"
 class PExpr;
 class PUdp;
 class Design;
@@ -36,7 +37,7 @@ class Design;
  * step will need to convert expressions to a network of gates in
  * order to elaborate expression inputs, but that can easily be done.
  */
-class PGate {
+class PGate : public LineInfo {
       
     public:
       explicit PGate(const string&name, const vector<PExpr*>&pins, long del)
@@ -135,6 +136,18 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.3  1999/01/25 05:45:56  steve
+ *  Add the LineInfo class to carry the source file
+ *  location of things. PGate, Statement and PProcess.
+ *
+ *  elaborate handles module parameter mismatches,
+ *  missing or incorrect lvalues for procedural
+ *  assignment, and errors are propogated to the
+ *  top of the elaboration call tree.
+ *
+ *  Attach line numbers to processes, gates and
+ *  assignment statements.
+ *
  * Revision 1.2  1998/12/01 00:42:13  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

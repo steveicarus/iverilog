@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.10 1998/12/14 02:01:34 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.11 1999/01/25 05:45:56 steve Exp $"
 #endif
 
 /*
@@ -221,6 +221,14 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters.
 
+      if (pin_count() != rmod->ports.size()) {
+	    cerr << get_line() << ": Wrong number "
+		  "of parameters. Expecting " << rmod->ports.size() <<
+		  ", got " << pin_count() << "."
+		 << endl;
+	    return;
+      }
+
       assert(pin_count() == rmod->ports.size());
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
@@ -240,11 +248,21 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 	    assert(prt->pin_count() == sig->pin_count());
 	    switch (prt->port_type()) {
+		    // INPUT and OUTPUT ports are directional. Handle
+		    // them like assignments.
 		case NetNet::PINPUT:
 		  do_assign(des, path, prt, sig);
 		  break;
 		case NetNet::POUTPUT:
 		  do_assign(des, path, sig, prt);
+		  break;
+
+		    // INOUT ports are like terminal posts. Just
+		    // connect the inside and the outside nets
+		    // together.
+		case NetNet::PINOUT:
+		  for (unsigned p = 0 ;  p < sig->pin_count() ;  p += 1)
+			connect(prt->pin(p), sig->pin(p));
 		  break;
 		default:
 		  assert(0);
@@ -569,10 +587,17 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 {
       NetNet*reg = des->find_signal(path+"."+lval());
       if (reg == 0) {
-	    cerr << "Could not match signal: " << lval() << endl;
-	    return new NetProc;
+	    cerr << get_line() << ": Could not match signal: " <<
+		  lval() << endl;
+	    return 0;
       }
       assert(reg);
+
+      if (reg->type() != NetNet::REG) {
+	    cerr << get_line() << ": " << lval() << " is not a register."
+		 << endl;
+	    return 0;
+      }
       assert(reg->type() == NetNet::REG);
       assert(expr_);
 
@@ -585,11 +610,29 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       return cur;
 }
 
+/*
+ * This is the elaboration method for a begin-end block. Try to
+ * elaborate the entire block, even if it fails somewhere. This way I
+ * get all the error messages out of it. Then, if I detected a failure
+ * then pass the failure up.
+ */
 NetProc* PBlock::elaborate(Design*des, const string&path) const
 {
       NetBlock*cur = new NetBlock(NetBlock::SEQU);
+      bool fail_flag = false;
+
       for (unsigned idx = 0 ;  idx < size() ;  idx += 1) {
-	    cur->append(stat(idx)->elaborate(des, path));
+	    NetProc*tmp = stat(idx)->elaborate(des, path);
+	    if (tmp == 0) {
+		  fail_flag = true;
+		  continue;
+	    }
+	    cur->append(tmp);
+      }
+
+      if (fail_flag) {
+	    delete cur;
+	    cur = 0;
       }
 
       return cur;
@@ -635,14 +678,18 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 {
       NetProc*enet = statement_->elaborate(des, path);
+      if (enet == 0)
+	    return 0;
+
       NetPEvent*ev = new NetPEvent(des->local_symbol(path), type_, enet);
 
       NetNet*expr = expr_->elaborate_net(des, path);
       if (expr == 0) {
-	    cerr << "Failed to elaborate expression: ";
+	    cerr << get_line() << ": Failed to elaborate expression: ";
 	    expr_->dump(cerr);
 	    cerr << endl;
-	    exit(1);
+	    delete ev;
+	    return 0;
       }
       assert(expr);
       connect(ev->pin(0), expr->pin(0));
@@ -695,8 +742,10 @@ NetProc* PWhile::elaborate(Design*des, const string&path) const
       return loop;
 }
 
-void Module::elaborate(Design*des, const string&path) const
+bool Module::elaborate(Design*des, const string&path) const
 {
+      bool result_flag = true;
+
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
       const list<PWire*>&wl = get_wires();
@@ -728,6 +777,13 @@ void Module::elaborate(Design*des, const string&path) const
 		 ; st ++ ) {
 
 	    NetProc*cur = (*st)->statement()->elaborate(des, path);
+	    if (cur == 0) {
+		  cerr << (*st)->get_line() << ": Elaboration "
+			"failed for this process." << endl;
+		  result_flag = false;
+		  continue;
+	    }
+
 	    NetProcTop*top;
 	    switch ((*st)->type()) {
 		case PProcess::PR_INITIAL:
@@ -740,6 +796,8 @@ void Module::elaborate(Design*des, const string&path) const
 
 	    des->add_process(top);
       }
+
+      return result_flag;
 }
 
 Design* elaborate(const map<string,Module*>&modules,
@@ -759,16 +817,32 @@ Design* elaborate(const map<string,Module*>&modules,
 
       modlist = &modules;
       udplist = &primitives;
-      rmod->elaborate(des, root);
+      bool rc = rmod->elaborate(des, root);
       modlist = 0;
       udplist = 0;
 
+      if (rc == false) {
+	    delete des;
+	    des = 0;
+      }
       return des;
 }
 
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.11  1999/01/25 05:45:56  steve
+ *  Add the LineInfo class to carry the source file
+ *  location of things. PGate, Statement and PProcess.
+ *
+ *  elaborate handles module parameter mismatches,
+ *  missing or incorrect lvalues for procedural
+ *  assignment, and errors are propogated to the
+ *  top of the elaboration call tree.
+ *
+ *  Attach line numbers to processes, gates and
+ *  assignment statements.
+ *
  * Revision 1.10  1998/12/14 02:01:34  steve
  *  Fully elaborate Sequential UDP behavior.
  *
