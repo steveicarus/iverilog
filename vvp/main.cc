@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.32 2003/01/06 23:57:26 steve Exp $"
+#ident "$Id: main.cc,v 1.33 2003/01/18 23:55:35 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -157,6 +157,7 @@ int main(int argc, char*argv[])
                    " -h             Print this help message.\n"
                    " -l file        Logfile, '-' for <stderr>\n"
                    " -M path        VPI module directory\n"
+		   " -M -           Clear VPI module path\n"
                    " -m module      Load vpi module.\n"
                    " -v             Verbose progress messages.\n" );
            exit(0);
@@ -164,7 +165,12 @@ int main(int argc, char*argv[])
 	    logfile_name = optarg;
 	    break;
 	  case 'M':
-	    vpip_module_path[vpip_module_path_cnt++] = optarg;
+	    if (strcmp(optarg,"-") == 0) {
+		  vpip_module_path_cnt = 0;
+		  vpip_module_path[0] = 0;
+	    } else {
+		  vpip_module_path[vpip_module_path_cnt++] = optarg;
+	    }
 	    break;
 	  case 'm':
 	    module_tab[module_cnt++] = optarg;
@@ -291,6 +297,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.33  2003/01/18 23:55:35  steve
+ *  Add a means to clear the module search path.
+ *
  * Revision 1.32  2003/01/06 23:57:26  steve
  *  Schedule wait lists of threads as a single event,
  *  to save on events. Also, improve efficiency of
