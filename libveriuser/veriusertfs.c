@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.12 2003/06/17 16:55:08 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.13 2003/06/17 22:09:45 steve Exp $"
 #endif
 
 /*
@@ -112,10 +112,19 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    tf_data.user_data = (char *)data;
 
 	    if (pli_trace) {
-		  fprintf(pli_trace, "Registering system task/function\n");
-		  fprintf(pli_trace, "    tfname: %s\n", tf->tfname);
-		  fprintf(pli_trace, "    type:   %d\n", tf->type);
-		  fprintf(pli_trace, "    data:   %d\n", tf->data);
+		  fprintf(pli_trace, "Registering system %s:\n",
+			tf->type == usertask ? "task" : "function");
+		  fprintf(pli_trace, "  tfname : %s\n", tf->tfname);
+		  if (tf->data)
+			fprintf(pli_trace, "  data   : %d\n", tf->data);
+		  if (tf->checktf)
+			fprintf(pli_trace, "  checktf: %p\n", tf->checktf);
+		  if (tf->sizetf)
+			fprintf(pli_trace, "  sizetf : %p\n", tf->sizetf);
+		  if (tf->calltf)
+			fprintf(pli_trace, "  calltf : %p\n", tf->calltf);
+		  if (tf->misctf)
+			fprintf(pli_trace, "  misctf : %p\n", tf->misctf);
 	    }
 
 	    /* register */
@@ -198,7 +207,7 @@ static int compiletf(char *data)
       if (tf->misctf) {
 	    if (pli_trace) {
 		  fprintf(pli_trace, "Call %s->misctf"
-			  "(user_data=%d, reason=%d, paramvc=%d);\n",
+			  "(user_data=%d, reason=%d, paramvc=%d)\n",
 			  tf->tfname, tf->data, reason_endofcompile, 0);
 	    }
 
@@ -278,7 +287,7 @@ static int callback(p_cb_data data)
 
       if (pli_trace) {
 	    fprintf(pli_trace, "Call %s->misctf"
-		    "(user_data=%d, reason=%d, paramvc=%d);\n",
+		    "(user_data=%d, reason=%d, paramvc=%d)\n",
 		    tf->tfname, tf->data, reason, paramvc);
       }
 
@@ -379,6 +388,9 @@ PLI_INT32 tf_setrealdelay(double dly)
 }
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.13  2003/06/17 22:09:45  steve
+ *  Better trace of PLI1 registration.
+ *
  * Revision 1.12  2003/06/17 16:55:08  steve
  *  1) setlinebuf() for vpi_trace
  *  2) Addes error checks for trace file opens
