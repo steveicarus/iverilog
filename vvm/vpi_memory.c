@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.c,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.6 2000/02/29 01:41:32 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -147,7 +147,7 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
 
 static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      struct __vpiMemoryWord*rfp = (struct __vpiMemorWord*)ref;
+      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(ref->vpi_type->type_code==vpiMemoryWord);
 
       vpip_bits_get_value(rfp->mem->bits+rfp->index*rfp->mem->width,
@@ -199,6 +199,9 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.6  2000/02/29 01:41:32  steve
+ *  Fix warning and typo.
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *
