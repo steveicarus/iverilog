@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.23 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.24 2000/04/20 02:34:47 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -81,6 +81,10 @@ class target_xnf  : public target_t {
       void signal(ostream&os, const NetNet*);
 
       void lpm_add_sub(ostream&os, const NetAddSub*);
+      void lpm_compare(ostream&os, const NetCompare*);
+      void lpm_compare_eq_(ostream&os, const NetCompare*);
+      void lpm_compare_ge_(ostream&os, const NetCompare*);
+      void lpm_compare_le_(ostream&os, const NetCompare*);
       void lpm_ff(ostream&os, const NetFF*);
       void lpm_mux(ostream&os, const NetMux*);
       void lpm_ram_dq(ostream&os, const NetRamDq*);
@@ -132,6 +136,7 @@ string target_xnf::mangle(const string&name)
  */
 string target_xnf::choose_sig_name(const NetObj::Link*lnk)
 {
+      assert(lnk->is_linked());
       const NetNet*sig = dynamic_cast<const NetNet*>(lnk->get_obj());
       unsigned pin = lnk->get_pin();
 
@@ -515,6 +520,118 @@ void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
 
 }
 
+/*
+ * In XNF, comparators are done differently depending on the type of
+ * comparator being implemented. So, here we dispatch to the correct
+ * code generator.
+ */
+void target_xnf::lpm_compare(ostream&os, const NetCompare*dev)
+{
+      if (dev->pin_AEB().is_linked()) {
+	    lpm_compare_eq_(os, dev);
+	    return;
+      }
+
+      if (dev->pin_AGEB().is_linked()) {
+	    lpm_compare_ge_(os, dev);
+	    return;
+      }
+
+      if (dev->pin_ALEB().is_linked()) {
+	    lpm_compare_le_(os, dev);
+	    return;
+      }
+
+      assert(0);
+}
+
+/*
+ * To compare that vectors are equal (identity comparator) generate
+ * XNOR gates to compare each pair of bits, then generate an AND gate
+ * to combine the bitwise results. This is pretty much the best way to
+ * do an identity compare in Xilinx CLBs.
+ */
+void target_xnf::lpm_compare_eq_(ostream&os, const NetCompare*dev)
+{
+      string mname = mangle(dev->name());
+
+	/* Draw XNOR gates for each bit pair. These gates to the
+	   bitwise comparison. */
+      for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1) {
+	    os << "SYM, " << mname << "/cmp<" << idx << ">, "
+	       << "XNOR, LIBVER=2.0.0" << endl;
+	    os << "    PIN, O, O, " << mname << "/bit<" << idx << ">"
+	       << endl;
+	    draw_pin(os, "I0", dev->pin_DataA(idx));
+	    draw_pin(os, "I1", dev->pin_DataB(idx));
+	    os << "END" << endl;
+      }
+
+	/* Now draw an AND gate to combine all the bitwise
+	   comparisons. If there are more the 5 bits of data, then we
+	   are going to have generate a nested AND to combine the
+	   results. */
+
+      if (dev->width() > 5) {
+	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 5) {
+
+		  if ((idx+1) >= dev->width()) break;
+		  os << "SYM, " << mname << "/nest<" << idx
+		     << ">, AND, LIBVER=2.0.0" << endl;
+
+		  os << "    PIN, O, O, " << mname << "/nbit<" << idx
+		     << ">" << endl;
+
+		  os << "    PIN, I0, I, " << mname << "/bit<" << idx+0
+		     << ">" << endl;
+		  os << "    PIN, I1, I, " << mname << "/bit<" << idx+1
+		     << ">" << endl;
+		  if ((idx+2) >= dev->width()) goto gate_out;
+		  os << "    PIN, I2, I, " << mname << "/bit<" << idx+2
+		     << ">" << endl;
+		  if ((idx+3) >= dev->width()) goto gate_out;
+		  os << "    PIN, I3, I, " << mname << "/bit<" << idx+3
+		     << ">" << endl;
+		  if ((idx+4) >= dev->width()) goto gate_out;
+		  os << "    PIN, I4, I, " << mname << "/bit<" << idx+4
+		     << ">" << endl;
+	    gate_out:
+		  os << "END" << endl;
+	    }
+
+	    os << "SYM, " << mname << ", AND, LIBVER=2.0.0" << endl;
+	    draw_pin(os, "O", dev->pin_AEB());
+	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 5) {
+		  if ((idx+1) == dev->width())
+			os << "    PIN, I" << idx/5 << ", I " << mname
+			   << "/bit<" << idx << ">" << endl;
+		  else
+			os << "    PIN, I" << idx/5 << ", I " << mname
+			   << "/nbit<" << idx << ">" << endl;
+	    }
+	    os << "END" << endl;
+
+      } else {
+	    os << "SYM, " << mname << ", AND, LIBVER=2.0.0" << endl;
+	    draw_pin(os, "O", dev->pin_AEB());
+	    for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1) {
+		  os << "    PIN, I" << idx << ", I, " << mname << "/bit<"
+		     << idx << ">" << endl;
+	    }
+	    os << "END" << endl;
+      }
+}
+
+void target_xnf::lpm_compare_ge_(ostream&os, const NetCompare*dev)
+{
+      cerr << "XXXX GE not supported yet" << endl;
+}
+
+void target_xnf::lpm_compare_le_(ostream&os, const NetCompare*dev)
+{
+      cerr << "XXXX LE not supported yet" << endl;
+}
+
 void target_xnf::lpm_ff(ostream&os, const NetFF*net)
 {
       string type = net->attribute("LPM_FFType");
@@ -711,6 +828,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.24  2000/04/20 02:34:47  steve
+ *  Generate code for identity compare. Use gates.
+ *
  * Revision 1.23  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *
