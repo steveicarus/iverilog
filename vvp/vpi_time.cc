@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.cc,v 1.3 2001/06/30 23:03:17 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.4 2001/08/16 03:29:31 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -37,6 +37,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       static char buf_obj[128];
       assert(ref == &time_handle.base);
+      unsigned long x, num_bits;
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -48,8 +49,31 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    vp->format = vpiTimeVal;
 	    break;
 
+	  case vpiBinStrVal:
+	    x = schedule_simtime();
+	    num_bits = 8 * sizeof(unsigned long);
+
+	    buf_obj[num_bits] = 0;
+	    for (int i = 1; i <= num_bits; i++) {
+	      buf_obj[num_bits-i] = x  & 1 ? '1' : '0';
+	      x = x >> 1;
+	    }
+
+	    vp->value.str = buf_obj;
+	    break;
+
 	  case vpiDecStrVal:
 	    sprintf(buf_obj, "%lu", schedule_simtime());
+	    vp->value.str = buf_obj;
+	    break;
+
+	  case vpiOctStrVal:
+	    sprintf(buf_obj, "%lo", schedule_simtime());
+	    vp->value.str = buf_obj;
+	    break;
+
+	  case vpiHexStrVal:
+	    sprintf(buf_obj, "%lx", schedule_simtime());
 	    vp->value.str = buf_obj;
 	    break;
 
@@ -89,6 +113,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.4  2001/08/16 03:29:31  steve
+ *  Support various other string formats for time.
+ *
  * Revision 1.3  2001/06/30 23:03:17  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.
