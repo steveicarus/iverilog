@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpip_to_dec.cc,v 1.2 2002/02/03 05:51:31 steve Exp $"
+#ident "$Id: vpip_to_dec.cc,v 1.3 2002/02/04 00:41:34 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -36,10 +36,6 @@
  * conversion length is unlimited. */
 /* #define MAX_DIGITS 20 */
 
-
-#ifndef SIZEOF_UNSIGNED_LONG
-#define SIZEOF_UNSIGNED_LONG 4
-#endif
 
 #if SIZEOF_UNSIGNED_LONG * CHAR_BIT >= 64
 #define BDIGITS 9
@@ -120,7 +116,7 @@ unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 	/* Jump through some hoops so we don't have to malloc/free valv
 	 * on every call, and implement an optional malloc-less version. */
 	static unsigned long *valv=NULL;
-	static int vlen_alloc=0;
+	static unsigned int vlen_alloc=0;
 
 	unsigned long val=0;
 	int comp=0;
