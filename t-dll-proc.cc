@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.27 2001/04/15 03:14:31 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.28 2001/04/15 03:19:44 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -312,7 +312,6 @@ void dll_target::proc_case(const NetCase*net)
 
       for (unsigned idx = 0 ;  idx < ncase ;  idx += 1) {
 	    const NetExpr*ex = net->expr(idx);
-	    assert(ex);
 	    if (ex) {
 		  ex->expr_scan(this);
 		  save_cur->u_.case_.case_ex[idx] = expr_;
@@ -608,6 +607,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.28  2001/04/15 03:19:44  steve
+ *  Oops, excessive test assert neets to be removed.
+ *
  * Revision 1.27  2001/04/15 03:14:31  steve
  *  Handle noop as case statements.
  *
