@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_attrib.cc,v 1.1 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: eval_attrib.cc,v 1.2 2002/06/03 03:55:14 steve Exp $"
 #endif
 
 # include  "util.h"
 # include  "PExpr.h"
 # include  "netlist.h"
+# include  <iostream>
 # include  <assert.h>
 
 /*
@@ -69,6 +70,9 @@ attrib_list_t* evaluate_attributes(const map<string,PExpr*>&att,
 
 /*
  * $Log: eval_attrib.cc,v $
+ * Revision 1.2  2002/06/03 03:55:14  steve
+ *  compile warnings.
+ *
  * Revision 1.1  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute
