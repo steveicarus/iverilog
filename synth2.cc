@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.18 2002/11/06 03:22:28 steve Exp $"
+#ident "$Id: synth2.cc,v 1.19 2002/11/09 20:22:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -315,8 +315,13 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       bool flag = true;
 
+	/* Keep an accounting of which statement accounts for which
+	   bit slice of the FF bank. This is used for error checking. */
+      NetProc**pin_accounting = new NetProc* [ff->pin_count()];
+      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
+	    pin_accounting[idx] = 0;
+
       NetProc*cur = last_;
-      unsigned offset = 0;
       do {
 	    cur = cur->next_;
 
@@ -329,7 +334,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  connect(tmp_set[idx], tmp_map->pin(idx));
 
 	      /* Create also a temporary net_out to collect the
-		 output. */
+		 output. The tmp1 and tmp2 map and out sets together
+		 are used to collect the outputs from the substatement
+		 for the inputs of the FF bank. */
 	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
 					tmp_set.count());
 
@@ -351,6 +358,17 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 		  if (ptr < tmp_aset.len())
 			aset_value2.set(idx, tmp_aset[ptr]);
+
+		  if (pin_accounting[ptr] != 0) {
+			cerr << cur->get_line() << ": error: "
+			     << "Synchronous output conflicts with "
+			     << pin_accounting[ptr]->get_line()
+			     << "." << endl;
+			flag = false;
+
+		  } else {
+			pin_accounting[ptr] = cur;
+		  }
 	    }
 	    if (ff->pin_Aclr().is_linked())
 		  connect(ff->pin_Aclr(),  ff2->pin_Aclr());
@@ -400,13 +418,13 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
 	    delete tmp_map;
 	    delete tmp_out;
-	    offset += ff2->width();
 
       } while (cur != last_);
 
+      delete[]pin_accounting;
+
 	/* Done. The large NetFF is no longer needed, as it has been
 	   taken up by the smaller NetFF devices. */
-      assert(offset == ff->width());
       delete ff;
 
       return flag;
@@ -684,6 +702,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.19  2002/11/09 20:22:57  steve
+ *  Detect synthesis conflicts blocks statements share outputs.
+ *
  * Revision 1.18  2002/11/06 03:22:28  steve
  *  More forgiving about assignment rval width mismatch.
  *
