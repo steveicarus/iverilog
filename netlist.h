@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.75 1999/09/30 02:43:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.76 1999/09/30 21:28:34 steve Exp $"
 #endif
 
 /*
@@ -991,8 +991,10 @@ class NetSTask  : public NetProc {
 class NetTaskDef {
 
     public:
-      NetTaskDef(const string&n, NetProc*p, const svector<NetNet*>&po);
+      NetTaskDef(const string&n, const svector<NetNet*>&po);
       ~NetTaskDef();
+
+      void set_proc(NetProc*p);
 
       const string& name() const { return name_; }
       const NetProc*proc() const { return proc_; }
@@ -1602,6 +1604,7 @@ class Design {
 
 	// Tasks
       void add_task(const string&n, NetTaskDef*);
+      NetTaskDef* find_task(const string&path, const string&name);
       NetTaskDef* find_task(const string&key);
 
 	// NODES
@@ -1704,6 +1707,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.76  1999/09/30 21:28:34  steve
+ *  Handle mutual reference of tasks by elaborating
+ *  task definitions in two passes, like functions.
+ *
  * Revision 1.75  1999/09/30 02:43:02  steve
  *  Elaborate ~^ and ~| operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.71 1999/09/29 18:36:03 steve Exp $"
+#ident "$Id: netlist.cc,v 1.72 1999/09/30 21:28:34 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1090,14 +1090,20 @@ const NetExpr* NetRepeat::expr() const
       return expr_;
 }
 
-NetTaskDef::NetTaskDef(const string&n, NetProc*p, const svector<NetNet*>&po)
-: name_(n), proc_(p), ports_(po)
+NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
+: name_(n), proc_(0), ports_(po)
 {
 }
 
 NetTaskDef::~NetTaskDef()
 {
       delete proc_;
+}
+
+void NetTaskDef::set_proc(NetProc*p)
+{
+      assert(proc_ == 0);
+      proc_ = p;
 }
 
 NetNet* NetTaskDef::port(unsigned idx)
@@ -1530,6 +1536,25 @@ void Design::add_task(const string&key, NetTaskDef*def)
       tasks_[key] = def;
 }
 
+NetTaskDef* Design::find_task(const string&path, const string&name)
+{
+      string root = path;
+      for (;;) {
+	    string key = root + "." + name;
+	    map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
+	    if (cur != tasks_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
+}
+
 NetTaskDef* Design::find_task(const string&key)
 {
       map<string,NetTaskDef*>::const_iterator cur = tasks_.find(key);
@@ -1657,6 +1682,10 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.72  1999/09/30 21:28:34  steve
+ *  Handle mutual reference of tasks by elaborating
+ *  task definitions in two passes, like functions.
+ *
  * Revision 1.71  1999/09/29 18:36:03  steve
  *  Full case support
  *

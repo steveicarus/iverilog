@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.106 1999/09/30 17:22:33 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.107 1999/09/30 21:28:34 steve Exp $"
 #endif
 
 /*
@@ -1921,16 +1921,16 @@ NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
  */
 NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 {
-      NetTaskDef*def = des->find_task(path + "." + name_);
+      NetTaskDef*def = des->find_task(path, name_);
       if (def == 0) {
-	    cerr << get_line() << ": Enable of unknown task ``" <<
-		  name_ << "''." << endl;
+	    cerr << get_line() << ": error: Enable of unknown task ``" <<
+		  path << "." << name_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
       if (nparms() != def->port_count()) {
-	    cerr << get_line() << ": Port count mismatch in call to ``"
+	    cerr << get_line() << ": error: Port count mismatch in call to ``"
 		 << name_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2226,7 +2226,7 @@ void PFunction::elaborate_2(Design*des, const string&path) const
 
       NetProc*st = statement_->elaborate(des, path);
       if (st == 0) {
-	    cerr << statement_->get_line() << ": Unable to elaborate "
+	    cerr << statement_->get_line() << ": error: Unable to elaborate "
 		  "statement in function " << path << "." << endl;
 	    des->errors += 1;
 	    return;
@@ -2280,8 +2280,29 @@ NetProc* PRepeat::elaborate(Design*des, const string&path) const
  * netlist doesn't really need the array of parameters once elaboration
  * is complete, but this is the best place to store them.
  */
-void PTask::elaborate(Design*des, const string&path) const
+void PTask::elaborate_1(Design*des, const string&path) const
 {
+	/* Translate the wires that are ports to NetNet pointers by
+	   presuming that the name is already elaborated, and look it
+	   up in the design. Then save that pointer for later use by
+	   calls to the task. (Remember, the task itself does not need
+	   these ports.) */
+      svector<NetNet*>ports (ports_? ports_->count() : 0);
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
+
+	    ports[idx] = tmp;
+      }
+
+      NetTaskDef*def = new NetTaskDef(path, ports);
+      des->add_task(path, def);
+}
+
+void PTask::elaborate_2(Design*des, const string&path) const
+{
+      NetTaskDef*def = des->find_task(path);
+      assert(def);
+
       NetProc*st;
       if (statement_ == 0) {
 	    cerr << get_line() << ": warning: task has no statement." << endl;
@@ -2298,20 +2319,7 @@ void PTask::elaborate(Design*des, const string&path) const
 	    }
       }
 
-	/* Translate the wires that are ports to NetNet pointers by
-	   presuming that the name is already elaborated, and look it
-	   up in the design. Then save that pointer for later use by
-	   calls to the task. (Remember, the task itself does not need
-	   these ports.) */
-      svector<NetNet*>ports (ports_? ports_->count() : 0);
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
-	    NetNet*tmp = des->find_signal(path, (*ports_)[idx]->name());
-
-	    ports[idx] = tmp;
-      }
-
-      NetTaskDef*def = new NetTaskDef(path, st, ports);
-      des->add_task(path, def);
+      def->set_proc(st);
 }
 
 /*
@@ -2432,10 +2440,17 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
       typedef map<string,PTask*>::const_iterator mtask_it_t;
+
       for (mtask_it_t cur = tasks_.begin()
 		 ; cur != tasks_.end() ;  cur ++) {
 	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate(des, pname);
+	    (*cur).second->elaborate_1(des, pname);
+      }
+
+      for (mtask_it_t cur = tasks_.begin()
+		 ; cur != tasks_.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    (*cur).second->elaborate_2(des, pname);
       }
 
 	// Get all the gates of the module and elaborate them by
@@ -2513,6 +2528,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.107  1999/09/30 21:28:34  steve
+ *  Handle mutual reference of tasks by elaborating
+ *  task definitions in two passes, like functions.
+ *
  * Revision 1.106  1999/09/30 17:22:33  steve
  *  catch non-constant delays as unsupported.
  *

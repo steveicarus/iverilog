@@ -252,11 +252,30 @@ current state of support for Verilog.
   - force/release/assign/deassign procedural assignments not
     supported.
 
+  - block disable not supported, i.e.:
+
+            begin : foo
+	        [...]
+		disable foo; // sorry
+		[...]
+	    end
+
   - fork/join is not supported in vvm runtime
 
   - structural arithmetic operators are in general not supported.
 
+            assign foo = a + b; // sorry
+            always @(a or b) foo = a + b; // OK
+
+  - Functions in structural contexts are not supported.
+
+            assign foo = user_function(a,b); // sorry
+	    always @(a or b) foo = user_function(a,b); // OK
+
   - multiplicative operators (*, /, %) are not supported.
+
+            assign foo = a * b; // sorry
+            always @(a or b) foo = a * b; // sorry
 
   - event data type is not supported.
 
@@ -264,6 +283,14 @@ current state of support for Verilog.
 
   - system functions are not supported. (User defined functions are
     supported, and system tasks are supported.)
+
+            assign foo = $some_function(a,b); // sorry
+	    always @(a or b) foo = $some_function(a,b); // sorry
+
+  - non-constant delay expressions, i.e.:
+
+            reg [7:0] del;
+	    always #(reg) $display($time,,"del = %d", del); // sorry
 
 Specify blocks are parsed but ignored in general.
 
