@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.11 2001/12/15 02:11:51 steve Exp $"
+#ident "$Id: resolv.cc,v 1.12 2001/12/18 05:32:11 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -185,8 +185,25 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
       put_ostr(val, sval, false);
 }
 
+#ifdef WITH_DEBUG
+# include  <stdio.h>
+
+static const char bitval_tab[4] = { '0', '1', 'x', 'z' };
+void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
+{
+      printf("0x%x: Resolver tied to %02x\n", fnc, hiz_);
+      printf("0x%x: input strengths = %02x %02x %02x %02x\n", fnc,
+	     istr[0], istr[1], istr[2], istr[3]);
+      functor_s::debug_print(fnc);
+}
+#endif
+
+
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.12  2001/12/18 05:32:11  steve
+ *  Improved functor debug dumps.
+ *
  * Revision 1.11  2001/12/15 02:11:51  steve
  *  Give tri0 and tri1 their proper strengths.
  *

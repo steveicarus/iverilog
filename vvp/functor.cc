@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.36 2001/12/14 01:59:28 steve Exp $"
+#ident "$Id: functor.cc,v 1.37 2001/12/18 05:32:11 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -123,7 +123,7 @@ functor_s::functor_s()
       cstr = StX;
       inhibit = 0;
 #if defined(WITH_DEBUG)
-      breakpoint = 0;
+      break_flag = 0;
 #endif
 }
 
@@ -170,8 +170,35 @@ void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
 edge_inputs_functor_s::~edge_inputs_functor_s()
 {}
 
+#ifdef WITH_DEBUG
+# include  <stdio.h>
+static const char bitval_tab[4] = { '0', '1', 'x', 'z' };
+
+void functor_s::debug_print(vvp_ipoint_t fnc)
+{
+      printf("0x%x: out pointer  =", fnc);
+      vvp_ipoint_t cur = out;
+      while (cur) {
+	    printf(" 0x%x", cur);
+	    functor_t tmp = functor_index(cur);
+	    cur = tmp->port[cur&3];
+      }
+      printf("\n");
+      printf("0x%x: input values = %c %c %c %c\n", fnc,
+	     bitval_tab[ival&3],
+	     bitval_tab[(ival>>2)&3],
+	     bitval_tab[(ival>>4)&3],
+	     bitval_tab[(ival>>6)&3]);
+      printf("0x%x: out value    = %c (%02x)\n", fnc,
+	     bitval_tab[get_oval()], get_ostr());
+}
+#endif
+
 /*
  * $Log: functor.cc,v $
+ * Revision 1.37  2001/12/18 05:32:11  steve
+ *  Improved functor debug dumps.
+ *
  * Revision 1.36  2001/12/14 01:59:28  steve
  *  Better variable names for functor chunks.
  *
@@ -201,73 +228,5 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
  *
  * Revision 1.28  2001/10/27 03:43:56  steve
  *  Propagate functor push, to make assign better.
- *
- * Revision 1.27  2001/10/12 03:00:09  steve
- *  M42 implementation of mode 2 (Stephan Boettcher)
- *
- * Revision 1.26  2001/08/08 01:05:06  steve
- *  Initial implementation of vvp_fvectors.
- *  (Stephan Boettcher)
- *
- * Revision 1.25  2001/07/30 03:53:01  steve
- *  Initialize initial functor tables.
- *
- * Revision 1.24  2001/07/16 18:06:01  steve
- *  Initialize allocated functors (Stephan Boettcher)
- *
- * Revision 1.23  2001/06/21 22:54:12  steve
- *  Support cbValueChange callbacks.
- *
- * Revision 1.22  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
- * Revision 1.21  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.20  2001/05/12 20:38:06  steve
- *  A resolver that understands some simple strengths.
- *
- * Revision 1.19  2001/05/09 04:23:18  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.18  2001/05/09 02:53:25  steve
- *  Implement the .resolv syntax.
- *
- * Revision 1.17  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
- *
- * Revision 1.16  2001/05/06 03:51:37  steve
- *  Regularize the mode-42 functor handling.
- *
- * Revision 1.15  2001/05/03 04:54:33  steve
- *  Fix handling of a mode 1 functor that feeds into a
- *  mode 2 functor. Feed the result only if the event
- *  is triggered, and do pass to the output even if no
- *  threads are waiting.
- *
- * Revision 1.14  2001/04/26 15:52:22  steve
- *  Add the mode-42 functor concept to UDPs.
- *
- * Revision 1.13  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.12  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.11  2001/04/14 05:10:56  steve
- *  support the .event/or statement.
- *
- * Revision 1.10  2001/04/03 03:18:34  steve
- *  support functor_set push for blocking assignment.
- *
- * Revision 1.9  2001/03/31 19:29:23  steve
- *  Fix compilation warnings.
  */
 

@@ -19,9 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.h,v 1.5 2001/12/15 02:11:51 steve Exp $"
+#ident "$Id: resolv.h,v 1.6 2001/12/18 05:32:11 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "functor.h"
 
 /*
@@ -38,6 +39,10 @@ class resolv_functor_s: public functor_s {
 
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
+#ifdef WITH_DEBUG
+      void debug_print(vvp_ipoint_t fnc);
+#endif
+
     private:
       unsigned char istr[4];
       unsigned char hiz_;
@@ -45,6 +50,9 @@ class resolv_functor_s: public functor_s {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.6  2001/12/18 05:32:11  steve
+ *  Improved functor debug dumps.
+ *
  * Revision 1.5  2001/12/15 02:11:51  steve
  *  Give tri0 and tri1 their proper strengths.
  *

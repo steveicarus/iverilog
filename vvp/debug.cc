@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.7 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: debug.cc,v 1.8 2001/12/18 05:32:11 steve Exp $"
 #endif
 
 /*
@@ -71,7 +71,7 @@ static void cmd_fbreak(unsigned argc, char*argv[])
 		  continue;
 	    }
 
-	    fp->breakpoint = 1;
+	    fp->break_flag = 1;
       }
 }
 
@@ -92,15 +92,7 @@ static void cmd_functor(unsigned argc, char*argv[])
 		  continue;
 	    }
 
-	    printf("0x%x: out pointer  = 0x%x\n", fnc, fp->out);
-	    printf("0x%x: input values = %c (%02x) %c (%02x)"
-		   " %c (%02x) %c (%02x)\n", fnc,
-		   bitval_tab[fp->ival&3], fp->istr[0],
-		   bitval_tab[(fp->ival>>2)&3], fp->istr[1],
-		   bitval_tab[(fp->ival>>4)&3], fp->istr[2],
-		   bitval_tab[(fp->ival>>6)&3], fp->istr[3]);
-	    printf("0x%x: out value    = %c (%02x)\n", fnc,
-		   bitval_tab[fp->oval], fp->ostr);
+	    fp->debug_print(fnc);
       }
 }
 
@@ -173,6 +165,9 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.8  2001/12/18 05:32:11  steve
+ *  Improved functor debug dumps.
+ *
  * Revision 1.7  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *

@@ -19,11 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.41 2001/12/14 01:59:28 steve Exp $"
+#ident "$Id: functor.h,v 1.42 2001/12/18 05:32:11 steve Exp $"
 #endif
 
 # include  "pointers.h"
 # include  "delay.h"
+#ifdef ENABLE_VVP_DEBUG
+# include  "debug.h"
+#endif
 
 /*
  * The vvp_ipoint_t is an integral type that is 32bits. The low 2 bits
@@ -174,7 +177,8 @@ struct functor_s {
     public:
 #if defined(WITH_DEBUG)
         /* True if this functor triggers a breakpoint. */
-      unsigned breakpoint : 1;
+      unsigned break_flag : 1;
+      virtual void debug_print(vvp_ipoint_t fnc);
 #endif
 
     public:
@@ -220,7 +224,7 @@ inline void functor_s::propagate(unsigned val, unsigned str, bool push)
       }
 
 #if defined(WITH_DEBUG)
-      if (breakpoint)
+      if (break_flag)
 	    breakpoint();
 #endif
 }
@@ -299,7 +303,7 @@ void functor_set(vvp_ipoint_t ptr, unsigned val, unsigned str, bool push = true)
       fp->set(ptr, push, val, str);
 
 #if defined(WITH_DEBUG)
-      if (fp->breakpoint)
+      if (fp->break_flag)
 	    breakpoint();
 #endif
 }
@@ -375,6 +379,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.42  2001/12/18 05:32:11  steve
+ *  Improved functor debug dumps.
+ *
  * Revision 1.41  2001/12/14 01:59:28  steve
  *  Better variable names for functor chunks.
  *
