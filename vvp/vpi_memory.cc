@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.2 2001/11/09 03:39:07 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.3 2001/12/07 23:23:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -159,20 +159,45 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(ref->vpi_type->type_code==vpiMemoryWord);
 
-      assert(val->format == vpiVectorVal);
 
+	/* Get the width of the memory, and the byte index of the
+	   first byte of the word. */
       unsigned width = memory_data_width(rfp->mem->mem);
       unsigned bidx = rfp->index * ((width+3)&~3);
 
-      for (unsigned widx = 0;  widx < width;  widx += 32) {
-	    p_vpi_vecval cur = val->value.vector + (widx/32);
-	    for (unsigned idx = widx;  idx < width && idx < widx+32;  idx++) {
-		  int aval = (cur->aval >> (idx%32)) & 1;
-		  int bval = (cur->bval >> (idx%32)) & 1;
-		  unsigned char val = (bval<<1) | (aval^bval);
-		  memory_set(rfp->mem->mem, bidx+idx, val);
+      switch (val->format) {
+
+	  case vpiVectorVal:
+	    for (unsigned widx = 0;  widx < width;  widx += 32) {
+		  p_vpi_vecval cur = val->value.vector + (widx/32);
+		  for (unsigned idx = widx
+			     ; idx < width && idx < widx+32
+			     ; idx += 1) {
+			int aval = (cur->aval >> (idx%32)) & 1;
+			int bval = (cur->bval >> (idx%32)) & 1;
+			unsigned char val = (bval<<1) | (aval^bval);
+			memory_set(rfp->mem->mem, bidx+idx, val);
+		  }
 	    }
+	    break;
+
+	  case vpiIntVal:
+	    for (unsigned widx = 0;  widx < width;  widx += 32) {
+		  int cur = val->value.integer;
+		  for (unsigned idx = widx
+			     ; idx < width && idx < widx+32
+			     ; idx += 1) {
+			unsigned char val = (cur&1)? 1 : 0;
+			memory_set(rfp->mem->mem, bidx+idx, val);
+			cur >>= 1;
+		  }
+	    }
+	    break;
+
+	  default:
+	    assert(0);
       }
+
       return 0;
 }
 
@@ -240,6 +265,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.3  2001/12/07 23:23:05  steve
+ *  vpi_put_value of vpiIntVal for memory words.
+ *
  * Revision 1.2  2001/11/09 03:39:07  steve
  *  Support vpiIntVal from memory.
  *
