@@ -2,68 +2,186 @@
 
 MINGW PORT OF ICARUS VERILOG
 
-    Copyright 2001 Stephen Williams  <steve@icarus.com>
+    Copyright 2003 Stephen Williams  <steve@icarus.com>
 
 
 Icarus Verilog source can be compiled with the mingw C/C++ compilers
 to get a Windows binary that does not require the POSIX compatibility
-cruft of the Cygwin.dll library. The configure scripts automatically
-detect that the compilers in use are the mingw compilers and will
-configure the Makefiles appropriately.
+cruft of the Cygwin.dll library. The resulting program can be run with
+or without Cygwin, so this is the preferred Windows distribution form.
+The configure scripts automatically detect that the compilers in use
+are the mingw compilers and will configure the Makefiles appropriately.
 
 However, the mingw tools do not include all the other tools around the
 compiler, including the shell interpreter for the configure script,
 bison, flex, gperf, etc. Therefore, you still need Cygwin to compile
-Icarus Verilog, even if you don't need the Cygwin compilers.
+Icarus Verilog, even if you don't need the Cygwin compilers. There are
+also a few precompiled library prerequisites that you need.
+
+* Some Preliminary Comments
+
+The Windows port of Icarus Verilog is the most difficult of all the
+ports. The Windows system off the shelf is completely stripped, devoid
+of any support for software development. Everything needed to compile
+Icarus Verilog must be collected from various sources and stitched
+together by hand. Normal human beings with a basic understanding of
+software development can do this, but some patience (and access to the
+internet) is required. You may choose to print these instructions.
+
+I have no plans to intentionally support MSVC++ compilation. Don't ask.
+
+* Summary of Prerequisites
+
+This is a brief list of prerequisite packages, along with the URL
+where each can be found. In most cases, the specific version is not
+critical, but these are the version I use.
+
+     Cygwin                     <http://cygwin.com>
+     Mingw32-2.0.0              <http://www.mingw.org>
+     readline-4.2-20010727.zip  <http://mingwrep.sourceforge.net>
+     bzip2-1.0.2-bin.zip        <http://gnuwin32.sourceforge.net>
+     zlib-1.1.4-bin.zip         <http://gnuwin32.sourceforge.net>
+     bzip2-1.0.2-lib.zip        <http://gnuwin32.sourceforge.net>
+     zlib-1.1.4-lib.zip         <http://gnuwin32.sourceforge.net>
+
+The above table lists the packages required. It is convenient to
+install them in the above order. Many of these packages are also
+collected into the directory:
+
+     <ftp://icarus.com/pub/eda/verilog/win32-build-parts>
 
 * Install Cygwin
 
 So, step 1 is "Download and Install Cygwin." See the web page
 http://www.cygwin.com for instructions and the files to do
-this. Cygwin *is* a kool package, and is worth having anyhow.
+this. Cygwin *is* a kool package, and is worth having anyhow. There is
+a convenient setup program that you download first. You execute the
+setup program, and that prompts you to select the package you want.
 
-* Install mingw
+You need in particular the Cygwin base, bison (see notes) flex, make
+and gperf. If you are compiling from CVS, you also need cvs, rcs and
+automake packages. You will also need tar and gunzip, but these are
+hard to not install. I recommend installing the "which" package as well.
+
+    NOTES:
+      bison-1.875 is broken, it generates invalid C/C++ code. You
+      don't want that version for anything you do. If you have that
+      version (use "bison -V" to check the version) then use the
+      Cygwin setup program to get a different version. I've downgraded
+      to version 1.75 and couldn't be happier. In fact, a whole host
+      of insane bison bugs can be avoided that way.
+
+Other then the install of mingw32, most of the remaining steps are
+best done in a Cygwin window. When you installed Cygwin, a start menu
+entry was created to allow you to start up the Cygwin window. I'll use
+the string "$ " to represent a command prompt in this window, because
+that is the usual bash prompt.
+
+* Install Mingw32
 
 The obvious step 2, then, is install the mingw compilers. These can be
-found as the web page <http://www.mingw.org>.
+found at the web page <http://www.mingw.org>. The Mingw-2.x.x version
+comes prepackaged in a convenient, Windows style, installer. I
+recommend you download this package instead of picking and choosing
+bits.
+
+When I install Mingw32 (using the installer) I typically set a
+destination directory of d:\mingw-2.0.0 or the like. You will be using
+that path later.
+
+    NOTES:
+      If you intend to compile VPI modules for Icarus Verilog, you
+      need Mingw32, even if you are using a precompiled binary. VPI
+      modules only require Mingw32, and none of the other libraries.
+
+* Install Mingw32 Packages
+
+There is a collection of precompiled libraries and add-on packages
+that are intended for use with the Mingw32 compiler. These do not come
+with simplified Windows installers, but they are pretty easy to
+install by hand. Icarus Verilog uses the readline-4.2 package from
+that collection.
+
+Since I installed Mingw32 in d:\mingw-2.0.0, I also created a
+Mingw-packages directory called d:\mingw-packages. The install, then,
+is as easy as this:
+
+  <cygwin shell>
+    $ cd d:/mingw-packages
+    $ unzip readline-4.2-20010727.zip
+        [lots of inflating...]
+
+Done. On to the next packages.
+
+* Install GnuWin32 Packages
+
+The GnuWin32 project is a collections of open source programs and
+libraries ported to Windows. These also work well with the Mingw
+compiler, and in fact Icarus Verilog uses a few libraries from this
+collection.
+
+You will need these gnuwin32 packages to compile Icarus Verilog:
+
+  <http://gnuwin32.sourceforge.net>
+    bzip2-1.0.2-lib.zip
+    bzip2-1.0.2-bin.zip
+    zlib-1.1.4-lib.zip
+    zlib-1.1.4-bin.zip
+
+I suggest creating a common directory for holding all your gnuwin32
+packages. I use D:\gnuwin32.
+
+After downloading these packages, put the .zip files in your gnuwin32
+directory and install them like so:
+
+  <cygwin shell>
+    $ cd d:/gnuwin32
+    $ unzip bzip2-1.0.2-bin.zip
+       [lots of inflating...]
+    $ unzip bzip2-1.0.2-lib.zip
+       [lots of inflating...]
+    $ unzip zlib-1.1.4-bin.zip
+       [lots of inflating...]
+    $ unzip zlib-1.1.4-lib.zip
+       [lots of inflating...]
+
+Done.
 
 * Unpack Icarus Verilog source
 
-Most of the remaining steps are best done in a Cygwin window. When you
-installed Cygwin, a start menu entry was created to allow you to start
-up the Cygwin window. I'll use the string "$ " to represent a command
-prompt in this window, because that is the usual bash prompt.
+Unpack the compressed tar file (.tar.gz) of the source with a command
+like this:
 
-Anyhow, unpack the compressed tar file (.tar.gz) of the source with a
-command like this:
+	$ gunzip -d verilog-20030303.tar.gz | tar xvf -
 
-	$ gunzip -d verilog-20010630.tar.gz | tar xvf -
+This will create a directory "verilog-20030303" that contains all the
+source for Icarus Verilog. Descend into that directory, as that is
+where we will work from now on.
 
-This will create a directory "verilog-20010630" that contains all the
-source. Descend into that directory, as that is where we will work
-from now on.
+	$ cd verilog-20030303
 
-	$ cd verilog-20010630
+    NOTE:
+      The exact name of the file will vary according to the
+      snapshot. The 20030303 name is only an example.
 
 * Select the mingw compilers
 
-In your cygwin window, if you type "which c++" you will get the
+In your cygwin window, if you type "which c++" you might get the
 response path "/usr/bin/c++" which is the cygwin compiler. This is not
 the one we want to use, however. Tell the shell where the mingw
 compilers are by setting the search path like so:
 
-	$ PATH=/cygdrive/d/mingw/bin:$PATH
+	$ PATH=/cygdrive/d/mingw-2.0.0/bin:$PATH
 
-This assumes that you installed mingw in D:\mingw. The actual programs
-are in the bin directory under the root. After this command, check
-that you are now getting the right compilers with this "which"
+This assumes that you installed mingw in D:\mingw-2.0.0. The actual
+programs are in the bin directory under the root. After this command,
+check that you are now getting the right compilers with this "which"
 command:
 
 	$ which c++
-	/cygdrive/d/mingw/bin/c++
+	/cygdrive/d/mingw-2.0.0/bin/c++
 
 Good!
-
 
 * Configure Icarus Verilog
 
@@ -74,16 +192,31 @@ permanent, so don't get too much angst over it. Just choose a name
 without white space.
 
 Now, configure the source to make the makefiles and configuration
-details. Run this command:
+details. Run these commands:
 
+	$ CPPFLAGS="-Id:/gnuwin32/include -Id:/mingw-packages/include"
+	$ LDFLAGS="-Ld:/gnuwin32/lib -Ld:/mingw-packages/include"
+	$ export CPPFLAGS LDFLAGS
 	$ ./configure --prefix=d:/iverilog
+
+    NOTES:
+      The CPPFLAGS and LDFLAGS variables tell configure where
+      the gnuwin32 packages are. The configure program will
+      write these values into the Makefiles, so you only need to
+      keep these variables long enough for the configure program
+      to work.
+
+      Your PATH variable was set in the previous step.
+
+      Use forward slashes as directory charactors. All the various
+      tools prefer the forward slash.
 
 Substitute your chosen directory for the prefix. This will cause the
 makefiles to build and the source code to configure. The configure
 program will detect that this is a mingw environment and set things up
 to build properly.
 
-(For a prefix, use the drive letter notation, the mingw compiled parts
+(For a prefix, use the drive letter notation; the mingw compiled parts
 require it, and the Cygwin tools should be able to handle it. You may
 need to check or upgrade your Cygwin installation if this causes
 problems for you.)
@@ -93,32 +226,35 @@ problems for you.)
 
 This, believe it or not, should be the easy part:
 
-	$ /usr/bin/make
+	$ make
 
 It could take a while. Now is a good time to go get some coffee or
-take a tea break. I suggest using the complete path to make, because
-the mingw version will not know how to execute the /usr/bin/install
-program.
+take a tea break.
 
 
 * Install Icarus Verilog
 
 If the compile ran OK, then next you install Icarus Verilog in the
-directory you have chosen. This is a little tricky, however, because
-the tools like "strip", "ranlib" and etc. that come with Mingw do not
-understand the Cygwin style paths that are in the makefile. To get
-around that problem, first remove the Mingw from your path before
-doing the next step. An easy way to do that is to open a fresh Cygwin
-window.
+directory you have chosen. When you are ready, install like this:
 
-When you are ready, install like this:
-
-	$ /usr/bin/make install
+	$ make install
 
 This is part of what the configure program did for you. The Makefiles
-now know to put the files under the D:\iverilog (or whatever directory
-you chose) directory, and away you go.
+now know to put the files under the D:\iverilog directory (or whatever
+directory you chose) and away you go.
 
+You may find that you need to put some of the prerequisite DLLS into
+the d:\iverilog\bin directory. These include:
+
+      d:\mingw-2.0.0\bin\mingw10.dll
+      d:\mingw-packages\bin\libreadline.dll
+      d:\gnuwin32\bin\bzip2.dll
+      d:\gnuwin32\bin\zlib.dll
+
+If you already have these in your Windows path (i.e. your system32
+directory) then you do not need to copy them into the iverilog
+directory. However, prepackaged Icarus Verilog binaries include these
+files.
 
 * Running Icarus Verilog
 
@@ -132,3 +268,7 @@ execute the D:\iverilog\bin\iverilog.exe program, it will locate its
 subparts in the D:\iverilog directory and subdirectories below
 that. This means you can move the Icarus Verilog installation by
 simply moving the root directory and all its contents.
+
+The vvp.pdf and iverilog.pdf files document the main commands. View
+these with Acrobat reader, or any other viewer capable of displaying
+PDF format files.
