@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.135 2005/01/28 05:39:33 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.136 2005/01/29 16:47:20 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -398,7 +398,8 @@ extern ivl_net_const_t ivl_design_const(ivl_design_t, unsigned idx);
 /* VECTOR CONSTANTS
  * Vector constants are nodes with no input and a single vector
  * output. The output is an array of 4-value bits, using a single char
- * value for each bit.
+ * value for each bit. The bits of the vector are in canonical (lsb
+ * first) order for the width of the constant.
  *
  * ivl_const_bits
  *    This returns a pointer to an array of conststant characters,
@@ -962,6 +963,11 @@ extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
  * ivl_nexus_ptr_sig
  *    If the target object is an ivl_signal_t, this method returns the
  *    object. If the target is not a signal, this method returns 0.
+ *
+ * SEMANTIC NOTES
+ * All the device pins that connect to a nexus have the same
+ * type. That means, for example, that vector pins have the same
+ * width. The compiler will insure this is so.
  */
 
 extern const char*     ivl_nexus_name(ivl_nexus_t net);
@@ -1458,6 +1464,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.136  2005/01/29 16:47:20  steve
+ *  Clarify width of nexus.
+ *
  * Revision 1.135  2005/01/28 05:39:33  steve
  *  Simplified NetMult and IVL_LPM_MULT.
  *
