@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.53 2003/04/23 03:09:25 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.54 2003/05/02 04:29:57 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -354,6 +354,8 @@ vpiHandle vpip_sim_realtime(struct __vpiScope*scope);
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
 
+extern int vpip_time_units_from_handle(vpiHandle obj);
+
 extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
 extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
 
@@ -415,6 +417,9 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.54  2003/05/02 04:29:57  steve
+ *  Add put_value with transport delay.
+ *
  * Revision 1.53  2003/04/23 03:09:25  steve
  *  VPI Access to named events.
  *
@@ -437,67 +442,5 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
  *
  * Revision 1.47  2003/02/09 23:33:26  steve
  *  Spelling fixes.
- *
- * Revision 1.46  2003/02/01 05:50:04  steve
- *  Make $time and $realtime available to $display uniquely.
- *
- * Revision 1.45  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.44  2003/01/26 18:16:22  steve
- *  Add %cvt/ir and %cvt/ri instructions, and support
- *  real values passed as arguments to VPI tasks.
- *
- * Revision 1.43  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.42  2003/01/09 04:09:44  steve
- *  Add vpi_put_userdata
- *
- * Revision 1.41  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.40  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.39  2002/07/09 03:24:37  steve
- *  Dynamic resizevpi result buf in more places.
- *
- * Revision 1.38  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.37  2002/06/21 04:58:55  steve
- *  Add support for special integer vectors.
- *
- * Revision 1.36  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.35  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.34  2002/05/17 04:12:19  steve
- *  Rewire vpiMemory and vpiMemoryWord handles to
- *  support proper iteration of words, and the
- *  vpiIndex value.
- *
- * Revision 1.33  2002/05/11 04:39:35  steve
- *  Set and get memory words by string value.
- *
- * Revision 1.32  2002/05/03 15:44:11  steve
- *  Add vpiModule iterator to vpiScope objects.
- *
- * Revision 1.31  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
  */
 #endif
