@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.127 2002/05/10 16:00:57 steve Exp $"
+#ident "$Id: compile.cc,v 1.128 2002/05/29 16:29:34 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -80,6 +80,7 @@ struct opcode_table_s {
 
 const static struct opcode_table_s opcode_table[] = {
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
@@ -1411,6 +1412,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.128  2002/05/29 16:29:34  steve
+ *  Add %addi, which is faster to simulate.
+ *
  * Revision 1.127  2002/05/10 16:00:57  steve
  *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
  *

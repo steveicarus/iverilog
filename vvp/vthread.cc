@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.73 2002/05/27 00:53:10 steve Exp $"
+#ident "$Id: vthread.cc,v 1.74 2002/05/29 16:29:34 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -376,6 +376,64 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
  x_out:
       delete[]lva;
       delete[]lvb;
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
+
+      return true;
+}
+
+/*
+ * This is %addi, add-immediate. The first value is a vector, the
+ * second value is the immediate value in the bin_idx[1] position. The
+ * immediate value can be up to 16 bits, which are then padded to the
+ * width of the vector with zero.
+ */
+bool of_ADDI(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      unsigned word_count = (cp->number+CPU_BITS-1)/CPU_BITS;
+
+      unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
+      unsigned long*lvb;
+      if (lva == 0)
+	    goto x_out;
+
+      lvb = new unsigned long[word_count];
+
+      lvb[0] = cp->bit_idx[1];
+      for (unsigned idx = 1 ;  idx < word_count ;  idx += 1)
+	    lvb[idx] = 0;
+
+      unsigned long carry;
+      carry = 0;
+      for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
+
+	    unsigned long tmp = lvb[idx] + carry;
+	    unsigned long sum = lva[idx] + tmp;
+	    carry = 0;
+	    if (tmp < lvb[idx])
+		  carry = 1;
+	    if (sum < tmp)
+		  carry = 1;
+	    if (sum < lva[idx])
+		  carry = 1;
+	    lva[idx] = sum;
+      }
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
+      }
+
+      delete[]lva;
+      delete[]lvb;
+
+      return true;
+
+ x_out:
+      delete[]lva;
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
@@ -1913,6 +1971,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.74  2002/05/29 16:29:34  steve
+ *  Add %addi, which is faster to simulate.
+ *
  * Revision 1.73  2002/05/27 00:53:10  steve
  *  Able to disable thread self.
  *

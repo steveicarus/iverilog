@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.59 2002/05/07 03:49:58 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.60 2002/05/29 16:29:34 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -539,6 +539,45 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
+static struct vector_info draw_add_immediate(ivl_expr_t le,
+					     ivl_expr_t re,
+					     unsigned wid)
+{
+      struct vector_info lv;
+      unsigned long imm = 0;
+      unsigned idx;
+
+      lv = draw_eval_expr_wid(le, wid);
+      assert(lv.wid == wid);
+
+      switch (ivl_expr_type(re)) {
+	  case IVL_EX_ULONG:
+	    imm = ivl_expr_uvalue(re);
+	    break;
+
+	  case IVL_EX_NUMBER: {
+		const char*bits = ivl_expr_bits(re);
+		unsigned nbits = ivl_expr_width(re);
+		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
+		    case '0':
+		      break;
+		    case '1':
+		      imm |= 1 << idx;
+		      break;
+		    default:
+		      assert(0);
+		}
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+      assert(0 == (imm & ~0xffffUL));
+      fprintf(vvp_out, "    %%addi %u, %lu, %u;\n", lv.base, imm, wid);
+      return lv;
+}
 
 static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
 {
@@ -549,6 +588,14 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       struct vector_info rv;
 
       const char*sign_string = ivl_expr_signed(exp)? "/s" : "";
+
+      if ((ivl_expr_opcode(exp) == '+')
+	  && (ivl_expr_type(re) == IVL_EX_ULONG))
+	    return draw_add_immediate(le, re, wid);
+
+      if ((ivl_expr_opcode(exp) == '+')
+	  && (ivl_expr_type(re) == IVL_EX_NUMBER))
+	    return draw_add_immediate(le, re, wid);
 
       lv = draw_eval_expr_wid(le, wid);
       rv = draw_eval_expr_wid(re, wid);
@@ -1512,6 +1559,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.60  2002/05/29 16:29:34  steve
+ *  Add %addi, which is faster to simulate.
+ *
  * Revision 1.59  2002/05/07 03:49:58  steve
  *  Handle x case of unary ! properly.
  *

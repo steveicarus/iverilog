@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.40 2002/04/21 22:29:49 steve Exp $"
+#ident "$Id: codes.h,v 1.41 2002/05/29 16:29:34 steve Exp $"
 #endif
 
 
@@ -36,6 +36,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  * access to the thread context.
  */
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
+extern bool of_ADDI(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
@@ -153,6 +154,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.41  2002/05/29 16:29:34  steve
+ *  Add %addi, which is faster to simulate.
+ *
  * Revision 1.40  2002/04/21 22:29:49  steve
  *  Add the assign/d instruction for computed delays.
  *
