@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.200 2001/01/12 04:20:18 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.201 2001/01/16 03:57:46 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1926,64 +1926,70 @@ void target_vvm::logic(const NetLogic*gate)
       switch (gate->type()) {
 	  case NetLogic::AND:
 	    if ((gate->pin_count()-1) == 2)
-		  out << "static vvm_and2 ";
+		  out << "static vvm_and2 " << mname << "(";
 	    else
-		  out << "static vvm_and" << "<" << gate->pin_count()-1 << "> ";
+		  out << "static vvm_and " << mname << "("
+		      << (gate->pin_count()-1 ) << ", ";
 	    break;
 	  case NetLogic::BUF:
-	    out << "static vvm_buf ";
+	    out << "static vvm_buf " << mname << "(";
 	    break;
 	  case NetLogic::BUFIF0:
-	    out << "static vvm_bufif0 ";
+	    out << "static vvm_bufif0 " << mname << "(";
 	    break;
 	  case NetLogic::BUFIF1:
-	    out << "static vvm_bufif1 ";
+	    out << "static vvm_bufif1 " << mname << "(";
 	    break;
 	  case NetLogic::NAND:
-	    out << "static vvm_nand" << "<" << gate->pin_count()-1 << "> ";
+	    out << "static vvm_nand " << mname << "("
+		<< (gate->pin_count()-1 ) << ", ";
 	    break;
 	  case NetLogic::NMOS:
-	    out << "static vvm_nmos ";
+	    out << "static vvm_nmos " << mname << "(";
 	    break;
 	  case NetLogic::NOR:
 	    if ((gate->pin_count()-1) == 2)
-		  out << "static vvm_nor2 ";
+		  out << "static vvm_nor2 " << mname << "(";
 	    else
-		  out << "static vvm_nor" << "<" << gate->pin_count()-1 << "> ";
+		  out << "static vvm_nor " << mname << "("
+		      << (gate->pin_count()-1 ) << ", ";
 	    break;
 	  case NetLogic::NOT:
-	    out << "static vvm_not ";
+	    out << "static vvm_not " << mname << "(";
 	    break;
 	  case NetLogic::NOTIF0:
-	    out << "static vvm_notif0 ";
+	    out << "static vvm_notif0 " << mname << "(";
 	    break;
 	  case NetLogic::NOTIF1:
-	    out << "static vvm_notif1 ";
+	    out << "static vvm_notif1 " << mname << "(";
 	    break;
 	  case NetLogic::OR:
-	    out << "static vvm_or" << "<" << gate->pin_count()-1 << "> ";
+	    out << "static vvm_or " << mname << "("
+		<< (gate->pin_count()-1 ) << ", ";
 	    break;
 	  case NetLogic::RNMOS:
-	    out << "static vvm_rnmos ";
+	    out << "static vvm_rnmos " << mname << "(";
 	    break;
 	  case NetLogic::RPMOS:
-	    out << "static vvm_rpmos ";
+	    out << "static vvm_rpmos " << mname << "(";
 	    break;
 	  case NetLogic::PMOS:
-	    out << "static vvm_pmos ";
+	    out << "static vvm_pmos " << mname << "(";
 	    break;
 	  case NetLogic::XNOR:
-	    out << "static vvm_xnor" << "<" << gate->pin_count()-1 << "> ";
+	    out << "static vvm_xnor " << mname << "("
+		<< (gate->pin_count()-1 ) << ", ";
 	    break;
 	  case NetLogic::XOR:
-	    out << "static vvm_xor" << "<" << gate->pin_count()-1 << "> ";
+	    out << "static vvm_xor " << mname << "("
+		<< (gate->pin_count()-1 ) << ", ";
 	    break;
 	  default:
 	    out << "#error \"internal ivl error:bad gate type for " <<
 		  gate->name() << "\"" << endl;
       }
 
-      out << mname << " (" << gate->rise_time() << ");" << endl;
+      out << gate->rise_time() << ");" << endl;
 
 	/* Write the code to invoke startup for this object. */
 
@@ -3621,6 +3627,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.201  2001/01/16 03:57:46  steve
+ *  Get rid of gate templates.
+ *
  * Revision 1.200  2001/01/12 04:20:18  steve
  *  Generated function prototype. (PR#107)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.20 2000/12/10 06:42:00 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.21 2001/01/16 03:57:46 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -172,6 +172,35 @@ vpip_bit_t reduce_strength(vpip_bit_t val)
     }
 
     return(HiZ);
+}
+
+vvm_and::vvm_and(unsigned wid, unsigned long d)
+: vvm_1bit_out(d), width_(wid)
+{
+      input_ = new vpip_bit_t[wid];
+}
+
+vvm_and::~vvm_and()
+{
+      delete [] input_;
+}
+
+void vvm_and::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_and::start()
+{
+      output(compute_and(input_,width_));
+}
+
+void vvm_and::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < width_);
+      if (input_[key] == val) return;
+      input_[key] = val;
+      output(compute_and(input_,width_));
 }
 
 vvm_and2::vvm_and2(unsigned long d)
@@ -365,6 +394,93 @@ vpip_bit_t vvm_eeq::compute_() const
       if (B_EQ(input_[0], input_[1]))
 	    outval = St1;
       return outval;
+}
+
+vvm_nand::vvm_nand(unsigned wid, unsigned long d)
+: vvm_1bit_out(d), width_(wid)
+{
+      input_ = new vpip_bit_t[wid];
+}
+
+vvm_nand::~vvm_nand()
+{
+      delete [] input_;
+}
+
+void vvm_nand::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_nand::start()
+{
+      output(compute_nand(input_,width_));
+}
+
+void vvm_nand::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < width_);
+      if (input_[key] == val) return;
+      input_[key] = val;
+      output(compute_nand(input_, width_));
+}
+
+vvm_nor::vvm_nor(unsigned wid, unsigned long d)
+: vvm_1bit_out(d), width_(wid)
+{
+      input_ = new vpip_bit_t[wid];
+}
+
+vvm_nor::~vvm_nor()
+{
+      delete [] input_;
+}
+
+void vvm_nor::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_nor::start()
+{
+      output(compute_nor(input_,width_));
+}
+
+void vvm_nor::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < width_);
+      if (input_[key] == val) return;
+      input_[key] = val;
+      output(compute_nor(input_, width_));
+}
+
+vvm_or::vvm_or(unsigned wid, unsigned long d)
+: vvm_1bit_out(d), width_(wid)
+{
+      input_ = new vpip_bit_t[wid];
+}
+
+vvm_or::~vvm_or()
+{
+      delete [] input_;
+}
+
+void vvm_or::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_or::start()
+{
+      output(compute_or(input_,width_));
+}
+
+void vvm_or::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < width_);
+      if (input_[key] == val) return;
+      input_[key] = val;
+      output(compute_or(input_, width_));
 }
 
 vvm_nmos::vvm_nmos(unsigned long d)
@@ -663,8 +779,69 @@ void vvm_notif1::take_value(unsigned key, vpip_bit_t val)
       }
 }
 
+vvm_xnor::vvm_xnor(unsigned wid, unsigned long d)
+: vvm_1bit_out(d), width_(wid)
+{
+      input_ = new vpip_bit_t[wid];
+}
+
+vvm_xnor::~vvm_xnor()
+{
+      delete [] input_;
+}
+
+void vvm_xnor::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_xnor::start()
+{
+      output(compute_xnor(input_,width_));
+}
+
+void vvm_xnor::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < width_);
+      if (input_[key] == val) return;
+      input_[key] = val;
+      output(compute_xnor(input_, width_));
+}
+
+vvm_xor::vvm_xor(unsigned wid, unsigned long d)
+: vvm_1bit_out(d), width_(wid)
+{
+      input_ = new vpip_bit_t[wid];
+}
+
+vvm_xor::~vvm_xor()
+{
+      delete [] input_;
+}
+
+void vvm_xor::init_I(unsigned idx, vpip_bit_t val)
+{
+      input_[idx] = val;
+}
+
+void vvm_xor::start()
+{
+      output(compute_xor(input_,width_));
+}
+
+void vvm_xor::take_value(unsigned key, vpip_bit_t val)
+{
+      assert(key < width_);
+      if (input_[key] == val) return;
+      input_[key] = val;
+      output(compute_xor(input_, width_));
+}
+
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.21  2001/01/16 03:57:46  steve
+ *  Get rid of gate templates.
+ *
  * Revision 1.20  2000/12/10 06:42:00  steve
  *  Support delays on continuous assignment from idents. (PR#40)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.69 2000/12/15 20:05:16 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.70 2001/01/16 03:57:46 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -136,30 +136,22 @@ class vvm_add_sub : public vvm_nexus::recvr_t {
  * parameter. The vvm_andN classes are versions that have specific
  * widths. The latter should be preferred over the generic form.
  */
-template <unsigned WIDTH>
 class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_and(unsigned d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_and(unsigned wid, unsigned long d);
+      ~vvm_and();
 
-      void init_I(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { output(compute_and(input_,WIDTH)); }
+      void start();
 
-    private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
+      void take_value(unsigned key, vpip_bit_t val);
 
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val) return;
-	      input_[idx] = val;
-	      output(compute_and(input_,WIDTH));
-	    }
 
     private:
-      vpip_bit_t input_[WIDTH];
+      unsigned width_;
+      vpip_bit_t*input_;
 };
 
 class vvm_and2  : public vvm_1bit_out, public vvm_nexus::recvr_t {
@@ -450,57 +442,40 @@ class vvm_mux  : public vvm_nexus::recvr_t {
       vvm_mux& operator= (vvm_mux&);
 };
 
-template <unsigned WIDTH> 
 class vvm_or : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_or(unsigned long d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_or(unsigned wid, unsigned long d);
+      ~vvm_or();
 
-      void init_I(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { output(compute_or(input_,WIDTH)); }
+      void start();
 
     private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
-
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		  return;
-	      input_[idx] = val;
-	      output(compute_or(input_,WIDTH));
-	    }
+      void take_value(unsigned key, vpip_bit_t val);
 
     private:
-      vpip_bit_t input_[WIDTH];
+      unsigned width_;
+      vpip_bit_t*input_;
 };
 
-template <unsigned WIDTH>
 class vvm_nor  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_nor(unsigned long d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_nor(unsigned wid, unsigned long d);
+      ~vvm_nor();
 
-      void init_I(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { output(compute_nor(input_,WIDTH)); }
+      void start();
 
     private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
+      void take_value(unsigned key, vpip_bit_t val);
 
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		  return;
-	      input_[idx] = val;
-	      output(compute_nor(input_,WIDTH));
-	    }
-
-      vpip_bit_t input_[WIDTH];
+    private:
+      unsigned width_;
+      vpip_bit_t*input_;
 };
 
 class vvm_nor2  : public vvm_1bit_out, public vvm_nexus::recvr_t {
@@ -671,30 +646,23 @@ class vvm_notif1  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       void take_value(unsigned key, vpip_bit_t val);
 };
 
-template <unsigned WIDTH> 
 class vvm_nand : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_nand(unsigned long d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_nand(unsigned wid, unsigned long d);
+      ~vvm_nand();
 
-      void init_I(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { output(compute_nand(input_,WIDTH)); }
+      void start();
 
     private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
+      void take_value(unsigned key, vpip_bit_t val);
 
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val) return;
-	      input_[idx] = val;
-	      output(compute_nand(input_,WIDTH));
-	    }
 
     private:
-      vpip_bit_t input_[WIDTH];
+      unsigned width_;
+      vpip_bit_t*input_;
 };
 
 /*
@@ -765,56 +733,41 @@ class vvm_rpmos  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 };
 
 
-template <unsigned WIDTH> 
 class vvm_xnor : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_xnor(unsigned long d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_xnor(unsigned wid, unsigned long d);
+      ~vvm_xnor();
 
-      void init_I(unsigned idx, vpip_bit_t val) { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { output(compute_xnor(input_,WIDTH)); }
-
-    private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
-
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		    return;
-	      input_[idx] = val;
-	      output(compute_xnor(input_,WIDTH));
-	    }
+      void start();
 
     private:
-      vpip_bit_t input_[WIDTH];
+      void take_value(unsigned key, vpip_bit_t val);
+
+    private:
+      unsigned width_;
+      vpip_bit_t*input_;
 };
 
-template <unsigned WIDTH> 
+
 class vvm_xor : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_xor(unsigned long d)
-      : vvm_1bit_out(d) { }
+      explicit vvm_xor(unsigned wid, unsigned long d);
+      ~vvm_xor();
 
-      void init_I(unsigned idx, vpip_bit_t val)
-	    { input_[idx] = val; }
+      void init_I(unsigned idx, vpip_bit_t val);
 
-      void start()
-	    { output(compute_xor(input_,WIDTH)); }
+      void start();
 
     private:
-      void take_value(unsigned key, vpip_bit_t val) { set_I(key, val); }
-
-      void set_I(unsigned idx, vpip_bit_t val)
-	    { if (input_[idx] == val)
-		    return;
-	      input_[idx] = val;
-	      output(compute_xor(input_,WIDTH)); }
+      void take_value(unsigned key, vpip_bit_t val);
 
     private:
-      vpip_bit_t input_[WIDTH];
+      unsigned width_;
+      vpip_bit_t*input_;
 };
 
 /*
@@ -1006,6 +959,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.70  2001/01/16 03:57:46  steve
+ *  Get rid of gate templates.
+ *
  * Revision 1.69  2000/12/15 20:05:16  steve
  *  Fix memory access in vvm. (PR#70)
  *
