@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.2 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.3 1998/12/17 23:54:58 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -184,6 +184,65 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
       vvm_out_event::action_t output_;
 };
 
+/*
+ * A Sequential UDP has a more complex truth table, and handles
+ * edges. Pin 0 is an output, and all the remaining pins are
+ * input. The WIDTH is the number of input pins.
+ *
+ * See vvm.txt for a description of the gate transition table.
+ */
+template <unsigned WIDTH> class vvm_udp_ssequ {
+
+    public:
+      explicit vvm_udp_ssequ(vvm_out_event::action_t o, vvm_bit_t i,
+			    const vvm_u32*tab)
+      : output_(o), table_(tab)
+      { state_[0] = i;
+        for (unsigned idx = 1; idx < WIDTH+1 ;  idx += 1)
+	      state_[idx] = Vx;
+      }
+
+      void set(vvm_simulation*sim, unsigned pin, vvm_bit_t val)
+	    { assert(pin > 0);
+	      assert(pin < WIDTH+1);
+	      if (val == Vz) val = Vx;
+	      if (state_[pin] == val) return;
+		// Convert the current state into a table index.
+	      unsigned entry = 0;
+	      for (unsigned idx = 0 ;  idx < WIDTH+1 ;  idx += 1) {
+		    entry *= 3;
+		    entry += state_[idx];
+	      }
+		// Get the table entry, and the 4bits that encode
+		// activity on this pin.
+	      vvm_u32 code = table_[entry];
+	      code >>= 4 * (WIDTH-pin);
+	      switch (state_[pin]*4 + val) {
+		  case (V0*4 + V1):
+		  case (V1*4 + V0):
+		  case (Vx*4 + V0):
+		    code = (code>>2) & 3;
+		    break;
+		  case (V0*4 + Vx):
+		  case (V1*4 + Vx):
+		  case (Vx*4 + V1):
+		    code &= 3;
+		    break;
+	      }
+		// Convert the code to a vvm_bit_t and run with it.
+	      vvm_bit_t outval = (code == 0)? V0 : (code == 1)? V1 : Vx;
+	      state_[0] = outval;
+	      state_[pin] = val;
+	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
+	      sim->insert_event(1, ev); // XXXX Delay not supported.
+	    }
+
+    private:
+      vvm_out_event::action_t output_;
+      const vvm_u32*const table_;
+      vvm_bit_t state_[WIDTH+1];
+};
+
 class vvm_bufz {
     public:
       explicit vvm_bufz(vvm_out_event::action_t o)
@@ -219,6 +278,9 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.3  1998/12/17 23:54:58  steve
+ *  VVM support for small sequential UDP objects.
+ *
  * Revision 1.2  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).

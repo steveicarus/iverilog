@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.6 1998/11/23 00:20:23 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.7 1998/12/17 23:54:58 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -43,6 +43,7 @@ class target_vvm : public target_t {
       virtual void signal(ostream&os, const NetNet*);
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
+      virtual void udp(ostream&os, const NetUDP*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_pevent(ostream&os, const NetPEvent*);
       virtual void start_process(ostream&os, const NetProcTop*);
@@ -66,6 +67,7 @@ class target_vvm : public target_t {
 
       unsigned indent_;
 };
+
 
 /*
  * This class emits code for the rvalue of a procedural
@@ -378,6 +380,75 @@ void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
       emit_gate_outputfun_(gate);
 }
 
+static string state_to_string(unsigned state, unsigned npins)
+{
+      static const char cur_table[3] = { '0', '1', 'x' };
+      string res = "";
+      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
+	    char cur = cur_table[state%3];
+	    res = cur + res;
+	    state /= 3;
+      }
+
+      return res;
+}
+
+void target_vvm::udp(ostream&os, const NetUDP*gate)
+{
+      assert(gate->pin_count() <= 9);
+      assert(gate->is_sequential());
+      unsigned states = 1;
+      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1)
+	    states *= 3;
+
+      os << "static vvm_u32 " << mangle(gate->name()) << "_table[" <<
+	    states << "] = {" << endl;
+      os << hex;
+      for (unsigned state = 0 ;  state < states ;  state += 1) {
+	    string sstr = state_to_string(state, gate->pin_count());
+
+	    unsigned long entry = 0;
+	    for (unsigned idx = 1 ;  idx < sstr.length() ;  idx += 1) {
+		  char o[2];
+		  switch (sstr[idx]) {
+		      case '0':
+			o[0] = '1';
+			o[1] = 'x';
+			break;
+		      case '1':
+			o[0] = '0';
+			o[1] = 'x';
+			break;
+		      case 'x':
+			o[0] = '0';
+			o[1] = '1';
+			break;
+		  }
+
+		  o[0] = gate->table_lookup(sstr, o[0], idx);
+		  o[1] = gate->table_lookup(sstr, o[1], idx);
+		  entry <<= 2;
+		  entry |= (o[0] == '0')? 0 : (o[0] == '1')? 1 : 2;
+		  entry <<= 2;
+		  entry |= (o[1] == '0')? 0 : (o[1] == '1')? 1 : 2;
+	    }
+	    os << " 0x" << setw(8) << setfill('0') << entry << ",";
+	    if (state % 3 == 2)
+		  os << endl;
+      }
+      os << "};" << dec << setfill(' ') << endl;
+
+      os << "static void " << mangle(gate->name()) <<
+	    "_output_fun(vvm_simulation*, vvm_bit_t);" << endl;
+
+      os << "static vvm_udp_ssequ<" << gate->pin_count()-1 << "> " <<
+	    mangle(gate->name()) << "(&" << mangle(gate->name()) <<
+	    "_output_fun, V" << gate->get_initial() << ", " <<
+	    mangle(gate->name()) << "_table);" << endl;
+
+      emit_gate_outputfun_(gate);
+}
+
 /*
  * The NetConst is a synthetic device created to represent constant
  * values. I represent them in the output as a vvm_bufz object that
@@ -671,6 +742,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.7  1998/12/17 23:54:58  steve
+ *  VVM support for small sequential UDP objects.
+ *
  * Revision 1.6  1998/11/23 00:20:23  steve
  *  NetAssign handles lvalues as pin links
  *  instead of a signal pointer,

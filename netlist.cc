@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.12 1998/12/14 02:01:35 steve Exp $"
+#ident "$Id: netlist.cc,v 1.13 1998/12/17 23:54:58 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -625,6 +625,33 @@ void NetUDP::cleanup_table()
       }
 }
 
+char NetUDP::table_lookup(const string&from, char to, unsigned pin) const
+{
+      assert(pin <= pin_count());
+      assert(from.length() == pin_count());
+      FSM_::const_iterator idx = fsm_.find(from);
+      if (idx == fsm_.end())
+	    return 'x';
+
+      state_t_*next;
+      switch (to) {
+	  case '0':
+	    next = (*idx).second->pins[pin].zer;
+	    break;
+	  case '1':
+	    next = (*idx).second->pins[pin].one;
+	    break;
+	  case 'x':
+	    next = (*idx).second->pins[pin].xxx;
+	    break;
+	  default:
+	    assert(0);
+	    next = 0;
+      }
+
+      return next? next->out : 'x';
+}
+
 void NetUDP::set_initial(char val)
 {
       assert(sequential_);
@@ -784,6 +811,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.13  1998/12/17 23:54:58  steve
+ *  VVM support for small sequential UDP objects.
+ *
  * Revision 1.12  1998/12/14 02:01:35  steve
  *  Fully elaborate Sequential UDP behavior.
  *

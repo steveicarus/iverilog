@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.12 1998/12/14 02:01:35 steve Exp $"
+#ident "$Id: netlist.h,v 1.13 1998/12/17 23:54:58 steve Exp $"
 #endif
 
 /*
@@ -389,7 +389,13 @@ class NetUDP  : public NetNode {
       bool set_table(const string&input, char output);
       void cleanup_table();
 
+	/* Return the next output from the passed state. Each letter
+	   of the input string represents the pin of the same
+	   position. */
+      char table_lookup(const string&from, char to, unsigned pin) const;
+
       void set_initial(char);
+      char get_initial() const { return init_; }
 
       bool is_sequential() const { return sequential_; }
 
@@ -888,6 +894,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.13  1998/12/17 23:54:58  steve
+ *  VVM support for small sequential UDP objects.
+ *
  * Revision 1.12  1998/12/14 02:01:35  steve
  *  Fully elaborate Sequential UDP behavior.
  *

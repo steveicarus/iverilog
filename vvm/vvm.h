@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.2 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: vvm.h,v 1.3 1998/12/17 23:54:58 steve Exp $"
 #endif
 
 # include  <vector>
@@ -29,6 +29,8 @@
  * The Verilog Virtual Machine are definitions for the virtual machine
  * that executes models that the simulation generator makes.
  */
+
+typedef unsigned vvm_u32;
 
 class vvm_event;
 class vvm_simulation;
@@ -215,6 +217,9 @@ class vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.3  1998/12/17 23:54:58  steve
+ *  VVM support for small sequential UDP objects.
+ *
  * Revision 1.2  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).
