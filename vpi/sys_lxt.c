@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.16 2003/02/13 18:13:28 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.17 2003/02/20 00:50:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,6 +40,13 @@
 # include  <malloc.h>
 #endif
 # include  "stringheap.h"
+
+
+static enum lxm_optimum_mode_e {
+      LXM_NONE  = 0,
+      LXM_SPACE = 1,
+      LXM_SPEED = 2
+} lxm_optimum_mode = LXM_SPEED;
 
 
 /*
@@ -300,6 +307,7 @@ static int sys_dumpoff_calltf(char*name)
       vcd_cur_time = now.low;
 
       vcd_checkpoint_x();
+      lt_set_dumpoff(dump_file);
 
       return 0;
 }
@@ -318,6 +326,8 @@ static int sys_dumpon_calltf(char*name)
 
       if (dump_header_pending())
 	    return 0;
+
+      lt_set_dumpon(dump_file);
 
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
@@ -686,12 +696,33 @@ static int sys_dumpvars_calltf(char*name)
 	    }
       }
 
+	/* Most effective compression. */
+      if (lxm_optimum_mode == LXM_SPACE)
+	    lt_set_no_interlace(dump_file);
+
       return 0;
 }
 
 void sys_lxt_register()
 {
+      int idx;
+      struct t_vpi_vlog_info vlog_info;
       s_vpi_systf_data tf_data;
+
+
+	/* Scan the extended arguments, looking for lxt optimization
+	   flags. */
+      vpi_get_vlog_info(&vlog_info);
+
+      for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+	    if (strcmp(vlog_info.argv[idx],"-lxt-space") == 0) {
+		  lxm_optimum_mode = LXM_SPACE;
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt-speed") == 0) {
+		  lxm_optimum_mode = LXM_SPEED;
+
+	    }
+      }
 
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpall";
@@ -736,6 +767,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.17  2003/02/20 00:50:06  steve
+ *  Update lxt_write implementation, and add compression control flags.
+ *
  * Revision 1.16  2003/02/13 18:13:28  steve
  *  Make lxt use stringheap to perm-allocate strings.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.17 2002/08/12 01:35:05 steve Exp $"
+#ident "$Id: sys_table.c,v 1.18 2003/02/20 00:50:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,9 @@ extern void sys_lxt_register();
 
 static void sys_lxt_or_vcd_register()
 {
+      int idx;
+      struct t_vpi_vlog_info vlog_info;
+
       char*dumper;
 
 	/* Get the dumper of choice from the IVERILOG_DUMPER
@@ -50,6 +53,28 @@ static void sys_lxt_or_vcd_register()
 
       } else {
 	    dumper = "vcd";
+      }
+
+	/* Scan the extended arguments, looking for flags that select
+	   major features. This can override the environment variable
+	   settings. */
+      vpi_get_vlog_info(&vlog_info);
+
+      for (idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+
+	    if (strcmp(vlog_info.argv[idx],"-lxt") == 0) {
+		  dumper = "lxt";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt-space") == 0) {
+		  dumper = "lxt";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-lxt-speed") == 0) {
+		  dumper = "lxt";
+
+	    } else if (strcmp(vlog_info.argv[idx],"-vcd") == 0) {
+		  dumper = "vcd";
+
+	    }
       }
 
       if (strcmp(dumper, "vcd") == 0)
@@ -86,6 +111,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.18  2003/02/20 00:50:06  steve
+ *  Update lxt_write implementation, and add compression control flags.
+ *
  * Revision 1.17  2002/08/12 01:35:05  steve
  *  conditional ident string using autoconfig.
  *
