@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.48 2001/05/01 01:09:39 steve Exp $"
+#ident "$Id: compile.cc,v 1.49 2001/05/01 02:18:15 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -242,12 +242,12 @@ static void define_functor_symbol(char*label, vvp_ipoint_t fdx)
 
 static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 {
-	/* Functors only have 4 inputs. The struct functor_s defines
-	   this to be so. */
-      assert(argc <= 4);
 
       for (unsigned idx = 0;  idx < argc;  idx += 1) {
 
+	      /* Find the functor for this input. This assumes that
+		 wide (more then 4 inputs) gates are consecutive
+		 functors. */
 	    vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
 	    functor_t iobj = functor_index(ifdx);
 
@@ -1064,6 +1064,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.49  2001/05/01 02:18:15  steve
+ *  Account for ipoint_input_index behavior in inputs_connect.
+ *
  * Revision 1.48  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
  *
