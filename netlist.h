@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.87 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: netlist.h,v 1.88 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 /*
@@ -357,6 +357,52 @@ class NetCLShift  : public NetNode {
     private:
       unsigned width_;
       unsigned width_dist_;
+};
+
+/*
+ * This class supports the LPM_COMPARE device.
+ *
+ * NOTE: This is not the same as the device used to support case
+ * compare. Case comparisons handle Vx and Vz values, whereas this
+ * device need not.
+ */
+class NetCompare  : public NetNode {
+
+    public:
+      NetCompare(const string&n, unsigned width);
+      ~NetCompare();
+
+      unsigned width() const;
+
+      NetObj::Link& pin_Aclr();
+      NetObj::Link& pin_Clock();
+      NetObj::Link& pin_AGB();
+      NetObj::Link& pin_AGEB();
+      NetObj::Link& pin_AEB();
+      NetObj::Link& pin_ANEB();
+      NetObj::Link& pin_ALB();
+      NetObj::Link& pin_ALEB();
+
+      NetObj::Link& pin_DataA(unsigned idx);
+      NetObj::Link& pin_DataB(unsigned idx);
+
+      const NetObj::Link& pin_Aclr() const;
+      const NetObj::Link& pin_Clock() const;
+      const NetObj::Link& pin_AGB() const;
+      const NetObj::Link& pin_AGEB() const;
+      const NetObj::Link& pin_AEB() const;
+      const NetObj::Link& pin_ANEB() const;
+      const NetObj::Link& pin_ALB() const;
+      const NetObj::Link& pin_ALEB() const;
+
+      const NetObj::Link& pin_DataA(unsigned idx) const;
+      const NetObj::Link& pin_DataB(unsigned idx) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+    private:
+      unsigned width_;
 };
 
 /*
@@ -1892,6 +1938,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.88  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.87  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

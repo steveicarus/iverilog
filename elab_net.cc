@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.5 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.6 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -41,6 +41,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	  case 'E':
 	  case 'e':
 	  case 'n':
+	  case '<':
+	  case '>':
+	  case 'L': // <=
+	  case 'G': // >=
 	    return elaborate_net_cmp_(des, path, width, rise, fall, decay);
 	  case 'l': // <<
 	  case 'r': // >>
@@ -165,6 +169,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 	  case 'E': // === (Case equals)
 	  case 'e': // ==
 	  case 'n': // !=
+	  case '<':
+	  case '>':
+	  case 'G': // >=
+	  case 'L': // <=
 	    assert(0);
 	    break;
 
@@ -305,6 +313,34 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
       NetNode*gate_t;
 
       switch (op_) {
+	  case '<':
+	  case '>':
+	  case 'L':
+	  case 'G': {
+		NetCompare*cmp = new NetCompare(des->local_symbol(path),
+						lsig->pin_count());
+		for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+		      connect(cmp->pin_DataA(idx), lsig->pin(idx));
+		      connect(cmp->pin_DataB(idx), rsig->pin(idx));
+		}
+		switch (op_) {
+		    case '<':
+		      connect(cmp->pin_ALB(), osig->pin(0));
+		      break;
+		    case '>':
+		      connect(cmp->pin_AGB(), osig->pin(0));
+		      break;
+		    case 'L':
+		      connect(cmp->pin_ALEB(), osig->pin(0));
+		      break;
+		    case 'G':
+		      connect(cmp->pin_AGEB(), osig->pin(0));
+		      break;
+		}
+		gate = cmp;
+		break;
+	  }
+
 	  case 'E': // Case equals (===)
 	      // The comparison generates gates to bitwise compare
 	      // each pair, and AND all the comparison results.
@@ -528,6 +564,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.6  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.5  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

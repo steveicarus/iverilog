@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.23 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: target.h,v 1.24 1999/11/14 23:43:46 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -68,6 +68,7 @@ struct target_t {
 	/* LPM style components are handled here. */
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
       virtual void lpm_clshift(ostream&os, const NetCLShift*);
+      virtual void lpm_compare(ostream&os, const NetCompare*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mux(ostream&os, const NetMux*);
 
@@ -140,6 +141,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.24  1999/11/14 23:43:46  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.23  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

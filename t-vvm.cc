@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.75 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.76 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -61,6 +61,7 @@ class target_vvm : public target_t {
 
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
       virtual void lpm_clshift(ostream&os, const NetCLShift*);
+      virtual void lpm_compare(ostream&os, const NetCompare*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mux(ostream&os, const NetMux*);
 
@@ -880,6 +881,28 @@ void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
 	    string outfun = defn_gate_outputfun_(os, gate, pin);
 	    init_code << "      " << mangle(gate->name()) <<
 		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(gate, pin);
+      }
+}
+
+void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
+{
+      os << "static vvm_compare<" << gate->width() << "> " <<
+	    mangle(gate->name()) << ";" << endl;
+
+      if (gate->pin_ALEB().is_linked()) {
+	    unsigned pin = gate->pin_ALEB().get_pin();
+	    string outfun = defn_gate_outputfun_(os, gate, pin);
+	    init_code << "      " << mangle(gate->name()) <<
+		  ".config_ALEB_out(&" << outfun << ");" << endl;
+	    emit_gate_outputfun_(gate, pin);
+      }
+
+      if (gate->pin_AGEB().is_linked()) {
+	    unsigned pin = gate->pin_AGEB().get_pin();
+	    string outfun = defn_gate_outputfun_(os, gate, pin);
+	    init_code << "      " << mangle(gate->name()) <<
+		  ".config_AGEB_out(&" << outfun << ");" << endl;
 	    emit_gate_outputfun_(gate, pin);
       }
 }
@@ -1879,6 +1902,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.76  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.75  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *
@@ -1948,127 +1974,5 @@ extern const struct target tgt_vvm = {
  *
  * Revision 1.55  1999/10/01 03:58:37  steve
  *  More resilient assignment to memory location.
- *
- * Revision 1.54  1999/10/01 03:15:00  steve
- *  Rewrite vvm output to separateclass declarations
- *  from method definitions. This is required to allow
- *  for mutual referencing, for example by tasks.
- *
- * Revision 1.53  1999/09/30 21:26:59  steve
- *  Remember to declare the calee_ member.
- *
- * Revision 1.52  1999/09/29 18:36:04  steve
- *  Full case support
- *
- * Revision 1.51  1999/09/29 00:42:25  steve
- *  Comment on where binary operator came from.
- *
- * Revision 1.50  1999/09/28 23:45:09  steve
- *  Use files instead of strstreams for delayed output,
- *  and fix a missing ends in case output code.
- *
- * Revision 1.49  1999/09/28 03:11:09  steve
- *  save the thread class name so that behaviors in tasks have it.
- *
- * Revision 1.48  1999/09/28 01:53:37  steve
- *  Generate code for repeat concatenations.
- *
- * Revision 1.47  1999/09/28 01:21:27  steve
- *  Proper syntax for method pointers.
- *
- * Revision 1.46  1999/09/28 01:13:15  steve
- *  Support in vvm > and >= behavioral operators.
- *
- * Revision 1.45  1999/09/23 03:56:57  steve
- *  Support shift operators.
- *
- * Revision 1.44  1999/09/22 16:57:24  steve
- *  Catch parallel blocks in vvm emit.
- *
- * Revision 1.43  1999/09/22 04:30:04  steve
- *  Parse and elaborate named for/join blocks.
- *
- * Revision 1.42  1999/09/16 04:18:15  steve
- *  elaborate concatenation repeats.
- *
- * Revision 1.41  1999/09/11 04:43:17  steve
- *  Support ternary and <= operators in vvm.
- *
- * Revision 1.40  1999/09/08 02:24:39  steve
- *  Empty conditionals (pmonta@imedia.com)
- *
- * Revision 1.39  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.38  1999/09/04 01:57:15  steve
- *  Generate fake adder code in vvm.
- *
- * Revision 1.37  1999/09/01 20:46:19  steve
- *  Handle recursive functions and arbitrary function
- *  references to other functions, properly pass
- *  function parameters and save function results.
- *
- * Revision 1.36  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.35  1999/08/15 01:23:56  steve
- *  Convert vvm to implement system tasks with vpi.
- *
- * Revision 1.34  1999/08/02 00:19:16  steve
- *  Get rid of excess set/init of NetESignal objects.
- *
- * Revision 1.33  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.32  1999/07/18 21:17:51  steve
- *  Add support for CE input to XNF DFF, and do
- *  complete cleanup of replaced design nodes.
- *
- * Revision 1.31  1999/07/17 03:39:11  steve
- *  simplified process scan for targets.
- *
- * Revision 1.30  1999/07/10 03:00:05  steve
- *  Proper initialization of registers.
- *
- * Revision 1.29  1999/07/10 01:02:08  steve
- *  Handle number constants as parameters.
- *
- * Revision 1.28  1999/07/07 04:20:57  steve
- *  Emit vvm for user defined tasks.
- *
- * Revision 1.27  1999/07/03 02:12:52  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.26  1999/06/24 04:21:45  steve
- *  Add the === and !== binary operators.
- *
- * Revision 1.25  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.24  1999/06/10 04:03:43  steve
- *  Do not bother trying to print lvalue name in comment.
- *
- * Revision 1.23  1999/06/09 03:00:06  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.22  1999/06/07 02:23:31  steve
- *  Support non-blocking assignment down to vvm.
- *
- * Revision 1.21  1999/05/12 04:03:19  steve
- *  emit NetAssignMem objects in vvm target.
- *
- * Revision 1.20  1999/05/03 01:51:29  steve
- *  Restore support for wait event control.
- *
- * Revision 1.19  1999/05/01 20:43:55  steve
- *  Handle wide events, such as @(a) where a has
- *  many bits in it.
- *
- *  Add to vvm the binary ^ and unary & operators.
- *
- *  Dump events a bit more completely.
  */
 

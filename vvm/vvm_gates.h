@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.21 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.22 1999/11/14 23:43:46 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -243,6 +243,94 @@ template <unsigned WIDTH, unsigned WDIST> class vvm_clshift {
 	      }
 	    }
 };
+
+template <unsigned WIDTH> class vvm_compare {
+
+    public:
+      explicit vvm_compare()
+	    { out_lt_ = 0;
+	      out_le_ = 0;
+	      gt_ = Vx;
+	      lt_ = Vx;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
+		    a_[idx] = Vx;
+		    b_[idx] = Vx;
+	      }
+	    }
+      ~vvm_compare() { }
+
+      void init_DataA(unsigned idx, vpip_bit_t val)
+	    { a_[idx] = val; }
+      void init_DataB(unsigned idx, vpip_bit_t val)
+	    { b_[idx] = val; }
+
+      void set_DataA(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (a_[idx] == val) return;
+	      a_[idx] = val;
+	      compute_(sim);
+	    }
+
+      void set_DataB(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (b_[idx] == val) return;
+	      b_[idx] = val;
+	      compute_(sim);
+	    }
+
+      void config_ALB_out(vvm_out_event::action_t o)
+	    { out_lt_ = o; }
+
+      void config_ALEB_out(vvm_out_event::action_t o)
+	    { out_le_ = o; }
+
+      void config_AGB_out(vvm_out_event::action_t o)
+	    { out_gt_ = o; }
+
+      void config_AGEB_out(vvm_out_event::action_t o)
+	    { out_ge_ = o; }
+
+    private:
+      vpip_bit_t a_[WIDTH];
+      vpip_bit_t b_[WIDTH];
+
+      vpip_bit_t gt_;
+      vpip_bit_t lt_;
+
+      vvm_out_event::action_t out_lt_;
+      vvm_out_event::action_t out_le_;
+      vvm_out_event::action_t out_gt_;
+      vvm_out_event::action_t out_ge_;
+
+      void compute_(vvm_simulation*sim)
+	    { vpip_bit_t gt = V0;
+	      vpip_bit_t lt = V0;
+	      vvm_event*ev;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
+		    gt = greater_with_cascade(a_[idx], b_[idx], gt);
+		    lt = less_with_cascade(a_[idx], b_[idx], lt);
+	      }
+
+	      if ((gt_ == gt) || (lt_ == lt)) return;
+	      gt_ = gt;
+	      lt_ = lt;
+	      if (out_lt_) {
+		    ev = new vvm_out_event(sim, lt_, out_lt_);
+		    sim->active_event(ev);
+	      }
+	      if (out_le_) {
+		    ev = new vvm_out_event(sim, not(gt_), out_le_);
+		    sim->active_event(ev);
+	      }
+	      if (out_gt_) {
+		    ev = new vvm_out_event(sim, gt_, out_gt_);
+		    sim->active_event(ev);
+	      }
+	      if (out_ge_) {
+		    ev = new vvm_out_event(sim, not(lt_), out_ge_);
+		    sim->active_event(ev);
+	      }
+	    }
+};
+
 
 /*
  * This class simulates the LPM flip-flop device.
@@ -832,6 +920,9 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.22  1999/11/14 23:43:46  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.21  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.27 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: emit.cc,v 1.28 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 /*
@@ -68,6 +68,11 @@ void NetCaseCmp::emit_node(ostream&o, struct target_t*tgt) const
 void NetCLShift::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->lpm_clshift(o, this);
+}
+
+void NetCompare::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_compare(o, this);
 }
 
 void NetConst::emit_node(ostream&o, struct target_t*tgt) const
@@ -372,6 +377,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.28  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.27  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

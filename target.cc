@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.24 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: target.cc,v 1.25 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -79,6 +79,12 @@ void target_t::lpm_clshift(ostream&, const NetCLShift*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetCLShift." << endl;
+}
+
+void target_t::lpm_compare(ostream&, const NetCompare*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetCompare." << endl;
 }
 
 void target_t::lpm_ff(ostream&, const NetFF*)
@@ -293,6 +299,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.25  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.24  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

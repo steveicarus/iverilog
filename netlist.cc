@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.85 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: netlist.cc,v 1.86 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -698,6 +698,134 @@ const NetObj::Link& NetCLShift::pin_Distance(unsigned idx) const
 {
       assert(idx < width_dist_);
       return pin(3+2*width_+idx);
+}
+
+NetCompare::NetCompare(const string&n, unsigned wi)
+: NetNode(n, 8+2*wi), width_(wi)
+{
+      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Aclr");
+      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Clock");
+      pin(2).set_dir(NetObj::Link::OUTPUT); pin(2).set_name("AGB");
+      pin(3).set_dir(NetObj::Link::OUTPUT); pin(3).set_name("AGEB");
+      pin(4).set_dir(NetObj::Link::OUTPUT); pin(4).set_name("AEB");
+      pin(5).set_dir(NetObj::Link::OUTPUT); pin(5).set_name("ANEB");
+      pin(6).set_dir(NetObj::Link::OUTPUT); pin(6).set_name("ALB");
+      pin(7).set_dir(NetObj::Link::OUTPUT); pin(7).set_name("ALEB");
+      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
+	    pin(8+idx).set_dir(NetObj::Link::INPUT);
+	    pin(8+idx).set_name("DataA", idx);
+	    pin(8+width_+idx).set_dir(NetObj::Link::INPUT);
+	    pin(8+width_+idx).set_name("DataB", idx);
+      }
+}
+
+NetCompare::~NetCompare()
+{
+}
+
+unsigned NetCompare::width() const
+{
+      return width_;
+}
+
+NetObj::Link& NetCompare::pin_Aclr()
+{
+      return pin(0);
+}
+
+const NetObj::Link& NetCompare::pin_Aclr() const
+{
+      return pin(0);
+}
+
+NetObj::Link& NetCompare::pin_Clock()
+{
+      return pin(1);
+}
+
+const NetObj::Link& NetCompare::pin_Clock() const
+{
+      return pin(1);
+}
+
+NetObj::Link& NetCompare::pin_AGB()
+{
+      return pin(2);
+}
+
+const NetObj::Link& NetCompare::pin_AGB() const
+{
+      return pin(2);
+}
+
+NetObj::Link& NetCompare::pin_AGEB()
+{
+      return pin(3);
+}
+
+const NetObj::Link& NetCompare::pin_AGEB() const
+{
+      return pin(3);
+}
+
+NetObj::Link& NetCompare::pin_AEB()
+{
+      return pin(4);
+}
+
+const NetObj::Link& NetCompare::pin_AEB() const
+{
+      return pin(4);
+}
+
+NetObj::Link& NetCompare::pin_ANEB()
+{
+      return pin(5);
+}
+
+const NetObj::Link& NetCompare::pin_ANEB() const
+{
+      return pin(5);
+}
+
+NetObj::Link& NetCompare::pin_ALB()
+{
+      return pin(6);
+}
+
+const NetObj::Link& NetCompare::pin_ALB() const
+{
+      return pin(6);
+}
+
+NetObj::Link& NetCompare::pin_ALEB()
+{
+      return pin(7);
+}
+
+const NetObj::Link& NetCompare::pin_ALEB() const
+{
+      return pin(7);
+}
+
+NetObj::Link& NetCompare::pin_DataA(unsigned idx)
+{
+      return pin(8+idx);
+}
+
+const NetObj::Link& NetCompare::pin_DataA(unsigned idx) const
+{
+      return pin(8+idx);
+}
+
+NetObj::Link& NetCompare::pin_DataB(unsigned idx)
+{
+      return pin(8+width_+idx);
+}
+
+const NetObj::Link& NetCompare::pin_DataB(unsigned idx) const
+{
+      return pin(8+width_+idx);
 }
 
 /*
@@ -2214,6 +2342,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.86  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.85  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *

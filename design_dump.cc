@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.56 1999/11/14 20:24:28 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.57 1999/11/14 23:43:45 steve Exp $"
 #endif
 
 /*
@@ -133,6 +133,14 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
 void NetCLShift::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Combinatorial shift (NetCLShift): " <<
+	    name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetCompare::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_COMPARE (NetCompare): " <<
 	    name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -826,6 +834,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.57  1999/11/14 23:43:45  steve
+ *  Support combinatorial comparators.
+ *
  * Revision 1.56  1999/11/14 20:24:28  steve
  *  Add support for the LPM_CLSHIFT device.
  *
