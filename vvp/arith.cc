@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.25 2003/04/11 05:15:38 steve Exp $"
+#ident "$Id: arith.cc,v 1.26 2003/08/01 00:58:34 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -115,9 +115,9 @@ void vvp_arith_div::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
 	    
 	    if (val & 0x01)
-		  a += 1 << idx;
+		  a += 1UL << idx;
 	    if (val & 0x04)
-		  b += 1 << idx;
+		  b += 1UL << idx;
       }
 
       if (b == 0) {
@@ -156,9 +156,9 @@ void vvp_arith_mod::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
 	    
 	    if (val & 0x01)
-		  a += 1 << idx;
+		  a += 1UL << idx;
 	    if (val & 0x04)
-		  b += 1 << idx;
+		  b += 1UL << idx;
       }
 
       if (b == 0) {
@@ -194,9 +194,9 @@ void vvp_arith_mult::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    }
 
 	    if (val & 0x01)
-		  a += 1 << idx;
+		  a += 1UL << idx;
 	    if (val & 0x04)
-		  b += 1 << idx;
+		  b += 1UL << idx;
       }
 
       output_val_(base, push, a*b);
@@ -209,8 +209,8 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
       b = new unsigned char[wid_];
       sum = new unsigned char[wid_];
 
-      int mxa = -1;
-      int mxb = -1;
+      unsigned mxa = 0;
+      unsigned mxb = 0;
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base, idx);
@@ -230,23 +230,26 @@ void vvp_arith_mult::wide(vvp_ipoint_t base, bool push)
             sum[idx] = 0;                   
       }
 
-//    do "unsigned ZZ sum = a * b" the hard way..
-      for(int i=0;i<=mxb;i++)
-		{
-		if(b[i])
-			{
-			unsigned char carry=0;
-			unsigned char temp;			
+	/* do the a*b multiply using the long method we learned in
+	   grade school. We know at this point that there are no X or
+	   Z values in the a or b vectors. */
 
-			for(int j=0;j<=mxa;j++)
-				{
-				if(i+j>=(int)wid_) break;
-				temp=sum[i+j]+a[j]+carry;
-				sum[i+j]=(temp&1);
-				carry=(temp>>1);
-				}
-			}
-		}
+      for(unsigned i=0 ;  i<=mxb ;  i += 1) {
+	    if(b[i]) {
+		  unsigned char carry=0;
+		  unsigned char temp;
+
+		  for(unsigned j=0 ;  j<=mxa ;  j += 1) {
+
+			if((i+j) >= wid_)
+			      break;
+
+			temp=sum[i+j] + a[j] + carry;
+			sum[i+j]=(temp&1);
+			carry=(temp>>1);
+		  }
+	    }
+      }
 
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_ipoint_t ptr = ipoint_index(base,idx);
@@ -607,6 +610,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.26  2003/08/01 00:58:34  steve
+ *  Fix arithmetic operators in 64bit processors.
+ *
  * Revision 1.25  2003/04/11 05:15:38  steve
  *  Add signed versions of .cmp/gt/ge
  *
