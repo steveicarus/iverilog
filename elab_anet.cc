@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.8 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.9 2003/09/19 03:50:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,7 @@
 
 # include  "PExpr.h"
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  <iostream>
 
 NetNet* PExpr::elaborate_anet(Design*des, NetScope*scope) const
@@ -104,17 +105,34 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 
 NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 {
-      NetNet*sig = des->find_signal(scope, path_);
+      assert(scope);
+
+      NetNet*       sig = 0;
+      NetMemory*    mem = 0;
+      NetVariable*  var = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(des, scope, path_, sig, mem, var, par, eve);
+
+
+      if (mem != 0) {
+	    cerr << get_line() << ": error: memories not allowed "
+		 << "on left side of procedural continuous "
+		 << "assignment." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (eve != 0) {
+	    cerr << get_line() << ": error: named events not allowed "
+		 << "on left side of procedural continuous "
+		 << "assignment." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (sig == 0) {
-	    if (des->find_memory(scope, path_)) {
-		  cerr << get_line() << ": error: memories not allowed "
-		       << "on left side of procedural continuous "
-		       << "assignment." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
 	    cerr << get_line() << ": error: reg ``" << path_ << "'' "
 		 << "is undefined in this scope." << endl;
 	    des->errors += 1;
@@ -149,6 +167,9 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.9  2003/09/19 03:50:12  steve
+ *  Remove find_memory method from Design class.
+ *
  * Revision 1.8  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.39 2003/09/19 03:30:05 steve Exp $"
+#ident "$Id: net_design.cc,v 1.40 2003/09/19 03:50:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -503,28 +503,6 @@ NetNet* Design::find_signal(NetScope*scope, hname_t path)
       return 0;
 }
 
-NetMemory* Design::find_memory(NetScope*scope, hname_t path)
-{
-      assert(scope);
-
-      char*key = path.remove_tail_name();
-      if (path.peek_name(0))
-	    scope = find_scope(scope, path);
-
-      while (scope) {
-	    if (NetMemory*mem = scope->find_memory(key)) {
-		  delete key;
-		  return mem;
-	    }
-
-	    scope = scope->parent();
-      }
-
-      delete key;
-      return 0;
-}
-
-
 NetFuncDef* Design::find_function(NetScope*scope, const hname_t&name)
 {
       assert(scope);
@@ -662,6 +640,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.40  2003/09/19 03:50:12  steve
+ *  Remove find_memory method from Design class.
+ *
  * Revision 1.39  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.300 2003/09/19 03:30:05 steve Exp $"
+#ident "$Id: netlist.h,v 1.301 2003/09/19 03:50:12 steve Exp $"
 #endif
 
 /*
@@ -3214,9 +3214,6 @@ class Design {
 
       NetNet*find_signal(NetScope*scope, hname_t path);
 
-	// Memories
-      NetMemory* find_memory(NetScope*scope, hname_t path);
-
 	/* This is a more general lookup that finds the named signal
 	   or memory, whichever is first in the search path. */
       void find_symbol(NetScope*,const string&key,
@@ -3319,6 +3316,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.301  2003/09/19 03:50:12  steve
+ *  Remove find_memory method from Design class.
+ *
  * Revision 1.300  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
  *

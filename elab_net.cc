@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.118 2003/09/13 01:30:07 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.119 2003/09/19 03:50:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1307,48 +1307,56 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
-      NetNet*sig = des->find_signal(scope, path_);
+      assert(scope);
 
+      NetNet*       sig = 0;
+      NetMemory*    mem = 0;
+      NetVariable*  var = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(des, scope, path_, sig, mem, var, par, eve);
+
+	/* If the identifier is a memory instead of a signal,
+	   then handle it elsewhere. Create a RAM. */
+      if (mem != 0) {
+	    return elaborate_net_ram_(des, scope, mem, lwidth,
+				      rise, fall, decay);
+      }
+
+	/* If this is a parameter name, then create a constant node
+	   that connects to a signal with the correct name. */
+      if (par != 0) {
+
+	    const NetEConst*pc = dynamic_cast<const NetEConst*>(par);
+	    assert(pc);
+	    verinum pvalue = pc->value();
+
+	    sig = new NetNet(scope, path_.peek_name(0),
+			     NetNet::IMPLICIT, pc->expr_width());
+	    NetConst*cp = new NetConst(scope, scope->local_symbol(),
+				       pvalue);
+	    des->add_node(cp);
+	    for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
+		  connect(sig->pin(idx), cp->pin(idx));
+      }
+
+	/* Fallback, this may be an implicitly declared net. */
       if (sig == 0) {
-	    NetScope*found_in;
 
-	      /* If the identifier is a memory instead of a signal,
-		 then handle it elsewhere. Create a RAM. */
-	    if (NetMemory*mem = des->find_memory(scope, path_))
-		  return elaborate_net_ram_(des, scope, mem, lwidth,
-					    rise, fall, decay);
+	    sig = new NetNet(scope, path_.peek_name(0),
+			     NetNet::IMPLICIT, 1);
 
+	    if (error_implicit) {
+		  cerr << get_line() << ": error: "
+		       << scope->name() << "." << path_.peek_name(0)
+		       << " not defined in this scope." << endl;
+		  des->errors += 1;
 
-	    if (const NetExpr*pe = des->find_parameter(scope, path_, found_in)) {
-
-		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
-		  assert(pc);
-		  verinum pvalue = pc->value();
-
-		  sig = new NetNet(scope, path_.peek_name(0),
-				   NetNet::IMPLICIT, pc->expr_width());
-		  NetConst*cp = new NetConst(scope, scope->local_symbol(),
-					     pvalue);
-		  des->add_node(cp);
-		  for (unsigned idx = 0;  idx <  sig->pin_count(); idx += 1)
-			connect(sig->pin(idx), cp->pin(idx));
-
-	    } else {
-
-		  sig = new NetNet(scope, path_.peek_name(0),
-				   NetNet::IMPLICIT, 1);
-
-		  if (error_implicit) {
-			cerr << get_line() << ": error: "
-			     << scope->name() << "." << path_.peek_name(0)
-			     << " not defined in this scope." << endl;
-			des->errors += 1;
-
-		  } else if (warn_implicit) {
-			cerr << get_line() << ": warning: implicit "
-			      "definition of wire " << scope->name()
-			     << "." << path_.peek_name(0) << "." << endl;
-		  }
+	    } else if (warn_implicit) {
+		  cerr << get_line() << ": warning: implicit "
+			"definition of wire " << scope->name()
+		       << "." << path_.peek_name(0) << "." << endl;
 	    }
       }
 
@@ -1559,16 +1567,33 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope,
 NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 				bool implicit_net_ok) const
 {
-      NetNet*sig = des->find_signal(scope, path_);
+      assert(scope);
+
+      NetNet*       sig = 0;
+      NetMemory*    mem = 0;
+      NetVariable*  var = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(des, scope, path_, sig, mem, var, par, eve);
+
+      if (mem != 0) {
+	    cerr << get_line() << ": error: memories (" << path_
+		 << ") cannot be l-values in continuous "
+		 << "assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (eve != 0) {
+	    cerr << get_line() << ": error: named events (" << path_
+		 << ") cannot be l-values in continuous "
+		 << "assignments." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (sig == 0) {
-	      /* Don't allow memories here. Is it a memory? */
-	    if (des->find_memory(scope, path_)) {
-		  cerr << get_line() << ": error: memories (" << path_
-		       << ") cannot be l-values in continuous "
-		       << "assignments." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
 
 	    if (implicit_net_ok && !error_implicit) {
 
@@ -2338,6 +2363,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.119  2003/09/19 03:50:12  steve
+ *  Remove find_memory method from Design class.
+ *
  * Revision 1.118  2003/09/13 01:30:07  steve
  *  Missing case warnings.
  *
