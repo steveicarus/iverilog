@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.171 2000/05/08 05:28:29 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.172 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 /*
@@ -1527,6 +1527,46 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       return block;
 }
 
+NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
+{
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lval == 0)
+	    return 0;
+
+      NetNet*rval = expr_->elaborate_net(des, path, lval->pin_count(),
+					 0, 0, 0);
+      if (rval == 0)
+	    return 0;
+
+      if (rval->pin_count() < lval->pin_count())
+	    rval = pad_to_width(des, path, rval, lval->pin_count());
+
+      NetCAssign* dev = new NetCAssign(des->local_symbol(path), lval);
+      des->add_node(dev);
+
+      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1)
+	    connect(dev->pin(idx), rval->pin(idx));
+
+      return dev;
+}
+
+NetDeassign* PDeassign::elaborate(Design*des, const string&path) const
+{
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lval == 0)
+	    return 0;
+
+      NetDeassign*dev = new NetDeassign(lval);
+      dev->set_line( *this );
+      return dev;
+}
+
 NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 {
       verinum*num = delay_->eval_const(des, path);
@@ -2382,6 +2422,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.172  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.171  2000/05/08 05:28:29  steve
  *  Use bufz to make assignments directional.
  *

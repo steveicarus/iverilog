@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.37 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: target.h,v 1.38 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -90,6 +90,7 @@ struct target_t {
       virtual void net_assign(ostream&os, const NetAssign*);
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
+      virtual bool net_cassign(ostream&os, const NetCAssign*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual bool net_force(ostream&os, const NetForce*);
       virtual void net_probe(ostream&os, const NetEvProbe*);
@@ -105,7 +106,9 @@ struct target_t {
       virtual void proc_assign_mem_nb(ostream&os, const NetAssignMemNB*);
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
+      virtual bool proc_cassign(ostream&os, const NetCAssign*);
       virtual void proc_condit(ostream&os, const NetCondit*);
+      virtual bool proc_deassign(ostream&os, const NetDeassign*);
       virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual bool proc_release(ostream&os, const NetRelease*);
@@ -156,6 +159,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.38  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.37  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

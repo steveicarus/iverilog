@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.38 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: target.cc,v 1.39 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -149,6 +149,13 @@ void target_t::net_case_cmp(ostream&os, const NetCaseCmp*)
 	    "Unhandled case compare node." << endl;
 }
 
+bool target_t::net_cassign(ostream&os, const NetCAssign*dev)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetCAssign node." << endl;
+      return false;
+}
+
 void target_t::net_const(ostream&os, const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -212,11 +219,26 @@ void target_t::proc_case(ostream&os, const NetCase*cur)
       cur->dump(cerr, 6);
 }
 
+bool target_t::proc_cassign(ostream&os, const NetCAssign*dev)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled proc_cassign." << endl;
+      return false;
+}
+
 void target_t::proc_condit(ostream&os, const NetCondit*condit)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled conditional:" << endl;
       condit->dump(cerr, 6);
+}
+
+bool target_t::proc_deassign(ostream&os, const NetDeassign*dev)
+{
+      cerr << dev->get_line() << ": internal error: "
+	   << "target (" << typeid(*this).name() <<  "): "
+	   << "Unhandled proc_deassign." << endl;
+      return false;
 }
 
 void target_t::proc_delay(ostream&os, const NetPDelay*)
@@ -242,7 +264,7 @@ bool target_t::proc_release(ostream&os, const NetRelease*dev)
 {
       cerr << dev->get_line() << ": internal error: "
 	   << "target (" << typeid(*this).name() <<  "): "
-	   << "Unhandled proc_repeat." << endl;
+	   << "Unhandled proc_release." << endl;
       return false;
 }
 
@@ -367,6 +389,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.39  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.38  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

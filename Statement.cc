@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.20 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: Statement.cc,v 1.21 2000/05/11 23:37:26 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -122,6 +122,17 @@ PCase::~PCase()
       delete[]items_;
 }
 
+PCAssign::PCAssign(PExpr*l, PExpr*r)
+: lval_(l), expr_(r)
+{
+}
+
+PCAssign::~PCAssign()
+{
+      delete lval_;
+      delete expr_;
+}
+
 PCondit::PCondit(PExpr*ex, Statement*i, Statement*e)
 : expr_(ex), if_(i), else_(e)
 {
@@ -132,6 +143,16 @@ PCondit::~PCondit()
       delete expr_;
       delete if_;
       delete else_;
+}
+
+PDeassign::PDeassign(PExpr*l)
+: lval_(l)
+{
+}
+
+PDeassign::~PDeassign()
+{
+      delete lval_;
 }
 
 
@@ -231,6 +252,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.21  2000/05/11 23:37:26  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.20  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.h,v 1.3 2000/04/23 03:45:25 steve Exp $"
+#ident "$Id: vvm_nexus.h,v 1.4 2000/05/11 23:37:28 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -103,6 +103,15 @@ class vvm_nexus {
 	// to procedural assignments to the node, as if it where a reg.
       void reg_assign(vpip_bit_t val);
 
+	// These methods support the procedural continuous assign. The
+	// vvm_force oject will set itself as an assigner, then will
+	// periodically call the cassign method to do the assign. The
+	// procedural deassign will call the deassign method to detach
+	// the vvm_force object.
+      void cassign_set(class vvm_force*frc, unsigned key);
+      void cassign(vpip_bit_t val);
+      void deassign();
+
 	// This method causes the specified value to be forced onto
 	// the nexus. This overrides all drivers that are attached.
       void force_set(class vvm_force*frc, unsigned key);
@@ -128,6 +137,9 @@ class vvm_nexus {
       vpip_bit_t*ival_;
       unsigned  nival_;
 
+      vvm_force *assigner_;
+      unsigned   assigner_key_;
+
       vpip_bit_t force_;
       vvm_force *forcer_;
       unsigned   forcer_key_;
@@ -148,6 +160,9 @@ extern void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.h,v $
+ * Revision 1.4  2000/05/11 23:37:28  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.3  2000/04/23 03:45:25  steve
  *  Add support for the procedural release statement.
  *

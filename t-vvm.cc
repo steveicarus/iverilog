@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.148 2000/05/09 21:16:35 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.149 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -79,6 +79,7 @@ class target_vvm : public target_t {
               void udp_sequ_(ostream&os, const NetUDP*);
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
+      virtual bool net_cassign(ostream&os, const NetCAssign*);
       virtual void net_const(ostream&os, const NetConst*);
       virtual bool net_force(ostream&os, const NetForce*);
       virtual void net_probe(ostream&os, const NetEvProbe*);
@@ -90,8 +91,10 @@ class target_vvm : public target_t {
       virtual bool proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
               void proc_case_fun(ostream&os, const NetCase*net);
+      virtual bool proc_cassign(ostream&os, const NetCAssign*);
       virtual void proc_condit(ostream&os, const NetCondit*);
               void proc_condit_fun(ostream&os, const NetCondit*);
+      virtual bool proc_deassign(ostream&os, const NetDeassign*);
       virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
       virtual bool proc_release(ostream&os, const NetRelease*);
@@ -1863,6 +1866,29 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 }
 
 /*
+ * Implement continuous assign with the force object, because they are
+ * so similar. I'll be using different methods to tickle this device,
+ * but it receives values the same as force.
+ */
+bool target_vvm::net_cassign(ostream&os, const NetCAssign*dev)
+{
+      string mname = mangle(dev->name());
+
+      os << "static vvm_force " << mname << "(" << dev->pin_count()
+	 << ");" << endl;
+
+      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&dev->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << idx << ");" << endl;
+      }
+
+      return true;
+}
+
+/*
  * The NetConst is a synthetic device created to represent constant
  * values. I represent them in the output as a vvm_bufz object that
  * has its input connected to nothing but is initialized to the
@@ -2457,6 +2483,21 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
       defn << "      } while(0);" << endl;
 }
 
+bool target_vvm::proc_cassign(ostream&os, const NetCAssign*dev)
+{
+      const string mname = mangle(dev->name());
+
+      for (unsigned idx = 0 ;  idx < dev->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&dev->lval_pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    defn << "      " << mname << ".assign("<<idx<<", "
+		 << "nexus_wire_table+"<<ncode << ");" << endl;
+      }
+
+      return true;
+}
+
 void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 {
       if (function_def_flag_) {
@@ -2521,6 +2562,20 @@ void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
       defn << "      } else {" << endl;
       net->emit_recurse_else(os, this);
       defn << "      }" << endl;
+}
+
+bool target_vvm::proc_deassign(ostream&os, const NetDeassign*dev)
+{
+      const NetNet*lval = dev->lval();
+      for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&lval->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    defn << "      nexus_wire_table["<<ncode<<"].deassign();"
+		 << endl;
+      }
+
+      return true;
 }
 
 bool target_vvm::proc_force(ostream&os, const NetForce*dev)
@@ -2868,6 +2923,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.149  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.148  2000/05/09 21:16:35  steve
  *  Give strengths to logic and bufz devices.
  *

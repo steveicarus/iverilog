@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.137 2000/05/07 18:20:07 steve Exp $"
+#ident "$Id: netlist.h,v 1.138 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 /*
@@ -1046,6 +1046,10 @@ class NetProc : public LineInfo {
     private:
       friend class NetBlock;
       NetProc*next_;
+
+    private: // not implemented
+      NetProc(const NetProc&);
+      NetProc& operator= (const NetProc&);
 };
 
 /*
@@ -1256,6 +1260,37 @@ class NetCase  : public NetProc {
       Item*items_;
 };
 
+/*
+ * The cassign statement causes the r-val net to be forced onto the
+ * l-val reg when it is executed. The code generator is expected to
+ * know what that means. All the expressions are structural and behave
+ * like nets.
+ *
+ * This class is a NetProc because it it turned on by procedural
+ * behavior. However, it is also a NetNode because it connects to
+ * nets, and when activated follows the net values.
+ */
+class NetCAssign  : public NetProc, public NetNode {
+
+    public:
+      explicit NetCAssign(const string&n, NetNet*l);
+      ~NetCAssign();
+
+      const Link& lval_pin(unsigned) const;
+
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+
+    private:
+      NetNet*lval_;
+
+    private: // not implemented
+      NetCAssign(const NetCAssign&);
+      NetCAssign& operator= (const NetCAssign&);
+};
+
 
 /* A condit represents a conditional. It has an expression to test,
    and a pair of statements to select from. */
@@ -1285,6 +1320,31 @@ class NetCondit  : public NetProc {
       NetExpr* expr_;
       NetProc*if_;
       NetProc*else_;
+};
+
+/*
+ * The procedural deassign statement (the opposite of assign) releases
+ * any assign expressions attached to the bits of the reg. The
+ * lval is the expression of the "deassign <expr>;" statement with the
+ * expr elaborated to a net.
+ */
+class NetDeassign : public NetProc {
+
+    public:
+      explicit NetDeassign(NetNet*l);
+      ~NetDeassign();
+
+      const NetNet*lval() const;
+
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetNet*lval_;
+
+    private: // not implemented
+      NetDeassign(const NetDeassign&);
+      NetDeassign& operator= (const NetDeassign&);
 };
 
 /*
@@ -2515,6 +2575,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.138  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.137  2000/05/07 18:20:07  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.44 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: emit.cc,v 1.45 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 /*
@@ -68,6 +68,11 @@ void NetAssignNB::emit_node(ostream&o, struct target_t*tgt) const
 void NetCaseCmp::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_case_cmp(o, this);
+}
+
+void NetCAssign::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->net_cassign(o, this);
 }
 
 void NetCLShift::emit_node(ostream&o, struct target_t*tgt) const
@@ -166,10 +171,20 @@ bool NetCase::emit_proc(ostream&o, struct target_t*tgt) const
       return true;
 }
 
+bool NetCAssign::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_cassign(o, this);
+}
+
 bool NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_condit(o, this);
       return true;
+}
+
+bool NetDeassign::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_deassign(o, this);
 }
 
 bool NetForce::emit_proc(ostream&o, struct target_t*tgt) const
@@ -434,6 +449,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.45  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.44  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

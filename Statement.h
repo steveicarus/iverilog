@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.25 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: Statement.h,v 1.26 2000/05/11 23:37:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -31,6 +31,8 @@ class PExpr;
 class Statement;
 class PEventStatement;
 class Design;
+class NetCAssign;
+class NetDeassign;
 class NetScope;
 
 /*
@@ -222,6 +224,20 @@ class PCase  : public Statement {
       PCase& operator= (const PCase&);
 };
 
+class PCAssign  : public Statement {
+
+    public:
+      explicit PCAssign(PExpr*l, PExpr*r);
+      ~PCAssign();
+
+      virtual NetCAssign* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*lval_;
+      PExpr*expr_;
+};
+
 class PCondit  : public Statement {
 
     public:
@@ -240,6 +256,19 @@ class PCondit  : public Statement {
     private: // not implemented
       PCondit(const PCondit&);
       PCondit& operator= (const PCondit&);
+};
+
+class PDeassign  : public Statement {
+
+    public:
+      explicit PDeassign(PExpr*l);
+      ~PDeassign();
+
+      virtual NetDeassign* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*lval_;
 };
 
 class PDelayStatement  : public Statement {
@@ -408,6 +437,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.26  2000/05/11 23:37:26  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.25  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.63 2000/05/11 01:37:33 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.64 2000/05/11 23:37:28 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -302,12 +302,21 @@ class vvm_force  : public vvm_nexus::recvr_t {
 
       void init_I(unsigned key, vpip_bit_t val);
 
+	// These methods turn on a force or continuous assign. They
+	// cause the vvm_force object to attach itself to the tgt
+	// object and deliver new values there.
       void force(unsigned key, vvm_nexus*tgt);
+      void assign(unsigned key, vvm_nexus*tgt);
+
+	// These methods are called by the attached nexus to detach
+	// the vvm_force object.
       void release(unsigned key);
+      void deassign(unsigned key);
 
     private:
       void take_value(unsigned key, vpip_bit_t val);
 
+      bool force_flag_;
       unsigned width_;
       vpip_bit_t*bits_;
       vvm_nexus**target_;
@@ -939,6 +948,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.64  2000/05/11 23:37:28  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.63  2000/05/11 01:37:33  steve
  *  Calculate the X output value from drive0 and drive1
  *

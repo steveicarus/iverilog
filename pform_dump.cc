@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.57 2000/05/06 15:41:57 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.58 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 /*
@@ -481,6 +481,18 @@ void PCondit::dump(ostream&out, unsigned ind) const
       }
 }
 
+void PCAssign::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "assign " << *lval_ << " = " << *expr_
+	  << "; /* " << get_line() << " */" << endl;
+}
+
+void PDeassign::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "deassign " << *lval_ << "; /* "
+	  << get_line() << " */" << endl;
+}
+
 void PDelayStatement::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "#" << *delay_ << " /* " <<
@@ -773,6 +785,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.58  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.57  2000/05/06 15:41:57  steve
  *  Carry assignment strength to pform.
  *

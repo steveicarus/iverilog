@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.124 2000/05/07 18:20:07 steve Exp $"
+#ident "$Id: netlist.cc,v 1.125 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1780,25 +1780,6 @@ verinum::V NetConst::value(unsigned idx) const
       return value_[idx];
 }
 
-NetForce::NetForce(const string&n, NetNet*l)
-: NetNode(n, l->pin_count()), lval_(l)
-{
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(Link::INPUT);
-	    pin(idx).set_name("I", idx);
-      }
-}
-
-NetForce::~NetForce()
-{
-}
-
-const Link& NetForce::lval_pin(unsigned idx) const
-{
-      assert(idx < lval_->pin_count());
-      return lval_->pin(idx);
-}
-
 NetFuncDef::NetFuncDef(NetScope*s, const svector<NetNet*>&po)
 : scope_(s), statement_(0), ports_(po)
 {
@@ -2421,20 +2402,6 @@ NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
       }
 }
 
-NetRelease::NetRelease(NetNet*l)
-: lval_(l)
-{
-}
-
-NetRelease::~NetRelease()
-{
-}
-
-const NetNet*NetRelease::lval() const
-{
-      return lval_;
-}
-
 NetRepeat::NetRepeat(NetExpr*e, NetProc*p)
 : expr_(e), statement_(p)
 {
@@ -2637,6 +2604,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.125  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.124  2000/05/07 18:20:07  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

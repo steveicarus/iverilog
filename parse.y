@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.95 2000/05/08 05:30:19 steve Exp $"
+#ident "$Id: parse.y,v 1.96 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1729,11 +1729,51 @@ specparam_list
 
 spec_polarity: '+' | '-' | ;
 
+
 statement
+
+  /* assign and deassign statements are procedural code to do
+     structural assignments, and to turn that structural assignment
+     off. This stronger then any other assign, but weaker then the
+     force assignments. */
+
 	: K_assign lavalue '=' expression ';'
-		{ yyerror(@1, "sorry: procedural continuous assign not supported.");
-		  $$ = 0;
+		{ PCAssign*tmp = new PCAssign($2, $4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
+
+	| K_deassign lavalue';'
+		{ PDeassign*tmp = new PDeassign($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+
+
+  /* Force and release statements are similar to assignments,
+     syntactically, but they will be elaborated differently. */
+
+	| K_force lavalue '=' expression ';'
+		{ PForce*tmp = new PForce($2, $4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| K_release lavalue ';'
+		{ PRelease*tmp = new PRelease($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+
+  /* begin-end blocks come in a variety of forms, including named and
+     anonymous. The named blocks can also carry their own reg
+     variables, which are placed in the scope created by the block
+     name. These are handled by pushing the scope name then matching
+     the declarations. The scope is popped at the end of the block. */
+
 	| K_begin statement_list K_end
 		{ PBlock*tmp = new PBlock(PBlock::BL_SEQ, *$2);
 		  tmp->set_file(@1.text);
@@ -1767,40 +1807,12 @@ statement
 		}
 	| K_begin error K_end
 		{ yyerrok; }
-	| K_deassign lavalue';'
-		{ yyerror(@1, "sorry:, deassign not supported.");
-		  $$ = 0;
-		}
-	| K_disable IDENTIFIER ';'
-		{ yyerror(@1, "sorry: disable statements not supported.");
-		  delete $2;
-		  $$ = 0;
-		}
-	| K_force lavalue '=' expression ';'
-		{ PForce*tmp = new PForce($2, $4);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		}
-	| K_TRIGGER IDENTIFIER ';'
-		{ PTrigger*tmp = new PTrigger($2);
-		  tmp->set_file(@2.text);
-		  tmp->set_lineno(@2.first_line);
-		  $$ = tmp;
-		}
-	| K_forever statement
-		{ PForever*tmp = new PForever($2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		}
-	| K_fork statement_list K_join
-		{ PBlock*tmp = new PBlock(PBlock::BL_PAR, *$2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		  delete $2;
-		  $$ = tmp;
-		}
+
+  /* fork-join blocks are very similar to begin-end blocks. In fact,
+     from the parser's perspective there is no real difference. All we
+     need to do is remember that this is a parallel block so that the
+     code generator can do the right thing. */
+
 	| K_fork ':' IDENTIFIER
 		{ pform_push_scope($3); }
 	  block_item_decls_opt
@@ -1825,10 +1837,29 @@ statement
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
 		}
-	| K_release lavalue ';'
-		{ PRelease*tmp = new PRelease($2);
+
+	| K_disable IDENTIFIER ';'
+		{ yyerror(@1, "sorry: disable statements not supported.");
+		  delete $2;
+		  $$ = 0;
+		}
+	| K_TRIGGER IDENTIFIER ';'
+		{ PTrigger*tmp = new PTrigger($2);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = tmp;
+		}
+	| K_forever statement
+		{ PForever*tmp = new PForever($2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| K_fork statement_list K_join
+		{ PBlock*tmp = new PBlock(PBlock::BL_PAR, *$2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  delete $2;
 		  $$ = tmp;
 		}
 	| K_repeat '(' expression ')' statement

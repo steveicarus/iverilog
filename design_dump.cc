@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.84 2000/05/07 18:20:07 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.85 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 /*
@@ -174,6 +174,13 @@ void NetAddSub::dump_node(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "Adder (NetAddSub): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
+}
+
+void NetCAssign::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Procedural continuous assign (NetCAssign): "
+	<< name() << endl;
+      dump_node_pins(o, ind+4);
 }
 
 void NetCLShift::dump_node(ostream&o, unsigned ind) const
@@ -539,6 +546,12 @@ void NetCase::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "endcase" << endl;
 }
 
+void NetCAssign::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "cassign " << lval_->name() << " = "
+	<< name() << ";" << endl;
+}
+
 void NetCondit::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "if (";
@@ -552,6 +565,12 @@ void NetCondit::dump(ostream&o, unsigned ind) const
 	    o << setw(ind) << "" << "else" << endl;
 	    else_->dump(o, ind+4);
       }
+}
+
+void NetDeassign::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "deassign " << lval_->name() << "; "
+	<< "/* " << get_line() << " */" << endl;
 }
 
 void NetEvProbe::dump_node(ostream&o, unsigned ind) const
@@ -960,6 +979,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.85  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.84  2000/05/07 18:20:07  steve
  *  Import MCD support from Stephen Tell, and add
  *  system function parameter support to the IVL core.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_force.cc,v 1.2 2000/04/23 03:45:25 steve Exp $"
+#ident "$Id: vvm_force.cc,v 1.3 2000/05/11 23:37:27 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -26,6 +26,7 @@
 vvm_force::vvm_force(unsigned w)
 : width_(w)
 {
+      force_flag_ = true;
       bits_ = new vpip_bit_t[width_];
       target_ = new vvm_nexus*[width_];
       for (unsigned idx = 0 ;  idx < width_ ;  idx += 1)
@@ -51,13 +52,29 @@ void vvm_force::take_value(unsigned key, vpip_bit_t val)
 	    return;
 
       bits_[key] = val;
-      target_[key]->force_assign(val);
+      if (! target_[key]) return;
+
+      if (force_flag_)
+	    target_[key]->force_assign(val);
+      else
+	    target_[key]->cassign(val);
+}
+
+void vvm_force::assign(unsigned key, vvm_nexus*tgt)
+{
+      assert(key < width_);
+      assert(target_[key] == 0);
+      force_flag_ = false;
+      target_[key] = tgt;
+      target_[key]->cassign_set(this, key);
+      target_[key]->cassign(bits_[key]);
 }
 
 void vvm_force::force(unsigned key, vvm_nexus*tgt)
 {
       assert(key < width_);
       assert(target_[key] == 0);
+      force_flag_ = true;
       target_[key] = tgt;
       target_[key]->force_set(this, key);
       target_[key]->force_assign(bits_[key]);
@@ -75,6 +92,9 @@ void vvm_force::release(unsigned key)
 
 /*
  * $Log: vvm_force.cc,v $
+ * Revision 1.3  2000/05/11 23:37:27  steve
+ *  Add support for procedural continuous assignment.
+ *
  * Revision 1.2  2000/04/23 03:45:25  steve
  *  Add support for the procedural release statement.
  *
