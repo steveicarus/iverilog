@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.58 2003/08/15 18:23:56 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.59 2004/02/19 21:31:59 steve Exp $"
 #endif
 
 /*
@@ -515,7 +515,7 @@ static void signal_put_stringval(struct __vpiSignal*rfp, unsigned wid,
       }
 
       while (idx < wid) {
-	    functor_poke(rfp, 0, 0, St0);
+	    functor_poke(rfp, idx, 0, St0);
 	    idx += 1;
       }
 }
@@ -845,6 +845,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.59  2004/02/19 21:31:59  steve
+ *  vpiStringVal writes need to set all the bits of a reg.
+ *
  * Revision 1.58  2003/08/15 18:23:56  steve
  *  vpiIntVal treats x and z bits as 0.
  *
