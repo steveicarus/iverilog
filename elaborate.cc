@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.16 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.17 1999/03/01 03:27:53 steve Exp $"
 #endif
 
 /*
@@ -650,8 +650,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 		  return ex;
 
 	    if (NetNet*net = des->find_signal(name)) {
-		  NetESignal*node = new NetESignal(net);
-		  des->add_node(node);
+		  NetESignal*node = des->get_esignal(net);
 		  return node;
 	    }
 
@@ -964,6 +963,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.17  1999/03/01 03:27:53  steve
+ *  Prevent the duplicate allocation of ESignal objects.
+ *
  * Revision 1.16  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

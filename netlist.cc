@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.17 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: netlist.cc,v 1.18 1999/03/01 03:27:53 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -323,19 +323,18 @@ void NetBlock::append(NetProc*cur)
 NetCase::NetCase(NetExpr*ex, unsigned cnt)
 : expr_(ex), nitems_(cnt)
 {
-      assert(expr_);
+      assert(expr_.ref());
       items_ = new Item[nitems_];
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    items_[idx].guard = 0;
 	    items_[idx].statement = 0;
       }
 }
 
 NetCase::~NetCase()
 {
-      delete expr_;
+      expr_.clr_and_delete();
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx].guard) delete items_[idx].guard;
+	    items_[idx].guard.clr_and_delete();
 	    if (items_[idx].statement) delete items_[idx].statement;
       }
       delete[]items_;
@@ -350,6 +349,9 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 
 NetTask::~NetTask()
 {
+      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
+	    parms_[idx].clr_and_delete();
+
       delete[]parms_;
 }
 
@@ -364,9 +366,56 @@ void NetExpr::set_width(unsigned w)
       expr_width(w);
 }
 
+void NetExpr::REF::clr()
+{
+      if (ref_ == 0)
+	    return;
+
+      NetExpr*ref = ref_;
+      ref_ = 0;
+      if (ref->reflist_ == this) {
+	    ref->reflist_ = next_;
+	    return;
+      }
+
+      NetExpr::REF*cur;
+      for (cur = ref->reflist_ ; cur->next_ != this  ;  cur = cur->next_) {
+	    assert(cur->next_);
+      }
+
+      cur->next_ = next_;
+}
+
+void NetExpr::REF::set(NetExpr*that)
+{
+      clr();
+      if (that == 0) return;
+      ref_ = that;
+      next_ = that->reflist_;
+      that->reflist_ = this;
+}
+
+void NetExpr::substitute(NetExpr*that)
+{
+      if (reflist_ == 0)
+	    return;
+
+      REF*cur = reflist_;
+      while (cur->next_) {
+	    cur->ref_ = that;
+	    cur = cur->next_;
+      }
+
+      cur->next_ = that->reflist_;
+      cur->ref_ = that;
+      that->reflist_ = reflist_;
+      reflist_ = 0;
+}
 
 NetEBinary::~NetEBinary()
 {
+      left_.clr_and_delete();
+      right_.clr_and_delete();
 }
 
 
@@ -443,6 +492,7 @@ void NetESignal::set_width(unsigned w)
 
 NetEUnary::~NetEUnary()
 {
+      expr_.clr_and_delete();
 }
 
 void NetEUnary::set_width(unsigned w)
@@ -736,11 +786,11 @@ void Design::set_parameter(const string&key, NetExpr*expr)
 
 NetExpr* Design::get_parameter(const string&key) const
 {
-      map<string,NetExpr*>::const_iterator cur = parameters_.find(key);
+      map<string,NetExpr::REF>::const_iterator cur = parameters_.find(key);
       if (cur == parameters_.end())
 	    return 0;
       else
-	    return (*cur).second;
+	    return (*cur).second.ref();
 }
 
 string Design::get_flag(const string&key) const
@@ -831,6 +881,17 @@ void Design::del_node(NetNode*net)
       net->design_ = 0;
 }
 
+NetESignal* Design::get_esignal(NetNet*net)
+{
+      NetESignal*&node = esigs_[net->name()];
+      if (node == 0) {
+	    node = new NetESignal(net);
+	    add_node(node);
+      }
+
+      return node;
+}
+
 void Design::add_process(NetProcTop*pro)
 {
       pro->next_ = procs_;
@@ -895,6 +956,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.18  1999/03/01 03:27:53  steve
+ *  Prevent the duplicate allocation of ESignal objects.
+ *
  * Revision 1.17  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

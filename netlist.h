@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.20 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.21 1999/03/01 03:27:53 steve Exp $"
 #endif
 
 /*
@@ -282,6 +282,83 @@ class NetNet  : public NetObj {
       verinum::V*ivalue_;
 };
 
+/* =========
+ * There are cases where expressions need to be represented. The
+ * NetExpr class is the root of a heirarchy that serves that purpose.
+ *
+ * The expr_width() is the width of the expression, that accounts
+ * for the widths of the sub-expressions I might have. It is up to the
+ * derived classes to properly set the expr width, if need be. The
+ * set_width() method is used to compel an expression to have a
+ * certain width, and is used particulary when the expression is an
+ * rvalue in an assignment statement.
+ *
+ * The NetExpr::REF type can be used sort of like a pointer to
+ * NetExpr objects. The NetExpr uses this list to know if it is still
+ * being referenced, so can handle garbage collection. Also, this
+ * trick can be used to replace subexpressions.
+ */
+class NetExpr {
+    public:
+      explicit NetExpr(unsigned w =0) : width_(w), reflist_(0)  { }
+      virtual ~NetExpr() =0;
+
+      virtual void expr_scan(struct expr_scan_t*) const =0;
+      virtual void dump(ostream&) const;
+
+      unsigned expr_width() const { return width_; }
+      virtual void set_width(unsigned);
+
+    public:
+      class REF {
+	    friend class NetExpr;
+	  public:
+	    void clr();
+	    void set(NetExpr*);
+	    NetExpr*ref() const { return ref_; }
+
+	    void clr_and_delete()
+		  { NetExpr*tmp = ref_;
+		    clr();
+		    if (tmp && tmp->is_referenced() == false)
+			  delete tmp;
+		  }
+
+	    NetExpr*operator-> () const { return ref_; }
+	    REF& operator=(NetExpr*that) { set(that); return *this; }
+
+	    REF() : ref_(0), next_(0) { }
+	    REF(NetExpr*that) : ref_(0), next_(0) { set(that); }
+	    REF(const REF&that) : ref_(0), next_(0) { set(that.ref_); }
+	    ~REF() { clr(); }
+	  private:
+	    NetExpr*ref_;
+	    REF*next_;
+	  private:// not implemented
+	    REF& operator=(const REF&);
+      };
+      friend class NetExpr::REF;
+
+	/* This method causes every item that references this object
+	   to reference that object instead. When this complete,
+	   no references to me will remain. */
+      void substitute(NetExpr*that);
+
+      bool is_referenced() const { return reflist_ != 0; }
+
+    protected:
+      void expr_width(unsigned w) { width_ = w; }
+
+    private:
+      unsigned width_;
+
+      REF*reflist_;
+
+    private: // not implemented
+      NetExpr(const NetExpr&);
+      NetExpr& operator=(const NetExpr&);
+};
+
 /*
  * The NetTmp object is a network that is only used momentarily by
  * elaboration to carry links around. A completed netlist cannot have
@@ -490,7 +567,7 @@ class NetAssign  : public NetProc, public NetNode {
       explicit NetAssign(NetNet*lv, NetExpr*rv);
       ~NetAssign();
 
-      const NetExpr*rval() const { return rval_; }
+      const NetExpr*rval() const { return rval_.ref(); }
 
       void find_lval_range(const NetNet*&net, unsigned&msb,
 			   unsigned&lsb) const;
@@ -501,7 +578,7 @@ class NetAssign  : public NetProc, public NetNode {
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetExpr*const rval_;
+      NetExpr::REF rval_;
 };
 
 /* A block is stuff line begin-end blocks, that contain and ordered
@@ -544,10 +621,10 @@ class NetCase  : public NetProc {
 
       void set_case(unsigned idx, NetExpr*ex, NetProc*st);
 
-      const NetExpr*expr() const { return expr_; }
+      const NetExpr*expr() const { return expr_.ref(); }
       unsigned nitems() const { return nitems_; }
 
-      const NetExpr*expr(unsigned idx) const { return items_[idx].guard; }
+      const NetExpr*expr(unsigned idx) const { return items_[idx].guard.ref();}
       const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
       virtual void emit_proc(ostream&, struct target_t*) const;
@@ -556,11 +633,11 @@ class NetCase  : public NetProc {
     private:
 
       struct Item {
-	    NetExpr*guard;
+	    NetExpr::REF guard;
 	    NetProc*statement;
       };
 
-      NetExpr*expr_;
+      NetExpr::REF expr_;
       unsigned nitems_;
       Item*items_;
 };
@@ -574,7 +651,7 @@ class NetCondit  : public NetProc {
       NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
       : expr_(ex), if_(i), else_(e) { }
 
-      NetExpr*expr() const { return expr_; }
+      NetExpr*expr() const { return expr_.ref(); }
       void emit_recurse_if(ostream&, struct target_t*) const;
       void emit_recurse_else(ostream&, struct target_t*) const;
 
@@ -582,7 +659,7 @@ class NetCondit  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetExpr*expr_;
+      NetExpr::REF expr_;
       NetProc*if_;
       NetProc*else_;
 };
@@ -642,10 +719,7 @@ class NetTask  : public NetProc {
     public:
       NetTask(const string&na, unsigned np)
       : name_(na), nparms_(np)
-      { parms_ = new NetExpr*[nparms_];
-        for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
-	      parms_[idx] = 0;
-      }
+      { parms_ = new NetExpr::REF[nparms_]; }
       ~NetTask();
 
       const string& name() const { return name_; }
@@ -659,7 +733,7 @@ class NetTask  : public NetProc {
 
       NetExpr* parm(unsigned idx) const
       { assert(idx < nparms_);
-        return parms_[idx];
+        return parms_[idx].ref();
       }
 
       virtual void emit_proc(ostream&, struct target_t*) const;
@@ -668,7 +742,7 @@ class NetTask  : public NetProc {
     private:
       string name_;
       unsigned nparms_;
-      NetExpr**parms_;
+      NetExpr::REF*parms_;
 };
 
 /*
@@ -682,7 +756,7 @@ class NetWhile  : public NetProc {
       NetWhile(NetExpr*c, NetProc*p)
       : cond_(c), proc_(p) { }
 
-      NetExpr*expr() const { return cond_; }
+      const NetExpr*expr() const { return cond_.ref(); }
 
       void emit_proc_recurse(ostream&, struct target_t*) const;
 
@@ -690,7 +764,7 @@ class NetWhile  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      NetExpr*cond_;
+      NetExpr::REF cond_;
       NetProc*proc_;
 };
 
@@ -719,38 +793,6 @@ class NetProcTop  : public LineInfo {
       NetProcTop*next_;
 };
 
-/* =========
- * There are cases where expressions need to be represented. The
- * NetExpr class is the root of a heirarchy that serves that purpose.
- *
- * The expr_width() is the width of the expression, that accounts
- * for the widths of the sub-expressions I might have. It is up to the
- * derived classes to properly set the expr width, if need be. The
- * set_width() method is used to compel an expression to have a
- * certain width, and is used particulary when the expression is an
- * rvalue in an assignment statement.
- */
-class NetExpr {
-    public:
-      explicit NetExpr(unsigned w =0) : width_(w)  { }
-      virtual ~NetExpr() =0;
-
-      virtual void expr_scan(struct expr_scan_t*) const =0;
-      virtual void dump(ostream&) const;
-
-      unsigned expr_width() const { return width_; }
-      virtual void set_width(unsigned);
-
-    protected:
-      void expr_width(unsigned w) { width_ = w; }
-
-    private:
-      unsigned width_;
-
-    private: // not implemented
-      NetExpr(const NetExpr&);
-      NetExpr& operator=(const NetExpr&);
-};
 
 class NetEBinary  : public NetExpr {
 
@@ -758,8 +800,8 @@ class NetEBinary  : public NetExpr {
       NetEBinary(char op, NetExpr*l, NetExpr*r);
       ~NetEBinary();
 
-      const NetExpr*left() const { return left_; }
-      const NetExpr*right() const { return right_; }
+      const NetExpr*left() const { return left_.ref(); }
+      const NetExpr*right() const { return right_.ref(); }
 
       char op() const { return op_; }
 
@@ -770,8 +812,8 @@ class NetEBinary  : public NetExpr {
 
     private:
       char op_;
-      NetExpr*left_;
-      NetExpr*right_;
+      NetExpr::REF left_;
+      NetExpr::REF right_;
 };
 
 class NetEConst  : public NetExpr {
@@ -799,7 +841,7 @@ class NetEUnary  : public NetExpr {
       ~NetEUnary();
 
       char op() const { return op_; }
-      const NetExpr* expr() const { return expr_; }
+      const NetExpr* expr() const { return expr_.ref(); }
 
       void set_width(unsigned w);
 
@@ -808,7 +850,7 @@ class NetEUnary  : public NetExpr {
 
     private:
       char op_;
-      NetExpr*expr_;
+      NetExpr::REF expr_;
 };
 
 /* System identifiers are represented here. */
@@ -827,9 +869,14 @@ class NetEIdent  : public NetExpr {
       string name_;
 };
 
-/* When a signal shows up in an expression, this type represents
-   it. From this the expression can get any kind of access to the
-   structural signal. */
+/*
+ * When a signal shows up in an expression, this type represents
+ * it. From this the expression can get any kind of access to the
+ * structural signal.
+ *
+ * A signal shows up as a node in the netlist so that structural
+ * activity can invoke the expression.
+ */
 class NetESignal  : public NetExpr, public NetNode {
 
     public:
@@ -874,7 +921,6 @@ class Design {
       NetExpr*get_parameter(const string&name) const;
 
 	// SIGNALS
-
       void add_signal(NetNet*);
       void del_signal(NetNet*);
       NetNet*find_signal(const string&name);
@@ -882,6 +928,9 @@ class Design {
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);
+
+	// ESIGNALS
+      NetESignal* get_esignal(NetNet*net);
 
 	// PROCESSES
       void add_process(NetProcTop*);
@@ -904,7 +953,9 @@ class Design {
       string local_symbol(const string&path);
 
     private:
-      map<string,NetExpr*> parameters_;
+	// List all the parameters in the design. This table includes
+	// the parameters of instantiated modules in canonical names.
+      map<string,NetExpr::REF> parameters_;
 
 	// List all the signals in the design.
       NetNet*signals_;
@@ -916,6 +967,9 @@ class Design {
       NetProcTop*procs_;
 
       map<string,string> flags_;
+
+	// Use this map to prevent duplicate signals.
+      map<string,NetESignal*> esigs_;
 
       unsigned lcounter_;
 
@@ -966,6 +1020,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.21  1999/03/01 03:27:53  steve
+ *  Prevent the duplicate allocation of ESignal objects.
+ *
  * Revision 1.20  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *

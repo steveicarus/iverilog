@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.14 1999/02/21 17:01:57 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.15 1999/03/01 03:27:53 steve Exp $"
 #endif
 
 /*
@@ -117,7 +117,7 @@ void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 
 void NetAssign::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Procedural assign: " << *rval_ << endl;
+      o << setw(ind) << "" << "Procedural assign: " << *rval_.ref() << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -311,12 +311,12 @@ void NetBlock::dump(ostream&o, unsigned ind) const
 
 void NetCase::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "case (" << *expr_ << ")" << endl;
+      o << setw(ind) << "" << "case (" << *expr_.ref() << ")" << endl;
 
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 	    o << setw(ind+2) << "";
-	    if (items_[idx].guard)
-		  o << *items_[idx].guard << ":";
+	    if (items_[idx].guard.ref())
+		  o << *items_[idx].guard.ref() << ":";
 	    else
 		  o << "default:";
 
@@ -386,12 +386,12 @@ void NetTask::dump(ostream&o, unsigned ind) const
 
       if (nparms_ > 0) {
 	    o << "(";
-	    if (parms_[0])
+	    if (parms_[0].ref())
 		  parms_[0]->dump(o);
 
 	    for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
 		  o << ", ";
-		  if (parms_[idx])
+		  if (parms_[idx].ref())
 			parms_[idx]->dump(o);
 	    }
 
@@ -402,7 +402,7 @@ void NetTask::dump(ostream&o, unsigned ind) const
 
 void NetWhile::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "while (" << *cond_ << ")" << endl;
+      o << setw(ind) << "" << "while (" << *cond_.ref() << ")" << endl;
       proc_->dump(o, ind+3);
 }
 
@@ -475,11 +475,11 @@ void Design::dump(ostream&o) const
 {
       o << "ELABORATED PARAMETERS:" << endl;
       {
-	    map<string,NetExpr*>::const_iterator pp;
+	    map<string,NetExpr::REF>::const_iterator pp;
 	    for (pp = parameters_.begin()
 		       ; pp != parameters_.end() ;  pp ++) {
 		  o << "    " << (*pp).first << " = "  <<
-			*(*pp).second << ";" << endl;
+			*(*pp).second.ref() << ";" << endl;
 	    }
       }
 
@@ -515,6 +515,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.15  1999/03/01 03:27:53  steve
+ *  Prevent the duplicate allocation of ESignal objects.
+ *
  * Revision 1.14  1999/02/21 17:01:57  steve
  *  Add support for module parameters.
  *
