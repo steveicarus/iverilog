@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.73 2003/02/25 03:39:53 steve Exp $"
+#ident "$Id: stub.c,v 1.74 2003/03/07 06:04:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -135,8 +135,19 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_REALNUM:
-	    fprintf(out, "%*s<realnum=%f>\n", ind, "", ivl_expr_dvalue(net));
-	    break;
+	      {
+		    int idx;
+		    union foo {
+			  double rv;
+			  unsigned char bv[sizeof(double)];
+		    } tmp;
+		    tmp.rv = ivl_expr_dvalue(net);
+		    fprintf(out, "%*s<realnum=%f (", ind, "", tmp.rv);
+		    for (idx = sizeof(double) ;  idx > 0 ;  idx -= 1)
+			  fprintf(out, "%02x", tmp.bv[idx-1]);
+		    fprintf(out, ")>\n");
+	      }
+	      break;
 
 	  default:
 	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
@@ -781,6 +792,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.74  2003/03/07 06:04:58  steve
+ *  Raw dump of double values for testing purposes.
+ *
  * Revision 1.73  2003/02/25 03:39:53  steve
  *  Eliminate use of ivl_lpm_name.
  *
