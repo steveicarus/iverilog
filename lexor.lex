@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.31 1999/07/10 01:03:18 steve Exp $"
+#ident "$Id: lexor.lex,v 1.32 1999/07/11 17:15:16 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -60,6 +60,8 @@ static int comment_enter;
 %x CSTRING
 %s UDPTABLE
 %x PPTIMESCALE
+
+W [ \t\b\f\r]+
 
 %%
 
@@ -202,8 +204,8 @@ static int comment_enter;
       yylval.realtime = new verireal(yytext);
       return REALTIME; }
 
-`celldefine[ \t]*\n { yylloc.first_line += 1; }
-`endcelldefine[ \t]*\n { yylloc.first_line += 1; }
+
+  /* Notice and handle the timescale directive. */
 
 `timescale { BEGIN(PPTIMESCALE); }
 <PPTIMESCALE>. { ; }
@@ -213,6 +215,70 @@ static int comment_enter;
       yylloc.first_line += 1;
       BEGIN(0); }
 
+
+  /* These are directives that I do not yet support. I think that IVL
+     should handle these, not an external preprocessor. */
+
+^`celldefine{W}?.*           {  }
+^`default_nettype{W}?.*      {  }
+^`delay_mode_distributed{W}?.*  {  }
+^`delay_mode_unit{W}?.*      {  }
+^`delay_mode_path{W}?.*      {  }
+^`disable_portfaults{W}?.*   {  }
+^`enable_portfaults{W}?.*    {  }
+^`endcelldefine{W}?.*        {  }
+^`endprotect{W}?.*           {  }
+^`nosuppress_faults{W}?.*    {  }
+^`nounconnected_drive{W}?*   {  }
+^`protect{W}?.*              {  }
+^`resetall{W}?.*             {  }
+^`suppress_faults{W}?.*      {  }
+^`unconnected_drive{W}?*     {  }
+^`uselib{W}?.*               {  }
+
+
+  /* These are directives that are not supported by me and should have
+     been handled by an external preprocessor such as ivlpp. */
+
+^`define{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": `define not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^{W}?`else{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": `else not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^{W}?`endif{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": `endif not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^{W}?`ifdef{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": `ifdef not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^`include{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": `include not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+^`undef{W}?.* {
+      cerr << yylloc.text << ":" << yylloc.first_line <<
+	    ": `undef not supported. Use an external preprocessor."
+	   << endl;
+  }
+
+
+
+  /* Final catchall. something got lost or mishandled. */
 
 . {   cerr << yylloc.first_line << ": unmatched character (";
       if (isgraph(yytext[0]))
