@@ -1,7 +1,7 @@
 #ifndef __PDelays_H
 #define __PDelays_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,16 +19,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.h,v 1.5 2001/12/29 20:19:31 steve Exp $"
+#ident "$Id: PDelays.h,v 1.6 2002/06/14 03:25:51 steve Exp $"
 #endif
 
 # include  "svector.h"
 # include  <string>
+# include  <iostream>
 
-#ifdef HAVE_IOSFWD
-# include  <iosfwd>
-#else
-class ostream;
+#ifdef __GNUC__
+#if __GNUC__ > 2
+using namespace std;
+#endif
 #endif
 
 class Design;
@@ -71,6 +72,9 @@ ostream& operator << (ostream&o, const PDelays&);
 
 /*
  * $Log: PDelays.h,v $
+ * Revision 1.6  2002/06/14 03:25:51  steve
+ *  Compiler portability.
+ *
  * Revision 1.5  2001/12/29 20:19:31  steve
  *  Do not delete delay expressions of UDP instances.
  *

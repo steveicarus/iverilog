@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: HName.h,v 1.1 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: HName.h,v 1.2 2002/06/14 03:25:51 steve Exp $"
 #endif
 
-#ifdef HAVE_IOSFWD
-# include  <iosfwd>
-#else
-class ostream;
+# include  <iostream>
+#ifdef __GNUC__
+#if __GNUC__ > 2
+using namespace std;
+#endif
 #endif
 
 /*
@@ -78,6 +79,9 @@ extern bool operator == (const hname_t&, const hname_t&);
 
 /*
  * $Log: HName.h,v $
+ * Revision 1.2  2002/06/14 03:25:51  steve
+ *  Compiler portability.
+ *
  * Revision 1.1  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
