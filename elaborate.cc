@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.95 1999/09/22 04:30:04 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.96 1999/09/22 21:25:42 steve Exp $"
 #endif
 
 /*
@@ -1608,6 +1608,12 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       }
       assert(rv);
 
+	/* Try to evaluate the expression, at least as far as possible. */
+      if (NetExpr*tmp = rv->eval_tree()) {
+	    delete rv;
+	    rv = tmp;
+      }
+      
       NetAssign*cur;
 
 	/* Rewrite delayed assignments as assignments that are
@@ -1630,10 +1636,13 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    string n = des->local_symbol(path);
 	    unsigned wid = reg->pin_count();
 
+	    rv->set_width(reg->pin_count());
+	    rv = pad_to_width(rv, reg->pin_count());
+
 	    if (! rv->set_width(reg->pin_count())) {
-		  cerr << get_line() << ": Unable to match expression "
-			"width of " << rv->expr_width() << " to l-value"
-			" width of " << wid << "." << endl;
+		  cerr << get_line() << ": error: Unable to match "
+			"expression width of " << rv->expr_width() <<
+			" to l-value width of " << wid << "." << endl;
 		    //XXXX delete rv;
 		  return 0;
 	    }
@@ -1711,7 +1720,7 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       } else {
 	    assert(reg->pin_count() == 1);
-	    cerr << get_line() << ": Sorry, l-value bit select expression"
+	    cerr << get_line() << ": Sorry: l-value bit select expression"
 		  " must be constant." << endl;
 	    delete reg;
 	    delete rv;
@@ -2616,6 +2625,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.96  1999/09/22 21:25:42  steve
+ *  Expand bits in delayed assignments.
+ *
  * Revision 1.95  1999/09/22 04:30:04  steve
  *  Parse and elaborate named for/join blocks.
  *
