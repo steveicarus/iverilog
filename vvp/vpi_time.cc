@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.12 2003/02/03 01:09:20 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.13 2003/03/13 04:59:21 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -134,8 +134,6 @@ static vpiHandle timevar_handle(int code, vpiHandle ref)
 
 static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      static char buf_obj[128];
-
 	/* Keep a persistent structure for passing time values back to
 	   the caller. */
       static struct t_vpi_time time_value;
@@ -145,6 +143,8 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
       unsigned long x, num_bits;
       vvp_time64_t simtime = schedule_simtime();
       int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
+
+      char*rbuf = need_result_buf(128, RBUF_VAL);
 
 	/* Calculate the divisor needed to scale the simulation time
 	   (in time_precision units) to time units of the scope. */
@@ -180,28 +180,28 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	    x = simtime;
 	    num_bits = 8 * sizeof(unsigned long);
 
-	    buf_obj[num_bits] = 0;
+	    rbuf[num_bits] = 0;
 	    for (unsigned i = 1; i <= num_bits; i++) {
-	      buf_obj[num_bits-i] = x  & 1 ? '1' : '0';
+	      rbuf[num_bits-i] = x  & 1 ? '1' : '0';
 	      x = x >> 1;
 	    }
 
-	    vp->value.str = buf_obj;
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(buf_obj, "%lu", simtime);
-	    vp->value.str = buf_obj;
+	    sprintf(rbuf, "%lu", simtime);
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiOctStrVal:
-	    sprintf(buf_obj, "%lo", simtime);
-	    vp->value.str = buf_obj;
+	    sprintf(rbuf, "%lo", simtime);
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(buf_obj, "%lx", simtime);
-	    vp->value.str = buf_obj;
+	    sprintf(rbuf, "%lx", simtime);
+	    vp->value.str = rbuf;
 	    break;
 
 	  default:
@@ -268,6 +268,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.13  2003/03/13 04:59:21  steve
+ *  Use rbufs instead of static buffers.
+ *
  * Revision 1.12  2003/02/03 01:09:20  steve
  *  Allow $display of $simtime.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.13 2003/03/01 00:46:13 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.14 2003/03/13 04:59:21 steve Exp $"
 #endif
 
 /*
@@ -112,23 +112,25 @@ static char* vthr_vec_get_str(int code, vpiHandle ref)
       return 0;
 }
 
-static char buf[4096];
-
 static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
       unsigned char*bits = new unsigned char[rfp->wid];
+      char *rbuf = need_result_buf((rfp->wid+2)/3 + 1, RBUF_VAL);
+
       for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1)
 	    bits[idx] = get_bit(rfp, idx);
 
-      vpip_bits_to_dec_str(bits, rfp->wid, buf, sizeof buf, rfp->signed_flag);
+      vpip_bits_to_dec_str(bits, rfp->wid, rbuf, rfp->wid+1, rfp->signed_flag);
+      vp->value.str = rbuf;
+
+      return;
 }
 
 static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
-    char*cp = buf;
     char tmp = 0;
-
-    assert(rfp->wid/8 < int(sizeof(buf)-1));
+    char *rbuf = need_result_buf((rfp->wid / 8) + 1, RBUF_VAL);
+    char *cp = rbuf;
 
     for(int bitnr=rfp->wid-1; bitnr>=0; bitnr--){
 	tmp <<= 1;
@@ -149,6 +151,7 @@ static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 	}
     }
     *cp++ = 0;
+    vp->value.str = rbuf;
     return;
 }
 
@@ -164,78 +167,77 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	     || (ref->vpi_type->type_code==vpiConstant));
 
       struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
+      char *rbuf;
       
       unsigned wid = rfp->wid;
 
       switch (vp->format) {
 
 	  case vpiBinStrVal:
-	    assert(wid < sizeof buf);
+	    rbuf = need_result_buf(wid+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		  buf[wid-idx-1] = "01xz"[get_bit(rfp, idx)];
+		  rbuf[wid-idx-1] = "01xz"[get_bit(rfp, idx)];
 	    }
-	    buf[wid] = 0;
-	    vp->value.str = buf;
+	    rbuf[wid] = 0;
+	    vp->value.str = rbuf;
 	    break;
 	    
 	  case vpiHexStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
-		assert(hwid < sizeof buf);
-		buf[hwid] = 0;
+		rbuf = need_result_buf(hwid+1, RBUF_VAL);
+		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      hval = hval | (get_bit(rfp, idx) << 2*(idx % 4));
 
 		      if (idx%4 == 3) {
 			    hwid -= 1;
-			    buf[hwid] = hex_digits[hval];
+			    rbuf[hwid] = hex_digits[hval];
 			    hval = 0;
 		      }
 		}
 
 		if (hwid > 0) {
 		      hwid -= 1;
-		      buf[hwid] = hex_digits[hval];
+		      rbuf[hwid] = hex_digits[hval];
 		      hval = 0;
 		}
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
 	  case vpiOctStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 2) / 3;
-		assert(hwid < sizeof buf);
-		buf[hwid] = 0;
+		rbuf = need_result_buf(hwid+1, RBUF_VAL);
+		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      hval = hval | (get_bit(rfp,idx) << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;
-			    buf[hwid] = oct_digits[hval];
+			    rbuf[hwid] = oct_digits[hval];
 			    hval = 0;
 		      }
 		}
 
 		if (hwid > 0) {
 		      hwid -= 1;
-		      buf[hwid] = oct_digits[hval];
+		      rbuf[hwid] = oct_digits[hval];
 		      hval = 0;
 		}
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
 	  case vpiDecStrVal:
 	    vthr_vec_DecStrVal(rfp, vp);
-	    vp->value.str = buf;
 	    break;
 
 	  case vpiStringVal:
 	    vthr_vec_StringVal(rfp, vp);
-	    vp->value.str = buf;
 	    break;
 
 	  case vpiIntVal:
@@ -388,8 +390,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
       assert(ref->vpi_type->type_code==vpiConstant);
 
       struct __vpiVThrWord*obj = (struct __vpiVThrWord*)ref;
-
-      static char buf[66];
+      char *rbuf = need_result_buf(66, RBUF_VAL);
 
       double val = 0.0;
 
@@ -410,20 +411,18 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(buf, "%0.0f", val);
-	    vp->value.str = buf;
+	    sprintf(rbuf, "%0.0f", val);
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(buf, "%lx", (long)val);
-	    vp->value.str = buf;
+	    sprintf(rbuf, "%lx", (long)val);
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
 		unsigned long vali = (unsigned long)val;
 		unsigned len = 0;
-
-		assert(8*sizeof(vali) < sizeof buf);
 
 		while (vali > 0) {
 		      len += 1;
@@ -432,16 +431,16 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		vali = (unsigned long)val;
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      buf[len-idx-1] = (vali & 1)? '1' : '0';
+		      rbuf[len-idx-1] = (vali & 1)? '1' : '0';
 		      vali /= 2;
 		}
 
-		buf[len] = 0;
+		rbuf[len] = 0;
 		if (len == 0) {
-		      buf[0] = '0';
-		      buf[1] = 0;
+		      rbuf[0] = '0';
+		      rbuf[1] = 0;
 		}
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
@@ -478,6 +477,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.14  2003/03/13 04:59:21  steve
+ *  Use rbufs instead of static buffers.
+ *
  * Revision 1.13  2003/03/01 00:46:13  steve
  *  Careful about compiletf calls.
  *

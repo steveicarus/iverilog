@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.24 2003/03/10 23:37:07 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.25 2003/03/13 04:59:21 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -28,8 +28,6 @@
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
-
-static char buf[4096];
 
 static int string_get(int code, vpiHandle ref)
 {
@@ -59,80 +57,63 @@ static int string_get(int code, vpiHandle ref)
 
 static void string_value(vpiHandle ref, p_vpi_value vp)
 {
-      int size;
       unsigned uint_value;
-      char *cp;
-
       struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
+      int size = strlen(rfp->value);
+      char*rbuf = 0;
+      char*cp;
+
       assert((ref->vpi_type->type_code == vpiConstant)
 	     || ((ref->vpi_type->type_code == vpiParameter)));
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
 	  case vpiStringVal:
-	    vp->value.str = (char*)rfp->value;
-	    vp->format = vpiStringVal;
+	    rbuf = need_result_buf(size + 1, RBUF_VAL);
+	    strcpy(rbuf, (char*)rfp->value);
+	    vp->value.str = rbuf;
 	    break;
 
           case vpiDecStrVal:
-	      size = strlen(rfp->value);
 	      if (size > 4){
 		  // We only support standard integers. Ignore other bytes...
 		  size = 4;	
 		  fprintf(stderr, "Warning (vpi_const.cc): %%d on constant strings only looks "
 			  "at first 4 bytes!\n");
 	      }
-
+	      rbuf = need_result_buf(size + 1, RBUF_VAL);
 	      uint_value = 0;
 	      for(int i=0; i<size;i ++){
 		  uint_value <<=8;
 		  uint_value += (unsigned char)(rfp->value[i]);
 	      }
-
-	      sprintf(buf, "%u", uint_value);
-
+	      sprintf(rbuf, "%u", uint_value);
 	      vp->format = vpiDecStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
           case vpiBinStrVal:
-	      size = strlen(rfp->value);
-	      if (size*8 > (int)(sizeof(buf)/sizeof(char))-1 ){
-		  // Avoid overflow of 'buf'
-		  // 4096 should be sufficient for most cases though. ;-)
-		  size = (sizeof(buf)/sizeof(char)-2)/8;	
-	      }
-
-	      cp = buf;
+	      rbuf = need_result_buf(8 * size + 1, RBUF_VAL);
+	      cp = rbuf;
 	      for(int i=0; i<size;i ++){
 		  for(int bit=7;bit>=0; bit--){
 		      *cp++ = "01"[ (rfp->value[i]>>bit)&1 ];
 		  }
 	      }
 	      *cp = 0;
-
-	      vp->format = vpiBinStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
           case vpiHexStrVal:
-	      size = strlen(rfp->value);
-	      if (size*2 > (int)(sizeof(buf)/sizeof(char))-1 ){
-		  // Avoid overflow of 'buf'
-		  // 4096 should be sufficient for most cases though. ;-)
-		  size = (sizeof(buf)/sizeof(char)-2)/2;	
-	      }
-
-	      cp = buf;
+	      rbuf = need_result_buf(2 * size + 1, RBUF_VAL);
+	      cp = rbuf;
 	      for(int i=0; i<size;i++){
 		  for(int nibble=1;nibble>=0; nibble--){
 		      *cp++ = "0123456789abcdef"[ (rfp->value[i]>>(nibble*4))&15 ];
 		  }
 	      }
 	      *cp = 0;
-
-	      vp->format = vpiHexStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
           case vpiOctStrVal:
@@ -206,11 +187,14 @@ struct __vpiStringParam  : public __vpiStringConst {
 static char* string_param_get_str(int code, vpiHandle obj)
 {
       struct __vpiStringParam*rfp = (struct __vpiStringParam*)obj;
+      char *rbuf = need_result_buf(strlen(rfp->basename) + 1, RBUF_STR);
+
       assert(obj->vpi_type->type_code == vpiParameter);
 
       switch (code) {
 	  case vpiName:
-	    return const_cast<char*>(rfp->basename);
+	    strcpy(rbuf, rfp->basename);
+	    return rbuf;
 	  default:
 	    return 0;
       }
@@ -272,7 +256,8 @@ static void binary_vpiStringVal(struct __vpiBinaryConst*rfp, p_vpi_value vp)
       unsigned nchar = rfp->nbits / 8;
       unsigned tail = rfp->nbits%8;
 
-      char*cp = buf;
+      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
+      char*cp = rbuf;
 
       if (tail > 0) {
 	    char char_val = 0;
@@ -309,72 +294,73 @@ static void binary_vpiStringVal(struct __vpiBinaryConst*rfp, p_vpi_value vp)
       }
 
       *cp = 0;
-      vp->format = vpiStringVal;
-      vp->value.str = buf;
+      vp->value.str = rbuf;
 }
 
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
-      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
       assert(ref->vpi_type->type_code == vpiConstant);
+
+      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
+      char*rbuf = 0;
+
 
       switch (vp->format) {
 
 	  case vpiObjTypeVal:
-	  case vpiBinStrVal:
-	    assert(rfp->nbits < sizeof buf);
+	  case vpiBinStrVal: {
+	    rbuf = need_result_buf(rfp->nbits + 1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
 		  unsigned nibble = idx/4;
 		  unsigned shift  = 2 * (idx%4);
 		  unsigned val = (rfp->bits[nibble] >> shift) & 3;
 
-		  buf[rfp->nbits-idx-1] = "01xz"[val];
+		  rbuf[rfp->nbits-idx-1] = "01xz"[val];
 	    }
-	    buf[rfp->nbits] = 0;
-	    vp->value.str = buf;
-	    vp->format = vpiBinStrVal;
+	    rbuf[rfp->nbits] = 0;
+	    vp->value.str = rbuf;
 	    break;
+	  }
 
 	  case vpiDecStrVal: {
 		unsigned wid = rfp->nbits;
+		rbuf = need_result_buf(rfp->nbits + 1, RBUF_VAL);
 		unsigned char*tmp = new unsigned char[wid];
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      tmp[idx] = (rfp->bits[idx/4] >> 2*(idx%4)) & 3;
 
-		vpip_bits_to_dec_str(tmp, wid, buf, sizeof buf,
+		vpip_bits_to_dec_str(tmp, wid, rbuf, wid + 1,
 				     rfp->signed_flag);
 
 		delete[]tmp;
-		vp->value.str = buf;
-		vp->format = vpiDecStrVal;
+		vp->value.str = rbuf;
 		break;
 	  }
 
 	  case vpiHexStrVal: {
 		unsigned nchar = (rfp->nbits+3)/4;
-		assert(nchar < sizeof buf);
+	        rbuf = need_result_buf(nchar + 1, RBUF_VAL);
 		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 4) {
 		      unsigned nibble = idx/4;
 		      unsigned vals = rfp->bits[nibble];
 
 		      if (vals == 0xff) {
-			    buf[nchar-idx/4-1] = 'z';
+			    rbuf[nchar-idx/4-1] = 'z';
 		      } else if (vals == 0xaa) {
-			    buf[nchar-idx/4-1] = 'x';
+			    rbuf[nchar-idx/4-1] = 'x';
 		      } else if (vals & 0xaa) {
-			    buf[nchar-idx/4-1] = 'X';
+			    rbuf[nchar-idx/4-1] = 'X';
 		      } else {
 			    unsigned val = vals&1;
 			    if (vals&0x04) val |= 2;
 			    if (vals&0x10) val |= 4;
 			    if (vals&0x40) val |= 8;
-			    buf[nchar-idx/4-1] = "0123456789abcdef"[val];
+			    rbuf[nchar-idx/4-1] = "0123456789abcdef"[val];
 		      }
 		}
 		      
-		buf[nchar] = 0;
-		vp->value.str = buf;
-		vp->format = vpiHexStrVal;
+		rbuf[nchar] = 0;
+		vp->value.str = rbuf;
 		break;
 	  }
 
@@ -412,7 +398,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 	  case vpiVectorVal: {
 	      unsigned int obit = 0;
 	      unsigned hwid = (rfp->nbits - 1)/32 + 1;
-	      char*rbuf = need_result_buf(hwid*sizeof(s_vpi_vecval), RBUF_VAL);
+	      rbuf = need_result_buf(hwid*sizeof(s_vpi_vecval), RBUF_VAL);
 
 	      s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 	      vp->value.vector = op;
@@ -550,8 +536,9 @@ static int dec_get(int code, vpiHandle ref)
 static void dec_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiDecConst*rfp = (struct __vpiDecConst*)ref;
-      char* cp;
       assert(ref->vpi_type->type_code == vpiConstant);
+      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
+      char*cp = rbuf;
 
       switch (vp->format) {
 
@@ -562,35 +549,30 @@ static void dec_value(vpiHandle ref, p_vpi_value vp)
 	  }
 
           case vpiDecStrVal:
-	      sprintf(buf, "%d", rfp->value);
+	      sprintf(rbuf, "%d", rfp->value);
 
-	      vp->format = vpiDecStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
           case vpiBinStrVal:
-	      cp = buf;
 	      for(int bit=31; bit<=0;bit--){
 		  *cp++ = "01"[ (rfp->value>>bit)&1 ];
 	      }
 	      *cp = 0;
 
-	      vp->format = vpiBinStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
           case vpiHexStrVal:
-	      sprintf(buf, "%08x", rfp->value);
+	      sprintf(rbuf, "%08x", rfp->value);
 
-	      vp->format = vpiHexStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
           case vpiOctStrVal:
-	      sprintf(buf, "%011x", rfp->value);
+	      sprintf(rbuf, "%011x", rfp->value);
 
-	      vp->format = vpiOctStrVal;
-	      vp->value.str = buf;
+	      vp->value.str = rbuf;
 	      break;
 
 	  default:
@@ -631,6 +613,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.25  2003/03/13 04:59:21  steve
+ *  Use rbufs instead of static buffers.
+ *
  * Revision 1.24  2003/03/10 23:37:07  steve
  *  Direct support for string parameters.
  *

@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.7 2003/03/06 04:32:00 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.8 2003/03/13 04:59:21 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <stdlib.h>
+# include  <string.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -43,11 +44,13 @@ static char* real_var_get_str(int code, vpiHandle ref)
       assert(ref->vpi_type->type_code == vpiRealVar);
 
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      char *rbuf = need_result_buf(strlen(rfp->name) + 1, RBUF_STR);
 
       switch (code) {
 
 	  case vpiName:
-	    return const_cast<char*>(rfp->name);
+	    strcpy(rbuf, rfp->name);
+	    return rbuf;
 
 	  default:
 	    return 0;
@@ -60,8 +63,8 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       assert(ref->vpi_type->type_code == vpiRealVar);
 
-      static char buf[66];
       struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -76,20 +79,18 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    sprintf(buf, "%0.0f", rfp->value);
-	    vp->value.str = buf;
+	    sprintf(rbuf, "%0.0f", rfp->value);
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiHexStrVal:
-	    sprintf(buf, "%lx", (long)rfp->value);
-	    vp->value.str = buf;
+	    sprintf(rbuf, "%lx", (long)rfp->value);
+	    vp->value.str = rbuf;
 	    break;
 
 	  case vpiBinStrVal: {
 		unsigned long val = (unsigned long)rfp->value;
 		unsigned len = 0;
-
-		assert(8*sizeof(val) < sizeof buf);
 
 		while (val > 0) {
 		      len += 1;
@@ -98,16 +99,16 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		val = (unsigned long)rfp->value;
 		for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
-		      buf[len-idx-1] = (val & 1)? '1' : '0';
+		      rbuf[len-idx-1] = (val & 1)? '1' : '0';
 		      val /= 2;
 		}
 
-		buf[len] = 0;
+		rbuf[len] = 0;
 		if (len == 0) {
-		      buf[0] = '0';
-		      buf[1] = 0;
+		      rbuf[0] = '0';
+		      rbuf[1] = 0;
 		}
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
@@ -178,6 +179,9 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.8  2003/03/13 04:59:21  steve
+ *  Use rbufs instead of static buffers.
+ *
  * Revision 1.7  2003/03/06 04:32:00  steve
  *  Use hashed name strings for identifiers.
  *
