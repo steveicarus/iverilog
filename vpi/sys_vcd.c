@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.53 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.54 2004/02/15 03:17:15 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -38,6 +38,7 @@
 #endif
 # include  "vcd_priv.h"
 
+static char*dump_path = 0;
 static FILE*dump_file = 0;
 
 static const char*units_names[] = {
@@ -355,14 +356,18 @@ static int sys_dumpall_calltf(char*name)
       return 0;
 }
 
-static void open_dumpfile(const char*path)
+static void open_dumpfile(void)
 {
-      dump_file = fopen(path, "w");
+      if (dump_path == 0) {
+	    dump_path = strdup("dump.vcd");
+      }
+
+      dump_file = fopen(dump_path, "w");
 
       if (dump_file == 0) {
 	    vpi_mcd_printf(1, 
 			   "VCD Error: Unable to open %s for output.\n", 
-			   path);
+			   dump_path);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
@@ -372,7 +377,7 @@ static void open_dumpfile(const char*path)
 
 	    vpi_mcd_printf(1, 
 			   "VCD info: dumpfile %s opened for output.\n", 
-			   path);
+			   dump_path);
 	    
 	    time(&walltime);
 
@@ -398,13 +403,13 @@ static void open_dumpfile(const char*path)
       }
 }
 
-static int sys_dumpfile_calltf(char*name)
+static int sys_dumpfile_compiletf(char*name)
 {
-      char*path;
-
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item;
+
+      char*path;
 
       if (argv && (item = vpi_scan(argv))) {
 	    s_vpi_value value;
@@ -425,19 +430,23 @@ static int sys_dumpfile_calltf(char*name)
 	    vpi_free_object(argv);
 
       } else {
-	    path = strdup("dumpfile.vcd");
+	    path = strdup("dump.vcd");
       }
 
-      if (dump_file) {
-	    fclose(dump_file);
-	    dump_file = 0;
+      if (dump_path) {
+	    vpi_mcd_printf(1, "VCD Warning:"
+			   " Overriding dumpfile path %s with %s\n",
+			   dump_path, path);
+	    free(dump_path);
       }
 
-      assert(dump_file == 0);
-      open_dumpfile(path);
+      dump_path = path;
 
-      free(path);
+      return 0;
+}
 
+static int sys_dumpfile_calltf(char*name)
+{
       return 0;
 }
 
@@ -703,7 +712,7 @@ static int sys_dumpvars_calltf(char*name)
       vpiHandle argv;
 
       if (dump_file == 0) {
-	    open_dumpfile("dumpfile.vcd");
+	    open_dumpfile();
 	    if (dump_file == 0)
 		  return 0;
       }
@@ -794,7 +803,7 @@ void sys_vcd_register()
       tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpfile";
       tf_data.calltf    = sys_dumpfile_calltf;
-      tf_data.compiletf = 0;
+      tf_data.compiletf = sys_dumpfile_compiletf;
       tf_data.sizetf    = 0;
       tf_data.user_data = "$dumpfile";
       vpi_register_systf(&tf_data);
@@ -810,6 +819,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.54  2004/02/15 03:17:15  steve
+ *  dumpfile selects file at compiletf time.
+ *
  * Revision 1.53  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *
@@ -836,112 +848,5 @@ void sys_vcd_register()
  *
  * Revision 1.45  2003/08/06 18:24:55  steve
  *  Fix error truncating bitvec in output.
- *
- * Revision 1.44  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.43  2003/04/27 02:22:28  steve
- *  Capture VCD dump value in the rosync time period.
- *
- * Revision 1.42  2003/02/12 05:28:01  steve
- *  Set dumpoff of real variables to NaN.
- *
- * Revision 1.41  2003/02/11 05:21:33  steve
- *  Support dump of vpiRealVar objects.
- *
- * Revision 1.40  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.39  2002/11/17 22:28:42  steve
- *  Close old file if $dumpfile is called again.
- *
- * Revision 1.38  2002/11/14 22:43:58  steve
- *  Save vpiFullName results.
- *
- * Revision 1.37  2002/08/15 02:12:20  steve
- *  add dumpvars_compiletf to check first argument.
- *
- * Revision 1.36  2002/08/12 01:35:05  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.35  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.34  2002/07/12 17:09:21  steve
- *  Remember to scan IntegerVars.
- *
- * Revision 1.33  2002/07/12 17:02:38  steve
- *  Scan scope objects before subscopes.
- *
- * Revision 1.32  2002/07/12 02:10:20  steve
- *  Make types array static, not on stack.
- *
- * Revision 1.31  2002/07/12 02:08:10  steve
- *  Eliminate use of vpiInternalScope.
- *
- * Revision 1.30  2002/06/21 04:59:36  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.29  2002/05/23 01:07:26  steve
- *  Ignore Named events in vcd signal scan.
- *
- * Revision 1.28  2002/05/10 16:00:16  steve
- *  ignore vpiMemory objects in vcd dumper.
- *
- * Revision 1.27  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
- *
- * Revision 1.26  2001/10/26 02:29:10  steve
- *  const/non-const warnings. (Stephan Boettcher)
- *
- * Revision 1.25  2001/10/25 04:19:53  steve
- *  VPI support for callback to return values.
- *
- * Revision 1.24  2001/10/15 01:50:23  steve
- *  Include scope information in VCD output.
- *
- * Revision 1.23  2001/10/14 18:32:06  steve
- *  More coverage of $dump related commands.
- *
- * Revision 1.22  2001/10/08 23:33:00  steve
- *  Fix pr283: signal values before enddefinitions in vcd. (Stephan Boettcher)
- *
- * Revision 1.21  2001/09/30 05:18:46  steve
- *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
- *
- * Revision 1.20  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.19  2001/07/16 18:53:16  steve
- *  Cut off scope iteration when depth runs out.
- *
- * Revision 1.18  2001/06/29 00:42:39  steve
- *  Get a private copy of the object name.
- *
- * Revision 1.17  2001/06/21 04:15:22  steve
- *  Add dumpon and dumpoff (Stephan Boettcher)
- *
- * Revision 1.16  2001/01/23 18:50:26  steve
- *  Forgot to actually *open* the VCD output.
- *
- * Revision 1.15  2001/01/22 20:58:31  steve
- *  Support default dumpfiles.
- *
- * Revision 1.14  2001/01/01 08:10:35  steve
- *  Handle function scopes in dumpvars scn (PR#95)
  */
 
