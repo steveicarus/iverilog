@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.8 2001/05/05 23:51:49 steve Exp $"
+#ident "$Id: schedule.cc,v 1.9 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -255,7 +255,7 @@ void schedule_simulate(void)
 		  break;
 
 		case TYPE_ASSIGN:
-		  functor_set(cur->fun, cur->val);
+		  functor_set(cur->fun, cur->val, 6, 6);
 		  break;
 
 		case TYPE_GEN:
@@ -271,6 +271,14 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.9  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.8  2001/05/05 23:51:49  steve
  *  Forward the simulation time for every event.
  *

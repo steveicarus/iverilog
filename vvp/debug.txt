@@ -1,0 +1,26 @@
+
+INTERACTIVE ASSEMBLY DEBUGGER
+
+The VVP runtime includes an interactive runtime debugger that allows
+the expert user to trace the actions of the VVP simulation. It is
+entered just before simulation starts if the user uses the -d flag to
+the vvp command, and it is also entered when an interesting breakpoint
+is triggered. The -d flag is useful for giving the user a chance to
+set breakpoints.
+
+DEBUGGER COMMANDS
+
+* go
+
+Resume the simulation. The simulation will continue until the next
+breakpoint, or until the simulation ends.
+
+* lookup <symbol>...
+
+Give a symbol name, and this function will lookup that symbol and
+return the type and address.
+
+fbreak <address>...
+
+Set the breakpoint on a given functor address. (Use the lookup
+function to locate the address.)

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.57 2001/05/06 17:42:22 steve Exp $"
+#ident "$Id: compile.cc,v 1.58 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -300,7 +300,12 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
       obj->ival = 0x33;
       obj->oval = 2;
+      obj->odrive0 = 6;
+      obj->odrive1 = 6;
       obj->mode = 0;
+#if defined(WIDH_DEBUG)
+      obj->breakpoint = 0;
+#endif
 
       if (strcmp(type, "OR") == 0) {
 	    obj->table = ft_OR;
@@ -406,6 +411,9 @@ void compile_udp_functor(char*label, char*type,
       iobj->old_ival = obj->ival;
       iobj->oval = u->init;
       iobj->mode = M42;
+#if defined(WITH_DEBUG)
+      iobj->breakpoint = 0;
+#endif
       if (idx)
 	{
 	  iobj->out = fdx;
@@ -498,8 +506,13 @@ void compile_event(char*label, char*type,
 
       obj->ival = 0xaa;
       obj->oval = 2;
+      obj->odrive0 = 6;
+      obj->odrive0 = 6;
       obj->mode = 1;
       obj->out  = 0;
+#if defined(WITH_DEBUG)
+      obj->breakpoint = 0;
+#endif
 
       obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
       obj->event->threads = 0;
@@ -527,8 +540,13 @@ void compile_named_event(char*label, char*name)
 
       obj->ival = 0xaa;
       obj->oval = 2;
+      obj->odrive0 = 6;
+      obj->odrive1 = 6;
       obj->mode = 2;
       obj->out  = 0;
+#if defined(WITH_DEBUG)
+      obj->breakpoint = 0;
+#endif
 
       obj->event = (struct vvp_event_s*) malloc(sizeof (struct vvp_event_s));
       obj->event->threads = 0;
@@ -547,8 +565,13 @@ void compile_event_or(char*label, unsigned argc, struct symb_s*argv)
 
       obj->ival = 0xaa;
       obj->oval = 2;
+      obj->odrive0 = 6;
+      obj->odrive1 = 6;
       obj->mode = 2;
       obj->out  = 0;
+#if defined(WITH_DEBUG)
+      obj->breakpoint = 0;
+#endif
 
       obj->event = new struct vvp_event_s;
       obj->event->threads = 0;
@@ -872,7 +895,12 @@ void compile_variable(char*label, char*name, int msb, int lsb,
 	    obj->table = ft_var;
 	    obj->ival  = 0x22;
 	    obj->oval  = 0x02;
+	    obj->odrive0 = 6;
+	    obj->odrive1 = 6;
 	    obj->mode  = 0;
+#if defined(WITH_DEBUG)
+	    obj->breakpoint = 0;
+#endif
       }
 
 	/* Make the vpiHandle for the reg. */
@@ -894,9 +922,14 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 	    functor_t obj = functor_index(ipoint_index(fdx,idx));
 	    obj->table = ft_var;
-	    obj->ival  = 0x22;
+	    obj->ival  = 0x02;
 	    obj->oval  = 0x02;
+	    obj->odrive0 = 6;
+	    obj->odrive1 = 6;
 	    obj->mode  = 0;
+#if defined(WITH_DEBUG)
+	    obj->breakpoint = 0;
+#endif
       }
 
       assert(argc == wid);
@@ -1048,7 +1081,29 @@ void compile_dump(FILE*fd)
 }
 
 /*
+ * These functions are in support of the debugger.
+ *
+ * debug_lookup_functor
+ *    Use a name to locate a functor address. This only gets the LSB
+ *    of a vector, but it is enough to locate the object.
+ */
+vvp_ipoint_t debug_lookup_functor(const char*name)
+{
+      symbol_value_t val = sym_get_value(sym_functors, name);
+      return val.num;
+}
+
+
+/*
  * $Log: compile.cc,v $
+ * Revision 1.58  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.57  2001/05/06 17:42:22  steve
  *  Add the %ix/get instruction. (Stephan Boettcher)
  *
@@ -1084,110 +1139,5 @@ void compile_dump(FILE*fd)
  *
  * Revision 1.48  2001/05/01 01:09:39  steve
  *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.47  2001/04/30 03:53:19  steve
- *  Fix up functor inputs to support C<?> values.
- *
- * Revision 1.46  2001/04/29 23:13:33  steve
- *  Add bufif0 and bufif1 functors.
- *
- * Revision 1.45  2001/04/29 22:59:46  steve
- *  Support .net constant inputs.
- *
- * Revision 1.44  2001/04/28 20:24:03  steve
- *  input connect cleanup. (Stephan Boettcher)
- *
- * Revision 1.43  2001/04/26 15:52:22  steve
- *  Add the mode-42 functor concept to UDPs.
- *
- * Revision 1.42  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.41  2001/04/26 03:10:55  steve
- *  Redo and simplify UDP behavior.
- *
- * Revision 1.40  2001/04/24 03:48:53  steve
- *  Fix underflow when UDP has 1 input.
- *
- * Revision 1.39  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.38  2001/04/23 00:37:58  steve
- *  Support unconnected .net objects.
- *
- * Revision 1.37  2001/04/21 02:04:01  steve
- *  Add NAND and XNOR functors.
- *
- * Revision 1.36  2001/04/18 05:03:49  steve
- *  Resolve forward references for %fork.
- *
- * Revision 1.35  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.34  2001/04/15 16:37:48  steve
- *  add XOR support.
- *
- * Revision 1.33  2001/04/15 04:07:56  steve
- *  Add support for behavioral xnor.
- *
- * Revision 1.32  2001/04/14 05:10:56  steve
- *  support the .event/or statement.
- *
- * Revision 1.31  2001/04/13 03:55:18  steve
- *  More complete reap of all threads.
- *
- * Revision 1.30  2001/04/05 01:34:26  steve
- *  Add the .var/s and .net/s statements for VPI support.
- *
- * Revision 1.29  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.28  2001/04/01 22:25:33  steve
- *  Add the reduction nor instruction.
- *
- * Revision 1.27  2001/04/01 21:31:46  steve
- *  Add the buf functor type.
- *
- * Revision 1.26  2001/04/01 07:22:08  steve
- *  Implement the less-then and %or instructions.
- *
- * Revision 1.25  2001/04/01 06:40:45  steve
- *  Support empty statements for hanging labels.
- *
- * Revision 1.24  2001/04/01 06:12:13  steve
- *  Add the bitwise %and instruction.
- *
- * Revision 1.23  2001/04/01 04:34:28  steve
- *  Implement %cmp/x and %cmp/z instructions.
- *
- * Revision 1.22  2001/03/31 19:00:43  steve
- *  Add VPI support for the simulation time.
- *
- * Revision 1.21  2001/03/31 17:36:02  steve
- *  Add the jmp/1 instruction.
- *
- * Revision 1.20  2001/03/31 01:59:59  steve
- *  Add the ADD instrunction.
- *
- * Revision 1.19  2001/03/30 04:55:22  steve
- *  Add fork and join instructions.
- *
- * Revision 1.18  2001/03/29 03:46:36  steve
- *  Support named events as mode 2 functors.
- *
- * Revision 1.17  2001/03/28 17:24:32  steve
- *  include string.h for strcmp et al.
- *
- * Revision 1.16  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.15  2001/03/25 19:38:23  steve
- *  Support NOR and NOT gates.
- *
- * Revision 1.14  2001/03/25 03:54:26  steve
- *  Add JMP0XZ and postpone net inputs when needed.
- *
- * Revision 1.13  2001/03/25 00:35:35  steve
- *  Add the .net statement.
  */
 

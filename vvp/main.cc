@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.8 2001/04/04 04:33:08 steve Exp $"
+#ident "$Id: main.cc,v 1.9 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 # include  "config.h"
+# include  "debug.h"
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "schedule.h"
@@ -41,8 +42,12 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       const char*dump_path = 0;
       const char*design_path = 0;
+      bool debug_flag = false;
 
-      while ((opt = getopt(argc, argv, "D:M:m:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "D:dM:m:")) != EOF) switch (opt) {
+	  case 'd':
+	    debug_flag = true;
+	    break;
 	  case 'D':
 	    dump_path = optarg;
 	    break;
@@ -93,6 +98,9 @@ int main(int argc, char*argv[])
 	    return compile_errors;
       }
 
+      if (debug_flag)
+	    breakpoint();
+
       schedule_simulate();
 
       return 0;
@@ -100,6 +108,14 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.9  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.8  2001/04/04 04:33:08  steve
  *  Take vector form as parameters to vpi_call.
  *

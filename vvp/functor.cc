@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.16 2001/05/06 03:51:37 steve Exp $"
+#ident "$Id: functor.cc,v 1.17 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "udp.h"
 # include  "schedule.h"
 # include  "vthread.h"
+# include  "debug.h"
 # include  <assert.h>
 
 /*
@@ -233,17 +234,21 @@ static void functor_set_mode2(functor_t fp)
  * output. If the output changes any, then generate the necessary
  * propagation events to pass the output on.
  */
-void functor_set(vvp_ipoint_t ptr, unsigned bit, bool push)
+void functor_set(vvp_ipoint_t ptr, unsigned bit,
+		 unsigned drive0, unsigned drive1,
+		 bool push)
 {
       functor_t fp = functor_index(ptr);
       unsigned pp = ipoint_port(ptr);
       assert(fp);
-      // assert(fp->table);
+
+      assert(drive0 <= 8);
+      assert(drive1 <= 8);
 
 	/* Change the bits of the input. */
       static const unsigned char mask_table[4] = { 0xfc, 0xf3, 0xcf, 0x3f };
       unsigned char mask = mask_table[pp];
-      fp->ival = (fp->ival & mask) | (bit << (2*pp));
+      fp->ival = (fp->ival & mask) | ((bit & 3) << (2*pp));
 
       switch (fp->mode) {
 	  case 0:
@@ -264,6 +269,11 @@ void functor_set(vvp_ipoint_t ptr, unsigned bit, bool push)
 	    fp->obj->set(ptr, fp, push);
 	    break;
       }
+
+#if defined(WITH_DEBUG)
+      if (fp->breakpoint)
+	    breakpoint();
+#endif
 }
 
 unsigned functor_get(vvp_ipoint_t ptr)
@@ -272,7 +282,7 @@ unsigned functor_get(vvp_ipoint_t ptr)
       assert(fp);
       if ((fp->mode == M42) && fp->obj)
 	    return fp->obj->get(ptr, fp);
-      return fp->oval & 3;
+      return fp->oval;
 }
 
 /*
@@ -285,12 +295,14 @@ void functor_propagate(vvp_ipoint_t ptr)
 {
       functor_t fp = functor_index(ptr);
       unsigned char oval = fp->oval;
+      unsigned drive0 = fp->odrive0;
+      unsigned drive1 = fp->odrive1;
 
       vvp_ipoint_t idx = fp->out;
       while (idx) {
 	    functor_t idxp = functor_index(idx);
 	    vvp_ipoint_t next = idxp->port[ipoint_port(idx)];
-	    functor_set(idx, oval);
+	    functor_set(idx, oval, drive0, drive1);
 	    idx = next;
       }
 }
@@ -331,6 +343,14 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.17  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.16  2001/05/06 03:51:37  steve
  *  Regularize the mode-42 functor handling.
  *

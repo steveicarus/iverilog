@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.9 2001/04/26 00:01:33 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.10 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 /*
@@ -267,7 +267,8 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-		      functor_set(ipoint_index(rfp->bits,idx), val&1, true);
+		      functor_set(ipoint_index(rfp->bits,idx), val&1,
+				  6, 6, true);
 		      val >>= 1;
 		}
 		break;
@@ -276,16 +277,16 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
 		case vpi0:
-		  functor_set(rfp->bits, 0, true);
+		  functor_set(rfp->bits, 0, 6, 6, true);
 		  break;
 		case vpi1:
-		  functor_set(rfp->bits, 1, true);
+		  functor_set(rfp->bits, 1, 6, 6, true);
 		  break;
 		case vpiX:
-		  functor_set(rfp->bits, 2, true);
+		  functor_set(rfp->bits, 2, 6, 6, true);
 		  break;
 		case vpiZ:
-		  functor_set(rfp->bits, 3, true);
+		  functor_set(rfp->bits, 3, 6, 6, true);
 		  break;
 		default:
 		  assert(0);
@@ -301,16 +302,20 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 		      int bit = (aval&1) | ((bval<<1)&2);
 		      switch (bit) {
 			  case 0: /* zero */
-			    functor_set(ipoint_index(rfp->bits,idx), 0, true);
+			    functor_set(ipoint_index(rfp->bits,idx),
+					0, 6, 6, true);
 			    break;
 			  case 1: /* one */
-			    functor_set(ipoint_index(rfp->bits,idx), 1, true);
+			    functor_set(ipoint_index(rfp->bits,idx),
+					1, 6, 6, true);
 			    break;
 			  case 2: /* z */
-			    functor_set(ipoint_index(rfp->bits,idx), 3, true);
+			    functor_set(ipoint_index(rfp->bits,idx),
+					3, 6, 6, true);
 			    break;
 			  case 3: /* x */
-			    functor_set(ipoint_index(rfp->bits,idx), 2, true);
+			    functor_set(ipoint_index(rfp->bits,idx),
+					2, 6, 6, true);
 			    break;
 		      }
 		      aval >>= 1;
@@ -394,6 +399,14 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.10  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.9  2001/04/26 00:01:33  steve
  *  Support $deposit to a wire or reg.
  *

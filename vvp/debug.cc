@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: debug.cc,v 1.1 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: debug.cc,v 1.2 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 /*
@@ -31,15 +31,77 @@
 #if defined(WITH_DEBUG)
 
 # include  "debug.h"
+# include  "functor.h"
 # include  "schedule.h"
 # include  <stdio.h>
 # include  <readline/readline.h>
 # include  <readline/history.h>
 # include  <string.h>
+# include  <stdlib.h>
 # include  <malloc.h>
 
 
 static bool interact_flag = false;
+
+extern vvp_ipoint_t debug_lookup_functor(const char*name);
+
+static void cmd_lookup(unsigned argc, char*argv[])
+{
+      for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
+	    vvp_ipoint_t fnc = debug_lookup_functor(argv[idx]);
+
+	    if (fnc) {
+		  printf("%s: functor 0x%x\n", argv[idx], fnc);
+		  continue;
+	    }
+
+	    printf("%s: *** unknown\n", argv[idx]);
+      }
+}
+
+static void cmd_fbreak(unsigned argc, char*argv[])
+{
+      for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
+	    vvp_ipoint_t fnc = strtoul(argv[idx],0,0);
+	    functor_t fp = functor_index(fnc);
+
+	    if (fp == 0) {
+		  continue;
+	    }
+
+	    fp->breakpoint = 1;
+      }
+}
+
+static const char bitval_tab[4] = { '0', '1', 'x', 'z' };
+static const char*strength_tab[8] = {
+      "hiz",    "small",
+      "medium", "weak",
+      "large",  "pull",
+      "strong", "supply" };
+
+static void cmd_functor(unsigned argc, char*argv[])
+{
+      for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
+	    vvp_ipoint_t fnc = strtoul(argv[idx],0,0);
+	    functor_t fp = functor_index(fnc);
+
+	    if (fp == 0) {
+		  continue;
+	    }
+
+	    printf("out pointer  = 0x%x\n", fp->out);
+	    printf("input values = %c %c %c %c\n",
+		   bitval_tab[fp->ival&3],
+		   bitval_tab[(fp->ival>>2)&3],
+		   bitval_tab[(fp->ival>>4)&3],
+		   bitval_tab[(fp->ival>>6)&3]);
+	    printf("out value    = %c (%s0 %s1)\n",
+		   bitval_tab[fp->oval],
+		   strength_tab[fp->odrive0],
+		   strength_tab[fp->odrive1]);
+      }
+}
 
 static void cmd_go(unsigned, char*[])
 {
@@ -60,9 +122,12 @@ static void cmd_unknown(unsigned argc, char*argv[])
 struct {
       const char*name;  void (*proc)(unsigned argc, char*argv[]);
 } cmd_table[] = {
-      { "go",   &cmd_go},
-      { "time", &cmd_time},
-      { 0,      &cmd_unknown}
+      { "fbreak", &cmd_fbreak},
+      { "func",   &cmd_functor},
+      { "go",     &cmd_go},
+      { "lookup", &cmd_lookup},
+      { "time",   &cmd_time},
+      { 0,        &cmd_unknown}
 };
 
 void breakpoint(void)
@@ -104,6 +169,14 @@ void breakpoint(void)
 #endif
 /*
  * $Log: debug.cc,v $
+ * Revision 1.2  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.1  2001/05/05 23:55:46  steve
  *  Add the beginnings of an interactive debugger.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.18 2001/05/06 03:51:37 steve Exp $"
+#ident "$Id: functor.h,v 1.19 2001/05/08 23:32:26 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -83,6 +83,25 @@
  * with a struct vvp_fobj_s pointer. This abstract class has virtual
  * methods for receiving and retrieving values. See the vvp_fobj_s
  * definition below.
+ *
+ * STRENGTHS:
+ *
+ * The normal functor (modes 0, 1 and 2) is not aware of strengths. It
+ * generates strength simply by virtue of having strength
+ * specifications.
+ *
+ * When the bit value is read out of the functor, only the val bits
+ * are read. There are 8 drive values available in the 3 bits:
+ *    HiZ    = 0,
+ *    SMALL  = 1,
+ *    MEDIUM = 2,
+ *    WEAK   = 3,
+ *    LARGE  = 4,
+ *    PULL   = 5,
+ *    STRONG = 6,
+ *    SUPPLY = 7
+ *
+ * Only mode-42 functors are strength-aware.
  */
 
 struct functor_s {
@@ -99,7 +118,15 @@ struct functor_s {
       vvp_ipoint_t port[4];
 	/* These are the input values. */
       unsigned char ival;
-      unsigned char oval;
+	/* Output value (low bits, and drive1 and drive0 strength. */
+      unsigned oval       : 2;
+      unsigned odrive0    : 3;
+      unsigned odrive1    : 3;
+#if defined(WITH_DEBUG)
+	/* True if this functor triggers a breakpoint. */
+      unsigned breakpoint : 1;
+#endif
+
 	/* functor mode:  0 == table ;  1 == event ; 2 == named event */
       unsigned char mode;
       union {
@@ -171,10 +198,21 @@ extern vvp_ipoint_t functor_allocate(unsigned wid);
 /*
  * functor_set sets the addressed input to the specified value, and
  * calculates a new output value. If there is any propagation to do,
- * propagation events are created.
+ * propagation events are created. Propagation calls further
+ * functor_set methods for the functors connected to the output.
+ *
+ * The val contains 2 bits two represent the 4-value bit. The drive0
+ * and drive1 values are also passed, and typically just stored in the
+ * functor.
  */
-extern void functor_set(vvp_ipoint_t point, unsigned val, bool push=false);
+extern void functor_set(vvp_ipoint_t point, unsigned val,
+			unsigned drive0, unsigned drive1,
+			bool push=false);
 
+/*
+ * Read the value of the functor. In fact, only the *value* is read --
+ * the strength of that value is stripped off.
+ */
 extern unsigned functor_get(vvp_ipoint_t ptr);
 
 /*
@@ -222,6 +260,14 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.19  2001/05/08 23:32:26  steve
+ *  Add to the debugger the ability to view and
+ *  break on functors.
+ *
+ *  Add strengths to functors at compile time,
+ *  and Make functors pass their strengths as they
+ *  propagate their output.
+ *
  * Revision 1.18  2001/05/06 03:51:37  steve
  *  Regularize the mode-42 functor handling.
  *
