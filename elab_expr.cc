@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.82 2003/10/09 16:52:52 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.83 2004/01/21 04:57:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -418,6 +418,13 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    if (parms_[idx] == 0) {
+		  cerr << get_line() << ": error: Missing expression "
+		       << (idx+1) << " of concatenation list." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
 	    assert(parms_[idx]);
 	    NetExpr*ex = elab_and_eval(des, scope, parms_[idx]);
 	    if (ex == 0) continue;
@@ -970,6 +977,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.83  2004/01/21 04:57:40  steve
+ *  Generate error when missing concatenation operands.
+ *
  * Revision 1.82  2003/10/09 16:52:52  steve
  *  Put parameter name in NetEConstParam, not scope.
  *
