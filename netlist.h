@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.95 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.96 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 /*
@@ -263,6 +263,12 @@ class NetNet  : public NetObj, public LineInfo {
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
 
+	/* NetESignal objects may reference this object. Keep a
+	   reference count so that I keep track of them. */
+      void incr_eref();
+      void decr_eref();
+      unsigned get_eref() const;
+
       verinum::V get_ival(unsigned pin) const
 	    { return ivalue_[pin]; }
       void set_ival(unsigned pin, verinum::V val)
@@ -284,6 +290,7 @@ class NetNet  : public NetObj, public LineInfo {
       long msb_, lsb_;
 
       bool local_flag_;
+      unsigned eref_count_;
 
       verinum::V*ivalue_;
 };
@@ -1804,27 +1811,28 @@ class NetEMemory  : public NetExpr {
  * A signal shows up as a node in the netlist so that structural
  * activity can invoke the expression.
  */
-class NetESignal  : public NetExpr, public NetNode {
+class NetESignal  : public NetExpr {
 
     public:
       NetESignal(NetNet*n);
-      NetESignal(const string&name, unsigned npins);
       ~NetESignal();
 
-      const string& name() const { return NetNode::name(); }
-
+      const string& name() const;
       virtual bool set_width(unsigned);
 
       virtual NetESignal* dup_expr() const;
-
       NetNet* synthesize(Design*des);
 
+	// These methods actually reference the properties of the
+	// NetNet object that I point to.
+      unsigned pin_count() const;
+      NetObj::Link& pin(unsigned idx);
+
       virtual void expr_scan(struct expr_scan_t*) const;
-      virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
+      NetNet*net_;
 };
 
 /*
@@ -2036,6 +2044,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.96  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.95  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *

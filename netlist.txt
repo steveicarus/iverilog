@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.6 1999/11/21 00:13:09 steve Exp $"
+#ident "$Id: netlist.txt,v 1.7 1999/11/28 23:42:02 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -204,13 +204,10 @@ INTERACTION OF EXPRESSIONS AND STRUCTURE: NetESignal
 The NetAssign_ class described above is the means for processes to
 manipulate the net, but values are read from the net by NetESignal
 objects. These objects are class NetExpr because they can appear in
-expressions (and have width) but are also class NetNode because they
-connect to and receive signals from the structural aspects of the
-design.
+expressions (and have width). They are not NetNode object, but hold
+pointers to a NetNet object, which is used to retrieve values with the
+expression is evaluated.
 
-The pins of a NetESignal object are passive. The values at the pin are
-only sampled when the process evaluates the expression that includes
-the NetESignal object.
 
 HIERARCHY IN NETLISTS
 
@@ -243,6 +240,10 @@ some task calls. C++ programmers recognize this as inlining a task.)
 
 
  $Log: netlist.txt,v $
+ Revision 1.7  1999/11/28 23:42:02  steve
+  NetESignal object no longer need to be NetNode
+  objects. Let them keep a pointer to NetNet objects.
+
  Revision 1.6  1999/11/21 00:13:09  steve
   Support memories in continuous assignments.
 

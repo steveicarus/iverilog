@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.95 1999/11/28 01:16:18 steve Exp $"
+#ident "$Id: netlist.cc,v 1.96 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -371,7 +371,7 @@ NetNode::~NetNode()
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 : NetObj(n, npins), sig_next_(0), sig_prev_(0), design_(0), scope_(s),
     type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
-    local_flag_(false)
+    local_flag_(false), eref_count_(0)
 {
       ivalue_ = new verinum::V[npins];
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
@@ -383,7 +383,8 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 : NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
     sig_prev_(0), design_(0), scope_(s), type_(t),
-    port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false)
+    port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false),
+    eref_count_(0)
 {
       ivalue_ = new verinum::V[pin_count()];
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
@@ -394,6 +395,7 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 
 NetNet::~NetNet()
 {
+      assert(eref_count_ == 0);
       if (design_)
 	    design_->del_signal(this);
 }
@@ -414,6 +416,22 @@ unsigned NetNet::sb_to_idx(long sb) const
 	    return sb - lsb_;
       else
 	    return lsb_ - sb;
+}
+
+void NetNet::incr_eref()
+{
+      eref_count_ += 1;
+}
+
+void NetNet::decr_eref()
+{
+      assert(eref_count_ > 0);
+      eref_count_ -= 1;
+}
+
+unsigned NetNet::get_eref() const
+{
+      return eref_count_;
 }
 
 NetTmp::NetTmp(const string&name, unsigned npins)
@@ -1805,28 +1823,30 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->pin_count()), NetNode(n->name(), n->pin_count())
+: NetExpr(n->pin_count()), net_(n)
 {
+      net_->incr_eref();
       set_line(*n);
-      for (unsigned idx = 0 ;  idx < n->pin_count() ;  idx += 1) {
-	    pin(idx).set_name("P", idx);
-	    pin(idx).set_dir(NetObj::Link::PASSIVE);
-	    connect(pin(idx), n->pin(idx));
-      }
-}
-
-NetESignal::NetESignal(const string&n, unsigned np)
-: NetExpr(np), NetNode(n, np)
-{
-      expr_width(pin_count());
-      for(unsigned idx = 0 ;  idx < np ;  idx += 1) {
-	    pin(idx).set_name("P", idx);
-	    pin(idx).set_dir(NetObj::Link::PASSIVE);
-      }
 }
 
 NetESignal::~NetESignal()
 {
+      net_->decr_eref();
+}
+
+const string& NetESignal::name() const
+{
+      return net_->name();
+}
+
+unsigned NetESignal::pin_count() const
+{
+      return net_->pin_count();
+}
+
+NetObj::Link& NetESignal::pin(unsigned idx)
+{
+      return net_->pin(idx);
 }
 
 NetESignal* NetESignal::dup_expr() const
@@ -2621,6 +2641,10 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.96  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.95  1999/11/28 01:16:18  steve
  *  gate outputs need to set signal values.
  *

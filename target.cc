@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.27 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: target.cc,v 1.28 1999/11/28 23:42:03 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -129,13 +129,6 @@ void target_t::net_const(ostream&os, const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled CONSTANT node." << endl;
-}
-
-void target_t::net_esignal(ostream&os, const NetESignal*net)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled Expression Signal node." << endl;
-      net->dump_node(cerr, 4);
 }
 
 void target_t::net_event(ostream&os, const NetNEvent*net)
@@ -315,6 +308,10 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.28  1999/11/28 23:42:03  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.27  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *

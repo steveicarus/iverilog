@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.30 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: emit.cc,v 1.31 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 /*
@@ -361,11 +361,6 @@ void NetESignal::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_signal(this);
 }
 
-void NetESignal::emit_node(ostream&o, struct target_t*tgt) const
-{
-      tgt->net_esignal(o, this);
-}
-
 void NetESubSignal::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_subsignal(this);
@@ -394,6 +389,10 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.31  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.30  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: nodangle.cc,v 1.1 1999/11/18 03:52:20 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.2 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 /*
@@ -38,6 +38,8 @@ class nodangle_f  : public functor_t {
 void nodangle_f::signal(Design*des, NetNet*sig)
 {
       if (! sig->local_flag())
+	    return;
+      if (sig->get_eref() > 0)
 	    return;
 
 	/* Check to see if there is some significant signal connected
@@ -71,6 +73,10 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.2  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.1  1999/11/18 03:52:20  steve
  *  Turn NetTmp objects into normal local NetNet objects,
  *  and add the nodangle functor to clean up the local

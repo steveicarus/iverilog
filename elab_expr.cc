@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.10 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.11 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 
@@ -154,7 +154,6 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, const string&path) const
       assert(res);
       NetESignal*eres = new NetESignal(res);
       assert(eres);
-      des->add_node(eres);
       NetEUFunc*func = new NetEUFunc(def, eres, parms);
       return func;
 }
@@ -215,15 +214,17 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 		  assert(net->sb_to_idx(msv) >= net->sb_to_idx(lsv));
 
 		  string tname = des->local_symbol(path);
-		  NetESignal*tmp = new NetESignal(tname, wid);
-		  tmp->set_line(*this);
+		  NetTmp*tsig = new NetTmp(tname, wid);
 
 		    // Connect the pins from the lsb up to the msb.
 		  unsigned off = net->sb_to_idx(lsv);
 		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-			connect(tmp->pin(idx), net->pin(idx+off));
+			connect(tsig->pin(idx), net->pin(idx+off));
 
-		  des->add_node(tmp);
+		  NetESignal*tmp = new NetESignal(tsig);
+		  tmp->set_line(*this);
+
+		  des->add_signal(tsig);
 		  return tmp;
 	    }
 
@@ -236,16 +237,16 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 		  unsigned long msv = msn->as_ulong();
 
 		  string tname = des->local_symbol(path);
-		  NetESignal*tmp = new NetESignal(tname, 1);
+		  NetTmp*tsig = new NetTmp(tname);
+		  connect(tsig->pin(0), net->pin(msv));
+		  NetESignal*tmp = new NetESignal(tsig);
 		  tmp->set_line(*this);
-		  connect(tmp->pin(0), net->pin(msv));
 
-		  des->add_node(tmp);
+		  des->add_signal(tsig);
 		  return tmp;
 	    }
 
 	    NetESignal*node = new NetESignal(net);
-	    des->add_node(node);
 	    assert(idx_ == 0);
 
 	      // Non-constant bit select? punt and make a subsignal
@@ -330,6 +331,10 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.11  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.10  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *

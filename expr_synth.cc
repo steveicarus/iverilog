@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: expr_synth.cc,v 1.5 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.6 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -195,17 +195,15 @@ NetNet* NetETernary::synthesize(Design *des)
 
 NetNet* NetESignal::synthesize(Design*des)
 {
-      NetNet*sig = new NetNet(0, des->local_symbol(name()),
-			      NetNet::WIRE, pin_count());
-      sig->local_flag(true);
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
-	    connect(sig->pin(idx), pin(idx));
-      des->add_signal(sig);
-      return sig;
+      return net_;
 }
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.6  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.5  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *

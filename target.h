@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.26 1999/11/27 19:07:58 steve Exp $"
+#ident "$Id: target.h,v 1.27 1999/11/28 23:42:03 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -85,7 +85,6 @@ struct target_t {
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
-      virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
 
 	/* Output a process (called for each process). It is up to the
@@ -147,6 +146,10 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.27  1999/11/28 23:42:03  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.26  1999/11/27 19:07:58  steve
  *  Support the creation of scopes.
  *

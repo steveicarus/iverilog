@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.60 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.61 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 /*
@@ -754,14 +754,6 @@ void NetEParam::dump(ostream&o) const
       o << "<" << path_ << "." << name_ << ">";
 }
 
-void NetESignal::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "Expression Node (NetESignal): " <<
-	    name() << endl;
-
-      dump_node_pins(o, ind+4);
-}
-
 void NetETernary::dump(ostream&o) const
 {
       o << "(" << *cond_ << ") ? (" << *true_val_ << ") : (" <<
@@ -874,6 +866,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.61  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.60  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *

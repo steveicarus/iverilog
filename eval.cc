@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.10 1999/11/21 20:03:24 steve Exp $"
+#ident "$Id: eval.cc,v 1.11 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -96,11 +96,12 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
  */
 verinum* PEIdent::eval_const(const Design*des, const string&path) const
 {
-      assert(msb_ == 0);
       const NetExpr*expr = des->find_parameter(path, text_);
 
       if (expr == 0)
 	    return 0;
+
+      assert(msb_ == 0);
 
       if (dynamic_cast<const NetEParam*>(expr)) {
 	    cerr << get_line() << ": sorry: I cannot evaluate ``" <<
@@ -126,6 +127,10 @@ verinum* PETernary::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.11  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.10  1999/11/21 20:03:24  steve
  *  Handle multiply in constant expressions.
  *

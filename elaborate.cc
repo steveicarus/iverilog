@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.130 1999/11/27 19:07:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.131 1999/11/28 23:42:02 steve Exp $"
 #endif
 
 /*
@@ -1142,7 +1142,6 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	      /* Generate an assignment of the temporary to the r-value... */
 	    n = des->local_symbol(path);
 	    NetESignal*sig = new NetESignal(tmp);
-	    des->add_node(sig);
 	    NetAssign*a2 = new NetAssign(n, des, wid, sig);
 	    a2->set_line(*this);
 	    des->add_node(a2);
@@ -1628,7 +1627,6 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    for (unsigned pi = 0 ; pi < val->pin_count() ;  pi += 1)
 		  connect(val->pin(pi), ass->pin(pi));
 
-	    des->add_node(sig);
 	    des->add_node(ass);
 	    block->append(ass);
       }
@@ -2152,6 +2150,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.131  1999/11/28 23:42:02  steve
+ *  NetESignal object no longer need to be NetNode
+ *  objects. Let them keep a pointer to NetNet objects.
+ *
  * Revision 1.130  1999/11/27 19:07:57  steve
  *  Support the creation of scopes.
  *
