@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.105 2003/08/15 02:23:53 steve Exp $"
+#ident "$Id: t-dll.h,v 1.106 2003/09/03 23:33:29 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -315,6 +315,7 @@ struct ivl_lpm_s {
 		  } s;
 		  ivl_memory_t mem; // ram only
 		  ivl_expr_t aset_value;
+		  ivl_expr_t sset_value;
 	    } ff;
 
 	    struct ivl_lpm_mux_s {
@@ -683,6 +684,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.106  2003/09/03 23:33:29  steve
+ *  Pass FF synchronous set values to code generator.
+ *
  * Revision 1.105  2003/08/15 02:23:53  steve
  *  Add synthesis support for synchronous reset.
  *

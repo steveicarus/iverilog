@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.103 2003/08/22 23:14:26 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.104 2003/09/03 23:33:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -464,8 +464,25 @@ extern "C" const char* ivl_expr_string(ivl_expr_t net)
 
 extern "C" unsigned long ivl_expr_uvalue(ivl_expr_t net)
 {
-      assert(net->type_ == IVL_EX_ULONG);
-      return net->u_.ulong_.value;
+      switch (net->type_) {
+
+	  case IVL_EX_ULONG:
+	    return net->u_.ulong_.value;
+
+	  case IVL_EX_NUMBER: {
+		unsigned long val = 0;
+		for (unsigned long idx = 0 ;  idx < net->width_ ;  idx += 1) {
+		      if (net->u_.number_.bits_[idx] == '1')
+			    val |= 1UL << idx;
+		}
+
+		return val;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
 }
 
 extern "C" ivl_variable_type_t ivl_expr_value(ivl_expr_t net)
@@ -681,6 +698,19 @@ extern "C" ivl_expr_t ivl_lpm_aset_value(ivl_lpm_t net)
 	    return 0;
       }
 }
+extern "C" ivl_expr_t ivl_lpm_sset_value(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
+	    return net->u_.ff.sset_value;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_scope_t ivl_lpm_define(ivl_lpm_t net)
 {
       assert(net);
@@ -1883,6 +1913,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.104  2003/09/03 23:33:30  steve
+ *  Pass FF synchronous set values to code generator.
+ *
  * Revision 1.103  2003/08/22 23:14:26  steve
  *  Preserve variable ranges all the way to the vpi.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.120 2003/08/22 04:14:33 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.121 2003/09/03 23:33:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1537,8 +1537,20 @@ void dll_target::lpm_ff(const NetFF*net)
 	    obj->u_.ff.sclr = 0;
       }
 
-	/* XXXX Not supported yet. */
-      obj->u_.ff.sset = 0;
+      if (net->pin_Sset().is_linked()) {
+	    nex = net->pin_Sset().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.sset = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.sset);
+	    nexus_lpm_add(obj->u_.ff.sset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    verinum tmp = net->sset_value();
+	    obj->u_.ff.sset_value = expr_from_value_(tmp);
+
+      } else {
+	    obj->u_.ff.sset = 0;
+	    obj->u_.ff.sset_value = 0;
+      }
 
       if (obj->u_.ff.width == 1) {
 	    nex = net->pin_Q(0).nexus();
@@ -2147,6 +2159,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.121  2003/09/03 23:33:29  steve
+ *  Pass FF synchronous set values to code generator.
+ *
  * Revision 1.120  2003/08/22 04:14:33  steve
  *  Fix uninitialized sset member.
  *
