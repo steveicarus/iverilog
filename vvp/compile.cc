@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.44 2001/04/28 20:24:03 steve Exp $"
+#ident "$Id: compile.cc,v 1.45 2001/04/29 22:59:46 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -798,6 +798,26 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		  continue;
 	    }
 
+	    if (strcmp(argv[idx].text, "C<0>") == 0) {
+		  obj->oval = 0;
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<1>") == 0) {
+		  obj->oval = 1;
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<x>") == 0) {
+		  obj->oval = 2;
+		  continue;
+	    }
+
+	    if (strcmp(argv[idx].text, "C<z>") == 0) {
+		  obj->oval = 3;
+		  continue;
+	    }
+
 	    symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
 	    if (val.num) {
 
@@ -858,6 +878,8 @@ void compile_cleanup(void)
 
 	    } else {
 		    /* Still not resolved. put back into the list. */
+		  fprintf(stderr, "unresolved functor reference: %s\n",
+			  res->source);
 		  res->next = resolv_list;
 		  resolv_list = res;
 	    }
@@ -909,6 +931,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.45  2001/04/29 22:59:46  steve
+ *  Support .net constant inputs.
+ *
  * Revision 1.44  2001/04/28 20:24:03  steve
  *  input connect cleanup. (Stephan Boettcher)
  *

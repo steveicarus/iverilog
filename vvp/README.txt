@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.18 2001/04/26 03:10:55 steve Exp $
+ *  $Id: README.txt,v 1.19 2001/04/29 22:59:46 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -260,6 +260,16 @@ legal to leave a bit unconnected. To do that, simply leave the
 position for that bit blank. Bits of .nets are initialized to
 z. Unconnected bits keep the value z throughout the simulation.
 
+The special input symbols "C<0>", "C<1>", "C<x>" and "C<z>" and magic
+symbols that set the net to a constant value instead of accepting an
+input from a functor. This can happen, for example, when a wire is
+declared like so:
+
+	wire foo = 1'b1;
+
+This prevents any real functor being created and connected, and
+instead leaves the input unconnected and initializes the wire with the
+specified value, instead of the default z.
 
 EVENT STATEMENTS
 
