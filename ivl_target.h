@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.37 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.38 2001/03/29 02:52:39 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -167,6 +167,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
+      IVL_EX_UNARY
 } ivl_expr_type_t;
 
 /* This is the type code for an ivl_net_logic_t object. */
@@ -361,9 +362,9 @@ extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 extern const char* ivl_expr_bits(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC */
 extern const char* ivl_expr_name(ivl_expr_t net);
-  /* IVL_EX_BINARY */
+  /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
-  /* IVL_EX_BINARY */
+  /* IVL_EX_BINARY IVL_EX_UNARY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
   /* IVL_EX_BINARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
@@ -719,6 +720,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.38  2001/03/29 02:52:39  steve
+ *  Add unary ~ operator to tgt-vvp.
+ *
  * Revision 1.37  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.

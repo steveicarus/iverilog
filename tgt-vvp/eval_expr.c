@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.3 2001/03/27 06:43:27 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.4 2001/03/29 02:52:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -267,6 +267,26 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+      ivl_expr_t sub = ivl_expr_oper1(exp);
+      res = draw_eval_expr_wid(sub, wid);
+
+      switch (ivl_expr_opcode(exp)) {
+	  case '~':
+	    fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
+	    break;
+
+	  default:
+	    fprintf(stderr, "vvp error: unhandled unary: %c\n",
+		    ivl_expr_opcode(exp));
+	    assert(0);
+      }
+
+      return res;
+}
+
 struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
@@ -290,6 +310,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	  case IVL_EX_SIGNAL:
 	    res = draw_signal_expr(exp, wid);
 	    break;
+
+	  case IVL_EX_UNARY:
+	    res = draw_unary_expr(exp, wid);
+	    break;
       }
 
       return res;
@@ -302,6 +326,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.4  2001/03/29 02:52:39  steve
+ *  Add unary ~ operator to tgt-vvp.
+ *
  * Revision 1.3  2001/03/27 06:43:27  steve
  *  Evaluate === and !==
  *

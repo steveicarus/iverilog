@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.30 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: stub.c,v 1.31 2001/03/29 02:52:39 steve Exp $"
 #endif
 
 /*
@@ -80,6 +80,11 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	  case IVL_EX_SIGNAL:
 	    fprintf(out, "%*s<signal=%s, width=%u, %s>\n", ind, "",
 		    ivl_expr_name(net), width, sign);
+	    break;
+
+	  case IVL_EX_UNARY:
+	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
+		    ivl_expr_opcode(net), width, sign);
 	    break;
 
 	  default:
@@ -202,6 +207,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	  case IVL_ST_WAIT: {
 		ivl_event_t evnt = ivl_stmt_event(net);
 		fprintf(out, "%*s@(%s)\n", ind, "", ivl_event_name(evnt));
+		show_statement(ivl_stmt_sub_stmt(net), ind+4);
 		break;
 	  }
 
@@ -443,6 +449,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.31  2001/03/29 02:52:39  steve
+ *  Add unary ~ operator to tgt-vvp.
+ *
  * Revision 1.30  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.

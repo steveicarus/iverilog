@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.24 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.25 2001/03/29 02:52:39 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -147,6 +147,9 @@ extern "C" char ivl_expr_opcode(ivl_expr_t net)
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.op_;
 
+	  case IVL_EX_UNARY:
+	    return net->u_.unary_.op_;
+
 	  default:
 	    assert(0);
       }
@@ -159,6 +162,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
       switch (net->type_) {
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.lef_;
+
+	  case IVL_EX_UNARY:
+	    return net->u_.unary_.sub_;
 
 	  default:
 	    assert(0);
@@ -703,6 +709,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.25  2001/03/29 02:52:39  steve
+ *  Add unary ~ operator to tgt-vvp.
+ *
  * Revision 1.24  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.7 2000/10/28 22:32:34 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.8 2001/03/29 02:52:39 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -144,8 +144,27 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->u_.subsig_.name_ = strdup(net->name().c_str());
 }
 
+void dll_target::expr_unary(const NetEUnary*net)
+{
+      assert(expr_ == 0);
+
+      net->expr()->expr_scan(this);
+      assert(expr_);
+
+      ivl_expr_t sub = expr_;
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_->type_ = IVL_EX_UNARY;
+      expr_->width_= net->expr_width();
+      expr_->u_.unary_.op_ = net->op();
+      expr_->u_.unary_.sub_ = sub;
+}
+
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.8  2001/03/29 02:52:39  steve
+ *  Add unary ~ operator to tgt-vvp.
+ *
  * Revision 1.7  2000/10/28 22:32:34  steve
  *  API for concatenation expressions.
  *

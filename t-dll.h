@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.25 2001/03/28 06:07:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.26 2001/03/29 02:52:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -91,6 +91,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
       void expr_sfunc(const NetESFunc*);
+      void expr_unary(const NetEUnary*);
       void expr_signal(const NetESignal*);
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
@@ -150,6 +151,12 @@ struct ivl_expr_s {
 		  ivl_expr_t msb_;
 		  ivl_expr_t lsb_;
 	    } subsig_;
+
+	    struct {
+		  char op_;
+		  ivl_expr_t sub_;
+	    } unary_;
+
       } u_;
 };
 
@@ -380,6 +387,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.26  2001/03/29 02:52:39  steve
+ *  Add unary ~ operator to tgt-vvp.
+ *
  * Revision 1.25  2001/03/28 06:07:39  steve
  *  Add the ivl_event_t to ivl_target, and use that to generate
  *  .event statements in vvp way ahead of the thread that uses it.
