@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.33 2001/11/10 18:07:11 steve Exp $"
+#ident "$Id: functor.cc,v 1.34 2001/11/16 04:22:27 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "debug.h"
 # include  <assert.h>
 # include  <string.h>
+# include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -168,6 +169,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.34  2001/11/16 04:22:27  steve
+ *  include stdlib.h for portability.
+ *
  * Revision 1.33  2001/11/10 18:07:11  steve
  *  Runtime support for functor delays. (Stephan Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.1 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: event.cc,v 1.2 2001/11/16 04:22:27 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -27,6 +27,7 @@
 
 # include  <string.h>
 # include  <assert.h>
+# include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -130,6 +131,9 @@ void compile_event(char*label, char*type,
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.2  2001/11/16 04:22:27  steve
+ *  include stdlib.h for portability.
+ *
  * Revision 1.1  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *

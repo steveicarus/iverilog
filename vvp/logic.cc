@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.2 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: logic.cc,v 1.3 2001/11/16 04:22:27 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -27,6 +27,7 @@
 
 # include  <string.h>
 # include  <assert.h>
+# include  <stdlib.h>
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -136,6 +137,9 @@ void compile_functor(char*label, char*type, unsigned argc, struct symb_s*argv)
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.3  2001/11/16 04:22:27  steve
+ *  include stdlib.h for portability.
+ *
  * Revision 1.2  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *
