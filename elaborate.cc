@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.185 2000/09/02 23:40:12 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.186 2000/09/03 17:58:35 steve Exp $"
 #endif
 
 /*
@@ -732,15 +732,28 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
 }
 
 /*
- * Elaborate an l-value as a NetNet (it may already exist) and make up
- * the part select stuff for where the assignment is going to be made.
+ * This method generates a NetAssign_ object for the l-value of the
+ * assignemnt. This is common code for the = and <= statements.
+ *
+ * What gets generated depends on the structure of the l-value. If the
+ * l-value is a simple name (i.e. foo <= <value>) the the NetAssign_
+ * is created the width of the foo reg and connected to all the
+ * bits.
+ *
+ * If there is a part select (i.e. foo[3:1] <= <value>) the NetAssign_
+ * is made only as wide as it needs to be (3 bits in this example) and
+ * connected to the correct bits of foo. A constant bit select is a
+ * special case of the part select. 
+ *
+ * If the bit-select is non-constant (i.e. foo[<expr>] = <value>) the
+ * NetAssign_ is made wide enough to connect to all the bits of foo,
+ * then the mux expression is elaborated and attached to the
+ * NetAssign_ node as a b_mux value. The target must interpret the
+ * presense of a bmux value as taking a single bit and assigning it to
+ * the bit selected by the bmux expression.
  */
-NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
-				 unsigned&msb, unsigned&lsb,
-				 NetExpr*&mux) const
+NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope)const
 {
-      NetScope*scope = des->find_scope(path);
-      assert(scope);
 
 	/* Get the l-value, and assume that it is an identifier. */
       const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
@@ -749,17 +762,19 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	   elaboration. Make a synthetic register that connects to the
 	   generated circuit and return that as the l-value. */
       if (id == 0) {
-	    NetNet*ll = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+	    NetNet*ll = lval_->elaborate_net(des, scope->name(), 0, 0, 0, 0);
 	    if (ll == 0) {
 		  cerr << get_line() << ": Assignment l-value too complex."
 		       << endl;
 		  return 0;
 	    }
 
-	    lsb = 0;
-	    msb = ll->pin_count()-1;
-	    mux = 0;
-	    return ll;
+	    NetAssign_*lv = new NetAssign_(scope->local_symbol(),
+					   ll->pin_count());
+	    for (unsigned idx = 0 ; idx < ll->pin_count() ;  idx += 1)
+		  connect(lv->pin(idx), ll->pin(idx));
+	    des->add_node(lv);
+	    return lv;
       }
 
       assert(id);
@@ -770,7 +785,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 
       if (reg == 0) {
 	    cerr << get_line() << ": error: Could not match signal ``" <<
-		  id->name() << "'' in ``" << path << "''" << endl;
+		  id->name() << "'' in ``" << scope->name() << "''" << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -783,12 +798,15 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	    return 0;
       }
 
+      long msb, lsb;
+      NetExpr*mux;
+
       if (id->msb_ && id->lsb_) {
 	      /* This handles part selects. In this case, there are
 		 two bit select expressions, and both must be
 		 constant. Evaluate them and pass the results back to
 		 the caller. */
-	    verinum*vl = id->lsb_->eval_const(des, path);
+	    verinum*vl = id->lsb_->eval_const(des, scope->name());
 	    if (vl == 0) {
 		  cerr << id->lsb_->get_line() << ": error: "
 			"Expression must be constant in this context: "
@@ -796,7 +814,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 		  des->errors += 1;
 		  return 0;
 	    }
-	    verinum*vm = id->msb_->eval_const(des, path);
+	    verinum*vm = id->msb_->eval_const(des, scope->name());
 	    if (vl == 0) {
 		  cerr << id->msb_->get_line() << ": error: "
 			"Expression must be constant in this context: "
@@ -817,7 +835,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 		 expression it not constant, then return the
 		 expression as a mux. */
 	    assert(id->lsb_ == 0);
-	    verinum*v = id->msb_->eval_const(des, path);
+	    verinum*v = id->msb_->eval_const(des, scope->name());
 	    if (v == 0) {
 		  NetExpr*m = id->msb_->elaborate_expr(des, scope);
 		  assert(m);
@@ -844,7 +862,41 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	    mux = 0;
       }
 
-      return reg;
+
+      NetAssign_*lv;
+      if (mux) {
+
+	      /* If there is a non-constant bit select, make a
+		 NetAssign_ the width of the target reg and attach a
+		 bmux to select the target bit. */
+	    unsigned wid = reg->pin_count();
+	    lv = new NetAssign_(scope->local_symbol(), wid);
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(lv->pin(idx), reg->pin(idx));
+
+	    lv->set_bmux(mux);
+
+      } else {
+
+	      /* If the bit/part select is constant, then make the
+		 NetAssign_ only as wide as it needs to be and connect
+		 only to the selected bits of the reg. */
+	    unsigned wid = (msb >= lsb)? (msb-lsb+1) : (lsb-msb+1);
+	    assert(wid <= reg->pin_count());
+
+	    lv = new NetAssign_(scope->local_symbol(), wid);
+	    unsigned off = reg->sb_to_idx(lsb);
+	    assert((off+wid) <= reg->pin_count());
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(lv->pin(idx), reg->pin(idx+off));
+
+      }
+
+
+      des->add_node(lv);
+
+      return lv;
 }
 
 NetProc* PAssign::elaborate(Design*des, const string&path) const
@@ -870,10 +922,8 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
 	/* elaborate the lval. This detects any part selects and mux
 	   expressions that might exist. */
-      unsigned lsb, msb;
-      NetExpr*mux;
-      NetNet*reg = elaborate_lval(des, path, msb, lsb, mux);
-      if (reg == 0) return 0;
+      NetAssign_*lv = elaborate_lval(des, scope);
+      if (lv == 0) return 0;
 
 	/* If there is a delay expression, elaborate it. */
       unsigned long rise_time, fall_time, decay_time;
@@ -906,8 +956,6 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    rv = tmp;
       }
 
-      NetAssign*cur;
-
 	/* Rewrite delayed assignments as assignments that are
 	   delayed. For example, a = #<d> b; becomes:
 
@@ -926,12 +974,12 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       if (rise_time || event_) {
 	    string n = des->local_symbol(path);
-	    unsigned wid = reg->pin_count();
+	    unsigned wid = lv->pin_count();
 
-	    rv->set_width(reg->pin_count());
-	    rv = pad_to_width(rv, reg->pin_count());
+	    rv->set_width(lv->pin_count());
+	    rv = pad_to_width(rv, lv->pin_count());
 
-	    if (! rv->set_width(reg->pin_count())) {
+	    if (! rv->set_width(lv->pin_count())) {
 		  cerr << get_line() << ": error: Unable to match "
 			"expression width of " << rv->expr_width() <<
 			" to l-value width of " << wid << "." << endl;
@@ -942,26 +990,20 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    NetNet*tmp = new NetNet(scope, n, NetNet::REG, wid);
 	    tmp->set_line(*this);
 
+	    NetESignal*sig = new NetESignal(tmp);
+
 	      /* Generate an assignment of the l-value to the temporary... */
 	    n = des->local_symbol(path);
-	    NetAssign_*lv = new NetAssign_(n, wid);
-	    des->add_node(lv);
+	    NetAssign_*lvt = new NetAssign_(n, wid);
+	    des->add_node(lvt);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), tmp->pin(idx));
+		  connect(lvt->pin(idx), tmp->pin(idx));
 
-	    NetAssign*a1 = new NetAssign(lv, rv);
+	    NetAssign*a1 = new NetAssign(lvt, rv);
 	    a1->set_line(*this);
 
 	      /* Generate an assignment of the temporary to the r-value... */
-	    n = des->local_symbol(path);
-	    NetESignal*sig = new NetESignal(tmp);
-	    lv = new NetAssign_(n, wid);
-	    des->add_node(lv);
-
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx));
-
 	    NetAssign*a2 = new NetAssign(lv, sig);
 	    a2->set_line(*this);
 
@@ -994,39 +1036,14 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    return bl;
       }
 
-      if (mux == 0) {
-	      /* This is a simple assign to a register. There may be a
-		 part select, so take care that the width is of the
-		 part, and using the lsb, make sure the correct range
-		 of bits is assigned. */
-	    unsigned wid = (msb >= lsb)? (msb-lsb+1) : (lsb-msb+1);
-	    assert(wid <= reg->pin_count());
+      if (lv->bmux() == 0) {
+	    rv->set_width(lv->pin_count());
+	    rv = pad_to_width(rv, lv->pin_count());
+	    assert(rv->expr_width() >= lv->pin_count());
 
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid);
-	    assert(rv->expr_width() >= wid);
-
-	    NetAssign_*lv = new NetAssign_(des->local_symbol(path), wid);
-	    des->add_node(lv);
-	    cur = new NetAssign(lv, rv);
-	    unsigned off = reg->sb_to_idx(lsb);
-	    assert((off+wid) <= reg->pin_count());
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx+off));
-
-      } else {
-
-	    assert(msb == lsb);
-	    NetAssign_*lv = new NetAssign_(des->local_symbol(path),
-					   reg->pin_count());
-	    lv->set_bmux(mux);
-	    des->add_node(lv);
-	    cur = new NetAssign(lv, rv);
-	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx));
       }
 
-
+      NetAssign*cur = new NetAssign(lv, rv);
       cur->set_line(*this);
 
       return cur;
@@ -1088,10 +1105,8 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
       } while(0);
 
 
-      unsigned lsb, msb;
-      NetExpr*mux;
-      NetNet*reg = elaborate_lval(des, path, msb, lsb, mux);
-      if (reg == 0) return 0;
+      NetAssign_*lv = elaborate_lval(des, scope);
+      if (lv == 0) return 0;
 
       assert(rval());
 
@@ -1103,45 +1118,24 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
       assert(rv);
 
-      NetAssignNB*cur;
-      if (mux == 0) {
-	    unsigned wid = msb - lsb + 1;
+      if (lv->bmux() == 0) {
+	    unsigned wid = lv->pin_count();
 
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
-	    assert(wid <= rv->expr_width());
 
-	    NetAssign_*lv = new NetAssign_(des->local_symbol(path), wid);
-	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(reg->sb_to_idx(idx+lsb)));
-	    des->add_node(lv);
-	    cur = new NetAssignNB(lv, rv);
-
-      } else {
-
-	      /* In this case, there is a mux expression (detected by
-		 the elaborate_lval method) that selects where the bit
-		 value goes. Create a NetAssignNB object that carries
-		 that mux expression, and connect it to the entire
-		 width of the lval. */
-	    NetAssign_*lv = new NetAssign_(des->local_symbol(path),
-					   reg->pin_count());
-	    lv->set_bmux(mux);
-	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
-		  connect(lv->pin(idx), reg->pin(idx));
-	    des->add_node(lv);
-	    cur = new NetAssignNB(lv, rv);
       }
 
 
       unsigned long rise_time, fall_time, decay_time;
       delay_.eval_delays(des, path, rise_time, fall_time, decay_time);
-      cur->l_val(0)->rise_time(rise_time);
-      cur->l_val(0)->fall_time(fall_time);
-      cur->l_val(0)->decay_time(decay_time);
+      lv->rise_time(rise_time);
+      lv->fall_time(fall_time);
+      lv->decay_time(decay_time);
 
 
 	/* All done with this node. mark its line number and check it in. */
+      NetAssignNB*cur = new NetAssignNB(lv, rv);
       cur->set_line(*this);
       return cur;
 }
@@ -2400,6 +2394,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.186  2000/09/03 17:58:35  steve
+ *  Change elaborate_lval to return NetAssign_ objects.
+ *
  * Revision 1.185  2000/09/02 23:40:12  steve
  *  Pull NetAssign_ creation out of constructors.
  *
