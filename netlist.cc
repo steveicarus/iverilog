@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.164 2001/07/01 00:27:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.165 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -727,8 +727,9 @@ const Link& NetAddSub::pin_Result(unsigned idx) const
  *    3+W -- Result(0)
  *    3+2W -- Distance(0)
  */
-NetCLShift::NetCLShift(const string&n, unsigned width, unsigned width_dist)
-: NetNode(n, 3+2*width+width_dist), width_(width), width_dist_(width_dist)
+NetCLShift::NetCLShift(NetScope*s, const string&n,
+		       unsigned width, unsigned width_dist)
+: NetNode(s, n, 3+2*width+width_dist), width_(width), width_dist_(width_dist)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Direction", 0);
       pin(1).set_dir(Link::OUTPUT); pin(1).set_name("Underflow", 0);
@@ -2341,6 +2342,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.165  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.164  2001/07/01 00:27:34  steve
  *  Make NetFF constructor take const char* for the name.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.70 2001/06/30 23:03:16 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.71 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -209,6 +209,8 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_FF,
       IVL_LPM_MULT,
       IVL_LPM_MUX,
+      IVL_LPM_SHIFTL,
+      IVL_LPM_SHIFTR,
       IVL_LPM_SUB,
       IVL_LPM_RAM
 } ivl_lpm_type_t;
@@ -889,6 +891,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.71  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.70  2001/06/30 23:03:16  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

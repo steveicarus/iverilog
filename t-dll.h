@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.52 2001/06/30 23:03:16 steve Exp $"
+#ident "$Id: t-dll.h,v 1.53 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -65,6 +65,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);
       void lpm_add_sub(const NetAddSub*);
+      void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
       void lpm_ff(const NetFF*);
       void lpm_mult(const NetMult*);
@@ -260,6 +261,14 @@ struct ivl_lpm_s {
 			ivl_nexus_t pin;
 		  } s;
 	    } mux;
+
+	    struct ivl_lpm_shift_s {
+		  unsigned short width;
+		  unsigned short select;
+		  ivl_nexus_t*q;
+		  ivl_nexus_t*d;
+		  ivl_nexus_t*s;
+	    } shift;
 
 	    struct ivl_lpm_arith_s {
 		  unsigned short width;
@@ -541,6 +550,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.53  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.52  2001/06/30 23:03:16  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

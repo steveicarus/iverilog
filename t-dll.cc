@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.52 2001/06/30 23:03:16 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.53 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -703,6 +703,63 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+void dll_target::lpm_clshift(const NetCLShift*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_SHIFTL;
+      obj->name = strdup(net->name());
+      assert(net->scope());
+      obj->scope = find_scope(des_.root_, net->scope());
+      assert(obj->scope);
+
+      assert(! net->pin_Direction().is_linked());
+
+      obj->u_.shift.width = net->width();
+      obj->u_.shift.select = net->width_dist();
+      unsigned nex_count = obj->u_.shift.width * 2 + obj->u_.shift.select;
+      obj->u_.shift.q = new ivl_nexus_t[nex_count];
+      obj->u_.shift.d = obj->u_.shift.q + obj->u_.shift.width;
+      obj->u_.shift.s = obj->u_.shift.d + obj->u_.shift.width;
+
+      for (unsigned idx = 0 ;  idx < nex_count ;  idx += 1)
+	    obj->u_.shift.q[idx] = 0;
+
+      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
+	    const Nexus*nex;
+
+	    nex = net->pin_Result(idx).nexus();
+	    assert(nex && nex->t_cookie());
+
+	    obj->u_.shift.q[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.shift.q[idx], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+      }
+
+      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
+	    const Nexus*nex;
+
+	    nex = net->pin_Data(idx).nexus();
+	    assert(nex && nex->t_cookie());
+
+	    obj->u_.shift.d[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.shift.q[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      for (unsigned idx = 0 ;  idx < net->width_dist() ;  idx += 1) {
+	    const Nexus*nex;
+
+	    nex = net->pin_Distance(idx).nexus();
+	    assert(nex && nex->t_cookie());
+
+	    obj->u_.shift.s[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.shift.s[idx], obj, 0,
+			  IVL_DR_HiZ, IVL_DR_HiZ);
+      }
+
+      scope_add_lpm(obj->scope, obj);
+}
+
 /*
  * Make out of the NetCompare object an ivl_lpm_s object. The
  * comparators in ivl_target do not support < or <=, but they can be
@@ -1382,6 +1439,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.53  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.52  2001/06/30 23:03:16  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

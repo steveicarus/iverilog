@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.210 2001/07/01 00:27:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.211 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 /*
@@ -430,7 +430,8 @@ class NetAddSub  : public NetNode {
 class NetCLShift  : public NetNode {
 
     public:
-      NetCLShift(const string&n, unsigned width, unsigned width_dist);
+      NetCLShift(NetScope*s, const string&n, unsigned width,
+		 unsigned width_dist);
       ~NetCLShift();
 
       unsigned width() const;
@@ -2811,6 +2812,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.211  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.210  2001/07/01 00:27:34  steve
  *  Make NetFF constructor take const char* for the name.
  *

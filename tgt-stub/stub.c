@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.46 2001/07/01 23:44:19 steve Exp $"
+#ident "$Id: stub.c,v 1.47 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 /*
@@ -116,6 +116,21 @@ static void show_lpm(ivl_lpm_t net)
 		      fprintf(out, "    Data B %u: %s\n", idx,
 			      nex? ivl_nexus_name(nex) : "");
 		}
+		break;
+	  }
+
+	  case IVL_LPM_SHIFTL: {
+		fprintf(out, "  LPM_SHIFTL %s: <width=%u, selects=%u>\n",
+			ivl_lpm_name(net), width, ivl_lpm_selects(net));
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Q %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_q(net, idx)));
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Data A %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_data(net, idx)));
+		for (idx = 0 ;  idx < ivl_lpm_selects(net) ;  idx += 1)
+		      fprintf(out, "    Shift %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_select(net, idx)));
 		break;
 	  }
 
@@ -587,6 +602,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.47  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.46  2001/07/01 23:44:19  steve
  *  Print memory l-values.
  *

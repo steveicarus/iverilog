@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.52 2001/06/30 23:03:16 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.53 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -475,6 +475,10 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx < net->u_.arith.width);
 	    return net->u_.arith.a[idx];
 
+	  case IVL_LPM_SHIFTL:
+	    assert(idx < net->u_.shift.width);
+	    return net->u_.shift.d[idx];
+
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
 	    assert(idx < net->u_.ff.width);
@@ -559,6 +563,10 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.mux.q.pins[idx];
 
+	  case IVL_LPM_SHIFTL:
+	    assert(idx < net->u_.shift.width);
+	    return net->u_.shift.q[idx];
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -582,6 +590,10 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.mux.s.pins[idx];
 
+	  case IVL_LPM_SHIFTL:
+	    assert(idx < net->u_.shift.select);
+	    return net->u_.shift.s[idx];
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -595,6 +607,8 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	    return net->u_.ff.swid;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
+	  case IVL_LPM_SHIFTL:
+	    return net->u_.shift.select;
 	  default:
 	    assert(0);
 	    return 0;
@@ -632,6 +646,8 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
+	  case IVL_LPM_SHIFTL:
+	    return net->u_.shift.width;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1232,6 +1248,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.53  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.52  2001/06/30 23:03:16  steve
  *  support fast programming by only writing the bits
  *  that are listed in the input file.

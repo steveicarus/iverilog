@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.70 2001/07/01 23:37:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.71 2001/07/04 22:59:25 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -893,7 +893,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
 
 	// Make the shift device itself, and the output
 	// NetNet. Connect the Result output pins to the osig signal
-      NetCLShift*gate = new NetCLShift(des->local_symbol(path),
+      NetCLShift*gate = new NetCLShift(scope, des->local_symbol(path),
 				       lwidth, rsig->pin_count());
 
       NetNet*osig = new NetNet(scope, des->local_symbol(path),
@@ -1902,6 +1902,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.71  2001/07/04 22:59:25  steve
+ *  handle left shifter in dll output.
+ *
  * Revision 1.70  2001/07/01 23:37:48  steve
  *  Make sure tmp net gets connected to ramdq output
  *
