@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.9 2003/05/28 02:42:43 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.10 2003/05/30 04:05:32 steve Exp $"
 #endif
 
 /*
@@ -60,8 +60,10 @@ void veriusertfs_register_table(p_tfcell vtable)
       if ((pli_trace == 0) && (path = getenv("PLI_TRACE"))) {
 	    if (strcmp(path,"-") == 0)
 		  pli_trace = stdout;
-	    else
+	    else {
 		  pli_trace = fopen(path, "w");
+		  setlinebuf(pli_trace);
+	    }
       }
 
       for (tf = vtable; tf; tf++) {
@@ -108,7 +110,6 @@ void veriusertfs_register_table(p_tfcell vtable)
 		  fprintf(pli_trace, "    tfname: %s\n", tf->tfname);
 		  fprintf(pli_trace, "    type:   %d\n", tf->type);
 		  fprintf(pli_trace, "    data:   %d\n", tf->data);
-		  fflush(pli_trace);
 	    }
 
 	    /* register */
@@ -183,7 +184,6 @@ static int compiletf(char *data)
 	    if (pli_trace) {
 		  fprintf(pli_trace, "Call %s->checktf(reason_checktf)\n",
 			  tf->tfname);
-		  fflush(pli_trace);
 	    }
 
 	    rtn = tf->checktf(tf->data, reason_checktf);
@@ -194,7 +194,6 @@ static int compiletf(char *data)
 		  fprintf(pli_trace, "Call %s->misctf"
 			  "(user_data=%d, reason=%d, paramvc=%d);\n",
 			  tf->tfname, tf->data, reason_endofcompile, 0);
-		  fflush(pli_trace);
 	    }
 
 	    tf->misctf(tf->data, reason_endofcompile, 0);
@@ -221,7 +220,6 @@ static int calltf(char *data)
 	    if (pli_trace) {
 		  fprintf(pli_trace, "Call %s->calltf(%d, %d)\n",
 			  tf->tfname, tf->data, reason_calltf);
-		  fflush(pli_trace);
 	    }
 
 	    rc = tf->calltf(tf->data, reason_calltf);
@@ -262,6 +260,9 @@ static int callback(p_cb_data data)
 	  case cbReadWriteSynch:
 	    reason = reason_synch;
 	    break;
+	  case cbReadOnlySynch:
+	    reason = reason_rosynch;
+	    break;
 	  default:
 	    assert(0);
       }
@@ -270,7 +271,6 @@ static int callback(p_cb_data data)
 	    fprintf(pli_trace, "Call %s->misctf"
 		    "(user_data=%d, reason=%d, paramvc=%d);\n",
 		    tf->tfname, tf->data, reason, paramvc);
-	    fflush(pli_trace);
       }
 
       /* execute misctf */
@@ -295,6 +295,10 @@ PLI_INT32 tf_isynchronize(void*obj)
       cb.user_data = (char *)pli;
 
       vpi_register_cb(&cb);
+
+      if (pli_trace)
+	    fprintf(pli_trace, "tf_isynchronize(%p) --> %d\n", obj, 0);
+
       return 0;
 }
 
@@ -303,8 +307,38 @@ PLI_INT32 tf_synchronize(void)
       return tf_isynchronize(tf_getinstance());
 }
 
+
+PLI_INT32 tf_irosynchronize(void*obj)
+{
+      vpiHandle sys = (vpiHandle)obj;
+      p_pli_data pli = vpi_get_userdata(sys);
+      s_cb_data cb;
+      s_vpi_time ti = {vpiSuppressTime, 0, 0};
+
+      cb.reason = cbReadOnlySynch;
+      cb.cb_rtn = callback;
+      cb.obj = sys;
+      cb.time = &ti;
+      cb.user_data = (char *)pli;
+
+      vpi_register_cb(&cb);
+
+      if (pli_trace)
+	    fprintf(pli_trace, "tf_irosynchronize(%p) --> %d\n", obj, 0);
+
+      return 0;
+}
+
+PLI_INT32 tf_rosynchronize(void)
+{
+      return tf_irosynchronize(tf_getinstance());
+}
+
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.10  2003/05/30 04:05:32  steve
+ *  Add tf_rosynchronize and friends.
+ *
  * Revision 1.9  2003/05/28 02:42:43  steve
  *  compiler warnings.
  *
