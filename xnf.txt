@@ -101,7 +101,7 @@ Flip-flops, or more specifically DFF devices, are generated to
 implement behavioral code like this:
 
 	reg Q;
-	always @(posedge clk) Q = <expr>;
+	always @(posedge clk) Q <= <expr>;
 
 The edge can be positive or negative, and the expression can be any
 synthesizeable expression. Furthermore, the register "Q" can have
@@ -109,7 +109,7 @@ width, which will cause the appropriate number of flip-flops to be
 created. A clock enable expression can also be added like so:
 
 	reg Q;
-	always @(posedge clk) if (<ce>) Q = <expr>;
+	always @(posedge clk) if (<ce>) Q <= <expr>;
 
 The <ce> expression can be any synthesizeable expression.
 
@@ -122,13 +122,13 @@ right. The behavioral description that the -Fsynth functor matches to
 get a synchronous RAM looks very similar to that for a DFF:
 
 	reg [15:0] M;
-	always @(posedge clk) if (<we>) M[<addr>] = <expr>;
+	always @(posedge clk) if (<we>) M[<addr>] <= <expr>;
 
 Note that in this case the l-value of the assignment is an addressed
 memory. This statement models writes into the memory. Reads from the
 device can be modeled with ordinary structural code, i.e.:
 
-	assign foo = M[<addr>];
+	assign foo <= M[<addr>];
 
 For the memory to be synthesizeable in the XNF target, the address
 lines for writes and reads must be connected. This corresponds to the
@@ -245,6 +245,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.13  2000/08/01 02:48:42  steve
+  Support <= in synthesis of DFF and ram devices.
+
  Revision 1.12  2000/07/25 22:49:32  steve
   memory is not a data type in verilog.
 

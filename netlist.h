@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.151 2000/07/30 18:25:44 steve Exp $"
+#ident "$Id: netlist.h,v 1.152 2000/08/01 02:48:42 steve Exp $"
 #endif
 
 /*
@@ -1180,6 +1180,7 @@ class NetAssignNB  : public NetAssign_ {
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
+      virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
@@ -1231,6 +1232,7 @@ class NetAssignMemNB : public NetAssignMem_ {
       explicit NetAssignMemNB(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMemNB();
 
+      virtual int match_proc(struct proc_match_t*);
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2726,6 +2728,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.152  2000/08/01 02:48:42  steve
+ *  Support <= in synthesis of DFF and ram devices.
+ *
  * Revision 1.151  2000/07/30 18:25:44  steve
  *  Rearrange task and function elaboration so that the
  *  NetTaskDef and NetFuncDef functions are created during

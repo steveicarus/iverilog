@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.7 2000/07/26 03:52:59 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.8 2000/08/01 02:48:42 steve Exp $"
 #endif
 
 /*
@@ -38,8 +38,8 @@
 struct syn_token_t {
       int token;
 
-      NetAssign*assign;
-      NetAssignMem*assign_mem;
+      NetAssign_*assign;
+      NetAssignMem_*assign_mem;
       NetProcTop*top;
       NetEvWait*evwait;
       NetEvent*event;
@@ -54,10 +54,10 @@ static void yyerror(const char*);
 static Design*des_;
 
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssign*asn);
+			NetEvent*eclk, NetExpr*cexp, NetAssign_*asn);
 static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssignMem*asn);
-static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn);
+			NetEvent*eclk, NetExpr*cexp, NetAssignMem_*asn);
+static void make_initializer(Design*des, NetProcTop*top, NetAssign_*asn);
 
 %}
 
@@ -131,7 +131,7 @@ start
 
   /* Various actions. */
 static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssign*asn)
+			NetEvent*eclk, NetExpr*cexp, NetAssign_*asn)
 {
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());
@@ -158,7 +158,7 @@ static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 }
 
 static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
-			NetEvent*eclk, NetExpr*cexp, NetAssignMem*asn)
+			NetEvent*eclk, NetExpr*cexp, NetAssignMem_*asn)
 {
       NetMemory*mem = asn->memory();
       NetExpr*adr_e = asn->index();
@@ -198,7 +198,7 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
  * the initial value for the link and get rid of the assignment
  * process.
  */
-static void make_initializer(Design*des, NetProcTop*top, NetAssign*asn)
+static void make_initializer(Design*des, NetProcTop*top, NetAssign_*asn)
 {
       NetESignal*rsig = dynamic_cast<NetESignal*> (asn->rval());
       assert(rsig);
@@ -245,7 +245,31 @@ struct tokenize : public proc_match_t {
 	    return 0;
       }
 
+      int assign_nb(NetAssignNB*dev)
+      {
+	    syn_token_t*cur;
+	    cur = new syn_token_t;
+	    cur->token = dev->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
+	    cur->assign = dev;
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+	    return 0;
+      }
+
       int assign_mem(NetAssignMem*dev)
+      {
+	    syn_token_t*cur;
+	    cur = new syn_token_t;
+	    cur->token = S_ASSIGN_MEM;
+	    cur->assign_mem = dev;
+	    cur->next_ = 0;
+	    last_->next_ = cur;
+	    last_ = cur;
+	    return 0;
+      }
+
+      int assign_mem_nb(NetAssignMemNB*dev)
       {
 	    syn_token_t*cur;
 	    cur = new syn_token_t;

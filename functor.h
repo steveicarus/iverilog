@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.15 2000/07/16 04:56:07 steve Exp $"
+#ident "$Id: functor.h,v 1.16 2000/08/01 02:48:42 steve Exp $"
 #endif
 
 /*
@@ -81,6 +81,8 @@ struct proc_match_t {
 
       virtual int assign(class NetAssign*);
       virtual int assign_mem(class NetAssignMem*);
+      virtual int assign_nb(class NetAssignNB*);
+      virtual int assign_mem_nb(class NetAssignMemNB*);
       virtual int condit(class NetCondit*);
       virtual int event_wait(class NetEvWait*);
       virtual int block(class NetBlock*);
@@ -89,6 +91,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.16  2000/08/01 02:48:42  steve
+ *  Support <= in synthesis of DFF and ram devices.
+ *
  * Revision 1.15  2000/07/16 04:56:07  steve
  *  Handle some edge cases during node scans.
  *

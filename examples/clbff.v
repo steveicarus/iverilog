@@ -74,7 +74,7 @@ module main;
       // This is mapped to a DFF. Since Q and D are two bits wide, the
       // code generator actually makes two DFF devices that share a
       // clock input.
-   always @(posedge clk) Q = D;
+   always @(posedge clk) Q <= D;
 
       // These attribute commands assign pins to the listed wires.
       // This can be done to wires and registers, as internally both

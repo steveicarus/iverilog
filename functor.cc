@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.20 2000/07/16 04:56:07 steve Exp $"
+#ident "$Id: functor.cc,v 1.21 2000/08/01 02:48:41 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -201,6 +201,16 @@ int NetAssign::match_proc(proc_match_t*that)
       return that->assign(this);
 }
 
+int proc_match_t::assign_nb(NetAssignNB*)
+{
+      return 0;
+}
+
+int NetAssignNB::match_proc(proc_match_t*that)
+{
+      return that->assign_nb(this);
+}
+
 int proc_match_t::assign_mem(NetAssignMem*)
 {
       return 0;
@@ -209,6 +219,16 @@ int proc_match_t::assign_mem(NetAssignMem*)
 int NetAssignMem::match_proc(proc_match_t*that)
 {
       return that->assign_mem(this);
+}
+
+int proc_match_t::assign_mem_nb(NetAssignMemNB*)
+{
+      return 0;
+}
+
+int NetAssignMemNB::match_proc(proc_match_t*that)
+{
+      return that->assign_mem_nb(this);
 }
 
 int proc_match_t::block(NetBlock*)
@@ -245,6 +265,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.21  2000/08/01 02:48:41  steve
+ *  Support <= in synthesis of DFF and ram devices.
+ *
  * Revision 1.20  2000/07/16 04:56:07  steve
  *  Handle some edge cases during node scans.
  *
