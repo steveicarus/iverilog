@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.7
+Version: 0.7.20030412
 Release: 0
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-0.7.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-20030412.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -20,7 +20,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-0.7
+%setup -n verilog-20030412
 
 %build
 ./configure --prefix=/usr
@@ -31,7 +31,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 
 %files
 
-%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt xilinx-hint.txt
+%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt swift.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt cadpli/cadpli.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
 %attr(-,root,root) /usr/man/man1/iverilog.1.gz
