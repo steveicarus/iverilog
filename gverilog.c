@@ -1,5 +1,5 @@
 /*
- * gvlog.c - A driver for verilog compiler ivl
+ * gverilog.c - A driver for verilog compiler ivl
  * Copyright (C) 1999 Stefan Petersen (spe@geda.seul.org)
 
  *   This program is free software; you can redistribute it and/or modify
@@ -32,34 +32,37 @@
 
 const char VERSION[] = "$Name:  $ $State: Exp $";
 
+#ifndef PATHLEN
+# define PATHLEN 100
+#endif
 
 #define P_IF_SET(var) var.set ? var.name : ""
 
 /* Div compiler settings */
 struct compset {
   char compsw[5];
-  char name[50];
+  char name[PATHLEN];
   int set;
 };
 
 /* cpp include path */
-struct compset cppincdir = {"-I", INCLUDEDIR, 1};
+struct compset cppincpath = {"-I", INCLUDEDIR, 1};
 
 /* cpp library path */
-struct compset cpplibdir ={"-L", LIBDIR, 1};
+struct compset cpplibpath ={"-L", LIBDIR, 1};
 
 /* VPI module path */
 struct compset VPImodpath = {"-f", LIBDIR "/ivl", 1};
 
 /* ivl include path */
-struct compset ivlppincdir = {"-I", "", 0};
+struct compset ivlppincpath = {"-I", "", 0};
 
 /* ivl defines */
 struct compset ivlppdefines = {"-D", "", 0};
 
 /* ivl target setup */ 
 /* Compilation target, default vvm */
-typedef enum {VVM, XNF, OTHER} targettype;
+typedef enum {VVM, XNF, NULLT, OTHER} targettype;
 struct target {
   targettype target;
   struct compset targetinfo;
@@ -77,7 +80,7 @@ struct compset outputfile = {"-o", "", 0};
 struct compset topmodule = {"-s", "", 0};
 
 /* verilog files */
-char verilogfiles[50] = "";
+char verilogfiles[PATHLEN] = "";
 
 
 /* Temp files for storage */
@@ -100,6 +103,14 @@ void sorry(char optelem)
 }
 
 
+void  strchk(char *str, unsigned int maxlen)
+{
+  if (strlen(str) >= maxlen) 
+    fprintf(stderr, "Warning! Following path too long, truncating it!\n%s\n",
+	    str);
+}
+
+
 targettype resolvtarget(char *target)
 {
   if (strcmp(target, "vvm") == 0) {
@@ -109,6 +120,8 @@ targettype resolvtarget(char *target)
 	    functors.compsw, functors.compsw, functors.compsw);
     functors.set = 1;
     return XNF;
+  } else if (strcmp(target, "null") == 0) {
+    return NULLT;
   } else {
     return OTHER;
   }
@@ -149,9 +162,12 @@ void preprocess(void)
 
   sprintf(argument, LIBDIR "/ivl/ivlpp %s %s -L -o%s %s",
 	  P_IF_SET(ivlppdefines),
-	  P_IF_SET(ivlppincdir),
+	  P_IF_SET(ivlppincpath),
 	  tmpPPfile,
 	  verilogfiles);
+
+  strchk(argument, 255);
+
   if (compileinfo.debug) {
     printf("Executing command : \n%s\n", argument);
   } else {
@@ -184,6 +200,9 @@ void compile(void)
 	     compileinfo.elabnetlist ? "-E whatever_netlist" : "", */
 	  tmpCCfile,
 	  tmpPPfile);
+
+  strchk(argument, 255);
+
   if (compileinfo.debug) {
     printf("Executing command : \n%s\n", argument);
     printf("Removing file %s\n", tmpPPfile);
@@ -213,10 +232,13 @@ void postprocess(void)
   case VVM:   /* Compile C++ source */
 
     sprintf(argument, "g++ -rdynamic %s%s %s%s %s -o %s -lvvm -ldl",
-	    cppincdir.compsw, cppincdir.name, /* Include dir */
-	    cpplibdir.compsw, cpplibdir.name, /* Library dir */
+	    cppincpath.compsw, cppincpath.name, /* Include dir */
+	    cpplibpath.compsw, cpplibpath.name, /* Library dir */
 	    tmpCCfile,
 	    outputfile.name);
+
+    strchk(argument, 255);
+    
     if (compileinfo.debug) {
       printf("Executing command :\n%s\n", argument);
     } else {
@@ -231,6 +253,9 @@ void postprocess(void)
     break;
   case XNF:   /* Just move file as is */
     sprintf(outputfile.name, "%s.xnf", outputfile.name);
+
+    strchk(argument, 255);
+
     if (compileinfo.debug) {
       printf("Moving file %s to %s\n", tmpCCfile, outputfile.name);
     } else {
@@ -239,8 +264,14 @@ void postprocess(void)
       }
     }
     break;
+  case NULLT:  /* Remove file we accidently created */
+    unlink(tmpCCfile);
+    break;
   case OTHER: /* Just move file as is */
     sprintf(outputfile.name, "%s.%s", outputfile.name, target.targetinfo.name);
+
+    strchk(argument, 255);
+
     if (compileinfo.debug) {
       printf("Moving file %s to %s\n", tmpCCfile, outputfile.name);
     } else {
@@ -284,9 +315,10 @@ int main(int argc, char **argv)
       ivlppdefines.set =1;
       break;
     case 'I': /* includepath */
-      sprintf(ivlppincdir.name, "%s %s %s", ivlppincdir.name, 
-	      ivlppincdir.compsw, optarg);
-      ivlppincdir.set = 1;
+      sprintf(ivlppincpath.name, "%s %s %s", ivlppincpath.name, 
+	      ivlppincpath.compsw, optarg);
+      ivlppincpath.set = 1;
+      strchk(ivlppincpath.name, PATHLEN);
       break;
     case 'X': /* xnf target */
       if (target.targetinfo.set)
@@ -362,13 +394,14 @@ int main(int argc, char **argv)
   }
 
   /* Resolve temporary file storage */
-  sprintf(tmpPPfile, "/tmp/ivl%d.pp", (int)getpid());
-  sprintf(tmpCCfile, "/tmp/ivl%d.cc", (int)getpid());
+  sprintf(tmpPPfile, "ivl%d.pp", (int)getpid()); 
+  sprintf(tmpCCfile, "ivl%d.cc", (int)getpid()); 
 
   /* Build list of verilog files */
   for(; optind != argc; optind++) {
     sprintf(verilogfiles, "%s %s", verilogfiles, argv[optind]); 
   }
+  strchk(verilogfiles , PATHLEN);
 
   /* Determine output filename if not explicitly set */
   if (!outputfile.set) {
