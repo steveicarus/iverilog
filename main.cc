@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.42 2001/06/23 18:41:02 steve Exp $"
+#ident "$Id: main.cc,v 1.43 2001/07/02 01:57:27 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -125,6 +125,7 @@ net_func name_to_net_func(const string&name)
 int main(int argc, char*argv[])
 {
       bool help_flag = false;
+      bool verbose_flag = false;
       const char* net_path = 0;
       const char* pf_path = 0;
       const char* warn_en = "";
@@ -137,7 +138,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:vW:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:p:s:T:t:VvW:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -192,6 +193,9 @@ int main(int argc, char*argv[])
 	  case 't':
 	    target = optarg;
 	    break;
+	  case 'V':
+	    verbose_flag = true;
+	    break;
 	  case 'v':
 	    cout << "Icarus Verilog version " << VERSION << endl;
 	    cout << COPYRIGHT << endl;
@@ -230,6 +234,10 @@ int main(int argc, char*argv[])
 	    break;
 	  default:
 	    break;
+      }
+
+      if (verbose_flag) {
+	    cout << "PARSING INPUT..." << endl;
       }
 
 	/* Parse the input. Make the pform. */
@@ -297,6 +305,10 @@ int main(int argc, char*argv[])
       }
 
 
+      if (verbose_flag) {
+	    cout << "ELABORATING DESIGN..." << endl;
+      }
+
 	/* On with the process of elaborating the module. */
       Design*des = elaborate(modules, primitives, start_module);
       if (des == 0) {
@@ -314,6 +326,10 @@ int main(int argc, char*argv[])
       des->set_flags(flags);
 
 
+      if (verbose_flag) {
+	    cout << "RUNNING FUNCTORS..." << endl;
+      }
+
       while (!net_func_queue.empty()) {
 	    net_func func = net_func_queue.front();
 	    net_func_queue.pop();
@@ -326,10 +342,18 @@ int main(int argc, char*argv[])
       }
 
 
+      if (verbose_flag) {
+	    cout << "STARTING CODE GENERATOR..." << endl;
+      }
+
       bool emit_rc = emit(des, target);
       if (!emit_rc) {
 	    cerr << "error: Code generation had errors." << endl;
 	    return 1;
+      }
+
+      if (verbose_flag) {
+	    cout << "DONE." << endl;
       }
 
       return 0;
@@ -337,6 +361,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.43  2001/07/02 01:57:27  steve
+ *  Add the -V flag, and some verbose messages.
+ *
  * Revision 1.42  2001/06/23 18:41:02  steve
  *  Include stdlib.h
  *
