@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.14 2003/05/16 03:50:28 steve Exp $"
+#ident "$Id: config.h.in,v 1.15 2003/05/20 03:48:23 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
@@ -40,7 +40,7 @@
 
 /* Figure if I can use readline. */
 #undef USE_READLINE
-#ifdef HAVE_LIB_READLINE
+#ifdef HAVE_LIBREADLINE
 #ifdef HAVE_READLINE_READLINE_H
 # define USE_READLINE
 #endif
@@ -94,6 +94,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.15  2003/05/20 03:48:23  steve
+ *  Fix spelling of HAVE_LIBREADLINE
+ *
  * Revision 1.14  2003/05/16 03:50:28  steve
  *  Fallback functionality if readline is not present.
  *
