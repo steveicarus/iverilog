@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.3 2000/04/10 05:26:06 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.4 2000/04/18 04:50:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -105,6 +105,26 @@ void NetScope::add_event(NetEvent*ev)
       events_ = ev;
 }
 
+void NetScope::rem_event(NetEvent*ev)
+{
+      assert(ev->scope_ == this);
+      ev->scope_ = 0;
+      if (events_ == ev) {
+	    events_ = ev->snext_;
+
+      } else {
+	    NetEvent*cur = events_;
+	    while (cur->snext_ != ev) {
+		  assert(cur->snext_);
+		  cur = cur->snext_;
+	    }
+	    cur->snext_ = ev->snext_;	    
+      }
+
+      ev->snext_ = 0;
+}
+
+
 NetEvent* NetScope::find_event(const string&name)
 {
       for (NetEvent*cur = events_;  cur ;  cur = cur->snext_)
@@ -164,6 +184,9 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.4  2000/04/18 04:50:20  steve
+ *  Clean up unneeded NetEvent objects.
+ *
  * Revision 1.3  2000/04/10 05:26:06  steve
  *  All events now use the NetEvent class.
  *

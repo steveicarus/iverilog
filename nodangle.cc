@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.3 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.4 2000/04/18 04:50:20 steve Exp $"
 #endif
 
 /*
@@ -31,9 +31,20 @@
 
 class nodangle_f  : public functor_t {
     public:
+      void event(Design*des, NetEvent*ev);
       void signal(Design*des, NetNet*sig);
 };
 
+void nodangle_f::event(Design*des, NetEvent*ev)
+{
+      if (ev->nwait() != 0)
+	    return;
+
+      if (ev->ntrig() != 0)
+	    return;
+
+      delete ev;
+}
 
 void nodangle_f::signal(Design*des, NetNet*sig)
 {
@@ -73,6 +84,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.4  2000/04/18 04:50:20  steve
+ *  Clean up unneeded NetEvent objects.
+ *
  * Revision 1.3  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *

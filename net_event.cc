@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.5 2000/04/16 23:32:18 steve Exp $"
+#ident "$Id: net_event.cc,v 1.6 2000/04/18 04:50:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -35,6 +35,12 @@ NetEvent::NetEvent(const string&n)
 NetEvent::~NetEvent()
 {
       assert(waitref_ == 0);
+      if (scope_) scope_->rem_event(this);
+      while (probes_) {
+	    NetEvProbe*tmp = probes_->enext_;
+	    delete probes_;
+	    tmp = probes_;
+      }
 }
 
 string NetEvent::name() const
@@ -68,6 +74,18 @@ NetEvProbe* NetEvent::probe(unsigned idx)
 	    idx -= 1;
       }
       return cur;
+}
+
+unsigned NetEvent::ntrig() const
+{
+      unsigned cnt = 0;
+      NetEvTrig*cur = trig_;
+      while (cur) {
+	    cnt += 1;
+	    cur = cur->enext_;
+      }
+
+      return cnt;
 }
 
 unsigned NetEvent::nwait() const
@@ -207,6 +225,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.6  2000/04/18 04:50:20  steve
+ *  Clean up unneeded NetEvent objects.
+ *
  * Revision 1.5  2000/04/16 23:32:18  steve
  *  Synthesis of comparator in expressions.
  *

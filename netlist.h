@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.124 2000/04/18 01:02:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.125 2000/04/18 04:50:20 steve Exp $"
 #endif
 
 /*
@@ -1305,6 +1305,8 @@ class NetEvent : public LineInfo {
 	// Return the number of NetEvWait nodes that reference me.
       unsigned nwait() const;
 
+      unsigned ntrig() const;
+
       NetScope* scope();
       const NetScope* scope() const;
 
@@ -1330,6 +1332,8 @@ class NetEvent : public LineInfo {
 };
 
 class NetEvTrig  : public NetProc {
+
+      friend class NetEvent;
 
     public:
       explicit NetEvTrig(NetEvent*tgt);
@@ -2173,6 +2177,7 @@ class NetScope {
 	   scope. */
 
       void add_event(NetEvent*);
+      void rem_event(NetEvent*);
       NetEvent*find_event(const string&name);
 
 	/* The parent and child() methods allow users of NetScope
@@ -2194,6 +2199,10 @@ class NetScope {
 
       void dump(ostream&) const;
       void emit_scope(ostream&o, struct target_t*tgt) const;
+
+	/* This method runs the functor on me. Recurse through the
+	   children of this node as well. */
+      void run_functor(Design*des, functor_t*fun);
 
 
 	/* This member is used during elaboration to pass defparam
@@ -2381,6 +2390,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.125  2000/04/18 04:50:20  steve
+ *  Clean up unneeded NetEvent objects.
+ *
  * Revision 1.124  2000/04/18 01:02:54  steve
  *  Minor cleanup of NetTaskDef.
  *

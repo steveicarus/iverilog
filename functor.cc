@@ -17,13 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.15 2000/04/16 23:32:18 steve Exp $"
+#ident "$Id: functor.cc,v 1.16 2000/04/18 04:50:19 steve Exp $"
 #endif
 
 # include  "functor.h"
 # include  "netlist.h"
 
 functor_t::~functor_t()
+{
+}
+
+void functor_t::event(class Design*, class NetEvent*)
 {
 }
 
@@ -59,8 +63,24 @@ void functor_t::lpm_mult(class Design*, class NetMult*)
 {
 }
 
+void NetScope::run_functor(Design*des, functor_t*fun)
+{
+      for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_) {
+	    cur->run_functor(des, fun);
+      }
+
+      for (NetEvent*cur = events_ ;  cur ;  /* */) {
+	    NetEvent*tmp = cur;
+	    cur = cur->snext_;
+	    fun->event(des, tmp);
+      }
+}
+
 void Design::functor(functor_t*fun)
 {
+	// Scan the scopes
+      root_scope_->run_functor(this, fun);
+
 	// apply to signals
       if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
@@ -188,6 +208,9 @@ int proc_match_t::event_wait(NetEvWait*)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.16  2000/04/18 04:50:19  steve
+ *  Clean up unneeded NetEvent objects.
+ *
  * Revision 1.15  2000/04/16 23:32:18  steve
  *  Synthesis of comparator in expressions.
  *

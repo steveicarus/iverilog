@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.11 2000/04/12 20:02:53 steve Exp $"
+#ident "$Id: functor.h,v 1.12 2000/04/18 04:50:19 steve Exp $"
 #endif
 
 /*
@@ -35,8 +35,10 @@ class NetProcTop;
 struct functor_t {
       virtual ~functor_t();
 
-	/* Signals are scanned first. This is called once for each
-	   signal in the design. */
+	/* Events are scanned here. */
+      virtual void event(class Design*des, class NetEvent*);
+
+	/* This is called once for each signal in the design. */
       virtual void signal(class Design*des, class NetNet*);
 
 	/* This method is called for each process in the design. */
@@ -74,6 +76,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.12  2000/04/18 04:50:19  steve
+ *  Clean up unneeded NetEvent objects.
+ *
  * Revision 1.11  2000/04/12 20:02:53  steve
  *  Finally remove the NetNEvent and NetPEvent classes,
  *  Get synthesis working with the NetEvWait class,
