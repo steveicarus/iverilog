@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.9 2001/03/31 01:59:58 steve Exp $"
+#ident "$Id: codes.h,v 1.10 2001/03/31 17:36:02 steve Exp $"
 #endif
 
 
@@ -45,6 +45,7 @@ extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_JMP(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
+extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
@@ -96,6 +97,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.10  2001/03/31 17:36:02  steve
+ *  Add the jmp/1 instruction.
+ *
  * Revision 1.9  2001/03/31 01:59:58  steve
  *  Add the ADD instrunction.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.15 2001/03/31 01:59:59 steve Exp $"
+#ident "$Id: vthread.cc,v 1.16 2001/03/31 17:36:02 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -278,6 +278,13 @@ bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_JMP1(vthread_t thr, vvp_code_t cp)
+{
+      if (thr_get_bit(thr, cp->bit_idx1) == 1)
+	    thr->pc = cp->cptr;
+      return true;
+}
+
 bool of_JOIN(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->child);
@@ -355,6 +362,9 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.16  2001/03/31 17:36:02  steve
+ *  Add the jmp/1 instruction.
+ *
  * Revision 1.15  2001/03/31 01:59:59  steve
  *  Add the ADD instrunction.
  *

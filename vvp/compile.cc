@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.20 2001/03/31 01:59:59 steve Exp $"
+#ident "$Id: compile.cc,v 1.21 2001/03/31 17:36:02 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -75,6 +75,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
+      { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -688,6 +689,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.21  2001/03/31 17:36:02  steve
+ *  Add the jmp/1 instruction.
+ *
  * Revision 1.20  2001/03/31 01:59:59  steve
  *  Add the ADD instrunction.
  *
