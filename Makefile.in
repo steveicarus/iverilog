@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.82 2000/11/30 17:31:42 steve Exp $"
+#ident "$Id: Makefile.in,v 1.83 2000/12/02 04:50:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -53,6 +53,7 @@ all: ivl@EXEEXT@
 	cd vpi ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
 	cd driver ; $(MAKE) all
+	cd tgt-null ; $(MAKE) all
 	cd tgt-verilog ; $(MAKE) all
 	cd tgt-stub ; $(MAKE) all
 
@@ -69,6 +70,7 @@ clean:
 	cd vpi ; $(MAKE) clean
 	cd driver ; $(MAKE) clean
 	cd ivlpp ; $(MAKE) clean
+	cd tgt-null ; $(MAKE) clean
 	cd tgt-verilog ; $(MAKE) clean
 	cd tgt-stub ; $(MAKE) clean
 
@@ -80,7 +82,7 @@ distclean: clean
 	rm -f config.status config.cache config.log
 	rm -f Makefile
 
-TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-null.o t-vvm.o t-xnf.o
+TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-vvm.o t-xnf.o
 FF = nodangle.o synth.o syn-rules.o xnfio.o
 
 O = main.o cprop.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
@@ -160,6 +162,7 @@ install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $
 	cd vpi ; $(MAKE) install
 	cd ivlpp ; $(MAKE) install
 	cd driver ; $(MAKE) install
+	cd tgt-null ; $(MAKE) install
 
 $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(libdir)/ivl/ivl@EXEEXT@
@@ -183,6 +186,7 @@ uninstall:
 	cd vpi ; $(MAKE) uninstall
 	cd vvm ; $(MAKE) uninstall
 	cd ivlpp ; $(MAKE) uninstall
+	cd tgt-null ; $(MAKE) uninstall
 
 
 -include $(patsubst %.o, dep/%.d, $O)

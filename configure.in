@@ -92,4 +92,4 @@ AC_SUBST(rdynamic)
 
 AC_MSG_RESULT($rdynamic)
 
-AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile driver/Makefile tgt-stub/Makefile tgt-verilog/Makefile)
+AC_OUTPUT(Makefile vpi/Makefile ivlpp/Makefile vvm/Makefile driver/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile)
