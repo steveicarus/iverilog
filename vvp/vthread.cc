@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.39 2001/05/10 00:26:53 steve Exp $"
+#ident "$Id: vthread.cc,v 1.40 2001/05/20 00:56:48 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -138,7 +138,7 @@ unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr)
 
 void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
 {
-      assert(addr < thr->nbits);
+      thr_check_addr(thr, addr);
       thr_put_bit(thr, addr, bit);
 }
 
@@ -1005,6 +1005,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.40  2001/05/20 00:56:48  steve
+ *  Make vthread_put_but expand the space if needed.
+ *
  * Revision 1.39  2001/05/10 00:26:53  steve
  *  VVP support for memories in expressions,
  *  including general support for thread bit
