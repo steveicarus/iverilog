@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.2 2001/03/25 03:25:43 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.3 2001/03/25 03:53:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -56,7 +56,8 @@ static void draw_nexus_input(ivl_nexus_t nex)
 
 	    sptr = ivl_nexus_ptr_sig(nptr);
 	    if (sptr && (ivl_signal_type(sptr) == IVL_SIT_REG)) {
-		  fprintf(vvp_out, "V_%s", ivl_signal_name(sptr));
+		  fprintf(vvp_out, "V_%s[%u]", ivl_signal_name(sptr),
+			  ivl_nexus_ptr_pin(nptr));
 		  return;
 	    }
       }
@@ -163,6 +164,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.3  2001/03/25 03:53:40  steve
+ *  Include signal bit index in functor input.
+ *
  * Revision 1.2  2001/03/25 03:25:43  steve
  *  Generate .net statements, and nexus inputs.
  *
