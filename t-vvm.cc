@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.153 2000/05/25 06:02:12 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.154 2000/05/31 03:52:07 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2160,9 +2160,14 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
       if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
 
-	    assert((net->pin_count() <= rs->pin_count())
-		   || (net->bmux() && (rs->pin_count() >= 1)));
-	    rval = mangle(rs->name()) + ".bits";
+	    if (net->pin_count() > rs->pin_count()) {
+		  rval = emit_proc_rval(defn, this, net->rval());
+
+	    } else {
+		  assert((net->pin_count() <= rs->pin_count())
+			 || (net->bmux() && (rs->pin_count() >= 1)));
+		  rval = mangle(rs->name()) + ".bits";
+	    }
 
       } else {
 
@@ -3046,6 +3051,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.154  2000/05/31 03:52:07  steve
+ *  The NetESignal shortcut cannot expand an rvalue.
+ *
  * Revision 1.153  2000/05/25 06:02:12  steve
  *  Emin init code only once per nexus.
  *
