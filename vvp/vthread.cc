@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.114 2003/08/01 00:58:03 steve Exp $"
+#ident "$Id: vthread.cc,v 1.115 2003/09/01 04:03:38 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2559,9 +2559,11 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
       lvb = new unsigned long[word_count];
 
-      lvb[0] = ~ cp->bit_idx[1];
+
+      lvb[0] = cp->bit_idx[1];
+      lvb[0] = ~lvb[0];
       for (unsigned idx = 1 ;  idx < word_count ;  idx += 1)
-	    lvb[idx] = ~0;
+	    lvb[idx] = ~0UL;
 
       unsigned long carry;
       carry = 1;
@@ -2569,7 +2571,7 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
 	    unsigned long tmp = lvb[idx] + carry;
 	    unsigned long sum = lva[idx] + tmp;
-	    carry = 0;
+	    carry = 0UL;
 	    if (tmp < lvb[idx])
 		  carry = 1;
 	    if (sum < tmp)
@@ -2760,6 +2762,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.115  2003/09/01 04:03:38  steve
+ *  32bit vs 64bit handling in SUBI.
+ *
  * Revision 1.114  2003/08/01 00:58:03  steve
  *  Initialize allocated memory.
  *
