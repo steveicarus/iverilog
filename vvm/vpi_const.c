@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.14 2000/12/02 02:40:56 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.15 2000/12/10 19:15:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -240,6 +240,10 @@ void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 	    break;
 
 	  case vpiStringVal:
+	      /* Turn the bits into an ascii string, terminated by a
+		 null. This is actually a bit tricky as nulls in the
+		 bit array would terminate the C string. I therefore
+		 translate them to ascii ' ' characters. */
 	    assert(nbits%8 == 0);
 	    for (idx = nbits ;  idx >= 8 ;  idx -= 8) {
 		  char tmp = 0;
@@ -249,7 +253,7 @@ void vpip_bits_get_value(const vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 			if (B_IS1(bits[idx-8+bdx-1]))
 			      tmp |= 1;
 		  }
-		  *cp++ = tmp;
+		  *cp++ = tmp? tmp : ' ';
 	    }
 	    *cp++ = 0;
 	    break;
@@ -439,6 +443,9 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.15  2000/12/10 19:15:19  steve
+ *  vpiStringVal handles leding nulls as blanks. (PR#62)
+ *
  * Revision 1.14  2000/12/02 02:40:56  steve
  *  Support for %s in $display (PR#62)
  *
