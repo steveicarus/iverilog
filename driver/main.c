@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.49 2002/12/04 03:26:59 steve Exp $"
+#ident "$Id: main.c,v 1.50 2003/01/10 19:01:04 steve Exp $"
 
 # include "config.h"
 
@@ -44,7 +44,9 @@ const char HELP[] =
 
 #ifdef __MINGW32__
 #include <windows.h>
+#ifdef HAVE_LIBIBERTY_H
 #include <libiberty.h>
+#endif
 #endif
 
 #if HAVE_GETOPT_H
@@ -686,6 +688,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.50  2003/01/10 19:01:04  steve
+ *  Only use libiberty.h if available.
+ *
  * Revision 1.49  2002/12/04 03:26:59  steve
  *  Mingw32 compatible temp file management.
  *

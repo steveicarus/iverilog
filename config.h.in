@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.5 2002/08/11 23:39:33 steve Exp $"
+#ident "$Id: config.h.in,v 1.6 2003/01/10 19:01:04 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -37,6 +37,7 @@
 # undef HAVE_TIMES
 # undef HAVE_IOSFWD
 # undef HAVE_GETOPT_H
+# undef HAVE_LIBIBERTY_H
 # undef HAVE_MALLOC_H
 # undef HAVE_DLFCN_H
 # undef HAVE_DL_H
@@ -46,6 +47,9 @@
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.6  2003/01/10 19:01:04  steve
+ *  Only use libiberty.h if available.
+ *
  * Revision 1.5  2002/08/11 23:39:33  steve
  *  Remove VVM option.
  *
