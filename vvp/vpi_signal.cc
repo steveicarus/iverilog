@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.3 2001/03/25 00:35:35 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.4 2001/03/25 19:38:05 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,8 @@
 # include  "functor.h"
 # include  <malloc.h>
 # include  <assert.h>
+
+extern const char hex_digits[256];
 
 /*
  * implement vpi_get for vpiReg objects.
@@ -103,6 +105,32 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    buf[wid] = 0;
 	    vp->value.str = buf;
 	    break;
+
+	  case vpiHexStrVal: {
+		unsigned hval, hwid;
+		hwid = (wid + 3) / 4;
+		buf[hwid] = 0;
+		hval = 0;
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		      vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		      functor_t fp = functor_index(fptr);
+		      hval = hval | ((fp->oval&3) << 2*(idx % 4));
+
+		      if (idx%4 == 3) {
+			    hwid -= 1;
+			    buf[hwid] = hex_digits[hval];
+			    hval = 0;
+		      }
+		}
+
+		if (hwid > 0) {
+		      hwid -= 1;
+		      buf[hwid] = hex_digits[hval];
+		      hval = 0;
+		}
+		vp->value.str = buf;
+		break;
+	  }
 
 	  default:
 	      /* XXXX Not implemented yet. */
@@ -193,6 +221,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.4  2001/03/25 19:38:05  steve
+ *  Support making hex strings.
+ *
  * Revision 1.3  2001/03/25 00:35:35  steve
  *  Add the .net statement.
  *
