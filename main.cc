@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.69 2003/09/22 01:12:08 steve Exp $"
+#ident "$Id: main.cc,v 1.70 2003/09/23 05:57:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -169,6 +169,9 @@ static void process_generation_flag(const char*gen)
  *        This specifies the ivlpp command line used to process
  *        library modules as I read them in.
  *
+ *    module:<name>
+ *        Load a VPI module.
+ *
  *    out:<path>
  *        Path to the output file.
  *
@@ -215,6 +218,9 @@ static void read_iconfig_file(const char*ipath)
 
 	    } else if (strcmp(buf, "ivlpp") == 0) {
 		  ivlpp_string = strdup(cp);
+
+	    } else if (strcmp(buf,"module") == 0) {
+		  flags["VPI_MODULE_LIST"] = flags["VPI_MODULE_LIST"]+","+cp;
 
 	    } else if (strcmp(buf, "out") == 0) {
 		  flags["-o"] = cp;
@@ -365,7 +371,7 @@ int main(int argc, char*argv[])
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "C:F:f:g:hm:M:N:o:P:p:s:T:t:VvW:Y:y:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "C:F:f:hN:P:p:t:Vv")) != EOF) switch (opt) {
 
 	  case 'C':
 	    read_iconfig_file(optarg);
@@ -387,9 +393,6 @@ int main(int argc, char*argv[])
 	    break;
 	  case 'h':
 	    help_flag = true;
-	    break;
-	  case 'm':
-	    flags["VPI_MODULE_LIST"] = flags["VPI_MODULE_LIST"]+","+optarg;
 	    break;
 	  case 'N':
 	    net_path = optarg;
@@ -429,7 +432,6 @@ int main(int argc, char*argv[])
 "\t-C <name>        Config file from driver.\n"
 "\t-F <name>        Apply netlist function <name>.\n"
 "\t-h               Print usage information, and exit.\n"
-"\t-m <module>      Load vpi module <module>.\n"
 "\t-N <file>        Dump the elaborated netlist to <file>.\n"
 "\t-P <file>        Write the parsed input to <file>.\n"
 "\t-p <assign>      Set a parameter value.\n"
@@ -658,6 +660,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.70  2003/09/23 05:57:36  steve
+ *  Pass -m flag from driver via iconfig file.
+ *
  * Revision 1.69  2003/09/22 01:12:08  steve
  *  Pass more ivl arguments through the iconfig file.
  *

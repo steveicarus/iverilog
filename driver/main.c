@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.54 2003/09/22 01:12:09 steve Exp $"
+#ident "$Id: main.c,v 1.55 2003/09/23 05:57:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -491,17 +491,7 @@ int main(int argc, char **argv)
 		  break;
 
 		case 'm':
-		  if (mod_list == 0) {
-			mod_list = malloc(strlen(" -m")+strlen(optarg)+1);
-			strcpy(mod_list, " -m");
-			strcat(mod_list, optarg);
-		  } else {
-			mod_list = realloc(mod_list, strlen(mod_list)
-					   + strlen(" -m")
-					   + strlen(optarg) + 1);
-			strcat(mod_list, " -m");
-			strcat(mod_list, optarg);
-		  }
+		  fprintf(iconfig_file, "module:%s\n", optarg);
 		  break;
 
 		case 'N':
@@ -704,6 +694,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.55  2003/09/23 05:57:15  steve
+ *  Pass -m flag from driver via iconfig file.
+ *
  * Revision 1.54  2003/09/22 01:12:09  steve
  *  Pass more ivl arguments through the iconfig file.
  *

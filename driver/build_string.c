@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: build_string.c,v 1.12 2003/09/22 01:12:09 steve Exp $"
+#ident "$Id: build_string.c,v 1.13 2003/09/23 05:57:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -53,7 +53,6 @@ int build_string(char*output, size_t olen, const char*pattern)
 			    tmp_buf[tail-pattern-1] = 0;
 
 			    if (((*pattern == 'v') && verbose_flag)
-				|| ((*pattern == 'M') && depfile)
 				|| ((*pattern == 'N') && npath)) {
 				  int rc = build_string(output, olen,
 							tmp_buf);
@@ -81,14 +80,6 @@ int build_string(char*output, size_t olen, const char*pattern)
 			      strcpy(output, f_list);
 			      output += strlen(f_list);
 			      olen -= strlen(f_list);
-			}
-			break;
-
-		      case 'm':
-			if (mod_list) {
-			      strcpy(output, mod_list);
-			      output += strlen(mod_list);
-			      olen -= strlen(mod_list);
 			}
 			break;
 
@@ -121,6 +112,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.13  2003/09/23 05:57:15  steve
+ *  Pass -m flag from driver via iconfig file.
+ *
  * Revision 1.12  2003/09/22 01:12:09  steve
  *  Pass more ivl arguments through the iconfig file.
  *
