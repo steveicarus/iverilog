@@ -1,0 +1,48 @@
+#ifndef __fpga_priv_H
+#define __fpga_priv_H
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+#ident "$Id: fpga_priv.h,v 1.1 2001/08/28 04:14:20 steve Exp $"
+
+# include  <stdio.h>
+# include  "device.h"
+
+/* This is the opened xnf file descriptor. It is the output that this
+   code generator writes to. */
+extern FILE*xnf;
+
+extern int show_scope_gates(ivl_scope_t net, void*x);
+
+extern void draw_pin(ivl_nexus_t nex, const char*nam, char dir);
+
+extern device_t device;
+
+/*
+ * These are mangle functions.
+ */
+extern void mangle_logic_name(ivl_net_logic_t net, char*buf, size_t nbuf);
+extern void mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
+
+/*
+ * $Log: fpga_priv.h,v $
+ * Revision 1.1  2001/08/28 04:14:20  steve
+ *  Add the fpga target.
+ *
+ */
+#endif

@@ -1,0 +1,90 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc.,
+#    59 Temple Place - Suite 330
+#    Boston, MA 02111-1307, USA
+#
+#ident "$Id: Makefile.in,v 1.1 2001/08/28 04:14:20 steve Exp $"
+#
+#
+SHELL = /bin/sh
+
+VERSION = 0.0
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = $(prefix)/include
+
+CC = @CC@
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
+CXXFLAGS = @CXXFLAGS@
+LDFLAGS = @LDFLAGS@
+
+all: fpga.tgt
+
+%.o: %.c
+	@[ -d dep ] || mkdir dep
+	$(CC) -Wall -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep
+
+O = fpga.o gates.o d-generic.o mangle.o
+
+ifeq (@WIN32@,yes)
+  TGTLDFLAGS=-L.. -livl
+  TGTDEPLIBS=../libivl.a
+else
+  TGTLDFLAGS=
+  TGTDEPLIBS=
+endif
+
+
+fpga.tgt: $O $(TGTDEPLIBS)
+	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+
+Makefile: Makefile.in config.status
+	./config.status
+
+clean:
+	rm -f *.o dep/*.d
+
+distclean: clean
+	rm -f Makefile config.status config.log config.cache fpga.tgt
+
+check: all
+
+install: all installdirs $(libdir)/ivl/fpga.tgt
+
+$(libdir)/ivl/fpga.tgt: ./fpga.tgt
+	$(INSTALL_DATA) ./fpga.tgt $(libdir)/ivl/fpga.tgt
+
+
+installdirs: ../mkinstalldirs
+	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+
+uninstall:
+	rm -f $(libdir)/ivl/fpga.tgt
+
+
+-include $(patsubst %.o, dep/%.d, $O)

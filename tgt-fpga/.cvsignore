@@ -1,0 +1,7 @@
+configure
+config.cache
+config.log
+config.status
+Makefile
+fpga.tgt
+dep
