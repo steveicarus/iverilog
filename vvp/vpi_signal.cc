@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.17 2001/06/21 23:05:08 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.18 2001/06/29 00:44:56 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,7 @@
 # include  "functor.h"
 # include  <stdio.h>
 # include  <malloc.h>
+# include  <string.h>
 # include  <assert.h>
 
 /*
@@ -79,9 +80,17 @@ static char* signal_get_str(int code, vpiHandle ref)
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
+      static char full_name[4096];
+
       switch (code) {
 
 	  case vpiFullName:
+	    strcpy(full_name, vpi_get_str(vpiFullName, &rfp->scope->base));
+	    strcat(full_name, ".");
+	    strcat(full_name, rfp->name);
+	    return full_name;
+
+	  case vpiName:
 	    return (char*)rfp->name;
       }
 
@@ -501,6 +510,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.18  2001/06/29 00:44:56  steve
+ *  Properly support signal full names.
+ *
  * Revision 1.17  2001/06/21 23:05:08  steve
  *  Some documentation of callback behavior.
  *
