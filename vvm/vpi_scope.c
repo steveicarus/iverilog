@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_scope.c,v 1.9 2000/10/29 17:10:02 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.10 2000/11/01 06:05:44 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -46,7 +46,8 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
       assert((obj->vpi_type->type_code == vpiModule)
-	     || (obj->vpi_type->type_code == vpiNamedBegin));
+	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiTask));
 
       switch (code) {
 	  case vpiInternalScope:
@@ -72,7 +73,7 @@ static const struct __vpirt vpip_task_rt = {
       0,
       0,
       0,
-      0
+      module_iter
 };
 
 static const struct __vpirt vpip_function_rt = {
@@ -148,6 +149,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.10  2000/11/01 06:05:44  steve
+ *  VCD scans tasks (PR#35)
+ *
  * Revision 1.9  2000/10/29 17:10:02  steve
  *  task threads ned their scope initialized. (PR#32)
  *

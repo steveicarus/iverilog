@@ -38,10 +38,10 @@ on a UNIX-like system:
 	  typically have GNU make as the gmake program.
 
 	- ISO C++ Compiler
-	  The ivl and ivlpp programs are written in C++ and makes use
+	  The ivl and ivlpp programs are written in C++ and make use
 	  of templates and some of the standard C++ library. egcs and
 	  recent gcc compilers with the associated libstdc++ are known
-	  to work.
+	  to work. MSVC++ 5 and 6 are known to definitely *not* work.
 
 	- bison
 
@@ -200,7 +200,7 @@ later steps.
 
 4.0 Running iverilog
 
-The preferred way to invoke the compiler with the iverilog(1)
+The preferred way to invoke the compiler is with the iverilog(1)
 command. This program invokes the preprocessor (ivlpp) and the
 compiler (ivl) with the proper command line options to get the job
 done in a friendly way. See the iverilog(1) man page for usage details.
@@ -335,7 +335,7 @@ Verilog web page for the current state of support for Verilog.
             assign foo = user_function(a,b); // sorry
 	    always @(a or b) foo = user_function(a,b); // OK
 
-  - real data type not supported.
+  - real data types not supported.
 
   - System functions are supported, but the compiler presumes that
     they return 32 bits. This is the typical case.

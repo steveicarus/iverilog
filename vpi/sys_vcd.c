@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.12 2000/07/31 03:34:31 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.13 2000/11/01 06:05:44 steve Exp $"
 #endif
 
 /*
@@ -331,6 +331,8 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		  break;
 
 		case vpiModule:
+		case vpiNamedBegin:
+		case vpiTask:
 		  sublist = vpi_iterate(vpiInternalScope, item);
 		  if (sublist && (depth > 0)) {
 			vcd_info_post_process();
@@ -428,6 +430,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.13  2000/11/01 06:05:44  steve
+ *  VCD scans tasks (PR#35)
+ *
  * Revision 1.12  2000/07/31 03:34:31  steve
  *  Report error when dumpfile is missing.
  *
