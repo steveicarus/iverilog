@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.73 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.74 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -674,6 +674,16 @@ void PProcess::dump(ostream&out, unsigned ind) const
 
       out << " /* " << get_line() << " */" << endl;
 
+      for (map<string,PExpr*>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end() ; idx++ ) {
+
+	    out << setw(ind+2) << "" << "(* " << (*idx).first;
+	    if ((*idx).second) {
+		  out << " = " << *(*idx).second;
+	    }
+	    out << " *)" << endl;
+      }
+
       statement_->dump(out, ind+2);
 }
 
@@ -828,6 +838,13 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.74  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.73  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

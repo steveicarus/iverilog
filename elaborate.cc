@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.249 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.250 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2417,7 +2417,9 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    (*gt)->elaborate(des, scope);
       }
 
-	// Elaborate the behaviors, making processes out of them.
+	// Elaborate the behaviors, making processes out of them. This
+	// involves scanning the PProcess* list, creating a NetProcTop
+	// for each process.
       const list<PProcess*>&sl = get_behaviors();
 
       for (list<PProcess*>::const_iterator st = sl.begin()
@@ -2439,6 +2441,21 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 		  top = new NetProcTop(scope, NetProcTop::KALWAYS, cur);
 		  break;
 	    }
+
+	      // Evaluate the attributes for this process, if there
+	      // are any. These attributes are to be attached to the
+	      // NetProcTop object.
+	    struct attrib_list_t*attrib_list = 0;
+	    unsigned attrib_list_n = 0;
+	    attrib_list = evaluate_attributes((*st)->attributes,
+					      attrib_list_n,
+					      des, scope);
+
+	    for (unsigned adx = 0 ;  adx < attrib_list_n ;  adx += 1)
+		  top->attribute(attrib_list[adx].key,
+				 attrib_list[adx].val);
+
+	    delete[]attrib_list;
 
 	    top->set_line(*(*st));
 	    des->add_process(top);
@@ -2551,6 +2568,13 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.250  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.249  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

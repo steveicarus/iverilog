@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.237 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: netlist.h,v 1.238 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 /*
@@ -78,7 +78,7 @@ struct functor_t;
  * interpretation of the rise/fall/decay times is typically left to
  * the target to properly interpret.
  */
-class NetObj {
+class NetObj  : public Attrib {
 
     public:
     public:
@@ -101,17 +101,6 @@ class NetObj {
       void fall_time(unsigned d) { delay2_ = d; }
       void decay_time(unsigned d) { delay3_ = d; }
 
-      const verinum& attribute(const string&key) const;
-      void attribute(const string&key, const verinum&value);
-
-	// Return true if this has all the attributes in that and they
-	// all have the same values.
-      bool has_compat_attributes(const NetObj&that) const;
-
-      unsigned nattr() const;
-      const char* attr_key(unsigned) const;
-      const verinum& attr_value(unsigned) const;
-
       Link&pin(unsigned idx);
       const Link&pin(unsigned idx) const;
 
@@ -126,8 +115,6 @@ class NetObj {
       unsigned delay1_;
       unsigned delay2_;
       unsigned delay3_;
-
-      Attrib attributes_;
 };
 
 class Link {
@@ -392,8 +379,14 @@ class NetNet  : public NetObj, public LineInfo {
 	   reference count so that I keep track of them. */
       void incr_eref();
       void decr_eref();
-      unsigned get_eref() const;
+      unsigned peek_eref() const;
 
+	/* Assignment statements count their lrefs here. */
+      void incr_lref();
+      void decr_lref();
+      unsigned peek_lref() const;
+
+      unsigned get_refs() const;
 
       virtual void dump_net(ostream&, unsigned) const;
 
@@ -411,6 +404,7 @@ class NetNet  : public NetObj, public LineInfo {
 
       bool local_flag_;
       unsigned eref_count_;
+      unsigned lref_count_;
 };
 
 /*
@@ -2067,7 +2061,7 @@ class NetWhile  : public NetProc {
  * always) and a pointer to the statement, probably a block, that
  * makes up the process.
  */
-class NetProcTop  : public LineInfo {
+class NetProcTop  : public LineInfo, public Attrib {
 
     public:
       enum Type { KINITIAL, KALWAYS };
@@ -2979,6 +2973,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.238  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.237  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

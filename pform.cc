@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.97 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: pform.cc,v 1.98 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1289,9 +1289,19 @@ svector<PWire*>* pform_make_udp_input_ports(list<char*>*names)
       return out;
 }
 
-PProcess* pform_make_behavior(PProcess::Type type, Statement*st)
+PProcess* pform_make_behavior(PProcess::Type type, Statement*st,
+			      svector<named_pexpr_t*>*attr)
 {
       PProcess*pp = new PProcess(type, st);
+
+      if (attr) {
+	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		  named_pexpr_t*tmp = (*attr)[idx];
+		  pp->attributes[tmp->name] = tmp->parm;
+	    }
+	    delete attr;
+      }
+
       pform_cur_module->add_behavior(pp);
       return pp;
 }
@@ -1337,6 +1347,13 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.98  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.97  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

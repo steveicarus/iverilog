@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.186 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: netlist.cc,v 1.187 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -205,37 +205,6 @@ const NetScope* NetObj::scope() const
       return scope_;
 }
 
-const verinum& NetObj::attribute(const string&key) const
-{
-      return attributes_.attribute(key);
-}
-
-void NetObj::attribute(const string&key, const verinum&value)
-{
-      attributes_.attribute(key, value);
-}
-
-bool NetObj::has_compat_attributes(const NetObj&that) const
-{
-      return attributes_.has_compat_attributes(that.attributes_);
-}
-
-unsigned NetObj::nattr() const
-{
-      return attributes_.size();
-}
-
-const char* NetObj::attr_key(unsigned idx) const
-{
-      return attributes_.key(idx).c_str();
-}
-
-const verinum& NetObj::attr_value(unsigned idx) const
-{
-      return attributes_.value(idx);
-}
-
-
 Link& NetObj::pin(unsigned idx)
 {
       assert(idx < npins_);
@@ -297,7 +266,7 @@ NetNode* NetNode::next_node()
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 : NetObj(s, n, npins), sig_next_(0), sig_prev_(0),
     type_(t), port_type_(NOT_A_PORT), signed_(false), msb_(npins-1), lsb_(0),
-    local_flag_(false), eref_count_(0)
+    local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
 
@@ -335,7 +304,7 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 : NetObj(s, n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
     sig_prev_(0), type_(t),
     port_type_(NOT_A_PORT), signed_(false), msb_(ms), lsb_(ls),
-    local_flag_(false), eref_count_(0)
+    local_flag_(false), eref_count_(0), lref_count_(0)
 {
       assert(s);
 
@@ -378,6 +347,13 @@ NetNet::~NetNet()
 	    dump_net(cerr, 4);
       }
       assert(eref_count_ == 0);
+      if (lref_count_ > 0) {
+	    cerr << get_line() << ": internal error: attempt to delete "
+		 << "signal ``" << name() << "'' which has "
+		 << "assign references." << endl;
+	    dump_net(cerr, 4);
+      }
+      assert(lref_count_ == 0);
       if (scope())
 	    scope()->rem_signal(this);
 }
@@ -436,10 +412,32 @@ void NetNet::decr_eref()
       eref_count_ -= 1;
 }
 
-unsigned NetNet::get_eref() const
+unsigned NetNet::peek_eref() const
 {
       return eref_count_;
 }
+
+void NetNet::incr_lref()
+{
+      lref_count_ += 1;
+}
+
+void NetNet::decr_lref()
+{
+      assert(lref_count_ > 0);
+      lref_count_ -= 1;
+}
+
+unsigned NetNet::peek_lref() const
+{
+      return lref_count_;
+}
+
+unsigned NetNet::get_refs() const
+{
+      return lref_count_ + eref_count_;
+}
+
 
 NetTmp::NetTmp(NetScope*s, const string&name, unsigned npins)
 : NetNet(s, name, IMPLICIT, npins)
@@ -2354,6 +2352,13 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.187  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.186  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.123 2002/05/05 21:11:49 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.124 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -93,7 +93,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << " inout";
 	    break;
       }
-      o << " (eref=" << get_eref() << ")";
+      o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
 	    o << " scope=" << scope()->name();
       o << " #(" << rise_time() << "," << fall_time() << "," <<
@@ -174,9 +174,9 @@ void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
 {
       unsigned idx;
-      for (idx = 0 ;  idx < attributes_.size() ;  idx += 1) {
-	    o << setw(ind) << "" << attributes_.key(idx) << " = \"" <<
-		  attributes_.value(idx) << "\"" << endl;
+      for (idx = 0 ;  idx < attr_cnt() ;  idx += 1) {
+	    o << setw(ind) << "" << attr_key(idx) << " = \"" <<
+		  attr_value(idx) << "\"" << endl;
       }
 }
 
@@ -411,6 +411,11 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 	    o << "always  /* " << get_line() << " in "
 	      << scope_->name() << " */" << endl;
 	    break;
+      }
+
+      for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1) {
+	    o << setw(ind+2) << "" << "(* " << attr_key(idx) << " = "
+	      << attr_value(idx) << " *)" << endl;
       }
 
       statement_->dump(o, ind+2);
@@ -980,6 +985,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.124  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.123  2002/05/05 21:11:49  steve
  *  Put off evaluation of concatenation repeat expresions
  *  until after parameters are defined. This allows parms

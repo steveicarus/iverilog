@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Attrib.cc,v 1.3 2002/05/23 03:08:50 steve Exp $"
+#ident "$Id: Attrib.cc,v 1.4 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -103,18 +103,18 @@ bool Attrib::has_compat_attributes(const Attrib&that) const
       return true;
 }
 
-unsigned Attrib::size() const
+unsigned Attrib::attr_cnt() const
 {
       return nlist_;
 }
 
-string Attrib::key(unsigned idx) const
+const char* Attrib::attr_key(unsigned idx) const
 {
       assert(idx < nlist_);
-      return list_[idx].key;
+      return list_[idx].key.c_str();
 }
 
-const verinum& Attrib::value(unsigned idx) const
+const verinum& Attrib::attr_value(unsigned idx) const
 {
       assert(idx < nlist_);
       return list_[idx].val;
@@ -123,6 +123,13 @@ const verinum& Attrib::value(unsigned idx) const
 
 /*
  * $Log: Attrib.cc,v $
+ * Revision 1.4  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.3  2002/05/23 03:08:50  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

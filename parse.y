@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.153 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: parse.y,v 1.154 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1443,15 +1443,20 @@ module_item
 
 	| K_assign drive_strength_opt delay3_opt assign_list ';'
 		{ pform_make_pgassign_list($4, $3, $2, @1.text, @1.first_line); }
-	| K_always statement
-		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+
+  /* Always and initial items are behavioral processes. */
+
+	| attribute_list_opt K_always statement
+		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS,
+						     $3, $1);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
 		}
-	| K_initial statement
-		{ PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL, $2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
+	| attribute_list_opt K_initial statement
+		{ PProcess*tmp = pform_make_behavior(PProcess::PR_INITIAL,
+						     $3, $1);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
 		}
 
   /* The task declaration rule matches the task declaration

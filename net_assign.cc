@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.9 2002/04/21 22:31:02 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.10 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -43,13 +43,13 @@ NetAssign_::NetAssign_(NetNet*s)
 {
       loff_ = 0;
       lwid_ = sig_->pin_count();
-      sig_->incr_eref();
+      sig_->incr_lref();
       more = 0;
 }
 
 NetAssign_::~NetAssign_()
 {
-      if (sig_) sig_->decr_eref();
+      if (sig_) sig_->decr_lref();
       assert( more == 0 );
       if (bmux_) delete bmux_;
 }
@@ -210,6 +210,13 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.10  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.9  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated

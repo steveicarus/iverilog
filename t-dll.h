@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.78 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: t-dll.h,v 1.79 2002/05/26 01:39:03 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -143,10 +143,13 @@ struct dll_target  : public target_t, public expr_scan_t {
       ivl_scope_t lookup_scope_(const NetScope*scope);
       ivl_memory_t lookup_memory_(const NetMemory*mem);
 
+      static ivl_attribute_s* fill_in_attributes(const Attrib*net);
+
     private:
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
       void add_root(ivl_design_s &des_, const NetScope *s);
+
 };
 
 /*
@@ -447,6 +450,9 @@ struct ivl_process_s {
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
 
+      struct ivl_attribute_s*attr;
+      unsigned nattr;
+
       ivl_process_t next_;
 };
 
@@ -597,6 +603,13 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.79  2002/05/26 01:39:03  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.78  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

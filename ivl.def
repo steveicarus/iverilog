@@ -131,6 +131,8 @@ ivl_signal_type
 ivl_signal_name
 ivl_signal_basename
 
+ivl_process_attr_cnt
+ivl_process_attr_val
 ivl_process_scope
 ivl_process_stmt
 ivl_process_type

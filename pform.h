@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.59 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: pform.h,v 1.60 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -199,7 +199,13 @@ extern void pform_set_type_attrib(const string&name, const string&key,
 extern void pform_set_parameter(const string&name, PExpr*expr);
 extern void pform_set_localparam(const string&name, PExpr*expr);
 extern void pform_set_defparam(const hname_t&name, PExpr*expr);
-extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
+
+/*
+ * pform_make_behavior creates processes that are declared with always
+ * or initial items.
+ */
+extern PProcess*  pform_make_behavior(PProcess::Type, Statement*,
+				      svector<named_pexpr_t*>*attr);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<char*>*);
 
@@ -250,6 +256,13 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.60  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.59  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

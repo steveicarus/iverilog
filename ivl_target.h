@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.96 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.97 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -938,12 +938,18 @@ extern ivl_attribute_t ivl_signal_attr_val(ivl_signal_t net, unsigned idx);
  * The ivl_process_stmt function gets the statement that forms the
  * process. See the statement related functions for how to manipulate
  * statements.
+ *
+ * Processes can have attributes attached to them. the attr_cnt and
+ * attr_val methods return those attributes.
  */
 extern ivl_process_type_t ivl_process_type(ivl_process_t net);
 
 extern ivl_scope_t ivl_process_scope(ivl_process_t net);
 
 extern ivl_statement_t ivl_process_stmt(ivl_process_t net);
+
+extern unsigned        ivl_process_attr_cnt(ivl_process_t net);
+extern ivl_attribute_t ivl_process_attr_val(ivl_process_t net, unsigned idx);
 
 /*
  * These functions manage statements of various type. This includes
@@ -1037,6 +1043,13 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.97  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.96  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.83 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.84 2002/05/26 01:39:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -135,10 +135,10 @@ static void drive_from_link(const Link&lnk, ivl_drive_t&drv0, ivl_drive_t&drv1)
       }
 }
 
-static ivl_attribute_s* fill_in_attributes(const NetObj*net)
+ivl_attribute_s* dll_target::fill_in_attributes(const Attrib*net)
 {
       ivl_attribute_s*attr;
-      unsigned nattr = net->nattr();
+      unsigned nattr = net->attr_cnt();
 
       if (nattr == 0)
 	    return 0;
@@ -504,8 +504,8 @@ int dll_target::end_design(const Design*)
 static void logic_attributes(struct ivl_net_logic_s *obj,
 			     const NetNode*net)
 {
-      obj->nattr = net->nattr();
-      obj->attr = fill_in_attributes(net);
+      obj->nattr = net->attr_cnt();
+      obj->attr = dll_target::fill_in_attributes(net);
 }
 
 /*
@@ -1893,7 +1893,7 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
-      obj->nattr = net->nattr();
+      obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
 
 
@@ -1946,6 +1946,13 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.84  2002/05/26 01:39:03  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.83  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.14 2002/02/02 06:13:38 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.15 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,8 +57,9 @@ void nodangle_f::event(Design*des, NetEvent*ev)
 
 void nodangle_f::signal(Design*des, NetNet*sig)
 {
-	/* Cannot delete signals referenced in an expression. */
-      if (sig->get_eref() > 0)
+	/* Cannot delete signals referenced in an expression
+	   or an l-value. */
+      if (sig->get_refs() > 0)
 	    return;
 
 	/* Cannot delete the ports of tasks or functions. There are
@@ -131,6 +132,13 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.15  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.14  2002/02/02 06:13:38  steve
  *  event find_similar should not find self.
  *

@@ -19,11 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Attrib.h,v 1.2 2002/05/23 03:08:50 steve Exp $"
+#ident "$Id: Attrib.h,v 1.3 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include  <string>
-# include  <map>
 # include  "verinum.h"
 
 /*
@@ -42,9 +41,9 @@ class Attrib {
 
 
 	/* Provide a means of iterating over the entries in the map. */
-      unsigned size() const;
-      string key(unsigned idx) const;
-      const verinum& value(unsigned idx) const;
+      unsigned       attr_cnt() const;
+      const char*    attr_key(unsigned idx) const;
+      const verinum& attr_value(unsigned idx) const;
 
 
     private:
@@ -63,6 +62,13 @@ class Attrib {
 
 /*
  * $Log: Attrib.h,v $
+ * Revision 1.3  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.2  2002/05/23 03:08:50  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

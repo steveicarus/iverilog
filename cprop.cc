@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.34 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: cprop.cc,v 1.35 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -915,7 +915,7 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 		    // If the net has an eref, then there is an
 		    // expression somewhere that reads this signal. So
 		    // the constant does get read.
-		  if (tmp->get_eref() > 0)
+		  if (tmp->peek_eref() > 0)
 			return;
 
 		    // If the net is a port of the root module, then
@@ -949,6 +949,13 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.35  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.34  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

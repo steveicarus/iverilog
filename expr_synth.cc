@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.32 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.33 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -378,7 +378,7 @@ NetNet* NetEConcat::synthesize(Design*des)
 		  obit += 1;
 	    }
 
-	    if (tmp[idx-1]->local_flag() && tmp[idx-1]->get_eref() == 0)
+	    if (tmp[idx-1]->local_flag() && tmp[idx-1]->get_refs() == 0)
 		  delete tmp[idx-1];
       }
 
@@ -587,6 +587,13 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.33  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.32  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.42 2002/04/21 22:31:02 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.43 2002/05/26 01:39:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,6 +54,8 @@ bool dll_target::process(const NetProcTop*net)
 	/* Save the scope of the process. */
       obj->scope_ = lookup_scope_(net->scope());
 
+      obj->nattr = net->attr_cnt();
+      obj->attr = fill_in_attributes(net);
 
 	/* This little bit causes the process to be completely
 	   generated so that it can be passed to the DLL. The
@@ -806,6 +808,13 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.43  2002/05/26 01:39:03  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.42  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated

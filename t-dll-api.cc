@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.79 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.80 2002/05/26 01:39:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -993,6 +993,18 @@ extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
       return net->stmt_;
 }
 
+extern "C" unsigned ivl_process_attr_cnt(ivl_process_t net)
+{
+      return net->nattr;
+}
+
+extern "C" ivl_attribute_t ivl_process_attr_val(ivl_process_t net,
+						unsigned idx)
+{
+      assert(idx < net->nattr);
+      return net->attr + idx;
+}
+
 extern "C" const char* ivl_scope_basename(ivl_scope_t net)
 {
       assert(net);
@@ -1519,6 +1531,13 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.80  2002/05/26 01:39:03  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.79  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

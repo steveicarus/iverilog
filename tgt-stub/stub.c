@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.59 2002/05/24 04:36:23 steve Exp $"
+#ident "$Id: stub.c,v 1.60 2002/05/26 01:39:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -382,6 +382,8 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 static int show_process(ivl_process_t net, void*x)
 {
+      unsigned idx;
+
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
 	    fprintf(out, "initial\n");
@@ -389,6 +391,23 @@ static int show_process(ivl_process_t net, void*x)
 	  case IVL_PR_ALWAYS:
 	    fprintf(out, "always\n");
 	    break;
+      }
+
+      for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
+	    ivl_attribute_t attr = ivl_process_attr_val(net, idx);
+	    switch (attr->type) {
+		case IVL_ATT_VOID:
+		  fprintf(out, "    (* %s *)\n", attr->key);
+		  break;
+		case IVL_ATT_STR:
+		  fprintf(out, "    (* %s = \"%s\" *)\n", attr->key,
+			  attr->val.str);
+		  break;
+		case IVL_ATT_NUM:
+		  fprintf(out, "    (* %s = %ld *)\n", attr->key,
+			  attr->val.num);
+		  break;
+	    }
       }
 
       show_statement(ivl_process_stmt(net), 4);
@@ -663,6 +682,13 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.60  2002/05/26 01:39:03  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.59  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
  *

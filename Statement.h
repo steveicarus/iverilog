@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.33 2002/04/21 22:31:02 steve Exp $"
+#ident "$Id: Statement.h,v 1.34 2002/05/26 01:39:02 steve Exp $"
 #endif
 
 # include  <string>
@@ -55,6 +55,8 @@ class PProcess : public LineInfo {
 
       Type type() const { return type_; }
       Statement*statement() { return statement_; }
+
+      map<string,PExpr*> attributes;
 
       virtual void dump(ostream&out, unsigned ind) const;
 
@@ -453,6 +455,13 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.34  2002/05/26 01:39:02  steve
+ *  Carry Verilog 2001 attributes with processes,
+ *  all the way through to the ivl_target API.
+ *
+ *  Divide signal reference counts between rval
+ *  and lval references.
+ *
  * Revision 1.33  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated
