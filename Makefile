@@ -13,8 +13,8 @@ O = main.o cprop.o design_dump.o elaborate.o emit.o eval.o lexor.o mangle.o \
 netlist.o parse.o parse_misc.o pform.o pform_dump.o verinum.o target.o \
 targets.o Module.o PExpr.o Statement.o $(FF) $(TT)
 
-vl: $O
-	$(CXX) $(CXXFLAGS) -o vl $O
+ivl: $O
+	$(CXX) $(CXXFLAGS) -o ivl $O
 
 clean:
 	rm *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc
