@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: npmos.cc,v 1.1 2001/10/09 02:28:17 steve Exp $"
+#ident "$Id: npmos.cc,v 1.2 2001/10/11 18:20:51 steve Exp $"
 #endif
 
 # include  "npmos.h"
@@ -28,12 +28,17 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
       unsigned in0 = fp->ival & 0x03;
       unsigned in1 = (fp->ival >> 2) & 0x03;
+      unsigned is0 = fp->istr[0];
 
-      unsigned char out0 = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
-      unsigned char out1 = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
-      unsigned char outX = 0x80 | (fp->odrive1<<0) | (fp->odrive0<<4);
-      unsigned char outH = 0x88 | (fp->odrive1<<4) | (0);
-      unsigned char outL = 0x00 | (fp->odrive1<<0) | (0);
+      // Reduce SUPPLY to STRONG
+      if ((is0 & 0x70) == 0x70)
+	is0 &= 0xef;
+      if ((is0 & 0x07) == 0x07)
+	is0 &= 0xfe;
+
+      unsigned char outH = 0x88 | ((is0 & 3)<<4) | (0);
+      unsigned char outL = 0x00 | ((is0 & 3)<<0) | (0);
+      unsigned char outX = 0x80 | (is0 & 3) | (is0 & 0x30);
 
       if (in0 == 3 || in1 == 1) {
 
@@ -45,20 +50,8 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 	switch (in1) {
 
 	  case 0:
-	    switch (in0) {
-		case 0:
-		  fp->oval = 0;
-		  fp->ostr = out0;
-		  break;
-		case 1:
-		  fp->oval = 1;
-		  fp->ostr = out1;
-		  break;
-		default:
-		  fp->oval = 2;
-		  fp->ostr = outX;
-		  break;
-	    }
+	    fp->oval = in0;
+	    fp->ostr = is0;
 	    break;
 
 	  default:
@@ -88,13 +81,17 @@ void vvp_nmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 {
       unsigned in0 = fp->ival & 0x03;
       unsigned in1 = (fp->ival >> 2) & 0x03;
+      unsigned is0 = fp->istr[0];
 
-      unsigned char out0 = 0x00 | (fp->odrive0<<0) | (fp->odrive0<<4);
-      unsigned char out1 = 0x88 | (fp->odrive1<<0) | (fp->odrive1<<4);
-      unsigned char outX = 0x80 | (fp->odrive1<<0) | (fp->odrive0<<4);
-      unsigned char outH = 0x88 | (fp->odrive1<<4) | (0);
-      unsigned char outL = 0x00 | (fp->odrive1<<0) | (0);
+      // Reduce SUPPLY to STRONG
+      if ((is0 & 0x70) == 0x70)
+	is0 &= 0xef;
+      if ((is0 & 0x07) == 0x07)
+	is0 &= 0xfe;
 
+      unsigned char outH = 0x88 | ((is0 & 3)<<4) | (0);
+      unsigned char outL = 0x00 | ((is0 & 3)<<0) | (0);
+      unsigned char outX = 0x80 | (is0 & 3) | (is0 & 0x30);
       if (in0 == 3 || in1 == 0) {
 
 	fp->oval = 3;
@@ -105,20 +102,8 @@ void vvp_nmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
         switch (in1) {
 
 	  case 1:
-	    switch (in0) {
-		case 0:
-		  fp->oval = 0;
-		  fp->ostr = out0;
-		  break;
-		case 1:
-		  fp->oval = 1;
-		  fp->ostr = out1;
-		  break;
-		default:
-		  fp->oval = 2;
-		  fp->ostr = outX;
-		  break;
-	    }
+	    fp->oval = in0;
+	    fp->ostr = is0;
 	    break;
 
 	  default:
@@ -146,6 +131,9 @@ void vvp_nmos_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: npmos.cc,v $
+ * Revision 1.2  2001/10/11 18:20:51  steve
+ *  npmos devices pass strength.
+ *
  * Revision 1.1  2001/10/09 02:28:17  steve
  *  Add the PMOS and NMOS functor types.
  *
