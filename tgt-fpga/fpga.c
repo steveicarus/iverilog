@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: fpga.c,v 1.8 2003/06/25 01:49:06 steve Exp $"
+#ident "$Id: fpga.c,v 1.9 2003/08/07 04:04:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,7 +29,7 @@
 # include  <ivl_target.h>
 # include  <string.h>
 # include  "fpga_priv.h"
-
+# include  <assert.h>
 
 /* This is the opened xnf file descriptor. It is the output that this
    code generator writes to. */
@@ -83,6 +83,7 @@ static void show_pads(ivl_scope_t scope)
 	    if (pad == 0)
 		  continue;
 
+	    assert(device->show_pad);
 	    device->show_pad(sig, pad);
       }
 }
@@ -111,7 +112,7 @@ int target_design(ivl_design_t des)
 	    arch = 0;
 
       if (arch == 0)
-	    arch = "generic-xnf";
+	    arch = "lpm";
 
       device = device_from_arch(arch);
       if (device == 0) {
@@ -144,6 +145,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: fpga.c,v $
+ * Revision 1.9  2003/08/07 04:04:01  steve
+ *  Add an LPM device type.
+ *
  * Revision 1.8  2003/06/25 01:49:06  steve
  *  Spelling fixes.
  *

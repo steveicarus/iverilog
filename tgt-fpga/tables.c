@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: tables.c,v 1.5 2003/03/24 00:47:54 steve Exp $"
+#ident "$Id: tables.c,v 1.6 2003/08/07 04:04:01 steve Exp $"
 #endif
 
 # include  "fpga_priv.h"
@@ -26,6 +26,7 @@
 
 extern const struct device_s d_generic;
 extern const struct device_s d_generic_edif;
+extern const struct device_s d_lpm_edif;
 extern const struct device_s d_virtex_edif;
 extern const struct device_s d_virtex2_edif;
 
@@ -36,6 +37,7 @@ const struct device_table_s {
 } device_table[] = {
       { "generic-edif", &d_generic_edif },
       { "generic-xnf",  &d_generic },
+      { "lpm",          &d_lpm_edif },
       { "virtex",       &d_virtex_edif },
       { "virtex2",      &d_virtex2_edif },
       { 0, 0 }
@@ -58,6 +60,9 @@ device_t device_from_arch(const char*arch)
 
 /*
  * $Log: tables.c,v $
+ * Revision 1.6  2003/08/07 04:04:01  steve
+ *  Add an LPM device type.
+ *
  * Revision 1.5  2003/03/24 00:47:54  steve
  *  Add new virtex2 architecture family, and
  *  also the new edif.h EDIF management functions.

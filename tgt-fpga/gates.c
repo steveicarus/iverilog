@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.11 2003/06/24 03:55:01 steve Exp $"
+#ident "$Id: gates.c,v 1.12 2003/08/07 04:04:01 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -37,6 +37,13 @@ static void show_cell_scope(ivl_scope_t scope)
 
 static void show_gate_logic(ivl_net_logic_t net)
 {
+      if (device->show_logic == 0) {
+	    fprintf(stderr, "fpga.tgt: IVL LOGIC not supported"
+		    " by this target.\n");
+	    return;
+      }
+
+      assert(device->show_logic);
       device->show_logic(net);
 }
 
@@ -152,6 +159,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.12  2003/08/07 04:04:01  steve
+ *  Add an LPM device type.
+ *
  * Revision 1.11  2003/06/24 03:55:01  steve
  *  Add ivl_synthesis_cell support for virtex2.
  *
