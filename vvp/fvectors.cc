@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fvectors.cc,v 1.3 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: fvectors.cc,v 1.4 2001/10/09 16:57:47 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -58,6 +58,12 @@ void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p)
 {
       assert(i < v->size);
       v->iptrs[i] = p;
+}
+
+vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i)
+{
+      assert(i < v->size);
+      return &v->iptrs[i];
 }
 
 vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p)

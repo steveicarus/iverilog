@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.31 2001/10/09 02:28:17 steve Exp $"
+#ident "$Id: functor.h,v 1.32 2001/10/09 16:57:47 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -284,6 +284,7 @@ inline unsigned functor_oval(vvp_ipoint_t fptr)
 extern unsigned vvp_fvector_size(vvp_fvector_t v);
 extern vvp_ipoint_t vvp_fvector_get(vvp_fvector_t v, unsigned i);
 extern void vvp_fvector_set(vvp_fvector_t v, unsigned i, vvp_ipoint_t p);
+extern vvp_ipoint_t *vvp_fvector_member(vvp_fvector_t v, unsigned i);
 extern vvp_fvector_t vvp_fvector_new(unsigned size);
 extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
@@ -318,6 +319,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.32  2001/10/09 16:57:47  steve
+ *  Collect functor reference handling into a single function. (Stephan Boettcher)
+ *
  * Revision 1.31  2001/10/09 02:28:17  steve
  *  Add the PMOS and NMOS functor types.
  *

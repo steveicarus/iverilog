@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.101 2001/10/09 02:28:16 steve Exp $"
+#ident "$Id: compile.cc,v 1.102 2001/10/09 16:57:47 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -289,46 +289,44 @@ void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
 }
 
 /*
- *  fvector_set lookup
+ *  Generic functor reference lookup.
  */
 
-struct fvector_resolv_list_s: public resolv_list_s {
+struct functor_gen_resolv_list_s: public resolv_list_s {
       char*source;
       unsigned idx;
-      vvp_fvector_t vec;
-      unsigned vidx;
+      vvp_ipoint_t *ref;
       virtual bool resolve(bool mes);
 };
 
-bool fvector_resolv_list_s::resolve(bool mes)
+bool functor_gen_resolv_list_s::resolve(bool mes)
 {
       vvp_ipoint_t tmp = lookup_functor_symbol(source);
+
       if (tmp) {
 	    tmp = ipoint_index(tmp, idx);
-	    vvp_fvector_set(vec, vidx, tmp);
+
+	    *ref = tmp;
+
 	    free(source);
 	    return true;
       }
 
-      if (mes) {
-	    fprintf(stderr, 
-		    "unresolved functor reference (net input): %s\n", 
-		    source);
-      }
-
+      if (mes)
+	    fprintf(stderr, "unresolved functor reference: %s\n", source);
+      
       return false;
 }
 
 inline static 
-void postpone_fvector_input(vvp_fvector_t vec, unsigned vidx,
-			    char*lab, unsigned idx)
+void functor_ref_lookup(vvp_ipoint_t *ref, char*lab, unsigned idx)
 {
-      struct fvector_resolv_list_s*res = new struct fvector_resolv_list_s;
+      struct functor_gen_resolv_list_s*res = 
+	    new struct functor_gen_resolv_list_s;
 
-      res->vec = vec;
-      res->vidx = vidx;
+      res->ref    = ref;
       res->source = lab;
-      res->idx = idx;
+      res->idx    = idx;
 
       resolv_submit(res);
 }
@@ -519,11 +517,11 @@ void compile_cleanup(void)
 			resolv_list = cur;
 		  }
 	    }
-	    if (last && nerrs)
+	    if (nerrs && last)
 		  fprintf(stderr, 
 			  "compile_cleanup: %d unresolved items\n", 
 			  nerrs);
-      } while (nerrs && nerrs != lnerrs && !last);
+      } while (nerrs && !last);
 
       compile_errors += nerrs;
 }
@@ -638,6 +636,88 @@ static void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 	    postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
       }
 }
+
+
+/* Lookup a functor[idx] and save the ipoint in *ref. */
+
+static vvp_ipoint_t make_const_functor(unsigned val, 
+				       unsigned str0, 
+				       unsigned str1)
+{
+      vvp_ipoint_t fdx = functor_allocate(1);
+      functor_t obj = functor_index(fdx);
+      
+      obj->table   = ft_var;
+      obj->ival    = val;
+      obj->oval    = val;
+      obj->odrive0 = str0;
+      obj->odrive1 = str1;
+      obj->mode    = 0;
+#if defined(WITH_DEBUG)
+      obj->breakpoint = 0;
+#endif
+      schedule_functor(fdx, 0);
+      return fdx;
+}
+
+static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
+{
+      if (lab == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(3,6,6);
+	    *ref = cf;
+      } else
+
+      if (strcmp(lab, "C<0>") == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(0,6,6);
+	    *ref = cf;
+      } else
+
+      if (strcmp(lab, "C<su0>") == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(0,7,7);
+	    *ref = cf;
+      } else
+
+      if (strcmp(lab, "C<1>") == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(1,6,6);
+	    *ref = cf;
+      } else
+
+      if (strcmp(lab, "C<su1>") == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(1,7,7);
+	    *ref = cf;
+      } else
+
+      if (strcmp(lab, "C<x>") == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(2,6,6);
+	    *ref = cf;
+      } else
+
+      if (strcmp(lab, "C<z>") == 0) {
+	    static vvp_ipoint_t cf=0;
+	    if (!cf) 
+		  cf = make_const_functor(3,6,6);
+	    *ref = cf;
+      } else {
+
+	    functor_ref_lookup(ref, lab, idx);
+	    return;
+      }
+
+      free(lab);
+}
+
 
 /*
  * The parser calls this function to create a functor. I allocate a
@@ -1531,26 +1611,6 @@ void compile_variable(char*label, char*name, int msb, int lsb,
       free(label);
 }
 
-static vvp_ipoint_t make_const_functor(unsigned val, 
-				       unsigned str0, 
-				       unsigned str1)
-{
-      vvp_ipoint_t fdx = functor_allocate(1);
-      functor_t obj = functor_index(fdx);
-
-      obj->table   = ft_var;
-      obj->ival    = val;
-      obj->oval    = val;
-      obj->odrive0 = str0;
-      obj->odrive1 = str1;
-      obj->mode    = 0;
-#if defined(WITH_DEBUG)
-      obj->breakpoint = 0;
-#endif
-      schedule_functor(fdx, 0);
-      return fdx;
-}
-
 void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 		 unsigned argc, struct symb_s*argv)
 {
@@ -1562,64 +1622,8 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
       assert(argc == wid);
 
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-
-	    vvp_ipoint_t ipt = 0;
-
-	    if (argv[idx].text == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(3,6,6);
-		  ipt = cf;
-	    } else
-
-	    if (strcmp(argv[idx].text, "C<0>") == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(0,6,6);
-		  ipt = cf;
-	    } else
-
-	    if (strcmp(argv[idx].text, "C<su0>") == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(0,7,7);
-		  ipt = cf;
-	    } else
-
-	    if (strcmp(argv[idx].text, "C<1>") == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(1,6,6);
-		  ipt = cf;
-	    } else
-
-	    if (strcmp(argv[idx].text, "C<su1>") == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(1,7,7);
-		  ipt = cf;
-	    } else
-
-	    if (strcmp(argv[idx].text, "C<x>") == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(2,6,6);
-		  ipt = cf;
-	    } else
-
-	    if (strcmp(argv[idx].text, "C<z>") == 0) {
-		  static vvp_ipoint_t cf=0;
-		  if (!cf) 
-			cf = make_const_functor(3,6,6);
-		  ipt = cf;
-	    } else {
-			
-		  postpone_fvector_input(vec, idx, 
-					 argv[idx].text, argv[idx].idx);
-		  continue;
-	    }
-
-	    vvp_fvector_set(vec, idx, ipt);
+	    vvp_ipoint_t *ref = vvp_fvector_member(vec, idx);
+	    functor_reference(ref, argv[idx].text, argv[idx].idx);
       }
 
 	/* Make the vpiHandle for the reg. */
@@ -1646,6 +1650,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.102  2001/10/09 16:57:47  steve
+ *  Collect functor reference handling into a single function. (Stephan Boettcher)
+ *
  * Revision 1.101  2001/10/09 02:28:16  steve
  *  Add the PMOS and NMOS functor types.
  *
