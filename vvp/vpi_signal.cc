@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.44 2002/07/23 02:36:34 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.45 2002/07/23 15:11:41 steve Exp $"
 #endif
 
 /*
@@ -370,7 +370,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		obit++;
 		if (!(obit % 32)) {
 		      op += 1;
-		      if ((op - vp->value.vector) < hwid)
+		      if ((op - vp->value.vector) < (ptrdiff_t)hwid)
 			    op->aval = op->bval = 0;
 		      obit = 0;
 		}
@@ -673,6 +673,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.45  2002/07/23 15:11:41  steve
+ *  integral type/ptrdiff_t warning.
+ *
  * Revision 1.44  2002/07/23 02:36:34  steve
  *  Careful not to overrun vector buffer.
  *
