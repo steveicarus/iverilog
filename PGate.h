@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PGate.h,v 1.15 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: PGate.h,v 1.16 2000/03/29 04:37:10 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -194,12 +194,16 @@ class PGModule  : public PGate {
       PExpr*lsb_;
 
       void elaborate_mod_(Design*, Module*mod, const string&path) const;
-      void elaborate_udp_(Design*, PUdp  *udp, const string&path) const;
+      void elaborate_sudp_(Design*, PUdp  *udp, const string&path) const;
+      void elaborate_cudp_(Design*, PUdp  *udp, const string&path) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
 };
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.16  2000/03/29 04:37:10  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.15  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.69 2000/03/12 17:09:40 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.70 2000/03/29 04:37:10 steve Exp $"
 #endif
 
 /*
@@ -336,18 +336,7 @@ void NetUDP::dump_sequ_(ostream&o, unsigned ind) const
 
 void NetUDP::dump_comb_(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Combinational UDP: ";
-      o << " #(" << rise_time() << "," << fall_time() << "," << decay_time() <<
-	    ") " << name() << endl;
-
-      for (CM_::const_iterator ent = cm_.begin()
-		 ; ent != cm_.end() ;  ent++) {
-	    o << setw(ind+6) << "" << (*ent).first << " --> " <<
-		  (*ent).second << endl;
-      }
-
-      dump_node_pins(o, ind+4);
-      dump_obj_attr(o, ind+4);
+      assert(0);
 }
 
 void NetUDP::dump_node(ostream&o, unsigned ind) const
@@ -356,6 +345,22 @@ void NetUDP::dump_node(ostream&o, unsigned ind) const
 	    dump_sequ_(o, ind);
       else
 	    dump_comb_(o, ind);
+}
+
+void NetUDP_COMB::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Combinational primitive: ";
+      o << " #(" << rise_time() << "," << fall_time() << "," << decay_time() <<
+	    ") " << name() << endl;
+
+      for (map<string,char>::const_iterator ent = cm_.begin()
+		 ; ent != cm_.end() ;  ent++) {
+	    o << setw(ind+6) << "" << (*ent).first << " --> " <<
+		  (*ent).second << endl;
+      }
+
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
 }
 
 void NetNEvent::dump_node(ostream&o, unsigned ind) const
@@ -892,6 +897,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.70  2000/03/29 04:37:10  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.69  2000/03/12 17:09:40  steve
  *  Support localparam.
  *

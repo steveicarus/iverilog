@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.126 2000/03/26 16:28:31 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.127 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -73,6 +73,8 @@ class target_vvm : public target_t {
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os, const NetUDP*);
+      virtual void udp_comb(ostream&os, const NetUDP_COMB*);
+              void udp_sequ_(ostream&os, const NetUDP*);
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
       virtual void net_const(ostream&os, const NetConst*);
@@ -1527,6 +1529,47 @@ void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 
 }
 
+void target_vvm::udp_comb(ostream&os, const NetUDP_COMB*gate)
+{
+      string mname = mangle(gate->name());
+      string nexus;
+      unsigned ncode;
+
+
+      os << "static const char*" << mname << "_ctab =" << endl;
+
+      string inp;
+      char out;
+      for (bool rc = gate->first(inp, out)
+		 ;  rc ;  rc = gate->next(inp,out)) {
+
+	    os << "    \"" << inp << out << "\"" << endl;
+      }
+      os << "    ;" << endl;
+
+      os << "static vvm_udp_comb " << mname << "("
+	 << (gate->pin_count()-1) << ", " << mname<<"_ctab);" << endl;
+
+	/* Connect the output of the device... */
+      nexus = nexus_from_link(&gate->pin(0));
+      ncode = nexus_wire_map[nexus];
+      init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
+	    mname << ");" << endl;
+
+	/* Connect the inputs of the device... */
+      for (unsigned idx = 1 ;  idx < gate->pin_count() ;  idx += 1) {
+	    if (! gate->pin(idx).is_linked())
+		  continue;
+
+	    nexus = nexus_from_link(&gate->pin(idx));
+	    ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << "," << (idx-1) << ");" << endl;
+      }
+
+}
+
 static string state_to_string(unsigned state, unsigned npins)
 {
       static const char cur_table[3] = { '0', '1', 'x' };
@@ -1541,6 +1584,12 @@ static string state_to_string(unsigned state, unsigned npins)
 }
 
 void target_vvm::udp(ostream&os, const NetUDP*gate)
+{
+      assert(gate->is_sequential());
+      udp_sequ_(os, gate);
+}
+
+void target_vvm::udp_sequ_(ostream&os, const NetUDP*gate)
 {
       assert(gate->pin_count() <= 9);
       assert(gate->is_sequential());
@@ -2440,6 +2489,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.127  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.126  2000/03/26 16:28:31  steve
  *  vvm_bitset_t is no longer a template.
  *

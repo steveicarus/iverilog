@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.52 2000/03/26 16:28:31 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.53 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -641,6 +641,49 @@ class vvm_eeq  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 };
 
 /*
+ * This class allows programmers to define combinational primitives at
+ * truth tables. The device has a single bit output, and any fixed
+ * width.
+ *
+ * The truth table is specified as a string of characters organized as
+ * a table. Every width+1 characters represents one row, including the
+ * set of inputs and the output that they generated. There can be any
+ * number of rows in the table, which is terminated by a nul byte. The
+ * table is passed to the constructor as a constant string.
+ *
+ * This is a simple example of a truth table for an inverter. The
+ * width is 1, so there are two characters in each row. The last
+ * character in each row is the output if all the other characters in
+ * the row match the input. As you can see, this table inverts its
+ * input and outputs 'x' if the input is unknown.
+ *
+ *  const char*invert_table = 
+ *          "01"
+ *          "10"
+ *          "xx";
+ *
+ * The valid input characters are '0', '1' and 'x'. The valid output
+ * characters are '0', '1', 'x' and 'z'. (The last is not supported by
+ * Verilog primitives, so ivl will never generate it.)
+ */
+class vvm_udp_comb  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_udp_comb(unsigned w, const char*t);
+      ~vvm_udp_comb();
+
+      void init_I(unsigned idx, vpip_bit_t val);
+      void start();
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+      vpip_bit_t*ibits_;
+
+      unsigned width_;
+      const char*table_;
+};
+
+/*
  * A Sequential UDP has a more complex truth table, and handles
  * edges. Pin 0 is an output, and all the remaining pins are
  * input. The WIDTH is the number of input pins.
@@ -796,6 +839,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.53  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.52  2000/03/26 16:28:31  steve
  *  vvm_bitset_t is no longer a template.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.29 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: target.h,v 1.30 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -82,6 +82,7 @@ struct target_t {
       virtual void logic(ostream&os, const NetLogic*);
       virtual void bufz(ostream&os, const NetBUFZ*);
       virtual void udp(ostream&os,  const NetUDP*);
+      virtual void udp_comb(ostream&os,  const NetUDP_COMB*);
       virtual void net_assign(ostream&os, const NetAssign*);
       virtual void net_assign_nb(ostream&os, const NetAssignNB*);
       virtual void net_case_cmp(ostream&os, const NetCaseCmp*);
@@ -147,6 +148,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.30  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.29  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

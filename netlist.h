@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.114 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.115 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 /*
@@ -918,6 +918,39 @@ class NetUDP  : public NetNode {
       void dump_sequ_(ostream&o, unsigned ind) const;
       void dump_comb_(ostream&o, unsigned ind) const;
 };
+
+class NetUDP_COMB  : public NetNode {
+
+    public:
+      explicit NetUDP_COMB(const string&n, unsigned pins);
+
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+	/* append a new truth table row. */
+      void set_table(const string&input, char output);
+
+	/* After the primitive is built up, this method is called to
+	   clean up redundancies, and possibly optimize the table. */
+      void cleanup_table();
+
+	/* Use these methods to scan the truth table of the
+	   device. "first" returns the first item in the table, and
+	   "next" returns the next item in the table. The method will
+	   return false when the scan is done. */
+      bool first(string&inp, char&out) const;
+      bool next(string&inp, char&out) const;
+
+    private:
+
+	// A combinational primitive is more simply represented as a
+	// simple map of input signals to a single output.
+      map<string,char> cm_;
+
+      mutable map<string,char>::const_iterator idx_;
+};
+
+
 
 /* =========
  * A process is a behavioral-model description. A process is a
@@ -2195,6 +2228,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.115  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.114  2000/03/12 17:09:41  steve
  *  Support localparam.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.30 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: target.cc,v 1.31 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -71,6 +71,12 @@ void target_t::udp(ostream&os, const NetUDP*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled UDP." << endl;
+}
+
+void target_t::udp_comb(ostream&os, const NetUDP_COMB*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled combinational primitive." << endl;
 }
 
 void target_t::lpm_add_sub(ostream&, const NetAddSub*)
@@ -314,6 +320,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.31  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.30  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

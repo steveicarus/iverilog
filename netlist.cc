@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.108 2000/03/12 17:09:41 steve Exp $"
+#ident "$Id: netlist.cc,v 1.109 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2374,31 +2374,6 @@ NetNet* NetTaskDef::port(unsigned idx)
       return ports_[idx];
 }
 
-NetUDP::NetUDP(const string&n, unsigned pins, bool sequ)
-: NetNode(n, pins), sequential_(sequ), init_('x')
-{
-      pin(0).set_dir(Link::OUTPUT);
-      for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
-	    pin(idx).set_dir(Link::INPUT);
-
-}
-
-NetUDP::state_t_* NetUDP::find_state_(const string&str)
-{
-      map<string,state_t_*>::iterator cur = fsm_.find(str);
-      if (cur != fsm_.end())
-	    return (*cur).second;
-
-      state_t_*st = fsm_[str];
-      if (st == 0) {
-	    st = new state_t_(pin_count());
-	    st->out = str[0];
-	    fsm_[str] = st;
-      }
-
-      return st;
-}
-
 /*
  * This method takes the input string, which contains exactly one
  * edge, and connects it to the correct output state. The output state
@@ -2546,106 +2521,11 @@ bool NetUDP::sequ_glob_(string input, char output)
       return set_sequ_(input, output);
 }
 
-bool NetUDP::set_table(const string&input, char output)
-{
-      assert((output == '0') || (output == '1') || (sequential_ &&
-						    (output == '-')));
-
-      if (sequential_) {
-	    assert(input.length() == pin_count());
-	      /* XXXX Need to check to make sure that the input vector
-		 contains a legal combination of characters. */
-	    return sequ_glob_(input, output);
-
-      } else {
-	    assert(input.length() == (pin_count()-1));
-	      /* XXXX Need to check to make sure that the input vector
-		 contains a legal combination of characters. In
-		 combinational UDPs, only 0, 1 and x are allowed. */
-	    cm_[input] = output;
-
-	    return true;
-      }
-}
-
-void NetUDP::cleanup_table()
-{
-      for (FSM_::iterator idx = fsm_.begin() ;  idx != fsm_.end() ; idx++) {
-	    string str = (*idx).first;
-	    state_t_*st = (*idx).second;
-	    assert(str[0] == st->out);
-
-	    for (unsigned pin = 0 ;  pin < pin_count() ;  pin += 1) {
-		  if (st->pins[pin].zer && st->pins[pin].zer->out == 'x')
-			st->pins[pin].zer = 0;
-		  if (st->pins[pin].one && st->pins[pin].one->out == 'x')
-			st->pins[pin].one = 0;
-		  if (st->pins[pin].xxx && st->pins[pin].xxx->out == 'x')
-			st->pins[pin].xxx = 0;
-	    }
-      }
-
-      for (FSM_::iterator idx = fsm_.begin() ;  idx != fsm_.end() ; ) {
-	    FSM_::iterator cur = idx;
-	    idx ++;
-
-	    state_t_*st = (*cur).second;
-
-	    if (st->out != 'x')
-		  continue;
-
-	    for (unsigned pin = 0 ;  pin < pin_count() ;  pin += 1) {
-		  if (st->pins[pin].zer)
-			goto break_label;
-		  if (st->pins[pin].one)
-			goto break_label;
-		  if (st->pins[pin].xxx)
-			goto break_label;
-	    }
-
-		    //delete st;
-	    fsm_.erase(cur);
-
-      break_label:;
-      }
-}
-
-char NetUDP::table_lookup(const string&from, char to, unsigned pin) const
-{
-      assert(pin <= pin_count());
-      assert(from.length() == pin_count());
-      FSM_::const_iterator idx = fsm_.find(from);
-      if (idx == fsm_.end())
-	    return 'x';
-
-      state_t_*next;
-      switch (to) {
-	  case '0':
-	    next = (*idx).second->pins[pin].zer;
-	    break;
-	  case '1':
-	    next = (*idx).second->pins[pin].one;
-	    break;
-	  case 'x':
-	    next = (*idx).second->pins[pin].xxx;
-	    break;
-	  default:
-	    assert(0);
-	    next = 0;
-      }
-
-      return next? next->out : 'x';
-}
-
-void NetUDP::set_initial(char val)
-{
-      assert(sequential_);
-      assert((val == '0') || (val == '1') || (val == 'x'));
-      init_ = val;
-}
-
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.109  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.108  2000/03/12 17:09:41  steve
  *  Support localparam.
  *
@@ -2670,33 +2550,5 @@ void NetUDP::set_initial(char val)
  *
  * Revision 1.102  1999/12/30 04:19:12  steve
  *  Propogate constant 0 in low bits of adders.
- *
- * Revision 1.101  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
- *
- * Revision 1.100  1999/12/16 02:42:15  steve
- *  Simulate carry output on adders.
- *
- * Revision 1.99  1999/12/05 19:30:43  steve
- *  Generate XNF RAMS from synthesized memories.
- *
- * Revision 1.98  1999/12/05 02:24:09  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.97  1999/12/02 16:58:58  steve
- *  Update case comparison (Eric Aardoom).
- *
- * Revision 1.96  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.95  1999/11/28 01:16:18  steve
- *  gate outputs need to set signal values.
- *
- * Revision 1.94  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.93  1999/11/24 04:01:59  steve
- *  Detect and list scope names.
  */
 

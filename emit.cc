@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.34 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: emit.cc,v 1.35 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 /*
@@ -38,6 +38,11 @@ void NetNode::emit_node(ostream&o, struct target_t*tgt) const
 void NetLogic::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->logic(o, this);
+}
+
+void NetUDP_COMB::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->udp_comb(o, this);
 }
 
 void NetUDP::emit_node(ostream&o, struct target_t*tgt) const
@@ -397,6 +402,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.35  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.34  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

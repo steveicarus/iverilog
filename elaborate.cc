@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.150 2000/03/20 15:28:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.151 2000/03/29 04:37:11 steve Exp $"
 #endif
 
 /*
@@ -535,12 +535,53 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
       }
 }
 
+void PGModule::elaborate_cudp_(Design*des, PUdp*udp, const string&path) const
+{
+      const string my_name = path+"."+get_name();
+      NetUDP_COMB*net = new NetUDP_COMB(my_name, udp->ports.count());
+      net->set_attributes(udp->attributes);
+
+	/* Run through the pins, making netlists for the pin
+	   expressions and connecting them to the pin in question. All
+	   of this is independent of the nature of the UDP. */
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+	    if (pin(idx) == 0)
+		  continue;
+
+	    NetNet*sig = pin(idx)->elaborate_net(des, path, 1, 0, 0, 0);
+	    if (sig == 0) {
+		  cerr << "internal error: Expression too complicated "
+			"for elaboration:" << *pin(idx) << endl;
+		  continue;
+	    }
+
+	    connect(sig->pin(0), net->pin(idx));
+
+	      // Delete excess holding signal.
+	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
+		  delete tmp;
+      }
+
+	/* Build up the truth table for the netlist from the input
+	   strings. */
+      for (unsigned idx = 0 ;  idx < udp->tinput.count() ;  idx += 1) {
+	    string input = udp->tinput[idx];
+
+	    net->set_table(input, udp->toutput[idx]);
+      }
+
+      net->cleanup_table();
+
+	// All done. Add the object to the design.
+      des->add_node(net);
+}
+
 /*
  * From a UDP definition in the source, make a NetUDP
  * object. Elaborate the pin expressions as netlists, then connect
  * those networks to the pins.
  */
-void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
+void PGModule::elaborate_sudp_(Design*des, PUdp*udp, const string&path) const
 {
       const string my_name = path+"."+get_name();
       NetUDP*net = new NetUDP(my_name, udp->ports.count(), udp->sequential);
@@ -570,16 +611,13 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 	/* Build up the truth table for the netlist from the input
 	   strings. */
       for (unsigned idx = 0 ;  idx < udp->tinput.count() ;  idx += 1) {
-	    string input = udp->sequential
-		  ? (string("") + udp->tcurrent[idx] + udp->tinput[idx])
-		  : udp->tinput[idx];
-
+	    string input = string("") + udp->tcurrent[idx] + udp->tinput[idx];
 	    net->set_table(input, udp->toutput[idx]);
       }
 
       net->cleanup_table();
 
-      if (udp->sequential) switch (udp->initial) {
+      switch (udp->initial) {
 	  case verinum::V0:
 	    net->set_initial('0');
 	    break;
@@ -608,7 +646,10 @@ void PGModule::elaborate(Design*des, const string&path) const
 	// Try a primitive type
       map<string,PUdp*>::const_iterator udp = udplist->find(type_);
       if (udp != udplist->end()) {
-	    elaborate_udp_(des, (*udp).second, path);
+	    if ((*udp).second->sequential)
+		  elaborate_sudp_(des, (*udp).second, path);
+	    else
+		  elaborate_cudp_(des, (*udp).second, path);
 	    return;
       }
 
@@ -1962,6 +2003,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.151  2000/03/29 04:37:11  steve
+ *  New and improved combinational primitives.
+ *
  * Revision 1.150  2000/03/20 15:28:58  steve
  *  Fix lval part select of non-blocking assign.
  *
