@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.119 2002/01/06 03:15:13 steve Exp $"
+#ident "$Id: compile.cc,v 1.120 2002/01/11 05:21:47 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -481,7 +481,8 @@ void compile_vpi_symbol(const char*label, vpiHandle obj)
 void compile_init(void)
 {
       sym_vpi = new_symbol_table();
-      compile_vpi_symbol("$time", vpip_sim_time());
+      compile_vpi_symbol("$time",  vpip_sim_time());
+      compile_vpi_symbol("$stime", vpip_sim_time());
 
       sym_functors = new_symbol_table();
       functor_init();
@@ -1378,6 +1379,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.120  2002/01/11 05:21:47  steve
+ *  Magic stime object support.
+ *
  * Revision 1.119  2002/01/06 03:15:13  steve
  *  Support weak functor inputs.
  *
