@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.227 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.228 2001/10/31 03:22:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2356,6 +2356,13 @@ Design* elaborate(list<const char*>roots)
 	    root_elems[i++] = r;
       }
 
+	// Errors already? Probably missing root modules. Just give up
+	// now and return nothing.
+      if (des->errors > 0) {
+	    delete des;
+	    return 0;
+      }
+
 	// This method recurses through the scopes, looking for
 	// defparam assignments to apply to the parameters in the
 	// various scopes. This needs to be done after all the scopes
@@ -2404,6 +2411,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.228  2001/10/31 03:22:31  steve
+ *  Give up if roots are missing.
+ *
  * Revision 1.227  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *
