@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.89 1999/12/12 06:03:14 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.90 1999/12/12 19:47:54 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -315,7 +315,7 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
       }
 
 	/* Make the function call. */
-      os_ << "        " << mangle(expr->name()) << "(sim_);" << endl;
+      os_ << "        " << mangle(expr->name()) << "();" << endl;
 
 	/* Save the return value in a temporary. */
       result = make_temp();
@@ -612,11 +612,11 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       os << "static struct __vpiStringConst string_table[];" << endl;
       os << "static struct __vpiNumberConst number_table[];" << endl;
 
-      init_code << "static void design_init(vvm_simulation&sim)" << endl;
+      init_code << "static void design_init()" << endl;
       init_code << "{" << endl;
       init_code << "      vpip_init_simulation();"
 		<< endl;
-      start_code << "static void design_start(vvm_simulation&sim)" << endl;
+      start_code << "static void design_start()" << endl;
       start_code << "{" << endl;
 }
 
@@ -701,15 +701,14 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 	    os << "      vvm_set_module_path(\"" << vpi_module_path <<
 		  "\");" << endl;
       os << "      vvm_load_vpi_module(\"system.vpi\");" << endl;
-      os << "      vvm_simulation sim;" << endl;
-      os << "      design_init(sim);" << endl;
-      os << "      design_start(sim);" << endl;
+      os << "      design_init();" << endl;
+      os << "      design_start();" << endl;
 
       for (unsigned idx = 0 ;  idx < process_counter ;  idx += 1)
 	    os << "      thread" << (idx+1) << "_t thread_" <<
-		  (idx+1) << "(&sim);" << endl;
+		  (idx+1) << ";" << endl;
 
-      os << "      sim.run();" << endl;
+      os << "      vpip_simulation_run();" << endl;
       os << "}" << endl;
 }
 
@@ -799,8 +798,8 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
 
       os << "class " << name << "  : public vvm_thread {" << endl;
       os << "    public:" << endl;
-      os << "      " << name << "(vvm_simulation*sim, vvm_thread*th)" << endl;
-      os << "      : vvm_thread(sim), back_(th), step_(&" << name << "::step_0_)" << endl;
+      os << "      " << name << "(vvm_thread*th)" << endl;
+      os << "      : vvm_thread(), back_(th), step_(&" << name << "::step_0_)" << endl;
       os << "      { }" << endl;
       os << "      ~" << name << "() { }" << endl;
       os << "      bool go() { return (this->*step_)(); }" << endl;
@@ -813,7 +812,7 @@ void target_vvm::task_def(ostream&os, const NetTaskDef*def)
 
       defn << "bool " << thread_class_ << "::step_0_() {" << endl;
       def->proc()->emit_proc(os, this);
-      defn << "      sim_->thread_active(back_);" << endl;
+      defn << "      back_ -> thread_yield();" << endl;
       defn << "      return false;" << endl;
       defn << "}" << endl;
 
@@ -834,10 +833,10 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
       thread_step_ = 0;
       const string name = mangle(def->name());
       os << "// Function " << def->name() << endl;
-      os << "static void " << name << "(vvm_simulation*);" << endl;
+      os << "static void " << name << "();" << endl;
 
       defn << "// Function " << def->name() << endl;
-      defn << "static void " << name << "(vvm_simulation*sim_)" << endl;
+      defn << "static void " << name << "()" << endl;
       defn << "{" << endl;
       def->proc()->emit_proc(os, this);
       defn << "}" << endl;
@@ -854,7 +853,7 @@ string target_vvm::defn_gate_outputfun_(ostream&os,
 	    "_" << lnk.get_inst() << ends;
       string name = tmp.str();
 
-      os << "static void " << name << "(vvm_simulation*, vpip_bit_t);" << endl;
+      os << "static void " << name << "(vpip_bit_t);" << endl;
       return name;
 }
 
@@ -869,7 +868,7 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 
       delayed << "static void " << mangle(gate->name()) <<
 	    "_output_" << lnk.get_name() << "_" << lnk.get_inst() <<
-	    "(vvm_simulation*sim, vpip_bit_t val)" <<
+	    "(vpip_bit_t val)" <<
 	    endl << "{" << endl;
 
 	/* The output function connects to gpin of the netlist part
@@ -884,12 +883,12 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 	    if (cur->pin(pin).get_name() != "") {
 
 		  delayed << "      " << mangle(cur->name()) << ".set_"
-			  << cur->pin(pin).get_name() << "(sim, " <<
+			  << cur->pin(pin).get_name() << "(" <<
 			cur->pin(pin).get_inst() << ", val);" << endl;
 
 	    } else {
 
-		  delayed << "      " << mangle(cur->name()) << ".set(sim, "
+		  delayed << "      " << mangle(cur->name()) << ".set("
 			  << pin << ", val);" << endl;
 	    }
 
@@ -1073,7 +1072,7 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
       emit_gate_outputfun_(gate, 0);
 
       start_code << "      " << mangle(gate->name()) <<
-	    ".start(&sim);" << endl;
+	    ".start();" << endl;
 }
 
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
@@ -1174,18 +1173,17 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
       os << "    public:" << endl;
 
       if (net->bmux()) {
-	    os << "      " << name << "(vvm_simulation*s, const vvm_bitset_t<"
+	    os << "      " << name << "(const vvm_bitset_t<"
 	       << iwid << ">&v, unsigned idx)" << endl;
-	    os << "      : sim_(s), value_(v), idx_(idx) { }" << endl;
+	    os << "      : value_(v), idx_(idx) { }" << endl;
       } else {
-	    os << "      " << name << "(vvm_simulation*s, const vvm_bits_t&v)"
+	    os << "      " << name << "(const vvm_bits_t&v)"
 	       << endl;
-	    os << "      : sim_(s), value_(v) { }" << endl;
+	    os << "      : value_(v) { }" << endl;
       }
       os << "      void event_function();" << endl;
 
       os << "    private:" << endl;
-      os << "      vvm_simulation*sim_;" << endl;
       os << "      vvm_bitset_t<" << iwid << ">value_;" << endl;
 
       if (net->bmux())
@@ -1220,7 +1218,7 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			      continue;
 
 			delayed << "        " << mangle(cur->name())
-				<< ".set_" << lnk.get_name() << "sim_, "
+				<< ".set_" << lnk.get_name()
 				<< lnk.get_inst() << ", value_[0]);" << endl;
 		  }
 
@@ -1247,7 +1245,7 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			      continue;
 
 			delayed << "      " << mangle(cur->name()) <<
-			      ".set_" << lnk.get_name() << "(sim_, "
+			      ".set_" << lnk.get_name() << "("
 				<< lnk.get_inst() << ", value_[" <<
 			      idx << "]);" << endl;
 		  }
@@ -1262,7 +1260,7 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 
       os << "static void " << mangle(gate->name()) <<
 	"_output_" << lnk.get_name() << "_" << lnk.get_inst() <<
-	"(vvm_simulation*, vpip_bit_t);" << endl;
+	"(vpip_bit_t);" << endl;
 
       assert(gate->pin_count() == 3);
       os << "static vvm_eeq" << "<" << gate->rise_time() << "> "
@@ -1271,8 +1269,7 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 
       emit_gate_outputfun_(gate, 0);
 
-      start_code << "      " << mangle(gate->name()) <<
-	    ".start(&sim);" << endl;
+      start_code << "      " << mangle(gate->name()) << ".start();" << endl;
 }
 
 /*
@@ -1288,7 +1285,7 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
       os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
 	    outfun << ");" << endl;
 
-      init_code << "      " << mangle(gate->name()) << ".set(&sim, 1, ";
+      init_code << "      " << mangle(gate->name()) << ".set(1, ";
       switch (gate->value()) {
 	  case verinum::V0:
 	    init_code << "V0";
@@ -1358,8 +1355,8 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
       os << "class " << thread_class_ << " : public vvm_thread {" << endl;
 
       os << "    public:" << endl;
-      os << "      " << thread_class_ << "(vvm_simulation*sim)" << endl;
-      os << "      : vvm_thread(sim), step_(&" << thread_class_ <<
+      os << "      " << thread_class_ << "()" << endl;
+      os << "      : vvm_thread(), step_(&" << thread_class_ <<
 	    "::step_0_)" << endl;
       os << "      { }" << endl;
       os << "      ~" << thread_class_ << "() { }" << endl;
@@ -1417,7 +1414,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			written[cur->name()] = true;
 			defn << "        " << mangle(cur->name()) <<
 			      ".set_" << cur->pin(pin).get_name() <<
-			      "(sim_, " << cur->pin(pin).get_inst() <<
+			      "(" << cur->pin(pin).get_inst() <<
 			      ", " << rval << "[0]);" << endl;
 		  }
 
@@ -1453,7 +1450,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 			written[cur->name()] = true;
 			defn << "      " << mangle(cur->name()) <<
 			      ".set_" << cur->pin(pin).get_name() <<
-			      "(sim_, " << cur->pin(pin).get_inst() <<
+			      "(" << cur->pin(pin).get_inst() <<
 			      ", " << rval << "[" << idx << "]);" << endl;
 		  }
 	    }
@@ -1474,7 +1471,7 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
       defn << "      /* " << amem->get_line() << " */" << endl;
       if (mem->width() == amem->rval()->expr_width()) {
 	    defn << "      " << mangle(mem->name()) <<
-		  ".set_word(sim_, " << index << ".as_unsigned(), " <<
+		  ".set_word(" << index << ".as_unsigned(), " <<
 		  rval << ");" << endl;
 
       } else {
@@ -1486,7 +1483,7 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 		  defn << "      " << tmp << "[" << idx << "] = " <<
 			rval << "[" << idx << "];" << endl;
 
-	    defn << "      " << mangle(mem->name()) << ".set_word(sim_, "
+	    defn << "      " << mangle(mem->name()) << ".set_word("
 		 << index << ".as_unsigned(), " << tmp << ");" << endl;
       }
 }
@@ -1497,14 +1494,14 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 
       if (net->bmux()) {
 	    string bval = emit_proc_rval(defn, 8, net->bmux());
-	    defn << "      sim_->insert_event(" << net->rise_time()
-	       << ", new " << mangle(net->name()) << "(sim_, " << rval
-	       << ", " << bval << ".as_unsigned()));" << endl;
+	    defn << "      (new " << mangle(net->name()) << "("
+		 << rval << ", " << bval << ".as_unsigned())) "
+		 << "-> schedule(" << net->rise_time() << ");" << endl;
 
       } else {
-	    defn << "      sim_->insert_event(" << net->rise_time()
-	       << ", new " << mangle(net->name()) << "(sim_, " << rval
-	       << "));" << endl;
+	    defn << "      (new " << mangle(net->name()) << "("
+		 << rval << ")) -> schedule(" << net->rise_time() <<
+		  ");" << endl;
       }
 }
 
@@ -1786,7 +1783,7 @@ void target_vvm::proc_utask(ostream&os, const NetUTask*net)
 {
       unsigned out_step = ++thread_step_;
       const string name = mangle(net->name());
-      defn << "      callee_ = new " << name << "(sim_, this);" << endl;
+      defn << "      callee_ = new " << name << "(this);" << endl;
       defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    out_step << "_;" << endl;
       defn << "      return false;" << endl;
@@ -1922,8 +1919,7 @@ void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
       thread_step_ += 1;
       defn << "      step_ = &" << thread_class_ << "::step_" <<
 	    thread_step_ << "_;" << endl;
-      defn << "      sim_->thread_delay(" << proc->delay() << ", this);"
-	 << endl;
+      defn << "      thread_yield(" << proc->delay() << ");" << endl;
       defn << "      return false;" << endl;
       defn << "}" << endl;
 
@@ -1959,6 +1955,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.90  1999/12/12 19:47:54  steve
+ *  Remove the useless vvm_simulation class.
+ *
  * Revision 1.89  1999/12/12 06:03:14  steve
  *  Allow memories without indices in expressions.
  *
@@ -2015,63 +2014,5 @@ extern const struct target tgt_vvm = {
  *
  * Revision 1.72  1999/11/06 16:00:17  steve
  *  Put number constants into a static table.
- *
- * Revision 1.71  1999/11/01 02:07:41  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.70  1999/10/31 20:08:24  steve
- *  Include subtraction in LPM_ADD_SUB device.
- *
- * Revision 1.69  1999/10/31 04:11:28  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.68  1999/10/28 21:51:21  steve
- *  gate output pins use vpip_bit_t (Eric Aardoom)
- *
- * Revision 1.67  1999/10/28 21:36:00  steve
- *  Get rid of monitor_t and fold __vpiSignal into signal.
- *
- * Revision 1.66  1999/10/28 04:48:29  steve
- *  Put strings into a single string table.
- *
- * Revision 1.65  1999/10/28 00:47:24  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
- *
- * Revision 1.64  1999/10/23 16:27:53  steve
- *  assignment to bit select is aa single bit.
- *
- * Revision 1.63  1999/10/21 02:15:06  steve
- *  Make generated code ISO legal.
- *
- * Revision 1.62  1999/10/10 01:59:55  steve
- *  Structural case equals device.
- *
- * Revision 1.61  1999/10/08 02:00:48  steve
- *  vvm supports unary | operator.
- *
- * Revision 1.60  1999/10/07 05:25:34  steve
- *  Add non-const bit select in l-value of assignment.
- *
- * Revision 1.59  1999/10/06 01:28:18  steve
- *  The $finish task should work immediately.
- *
- * Revision 1.58  1999/10/05 06:19:46  steve
- *  Add support for reduction NOR.
- *
- * Revision 1.57  1999/10/05 04:02:10  steve
- *  Relaxed width handling for <= assignment.
- *
- * Revision 1.56  1999/10/01 15:26:28  steve
- *  Add some vvm operators from Eric Aardoom.
- *
- * Revision 1.55  1999/10/01 03:58:37  steve
- *  More resilient assignment to memory location.
  */
 

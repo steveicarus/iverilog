@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_event.cc,v 1.2 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm_event.cc,v 1.3 1999/12/12 19:47:54 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -32,6 +32,11 @@ vvm_event::~vvm_event()
 {
 }
 
+void vvm_event::schedule(unsigned long delay)
+{
+      event_ = vpip_sim_insert_event(delay, this, callback_, 0);
+}
+
 void vvm_event::callback_(void*cbd)
 {
       vvm_event*obj = reinterpret_cast<vvm_event*>(cbd);
@@ -41,6 +46,9 @@ void vvm_event::callback_(void*cbd)
 
 /*
  * $Log: vvm_event.cc,v $
+ * Revision 1.3  1999/12/12 19:47:54  steve
+ *  Remove the useless vvm_simulation class.
+ *
  * Revision 1.2  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

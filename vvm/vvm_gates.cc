@@ -23,13 +23,13 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.cc,v 1.3 1999/12/02 04:54:11 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.4 1999/12/12 19:47:54 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
 
-vvm_out_event::vvm_out_event(vvm_simulation*s, vpip_bit_t v, action_t o)
-: output_(o), sim_(s), val_(v)
+vvm_out_event::vvm_out_event(vpip_bit_t v, action_t o)
+: output_(o), val_(v)
 {
 }
 
@@ -39,7 +39,7 @@ vvm_out_event::~vvm_out_event()
 
 void vvm_out_event::event_function()
 {
-      output_(sim_, val_);
+      output_(val_);
 }
 
 vvm_1bit_out::vvm_1bit_out(vvm_out_event::action_t o, unsigned d)
@@ -51,13 +51,10 @@ vvm_1bit_out::~vvm_1bit_out()
 {
 }
 
-void vvm_1bit_out::output(vvm_simulation*sim, vpip_bit_t val)
+void vvm_1bit_out::output(vpip_bit_t val)
 {
-      vvm_event*ev = new vvm_out_event(sim, val, output_);
-      if (delay_ > 0)
-	    sim->insert_event(delay_, ev);
-      else
-	    sim->active_event(ev);
+      vvm_event*ev = new vvm_out_event(val, output_);
+      ev -> schedule(delay_);
 }
 
 
@@ -146,6 +143,9 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.4  1999/12/12 19:47:54  steve
+ *  Remove the useless vvm_simulation class.
+ *
  * Revision 1.3  1999/12/02 04:54:11  steve
  *  Handle mux sel of X, if inputs are equal.
  *

@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_pevent.cc,v 1.3 1999/05/01 20:43:55 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.4 1999/12/12 19:47:54 steve Exp $"
 #endif
 
 # include  "vvm.h"
 # include  "vvm_gates.h"
+# include  "vvm_thread.h"
 
 vvm_sync::vvm_sync()
 : hold_(0)
@@ -34,16 +35,19 @@ void vvm_sync::wait(vvm_thread*thr)
       hold_ = thr;
 }
 
-void vvm_sync::wakeup(vvm_simulation*sim)
+void vvm_sync::wakeup()
 {
       vvm_thread*tmp = hold_;
       hold_ = 0;
-      if (tmp) sim->thread_active(tmp);
+      if (tmp) tmp->thread_yield();
 }
 
 
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.4  1999/12/12 19:47:54  steve
+ *  Remove the useless vvm_simulation class.
+ *
  * Revision 1.3  1999/05/01 20:43:55  steve
  *  Handle wide events, such as @(a) where a has
  *  many bits in it.

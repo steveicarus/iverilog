@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.26 1999/12/09 06:00:19 steve Exp $"
+#ident "$Id: vvm.h,v 1.27 1999/12/12 19:47:54 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -33,8 +33,6 @@
 typedef unsigned vvm_u32;
 
 class vvm_event;
-class vvm_simulation;
-class vvm_simulation_cycle;
 class vvm_thread;
 class ostream;
 
@@ -159,17 +157,17 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
  */
 class vvm_event {
 
-      friend class vvm_simulation;
-
     public:
       vvm_event();
       virtual ~vvm_event() =0;
       virtual void event_function() =0;
 
-      static void callback_(void*);
+      void schedule(unsigned long delay =0);
 
     private:
       struct vpip_event*event_;
+
+      static void callback_(void*);
 
     private: // not implemented
       vvm_event(const vvm_event&);
@@ -177,50 +175,6 @@ class vvm_event {
 };
 
 
-/*
- * This class is the main simulation engine. Object of this type are
- * self-contained simulations. Generally, only one is needed.
- */
-class vvm_simulation {
-
-    public:
-      vvm_simulation();
-      ~vvm_simulation();
-
-	// Take a simulation that has been primed with some initial
-	// events, and run it. Continue running it until the
-	// simulation stops. The sim parameter becomes the new list,
-	// or 0 if the events run out. The simulation clock is
-	// advanced for the first cycle in sim.
-      void run();
-
-	// Add an event to an existing simulation cycle list. If there
-	// is not a cycle for the exact delay of the event, create one
-	// and insert it into the cycle list. Add the event to the
-	// list of events for the cycle time.
-      void insert_event(unsigned long delay, vvm_event*event);
-
-	// This puts the event in the current active list. No delay.
-      void active_event(vvm_event*event);
-
-	// These are versions of the *_event methods that take
-	// vvm_thread objects instead.
-      void thread_delay(unsigned long delay, vvm_thread*);
-      void thread_active(vvm_thread*);
-
-	// Trigger an event as a monitor event causes it to be
-	// scheduled and executed when the time cycle is
-	// complete. Unlike other events, the execution of a event so
-	// scheduled will not cause the event to be deleted. Also,
-	// only one event can be a monitor.
-      void monitor_event(vvm_event*);
-
-      bool finished() const;
-
-    private: // not implemented
-      vvm_simulation(const vvm_simulation&);
-      vvm_simulation& operator= (const vvm_simulation&);
-};
 
 /*
  * The vvm_signal_t template is the real object that handles the
@@ -239,12 +193,12 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
       void init_P(unsigned idx, vpip_bit_t val)
 	    { bits[idx] = val; }
 
-      void set_P(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+      void set_P(unsigned idx, vpip_bit_t val)
 	    { bits[idx] = val;
 	      vpip_run_value_changes(this);
 	    }
 
-      void set_P(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
+      void set_P(const vvm_bitset_t<WIDTH>&val)
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  set(sim, idx, val[idx]);
 	    }
@@ -253,7 +207,7 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 struct vvm_ram_callback {
       vvm_ram_callback();
       virtual ~vvm_ram_callback();
-      virtual void handle_write(vvm_simulation*sim, unsigned idx) =0;
+      virtual void handle_write(unsigned idx) =0;
       vvm_ram_callback*next_;
 };
 
@@ -265,20 +219,20 @@ class vvm_memory_t : public __vpiMemory {
 	    { cb_list_ = 0;
 	    }
 
-      void set_word(vvm_simulation*sim, unsigned addr,
+      void set_word(unsigned addr,
 		    const vvm_bitset_t<WIDTH>&val)
 	    { unsigned base = WIDTH * addr;
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    bits[base+idx] = val[idx];
-	      call_list_(sim, addr);
+	      call_list_(addr);
 	    }
 
-      void set_word(vvm_simulation*sim, unsigned addr,
+      void set_word(unsigned addr,
 		    const vpip_bit_t val[WIDTH])
 	    { unsigned base = WIDTH * addr;
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    bits[base+idx] = val[idx];
-	      call_list_(sim, addr);
+	      call_list_(addr);
 	    }
 
       vvm_bitset_t<WIDTH> get_word(unsigned addr) const
@@ -296,14 +250,17 @@ class vvm_memory_t : public __vpiMemory {
 
     private:
       vvm_ram_callback*cb_list_;
-      void call_list_(vvm_simulation*sim, unsigned idx)
+      void call_list_(unsigned idx)
 	    { for (vvm_ram_callback*cur = cb_list_; cur; cur = cur->next_)
-		    cur->handle_write(sim, idx);
+		    cur->handle_write(idx);
 	    }
 };
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.27  1999/12/12 19:47:54  steve
+ *  Remove the useless vvm_simulation class.
+ *
  * Revision 1.26  1999/12/09 06:00:19  steve
  *  Fix const/non-const errors.
  *

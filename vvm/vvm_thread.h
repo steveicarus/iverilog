@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_thread.h,v 1.2 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.3 1999/12/12 19:47:54 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -36,8 +36,10 @@
 class vvm_thread {
 
     public:
-      explicit vvm_thread(vvm_simulation*sim);
+      explicit vvm_thread();
       virtual ~vvm_thread();
+
+      void thread_yield(unsigned long delay =0);
 
 	// This method executes a setp of the thread. The engine will
 	// continue to call go as long as it returns true. The thread
@@ -45,11 +47,13 @@ class vvm_thread {
       virtual bool go() =0;
 
     protected:
-      vvm_simulation*const sim_;
 };
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.3  1999/12/12 19:47:54  steve
+ *  Remove the useless vvm_simulation class.
+ *
  * Revision 1.2  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).
