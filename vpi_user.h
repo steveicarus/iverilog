@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.29 2003/07/15 03:49:22 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.30 2003/10/30 03:42:51 steve Exp $"
 #endif
 
 
@@ -237,6 +237,19 @@ extern PLI_INT32  vpi_flush(void);
 extern PLI_INT32  vpi_mcd_flush(PLI_UINT32 mcd);
 
 /* proposed extensions */
+/*
+ * These functions are proposed extensions to Verilog, and
+ * are described by the Verilog PLI task force as issue#347.
+ *
+ * The vpi_fopen() function is exactly the same as the $fopen system
+ * function. That is, it takes a path string and a mode string, and
+ * opens the file. The result is a 32bit value with bit 31 set, the
+ * remaining bits made up a small integer to represent the file.
+ *
+ * The vpi_get_file(fd) function takes as input a descriptor as
+ * returned by vpi_fopen or $fopen. Bit 31 must be set. The result
+ * is the C FILE* that represents the file.
+ */
 extern PLI_INT32 vpi_fopen(const char*name, const char*mode);
 extern FILE *vpi_get_file(PLI_INT32 fd);
 
@@ -399,6 +412,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.30  2003/10/30 03:42:51  steve
+ *  Details on the vpi_get_file function.
+ *
  * Revision 1.29  2003/07/15 03:49:22  steve
  *  Spelling fixes.
  *
