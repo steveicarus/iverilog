@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.48 2001/12/31 00:08:14 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.49 2002/01/11 05:25:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -186,6 +186,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 
       if (strcmp(path_.peek_name(0), "$time") == 0)
 	    wid = 64;
+      if (strcmp(path_.peek_name(0), "$stime") == 0)
+	    wid = 32;
 
 
 	/* How many parameters are there? The Verilog language allows
@@ -671,6 +673,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.49  2002/01/11 05:25:45  steve
+ *  The stime system function is 32bits.
+ *
  * Revision 1.48  2001/12/31 00:08:14  steve
  *  Support $signed cast of expressions.
  *
