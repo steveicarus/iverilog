@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.cc,v 1.6 2001/12/14 06:03:17 steve Exp $"
+#ident "$Id: logic.cc,v 1.7 2002/01/12 04:02:16 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -88,6 +88,9 @@ void compile_functor(char*label, char*type,
       } else if (strcmp(type, "BUFIF1") == 0) {
 	    obj = new vvp_bufif_s(false,false);
 
+      } else if (strcmp(type, "BUFZ") == 0) {
+	    obj = new table_functor_s(ft_BUFZ, ostr0, ostr1);
+
       } else if (strcmp(type, "PMOS") == 0) {
 	    obj = new vvp_pmos_s;
 
@@ -152,6 +155,9 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.7  2002/01/12 04:02:16  steve
+ *  Support the BUFZ logic device.
+ *
  * Revision 1.6  2001/12/14 06:03:17  steve
  *  Arrange bufif to support notif as well.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: logic.h,v 1.2 2001/12/14 02:04:49 steve Exp $"
+#ident "$Id: logic.h,v 1.3 2002/01/12 04:02:16 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -47,6 +47,7 @@ extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
 extern const unsigned char ft_BUFIF0[];
 extern const unsigned char ft_BUFIF1[];
+extern const unsigned char ft_BUFZ[];
 extern const unsigned char ft_PMOS[];
 extern const unsigned char ft_NMOS[];
 extern const unsigned char ft_MUXZ[];
@@ -61,6 +62,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: logic.h,v $
+ * Revision 1.3  2002/01/12 04:02:16  steve
+ *  Support the BUFZ logic device.
+ *
  * Revision 1.2  2001/12/14 02:04:49  steve
  *  Support strength syntax on functors.
  *
