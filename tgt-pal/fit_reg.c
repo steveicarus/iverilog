@@ -17,13 +17,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: fit_reg.c,v 1.1 2000/12/09 03:42:52 steve Exp $"
+#ident "$Id: fit_reg.c,v 1.2 2000/12/09 05:40:42 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
 # include  <stdio.h>
 # include  <assert.h>
 # include  "priv.h"
+
+/*
+ * The fit_registers function scans all the scopes for flip-flop
+ * devices to be assigned to macrocells. First look to see if the
+ * device is connected to a PAD directly or through a bufif device. If
+ * not, then just pick a free macrocell and drop it there.
+ */
 
 static int scan_ff_q(ivl_lpm_ff_t ff, unsigned q);
 
@@ -33,12 +40,17 @@ int fit_registers(ivl_scope_t scope)
       unsigned idx;
       unsigned lpms;
 
+	/* Scan child scopes first... */
       rc = ivl_scope_children(scope, fit_registers);
       if (rc != 0)
 	    return rc;
 
-      lpms = ivl_scope_lpms(scope);
 
+	/* Scan the current scope for flip-flop devices. Pass the
+	   devices we find to the scan_ff_q function to assign to a
+	   macrocell. */
+
+      lpms = ivl_scope_lpms(scope);
       for (idx = 0 ;  idx < lpms ;  idx += 1) {
 	    ivl_lpm_t lpm = ivl_scope_lpm(scope, idx);
 	    ivl_lpm_ff_t ff;
@@ -60,6 +72,10 @@ int fit_registers(ivl_scope_t scope)
       return 0;
 }
 
+/*
+ * This is the part that actually assigns the single bit of a single
+ * flip-flop to a single macrocell.
+ */
 int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
 {
       unsigned idx;
@@ -93,7 +109,7 @@ int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
 	    }
       }
 
-	/* There is no poin connection, so try setting this to an
+	/* There is no pin connection, so try setting this to an
 	   unbound sop cell. We know that a sop is unbound if there
 	   are no enables, nexus or ff devices connected to it. */
 
@@ -120,6 +136,9 @@ int scan_ff_q(ivl_lpm_ff_t ff, unsigned q)
 
 /*
  * $Log: fit_reg.c,v $
+ * Revision 1.2  2000/12/09 05:40:42  steve
+ *  documentation...
+ *
  * Revision 1.1  2000/12/09 03:42:52  steve
  *  Stuff registers into macrocells.
  *

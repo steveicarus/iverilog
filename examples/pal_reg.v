@@ -20,16 +20,37 @@
 /*
  * This example shows how to use Icarus Verilog to generate PLD output.
  * The design is intended to fit into a 22v10 in a PLCC package, with
- * pin assignments locked down by design.
+ * pin assignments locked down by design. The command to compile this
+ * into a jedec file is;
+ *
+ *   iverilog -tpal -fpart=generic-22v10-plcc -opal_reg.jed pal_reg.v
+ *
+ * The output file name (passed through the -o<file> switch) can be
+ * any file you desire. If the compilation and fittin all succeed, the
+ * output file will be a JEDEC file that you can take to your favorite
+ * PROM programmer to program the part.
+ *
+ * This source demonstrates some important principles of synthesizing
+ * a design for a PLD, including how to specify synchronous logic, and
+ * how to assign signals to pins. The pin assignment in particular is
+ * part specific, and must be right for the fitting to succeed.
  */
+
 
 /*
  * The register module is an 8 bit register that copies the input to
- * the output registers on the rising edge of the clk input. The output
- * drivers are controled by a single active low output enable.
+ * the output registers on the rising edge of the clk input. The
+ * always statement creates a simple d-type flip-flop that is loaded
+ * on the rising edge of the clock.
  *
- * This module contains all the logic of the device, but includes nothing
- * that has anything to do with the real hardware.
+ * The output drivers are controlled by a single active low output
+ * enable. I used bufif0 devices in this example, but the exact same
+ * thing can be achived with a continuous assignment like so:
+ *
+ *   assign out = oe? 8'hzz : Q;
+ *
+ * Many people prefer the expression form. It is true that it does
+ * seem to express the intent a bit more clearly.
  */
 module register (out, val, clk, oe);
 
@@ -53,6 +74,13 @@ endmodule
  * the device. We use this to lock down the pin assignments of the
  * synthesized result. The pin number assignments are for a 22v10 in
  * a PLCC package.
+ *
+ * Note that this module has no logic in it. It is a convention I use
+ * that I put all the functionality in a seperate module (seen above)
+ * and isolate the Icarus Verilog specific $attribute madness into a
+ * top-level module. The advantage of this style is that the entire
+ * module can be `ifdef'ed out when doing simulation and you don't
+ * need to worry that functionality will be affected.
  */
 module pal;
 

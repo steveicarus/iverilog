@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: imain.c,v 1.2 2000/12/09 03:42:52 steve Exp $"
+#ident "$Id: imain.c,v 1.3 2000/12/09 05:40:42 steve Exp $"
 #endif
 
 /*
@@ -67,8 +67,18 @@ int target_design(ivl_design_t des)
 	   key. Given the part type, try to open the pal description
 	   so that we can figure out the device. */
       part = ivl_design_flag(des, "part");
-      assert(part);
+      if (part == 0) {
+	    fprintf(stderr, "error: part must be specified. Specify a\n");
+	    fprintf(stderr, "     : type with the -fpart=<type> option.\n");
+	    return -1;
+      }
+
       pal = pal_alloc(part);
+      if (pal == 0) {
+	    fprintf(stderr, "error: %s is not a valid part type.\n", part);
+	    return -1;
+      }
+
       assert(pal);
 
       pins = pal_pins(pal);
@@ -132,6 +142,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: imain.c,v $
+ * Revision 1.3  2000/12/09 05:40:42  steve
+ *  documentation...
+ *
  * Revision 1.2  2000/12/09 03:42:52  steve
  *  Stuff registers into macrocells.
  *
