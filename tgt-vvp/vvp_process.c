@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.40 2001/07/28 01:18:07 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.41 2001/08/16 03:45:17 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -610,7 +610,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       unsigned top_label = local_count++;
       unsigned out_label = local_count++;
 
-      fprintf(vvp_out, "T_%d.%d\n", thread_count, top_label);
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, top_label);
 
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
@@ -626,7 +626,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* This is the bottom of the loop. branch to the top where the
 	   test is repeased, and also draw the out label. */
       fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, top_label);
-      fprintf(vvp_out, "T_%d.%d\n", thread_count, out_label);
+      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, out_label);
       return rc;
 }
 
@@ -931,6 +931,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.41  2001/08/16 03:45:17  steve
+ *  statement ends after while loop labels.
+ *
  * Revision 1.40  2001/07/28 01:18:07  steve
  *  Evaluate part selects when passed to system tasks.
  *
