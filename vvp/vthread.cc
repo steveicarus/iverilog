@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.74 2002/05/29 16:29:34 steve Exp $"
+#ident "$Id: vthread.cc,v 1.75 2002/05/31 00:05:49 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -36,6 +36,12 @@
 # include  <assert.h>
 
 #include  <stdio.h>
+
+/* This is the size of an unsigned long in bits. This is just a
+   convenience macro. */
+# define CPU_WORD_BITS (8*sizeof(unsigned long))
+# define TOP_BIT (1UL << (CPU_WORD_BITS-1))
+
 /*
  * This vhtread_s structure describes all there is to know about a
  * thread, including its program counter, all the private bits it
@@ -88,7 +94,7 @@ struct vthread_s {
 	/* This is the program counter. */
       unsigned long pc;
 	/* These hold the private thread bits. */
-      unsigned char *bits;
+      unsigned long *bits;
       long index[4];
       unsigned nbits :16;
 	/* My parent sets this when it wants me to wake it up. */
@@ -106,35 +112,55 @@ struct vthread_s {
       struct vthread_s*scope_next, *scope_prev;
 };
 
+#if SIZEOF_UNSIGNED_LONG == 8
+# define THR_BITS_INIT 0xaaaaaaaaaaaaaaaaUL
+#else
+# define THR_BITS_INIT 0xaaaaaaaaUL
+#endif
+
 static void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
-      if (addr < thr->nbits)
-	    return;
       assert(addr < 0x10000);
       while (thr->nbits <= addr) {
-	    thr->bits = (unsigned char*)realloc(thr->bits, thr->nbits/4 + 16);
-	    memset(thr->bits + thr->nbits/4, 0xaa, 16);
-	    thr->nbits += 16*4;
+	    unsigned word_cnt = thr->nbits/(CPU_WORD_BITS/2) + 1;
+	    thr->bits = (unsigned long*)
+		  realloc(thr->bits, word_cnt*sizeof(unsigned long));
+	    thr->bits[word_cnt-1] = THR_BITS_INIT;
+	    thr->nbits = word_cnt * (CPU_WORD_BITS/2);
       }
 }
 
 static inline unsigned thr_get_bit(struct vthread_s*thr, unsigned addr)
 {
       assert(addr < thr->nbits);
-      unsigned idx = addr % 4;
-      addr /= 4;
-      return (thr->bits[addr] >> (idx*2)) & 3;
+      unsigned idx = addr % (CPU_WORD_BITS/2);
+      addr /= (CPU_WORD_BITS/2);
+      return (thr->bits[addr] >> (idx*2)) & 3UL;
 }
 
 static inline void thr_put_bit(struct vthread_s*thr,
 			       unsigned addr, unsigned val)
 {
-      thr_check_addr(thr, addr);
-      unsigned idx = addr % 4;
-      addr /= 4;
-      unsigned mask = 3 << (idx*2);
+      if (addr >= thr->nbits)
+	    thr_check_addr(thr, addr);
 
-      thr->bits[addr] = (thr->bits[addr] & ~mask) | (val << (idx*2));
+      unsigned idx = addr % (CPU_WORD_BITS/2);
+      addr /= (CPU_WORD_BITS/2);
+
+      unsigned long mask = 3UL << (idx*2);
+      unsigned long tmp = val;
+
+      thr->bits[addr] = (thr->bits[addr] & ~mask) | (tmp << (idx*2));
+}
+
+static inline void thr_clr_bit_(struct vthread_s*thr, unsigned addr)
+{
+      unsigned idx = addr % (CPU_WORD_BITS/2);
+      addr /= (CPU_WORD_BITS/2);
+
+      unsigned long mask = 3UL << (idx*2);
+
+      thr->bits[addr] &= ~mask;
 }
 
 unsigned vthread_get_bit(struct vthread_s*thr, unsigned addr)
@@ -147,13 +173,10 @@ void vthread_put_bit(struct vthread_s*thr, unsigned addr, unsigned bit)
       thr_put_bit(thr, addr, bit);
 }
 
-# define CPU_BITS (8*sizeof(unsigned long))
-# define TOP_BIT (1UL << (CPU_BITS-1))
-
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
-      unsigned awid = (wid + CPU_BITS - 1) / (8*sizeof(unsigned long));
+      unsigned awid = (wid + CPU_WORD_BITS - 1) / (CPU_WORD_BITS);
       unsigned long*val = new unsigned long[awid];
 
       for (unsigned idx = 0 ;  idx < awid ;  idx += 1)
@@ -165,7 +188,7 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 	    if (bit & 2)
 		  goto x_out;
 
-	    val[idx/CPU_BITS] |= bit << (idx % CPU_BITS);
+	    val[idx/CPU_WORD_BITS] |= bit << (idx % CPU_WORD_BITS);
 	    if (addr >= 4)
 		  addr += 1;
       }
@@ -185,8 +208,8 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
-      thr->bits   = (unsigned char*)malloc(16);
-      thr->nbits  = 16*4;
+      thr->bits   = (unsigned long*)malloc(4 * sizeof(unsigned long));
+      thr->nbits  = 4 * (CPU_WORD_BITS/2);
       thr->child  = 0;
       thr->parent = 0;
       thr->wait_next   = 0;
@@ -349,7 +372,7 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 
       unsigned long carry;
       carry = 0;
-      for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
 
 	    unsigned long tmp = lvb[idx] + carry;
 	    unsigned long sum = lva[idx] + tmp;
@@ -364,7 +387,7 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
+	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
       }
 
@@ -393,7 +416,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
 
-      unsigned word_count = (cp->number+CPU_BITS-1)/CPU_BITS;
+      unsigned word_count = (cp->number+CPU_WORD_BITS-1)/CPU_WORD_BITS;
 
       unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
       unsigned long*lvb;
@@ -408,7 +431,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 
       unsigned long carry;
       carry = 0;
-      for (unsigned idx = 0 ;  (idx*CPU_BITS) < cp->number ;  idx += 1) {
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1) {
 
 	    unsigned long tmp = lvb[idx] + carry;
 	    unsigned long sum = lva[idx] + tmp;
@@ -423,7 +446,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       }
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned bit = lva[idx/CPU_BITS] >> (idx % CPU_BITS);
+	    unsigned bit = lva[idx/CPU_WORD_BITS] >> (idx % CPU_WORD_BITS);
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, (bit&1) ? 1 : 0);
       }
 
@@ -1401,6 +1424,20 @@ tally:
       return true;
 }
 
+static bool of_MOV_clr_(vthread_t thr, vvp_code_t cp)
+{
+	/* Test that the address is OK just once, then use the clear
+	   method that relies on the results of this test. */
+      unsigned test_addr = cp->bit_idx[0] + cp->number - 1;
+      if (test_addr >= thr->nbits)
+	    thr_check_addr(thr, test_addr);
+
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_clr_bit_(thr, cp->bit_idx[0]+idx);
+
+      return true;
+}
+
 bool of_MOV(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -1410,6 +1447,13 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
 		  thr_put_bit(thr,
 			      cp->bit_idx[0]+idx,
 			      thr_get_bit(thr, cp->bit_idx[1]+idx));
+
+      } else if (cp->bit_idx[1] == 0) {
+	      /* Detect the special case where this is really just a
+		 large clear. Rewrite the instruction to skip this
+		 test next time around. */
+	    cp->opcode = &of_MOV_clr_;
+	    return cp->opcode(thr, cp);
 
       } else {
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
@@ -1807,11 +1851,11 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
 	    unsigned long tmp;
 	    unsigned sum = carry;
 
-	    tmp = lva[idx/CPU_BITS];
-	    sum += 1 &  (tmp >> (idx%CPU_BITS));
+	    tmp = lva[idx/CPU_WORD_BITS];
+	    sum += 1 &  (tmp >> (idx%CPU_WORD_BITS));
 
-	    tmp = lvb[idx/CPU_BITS];
-	    sum += 1 & ~(tmp >> (idx%CPU_BITS));
+	    tmp = lvb[idx/CPU_WORD_BITS];
+	    sum += 1 & ~(tmp >> (idx%CPU_WORD_BITS));
 
 	    carry = sum / 2;
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, (sum&1) ? 1 : 0);
@@ -1971,6 +2015,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.75  2002/05/31 00:05:49  steve
+ *  Word oriented bit storage.
+ *
  * Revision 1.74  2002/05/29 16:29:34  steve
  *  Add %addi, which is faster to simulate.
  *
@@ -2070,37 +2117,5 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
  * Revision 1.44  2001/06/18 01:09:32  steve
  *  More behavioral unary reduction operators.
  *  (Stephan Boettcher)
- *
- * Revision 1.43  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.42  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.41  2001/05/24 04:20:10  steve
- *  Add behavioral modulus.
- *
- * Revision 1.40  2001/05/20 00:56:48  steve
- *  Make vthread_put_but expand the space if needed.
- *
- * Revision 1.39  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.38  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.37  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
  */
 
