@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.10 2002/09/17 04:40:28 steve Exp $"
+#ident "$Id: synth2.cc,v 1.11 2002/09/24 00:58:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -308,20 +308,60 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetNet*nex_map, NetNet*nex_out)
 {
-	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope, ff, nex_map, nex_out);
-
+	/* This can't be other then one unless there are named events,
+	   which I cannot synthesize. */
       assert(nevents_ == 1);
       NetEvent*ev = events_[0];
 
-      assert(ev->nprobe() == 1);
-      NetEvProbe*pclk = ev->probe(0);
+      assert(ev->nprobe() >= 1);
 
-      assert(pclk->pin_count() == 1);
+	/* Get the input set from the substatement. This will be used
+	   to figure out which of the probes in the clock. */
+      NexusSet*statement_input = statement_ -> nex_input();
+
+	/* Search for a clock input. The clock input is the edge event
+	   that is not also an input to the substatement. */
+      NetEvProbe*pclk = 0;
+      for (unsigned idx = 0 ;  idx < ev->nprobe() ;  idx += 1) {
+	    NetEvProbe*tmp = ev->probe(idx);
+	    assert(tmp->pin_count() == 1);
+
+	    NexusSet tmp_nex;
+	    tmp_nex .add( tmp->pin(0).nexus() );
+
+	    if (! statement_input ->contains(tmp_nex)) {
+		  if (pclk != 0) {
+			cerr << get_line() << ": error: Too many "
+			     << "clocks for synchronous logic." << endl;
+			cerr << get_line() << ":      : Perhaps an"
+			     << " asynchronous set/reset is misused?" << endl;
+			des->errors += 1;
+		  }
+		  pclk = tmp;
+	    }
+      }
+
+      if (pclk == 0) {
+	    cerr << get_line() << ": error: None of the edges"
+		 << " are valid clock inputs." << endl;
+	    cerr << get_line() << ":      : Perhaps the clock"
+		 << " is read by a statement or expression?" << endl;
+	    return false;
+      }
 
       connect(ff->pin_Clock(), pclk->pin(0));
       if (pclk->edge() == NetEvProbe::NEGEDGE)
 	    ff->attribute("Clock:LPM_Polarity", verinum("INVERT"));
+
+      if (ev->nprobe() > 1) {
+	    cerr << get_line() << ": sorry: I don't know how "
+		 << "to synthesize asynchronous DFF controls."
+		 << endl;
+	    return false;
+      }
+
+	/* Synthesize the input to the DFF. */
+      bool flag = statement_->synth_sync(des, scope, ff, nex_map, nex_out);
 
       return flag;
 }
@@ -383,7 +423,10 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
 
       if (top->is_synchronous()) do {
 	    bool flag = top->synth_sync(des);
-	    assert(flag);
+	    if (! flag) {
+		  des->errors += 1;
+		  return;
+	    }
 	    des->delete_process(top);
 	    return;
       } while (0);
@@ -431,6 +474,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.11  2002/09/24 00:58:35  steve
+ *  More detailed check of process edge events.
+ *
  * Revision 1.10  2002/09/17 04:40:28  steve
  *  Connect output of block to net_out, instead of statement outputs.
  *

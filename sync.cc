@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sync.cc,v 1.2 2002/09/16 21:55:06 steve Exp $"
+#ident "$Id: sync.cc,v 1.3 2002/09/24 00:58:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,7 @@ bool NetEvWait::is_synchronous()
       for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
 	    NetEvent*ev = events_[idx];
 
-	    if (ev->nprobe() != 1)
+	    if (ev->nprobe() == 0)
 		  return false;
 
 	    for (unsigned pdx = 0 ;  pdx < ev->nprobe() ;  pdx += 1) {
@@ -67,6 +67,9 @@ bool NetProcTop::is_synchronous()
 
 /*
  * $Log: sync.cc,v $
+ * Revision 1.3  2002/09/24 00:58:35  steve
+ *  More detailed check of process edge events.
+ *
  * Revision 1.2  2002/09/16 21:55:06  steve
  *  Reject multiple probes on synchronous logic.
  *
