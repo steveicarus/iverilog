@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.22 2001/10/08 23:33:00 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.23 2001/10/14 18:32:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,6 +116,16 @@ static void show_this_item(struct vcd_info*info)
 }
 
 
+static void show_this_item_x(struct vcd_info*info)
+{
+      if (vpi_get(vpiSize, info->item) == 1) {
+	    fprintf(dump_file, "x%s\n", info->ident);
+      } else {
+	    fprintf(dump_file, "bx %s\n", info->ident);
+      }
+}
+
+
 /*
  * managed qsorted list of scope names for duplicates bsearching
  */
@@ -208,6 +218,14 @@ static void vcd_checkpoint()
 	    show_this_item(cur);
 }
 
+static void vcd_checkpoint_x()
+{
+      struct vcd_info*cur;
+
+      for (cur = vcd_list ;  cur ;  cur = cur->next)
+	    show_this_item_x(cur);
+}
+
 static int variable_cb(p_cb_data cause)
 {
       unsigned long now = cause->time->low;
@@ -266,12 +284,10 @@ inline static int install_dumpvars_callback(void)
 	    return 0;
 
       if (dumpvars_status == 2) {
-	    fprintf(stderr, 
-		    "VCD error:"
-		    " $dumpvars ignored\n"
-		    "VCD error:"
-		    " $dumpvars was previously called at simtime %lu\n",
-		    dumpvars_time);
+	    vpi_mcd_printf(6, "VCD Error:"
+			   " $dumpvars ignored,"
+			   " previously called at simtime %lu\n",
+			   dumpvars_time);
 	    return 1;
       }
 
@@ -290,13 +306,38 @@ inline static int install_dumpvars_callback(void)
 
 static int sys_dumpoff_calltf(char*name)
 {
+      s_vpi_time now;
+
+      if (dump_is_off)
+	    return 0;
+
       dump_is_off = 1;
+
+      if (dump_file == 0)
+	    return 0;
+
+      if (dump_header_pending())
+	    return 0;
+
+      vpi_get_time(0, &now);
+      if (now.low > vcd_cur_time)
+	    fprintf(dump_file, "#%u\n", now.low);
+      vcd_cur_time = now.low;
+
+      fprintf(dump_file, "$dumpoff\n");
+      vcd_checkpoint_x();
+      fprintf(dump_file, "$end\n");
+
       return 0;
 }
 
 static int sys_dumpon_calltf(char*name)
 {
       s_vpi_time now;
+
+      if (!dump_is_off)
+	    return 0;
+
       dump_is_off = 0;
 
       if (dump_file == 0)
@@ -306,11 +347,13 @@ static int sys_dumpon_calltf(char*name)
 	    return 0;
 
       vpi_get_time(0, &now);
-      if (now.low > vcd_cur_time) {
+      if (now.low > vcd_cur_time)
 	    fprintf(dump_file, "#%u\n", now.low);
-	    vcd_cur_time = now.low;
-	    vcd_checkpoint();
-      }
+      vcd_cur_time = now.low;
+
+      fprintf(dump_file, "$dumpon\n");
+      vcd_checkpoint();
+      fprintf(dump_file, "$end\n");
 
       return 0;
 }
@@ -326,9 +369,13 @@ static int sys_dumpall_calltf(char*name)
 	    return 0;
 
       vpi_get_time(0, &now);
-      fprintf(dump_file, "#%u\n", now.low);
+      if (now.low > vcd_cur_time)
+	    fprintf(dump_file, "#%u\n", now.low);
       vcd_cur_time = now.low;
+
+      fprintf(dump_file, "$dumpall\n");
       vcd_checkpoint();
+      fprintf(dump_file, "$end\n");
 
       return 0;
 }
@@ -338,7 +385,9 @@ static void open_dumpfile(const char*path)
       dump_file = fopen(path, "w");
 
       if (dump_file == 0) {
-	    vpi_printf("ERROR: Unable to open %s for output.\n", path);
+	    vpi_mcd_printf(6, 
+			   "VCD Error: Unable to open %s for output.\n", 
+			   path);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
@@ -376,18 +425,17 @@ static int sys_dumpfile_calltf(char*name)
 
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item;
 
-      if (argv) {
-	    vpiHandle item = vpi_scan(argv);
+      if (argv && (item = vpi_scan(argv))) {
 	    s_vpi_value value;
 
-	    if (vpi_get(vpiType, item) != vpiConstant) {
-		  vpi_printf("ERROR: %s parameter must be a constant\n", name);
-		  return 0;
-	    }
-
-	    if (vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    if (vpi_get(vpiType, item) != vpiConstant
+		|| vpi_get(vpiConstType, item) != vpiStringConst) {
+		  vpi_mcd_printf(6, 
+				 "VCD Error:"
+				 " %s parameter must be a string constant\n", 
+				 name);
 		  return 0;
 	    }
 
@@ -474,115 +522,110 @@ inline static void set_nexus_ident(int nex, const char *id)
       vcd_ids[ihash(nex)] = bucket;
 }
 
-
-static void scan_scope(unsigned depth, vpiHandle argv, int skip)
+static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
-      struct vcd_info*info;
+      struct vcd_info* info;
 
-      vpiHandle item;
-      vpiHandle sublist;
+      const char* type;
+      const char* fullname;
+      const char* ident;
+      int nexus_id;
 
-      cb.reason = cbValueChange;
-      cb.cb_rtn = variable_cb;
-
-      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
-	    const char*type;
-	    const char*fullname;
-	    const char* ident;
-	    int nexus_id;
-
-	    switch (vpi_get(vpiType, item)) {
-		case vpiNet:
-		case vpiReg:
-		  if (skip)
-			break;
-
-		  fullname = vpi_get_str(vpiFullName, item);
-		  
-		  type = "wire";
-		  if (vpi_get(vpiType, item) == vpiReg)
-			type = "reg";
-
-		  nexus_id = vpi_get(_vpiNexusId, item);
-
-		  if (nexus_id) {
-			ident = find_nexus_ident(nexus_id);
-		  } else {
-			ident = 0;
-		  }
-
-		  if (!ident) {
-			ident = strdup(vcdid);
-			gen_new_vcd_id();
-
-			if (nexus_id)
-			      set_nexus_ident(nexus_id, ident);
-			
-			info = malloc(sizeof(*info));
-			info->time.type = vpiSimTime;
-			cb.time = &info->time;
-			cb.user_data = (char*)info;
-			cb.obj = item;
-			info->item  = item;
-			info->ident = ident;
-			info->cb    = vpi_register_cb(&cb);
-			info->next = vcd_list;
-			vcd_list   = info;
-		  }
-
-		  fprintf(dump_file, "$var %s %u %s %s $end\n",
-			  type, vpi_get(vpiSize, item), ident,
-			  fullname);
+      switch (vpi_get(vpiType, item)) {
+	  case vpiNet:
+	  case vpiReg:
+	    if (skip)
 		  break;
 
-		case vpiModule:
-		case vpiNamedBegin:
-		case vpiTask:
-		case vpiFunction:
-		  if (depth > 0) {
-			static int scan_depth = 0;
-			
-			const char* fullname =
-			      vpi_get_str(vpiFullName, item);
+	    fullname = vpi_get_str(vpiFullName, item);
+	    
+	    type = "wire";
+	    if (vpi_get(vpiType, item) == vpiReg)
+		  type = "reg";
+	    
+	    nexus_id = vpi_get(_vpiNexusId, item);
+	    
+	    if (nexus_id) {
+		  ident = find_nexus_ident(nexus_id);
+	    } else {
+		  ident = 0;
+	    }
+	    
+	    if (!ident) {
+		  ident = strdup(vcdid);
+		  gen_new_vcd_id();
+		  
+		  if (nexus_id)
+			set_nexus_ident(nexus_id, ident);
+		  
+		  info = malloc(sizeof(*info));
 
-			int nskip;
-			
-			/* 
-			   Scopes can be scanned multiple times if
-			   arguments to $dumpvars() overlap.
-			   
-			   While we are decending into a scope, we cannot
-			   encounter duplicates from the current root scope.
-			   So we need to add the list of previously scanned
-			   scopes only before scanning a new root scope.
+		  info->time.type = vpiSimTime;
+		  info->item  = item;
+		  info->ident = ident;
 
-			   Explicitely specified signals are not covered. 
-			*/
+		  cb.time      = &info->time;
+		  cb.user_data = (char*)info;
+		  cb.obj       = item;
+		  cb.reason    = cbValueChange;
+		  cb.cb_rtn    = variable_cb;
 
-			if (scan_depth == 0)
-			      vcd_names_sort();
+		  info->next  = vcd_list;
+		  vcd_list    = info;
 
-			nskip = sorted_names && fullname
-			      && vcd_names_search(fullname);
+		  info->cb    = vpi_register_cb(&cb);
+	    }
+	    
+	    fprintf(dump_file, "$var %s %u %s %s $end\n",
+		    type, vpi_get(vpiSize, item), ident,
+		    fullname);
+	    break;
+	    
+	  case vpiModule:
+	  case vpiNamedBegin:
+	  case vpiTask:
+	  case vpiFunction:
+	    if (depth > 0) {
+		  int nskip;
+		  vpiHandle argv;
 
-			if (!nskip) 
-			      vcd_names_add(fullname);
-			
-			sublist = vpi_iterate(vpiInternalScope, item);
-			if (sublist) {
-			      scan_depth++;
-			      scan_scope(depth-1, sublist, nskip);
-			      scan_depth--;
+		  const char* fullname =
+			vpi_get_str(vpiFullName, item);
+
+		  vpi_mcd_printf(4, 
+				 "VCD info:"
+				 " scanning scope %s, %u levels\n",
+				 fullname, depth);
+
+		  nskip = sorted_names && fullname
+			&& vcd_names_search(fullname);
+		  
+		  if (!nskip) 
+			vcd_names_add(fullname);
+		  else 
+		    vpi_mcd_printf(6,
+				   "VCD warning:"
+				   " ignoring signals"
+				   " in previously scanned scope %s\n",
+				   fullname);
+		  
+		  argv = vpi_iterate(vpiInternalScope, item);
+		  if (argv) {
+			for (item = vpi_scan(argv) ;  
+			     item ;  
+			     item = vpi_scan(argv)) {
+
+			      scan_item(depth-1, item, nskip);
 			}
 		  }
-		  break;
-
-		default:
-		  vpi_printf("ERROR: $dumpvars: Unsupported parameter "
-			     "type (%d)\n", vpi_get(vpiType, item));
 	    }
-
+	    break;
+	    
+	  default:
+	    vpi_mcd_printf(6,
+			   "VCD Error: $dumpvars: Unsupported parameter "
+			   "type (%d)\n", vpi_get(vpiType, item));
       }
 }
 
@@ -590,19 +633,14 @@ static int sys_dumpvars_calltf(char*name)
 {
       unsigned depth;
       s_vpi_value value;
-      vpiHandle item;
+      vpiHandle item = 0;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv;
 
       if (dump_file == 0) {
-	    vpi_printf("warning: %s caused default dumpfile "
-		       "dumpfile.vcd to be opened.\n", name);
 	    open_dumpfile("dumpfile.vcd");
-	    if (dump_file == 0) {
-		  vpi_printf("error: Unable to open "
-			     "dumpfile.vcd for output.\n");
+	    if (dump_file == 0)
 		  return 0;
-	    }
       }
 
       if (install_dumpvars_callback()) {
@@ -610,28 +648,41 @@ static int sys_dumpvars_calltf(char*name)
       }
 
       argv = vpi_iterate(vpiArgument, sys);
-      if (argv == 0) {
-	    vpi_printf("SORRY: %s requires arguments\n", name);
+
+      depth = 0;
+      if (argv && (item = vpi_scan(argv)))
+	    switch (vpi_get(vpiType, item)) {
+		case vpiConstant:
+		case vpiNet:
+		case vpiReg:
+		case vpiMemoryWord:
+		  value.format = vpiIntVal;
+		  vpi_get_value(item, &value);
+		  depth = value.value.integer;
+		  break;
+	    }
+
+      if (!depth)
+	    depth = 10000;
+
+      if (!argv) {
+	    // item = (how do I get the top level scope?);
+	    // assert(item);
+	    // scan_item(depth, item, 0);
+	    // return 0
+      }
+
+      if (!argv  ||  !item  ||  !(item = vpi_scan(argv))) {
+	    item = vpi_handle(vpiScope, sys);
+	    assert(item);
+	    scan_item(depth, item, 0);
 	    return 0;
       }
 
-      item = vpi_scan(argv);
-      switch (vpi_get(vpiType, item)) {
-	  case vpiConstant:
-	  case vpiNet:
-	  case vpiReg:
-	  case vpiMemoryWord:
-	    value.format = vpiIntVal;
-	    vpi_get_value(item, &value);
-	    break;
-	  default:
-	    value.value.integer = 0;
-	    break;
+      for ( ; item; item = vpi_scan(argv)) {
+	    vcd_names_sort();
+	    scan_item(depth, item, 0);
       }
-
-      depth = value.value.integer == 0? 0xffffU : value.value.integer;
-
-      scan_scope(depth, argv, 0);
 
       return 0;
 }
@@ -683,6 +734,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.23  2001/10/14 18:32:06  steve
+ *  More coverage of $dump related commands.
+ *
  * Revision 1.22  2001/10/08 23:33:00  steve
  *  Fix pr283: signal values before enddefinitions in vcd. (Stephan Boettcher)
  *
