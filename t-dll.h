@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.90 2002/08/05 04:18:45 steve Exp $"
+#ident "$Id: t-dll.h,v 1.91 2002/08/07 00:54:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -329,6 +329,7 @@ enum ivl_lval_type_t {
       IVL_LVAL_REG = 0,
       IVL_LVAL_MUX = 1,
       IVL_LVAL_MEM = 2,
+      IVL_LVAL_NET = 3 /* Only force can have NET l-values */
 };
 
 struct ivl_lval_s {
@@ -616,6 +617,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.91  2002/08/07 00:54:39  steve
+ *  Add force to nets.
+ *
  * Revision 1.90  2002/08/05 04:18:45  steve
  *  Store only the base name of memories.
  *

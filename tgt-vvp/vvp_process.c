@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.61 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.62 2002/08/07 00:54:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -771,14 +771,19 @@ static int show_stmt_release(ivl_statement_t net)
       assert(ivl_lval_mux(lval) == 0);
       assert(ivl_lval_part_off(lval) == 0);
 
+	/* On release, reg variables hold the value that was forced on
+	   to them. */
       for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
-	    fprintf(vvp_out, "    %%load 4, V_%s[%u];\n",
-		    vvp_signal_label(lsig), idx);
-	    fprintf(vvp_out, "    %%set V_%s[%u], 4;\n",
-		    vvp_signal_label(lsig), idx);
+	    if (ivl_signal_type(lsig) == IVL_SIT_REG) {
+		  fprintf(vvp_out, "    %%load 4, V_%s[%u];\n",
+			  vvp_signal_label(lsig), idx);
+		  fprintf(vvp_out, "    %%set V_%s[%u], 4;\n",
+			  vvp_signal_label(lsig), idx);
+	    }
 	    fprintf(vvp_out, "    %%release V_%s[%u];\n",
 		    vvp_signal_label(lsig), idx);
       }
+
       return 0;
 }
 
@@ -1221,6 +1226,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.62  2002/08/07 00:54:39  steve
+ *  Add force to nets.
+ *
  * Revision 1.61  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

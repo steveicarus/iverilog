@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.50 2002/08/04 18:28:15 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.51 2002/08/07 00:54:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -528,18 +528,27 @@ bool dll_target::proc_force(const NetForce*net)
       assert(lsig);
       ivl_signal_t sig = find_signal(des_, lsig);
       assert(sig);
-      if (sig->type_ != IVL_SIT_REG) {
+
+      ivl_lval_type_t ltype;
+      switch (sig->type_) {
+	  case IVL_SIT_REG:
+	    ltype = IVL_LVAL_REG;
+	    break;
+	  case IVL_SIT_TRI:
+	  case IVL_SIT_TRI0:
+	  case IVL_SIT_TRI1:
+	    ltype = IVL_LVAL_NET;
+	    break;
+	  default:
 	    cerr << net->get_line() << ": internal error: Sorry, "
 		 << "force to nets not supported by this target."
 		 << endl;
 	    return false;
       }
 
-      assert(sig->type_ == IVL_SIT_REG);
-
       stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
       stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
-      stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
+      stmt_cur_->u_.cassign_.lval[0].type_  = ltype;
       stmt_cur_->u_.cassign_.lval[0].idx    = 0;
       stmt_cur_->u_.cassign_.lval[0].n.sig  = sig;
 
@@ -589,11 +598,28 @@ bool dll_target::proc_release(const NetRelease*net)
       const NetNet*lsig = net->lval();
       ivl_signal_t sig = find_signal(des_, lsig);
       assert(sig);
-      assert(sig->type_ == IVL_SIT_REG);
+
+      ivl_lval_type_t ltype;
+      switch (sig->type_) {
+	  case IVL_SIT_REG:
+	    ltype = IVL_LVAL_REG;
+	    break;
+	  case IVL_SIT_TRI:
+	  case IVL_SIT_TRI0:
+	  case IVL_SIT_TRI1:
+	    ltype = IVL_LVAL_NET;
+	    break;
+	  default:
+	    cerr << net->get_line() << ": internal error: Sorry, "
+		 << "force/release to nets not supported by this target."
+		 << endl;
+	    return false;
+      }
+
 
       stmt_cur_->u_.cassign_.lval[0].width_ = lsig->pin_count();
       stmt_cur_->u_.cassign_.lval[0].loff_  = 0;
-      stmt_cur_->u_.cassign_.lval[0].type_  = IVL_LVAL_REG;
+      stmt_cur_->u_.cassign_.lval[0].type_  = ltype;
       stmt_cur_->u_.cassign_.lval[0].idx    = 0;
       stmt_cur_->u_.cassign_.lval[0].n.sig  = sig;
 
@@ -786,6 +812,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.51  2002/08/07 00:54:39  steve
+ *  Add force to nets.
+ *
  * Revision 1.50  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

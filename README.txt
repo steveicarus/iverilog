@@ -307,8 +307,8 @@ constructs.
 
   - trireg is not supported. tri0 and tri1 are supported.
 
-  - force to nets are not supported. Force to variables, and
-    assign/deassign, are supported.
+  - Module instance arrays are not supported, although gate instance
+    arrays do work.
 
 5.1 Nonstandard Constructs or Behaviors
 
@@ -454,10 +454,10 @@ just the systems where precompiled binaries are publicly available.
 
 6.2 TEST SUITE MANAGER
 
-Steve Wilson <stevew@ka6s.com> or <stevew@intrinsix.com> has taken on
-the large task of managing the test suite. He has maintained the
-regression test scripts, the driver list, received submissions from
-myself and others, and has written a great many tests on his own. Any
-compiler writer, for any language, will tell you that the test suite
-is at least as important as the compiler code itself.
+Steve Wilson <stevew@ka6s.com> has taken on the large task of managing
+the test suite. He has maintained the regression test scripts, the
+driver list, received submissions from myself and others, and has
+written a great many tests on his own. Any compiler writer, for any
+language, will tell you that the test suite is at least as important
+as the compiler code itself.
 
