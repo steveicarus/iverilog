@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.46 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.47 2002/09/06 04:56:29 steve Exp $"
 #endif
 
 /*
@@ -378,6 +378,48 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	      break;
 	    }
 
+	  case vpiStrengthVal: {
+		s_vpi_strengthval*op = (s_vpi_strengthval*)
+		      need_result_buf(wid * sizeof(s_vpi_strengthval),
+				      RBUF_VAL);
+
+		  /* Convert the internal strength values of each
+		     functor in the vector to a PLI2.0 version. */
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		      vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
+		      functor_t fp = functor_index(fptr);
+
+		      unsigned str = fp->get_ostr();
+		      unsigned s0 = 1 << (str&0x07);
+		      unsigned s1 = 1 << ((str>>4) & 0x07);
+
+		      switch (fp->get()) {
+			  case 0:
+			    op[idx].logic = vpi0;
+			    op[idx].s0 = s0|s1;
+			    op[idx].s1 = 0;
+			    break;
+			  case 1:
+			    op[idx].logic = vpi1;
+			    op[idx].s0 = 0;
+			    op[idx].s1 = s0|s1;
+			    break;
+			  case 2:
+			    op[idx].logic = vpiX;
+			    op[idx].s0 = s0;
+			    op[idx].s1 = s1;
+			    break;
+			  case 3:
+			    op[idx].logic = vpiZ;
+			    op[idx].s0 = vpiHiZ;
+			    op[idx].s1 = vpiHiZ;
+			    break;
+		      }
+		}
+
+		break;
+	  }
+
 	  default:
 	    fprintf(stderr, "vvp internal error: signal_get_value: "
 		    "value type %u not implemented.\n", vp->format);
@@ -673,6 +715,11 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.47  2002/09/06 04:56:29  steve
+ *  Add support for %v is the display system task.
+ *  Change the encoding of H and L outputs from
+ *  the bufif devices so that they are logic x.
+ *
  * Revision 1.46  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

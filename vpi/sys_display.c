@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.44 2002/08/24 02:02:44 steve Exp $"
+#ident "$Id: sys_display.c,v 1.45 2002/09/06 04:56:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -206,6 +206,91 @@ static void format_time(unsigned mcd, int fsize, const char*value)
       vpi_mcd_printf(mcd, "%s", bp);
 }
 
+static const char str_char1_table[256] = {
+      ".HS1M222" "W3333333" /* 00 0F */ "L4444444" "44444444" /* 10 1F */
+      "P5555555" "55555555" /* 20 2F */ "55555555" "55555555" /* 30 3F */
+      "S6666666" "66666666" /* 40 4F */ "66666666" "66666666" /* 50 5F */
+      "66666666" "66666666" /* 60 6F */ "66666666" "66666666" /* 70 7F */
+      "S7777777" "77777777" /* 80 8F */ "77777777" "77777777" /* 90 9F */
+      "77777777" "77777777" /* A0 AF */ "77777777" "77777777" /* B0 BF */
+      "77777777" "77777777" /* C0 CF */ "77777777" "77777777" /* D0 DF */
+      "77777777" "77777777" /* E0 EF */ "77777777" "77777777" /* F0 FF */ };
+
+static const char str_char2_table[256] = {
+      ".im0e010" "e0102010" /* 00 0F */ "a0102010" "30102010" /* 10 1F */
+      "u0102010" "30102010" /* 20 2F */ "40102010" "30102010" /* 30 3F */
+      "t0102010" "30102010" /* 40 4F */ "40102010" "30102010" /* 50 5F */
+      "50102010" "30102010" /* 60 6F */ "40102010" "30102010" /* 70 7F */
+      "u0102010" "30102010" /* 80 8F */ "40102010" "30102010" /* 90 9F */
+      "50102010" "30102010" /* A0 AF */ "40102010" "30102010" /* B0 BF */
+      "60102010" "30102010" /* C0 CF */ "40102010" "30102010" /* D0 DF */
+      "50102010" "30102010" /* E0 EF */ "40102010" "30102010" /* F0 FF */ };
+
+static void format_strength(unsigned int mcd, s_vpi_value*value)
+{
+      char str[4];
+
+      str[0] = '.';
+      str[1] = '.';
+      str[2] = '.';
+      str[3] = 0;
+
+
+      switch (value->value.strength[0].logic) {
+	  case vpi0:
+	    str[0] = str_char1_table[value->value.strength[0].s0];
+	    str[1] = str_char2_table[value->value.strength[0].s0];
+	    str[2] = '0';
+	    break;
+	  case vpi1:
+	    str[0] = str_char1_table[value->value.strength[0].s1];
+	    str[1] = str_char2_table[value->value.strength[0].s1];
+	    str[2] = '1';
+	    break;
+	  case vpiX:
+	    if (value->value.strength[0].s0 == 1) {
+		  str[0] = str_char1_table[value->value.strength[0].s1];
+		  str[1] = str_char2_table[value->value.strength[0].s1];
+		  str[2] = 'H';
+	    } else if (value->value.strength[0].s1 == 1) {
+		  str[0] = str_char1_table[value->value.strength[0].s0];
+		  str[1] = str_char2_table[value->value.strength[0].s0];
+		  str[2] = 'L';
+	    } else if (value->value.strength[0].s1 ==
+		       value->value.strength[0].s0) {
+		  str[0] = str_char1_table[value->value.strength[0].s0];
+		  str[1] = str_char2_table[value->value.strength[0].s0];
+		  str[2] = 'X';
+	    } else {
+		  int ss;
+
+		  str[0] = '0';
+		  ss = value->value.strength[0].s0;
+		  while (ss > 1) {
+			str[0] += 1;
+			ss >>= 1;
+		  }
+		  str[1] = '0';
+		  ss = value->value.strength[0].s1;
+		  while (ss > 1) {
+			str[1] += 1;
+			ss >>= 1;
+		  }
+		  str[2] = 'X';
+	    }
+	    break;
+	  case vpiZ:
+	    str[0] = 'H';
+	    str[1] = 'i';
+	    str[2] = 'Z';
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      vpi_mcd_printf(mcd, "%s", str);
+}
+
 /*
  * If $display discovers a string as a parameter, this function is
  * called to process it as a format string. I need the argv handle as
@@ -354,6 +439,14 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			cp += 1;
 			break;
 
+		      case 'v':
+		      case 'V':
+			format_char = 'v';
+			do_arg = 1;
+			value.format = vpiStrengthVal;
+			cp += 1;
+			break;
+
 		      case '%':
 			if (fsize != -1 && ffsize != -1) {
 			     vpi_printf("\nERROR: Illegal format \"%s\"\n", fmt);
@@ -364,8 +457,6 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			cp += 1;
 			break;
 
-		      case 'v':
-		      case 'V':
 		      case 'e':
 		      case 'f':
 		      case 'g':
@@ -476,6 +567,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 				      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
 				  }
 				  break;
+
+			      case 'v':
+				format_strength(mcd, &value);
+				break;
 
 			      default:
 				    if (fsize > 0)
@@ -1366,6 +1461,11 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.45  2002/09/06 04:56:28  steve
+ *  Add support for %v is the display system task.
+ *  Change the encoding of H and L outputs from
+ *  the bufif devices so that they are logic x.
+ *
  * Revision 1.44  2002/08/24 02:02:44  steve
  *  Rewire time formatting to handle all cases.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.cc,v 1.8 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: bufif.cc,v 1.9 2002/09/06 04:56:28 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -25,9 +25,12 @@
 # include  "schedule.h"
 # include  "statistics.h"
 
-vvp_bufif_s::vvp_bufif_s(bool en_invert, bool out_invert)
+vvp_bufif_s::vvp_bufif_s(bool en_invert, bool out_invert,
+			 unsigned str0, unsigned str1)
 : pol_(en_invert? 1 : 0), inv_(out_invert? 1 : 0)
 {
+      odrive0 = str0;
+      odrive1 = str1;
       count_functors_bufif += 1;
 }
 
@@ -41,8 +44,8 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
       unsigned char out0 = 0x00 | (odrive0<<0) | (odrive0<<4);
       unsigned char out1 = 0x88 | (odrive1<<0) | (odrive1<<4);
       unsigned char outX = 0x80 | (odrive0<<0) | (odrive1<<4);
-      unsigned char outH = 0x88 | (0)          | (odrive1<<4);
-      unsigned char outL = 0x00 | (odrive0<<0) | (0);
+      unsigned char outH = 0x80 | (0)          | (odrive1<<4);
+      unsigned char outL = 0x80 | (odrive0<<0) | (0);
 
       unsigned val;
       unsigned str;
@@ -98,6 +101,11 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.9  2002/09/06 04:56:28  steve
+ *  Add support for %v is the display system task.
+ *  Change the encoding of H and L outputs from
+ *  the bufif devices so that they are logic x.
+ *
  * Revision 1.8  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *

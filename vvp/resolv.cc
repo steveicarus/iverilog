@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: resolv.cc,v 1.14 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: resolv.cc,v 1.15 2002/09/06 04:56:29 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -35,6 +35,7 @@
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
 # define STREN0(v) ( ((v)&0x08)? ((v)&0x0f) : (0x07 - ((v)&0x0f)) )
 
+# include <iostream>
 static unsigned blend(unsigned a, unsigned b)
 {
       if (a == HiZ)
@@ -203,6 +204,11 @@ void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.15  2002/09/06 04:56:29  steve
+ *  Add support for %v is the display system task.
+ *  Change the encoding of H and L outputs from
+ *  the bufif devices so that they are logic x.
+ *
  * Revision 1.14  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

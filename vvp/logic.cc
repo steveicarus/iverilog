@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.11 2002/08/29 03:04:01 steve Exp $"
+#ident "$Id: logic.cc,v 1.12 2002/09/06 04:56:29 steve Exp $"
 #endif
 
 # include  "logic.h"
@@ -92,10 +92,10 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_BUF, ostr0, ostr1);
 
       } else if (strcmp(type, "BUFIF0") == 0) {
-	    obj = new vvp_bufif_s(true,false);
+	    obj = new vvp_bufif_s(true,false, ostr0, ostr1);
 
       } else if (strcmp(type, "BUFIF1") == 0) {
-	    obj = new vvp_bufif_s(false,false);
+	    obj = new vvp_bufif_s(false,false, ostr0, ostr1);
 
       } else if (strcmp(type, "BUFZ") == 0) {
 	    obj = new table_functor_s(ft_BUFZ, ostr0, ostr1);
@@ -131,10 +131,10 @@ void compile_functor(char*label, char*type,
 	    obj = new table_functor_s(ft_NOT, ostr0, ostr1);
 
       } else if (strcmp(type, "NOTIF0") == 0) {
-	    obj = new vvp_bufif_s(true,true);
+	    obj = new vvp_bufif_s(true,true, ostr0, ostr1);
 
       } else if (strcmp(type, "NOTIF1") == 0) {
-	    obj = new vvp_bufif_s(false,true);
+	    obj = new vvp_bufif_s(false,true, ostr0, ostr1);
 
       } else if (strcmp(type, "XNOR") == 0) {
 	    obj = new table_functor_s(ft_XNOR, ostr0, ostr1);
@@ -167,6 +167,11 @@ void compile_functor(char*label, char*type,
 
 /*
  * $Log: logic.cc,v $
+ * Revision 1.12  2002/09/06 04:56:29  steve
+ *  Add support for %v is the display system task.
+ *  Change the encoding of H and L outputs from
+ *  the bufif devices so that they are logic x.
+ *
  * Revision 1.11  2002/08/29 03:04:01  steve
  *  Generate x out for x select on wide muxes.
  *

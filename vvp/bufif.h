@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: bufif.h,v 1.5 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: bufif.h,v 1.6 2002/09/06 04:56:29 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -27,7 +27,8 @@
 class vvp_bufif_s  : public functor_s {
 
     public:
-      vvp_bufif_s(bool en_invert, bool out_invert);
+      vvp_bufif_s(bool en_invert, bool out_invert,
+		  unsigned str0, unsigned str1);
 
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
@@ -38,6 +39,11 @@ class vvp_bufif_s  : public functor_s {
 
 /*
  * $Log: bufif.h,v $
+ * Revision 1.6  2002/09/06 04:56:29  steve
+ *  Add support for %v is the display system task.
+ *  Change the encoding of H and L outputs from
+ *  the bufif devices so that they are logic x.
+ *
  * Revision 1.5  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *
