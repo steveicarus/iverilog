@@ -5,6 +5,7 @@ config.log
 config.status
 autom4te.cache
 config.h
+bin32
 dep
 foo.*
 Makefile
@@ -15,6 +16,7 @@ parse.output
 parse.h
 tables.cc
 vvp
+vvp32
 vvp.exp
 vvp.pdf
 work
