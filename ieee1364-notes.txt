@@ -426,8 +426,55 @@ is clear and correct, and it behaves as does NC-Verilog in this
 matter.
 
 
-$Id: ieee1364-notes.txt,v 1.14 2003/02/06 17:51:36 steve Exp $
+* REAL VARIABLES IN $dumpoff DEAD-ZONES
+
+The IEEE1364 standard clearly states that in VCD files, the $dumpoff
+section checkpoints all the dumped variables as X values. For reg and
+wire bits/vectors, this obviously means 'bx values. Icarus Verilog
+does this, for example:
+
+    $dumpoff
+    x!
+    x"
+    $end
+
+Real variables can also be included in VCD dumps, but it is not at
+all obvious what is supposed to be dumped into the $dumpoff-$end
+section of the VCD file. Verilog-XL dumps "r0 !" to set the real
+variables to the dead-zone value of 0.0, whereas other tools, such as
+ModelTech, ignore real variables in this section.
+
+For example (from XL):
+
+    $dumpoff
+    r0 !
+    r0 "
+    $end
+
+Icarus Verilog dumps NaN values for real variables in the
+$dumpoff-$end section of the VCD file. The NaN value is the IEEE754
+equivalent of an unknown value, and so better reflects the unknown
+(during the dead zone) status of the variable, like this:
+
+    $dumpoff
+    rNaN !
+    rNaN "
+    $end
+
+It turns out that NaN is conventionally accepted by scanf functions,
+and viewers that support real variables support NaN values. So while
+the IEEE1364 doesn't require this behavior, and given the variety that
+already seems to exist amongst VCD viewers in the wild, this behavior
+seems to be acceptable according to the standard, is a better mirror
+of 4-value behavior in the dead zone, and appears more user friendly
+when viewed by reasonable viewers.
+
+
+$Id: ieee1364-notes.txt,v 1.15 2003/02/16 23:39:08 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.15  2003/02/16 23:39:08  steve
+ NaN in dead zones of VCD dumps.
+
 Revision 1.14  2003/02/06 17:51:36  steve
  Edge of vectors notes.
 
