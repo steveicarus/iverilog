@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.32 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: functor.cc,v 1.33 2001/11/10 18:07:11 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -106,6 +106,7 @@ void functor_define(vvp_ipoint_t point, functor_t obj)
 
 functor_s::functor_s()
 {
+      delay = 0;
       out = 0;
       port[0] = 0;
       port[1] = 0;
@@ -167,6 +168,9 @@ edge_inputs_functor_s::~edge_inputs_functor_s()
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.33  2001/11/10 18:07:11  steve
+ *  Runtime support for functor delays. (Stephan Boettcher)
+ *
  * Revision 1.32  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *

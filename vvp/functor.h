@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.38 2001/11/07 03:34:42 steve Exp $"
+#ident "$Id: functor.h,v 1.39 2001/11/10 18:07:12 steve Exp $"
 #endif
 
 # include  "pointers.h"
+# include  "delay.h"
 
 /*
  * Create a propagation event. The fun parameter points to the functor
@@ -149,6 +150,9 @@ extern void functor_define(vvp_ipoint_t point, functor_t obj);
 struct functor_s {
       functor_s();
       virtual ~functor_s();
+      
+        /* delay object */
+      vvp_delay_t delay;
 	/* This is the output for the device. */
       vvp_ipoint_t out;
 	/* These are the input ports. */
@@ -215,6 +219,30 @@ inline void functor_s::propagate(bool push)
       }
 }
 
+inline void functor_s::put_ostr(bool push, unsigned val, unsigned str)
+{
+      if (val != oval || str != ostr) {
+
+	    ostr = str;
+
+	    if (inhibit)
+		  return;
+
+	    oval = val;
+
+	    unsigned del;
+	    if (delay)
+	      del = vvp_delay_get(delay, oval, val);
+	    else
+	      del = 0;
+
+	    if (del == 0  &&  push)
+		  propagate(true);
+	    else
+		  schedule_functor(this, del);
+      }
+}
+
 inline void functor_s::put_oval(bool push, unsigned val)
 {
       switch (val) {
@@ -231,29 +259,8 @@ inline void functor_s::put_oval(bool push, unsigned val)
 	    ostr = 0x00;
 	    break;
       }
-      if (inhibit)
-	    return;
-      if (val != oval) {
-	    oval = val;
-	    if (push)
-		  propagate(true);
-	    else
-		  schedule_functor(this, 0);
-      }
-}
 
-inline void functor_s::put_ostr(bool push, unsigned val, unsigned str)
-{
-      if (val != oval || str != ostr) {      
-	    ostr = str;
-	    if (inhibit)
-		  return;
-	    oval = val;
-	    if (push)
-		  propagate(true);
-	    else
-		  schedule_functor(this, 0);
-      }
+      put_ostr(push, val, ostr);
 }
 
 /*
@@ -369,6 +376,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.39  2001/11/10 18:07:12  steve
+ *  Runtime support for functor delays. (Stephan Boettcher)
+ *
  * Revision 1.38  2001/11/07 03:34:42  steve
  *  Use functor pointers where vvp_ipoint_t is unneeded.
  *
