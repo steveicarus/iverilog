@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.43 2000/03/17 03:36:07 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.44 2000/03/17 17:25:53 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -74,87 +74,51 @@ class vvm_1bit_out  : public vvm_nexus::drive_t  {
 };
 
 /*
- * This template implements the LPM_ADD_SUB device type. The width of
- * the device is a template parameter. The device handles addition and
+ * This class implements the LPM_ADD_SUB device type. The width of
+ * the device is a constructor parameter. The device handles addition and
  * subtraction, selectable by the Add_Sub input. When configured as a
  * subtractor, the device works by adding the 2s complement of
  * DataB.
  */
-template <unsigned WIDTH> class vvm_add_sub : public vvm_nexus::recvr_t {
+class vvm_add_sub : public vvm_nexus::recvr_t {
 
     public:
-      vvm_add_sub() : ndir_(V0) { }
+      explicit vvm_add_sub(unsigned width);
+      ~vvm_add_sub();
 
-      vvm_nexus::drive_t* config_rout(unsigned idx)
-	    { r_[idx] = Vx;
-	      assert(idx < WIDTH);
-	      return ro_+idx;
-	    }
+      vvm_nexus::drive_t* config_rout(unsigned idx);
+      vvm_nexus::drive_t* config_cout();
 
-      vvm_nexus::drive_t* config_cout()
-	    { c_ = Vx;
-	      return &co_;
-	    }
+      unsigned key_DataA(unsigned idx) const;
+      unsigned key_DataB(unsigned idx) const;
 
-      unsigned key_DataA(unsigned idx) const { return idx; }
-      unsigned key_DataB(unsigned idx) const { return idx|0x10000; }
+      void init_DataA(unsigned idx, vpip_bit_t val);
+      void init_DataB(unsigned idx, vpip_bit_t val);
+      void init_Add_Sub(unsigned, vpip_bit_t val);
 
-      void init_DataA(unsigned idx, vpip_bit_t val)
-	    { a_[idx] = val;
-	    }
-
-      void init_DataB(unsigned idx, vpip_bit_t val)
-	    { b_[idx] = val;
-	    }
-
-      void init_Add_Sub(unsigned, vpip_bit_t val)
-	    { ndir_ = v_not(val);
-	    }
-
-      void start() { compute_(); }
-
-      void set_DataA(unsigned idx, vpip_bit_t val)
-	    { a_[idx] = val;
-	      compute_();
-	    }
-      void set_DataB(unsigned idx, vpip_bit_t val)
-	    { b_[idx] = val;
-	      compute_();
-	    }
+      void start();
 
     private:
-      void take_value(unsigned key, vpip_bit_t val)
-      { if (key&0x10000) set_DataB(key&0xffff, val);
-        else set_DataA(key&0xffff, val);
-      }
+      void take_value(unsigned key, vpip_bit_t val);
 
-    private:
-      vpip_bit_t a_[WIDTH];
-      vpip_bit_t b_[WIDTH];
-      vpip_bit_t r_[WIDTH];
+      unsigned width_;
+      vpip_bit_t*ibits_;
       vpip_bit_t c_;
 
 	// this is the inverse of the Add_Sub port. It is 0 for add,
 	// and 1 for subtract.
       vpip_bit_t ndir_;
 
-      vvm_nexus::drive_t ro_[WIDTH];
+      vvm_nexus::drive_t*ro_;
       vvm_nexus::drive_t co_;
 
-      void compute_()
-	    { vpip_bit_t carry = ndir_;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
-		    vpip_bit_t val;
-		    val = add_with_carry(a_[idx], b_[idx] ^ ndir_, carry);
-		    if (val == r_[idx]) continue;
-		    r_[idx] = val;
-		    vvm_event*ev = new vvm_out_event(val, ro_+idx);
-		    ev->schedule();
-	      }
-	      if (carry != c_)
-		    (new vvm_out_event(carry, &co_)) -> schedule();
-	    }
+      void compute_();
+
+    private: // not implemented
+      vvm_add_sub(const vvm_add_sub&);
+      vvm_add_sub& operator= (const vvm_add_sub&);
 };
+
 
 template <unsigned WIDTH>
 class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
@@ -218,91 +182,46 @@ class vvm_clshift  : public vvm_nexus::recvr_t {
 };
 
 
-template <unsigned WIDTH> class vvm_compare {
+/*
+ * This class implements structural comparators, specifically the
+ * LPM_COMPARE device type.
+ */
+class vvm_compare  : public vvm_nexus::recvr_t {
 
     public:
-      explicit vvm_compare()
-	    { out_lt_ = 0;
-	      out_le_ = 0;
-	      gt_ = Vx;
-	      lt_ = Vx;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
-		    a_[idx] = Vx;
-		    b_[idx] = Vx;
-	      }
-	    }
-      ~vvm_compare() { }
+      explicit vvm_compare(unsigned w);
+      ~vvm_compare();
 
-      void init_DataA(unsigned idx, vpip_bit_t val)
-	    { a_[idx] = val; }
-      void init_DataB(unsigned idx, vpip_bit_t val)
-	    { b_[idx] = val; }
+      void init_DataA(unsigned idx, vpip_bit_t val);
+      void init_DataB(unsigned idx, vpip_bit_t val);
 
-      void set_DataA(unsigned idx, vpip_bit_t val)
-	    { if (a_[idx] == val) return;
-	      a_[idx] = val;
-	      compute_();
-	    }
+      unsigned key_DataA(unsigned idx) const;
+      unsigned key_DataB(unsigned idx) const;
 
-      void set_DataB(unsigned idx, vpip_bit_t val)
-	    { if (b_[idx] == val) return;
-	      b_[idx] = val;
-	      compute_();
-	    }
-
-      void config_ALB_out(vvm_out_event::action_t o)
-	    { out_lt_ = o; }
-
-      void config_ALEB_out(vvm_out_event::action_t o)
-	    { out_le_ = o; }
-
-      void config_AGB_out(vvm_out_event::action_t o)
-	    { out_gt_ = o; }
-
-      void config_AGEB_out(vvm_out_event::action_t o)
-	    { out_ge_ = o; }
+      vvm_nexus::drive_t* config_ALB_out();
+      vvm_nexus::drive_t* config_ALEB_out();
+      vvm_nexus::drive_t* config_AGB_out();
+      vvm_nexus::drive_t* config_AGEB_out();
 
     private:
-      vpip_bit_t a_[WIDTH];
-      vpip_bit_t b_[WIDTH];
+      void take_value(unsigned key, vpip_bit_t val);
+
+      unsigned width_;
+      vpip_bit_t*ibits_;
 
       vpip_bit_t gt_;
       vpip_bit_t lt_;
 
-      vvm_out_event::action_t out_lt_;
-      vvm_out_event::action_t out_le_;
-      vvm_out_event::action_t out_gt_;
-      vvm_out_event::action_t out_ge_;
+      vvm_nexus::drive_t out_lt_;
+      vvm_nexus::drive_t out_le_;
+      vvm_nexus::drive_t out_gt_;
+      vvm_nexus::drive_t out_ge_;
 
-      void compute_()
-	    { vpip_bit_t gt = V0;
-	      vpip_bit_t lt = V0;
-	      vvm_event*ev;
-	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
-		    gt = greater_with_cascade(a_[idx], b_[idx], gt);
-		    lt = less_with_cascade(a_[idx], b_[idx], lt);
-	      }
+      void compute_();
 
-	      if ((gt_ == gt) && (lt_ == lt)) return;
-	      gt_ = gt;
-	      lt_ = lt;
-	      if (out_lt_) {
-		    ev = new vvm_out_event(lt_, out_lt_);
-		    ev->schedule();
-	      }
-	      if (out_le_) {
-		    ev = new vvm_out_event(v_not(gt_), out_le_);
-		    ev->schedule();
-	      }
-	      if (out_gt_) {
-		    ev = new vvm_out_event(gt_, out_gt_);
-		    ev->schedule();
-	      }
-	      if (out_ge_) {
-		    ev = new vvm_out_event(v_not(lt_), out_ge_);
-		    ev->schedule();
-	      }
-	    }
+    private: // not implemented
+      vvm_compare(const vvm_compare&);
+      vvm_compare& operator= (const vvm_compare&);
 };
 
 
@@ -895,6 +814,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.44  2000/03/17 17:25:53  steve
+ *  Adder and comparator in nexus style.
+ *
  * Revision 1.43  2000/03/17 03:36:07  steve
  *  Remove some useless template parameters.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.112 2000/03/17 03:05:13 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.113 2000/03/17 17:25:53 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1014,8 +1014,8 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 
 void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 {
-      os << "static vvm_add_sub<" << gate->width() << "> " <<
-	    mangle(gate->name()) << ";" << endl;
+      os << "static vvm_add_sub " <<
+	    mangle(gate->name()) << "(" << gate->width() << ");" << endl;
 
 	/* Connect the DataA inputs. */
 
@@ -1103,39 +1103,50 @@ void target_vvm::lpm_clshift(ostream&os, const NetCLShift*gate)
 
 void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
 {
-      os << "static vvm_compare<" << gate->width() << "> " <<
-	    mangle(gate->name()) << ";" << endl;
+      string mname = mangle(gate->name());
 
-      if (gate->pin_ALB().is_linked()) {
-	unsigned pin = gate->pin_ALB().get_pin();
-	string outfun = defn_gate_outputfun_(os,gate,pin);
-	init_code << "      " << mangle(gate->name()) <<
-	  ".config_ALB_out(&" << outfun << ");" << endl;
-	emit_gate_outputfun_(gate,pin);
+      os << "static vvm_compare " << mname << "(" << gate->width() <<
+	    ");" << endl;
+
+	/* Connect DataA inputs... */
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_DataA(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&" << mname
+		      << ", " << mname << ".key_DataA(" << idx
+		      << "));" << endl;
       }
 
-      if (gate->pin_ALEB().is_linked()) {
-	    unsigned pin = gate->pin_ALEB().get_pin();
-	    string outfun = defn_gate_outputfun_(os, gate, pin);
-	    init_code << "      " << mangle(gate->name()) <<
-		  ".config_ALEB_out(&" << outfun << ");" << endl;
-	    emit_gate_outputfun_(gate, pin);
+	/* Connect DataB inputs... */
+      for (unsigned idx = 0 ;  idx < gate->width() ;  idx += 1) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_DataB(idx)));
+	    init_code << "      " << nexus << "_nex.connect(&" << mname
+		      << ", " << mname << ".key_DataB(" << idx
+		      << "));" << endl;
+      }
+
+      if (gate->pin_ALB().is_linked()) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_ALB()));
+	    init_code << "      " << nexus << "_nex.connect(" << mname
+		      << ".config_ALB_out());" << endl;
       }
 
       if (gate->pin_AGB().is_linked()) {
-	unsigned pin = gate->pin_AGB().get_pin();
-	string outfun = defn_gate_outputfun_(os,gate,pin);
-	init_code << "      " << mangle(gate->name()) <<
-	  ".config_AGB_out(&" << outfun << ");" << endl;
-	emit_gate_outputfun_(gate,pin);
+	    string nexus = mangle(nexus_from_link(&gate->pin_AGB()));
+	    init_code << "      " << nexus << "_nex.connect(" << mname
+		      << ".config_AGB_out());" << endl;
+      }
+
+
+      if (gate->pin_ALEB().is_linked()) {
+	    string nexus = mangle(nexus_from_link(&gate->pin_ALEB()));
+	    init_code << "      " << nexus << "_nex.connect(" << mname
+		      << ".config_ALEB_out());" << endl;
       }
 
       if (gate->pin_AGEB().is_linked()) {
-	    unsigned pin = gate->pin_AGEB().get_pin();
-	    string outfun = defn_gate_outputfun_(os, gate, pin);
-	    init_code << "      " << mangle(gate->name()) <<
-		  ".config_AGEB_out(&" << outfun << ");" << endl;
-	    emit_gate_outputfun_(gate, pin);
+	    string nexus = mangle(nexus_from_link(&gate->pin_AGEB()));
+	    init_code << "      " << nexus << "_nex.connect(" << mname
+		      << ".config_AGEB_out());" << endl;
       }
 }
 
@@ -1510,6 +1521,38 @@ void target_vvm::start_process(ostream&os, const NetProcTop*proc)
  */
 void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 {
+
+	/* Detect the very special (and very common) case that the
+	   rvalue is a constant in this assignment. I this case, there
+	   is no reason to go scan the expression, and in the process
+	   generate bunches of temporaries. */
+
+      if (const NetEConst*rc = dynamic_cast<const NetEConst*>(net->rval())) {
+	    assert(net->bmux() == 0);
+	    const verinum value = rc->value();
+
+	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
+		  string nexus = mangle(nexus_from_link(&net->pin(idx)));
+		  defn << "      " << nexus << "_nex.reg_assign(";
+		  switch (value.get(idx)) {
+		      case verinum::V0:
+			defn << "V0";
+			break;
+		      case verinum::V1:
+			defn << "V1";
+			break;
+		      case verinum::Vx:
+			defn << "Vx";
+			break;
+		      case verinum::Vz:
+			defn << "Vz";
+			break;
+		  }
+		  defn << ");" << endl;
+	    }
+	    return;
+      }
+
       string rval = emit_proc_rval(defn, 8, net->rval());
 
       defn << "      // " << net->get_line() << ": " << endl;
@@ -2196,6 +2239,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.113  2000/03/17 17:25:53  steve
+ *  Adder and comparator in nexus style.
+ *
  * Revision 1.112  2000/03/17 03:05:13  steve
  *  Update vvm_mult to nexus style.
  *
