@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.156 2000/06/06 02:32:45 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.157 2000/06/13 03:24:48 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2247,11 +2247,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 {
 	/* make a temporary to reference the index signal. */
-      string index = make_temp();
-
-      defn << "      vvm_bitset_t " << index << "("
-	   << mangle(amem->index()->name()) << ".bits, "
-	   << mangle(amem->index()->name()) << ".nbits);" << endl;
+      string index = emit_proc_rval(defn, this, amem->index());
 
 	/* Evaluate the rval that gets written into the memory word. */
       string rval = emit_proc_rval(defn, this, amem->rval());
@@ -2317,11 +2313,7 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
 {
 	/* make a temporary to reference the index signal. */
-      string index = make_temp();
-
-      defn << "      vvm_bitset_t " << index << "("
-	   << mangle(amem->index()->name()) << ".bits, "
-	   << mangle(amem->index()->name()) << ".nbits);" << endl;
+      string index = emit_proc_rval(defn, this, amem->index());
 
 
 	/* Evaluate the rval that gets written into the memory word. */
@@ -3063,6 +3055,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.157  2000/06/13 03:24:48  steve
+ *  Index in memory assign should be a NetExpr.
+ *
  * Revision 1.156  2000/06/06 02:32:45  steve
  *  Expand constants in its special case assignment. (Stephan Boettcher)
  *

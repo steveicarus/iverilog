@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.3 2000/05/14 17:55:04 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.4 2000/06/13 03:24:48 steve Exp $"
 #endif
 
 /*
@@ -161,7 +161,10 @@ static void make_RAM_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
 			NetEvent*eclk, NetExpr*cexp, NetAssignMem*asn)
 {
       NetMemory*mem = asn->memory();
-      NetNet*adr = asn->index();
+      NetExpr*adr_e = asn->index();
+
+      NetNet*adr = adr_e->synthesize(des);
+      assert(adr);
 
       NetEvProbe*pclk = eclk->probe(0);
       NetESignal*d = dynamic_cast<NetESignal*> (asn->rval());

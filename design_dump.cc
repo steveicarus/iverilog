@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.85 2000/05/11 23:37:27 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.86 2000/06/13 03:24:48 steve Exp $"
 #endif
 
 /*
@@ -483,7 +483,7 @@ void NetAssignMem::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
       o << "/* " << get_line() << " */" << endl;
       o << setw(ind) << "";
-      o << memory()->name() << "[" << index()->name() << "] = ";
+      o << memory()->name() << "[" << *index() << "] = ";
       rval()->dump(o);
       o << ";" << endl;
 }
@@ -493,7 +493,7 @@ void NetAssignMemNB::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
       o << "/* " << get_line() << " */" << endl;
       o << setw(ind) << "";
-      o << memory()->name() << "[" << index()->name() << "] <= ";
+      o << memory()->name() << "[" << *index() << "] <= ";
       rval()->dump(o);
       o << ";" << endl;
 }
@@ -979,6 +979,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.86  2000/06/13 03:24:48  steve
+ *  Index in memory assign should be a NetExpr.
+ *
  * Revision 1.85  2000/05/11 23:37:27  steve
  *  Add support for procedural continuous assignment.
  *

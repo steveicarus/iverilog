@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.140 2000/05/31 02:26:49 steve Exp $"
+#ident "$Id: netlist.h,v 1.141 2000/06/13 03:24:48 steve Exp $"
 #endif
 
 /*
@@ -1140,27 +1140,27 @@ class NetAssignNB  : public NetAssign_ {
 class NetAssignMem_ : public NetProc {
 
     public:
-      explicit NetAssignMem_(NetMemory*, NetNet*idx, NetExpr*rv);
+      explicit NetAssignMem_(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMem_();
 
       NetMemory*memory() { return mem_; }
-      NetNet*index()     { return index_; }
+      NetExpr*index()    { return index_; }
       NetExpr*rval()     { return rval_; }
 
       const NetMemory*memory()const { return mem_; }
-      const NetNet*index()const     { return index_; }
+      const NetExpr*index()const    { return index_; }
       const NetExpr*rval()const     { return rval_; }
 
     private:
       NetMemory*mem_;
-      NetNet * index_;
+      NetExpr* index_;
       NetExpr* rval_;
 };
 
 class NetAssignMem : public NetAssignMem_ {
 
     public:
-      explicit NetAssignMem(NetMemory*, NetNet*idx, NetExpr*rv);
+      explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMem();
 
       virtual int match_proc(struct proc_match_t*);
@@ -1173,7 +1173,7 @@ class NetAssignMem : public NetAssignMem_ {
 class NetAssignMemNB : public NetAssignMem_ {
 
     public:
-      explicit NetAssignMemNB(NetMemory*, NetNet*idx, NetExpr*rv);
+      explicit NetAssignMemNB(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMemNB();
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
@@ -2595,6 +2595,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.141  2000/06/13 03:24:48  steve
+ *  Index in memory assign should be a NetExpr.
+ *
  * Revision 1.140  2000/05/31 02:26:49  steve
  *  Globally merge redundant event objects.
  *

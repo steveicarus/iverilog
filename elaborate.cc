@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.175 2000/05/31 02:26:49 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.176 2000/06/13 03:24:48 steve Exp $"
 #endif
 
 /*
@@ -709,7 +709,7 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       }
 
       assert(ix);
-      NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
+      NetExpr*idx = ix->elaborate_expr(des, scope);
       assert(idx);
 
       if (rv->expr_width() < mem->width())
@@ -1034,7 +1034,7 @@ NetProc* PAssignNB::assign_to_memory_(NetMemory*mem, PExpr*ix,
       rv->set_width(mem->width());
 
 	/* Elaborate the expression to calculate the index, ... */
-      NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
+      NetExpr*idx = ix->elaborate_expr(des, scope);
       assert(idx);
 
 	/* And connect them together in an assignment NetProc. */
@@ -1474,8 +1474,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 		 of a normal assignment. */
 	    if (mem != 0) {
 		  assert(id->msb_);
-		  NetNet*ix = id->msb_->elaborate_net(des, path,
-						      0, 0, 0, 0);
+		  NetExpr*ix = id->msb_->elaborate_expr(des, scope);
 		  assert(ix);
 
 		  NetExpr*rv = new NetESignal(port);
@@ -2436,6 +2435,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.176  2000/06/13 03:24:48  steve
+ *  Index in memory assign should be a NetExpr.
+ *
  * Revision 1.175  2000/05/31 02:26:49  steve
  *  Globally merge redundant event objects.
  *

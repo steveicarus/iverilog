@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.128 2000/06/12 03:57:10 steve Exp $"
+#ident "$Id: netlist.cc,v 1.129 2000/06/13 03:24:48 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1621,18 +1621,16 @@ NetAssignNB::~NetAssignNB()
 }
 
 
-NetAssignMem_::NetAssignMem_(NetMemory*m, NetNet*i, NetExpr*r)
+NetAssignMem_::NetAssignMem_(NetMemory*m, NetExpr*i, NetExpr*r)
 : mem_(m), index_(i), rval_(r)
 {
-      index_->incr_eref();
 }
 
 NetAssignMem_::~NetAssignMem_()
 {
-      index_->decr_eref();
 }
 
-NetAssignMem::NetAssignMem(NetMemory*m, NetNet*i, NetExpr*r)
+NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
 : NetAssignMem_(m, i, r)
 {
 }
@@ -1641,7 +1639,7 @@ NetAssignMem::~NetAssignMem()
 {
 }
 
-NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetNet*i, NetExpr*r)
+NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetExpr*i, NetExpr*r)
 : NetAssignMem_(m, i, r)
 {
 }
@@ -2636,6 +2634,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.129  2000/06/13 03:24:48  steve
+ *  Index in memory assign should be a NetExpr.
+ *
  * Revision 1.128  2000/06/12 03:57:10  steve
  *  NetEParam supports dup_expr.
  *
