@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.25 2003/05/15 16:51:08 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.26 2003/05/23 04:04:02 steve Exp $"
 #endif
 
 
@@ -45,6 +45,7 @@
 EXTERN_C_START
 
 # include  <stdarg.h>
+# include  <stdio.h>
 # include  "_pli_types.h"
 
 typedef struct __vpiHandle *vpiHandle;
@@ -232,9 +233,9 @@ extern PLI_INT32  vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap);
 extern PLI_INT32  vpi_flush(void);
 extern PLI_INT32  vpi_mcd_flush(PLI_UINT32 mcd);
 
-extern PLI_UINT32 vpi_mcd_open_x(char *name, char *mode);
-extern PLI_INT32  vpi_mcd_fputc(PLI_UINT32 mcd, unsigned char x);
-extern PLI_INT32  vpi_mcd_fgetc(PLI_UINT32 mcd);
+/* proposed extensions */
+extern PLI_INT32 vpi_fopen(const char*name, const char*mode);
+extern FILE *vpi_get_file(PLI_INT32 fd);
 
 /*
  * support for VPI callback functions.
@@ -395,6 +396,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.26  2003/05/23 04:04:02  steve
+ *  Add vpi_fopen and vpi_get_file.
+ *
  * Revision 1.25  2003/05/15 16:51:08  steve
  *  Arrange for mcd id=00_00_00_01 to go to stdout
  *  as well as a user specified log file, set log

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.60 2003/05/15 16:51:08 steve Exp $"
+#ident "$Id: sys_display.c,v 1.61 2003/05/23 04:04:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,8 +26,30 @@
 # include  <assert.h>
 # include  <string.h>
 # include  <ctype.h>
+# include  <stdio.h>
 # include  <stdlib.h>
 # include  <math.h>
+
+#define IS_MCD(mcd)     !((mcd)>>31&1)
+
+/* Printf wrapper to handle both MCD/FD */
+static PLI_INT32 my_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
+{
+      int r = 0;
+
+      va_list ap;
+      va_start(ap, fmt);
+
+      if (IS_MCD(mcd)) {
+	    r = vpi_mcd_vprintf(mcd, fmt, ap);
+      } else {
+	    FILE *fp = vpi_get_file(mcd);
+	    if (fp) r = vfprintf(fp, fmt, ap);
+      }
+
+      va_end(ap);
+      return r;
+}
 
 struct timeformat_info_s {
       int units;
@@ -276,7 +298,7 @@ static void format_time(unsigned mcd, int fsize,
       }
 	    
 
-      vpi_mcd_printf(mcd, "%s", bp);
+      my_mcd_printf(mcd, "%s", bp);
 }
 
 static void format_time_real(unsigned mcd, int fsize,
@@ -291,7 +313,7 @@ static void format_time_real(unsigned mcd, int fsize,
 
 	/* The timeformat_info.prec is the number of digits after the
 	   decimal point, no matter what the units. */
-      vpi_mcd_printf(mcd, "%0.*f%s", timeformat_info.prec, value,
+      my_mcd_printf(mcd, "%0.*f%s", timeformat_info.prec, value,
 		     timeformat_info.suff);
 }
 
@@ -300,7 +322,7 @@ static void format_strength(unsigned int mcd, s_vpi_value*value)
 {
       char str[4];
       vpip_format_strength(str, value);
-      vpi_mcd_printf(mcd, "%s", str);
+      my_mcd_printf(mcd, "%s", str);
 }
 
 static void format_error_msg(const char*msg, int leading_zero,
@@ -356,7 +378,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  ffsize = -1;
 	    }
 
-	    vpi_mcd_printf(mcd, "%%");
+	    my_mcd_printf(mcd, "%%");
 
 	    use_count = 0;
 	    break;
@@ -372,7 +394,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	  case 'Z':
 	    format_error_msg("Unsupported format", leading_zero,
 				 fsize, ffsize, fmt);
-	    vpi_mcd_printf(mcd, "%c", fmt);
+	    my_mcd_printf(mcd, "%c", fmt);
 
 	    use_count = 0;
 	    break;
@@ -380,7 +402,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	  default:
 	    format_error_msg("Illegal format", leading_zero,
 			     fsize, ffsize, fmt);
-	    vpi_mcd_printf(mcd, "%c", fmt);
+	    my_mcd_printf(mcd, "%c", fmt);
 	    break;
 
 	      /* Print numeric value in binary/hex/octal format. */
@@ -437,7 +459,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		    value_str += i;
 	      }
 
-	      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
+	      my_mcd_printf(mcd, "%*s", fsize, value_str);
 	    }
 
 	    use_count = 1;
@@ -467,7 +489,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
-	    vpi_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
+	    my_mcd_printf(mcd, "%c", value.value.str[strlen(value.value.str)-1]);
 
 	    use_count = 1;
 	    break;
@@ -506,7 +528,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 			: vpi_get_dec_size(argv[idx]);
 	    }
 
-	    vpi_mcd_printf(mcd, "%*s", fsize, value.value.str);
+	    my_mcd_printf(mcd, "%*s", fsize, value.value.str);
 
 	    use_count = 1;
 	    break;
@@ -528,7 +550,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
-	    vpi_mcd_printf(mcd, "%*.*f", fsize, ffsize, value.value.real);
+	    my_mcd_printf(mcd, "%*.*f", fsize, ffsize, value.value.real);
 
 	    use_count = 1;
 	    break;
@@ -544,7 +566,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    if (fsize == -1)
 		  fsize = 0;
 	    assert(scope);
-	    vpi_mcd_printf(mcd, "%*s",
+	    my_mcd_printf(mcd, "%*s",
 			   fsize,
 			   vpi_get_str(vpiFullName, scope));
 	    break;
@@ -568,7 +590,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    }
 
 	    if (fsize==-1){
-		  vpi_mcd_printf(mcd, "%s", value.value.str);
+		  my_mcd_printf(mcd, "%s", value.value.str);
 
 	    } else {
 		  char* value_str = value.value.str;
@@ -592,7 +614,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 
 		  }
 
-		  vpi_mcd_printf(mcd, "%*s", fsize, value_str);
+		  my_mcd_printf(mcd, "%*s", fsize, value_str);
 	    }
 
 	    use_count = 1;
@@ -686,7 +708,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			cnt = sizeof buf - 1;
 		  strncpy(buf, cp, cnt);
 		  buf[cnt] = 0;
-		  vpi_mcd_printf(mcd, "%s", buf);
+		  my_mcd_printf(mcd, "%s", buf);
 		  cp += cnt;
 
 	    } else if (*cp == '%') {
@@ -718,19 +740,19 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		      case 0:
 			break;
 		      case 'n':
-			vpi_mcd_printf(mcd, "\n");
+			my_mcd_printf(mcd, "\n");
 			cp += 1;
 			break;
 		      case 't':
-			vpi_mcd_printf(mcd, "\t");
+			my_mcd_printf(mcd, "\t");
 			cp += 1;
 			break;
 		      case '\\':
-			vpi_mcd_printf(mcd, "\\");
+			my_mcd_printf(mcd, "\\");
 			cp += 1;
 			break;
 		      case '"':
-			vpi_mcd_printf(mcd, "\"");
+			my_mcd_printf(mcd, "\"");
 			cp += 1;
 			break;
 			
@@ -746,19 +768,19 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 			    && isdigit(cp[1])
 			    && isdigit(cp[2])) {
 			        /* handle octal escapes (e.g. "\015" is CR)*/
-			      vpi_mcd_printf(mcd, "%c",
+			      my_mcd_printf(mcd, "%c",
 					     (cp[2] - '0') +
 					     8 * ((cp[1] - '0') +
 						  8 * (cp[0] - '0')));
 			      cp += 3;
 			} else {
-			      vpi_mcd_printf(mcd, "%c", *cp);
+			      my_mcd_printf(mcd, "%c", *cp);
 			      cp += 1;
 			}
 			break;
 
 		      default:
-			vpi_mcd_printf(mcd, "%c", *cp);
+			my_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
 		  }
 	    }
@@ -779,7 +801,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 	    switch (vpi_get(vpiType, item)) {
 
 		case 0:
-		  vpi_mcd_printf(mcd, " ");
+		  my_mcd_printf(mcd, " ");
 		  break;
 
 		case vpiConstant:
@@ -793,7 +815,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  } else {
 			value.format = vpiBinStrVal;
 			vpi_get_value(item, &value);
-			vpi_mcd_printf(mcd, "%s", value.value.str);
+			my_mcd_printf(mcd, "%s", value.value.str);
 		  }
 		  break;
 
@@ -807,11 +829,11 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  switch(info->default_format){
 		  case vpiDecStrVal:
 		      size = vpi_get_dec_size(item);
-		      vpi_mcd_printf(mcd, "%*s", size, value.value.str);
+		      my_mcd_printf(mcd, "%*s", size, value.value.str);
 		      break;
 
 		  default:
-		      vpi_mcd_printf(mcd, "%s", value.value.str);
+		      my_mcd_printf(mcd, "%s", value.value.str);
 		  }
 		  
 
@@ -820,13 +842,13 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		case vpiTimeVar:
 		  value.format = vpiTimeVal;
 		  vpi_get_value(item, &value);
-		  vpi_mcd_printf(mcd, "%20u", value.value.time->low);
+		  my_mcd_printf(mcd, "%20u", value.value.time->low);
 		  break;
 
 		case vpiRealVar:
 		  value.format = vpiRealVal;
 		  vpi_get_value(item, &value);
-		  vpi_mcd_printf(mcd, "%f", value.value.real);
+		  my_mcd_printf(mcd, "%f", value.value.real);
 		  break;
 
 		case vpiSysFuncCall: {
@@ -836,7 +858,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		      if (strcmp(tmp,"$time") == 0) {
 			    value.format = vpiTimeVal;
 			    vpi_get_value(item, &value);
-			    vpi_mcd_printf(mcd, "%20u", value.value.time->low);
+			    my_mcd_printf(mcd, "%20u", value.value.time->low);
 		      } else if (strcmp(tmp,"$realtime") == 0) {
 			    int time_units = vpi_get(vpiTimeUnit, scope);
 			    int time_prec = vpi_get(vpiTimePrecision, 0);
@@ -846,16 +868,16 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 
 			    value.format = vpiRealVal;
 			    vpi_get_value(item, &value);
-			    vpi_mcd_printf(mcd, "%0.*f", use_prec,
+			    my_mcd_printf(mcd, "%0.*f", use_prec,
 					   value.value.real);
 		      } else {
-			    vpi_mcd_printf(mcd, "<%s>", tmp);
+			    my_mcd_printf(mcd, "<%s>", tmp);
 		      }
 		      break;
 		}
 
 		default:
-		  vpi_mcd_printf(mcd, "?");
+		  my_mcd_printf(mcd, "?");
 		  break;
 	    }
       }
@@ -902,7 +924,7 @@ static int sys_display_calltf(char *name)
       do_display(1, info);
 
       if (strncmp(name,"$display",8) == 0)
-	    vpi_mcd_printf(1, "\n");
+	    my_mcd_printf(1, "\n");
 
       return 0;
 }
@@ -1099,8 +1121,8 @@ static int sys_monitoroff_calltf(char*name)
  */
 static int sys_fopen_calltf(char *name)
 {
-      s_vpi_value val, value, modevalue;
-      unsigned char *mode_string;
+      s_vpi_value value;
+      unsigned char *mode_string = 0;
 
       vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
@@ -1128,10 +1150,8 @@ static int sys_fopen_calltf(char *name)
 	    return 0;
       }
 
-      if (mode == 0) {
-            mode_string = "w";
-      } else {
-	    if (is_constant(mode)) {
+      if (mode) {
+	    if (! is_constant(mode)) {
 		vpi_printf("ERROR: %s parameter must be a constant\n", name);
 		vpi_free_object(argv);
 	        return 0;
@@ -1142,18 +1162,22 @@ static int sys_fopen_calltf(char *name)
                vpi_free_object(argv);
                return 0;
            }
-           modevalue.format = vpiStringVal;
-           vpi_get_value(mode, &modevalue);
-           mode_string = modevalue.value.str;
+           value.format = vpiStringVal;
+           vpi_get_value(mode, &value);
+           mode_string = strdup(value.value.str);
       }
 
       value.format = vpiStringVal;
       vpi_get_value(item, &value);
 
-      val.format = vpiIntVal;
-      val.value.integer = vpi_mcd_open_x( value.value.str, mode_string );
+      value.format = vpiIntVal;
+      if (mode) {
+	    value.value.integer = vpi_fopen(value.value.str, mode_string);
+	    free(mode_string);
+      } else
+	    value.value.integer = vpi_mcd_open(value.value.str);
 
-      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+      vpi_put_value(call_handle, &value, 0, vpiNoDelay);
 
       return 0;
 }
@@ -1224,7 +1248,7 @@ static int sys_fdisplay_calltf(char *name)
       free(info.items);
 
       if (strncmp(name,"$fdisplay",9) == 0)
-	    vpi_mcd_printf(mcd, "\n");
+	    my_mcd_printf(mcd, "\n");
 
       return 0;
 }
@@ -1278,6 +1302,7 @@ static int sys_fputc_calltf(char *name)
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
+      FILE *fp;
 
       if (item == 0) {
 	    vpi_printf("%s: mcd parameter missing.\n", name);
@@ -1301,13 +1326,18 @@ static int sys_fputc_calltf(char *name)
       vpi_get_value(item, &value);
       mcd = value.value.integer;
 
+      if (IS_MCD(mcd)) return EOF;
+
       item = vpi_scan(argv);
 
       xvalue.format = vpiIntVal;
       vpi_get_value(item, &xvalue);
       x = xvalue.value.integer;
 
-      return vpi_mcd_fputc( mcd, x );
+      fp = vpi_get_file(mcd);
+      if (!fp) return EOF;
+
+      return fputc(x, fp);
 }
 
 static int sys_fgetc_calltf(char *name)
@@ -1318,6 +1348,7 @@ static int sys_fgetc_calltf(char *name)
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
       vpiHandle item = vpi_scan(argv);
+      FILE *fp;
 
       if (item == 0) {
 	    vpi_printf("%s: mcd parameter missing.\n", name);
@@ -1342,7 +1373,12 @@ static int sys_fgetc_calltf(char *name)
       mcd = value.value.integer;
 
       rval.format = vpiIntVal;
-      rval.value.integer = vpi_mcd_fgetc( mcd );
+
+      fp = vpi_get_file(mcd);
+      if (!fp || IS_MCD(mcd))
+	  rval.value.integer = EOF;
+      else
+	  rval.value.integer = fgetc(fp);
 
       vpi_put_value(sys, &rval, 0, vpiNoDelay);
 
@@ -1666,6 +1702,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.61  2003/05/23 04:04:02  steve
+ *  Add vpi_fopen and vpi_get_file.
+ *
  * Revision 1.60  2003/05/15 16:51:08  steve
  *  Arrange for mcd id=00_00_00_01 to go to stdout
  *  as well as a user specified log file, set log
