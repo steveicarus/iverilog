@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.37 2003/06/13 19:51:08 steve Exp $"
+#ident "$Id: main.cc,v 1.38 2003/06/25 04:04:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -55,6 +55,7 @@ extern "C" const char*optarg;
 
 bool verbose_flag = false;
 
+static char log_buffer[4096];
 
 #if defined(HAVE_SYS_RESOURCE_H)
 static void my_getrusage(struct rusage *a)
@@ -197,7 +198,7 @@ int main(int argc, char*argv[])
 		        perror(logfile_name);
 		        exit(1);
 		  }
-		  setlinebuf(logfile);
+		  setvbuf(logfile, log_buffer, _IOLBF, sizeof(log_buffer));
 	    }
       }
 
@@ -276,6 +277,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.38  2003/06/25 04:04:19  steve
+ *  Fix mingw portability problems.
+ *
  * Revision 1.37  2003/06/13 19:51:08  steve
  *  Include verbose messages in log output.
  *

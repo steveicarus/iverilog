@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.13 2003/06/17 22:09:45 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.14 2003/06/25 04:04:19 steve Exp $"
 #endif
 
 /*
@@ -58,6 +58,7 @@ void veriusertfs_register_table(p_tfcell vtable)
       p_tfcell tf;
       s_vpi_systf_data tf_data;
       p_pli_data data;
+      char trace_buf[1024];
 
       if (!pli_trace && (path = getenv("PLI_TRACE"))) {
 	    if (strcmp(path,"-") == 0)
@@ -68,7 +69,7 @@ void veriusertfs_register_table(p_tfcell vtable)
 			perror(path);
 			exit(1);
 		  }
-		  setlinebuf(pli_trace);
+		  setvbuf(pli_trace, trace_buf, _IOLBF, sizeof(trace_buf));
 	    }
       }
 
@@ -388,6 +389,9 @@ PLI_INT32 tf_setrealdelay(double dly)
 }
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.14  2003/06/25 04:04:19  steve
+ *  Fix mingw portability problems.
+ *
  * Revision 1.13  2003/06/17 22:09:45  steve
  *  Better trace of PLI1 registration.
  *

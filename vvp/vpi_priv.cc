@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.42 2003/06/22 04:19:26 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.43 2003/06/25 04:04:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -337,6 +337,8 @@ void vpi_set_vlog_info(int argc, char** argv)
     vpi_vlog_info.argc    = argc;
     vpi_vlog_info.argv    = argv;
 
+    static char trace_buf[1024];
+
     if (const char*path = getenv("VPI_TRACE")) {
 	  if (!strcmp(path,"-"))
 		vpi_trace = stdout;
@@ -346,7 +348,7 @@ void vpi_set_vlog_info(int argc, char** argv)
 		      perror(path);
 		      exit(1);
 		}
-		setlinebuf(vpi_trace);
+		setvbuf(vpi_trace, trace_buf, _IOLBF, sizeof(trace_buf));
 	  }
     }
 }
@@ -644,6 +646,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.43  2003/06/25 04:04:19  steve
+ *  Fix mingw portability problems.
+ *
  * Revision 1.42  2003/06/22 04:19:26  steve
  *  vpi_handle diagnostic message.
  *
