@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.cc,v 1.5 2001/07/16 18:40:19 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.6 2002/01/04 02:26:36 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -107,6 +107,10 @@ extern "C" int vpi_mcd_vprintf(unsigned int mcd, const char*fmt, va_list ap)
 	int len;
 	int rc;
 
+	// don't print to stderr twice
+	if (mcd_table[1].fp == mcd_table[2].fp  &&  (mcd&6) == 6)
+	      mcd &= ~2;
+
 	rc = len = 0;
 	for(i = 0; i < 31; i++) {
 		if( (mcd>>i) & 1) {
@@ -121,6 +125,15 @@ extern "C" int vpi_mcd_vprintf(unsigned int mcd, const char*fmt, va_list ap)
 		return rc;
 	else
 		return len;
+}
+
+extern "C" int vpi_mcd_printf(unsigned int mcd, const char *fmt, ...)
+{
+      va_list ap;
+      va_start(ap, fmt);
+      int r = vpi_mcd_vprintf(mcd,fmt,ap);
+      va_end(ap);
+      return r;
 }
 
 int vpi_mcd_fputc(unsigned int mcd, unsigned char x)
