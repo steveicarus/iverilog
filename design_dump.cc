@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.131 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.132 2002/08/13 05:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -495,7 +495,10 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 /* Dump a block statement */
 void NetBlock::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << type_ << endl;
+      o << setw(ind) << "" << type_;
+      if (subscope_)
+	    o << " : " << subscope_->name();
+      o << endl;
 
       if (last_) {
 	    const NetProc*cur = last_;
@@ -984,6 +987,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.132  2002/08/13 05:35:00  steve
+ *  Do not elide named blocks.
+ *
  * Revision 1.131  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

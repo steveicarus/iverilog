@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.260 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.261 2002/08/13 05:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1168,8 +1168,10 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    nscope = scope;
 
 	// Handle the special case that the block contains only one
-	// statement. There is no need to keep the block node.
-      if (list_.count() == 1) {
+	// statement. There is no need to keep the block node. Also,
+	// don't elide named blocks, because they might be referenced
+	// elsewhere.
+      if ((list_.count() == 1) && (name_.length() == 0)) {
 	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
@@ -2502,6 +2504,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.261  2002/08/13 05:35:00  steve
+ *  Do not elide named blocks.
+ *
  * Revision 1.260  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *
@@ -2537,109 +2542,5 @@ Design* elaborate(list<const char*>roots)
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have
  *  the vvp code generator use that to support disable.
- *
- * Revision 1.250  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.249  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.248  2002/05/12 19:16:58  steve
- *  Accept errors in memory index expression.
- *
- * Revision 1.247  2002/05/07 05:06:07  steve
- *  Use else clause instead of ! to preface wait events.
- *
- * Revision 1.246  2002/04/24 17:40:48  steve
- *  Agressively evalutate case expressions.
- *
- * Revision 1.245  2002/04/22 00:53:39  steve
- *  Do not allow implicit wires in sensitivity lists.
- *
- * Revision 1.244  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
- *
- * Revision 1.243  2002/04/21 04:59:07  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.242  2002/04/13 02:33:17  steve
- *  Detect missing indices to memories (PR#421)
- *
- * Revision 1.241  2002/03/09 04:02:26  steve
- *  Constant expressions are not l-values for task ports.
- *
- * Revision 1.240  2002/01/23 05:56:22  steve
- *  elaborate deassign lval as done for assign.
- *
- * Revision 1.239  2002/01/19 20:09:56  steve
- *  Evaluate case guards, if possible.
- *
- * Revision 1.238  2001/12/31 00:39:20  steve
- *  Remove test print
- *
- * Revision 1.237  2001/12/29 20:19:31  steve
- *  Do not delete delay expressions of UDP instances.
- *
- * Revision 1.236  2001/12/06 05:04:49  steve
- *  Forgot to evaluate UDP delays.
- *
- * Revision 1.235  2001/12/06 04:44:11  steve
- *  Support delays on UDP instances.
- *
- * Revision 1.234  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.233  2001/11/22 06:20:59  steve
- *  Use NetScope instead of string for scope path.
- *
- * Revision 1.232  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.231  2001/11/07 04:26:46  steve
- *  elaborate_lnet uses scope instead of string path.
- *
- * Revision 1.230  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.229  2001/11/04 23:12:29  steve
- *  Pad limited r-values in continuous assignments.
- *
- * Revision 1.228  2001/10/31 03:22:31  steve
- *  Give up if roots are missing.
- *
- * Revision 1.227  2001/10/28 01:14:53  steve
- *  NetObj constructor finally requires a scope.
- *
- * Revision 1.226  2001/10/22 23:26:37  steve
- *  Better error message for mising root module.
- *
- * Revision 1.225  2001/10/22 02:05:20  steve
- *  Handle activating tasks in another root.
- *
- * Revision 1.224  2001/10/21 00:42:47  steve
- *  Module types in pform are char* instead of string.
- *
- * Revision 1.223  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.222  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.221  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
  */
 

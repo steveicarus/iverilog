@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.52 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.53 2002/08/13 05:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -283,7 +283,7 @@ bool dll_target::proc_block(const NetBlock*net)
 
 	/* If there is exactly one statement, there is no need for the
 	   block wrapper, generate the contained statement instead. */
-      if (count == 1) {
+      if ((count == 1) && (net->subscope() == 0)) {
 	    return net->proc_first()->emit_proc(this);
       }
 
@@ -812,6 +812,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.53  2002/08/13 05:35:00  steve
+ *  Do not elide named blocks.
+ *
  * Revision 1.52  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *
