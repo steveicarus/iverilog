@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.184 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.185 2000/09/02 23:40:12 steve Exp $"
 #endif
 
 /*
@@ -944,20 +944,26 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
 	      /* Generate an assignment of the l-value to the temporary... */
 	    n = des->local_symbol(path);
-	    NetAssign*a1 = new NetAssign(n, des, wid, rv);
-	    a1->set_line(*this);
+	    NetAssign_*lv = new NetAssign_(n, wid);
+	    des->add_node(lv);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(a1->l_val(0)->pin(idx), tmp->pin(idx));
+		  connect(lv->pin(idx), tmp->pin(idx));
+
+	    NetAssign*a1 = new NetAssign(lv, rv);
+	    a1->set_line(*this);
 
 	      /* Generate an assignment of the temporary to the r-value... */
 	    n = des->local_symbol(path);
 	    NetESignal*sig = new NetESignal(tmp);
-	    NetAssign*a2 = new NetAssign(n, des, wid, sig);
-	    a2->set_line(*this);
+	    lv = new NetAssign_(n, wid);
+	    des->add_node(lv);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(a2->l_val(0)->pin(idx), reg->pin(idx));
+		  connect(lv->pin(idx), reg->pin(idx));
+
+	    NetAssign*a2 = new NetAssign(lv, sig);
+	    a2->set_line(*this);
 
 	      /* Generate the delay statement with the final
 		 assignment attached to it. If this is an event delay,
@@ -1000,19 +1006,24 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    rv = pad_to_width(rv, wid);
 	    assert(rv->expr_width() >= wid);
 
-	    cur = new NetAssign(des->local_symbol(path), des, wid, rv);
+	    NetAssign_*lv = new NetAssign_(des->local_symbol(path), wid);
+	    des->add_node(lv);
+	    cur = new NetAssign(lv, rv);
 	    unsigned off = reg->sb_to_idx(lsb);
 	    assert((off+wid) <= reg->pin_count());
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->l_val(0)->pin(idx), reg->pin(idx+off));
+		  connect(lv->pin(idx), reg->pin(idx+off));
 
       } else {
 
 	    assert(msb == lsb);
-	    cur = new NetAssign(des->local_symbol(path), des,
-				reg->pin_count(), mux, rv);
+	    NetAssign_*lv = new NetAssign_(des->local_symbol(path),
+					   reg->pin_count());
+	    lv->set_bmux(mux);
+	    des->add_node(lv);
+	    cur = new NetAssign(lv, rv);
 	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
-		  connect(cur->l_val(0)->pin(idx), reg->pin(idx));
+		  connect(lv->pin(idx), reg->pin(idx));
       }
 
 
@@ -1100,9 +1111,11 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	    rv = pad_to_width(rv, wid);
 	    assert(wid <= rv->expr_width());
 
-	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rv);
+	    NetAssign_*lv = new NetAssign_(des->local_symbol(path), wid);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		  connect(cur->l_val(0)->pin(idx), reg->pin(reg->sb_to_idx(idx+lsb)));
+		  connect(lv->pin(idx), reg->pin(reg->sb_to_idx(idx+lsb)));
+	    des->add_node(lv);
+	    cur = new NetAssignNB(lv, rv);
 
       } else {
 
@@ -1111,10 +1124,13 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 		 value goes. Create a NetAssignNB object that carries
 		 that mux expression, and connect it to the entire
 		 width of the lval. */
-	    cur = new NetAssignNB(des->local_symbol(path), des,
-				  reg->pin_count(), mux, rv);
+	    NetAssign_*lv = new NetAssign_(des->local_symbol(path),
+					   reg->pin_count());
+	    lv->set_bmux(mux);
 	    for (unsigned idx = 0 ;  idx < reg->pin_count() ;  idx += 1)
-		  connect(cur->l_val(0)->pin(idx), reg->pin(idx));
+		  connect(lv->pin(idx), reg->pin(idx));
+	    des->add_node(lv);
+	    cur = new NetAssignNB(lv, rv);
       }
 
 
@@ -1439,9 +1455,11 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 		  continue;
 
 	    NetExpr*rv = parms_[idx]->elaborate_expr(des, scope);
-	    NetAssign*pr = new NetAssign("@", des, port->pin_count(), rv);
+	    NetAssign_*lv = new NetAssign_("@", port->pin_count());
+	    des->add_node(lv);
 	    for (unsigned pi = 0 ;  pi < port->pin_count() ;  pi += 1)
-		  connect(port->pin(pi), pr->l_val(0)->pin(pi));
+		  connect(port->pin(pi), lv->pin(pi));
+	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
       }
 
@@ -1528,9 +1546,11 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 
 
 	      /* Generate the assignment statement. */
-	    NetAssign*ass = new NetAssign("@", des, val->pin_count(), pexp);
+	    NetAssign_*lv = new NetAssign_("@", val->pin_count());
+	    des->add_node(lv);
 	    for (unsigned pi = 0 ; pi < val->pin_count() ;  pi += 1)
-		  connect(val->pin(pi), ass->l_val(0)->pin(pi));
+		  connect(val->pin(pi), lv->pin(pi));
+	    NetAssign*ass = new NetAssign(lv, pexp);
 
 	    block->append(ass);
       }
@@ -2001,10 +2021,11 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	    return 0;
       }
       assert(sig);
-      NetAssign*init = new NetAssign("@for-assign", des, sig->pin_count(),
-				     expr1_->elaborate_expr(des, scope));
-      for (unsigned idx = 0 ;  idx < init->l_val(0)->pin_count() ;  idx += 1)
-	    connect(init->l_val(0)->pin(idx), sig->pin(idx));
+      NetAssign_*lv = new NetAssign_("@for-assign", sig->pin_count());
+      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1)
+	    connect(lv->pin(idx), sig->pin(idx));
+      des->add_node(lv);
+      NetAssign*init = new NetAssign(lv, expr1_->elaborate_expr(des, scope));
 
       top->append(init);
 
@@ -2024,10 +2045,11 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
 	   statement. Put this into the "body" block. */
       sig = des->find_signal(scope, id2->name());
       assert(sig);
-      NetAssign*step = new NetAssign("@for-assign", des, sig->pin_count(),
-				     expr2_->elaborate_expr(des, scope));
-      for (unsigned idx = 0 ;  idx < step->l_val(0)->pin_count() ;  idx += 1)
-	    connect(step->l_val(0)->pin(idx), sig->pin(idx));
+      lv = new NetAssign_("@for-assign", sig->pin_count());
+      for (unsigned idx = 0 ;  idx < lv->pin_count() ;  idx += 1)
+	    connect(lv->pin(idx), sig->pin(idx));
+      des->add_node(lv);
+      NetAssign*step = new NetAssign(lv, expr2_->elaborate_expr(des, scope));
 
       body->append(step);
 
@@ -2378,6 +2400,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.185  2000/09/02 23:40:12  steve
+ *  Pull NetAssign_ creation out of constructors.
+ *
  * Revision 1.184  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *

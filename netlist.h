@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.159 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: netlist.h,v 1.160 2000/09/02 23:40:13 steve Exp $"
 #endif
 
 /*
@@ -1178,9 +1178,7 @@ class NetAssignBase : public NetProc {
 class NetAssign : public NetAssignBase {
 
     public:
-      explicit NetAssign(const string&, Design*des, unsigned w, NetExpr*rv);
-      explicit NetAssign(const string&, Design*des, unsigned w,
-			 NetExpr*mux, NetExpr*rv);
+      explicit NetAssign(NetAssign_*lv, NetExpr*rv);
       ~NetAssign();
 
       virtual bool emit_proc(struct target_t*) const;
@@ -1192,9 +1190,7 @@ class NetAssign : public NetAssignBase {
 
 class NetAssignNB  : public NetAssignBase {
     public:
-      explicit NetAssignNB(const string&, Design*des, unsigned w, NetExpr*rv);
-      explicit NetAssignNB(const string&, Design*des, unsigned w,
-			   NetExpr*mux, NetExpr*rv);
+      explicit NetAssignNB(NetAssign_*lv, NetExpr*rv);
       ~NetAssignNB();
 
 
@@ -2748,6 +2744,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.160  2000/09/02 23:40:13  steve
+ *  Pull NetAssign_ creation out of constructors.
+ *
  * Revision 1.159  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *

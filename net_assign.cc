@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.1 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.2 2000/09/02 23:40:13 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -92,54 +92,18 @@ const NetAssign_* NetAssignBase::l_val(unsigned idx) const
 }
 
 
-NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssignBase(new NetAssign_(n, w), rv)
+NetAssign::NetAssign(NetAssign_*lv, NetExpr*rv)
+: NetAssignBase(lv, rv)
 {
-      des->add_node(l_val(0));
-}
-
-NetAssign::NetAssign(const string&n, Design*des, unsigned w,
-		     NetExpr*mu, NetExpr*rv)
-: NetAssignBase(new NetAssign_(n, w), rv)
-{
-      des->add_node(l_val(0));
-      bool flag = rv->set_width(1);
-      if (flag == false) {
-	    cerr << rv->get_line() << ": Expression bit width" <<
-		  " conflicts with l-value bit width." << endl;
-	    des->errors += 1;
-      }
-
-      l_val(0)->set_bmux(mu);
 }
 
 NetAssign::~NetAssign()
 {
 }
 
-NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w, NetExpr*rv)
-: NetAssignBase(new NetAssign_(n, w), rv)
+NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv)
+: NetAssignBase(lv, rv)
 {
-      if (rval()->expr_width() < w) {
-	    cerr << rval()->get_line() << ": Expression bit width (" <<
-		  rval()->expr_width() << ") conflicts with l-value "
-		  "bit width (" << w << ")." << endl;
-	    des->errors += 1;
-      }
-}
-
-NetAssignNB::NetAssignNB(const string&n, Design*des, unsigned w,
-			 NetExpr*mu, NetExpr*rv)
-: NetAssignBase(new NetAssign_(n, w), rv)
-{
-      bool flag = rval()->set_width(1);
-      if (flag == false) {
-	    cerr << rval()->get_line() << ": Expression bit width" <<
-		  " conflicts with l-value bit width." << endl;
-	    des->errors += 1;
-      }
-
-      l_val(0)->set_bmux(mu);
 }
 
 NetAssignNB::~NetAssignNB()
@@ -148,6 +112,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.2  2000/09/02 23:40:13  steve
+ *  Pull NetAssign_ creation out of constructors.
+ *
  * Revision 1.1  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *
