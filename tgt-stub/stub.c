@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.72 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: stub.c,v 1.73 2003/02/25 03:39:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -153,7 +153,7 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_ADD: {
 		fprintf(out, "  LPM_ADD %s: <width=%u>\n",
-			ivl_lpm_name(net), width);
+			ivl_lpm_basename(net), width);
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Q %u: %s\n", idx,
 			      ivl_nexus_name(ivl_lpm_q(net, idx)));
@@ -172,7 +172,7 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_SHIFTL: {
 		fprintf(out, "  LPM_SHIFTL %s: <width=%u, selects=%u>\n",
-			ivl_lpm_name(net), width, ivl_lpm_selects(net));
+			ivl_lpm_basename(net), width, ivl_lpm_selects(net));
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Q %u: %s\n", idx,
 			      ivl_nexus_name(ivl_lpm_q(net, idx)));
@@ -187,7 +187,7 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_SUB: {
 		fprintf(out, "  LPM_SUB %s: <width=%u>\n",
-			ivl_lpm_name(net), width);
+			ivl_lpm_basename(net), width);
 		for (idx = 0 ;  idx < width ;  idx += 1)
 		      fprintf(out, "    Q %u: %s\n", idx,
 			      ivl_nexus_name(ivl_lpm_q(net, idx)));
@@ -203,7 +203,7 @@ static void show_lpm(ivl_lpm_t net)
 	  case IVL_LPM_FF: {
 
 		fprintf(out, "  LPM_FF %s: <width=%u>\n",
-			ivl_lpm_name(net), width);
+			ivl_lpm_basename(net), width);
 
 		if (ivl_lpm_enable(net))
 		      fprintf(out, "    clk: %s CE: %s\n",
@@ -239,7 +239,7 @@ static void show_lpm(ivl_lpm_t net)
 		unsigned sdx;
 
 		fprintf(out, "  LPM_MUX %s: <width=%u, size=%u, sel_wid=%u>\n",
-			ivl_lpm_name(net), width, ivl_lpm_size(net),
+			ivl_lpm_basename(net), width, ivl_lpm_size(net),
 			ivl_lpm_selects(net));
 
 		for (idx = 0 ;  idx < width ;  idx += 1)
@@ -258,7 +258,7 @@ static void show_lpm(ivl_lpm_t net)
 	  }
 
 	  default:
-	    fprintf(out, "  %s: <width=%u>\n", ivl_lpm_name(net),
+	    fprintf(out, "  %s: <width=%u>\n", ivl_lpm_basename(net),
 		    ivl_lpm_width(net));
       }
 }
@@ -596,8 +596,9 @@ static void show_signal(ivl_signal_t net)
 				ivl_nexus_ptr_pin(ptr), dr0, dr1);
 
 		  } else if ((lpm = ivl_nexus_ptr_lpm(ptr))) {
-			fprintf(out, "      LPM %s (%s0, %s1)\n",
-				ivl_lpm_name(lpm), dr0, dr1);
+			fprintf(out, "      LPM %s.%s (%s0, %s1)\n",
+				ivl_scope_name(ivl_lpm_scope(lpm)),
+				ivl_lpm_basename(lpm), dr0, dr1);
 
 		  } else if ((con = ivl_nexus_ptr_con(ptr))) {
 			const char*bits = ivl_const_bits(con);
@@ -780,6 +781,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.73  2003/02/25 03:39:53  steve
+ *  Eliminate use of ivl_lpm_name.
+ *
  * Revision 1.72  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
