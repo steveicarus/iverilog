@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.11 2000/10/15 04:46:23 steve Exp $"
+#ident "$Id: verilog.c,v 1.12 2000/10/15 21:02:09 steve Exp $"
 #endif
 
 /*
@@ -286,8 +286,16 @@ int target_net_signal(const char*name, ivl_signal_t net)
       return 0;
 }
 
+#ifdef __CYGWIN32__
+#include <cygwin/cygwin_dll.h>
+DECLARE_CYGWIN_DLL(DllMain);
+#endif
+
 /*
  * $Log: verilog.c,v $
+ * Revision 1.12  2000/10/15 21:02:09  steve
+ *  Makefile patches to support target loading under cygwin.
+ *
  * Revision 1.11  2000/10/15 04:46:23  steve
  *  Scopes and processes are accessible randomly from
  *  the design, and signals and logic are accessible

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.17 2000/10/15 04:46:23 steve Exp $"
+#ident "$Id: stub.c,v 1.18 2000/10/15 21:02:08 steve Exp $"
 #endif
 
 /*
@@ -168,6 +168,7 @@ static int show_process(ivl_process_t net)
       return 0;
 }
 
+
 static void show_signal(ivl_signal_t net)
 {
       const char*type = "?";
@@ -315,9 +316,16 @@ int target_net_probe(const char*name, ivl_net_probe_t net)
       return 0;
 }
 
+#ifdef __CYGWIN32__
+#include <cygwin/cygwin_dll.h>
+DECLARE_CYGWIN_DLL(DllMain);
+#endif
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.18  2000/10/15 21:02:08  steve
+ *  Makefile patches to support target loading under cygwin.
+ *
  * Revision 1.17  2000/10/15 04:46:23  steve
  *  Scopes and processes are accessible randomly from
  *  the design, and signals and logic are accessible

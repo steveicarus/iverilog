@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.73 2000/10/08 22:36:55 steve Exp $"
+#ident "$Id: Makefile.in,v 1.74 2000/10/15 21:02:08 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -110,8 +110,18 @@ verilog: $(srcdir)/verilog.sh
 	    -e 's;@dllib@;@DLLIB@;' \
 	    -e 's;@$(tmp4)@;@CXX@;' < $< > $@
 
+ifeq (@CYGWIN@,yes)
+ivl@EXEEXT@: $O ivl.def
+	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
+		--output-lib libivl.a --output-exp ivl.exp
+#	$(CXX) -o ivl@EXEEXT@ -Wl,--base-file,ivl.base ivl.exp $O $(dllib)
+#	dlltool --dllname ivl@EXEEXT@ --base-file ivl.base \
+#		--output-exp ivl.exp --def ivl.def
+	$(CXX) -o ivl@EXEEXT@ ivl.exp $O $(dllib)	
+else
 ivl@EXEEXT@: $O
-	$(CXX) $(CXXFLAGS) $(rdynamic) -o ivl@EXEEXT@ $O $(dllib)
+	$(CXX) $(CXXFLAGS) $(rdynamic) $(LDFLAGS) -o ivl@EXEEXT@ $O $(dllib)
+endif
 
 
 %.o: %.cc
