@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.27 2003/03/15 05:44:50 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.28 2003/03/17 23:47:25 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -72,9 +72,9 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 	    vp->format = vpiStringVal;
 
 	  case vpiStringVal:
-	      /* This value is already safe and persistent in the
-		 vpiHandle. No need to copy it. */
-	    vp->value.str = rfp->value;
+	    rbuf = need_result_buf(size + 1, RBUF_VAL);
+	    strcpy(rbuf, (char*)rfp->value);
+	    vp->value.str = rbuf;
 	    break;
 
           case vpiDecStrVal:
@@ -633,6 +633,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.28  2003/03/17 23:47:25  steve
+ *  Make a safe copy of const string values.
+ *
  * Revision 1.27  2003/03/15 05:44:50  steve
  *  Remove excess assignment.
  *
