@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.54 2003/10/02 19:33:44 steve Exp $"
+#ident "$Id: Makefile.in,v 1.55 2003/10/02 21:30:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -46,13 +46,18 @@ RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
 
-CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ -DMODULE_DIR=\"$(libdir)/ivl\"
+CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
 dllib=@DLLIB@
 rdynamic=@rdynamic@
+
+CPPFLAGS += -DMODULE_DIR=\"$(libdir)/ivl/@vpidir1@\"
+ifneq (x@vpidir2@,x)
+CPPFLAGS += -DMODULE_DIR2=\"$(libdir)/ivl/@vpidir2@\"
+endif
 
 all: dep vvp@EXEEXT@ libvpi.a
 

@@ -99,7 +99,7 @@ want to put libraries in a lib64 directory instead of the usual lib
 directory. This is how Linux/AMD64 keeps 64bit libraries segregated
 from 32bit libraries. This is done by configuring like this:
 
-  ./configure libdir64='$(prefix)/lib64'
+  ./configure libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=.
 
 2.3 (Optional) Testing
 

@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.44 2003/09/30 01:33:39 steve Exp $"
+#ident "$Id: Makefile.in,v 1.45 2003/10/02 21:30:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -34,6 +34,8 @@ VPATH = $(srcdir)
 bindir = @bindir@
 libdir = @libdir@
 includedir = $(prefix)/include
+
+vpidir = $(libdir)/ivl/@vpidir1@
 
 strip_dynamic=@strip_dynamic@
 
@@ -83,17 +85,17 @@ clean:
 distclean: clean
 	rm -f Makefile
 
-install: all installdirs $(libdir)/ivl/system.vpi
+install: all installdirs $(vpidir)/system.vpi
 
-$(libdir)/ivl/system.vpi: ./system.vpi
-	$(INSTALL_PROGRAM) ./system.vpi $(libdir)/ivl/system.vpi
-	$(STRIP) $(strip_dynamic) $(libdir)/ivl/system.vpi
+$(vpidir)/system.vpi: ./system.vpi
+	$(INSTALL_PROGRAM) ./system.vpi $(vpidir)/system.vpi
+	$(STRIP) $(strip_dynamic) $(vpidir)/system.vpi
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(libdir)/ivl
+	$(srcdir)/../mkinstalldirs $(vpidir)
 
 uninstall:
-	rm -f $(libdir)/ivl/system.vpi
+	rm -f $(vpidir)/system.vpi
 
 
 -include $(patsubst %.o, dep/%.d, $O)

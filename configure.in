@@ -50,7 +50,7 @@ AC_SUBST(EXEEXT)
 
 AC_LANG_CPLUSPLUS
 
-AC_CHECK_HEADERS(getopt.h malloc.h stdint.h libiberty.h iosfwd sys/wait.h)
+AC_CHECK_HEADERS(getopt.h malloc.h inttypes.h libiberty.h iosfwd sys/wait.h)
 
 AC_CHECK_LIB(z, gzwrite)
 AC_CHECK_LIB(z, gzwrite, HAVE_LIBZ=yes, HAVE_LIBZ=no)
@@ -264,6 +264,16 @@ esac
 AC_SUBST(ident_support)
 AC_MSG_RESULT($ident_support)
 
+# where to put vpi subdirectories
+AC_MSG_CHECKING(for VPI subdirectories)
+if test x${vpidir1} = x
+then
+	vpidir1="."
+fi
+
+AC_SUBST(vpidir1)
+AC_SUBST(vpidir2)
+AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
 AC_CONFIG_SUBDIRS(vvp tgt-vvp tgt-fpga libveriuser cadpli)
 
