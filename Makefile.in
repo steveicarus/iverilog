@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.135 2002/11/06 03:42:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.136 2002/11/11 01:12:41 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -216,7 +216,7 @@ INSTALL_DOCDIR = $(mandir)/man1
 endif
 
 ifeq (@WIN32@,yes)
-WIN32_INSTALL = $(prefix)/hello.vl $(prefix)/sqrt.vl $(prefix)/QUICK_START.txt
+WIN32_INSTALL = $(prefix)/hello.vl $(prefix)/sqrt.vl $(prefix)/sqrt-virtex.v $(prefix)/QUICK_START.txt
 else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
@@ -272,6 +272,10 @@ $(prefix)/hello.vl: $(srcdir)/examples/hello.vl
 $(prefix)/sqrt.vl: $(srcdir)/examples/sqrt.vl
 	./dosify.exe $(srcdir)/examples/sqrt.vl tmp.vl
 	mv tmp.vl $(prefix)/sqrt.vl
+
+$(prefix)/sqrt-virtex.v: $(srcdir)/examples/sqrt-virtex.v
+	./dosify.exe $(srcdir)/examples/sqrt-virtex.v tmp.vl
+	mv tmp.vl $(prefix)/sqrt-virtex.v
 
 $(prefix)/QUICK_START.txt: $(srcdir)/QUICK_START.txt
 	./dosify.exe $(srcdir)/QUICK_START.txt tmp.txt
