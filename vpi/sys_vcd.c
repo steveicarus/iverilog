@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.44 2003/05/15 16:51:09 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.45 2003/08/06 18:24:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,7 +99,7 @@ static char *truncate_bitvec(char *s)
 	    if(!r) return (s-1);
                  
 	    if(l!=r)
-		  return(((l=='0')&&(r='1'))?s:s-1);
+		  return(((l=='0')&&(r=='1'))?s:s-1);
 
       }
 }
@@ -793,6 +793,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.45  2003/08/06 18:24:55  steve
+ *  Fix error truncating bitvec in output.
+ *
  * Revision 1.44  2003/05/15 16:51:09  steve
  *  Arrange for mcd id=00_00_00_01 to go to stdout
  *  as well as a user specified log file, set log
