@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.36 1999/09/30 04:51:14 steve Exp $"
+#ident "$Id: lexor.lex,v 1.37 1999/11/17 00:50:06 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -157,7 +157,7 @@ W [ \t\b\f\r]+
       yylval.text = strdup(cp);
       return PORTNAME; }
 
-[0-9][0-9_]*[ \t]*\'d[ \t]*[0-9][0-9_]* {
+[0-9][0-9_]*[ \t]*\'[dD][ \t]*[0-9][0-9_]* {
       yylval.number = make_sized_dec(yytext);
       return NUMBER; }
 [0-9][0-9_]*[ \t]*\'[bB][ \t]*[0-1xzXZ_\?]+ {
