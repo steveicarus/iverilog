@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.134 2004/08/28 15:42:12 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.135 2004/09/24 04:25:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1509,6 +1509,27 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	/* Check for the error case that the name is not found, and it
+	   is hierarchical. We can't just create a name in another
+	   scope, it's just not allowed. */
+      if (sig == 0 && path_.component_count() != 1) {
+	    cerr << get_line() << ": error: The hierarchical name "
+		 << path_ << " is undefined in "
+		 << scope->name() << "." << endl;
+
+	    hname_t tmp_path = path_;
+	    delete[] tmp_path.remove_tail_name();
+
+	    NetScope*tmp_scope = des->find_scope(scope, tmp_path);
+	    if (tmp_scope == 0) {
+		  cerr << get_line() << ":      : I can't even find "
+		       << "the scope " << tmp_path << "." << endl;
+	    }
+
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* Fallback, this may be an implicitly declared net. */
       if (sig == 0) {
 	    NetNet::Type nettype = scope->default_nettype();
@@ -2488,6 +2509,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.135  2004/09/24 04:25:19  steve
+ *  Detect and prevent implicit declaration of hierarchical names.
+ *
  * Revision 1.134  2004/08/28 15:42:12  steve
  *  Add support for $unsigned.
  *
