@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.36 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.37 1999/09/01 20:46:19 steve Exp $"
 #endif
 
 /*
@@ -427,7 +427,10 @@ void NetForever::dump(ostream&o, unsigned ind) const
 void NetFuncDef::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "function " << name_ << endl;
-      statement_->dump(o, ind+2);
+      if (statement_)
+	    statement_->dump(o, ind+2);
+      else
+	    o << setw(ind+2) << "" << "// NO STATEMENT" << endl;
 }
 
 void NetPDelay::dump(ostream&o, unsigned ind) const
@@ -719,6 +722,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.37  1999/09/01 20:46:19  steve
+ *  Handle recursive functions and arbitrary function
+ *  references to other functions, properly pass
+ *  function parameters and save function results.
+ *
  * Revision 1.36  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

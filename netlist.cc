@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.54 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: netlist.cc,v 1.55 1999/09/01 20:46:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -482,8 +482,8 @@ NetProc* NetCondit::else_clause()
       return else_;
 }
 
-NetFuncDef::NetFuncDef(const string&n, NetProc*st, const svector<NetNet*>&po)
-: name_(n), statement_(st), ports_(po)
+NetFuncDef::NetFuncDef(const string&n, const svector<NetNet*>&po)
+: name_(n), statement_(0), ports_(po)
 {
 }
 
@@ -496,9 +496,27 @@ const string& NetFuncDef::name() const
       return name_;
 }
 
+void NetFuncDef::set_proc(NetProc*st)
+{
+      assert(statement_ == 0);
+      assert(st != 0);
+      statement_ = st;
+}
+
 const NetProc* NetFuncDef::proc() const
 {
       return statement_;
+}
+
+unsigned NetFuncDef::port_count() const
+{
+      return ports_.count();
+}
+
+const NetNet* NetFuncDef::port(unsigned idx) const
+{
+      assert(idx < ports_.count());
+      return ports_[idx];
 }
 
 NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
@@ -560,6 +578,7 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 NetEUFunc::NetEUFunc(NetFuncDef*def, NetESignal*res, svector<NetExpr*>&p)
 : func_(def), result_(res), parms_(p)
 {
+      expr_width(result_->expr_width());
 }
 
 NetEUFunc::~NetEUFunc()
@@ -576,6 +595,22 @@ const string& NetEUFunc::name() const
 const NetESignal*NetEUFunc::result() const
 {
       return result_;
+}
+
+unsigned NetEUFunc::parm_count() const
+{
+      return parms_.count();
+}
+
+const NetExpr* NetEUFunc::parm(unsigned idx) const
+{
+      assert(idx < parms_.count());
+      return parms_[idx];
+}
+
+const NetFuncDef* NetEUFunc::definition() const
+{
+      return func_;
 }
 
 /*
@@ -1501,13 +1536,31 @@ void Design::add_function(const string&key, NetFuncDef*def)
       funcs_[key] = def;
 }
 
+NetFuncDef* Design::find_function(const string&path, const string&name)
+{
+      string root = path;
+      for (;;) {
+	    string key = root + "." + name;
+	    map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
+	    if (cur != funcs_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
+}
+
 NetFuncDef* Design::find_function(const string&key)
 {
       map<string,NetFuncDef*>::const_iterator cur = funcs_.find(key);
-      if (cur == funcs_.end())
-	    return 0;
-
-      return (*cur).second;
+      if (cur != funcs_.end())
+	    return (*cur).second;
+      return 0;
 }
 
 void Design::add_task(const string&key, NetTaskDef*def)
@@ -1642,6 +1695,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.55  1999/09/01 20:46:19  steve
+ *  Handle recursive functions and arbitrary function
+ *  references to other functions, properly pass
+ *  function parameters and save function results.
+ *
  * Revision 1.54  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.58 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: netlist.h,v 1.59 1999/09/01 20:46:19 steve Exp $"
 #endif
 
 /*
@@ -768,11 +768,16 @@ class NetForever : public NetProc {
 class NetFuncDef {
 
     public:
-      NetFuncDef(const string&, NetProc*st, const svector<NetNet*>&po);
+      NetFuncDef(const string&, const svector<NetNet*>&po);
       ~NetFuncDef();
+
+      void set_proc(NetProc*st);
 
       const string& name() const;
       const NetProc*proc() const;
+
+      unsigned port_count() const;
+      const NetNet*port(unsigned idx) const;
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -951,6 +956,10 @@ class NetEUFunc  : public NetExpr {
       const string& name() const;
 
       const NetESignal*result() const;
+      unsigned parm_count() const;
+      const NetExpr* parm(unsigned idx) const;
+
+      const NetFuncDef* definition() const;
 
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
@@ -1402,7 +1411,8 @@ class Design {
 
 	// Functions
       void add_function(const string&n, NetFuncDef*);
-      NetFuncDef* find_function(const string&key);
+      NetFuncDef* find_function(const string&path, const string&key);
+      NetFuncDef* find_function(const string&path);
 
 	// Tasks
       void add_task(const string&n, NetTaskDef*);
@@ -1508,6 +1518,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.59  1999/09/01 20:46:19  steve
+ *  Handle recursive functions and arbitrary function
+ *  references to other functions, properly pass
+ *  function parameters and save function results.
+ *
  * Revision 1.58  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PTask.h,v 1.4 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: PTask.h,v 1.5 1999/09/01 20:46:19 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -63,7 +63,10 @@ class PFunction : public LineInfo {
 
       void set_output(PWire*);
 
-      virtual void elaborate(Design *des, const string &path) const;
+	/* Functions are elaborated in 2 passes. */
+      virtual void elaborate_1(Design *des, const string &path) const;
+      virtual void elaborate_2(Design *des, const string &path) const;
+
       void dump(ostream&, unsigned) const;
 
     private:
@@ -74,6 +77,11 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.5  1999/09/01 20:46:19  steve
+ *  Handle recursive functions and arbitrary function
+ *  references to other functions, properly pass
+ *  function parameters and save function results.
+ *
  * Revision 1.4  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.36 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.37 1999/09/01 20:46:19 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -206,11 +206,38 @@ void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
       result = val;
 }
 
+/*
+ * A function call is handled by assigning the parameters from the
+ * input expressions, then calling the function. After the function
+ * returns, copy the result into a temporary variable.
+ *
+ * Function calls are different from tasks in this regard--tasks had
+ * all this assigning arranged during elaboration. For functions, we
+ * must do it ourselves.
+ */
 void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 {
-      string name = mangle(expr->name());
-      os_ << "        " << name << "(sim_);" << endl;
-      result = mangle(expr->result()->name()) + "_bits";
+      const NetFuncDef*def = expr->definition();
+      const unsigned pcnt = expr->parm_count();
+      assert(pcnt == (def->port_count()-1));
+
+	/* Scan the parameter expressions, and assign the values to
+	   the parameter port register. */
+      for (unsigned idx = 0 ;  idx < pcnt ;  idx += 1) {
+	    expr->parm(idx)->expr_scan(this);
+	    os_ << "        " << mangle(def->port(idx+1)->name()) <<
+		  "_bits = " << result << ";" << endl;
+      }
+
+	/* Make the function call. */
+      os_ << "        " << mangle(expr->name()) << "(sim_);" << endl;
+
+	/* Save the return value in a temporary. */
+      result = make_temp();
+      string rbits = mangle(expr->result()->name()) + "_bits";
+
+      os_ << "        vvm_bitset_t<" << expr->expr_width() << "> " <<
+	    result << " = " << rbits << ";" << endl;
 }
 
 void vvm_proc_rval::expr_unary(const NetEUnary*expr)
@@ -537,10 +564,13 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
       thread_step_ = 0;
       const string name = mangle(def->name());
       os << "// Function " << def->name() << endl;
-      os << "static void " << name << "(vvm_simulation*sim_)" << endl;
-      os << "{" << endl;
-      def->proc()->emit_proc(os, this);
-      os << "}" << endl;
+      os << "static void " << name << "(vvm_simulation*);" << endl;
+
+      delayed << "// Function " << def->name() << endl;
+      delayed << "static void " << name << "(vvm_simulation*sim_)" << endl;
+      delayed << "{" << endl;
+      def->proc()->emit_proc(delayed, this);
+      delayed << "}" << endl;
 }
 
 /*
@@ -1191,19 +1221,6 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 {
       string ptmp = make_temp();
 
-#if 0
-      os << "        struct __vpiHandle " << ptmp << "[" <<
-	    net->nparms() << "];" << endl;
-      for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1)
-	    if (net->parm(idx)) {
-		  string val = emit_parm_rval(os, net->parm(idx));
-		  os << "        vvm_make_vpi_parm(&" << ptmp << "["
-		     << idx << "], " << val << ");" << endl;
-	    } else {
-		  os << "        vvm_make_vpi_parm(&" << ptmp << "["
-		     << idx << "]);" << endl;
-	    }
-#else
       os << "        vpiHandle " << ptmp << "[" << net->nparms() <<
 	    "];" << endl;
       for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1) {
@@ -1221,7 +1238,6 @@ void target_vvm::proc_stask(ostream&os, const NetSTask*net)
 	    os << "        " << ptmp << "[" << idx << "] = " << val << ";"
 	       << endl;
       }
-#endif
 
       os << "        vvm_calltask(sim_, \"" << net->name() << "\", " <<
 	    net->nparms() << ", " << ptmp << ");" << endl;
@@ -1385,6 +1401,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.37  1999/09/01 20:46:19  steve
+ *  Handle recursive functions and arbitrary function
+ *  references to other functions, properly pass
+ *  function parameters and save function results.
+ *
  * Revision 1.36  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.74 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.75 1999/09/01 20:46:19 steve Exp $"
 #endif
 
 /*
@@ -736,7 +736,13 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 NetEUFunc* PECallFunction::elaborate_expr(Design*des, const string&path) const
 {
       string myname = path+"."+name_;
-      NetFuncDef*def = des->find_function(myname);
+      NetFuncDef*def = des->find_function(path, name_);
+      if (def == 0) {
+	    cerr << get_line() << ": No function " << name_ <<
+		  " in this context (" << path << ")." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
       assert(def);
       svector<NetExpr*> parms (parms_.count());
 
@@ -745,7 +751,17 @@ NetEUFunc* PECallFunction::elaborate_expr(Design*des, const string&path) const
 	    parms[idx] = tmp;
       }
 
-      NetNet*res = des->find_signal(myname, name_);
+	/* Look for the return value signal for the called function in
+	   the context of the function definition, not my context. */
+      NetNet*res = des->find_signal(def->name(), name_);
+      if (res == 0) {
+	    cerr << get_line() << ": INTERNAL ERROR: Unable to locate "
+		  "function return value for " << name_ << " in " <<
+		  def->name() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       assert(res);
       NetESignal*eres = new NetESignal(res);
       assert(eres);
@@ -1887,16 +1903,16 @@ NetProc* PForStatement::elaborate(Design*des, const string&path) const
       return top;
 }
 
-void PFunction::elaborate(Design*des, const string&path) const
+/*
+ * Elaborating function definitions takes 2 passes. The first creates
+ * the NetFuncDef object and attaches the ports to it. The second pass
+ * (elaborate_2) elaborates the statement that is contained
+ * within. These passes are needed because the statement may invoke
+ * the function itself (or other functions) so can't be elaborated
+ * until all the functions are partially elaborated.
+ */
+void PFunction::elaborate_1(Design*des, const string&path) const
 {
-      NetProc*st = statement_->elaborate(des, path);
-      if (st == 0) {
-	    cerr << statement_->get_line() << ": Unable to elaborate "
-		  "statement in function " << path << " at " << get_line()
-		 << "." << endl;
-	    return;
-      }
-
 	/* Translate the wires that are ports to NetNet pointers by
 	   presuming that the name is already elaborated, and look it
 	   up in the design. Then save that pointer for later use by
@@ -1910,9 +1926,24 @@ void PFunction::elaborate(Design*des, const string&path) const
 	    ports[idx+1] = tmp;
       }
 
-
-      NetFuncDef*def = new NetFuncDef(path, st, ports);
+      NetFuncDef*def = new NetFuncDef(path, ports);
       des->add_function(path, def);
+}
+
+void PFunction::elaborate_2(Design*des, const string&path) const
+{
+      NetFuncDef*def = des->find_function(path);
+      assert(def);
+
+      NetProc*st = statement_->elaborate(des, path);
+      if (st == 0) {
+	    cerr << statement_->get_line() << ": Unable to elaborate "
+		  "statement in function " << path << "." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
+      def->set_proc(st);
 }
 
 NetProc* PRepeat::elaborate(Design*des, const string&path) const
@@ -2036,10 +2067,17 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
 
 	// Elaborate functions.
       typedef map<string,PFunction*>::const_iterator mfunc_it_t;
+
       for (mfunc_it_t cur = funcs_.begin()
 		 ; cur != funcs_.end() ;  cur ++) {
 	    string pname = path + "." + (*cur).first;
-	    (*cur).second->elaborate(des, pname);
+	    (*cur).second->elaborate_1(des, pname);
+      }
+
+      for (mfunc_it_t cur = funcs_.begin()
+		 ; cur != funcs_.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    (*cur).second->elaborate_2(des, pname);
       }
 
 	// Elaborate the task definitions. This is done before the
@@ -2127,6 +2165,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.75  1999/09/01 20:46:19  steve
+ *  Handle recursive functions and arbitrary function
+ *  references to other functions, properly pass
+ *  function parameters and save function results.
+ *
  * Revision 1.74  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *
