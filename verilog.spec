@@ -1,10 +1,10 @@
 Summary: Icarus Verilog
 Name: verilog
-Version: 0.6.20021027
+Version: 0.6.20021102
 Release: 0
 Copyright: GPL
 Group: Applications/Engineering
-Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-20021027.tar.gz
+Source: ftp://icarus.com/pub/eda/verilog/snapshots/verilog-20021102.tar.gz
 URL: http://www.icarus.com/eda/verilog/index.html
 Packager: Stephen Williams <steve@icarus.com>
 
@@ -20,7 +20,7 @@ engineering formats, including simulation. It strives to be true
 to the IEEE-1364 standard.
 
 %prep
-%setup -n verilog-20021027
+%setup -n verilog-20021102
 
 %build
 ./configure --prefix=/usr
