@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.74 2001/02/17 05:15:33 steve Exp $"
+#ident "$Id: pform.cc,v 1.75 2001/04/28 23:18:08 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -443,13 +443,6 @@ static void pform_make_modgate(const string&type,
 			       PExpr*msb, PExpr*lsb,
 			       const char*fn, unsigned ln)
 {
-      if (name == "") {
-	    cerr << fn << ":" << ln << ": Instantiation of " << type
-		 << " module requires an instance name." << endl;
-	    error_count += 1;
-	    return;
-      }
-
       PGModule*cur = new PGModule(type, name, wires);
       cur->set_file(fn);
       cur->set_lineno(ln);
@@ -481,13 +474,6 @@ static void pform_make_modgate(const string&type,
 			       PExpr*msb, PExpr*lsb,
 			       const char*fn, unsigned ln)
 {
-      if (name == "") {
-	    cerr << fn << ":" << ln << ": Instantiation of " << type
-		 << " module requires an instance name." << endl;
-	    error_count += 1;
-	    return;
-      }
-
       unsigned npins = bind->count();
       named<PExpr*>*pins = new named<PExpr*>[npins];
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
@@ -1010,6 +996,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.75  2001/04/28 23:18:08  steve
+ *  UDP instances need not have user supplied names.
+ *
  * Revision 1.74  2001/02/17 05:15:33  steve
  *  Allow task ports to be given real types.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.7 2000/12/16 01:45:48 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.8 2001/04/28 23:18:08 steve Exp $"
 #endif
 
 /*
@@ -191,6 +191,13 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 
 void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 {
+      if (get_name() == "") {
+	    cerr << get_line() << ": error: Instantiation of module "
+		 << mod->get_name() << " requires an instance name." << endl;
+	    des->errors += 1;
+	    return;
+      }
+
 	// Missing module instance names have already been rejected.
       assert(get_name() != "");
 
@@ -444,6 +451,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.8  2001/04/28 23:18:08  steve
+ *  UDP instances need not have user supplied names.
+ *
  * Revision 1.7  2000/12/16 01:45:48  steve
  *  Detect recursive instantiations (PR#2)
  *
