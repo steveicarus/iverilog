@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: event.cc,v 1.2 2001/11/16 04:22:27 steve Exp $"
+#ident "$Id: event.cc,v 1.3 2001/12/29 23:59:06 steve Exp $"
 #endif
 
 # include  "event.h"
@@ -39,6 +39,10 @@ event_functor_s::event_functor_s(edge_t e)
 event_functor_s::~event_functor_s() 
 {}
 
+/*
+ * Receive a value into an event functor, whether an edge or event/or.
+ * Detect edges, if any, then schedule awakened threads.
+ */
 void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 {
       old_ival = ival;
@@ -49,6 +53,10 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 
 	    bool edge_p = true;
 
+	      /* If there is an edge detect lookup table, then use the
+		 out input and new input to detect whether this is the
+		 requested edge. If there is no edge table, then any
+		 set is a match. */
 	    if (edge) {
 		  
 		  unsigned pp = ipoint_port(ptr);
@@ -60,14 +68,23 @@ void event_functor_s::set(vvp_ipoint_t ptr, bool, unsigned val, unsigned)
 		  edge_p = ((edge>>val) & 1) != 0;
 	    }
 
+	      /* If we detect an edge, then schedule any threads that
+		 are attached to this event, then propagate the
+		 positive detect to the output.
+
+		 Note that only other events (notably event/or
+		 functors) can be connected to event outputs. */
+
 	    if (edge_p) {
 		  vthread_t tmp = threads;
 		  threads = 0;
 		  vthread_schedule_list(tmp);
 		  
-		  if (out)
-			// only one output?  Why not propagate?
-			schedule_assign(out, 0, 0);
+		  if (out) {
+			functor_set(out, 0, St0, true);
+		  }
+		    // only one output?  Why not propagate?
+		    //schedule_assign(out, 0, 0);
 	    }
       }
 }
@@ -131,6 +148,9 @@ void compile_event(char*label, char*type,
 
 /*
  * $Log: event.cc,v $
+ * Revision 1.3  2001/12/29 23:59:06  steve
+ *  push events through event/or lists.
+ *
  * Revision 1.2  2001/11/16 04:22:27  steve
  *  include stdlib.h for portability.
  *
