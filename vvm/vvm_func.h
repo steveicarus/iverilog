@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.24 2000/03/24 02:43:37 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.25 2000/03/25 02:43:57 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -212,45 +212,45 @@ void vvm_binop_shiftr(vvm_bitset_t<WIDTH>&v,
  * extended with zeros. Also, if there is Vx or Vz anywhere in either
  * vectors, the result is Vx.
  */
-extern vvm_bitset_t<1> vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r);
-extern vvm_bitset_t<1> vvm_binop_ne(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_ne(const vvm_bits_t&l, const vvm_bits_t&r);
 
 /*
  * This function return true if all the bits are the same. Even x and
  * z bites are compared for equality.
  */
-extern vvm_bitset_t<1> vvm_binop_eeq(const vvm_bits_t&l, const vvm_bits_t&r);
-extern vvm_bitset_t<1> vvm_binop_nee(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_eeq(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_nee(const vvm_bits_t&l, const vvm_bits_t&r);
 
 
 /*
  * This function return true if all the bits are the same. The x and z
  * bits are don't care, s don't make the result false.
  */
-extern vvm_bitset_t<1> vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_xeq(const vvm_bits_t&l, const vvm_bits_t&r);
 
 /*
  * This function return true if all the bits are the same. The z
  * bits are don't care, so don't make the result false.
  */
-extern vvm_bitset_t<1> vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_zeq(const vvm_bits_t&l, const vvm_bits_t&r);
 
 
-extern vvm_bitset_t<1> vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_lt(const vvm_bits_t&l, const vvm_bits_t&r);
 
 /*
  * The <= operator takes operands of natural width and returns a
  * single bit. The result is V1 if l <= r, otherwise V0;
  */
-extern vvm_bitset_t<1> vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_le(const vvm_bits_t&l, const vvm_bits_t&r);
 
-extern vvm_bitset_t<1> vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_gt(const vvm_bits_t&l, const vvm_bits_t&r);
 
-extern vvm_bitset_t<1> vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r);
 
-extern vvm_bitset_t<1> vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r);
 
-extern vvm_bitset_t<1> vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r);
+extern vpip_bit_t vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r);
 
 template <unsigned W>
 void vvm_ternary(vvm_bitset_t<W>&v, vpip_bit_t c,
@@ -278,6 +278,10 @@ void vvm_ternary(vvm_bitset_t<W>&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.25  2000/03/25 02:43:57  steve
+ *  Remove all remain vvm_bitset_t return values,
+ *  and disallow vvm_bitset_t copying.
+ *
  * Revision 1.24  2000/03/24 02:43:37  steve
  *  vvm_unop and vvm_binop pass result by reference
  *  instead of returning a value.

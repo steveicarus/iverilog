@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.50 2000/03/24 03:47:01 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.51 2000/03/25 02:43:57 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -488,7 +488,8 @@ class vvm_ram_dq  : protected vvm_ram_callback,  public vvm_nexus::recvr_t {
 	    }
 
       void send_out_()
-	    { vvm_bitset_t<WIDTH>ov = mem_->get_word(addr_val_);
+	    { vvm_bitset_t<WIDTH>ov;
+	      mem_->get_word(addr_val_, ov);
 	      for (unsigned bit = 0 ;  bit < WIDTH ;  bit += 1) {
 		    vvm_out_event*ev = new vvm_out_event(ov[bit], out_+bit);
 		    ev->schedule();
@@ -754,7 +755,7 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 		  value_[idx] = HiZ;
 	    }
 
-      vvm_bitset_t<WIDTH> get() const { return value_; }
+      vpip_bit_t get(unsigned idx) const { return value_[idx]; }
 
       void init_P(int idx, vpip_bit_t val)
 	    { assert(idx < WIDTH);
@@ -794,6 +795,10 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.51  2000/03/25 02:43:57  steve
+ *  Remove all remain vvm_bitset_t return values,
+ *  and disallow vvm_bitset_t copying.
+ *
  * Revision 1.50  2000/03/24 03:47:01  steve
  *  Update vvm_ram_dq to nexus style.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.123 2000/03/24 03:47:01 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.124 2000/03/25 02:43:56 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -258,12 +258,21 @@ void vvm_proc_rval::expr_ident(const NetEIdent*expr)
       result = mangle(expr->name());
 }
 
+/*
+ * a bitset rval that is a memory reference.
+ */
 void vvm_proc_rval::expr_memory(const NetEMemory*mem)
 {
+      const string tname = make_temp();
+      os_ << setw(indent_) << "" << "vvm_bitset_t<"
+	  << mem->expr_width() << "> " << tname << ";" << endl;
+
       const string mname = mangle(mem->name());
       assert(mem->index());
       mem->index()->expr_scan(this);
-      result = mname + ".get_word(" + result + ".as_unsigned())";
+      os_ << setw(indent_) << "" << mname << ".get_word(" <<
+	    result<<".as_unsigned(), " << tname << ");";
+      result = tname;
 }
 
 void vvm_proc_rval::expr_signal(const NetESignal*expr)
@@ -329,8 +338,13 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 	   the parameter port register. */
       for (unsigned idx = 0 ;  idx < pcnt ;  idx += 1) {
 	    expr->parm(idx)->expr_scan(this);
-	    os_ << "        " << mangle(def->port(idx+1)->name()) <<
-		  "_bits = " << result << ";" << endl;
+	    string bname = mangle(def->port(idx+1)->name());
+	    for (unsigned bit = 0 ; 
+		 bit < expr->parm(idx)->expr_width() ;  bit += 1) {
+
+		  os_ << "      " << bname << "_bits["<<bit<<"] = " <<
+			result << "["<<bit<<"];" << endl;
+	    }
       }
 
 	/* Make the function call. */
@@ -340,8 +354,13 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
       result = make_temp();
       string rbits = mangle(expr->result()->name()) + "_bits";
 
-      os_ << "        vvm_bitset_t<" << expr->expr_width() << "> " <<
-	    result << " = " << rbits << ";" << endl;
+      os_ << "      vvm_bitset_t<" << expr->expr_width() << "> " <<
+	    result << ";" << endl;
+
+      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
+	    os_ << "      " << result<<"["<<idx<<"] = " <<
+		  rbits<<"["<<idx<<"];" << endl;
+      }
 }
 
 void vvm_proc_rval::expr_unary(const NetEUnary*expr)
@@ -354,7 +373,8 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 
       switch (expr->op()) {
 	  case '~':
-	    os_ << "vvm_unop_not(" << tname << "," << result << ");" << endl;
+	    os_ << "      vvm_unop_not(" << tname << "," << result <<
+		  ");" << endl;
 	    break;
 	  case '&':
 	    os_ << "      " << tname << "[0] "
@@ -410,19 +430,19 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 	    expr->expr_width() << ">" << result << ";" << endl;
       switch (expr->op()) {
 	  case 'a': // logical and (&&)
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_land("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_land("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'E': // ===
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_eeq("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_eeq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'e': // ==
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_eq("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_eq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'G': // >=
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_ge("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_ge("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'l': // left shift(<<)
@@ -430,27 +450,27 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'L': // <=
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_le("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_le("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'N': // !==
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_nee("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_nee("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'n':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_ne("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_ne("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '<':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_lt("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_lt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '>':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_gt("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_gt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'o': // logical or (||)
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_lor("
+	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_lor("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'r': // right shift(>>)
@@ -1897,7 +1917,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 	    string guard = emit_proc_rval(defn, 8, net->expr(idx));
 
 	    defn << "      if (B_IS1(" << test_func << "(" << guard << ","
-	       << expr << ")[0])) {" << endl;
+	       << expr << "))) {" << endl;
 	    defn << "          step_ = &" << thread_class_ <<
 		  "::step_" << thread_step_ << "_;" << endl;
 	    defn << "          return true;" << endl;
@@ -2009,7 +2029,7 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 	    string guard = emit_proc_rval(defn, 6, net->expr(idx));
 
 	    defn << "      if (B_IS1(" << test_func << "(" <<
-		  guard << "," << expr << ")[0])) {" << endl;
+		  guard << "," << expr << "))) {" << endl;
 	    if (net->stat(idx))
 		  net->stat(idx)->emit_proc(os, this);
 	    defn << "      break; }" << endl;
@@ -2275,7 +2295,7 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
 	/* POSITIVE is for the wait construct, and needs to be handled
 	   specially. The structure of the generated code is:
 
-	     if (event.get()==V1) {
+	     if (event.get(0)==V1) {
 	         return true;
 	     } else {
 	         event.wait(this);
@@ -2295,7 +2315,7 @@ void target_vvm::proc_event(ostream&os, const NetPEvent*proc)
       svector<const NetNEvent*>*list = proc->back_list();
       if ((list->count()==1) && ((*list)[0]->type() == NetNEvent::POSITIVE)) {
 	    defn << "      if (B_IS1(" << mangle((*list)[0]->name()) <<
-		  ".get()[0])) {" << endl;
+		  ".get(0))) {" << endl;
 	    defn << "         return true;" << endl;
 	    defn << "      } else {" << endl;
 	    defn << "         " << mangle(proc->name()) <<
@@ -2367,6 +2387,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.124  2000/03/25 02:43:56  steve
+ *  Remove all remain vvm_bitset_t return values,
+ *  and disallow vvm_bitset_t copying.
+ *
  * Revision 1.123  2000/03/24 03:47:01  steve
  *  Update vvm_ram_dq to nexus style.
  *

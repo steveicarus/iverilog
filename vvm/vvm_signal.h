@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.4 2000/03/24 02:43:37 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.5 2000/03/25 02:43:57 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -38,23 +38,6 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  bits[idx] = HiZ;
 	    }
-#if 0
-      vvm_bitset_t(const vvm_bits_t&that)
-	    { unsigned wid = WIDTH;
-	      if (that.get_width() < WIDTH)
-		    wid = that.get_width();
-	      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-		    bits[idx] = that.get_bit(idx);
-	      for (unsigned idx = wid ;  idx < WIDTH ;  idx += 1)
-		    bits[idx] = St0;
-	    }
-#endif
-#if 0
-      vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
-	    { for (unsigned idx = 0; idx < WIDTH; idx += 1)
-		    bits[idx] = that.bits[idx];
-	    }
-#endif
 
       vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
       vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
@@ -64,6 +47,10 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 
     public:
       vpip_bit_t bits[WIDTH];
+
+    private: // not implemented
+      vvm_bitset_t(const vvm_bitset_t<WIDTH>&);
+      vvm_bitset_t<WIDTH>& operator= (const vvm_bitset_t<WIDTH>&);
 };
 
 /*
@@ -117,13 +104,11 @@ class vvm_memory_t : public __vpiMemory {
 	      call_list_(addr);
 	    }
 
-      vvm_bitset_t<WIDTH> get_word(unsigned addr) const
-	    { vvm_bitset_t<WIDTH> val;
-	      unsigned base = WIDTH * addr;
+      void get_word(unsigned addr, vvm_bitset_t<WIDTH>&val) const
+	    { unsigned base = WIDTH * addr;
 	      assert(addr < size);
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		    val[idx] = bits[base+idx];
-	      return val;
 	    }
 
       void set_callback(vvm_ram_callback*ram)
@@ -135,7 +120,10 @@ class vvm_memory_t : public __vpiMemory {
 	  public:
 	    assign_nb(vvm_memory_t<WIDTH,SIZE>&m, unsigned i,
 		      const vvm_bitset_t<WIDTH>&v)
-	    : mem_(m), index_(i), val_(v) { }
+	    : mem_(m), index_(i)
+	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		  val_[idx] = v[idx];
+	    }
 
 	    void event_function() { mem_.set_word(index_, val_); }
 
@@ -156,6 +144,10 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.5  2000/03/25 02:43:57  steve
+ *  Remove all remain vvm_bitset_t return values,
+ *  and disallow vvm_bitset_t copying.
+ *
  * Revision 1.4  2000/03/24 02:43:37  steve
  *  vvm_unop and vvm_binop pass result by reference
  *  instead of returning a value.
