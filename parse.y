@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.35 1999/06/10 04:03:53 steve Exp $"
+#ident "$Id: parse.y,v 1.36 1999/06/10 05:33:12 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1173,6 +1173,7 @@ statement
 		{ PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11, $13);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| K_for '(' lpvalue '=' expression ';' expression ';'
 	  error ')' statement
