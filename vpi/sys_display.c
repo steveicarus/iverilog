@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.12 2000/03/31 07:08:39 steve Exp $"
+#ident "$Id: sys_display.c,v 1.13 2000/04/21 02:00:35 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -104,6 +104,10 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 		      case 'H':
 		      case 'x':
 		      case 'X':
+			if (idx >= argc) {
+			      vpi_printf("%s", "\nRAN OUT OF VALUES\n");
+			      exit(1);
+			}
 			value.format = vpiHexStrVal;
 			vpi_get_value(argv[idx++], &value);
 			vpi_printf("%s", value.value.str);
@@ -421,6 +425,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.13  2000/04/21 02:00:35  steve
+ *  exit if hex value is missing.
+ *
  * Revision 1.12  2000/03/31 07:08:39  steve
  *  allow cancelling of cbValueChange events.
  *
