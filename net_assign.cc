@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.2 2000/09/02 23:40:13 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.3 2000/09/07 00:06:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -50,6 +50,12 @@ void NetAssign_::set_bmux(NetExpr*r)
 const NetExpr* NetAssign_::bmux() const
 {
       return bmux_;
+}
+
+unsigned NetAssign_::lwidth() const
+{
+      if (bmux_) return 1;
+      else return pin_count();
 }
 
 NetAssignBase::NetAssignBase(NetAssign_*lv, NetExpr*rv)
@@ -91,6 +97,12 @@ const NetAssign_* NetAssignBase::l_val(unsigned idx) const
       return lval_;
 }
 
+unsigned NetAssignBase::lwidth() const
+{
+      assert(lval_);
+      return lval_->lwidth();
+}
+
 
 NetAssign::NetAssign(NetAssign_*lv, NetExpr*rv)
 : NetAssignBase(lv, rv)
@@ -112,6 +124,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.3  2000/09/07 00:06:53  steve
+ *  encapsulate access to the l-value expected width.
+ *
  * Revision 1.2  2000/09/02 23:40:13  steve
  *  Pull NetAssign_ creation out of constructors.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.160 2000/09/02 23:40:13 steve Exp $"
+#ident "$Id: netlist.h,v 1.161 2000/09/07 00:06:53 steve Exp $"
 #endif
 
 /*
@@ -1124,9 +1124,9 @@ class NetProc : public LineInfo {
  * in the NetProc behaviors.
  *
  * The l-value of the assignment is a collection of NetAssign_
- * objects. These are nodes that connect to the structural netlist
- * where the assignment has its effect. The NetAssign_ class is not to
- * be derived from.
+ * objects that are connected to the structural netlist where the
+ * assignment has its effect. The NetAssign_ class is not to be
+ * derived from. 
  *
  * NOTE: The elaborator will make an effort to match the width of the
  * r-value to the with of the l-value, but targets and functions
@@ -1144,8 +1144,12 @@ class NetAssign_ : public NetNode {
 	// the pin that gets the value.
       const NetExpr*bmux() const;
 
-
       void set_bmux(NetExpr*);
+
+	// Get the width of the r-value that this node expects. This
+	// method accounts for the presence of the mux, so it not
+	// nexessarily the same as the pin_count().
+      unsigned lwidth() const;
 
       virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1169,6 +1173,10 @@ class NetAssignBase : public NetProc {
 
       NetAssign_* l_val(unsigned);
       const NetAssign_* l_val(unsigned) const;
+
+	// This returns the total width of the accumulated l-value. It
+	// accounts for any grouping of NetAssign_ objects that might happen.
+      unsigned lwidth() const;
 
     private:
       NetAssign_*lval_;
@@ -2744,6 +2752,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.161  2000/09/07 00:06:53  steve
+ *  encapsulate access to the l-value expected width.
+ *
  * Revision 1.160  2000/09/02 23:40:13  steve
  *  Pull NetAssign_ creation out of constructors.
  *

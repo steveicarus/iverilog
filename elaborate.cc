@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.186 2000/09/03 17:58:35 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.187 2000/09/07 00:06:53 steve Exp $"
 #endif
 
 /*
@@ -751,6 +751,16 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
  * NetAssign_ node as a b_mux value. The target must interpret the
  * presense of a bmux value as taking a single bit and assigning it to
  * the bit selected by the bmux expression.
+ *
+ * If the l-value expression is non-trivial, but can be fully
+ * evaluated at compile time (meaning any bit selects are constant)
+ * then elaboration will make a single NetAssign_ that connects to a
+ * synthetic reg that in turn connects to all the proper pins of the
+ * l-value.
+ *
+ * This last case can turn up in statements like: {a, b[1]} = c;
+ * rather then create a NetAssign_ for each item in the contatenation,
+ * elaboration makes a single NetAssign_ and connects it up properly.
  */
 NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope)const
 {
@@ -1036,11 +1046,10 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    return bl;
       }
 
-      if (lv->bmux() == 0) {
-	    rv->set_width(lv->pin_count());
-	    rv = pad_to_width(rv, lv->pin_count());
-	    assert(rv->expr_width() >= lv->pin_count());
-
+      { unsigned wid = lv->lwidth();
+        rv->set_width(wid);
+	rv = pad_to_width(rv, wid);
+	assert(rv->expr_width() >= wid);
       }
 
       NetAssign*cur = new NetAssign(lv, rv);
@@ -1118,12 +1127,9 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 
       assert(rv);
 
-      if (lv->bmux() == 0) {
-	    unsigned wid = lv->pin_count();
-
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid);
-
+      { unsigned wid = lv->lwidth();
+        rv->set_width(wid);
+	rv = pad_to_width(rv, wid);
       }
 
 
@@ -2394,6 +2400,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.187  2000/09/07 00:06:53  steve
+ *  encapsulate access to the l-value expected width.
+ *
  * Revision 1.186  2000/09/03 17:58:35  steve
  *  Change elaborate_lval to return NetAssign_ objects.
  *
