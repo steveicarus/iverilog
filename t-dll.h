@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.54 2001/07/07 20:20:10 steve Exp $"
+#ident "$Id: t-dll.h,v 1.55 2001/07/19 04:55:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -512,7 +512,7 @@ struct ivl_statement_s {
 	    } delay_;
 
 	    struct { /* IVL_ST_DELAYX */
-		  int expr_; /* XXXX */
+		  ivl_expr_t expr; /* XXXX */
 		  ivl_statement_t stmt_;
 	    } delayx_;
 
@@ -552,6 +552,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.55  2001/07/19 04:55:06  steve
+ *  Support calculated delays in vvp.tgt.
+ *
  * Revision 1.54  2001/07/07 20:20:10  steve
  *  Pass parameters to system functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.55 2001/07/07 20:20:10 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.56 2001/07/19 04:55:06 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -1111,6 +1111,9 @@ extern "C" ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net)
 	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.delay;
 
+	  case IVL_ST_DELAYX:
+	    return net->u_.delayx_.expr;
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -1241,6 +1244,8 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_DELAY:
 	    return net->u_.delay_.stmt_;
+	  case IVL_ST_DELAYX:
+	    return net->u_.delayx_.stmt_;
 	  case IVL_ST_FOREVER:
 	    return net->u_.forever_.stmt_;
 	  case IVL_ST_WAIT:
@@ -1257,6 +1262,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.56  2001/07/19 04:55:06  steve
+ *  Support calculated delays in vvp.tgt.
+ *
  * Revision 1.55  2001/07/07 20:20:10  steve
  *  Pass parameters to system functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.38 2001/06/29 02:41:05 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.39 2001/07/19 04:55:06 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -453,6 +453,29 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+/*
+ * The delayx statement is slightly more complex in that it is
+ * necessary to calculate the delay first. Load the calculated delay
+ * into and index register and use the %delayx instruction to do the
+ * actual delay.
+ */
+static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+      ivl_expr_t exp = ivl_stmt_delay_expr(net);
+      ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
+
+      { struct vector_info del = draw_eval_expr(exp);
+        fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", del.base, del.wid);
+	clr_vector(del);
+      }
+
+      fprintf(vvp_out, "    %%delayx 0;\n");
+
+      rc += show_statement(stmt, sscope);
+      return rc;
+}
+
 static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
@@ -755,6 +778,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    rc += show_stmt_delay(net, sscope);
 	    break;
 
+	  case IVL_ST_DELAYX:
+	    rc += show_stmt_delayx(net, sscope);
+	    break;
+
 	  case IVL_ST_DISABLE:
 	    rc += show_stmt_disable(net, sscope);
 	    break;
@@ -887,6 +914,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.39  2001/07/19 04:55:06  steve
+ *  Support calculated delays in vvp.tgt.
+ *
  * Revision 1.38  2001/06/29 02:41:05  steve
  *  Handle null parameters to system tasks.
  *

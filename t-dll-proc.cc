@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.30 2001/06/21 23:23:14 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.31 2001/07/19 04:55:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -444,6 +444,11 @@ bool dll_target::proc_delay(const NetPDelay*net)
       if (const NetExpr*expr = net->expr()) {
 
 	    stmt_cur_->type_ = IVL_ST_DELAYX;
+	    assert(expr_ == 0);
+	    expr->expr_scan(this);
+	    stmt_cur_->u_.delayx_.expr = expr_;
+	    expr_ = 0;
+
 	    stmt_cur_->u_.delayx_.stmt_ = tmp;
 
       } else {
@@ -684,6 +689,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.31  2001/07/19 04:55:06  steve
+ *  Support calculated delays in vvp.tgt.
+ *
  * Revision 1.30  2001/06/21 23:23:14  steve
  *  Initialize stmt_cur_ substatements during dll case building.
  *

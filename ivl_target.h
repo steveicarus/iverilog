@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.71 2001/07/04 22:59:25 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.72 2001/07/19 04:55:06 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -850,7 +850,7 @@ extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
   /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
-  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
+  /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB IVL_ST_DELAYX */
 extern ivl_expr_t ivl_stmt_delay_expr(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
@@ -870,7 +870,8 @@ extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
   /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
-  /* IVL_ST_DELAY, IVL_ST_FOREVER, IVL_ST_REPEAT IVL_ST_WAIT, IVL_ST_WHILE */
+  /* IVL_ST_DELAY, IVL_ST_DELAYX, IVL_ST_FOREVER, IVL_ST_REPEAT
+     IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
 
@@ -891,6 +892,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.72  2001/07/19 04:55:06  steve
+ *  Support calculated delays in vvp.tgt.
+ *
  * Revision 1.71  2001/07/04 22:59:25  steve
  *  handle left shifter in dll output.
  *
