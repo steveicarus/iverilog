@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.22 2001/02/10 19:50:33 steve Exp $"
+#ident "$Id: sys_display.c,v 1.23 2001/03/18 00:31:32 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -35,18 +35,24 @@ struct strobe_cb_info {
 
 static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
 {
-      vpiHandle item;
-      unsigned nitems = 1;
-      vpiHandle*items = malloc(sizeof(vpiHandle));
-      items[0] = vpi_scan(argv);
-      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
-	    items = realloc(items, (nitems+1)*sizeof(vpiHandle));
-	    items[nitems] = item;
-	    nitems += 1;
-      }
+      if (argv) {
+	    vpiHandle item;
+	    unsigned nitems = 1;
+	    vpiHandle*items = malloc(sizeof(vpiHandle));
+	    items[0] = vpi_scan(argv);
+	    for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
+		  items = realloc(items, (nitems+1)*sizeof(vpiHandle));
+		  items[nitems] = item;
+		  nitems += 1;
+	    }
 
-      info->nitems = nitems;
-      info->items = items;
+	    info->nitems = nitems;
+	    info->items = items;
+
+      } else {
+	    info->nitems = 0;
+	    info->items = 0;
+      }
 }
 
 
@@ -600,6 +606,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.23  2001/03/18 00:31:32  steve
+ *  $display can take 0 arguments.
+ *
  * Revision 1.22  2001/02/10 19:50:33  steve
  *  Slightly more specific error message.
  *
