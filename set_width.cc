@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.34 2003/08/28 04:11:19 steve Exp $"
+#ident "$Id: set_width.cc,v 1.34.2.1 2005/03/05 01:36:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -167,12 +167,13 @@ bool NetEBDiv::set_width(unsigned w)
       return w == expr_width();
 }
 
+/*
+ * The logical binary operators do not care what the widths of their
+ * operands are, the output is always 1 bit. The operands are
+ * self-determined, so a set_width is stopped here.
+ */
 bool NetEBLogic::set_width(unsigned w)
 {
-      bool flag;
-      flag = left_->set_width(right_->expr_width());
-      if (!flag)
-	    flag = right_->set_width(left_->expr_width());
       return (w == 1);
 }
 
@@ -411,6 +412,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.34.2.1  2005/03/05 01:36:16  steve
+ *  Fix set_width to allow binary logical operands to be self determined.
+ *
  * Revision 1.34  2003/08/28 04:11:19  steve
  *  Spelling patch.
  *
