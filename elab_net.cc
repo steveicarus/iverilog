@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.97 2002/08/21 02:28:03 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.98 2002/08/31 03:48:50 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1173,7 +1173,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 }
 
 /*
- * This provate method handles the special case that we have a
+ * This private method handles the special case that we have a
  * non-constant bit-select of an identifier. We already know that the
  * signal that is represented is "sig".
  */
@@ -1188,12 +1188,25 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
 	/* Elaborate the selector. */
       NetNet*sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
 
+      unsigned sig_width = sig->pin_count();
       NetMux*mux = new NetMux(scope, scope->local_hsymbol(), 1,
-			      sig->pin_count(),
-			      sel->pin_count());
+			      sig_width, sel->pin_count());
 
-      for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1)
-	    connect(mux->pin_Data(0, idx), sig->pin(idx));
+	/* Connect the signal bits to the mux. Account for the
+	   direction of the numbering (lsb to msb vs. msb to lsb) by
+	   swapping the connection order. */
+
+      if (sig->msb() > sig->lsb()) {
+
+	    sel = add_to_net(des, sel, -sig->lsb());
+	    for (unsigned idx = 0 ;  idx < sig_width ;  idx += 1)
+		  connect(mux->pin_Data(0, idx), sig->pin(idx));
+      } else {
+
+	    sel = add_to_net(des, sel, -sig->msb());
+	    for (unsigned idx = 0 ;  idx < sig_width ;  idx += 1)
+		  connect(mux->pin_Data(0, idx), sig->pin(sig_width-idx-1));
+      }
 
       for (unsigned idx = 0 ;  idx < sel->pin_count() ;  idx += 1)
 	    connect(mux->pin_Sel(idx), sel->pin(idx));
@@ -2161,6 +2174,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.98  2002/08/31 03:48:50  steve
+ *  Fix reverse bit ordered bit select in continuous assignment.
+ *
  * Revision 1.97  2002/08/21 02:28:03  steve
  *  Carry mux output delays.
  *

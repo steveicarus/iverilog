@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.15 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: netmisc.h,v 1.16 2002/08/31 03:48:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -32,6 +32,13 @@
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
+
+/*
+ * This function takes as input a NetNet signal and adds a constant
+ * value to it. If the val is 0, then simply return sig. Otherwise,
+ * return a new NetNet value that is the output of an addition.
+ */
+extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
 
 /*
  * In some cases the lval is accessible as a pointer to the head of
@@ -50,6 +57,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.16  2002/08/31 03:48:50  steve
+ *  Fix reverse bit ordered bit select in continuous assignment.
+ *
  * Revision 1.15  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

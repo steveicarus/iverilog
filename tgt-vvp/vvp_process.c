@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.65 2002/08/27 05:39:57 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.66 2002/08/31 03:48:50 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -270,7 +270,8 @@ static int show_stmt_assign(ivl_statement_t net)
 
 	}
 
-	clr_vector(res);
+	if (res.base > 3)
+	      clr_vector(res);
       }
 
 
@@ -403,7 +404,8 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 
 	}
 
-	clr_vector(res);
+	if (res.base > 3)
+	      clr_vector(res);
       }
 
       return 0;
@@ -1267,6 +1269,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.66  2002/08/31 03:48:50  steve
+ *  Fix reverse bit ordered bit select in continuous assignment.
+ *
  * Revision 1.65  2002/08/27 05:39:57  steve
  *  Fix l-value indexing of memories and vectors so that
  *  an unknown (x) index causes so cell to be addresses.
