@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.10 2003/02/04 04:03:40 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.11 2003/02/06 17:41:33 steve Exp $"
 #endif
 
 /*
@@ -367,6 +367,22 @@ struct __vpiVThrWord {
       unsigned short index;
 };
 
+static int vthr_word_get(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code==vpiConstant);
+
+      struct __vpiVThrWord*rfp = (struct __vpiVThrWord*)ref;
+
+      switch (code) {
+
+	  case vpiConstType:
+	    return rfp->subtype;
+
+	  default:
+	    return 0;
+      }
+}
+
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       assert(ref->vpi_type->type_code==vpiConstant);
@@ -428,7 +444,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 static const struct __vpirt vpip_vthr_const_real_rt = {
       vpiConstant,
-      0,
+      vthr_word_get,
       0,
       vthr_real_get_value,
       0,
@@ -453,6 +469,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.11  2003/02/06 17:41:33  steve
+ *  Support constant types for thread words.
+ *
  * Revision 1.10  2003/02/04 04:03:40  steve
  *  Add hex and binary formatting of real values.
  *
