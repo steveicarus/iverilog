@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.55 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: PExpr.h,v 1.56 2002/03/09 04:02:26 steve Exp $"
 #endif
 
 # include  <string>
@@ -275,6 +275,8 @@ class PENumber : public PExpr {
 				    Link::strength_t drive1) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*) const;
       virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
+      virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
+
       virtual verinum* eval_const(const Design*des, const NetScope*sc) const;
       virtual verireal*eval_rconst(const Design*, const NetScope*) const;
 
@@ -473,6 +475,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.56  2002/03/09 04:02:26  steve
+ *  Constant expressions are not l-values for task ports.
+ *
  * Revision 1.55  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

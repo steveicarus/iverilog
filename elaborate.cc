@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.240 2002/01/23 05:56:22 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.241 2002/03/09 04:02:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1487,9 +1487,24 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    }
 
 
-	    NetAssign_*lv = parms_[idx]
-		  ? parms_[idx]->elaborate_lval(des, scope)
-		  : 0;
+	      /* Elaborate an l-value version of the port expression
+		 for output and inout ports. If the expression does
+		 not exist then quietly skip it, but if the expression
+		 is not a valid l-value print an error message. Note
+		 that the elaborate_lval method already printed a
+		 detailed message. */
+	    NetAssign_*lv;
+	    if (parms_[idx]) {
+		  lv = parms_[idx]->elaborate_lval(des, scope);
+		  if (lv == 0) {
+			cerr << parms_[idx]->get_line() << ": error: "
+			     << "I give up on task port " << (idx+1)
+			     << " expression: " << *parms_[idx] << endl;
+		  }
+	    } else {
+		  lv = 0;
+	    }
+
 	    if (lv == 0)
 		  continue;
 
@@ -2408,6 +2423,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.241  2002/03/09 04:02:26  steve
+ *  Constant expressions are not l-values for task ports.
+ *
  * Revision 1.240  2002/01/23 05:56:22  steve
  *  elaborate deassign lval as done for assign.
  *

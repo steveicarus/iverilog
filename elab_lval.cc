@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.17 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.18 2002/03/09 04:02:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,7 @@
  */
 NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
 {
-      NetNet*ll = elaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*ll = 0; //XXXXelaborate_net(des, scope, 0, 0, 0, 0);
       if (ll == 0) {
 	    cerr << get_line() << ": Assignment l-value too complex."
 		 << endl;
@@ -275,8 +275,19 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       return lv;
 }
 
+NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
+{
+      cerr << get_line() << ": error: Constant values not allowed "
+	   << "in l-value expressions." << endl;
+      des->errors += 1;
+      return 0;
+}
+
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.18  2002/03/09 04:02:26  steve
+ *  Constant expressions are not l-values for task ports.
+ *
  * Revision 1.17  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
