@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.8 2000/03/17 03:36:07 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.9 2000/03/17 19:24:00 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -134,6 +134,36 @@ void compute_mux(vpip_bit_t*out, unsigned wid,
       }
 }
 
+vvm_and2::vvm_and2(unsigned long d)
+: vvm_1bit_out(d)
+{
+}
+
+vvm_and2::~vvm_and2()
+{
+}
+
+void vvm_and2::init_I(unsigned idx, vpip_bit_t val)
+{
+      assert(idx < 2);
+      input_[idx] = val;
+}
+
+void vvm_and2::start()
+{
+      output(input_[0] & input_[1]);
+}
+
+void vvm_and2::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val)
+	    return;
+
+      input_[key] = val;
+      output(input_[0] & input_[1]);
+}
+
+
 vvm_buf::vvm_buf(unsigned long d)
 : vvm_1bit_out(d)
 {
@@ -214,6 +244,35 @@ vpip_bit_t vvm_eeq::compute_() const
       return outval;
 }
 
+vvm_nor2::vvm_nor2(unsigned long d)
+: vvm_1bit_out(d)
+{
+}
+
+vvm_nor2::~vvm_nor2()
+{
+}
+
+void vvm_nor2::init_I(unsigned idx, vpip_bit_t val)
+{
+      assert(idx < 2);
+      input_[idx] = val;
+}
+
+void vvm_nor2::start()
+{
+      output(v_not(input_[0] | input_[1]));
+}
+
+void vvm_nor2::take_value(unsigned key, vpip_bit_t val)
+{
+      if (input_[key] == val)
+	    return;
+
+      input_[key] = val;
+      output(v_not(input_[0] | input_[1]));
+}
+
 vvm_not::vvm_not(unsigned long d)
 : vvm_1bit_out(d)
 {
@@ -239,6 +298,9 @@ void vvm_not::take_value(unsigned, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.9  2000/03/17 19:24:00  steve
+ *  nor2 and and2 optimized gates.
+ *
  * Revision 1.8  2000/03/17 03:36:07  steve
  *  Remove some useless template parameters.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.44 2000/03/17 17:25:53 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.45 2000/03/17 19:24:00 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -119,7 +119,12 @@ class vvm_add_sub : public vvm_nexus::recvr_t {
       vvm_add_sub& operator= (const vvm_add_sub&);
 };
 
-
+/*
+ * These are implementations of reduction AND. the vvm_and class is
+ * the parameterized form, that takes the width of the gate input as a
+ * parameter. The vvm_andN classes are versions that have specific
+ * widths. The latter should be preferred over the generic form.
+ */
 template <unsigned WIDTH>
 class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
@@ -144,6 +149,21 @@ class vvm_and  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 
     private:
       vpip_bit_t input_[WIDTH];
+};
+
+class vvm_and2  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_and2(unsigned long d);
+      ~vvm_and2();
+
+      void init_I(unsigned idx, vpip_bit_t val);
+      void start();
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+
+      vpip_bit_t input_[2];
 };
 
 /*
@@ -425,6 +445,20 @@ class vvm_nor  : public vvm_1bit_out, public vvm_nexus::recvr_t {
 	    }
 
       vpip_bit_t input_[WIDTH];
+};
+
+class vvm_nor2  : public vvm_1bit_out, public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_nor2(unsigned long d);
+      ~vvm_nor2();
+
+      void init_I(unsigned idx, vpip_bit_t val);
+      void start();
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+      vpip_bit_t input_[2];
 };
 
 /*
@@ -814,6 +848,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.45  2000/03/17 19:24:00  steve
+ *  nor2 and and2 optimized gates.
+ *
  * Revision 1.44  2000/03/17 17:25:53  steve
  *  Adder and comparator in nexus style.
  *

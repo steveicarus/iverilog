@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.113 2000/03/17 17:25:53 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.114 2000/03/17 19:23:59 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1256,7 +1256,10 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 
       switch (gate->type()) {
 	  case NetLogic::AND:
-	    os << "static vvm_and" << "<" << gate->pin_count()-1 << "> ";
+	    if ((gate->pin_count()-1) == 2)
+		  os << "static vvm_and2 ";
+	    else
+		  os << "static vvm_and" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::BUF:
 	    os << "static vvm_buf ";
@@ -1271,7 +1274,10 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	    os << "static vvm_nand" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::NOR:
-	    os << "static vvm_nor" << "<" << gate->pin_count()-1 << "> ";
+	    if ((gate->pin_count()-1) == 2)
+		  os << "static vvm_nor2 ";
+	    else
+		  os << "static vvm_nor" << "<" << gate->pin_count()-1 << "> ";
 	    break;
 	  case NetLogic::NOT:
 	    os << "static vvm_not ";
@@ -2239,6 +2245,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.114  2000/03/17 19:23:59  steve
+ *  nor2 and and2 optimized gates.
+ *
  * Revision 1.113  2000/03/17 17:25:53  steve
  *  Adder and comparator in nexus style.
  *
