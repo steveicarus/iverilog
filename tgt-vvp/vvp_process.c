@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.46 2001/10/19 23:52:36 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.47 2001/11/01 04:26:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -451,6 +451,51 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       return 0;
 }
 
+static int show_stmt_cassign(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
+      unsigned idx;
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+
+      lsig = ivl_lval_sig(lval);
+      assert(lsig != 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(ivl_signal_pins(lsig) == ivl_stmt_nexus_count(net));
+      assert(ivl_lval_part_off(lval) == 0);
+
+      for (idx = 0 ;  idx < ivl_stmt_nexus_count(net) ;  idx += 1) {
+	    fprintf(vvp_out, "    %%cassign V_%s[%u], %s;\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx,
+		    draw_net_input(ivl_stmt_nexus(net, idx)));
+      }
+
+      return 0;
+}
+
+static int show_stmt_deassign(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+      ivl_signal_t lsig;
+      unsigned idx;
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+
+      lsig = ivl_lval_sig(lval);
+      assert(lsig != 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(ivl_lval_part_off(lval) == 0);
+
+      for (idx = 0 ;  idx < ivl_lval_pins(lval) ; idx += 1) {
+	    fprintf(vvp_out, "    %%deassign V_%s[%u], 1;\n",
+		    vvp_mangle_id(ivl_signal_name(lsig)), idx);
+      }
+      return 0;
+}
+
 static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
@@ -840,8 +885,16 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    rc += show_stmt_case(net, sscope);
 	    break;
 
+	  case IVL_ST_CASSIGN:
+	    rc += show_stmt_cassign(net);
+	    break;
+
 	  case IVL_ST_CONDIT:
 	    rc += show_stmt_condit(net, sscope);
+	    break;
+
+	  case IVL_ST_DEASSIGN:
+	    rc += show_stmt_deassign(net);
 	    break;
 
 	  case IVL_ST_DELAY:
@@ -984,6 +1037,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.47  2001/11/01 04:26:57  steve
+ *  Generate code for deassign and cassign.
+ *
  * Revision 1.46  2001/10/19 23:52:36  steve
  *  Add trailing ; to fork-join out labels.
  *

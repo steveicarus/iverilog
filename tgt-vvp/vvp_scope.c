@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.55 2001/10/24 03:43:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.56 2001/11/01 04:26:57 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -132,7 +132,6 @@ const char *vvp_mangle_name(const char *id)
  * other functions in this file are in support of that task.
  */
 
-static const char* draw_net_input(ivl_nexus_t nex);
 
 /*
  * NEXUS
@@ -269,7 +268,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
  * The string that this returns is bound to the nexus, so the pointer
  * remains valid.
  */
-static const char* draw_net_input(ivl_nexus_t nex)
+const char* draw_net_input(ivl_nexus_t nex)
 {
       char result[512];
       unsigned idx;
@@ -1218,6 +1217,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.56  2001/11/01 04:26:57  steve
+ *  Generate code for deassign and cassign.
+ *
  * Revision 1.55  2001/10/24 03:43:45  steve
  *  Write resolvers before the .functor (PR#300)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.11 2001/06/18 03:10:34 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.12 2001/11/01 04:26:57 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -57,6 +57,7 @@ extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
  */
 extern void draw_nexus_input(ivl_nexus_t nex);
 
+extern const char* draw_net_input(ivl_nexus_t nex);
 
 /*
  * The draw_eval_expr function writes out the code to evaluate a
@@ -87,6 +88,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.12  2001/11/01 04:26:57  steve
+ *  Generate code for deassign and cassign.
+ *
  * Revision 1.11  2001/06/18 03:10:34  steve
  *   1. Logic with more than 4 inputs
  *   2. Id and name mangling
