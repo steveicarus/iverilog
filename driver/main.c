@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.48 2002/12/04 02:29:36 steve Exp $"
+#ident "$Id: main.c,v 1.49 2002/12/04 03:26:59 steve Exp $"
 
 # include "config.h"
 
@@ -120,15 +120,16 @@ char tmp[MAXSIZE];
 static char ivl_root[MAXSIZE];
 
 #ifdef __MINGW32__
+# include  <io.h>
 # include  <fcntl.h>
 static FILE*fopen_safe(const char*path)
 {
       FILE*file = 0;
       int fd;
 
-      fd = open(path, O_WRONLY|O_CREAT|O_EXCL, 0700);
+      fd = _open(path, _O_WRONLY|_O_CREAT|_O_EXCL, 0700);
       if (fd != -1)
-	    file = fdopen(fd, "w");
+	    file = _fdopen(fd, "w");
 
        return file;
 }
@@ -685,6 +686,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.49  2002/12/04 03:26:59  steve
+ *  Mingw32 compatible temp file management.
+ *
  * Revision 1.48  2002/12/04 02:29:36  steve
  *  Use O_EXCL when opening temp files.
  *
