@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.181 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.182 2000/10/29 17:10:02 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2698,6 +2698,8 @@ bool target_vvm::proc_block(const NetBlock*net)
 	    defn << "      thr->callee_["<<idx<<"].step_ = &"
 		 << thread_class_ << "_step_" << (exit_step+idx+1)
 		 << "_;" << endl;
+	    defn << "      thr->callee_["<<idx<<"].scope = "
+		 << "thr->scope;" << endl;
 	    defn << "      thr->callee_["<<idx<<"].thread_yield();" << endl;
       }
 
@@ -3216,6 +3218,8 @@ void target_vvm::proc_utask(const NetUTask*net)
       defn << "      thr->callee_ = new vvm_thread;" << endl;
       defn << "      thr->callee_->back_ = thr;" << endl;
       defn << "      thr->callee_->step_ = &" << name << "_step_0_;" << endl;
+      defn << "      thr->callee_->scope = &" << mangle(net->name())
+	   << "_scope;" << endl;
       defn << "      thr->callee_->thread_yield();" << endl;
       defn << "      thr->step_ = &" << thread_class_ << "_step_"
 	   << out_step << "_;" << endl;
@@ -3394,6 +3398,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.182  2000/10/29 17:10:02  steve
+ *  task threads ned their scope initialized. (PR#32)
+ *
  * Revision 1.181  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

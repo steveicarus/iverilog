@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_scope.c,v 1.8 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.9 2000/10/29 17:10:02 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -30,7 +30,8 @@ static char* scope_get_str(int code, vpiHandle obj)
 
 
       assert((obj->vpi_type->type_code == vpiModule)
-	     || (obj->vpi_type->type_code == vpiNamedBegin));
+	     || (obj->vpi_type->type_code == vpiNamedBegin)
+	     || (obj->vpi_type->type_code == vpiTask));
 
       switch (code) {
 	  case vpiFullName:
@@ -147,6 +148,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.9  2000/10/29 17:10:02  steve
+ *  task threads ned their scope initialized. (PR#32)
+ *
  * Revision 1.8  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls
