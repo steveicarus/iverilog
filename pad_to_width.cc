@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pad_to_width.cc,v 1.1 1999/09/29 00:42:51 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.2 2000/01/01 06:17:25 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -34,7 +34,9 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
       if (wid > expr->expr_width()) {
 	    verinum pad(verinum::V0, wid - expr->expr_width());
 	    NetEConst*co = new NetEConst(pad);
+	    co->set_line(*expr);
 	    NetEConcat*cc = new NetEConcat(2);
+	    cc->set_line(*expr);
 	    cc->set(0, co);
 	    cc->set(1, expr);
 	    cc->set_width(wid);
@@ -46,6 +48,9 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.2  2000/01/01 06:17:25  steve
+ *  Propogate line number information when expanding expressions.
+ *
  * Revision 1.1  1999/09/29 00:42:51  steve
  *  Allow expanding of additive operators.
  *
