@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.12 2001/10/14 16:36:43 steve Exp $"
+#ident "$Id: arith.cc,v 1.13 2001/10/14 17:36:18 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -117,7 +117,7 @@ if(wid_ <= 8*sizeof(unsigned long)) {
 		  return;
 	    }
 
-	    if((a[idx] = ((ival & 0x01) != 0))) mxa=idx;  
+	    if((a[idx] = ((ival & 0x01) != 0))) mxa=idx+1;  
 	    if((b[idx] = ((ival & 0x04) != 0))) mxb=idx;
             sum[idx] = 0;                   
       }
@@ -574,6 +574,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, functor_t f, bool push)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.13  2001/10/14 17:36:18  steve
+ *  Forgot to propagate carry.
+ *
  * Revision 1.12  2001/10/14 16:36:43  steve
  *  Very wide multiplication (Anthony Bybell)
  *

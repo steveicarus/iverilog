@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.56 2001/10/14 16:36:43 steve Exp $"
+#ident "$Id: vthread.cc,v 1.57 2001/10/14 17:36:19 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -970,7 +970,7 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 		  goto x_out;
 		  }
 
-	    if((a[idx] = lb)) mxa=idx;
+	    if((a[idx] = lb)) mxa=idx+1;
 	    if((b[idx] = rb)) mxb=idx;
             sum[idx]=0;
 
@@ -1416,6 +1416,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.57  2001/10/14 17:36:19  steve
+ *  Forgot to propagate carry.
+ *
  * Revision 1.56  2001/10/14 16:36:43  steve
  *  Very wide multiplication (Anthony Bybell)
  *
