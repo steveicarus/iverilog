@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.18 2001/04/24 02:23:58 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.19 2001/04/24 02:59:52 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -126,13 +126,19 @@ static void draw_udp_def(ivl_udp_t udp)
       break;
     }
 
-  fprintf(vvp_out, 
-	  "UDP_%s .udp/%s \"%s\", %d, %d",
-	  ivl_udp_name(udp), 
-	  ivl_udp_sequ(udp) ? "sequ" : "comp",
-	  ivl_udp_name(udp),
-	  ivl_udp_nin(udp),
-	  init );
+  if (ivl_udp_sequ(udp))
+	fprintf(vvp_out, 
+		"UDP_%s .udp/sequ \"%s\", %d, %d",
+		ivl_udp_name(udp),
+		ivl_udp_name(udp),
+		ivl_udp_nin(udp),
+		init );
+  else
+	fprintf(vvp_out, 
+		"UDP_%s .udp/comb \"%s\", %d",
+		ivl_udp_name(udp),
+		ivl_udp_name(udp),
+		ivl_udp_nin(udp));
 
   for (i=0; i<ivl_udp_rows(udp); i++)
     fprintf(vvp_out, "\n ,\"%s\"", ivl_udp_row(udp, i) );
@@ -386,6 +392,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.19  2001/04/24 02:59:52  steve
+ *  Fix generation of udp/comb definitions.
+ *
  * Revision 1.18  2001/04/24 02:23:58  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *
