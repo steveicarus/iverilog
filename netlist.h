@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.33 1999/05/30 01:11:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.34 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 /*
@@ -212,7 +212,7 @@ class NetNode  : public NetObj {
  * of the NetObj class is used to make a set of identical wires, in
  * order to support ranges, or busses.
  */
-class NetNet  : public NetObj {
+class NetNet  : public NetObj, public LineInfo {
 
     public:
       enum Type { IMPLICIT, WIRE, TRI, TRI1, SUPPLY0, WAND, TRIAND,
@@ -1165,6 +1165,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.34  1999/06/02 15:38:46  steve
+ *  Line information with nets.
+ *
  * Revision 1.33  1999/05/30 01:11:46  steve
  *  Exressions are trees that can duplicate, and not DAGS.
  *

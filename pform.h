@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.16 1999/05/29 02:36:17 steve Exp $"
+#ident "$Id: pform.h,v 1.17 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -55,6 +55,7 @@
  */
 class PGate;
 class PExpr;
+struct vlltype;
 
 /*
  * These type are lexical types -- that is, types that are used as
@@ -105,8 +106,10 @@ extern void pform_make_udp(string*name, list<string>*parms,
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
-extern void pform_makewire(const string&name, NetNet::Type type = NetNet::IMPLICIT);
-extern void pform_makewire(const list<string>*names, NetNet::Type type);
+extern void pform_makewire(const struct vlltype&li, const string&name,
+			   NetNet::Type type = NetNet::IMPLICIT);
+extern void pform_makewire(const struct vlltype&li, const list<string>*names,
+			   NetNet::Type type);
 extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
@@ -148,6 +151,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.17  1999/06/02 15:38:46  steve
+ *  Line information with nets.
+ *
  * Revision 1.16  1999/05/29 02:36:17  steve
  *  module parameter bind by name.
  *

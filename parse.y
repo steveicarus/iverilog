@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.31 1999/06/02 02:56:29 steve Exp $"
+#ident "$Id: parse.y,v 1.32 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -795,7 +795,7 @@ module
 
 module_item
 	: net_type range_opt list_of_variables ';'
-		{ pform_makewire($3, $1);
+		{ pform_makewire(@1, $3, $1);
 		  if ($2) {
 			pform_set_net_range($3, $2);
 			delete $2;
@@ -803,7 +803,7 @@ module_item
 		  delete $3;
 		}
 	| net_type range_opt net_decl_assigns ';'
-		{ pform_makewire($3, $1);
+		{ pform_makewire(@1, $3, $1);
 		  if ($2) {
 			pform_set_net_range($3, $2);
 			delete $2;
@@ -944,11 +944,15 @@ port
 	: IDENTIFIER
 		{ $$ = new PWire(*$1, NetNet::IMPLICIT);
 		  $$->port_type = NetNet::PIMPLICIT;
+		  $$->set_file(@1.text);
+		  $$->set_lineno(@1.first_line);
 		  delete $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
 		{ PWire*tmp = new PWire(*$1, NetNet::IMPLICIT);
 		  tmp->port_type = NetNet::PIMPLICIT;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
 		  if (!pform_expression_is_constant($3)) {
 			yyerror(@3, "msb expression of port bit select "
 			        "must be constant.");
@@ -970,6 +974,8 @@ port
 		{ yyerror(@1, "invalid port bit select");
 		  $$ = new PWire(*$1, NetNet::IMPLICIT);
 		  $$->port_type = NetNet::PIMPLICIT;
+		  $$->set_file(@1.text);
+		  $$->set_lineno(@1.first_line);
 		  delete $1;
 		}
 	;
@@ -1058,11 +1064,11 @@ range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
 	: IDENTIFIER
-		{ pform_makewire(*$1, NetNet::REG);
+		{ pform_makewire(@1, *$1, NetNet::REG);
 		  $$ = $1;
 		}
 	| IDENTIFIER '[' expression ':' expression ']'
-		{ pform_makewire(*$1, NetNet::REG);
+		{ pform_makewire(@1, *$1, NetNet::REG);
 		  if (! pform_expression_is_constant($3))
 			yyerror(@3, "msb of register range must be constant.");
 		  if (! pform_expression_is_constant($5))

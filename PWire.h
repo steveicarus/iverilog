@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PWire.h,v 1.3 1999/04/19 01:59:36 steve Exp $"
+#ident "$Id: PWire.h,v 1.4 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  "LineInfo.h"
 # include <map>
 class ostream;
 class PExpr;
@@ -33,7 +34,7 @@ class Design;
  * a port by declaration, so ports are not seperate. The module
  * identifies a port by keeping it in its port list.
  */
-class PWire {
+class PWire : public LineInfo {
 
     public:
       PWire(const string&n, NetNet::Type t =NetNet::IMPLICIT)
@@ -67,6 +68,9 @@ class PWire {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.4  1999/06/02 15:38:46  steve
+ *  Line information with nets.
+ *
  * Revision 1.3  1999/04/19 01:59:36  steve
  *  Add memories to the parse and elaboration phases.
  *

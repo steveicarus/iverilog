@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.31 1999/05/31 15:45:35 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.32 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 /*
@@ -162,6 +162,7 @@ void PWire::elaborate(Design*des, const string&path) const
       } else {
 
 	    NetNet*sig = new NetNet(path + "." + name, wtype, wid);
+	    sig->set_line(*this);
 	    sig->port_type(port_type);
 	    sig->set_attributes(attributes);
 	    des->add_signal(sig);
@@ -1247,6 +1248,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.32  1999/06/02 15:38:46  steve
+ *  Line information with nets.
+ *
  * Revision 1.31  1999/05/31 15:45:35  steve
  *  Fix error message.
  *

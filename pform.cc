@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.21 1999/05/31 15:45:59 steve Exp $"
+#ident "$Id: pform.cc,v 1.22 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -353,13 +353,15 @@ PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval)
       return cur;
 }
 
-void pform_makewire(const string&name, NetNet::Type type)
+void pform_makewire(const vlltype&li, const string&name,
+		    NetNet::Type type)
 {
       PWire*cur = cur_module->get_wire(name);
       if (cur) {
 	    if (cur->type != NetNet::IMPLICIT) {
 		  strstream msg;
-		  msg << "Duplicate definition of " << name << ".";
+		  msg << name << " previously defined at " <<
+			cur->get_line() << ".";
 		  VLerror(msg.str());
 	    }
 	    cur->type = type;
@@ -367,15 +369,18 @@ void pform_makewire(const string&name, NetNet::Type type)
       }
 
       cur = new PWire(name, type);
+      cur->set_file(li.text);
+      cur->set_lineno(li.first_line);
       cur_module->add_wire(cur);
 }
 
-void pform_makewire(const list<string>*names, NetNet::Type type)
+void pform_makewire(const vlltype&li, const list<string>*names,
+		    NetNet::Type type)
 {
       for (list<string>::const_iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ )
-	    pform_makewire(*cur, type);
+	    pform_makewire(li, *cur, type);
 
 }
 
@@ -556,6 +561,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.22  1999/06/02 15:38:46  steve
+ *  Line information with nets.
+ *
  * Revision 1.21  1999/05/31 15:45:59  steve
  *  makegates infinite loop fixed.
  *

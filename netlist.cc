@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.29 1999/05/30 01:11:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.30 1999/06/02 15:38:46 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -527,6 +527,7 @@ NetEMemory* NetEMemory::dup_expr() const
 NetESignal::NetESignal(NetNet*n)
 : NetExpr(n->pin_count()), NetNode(n->name(), n->pin_count())
 {
+      set_line(*n);
       for (unsigned idx = 0 ;  idx < n->pin_count() ;  idx += 1) {
 	    connect(pin(idx), n->pin(idx));
       }
@@ -539,8 +540,8 @@ NetESignal::~NetESignal()
 bool NetESignal::set_width(unsigned w)
 {
       if (w != pin_count()) {
-	    cerr << get_line() << ": Width of " << w << " does not match "
-		 << *this << endl;
+	    cerr << get_line() << ": " << *this << " cannot be made "
+		 << w << " bits wide." << endl;
 	    return false;
       }
       assert(w == pin_count());
@@ -1068,6 +1069,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.30  1999/06/02 15:38:46  steve
+ *  Line information with nets.
+ *
  * Revision 1.29  1999/05/30 01:11:46  steve
  *  Exressions are trees that can duplicate, and not DAGS.
  *
