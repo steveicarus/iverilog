@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.23 2004/09/05 17:44:41 steve Exp $"
+#ident "$Id: compiler.h,v 1.24 2004/09/10 23:51:42 steve Exp $"
 #endif
 
 # include  <list>
@@ -82,6 +82,7 @@ extern bool warn_portbinding;
 extern bool verbose_flag;
 
 extern bool debug_scopes;
+extern bool debug_eval_tree;
 
 /* Path to a directory useful for finding subcomponents. */
 extern const char*basedir;
@@ -134,6 +135,9 @@ extern int load_sys_func_table(const char*path);
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.24  2004/09/10 23:51:42  steve
+ *  Fix the evaluation of constant ternary expressions.
+ *
  * Revision 1.23  2004/09/05 17:44:41  steve
  *  Add support for module instance arrays.
  *

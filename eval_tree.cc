@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.60 2004/02/20 06:22:56 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.61 2004/09/10 23:51:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1305,18 +1305,50 @@ NetExpr* NetETernary::eval_tree()
       if (c == 0)
 	    return 0;
 
+	/* Check the boolean value of the constant condition
+	   expression. Note that the X case is handled explicitly, so
+	   we must differentiate. */
+
+      verinum cond_value = c->value();
+      bool true_flag = false;
+      bool x_flag = false;
+
+      for (unsigned idx = 0 ;  idx < cond_value.len() ;  idx += 1) {
+	    switch (cond_value.get(idx)) {
+		case verinum::V1:
+		  true_flag = true;
+		  break;
+		case verinum::V0:
+		  break;
+		default:
+		  x_flag = true;
+	    }
+      }
+
 
 	/* If the condition is 1 or 0, return the true or false
 	   expression. Try to evaluate the expression down as far as
 	   we can. */
 
-      if (c->value().get(0) == verinum::V1)
+      if (true_flag) {
+	    if (debug_eval_tree) {
+		  cerr << get_line() << ": debug: Evaluate ternary with "
+		       << "constant condition value: " << c->value() << endl;
+		  cerr << get_line() << ":      : Selecting true case: "
+		       << *true_val_ << endl;
+	    }
 	    return true_val_->dup_expr();
+      }
 
-
-      if (c->value().get(0) == verinum::V0)
+      if (! x_flag) {
+	    if (debug_eval_tree) {
+		  cerr << get_line() << ": debug: Evaluate ternary with "
+		       << "constant condition value: " << c->value() << endl;
+		  cerr << get_line() << ":      : Selecting false case: "
+		       << *true_val_ << endl;
+	    }
 	    return false_val_->dup_expr();
-
+      }
 
 	/* Here we have a more complex case. We need to evaluate both
 	   expressions down to constants then compare the values to
@@ -1332,18 +1364,27 @@ NetExpr* NetETernary::eval_tree()
 	    return 0;
 
 
-      unsigned size = t->expr_width();
-      assert(size == f->expr_width());
+      unsigned tsize = t->expr_width();
+      unsigned fsize = f->expr_width();
+	/* Size of the result is the size of the widest operand. */
+      unsigned rsize = tsize > fsize? tsize : fsize;
 
-      verinum val (verinum::V0, size);
-      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
-	    verinum::V tv = t->value().get(idx);
-	    verinum::V fv = f->value().get(idx);
+      verinum val (verinum::V0, rsize);
+      for (unsigned idx = 0 ;  idx < rsize ;  idx += 1) {
+	    verinum::V tv = idx < tsize? t->value().get(idx) : verinum::V0;
+	    verinum::V fv = idx < rsize? f->value().get(idx) : verinum::V0;
 
 	    if (tv == fv)
 		  val.set(idx, tv);
 	    else
 		  val.set(idx, verinum::Vx);
+      }
+
+      if (debug_eval_tree) {
+	    cerr << get_line() << ": debug: Evaluate ternary with "
+		 << "constant condition value: " << c->value() << endl;
+	    cerr << get_line() << ":      : Blending cases to get "
+		 << val << endl;
       }
 
       NetEConst*rc = new NetEConst(val);
@@ -1510,6 +1551,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.61  2004/09/10 23:51:42  steve
+ *  Fix the evaluation of constant ternary expressions.
+ *
  * Revision 1.60  2004/02/20 06:22:56  steve
  *  parameter keys are per_strings.
  *

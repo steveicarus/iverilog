@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.83 2004/09/05 17:44:42 steve Exp $"
+#ident "$Id: main.cc,v 1.84 2004/09/10 23:51:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -110,7 +110,7 @@ bool error_implicit = false;
  * Debug message class flags.
  */
 bool debug_scopes = false;
-
+bool debug_eval_tree = false;
 /*
  * Verbose messages enabled.
  */
@@ -307,6 +307,9 @@ static void read_iconfig_file(const char*ipath)
 		  if (strcmp(cp, "scope") == 0) {
 			debug_scopes = true;
 			cerr << "debug: Enable scope debug" << endl;
+		  } else if (strcmp(cp,"eval_tree") == 0) {
+			debug_eval_tree = true;
+			cerr << "debug: Enable eval_tree debug" << endl;
 		  } else {
 		  }
 
@@ -737,6 +740,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.84  2004/09/10 23:51:42  steve
+ *  Fix the evaluation of constant ternary expressions.
+ *
  * Revision 1.83  2004/09/05 17:44:42  steve
  *  Add support for module instance arrays.
  *
