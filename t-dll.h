@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.32 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: t-dll.h,v 1.33 2001/04/03 04:50:37 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -78,6 +78,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 	   statements of a thread. */
       struct ivl_statement_s*stmt_cur_;
       void proc_assign(const NetAssign*);
+      void proc_assign_nb(const NetAssignNB*);
       bool proc_block(const NetBlock*);
       void proc_case(const NetCase*);
       void proc_condit(const NetCondit*);
@@ -346,7 +347,7 @@ struct ivl_signal_s {
 struct ivl_statement_s {
       enum ivl_statement_type_e type_;
       union {
-	    struct { /* IVL_ST_ASSIGN */
+	    struct { /* IVL_ST_ASSIGN IVL_ST_ASSIGN_NB */
 		  unsigned lvals_;
 		  struct ivl_lval_s*lval_;
 		  ivl_expr_t rval_;
@@ -409,6 +410,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.33  2001/04/03 04:50:37  steve
+ *  Support non-blocking assignments.
+ *
  * Revision 1.32  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

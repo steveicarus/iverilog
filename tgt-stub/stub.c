@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.35 2001/04/02 02:28:13 steve Exp $"
+#ident "$Id: stub.c,v 1.36 2001/04/03 04:50:37 steve Exp $"
 #endif
 
 /*
@@ -133,6 +133,28 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_ASSIGN:
 	    fprintf(out, "%*sASSIGN <lwidth=%u>\n", ind, "",
+		    ivl_stmt_lwidth(net));
+	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1) {
+		  unsigned pp;
+		  ivl_lval_t lval = ivl_stmt_lval(net, idx);
+		  ivl_nexus_t nex = ivl_lval_pin(lval, 0);
+
+		  fprintf(out, "%*s{%s", ind+4, "", ivl_nexus_name(nex));
+		  fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
+		  for (pp = 1 ;  pp < ivl_lval_pins(lval) ;  pp += 1) {
+			nex = ivl_lval_pin(lval, pp);
+			fprintf(out, ", %s", ivl_nexus_name(nex));
+			fprintf(out, "<nptrs=%u>", ivl_nexus_ptrs(nex));
+		  }
+		  fprintf(out, "}\n");
+	    }
+
+	    if (ivl_stmt_rval(net))
+		  show_expression(ivl_stmt_rval(net), ind+4);
+	    break;
+
+	  case IVL_ST_ASSIGN_NB:
+	    fprintf(out, "%*sASSIGN_NB <lwidth=%u>\n", ind, "",
 		    ivl_stmt_lwidth(net));
 	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1) {
 		  unsigned pp;
@@ -484,6 +506,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.36  2001/04/03 04:50:37  steve
+ *  Support non-blocking assignments.
+ *
  * Revision 1.35  2001/04/02 02:28:13  steve
  *  Generate code for task calls.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.32 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.33 2001/04/03 04:50:37 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -729,6 +729,7 @@ extern "C" ivl_lval_t ivl_stmt_lval(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
+	  case IVL_ST_ASSIGN_NB:
 	    assert(idx < net->u_.assign_.lvals_);
 	    return net->u_.assign_.lval_ + idx;
 	  default:
@@ -741,6 +742,7 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 {
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
+	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.lvals_;
 	  default:
 	    assert(0);
@@ -750,7 +752,9 @@ extern "C" unsigned ivl_stmt_lvals(ivl_statement_t net)
 
 extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 {
-      assert(net->type_ == IVL_ST_ASSIGN);
+      assert((net->type_ == IVL_ST_ASSIGN)
+	     || (net->type_ == IVL_ST_ASSIGN_NB));
+
       unsigned sum = 0;
       for (unsigned idx = 0 ;  idx < net->u_.assign_.lvals_ ;  idx += 1) {
 	    ivl_lval_t cur = net->u_.assign_.lval_ + idx;
@@ -803,6 +807,7 @@ extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
 {
       switch (net->type_) {
 	  case IVL_ST_ASSIGN:
+	  case IVL_ST_ASSIGN_NB:
 	    return net->u_.assign_.rval_;
 	  default:
 	    assert(0);
@@ -829,6 +834,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.33  2001/04/03 04:50:37  steve
+ *  Support non-blocking assignments.
+ *
  * Revision 1.32  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

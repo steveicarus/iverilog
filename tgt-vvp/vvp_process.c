@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.20 2001/04/02 04:09:20 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.21 2001/04/03 04:50:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -81,6 +81,23 @@ static void set_to_nexus(ivl_nexus_t nex, unsigned bit)
       }
 }
 
+static void assign_to_nexus(ivl_nexus_t nex, unsigned bit, unsigned delay)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    unsigned pin = ivl_nexus_ptr_pin(ptr);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+
+	    if (sig == 0)
+		  continue;
+
+	    fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
+		    ivl_signal_name(sig), pin, delay, bit);
+      }
+}
+
 static int show_stmt_assign(ivl_statement_t net)
 {
       ivl_lval_t lval;
@@ -128,6 +145,60 @@ static int show_stmt_assign(ivl_statement_t net)
 
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
 	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
+
+	clr_vector(res);
+      }
+
+      return 0;
+}
+
+static int show_stmt_assign_nb(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+      ivl_expr_t rval = ivl_stmt_rval(net);
+
+
+	/* Handle the special case that the r-value is a constant. We
+	   can generate the %set statement directly, without any worry
+	   about generating code to evaluate the r-value expressions. */
+
+      if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
+	    unsigned idx;
+	    const char*bits = ivl_expr_bits(rval);
+
+	      /* XXXX Only single l-value supported for now */
+	    assert(ivl_stmt_lvals(net) == 1);
+
+	    lval = ivl_stmt_lval(net, 0);
+	      /* XXXX No mux support yet. */
+	    assert(ivl_lval_mux(lval) == 0);
+
+	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+		  assign_to_nexus(ivl_lval_pin(lval, idx),
+				  bitchar_to_idx(bits[idx]), 0);
+
+	    return 0;
+      }
+
+      { struct vector_info res = draw_eval_expr(rval);
+        unsigned wid = res.wid;
+	unsigned idx;
+
+	  /* XXXX Only single l-value supported for now */
+	assert(ivl_stmt_lvals(net) == 1);
+
+	lval = ivl_stmt_lval(net, 0);
+	  /* XXXX No mux support yet. */
+	assert(ivl_lval_mux(lval) == 0);
+
+	if (ivl_lval_pins(lval) < wid)
+	      wid = ivl_lval_pins(lval);
+
+	for (idx = 0 ;  idx < wid ;  idx += 1)
+	      assign_to_nexus(ivl_lval_pin(lval, idx), res.base+idx, 0);
+
+	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+	      assign_to_nexus(ivl_lval_pin(lval, idx), 0, 0);
 
 	clr_vector(res);
       }
@@ -467,6 +538,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_stmt_assign(net);
 	    break;
 
+	  case IVL_ST_ASSIGN_NB:
+	    rc += show_stmt_assign_nb(net);
+	    break;
+
 	      /* Begin-end blocks simply draw their contents. */
 	  case IVL_ST_BLOCK: {
 		unsigned idx;
@@ -594,6 +669,9 @@ int draw_task_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.21  2001/04/03 04:50:37  steve
+ *  Support non-blocking assignments.
+ *
  * Revision 1.20  2001/04/02 04:09:20  steve
  *  thread bit allocation leak in assign.
  *
