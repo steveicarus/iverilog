@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.38 2003/02/03 00:28:12 steve Exp $"
+#ident "$Id: lexor.lex,v 1.39 2003/05/08 16:20:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -324,7 +324,7 @@ static void def_match()
 	    isp->next = istack;
 	    istack->yybs = YY_CURRENT_BUFFER;
 	    istack = isp;
-	    yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
+	    yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
 
       } else {
 	    emit_pathline(istack);
@@ -655,7 +655,7 @@ static void do_include()
       istack->yybs = YY_CURRENT_BUFFER;
       istack = standby;
       standby = 0;
-      yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
+      yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
 
       if (line_direct_flag && istack->path)
 	    fprintf(yyout, "\n`line %u \"%s\" 1\n",
