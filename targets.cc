@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: targets.cc,v 1.9 2002/02/16 03:18:54 steve Exp $"
+#ident "$Id: targets.cc,v 1.10 2002/08/11 23:39:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,21 +27,18 @@
 extern const struct target tgt_dll;
 extern const struct target tgt_xnf;
 
-#ifdef ENABLE_VVM
-extern const struct target tgt_vvm;
-#endif
 
 const struct target *target_table[] = {
       &tgt_dll,
-#ifdef ENABLE_VVM
-      &tgt_vvm,
-#endif
       &tgt_xnf,
       0
 };
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.10  2002/08/11 23:39:33  steve
+ *  Remove VVM option.
+ *
  * Revision 1.9  2002/02/16 03:18:54  steve
  *  Make vvm optional, normally off.
  *
