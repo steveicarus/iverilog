@@ -16,11 +16,13 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: substit.c,v 1.1 2002/06/23 20:10:51 steve Exp $"
+#ident "$Id: substit.c,v 1.2 2002/06/25 01:33:01 steve Exp $"
 
 # include  <string.h>
-# include  <malloc.h>
 # include  <stdlib.h>
+#ifdef HAVE_MALLOC_H
+# include  <malloc.h>
+#endif
 
 
 char* substitutions(const char*str)
@@ -92,6 +94,9 @@ char* substitutions(const char*str)
 
 /*
  * $Log: substit.c,v $
+ * Revision 1.2  2002/06/25 01:33:01  steve
+ *  include malloc.h only when available.
+ *
  * Revision 1.1  2002/06/23 20:10:51  steve
  *  Variable substitution in command files.
  *
