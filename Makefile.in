@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.67 2000/09/18 01:24:32 steve Exp $"
+#ident "$Id: Makefile.in,v 1.68 2000/09/20 01:02:13 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -155,7 +155,7 @@ $(mandir)/man1/iverilog.1: $(srcdir)/iverilog.man
 	$(INSTALL_DATA) $(srcdir)/iverilog.man $(mandir)/man1/iverilog.1
 
 installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(libdir)/ivl $(mandir)/man1
+	$(srcdir)/mkinstalldirs $(bindir) $(includedir) $(libdir)/ivl $(mandir)/man1
 
 uninstall:
 	rm -f $(libdir)/ivl/ivl
