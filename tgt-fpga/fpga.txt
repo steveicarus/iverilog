@@ -2,7 +2,7 @@
 FPGA LOADABLE CODE GENERATOR FOR Icarus Verilog
 
   Copyright 2001 Stephen Williams
-  $Id: fpga.txt,v 1.4 2001/09/16 22:26:47 steve Exp $
+  $Id: fpga.txt,v 1.5 2002/04/30 04:26:42 steve Exp $
 
 The FPGA code generator supports a variety of FPGA devices, writing
 XNF or EDIF depending on the target. You can select the architecture
@@ -18,7 +18,7 @@ the -p flag of iverilog:
 
 	iverilog -parch=virtex -fpart=v50-pq240-6 -tfpga foo.vl
 
-This example selects the virtext architecture, and give the detailed
+This example selects the Virtex architecture, and give the detailed
 part number as v50-pq240-6. The output is written into a.out unless a
 different output file is specified with the -o flag.
 
@@ -37,7 +37,7 @@ map to target gates if desired.
 If this is selected, then the output is formatted as an XNF file,
 suitable for most any type of device. The devices that it emits
 are generic devices from the unified library. Some devices are macros,
-you will may need to further resolve the generated XNF to get working
+youmay need to further resolve the generated XNF to get working
 code for your part.
 
 * arch=virtex
@@ -106,8 +106,8 @@ creates these ports:
 	in[1] INPUT
 	in[2] INPUT
 
-Target tools, include Xilinx Foundation tools, understand the []
-characters in the name and recollect the signals into a proper bus,
+Target tools, including Xilinx Foundation tools, understand the []
+characters in the name and recollect the signals into a proper bus
 when presenting the vector to the user.
 
 
@@ -128,7 +128,7 @@ example:
 	endmodule
 
 In this example, port ``out'' is assigned to pin 10, and port ``in''
-is assigned to pins 20-22. If the architecture supports it, then a pin
+is assigned to pins 20-22. If the architecture supports it, a pin
 number of 0 means let the back end tools choose a pin.
 
 NOTE: If a module port is assigned to a pin (and therefore attached to
@@ -169,6 +169,9 @@ Compile a single-file design with command line tools like so:
 
 ---
 $Log: fpga.txt,v $
+Revision 1.5  2002/04/30 04:26:42  steve
+ Spelling errors.
+
 Revision 1.4  2001/09/16 22:26:47  steve
  Support the cellref attribute.
 
