@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2003/02/22 04:12:49 $" Version "$Date: 2003/02/22 04:12:49 $"
+.TH iverilog 1 "$Date: 2003/08/09 04:31:44 $" Version "$Date: 2003/08/09 04:31:44 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -175,14 +175,15 @@ but must be run by the \fBvvp\fP command.
 .TP 8
 .B xnf
 This is the Xilinx Netlist Format used by many tools for placing
-devices in FPGAs or other programmable devices. The Icarus Verilog XNF
-code generator can generate complete designs or XNF macros that can be
-imported into larger designs by other tools. (This target is obsolete,
-use the \fBfpga\fP target instead.)
+devices in FPGAs or other programmable devices. This target is
+obsolete, use the \fBfpga\fP target instead.
 .TP 8
 .B fpga
 This is a synthesis target that supports a variety of fpga devices,
-mostly by EDIF format output.
+mostly by EDIF format output. The Icarus Verilog fpga code generator
+can generate complete designs or EDIF macros that can in turn be
+imported into larger designs by other tools. The \fBfpga\fP target
+implies the synthesis \fB-S\fP flag.
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
