@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.46 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: compile.h,v 1.47 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -189,6 +189,11 @@ extern void compile_event(char*label, char*type,
 extern void compile_named_event(char*label, char*type);
 
 /*
+ * Word declarations include a label, a type symbol, and a vpi name.
+ */
+extern void compile_word(char*label, char*type, char*name);
+
+/*
  * A code statement is a label, an opcode and up to 3 operands. There
  * are a few lexical types that the parser recognizes of the operands,
  * given by the ltype_e enumeration. The compile_code function takes
@@ -252,6 +257,10 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.47  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.46  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

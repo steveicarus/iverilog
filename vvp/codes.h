@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.54 2002/11/21 22:43:13 steve Exp $"
+#ident "$Id: codes.h,v 1.55 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 
@@ -36,6 +36,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
  * access to the thread context.
  */
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
+extern bool of_ADD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_ADDI(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ANDR(vthread_t thr, vvp_code_t code);
@@ -50,6 +51,7 @@ extern bool of_CASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
+extern bool of_CMPWR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
 extern bool of_DEASSIGN(vthread_t thr, vvp_code_t code);
@@ -76,10 +78,13 @@ extern bool of_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_NX(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_X(vthread_t thr, vvp_code_t code);
+extern bool of_LOADI_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
+extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MULI(vthread_t thr, vvp_code_t code);
 extern bool of_NAND(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
@@ -92,6 +97,7 @@ extern bool of_RELEASE(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
+extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
@@ -160,6 +166,10 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.55  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.54  2002/11/21 22:43:13  steve
  *  %set/x0 instruction to support bounds checking.
  *
@@ -207,20 +217,5 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
  *
  * Revision 1.39  2002/04/14 18:41:34  steve
  *  Support signed integer division.
- *
- * Revision 1.38  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- * Revision 1.37  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.36  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.35  2001/10/16 01:26:54  steve
- *  Add %div support (Anthony Bybell)
- *
- * Revision 1.34  2001/08/26 22:59:32  steve
- *  Add the assign/x0 and set/x opcodes.
  */
 #endif

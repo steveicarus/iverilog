@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.96 2003/01/06 23:57:26 steve Exp $"
+#ident "$Id: vthread.cc,v 1.97 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -34,6 +34,7 @@
 # include  <stdlib.h>
 # include  <limits.h>
 # include  <string.h>
+# include  <math.h>
 # include  <assert.h>
 
 #include  <stdio.h>
@@ -96,7 +97,13 @@ struct vthread_s {
       unsigned long pc;
 	/* These hold the private thread bits. */
       unsigned long *bits;
-      long index[4];
+
+	/* These are the word registers. */
+      union {
+	    long w_int;
+	    double w_real;
+      } words[16];
+
       unsigned nbits :16;
 	/* My parent sets this when it wants me to wake it up. */
       unsigned schedule_parent_on_end :1;
@@ -423,6 +430,14 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_ADD_WR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = l + r;
+      return true;
+}
+
 /*
  * This is %addi, add-immediate. The first value is a vector, the
  * second value is the immediate value in the bin_idx[1] position. The
@@ -492,7 +507,7 @@ bool of_ASSIGN_D(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] < 4);
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
-      schedule_assign(cp->iptr, bit_val, thr->index[cp->bit_idx[0]]);
+      schedule_assign(cp->iptr, bit_val, thr->words[cp->bit_idx[0]].w_int);
       return true;
 }
 
@@ -502,7 +517,7 @@ bool of_ASSIGN_D(vthread_t thr, vvp_code_t cp)
  */
 bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 {
-      unsigned wid = thr->index[0];
+      unsigned wid = thr->words[0].w_int;
       assert(wid > 0);
       assert(wid < 0x10000);
 
@@ -525,7 +540,7 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
-      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->index[0]);
+      vvp_ipoint_t itmp = ipoint_index(cp->iptr, thr->words[0].w_int);
       schedule_assign(itmp, bit_val, cp->bit_idx[0]);
       return true;
 }
@@ -533,7 +548,7 @@ bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
-      schedule_memory(cp->mem, thr->index[3], bit_val, cp->bit_idx[0]);
+      schedule_memory(cp->mem, thr->words[3].w_int, bit_val, cp->bit_idx[0]);
       return true;
 }
 
@@ -752,6 +767,20 @@ bool of_CMPX(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CMPWR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+
+      unsigned eq = (l == r)? 1 : 0;
+      unsigned lt = (l <  r)? 1 : 0;
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+
+      return true;
+}
+
 bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 {
       unsigned eq = 1;
@@ -789,7 +818,7 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
       unsigned long delay;
 
       assert(cp->number < 4);
-      delay = thr->index[cp->number];
+      delay = thr->words[cp->number].w_int;
       schedule_vthread(thr, delay);
       return false;
 }
@@ -1301,25 +1330,25 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
 
 bool of_IX_ADD(vthread_t thr, vvp_code_t cp)
 {
-  thr->index[cp->bit_idx[0] & 3] += cp->number;
+  thr->words[cp->bit_idx[0] & 3].w_int += cp->number;
   return true;
 }
 
 bool of_IX_SUB(vthread_t thr, vvp_code_t cp)
 {
-  thr->index[cp->bit_idx[0] & 3] -= cp->number;
+  thr->words[cp->bit_idx[0] & 3].w_int -= cp->number;
   return true;
 }
 
 bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
 {
-  thr->index[cp->bit_idx[0] & 3] *= cp->number;
+  thr->words[cp->bit_idx[0] & 3].w_int *= cp->number;
   return true;
 }
 
 bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 {
-      thr->index[cp->bit_idx[0] & 3] = cp->number;
+      thr->words[cp->bit_idx[0] & 3].w_int = cp->number;
       return true;
 }
 
@@ -1350,7 +1379,7 @@ bool of_IX_GET(vthread_t thr, vvp_code_t cp)
 	    }
 	    v |= vv << i;
       }
-      thr->index[cp->bit_idx[0] & 3] = v;
+      thr->words[cp->bit_idx[0] & 3].w_int = v;
 	/* Set bit 4 as a flag if the input is unknown. */
       thr_put_bit(thr, 4, unknown_flag? 1 : 0);
       return true;
@@ -1425,7 +1454,7 @@ bool of_LOAD(vthread_t thr, vvp_code_t cp)
 bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
-      unsigned char val = memory_get(cp->mem, thr->index[3]);
+      unsigned char val = memory_get(cp->mem, thr->words[3].w_int);
       thr_put_bit(thr, cp->bit_idx[0], val);
       return true;
 }
@@ -1442,7 +1471,7 @@ bool of_LOAD_NX(vthread_t thr, vvp_code_t cp)
       struct __vpiSignal*sig =
 	    reinterpret_cast<struct __vpiSignal*>(cp->handle);
 
-      unsigned idx = thr->index[cp->bit_idx[1]];
+      unsigned idx = thr->words[cp->bit_idx[1]].w_int;
 
       vvp_ipoint_t ptr = vvp_fvector_get(sig->bits, idx);
       thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
@@ -1464,13 +1493,40 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
+{
+      struct __vpiHandle*tmp = cp->handle;
+      t_vpi_value val;
+
+      val.format = vpiRealVal;
+      vpi_get_value(tmp, &val);
+
+      thr->words[cp->bit_idx[0]].w_real = val.value.real;
+
+      return true;
+}
+
 bool of_LOAD_X(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
       assert(cp->bit_idx[1] <  4);
 
-      vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->index[cp->bit_idx[1]]);
+      vvp_ipoint_t ptr = ipoint_index(cp->iptr, thr->words[cp->bit_idx[1]].w_int);
       thr_put_bit(thr, cp->bit_idx[0], functor_get(ptr));
+      return true;
+}
+
+bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      double mant = cp->number;
+      int exp = cp->bit_idx[1];
+      double sign = (exp & 0x2000)? -1.0 : 1.0;
+
+      exp &= 0x1fff;
+
+      mant = sign * ldexp(mant, exp - 0x1000);
+      thr->words[idx].w_real = mant;
       return true;
 }
 
@@ -1810,6 +1866,14 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, 2);
 
+      return true;
+}
+
+bool of_MUL_WR(vthread_t thr, vvp_code_t cp)
+{
+      double l = thr->words[cp->bit_idx[0]].w_real;
+      double r = thr->words[cp->bit_idx[1]].w_real;
+      thr->words[cp->bit_idx[0]].w_real = l * r;
       return true;
 }
 
@@ -2164,7 +2228,7 @@ bool of_SET(vthread_t thr, vvp_code_t cp)
 bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
 {
       unsigned char val = thr_get_bit(thr, cp->bit_idx[0]);
-      memory_set(cp->mem, thr->index[3], val);
+      memory_set(cp->mem, thr->words[3].w_int, val);
 
       return true;
 }
@@ -2192,6 +2256,18 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SET_WORDR(vthread_t thr, vvp_code_t cp)
+{
+      struct __vpiHandle*tmp = cp->handle;
+      t_vpi_value val;
+
+      val.format = vpiRealVal;
+      val.value.real = thr->words[cp->bit_idx[0]].w_real;
+      vpi_put_value(tmp, &val, 0, vpiNoDelay);
+
+      return true;
+}
+
 /*
  * Implement the %set/x instruction:
  *
@@ -2203,7 +2279,7 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[0]);
-      long idx = thr->index[0];
+      long idx = thr->words[0].w_int;
 
 	/* If idx < 0, then the index value is probably generated from
 	   an undefined value. At any rate, this is defined to have no
@@ -2228,7 +2304,7 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      unsigned long shift = thr->index[0];
+      unsigned long shift = thr->words[0].w_int;
 
       assert(base >= 4);
 
@@ -2255,7 +2331,7 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
 {
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      unsigned long shift = thr->index[0];
+      unsigned long shift = thr->words[0].w_int;
 
       if (shift >= wid) {
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
@@ -2505,6 +2581,10 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.97  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.96  2003/01/06 23:57:26  steve
  *  Schedule wait lists of threads as a single event,
  *  to save on events. Also, improve efficiency of
@@ -2531,151 +2611,5 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
  *
  * Revision 1.89  2002/09/21 23:47:30  steve
  *  Remove some now useless asserts.
- *
- * Revision 1.88  2002/09/21 04:55:00  steve
- *  Fix disable in arbitrary fork/join situations.
- *
- * Revision 1.87  2002/09/20 03:59:34  steve
- *  disable threads with children.
- *
- * Revision 1.86  2002/09/18 04:29:55  steve
- *  Add support for binary NOR operator.
- *
- * Revision 1.85  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.84  2002/08/28 18:38:07  steve
- *  Add the %subi instruction, and use it where possible.
- *
- * Revision 1.83  2002/08/28 17:15:06  steve
- *  Add the %load/nx opcode to index vpi nets.
- *
- * Revision 1.82  2002/08/27 05:39:57  steve
- *  Fix l-value indexing of memories and vectors so that
- *  an unknown (x) index causes so cell to be addresses.
- *
- *  Fix tangling of label identifiers in the fork-join
- *  code generator.
- *
- * Revision 1.81  2002/08/22 03:38:40  steve
- *  Fix behavioral eval of x?a:b expressions.
- *
- * Revision 1.80  2002/08/18 01:05:50  steve
- *  x in index values leads to 0.
- *
- * Revision 1.79  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.78  2002/06/02 18:55:58  steve
- *  Add %cmpi/u instruction.
- *
- * Revision 1.77  2002/05/31 20:04:22  steve
- *  Add the %muli instruction.
- *
- * Revision 1.76  2002/05/31 04:09:58  steve
- *  Slight improvement in %mov performance.
- *
- * Revision 1.75  2002/05/31 00:05:49  steve
- *  Word oriented bit storage.
- *
- * Revision 1.74  2002/05/29 16:29:34  steve
- *  Add %addi, which is faster to simulate.
- *
- * Revision 1.73  2002/05/27 00:53:10  steve
- *  Able to disable thread self.
- *
- * Revision 1.72  2002/05/24 04:55:13  steve
- *  Detect long division by zero.
- *
- * Revision 1.71  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.70  2002/05/12 23:44:41  steve
- *  task calls and forks push the thread event in the queue.
- *
- * Revision 1.69  2002/04/21 22:29:49  steve
- *  Add the assign/d instruction for computed delays.
- *
- * Revision 1.68  2002/04/14 18:41:34  steve
- *  Support signed integer division.
- *
- * Revision 1.67  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- * Revision 1.66  2002/01/26 02:08:07  steve
- *  Handle x in l-value of set/x
- *
- * Revision 1.65  2001/12/31 00:01:16  steve
- *  Account for negatives in cmp/s
- *
- * Revision 1.64  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.63  2001/11/01 03:00:20  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.62  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.61  2001/10/25 04:19:53  steve
- *  VPI support for callback to return values.
- *
- * Revision 1.60  2001/10/23 03:49:13  steve
- *  Fix carry between works for %add instruction.
- *
- * Revision 1.59  2001/10/20 23:20:32  steve
- *  Catch and X division by 0.
- *
- * Revision 1.58  2001/10/16 01:26:55  steve
- *  Add %div support (Anthony Bybell)
- *
- * Revision 1.57  2001/10/14 17:36:19  steve
- *  Forgot to propagate carry.
- *
- * Revision 1.56  2001/10/14 16:36:43  steve
- *  Very wide multiplication (Anthony Bybell)
- *
- * Revision 1.55  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.54  2001/09/07 23:29:28  steve
- *  Redo of_SUBU in a more obvious algorithm, that
- *  is not significantly slower. Also, clean up the
- *  implementation of %mov from a constant.
- *
- *  Fix initial clearing of vector by vector_to_array
- *
- * Revision 1.53  2001/08/26 22:59:32  steve
- *  Add the assign/x0 and set/x opcodes.
- *
- * Revision 1.52  2001/08/08 00:53:50  steve
- *  signed/unsigned warnings?
- *
- * Revision 1.51  2001/07/22 00:04:50  steve
- *  Add the load/x instruction for bit selects.
- *
- * Revision 1.50  2001/07/20 04:57:00  steve
- *  Fix of_END when a middle thread ends.
- *
- * Revision 1.49  2001/07/19 04:40:55  steve
- *  Add support for the delayx opcode.
- *
- * Revision 1.48  2001/07/04 04:57:10  steve
- *  Relax limit on behavioral subtraction.
- *
- * Revision 1.47  2001/06/30 21:07:26  steve
- *  Support non-const right shift (unsigned).
- *
- * Revision 1.46  2001/06/23 18:26:26  steve
- *  Add the %shiftl/i0 instruction.
- *
- * Revision 1.45  2001/06/22 00:03:05  steve
- *  Infinitely wide behavioral add.
- *
- * Revision 1.44  2001/06/18 01:09:32  steve
- *  More behavioral unary reduction operators.
- *  (Stephan Boettcher)
  */
 

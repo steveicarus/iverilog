@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.45 2002/11/21 22:43:13 steve Exp $
+ *  $Id: opcodes.txt,v 1.46 2003/01/25 23:48:06 steve Exp $
  */
 
 
@@ -29,6 +29,10 @@ are x or z, the result is x. Otherwise, the result is the arithmetic
 sum.
 
 See also the %sub instruction.
+
+
+* %add/wr <bit-l>, <bit-r>
+
 
 * %addi <bit-l>, <imm>, <wid>
 
@@ -154,6 +158,12 @@ The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 %cmp/u does an unsigned compare, whereas the %cmp/s does a signed
 compare. In either case, if either operand constains x or z, then lt
 bit gets the x value.
+
+
+* %cmp/wr <bit-l>, <bit-r>
+
+[compare real values.]
+
 
 * %cmp/z <bit-l>, <bit-r>, <wid>
 * %cmp/x <bit-l>, <bit-r>, <wid>
@@ -325,6 +335,10 @@ This instruction load a value from a .net object bit. Since .net
 objects don't really exist (they are only named indirection into the
 netlist) this instruction indexes into the .net list of bits.
 
+* %load/wr <bit>, <vpi-label>
+
+This instruction reads a real value from the vpi-like object to a word
+register.
 
 * %load/x <bit>, <functor-label>, <idx>
 
@@ -332,6 +346,15 @@ This is an indexed load. It uses the contents of the specified index
 register to select a bit from an array based at <functor-label>. The
 bit is pulled from the addressed functor and loaded into the
 destination bit. This function does not do any bounds checking.
+
+
+* %loadi/wr <bit>, <mant>, <exp>
+
+This opcode loads an immediate value, floating point, into the word
+register selected by <bit>. The mantissa is an unsigned integer value,
+up to 32 bits, that multiplied by 2**(<exp>-0x1000) to make a real
+value. The sign bit is OR-ed into the <exp> value at bit 0x2000, and
+is removed from the <exp> before calculating the real value.
 
 
 * %mod <bit-l>, <bit-r>, <wid>
@@ -357,6 +380,12 @@ This instruction multiplies the left vector by the right vector, the
 vectors having the width <wid>. If any of the bits of either vector
 are x or z, the result is x. Otherwise, the result is the arithmetic
 product.
+
+
+* %mul/wr <bit-l>, <bit-r>
+
+This opcode multiplies two real words together. The result replaces
+the left operand.
 
 
 * %muli <bit-l>, <imm>, <wid>
@@ -458,6 +487,10 @@ register bit. The memory bit is addressed by index register 3.  Bit
 address zero is the LSB of the first memory word.  This instruction
 sets only a single bit.
 
+
+* %set/wr <vpi-label>, <bit>
+
+This instruction writes a real word to the specified VPI-like object.
 
 * %set/x0 <var-label>, <bit>, <top>
 

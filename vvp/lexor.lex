@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.35 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: lexor.lex,v 1.36 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -105,6 +105,7 @@
 ".var"      { return K_VAR; }
 ".var/s"    { return K_VAR_S; }
 ".var/i"    { return K_VAR_I; /* integer */ }
+".word"     { return K_WORD; }
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }
@@ -174,6 +175,10 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.36  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.35  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

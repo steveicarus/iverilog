@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.147 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: compile.cc,v 1.148 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -83,6 +83,7 @@ struct opcode_table_s {
 
 const static struct opcode_table_s opcode_table[] = {
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%add/wr", of_ADD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -96,6 +97,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cassign",of_CASSIGN,2,  {OA_FUNC_PTR, OA_FUNC_PTR2,OA_NONE} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmp/wr", of_CMPWR,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -121,10 +123,13 @@ const static struct opcode_table_s opcode_table[] = {
       { "%load/m", of_LOAD_MEM,2, {OA_BIT1,     OA_MEM_PTR,  OA_NONE} },
       { "%load/nx",of_LOAD_NX,3,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
-      { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
+      { "%load/x", of_LOAD_X, 3,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
+      { "%loadi/wr",of_LOADI_WR,3,{OA_BIT1,     OA_NUMBER,   OA_BIT2} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%mul/wr", of_MUL_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand",   of_NAND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand/r", of_NANDR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -137,6 +142,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
@@ -1493,6 +1499,10 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.148  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.147  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal
@@ -1538,67 +1548,5 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
  *
  * Revision 1.134  2002/07/05 17:14:15  steve
  *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.133  2002/07/05 04:40:59  steve
- *  Symbol table uses more efficient key string allocator,
- *  and remove all the symbol tables after compile is done.
- *
- * Revision 1.132  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.131  2002/06/21 04:58:55  steve
- *  Add support for special integer vectors.
- *
- * Revision 1.130  2002/06/02 18:55:58  steve
- *  Add %cmpi/u instruction.
- *
- * Revision 1.129  2002/05/31 20:04:22  steve
- *  Add the %muli instruction.
- *
- * Revision 1.128  2002/05/29 16:29:34  steve
- *  Add %addi, which is faster to simulate.
- *
- * Revision 1.127  2002/05/10 16:00:57  steve
- *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
- *
- * Revision 1.126  2002/05/07 04:15:43  steve
- *  Fix uninitialized memory accesses.
- *
- * Revision 1.125  2002/04/21 22:29:49  steve
- *  Add the assign/d instruction for computed delays.
- *
- * Revision 1.124  2002/04/14 18:41:34  steve
- *  Support signed integer division.
- *
- * Revision 1.123  2002/04/14 02:56:19  steve
- *  Support signed expressions through to VPI.
- *
- * Revision 1.122  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- * Revision 1.121  2002/03/08 05:41:45  steve
- *  Debug code for write to constants.
- *
- * Revision 1.120  2002/01/11 05:21:47  steve
- *  Magic stime object support.
- *
- * Revision 1.119  2002/01/06 03:15:13  steve
- *  Support weak functor inputs.
- *
- * Revision 1.118  2002/01/03 04:19:02  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.117  2001/12/15 02:11:51  steve
- *  Give tri0 and tri1 their proper strengths.
- *
- * Revision 1.116  2001/12/15 01:54:38  steve
- *  Support tri0 and tri1 resolvers.
- *
- * Revision 1.115  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.114  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
  */
 

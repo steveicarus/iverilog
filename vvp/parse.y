@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.48 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: parse.y,v 1.49 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -63,7 +63,7 @@ extern FILE*yyin;
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
-%token K_FORCE 
+%token K_FORCE  K_WORD
 %token K_VAR K_VAR_S K_VAR_I K_vpi_call K_vpi_func K_disable K_fork
 %token K_vpi_module K_vpi_time_precision
 
@@ -249,6 +249,11 @@ statement
 	| T_LABEL K_EVENT_OR symbols ';'
 		{ compile_event($1, 0, $3.cnt, $3.vect); }
 
+
+  /* match word statements. */
+
+	| T_LABEL K_WORD T_SYMBOL ',' T_STRING ';'
+		{ compile_word($1, $3, $5); }
 
   /* Instructions may have a label, and have zero or more
      operands. The meaning of and restrictions on the operands depends
@@ -559,6 +564,10 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.49  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.48  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

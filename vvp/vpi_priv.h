@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.42 2003/01/09 04:09:44 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.43 2003/01/25 23:48:06 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -212,6 +212,11 @@ extern void vpip_run_named_event_callbacks(vpiHandle ref);
 extern vpiHandle vpip_make_memory(vvp_memory_t mem);
 
 /*
+ * These are the various variable types.
+ */
+extern vpiHandle vpip_make_real_var(const char*name);
+
+/*
  * When a loaded VPI module announces a system task/function, one
  * __vpiUserSystf object is created to hold the definition of that
  * task/function. The distinction between task and function is stored
@@ -385,6 +390,10 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.43  2003/01/25 23:48:06  steve
+ *  Add thread word array, and add the instructions,
+ *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
+ *
  * Revision 1.42  2003/01/09 04:09:44  steve
  *  Add vpi_put_userdata
  *
@@ -431,64 +440,5 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
  *  Support specified times in cbReadOnlySync, and
  *  add support for cbReadWriteSync.
  *  Keep simulation time in a 64bit number.
- *
- * Revision 1.30  2002/04/14 03:53:20  steve
- *  Allow signed constant vectors for call_vpi parameters.
- *
- * Revision 1.29  2002/04/14 02:56:19  steve
- *  Support signed expressions through to VPI.
- *
- * Revision 1.28  2002/02/03 01:01:51  steve
- *  Use Larrys bits-to-decimal-string code.
- *
- * Revision 1.27  2002/01/31 04:28:17  steve
- *  Full support for $readmem ranges (Tom Verbeure)
- *
- * Revision 1.26  2002/01/06 17:50:50  steve
- *  Support scope for functors. (Stephan Boettcher)
- *
- * Revision 1.25  2002/01/06 00:48:39  steve
- *  VPI access to root module scopes.
- *
- * Revision 1.24  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.23  2001/10/15 01:49:50  steve
- *  Support getting scope of scope, and scope of signals.
- *
- * Revision 1.22  2001/08/08 01:05:06  steve
- *  Initial implementation of vvp_fvectors.
- *  (Stephan Boettcher)
- *
- * Revision 1.21  2001/07/30 02:44:05  steve
- *  Cleanup defines and types for mingw compile.
- *
- * Revision 1.20  2001/07/26 03:13:51  steve
- *  Make the -M flag add module search paths.
- *
- * Revision 1.19  2001/07/11 02:27:21  steve
- *  Add support for REadOnlySync and monitors.
- *
- * Revision 1.18  2001/06/30 23:03:17  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.17  2001/06/21 22:54:12  steve
- *  Support cbValueChange callbacks.
- *
- * Revision 1.16  2001/05/20 00:46:12  steve
- *  Add support for system function calls.
- *
- * Revision 1.15  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.14  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
  */
 #endif
