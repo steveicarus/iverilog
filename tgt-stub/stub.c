@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.16 2000/10/08 05:00:04 steve Exp $"
+#ident "$Id: stub.c,v 1.17 2000/10/15 04:46:23 steve Exp $"
 #endif
 
 /*
@@ -31,135 +31,6 @@
 # include  <stdio.h>
 
 static FILE*out;
-
-int target_start_design(ivl_design_t des)
-{
-      const char*path = ivl_get_flag(des, "-o");
-      if (path == 0) {
-	    return -1;
-      }
-
-      out = fopen(path, "w");
-      if (out == 0) {
-	    perror(path);
-	    return -2;
-      }
-
-      fprintf(out, "root module = %s;\n", ivl_get_root_name(des));
-      return 0;
-}
-
-void target_end_design(ivl_design_t des)
-{
-      fclose(out);
-}
-
-int target_net_const(const char*name, ivl_net_const_t net)
-{
-      unsigned idx;
-      unsigned wid = ivl_const_pins(net);
-      const char*bits = ivl_const_bits(net);
-
-      fprintf(out, "LPM_CONSTANT %s: %s%u'b", name,
-	      ivl_const_signed(net)? "+- ":"",
-	      wid);
-
-      for (idx = 0 ;  idx < wid ;  idx += 1)
-	    fprintf(out, "%c", bits[wid-1-idx]);
-
-      fprintf(out, " (%s", ivl_nexus_name(ivl_const_pin(net, 0)));
-      for (idx = 1 ;  idx < wid ;  idx += 1)
-	    fprintf(out, ", %s", ivl_nexus_name(ivl_const_pin(net, idx)));
-
-      fprintf(out, ")\n");
-      return 0;
-}
-
-int target_net_event(const char*name, ivl_net_event_t net)
-{
-      fprintf(out, "STUB: %s: event\n", name);
-      return 0;
-}
-
-int target_net_logic(const char*name, ivl_net_logic_t net)
-{
-      unsigned npins, idx;
-
-      switch (ivl_logic_type(net)) {
-	  case IVL_LO_AND:
-	    fprintf(out, "and %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_BUF:
-	    fprintf(out, "buf %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_BUFZ:
-	    fprintf(out, "bufz %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_OR:
-	    fprintf(out, "or %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_XOR:
-	    fprintf(out, "xor %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  default:
-	    fprintf(out, "unsupported gate %s: \n", name);
-	    return -1;
-      }
-
-      npins = ivl_logic_pins(net);
-      for (idx = 1 ;  idx < npins ;  idx += 1)
-	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
-
-      fprintf(out, ");\n");
-
-      return 0;
-}
-
-int target_net_probe(const char*name, ivl_net_probe_t net)
-{
-      fprintf(out, "STUB: %s: probe\n", name);
-      return 0;
-}
-
-int target_net_signal(const char*name, ivl_signal_t net)
-{
-      const char*type = "?";
-      const char*port = "";
-
-      switch (ivl_signal_type(net)) {
-	  case IVL_SIT_REG:
-	    type = "reg";
-	    break;
-	  case IVL_SIT_WIRE:
-	    type = "wire";
-	    break;
-      }
-
-      switch (ivl_signal_port(net)) {
-
-	  case IVL_SIP_INPUT:
-	    port = "input ";
-	    break;
-
-	  case IVL_SIP_OUTPUT:
-	    port = "output ";
-	    break;
-
-	  case IVL_SIP_INOUT:
-	    port = "inout ";
-	    break;
-      }
-
-      fprintf(out, "%s %s[%u] %s\n", type, port,
-	      ivl_signal_pins(net), name);
-
-      return 0;
-}
 
 static void show_expression(ivl_expr_t net, unsigned ind)
 {
@@ -281,7 +152,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
       }
 }
 
-int target_process(ivl_process_t net)
+static int show_process(ivl_process_t net)
 {
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
@@ -297,8 +168,168 @@ int target_process(ivl_process_t net)
       return 0;
 }
 
+static void show_signal(ivl_signal_t net)
+{
+      const char*type = "?";
+      const char*port = "";
+
+      switch (ivl_signal_type(net)) {
+	  case IVL_SIT_REG:
+	    type = "reg";
+	    break;
+	  case IVL_SIT_WIRE:
+	    type = "wire";
+	    break;
+      }
+
+      switch (ivl_signal_port(net)) {
+
+	  case IVL_SIP_INPUT:
+	    port = "input ";
+	    break;
+
+	  case IVL_SIP_OUTPUT:
+	    port = "output ";
+	    break;
+
+	  case IVL_SIP_INOUT:
+	    port = "inout ";
+	    break;
+      }
+
+      fprintf(out, "  %s %s[%u] %s\n", type, port,
+	      ivl_signal_pins(net), ivl_signal_basename(net));
+}
+
+static void show_logic(ivl_net_logic_t net)
+{
+      unsigned npins, idx;
+      const char*name = ivl_logic_basename(net);
+
+      switch (ivl_logic_type(net)) {
+	  case IVL_LO_AND:
+	    fprintf(out, "  and %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUF:
+	    fprintf(out, "  buf %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUFZ:
+	    fprintf(out, "  bufz %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_OR:
+	    fprintf(out, "  or %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_XOR:
+	    fprintf(out, "  xor %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  default:
+	    fprintf(out, "  unsupported gate %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    return;
+      }
+
+      npins = ivl_logic_pins(net);
+      for (idx = 1 ;  idx < npins ;  idx += 1)
+	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
+
+      fprintf(out, ");\n");
+}
+
+static int show_scope(ivl_scope_t net)
+{
+      unsigned idx;
+
+      fprintf(out, "scope: %s (%u signals, %u logic)\n", ivl_scope_name(net),
+	      ivl_scope_sigs(net), ivl_scope_logs(net));
+
+      for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
+	    show_signal(ivl_scope_sig(net, idx));
+
+      for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1)
+	    show_logic(ivl_scope_log(net, idx));
+
+      fprintf(out, "end scope %s\n", ivl_scope_name(net));
+      return ivl_scope_children(net, show_scope);
+}
+
+int target_start_design(ivl_design_t des)
+{
+      const char*path = ivl_design_flag(des, "-o");
+      if (path == 0) {
+	    return -1;
+      }
+
+      out = fopen(path, "w");
+      if (out == 0) {
+	    perror(path);
+	    return -2;
+      }
+
+      fprintf(out, "root module = %s;\n",
+	      ivl_scope_name(ivl_design_root(des)));
+      return 0;
+}
+
+void target_end_design(ivl_design_t des)
+{
+      show_scope(ivl_design_root(des));
+      ivl_design_process(des, show_process);
+      fclose(out);
+}
+
+int target_net_const(const char*name, ivl_net_const_t net)
+{
+      unsigned idx;
+      unsigned wid = ivl_const_pins(net);
+      const char*bits = ivl_const_bits(net);
+
+      fprintf(out, "LPM_CONSTANT %s: %s%u'b", name,
+	      ivl_const_signed(net)? "+- ":"",
+	      wid);
+
+      for (idx = 0 ;  idx < wid ;  idx += 1)
+	    fprintf(out, "%c", bits[wid-1-idx]);
+
+      fprintf(out, " (%s", ivl_nexus_name(ivl_const_pin(net, 0)));
+      for (idx = 1 ;  idx < wid ;  idx += 1)
+	    fprintf(out, ", %s", ivl_nexus_name(ivl_const_pin(net, idx)));
+
+      fprintf(out, ")\n");
+      return 0;
+}
+
+int target_net_event(const char*name, ivl_net_event_t net)
+{
+      fprintf(out, "STUB: %s: event\n", name);
+      return 0;
+}
+
+int target_net_probe(const char*name, ivl_net_probe_t net)
+{
+      fprintf(out, "STUB: %s: probe\n", name);
+      return 0;
+}
+
+
 /*
  * $Log: stub.c,v $
+ * Revision 1.17  2000/10/15 04:46:23  steve
+ *  Scopes and processes are accessible randomly from
+ *  the design, and signals and logic are accessible
+ *  from scopes. Remove the target calls that are no
+ *  longer needed.
+ *
+ *  Add the ivl_nexus_ptr_t and the means to get at
+ *  them from nexus objects.
+ *
+ *  Give names to methods that manipulate the ivl_design_t
+ *  type more consistent names.
+ *
  * Revision 1.16  2000/10/08 05:00:04  steve
  *  Missing stream in call to fprintf.
  *
@@ -312,46 +343,5 @@ int target_process(ivl_process_t net)
  *
  * Revision 1.13  2000/10/05 05:03:01  steve
  *  xor and constant devices.
- *
- * Revision 1.12  2000/09/26 00:30:07  steve
- *  Add EX_NUMBER and ST_TRIGGER to dll-api.
- *
- * Revision 1.11  2000/09/24 15:46:00  steve
- *  API access to signal type and port type.
- *
- * Revision 1.10  2000/09/24 02:21:53  steve
- *  Add support for signal expressions.
- *
- * Revision 1.9  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.8  2000/09/19 04:15:27  steve
- *  Introduce the means to get statement types.
- *
- * Revision 1.7  2000/09/18 01:24:32  steve
- *  Get the structure for ivl_statement_t worked out.
- *
- * Revision 1.6  2000/08/27 15:51:51  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.5  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.4  2000/08/20 04:13:57  steve
- *  Add ivl_target support for logic gates, and
- *  make the interface more accessible.
- *
- * Revision 1.3  2000/08/19 18:12:42  steve
- *  Add target calls for scope, events and logic.
- *
- * Revision 1.2  2000/08/14 04:39:57  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.1  2000/08/12 16:34:37  steve
- *  Start stub for loadable targets.
- *
  */
 

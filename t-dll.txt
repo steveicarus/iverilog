@@ -18,44 +18,13 @@ The target module loader is invoked with the ivl flag "-tdll". That
 is, the DLL loader is a linked in target type. The name of the target
 module to load is then specified with the DLL flag, i.e. "-fDLL=<path>".
 
+COMPILING TARGET MODULES
+
+<write me>
 
 LOADABLE TARGET MODULE API
 
 The target module API is defined in the ivl_target.h header file. This
 declares all the type and functions that a loadable module needs to
 access the design.
-
-
-PROCESSES
-
-A process is an always or initial construct with its associated
-statement. The target gets from the compiler an ivl_process_t object,
-that holds the process type (always or initial) and the statement,
-which is an ivl_statement_t.
-
-All the interesting stuff happens in the ivl_statement_t object. This
-is a generic object that represents any single Verilog statement. If
-the statement is compound, then it also holds references to the
-contained statements. The target module can access statements in any
-way it chooses, once it is handed the process that contains the
-statement.
-
-
-EXPRESSIONS
-
-In behavioral code (and some combinational code) expressions are
-passed on to the target as ivl_expr_t objects. Each object is a node
-in a tree that represents the expression from the source. All the
-issues of width and sign are taken care of so that it is clear an easy
-to know exactly what you have.
-
-All expressions have a width, available with the ivl_expr_width()
-function. Each node in an expression tree may have a different width,
-the compiler figures out everything and eliminates the ambiguity.
-
-All expressions are also "signed" or "unsigned" -- mostly
-unsigned. The ivl_expr_signed() function returns true if the
-expression node is signed. A node may be signed, for example, if it is
-a reference to an integer or a signed wire. The compiler figures out
-whether or not each node is signed, the target need not guess.
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.19 2000/10/13 03:39:27 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.20 2000/10/15 04:46:23 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -78,6 +78,13 @@ _BEGIN_DECL
  *    single output, including logic gates and nmos, pmos and cmon
  *    devices. There is also the occasional Icarus Verilog creation.
  *
+ * ivl_nexus_t
+ *    Structural links within an elaborated design are connected
+ *    together at each bit. The connection point is a nexus, so pins
+ *    of devices refer to an ivl_nexus_t. Furthermore, from a nexus
+ *    there are backward references to all the device pins that point
+ *    to it.
+ *
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
  *    be an "initial" or an "always" process. These come from initial
@@ -111,6 +118,7 @@ typedef struct ivl_net_event_s*ivl_net_event_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
+typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
@@ -200,21 +208,45 @@ typedef enum ivl_statement_type_e {
       IVL_ST_WHILE
 } ivl_statement_type_t;
 
+/* This is the type of the function to apply to a process. */
+typedef int (*ivl_process_f)(ivl_process_t net);
 
-/* This function returns the string value of the named flag. The key
-   is used to select the flag. If the key does not exist or the flag
-   does not have a value, this function returns 0.
+/* This is the type of a function to apply to a scope. */
+typedef int (ivl_scope_f)(ivl_scope_t net);
 
-   Flags come from the "-fkey=value" options to the iverilog command
-   line.
 
-   The key "-o" is special and is the argument to the -o flag of the
-   iverilog command. This is generally how the target learns the name
-   of the output file. */
-extern const char* ivl_get_flag(ivl_design_t, const char*key);
+/* DESIGN
+ * When handed a design (ivl_design_t) there are a few things that you
+ * can do with it. The Verilog program has one design that carries the
+ * entire program. Use the design methods to iterate over the elements
+ * of the design.
+ *
+ * ivl_design_flag
+ *    This function returns the string value of a named flag. Flags
+ *    come from the "-fkey=value" options to the iverilog command and
+ *    are stored in a map for this function. Given the key, this
+ *    function returns the value.
+ *
+ *    The special key "-o" is the argument to the -o flag of the
+ *    command line (or the default if the -o flag is not used) and is
+ *    generally how the target learns the name of the output file.
+ *
+ * ivl_design_process
+ *    This function scans the processes (threads) in the design. It
+ *    calls the user suplied function on each of the processes until
+ *    one of the functors returns non-0 or all the processes are
+ *    scanned. This function will return 0, or the non-zero value that
+ *    was returned from the last scanned process.
+ *
+ * ivl_design_root
+ *    A design has a root named scope that is an instance of the top
+ *    level module in the design. This is a hook for naming the
+ *    design, or for starting the scope scan.
+ */
 
-/* Get the name of the root module. This can be used as the design name. */
-extern const char* ivl_get_root_name(ivl_design_t net);
+extern const char* ivl_design_flag(ivl_design_t des, const char*key);
+extern int         ivl_design_process(ivl_design_t des, ivl_process_f fun);
+extern ivl_scope_t ivl_design_root(ivl_design_t des);
 
 /*
  * These methods apply to ivl_net_const_t objects.
@@ -256,25 +288,96 @@ extern unsigned    ivl_expr_width(ivl_expr_t net);
  * ivl_logic_t enumeration identifies the various kinds of gates that
  * the ivl_net_logic_t can represent. The various functions then
  * provide access to the bits of information for a given logic device.
+ *
+ * ivl_logic_type
+ *    This method returns the type of logic gate that the cookie
+ *    represents.
+ *
+ * ivl_logic_name
+ *    This method returns the complete name of the logic gate. Every
+ *    gate has a complete name (that includes the scope) even if the
+ *    Verilog source doesn't include one. The compiler will choose one
+ *    if necessary.
+ *
+ * ivl_logic_basename
+ *    This is the name of the gate without the scope part.
+ *
+ * ivl_logic_pins
+ * ivl_logic_pin
  */
 
+extern const char* ivl_logic_name(ivl_net_logic_t net);
+extern const char* ivl_logic_basename(ivl_net_logic_t net);
 extern ivl_logic_t ivl_logic_type(ivl_net_logic_t net);
 extern ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin);
 extern unsigned    ivl_logic_pins(ivl_net_logic_t net);
 
 /* NEXUS
  * connections of signals and nodes is handled by single-bit
- * nexus. These functions manage the ivl_nexus_t object.
+ * nexus. These functions manage the ivl_nexus_t object. They also
+ * manage the ivl_nexus_ptr_t objects that are closely related to the
+ * nexus. 
+ *
+ * ivl_nexus_name
+ *    Each nexus is given a name, typically derived from the signals
+ *    connected to it, but completely made up if need be. The name of
+ *    every nexus is unique.
+ *
+ * ivl_nexus_ptrs
+ *    This function returns the number of pointers that are held by
+ *    the nexus. It should always return at least 1. The pointer
+ *    proper is accessed by index.
+ *
+ * ivl_nexus_ptr
+ *    Return a nexus pointer given the nexus and an index.
  */
 
-extern const char* ivl_nexus_name(ivl_nexus_t net);
+extern const char*     ivl_nexus_name(ivl_nexus_t net);
+extern unsigned        ivl_nexus_ptrs(ivl_nexus_t net);
+extern ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx);
 
 
 /* SCOPE
  * Scopes of various sort have these properties. Use these methods to
- * access them.
+ * access them. Scopes come to exist in the elaborated design
+ * generally when a module is instantiated, though they also come from
+ * named blocks, tasks and functions.
+ *
+ * (NOTE: Module scopes are *instances* of modules, and not the module
+ * definition. A definition may apply to many instances.)
+ *
+ * ivl_scope_children
+ *    A scope may in turn contain other scopes. This method iterates
+ *    through all the child scopes of a given scope. If the function
+ *    returns any value other then 0, the iteration stops and the
+ *    method returns that value. Otherwise, iteration continues until
+ *    the children run out.
+ *
+ *    If the scope has no children, this method will return 0 and
+ *    otherwise do nothing.
+ *
+ * ivl_scope_log
+ * ivl_scope_logs
+ *    Scopes have 0 or more logic devices in them. A logic device is
+ *    represented by ivl_logic_t.
+ *
+ * ivl_scope_name
+ *    Every scope has a hierarchical name. This name is also a prefix
+ *    of all the names of objects contained within the scope.
+ *
+ * ivl_scope_sig
+ * ivl_scope_sigs
+ *    Scopes have 0 or more signals in them. These signals are
+ *    anything that can become and ivl_signal_t, include synthetic
+ *    signals generated by the compiler.
  */
-extern const char* ivl_scope_name(ivl_scope_t net);
+
+extern int          ivl_scope_children(ivl_scope_t net, ivl_scope_f func);
+extern unsigned     ivl_scope_logs(ivl_scope_t net);
+extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
+extern const char*  ivl_scope_name(ivl_scope_t net);
+extern unsigned     ivl_scope_sigs(ivl_scope_t net);
+extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
 
 
 /* SIGNALS
@@ -403,14 +506,6 @@ typedef int (*net_const_f)(const char*name, ivl_net_const_t net);
 typedef int (*net_event_f)(const char*name, ivl_net_event_t net);
 
 
-/* target_net_logic
-
-   This function is called for each logic gate in the design. The name
-   parameter is the name of the gate in the design. If the gate is
-   part of an array of gates, the name includes its index. */
-typedef int (*net_logic_f)(const char*name, ivl_net_logic_t net);
-
-
 /* target_net_probe
 
    This is the probe, or structural trigger, of an event. The
@@ -418,41 +513,23 @@ typedef int (*net_logic_f)(const char*name, ivl_net_logic_t net);
    before this probe is called. */
 typedef int (*net_probe_f)(const char*name, ivl_net_probe_t net);
 
-/* target_net_signal
-
-   Signals are things like "wire foo" or "reg bar;" that is, declared
-   signals in the verilog source. These are not memories, which are
-   handled elsewhere. */
-typedef int (*net_signal_f)(const char*name, ivl_signal_t net);
-
-
-/* target_process
-
-   The "target_process" function is called for each always and initial
-   block in the design. In principle, the target creates a thread for
-   each process in the Verilog original.
-
-   This function is called with the entire thread generated. The
-   process and statement access methods can be used to randomly
-   (read-only) access all the code of the thread. Also, the module may
-   hold on to the process, the core will not delete it. */
-typedef int (*process_f)(ivl_process_t net);
-
-
-/* target_scope (optional)
-
-   If the "target_scope" function is implemented in the module, it is
-   called to introduce a new scope in the design. If scopes are
-   nested, this method is always called for the containing scope
-   before the contained scope. Also, this is guaranteed to be called
-   before functions for any objects contained in this scope. */
-typedef void (*scope_f)(ivl_scope_t net);
-
 
 _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.20  2000/10/15 04:46:23  steve
+ *  Scopes and processes are accessible randomly from
+ *  the design, and signals and logic are accessible
+ *  from scopes. Remove the target calls that are no
+ *  longer needed.
+ *
+ *  Add the ivl_nexus_ptr_t and the means to get at
+ *  them from nexus objects.
+ *
+ *  Give names to methods that manipulate the ivl_design_t
+ *  type more consistent names.
+ *
  * Revision 1.19  2000/10/13 03:39:27  steve
  *  Include constants in nexus targets.
  *
@@ -476,49 +553,5 @@ _END_DECL
  * Revision 1.14  2000/09/30 02:18:15  steve
  *  ivl_expr_t support for binary operators,
  *  Create a proper ivl_scope_t object.
- *
- * Revision 1.13  2000/09/26 00:30:07  steve
- *  Add EX_NUMBER and ST_TRIGGER to dll-api.
- *
- * Revision 1.12  2000/09/24 15:46:00  steve
- *  API access to signal type and port type.
- *
- * Revision 1.11  2000/09/24 02:21:53  steve
- *  Add support for signal expressions.
- *
- * Revision 1.10  2000/09/23 05:15:07  steve
- *  Add enough tgt-verilog code to support hello world.
- *
- * Revision 1.9  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.8  2000/09/19 04:15:27  steve
- *  Introduce the means to get statement types.
- *
- * Revision 1.7  2000/09/18 01:24:32  steve
- *  Get the structure for ivl_statement_t worked out.
- *
- * Revision 1.6  2000/08/27 15:51:50  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.5  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.4  2000/08/20 04:13:57  steve
- *  Add ivl_target support for logic gates, and
- *  make the interface more accessible.
- *
- * Revision 1.3  2000/08/19 18:12:42  steve
- *  Add target calls for scope, events and logic.
- *
- * Revision 1.2  2000/08/14 04:39:56  steve
- *  add th t-dll functions for net_const, net_bufz and processes.
- *
- * Revision 1.1  2000/08/12 16:34:37  steve
- *  Start stub for loadable targets.
- *
  */
 #endif

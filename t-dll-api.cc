@@ -17,28 +17,39 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.11 2000/10/08 04:01:54 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.12 2000/10/15 04:46:23 steve Exp $"
 #endif
 
 # include  "t-dll.h"
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
+extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)
+{
+      return des->self->get_flag(key).c_str();
+}
+
+extern "C" int ivl_design_process(ivl_design_t des, ivl_process_f func)
+{
+      for (ivl_process_t idx = des->threads_;  idx;  idx = idx->next_) {
+	    int rc = (func)(idx);
+	    if (rc != 0)
+		  return rc;
+      }
+
+      return 0;
+}
+
+extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
+{
+      return des->root_;
+}
+
 extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
 {
       if (net == 0)
 	    return IVL_EX_NONE;
       return net->type_;
-}
-
-extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
-{
-      return des->self->get_flag(key).c_str();
-}
-
-extern "C" const char*ivl_get_root_name(ivl_design_t des)
-{
-      return des->root_->name_;
 }
 
 extern "C" const char*ivl_const_bits(ivl_net_const_t net)
@@ -153,6 +164,21 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
       return net->width_;
 }
 
+extern "C" const char* ivl_logic_name(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->name_;
+}
+
+extern "C" const char* ivl_logic_basename(ivl_net_logic_t net)
+{
+      const char*nam = net->name_;
+      nam += strlen(ivl_scope_name(net->scope_));
+      assert(*nam == '.');
+      nam += 1;
+      return nam;
+}
+
 extern "C" ivl_logic_t ivl_logic_type(ivl_net_logic_t net)
 {
       return net->type_;
@@ -175,6 +201,19 @@ extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
       return net->name_;
 }
 
+extern "C" unsigned ivl_nexus_ptrs(ivl_nexus_t net)
+{
+      assert(net);
+      return net->nptr_;
+}
+
+extern "C" ivl_nexus_ptr_t ivl_nexus_ptr(ivl_nexus_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nptr_);
+      return net->ptrs_ + idx;
+}
+
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
@@ -185,9 +224,46 @@ extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
       return net->stmt_;
 }
 
+extern "C" int ivl_scope_children(ivl_scope_t net, ivl_scope_f func)
+{
+      for (ivl_scope_t cur = net->child_; cur;  cur = cur->sibling_) {
+	    int rc = func(cur);
+	    if (rc != 0)
+		  return rc;
+      }
+
+      return 0;
+}
+
+extern "C" unsigned ivl_scope_logs(ivl_scope_t net)
+{
+      assert(net);
+      return net->nlog_;
+}
+
+extern "C" ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nlog_);
+      return net->log_[idx];
+}
+
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
 {
       return net->name_;
+}
+
+extern "C" unsigned ivl_scope_sigs(ivl_scope_t net)
+{
+      assert(net);
+      return net->nsigs_;
+}
+
+extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nsigs_);
+      return net->sigs_[idx];
 }
 
 extern "C" const char* ivl_signal_basename(ivl_signal_t net)
@@ -340,6 +416,18 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.12  2000/10/15 04:46:23  steve
+ *  Scopes and processes are accessible randomly from
+ *  the design, and signals and logic are accessible
+ *  from scopes. Remove the target calls that are no
+ *  longer needed.
+ *
+ *  Add the ivl_nexus_ptr_t and the means to get at
+ *  them from nexus objects.
+ *
+ *  Give names to methods that manipulate the ivl_design_t
+ *  type more consistent names.
+ *
  * Revision 1.11  2000/10/08 04:01:54  steve
  *  Back pointers in the nexus objects into the devices
  *  that point to it.

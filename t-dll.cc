@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.14 2000/10/13 03:39:27 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.15 2000/10/15 04:46:23 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -40,12 +40,12 @@ static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
 	    parent = find_scope(root, par);
 
       } else {
-	    assert(root->self == cur);
+	    assert(strcmp(root->name_, cur->name().c_str()) == 0);
 	    return root;
       }
 
       for (tmp = parent->child_ ;  tmp ;  tmp = tmp->sibling_)
-	    if (tmp->self == cur)
+	    if (strcmp(tmp->name_, cur->name().c_str()) == 0)
 		  return tmp;
 
       return 0;
@@ -55,7 +55,8 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 {
       ivl_nexus_t tmp = new struct ivl_nexus_s;
       tmp->nptr_ = 1;
-      tmp->ptrs_ = (struct __nexus_ptr*) malloc(sizeof(struct __nexus_ptr));
+      tmp->ptrs_ = (struct ivl_nexus_ptr_s*)
+	    malloc(sizeof(struct ivl_nexus_ptr_s));
       tmp->ptrs_[0].pin_  = pin;
       tmp->ptrs_[0].type_ = __NEXUS_PTR_SIG;
       tmp->ptrs_[0].l.sig = net;
@@ -65,8 +66,8 @@ static ivl_nexus_t nexus_sig_make(ivl_signal_t net, unsigned pin)
 static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
 {
       unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct __nexus_ptr*)
-	    realloc(nex->ptrs_, top * sizeof(struct __nexus_ptr));
+      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
+	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_SIG;
@@ -77,8 +78,8 @@ static void nexus_sig_add(ivl_nexus_t nex, ivl_signal_t net, unsigned pin)
 static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
 {
       unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct __nexus_ptr*)
-	    realloc(nex->ptrs_, top * sizeof(struct __nexus_ptr));
+      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
+	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_LOG;
@@ -89,8 +90,8 @@ static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
 static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
 {
       unsigned top = nex->nptr_ + 1;
-      nex->ptrs_ = (struct __nexus_ptr*)
-	    realloc(nex->ptrs_, top * sizeof(struct __nexus_ptr));
+      nex->ptrs_ = (struct ivl_nexus_ptr_s*)
+	    realloc(nex->ptrs_, top * sizeof(struct ivl_nexus_ptr_s));
       nex->nptr_ = top;
 
       nex->ptrs_[top-1].type_= __NEXUS_PTR_CON;
@@ -130,18 +131,13 @@ bool dll_target::start_design(const Design*des)
       des_.self = des;
       des_.root_ = new struct ivl_scope_s;
       des_.root_->name_ = strdup(des->find_root_scope()->name().c_str());
-      des_.root_->self = des->find_root_scope();
 
       start_design_ = (start_design_f)dlsym(dll_, LU "target_start_design" TU);
       end_design_   = (end_design_f)  dlsym(dll_, LU "target_end_design" TU);
 
       net_const_  = (net_const_f) dlsym(dll_, LU "target_net_const" TU);
       net_event_  = (net_event_f) dlsym(dll_, LU "target_net_event" TU);
-      net_logic_  = (net_logic_f) dlsym(dll_, LU "target_net_logic" TU);
       net_probe_  = (net_probe_f) dlsym(dll_, LU "target_net_probe" TU);
-      net_signal_ = (net_signal_f)dlsym(dll_, LU "target_net_signal" TU);
-      process_    = (process_f)   dlsym(dll_, LU "target_process" TU);
-      scope_      = (scope_f)     dlsym(dll_, LU "target_scope" TU);
 
       (start_design_)(&des_);
       return true;
@@ -153,17 +149,6 @@ bool dll_target::start_design(const Design*des)
  */
 void dll_target::end_design(const Design*)
 {
-      if (process_) {
-	    for (ivl_process_t idx = des_.threads_;  idx;  idx = idx->next_) {
-		  process_(idx);
-	    }
-
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_process function." << endl;
-      }
-
-
       (end_design_)(&des_);
       dlclose(dll_);
 }
@@ -186,7 +171,6 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->npins_ = 2;
       obj->pins_ = new ivl_nexus_t[2];
 
-
 	/* Get the ivl_nexus_t objects connected to the two pins.
 
 	   (We know a priori that the ivl_nexus_t objects have been
@@ -208,12 +192,9 @@ bool dll_target::bufz(const NetBUFZ*net)
       ivl_scope_t scope = find_scope(des_.root_, net->scope());
       assert(scope);
 
+      obj->scope_ = scope;
+      obj->name_ = strdup(net->name());
       scope_add_logic(scope, obj);
-
-      if (net_logic_) {
-	    (net_logic_)(net->name(), obj);
-
-      }
 
       return true;
 }
@@ -270,12 +251,10 @@ void dll_target::logic(const NetLogic*net)
       ivl_scope_t scope = find_scope(des_.root_, net->scope());
       assert(scope);
 
+      obj->scope_= scope;
+      obj->name_ = strdup(net->name());
+
       scope_add_logic(scope, obj);
-
-      if (net_logic_) {
-	    (net_logic_)(net->name(), obj);
-
-      }
 }
 
 bool dll_target::net_const(const NetConst*net)
@@ -358,12 +337,11 @@ void dll_target::scope(const NetScope*net)
       ivl_scope_t scope;
 
       if (net->parent() == 0) {
-	    assert(des_.root_->self == net);
+	    assert(strcmp(des_.root_->name_, net->name().c_str()) == 0);
 	    scope = des_.root_;
 
       } else {
 	    scope = new struct ivl_scope_s;
-	    scope->self = net;
 	    scope->name_ = strdup(net->name().c_str());
 
 	    ivl_scope_t parent = find_scope(des_.root_, net->parent());
@@ -372,9 +350,6 @@ void dll_target::scope(const NetScope*net)
 	    scope->sibling_= parent->child_;
 	    parent->child_ = scope;
       }
-
-      if (scope_)
-	    (scope_)(scope);
 }
 
 void dll_target::signal(const NetNet*net)
@@ -401,13 +376,13 @@ void dll_target::signal(const NetNet*net)
 	    obj->scope_->sigs_ = (ivl_signal_t*)
 		  realloc(obj->scope_->sigs_,
 			  obj->scope_->nsigs_*sizeof(ivl_signal_t));
-	    obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
       }
 
+      obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
+
 #ifndef NDEBUG
-      { const char*scope_name = obj->scope_->self->name().c_str();
-        size_t name_len = strlen(scope_name);
-	assert(0 == strncmp(scope_name, obj->name_, name_len));
+      { size_t name_len = strlen(obj->scope_->name_);
+	assert(0 == strncmp(obj->scope_->name_, obj->name_, name_len));
       }
 #endif
 
@@ -531,19 +506,6 @@ void dll_target::signal(const NetNet*net)
 		  }
 	    }
       }
-
-	/* Invoke the target_net_signal function of the loaded target
-	   module, if it exists. */
-
-      if (net_signal_) {
-	    int rc = (net_signal_)(obj->name_, obj);
-	    return;
-
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_signal function." << endl;
-	    return;
-      }
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
@@ -551,6 +513,18 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.15  2000/10/15 04:46:23  steve
+ *  Scopes and processes are accessible randomly from
+ *  the design, and signals and logic are accessible
+ *  from scopes. Remove the target calls that are no
+ *  longer needed.
+ *
+ *  Add the ivl_nexus_ptr_t and the means to get at
+ *  them from nexus objects.
+ *
+ *  Give names to methods that manipulate the ivl_design_t
+ *  type more consistent names.
+ *
  * Revision 1.14  2000/10/13 03:39:27  steve
  *  Include constants in nexus targets.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.12 2000/10/13 03:39:27 steve Exp $"
+#ident "$Id: t-dll.h,v 1.13 2000/10/15 04:46:23 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -66,12 +66,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       net_const_f  net_const_;
       net_event_f  net_event_;
-      net_logic_f  net_logic_;
       net_probe_f  net_probe_;
-      net_signal_f net_signal_;
-
-      process_f    process_;
-      scope_f      scope_;
 
 	/* These methods and members are used for forming the
 	   statements of a thread. */
@@ -160,6 +155,10 @@ struct ivl_net_const_s {
  */
 struct ivl_net_logic_s {
       ivl_logic_t type_;
+
+      char* name_;
+      ivl_scope_t scope_;
+
       unsigned npins_;
       ivl_nexus_t*pins_;
 };
@@ -170,7 +169,7 @@ struct ivl_net_logic_s {
  * devices. the __nexus_ptr structure is a helper that actually does
  * the pointing.
  */
-struct __nexus_ptr {
+struct ivl_nexus_ptr_s {
       unsigned pin_  :24;
       unsigned type_ : 8;
       union {
@@ -185,7 +184,7 @@ struct __nexus_ptr {
 
 struct ivl_nexus_s {
       unsigned nptr_;
-      struct __nexus_ptr*ptrs_;
+      struct ivl_nexus_ptr_s*ptrs_;
       char*name_;
 };
 
@@ -210,7 +209,6 @@ struct ivl_scope_s {
       ivl_scope_t child_, sibling_;
 
       char* name_;
-      const NetScope*self;
 
       unsigned nsigs_;
       ivl_signal_t*sigs_;
@@ -300,6 +298,18 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.13  2000/10/15 04:46:23  steve
+ *  Scopes and processes are accessible randomly from
+ *  the design, and signals and logic are accessible
+ *  from scopes. Remove the target calls that are no
+ *  longer needed.
+ *
+ *  Add the ivl_nexus_ptr_t and the means to get at
+ *  them from nexus objects.
+ *
+ *  Give names to methods that manipulate the ivl_design_t
+ *  type more consistent names.
+ *
  * Revision 1.12  2000/10/13 03:39:27  steve
  *  Include constants in nexus targets.
  *
