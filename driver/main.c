@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.30 2001/11/16 05:07:19 steve Exp $"
+#ident "$Id: main.c,v 1.31 2001/11/21 02:20:34 steve Exp $"
 
 # include "config.h"
 
@@ -94,16 +94,21 @@ char *library_flags2 = 0;
 char*inc_list = 0;
 char*def_list = 0;
 char*mod_list = 0;
-char*src_list = 0;
 char*command_filename = 0;
 char*start = 0;
 
 char*f_list = 0;
 
+/* These are used to collect the list of file names that will be
+   passed to ivlpp. Keep the list in a file because it can be a long
+   list. */
+char*source_path = 0;
+FILE*source_file = 0;
+unsigned source_count = 0;
+
 int synth_flag = 0;
 int verbose_flag = 0;
 int command_file = 0;
-int inside_c_comment = 0;
 
 FILE *fp;
 
@@ -151,6 +156,7 @@ static int t_default(char*cmd, unsigned ncmd)
 
 
       rc = system(cmd);
+      remove(source_path);
       if (rc != 0) {
 	    if (rc == 127) {
 		  fprintf(stderr, "Failed to execute: %s\n", cmd);
@@ -206,6 +212,7 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    printf("translate: %s\n", cmd);
 
       rc = system(cmd);
+      remove(source_path);
       if (rc != 0) {
 	    if (WIFEXITED(rc)) {
 		  fprintf(stderr, "errors translating Verilog program.\n");
@@ -330,15 +337,8 @@ void process_define(const char*name)
 
 void process_file_name(const char*name)
 {
-      if (src_list) {
-	    src_list = realloc(src_list,
-			       strlen(src_list) + strlen(name) + 2);
-	    strcat(src_list, " ");
-	    strcat(src_list, name);
-      } else {
-	    src_list = malloc(strlen(name) + 1);
-	    strcpy(src_list, name);
-      }
+      fprintf(source_file, "%s\n", name);
+      source_count += 1;
 }
 
 int main(int argc, char **argv)
@@ -386,6 +386,11 @@ int main(int argc, char **argv)
       strcpy(ivl_root, IVL_ROOT);
       base = ivl_root;
 #endif
+
+      source_path = strdup(tmpnam(0));
+      assert(source_path);
+      source_file = fopen(source_path, "w");
+      assert(source_file);
 
       while ((opt = getopt(argc, argv, "B:C:c:D:Ef:hI:m:N::o:p:Ss:T:t:vW:y:")) != EOF) {
 
@@ -527,7 +532,10 @@ int main(int argc, char **argv)
 	    process_file_name(argv[idx]);
 
 
-      if (src_list == 0) {
+      fclose(source_file);
+      source_file = 0;
+
+      if (source_count == 0) {
 	    fprintf(stderr, "%s: No input files.\n", argv[0]);
  	    fprintf(stderr, "%s\n", HELP);
 	    return 1;
@@ -554,9 +562,9 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s%civlpp %s%s", base,sep,
+      sprintf(tmp, "%s%civlpp %s%s -f%s ", base,sep,
 	      verbose_flag?" -v":"",
-	      e_flag?"":" -L");
+	      e_flag?"":" -L", source_path);
 
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
@@ -575,13 +583,6 @@ int main(int argc, char **argv)
       }
 
 
-	/* Add the file names to the preprocessor command line. */
-      cmd = realloc(cmd, ncmd+strlen(src_list)+2);
-      strcpy(cmd+ncmd, " ");
-      ncmd += 1;
-      strcpy(cmd+ncmd, src_list);
-      ncmd += strlen(src_list);
-
 	/* If the -E flag was given on the command line, then all we
 	   do is run the preprocessor and put the output where the
 	   user wants it. */
@@ -598,6 +599,7 @@ int main(int argc, char **argv)
 		  printf("preprocess: %s\n", cmd);
 
 	    rc = system(cmd);
+	    remove(source_path);
 	    if (rc != 0) {
 		  if (WIFEXITED(rc)) {
 			fprintf(stderr, "errors preprocessing Verilog program.\n");
@@ -622,6 +624,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.31  2001/11/21 02:20:34  steve
+ *  Pass list of file to ivlpp via temporary file.
+ *
  * Revision 1.30  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
  *

@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.12 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: main.c,v 1.13 2001/11/21 02:20:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -58,6 +58,29 @@ extern int optind;
 extern const char*optarg;
 #endif
 
+/*
+ * Keep in source_list an array of pointers to file names. The array
+ * is terminated by a pointer to null.
+ */
+static char**source_list = 0;
+static unsigned source_cnt = 0;
+
+void add_source_file(const char*name)
+{
+      fprintf(stderr, "add_source_file: %s\n", name);
+      if (source_list == 0) {
+	    source_list = calloc(2, sizeof(char*));
+	    source_list[0] = strdup(name);
+	    source_list[1] = 0;
+	    source_cnt = 1;
+      } else {
+	    source_list = realloc(source_list, sizeof(char*) * (source_cnt+2));
+	    source_list[source_cnt+0] = strdup(name);
+	    source_list[source_cnt+1] = 0;
+	    source_cnt += 1;
+      }
+}
+
 char**include_dir = 0;
 unsigned include_cnt = 0;
 
@@ -65,9 +88,42 @@ int line_direct_flag = 0;
 
 unsigned error_count = 0;
 
+/*
+ * This function reads from a file a list of file names. Each name
+ * starts with the first non-space character, and ends with the last
+ * non-space character. Spaces in the middle are OK.
+ */
+static int flist_read_names(const char*path)
+{
+      char line_buf[2048];
+
+      FILE*fd = fopen(path, "r");
+      if (fd == 0) {
+	    fprintf(stderr, "%s: unable to open for reading.\n", path);
+	    return 1;
+      }
+
+      while (fgets(line_buf, sizeof line_buf, fd) != 0) {
+	    char*cp = line_buf + strspn(line_buf, " \t\r\b\f");
+	    char*tail = cp + strlen(cp);
+	    while (tail > cp) {
+		  if (! isspace(tail[-1]))
+			break;
+		  tail -= 1;
+		  tail[0] = 0;
+	    }
+
+	    if (cp < tail)
+		  add_source_file(cp);
+      }
+
+      return 0;
+}
+
 int main(int argc, char*argv[])
 {
-      int opt;
+      int opt, idx;
+      const char*flist_path = 0;
       unsigned flag_errors = 0;
       char*out_path = 0;
       FILE*out;
@@ -95,7 +151,7 @@ int main(int argc, char*argv[])
       include_dir[0] = strdup(".");
       include_cnt = 1;
 
-      while ((opt = getopt(argc, argv, "D:I:K:Lo:v")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "D:f:I:K:Lo:v")) != EOF) switch (opt) {
 
 	  case 'D': {
 		char*tmp = strdup(optarg);
@@ -109,6 +165,14 @@ int main(int argc, char*argv[])
 		free(tmp);
 		break;
 	  }
+
+	  case 'f':
+	    if (flist_path) {
+		  fprintf(stderr, "%s: duplicate -f flag\n", argv[0]);
+		  flag_errors += 1;
+	    }
+	    flist_path = optarg;
+	    break;
 
 	  case 'I':
 	    include_dir = realloc(include_dir, (include_cnt+1)*sizeof(char*));
@@ -149,12 +213,10 @@ int main(int argc, char*argv[])
 	    break;
       }
 
-      if (optind == argc)
-	    flag_errors += 1;
-
       if (flag_errors) {
 	    fprintf(stderr, "\nUsage: %s [-v][-L][-I<dir>][-D<def>] <file>...\n"
 		    "    -D<def> - Predefine a value.\n"
+		    "    -f<fil> - Read the sources listed in the file\n"
 		    "    -I<dir> - Add an include file search directory\n"
 		    "    -K<def> - Define a keyword macro that I just pass\n"
 		    "    -L      - Emit line number directives\n"
@@ -164,6 +226,21 @@ int main(int argc, char*argv[])
 	    return flag_errors;
       }
 
+	/* Collect the file names on the command line in the source
+	   file list, then if there is a file list, read more file
+	   names from there. */
+      for (idx = optind ;  idx < argc ;  idx += 1)
+	    add_source_file(argv[idx]);
+
+
+      if (flist_path) {
+	    int rc = flist_read_names(flist_path);
+	    if (rc != 0)
+		  return rc;
+      }
+
+	/* Figure out what to use for an output file. Write to stdout
+	   if no path is specified. */
       if (out_path) {
 	    out = fopen(out_path, "w");
 	    if (out == 0) {
@@ -174,13 +251,14 @@ int main(int argc, char*argv[])
 	    out = stdout;
       }
 
-      if (argv[optind] == 0) {
+      if (source_cnt == 0) {
 	    fprintf(stderr, "%s: No input files given.\n", argv[0]);
 	    return 1;
       }
 
-      reset_lexor(out, argv+optind);
-
+	/* Pass to the lexical analyzer the list of input file, and
+	   start the parser. */
+      reset_lexor(out, source_list);
       if (yyparse()) return -1;
 
       return error_count;
@@ -188,6 +266,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.13  2001/11/21 02:20:35  steve
+ *  Pass list of file to ivlpp via temporary file.
+ *
  * Revision 1.12  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *
