@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.231 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: netlist.cc,v 1.232 2005/01/22 18:16:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -454,17 +454,6 @@ unsigned NetNet::get_refs() const
       return lref_count_ + eref_count_;
 }
 
-
-NetSubnet::NetSubnet(NetNet*sig, unsigned off, unsigned wid)
-: NetNet(sig->scope(), sig->scope()->local_symbol(), sig->type(), wid-1,0)
-{
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-	    connect(sig->pin(idx+off), pin(idx));
-
-      port_type(sig->port_type());
-      local_flag(true);
-      set_line(*sig);
-}
 
 NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
 			     NetPartSelect::dir_t dir)
@@ -2347,6 +2336,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.232  2005/01/22 18:16:01  steve
+ *  Remove obsolete NetSubnet class.
+ *
  * Revision 1.231  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

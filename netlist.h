@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.327 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.328 2005/01/22 18:16:01 steve Exp $"
 #endif
 
 /*
@@ -1151,19 +1151,6 @@ class NetECRealParam  : public NetECReal {
     private:
       NetScope*scope_;
       perm_string name_;
-};
-
-/* DEPRECATED -- REMOVE ME! Use NetPartSelect instead.
- * This is a special, magical NetNet object. It represents a constant
- * bit or part select of another NetNet, so is used to return that
- * selection from elaborate function. None of these should remain once
- * the elaboration is complete.
- */
-class NetSubnet  : public NetNet {
-
-    public:
-      explicit NetSubnet(NetNet*sig, unsigned off, unsigned wid);
-      virtual void dump_net(ostream&, unsigned) const;
 };
 
 /*
@@ -3419,6 +3406,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.328  2005/01/22 18:16:01  steve
+ *  Remove obsolete NetSubnet class.
+ *
  * Revision 1.327  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

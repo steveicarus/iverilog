@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.314 2005/01/12 03:17:36 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.315 2005/01/22 18:16:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -522,8 +522,6 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  des->errors += 1;
 	    }
 
-	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
-		  delete tmp;
       }
 }
 
@@ -1043,10 +1041,6 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    }
 
 	    connect(sig->pin(0), net->pin(idx));
-
-	      // Delete excess holding signal.
-	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
-		  delete tmp;
       }
 
 	// All done. Add the object to the design.
@@ -2886,6 +2880,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.315  2005/01/22 18:16:00  steve
+ *  Remove obsolete NetSubnet class.
+ *
  * Revision 1.314  2005/01/12 03:17:36  steve
  *  Properly pad vector widths in pgassign.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.143 2005/01/22 01:06:55 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.144 2005/01/22 18:16:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -148,11 +148,6 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    osig = 0;
       }
-
-      if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(lsig))
-	    delete tmp;
-      if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(rsig))
-	    delete tmp;
 
       return osig;
 }
@@ -2456,6 +2451,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.144  2005/01/22 18:16:00  steve
+ *  Remove obsolete NetSubnet class.
+ *
  * Revision 1.143  2005/01/22 01:06:55  steve
  *  Change case compare from logic to an LPM node.
  *

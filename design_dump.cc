@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.152 2005/01/09 20:16:00 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.153 2005/01/22 18:16:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -117,13 +117,6 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	      << " " << nex->name() << endl;
       }
       dump_obj_attr(o, ind+4);
-}
-
-void NetSubnet::dump_net(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "** " << name() << " is a NetSubnet **"
-	<< endl;
-      NetNet::dump_net(o, ind);
 }
 
 void NetMemory::dump(ostream&o, unsigned ind) const
@@ -1109,6 +1102,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.153  2005/01/22 18:16:00  steve
+ *  Remove obsolete NetSubnet class.
+ *
  * Revision 1.152  2005/01/09 20:16:00  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *
