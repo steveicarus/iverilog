@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.39 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.40 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -52,7 +52,7 @@ NetNet* NetEBAdd::synthesize(Design*des)
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
-      string oname = des->local_symbol(path);
+      string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(lsig->pin(idx), adder->pin_DataA(idx));
@@ -577,7 +577,7 @@ NetNet* NetETernary::synthesize(Design *des)
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
       osig->local_flag(true);
 
-      string oname = des->local_symbol(path);
+      string oname = csig->scope()->local_symbol();
       NetMux *mux = new NetMux(csig->scope(), oname, width, 2, 1);
       for (unsigned idx = 0 ;  idx < width;  idx += 1) {
 	    connect(tsig->pin(idx), mux->pin_Data(idx, 1));
@@ -643,6 +643,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.40  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.39  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *

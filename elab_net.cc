@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.106 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.107 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -180,7 +180,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       NetNode*gate;
       NetNode*gate_t;
 
-      string name = scope->local_hsymbol();
+      string name = scope->local_symbol();
       unsigned width = lsig->pin_count();
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
@@ -444,7 +444,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	  case 'L':
 	  case 'G': {
 		NetCompare*cmp = new
-		      NetCompare(scope, scope->local_hsymbol(), dwidth);
+		      NetCompare(scope, scope->local_symbol(), dwidth);
 		for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 		      connect(cmp->pin_DataA(idx), lsig->pin(idx));
 		for (unsigned idx = lsig->pin_count(); idx < dwidth ; idx += 1)
@@ -521,7 +521,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    }
 
 	      /* Oh well, do the general case with a NetCompare. */
-	    { NetCompare*cmp = new NetCompare(scope, scope->local_hsymbol(),
+	    { NetCompare*cmp = new NetCompare(scope, scope->local_symbol(),
 					      dwidth);
 	      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 
@@ -555,7 +555,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    }
 
 	      /* Oh well, do the general case with a NetCompare. */
-	    { NetCompare*cmp = new NetCompare(scope, scope->local_hsymbol(),
+	    { NetCompare*cmp = new NetCompare(scope, scope->local_symbol(),
 					      dwidth);
 	      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 
@@ -626,7 +626,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       }
 
 	// Create a device with the calculated dimensions.
-      NetDivide*div = new NetDivide(scope, scope->local_hsymbol(), rwidth,
+      NetDivide*div = new NetDivide(scope, scope->local_symbol(), rwidth,
 				    lsig->pin_count(),
 				    rsig->pin_count());
       des->add_node(div);
@@ -691,7 +691,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
 	    if (rsig->pin_count() > rwidth)
 		  rwidth = rsig->pin_count();
       }
-      NetModulo*mod = new NetModulo(scope, scope->local_hsymbol(), rwidth,
+      NetModulo*mod = new NetModulo(scope, scope->local_symbol(), rwidth,
 				    lsig->pin_count(),
 				    rsig->pin_count());
       des->add_node(mod);
@@ -860,7 +860,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 	    rwidth = lsig->pin_count() + rsig->pin_count();
       }
 
-      NetMult*mult = new NetMult(scope, scope->local_hsymbol(), rwidth,
+      NetMult*mult = new NetMult(scope, scope->local_symbol(), rwidth,
 				 lsig->pin_count(),
 				 rsig->pin_count());
       des->add_node(mult);
@@ -961,7 +961,7 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 
 	// Make the shift device itself, and the output
 	// NetNet. Connect the Result output pins to the osig signal
-      NetCLShift*gate = new NetCLShift(scope, scope->local_hsymbol(),
+      NetCLShift*gate = new NetCLShift(scope, scope->local_symbol(),
 				       lwidth, rsig->pin_count());
 
       NetNet*osig = new NetNet(scope, scope->local_hsymbol(),
@@ -1219,7 +1219,7 @@ NetNet* PEIdent::elaborate_net_bitmux_(Design*des, NetScope*scope,
       NetNet*sel = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
 
       unsigned sig_width = sig->pin_count();
-      NetMux*mux = new NetMux(scope, scope->local_hsymbol(), 1,
+      NetMux*mux = new NetMux(scope, scope->local_symbol(), 1,
 			      sig_width, sel->pin_count());
 
 	/* Connect the signal bits to the mux. Account for the
@@ -1976,7 +1976,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
 	   The inputs are the 0 (false) connected to fal_sig and 1
 	   (true) connected to tru_sig.  */
 
-      NetMux*mux = new NetMux(scope, scope->local_hsymbol(), dwidth, 2, 1);
+      NetMux*mux = new NetMux(scope, scope->local_symbol(), dwidth, 2, 1);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
 	/* Connect the data inputs. */
@@ -2242,7 +2242,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 		  break;
 
 		default:
-		  NetAddSub*sub = new NetAddSub(scope, scope->local_hsymbol(),
+		  NetAddSub*sub = new NetAddSub(scope, scope->local_symbol(),
 						sig->pin_count());
 		  sub->attribute("LPM_Direction", verinum("SUB"));
 
@@ -2284,6 +2284,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.107  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.106  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

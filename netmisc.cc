@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.4 2002/08/31 03:48:50 steve Exp $"
+#ident "$Id: netmisc.cc,v 1.5 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,7 +47,7 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
 			      NetNet::IMPLICIT, width);
       res->local_flag(true);
 
-      NetAddSub*add = new NetAddSub(scope, scope->local_hsymbol(), width);
+      NetAddSub*add = new NetAddSub(scope, scope->local_symbol(), width);
 
       for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    connect(sig->pin(idx), add->pin_DataA(idx));
@@ -90,6 +90,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
 /*
  * $Log: netmisc.cc,v $
+ * Revision 1.5  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.4  2002/08/31 03:48:50  steve
  *  Fix reverse bit ordered bit select in continuous assignment.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.41 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: cprop.cc,v 1.42 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -834,9 +834,10 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       }
 
       if (flag) {
+	    NetScope*scope = obj->scope();
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(obj->scope(),
-					      des->local_symbol(obj->name()),
+					      scope->local_hsymbol(),
 					      3, NetLogic::BUFIF1);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
@@ -866,9 +867,10 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
       }
 
       if (flag) {
+	    NetScope*scope = obj->scope();
 	    for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
 		  NetLogic*tmp = new NetLogic(obj->scope(),
-					      des->local_symbol(obj->name()),
+					      scope->local_hsymbol(),
 					      3, NetLogic::BUFIF0);
 
 		  connect(obj->pin_Result(idx), tmp->pin(0));
@@ -994,6 +996,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.42  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.41  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *
@@ -1019,128 +1024,5 @@ void cprop(Design*des)
  *
  *  Divide signal reference counts between rval
  *  and lval references.
- *
- * Revision 1.34  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.33  2002/04/14 02:51:37  steve
- *  Fix bug removing pairs of ones in XOR.
- *
- * Revision 1.32  2002/02/03 00:06:28  steve
- *  Comments about xor evaluation.
- *
- * Revision 1.31  2001/12/31 01:56:08  steve
- *  Get sense of 1-bit == operator right.
- *
- * Revision 1.30  2001/10/28 01:14:53  steve
- *  NetObj constructor finally requires a scope.
- *
- * Revision 1.29  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.28  2001/06/15 04:14:18  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.27  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.26  2001/02/18 01:07:32  steve
- *  check signals in the cprop functor.
- *
- * Revision 1.25  2001/02/16 03:27:31  steve
- *  Constant propagation for compare ==.
- *
- * Revision 1.24  2001/02/10 04:50:54  steve
- *  Catch constants driving root module ports. (PR#130)
- *
- * Revision 1.23  2000/12/30 03:11:15  steve
- *  Propagate initial value of constants into wires.
- *
- * Revision 1.22  2000/11/23 01:55:52  steve
- *  Propagate constants through xnor gates. (PR#51)
- *
- * Revision 1.21  2000/11/19 05:26:58  steve
- *  Replace AND constand propagation.
- *
- * Revision 1.20  2000/11/18 05:13:27  steve
- *  Thorough constant propagation for or and nor gates.
- *
- * Revision 1.19  2000/11/18 04:10:37  steve
- *  Handle constant propagation through XOR gates,
- *  including reducing the gate to a constant,
- *  a buffer or an inverter if possible.
- *
- * Revision 1.18  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.17  2000/10/07 19:45:42  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.16  2000/10/06 21:26:34  steve
- *  Eliminate zero inputs to xor.
- *
- * Revision 1.15  2000/08/02 14:48:01  steve
- *  use bufif0 if z is in true case of mux.
- *
- * Revision 1.14  2000/07/25 02:55:13  steve
- *  Unlink z constants from nets.
- *
- * Revision 1.13  2000/07/15 05:13:43  steve
- *  Detect muxing Vz as a bufufN.
- *
- * Revision 1.12  2000/06/25 19:59:41  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- * Revision 1.11  2000/06/24 22:55:19  steve
- *  Get rid of useless next_link method.
- *
- * Revision 1.10  2000/05/14 17:55:04  steve
- *  Support initialization of FF Q value.
- *
- * Revision 1.9  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.8  2000/04/28 21:00:28  steve
- *  Over agressive signal elimination in constant probadation.
- *
- * Revision 1.7  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.6  2000/01/02 17:56:42  steve
- *  Do not delete constants that input to exressions.
- *
- * Revision 1.5  1999/12/30 04:19:12  steve
- *  Propogate constant 0 in low bits of adders.
- *
- * Revision 1.4  1999/12/17 06:18:15  steve
- *  Rewrite the cprop functor to use the functor_t interface.
- *
- * Revision 1.3  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
- *
- * Revision 1.2  1998/12/02 04:37:13  steve
- *  Add the nobufz function to eliminate bufz objects,
- *  Object links are marked with direction,
- *  constant propagation is more careful will wide links,
- *  Signal folding is aware of attributes, and
- *  the XNF target can dump UDP objects based on LCA
- *  attributes.
- *
- * Revision 1.1  1998/11/13 06:23:17  steve
- *  Introduce netlist optimizations with the
- *  cprop function to do constant propogation.
- *
  */
 

@@ -17,11 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.90 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.91 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 # include "config.h"
 # include  "t-dll.h"
+# include  <stdlib.h>
+# include  <string.h>
+#ifdef HAVE_MALLOC_H
+# include  <malloc.h>
+#endif
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
 
@@ -558,7 +563,7 @@ extern "C" const char* ivl_udp_name(ivl_udp_t net)
 
 extern "C" const char* ivl_lpm_basename(ivl_lpm_t net)
 {
-      return basename(net->scope, net->name);
+      return net->name;
 }
 
 extern "C" ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net)
@@ -731,10 +736,36 @@ extern "C" unsigned ivl_lpm_data2_width(ivl_lpm_t net, unsigned sdx)
 	    return 0;
       }
 }
+
+/*
+ * This function returns the hierarchical name for the LPM device. The
+ * name needs to be built up from the scope name and the lpm base
+ * name.
+ *
+ * Anachronism: This function is provided for
+ * compatibility. Eventually, it will be removed.
+ */
 extern "C" const char* ivl_lpm_name(ivl_lpm_t net)
 {
-      return net->name;
+      static char*name_buffer = 0;
+      static unsigned name_size = 0;
+
+      ivl_scope_t scope = ivl_lpm_scope(net);
+      const char*sn = ivl_scope_name(scope);
+
+      unsigned need = strlen(sn) + 1 + strlen(net->name) + 1;
+      if (need < name_size) {
+	    name_buffer = (char*)realloc(name_buffer, need);
+	    name_size = need;
+      }
+
+      strcpy(name_buffer, sn);
+      char*tmp = name_buffer + strlen(sn);
+      *tmp++ = '.';
+      strcpy(tmp, net->name);
+      return name_buffer;
 }
+
 
 extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 {
@@ -1648,6 +1679,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.91  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.90  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.21 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: synth2.cc,v 1.22 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -179,7 +179,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       }
       assert(cur == (1 << sel_pins));
 
-      NetMux*mux = new NetMux(scope, scope->local_hsymbol(),
+      NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(),
 			      1 << sel_pins, sel_pins);
 
@@ -251,7 +251,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       else_->synth_async(des, scope, nex_map, bsig);
 
-      NetMux*mux = new NetMux(scope, scope->local_hsymbol(),
+      NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      nex_out->pin_count(), 2, 1);
 
       connect(mux->pin_Sel(0), ssig->pin(0));
@@ -346,7 +346,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 block. Connect this NetFF to the associated pins of
 		 the existing wide NetFF device. While I'm at it, also
 		 copy the aset_value bits for the new ff device. */
-	    NetFF*ff2 = new NetFF(scope, scope->local_hsymbol().c_str(),
+	    NetFF*ff2 = new NetFF(scope, scope->local_symbol().c_str(),
 				  tmp_out->pin_count());
 	    des->add_node(ff2);
 
@@ -631,7 +631,7 @@ bool NetProcTop::synth_sync(Design*des)
       NexusSet nex_set;
       statement_->nex_output(nex_set);
 
-      NetFF*ff = new NetFF(scope(), scope()->local_hsymbol().c_str(),
+      NetFF*ff = new NetFF(scope(), scope()->local_symbol().c_str(),
 			   nex_set.count());
       des->add_node(ff);
       ff->attribute("LPM_FFType", verinum("DFF"));
@@ -738,6 +738,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.22  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.21  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

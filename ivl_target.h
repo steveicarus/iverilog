@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.111 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.112 2003/02/26 01:29:24 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -583,7 +583,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *
  * These are the functions that apply to all LPM devices:
  *
- * ivl_lpm_name
+ * ivl_lpm_name (Obsolete)
  * ivl_lpm_basename
  *    Return the name of the device. The name is the name of the
  *    device with the scope part, and the basename is without the scope.
@@ -626,7 +626,8 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  *    often the number of inputs per out, i.e., the number of inputs
  *    per bit for a MUX.
  */
-extern const char*    ivl_lpm_name(ivl_lpm_t net);
+
+extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
 extern const char*    ivl_lpm_basename(ivl_lpm_t net);
 extern ivl_scope_t    ivl_lpm_scope(ivl_lpm_t net);
 extern ivl_lpm_type_t ivl_lpm_type(ivl_lpm_t net);
@@ -1143,6 +1144,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.112  2003/02/26 01:29:24  steve
+ *  LPM objects store only their base names.
+ *
  * Revision 1.111  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *
