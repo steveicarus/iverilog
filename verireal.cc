@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.cc,v 1.6 2001/11/06 06:11:55 steve Exp $"
+#ident "$Id: verireal.cc,v 1.7 2002/06/15 02:35:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -107,9 +107,8 @@ long verireal::as_long(int shift) const
       while (ex < 0) {
 	    long mod = val % 10;
 	    val /= 10;
-	    if (mod >= 5)
+	    if (ex == -1 && mod >= 5)
 		  val += 1;
-
 	    ex += 1;
       }
 
@@ -141,6 +140,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.7  2002/06/15 02:35:49  steve
+ *  Rounding error.
+ *
  * Revision 1.6  2001/11/06 06:11:55  steve
  *  Support more real arithmetic in delay constants.
  *
