@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.9 2000/02/23 02:56:55 steve Exp $"
+#ident "$Id: set_width.cc,v 1.10 2000/04/21 02:46:42 steve Exp $"
 #endif
 
 /*
@@ -262,18 +262,22 @@ bool NetEUnary::set_width(unsigned w)
 	  case '~':
 	  case '-':
 	    flag = expr_->set_width(w);
+	    expr_width(w);
 	    break;
 	  default:
 	    flag = expr_width() == w;
 	    break;
       }
-      expr_width(w);
+
       return flag;
 }
 
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.10  2000/04/21 02:46:42  steve
+ *  Many Unary operators have known widths.
+ *
  * Revision 1.9  2000/02/23 02:56:55  steve
  *  Macintosh compilers do not support ident.
  *
