@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.8 2000/05/31 02:26:49 steve Exp $"
+#ident "$Id: net_event.cc,v 1.9 2000/07/29 03:55:38 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -106,7 +106,9 @@ NetEvent* NetEvent::find_similar_event()
       NetEvProbe*cur = probes_;
 
 	/* First locate all the canditate events from the probe
-	   objects that are connected to them. */
+	   objects that are connected to them and to my first
+	   probe. All of these candidates have at least this probe in
+	   common. */
 
       for (NetNode*idx = cur->next_node()
 		 ; idx && (idx != cur) ;  idx = idx->next_node()) {
@@ -120,9 +122,19 @@ NetEvent* NetEvent::find_similar_event()
 	    assert(ncand <= NCAND);
       }
 
+	/* Now go through the remaining probes, checking that all the
+	   candidate events also have a probe connected to this
+	   one. By the time I finish this list, I will have eliminated
+	   all the candidate events that are not connected to all of
+	   my probes. */
+
       for (cur = cur->enext_ ;  cur && ncand ;  cur = cur->enext_) {
 	    for (unsigned idx = 0 ;  idx < ncand ;  idx += 1)
 		  cflg[idx] = false;
+
+	      /* For this probe, look for other probes connected to it
+		 and find the event connected to it. Mark that event
+		 as connected to this probe. */
 
 	    for (NetNode*idx = cur->next_node()
 		       ; idx && (idx != cur) ;  idx = idx->next_node()) {
@@ -139,19 +151,26 @@ NetEvent* NetEvent::find_similar_event()
 			}
 	    }
 
+	      /* Look for all the candidates that did not connect to
+		 this probe (cflg is false) and eliminate them. */
+
 	    for (unsigned idx = 0 ;  idx < ncand ;  ) {
 		  if (cflg[idx]) {
 			idx += 1;
 			continue;
 		  }
 
-		  for (unsigned tmp = idx ;  idx+1 < ncand ;  idx += 1) {
+		  for (unsigned tmp = idx ;  (tmp+1) < ncand ;  tmp += 1) {
 			cflg[tmp] = cflg[tmp+1];
 			cand[tmp] = cand[tmp+1];
 		  }
 		  ncand -= 1;
 	    }
       }
+
+	/* Now, skip any of the remaining candidates for any that have
+	   a different number of probes. These would be events that
+	   have probes that I'm not connected to. */
 
       for (unsigned idx = 0 ;  idx < ncand ;  idx += 1) {
 	    if (cand[idx]->nprobe() == nprobe())
@@ -364,6 +383,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.9  2000/07/29 03:55:38  steve
+ *  fix problem coalescing events w/ probes.
+ *
  * Revision 1.8  2000/05/31 02:26:49  steve
  *  Globally merge redundant event objects.
  *

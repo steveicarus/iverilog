@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.92 2000/07/27 05:13:44 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.93 2000/07/29 03:55:38 steve Exp $"
 #endif
 
 /*
@@ -600,10 +600,10 @@ void NetEvTrig::dump(ostream&o, unsigned ind) const
 void NetEvWait::dump(ostream&o, unsigned ind) const
 {
       assert(nevents() > 0);
-      o << setw(ind) <<"" << "@(" << event(0)->name();
+      o << setw(ind) <<"" << "@(" << event(0)->full_name();
 
       for (unsigned idx = 1 ;  idx < nevents() ;  idx += 1)
-	    o << " or " << event(idx)->name();
+	    o << " or " << event(idx)->full_name();
 
       o << ")  // " << get_line() << endl;
 
@@ -716,8 +716,8 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump the events in this scope. */
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
-	    o << "    event " << cur->name() << "; "
-	      << "// " << cur->get_line() << endl;
+	    o << "    event " << cur->name() << "; nprobe="
+	      << cur->nprobe() << " // " << cur->get_line() << endl;
       }
 
 	// Dump the signals,
@@ -987,6 +987,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.93  2000/07/29 03:55:38  steve
+ *  fix problem coalescing events w/ probes.
+ *
  * Revision 1.92  2000/07/27 05:13:44  steve
  *  Support elaboration of disable statements.
  *
