@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.66 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: main.cc,v 1.67 2003/04/24 05:25:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -539,12 +539,20 @@ int main(int argc, char*argv[])
       Design*des = elaborate(roots);
       if (des == 0) {
 	    cerr << "Elaboration failed" << endl;
+	    if (net_path) {
+		  ofstream out (net_path);
+		  des->dump(out);
+	    }
 	    return 1;
       }
 
       if (des->errors) {
 	    cerr << des->errors
 		 << " error(s) during elaboration." << endl;
+	    if (net_path) {
+		  ofstream out (net_path);
+		  des->dump(out);
+	    }
 	    return des->errors;
       }
 
@@ -624,6 +632,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.67  2003/04/24 05:25:27  steve
+ *  Dump design even on errors.
+ *
  * Revision 1.66  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names
