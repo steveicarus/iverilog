@@ -27,18 +27,19 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.11 2002/07/01 15:36:12 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.12 2002/07/03 02:09:38 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  "memory.h"
 # include  <stdlib.h>
+# include  <string.h>
 # include  <assert.h>
 
 # include  <stdio.h>
 
 extern const char hex_digits[256];
-static char buf[4096];
+extern char*need_result_buf(size_t);
 
 static void memory_make_word_handles(struct __vpiMemory*rfp);
 
@@ -57,7 +58,7 @@ struct __vpiMemory {
       struct __vpiDecConst right_range;
       struct __vpiDecConst word_left_range;
       struct __vpiDecConst word_right_range;
-    
+
 };
 
 struct __vpiMemWordIterator {
@@ -104,16 +105,26 @@ static int vpi_memory_get(int code, vpiHandle ref)
 
 static char* memory_get_str(int code, vpiHandle ref)
 {
-      struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
       assert(ref->vpi_type->type_code==vpiMemory);
 
+      struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
+
+      static char buf[4096];
+
+      char *bn = vpi_get_str(vpiFullName, &rfp->scope->base);
+      char *nm = memory_name(rfp->mem);
+
+      assert ((strlen(bn) + strlen(nm) + 1) < 4096);
+
       switch (code) {
-	  case vpiName:
-	    return memory_name(rfp->mem);
 	  case vpiFullName:
-	    return memory_name(rfp->mem);
+	    sprintf(buf, "%s.%s", bn, nm);
+	    return buf;
+	  case vpiName:
+	    strcpy(buf, nm);
+	    return buf;
       }
-      
+
       return 0;
 }
 
@@ -190,7 +201,6 @@ static vpiHandle memory_index(vpiHandle ref, int index)
 static vpiHandle memory_word_get_handle(int code, vpiHandle obj)
 {
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)obj;
-
       assert(obj->vpi_type->type_code==vpiMemoryWord);
 
       switch(code){
@@ -204,7 +214,7 @@ static vpiHandle memory_word_get_handle(int code, vpiHandle obj)
 	    return &(rfp->index.base);
       }
 
-      
+
       return 0;
 }
 
@@ -330,32 +340,63 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
       return 0;
 }
 
+static char* memory_word_get_str(int code, vpiHandle ref)
+{
+      assert(ref->vpi_type->type_code==vpiMemoryWord);
+
+      struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
+
+      static char buf[4096];
+
+      char *bn = vpi_get_str(vpiFullName, &rfp->mem->scope->base);
+      char *nm = memory_name(rfp->mem->mem);
+
+      assert ((strlen(bn) + strlen(nm) + 16) < 4096);
+
+      switch (code) {
+	  case vpiFullName:
+	    sprintf(buf, "%s.%s[%d]", bn, nm, rfp->index.value);
+	    return buf;
+	    break;
+	  case vpiName: {
+	    sprintf(buf, "%s[%d]", nm, rfp->index.value);
+	    return buf;
+	    break;
+	  }
+      }
+
+      return 0;
+}
+
 static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
       assert(rfp->base.vpi_type->type_code==vpiMemoryWord);
-      
+
       unsigned width = memory_data_width(rfp->mem->mem);
       unsigned word_offset = memory_root(rfp->mem->mem);
       unsigned bidx = (rfp->index.value - word_offset) * ((width+3)&~3);
+
+      char *rbuf = 0;
 
       switch (vp->format) {
 	  default:
 	    assert("format not implemented");
 
-          case vpiBinStrVal:
-	      assert(width < sizeof(buf));
+	  case vpiBinStrVal:
+	      rbuf = need_result_buf(width+1);
 	      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		  unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
-		  
-		  buf[width-idx-1] = "01xz"[bit];
+
+		  rbuf[width-idx-1] = "01xz"[bit];
 	      }
-	      buf[width] = 0;
-	      vp->value.str = buf;
+	      rbuf[width] = 0;
+	      vp->value.str = rbuf;
 	      break;
 
 	  case vpiOctStrVal: {
-		unsigned char*bits = new unsigned char[(width+3) / 4];
+		unsigned hwid = (width+2) / 3;
+		unsigned char*bits = new unsigned char[width];
 
 		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		      unsigned bb = idx / 4;
@@ -367,10 +408,11 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			    bits[bb] |= val << bs;
 		}
 
-		vpip_bits_to_oct_str(bits, width, buf, sizeof buf, false);
+		rbuf = need_result_buf(hwid+1);
+		vpip_bits_to_oct_str(bits, width, rbuf, hwid+1, false);
 
 		delete[]bits;
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
@@ -378,8 +420,8 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned hval, hwid;
 		hwid = (width + 3) / 4;
 
-		assert(hwid < sizeof(buf) );
-		buf[hwid] = 0;
+		rbuf = need_result_buf(hwid+1);
+		rbuf[hwid] = 0;
 
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
@@ -388,7 +430,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 
 		    if (idx%4 == 3) {
 			hwid -= 1;
-			buf[hwid] = hex_digits[hval];
+			rbuf[hwid] = hex_digits[hval];
 			hval = 0;
 		    }
 		}
@@ -397,8 +439,8 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		    unsigned padd = 0;
 
 		    hwid -= 1;
-		    buf[hwid] = hex_digits[hval];
-		    switch(buf[hwid]) {
+		    rbuf[hwid] = hex_digits[hval];
+		    switch(rbuf[hwid]) {
 		    case 'X': padd = 2; break;
 		    case 'Z': padd = 3; break;
 		    }
@@ -406,10 +448,10 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			for (unsigned idx = width % 4; idx < 4; idx += 1) {
 			    hval = hval | padd << 2*idx;
 			}
-			buf[hwid] = hex_digits[hval];
+			rbuf[hwid] = hex_digits[hval];
 		    }
 		}
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
@@ -419,14 +461,17 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 		      bits[idx] = memory_get(rfp->mem->mem, bidx+idx);
 
-		vpip_bits_to_dec_str(bits, width, buf, sizeof buf, false);
+		rbuf = need_result_buf(width+1);
+		vpip_bits_to_dec_str(bits, width, rbuf, width+1, false);
 
 		delete[]bits;
-		vp->value.str = buf;
+		vp->value.str = rbuf;
 		break;
 	  }
 
       	  case vpiIntVal:
+	    assert(width <= 8 * sizeof vp->value.integer);
+
 	    vp->value.integer = 0;
 	    for (unsigned idx = 0;  idx < width;  idx += 1) {
 
@@ -435,18 +480,20 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			vp->value.integer = 0;
 			break;
 		  }
-			
+
 		  vp->value.integer |= bit << idx;
 	    }
 	    break;
 
-          case vpiVectorVal: {
-		  assert(width < (sizeof(buf)/sizeof(s_vpi_vecval)*32));
-		  s_vpi_vecval *op = (p_vpi_vecval)buf;
+	  case vpiVectorVal: {
+		  unsigned hwid = (width - 1)/32 + 1;
+
+		  rbuf = need_result_buf(hwid);
+		  s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 		  vp->value.vector = op;
 
 		  op->aval = op->bval = 0;
-                  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		  for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 			switch (memory_get(rfp->mem->mem, idx)) {
 			case 0:
 			      op->aval &= ~(1 << idx % 32);
@@ -471,7 +518,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			}
 		  }
 		  break;
-            }
+	    }
       }
 }
 
@@ -489,7 +536,7 @@ static const struct __vpirt vpip_memory_rt = {
 static const struct __vpirt vpip_memory_word_rt = {
       vpiMemoryWord,
       memory_word_get,
-      0,
+      memory_word_get_str,
       memory_word_get_value,
       memory_word_put,
       memory_word_get_handle,
@@ -536,6 +583,13 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.12  2002/07/03 02:09:38  steve
+ *  vpiName, vpiFullName support in memory types,
+ *  length checks for *_get_str() buffers,
+ *  temporary buffers for *_get_str() data,
+ *  dynamic storage for vpi_get_data() in memory types
+ *  shared with signal white space
+ *
  * Revision 1.11  2002/07/01 15:36:12  steve
  *  Limit word writing to vector limits.
  *
@@ -573,4 +627,3 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
  *  expressions and l-values. (Stephan Boettcher)
  *
  */
-
