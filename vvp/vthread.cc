@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.58 2001/10/16 01:26:55 steve Exp $"
+#ident "$Id: vthread.cc,v 1.59 2001/10/20 23:20:32 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -640,6 +640,9 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 			idx2 += 1;
 	    }
 
+	    if (rv == 0)
+		  goto x_out;
+
 	    lv /= rv;
 
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
@@ -1021,6 +1024,9 @@ if(cp->number <= 8*sizeof(unsigned long)) {
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
+
+      if (rv == 0)
+	    goto x_out;
 
       lv %= rv;
 
@@ -1659,6 +1665,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.59  2001/10/20 23:20:32  steve
+ *  Catch and X division by 0.
+ *
  * Revision 1.58  2001/10/16 01:26:55  steve
  *  Add %div support (Anthony Bybell)
  *
