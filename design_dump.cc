@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.7 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.8 1998/12/14 02:01:34 steve Exp $"
 #endif
 
 /*
@@ -167,14 +167,68 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetUDP::dump_node(ostream&o, unsigned ind) const
+void NetUDP::dump_sequ_(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "UDP: ";
+      string tmp = "";
+      for (unsigned idx = 0 ;  idx < ind ;  idx += 1)
+	    tmp += " ";
+
+      o << tmp << "Sequential UDP" << " #(" << delay1() <<
+	    "," << delay2() << "," << delay3() << ") " << name() <<
+	    endl;
+
+      for (FSM_::const_iterator ent = fsm_.begin()
+		 ; ent != fsm_.end() ;  ent++) {
+	    o << setw(ind+6) << "" << (*ent).first << " -->";
+
+	    state_t_*st = (*ent).second;
+	    assert((*ent).first[0] == st->out);
+	    for (unsigned idx = 1 ;  idx < pin_count() ;  idx += 1) {
+		  string tmp = (*ent).first;
+		  if (st->pins[idx].zer) {
+			tmp[0] = st->pins[idx].zer->out;
+			tmp[idx] = '0';
+			o << " " << tmp;
+		  }
+
+		  if (st->pins[idx].one) {
+			tmp[0] = st->pins[idx].one->out;
+			tmp[idx] = '1';
+			o << " " << tmp;
+		  }
+
+		  if (st->pins[idx].xxx) {
+			tmp[0] = st->pins[idx].xxx->out;
+			tmp[idx] = 'x';
+			o << " " << tmp;
+		  }
+	    }
+
+	    o << endl;
+      }
+
+      o << setw(ind+6) << ""  << "initial value == " << init_ << endl;
+
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetUDP::dump_comb_(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Combinational UDP: ";
       o << " #(" << delay1() << "," << delay2() << "," << delay3() <<
 	    ") " << name() << endl;
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
+}
+
+void NetUDP::dump_node(ostream&o, unsigned ind) const
+{
+      if (sequential_)
+	    dump_sequ_(o, ind);
+      else
+	    dump_comb_(o, ind);
 }
 
 void NetPEvent::dump_node(ostream&o, unsigned ind) const
@@ -407,6 +461,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.8  1998/12/14 02:01:34  steve
+ *  Fully elaborate Sequential UDP behavior.
+ *
  * Revision 1.7  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.11 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: netlist.cc,v 1.12 1998/12/14 02:01:35 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -423,12 +423,213 @@ NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
 	    pin(idx).set_dir(Link::INPUT);
 }
 
-NetUDP::NetUDP(const string&n, unsigned pins)
-: NetNode(n, pins)
+NetUDP::NetUDP(const string&n, unsigned pins, bool sequ)
+: NetNode(n, pins), sequential_(sequ), init_('x')
 {
       pin(0).set_dir(Link::OUTPUT);
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
 	    pin(idx).set_dir(Link::INPUT);
+
+}
+
+NetUDP::state_t_* NetUDP::find_state_(const string&str)
+{
+      map<string,state_t_*>::iterator cur = fsm_.find(str);
+      if (cur != fsm_.end())
+	    return (*cur).second;
+
+      state_t_*st = fsm_[str];
+      if (st == 0) {
+	    st = new state_t_(pin_count());
+	    st->out = str[0];
+	    fsm_[str] = st;
+      }
+
+      return st;
+}
+
+/*
+ * This method takes the input string, which contains exactly one
+ * edge, and connects it to the correct output state. The output state
+ * will be generated if needed, and the value compared.
+ */
+bool NetUDP::set_sequ_(const string&input, char output)
+{
+      if (output == '-')
+	    output = input[0];
+
+      string frm = input;
+      string to  = input;
+      to[0] = output;
+
+      unsigned edge = frm.find_first_not_of("01x");
+      assert(frm.find_last_not_of("01x") == edge);
+
+      switch (input[edge]) {
+	  case 'r':
+	    frm[edge] = '0';
+	    to[edge] = '1';
+	    break;
+	  case 'R':
+	    frm[edge] = 'x';
+	    to[edge] = '1';
+	    break;
+	  case 'f':
+	    frm[edge] = '1';
+	    to[edge] = '0';
+	    break;
+	  case 'F':
+	    frm[edge] = 'x';
+	    to[edge] = '0';
+	    break;
+	  case 'P':
+	    frm[edge] = '0';
+	    to[edge] = 'x';
+	    break;
+	  case 'N':
+	    frm[edge] = '1';
+	    to[edge] = 'x';
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      state_t_*sfrm = find_state_(frm);
+      state_t_*sto  = find_state_(to);
+
+      switch (to[edge]) {
+	  case '0':
+	    assert(sfrm->pins[edge].zer == 0);
+	    sfrm->pins[edge].zer = sto;
+	    break;
+	  case '1':
+	    assert(sfrm->pins[edge].one == 0);
+	    sfrm->pins[edge].one = sto;
+	    break;
+	  case 'x':
+	    assert(sfrm->pins[edge].xxx == 0);
+	    sfrm->pins[edge].xxx = sto;
+	    break;
+      }
+
+      return true;
+}
+
+bool NetUDP::sequ_glob_(string input, char output)
+{
+      for (unsigned idx = 0 ;  idx < input.length() ;  idx += 1)
+	    switch (input[idx]) {
+		case '0':
+		case '1':
+		case 'x':
+		case 'r':
+		case 'R':
+		case 'f':
+		case 'F':
+		case 'P':
+		case 'N':
+		  break;
+
+		case '?': // Iterate over all the levels
+		  input[idx] = '0';
+		  sequ_glob_(input, output);
+		  input[idx] = '1';
+		  sequ_glob_(input, output);
+		  input[idx] = 'x';
+		  sequ_glob_(input, output);
+		  return true;
+
+		case '*': // Iterate over all the edges
+		  input[idx] = 'r';
+		  sequ_glob_(input, output);
+		  input[idx] = 'R';
+		  sequ_glob_(input, output);
+		  input[idx] = 'f';
+		  sequ_glob_(input, output);
+		  input[idx] = 'F';
+		  sequ_glob_(input, output);
+		  input[idx] = 'P';
+		  sequ_glob_(input, output);
+		  input[idx] = 'N';
+		  sequ_glob_(input, output);
+		  return true;
+
+		default:
+		  assert(0);
+	    }
+
+      return set_sequ_(input, output);
+}
+
+bool NetUDP::set_table(const string&input, char output)
+{
+      assert((output == '0') || (output == '1') || (sequential_ &&
+						    (output == '-')));
+
+      if (sequential_) {
+	    assert(input.length() == pin_count());
+	      /* XXXX Need to check to make sure that the input vector
+		 contains a legal combination of characters. */
+	    return sequ_glob_(input, output);
+
+      } else {
+	    assert(input.length() == (pin_count()-1));
+	      /* XXXX Need to check to make sure that the input vector
+		 contains a legal combination of characters. In
+		 combinational UDPs, only 0, 1 and x are allowed. */
+	    assert(0);
+
+	    return true;
+      }
+}
+
+void NetUDP::cleanup_table()
+{
+      for (FSM_::iterator idx = fsm_.begin() ;  idx != fsm_.end() ; idx++) {
+	    string str = (*idx).first;
+	    state_t_*st = (*idx).second;
+	    assert(str[0] == st->out);
+
+	    for (unsigned pin = 0 ;  pin < pin_count() ;  pin += 1) {
+		  if (st->pins[pin].zer && st->pins[pin].zer->out == 'x')
+			st->pins[pin].zer = 0;
+		  if (st->pins[pin].one && st->pins[pin].one->out == 'x')
+			st->pins[pin].one = 0;
+		  if (st->pins[pin].xxx && st->pins[pin].xxx->out == 'x')
+			st->pins[pin].xxx = 0;
+	    }
+      }
+
+      for (FSM_::iterator idx = fsm_.begin() ;  idx != fsm_.end() ; ) {
+	    FSM_::iterator cur = idx;
+	    idx ++;
+
+	    state_t_*st = (*cur).second;
+
+	    if (st->out != 'x')
+		  continue;
+
+	    for (unsigned pin = 0 ;  pin < pin_count() ;  pin += 1) {
+		  if (st->pins[pin].zer)
+			goto break_label;
+		  if (st->pins[pin].one)
+			goto break_label;
+		  if (st->pins[pin].xxx)
+			goto break_label;
+	    }
+
+		    //delete st;
+	    fsm_.erase(cur);
+
+      break_label:;
+      }
+}
+
+void NetUDP::set_initial(char val)
+{
+      assert(sequential_);
+      assert((val == '0') || (val == '1') || (val == 'x'));
+      init_ = val;
 }
 
 string Design::get_flag(const string&key) const
@@ -583,6 +784,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.12  1998/12/14 02:01:35  steve
+ *  Fully elaborate Sequential UDP behavior.
+ *
  * Revision 1.11  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved

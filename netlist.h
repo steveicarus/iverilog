@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.11 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: netlist.h,v 1.12 1998/12/14 02:01:35 steve Exp $"
 #endif
 
 /*
@@ -338,14 +338,91 @@ class NetLogic  : public NetNode {
  * The UDP is a User Defined Primitive from the Verilog source. Do not
  * expand it out any further then this in the netlist, as this can be
  * used to represent target device primitives.
+ *
+ * The UDP can be combinational or sequential. The sequentianl UDP
+ * includes the current output in the truth table, and supports edges,
+ * whereas the combinational does not and is entirely level sensitive.
+ * In any case, pin 0 is an output, and all the remaining pins are
+ * inputs.
+ *
+ * The truth table is canonically represented as a finite state
+ * machine with the current state representing the inputs and the
+ * current output, and the next state carrying the new output value to
+ * use. All the outgoing transitions from a state represent a single
+ * edge.
+ *
+ * Set_table takes as input a string with one letter per pin. The
+ * valid characters are:
+ *
+ *      0, 1, x  -- The levels
+ *      r   -- (01)
+ *      R   -- (x1)
+ *      f   -- (10)
+ *      F   -- (x0)
+ *      P   -- (0x)
+ *      N   -- (1x)
+ *
+ * COMBINATIONAL
+ * The logic table is a map between the input levels and the
+ * output. Each input pin can have the value 0, 1 or x and the output
+ * can have the values 0 or 1. If the input matches nothing, the
+ * output is x. In canonical form, only the entries that generate 0 or
+ * 1 are listed.
+ *
+ * SEQUENTIAL
+ * These objects have a single bit of memory. The logic table includes
+ * an entry for the current value, and allows edges on the inputs. In
+ * canonical form, inly then entries that generate 0, 1 or - (no change)
+ * are listed.
+ *
  */
 class NetUDP  : public NetNode {
 
     public:
-      explicit NetUDP(const string&n, unsigned pins);
+      explicit NetUDP(const string&n, unsigned pins, bool sequ =false);
 
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
+
+	/* return false if the entry conflicts with an existing
+	   entry. In any case, the new output overrides. */
+      bool set_table(const string&input, char output);
+      void cleanup_table();
+
+      void set_initial(char);
+
+      bool is_sequential() const { return sequential_; }
+
+    private:
+      const bool sequential_;
+      char init_;
+
+      struct state_t_;
+      struct pin_t_ {
+	    state_t_*zer;
+	    state_t_*one;
+	    state_t_*xxx;
+
+	    explicit pin_t_() : zer(0), one(0), xxx(0) { }
+      };
+
+      struct state_t_ {
+	    char out;
+	    pin_t_*pins;
+
+	    state_t_(unsigned n) : out(0), pins(new pin_t_[n]) {}
+	    ~state_t_() { delete[]pins; }
+      };
+
+      typedef map<string,state_t_*> FSM_;
+      FSM_ fsm_;
+      bool set_sequ_(const string&in, char out);
+      bool sequ_glob_(string, char out);
+
+      state_t_*find_state_(const string&);
+
+      void dump_sequ_(ostream&o, unsigned ind) const;
+      void dump_comb_(ostream&o, unsigned ind) const;
 };
 
 /* =========
@@ -811,6 +888,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.12  1998/12/14 02:01:35  steve
+ *  Fully elaborate Sequential UDP behavior.
+ *
  * Revision 1.11  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved

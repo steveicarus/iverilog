@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.9 1998/12/07 04:53:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.10 1998/12/14 02:01:34 steve Exp $"
 #endif
 
 /*
@@ -255,12 +255,20 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
       }
 }
 
+/*
+ * From a UDP definition in the source, make a NetUDP
+ * object. Elaborate the pin expressions as netlists, then connect
+ * those networks to the pins.
+ */
 void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 {
       const string my_name = path+"."+get_name();
-      NetUDP*net = new NetUDP(my_name, udp->ports.size());
+      NetUDP*net = new NetUDP(my_name, udp->ports.size(), udp->sequential);
       net->set_attributes(udp->attributes);
 
+	/* Run through the pins, making netlists for the pin
+	   expressions and connecting them to the pin in question. All
+	   of this is independent of the nature of the UDP. */
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    if (pin(idx) == 0)
 		  continue;
@@ -274,10 +282,37 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 
 	    connect(sig->pin(0), net->pin(idx));
 
+	      // Delete excess holding signal.
 	    if (NetTmp*tmp = dynamic_cast<NetTmp*>(sig))
 		  delete tmp;
       }
 
+	/* Build up the truth table for the netlist from the input
+	   strings. */
+      for (unsigned idx = 0 ;  idx < udp->tinput.size() ;  idx += 1) {
+	    string input = udp->sequential
+		  ? (string("") + udp->tcurrent[idx] + udp->tinput[idx])
+		  : udp->tinput[idx];
+
+	    net->set_table(input, udp->toutput[idx]);
+      }
+
+      net->cleanup_table();
+
+      if (udp->sequential) switch (udp->initial) {
+	  case verinum::V0:
+	    net->set_initial('0');
+	    break;
+	  case verinum::V1:
+	    net->set_initial('1');
+	    break;
+	  case verinum::Vx:
+	  case verinum::Vz:
+	    net->set_initial('x');
+	    break;
+      }
+
+	// All done. Add the object to the design.
       des->add_node(net);
 }
 
@@ -734,6 +769,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.10  1998/12/14 02:01:34  steve
+ *  Fully elaborate Sequential UDP behavior.
+ *
  * Revision 1.9  1998/12/07 04:53:17  steve
  *  Generate OBUF or IBUF attributes (and the gates
  *  to garry them) where a wire is a pad. This involved
