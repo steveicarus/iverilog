@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.127 2001/08/31 17:38:41 steve Exp $"
+#ident "$Id: parse.y,v 1.128 2001/08/31 21:08:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1914,22 +1914,20 @@ specify_edge_path_decl
 	;
 
 specify_edge_path
-	: '(' K_posedge specify_path_identifiers spec_polarity
-	  K_EG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity
-	  K_EG '(' IDENTIFIER K_PO_POS expression ')' ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity
-	  K_SG IDENTIFIER ')'
-	| '(' K_posedge specify_path_identifiers spec_polarity
-	  K_SG '(' IDENTIFIER K_PO_POS expression ')' ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity
-	  K_EG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity
-	  K_EG '(' IDENTIFIER K_PO_POS expression ')' ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity
-	  K_SG IDENTIFIER ')'
-	| '(' K_negedge specify_path_identifiers spec_polarity
-	  K_SG '(' IDENTIFIER K_PO_POS expression ')' ')'
+	: '(' K_posedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity K_EG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
+	| '(' K_posedge specify_path_identifiers spec_polarity K_SG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity K_EG IDENTIFIER ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity K_EG '(' IDENTIFIER polarity_operator expression ')' ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity K_SG IDENTIFIER ')'
+	| '(' K_negedge specify_path_identifiers spec_polarity K_SG '(' IDENTIFIER polarity_operator expression ')' ')'
+	;
+
+polarity_operator
+        : K_PO_POS
+	| K_PO_NEG
+	| ':'
 	;
 
 specify_simple_path_decl
