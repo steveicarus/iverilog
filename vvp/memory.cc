@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.5 2001/07/11 02:27:21 steve Exp $"
+#ident "$Id: memory.cc,v 1.6 2001/08/09 19:37:05 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -64,7 +64,6 @@ struct vvp_memory_index_s
 
 struct vvp_memory_port_s : public vvp_fobj_s
 {
-      unsigned get(vvp_ipoint_t i, functor_t f);
       void set(vvp_ipoint_t i, functor_t f, bool push);
 
       vvp_memory_t mem;
@@ -179,7 +178,7 @@ void memory_port_new(vvp_memory_t mem, vvp_ipoint_t ix,
   a->bitoff = bitoff;
   
   a->next = mem->addr_root;
-  a->mem->addr_root = a;
+  mem->addr_root = a;
   
   unsigned nfun = naddr;
   if (writable)
@@ -297,7 +296,7 @@ bool update_addr_bit(vvp_memory_port_t addr, vvp_ipoint_t ip)
 static
 void update_addr(vvp_memory_port_t addr)
 {
-  addr->cur_addr = 2;
+  addr->cur_addr = 0;
   for (unsigned i=0; i < addr->naddr; i++)
     {
       update_addr_bit(addr, addr->ix+i);
@@ -391,11 +390,6 @@ void vvp_memory_port_s::set(vvp_ipoint_t i, functor_t f, bool push)
       assert(writable);
       write_event(this);
     }
-}
-
-unsigned vvp_memory_port_s::get(vvp_ipoint_t i, functor_t f)
-{
-      assert(0);
 }
 
 
