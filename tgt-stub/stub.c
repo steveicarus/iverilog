@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.75 2003/03/10 23:40:54 steve Exp $"
+#ident "$Id: stub.c,v 1.76 2003/03/29 05:51:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -259,6 +259,25 @@ static void show_lpm(ivl_lpm_t net)
 		      fprintf(out, "    Q %u: %s\n", idx,
 			      ivl_nexus_name(ivl_lpm_q(net, idx)));
 
+		break;
+	  }
+
+	  case IVL_LPM_MULT: {
+		fprintf(out, "  LPM_MULT %s: <width=%u>\n",
+			ivl_lpm_basename(net), width);
+		for (idx = 0 ;  idx < width ;  idx += 1)
+		      fprintf(out, "    Q %u: %s\n", idx,
+			      ivl_nexus_name(ivl_lpm_q(net, idx)));
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
+		      fprintf(out, "    Data A %u: %s\n", idx,
+			      nex? ivl_nexus_name(nex) : "");
+		}
+		for (idx = 0 ;  idx < width ;  idx += 1) {
+		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
+		      fprintf(out, "    Data B %u: %s\n", idx,
+			      nex? ivl_nexus_name(nex) : "");
+		}
 		break;
 	  }
 
@@ -818,6 +837,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.76  2003/03/29 05:51:26  steve
+ *  Sign extend NetMult inputs if result is signed.
+ *
  * Revision 1.75  2003/03/10 23:40:54  steve
  *  Keep parameter constants for the ivl_target API.
  *

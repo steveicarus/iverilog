@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.209 2003/03/15 18:08:43 steve Exp $"
+#ident "$Id: netlist.cc,v 1.210 2003/03/29 05:51:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1052,7 +1052,7 @@ const Link& NetDivide::pin_DataB(unsigned idx) const
 NetMult::NetMult(NetScope*sc, const string&n, unsigned wr,
 		 unsigned wa, unsigned wb, unsigned ws)
 : NetNode(sc, lex_strings.add(n.c_str()), 2+wr+wa+wb+ws),
-  width_r_(wr), width_a_(wa), width_b_(wb), width_s_(ws)
+  signed_(false), width_r_(wr), width_a_(wa), width_b_(wb), width_s_(ws)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name("Aclr", 0);
       pin(1).set_dir(Link::INPUT); pin(1).set_name("Clock", 0);
@@ -1079,6 +1079,16 @@ NetMult::NetMult(NetScope*sc, const string&n, unsigned wr,
 
 NetMult::~NetMult()
 {
+}
+
+void NetMult::set_signed(bool flag)
+{
+      signed_ = flag;
+}
+
+bool NetMult::get_signed() const
+{
+      return signed_;
 }
 
 unsigned NetMult::width_r() const
@@ -2141,6 +2151,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.210  2003/03/29 05:51:25  steve
+ *  Sign extend NetMult inputs if result is signed.
+ *
  * Revision 1.209  2003/03/15 18:08:43  steve
  *  Comparison operators do have defined width.
  *

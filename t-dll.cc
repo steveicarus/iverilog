@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.108 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.109 2003/03/29 05:51:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1685,6 +1685,15 @@ void dll_target::lpm_mult(const NetMult*net)
 		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
 				IVL_DR_HiZ, IVL_DR_HiZ);
 
+	    } else if (net->get_signed()) {
+		    /* Beyond the width of input a, but if the mult is
+		       signed, then sign extend the input. */
+		  nex = net->pin_DataA(net->width_a()-1).nexus();
+
+		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+
 	    } else {
 		  obj->u_.arith.a[idx] = 0;
 	    }
@@ -1694,6 +1703,15 @@ void dll_target::lpm_mult(const NetMult*net)
 		  nex = net->pin_DataB(idx).nexus();
 		  assert(nex);
 		  assert(nex->t_cookie());
+
+		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    } else if (net->get_signed()) {
+		    /* Beyond the width of input b, but if the mult is
+		       signed, then sign extend the input. */
+		  nex = net->pin_DataB(net->width_b()-1).nexus();
 
 		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
 		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
@@ -2099,6 +2117,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.109  2003/03/29 05:51:25  steve
+ *  Sign extend NetMult inputs if result is signed.
+ *
  * Revision 1.108  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

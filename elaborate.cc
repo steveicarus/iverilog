@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.277 2003/03/26 06:16:38 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.278 2003/03/29 05:51:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -159,19 +159,31 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    if (! need_driver_flag) {
 		    /* Don't need a driver, presumably because the
 		       r-value already has the needed drivers. Just
-		       hook things up. */
+		       hook things up. If the r-value is too narrow
+		       for the l-value, then sign extend it or zero
+		       extend it, whichever makes sense. */
 		  unsigned idx;
 		  for (idx = 0 ;  idx < cnt; idx += 1)
 			connect(lval->pin(idx), rid->pin(idx));
 
 		  if (cnt < lval->pin_count()) {
-			verinum tmpv (0UL, lval->pin_count()-cnt);
-			NetConst*tmp = new NetConst(scope,
-						    scope->local_symbol(),
-						    tmpv);
-			des->add_node(tmp);
-			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
-			      connect(lval->pin(idx), tmp->pin(idx-cnt));
+			if (lval->get_signed() && rid->get_signed()) {
+			      for (idx = cnt
+					 ;  idx < lval->pin_count()
+					 ;  idx += 1)
+				    connect(lval->pin(idx), rid->pin(cnt-1));
+
+			} else {
+			      verinum tmpv (0UL, lval->pin_count()-cnt);
+			      NetConst*tmp = new NetConst(scope,
+							scope->local_symbol(),
+							tmpv);
+			      des->add_node(tmp);
+			      for (idx = cnt
+					 ;  idx < lval->pin_count()
+					 ; idx += 1)
+				    connect(lval->pin(idx), tmp->pin(idx-cnt));
+			}
 		  }
 
 	    } else {
@@ -192,15 +204,25 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		  }
 
 		  if (cnt < lval->pin_count()) {
-			NetConst*dev = new NetConst(scope,
-						    scope->local_symbol(),
-						    verinum::V0);
+			if (lval->get_signed() && rid->get_signed()) {
+			      for (idx = cnt
+					 ;  idx < lval->pin_count()
+					 ;  idx += 1)
+				    connect(lval->pin(idx), lval->pin(cnt-1));
+
+			} else {
+			      NetConst*dev = new NetConst(scope,
+						      scope->local_symbol(),
+						       verinum::V0);
 			
-			des->add_node(dev);
-			dev->pin(0).drive0(drive0);
-			dev->pin(0).drive1(drive1);
-			for (idx = cnt ;  idx < lval->pin_count() ; idx += 1)
-			      connect(lval->pin(idx), dev->pin(0));
+			      des->add_node(dev);
+			      dev->pin(0).drive0(drive0);
+			      dev->pin(0).drive1(drive1);
+			      for (idx = cnt
+					 ;  idx < lval->pin_count()
+					 ; idx += 1)
+				    connect(lval->pin(idx), dev->pin(0));
+			}
 		  }
 	    }
 
@@ -2499,6 +2521,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.278  2003/03/29 05:51:25  steve
+ *  Sign extend NetMult inputs if result is signed.
+ *
  * Revision 1.277  2003/03/26 06:16:38  steve
  *  Some better internal error messages.
  *

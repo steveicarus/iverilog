@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.282 2003/03/15 18:08:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.283 2003/03/29 05:51:25 steve Exp $"
 #endif
 
 /*
@@ -752,6 +752,9 @@ class NetMult  : public NetNode {
 	      unsigned wa, unsigned wb, unsigned width_s =0);
       ~NetMult();
 
+      bool get_signed() const;
+      void set_signed(bool);
+
 	// Get the width of the device bussed inputs. There are these
 	// parameterized widths:
       unsigned width_r() const; // Result
@@ -780,6 +783,7 @@ class NetMult  : public NetNode {
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
+      bool signed_;
       unsigned width_r_;
       unsigned width_a_;
       unsigned width_b_;
@@ -3240,6 +3244,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.283  2003/03/29 05:51:25  steve
+ *  Sign extend NetMult inputs if result is signed.
+ *
  * Revision 1.282  2003/03/15 18:08:43  steve
  *  Comparison operators do have defined width.
  *

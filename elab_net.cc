@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.110 2003/03/26 06:16:38 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.111 2003/03/29 05:51:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -863,6 +863,8 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
 				 lsig->pin_count(),
 				 rsig->pin_count());
       des->add_node(mult);
+
+      mult->set_signed( lsig->get_signed() && rsig->get_signed() );
 
       for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 	    connect(mult->pin_DataA(idx), lsig->pin(idx));
@@ -2279,6 +2281,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.111  2003/03/29 05:51:25  steve
+ *  Sign extend NetMult inputs if result is signed.
+ *
  * Revision 1.110  2003/03/26 06:16:38  steve
  *  Some better internal error messages.
  *
