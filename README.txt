@@ -63,7 +63,17 @@ with the commands:
   ./configure
   make
 
-2.3 Installation
+2.3 (Optional) Testing
+
+To run a simple test before installation, execute
+
+  make check
+
+The commands printed by this run might help you in running Icarus
+Verilog on your own verilog sources before the package is installed
+by root.
+
+2.4 Installation
 
 Now install the files in an appropriate place. (The makefiles by
 default install in /usr/local unless you specify a different prefix

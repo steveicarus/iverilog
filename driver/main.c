@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.8 2001/02/01 17:12:22 steve Exp $"
+#ident "$Id: main.c,v 1.9 2001/04/26 16:04:39 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -401,6 +401,10 @@ int main(int argc, char **argv)
 	      sprintf(path, "%s/iverilog.conf", base);
 	}
 	fd = fopen(path, "r");
+	if (fd == 0) {
+	      fprintf(stderr, "Config file \"%s\" not found\n",path);
+	      return 1;
+	}
 	reset_lexor(fd);
 	yyparse();
       }
@@ -520,6 +524,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.9  2001/04/26 16:04:39  steve
+ *  Handle missing or uninstalled .conf files.
+ *
  * Revision 1.8  2001/02/01 17:12:22  steve
  *  Forgot to actually allow the -p flag.
  *
