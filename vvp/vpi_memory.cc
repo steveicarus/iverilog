@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.7 2002/05/10 16:00:57 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.8 2002/05/11 04:39:35 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -251,6 +251,64 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
 	    }
 	    break;
 
+	      /* If the caller tries to set a HexStrVal, convert it to
+		 bits and write the bits into the word. */
+	  case vpiHexStrVal: {
+		unsigned char*bits = new unsigned char[(width+3) / 4];
+		vpip_hex_str_to_bits(bits, width, val->value.str, false);
+
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      unsigned bb = idx / 4;
+		      unsigned bs = (idx % 4) * 2;
+		      unsigned val = (bits[bb] >> bs) & 0x03;
+		      memory_set(rfp->mem->mem, bidx+idx, val);
+		}
+
+		delete[]bits;
+		break;
+	  }
+
+	  case vpiDecStrVal: {
+		unsigned char*bits = new unsigned char[width];
+		vpip_dec_str_to_bits(bits, width, val->value.str, false);
+
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		      memory_set(rfp->mem->mem, bidx+idx, bits[idx]);
+
+		delete[]bits;
+		break;
+	  }
+
+	  case vpiOctStrVal: {
+		unsigned char*bits = new unsigned char[(width+3) / 4];
+		vpip_oct_str_to_bits(bits, width, val->value.str, false);
+
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      unsigned bb = idx / 4;
+		      unsigned bs = (idx % 4) * 2;
+		      unsigned val = (bits[bb] >> bs) & 0x03;
+		      memory_set(rfp->mem->mem, bidx+idx, val);
+		}
+
+		delete[]bits;
+		break;
+	  }
+
+	  case vpiBinStrVal: {
+		unsigned char*bits = new unsigned char[(width+3) / 4];
+		vpip_bin_str_to_bits(bits, width, val->value.str, false);
+
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      unsigned bb = idx / 4;
+		      unsigned bs = (idx % 4) * 2;
+		      unsigned val = (bits[bb] >> bs) & 0x03;
+		      memory_set(rfp->mem->mem, bidx+idx, val);
+		}
+
+		delete[]bits;
+		break;
+	  }
+
 	  default:
 	    assert(0);
       }
@@ -280,6 +338,26 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	      buf[width] = 0;
 	      vp->value.str = buf;
 	      break;
+
+	  case vpiOctStrVal: {
+		unsigned char*bits = new unsigned char[(width+3) / 4];
+
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      unsigned bb = idx / 4;
+		      unsigned bs = (idx % 4) * 2;
+		      unsigned val = memory_get(rfp->mem->mem, bidx+idx);
+		      if (bs == 0)
+			    bits[bb] = val;
+		      else
+			    bits[bb] |= val << bs;
+		}
+
+		vpip_bits_to_oct_str(bits, width, buf, sizeof buf, false);
+
+		delete[]bits;
+		vp->value.str = buf;
+		break;
+	  }
 
 	  case vpiHexStrVal: {
 		unsigned hval, hwid;
@@ -316,6 +394,19 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			buf[hwid] = hex_digits[hval];
 		    }
 		}
+		vp->value.str = buf;
+		break;
+	  }
+
+	  case vpiDecStrVal: {
+		unsigned char*bits = new unsigned char[width];
+
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1)
+		      bits[idx] = memory_get(rfp->mem->mem, bidx+idx);
+
+		vpip_bits_to_dec_str(bits, width, buf, sizeof buf, false);
+
+		delete[]bits;
 		vp->value.str = buf;
 		break;
 	  }
@@ -378,6 +469,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.8  2002/05/11 04:39:35  steve
+ *  Set and get memory words by string value.
+ *
  * Revision 1.7  2002/05/10 16:00:57  steve
  *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
  *

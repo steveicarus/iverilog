@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.32 2002/05/03 15:44:11 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.33 2002/05/11 04:39:35 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -282,8 +282,26 @@ extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
 				     char *buf, unsigned int nbuf,
 				     int signed_flag);
 
+extern void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
+				 const char*buf, bool signed_flag);
+
+extern void vpip_bin_str_to_bits(unsigned char*bits, unsigned nbits,
+				 const char*buf, bool signed_flag);
+
+extern void vpip_hex_str_to_bits(unsigned char*bits, unsigned nbits,
+				 const char*buf, bool signed_flag);
+
+extern void vpip_bits_to_oct_str(const unsigned char*bits, unsigned nbits,
+				 char*buf, unsigned nbuf, bool signed_flag);
+
+extern void vpip_oct_str_to_bits(unsigned char*bits, unsigned nbits,
+				 const char*buf, bool signed_flag);
+
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.33  2002/05/11 04:39:35  steve
+ *  Set and get memory words by string value.
+ *
  * Revision 1.32  2002/05/03 15:44:11  steve
  *  Add vpiModule iterator to vpiScope objects.
  *
