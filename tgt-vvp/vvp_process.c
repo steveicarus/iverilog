@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.16 2001/04/01 04:34:59 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.17 2001/04/01 06:49:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -343,6 +343,34 @@ static int show_stmt_wait(ivl_statement_t net)
       return show_statement(ivl_stmt_sub_stmt(net));
 }
 
+static int show_stmt_while(ivl_statement_t net)
+{
+      int rc = 0;
+      struct vector_info cvec;
+
+      unsigned top_label = local_count++;
+      unsigned out_label = local_count++;
+
+      fprintf(vvp_out, "T_%d.%d\n", thread_count, top_label);
+
+	/* Draw the evaluation of the condition expression, and test
+	   the result. If the expression evaluates to false, then
+	   branch to the out label. */
+      cvec = draw_eval_expr(ivl_stmt_cond_expr(net));
+      fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, %u;\n",
+	      thread_count, out_label, cvec.base);
+      clr_vector(cvec);
+
+	/* Draw the body of the loop. */
+      rc += show_statement(ivl_stmt_sub_stmt(net));
+
+	/* This is the bottom of the loop. branch to the top where the
+	   test is repeased, and also draw the out label. */
+      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, top_label);
+      fprintf(vvp_out, "T_%d.%d\n", thread_count, out_label);
+      return rc;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
       unsigned idx;
@@ -443,6 +471,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_stmt_wait(net);
 	    break;
 
+	  case IVL_ST_WHILE:
+	    rc += show_stmt_while(net);
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp.tgt: Unable to draw statement type %u\n",
 		    code);
@@ -471,7 +503,7 @@ int draw_process(ivl_process_t net, void*x)
 
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
-      fprintf(vvp_out, "T_%d\n", thread_count);
+      fprintf(vvp_out, "T_%d ;\n", thread_count);
 
 	/* Draw the contents of the thread. */
       rc += show_statement(stmt);
@@ -502,6 +534,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.17  2001/04/01 06:49:04  steve
+ *  Generate code for while statements.
+ *
  * Revision 1.16  2001/04/01 04:34:59  steve
  *  Generate code for casex and casez
  *
