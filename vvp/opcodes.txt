@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.57 2004/12/15 17:17:42 steve Exp $
+ *  $Id: opcodes.txt,v 1.58 2004/12/17 04:47:47 steve Exp $
  */
 
 
@@ -481,21 +481,17 @@ and the <dst> is a writable scalar. The <dst> gets the value of the
 or of all the bits of the src vector.
 
 
-* %release <functor-label>
+* %release/net <functor-label>
+* %release/reg <functor-label>
 
 Release the force on the signal that is represented by the functor
-<functor-label>.  The force was previously activated with a %force
+<functor-label>.  The force was previously activated with a %force/v
 statement.  If no force was active on this functor the statement does
-nothing.  %release restores and propagates the normal value of the
-previously forced functor.  In case of a forced Verilog register, the
-current value of the force expression should be %set to the .var
-functor before the force is released, to comply with Verilog release
-semantics.  Like:
-
-	%load	 <bit>, <functor-label> ; get the forced value
-	%set	 <functor-label>, <bit> ; set the .var value
-	%release <functor-label>	; remove the force
-
+nothing. The %release/net sends to the labeled functor the release
+command with net semantics: the unforced value is propagated to the
+output of the signal after the release is complete. The %release/reg
+sends the release command with reg semantics: the signal holds its
+forced value until another value propagates through.
 
 * %set/v <var-label>, <bit>, <wid>
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.68 2004/12/15 17:17:42 steve Exp $"
+#ident "$Id: codes.h,v 1.69 2004/12/17 04:47:47 steve Exp $"
 #endif
 
 
@@ -97,7 +97,8 @@ extern bool of_NOR(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
-extern bool of_RELEASE(vthread_t thr, vvp_code_t code);
+extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
+extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
@@ -168,6 +169,9 @@ extern vvp_code_t codespace_null(void);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.69  2004/12/17 04:47:47  steve
+ *  Replace single release with release/net and release/reg.
+ *
  * Revision 1.68  2004/12/15 17:17:42  steve
  *  Add the force/v instruction.
  *

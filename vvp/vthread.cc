@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.124 2004/12/15 17:17:42 steve Exp $"
+#ident "$Id: vthread.cc,v 1.125 2004/12/17 04:47:47 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -2550,6 +2550,34 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * These implement the %release/net and %release/reg instructions. The
+ * %release/net instruction applies to a net kind of functor by
+ * sending the release/net command to the command port. (See vvp_net.h
+ * for details.) The %release/reg instruction is the same, but sends
+ * the release/reg command instead. These are very similar to the
+ * %deassign instruction.
+ */
+bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_net_ptr_t ptr (net, 3);
+      vvp_send_long(ptr, 2);
+
+      return true;
+}
+
+bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      vvp_net_ptr_t ptr (net, 3);
+      vvp_send_long(ptr, 3);
+
+      return true;
+}
+
 static const unsigned char strong_values[4] = {St0, St1, StX, HiZ};
 
 bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
@@ -3007,6 +3035,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.125  2004/12/17 04:47:47  steve
+ *  Replace single release with release/net and release/reg.
+ *
  * Revision 1.124  2004/12/15 17:17:42  steve
  *  Add the force/v instruction.
  *

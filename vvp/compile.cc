@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.177 2004/12/15 17:17:42 steve Exp $"
+#ident "$Id: compile.cc,v 1.178 2004/12/17 04:47:47 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -143,7 +143,8 @@ const static struct opcode_table_s opcode_table[] = {
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%release",of_RELEASE,1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
+      { "%release/net",of_RELEASE_NET,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
+      { "%release/reg",of_RELEASE_REG,1,{OA_FUNC_PTR,OA_NONE,OA_NONE} },
       { "%set/m",  of_SET_MEM,2,  {OA_MEM_PTR,  OA_BIT1,     OA_NONE} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/wr", of_SET_WORDR,2,{OA_VPI_PTR,  OA_BIT1,     OA_NONE} },
@@ -1562,6 +1563,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.178  2004/12/17 04:47:47  steve
+ *  Replace single release with release/net and release/reg.
+ *
  * Revision 1.177  2004/12/15 17:17:42  steve
  *  Add the force/v instruction.
  *

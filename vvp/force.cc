@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: force.cc,v 1.10 2004/12/15 17:17:42 steve Exp $"
+#ident "$Id: force.cc,v 1.11 2004/12/17 04:47:47 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -98,25 +98,6 @@ static bool release_force(vvp_ipoint_t itgt, functor_t tgt)
 
 
 /*
- * The %release instruction causes any force functors driving the
- * target functor to be released.
- */
-bool of_RELEASE(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      vvp_ipoint_t itgt = cp->iptr;
-      functor_t tgt = functor_index(itgt);
-
-      if (release_force(itgt, tgt))
-	    tgt->enable(itgt);
-#else
-      fprintf(stderr, "XXXX forgot how to implement %%release\n");
-#endif
-      return true;
-}
-
-
-/*
 **  Variable functors receive %set or %assign-ed values at port[0].
 **  Continuous assignments are connected to port[1].
 **
@@ -171,6 +152,9 @@ bool var_functor_s::deassign(vvp_ipoint_t itgt)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.11  2004/12/17 04:47:47  steve
+ *  Replace single release with release/net and release/reg.
+ *
  * Revision 1.10  2004/12/15 17:17:42  steve
  *  Add the force/v instruction.
  *
