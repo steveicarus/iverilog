@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.27 2001/05/20 01:02:55 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.28 2001/05/20 01:18:38 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -940,6 +940,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case '!':
+	  case 'N': /* Reduction NOR ~| */
 	    res = draw_eval_expr(sub);
 	    if (res.wid > 1) {
 		    /* a ! on a vector is implemented with a reduction
@@ -1029,6 +1030,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.28  2001/05/20 01:18:38  steve
+ *  Implement reduction nor.
+ *
  * Revision 1.27  2001/05/20 01:02:55  steve
  *  Initial support for system functions.
  *
