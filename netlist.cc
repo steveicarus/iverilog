@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.212 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: netlist.cc,v 1.213 2003/04/24 05:26:25 steve Exp $"
 #endif
 
 # include "config.h"
@@ -447,7 +447,9 @@ NetSubnet::NetSubnet(NetNet*sig, unsigned off, unsigned wid)
       for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 	    connect(sig->pin(idx+off), pin(idx));
 
+      port_type(sig->port_type());
       local_flag(true);
+      set_line(*sig);
 }
 
 NetProc::NetProc()
@@ -2177,6 +2179,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.213  2003/04/24 05:26:25  steve
+ *  NetSubsignal inherits port type from source.
+ *
  * Revision 1.212  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *
