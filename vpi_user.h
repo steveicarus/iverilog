@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.20 2003/03/10 23:40:54 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.21 2003/03/12 02:49:38 steve Exp $"
 #endif
 
 
@@ -181,6 +181,7 @@ typedef struct t_vpi_value {
 #define vpiCallback  1000
 
 /* PROPERTIES */
+#define vpiUndefined  (-1)
 #define vpiType       1
 #define vpiName       2
 #define vpiFullName   3
@@ -200,7 +201,7 @@ typedef struct t_vpi_value {
 #   define vpiTimeFunc    3
 #define vpiSigned    65
 /* IVL private properties */
-#define _vpiNexusId 128
+#define _vpiNexusId 0x1000000
 
 /* DELAY MODES */
 #define vpiNoDelay            1
@@ -373,6 +374,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.21  2003/03/12 02:49:38  steve
+ *  Move _vpiNexisId safely out of the way.
+ *
  * Revision 1.20  2003/03/10 23:40:54  steve
  *  Keep parameter constants for the ivl_target API.
  *
@@ -393,54 +397,5 @@ EXTERN_C_END
  *
  * Revision 1.16  2003/01/09 04:10:17  steve
  *  Add vpi_put_userdata
- *
- * Revision 1.15  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.14  2002/07/19 01:57:26  steve
- *  Add vpi_chk_error and vpi_control functions.
- *
- * Revision 1.13  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.12  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.11  2002/05/24 19:05:30  steve
- *  support GCC __attributes__ for printf formats.
- *
- * Revision 1.10  2002/05/23 03:34:46  steve
- *  Export the vpi_vprintf function.
- *
- * Revision 1.9  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.8  2002/05/17 16:13:08  steve
- *  Add vpiIndex update.
- *
- * Revision 1.7  2002/01/24 04:19:39  steve
- *  Add the vpiLeft.. and vpiRightRange constants
- *
- * Revision 1.6  2001/09/30 05:18:46  steve
- *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
- *
- * Revision 1.5  2001/05/20 15:09:40  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.4  2001/05/10 00:16:00  steve
- *  Add the vpi_user strength definitions.
- *
- * Revision 1.3  2001/04/25 04:45:52  steve
- *  Implement vpi_put_value for signals.
- *
- * Revision 1.2  2001/03/22 02:23:17  steve
- *  fgetc patch from Peter Monta.
- *
- * Revision 1.1  2001/03/19 01:21:45  steve
- *  vpi_user header file is a root header.
  */
 #endif
