@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.9 2001/04/26 16:04:39 steve Exp $"
+#ident "$Id: main.c,v 1.10 2001/05/17 03:14:26 steve Exp $"
 #endif
 
 const char HELP[] =
-"Usage: iverilog [-ESv] [-c <path>] [-Dmacro[=defn]] 
-                [-p flag=value] [-I<dir>] [-m module]
-                [-o <output>] [-s top_module] [-t<type>]
+"Usage: iverilog [-ESv] [-B base] [-C path] [-c cmdfile]
+                [-D macro[=defn]] [-I includedir] [-m module]
+                [-N file] [-o filename] [-p flag=value]
+                [-s topmodule] [-t target] [-T min|typ|max]
                 [-W class] source_file(s)
 See man page for details.";
 
@@ -524,6 +525,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.10  2001/05/17 03:14:26  steve
+ *  Update help message.
+ *
  * Revision 1.9  2001/04/26 16:04:39  steve
  *  Handle missing or uninstalled .conf files.
  *
