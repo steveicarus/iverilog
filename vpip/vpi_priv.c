@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.2 2001/06/12 03:53:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -202,13 +202,19 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
       return (ref->vpi_type->index_)(ref, idx);
 }
 
-void vpi_printf(const char*fmt, ...)
+extern void vpi_vprintf(const char*fmt, va_list ap)
 {
-      va_list ap;
-      va_start(ap, fmt);
       vprintf(fmt, ap);
-      va_end(ap);
 }
+
+extern void vpi_printf(const char *fmt, ...)
+{
+  va_list ap;
+  va_start(fmt,ap);
+  vpi_vprintf(fmt,ap);
+  va_end(ap);
+}
+
 
 /*
  * This function adds the information that the user supplies to a list
@@ -235,6 +241,10 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.2  2001/06/12 03:53:10  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *

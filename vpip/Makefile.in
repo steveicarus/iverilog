@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.5 2001/05/20 17:13:27 steve Exp $"
+#ident "$Id: Makefile.in,v 1.6 2001/06/12 03:53:10 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -53,15 +53,6 @@ vpi_mcd.o vpi_vlog_info.o
 
 
 
-ifeq (@WIN32@,yes)
-# In the DOS world, we make libvpip differently.
-all: libvpip.a vpip.dll
-
-libvpip.a vpip.dll: $P vpip.def
-	$(CC) @shared@,--out-implib,libvpip.a -o vpip.dll vpip.def $P
-
-else
-
 all: libvpip.a
 
 check: all
@@ -73,7 +64,6 @@ libvpip.a: $P
 	ld -r -o vpip.o $P
 	rm -f $@
 	ar cvq $@ vpip.o
-endif
 
 libvvm.a: $O
 	rm -f $@
@@ -86,7 +76,7 @@ libvvm.a: $O
 
 
 clean:
-	rm -f *.o dep/*.d libvpip.a vpip.dll
+	rm -f *.o dep/*.d libvpip.a
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache
@@ -97,15 +87,6 @@ install:: all installdirs \
 
 $(libdir)/libvpip.a: ./libvpip.a
 	$(INSTALL_DATA) ./libvpip.a $(libdir)/libvpip.a
-
-ifeq (@WIN32@,yes)
-install :: $(bindir)/vpip.dll
-
-$(bindir)/vpip.dll: ./vpip.dll
-	$(INSTALL_PROGRAM) ./vpip.dll $(bindir)/vpip.dll
-	$(STRIP) $(bindir)/vpip.dll
-
-endif
 
 $(includedir)/vpi_priv.h: $(srcdir)/vpi_priv.h
 	$(INSTALL_DATA) $(srcdir)/vpi_priv.h $(includedir)/vpi_priv.h

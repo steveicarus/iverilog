@@ -17,15 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.4 2001/05/22 02:14:47 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.5 2001/06/12 03:53:11 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
 # include  <stdio.h>
+# include  "vpithunk.h"
 
 typedef void (*vlog_startup_routines_t)(void);
+typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
 
 void vpip_load_module(const char*name, const char*path)
 {
@@ -44,6 +46,22 @@ void vpip_load_module(const char*name, const char*path)
 	    return;
       }
 
+      void *regsub = ivl_dlsym(dll, LU "vpi_register_sim" TU);
+      vpi_register_sim_t simreg = (vpi_register_sim_t)regsub;
+      if (regsub == 0) {
+	fprintf(stderr, "%s: Unable to locate vpi_register_sim", name);
+	ivl_dlclose(dll);
+	return;
+      }
+
+      extern vpi_thunk vvpt;
+      if (((simreg)(&vvpt)) == 0) {
+	fprintf(stderr, "%s: : vpi_register_sim returned zero", name);
+	ivl_dlclose(dll);
+	return;
+      }
+
+
       void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
       if (table == 0) {
 	    fprintf(stderr, "%s: no vlog_startup_routines\n", name);
@@ -59,6 +77,10 @@ void vpip_load_module(const char*name, const char*path)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.5  2001/06/12 03:53:11  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.4  2001/05/22 02:14:47  steve
  *  Update the mingw build to not require cygwin files.
  *

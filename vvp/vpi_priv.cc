@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.4 2001/06/10 16:47:49 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.5 2001/06/12 03:53:11 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -132,14 +132,10 @@ vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
       return (ref->vpi_type->index_)(ref, idx);
 }
 
-void vpi_printf(const char*fmt, ...)
+extern "C" void vpi_vprintf(const char*fmt, va_list ap)
 {
-      va_list ap;
-      va_start(ap, fmt);
       vprintf(fmt, ap);
-      va_end(ap);
 }
-
 
 /* STUBS */
 
@@ -156,7 +152,7 @@ int vpi_remove_cb(vpiHandle ref)
       return 0;
 }
 
-void vpi_sim_control(int operation, ...)
+extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 {
       switch (operation) {
 	  case vpiFinish:
@@ -170,6 +166,10 @@ void vpi_sim_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.5  2001/06/12 03:53:11  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.4  2001/06/10 16:47:49  steve
  *  support scan of scope from VPI.
  *

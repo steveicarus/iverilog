@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.13 2001/05/20 18:22:02 steve Exp $"
+#ident "$Id: main.c,v 1.14 2001/06/12 03:53:10 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -104,6 +104,8 @@ FILE *fp;
 
 char line[MAXSIZE];
 char tmp[MAXSIZE];
+
+static char ivl_install_dir[MAXSIZE];
 
 /*
  * This is the default target type. It looks up the bits that are
@@ -204,9 +206,9 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    }
       }
 
-      sprintf(tmp, "%s " RDYNAMIC " -fno-exceptions -o %s -I%s "
-	      "-L%s %s.cc -lvvm -lvpip %s", CXX, opath, IVL_INC, IVL_LIB,
-	      opath, DLLIB);
+      sprintf(tmp, "%s " RDYNAMIC " -s -fno-exceptions -o %s -I%s%s%s "
+	      "-L%s%s%s %s.cc -lvvm -lvpip %s", CXX, opath, ivl_install_dir, 
+	      sep, "include", ivl_install_dir, sep, "lib", opath, DLLIB);
 
       if (verbose_flag)
 	    printf("compile: %s\n", tmp);
@@ -451,12 +453,14 @@ int main(int argc, char **argv)
 
 #ifdef __MINGW32__
       {
-	char basepath[1024],*s;
+	static char basepath[1024],*s;
 	GetModuleFileName(NULL,basepath,1024);
 	/* Get to the end.  Search back twice for backslashes */
 	s = basepath + strlen(basepath);
 	while (*s != '\\') s--; s--;
 	while (*s != '\\') s--; 
+	*s = '\0';
+	strcpy(ivl_install_dir, basepath);
 	strcpy(s,"\\lib\\ivl");
 	base = basepath;
       }
@@ -596,6 +600,10 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.14  2001/06/12 03:53:10  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.13  2001/05/20 18:22:02  steve
  *  Fix WIFEXITED macro.
  *

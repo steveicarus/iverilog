@@ -1,0 +1,172 @@
+#include <stdio.h>
+#include <stdarg.h>
+#include "vpi_user.h"
+#include "vpithunk.h"
+
+static p_vpi_thunk vpi_thunk_p = 0;
+
+#define VPITV_CALL(fn,args) {						\
+  if (vpi_thunk_p == 0) {						\
+    fprintf(stderr, "No Simulator registered, cannot handle vpi "	\
+	    "call to " #fn "\n");					\
+    return;								\
+  }									\
+  if (vpi_thunk_p->fn == 0) {						\
+    fprintf(stderr, "Simulator doesn't have a " #fn " function\n");	\
+    return;								\
+  }									\
+  vpi_thunk_p->fn args;							\
+}
+
+#define VPIT_CALL(fn,def,args) {					\
+  if (vpi_thunk_p == 0) {						\
+    fprintf(stderr, "No Simulator registered, cannot handle vpi "	\
+	    "call to " #fn "\n");					\
+    return def;								\
+  }									\
+  if (vpi_thunk_p->fn == 0) {						\
+    fprintf(stderr, "Simulator doesn't have a " #fn " function\n");	\
+    return;								\
+  }									\
+  return vpi_thunk_p->fn args;						\
+}
+
+DLLEXPORT int vpi_register_sim(p_vpi_thunk tp)
+{
+  vpi_thunk_p = 0;
+  if (tp->magic != VPI_THUNK_MAGIC) {
+    fprintf(stderr, "Thunk Magic Number mismatch. Got %08X, expected %08x\n",
+	    tp->magic, VPI_THUNK_MAGIC);
+    return 0;
+  }
+  vpi_thunk_p = tp;
+  return 1;
+}
+
+void vpi_register_systf(const struct t_vpi_systf_data *ss)
+{
+  VPITV_CALL(vpi_register_systf,(ss));
+}
+
+void vpi_printf(const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  VPITV_CALL(vpi_vprintf,(fmt,ap));
+  va_end(ap);
+}
+
+unsigned int vpi_mcd_close(unsigned int mcd)
+{
+  VPIT_CALL(vpi_mcd_close,-1,(mcd));
+}
+
+
+char *vpi_mcd_name(unsigned int mcd) 
+{
+  VPIT_CALL(vpi_mcd_name,0,(mcd));
+}
+
+unsigned int vpi_mcd_open(char *name)
+{
+  VPIT_CALL(vpi_mcd_open,-1,(name));
+}
+
+unsigned int vpi_mcd_open_x(char *name, char *mode)
+{
+  VPIT_CALL(vpi_mcd_open_x,-1, (name, mode));
+}
+
+int vpi_mcd_printf(unsigned int mcd, const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  VPIT_CALL(vpi_mcd_vprintf,0,(mcd,fmt,ap));
+  va_end(ap);			/* bad - never hit */
+}
+
+int vpi_mcd_fputc(unsigned int mcd, unsigned char x)
+{
+  VPIT_CALL(vpi_mcd_fputc, 0, (mcd, x));
+}
+
+int vpi_mcd_fgetc(unsigned int mcd)
+{
+  VPIT_CALL(vpi_mcd_fgetc, -1, (mcd));
+}
+
+extern vpiHandle vpi_register_cb(p_cb_data data)
+{
+  VPIT_CALL(vpi_register_cb,0,(data));
+}
+
+extern int vpi_remove_cb(vpiHandle ref)
+{
+  VPIT_CALL(vpi_remove_cb,0,(ref));
+}
+
+extern void vpi_sim_control(int operation, ...)
+{
+  va_list ap;
+  va_start(ap, operation);
+  VPITV_CALL(vpi_sim_vcontrol,(operation,ap));
+  va_end(ap);			/* bad - never hit */
+}
+
+extern vpiHandle  vpi_handle(int type, vpiHandle ref)
+{
+  VPIT_CALL(vpi_handle, 0, (type, ref));
+}
+
+extern vpiHandle  vpi_iterate(int type, vpiHandle ref)
+{
+  VPIT_CALL(vpi_iterate, 0, (type, ref));
+}
+
+extern vpiHandle  vpi_scan(vpiHandle iter)
+{
+  VPIT_CALL(vpi_scan, 0, (iter));
+}
+
+extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index)
+{
+  VPIT_CALL(vpi_handle_by_index,0,(ref, index));
+}
+
+extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t)
+{
+  VPITV_CALL(vpi_get_time, (obj,t));
+}
+
+extern int   vpi_get(int property, vpiHandle ref)
+{
+  VPIT_CALL(vpi_get, 0, (property, ref));
+
+}
+
+extern char* vpi_get_str(int property, vpiHandle ref)
+{
+  VPIT_CALL(vpi_get_str, 0, (property,ref));
+}
+
+extern void  vpi_get_value(vpiHandle expr, p_vpi_value value)
+{
+  VPITV_CALL(vpi_get_value, (expr, value));
+}
+
+extern vpiHandle vpi_put_value(vpiHandle obj, p_vpi_value value,
+			       p_vpi_time when, int flags)
+{
+  VPIT_CALL(vpi_put_value, 0, (obj, value, when, flags));
+}
+
+extern int vpi_free_object(vpiHandle ref)
+{
+  VPIT_CALL(vpi_free_object, -1, (ref));
+}
+
+extern int vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
+{
+  VPIT_CALL(vpi_get_vlog_info, 0, (vlog_info_p));
+}
+

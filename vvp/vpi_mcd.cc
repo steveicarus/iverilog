@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.cc,v 1.3 2001/03/31 19:29:23 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.4 2001/06/12 03:53:11 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -101,15 +101,13 @@ unsigned int vpi_mcd_open(char *name)
 	return vpi_mcd_open_x(name,"w");
 }
 
-int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
+extern "C" int vpi_mcd_vprintf(unsigned int mcd, const char*fmt, va_list ap)
 {
 	int i;
 	int len;
 	int rc;
-	va_list ap;
 
 	rc = len = 0;
-	va_start(ap, fmt);
 	for(i = 0; i < 31; i++) {
 		if( (mcd>>i) & 1) {
 			if(mcd_table[i].fp)
@@ -118,7 +116,6 @@ int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
 				rc = EOF;
 		}
 	}
-	va_end(ap);
 
 	if(rc)
 		return rc;

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_calltf.cc,v 1.12 2001/01/14 17:12:59 steve Exp $"
+#ident "$Id: vvm_calltf.cc,v 1.13 2001/06/12 03:53:10 steve Exp $"
 #endif
 
 # include  "machine.h"
@@ -32,6 +32,7 @@
 # include  <malloc.h>
 # include  <stdio.h>
 # include  "ivl_dlfcn.h"
+# include  "vpithunk.h"
 
 # define MAX_PATHLEN 1024
 
@@ -60,6 +61,7 @@ void vvm_set_module_path(const char*path)
  * tried. If you wish '.' be in th search path, include it.
  */
 typedef void (*vlog_startup_routines_t)(void);
+typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
 
 void vvm_load_vpi_module(const char*name)
 {
@@ -100,6 +102,21 @@ void vvm_load_vpi_module(const char*name)
 	    return;
       }
 
+      void *regsub = ivl_dlsym(mod, LU "vpi_register_sim" TU);
+      vpi_register_sim_t simreg = (vpi_register_sim_t)regsub;
+      if (regsub == 0) {
+	cerr << name << ": Unable to locate vpi_register_sim" << endl;
+	ivl_dlclose(mod);
+	return;
+      }
+
+      extern vpi_thunk vvmt;
+      if (((simreg)(&vvmt)) == 0) {
+	cerr << name << ": vpi_register_sim returned zero" << endl;
+	ivl_dlclose(mod);
+	return;
+      }
+
       void*table = ivl_dlsym(mod, LU "vlog_startup_routines" TU);
       vlog_startup_routines_t*routines = (vlog_startup_routines_t*)table;
       if (routines == 0) {
@@ -109,6 +126,7 @@ void vvm_load_vpi_module(const char*name)
 	    return;
       }
 
+
       for (unsigned idx = 0 ;  routines[idx] ;  idx += 1)
 	    (routines[idx])();
 }
@@ -117,6 +135,10 @@ void vvm_load_vpi_module(const char*name)
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.13  2001/06/12 03:53:10  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.12  2001/01/14 17:12:59  steve
  *  possible HP/UX portability support.
  *

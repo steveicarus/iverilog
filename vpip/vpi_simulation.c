@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_simulation.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_simulation.c,v 1.2 2001/06/12 03:53:10 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdlib.h>
+# include  <stdarg.h>
 # include  <assert.h>
 
 struct vpip_event {
@@ -39,7 +40,7 @@ struct vpip_simulation *vpip_get_simulation_obj(void)
 
 
 
-void vpi_sim_control(int func, ...)
+extern void vpi_sim_vcontrol(int func, va_list ap)
 {
       switch (func) {
 	  case vpiFinish:
@@ -210,6 +211,10 @@ void vpip_simulation_run()
 
 /*
  * $Log: vpi_simulation.c,v $
+ * Revision 1.2  2001/06/12 03:53:10  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *

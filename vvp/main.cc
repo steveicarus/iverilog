@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.14 2001/05/20 17:34:53 steve Exp $"
+#ident "$Id: main.cc,v 1.15 2001/06/12 03:53:11 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -43,6 +43,7 @@ unsigned module_cnt = 0;
 const char*module_tab[64];
 
 extern void vpi_mcd_init(void);
+extern void vvp_vpi_init(void);
 
 int main(int argc, char*argv[])
 {
@@ -81,6 +82,8 @@ int main(int argc, char*argv[])
 
       vpi_mcd_init();
 
+      vvp_vpi_init();
+
       compile_init();
 #if 0
       for (unsigned idx = 0 ;  idx < module_cnt ;  idx += 1)
@@ -108,6 +111,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.15  2001/06/12 03:53:11  steve
+ *  Change the VPI call process so that loaded .vpi modules
+ *  use a function table instead of implicit binding.
+ *
  * Revision 1.14  2001/05/20 17:34:53  steve
  *  declare getopt by hand in mingw32 compile.
  *
