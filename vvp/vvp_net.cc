@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.10 2005/01/29 17:52:06 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.11 2005/01/30 05:06:49 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -70,6 +70,18 @@ vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
       if (bit4_is_xz(b))
 	    return BIT4_X;
       return BIT4_1;
+}
+
+vvp_bit4_t operator ~ (vvp_bit4_t a)
+{
+      switch (a) {
+	  case BIT4_0:
+	    return BIT4_1;
+	  case BIT4_1:
+	    return BIT4_0;
+	  default:
+	    return  BIT4_X;
+      }
 }
 
 void vvp_send_vec4(vvp_net_ptr_t ptr, vvp_vector4_t val)
@@ -852,6 +864,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.11  2005/01/30 05:06:49  steve
+ *  Get .arith/sub working.
+ *
  * Revision 1.10  2005/01/29 17:52:06  steve
  *  move AND to buitin instead of table.
  *

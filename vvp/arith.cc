@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.36 2005/01/28 05:34:25 steve Exp $"
+#ident "$Id: arith.cc,v 1.37 2005/01/30 05:06:49 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -361,10 +361,10 @@ vvp_arith_sub::~vvp_arith_sub()
 }
 
 /*
- * Subtraction works by adding the 2s complement of the B, C and D
- * inputs from the A input. The 2s complement is the 1s complement
- * plus one, so we further reduce the operation to adding in the
- * inverted value and adding a correction.
+ * Subtraction works by adding the 2s complement of the B input from
+ * the A input. The 2s complement is the 1s complement plus one, so we
+ * further reduce the operation to adding in the inverted value and
+ * adding a correction.
  */
 void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 {
@@ -381,7 +381,7 @@ void vvp_arith_sub::recv_vec4(vvp_net_ptr_t ptr, vvp_vector4_t bit)
       vvp_bit4_t carry = BIT4_1;
       for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
 	    vvp_bit4_t a = (idx >= op_a_.size())? pad : op_a_.value(idx);
-	    vvp_bit4_t b = (idx >= op_b_.size())? pad : op_b_.value(idx);
+	    vvp_bit4_t b = (idx >= op_b_.size())? pad : ~op_b_.value(idx);
 	    vvp_bit4_t cur = add_with_carry(a, b, carry);
 
 	    if (cur == BIT4_X) {
@@ -652,6 +652,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.37  2005/01/30 05:06:49  steve
+ *  Get .arith/sub working.
+ *
  * Revision 1.36  2005/01/28 05:34:25  steve
  *  Add vector4 implementation of .arith/mult.
  *

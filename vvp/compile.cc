@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.184 2005/01/29 17:53:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.185 2005/01/30 05:06:49 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -885,21 +885,13 @@ void compile_arith_sub(char*label, long wid, unsigned argc, struct symb_s*argv)
 {
       assert( wid > 0 );
 
-      if ((argc % wid) != 0) {
-	    fprintf(stderr, "%s; .arith has wrong number of symbols\n", label);
-	    compile_errors += 1;
-	    return;
-      }
-
-      unsigned opcount = argc / wid;
-      if (opcount > 4) {
-	    fprintf(stderr, "%s; .arith has too many operands.\n", label);
+      if (argc != 2) {
+	    fprintf(stderr, "%s .arith has wrong number of symbols\n", label);
 	    compile_errors += 1;
 	    return;
       }
 
       vvp_arith_ *arith = new vvp_arith_sub(wid);
-
       make_arith(arith, label, wid, argc, argv);
 }
 
@@ -1585,6 +1577,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.185  2005/01/30 05:06:49  steve
+ *  Get .arith/sub working.
+ *
  * Revision 1.184  2005/01/29 17:53:25  steve
  *  Use scheduler to initialize constant functor inputs.
  *
