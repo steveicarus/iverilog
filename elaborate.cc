@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.141 2000/01/10 01:35:23 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.142 2000/02/06 23:13:14 steve Exp $"
 #endif
 
 /*
@@ -228,6 +228,8 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
       string name = get_name();
       if (name == "")
 	    name = des->local_symbol(path);
+      else
+	    name = path+"."+name;
 
 	/* If the verilog source has a range specification for the
 	   gates, then I am expected to make more then one
@@ -2000,6 +2002,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.142  2000/02/06 23:13:14  steve
+ *  Include the scope in named gates.
+ *
  * Revision 1.141  2000/01/10 01:35:23  steve
  *  Elaborate parameters afer binding of overrides.
  *
