@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.26 2003/05/28 03:14:20 steve Exp $"
+#ident "$Id: veriuser.h,v 1.27 2003/05/28 03:38:05 steve Exp $"
 #endif
 
 /*
@@ -273,6 +273,7 @@ extern void tf_multiply_long(PLI_INT32*aof_low1, PLI_INT32*aof_high1,
 			     PLI_INT32 aof_low2, PLI_INT32 aof_high2);
 
 extern int tf_nump(void);
+extern int tf_inump(void*);
 
 /* IEEE1364 NOTE: tf_putlongp is listed as returning in in the header
    file shown in the standard, but as returning void in the detailed
@@ -310,6 +311,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.27  2003/05/28 03:38:05  steve
+ *  Implement tf_inump
+ *
  * Revision 1.26  2003/05/28 03:14:20  steve
  *  Missing time related declarations.
  *
