@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.6 2002/08/18 22:07:16 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.7 2002/11/16 05:45:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -250,11 +250,15 @@ NexusSet* NetCase::nex_input()
 	    result->add(*tmp);
 	    delete tmp;
 
-	    assert(items_[idx].guard);
-	    tmp = items_[idx].guard->nex_input();
-	    assert(tmp);
-	    result->add(*tmp);
-	    delete tmp;
+	      /* Usually, this is the guard expression. The default
+		 case is special and is identified by a null
+		 guard. The default guard obviously has no input. */
+	    if (items_[idx].guard) {
+		  tmp = items_[idx].guard->nex_input();
+		  assert(tmp);
+		  result->add(*tmp);
+		  delete tmp;
+	    }
       }
 
       return result;
@@ -358,6 +362,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.7  2002/11/16 05:45:41  steve
+ *  Handle default: case in net_inputs for NetCase.
+ *
  * Revision 1.6  2002/08/18 22:07:16  steve
  *  Detect temporaries in sequential block synthesis.
  *
