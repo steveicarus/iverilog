@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.15 2000/08/02 14:48:01 steve Exp $"
+#ident "$Id: cprop.cc,v 1.16 2000/10/06 21:26:34 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -222,6 +222,56 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 	    count += 1;
 	    return;
 
+	  case NetLogic::XOR: {
+		unsigned top = obj->pin_count();
+		unsigned idx = 1;
+
+		while (idx < top) {
+		      if (! link_drivers_constant(obj->pin(idx))) {
+			    idx += 1;
+			    continue;
+		      }
+
+		      if (driven_value(obj->pin(idx)) == verinum::V0) {
+			    obj->pin(idx).unlink();
+			    top -= 1;
+			    if (idx < top) {
+				  connect(obj->pin(idx), obj->pin(top));
+				  obj->pin(top).unlink();
+			    }
+
+		      } else {
+			    idx += 1;
+		      }
+		}
+
+		if (top == 2) {
+		      NetLogic*tmp = new NetLogic(obj->name(), top,
+						  NetLogic::BUF);
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+		      connect(obj->pin(1), tmp->pin(1));
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		if (top < obj->pin_count()) {
+		      NetLogic*tmp = new NetLogic(obj->name(), top,
+						  NetLogic::XOR);
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      for (unsigned idx = 0 ;  idx < top ;  idx += 1)
+			    connect(tmp->pin(idx), obj->pin(idx));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+	    }
 	  default:
 	    break;
       }
@@ -378,6 +428,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.16  2000/10/06 21:26:34  steve
+ *  Eliminate zero inputs to xor.
+ *
  * Revision 1.15  2000/08/02 14:48:01  steve
  *  use bufif0 if z is in true case of mux.
  *
