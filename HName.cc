@@ -17,9 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: HName.cc,v 1.1 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: HName.cc,v 1.2 2001/12/18 04:52:45 steve Exp $"
 #endif
 
+# include  "config.h"
 # include  "HName.h"
 # include  <iostream>
 # include  <string.h>
@@ -249,6 +250,9 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.2  2001/12/18 04:52:45  steve
+ *  Include config.h for namespace declaration.
+ *
  * Revision 1.1  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
