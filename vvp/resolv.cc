@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.4 2001/05/31 04:12:43 steve Exp $"
+#ident "$Id: resolv.cc,v 1.5 2001/07/21 02:34:39 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -69,12 +69,7 @@ static unsigned blend(unsigned a, unsigned b)
 		    /* Must be res is the stronger one. */
 	    }
 
-      } else if (UNAMBIG(res) || UNAMBIG(b)) {
-
-	      /* If one of the signals is unambiguous, then it
-		 will sweep up the weaker parts of the ambiguous
-		 signal. The result may be ambiguous, or maybe not. */
-
+      } else if (UNAMBIG(res)) {
 	    unsigned tmp = 0;
 
 	    if ((res&0x70) > (b&0x70))
@@ -86,6 +81,26 @@ static unsigned blend(unsigned a, unsigned b)
 		  tmp |= res&0x0f;
 	    else
 		  tmp |= b&0x0f;
+
+	    res = tmp;
+
+      } else if (UNAMBIG(b)) {
+
+	      /* If one of the signals is unambiguous, then it
+		 will sweep up the weaker parts of the ambiguous
+		 signal. The result may be ambiguous, or maybe not. */
+
+	    unsigned tmp = 0;
+
+	    if ((b&0x70) > (res&0x70))
+		  tmp |= b&0xf0;
+	    else
+		  tmp |= res&0xf0;
+
+	    if ((b&0x07) > (res&0x07))
+		  tmp |= b&0x0f;
+	    else
+		  tmp |= res&0x0f;
 
 	    res = tmp;
 
@@ -160,6 +175,9 @@ void vvp_resolv_s::set(vvp_ipoint_t ptr, functor_t fp, bool push)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.5  2001/07/21 02:34:39  steve
+ *  Fix blending of ambiguous pairs.
+ *
  * Revision 1.4  2001/05/31 04:12:43  steve
  *  Make the bufif0 and bufif1 gates strength aware,
  *  and accurately propagate strengths of outputs.
