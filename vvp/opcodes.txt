@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.28 2001/08/26 22:59:32 steve Exp $
+ *  $Id: opcodes.txt,v 1.29 2001/10/10 04:48:12 steve Exp $
  */
 
 
@@ -301,6 +301,12 @@ truth table:
 	? or 1 --> 1
 	0 or 0 --> 0
 	otherwise  x
+
+* %or/r <dst>, <src>, <wid>
+
+This is a reduction version of the %or opcode. The <src> is a vector,
+and the <dst> is a writeable scaler. The <dst> gets the value of the
+or of all the bits of the src vector.
 
 
 * %set <var-label>, <bit>
