@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.53 2003/02/10 05:20:48 steve Exp $"
+#ident "$Id: sys_display.c,v 1.54 2003/03/05 02:58:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -563,10 +563,14 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    }
 
 	    if (fsize==-1){
-		    // simple %d parameter. 
+		    // simple %d parameter, or %0d parameter.
 		    // Size is now determined by the width
-		    // of the vector or integer
-		  fsize = vpi_get_dec_size(argv[idx]);
+		    // of the vector or integer. If %0d, then
+		    // set the size to 0 so that the minimum
+		    // size is used.
+		  fsize = (leading_zero==1)
+			? 0
+			: vpi_get_dec_size(argv[idx]);
 	    }
 
 	    vpi_mcd_printf(mcd, "%*s", fsize, value.value.str);
@@ -591,7 +595,7 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 		  return 1;
 	    }
 
-	    vpi_mcd_printf(mcd, "%f", value.value.real);
+	    vpi_mcd_printf(mcd, "%*.*f", fsize, ffsize, value.value.real);
 
 	    use_count = 1;
 	    break;
@@ -746,13 +750,17 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 		  cp += cnt;
 
 	    } else if (*cp == '%') {
-		  int leading_zero = -1, fsize = -1, ffsize = -1;
+		  int leading_zero = -1, ljust = 1, fsize = -1, ffsize = -1;
 
 		  cp += 1;
+		  if (*cp == '-') {
+		      ljust=-1;
+		      cp += 1;
+		  }
 		  if (*cp == '0')
 		      leading_zero=1;
 		  if (isdigit((int)*cp))
-			fsize = strtoul(cp, &cp, 10);
+			fsize = ljust * strtoul(cp, &cp, 10);
 		  if (*cp == '.') {
 			cp += 1;
 			ffsize = strtoul(cp, &cp, 10);
@@ -1700,6 +1708,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.54  2003/03/05 02:58:04  steve
+ *  Add support for sizes in %f format.
+ *
  * Revision 1.53  2003/02/10 05:20:48  steve
  *  Support monitor of real variables.
  *
