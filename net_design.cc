@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.2 2000/03/10 06:20:48 steve Exp $"
+#ident "$Id: net_design.cc,v 1.3 2000/03/11 03:25:52 steve Exp $"
 #endif
 
 /*
@@ -69,18 +69,6 @@ NetScope* Design::make_root_scope(const string&root)
       assert(root_scope_ == 0);
       root_scope_ = new NetScope(root);
       return root_scope_;
-}
-
-NetScope* Design::make_scope(const string&path,
-			     NetScope::TYPE t,
-			     const string&name)
-{
-      NetScope*up = find_scope(path);
-      assert(up);
-
-      NetScope*scope = new NetScope(up, name, t);
-
-      return scope;
 }
 
 
@@ -551,6 +539,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.3  2000/03/11 03:25:52  steve
+ *  Locate scopes in statements.
+ *
  * Revision 1.2  2000/03/10 06:20:48  steve
  *  Handle defparam to partial hierarchical names.
  *

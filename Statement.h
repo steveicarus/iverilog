@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.21 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: Statement.h,v 1.22 2000/03/11 03:25:51 steve Exp $"
 #endif
 
 # include  <string>
@@ -30,6 +30,8 @@
 class PExpr;
 class Statement;
 class PEventStatement;
+class Design;
+class NetScope;
 
 /*
  * The PProcess is the root of a behavioral process. Each process gets
@@ -70,6 +72,7 @@ class Statement : public LineInfo {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
 };
 
 /*
@@ -155,6 +158,7 @@ class PBlock  : public Statement {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
       string name_;
@@ -204,6 +208,7 @@ class PCase  : public Statement {
       ~PCase();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -225,6 +230,7 @@ class PCondit  : public Statement {
       ~PCondit();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -245,6 +251,7 @@ class PDelayStatement  : public Statement {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
     private:
       PExpr*delay_;
@@ -265,6 +272,7 @@ class PEventStatement  : public Statement {
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
 
 	// This method is used to elaborate, but attach a previously
 	// elaborated statement to the event.
@@ -281,6 +289,7 @@ class PForever : public Statement {
       ~PForever();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -297,6 +306,7 @@ class PForStatement  : public Statement {
       { }
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -323,6 +333,7 @@ class PRepeat : public Statement {
       ~PRepeat();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -338,6 +349,7 @@ class PWhile  : public Statement {
       ~PWhile();
 
       virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
@@ -347,6 +359,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.22  2000/03/11 03:25:51  steve
+ *  Locate scopes in statements.
+ *
  * Revision 1.21  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

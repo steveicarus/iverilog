@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.1 2000/03/08 04:36:53 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.2 2000/03/11 03:25:52 steve Exp $"
 #endif
 
 /*
@@ -31,7 +31,9 @@
 # include  "PExpr.h"
 # include  "PGate.h"
 # include  "PTask.h"
+# include  "Statement.h"
 # include  "netlist.h"
+# include  <typeinfo>
 
 bool Module::elaborate_scope(Design*des, NetScope*scope) const
 {
@@ -136,9 +138,21 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       for (gates_it_t cur = gates_.begin()
 		 ; cur != gates_.end() ;  cur ++ ) {
 
-	    (*cur)->elaborate_scope(des, scope);
+	    (*cur) -> elaborate_scope(des, scope);
       }
 
+
+	// initial and always blocks may contain begin-end and
+	// fork-join blocks that can introduce scopes. Therefore, I
+	// get to scan processes here.
+
+      typedef list<PProcess*>::const_iterator proc_it_t;
+
+      for (proc_it_t cur = behaviors_.begin()
+		 ; cur != behaviors_.end() ;  cur ++ ) {
+
+	    (*cur) -> statement() -> elaborate_scope(des, scope);
+      }
 
       return des->errors == 0;
 }
@@ -163,7 +177,8 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
       }
 
 	// Create the new scope as a MODULE with my name.
-      NetScope*my_scope = des->make_scope(path, NetScope::MODULE, get_name());
+      NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
+
 
 	// This call actually arranges for the description of the
 	// module type to process this instance and handle parameters
@@ -230,7 +245,136 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
 
 
 /*
+ * The base statement does not have sub-statements and does not
+ * introduce any scope, so this is a no-op.
+ */
+void Statement::elaborate_scope(Design*, NetScope*) const
+{
+}
+
+/*
+ * When I get a behavioral block, check to see if it has a name. If it
+ * does, then create a new scope for the statements within it,
+ * otherwise use the current scope. Use the selected scope to scan the
+ * statements that I contain.
+ */
+void PBlock::elaborate_scope(Design*des, NetScope*scope) const
+{
+      NetScope*my_scope = scope;
+
+      if (name_ != "") {
+	    my_scope = new NetScope(scope, name_, bl_type_==BL_PAR
+				    ? NetScope::FORK_JOIN
+				    : NetScope::BEGIN_END);
+      }
+
+      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
+	    list_[idx] -> elaborate_scope(des, my_scope);
+
+}
+
+/*
+ * The case statement itseof does not introduce scope, but contains
+ * other statements that may be named blocks. So scan the case items
+ * with the elaborate_scope method.
+ */
+void PCase::elaborate_scope(Design*des, NetScope*scope) const
+{
+      assert(items_);
+      for (unsigned idx = 0 ;  idx < (*items_).count() ;  idx += 1) {
+	    assert( (*items_)[idx] );
+
+	    if (Statement*sp = (*items_)[idx]->stat)
+		  sp -> elaborate_scope(des, scope);
+      }
+}
+
+/*
+ * The conditional statement (if-else) does not introduce scope, but
+ * the statements of the clauses may, so elaborate_scope the contained
+ * statements.
+ */
+void PCondit::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (if_)
+	    if_ -> elaborate_scope(des, scope);
+
+      if (else_)
+	    else_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
+void PDelayStatement::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
+void PEventStatement::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
+void PForever::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
+void PForStatement::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
+void PRepeat::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
+void PWhile::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+
+/*
  * $Log: elab_scope.cc,v $
+ * Revision 1.2  2000/03/11 03:25:52  steve
+ *  Locate scopes in statements.
+ *
  * Revision 1.1  2000/03/08 04:36:53  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

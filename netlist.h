@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.112 2000/03/10 06:20:48 steve Exp $"
+#ident "$Id: netlist.h,v 1.113 2000/03/11 03:25:52 steve Exp $"
 #endif
 
 /*
@@ -2053,8 +2053,6 @@ class Design {
       string get_flag(const string&key) const;
 
       NetScope* make_root_scope(const string&name);
-      NetScope* make_scope(const string&path, NetScope::TYPE t,
-			   const string&name);
 
 	/* look up a scope. If no starting scope is passed, then the
 	   path name string is taken as an absolute scope
@@ -2195,6 +2193,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.113  2000/03/11 03:25:52  steve
+ *  Locate scopes in statements.
+ *
  * Revision 1.112  2000/03/10 06:20:48  steve
  *  Handle defparam to partial hierarchical names.
  *

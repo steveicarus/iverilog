@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.147 2000/03/10 06:20:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.148 2000/03/11 03:25:52 steve Exp $"
 #endif
 
 /*
@@ -1132,6 +1132,15 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       NetScope*nscope;
       if (name_.length()) {
 	    nscope = scope->child(name_);
+	    if (nscope == 0) {
+		  cerr << get_line() << ": internal error: "
+			"unable to find block scope " << scope->name()
+		       << "<" << name_ << ">" << endl;
+		  des->errors += 1;
+		  delete cur;
+		  return 0;
+	    }
+
 	    assert(nscope);
 	    npath = nscope->name();
 
@@ -1953,6 +1962,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.148  2000/03/11 03:25:52  steve
+ *  Locate scopes in statements.
+ *
  * Revision 1.147  2000/03/10 06:20:48  steve
  *  Handle defparam to partial hierarchical names.
  *
