@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp.c,v 1.15 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: vvp.c,v 1.16 2003/05/16 03:22:52 steve Exp $"
 #endif
 
 /*
@@ -72,7 +72,11 @@ int target_design(ivl_design_t des)
       const char*path = ivl_design_flag(des, "-o");
       assert(path);
 
+#ifdef HAVE_FOPEN64
+      vvp_out = fopen64(path, "w");
+#else
       vvp_out = fopen(path, "w");
+#endif
       if (vvp_out == 0) {
 	    perror(path);
 	    return -1;
@@ -104,6 +108,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: vvp.c,v $
+ * Revision 1.16  2003/05/16 03:22:52  steve
+ *  Use fopen64 to open output file.
+ *
  * Revision 1.15  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *
