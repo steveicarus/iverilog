@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.55 2000/12/01 02:55:37 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.56 2001/01/05 03:19:47 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -534,7 +534,9 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 }
 
 /*
- * Elaborate a divider gate.
+ * Elaborate a divider gate. This function create a NetDevide gate
+ * which has exactly the right sized DataA, DataB and Result ports. If
+ * the l-value is wider then the result, then pad.
  */
 NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
 				     unsigned lwidth,
@@ -549,36 +551,67 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
       NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
       if (rsig == 0) return 0;
 
-      unsigned rwidth = lsig->pin_count();
-      if (rsig->pin_count() > rwidth)
-	    rwidth = rsig->pin_count();
+
+	// Check the l-value width. If it is unspecified, then use the
+	// largest operand width as the l-value width. Restrict the
+	// result width to the width of the largest operand, because
+	// there is no value is excess divider.
+
+      unsigned rwidth = lwidth;
+
+      if (rwidth == 0) {
+	    rwidth = lsig->pin_count();
+	    if (rsig->pin_count() > rwidth)
+		  rwidth = rsig->pin_count();
+
+	    lwidth = rwidth;
+      }
+
+      if ((rwidth > lsig->pin_count()) && (rwidth > rsig->pin_count())) {
+	    rwidth = lsig->pin_count();
+	    if (rsig->pin_count() > rwidth)
+		  rwidth = rsig->pin_count();
+      }
+
+	// Create a device with the calculated dimensions.
       NetDivide*div = new NetDivide(des->local_symbol(path), rwidth,
 				    lsig->pin_count(),
 				    rsig->pin_count());
       des->add_node(div);
+
+
+	// Connect the left and right inputs of the divider to the
+	// nets that are the left and right expressions.
 
       for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
 	    connect(div->pin_DataA(idx), lsig->pin(idx));
       for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
 	    connect(div->pin_DataB(idx), rsig->pin(idx));
 
-      if (lwidth == 0) lwidth = rwidth;
+
+	// Make an output signal that is the width of the l-value.
+	// Due to above calculation of rwidth, we know that the result
+	// will be no more then the l-value, so it is safe to connect
+	// all the result pins to the osig.
+
       NetNet*osig = new NetNet(scope, des->local_symbol(path),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
 
-      unsigned cnt = osig->pin_count();
-      if (cnt > rwidth) cnt = rwidth;
-
-      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < rwidth ;  idx += 1)
 	    connect(div->pin_Result(idx), osig->pin(idx));
 
-	/* If the lvalue is larger then the result, then pad the
-	   output with constant 0. */
-      if (cnt < osig->pin_count()) {
+
+	// If the lvalue is larger then the result, then pad the
+	// output with constant 0. This can happen for example in
+	// cases like this:
+	//    wire [3;0] a, b;
+	//    wire [7:0] r = a / b;
+
+      if (rwidth < osig->pin_count()) {
 	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
 	    des->add_node(tmp);
-	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
+	    for (unsigned idx = rwidth ;  idx < osig->pin_count() ;  idx += 1)
 		  connect(osig->pin(idx), tmp->pin(0));
       }
 
@@ -1450,8 +1483,14 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 	    return net;
       }
 
+#if 0
+	/* This warning is trying to catch the cases where an unsized
+	   integer in a netlist causes the netlist to explode in width
+	   even when it need not. This proved to be spurious and
+	   caused lots of false alarms, so it is commented out. */
       cerr << get_line() << ": warning: Number with indefinite size "
 	   << "in self-determined context." << endl;
+#endif
 
 	/* None of the above tight constraints are present, so make a
 	   plausible choice for the width. Try to reduce the width as
@@ -1758,6 +1797,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.56  2001/01/05 03:19:47  steve
+ *  Fix net division to cope with small output sizes.
+ *
  * Revision 1.55  2000/12/01 02:55:37  steve
  *  Detect part select errors on l-values.
  *
