@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.91 2002/11/07 02:32:39 steve Exp $"
+#ident "$Id: vthread.cc,v 1.92 2002/11/07 03:11:43 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2147,11 +2147,11 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 	    }
 
       } else {
-	    unsigned char bit_val = strong_values[thr_get_bit(thr, bit)];
+	    unsigned char bit_val = strong_values[bit];
 
 	    for (unsigned idx = 0;  idx < cp->bit_idx[1]; idx += 1) {
 		  vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
-		  functor_set(iptr, bit_val, bit_val, true);
+		  functor_set(iptr, bit, bit_val, true);
 	    }
       }
       return true;
@@ -2466,6 +2466,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.92  2002/11/07 03:11:43  steve
+ *  functor_set takes bit and strength, not 2 strengths.
+ *
  * Revision 1.91  2002/11/07 02:32:39  steve
  *  Add vector set and load instructions.
  *
