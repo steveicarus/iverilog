@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.59 2003/03/28 02:33:56 steve Exp $"
+#ident "$Id: codes.h,v 1.60 2003/05/07 03:39:12 steve Exp $"
 #endif
 
 
@@ -117,7 +117,8 @@ extern bool of_XORR(vthread_t thr, vvp_code_t code);
 
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
-extern bool of_CALL_UFUNC(vthread_t thr, vvp_code_t code);
+extern bool of_FORK_UFUNC(vthread_t thr, vvp_code_t code);
+extern bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t code);
 
 /*
  * This is the format of a machine code instruction.
@@ -171,6 +172,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.60  2003/05/07 03:39:12  steve
+ *  ufunc calls to functions can have scheduling complexities.
+ *
  * Revision 1.59  2003/03/28 02:33:56  steve
  *  Add support for division of real operands.
  *
