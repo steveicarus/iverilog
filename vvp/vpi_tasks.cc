@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.1 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.2 2001/03/18 00:37:55 steve Exp $"
 #endif
 
 /*
@@ -33,7 +33,16 @@
 
 static vpiHandle systask_handle(int type, vpiHandle ref)
 {
-      return 0;
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+
+      switch (type) {
+	  case vpiScope:
+	    return rfp->scope;
+	  default:
+	    return 0;
+      };
 }
 
 /*
@@ -140,9 +149,10 @@ vpiHandle vpip_build_vpi_call(const char*name)
 	    calloc(1, sizeof (struct __vpiSysTaskCall));
 
       obj->base.vpi_type = &vpip_systask_rt;
-      obj->defn = vpip_find_systf(name);
+      obj->scope = vpip_peek_current_scope();
+      obj->defn  = vpip_find_systf(name);
       obj->nargs = 0;
-      obj->args = 0;
+      obj->args  = 0;
 
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf)
@@ -182,6 +192,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.2  2001/03/18 00:37:55  steve
+ *  Add support for vpi scopes.
+ *
  * Revision 1.1  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.

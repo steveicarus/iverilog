@@ -21,7 +21,7 @@ extern FILE*yyin;
 };
 
 
-%token K_FUNCTOR K_THREAD K_VAR K_vpi_call
+%token K_FUNCTOR K_SCOPE K_THREAD K_VAR K_vpi_call
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -78,6 +78,18 @@ statement
 
 	|         K_vpi_call T_STRING ';'
 		{ compile_vpi_call(0, $2); }
+
+  /* Scope statements come in two forms. There are the scope
+     declaration and the scope recall. */
+
+	| T_LABEL K_SCOPE T_STRING ';'
+		{ compile_scope_decl($1, $3, 0); }
+
+	| T_LABEL K_SCOPE T_STRING ',' T_SYMBOL ';'
+		{ compile_scope_decl($1, $3, $5); }
+
+	|         K_SCOPE T_SYMBOL ';'
+		{ compile_scope_recall($2); }
 
   /* Thread statements declare a thread with its starting address. The
      starting address must already be defined. */

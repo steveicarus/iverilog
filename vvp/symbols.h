@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.h,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: symbols.h,v 1.2 2001/03/18 00:37:55 steve Exp $"
 #endif
 
 /*
@@ -48,6 +48,13 @@
  */
 typedef struct symbol_table_s *symbol_table_t;
 
+typedef struct symbol_value_s {
+      union {
+	    unsigned long num;
+	    void*ptr;
+      };
+} symbol_value_t;
+
 /*
  * Create a new symbol table or release an existing one. A new symbol
  * table has no keys and no values. As a symbol table is built up, it
@@ -62,14 +69,14 @@ extern void delete_symbol_table(symbol_table_t tbl);
  * This method locates the value in the symbol table and sets its
  * value. If the key doesn't yet exist, create it.
  */
-void sym_set_value(symbol_table_t tbl, const char*key, unsigned long val);
+void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val);
 
 /*
  * This method locates the value in the symbol table and returns
  * it. If the value does not exist, create it, initialize it with
  * zero and return the zero value.
  */
-unsigned long sym_get_value(symbol_table_t tbl, const char*key);
+symbol_value_t sym_get_value(symbol_table_t tbl, const char*key);
 
 /*
  * Diagnostic dump of the symbol table.
@@ -78,6 +85,9 @@ extern void sym_dump(symbol_table_t tbl, FILE*fd);
 
 /*
  * $Log: symbols.h,v $
+ * Revision 1.2  2001/03/18 00:37:55  steve
+ *  Add support for vpi scopes.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *

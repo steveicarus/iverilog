@@ -23,6 +23,7 @@
 
   /* These are some keywords that are recognized. */
 ".functor" { return K_FUNCTOR; }
+".scope"   { return K_SCOPE; }
 ".thread"  { return K_THREAD; }
 ".var"     { return K_VAR; }
 

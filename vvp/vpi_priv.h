@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.1 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.2 2001/03/18 00:37:55 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -73,6 +73,20 @@ struct __vpiIterator {
 };
 
 /*
+ * Scopes are created by .scope statements in the source.
+ */
+struct __vpiScope {
+      struct __vpiHandle base;
+	/* The scope has a name. */
+      char*name;
+      /* Keep an array of internal scope items. */
+      struct __vpiHandle**intern;
+      unsigned nintern;
+};
+extern vpiHandle vpip_peek_current_scope(void);
+extern void vpip_attach_to_current_scope(vpiHandle obj);
+
+/*
  * When a loaded VPI module announces a system task/function, one
  * __vpiUserSystf object is created to hold the definition of that
  * task/function.
@@ -89,6 +103,7 @@ struct __vpiUserSystf {
 
 struct __vpiSysTaskCall {
       struct __vpiHandle base;
+      vpiHandle scope;
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
@@ -120,7 +135,17 @@ extern void vpip_execute_vpi_call(vpiHandle obj);
 
 
 /*
+ * These are functions used by the compiler to prepare for compilation
+ * and to finish compilation in preparation for execution.
+ */
+extern void scope_init(void);
+extern void scope_cleanup(void);
+
+/*
  * $Log: vpi_priv.h,v $
+ * Revision 1.2  2001/03/18 00:37:55  steve
+ *  Add support for vpi scopes.
+ *
  * Revision 1.1  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.

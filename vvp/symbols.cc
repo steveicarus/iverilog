@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: symbols.cc,v 1.2 2001/03/18 00:37:55 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -52,7 +52,7 @@ struct tree_node_ {
       union {
 	    struct {
 		  char*key;
-		  unsigned long val;
+		  symbol_value_t val;
 	    } leaf[leaf_width];
 
 	    struct tree_node_*child[node_width];
@@ -142,14 +142,14 @@ static struct tree_node_* split_leaf_(struct tree_node_*cur)
 
 
 /*
- * Thid function searches tree recursively for the key. If the value
+ * This function searches tree recursively for the key. If the value
  * is not found (and we are at a leaf) then set the key with the given
  * value. If the key is found, set the value only if the force_flag is
  * true.
  */
 
-static unsigned long find_value_(symbol_table_t tbl, struct tree_node_*cur,
-				 const char*key, unsigned long val,
+static symbol_value_t find_value_(symbol_table_t tbl, struct tree_node_*cur,
+				 const char*key, symbol_value_t val,
 				 bool force_flag)
 {
       if (cur->leaf_flag) {
@@ -218,10 +218,13 @@ static unsigned long find_value_(symbol_table_t tbl, struct tree_node_*cur,
       }
 
       assert(0);
-      return 0;
+      { symbol_value_t tmp;
+        tmp.num = 0;
+        return tmp;
+      }
 }
 
-void sym_set_value(symbol_table_t tbl, const char*key, unsigned long val)
+void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val)
 {
       if (tbl->root->count == 0) {
 	      /* Handle the special case that this is the very first
@@ -241,8 +244,11 @@ void sym_set_value(symbol_table_t tbl, const char*key, unsigned long val)
       }
 }
 
-unsigned long sym_get_value(symbol_table_t tbl, const char*key)
+symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 {
+      symbol_value_t def;
+      def.num = 0;
+
       if (tbl->root->count == 0) {
 	      /* Handle the special case that this is the very first
 		 value in the symbol table. Create the first leaf node
@@ -252,13 +258,13 @@ unsigned long sym_get_value(symbol_table_t tbl, const char*key)
 	    cur->parent = tbl->root;
 	    cur->count = 1;
 	    cur->leaf[0].key = strdup(key);
-	    cur->leaf[0].val = 0;
+	    cur->leaf[0].val = def;
 
 	    tbl->root->count = 1;
 	    tbl->root->child[0] = cur;
-	    return 0;
+	    return cur->leaf[0].val;
       } else {
-	    return find_value_(tbl, tbl->root, key, 0, false);
+	    return find_value_(tbl, tbl->root, key, def, false);
       }
 }
 
@@ -270,7 +276,7 @@ static void dump_tree(struct tree_node_*cur, unsigned ind, FILE*fd)
 	    fprintf(fd, "%*s%p: %u keys\n", ind, "", cur, cur->count);
 	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1) {
 		  fprintf(fd, "%*s    %3d: key=%s, val=0x%lx\n", ind, "",
-			  idx, cur->leaf[idx].key, cur->leaf[idx].val);
+			  idx, cur->leaf[idx].key, cur->leaf[idx].val.num);
 	    }
 
       } else {
@@ -288,6 +294,9 @@ void sym_dump(symbol_table_t tbl, FILE*fd)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.2  2001/03/18 00:37:55  steve
+ *  Add support for vpi scopes.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *

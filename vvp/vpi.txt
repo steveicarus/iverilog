@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vpi.txt,v 1.2 2001/03/16 01:44:34 steve Exp $
+ *  $Id: vpi.txt,v 1.3 2001/03/18 00:37:55 steve Exp $
  */
 
 
@@ -35,7 +35,7 @@ thus be caught before the simulation is run.
      Verilog.
 
 The handle that the vvp threads have to the VPI are the vpiHandles of
-the system tasks and functions. The %stask instruction, once compiled,
+the system tasks and functions. The %vpi_call instruction, once compiled,
 carries the vpiHandle of the system task.
 
 
@@ -84,6 +84,40 @@ creates and that the %vpi_call instruction ultimately refers to. All
 the arguments must be some sort of object that can be represented by a
 vpiHandle at compile time.
 
+
+SCOPES
+
+VPI can access scopes as objects of type vpiScope. Scopes have names
+and can also contain other sub-scopes, all of which the VPI function
+can access by the vpiInternalScope reference. Therefore, the run-time
+needs to form a tree of scopes into which other scoped VPI objects are
+placed.
+
+A scope is created with a .scope directive, like so:
+
+	<label> .scope "name" [, <parent>];
+
+The scope takes a string name as the first parameter. If there is an
+additional parameter, it is a label of the directive for the parent
+scope. Scopes that have no parent are root scopes. It is an error to
+declare a scope with the same name more then once in a parent scope.
+
+The name string given when creating the scope is the basename for the
+scope. The vvp automatically constructs full names from the scope
+hierarchy, and runtime VPI code can access that full name with the
+vpiFullname reference.
+
+Objects that place themselves in a scope place themselves in the
+current scope. The current scope is the one that was last mentioned by
+a .scope directive. If the wrong scope is current, the label on a
+scope directive can be used to resume a scope. The syntax works like
+this:
+
+		.scope <symbol>;
+
+In this case, the <symbol> is the label of a previous scope directive,
+and is used to identify the scope to be resumed. A scope resume
+directive cannot have a label.
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)

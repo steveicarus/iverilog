@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.3 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: compile.h,v 1.4 2001/03/18 00:37:55 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -80,6 +80,13 @@ extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_vpi_call(char*label, char*name);
 
 /*
+ * The parser uses these functions to compile .scope statements.
+ * The implementations of these live in the vpi_scope.cc file.
+ */
+extern void compile_scope_decl(char*lab, char*nam, char*par);
+extern void compile_scope_recall(char*sym);
+
+/*
  * The parser uses this function to declare a thread. The start_sym is
  * the start instruction, and must already be defined.
  */
@@ -98,6 +105,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.4  2001/03/18 00:37:55  steve
+ *  Add support for vpi scopes.
+ *
  * Revision 1.3  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.4 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: compile.cc,v 1.5 2001/03/18 00:37:55 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -112,6 +112,7 @@ static struct resolv_list_s*resolv_list = 0;
  */
 void compile_init(void)
 {
+      scope_init();
       sym_functors = new_symbol_table();
       functor_init();
       sym_codespace = new_symbol_table();
@@ -132,7 +133,11 @@ void compile_functor(char*label, char*type, unsigned init,
 {
       vvp_ipoint_t fdx = functor_allocate();
       functor_t obj = functor_index(fdx);
-      sym_set_value(sym_functors, label, fdx);
+
+      { symbol_value_t val;
+        val.num = fdx;
+	sym_set_value(sym_functors, label, val);
+      }
 
       assert(argc <= 4);
 
@@ -146,7 +151,8 @@ void compile_functor(char*label, char*type, unsigned init,
 	   the link yet. Save the reference to be resolved later. */
 
       for (unsigned idx = 0 ;  idx < argc ;  idx += 1) {
-	    vvp_ipoint_t tmp = sym_get_value(sym_functors, argv[idx]);
+	    symbol_value_t val = sym_get_value(sym_functors, argv[idx]);
+	    vvp_ipoint_t tmp = val.num;
 
 	    if (tmp) {
 		  functor_t fport = functor_index(tmp);
@@ -198,7 +204,9 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	   codespace pointer. Don't need the text of the label after
 	   this is done. */
       if (label) {
-	    sym_set_value(sym_codespace, label, ptr);
+	    symbol_value_t val;
+	    val.num = ptr;
+	    sym_set_value(sym_codespace, label, val);
 	    free(label);
       }
 
@@ -227,6 +235,8 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 	   list that the parser supplied. */
 
       for (unsigned idx = 0 ;  idx < op->argc ;  idx += 1) {
+	    symbol_value_t tmp;
+
 	    switch (op->argt[idx]) {
 		case OA_NONE:
 		  break;
@@ -255,8 +265,8 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  code->cptr = sym_get_value(sym_codespace,
-					     opa->argv[idx].text);
+		  tmp = sym_get_value(sym_codespace, opa->argv[idx].text);
+		  code->cptr = tmp.num;
 		  if (code->cptr == 0) {
 			yyerror("functor undefined");
 			break;
@@ -271,8 +281,8 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 			break;
 		  }
 
-		  code->iptr = sym_get_value(sym_functors,
-					     opa->argv[idx].text);
+		  tmp = sym_get_value(sym_functors, opa->argv[idx].text);
+		  code->iptr = tmp.num;
 		  if (code->iptr == 0) {
 			yyerror("functor undefined");
 			break;
@@ -306,7 +316,9 @@ void compile_vpi_call(char*label, char*name)
 	   codespace pointer. Don't need the text of the label after
 	   this is done. */
       if (label) {
-	    sym_set_value(sym_codespace, label, ptr);
+	    symbol_value_t val;
+	    val.num = ptr;
+	    sym_set_value(sym_codespace, label, val);
 	    free(label);
       }
 
@@ -329,7 +341,8 @@ void compile_vpi_call(char*label, char*name)
  */
 void compile_thread(char*start_sym)
 {
-      vvp_cpoint_t pc = sym_get_value(sym_codespace, start_sym);
+      symbol_value_t tmp = sym_get_value(sym_codespace, start_sym);
+      vvp_cpoint_t pc = tmp.num;
       if (pc == 0) {
 	    yyerror("unresolved address");
 	    return;
@@ -347,7 +360,9 @@ void compile_thread(char*start_sym)
 void compile_variable(char*label)
 {
       vvp_ipoint_t fdx = functor_allocate();
-      sym_set_value(sym_functors, label, fdx);
+      symbol_value_t val;
+      val.num = fdx;
+      sym_set_value(sym_functors, label, val);
 
       functor_t obj = functor_index(fdx);
       obj->table = ft_var;
@@ -377,7 +392,8 @@ void compile_cleanup(void)
 
 	      /* Try again to look up the symbol that was not defined
 		 the first time around. */
-	    vvp_ipoint_t tmp = sym_get_value(sym_functors, res->source);
+	    symbol_value_t val = sym_get_value(sym_functors, res->source);
+	    vvp_ipoint_t tmp = val.num;
 
 	    if (tmp != 0) {
 		    /* The symbol is defined, link the functor input
@@ -395,6 +411,8 @@ void compile_cleanup(void)
 		  resolv_list = res;
 	    }
       }
+
+      scope_cleanup();
 }
 
 void compile_dump(FILE*fd)
@@ -405,7 +423,7 @@ void compile_dump(FILE*fd)
       functor_dump(fd);
       fprintf(fd, "UNRESOLVED PORT INPUTS:\n");
       for (struct resolv_list_s*cur = resolv_list ;  cur ;  cur = cur->next)
-	    fprintf(fd, "    %p: %s\n", cur->port, cur->source);
+	    fprintf(fd, "    %p: %s\n", (void*)cur->port, cur->source);
 
       fprintf(fd, "CODE SPACE SYMBOL TABLE:\n");
       sym_dump(sym_codespace, fd);
@@ -416,6 +434,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.5  2001/03/18 00:37:55  steve
+ *  Add support for vpi scopes.
+ *
  * Revision 1.4  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.
