@@ -25,6 +25,7 @@ ivl_event_pos
 ivl_expr_type
 ivl_expr_bits
 ivl_expr_def
+ivl_expr_dvalue
 ivl_expr_lsi
 ivl_expr_memory
 ivl_expr_name
@@ -40,6 +41,8 @@ ivl_expr_signal
 ivl_expr_signed
 ivl_expr_string
 ivl_expr_uvalue
+ivl_expr_value
+ivl_expr_variable
 ivl_expr_width
 
 ivl_logic_attr
@@ -82,6 +85,7 @@ ivl_lval_part_off
 ivl_lval_pin
 ivl_lval_pins
 ivl_lval_sig
+ivl_lval_var
 
 ivl_memory_basename
 ivl_memory_root
@@ -123,6 +127,8 @@ ivl_scope_sig
 ivl_scope_time_units
 ivl_scope_type
 ivl_scope_tname
+ivl_scope_var
+ivl_scope_vars
 
 ivl_signal_attr
 ivl_signal_attr_cnt
@@ -175,3 +181,6 @@ ivl_udp_nin
 ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ
+
+ivl_variable_name
+ivl_variable_type
