@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.42 2001/08/25 23:50:03 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.43 2001/08/26 23:00:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -71,8 +71,12 @@ static void set_to_lvariable(ivl_lval_t lval, unsigned idx, unsigned bit)
       ivl_signal_t sig  = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
 
-      fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-	      vvp_mangle_id(ivl_signal_name(sig)), idx+part_off, bit);
+      if (ivl_lval_mux(lval))
+	    fprintf(vvp_out, "    %%set/x V_%s, %u, 0;\n",
+		    vvp_mangle_id(ivl_signal_name(sig)), bit);
+      else
+	    fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
+		    vvp_mangle_id(ivl_signal_name(sig)), idx+part_off, bit);
 }
 
 static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
@@ -83,15 +87,25 @@ static void set_to_memory(ivl_memory_t mem, unsigned idx, unsigned bit)
 	      vvp_mangle_id(ivl_memory_name(mem)), bit);
 }
 
+/*
+ * This generates an assign to a single bit of an lvalue variable. If
+ * the bit is a part select, then index the label to set the right
+ * bit. If there is an lvalue mux, then use the indexed assign to make
+ * a calculated assign.
+ */
 static void assign_to_lvariable(ivl_lval_t lval, unsigned idx,
 				unsigned bit, unsigned delay)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       unsigned part_off = ivl_lval_part_off(lval);
 
-      fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
-	      vvp_mangle_id(ivl_signal_name(sig)),
-	      idx+part_off, delay, bit);
+      if (ivl_lval_mux(lval))
+	    fprintf(vvp_out, "    %%assign/x0 V_%s, %u, %u;\n",
+		    vvp_mangle_id(ivl_signal_name(sig)), delay, bit);
+      else
+	    fprintf(vvp_out, "    %%assign V_%s[%u], %u, %u;\n",
+		    vvp_mangle_id(ivl_signal_name(sig)),
+		    idx+part_off, delay, bit);
 }
 
 static void assign_to_memory(ivl_memory_t mem, unsigned idx, 
@@ -101,6 +115,13 @@ static void assign_to_memory(ivl_memory_t mem, unsigned idx,
 	    fprintf(vvp_out, "    %%ix/add 3, 1;\n");
       fprintf(vvp_out, "    %%assign/m M_%s, %u, %u;\n",
 	      vvp_mangle_id(ivl_memory_name(mem)), delay, bit);
+}
+
+static void calculate_into_x0(ivl_expr_t expr)
+{
+      struct vector_info vec = draw_eval_expr(expr);
+      fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", vec.base, vec.wid);
+      clr_vector(vec);
 }
 
 static int show_stmt_assign(ivl_statement_t net)
@@ -124,10 +145,12 @@ static int show_stmt_assign(ivl_statement_t net)
 		  unsigned bit_limit = wid - cur_rbit;
 		  lval = ivl_stmt_lval(net, lidx);
 
-		    /* XXXX No mux support yet. */
-		  assert(ivl_lval_mux(lval) == 0);
-		  mem = ivl_lval_mem(lval);
+		    /* If there is a mux for the lval, calculate the
+		       value and write it into index0. */
+		  if (ivl_lval_mux(lval))
+			calculate_into_x0(ivl_lval_mux(lval));
 
+		  mem = ivl_lval_mem(lval);
 		  if (mem) 
 			draw_memory_index_expr(mem, ivl_lval_idx(lval));
 
@@ -166,8 +189,10 @@ static int show_stmt_assign(ivl_statement_t net)
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
-		/* XXXX No mux support yet. */
-	      assert(ivl_lval_mux(lval) == 0);
+		/* If there is a mux for the lval, calculate the
+		   value and write it into index0. */
+	      if (ivl_lval_mux(lval))
+		    calculate_into_x0(ivl_lval_mux(lval));
 
 	      mem = ivl_lval_mem(lval);
 	      if (mem) 
@@ -232,8 +257,10 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		  unsigned bit_limit = wid - cur_rbit;
 		  lval = ivl_stmt_lval(net, lidx);
 
-		    /* XXXX No mux support yet. */
-		  assert(ivl_lval_mux(lval) == 0);
+		    /* If there is a mux for the lval, calculate the
+		       value and write it into index0. */
+		  if (ivl_lval_mux(lval))
+			calculate_into_x0(ivl_lval_mux(lval));
 
 		  mem = ivl_lval_mem(lval);
 		  if (mem)
@@ -276,8 +303,11 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      unsigned bit_limit = wid - cur_rbit;
 	      lval = ivl_stmt_lval(net, lidx);
 
-		/* XXXX No mux support yet. */
-	      assert(ivl_lval_mux(lval) == 0);
+		/* If there is a mux for the lval, calculate the
+		   value and write it into index0. */
+	      if (ivl_lval_mux(lval))
+		    calculate_into_x0(ivl_lval_mux(lval));
+
 
 	      mem = ivl_lval_mem(lval);
 	      if (mem) 
@@ -951,6 +981,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.43  2001/08/26 23:00:13  steve
+ *  Generate code for l-value bit selects.
+ *
  * Revision 1.42  2001/08/25 23:50:03  steve
  *  Change the NetAssign_ class to refer to the signal
  *  instead of link into the netlist. This is faster
