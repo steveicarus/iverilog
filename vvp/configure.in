@@ -56,11 +56,16 @@ fi
 AC_SUBST(DLLIB)
 
 
-# Darwin requires -no-cpp-precomp
+# Processor specific compile flags
 case "${host}" in
+    # MacOSX/Darwin needs the -no-cpp-precomp
     *-*-darwin*)
 	CPPFLAGS="-no-cpp-precomp $CPPFLAGS"
 	CFLAGS="-no-cpp-precomp $CFLAGS"
+	;;
+    alpha*-*-linux*)
+	CPPFLAGS="-mieee $CPPFLAGS"
+	CFLAGS="-mieee $CFLAGS"
 	;;
 esac
 
