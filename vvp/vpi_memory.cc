@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.20 2002/09/12 15:13:07 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.21 2003/02/02 01:40:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -145,7 +145,7 @@ static vpiHandle memory_scan(vpiHandle ref, int)
 static int mem_iter_free_object(vpiHandle ref)
 {
       free(ref);
-      return 0;
+      return 1;
 }
 
 static const struct __vpirt vpip_mem_iter_rt = {
@@ -586,6 +586,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.21  2003/02/02 01:40:24  steve
+ *  Five vpi_free_object a default behavior.
+ *
  * Revision 1.20  2002/09/12 15:13:07  steve
  *  Account for buffer overrun in memory word names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_real.cc,v 1.2 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: vpi_real.cc,v 1.3 2003/02/02 01:40:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -72,11 +72,6 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp,
       return 0;
 }
 
-static int real_var_free_object(vpiHandle)
-{
-      return 0;
-}
-
 static const struct __vpirt vpip_real_var_rt = {
       vpiRealVar,
 
@@ -89,7 +84,7 @@ static const struct __vpirt vpip_real_var_rt = {
       0,
       0,
 
-      real_var_free_object
+      0
 };
 
 vpiHandle vpip_make_real_var(const char*name)
@@ -106,6 +101,9 @@ vpiHandle vpip_make_real_var(const char*name)
 
 /*
  * $Log: vpi_real.cc,v $
+ * Revision 1.3  2003/02/02 01:40:24  steve
+ *  Five vpi_free_object a default behavior.
+ *
  * Revision 1.2  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

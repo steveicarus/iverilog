@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_event.cc,v 1.5 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: vpi_event.cc,v 1.6 2003/02/02 01:40:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -71,15 +71,6 @@ static vpiHandle named_event_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
-/*
- * We keep the object around, in case we need it again. It's all we
- * can do, because it cannot be recreated.
- */
-static int named_event_free_object(vpiHandle)
-{
-      return 0;
-}
-
 static const struct __vpirt vpip_named_event_rt = {
       vpiNamedEvent,
 
@@ -92,7 +83,7 @@ static const struct __vpirt vpip_named_event_rt = {
       0,
       0,
 
-      named_event_free_object
+      0
 };
 
 vpiHandle vpip_make_named_event(const char*name)
@@ -124,6 +115,9 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 
 /*
  * $Log: vpi_event.cc,v $
+ * Revision 1.6  2003/02/02 01:40:24  steve
+ *  Five vpi_free_object a default behavior.
+ *
  * Revision 1.5  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.28 2003/01/10 19:02:21 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.29 2003/02/02 01:40:24 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -94,7 +94,9 @@ struct __vpiSysTaskCall*vpip_cur_task = 0;
 int vpi_free_object(vpiHandle ref)
 {
       assert(ref);
-      assert(ref->vpi_type->vpi_free_object_);
+      if (ref->vpi_type->vpi_free_object_ == 0)
+	    return 1;
+
       return ref->vpi_type->vpi_free_object_(ref);
 }
 
@@ -393,6 +395,9 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.29  2003/02/02 01:40:24  steve
+ *  Five vpi_free_object a default behavior.
+ *
  * Revision 1.28  2003/01/10 19:02:21  steve
  *  Add missing vpi entry points.
  *
