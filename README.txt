@@ -335,12 +335,14 @@ Verilog web page for the current state of support for Verilog.
             assign foo = user_function(a,b); // sorry
 	    always @(a or b) foo = user_function(a,b); // OK
 
-  - real data types not supported.
+  - real data types not supported. This includes real and realtime.
 
   - System functions are supported, but the compiler presumes that
     they return 32 bits. This is the typical case.
 
   - Specify blocks are parsed but ignored in general.
+
+  - trireg is not supported. tri0 and tri1 are supported.
 
 
 6.0 CREDITS
@@ -384,7 +386,7 @@ removed from the list) send e-mail to me.
       FreeBSD/{Intel,alpha}
 	*maintainer needed*
 
-      Linux/{alpha,Intel,SPARC} (RPMS)
+      Linux/{alpha,Intel} (RPMS)
 	Stephen Williams <steve@icarus.com>
 
       Linux/* (.debs)
