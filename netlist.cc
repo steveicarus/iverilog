@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.98 1999/12/05 02:24:09 steve Exp $"
+#ident "$Id: netlist.cc,v 1.99 1999/12/05 19:30:43 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1091,6 +1091,15 @@ unsigned NetRamDq::size() const
 const NetMemory* NetRamDq::mem() const
 {
       return mem_;
+}
+
+unsigned NetRamDq::count_partners() const
+{
+      unsigned count = 0;
+      for (NetRamDq*cur = mem_->ram_list_ ;  cur ;  cur = cur->next_)
+	    count += 1;
+
+      return count;
 }
 
 void NetRamDq::absorb_partners()
@@ -2725,6 +2734,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.99  1999/12/05 19:30:43  steve
+ *  Generate XNF RAMS from synthesized memories.
+ *
  * Revision 1.98  1999/12/05 02:24:09  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.98 1999/12/05 02:24:09 steve Exp $"
+#ident "$Id: netlist.h,v 1.99 1999/12/05 19:30:43 steve Exp $"
 #endif
 
 /*
@@ -568,6 +568,10 @@ class NetRamDq  : public NetNode {
 	// connected to the same memory, and have compatible pin
 	// connections.
       void absorb_partners();
+
+	// Use this method to count the partners (including myself)
+	// that are ports to the attached memory.
+      unsigned count_partners() const;
 
     private:
       NetMemory*mem_;
@@ -2062,6 +2066,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.99  1999/12/05 19:30:43  steve
+ *  Generate XNF RAMS from synthesized memories.
+ *
  * Revision 1.98  1999/12/05 02:24:09  steve
  *  Synthesize LPM_RAM_DQ for writes into memories.
  *

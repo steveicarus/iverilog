@@ -65,7 +65,50 @@ programmer really knows how the pins of the XNF device are to be
 connected. It also bypasses the efforts of the compiler, so is not
 checked for correctness.
 
-XNF SPECIAL DEVICES
+XNF STORAGE ELEMENTS
+
+Storage elements in XNF include flip-flops, latches and CLB
+rams. These devices are generated from the LPM equivilents that the
+-Fsynth functor synthesizes from behavioral descriptions.
+
+Flip-flops, or more specifically DFF devices, are generated to
+implement behavioral code like this:
+
+	reg Q;
+	always @(posedge clk) Q = <expr>;
+
+The edge can be positive or negative, and the expression can be any
+synthesizeable expression. Furthermore, the register "Q" can have
+width, which will cause the appropriate number of flip-flops to be
+created. A clock enable expression can also be added like so:
+
+	reg Q;
+	always @(posedge clk) if (<ce>) Q = <expr>;
+
+The <ce> expression can be any synthesizeable expression.
+
+With or without the CE, the generated DFF devices are written into the
+XNF output one bit at a time, with the clock input inverted if necessary.
+
+Xilinx parts also support CLB circuitry as synchronous RAMS. These
+devices are created from Verilog memories if the properties are
+right. The behavioral description that the -Fsynth functor matches to
+get a synchronous RAM looks very similar to that for a DFF:
+
+	memory [15:0] M;
+	always @(posedge clk) if (<we>) M[<addr>] = <expr>;
+
+Note that in this case the l-value of the assignment is an addressed
+memory. This statement models writes into the memory. Reads from the
+device can be modeled with ordinary structural code, i.e.:
+
+	assign foo = M[<addr>];
+
+For the memory to be synthesizeable in the XNF target, the address
+lines for writes and reads must be connected. This corresponds to the
+limitations of the real hardware.
+
+OTHER XNF SPECIAL DEVICES
 
 There are certain special devices in XNF that Verilog does not
 naturally represent, although there are similar more generic Verilog
@@ -176,6 +219,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.10  1999/12/05 19:30:43  steve
+  Generate XNF RAMS from synthesized memories.
+
  Revision 1.9  1999/11/18 03:52:20  steve
   Turn NetTmp objects into normal local NetNet objects,
   and add the nodangle functor to clean up the local

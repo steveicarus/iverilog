@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.18 1999/11/19 03:02:25 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.19 1999/12/05 19:30:43 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -77,11 +77,13 @@ class target_xnf  : public target_t {
     public:
       void start_design(ostream&os, const Design*);
       void end_design(ostream&os, const Design*);
+      void memory(ostream&os, const NetMemory*);
       void signal(ostream&os, const NetNet*);
 
       void lpm_add_sub(ostream&os, const NetAddSub*);
       void lpm_ff(ostream&os, const NetFF*);
       void lpm_mux(ostream&os, const NetMux*);
+      void lpm_ram_dq(ostream&os, const NetRamDq*);
 
       void net_const(ostream&os, const NetConst*);
       void logic(ostream&os, const NetLogic*);
@@ -293,6 +295,14 @@ void scrape_pad_info(string str, char&dir, unsigned&num)
 	    str = str.substr(1);
       }
       num = val;
+}
+
+/*
+ * Memories are handled by the lpm_ram_dq method, so there is nothing
+ * to do here.
+ */
+void target_xnf::memory(ostream&, const NetMemory*)
+{
 }
 
 /*
@@ -545,6 +555,30 @@ void target_xnf::lpm_mux(ostream&os, const NetMux*net)
 
 }
 
+void target_xnf::lpm_ram_dq(ostream&os, const NetRamDq*ram)
+{
+      assert(ram->count_partners() == 1);
+
+      const NetMemory*mem = ram->mem();
+
+      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
+	    os << "SYM, " << mangle(ram->name())
+	       << "<" << idx << ">, RAMS" << endl;
+
+	    draw_pin(os, "O", ram->pin_Q(idx));
+	    draw_pin(os, "D", ram->pin_Data(idx));
+	    draw_pin(os, "WE", ram->pin_WE());
+	    draw_pin(os, "WCLK", ram->pin_InClock());
+	    for (unsigned adr = 0 ;  adr < ram->awidth() ;  adr += 1) {
+		  strstream tmp;
+		  tmp << "A" << adr << ends;
+		  draw_pin(os, tmp.str(), ram->pin_Address(adr));
+	    }
+
+	    os << "END" << endl;
+      }
+}
+
 void target_xnf::net_const(ostream&os, const NetConst*c)
 {
       verinum::V v=c->value();
@@ -653,6 +687,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.19  1999/12/05 19:30:43  steve
+ *  Generate XNF RAMS from synthesized memories.
+ *
  * Revision 1.18  1999/11/19 03:02:25  steve
  *  Detect flip-flops connected to opads and turn
  *  them into OUTFF devices. Inprove support for

@@ -273,13 +273,6 @@ current state of support for Verilog.
 
   - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
 
-  - Memories work, but only in procedural code.
-
-            reg [1:0] b [2:0], bar;
-	    wire [1:0] foo;
-            always foo = b[i]; // sorry
-	    always @(i) bar = b[i]; // OK
-
   - `timescale directive
 
   - force/release/assign/deassign procedural assignments not
@@ -295,19 +288,14 @@ current state of support for Verilog.
 
   - fork/join is not supported in vvm runtime
 
-  - Structural shift operators are in general not supported.
-    Procedural expressions are OK. Constant expressions are OK.
-
-            assign foo = a << b; // sorry
-	    always @(a or b) foo = a << b; // OK
-	    parameter foo = a << b; // OK
-
   - Functions in structural contexts are not supported.
 
             assign foo = user_function(a,b); // sorry
 	    always @(a or b) foo = user_function(a,b); // OK
 
-  - multiplicative operators (*, /, %) are not supported.
+  - multiplicative operators (*, /, %) are not supported in
+    general. They do work if the compiler can evaluate them at compile
+    time.
 
             assign foo = a * b; // sorry
             always @(a or b) foo = a * b; // sorry
