@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.6 1999/08/04 02:13:02 steve Exp $"
+#ident "$Id: Module.cc,v 1.7 1999/09/17 02:06:25 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -30,6 +30,8 @@ Module::Module(const string&name, const svector<Module::port_t*>*pp)
 	    ports_ = *pp;
 	    for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
 		  port_t*cur = ports_[idx];
+		  if (cur == 0)
+			continue;
 		  for (unsigned jdx = 0 ;  jdx < cur->wires.count() ; jdx += 1)
 			add_wire(cur->wires[jdx]);
 	    }
@@ -99,6 +101,9 @@ PWire* Module::get_wire(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.7  1999/09/17 02:06:25  steve
+ *  Handle unconnected module ports.
+ *
  * Revision 1.6  1999/08/04 02:13:02  steve
  *  Elaborate module ports that are concatenations of
  *  module signals.

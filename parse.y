@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.63 1999/09/10 05:02:09 steve Exp $"
+#ident "$Id: parse.y,v 1.64 1999/09/17 02:06:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -109,7 +109,7 @@ extern void lex_end_table();
 %type <text> net_decl_assign
 %type <strings> net_decl_assigns
 
-%type <mport> port port_reference port_reference_list
+%type <mport> port port_opt port_reference port_reference_list
 %type <mports> list_of_ports list_of_ports_opt
 
 %type <wires> task_item task_item_list task_item_list_opt
@@ -816,13 +816,13 @@ identifier
 	;
 
 list_of_ports
-	: port
+	: port_opt
 		{ svector<Module::port_t*>*tmp
 			  = new svector<Module::port_t*>(1);
 		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
-	| list_of_ports ',' port
+	| list_of_ports ',' port_opt
 		{ svector<Module::port_t*>*tmp
 			= new svector<Module::port_t*>(*$1, $3);
 		  delete $1;
@@ -832,7 +832,6 @@ list_of_ports
 
 list_of_ports_opt
 	: '(' list_of_ports ')' { $$ = $2; }
-	| '(' ')'               { $$ = 0; }
 	|                       { $$ = 0; }
 	;
 
@@ -1172,6 +1171,11 @@ port
 		  delete $1;
 		  $$ = tmp;
 		}
+	;
+
+port_opt
+	: port { $$ = $1; }
+	| { $$ = 0; }
 	;
 
 port_reference

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.43 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: pform.cc,v 1.44 1999/09/17 02:06:26 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -97,6 +97,15 @@ static unsigned long evaluate_delay(PExpr*delay)
 void pform_startmodule(const string&name, svector<Module::port_t*>*ports)
 {
       assert( pform_cur_module == 0 );
+
+	/* The parser parses ``module foo()'' as having one
+	   unconnected port, but it is really a module with no
+	   ports. Fix it up here. */
+      if (ports && (ports->count() == 1) && ((*ports)[0] == 0)) {
+	    delete ports;
+	    ports = 0;
+      }
+
       pform_cur_module = new Module(name, ports);
       delete ports;
 }
@@ -698,6 +707,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.44  1999/09/17 02:06:26  steve
+ *  Handle unconnected module ports.
+ *
  * Revision 1.43  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *

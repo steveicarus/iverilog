@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.38 1999/09/08 02:24:39 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.39 1999/09/17 02:06:26 steve Exp $"
 #endif
 
 /*
@@ -516,6 +516,12 @@ void Module::dump(ostream&out) const
 
       for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
 	    port_t*cur = ports_[idx];
+
+	    if (cur == 0) {
+		  out << "    unconnected" << endl;
+		  continue;
+	    }
+
 	    switch (cur->wires[0]->get_port_type()) {
 		case NetNet::PINPUT:
 		  out << "    input ." << cur->name << "(";
@@ -639,6 +645,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.39  1999/09/17 02:06:26  steve
+ *  Handle unconnected module ports.
+ *
  * Revision 1.38  1999/09/08 02:24:39  steve
  *  Empty conditionals (pmonta@imedia.com)
  *

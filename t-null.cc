@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-null.cc,v 1.4 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: t-null.cc,v 1.5 1999/09/17 02:06:26 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -36,16 +36,21 @@ static class target_null_t  : public target_t {
       void net_esignal(ostream&, const NetESignal*) { }
       void net_event(ostream&, const NetNEvent*) { }
       void proc_block(ostream&, const NetBlock*) { }
+      void proc_condit(ostream&, const NetCondit*) { }
       void proc_delay(ostream&, const NetPDelay*) { }
       void proc_event(ostream&, const NetPEvent*) { }
       void proc_forever(ostream&, const NetForever*) { }
       void proc_repeat(ostream&, const NetRepeat*) { }
+      void proc_stask(ostream&, const NetSTask*) { }
 
 } target_null_obj;
 
 extern const struct target tgt_null = { "null", &target_null_obj };
 /*
  * $Log: t-null.cc,v $
+ * Revision 1.5  1999/09/17 02:06:26  steve
+ *  Handle unconnected module ports.
+ *
  * Revision 1.4  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.88 1999/09/16 04:18:15 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.89 1999/09/17 02:06:25 steve Exp $"
 #endif
 
 /*
@@ -508,7 +508,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 
 	    unsigned prts_pin_count = 0;
 	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
-		  PWire*pport = mport[0];
+		  PWire*pport = mport[ldx];
 		  prts[ldx] = des->find_signal(my_name, pport->name());
 		  assert(prts[ldx]);
 		  prts_pin_count += prts[ldx]->pin_count();
@@ -2600,6 +2600,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.89  1999/09/17 02:06:25  steve
+ *  Handle unconnected module ports.
+ *
  * Revision 1.88  1999/09/16 04:18:15  steve
  *  elaborate concatenation repeats.
  *
