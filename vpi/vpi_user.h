@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.10 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.11 2000/01/20 06:04:55 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -208,6 +208,7 @@ extern vpiHandle  vpi_handle(int type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
 
+extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern int   vpi_get(int property, vpiHandle ref);
 extern char* vpi_get_str(int property, vpiHandle ref);
 extern void  vpi_get_value(vpiHandle expr, p_vpi_value value);
@@ -226,6 +227,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.11  2000/01/20 06:04:55  steve
+ *  $dumpall checkpointing in VCD dump.
+ *
  * Revision 1.10  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *

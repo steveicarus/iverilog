@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_vcd.c,v 1.3 2000/01/13 04:48:50 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.4 2000/01/20 06:04:55 steve Exp $"
 #endif
 
 /*
@@ -44,10 +44,36 @@ struct vcd_info {
 static struct vcd_info*vcd_list = 0;
 unsigned long vcd_cur_time = 0;
 
+static void show_this_item(struct vcd_info*info)
+{
+      s_vpi_value value;
+
+      if (vpi_get(vpiSize, info->item) == 1) {
+	    value.format = vpiBinStrVal;
+	    vpi_get_value(info->item, &value);
+	    fprintf(dump_file, "%s%s\n", value.value.str, info->ident);
+      } else {
+	    value.format = vpiBinStrVal;
+	    vpi_get_value(info->item, &value);
+	    fprintf(dump_file, "b%s %s\n", value.value.str, info->ident);
+      }
+}
+
+/*
+ * This function writes out all the traced variables, whether they
+ * changed or not.
+ */
+static void vcd_checkpoint()
+{
+      struct vcd_info*cur;
+
+      for (cur = vcd_list ;  cur ;  cur = cur->next)
+	    show_this_item(cur);
+}
+
 static int variable_cb(p_cb_data cause)
 {
       unsigned long now = cause->time->low;
-      s_vpi_value value;
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
@@ -61,21 +87,19 @@ static int variable_cb(p_cb_data cause)
 	    vcd_cur_time = now;
       }
 
-      if (vpi_get(vpiSize, info->item) == 1) {
-	    value.format = vpiBinStrVal;
-	    vpi_get_value(info->item, &value);
-	    fprintf(dump_file, "%s%s\n", value.value.str, info->ident);
-      } else {
-	    value.format = vpiBinStrVal;
-	    vpi_get_value(info->item, &value);
-	    fprintf(dump_file, "b%s %s\n", value.value.str, info->ident);
-      }
+      show_this_item(info);
 
       return 0;
 }
 
 static int sys_dumpall_calltf(char*name)
 {
+      s_vpi_time now;
+      vpi_get_time(0, &now);
+      fprintf(dump_file, "#%u\n", now.low);
+      vcd_cur_time = now.low;
+      vcd_checkpoint();
+
       return 0;
 }
 
@@ -176,6 +200,7 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 
 static int sys_dumpvars_calltf(char*name)
 {
+      s_vpi_time now;
       vpiHandle item;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -192,7 +217,11 @@ static int sys_dumpvars_calltf(char*name)
       scan_scope(99, argv);
 
       fprintf(dump_file, "$enddefinitions $end\n");
-      fprintf(dump_file, "#0\n");
+
+      vpi_get_time(0, &now);
+      fprintf(dump_file, "#%u\n", now.low);
+
+      vcd_checkpoint();
 
       return 0;
 }
@@ -228,6 +257,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.4  2000/01/20 06:04:55  steve
+ *  $dumpall checkpointing in VCD dump.
+ *
  * Revision 1.3  2000/01/13 04:48:50  steve
  *  Catch some parameter problems.
  *

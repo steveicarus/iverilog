@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.c,v 1.2 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.3 2000/01/20 06:04:55 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -95,6 +95,15 @@ char* vpi_get_str(int property, vpiHandle ref)
       return (ref->vpi_type->vpi_get_str_)(property, ref);
 }
 
+void vpi_get_time(vpiHandle obj, s_vpi_time*t)
+{
+      s_vpi_value value;
+      vpiHandle tm = vpip_sim_time();
+      value.format = vpiTimeVal;
+      vpi_get_value(tm, &value);
+      memcpy(t, value.value.time, sizeof (*t));
+}
+
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 {
       if (expr->vpi_type->vpi_get_value_) {
@@ -159,6 +168,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.3  2000/01/20 06:04:55  steve
+ *  $dumpall checkpointing in VCD dump.
+ *
  * Revision 1.2  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *
