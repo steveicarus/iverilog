@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.2 2003/03/24 02:29:04 steve Exp $"
+#ident "$Id: edif.c,v 1.3 2003/03/30 03:43:44 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -62,6 +62,7 @@ struct edif_xlibrary_s {
 
 struct __cell_port {
       const char*name;
+      const char*ename;
       ivl_signal_port_t dir;
 };
 
@@ -94,6 +95,15 @@ struct edif_joint_s {
       struct edif_joint_s*next;
 };
 
+
+static int is_edif_name(const char*text)
+{
+      static const char*edif_name_chars = "abcdefghijklmnopqrstuvwxyz"
+                                          "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                          "0123456789";
+      return (strspn(text, edif_name_chars) == strlen(text));
+}
+
 edif_t edif_create(const char*design_name, unsigned nports)
 {
       edif_t edf = malloc(sizeof(struct edif_s));
@@ -115,6 +125,15 @@ void edif_portconfig(edif_t edf, unsigned idx,
       assert(idx < edf->nports);
 
       edf->ports[idx].name = name;
+      if (is_edif_name(name)) {
+	    edf->ports[idx].ename = 0;
+
+      } else {
+	    char buf[16];
+	    sprintf(buf, "PORT%u", idx);
+	    edf->ports[idx].ename = strdup(buf);
+      }
+
       edf->ports[idx].dir  = dir;
 }
 
@@ -273,7 +292,6 @@ void edif_add_to_joint(edif_joint_t jnt, edif_cellref_t cell, unsigned port)
       jnt->links = jc;
 }
 
-
 /*
  * This function takes all the data structures that have been
  * assembled by the code generator, and writes them into an EDIF
@@ -352,7 +370,14 @@ void edif_print(FILE*fd, edif_t edf)
       fprintf(fd, "          (interface\n");
 
       for (idx = 0 ;  idx < edf->nports ;  idx += 1) {
-	    fprintf(fd, "            (port %s ", edf->ports[idx].name);
+	    fprintf(fd, "            (port ");
+	    if (edf->ports[idx].ename == 0)
+		  fprintf(fd, "%s ", edf->ports[idx].name);
+	    else
+		  fprintf(fd, "(rename %s \"%s\") ",
+			  edf->ports[idx].ename,
+			  edf->ports[idx].name);
+
 	    switch (edf->ports[idx].dir) {
 		case IVL_SIP_INPUT:
 		  fprintf(fd, "(direction INPUT)");
@@ -405,13 +430,19 @@ void edif_print(FILE*fd, edif_t edf)
 	    fprintf(fd, " (joined");
 
 	    for (jc = jnt->links ;  jc ;  jc = jc->next) {
-		  if (jc->cell)
+		  if (jc->cell) {
 			fprintf(fd, " (portRef %s (instanceRef U%u))",
 				jc->cell->cell->ports[jc->port].name,
 				jc->cell->u);
-		  else
-			fprintf(fd, " (portRef %s)",
-				edf->ports[jc->port].name);
+		  } else {
+			  /* Reference to a port of the main cell. */
+			if (edf->ports[jc->port].ename)
+			      fprintf(fd, " (portRef %s)",
+				      edf->ports[jc->port].ename);
+			else
+			      fprintf(fd, " (portRef %s)",
+				      edf->ports[jc->port].name);
+		  }
 	    }
 	    fprintf(fd, "))\n");
       }
@@ -441,6 +472,9 @@ void edif_print(FILE*fd, edif_t edf)
 
 /*
  * $Log: edif.c,v $
+ * Revision 1.3  2003/03/30 03:43:44  steve
+ *  Handle wide ports of macros.
+ *
  * Revision 1.2  2003/03/24 02:29:04  steve
  *  Give proper basenames to PAD signals.
  *

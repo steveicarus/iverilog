@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.2 2003/03/24 02:29:04 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.3 2003/03/30 03:43:44 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -291,12 +291,29 @@ static void virtex2_show_header(ivl_design_t des)
 	    if (ivl_signal_attr(sig, "PAD") != 0)
 		  continue;
 
-	    edif_portconfig(edf, pidx, ivl_signal_basename(sig),
-			    ivl_signal_port(sig));
+	    if (ivl_signal_pins(sig) == 1) {
+		  edif_portconfig(edf, pidx, ivl_signal_basename(sig),
+				  ivl_signal_port(sig));
 
-	    assert(ivl_signal_pins(sig) == 1);
-	    jnt = edif_joint_of_nexus(edf, ivl_signal_pin(sig, 0));
-	    edif_port_to_joint(jnt, edf, pidx);
+		  assert(ivl_signal_pins(sig) == 1);
+		  jnt = edif_joint_of_nexus(edf, ivl_signal_pin(sig, 0));
+		  edif_port_to_joint(jnt, edf, pidx);
+
+	    } else {
+		  const char*name = ivl_signal_basename(sig);
+		  ivl_signal_port_t dir = ivl_signal_port(sig);
+		  char buf[128];
+		  unsigned bit;
+		  for (bit = 0 ;  bit < ivl_signal_pins(sig) ; bit += 1) {
+			const char*tmp;
+			sprintf(buf, "%s[%u]", name, bit);
+			tmp = strdup(buf);
+			edif_portconfig(edf, pidx+bit, tmp, dir);
+
+			jnt = edif_joint_of_nexus(edf,ivl_signal_pin(sig,bit));
+			edif_port_to_joint(jnt, edf, pidx+bit);
+		  }
+	    }
 
 	    pidx += ivl_signal_pins(sig);
       }
@@ -1141,6 +1158,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.3  2003/03/30 03:43:44  steve
+ *  Handle wide ports of macros.
+ *
  * Revision 1.2  2003/03/24 02:29:04  steve
  *  Give proper basenames to PAD signals.
  *
