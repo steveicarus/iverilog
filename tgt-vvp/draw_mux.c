@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_mux.c,v 1.1 2002/07/08 04:04:07 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.2 2002/07/16 03:15:11 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -32,10 +32,21 @@ static void draw_lpm_mux_bitslice(ivl_lpm_t net, unsigned slice)
 {
       unsigned sel = ivl_lpm_selects(net);
       unsigned size = ivl_lpm_size(net);
+      unsigned sel_from_size;
       unsigned seldx, idx;
       ivl_nexus_t s;
 
-      assert(size <= (1 << sel));
+      sel_from_size = 0;
+      seldx = size - 1;
+      while (seldx > 0) {
+	    seldx >>= 1;
+	    sel_from_size += 1;
+      }
+      if (sel_from_size > sel) {
+	    fprintf(stderr, "internal error: MUX size=%u, selects=%u\n",
+		    size, sel);
+      }
+      assert(sel_from_size <= sel);
 
       s = ivl_lpm_select(net, 0);
 
