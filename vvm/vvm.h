@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.16 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm.h,v 1.17 1999/10/28 21:36:00 steve Exp $"
 #endif
 
 # include  <vector>
@@ -224,52 +224,37 @@ class vvm_simulation {
 };
 
 /*
- * The vvm_monitor_t is a way of attaching a name to the signal, for
- * use by the vpi_ functions. I need to make a base type so that I can
- * avoid the casting problems with the vvm_signal_t template below.
- *
  * The vvm_signal_t template is the real object that handles the
- * receiving of assignments and doing whatever is done.
+ * receiving of assignments and doing whatever is done. It also
+ * connects VPI to the C++/vvm design.
  */
-class vvm_monitor_t {
-    public:
-      vvm_monitor_t(const char*);
-      ~vvm_monitor_t();
-      const char* name() const;
-    private:
-      const char* name_;
-
-    private: // not implemented
-      vvm_monitor_t(const vvm_monitor_t&);
-      vvm_monitor_t& operator= (const vvm_monitor_t&);
-};
-
-template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t  {
+template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 
     public:
-      vvm_signal_t(const char*n, vvm_bitset_t<WIDTH>*b)
-      : vvm_monitor_t(n), bits_(b) { }
-
+      vvm_signal_t(vvm_bitset_t<WIDTH>*b)
+	    { bits = b->bits;
+	      nbits = WIDTH;
+	    }
       ~vvm_signal_t() { }
 
       void init(unsigned idx, vpip_bit_t val)
-	    { (*bits_)[idx] = val; }
+	    { bits[idx] = val; }
 
       void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { (*bits_)[idx] = val;
+	    { bits[idx] = val;
 	    }
 
       void set(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  set(sim, idx, val[idx]);
 	    }
-
-    private:
-      vvm_bitset_t<WIDTH>*bits_;
 };
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.17  1999/10/28 21:36:00  steve
+ *  Get rid of monitor_t and fold __vpiSignal into signal.
+ *
  * Revision 1.16  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

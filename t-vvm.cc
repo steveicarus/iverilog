@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.66 1999/10/28 04:48:29 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.67 1999/10/28 21:36:00 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -536,7 +536,7 @@ void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 
 void vvm_parm_rval::expr_signal(const NetESignal*expr)
 {
-      string res = string("&") + mangle(expr->name()) + "_vpi.base";
+      string res = string("&") + mangle(expr->name()) + ".base";
       result = res;
 }
 
@@ -1087,23 +1087,15 @@ void target_vvm::net_esignal(ostream&os, const NetESignal*net)
 	    return;
 
       flag = true;
+      string net_name = mangle(net->name());
       os << "static vvm_bitset_t<" << net->pin_count() << "> " <<
-	    mangle(net->name()) << "_bits; /* " << net->name() <<
+	    net_name<< "_bits; /* " << net->name() <<
 	    " */" << endl;
       os << "static vvm_signal_t<" << net->pin_count() << "> " <<
-	    mangle(net->name()) << "(\"" << net->name() << "\", &" <<
-	    mangle(net->name()) << "_bits);" << endl;
+	    net_name << "(&" << net_name << "_bits);" << endl;
 
-      os << "static struct __vpiSignal " << mangle(net->name()) <<
-	    "_vpi;" << endl;
-
-      string vpi_name = mangle(net->name()) + "_vpi";
-      init_code << "      vpip_make_reg(&" << vpi_name << ", \"" <<
-	    net->name() << "\");" << endl;
-      init_code << "      " << vpi_name << ".bits = " <<
-	    mangle(net->name()) << "_bits.bits;" << endl;
-      init_code << "      " << vpi_name << ".nbits = " <<
-	    net->pin_count() << ";" << endl;
+      init_code << "      vpip_make_reg(&" << net_name <<
+	    ", \"" << net->name() << "\");" << endl;
 }
 
 /*
@@ -1766,6 +1758,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.67  1999/10/28 21:36:00  steve
+ *  Get rid of monitor_t and fold __vpiSignal into signal.
+ *
  * Revision 1.66  1999/10/28 04:48:29  steve
  *  Put strings into a single string table.
  *
