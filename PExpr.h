@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998-1999 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2000 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.27 2000/01/13 03:35:35 steve Exp $"
+#ident "$Id: PExpr.h,v 1.28 2000/02/16 03:58:27 steve Exp $"
 #endif
 
 # include  <string>
@@ -254,6 +254,11 @@ class PEBinary : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+      NetNet* elaborate_net_bit_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
       NetNet* elaborate_net_cmp_(Design*des, const string&path,
 				 unsigned lwidth,
 				 unsigned long rise,
@@ -323,6 +328,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.28  2000/02/16 03:58:27  steve
+ *  Fix up width matching in structural bitwise operators.
+ *
  * Revision 1.27  2000/01/13 03:35:35  steve
  *  Multiplication all the way to simulation.
  *

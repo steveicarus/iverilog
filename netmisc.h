@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netmisc.h,v 1.1 1999/09/29 00:42:51 steve Exp $"
+#ident "$Id: netmisc.h,v 1.2 2000/02/16 03:58:27 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,10 +31,13 @@
  * enough.
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
-
+extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.2  2000/02/16 03:58:27  steve
+ *  Fix up width matching in structural bitwise operators.
+ *
  * Revision 1.1  1999/09/29 00:42:51  steve
  *  Allow expanding of additive operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pad_to_width.cc,v 1.2 2000/01/01 06:17:25 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.3 2000/02/16 03:58:27 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -45,9 +45,32 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
       return expr;
 }
 
+NetNet*pad_to_width(Design*des, const string&path, NetNet*net, unsigned wid)
+{
+      if (net->pin_count() >= wid)
+	    return net;
+
+      verinum pad(verinum::V0, wid - net->pin_count());
+      NetConst*con = new NetConst(des->local_symbol(path), pad);
+      des->add_node(con);
+
+      NetNet*tmp = new NetNet(0, des->local_symbol(path), NetNet::WIRE, wid);
+      tmp->local_flag(true);
+      des->add_signal(tmp);
+
+      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1)
+	    connect(tmp->pin(idx), net->pin(idx));
+      for (unsigned idx = net->pin_count() ;  idx < wid ;  idx += 1)
+	    connect(tmp->pin(idx), con->pin(idx-net->pin_count()));
+
+      return tmp;
+}
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.3  2000/02/16 03:58:27  steve
+ *  Fix up width matching in structural bitwise operators.
+ *
  * Revision 1.2  2000/01/01 06:17:25  steve
  *  Propogate line number information when expanding expressions.
  *
