@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_vcl.c,v 1.5 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: a_vcl.c,v 1.6 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -144,7 +144,6 @@ static PLI_INT32 vcl_value_callback(struct t_cb_data*cb)
 			  vcr.out_value.strengths_s.logic_value,
 			  vcr.out_value.strengths_s.strength1,
 			  vcr.out_value.strengths_s.strength2);
-		  fflush(pli_trace);
 	    }
 	    break;
 
@@ -187,7 +186,6 @@ void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
 	    if (pli_trace) {
 		  fprintf(pli_trace, "acc_vcl_add(<%s>, ..., %p, %d)\n",
 			  vpi_get_str(vpiFullName, obj), data, vcl_flag);
-		  fflush(pli_trace);
 	    }
 	    break;
 
@@ -208,6 +206,12 @@ void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
 /*
  * $Log: a_vcl.c,v $
+ * Revision 1.6  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.5  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *

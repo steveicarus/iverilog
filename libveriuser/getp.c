@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getp.c,v 1.5 2003/05/30 04:22:13 steve Exp $"
+#ident "$Id: getp.c,v 1.6 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -66,7 +66,6 @@ out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_igetp(n=%d, obj=%p) --> %d\n",
 		  n, obj, rtn);
-	    fflush(pli_trace);
       }
 
       return rtn;
@@ -114,7 +113,6 @@ out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_igetrealp(n=%d, obj=%p) --> %f\n",
 		  n, obj, rtn);
-	    fflush(pli_trace);
       }
 
       return rtn;
@@ -172,7 +170,6 @@ out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_istrgetp(n=%d, fmt=%c, obj=%p) --> \"%s\"\n",
 		  n, fmt, obj, rtn);
-	    fflush(pli_trace);
       }
 
       return rtn;
@@ -187,6 +184,12 @@ char *tf_strgetp(PLI_INT32 n, PLI_INT32 fmt)
 
 /*
  * $Log: getp.c,v $
+ * Revision 1.6  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.5  2003/05/30 04:22:13  steve
  *  Add tf_strgetp functions.
  *

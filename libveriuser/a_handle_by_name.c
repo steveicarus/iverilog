@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_by_name.c,v 1.1 2003/05/24 03:02:04 steve Exp $"
+#ident "$Id: a_handle_by_name.c,v 1.2 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -46,7 +46,6 @@ handle acc_handle_by_name(const char*obj_name, handle scope)
 	    fprintf(pli_trace, "acc_handle_by_name(\"%s\", scope=%s) "
 		    " --> %p\n", obj_name,
 		    vpi_get_str(vpiFullName, scope), res);
-	    fflush(pli_trace);
       }
 
       return res;
@@ -54,6 +53,12 @@ handle acc_handle_by_name(const char*obj_name, handle scope)
 
 /*
  * $Log: a_handle_by_name.c,v $
+ * Revision 1.2  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.1  2003/05/24 03:02:04  steve
  *  Add implementation of acc_handle_by_name.
  *

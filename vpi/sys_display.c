@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.61 2003/05/23 04:04:02 steve Exp $"
+#ident "$Id: sys_display.c,v 1.62 2003/06/17 16:55:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -383,8 +383,6 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    use_count = 0;
 	    break;
 
-	  case 'e':
-	  case 'g':
 	      // new Verilog 2001 format specifiers...
 	  case 'l':
 	  case 'L':
@@ -533,6 +531,26 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    use_count = 1;
 	    break;
 
+	  case 'e':
+	  case 'E':
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 0;
+	    }
+
+	    value.format = vpiRealVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    my_mcd_printf(mcd, "%*.*g", fsize, ffsize, value.value.real);
+
+	    use_count = 1;
+	    break;
 
 	  case 'f':
 	  case 'F':
@@ -551,6 +569,27 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
 	    }
 
 	    my_mcd_printf(mcd, "%*.*f", fsize, ffsize, value.value.real);
+
+	    use_count = 1;
+	    break;
+
+	  case 'g':
+	  case 'G':
+	    if (idx >= argc) {
+		  format_error_msg("Missing Argument", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 0;
+	    }
+
+	    value.format = vpiRealVal;
+	    vpi_get_value(argv[idx], &value);
+	    if (value.format == vpiSuppressVal){
+		  format_error_msg("Incompatible value", leading_zero,
+				   fsize, ffsize, fmt);
+		  return 1;
+	    }
+
+	    my_mcd_printf(mcd, "%*.*g", fsize, ffsize, value.value.real);
 
 	    use_count = 1;
 	    break;
@@ -1702,6 +1741,12 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.62  2003/06/17 16:55:08  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.61  2003/05/23 04:04:02  steve
  *  Add vpi_fopen and vpi_get_file.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.11 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.12 2003/06/17 16:55:08 steve Exp $"
 #endif
 
 /*
@@ -59,11 +59,15 @@ void veriusertfs_register_table(p_tfcell vtable)
       s_vpi_systf_data tf_data;
       p_pli_data data;
 
-      if ((pli_trace == 0) && (path = getenv("PLI_TRACE"))) {
+      if (!pli_trace && (path = getenv("PLI_TRACE"))) {
 	    if (strcmp(path,"-") == 0)
 		  pli_trace = stdout;
 	    else {
 		  pli_trace = fopen(path, "w");
+		  if (!pli_trace) {
+			perror(path);
+			exit(1);
+		  }
 		  setlinebuf(pli_trace);
 	    }
       }
@@ -375,6 +379,12 @@ PLI_INT32 tf_setrealdelay(double dly)
 }
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.12  2003/06/17 16:55:08  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.11  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

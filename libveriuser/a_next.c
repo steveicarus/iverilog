@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_next.c,v 1.2 2003/06/04 01:56:20 steve Exp $"
+#ident "$Id: a_next.c,v 1.3 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 #include  <stdio.h>
@@ -63,7 +63,7 @@ handle acc_next(PLI_INT32 *type, handle scope, handle prev)
       }
 
       /* scan for next */
-      if (hand) {
+      if (!prev || hand) {
 	    while ((hand = vpi_scan(iter))) {
 		  if (acc_object_in_typelist(hand, type))
 			break;
@@ -94,6 +94,12 @@ handle acc_next_scope(handle scope, handle prev)
 
 /*
  * $Log: a_next.c,v $
+ * Revision 1.3  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.2  2003/06/04 01:56:20  steve
  * 1) Adds configure logic to clean up compiler warnings
  * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and

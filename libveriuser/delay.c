@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.c,v 1.2 2003/05/28 02:42:43 steve Exp $"
+#ident "$Id: delay.c,v 1.3 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -44,7 +44,6 @@ int tf_isetdelay(PLI_INT32 delay, void*ss)
 	    fprintf(pli_trace, "%s: tf_isetdelay(%d, ...)"
 		    " <unit=%d, prec=%d>;\n",
 		    vpi_get_str(vpiName, sys), delay, unit, prec);
-	    fflush(pli_trace);
       }
 
 
@@ -82,6 +81,12 @@ int tf_setdelay(PLI_INT32 delay)
 
 /*
  * $Log: delay.c,v $
+ * Revision 1.3  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.2  2003/05/28 02:42:43  steve
  *  compiler warnings.
  *

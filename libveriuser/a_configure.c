@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_configure.c,v 1.2 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: a_configure.c,v 1.3 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 #include  <acc_user.h>
@@ -36,7 +36,6 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 		  fprintf(pli_trace,
 			  "acc_configure(accDevelopmentVersion, %s)\n",
 			  value);
-		  fflush(pli_trace);
 	    }
 	    break;
 
@@ -45,7 +44,6 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 	    if (pli_trace) {
 		  fprintf(pli_trace, "acc_configure(config=%d, %s)\n",
 			  config_param, value);
-		  fflush(pli_trace);
 	    }
 
 	    vpi_printf("XXXX acc_configure(%d, %s)\n", config_param, value);
@@ -58,6 +56,12 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 
 /*
  * $Log: a_configure.c,v $
+ * Revision 1.3  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.2  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *

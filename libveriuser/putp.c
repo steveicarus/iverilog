@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: putp.c,v 1.4 2003/05/29 03:46:21 steve Exp $"
+#ident "$Id: putp.c,v 1.5 2003/06/17 16:55:08 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -64,7 +64,6 @@ out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_iputp(n=%d, value=%d, obj=%p) --> %d\n",
 		  n, value, obj, rtn);
-	    fflush(pli_trace);
       }
 
       return rtn;
@@ -114,7 +113,6 @@ out:
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_iputrealp(n=%d, value=%f, obj=%p) --> %d\n",
 		  n, value, obj, rtn);
-	    fflush(pli_trace);
       }
 
       return rtn;
@@ -128,6 +126,12 @@ PLI_INT32 tf_putrealp(PLI_INT32 n, double value)
 }
 /*
  * $Log: putp.c,v $
+ * Revision 1.5  2003/06/17 16:55:08  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.4  2003/05/29 03:46:21  steve
  *  Add tf_getp/putp support for integers
  *  and real valued arguments.

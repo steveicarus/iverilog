@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: spname.c,v 1.3 2003/05/29 03:46:21 steve Exp $"
+#ident "$Id: spname.c,v 1.4 2003/06/17 16:55:08 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -37,7 +37,6 @@ char* tf_spname(void)
       if (pli_trace) {
 	    fprintf(pli_trace, "%s: tf_spname() --> %s\n",
 		    vpi_get_str(vpiName,sys), rtn);
-	    fflush(pli_trace);
       }
 
       return rtn;
@@ -55,6 +54,12 @@ char *tf_mipname(void)
 
 /*
  * $Log: spname.c,v $
+ * Revision 1.4  2003/06/17 16:55:08  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.3  2003/05/29 03:46:21  steve
  *  Add tf_getp/putp support for integers
  *  and real valued arguments.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_close.c,v 1.3 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: a_close.c,v 1.4 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -27,12 +27,17 @@ void acc_close(void)
 {
       if (pli_trace) {
 	    fprintf(pli_trace, "acc_close()\n");
-	    fflush(pli_trace);
       }
 }
 
 /*
  * $Log: a_close.c,v $
+ * Revision 1.4  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.3  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_value.c,v 1.4 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: a_fetch_value.c,v 1.5 2003/06/17 16:55:07 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -57,7 +57,6 @@ static char* fetch_struct_value(handle obj, s_acc_value*value)
 			  "accScalarVal) --> %d\n",
 			  vpi_get_str(vpiFullName,obj),
 			  value->value.scalar);
-		  fflush(pli_trace);
 	    }
 	    break;
 
@@ -71,7 +70,6 @@ static char* fetch_struct_value(handle obj, s_acc_value*value)
 			  "accIntVal) --> %d\n",
 			  vpi_get_str(vpiFullName,obj),
 			  value->value.integer);
-		  fflush(pli_trace);
 	    }
 	    break;
 
@@ -85,7 +83,6 @@ static char* fetch_struct_value(handle obj, s_acc_value*value)
 			  "accRealVal) --> %g\n",
 			  vpi_get_str(vpiFullName,obj),
 			  value->value.real);
-		  fflush(pli_trace);
 	    }
 	    break;
 
@@ -112,7 +109,6 @@ static char* fetch_strength_value(handle obj)
       if (pli_trace) {
 	    fprintf(pli_trace, "acc_fetch_value(<%s>, \"%%v\") --> %s\n",
 		    vpi_get_str(vpiFullName,obj), str);
-	    fflush(pli_trace);
       }
 
       return __acc_newstring(str);
@@ -133,6 +129,12 @@ char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value)
 
 /*
  * $Log: a_fetch_value.c,v $
+ * Revision 1.5  2003/06/17 16:55:07  steve
+ *  1) setlinebuf() for vpi_trace
+ *  2) Addes error checks for trace file opens
+ *  3) removes now extraneous flushes
+ *  4) fixes acc_next() bug
+ *
  * Revision 1.4  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *
