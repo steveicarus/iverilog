@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.88 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.89 2000/07/07 04:53:53 steve Exp $"
 #endif
 
 /*
@@ -626,7 +626,13 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
 
 void NetPDelay::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "#" << delay_;
+      if (expr_) {
+	    o << setw(ind) << "" << "#" << *expr_;
+
+      } else {
+	    o << setw(ind) << "" << "#" << delay_;
+      }
+
       if (statement_) {
 	    o << endl;
 	    statement_->dump(o, ind+2);
@@ -967,6 +973,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.89  2000/07/07 04:53:53  steve
+ *  Add support for non-constant delays in delay statements,
+ *  Support evaluating ! in constant expressions, and
+ *  move some code from netlist.cc to net_proc.cc.
+ *
  * Revision 1.88  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

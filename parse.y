@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.101 2000/06/30 15:50:20 steve Exp $"
+#ident "$Id: parse.y,v 1.102 2000/07/07 04:53:54 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -344,9 +344,6 @@ delay3_opt
 delay_value
 	: expression
 		{ PExpr*tmp = $1;
-		  if (! pform_expression_is_constant(tmp))
-			yyerror(@1, "error: delay expression must "
-				"be constant.");
 		  $$ = tmp;
 		}
 	| expression ':' expression ':' expression

@@ -331,11 +331,6 @@ current state of support for Verilog.
   - System functions are supported, but the compiler presumes that
     they return 32 bits. This is the typical case.
 
-  - non-constant delay expressions, i.e.:
-
-            reg [7:0] del;
-	    always #(reg) $display($time,,"del = %d", del); // sorry
-
   - Specify blocks are parsed but ignored in general.
 
 

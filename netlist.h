@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.143 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.144 2000/07/07 04:53:54 steve Exp $"
 #endif
 
 /*
@@ -1626,13 +1626,29 @@ class NetFuncDef {
       svector<NetNet*>ports_;
 };
 
+/*
+ * This class represents delay statements of the form:
+ *
+ *     #<expr> <statement>
+ *
+ * Where the statement may be null. The delay is evaluated at
+ * elaboration time to make a constant unsigned long that is the delay
+ * in simulation ticks.
+ *
+ * If the delay expression is non-constant, construct the NetPDelay
+ * object with a NetExpr* instead of the d value, and use th expr()
+ * method to get the expression. If expr() returns 0, use the delay()
+ * method to get the constant delay.
+ */
 class NetPDelay  : public NetProc {
 
     public:
-      NetPDelay(unsigned long d, NetProc*st)
-      : delay_(d), statement_(st) { }
+      NetPDelay(unsigned long d, NetProc*st);
+      NetPDelay(NetExpr* d, NetProc*st);
+      ~NetPDelay();
 
-      unsigned long delay() const { return delay_; }
+      unsigned long delay() const;
+      const NetExpr*expr() const;
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -1641,6 +1657,7 @@ class NetPDelay  : public NetProc {
 
     private:
       unsigned long delay_;
+      NetExpr*expr_;
       NetProc*statement_;
 };
 
@@ -2242,6 +2259,7 @@ class NetEUnary  : public NetExpr {
       virtual bool set_width(unsigned w);
 
       virtual NetEUnary* dup_expr() const;
+      virtual NetEConst* eval_tree();
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2630,6 +2648,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.144  2000/07/07 04:53:54  steve
+ *  Add support for non-constant delays in delay statements,
+ *  Support evaluating ! in constant expressions, and
+ *  move some code from netlist.cc to net_proc.cc.
+ *
  * Revision 1.143  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

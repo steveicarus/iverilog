@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.131 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: netlist.cc,v 1.132 2000/07/07 04:53:54 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2241,16 +2241,6 @@ NetEUBits::~NetEUBits()
 {
 }
 
-NetForever::NetForever(NetProc*p)
-: statement_(p)
-{
-}
-
-NetForever::~NetForever()
-{
-      delete statement_;
-}
-
 NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
 : NetNode(n, pins), type_(t)
 {
@@ -2260,22 +2250,6 @@ NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
 	    pin(idx).set_dir(Link::INPUT);
 	    pin(idx).set_name("I", idx-1);
       }
-}
-
-NetRepeat::NetRepeat(NetExpr*e, NetProc*p)
-: expr_(e), statement_(p)
-{
-}
-
-NetRepeat::~NetRepeat()
-{
-      delete expr_;
-      delete statement_;
-}
-
-const NetExpr* NetRepeat::expr() const
-{
-      return expr_;
 }
 
 NetTaskDef::NetTaskDef(const string&n, const svector<NetNet*>&po)
@@ -2464,6 +2438,11 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.132  2000/07/07 04:53:54  steve
+ *  Add support for non-constant delays in delay statements,
+ *  Support evaluating ! in constant expressions, and
+ *  move some code from netlist.cc to net_proc.cc.
+ *
  * Revision 1.131  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

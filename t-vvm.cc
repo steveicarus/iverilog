@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.160 2000/06/25 19:59:42 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.161 2000/07/07 04:53:54 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -3025,16 +3025,31 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
 
 
 /*
- * A delay suspends the thread for a period of time.
+ * A delay suspends the thread for a period of time. If the delay
+ * is an expression expresion, evaluate it at run time and use the
+ * unsigned interpretation of it as the actual delay.
  */
 void target_vvm::proc_delay(ostream&os, const NetPDelay*proc)
 {
       thread_step_ += 1;
-      defn << "      thr->step_ = &" << thread_class_ << "_step_"
-	   << thread_step_ << "_;" << endl;
-      defn << "      thr->thread_yield(" << proc->delay() << ");" << endl;
-      defn << "      return false;" << endl;
-      defn << "}" << endl;
+
+      if (proc->expr()) {
+	    string rval = emit_proc_rval(this, proc->expr());
+	    defn << "      thr->step_ = &" << thread_class_ << "_step_"
+		 << thread_step_ << "_;" << endl;
+	    defn << "      thr->thread_yield(" << rval << ".as_unsigned());"
+		 << endl;
+	    defn << "      return false;" << endl;
+	    defn << "}" << endl;
+
+      } else {
+	    defn << "      thr->step_ = &" << thread_class_ << "_step_"
+		 << thread_step_ << "_;" << endl;
+	    defn << "      thr->thread_yield(" << proc->delay() << ");"
+		 << endl;
+	    defn << "      return false;" << endl;
+	    defn << "}" << endl;
+      }
 
       os << "static bool " << thread_class_ << "_step_"
 	 << thread_step_ << "_(vvm_thread*thr);" << endl;
@@ -3068,6 +3083,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.161  2000/07/07 04:53:54  steve
+ *  Add support for non-constant delays in delay statements,
+ *  Support evaluating ! in constant expressions, and
+ *  move some code from netlist.cc to net_proc.cc.
+ *
  * Revision 1.160  2000/06/25 19:59:42  steve
  *  Redesign Links to include the Nexus class that
  *  carries properties of the connected set of links.

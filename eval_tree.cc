@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.10 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.11 2000/07/07 04:53:54 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -273,8 +273,55 @@ NetExpr* NetEParam::eval_tree()
       return res->dup_expr();
 }
 
+NetEConst* NetEUnary::eval_tree()
+{
+      NetExpr*oper = expr_->eval_tree();
+      NetEConst*rval = dynamic_cast<NetEConst*>(oper);
+
+      if (rval == 0)
+	    return 0;
+
+      verinum val = rval->value();
+
+      switch (op_) {
+
+	  case '!': {
+		  /* Evaluate the unary logical not by first scanning
+		     the operand value for V1 and Vx bits. If we find
+		     any V1 bits we know that the value is TRUE, so
+		     the result of ! is V0. If there are no V1 bits
+		     but there are some Vx/Vz bits, the result is
+		     unknown. Otherwise, the result is V1. */
+		unsigned v1 = 0, vx = 0;
+		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+		      switch (val.get(idx)) {
+			  case verinum::V0:
+			    break;
+			  case verinum::V1:
+			    v1 += 1;
+			    break;
+			  default:
+			    vx += 1;
+			    break;
+		      }
+		}
+		verinum out(v1? verinum::V0 : (vx? verinum::Vx : verinum::V1));
+		return new NetEConst(out);
+	  }
+
+	  default:
+	    delete rval;
+	    return 0;
+      }
+}
+
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.11  2000/07/07 04:53:54  steve
+ *  Add support for non-constant delays in delay statements,
+ *  Support evaluating ! in constant expressions, and
+ *  move some code from netlist.cc to net_proc.cc.
+ *
  * Revision 1.10  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *

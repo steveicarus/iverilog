@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.176 2000/06/13 03:24:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.177 2000/07/07 04:53:54 steve Exp $"
 #endif
 
 /*
@@ -1573,21 +1573,44 @@ NetDeassign* PDeassign::elaborate(Design*des, const string&path) const
       return dev;
 }
 
+/*
+ * Elaborate the delay statment (of the form #<expr> <statement>) as a
+ * NetPDelay object. If the expression is constant, evaluate it now
+ * and make a constant delay. If not, then pass an elaborated
+ * expression to the constructor of NetPDelay so that the code
+ * generator knows to evaluate the expression at run time.
+ */
 NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 {
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
       verinum*num = delay_->eval_const(des, path);
       if (num == 0) {
-	    cerr << get_line() << ": sorry: delay expression "
-		  "must be constant." << endl;
-	    return 0;
+	      /* Ah, the delay is not constant. OK, elaborate the
+		 expression and let the run-time handle it. */
+	    NetExpr*dex = delay_->elaborate_expr(des, scope);
+	    if (statement_)
+		  return new NetPDelay(dex, statement_->elaborate(des, path));
+	    else
+		  return new NetPDelay(dex, 0);
       }
       assert(num);
 
+
+	/* If there is a statement, then elaborate it and create a
+	   NetPDelay statement to contain it. Note that we create a
+	   NetPDelay statement even if the value is 0 because #0 does
+	   in fact have a well defined meaning in Verilog. */
+
       unsigned long val = num->as_ulong();
-      if (statement_)
-	    return new NetPDelay(val, statement_->elaborate(des, path));
-      else
+      if (statement_) {
+	    NetProc*stmt = statement_->elaborate(des, path);
+	    return new NetPDelay(val, stmt);
+
+      }  else {
 	    return new NetPDelay(val, 0);
+      }
 }
 
 /*
@@ -2435,6 +2458,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.177  2000/07/07 04:53:54  steve
+ *  Add support for non-constant delays in delay statements,
+ *  Support evaluating ! in constant expressions, and
+ *  move some code from netlist.cc to net_proc.cc.
+ *
  * Revision 1.176  2000/06/13 03:24:48  steve
  *  Index in memory assign should be a NetExpr.
  *
