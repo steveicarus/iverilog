@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.44 2004/09/05 21:29:07 steve Exp $"
+#ident "$Id: lexor.lex,v 1.45 2004/09/06 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -556,7 +556,7 @@ static int def_is_done()
 /*
  * After some number of calls to do_define, this function is called to
  * assigned value to the parsed name. If there is no value, then
- * assign the string "1"
+ * assign the string "" (empty string.)
  */
 static void def_finish()
 {
@@ -570,7 +570,7 @@ static void def_finish()
 		  define_cnt = 0;
 
 	    } else {
-		  define_macro(def_name, "1", 0);
+		  define_macro(def_name, "", 0);
 	    }
 	    def_name[0] = 0;
       }
