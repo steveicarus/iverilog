@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.35 2000/07/14 06:12:57 steve Exp $"
+#ident "$Id: main.cc,v 1.36 2000/07/29 17:58:21 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -127,8 +127,10 @@ int main(int argc, char*argv[])
       queue<net_func> net_func_queue;
 
       flags["VPI_MODULE_LIST"] = "system";
+      min_typ_max_flag = TYP;
+      min_typ_max_warn = 10;
 
-      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:s:t:vW:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "F:f:hm:N:o:P:s:T:t:vW:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -160,6 +162,22 @@ int main(int argc, char*argv[])
 	    break;
 	  case 's':
 	    start_module = optarg;
+	    break;
+	  case 'T':
+	    if (strcmp(optarg,"min") == 0) {
+		  min_typ_max_flag = MIN;
+		  min_typ_max_warn = 0;
+	    } else if (strcmp(optarg,"typ") == 0) {
+		  min_typ_max_flag = TYP;
+		  min_typ_max_warn = 0;
+	    } else if (strcmp(optarg,"max") == 0) {
+		  min_typ_max_flag = MAX;
+		  min_typ_max_warn = 0;
+	    } else {
+		  cerr << "Invalid argument (" << optarg << ") to -T flag."
+		       << endl;
+		  flag_errors += 1;
+	    }
 	    break;
 	  case 't':
 	    target = optarg;
@@ -303,6 +321,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.36  2000/07/29 17:58:21  steve
+ *  Introduce min:typ:max support.
+ *
  * Revision 1.35  2000/07/14 06:12:57  steve
  *  Move inital value handling from NetNet to Nexus
  *  objects. This allows better propogation of inital

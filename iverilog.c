@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.18 2000/07/11 23:30:03 steve Exp $"
+#ident "$Id: iverilog.c,v 1.19 2000/07/29 17:58:20 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -37,6 +37,7 @@
 #endif
 
 const char*base = IVL_ROOT;
+const char*mtm  = 0;
 const char*opath = "a.out";
 const char*targ  = "vvm";
 const char*start = 0;
@@ -66,6 +67,14 @@ static int t_null(char*cmd, unsigned ncmd)
 
       if (start) {
 	    sprintf(tmp, " -s%s", start);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
+      if (mtm) {
+	    sprintf(tmp, " -T%s", mtm);
 	    rc = strlen(tmp);
 	    cmd = realloc(cmd, ncmd+rc+1);
 	    strcpy(cmd+ncmd, tmp);
@@ -130,6 +139,14 @@ static int t_vvm(char*cmd, unsigned ncmd)
 	    rc = strlen(mod_list);
 	    cmd = realloc(cmd, ncmd+rc+1);
 	    strcpy(cmd+ncmd, mod_list);
+	    ncmd += rc;
+      }
+
+      if (mtm) {
+	    sprintf(tmp, " -T%s", mtm);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
 	    ncmd += rc;
       }
 
@@ -203,6 +220,14 @@ static int t_xnf(char*cmd, unsigned ncmd)
 	    ncmd += rc;
       }
 
+      if (mtm) {
+	    sprintf(tmp, " -T%s", mtm);
+	    rc = strlen(tmp);
+	    cmd = realloc(cmd, ncmd+rc+1);
+	    strcpy(cmd+ncmd, tmp);
+	    ncmd += rc;
+      }
+
       if (start) {
 	    sprintf(tmp, " -s%s", start);
 	    rc = strlen(tmp);
@@ -255,7 +280,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:D:Ef:I:m:o:Ss:t:vW:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:D:Ef:I:m:o:Ss:T:t:vW:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -324,6 +349,19 @@ int main(int argc, char **argv)
 		  break;
 		case 's':
 		  start = optarg;
+		  break;
+		case 'T':
+		  if (strcmp(optarg,"min") == 0) {
+			mtm = "min";
+		  } else if (strcmp(optarg,"typ") == 0) {
+			mtm = "typ";
+		  } else if (strcmp(optarg,"max") == 0) {
+			mtm = "max";
+		  } else {
+			fprintf(stderr, "%s: invalid -T%s argument\n",
+				argv[0], optarg);
+			return 1;
+		  }
 		  break;
 		case 't':
 		  targ = optarg;
@@ -422,6 +460,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.19  2000/07/29 17:58:20  steve
+ *  Introduce min:typ:max support.
+ *
  * Revision 1.18  2000/07/11 23:30:03  steve
  *  More detailed handling of exit status from commands.
  *

@@ -1,10 +1,10 @@
-.TH iverilog 1 "$Date: 2000/05/17 03:53:29 $" Version "$Date: 2000/05/17 03:53:29 $"
+.TH iverilog 1 "$Date: 2000/07/29 17:58:20 $" Version "$Date: 2000/07/29 17:58:20 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
 .SH SYNOPSIS
 .B iverilog
-[-ESv] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-ooutputfilename] [-s topmodule] [-ttype] [-Wclass] sourcefile[s]
+[-ESv] [-Dmacro[=defn]] [-fflag=value] [-Iincludepath] [-mmodule] [-ooutputfilename] [-s topmodule] [-ttype] [-Tmin/typ/max] [-Wclass] sourcefile[s]
 
 .SH DESCRIPTION
 .PP
@@ -72,6 +72,13 @@ Specify the top level module to elaborate. Icarus Verilog will by default
 choose the only module that has no ports. However, this simplistic
 heuristic is often not sufficient, and sometimes not what is wanted
 anyhow.
+.TP 8
+.B -T\fImin|typ|max\fP
+Use this switch to select min, typ or max times from min:typ:max
+expressions. Normally, the compiler will simply use the typ value from
+these expressions (with a warning) but this switch will tell the
+compiler explicitly which value to use. This will suppress the
+warning that the compiler is making a choice.
 .TP 8
 .B -t\fItarget\fP
 Use this switch to specify the target output format. See the

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.62 2000/07/22 22:09:04 steve Exp $"
+#ident "$Id: pform.cc,v 1.63 2000/07/29 17:58:21 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -135,6 +135,52 @@ void pform_endmodule(const string&name)
 bool pform_expression_is_constant(const PExpr*ex)
 {
       return ex->is_constant(pform_cur_module);
+}
+
+MIN_TYP_MAX min_typ_max_flag = TYP;
+unsigned min_typ_max_warn = 10;
+
+PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max)
+{
+      PExpr*res = 0;
+
+      switch (min_typ_max_flag) {
+	  case MIN:
+	    res = min;
+	    delete typ;
+	    delete max;
+	    break;
+	  case TYP:
+	    res = typ;
+	    delete min;
+	    delete max;
+	    break;
+	  case MAX:
+	    res = max;
+	    delete min;
+	    delete max;
+	    break;
+      }
+
+      if (min_typ_max_warn > 0) {
+	    cerr << res->get_line() << ": warning: choosing ";
+	    switch (min_typ_max_flag) {
+		case MIN:
+		  cerr << "min";
+		  break;
+		case TYP:
+		  cerr << "typ";
+		  break;
+		case MAX:
+		  cerr << "max";
+		  break;
+	    }
+
+	    cerr << " expression." << endl;
+	    min_typ_max_warn -= 1;
+      }
+
+      return res;
 }
 
 void pform_make_udp(const char*name, list<string>*parms,
@@ -885,6 +931,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.63  2000/07/29 17:58:21  steve
+ *  Introduce min:typ:max support.
+ *
  * Revision 1.62  2000/07/22 22:09:04  steve
  *  Parse and elaborate timescale to scopes.
  *

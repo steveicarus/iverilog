@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.40 2000/05/08 05:30:20 steve Exp $"
+#ident "$Id: pform.h,v 1.41 2000/07/29 17:58:21 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -57,6 +57,15 @@
 class PGate;
 class PExpr;
 struct vlltype;
+
+/*
+ * The min:typ:max expression s selected at parse time using the
+ * enumeration. When the compiler makes a choise, it also prints a
+ * warning if min_typ_max_warn > 0.
+ */
+extern enum MIN_TYP_MAX { MIN, TYP, MAX } min_typ_max_flag;
+extern unsigned min_typ_max_warn;
+PExpr* pform_select_mtm_expr(PExpr*min, PExpr*typ, PExpr*max);
 
 /*
  * These type are lexical types -- that is, types that are used as
@@ -190,6 +199,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.41  2000/07/29 17:58:21  steve
+ *  Introduce min:typ:max support.
+ *
  * Revision 1.40  2000/05/08 05:30:20  steve
  *  Deliver gate output strengths to the netlist.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.103 2000/07/26 05:08:07 steve Exp $"
+#ident "$Id: parse.y,v 1.104 2000/07/29 17:58:21 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -347,11 +347,7 @@ delay_value
 		  $$ = tmp;
 		}
 	| expression ':' expression ':' expression
-		{ yyerror(@1, "sorry: (min:typ:max) not supported.");
-		  $$ = $3;
-		  delete $1;
-		  delete $5;
-		}
+		{ $$ = pform_select_mtm_expr($1, $3, $5); }
 	;
 	
 delay_value_list
