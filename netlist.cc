@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.43 1999/07/17 03:08:31 steve Exp $"
+#ident "$Id: netlist.cc,v 1.44 1999/07/17 18:06:02 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -290,8 +290,9 @@ NetAssign::NetAssign(const string&n, Design*des, unsigned w, NetExpr*rv)
 {
       bool flag = rval_->set_width(w);
       if (flag == false) {
-	    cerr << rv->get_line() << ": Expression bit width" <<
-		  " conflicts with l-value bit width." << endl;
+	    cerr << rv->get_line() << ": Expression bit width of " <<
+		  rv->expr_width() << " conflicts with l-value bit width of "
+		 << w << "." << endl;
 	    des->errors += 1;
       }
 }
@@ -479,6 +480,24 @@ NetExpr* NetExpr::eval_tree()
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
+      switch (op_) {
+	  case '+':
+	  case '-':
+	  case '^':
+	  case '&':
+	  case '|':
+	  case '%':
+	  case '/':
+	    if (l->expr_width() >= r->expr_width()) {
+		  expr_width(l->expr_width());
+		  r->set_width(expr_width());
+	    } else {
+		  expr_width(r->expr_width());
+		  l->set_width(expr_width());
+	    }
+	    assert(l->expr_width() == r->expr_width());
+	    break;
+      }
 }
 
 NetEBinary::~NetEBinary()
@@ -491,6 +510,11 @@ bool NetEBinary::set_width(unsigned w)
 {
       bool flag = true;
       switch (op_) {
+	  case 'a': // logical and (&&)
+	    assert(w == 1);
+	    expr_width(w);
+	    break;
+
 	      /* Comparison operators allow the subexpressions to have
 		 their own natural width. However, I do need to make
 		 sure that the subexpressions have the same width. */
@@ -530,6 +554,20 @@ bool NetEBinary::set_width(unsigned w)
 
 	  case '+':
 	  case '-':
+	    flag = true;
+	    if (left_->expr_width() > right_->expr_width())
+		  right_->set_width(left_->expr_width());
+	    else
+		  left_->set_width(right_->expr_width());
+
+	    if (left_->expr_width() == w)
+		  expr_width(w);
+	    else if (left_->expr_width() == (w-1))
+		  expr_width(w);
+	    else
+		  flag = false;
+	    break;
+
 	  case '^':
 	  case '&':
 	  case '|':
@@ -595,6 +633,7 @@ NetExpr* NetEBinary::eval_tree()
 NetEConcat::NetEConcat(unsigned cnt)
 : parms_(cnt)
 {
+      expr_width(0);
 }
 
 NetEConcat::~NetEConcat()
@@ -608,6 +647,7 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       assert(idx < parms_.count());
       assert(parms_[idx] == 0);
       parms_[idx] = e;
+      expr_width( expr_width() + e->expr_width() );
 }
 
 bool NetEConcat::set_width(unsigned w)
@@ -616,8 +656,8 @@ bool NetEConcat::set_width(unsigned w)
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    sum += parms_[idx]->expr_width();
 
+      expr_width(sum);
       if (sum != w) return false;
-      expr_width(w);
       return true;
 }
 
@@ -696,6 +736,7 @@ NetESignal::NetESignal(NetNet*n)
 NetESignal::NetESignal(const string&n, unsigned np)
 : NetExpr(np), NetNode(n, np)
 {
+      expr_width(pin_count());
 }
 
 NetESignal::~NetESignal()
@@ -708,10 +749,9 @@ NetESignal::~NetESignal()
  */
 bool NetESignal::set_width(unsigned w)
 {
-      if (w < pin_count())
+      if (w != pin_count())
 	    return false;
 
-      expr_width(w);
       return true;
 }
 
@@ -1316,6 +1356,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.44  1999/07/17 18:06:02  steve
+ *  Better handling of bit width of + operators.
+ *
  * Revision 1.43  1999/07/17 03:08:31  steve
  *  part select in expressions.
  *

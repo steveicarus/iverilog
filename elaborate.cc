@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.55 1999/07/17 03:08:31 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.56 1999/07/17 18:06:02 steve Exp $"
 #endif
 
 /*
@@ -1218,6 +1218,15 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
       if (dex) {
 	    string n = des->local_symbol(path);
 	    unsigned wid = msb - lsb + 1;
+
+	    if (! rv->set_width(wid)) {
+		  cerr << rv->get_line() << ": Unable to match expression "
+			"width of " << rv->expr_width() << " to l-value"
+			" width of " << wid << "." << endl;
+		    //XXXX delete rv;
+		  return 0;
+	    }
+
 	    NetNet*tmp = new NetNet(n, NetNet::REG, wid);
 	    tmp->set_line(*this);
 	    des->add_signal(tmp);
@@ -1251,6 +1260,15 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 
       if (mux == 0) {
 	    unsigned wid = msb - lsb + 1;
+
+	    if (! rv->set_width(wid)) {
+		  cerr << rv->get_line() << ": Unable to match expression "
+			"width of " << rv->expr_width() << " to l-value"
+			" width of " << wid << "." << endl;
+		    //XXXX delete rv;
+		  return 0;
+	    }
+
 	    cur = new NetAssign(des->local_symbol(path), des, wid, rv);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(cur->pin(idx), reg->pin(idx+lsb));
@@ -1826,6 +1844,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.56  1999/07/17 18:06:02  steve
+ *  Better handling of bit width of + operators.
+ *
  * Revision 1.55  1999/07/17 03:08:31  steve
  *  part select in expressions.
  *
