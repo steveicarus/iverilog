@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.48 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.49 2003/03/15 18:07:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -299,19 +299,21 @@ NetEConst* NetEBComp::eval_gt_()
 	    return new NetEConst(result);
       }
 
-	/* Detect the case where the left side is greater than the
-	   largest value the right side can possibly have. */
-      assert(right_->expr_width() > 0);
-      verinum rv (verinum::V1, right_->expr_width());
-      if (lv > rv) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
+	/* Check for the special case where we know, simply by the
+	   limited width of the right expression, that it cannot
+	   possibly be false. */
+      if (right_->expr_width() > 0) {
+	    verinum rv (verinum::V1, right_->expr_width());
+	    if (lv > rv) {
+		  verinum result(verinum::V1, 1);
+		  return new NetEConst(result);
+	    }
       }
 
 	/* Now go on to the normal test of the values. */
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
-      rv = r->value();
+      verinum rv = r->value();
       if (! rv.is_defined()) {
 	    verinum result(verinum::Vx, 1);
 	    return new NetEConst(result);
@@ -1240,6 +1242,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.49  2003/03/15 18:07:58  steve
+ *  More resilient WRT right expression width of GT.
+ *
  * Revision 1.48  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *
