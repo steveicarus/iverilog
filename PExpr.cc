@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.27 2001/11/08 05:15:50 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.28 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -79,13 +79,13 @@ bool PEBinary::is_constant(Module*mod) const
       return left_->is_constant(mod) && right_->is_constant(mod);
 }
 
-PECallFunction::PECallFunction(const char*n, const svector<PExpr *> &parms) 
-: name_(n), parms_(parms)
+PECallFunction::PECallFunction(const hname_t&n, const svector<PExpr *> &parms) 
+: path_(n), parms_(parms)
 {
 }
 
-PECallFunction::PECallFunction(const char*n) 
-: name_(n)
+PECallFunction::PECallFunction(const hname_t&n) 
+: path_(n)
 {
 }
 
@@ -151,8 +151,8 @@ bool PEFNumber::is_constant(Module*) const
       return true;
 }
 
-PEIdent::PEIdent(const string&s)
-: text_(s), msb_(0), lsb_(0), idx_(0)
+PEIdent::PEIdent(const hname_t&s)
+: path_(s), msb_(0), lsb_(0), idx_(0)
 {
 }
 
@@ -160,9 +160,9 @@ PEIdent::~PEIdent()
 {
 }
 
-string PEIdent::name() const
+const hname_t& PEIdent::path() const
 {
-      return text_;
+      return path_;
 }
 
 /*
@@ -171,14 +171,17 @@ string PEIdent::name() const
  */
 bool PEIdent::is_constant(Module*mod) const
 {
-      map<string,PExpr*>::const_iterator cur;
       if (mod == 0) return false;
 
-      cur = mod->parameters.find(text_);
-      if (cur != mod->parameters.end()) return true;
+      { map<string,PExpr*>::const_iterator cur;
+        cur = mod->parameters.find(path_.peek_name(0));
+	if (cur != mod->parameters.end()) return true;
+      }
 
-      cur = mod->localparams.find(text_);
-      if (cur != mod->localparams.end()) return true;
+      { map<string,PExpr*>::const_iterator cur;
+        cur = mod->localparams.find(path_.peek_name(0));
+	if (cur != mod->localparams.end()) return true;
+      }
 
       return false;
 }
@@ -264,6 +267,10 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.28  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.27  2001/11/08 05:15:50  steve
  *  Remove string paths from PExpr elaboration.
  *

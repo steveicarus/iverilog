@@ -19,13 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.30 2001/11/22 06:20:59 steve Exp $"
+#ident "$Id: Statement.h,v 1.31 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include  <string>
 # include  "svector.h"
 # include  "PDelays.h"
 # include  "PExpr.h"
+# include  "HName.h"
 # include  "LineInfo.h"
 class PExpr;
 class Statement;
@@ -168,10 +169,10 @@ class PBlock  : public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(const string&n, const svector<PExpr*>&parms);
+      explicit PCallTask(const hname_t&n, const svector<PExpr*>&parms);
       ~PCallTask();
 
-      string name() const { return name_; }
+      const hname_t& path() const;
 
       unsigned nparms() const { return parms_.count(); }
 
@@ -192,7 +193,7 @@ class PCallTask  : public Statement {
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
 
-      const string name_;
+      hname_t path_;
       svector<PExpr*> parms_;
 };
 
@@ -291,14 +292,14 @@ class PDelayStatement  : public Statement {
 class PDisable  : public Statement {
 
     public:
-      explicit PDisable(const string&sc);
+      explicit PDisable(const hname_t&sc);
       ~PDisable();
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
-      string scope_;
+      hname_t scope_;
 };
 
 /*
@@ -422,14 +423,14 @@ class PRelease  : public Statement {
 class PTrigger  : public Statement {
 
     public:
-      explicit PTrigger(const string&ev);
+      explicit PTrigger(const hname_t&ev);
       ~PTrigger();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
-      string event_;
+      hname_t event_;
 };
 
 class PWhile  : public Statement {
@@ -449,6 +450,10 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.31  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.30  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *

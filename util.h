@@ -19,19 +19,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: util.h,v 1.3 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: util.h,v 1.4 2001/12/03 04:47:15 steve Exp $"
 #endif
 
-# include  <string>
-
-/*
- * This function returns the first name of a hierarchical path, and
- * sets the parameter to what's left. If there is no path, then the
- * parameter is set to "".
- */
-extern string parse_first_name(string&path);
-
-extern string parse_last_name(string&path);
 
 /*
  * This file attempts to locate a module in a file. It operates by
@@ -43,17 +33,11 @@ extern bool load_module(const char*type);
 
 /*
  * $Log: util.h,v $
+ * Revision 1.4  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.3  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
- *
- * Revision 1.2  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.1  2000/04/29 04:53:44  steve
- *  missing header file.
- *
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.29 2001/11/19 01:54:14 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.30 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -764,7 +764,8 @@ NetExpr* NetEParam::eval_tree()
 	    return 0;
 
       assert(scope_);
-      const NetExpr*expr = scope_->get_parameter(name_);
+      assert(name_.peek_name(1) == 0);
+      const NetExpr*expr = scope_->get_parameter(name_.peek_name(0));
       if (expr == 0) {
 	    cerr << get_line() << ": internal error: Unable to match "
 		 << "parameter " << name_ << " in scope "
@@ -792,7 +793,7 @@ NetExpr* NetEParam::eval_tree()
 
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
-      scope_->set_parameter(name_, res);
+      scope_->set_parameter(name_.peek_name(0), res);
       return res->dup_expr();
 }
 
@@ -1001,6 +1002,10 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.30  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.29  2001/11/19 01:54:14  steve
  *  Port close cropping behavior from mcrgb
  *  Move window array reset to libmc.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.11 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.12 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -136,25 +136,25 @@ NetExpr*PEFNumber::elaborate_pexpr(Design*des, NetScope*scope) const
  */
 NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 {
-      string path = text_;
-      string name = parse_last_name(path);
+      hname_t path = path_;
+      char*name = path.remove_tail_name();
 
       NetScope*pscope = scope;
-      if (path != "")
+      if (path.peek_name(0))
 	    pscope = des->find_scope(scope, path);
-
-      assert(pscope);
 
       const NetExpr*ex = pscope->get_parameter(name);
       if (ex == 0) {
-	    cerr << get_line() << ": error: identifier ``" << text_ <<
+	    cerr << get_line() << ": error: identifier ``" << path_ <<
 		  "'' is not a parameter in " << scope->name() << "." << endl;
 	    des->errors += 1;
+	    delete name;
 	    return 0;
       }
 
-      NetExpr*res = new NetEParam(des, pscope, name);
+      NetExpr*res = new NetEParam(des, pscope, hname_t(name));
       assert(res);
+      delete name;
       return res;
 }
 
@@ -218,6 +218,10 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.12  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.11  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.67 2001/07/25 03:10:49 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.68 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -99,7 +99,7 @@ void PEConcat::dump(ostream&out) const
 
 void PECallFunction::dump(ostream &out) const
 {
-      out << name_ << "(";
+      out << path_ << "(";
 
       if (parms_.count() > 0) {
 	    if (parms_[0]) parms_[0]->dump(out);
@@ -142,7 +142,7 @@ void PENumber::dump(ostream&out) const
 
 void PEIdent::dump(ostream&out) const
 {
-      out << text_;
+      out << path_;
       if (msb_) {
 	    out << "[" << *msb_;
 	    if (lsb_) {
@@ -234,7 +234,7 @@ void PWire::dump(ostream&out) const
 		  out << " [" << *msb_[idx] << "]";
       }
 
-      out << " " << name_;
+      out << " " << hname_;
 
 	// If the wire has indices, dump them.
       if (lidx_ || ridx_) {
@@ -444,7 +444,7 @@ void PBlock::dump(ostream&out, unsigned ind) const
 
 void PCallTask::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << name_;
+      out << setw(ind) << "" << path_;
 
       if (parms_.count() > 0) {
 	    out << "(";
@@ -587,12 +587,12 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 
 void PFunction::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "output " << out_->name() << ";" << endl;
+      out << setw(ind) << "" << "output " << out_->path() << ";" << endl;
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
 		  out << setw(ind) << "";
 		  out << "input ";
-		  out << (*ports_)[idx]->name() << ";" << endl;
+		  out << (*ports_)[idx]->path() << ";" << endl;
 	    }
 
       if (statement_)
@@ -629,7 +629,7 @@ void PTask::dump(ostream&out, unsigned ind) const
 			out << "inout ";
 			break;
 		  }
-		  out << (*ports_)[idx]->name() << ";" << endl;
+		  out << (*ports_)[idx]->path() << ";" << endl;
 	    }
 
       if (statement_)
@@ -686,6 +686,7 @@ void Module::dump(ostream&out) const
       }
 
       typedef map<string,PExpr*>::const_iterator parm_iter_t;
+      typedef map<hname_t,PExpr*>::const_iterator parm_hiter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
 	    out << "    parameter " << (*cur).first << " = ";
@@ -704,7 +705,7 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
-      for (parm_iter_t cur = defparms.begin()
+      for (parm_hiter_t cur = defparms.begin()
 		 ; cur != defparms.end() ;  cur ++) {
 	    out << "    defparam " << (*cur).first << " = ";
 	    if ((*cur).second)
@@ -721,7 +722,7 @@ void Module::dump(ostream&out) const
       }
 
 	// Iterate through and display all the wires.
-      for (map<string,PWire*>::const_iterator wire = wires_.begin()
+      for (map<hname_t,PWire*>::const_iterator wire = wires_.begin()
 		 ; wire != wires_.end()
 		 ; wire ++ ) {
 
@@ -813,6 +814,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.68  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.67  2001/07/25 03:10:49  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.226 2001/11/29 01:58:18 steve Exp $"
+#ident "$Id: netlist.h,v 1.227 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 /*
@@ -32,6 +32,7 @@
 # include  <map>
 # include  <list>
 # include  "verinum.h"
+# include  "HName.h"
 # include  "LineInfo.h"
 # include  "svector.h"
 # include  "Attrib.h"
@@ -1527,7 +1528,10 @@ class NetDisable  : public NetProc {
  *
  * Once an object of this type exists, behavioral code can wait on the
  * event or trigger the event. Event waits refer to this object, as do
- * the event trigger statements.
+ * the event trigger statements. The NetEvent class may have a name and
+ * a scope. The name is a simple name (no hierarchy) and the scope is
+ * the NetScope that contains the object. The socpe member is written
+ * by the NetScope object when the NetEvent is stored.
  *
  * The NetEvWait class represents a thread wait for an event. When
  * this statement is executed, it starts waiting on the
@@ -2285,7 +2289,7 @@ class NetEConcat  : public NetExpr {
 class NetEParam  : public NetExpr {
     public:
       NetEParam();
-      NetEParam(class Design*des, NetScope*scope, const string&name);
+      NetEParam(class Design*des, NetScope*scope, const hname_t&name);
       ~NetEParam();
 
       virtual bool set_width(unsigned w);
@@ -2299,7 +2303,7 @@ class NetEParam  : public NetExpr {
     private:
       Design*des_;
       NetScope*scope_;
-      string name_;
+      hname_t name_;
 };
 
 
@@ -2585,7 +2589,7 @@ class NetScope {
 
       void add_event(NetEvent*);
       void rem_event(NetEvent*);
-      NetEvent*find_event(const string&name);
+      NetEvent*find_event(const hname_t&name);
 
 
 	/* These methods manage signals. The add_ and rem_signal
@@ -2597,6 +2601,7 @@ class NetScope {
       void rem_signal(NetNet*);
 
       NetNet* find_signal(const string&name);
+      NetNet* find_signal_in_child(const hname_t&name);
 
 
 	/* ... and these methods manage memory the same way as signals
@@ -2671,7 +2676,7 @@ class NetScope {
 	   assignments from the scope pass to the parameter evaluation
 	   step. After that, it is not used. */
 
-      map<string,NetExpr*>defparams;
+      map<hname_t,NetExpr*>defparams;
 
     private:
       TYPE type_;
@@ -2740,18 +2745,18 @@ class Design {
       unsigned long scale_to_precision(unsigned long, const NetScope*)const;
 
 	/* look up a scope. If no starting scope is passed, then the
-	   path name string is taken as an absolute scope
-	   name. Otherwise, the scope is located starting at the
-	   passed scope and working up if needed. */
-      NetScope* find_scope(const string&path) const;
-      NetScope* find_scope(NetScope*, const string&path) const;
+	   path is taken as an absolute scope name. Otherwise, the
+	   scope is located starting at the passed scope and working
+	   up if needed. */
+      NetScope* find_scope(const hname_t&path) const;
+      NetScope* find_scope(NetScope*, const hname_t&path) const;
 
 	// PARAMETERS
 
 	/* This method searches for a parameter, starting in the given
 	   scope. This method handles the upward searches that the
 	   NetScope class itself does not support. */
-      const NetExpr*find_parameter(const NetScope*, const string&name) const;
+      const NetExpr*find_parameter(const NetScope*, const hname_t&path) const;
 
       void run_defparams();
       void evaluate_parameters();
@@ -2761,10 +2766,10 @@ class Design {
 	   this method, unlike the NetScope::find_signal method,
 	   handles global name binding. */
 
-      NetNet*find_signal(NetScope*scope, const string&name);
+      NetNet*find_signal(NetScope*scope, hname_t path);
 
 	// Memories
-      NetMemory* find_memory(NetScope*scope, const string&name);
+      NetMemory* find_memory(NetScope*scope, hname_t path);
 
 	/* This is a more general lookup that finds the named signal
 	   or memory, whichever is first in the search path. */
@@ -2772,12 +2777,12 @@ class Design {
 		       NetNet*&sig, NetMemory*&mem);
 
 	// Functions
-      NetFuncDef* find_function(NetScope*scope, const string&key);
-      NetFuncDef* find_function(const string&path);
+      NetFuncDef* find_function(NetScope*scope, const hname_t&key);
+      NetFuncDef* find_function(const hname_t&path);
 
 	// Tasks
-      NetScope* find_task(NetScope*scope, const string&name);
-      NetScope* find_task(const string&key);
+      NetScope* find_task(NetScope*scope, const hname_t&name);
+      NetScope* find_task(const hname_t&key);
 
 	// NODES
       void add_node(NetNode*);
@@ -2862,6 +2867,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.227  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.226  2001/11/29 01:58:18  steve
  *  Handle part selects in l-values of DFF devices.
  *

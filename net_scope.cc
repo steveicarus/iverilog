@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.15 2001/11/08 05:15:50 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.16 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -224,10 +224,10 @@ void NetScope::rem_event(NetEvent*ev)
 }
 
 
-NetEvent* NetScope::find_event(const string&name)
+NetEvent* NetScope::find_event(const hname_t&name)
 {
       for (NetEvent*cur = events_;  cur ;  cur = cur->snext_)
-	    if (cur->name() == name)
+	    if (strcmp(cur->name(), name.peek_tail_name()) == 0)
 		  return cur;
 
       return 0;
@@ -261,6 +261,11 @@ void NetScope::rem_signal(NetNet*net)
       }
 }
 
+/*
+ * This method looks for a signal within the current scope. The name
+ * is assumed to be the base name of the signal, so no sub-scopes are
+ * searched. 
+ */
 NetNet* NetScope::find_signal(const string&key)
 {
       if (signals_ == 0)
@@ -274,6 +279,27 @@ NetNet* NetScope::find_signal(const string&key)
 	    cur = cur->sig_prev_;
       } while (cur != signals_);
       return 0;
+}
+
+/*
+ * This method searches for the signal within this scope. If the path
+ * has hierarchy, I follow the child scopes until I get the base name,
+ * and look for the key in the deepest scope.
+ */
+NetNet* NetScope::find_signal_in_child(const hname_t&path)
+{
+      NetScope*cur = this;
+      unsigned idx = 0;
+
+      while (path.peek_name(idx+1)) {
+	    cur = cur->child(path.peek_name(idx));
+	    if (cur == 0)
+		  return 0;
+
+	    idx += 1;
+      }
+
+      return cur->find_signal(path.peek_name(idx));
 }
 
 void NetScope::add_memory(NetMemory*mem)
@@ -376,6 +402,10 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.16  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.15  2001/11/08 05:15:50  steve
  *  Remove string paths from PExpr elaboration.
  *

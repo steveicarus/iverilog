@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.h,v 1.10 2001/01/16 02:44:18 steve Exp $"
+#ident "$Id: PWire.h,v 1.11 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -40,14 +40,21 @@ class Design;
  * Wires include nets, registers and ports. A net or register becomes
  * a port by declaration, so ports are not seperate. The module
  * identifies a port by keeping it in its port list.
+ *
+ * The hname parameter to the constructor is a hierarchical name. It
+ * is an array of strings starting with the root, running towards
+ * the base name, and terminated by a null pointer. The environment
+ * allocates the memory for me.
  */
 class PWire : public LineInfo {
 
     public:
-      PWire(const string&n, NetNet::Type t, NetNet::PortType pt);
+      PWire(const hname_t&hname, NetNet::Type t, NetNet::PortType pt);
+      PWire(char*name, NetNet::Type t, NetNet::PortType pt);
 
-
-      const string&name() const { return name_; }
+	// Return a hierarchical name.
+	//const string name() const;
+      const hname_t&path() const;
 
       NetNet::Type get_wire_type() const;
       bool set_wire_type(NetNet::Type);
@@ -70,7 +77,7 @@ class PWire : public LineInfo {
       void elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      string name_;
+      hname_t hname_;
       NetNet::Type type_;
       NetNet::PortType port_type_;
       bool signed_;
@@ -92,6 +99,10 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.11  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.10  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.233 2001/11/22 06:20:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.234 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -871,11 +871,11 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
-	    NetNet*net = des->find_signal(scope, id->name());
+	    NetNet*net = des->find_signal(scope, id->path());
 	    if (net && (net->scope() == scope))
 		  break;
 
-	    if (NetMemory*mem = des->find_memory(scope, id->name()))
+	    if (NetMemory*mem = des->find_memory(scope, id->path()))
 		  return assign_to_memory_(mem, id->msb_, des, scope);
 
       } while(0);
@@ -1053,7 +1053,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 	    if (id == 0) break;
 
-	    if (NetMemory*mem = des->find_memory(scope, id->name()))
+	    if (NetMemory*mem = des->find_memory(scope, id->path()))
 		  return assign_to_memory_(mem, id->msb_, des, scope);
 
       } while(0);
@@ -1288,7 +1288,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 
 NetProc* PCallTask::elaborate(Design*des, NetScope*scope) const
 {
-      if (name_[0] == '$')
+      if (path_.peek_name(0)[0] == '$')
 	    return elaborate_sys(des, scope);
       else
 	    return elaborate_usr(des, scope);
@@ -1315,7 +1315,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    eparms[idx] = ex? ex->elaborate_expr(des, scope) : 0;
       }
 
-      NetSTask*cur = new NetSTask(name(), eparms);
+      NetSTask*cur = new NetSTask(path_.peek_name(0), eparms);
       return cur;
 }
 
@@ -1351,10 +1351,10 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetScope*task = des->find_task(scope, name_);
+      NetScope*task = des->find_task(scope, path_);
       if (task == 0) {
 	    cerr << get_line() << ": error: Enable of unknown task "
-		 << "``" << name_ << "''." << endl;
+		 << "``" << path_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1363,7 +1363,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       assert(task->type() == NetScope::TASK);
       NetTaskDef*def = task->task_def();
       if (def == 0) {
-	    cerr << get_line() << ": internal error: task " << name_
+	    cerr << get_line() << ": internal error: task " << path_
 		 << " doesn't have a definition in " << scope->name()
 		 << "." << endl;
 	    des->errors += 1;
@@ -1373,7 +1373,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       if (nparms() != def->port_count()) {
 	    cerr << get_line() << ": error: Port count mismatch in call to ``"
-		 << name_ << "''." << endl;
+		 << path_ << "''." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1447,7 +1447,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		 NetAssign. */
 	    NetMemory*mem;
 	    const PEIdent*id = dynamic_cast<const PEIdent*>(parms_[idx]);
-	    if (id && (mem = des->find_memory(scope, id->name()))) {
+	    if (id && (mem = des->find_memory(scope, id->path()))) {
 
 		  NetExpr*ix = id->msb_->elaborate_expr(des, scope);
 		  assert(ix);
@@ -1733,6 +1733,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	      /* Create a NetEvent object to manage this event. Note
+		 that the NetEvent object's name has no hierarchy. */
 	    NetEvent*ev = new NetEvent(scope->local_symbol());
 	    scope->add_event(ev);
 
@@ -1778,7 +1780,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    assert(expr_[0]->expr());
 	    PEIdent*id = dynamic_cast<PEIdent*>(expr_[0]->expr());
 	    NetEvent*ev;
-	    if (id && (ev = scope->find_event(id->name()))) {
+	    if (id && (ev = scope->find_event(id->path()))) {
 		  NetEvWait*pr = new NetEvWait(enet);
 		  pr->add_event(ev);
 		  pr->set_line(*this);
@@ -1807,7 +1809,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		 skip the rest of the expression handling. */
 
 	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
-		  NetEvent*tmp = scope->find_event(id->name());
+		  NetEvent*tmp = scope->find_event(id->path());
 		  if (tmp) {
 			wa->add_event(tmp);
 			continue;
@@ -1958,9 +1960,9 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* make the expression, and later the initial assignment to
 	   the condition variable. The statement in the for loop is
 	   very specifically an assignment. */
-      NetNet*sig = des->find_signal(scope, id1->name());
+      NetNet*sig = des->find_signal(scope, id1->path());
       if (sig == 0) {
-	    cerr << id1->get_line() << ": register ``" << id1->name()
+	    cerr << id1->get_line() << ": register ``" << id1->path()
 		 << "'' unknown in this context." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1991,7 +1993,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the increment assignment statement at the end of
 	   the for loop. This is also a very specific assignment
 	   statement. Put this into the "body" block. */
-      sig = des->find_signal(scope, id2->name());
+      sig = des->find_signal(scope, id2->path());
       assert(sig);
       lv = new NetAssign_(sig);
 
@@ -2052,7 +2054,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 void PFunction::elaborate(Design*des, NetScope*scope) const
 {
-      NetFuncDef*def = des->find_function(scope->name());
+      NetFuncDef*def = scope->func_def();
       assert(def);
 
       NetProc*st = statement_->elaborate(des, scope);
@@ -2378,6 +2380,10 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.234  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.233  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *

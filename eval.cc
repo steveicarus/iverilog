@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.23 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: eval.cc,v 1.24 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -116,7 +116,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
 {
       assert(scope);
-      const NetExpr*expr = des->find_parameter(scope, text_);
+      const NetExpr*expr = des->find_parameter(scope, path_);
 
       if (expr == 0)
 	    return 0;
@@ -125,7 +125,7 @@ verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
 
       if (dynamic_cast<const NetEParam*>(expr)) {
 	    cerr << get_line() << ": sorry: I cannot evaluate ``" <<
-		  text_ << "'' in this scope: " << scope->name() << endl;
+		  path_ << "'' in this scope: " << scope->name() << endl;
 	    return 0;
       }
 
@@ -196,6 +196,10 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.24  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.23  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *

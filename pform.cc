@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.85 2001/11/29 17:37:51 steve Exp $"
+#ident "$Id: pform.cc,v 1.86 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -51,15 +51,34 @@ static int pform_time_prec = 0;
 /*
  * The scope stack and the following functions handle the processing
  * of scope. As I enter a scope, the push function is called, and as I
- * leave a scope the pop function is called.
+ * leave a scope the pop function is called. Entering tasks, functions
+ * and named blocks causes scope to be pushed and popped. The module
+ * name is not included it this scope stack.
  *
- * The top module is not included in the scope list.
+ * The hier_name function, therefore, returns the name path of a
+ * function relative the current function.
  */
-struct scope_name_t {
-      string name;
-      struct scope_name_t*next;
-};
-static scope_name_t*scope_stack  = 0;
+
+static hname_t scope_stack;
+
+void pform_push_scope(char*name)
+{
+      scope_stack.append(name);
+}
+
+void pform_pop_scope()
+{
+      char*tmp = scope_stack.remove_tail_name();
+      assert(tmp);
+      free(tmp);
+}
+
+static hname_t hier_name(const char*tail)
+{
+      hname_t name = scope_stack;
+      name.append(tail);
+      return name;
+}
 
 void pform_set_timescale(int unit, int prec)
 {
@@ -68,31 +87,6 @@ void pform_set_timescale(int unit, int prec)
       pform_time_prec = prec;
 }
 
-void pform_push_scope(const string&name)
-{
-      scope_name_t*cur = new scope_name_t;
-      cur->name = name;
-      cur->next = scope_stack;
-      scope_stack = cur;
-}
-
-void pform_pop_scope()
-{
-      assert(scope_stack);
-      scope_name_t*cur = scope_stack;
-      scope_stack = cur->next;
-      delete cur;
-}
-
-static string scoped_name(string name)
-{
-      scope_name_t*cur = scope_stack;
-      while (cur) {
-	    name = cur->name + "." + name;
-	    cur = cur->next;
-      }
-      return name;
-}
 
 /*
  * This function evaluates delay expressions. The result should be a
@@ -206,9 +200,9 @@ void pform_make_udp(const char*name, list<string>*parms,
       map<string,PWire*> defs;
       for (unsigned idx = 0 ;  idx < decl->count() ;  idx += 1) {
 
-	    string pname = (*decl)[idx]->name();
-	    PWire*cur = defs[pname];
-	    if (PWire*cur = defs[pname]) {
+	    hname_t pname = (*decl)[idx]->path();
+
+	    if (PWire*cur = defs[pname.peek_name(0)]) {
 		  bool rc = true;
 		  assert((*decl)[idx]);
 		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
@@ -221,7 +215,7 @@ void pform_make_udp(const char*name, list<string>*parms,
 		  }
 
 	    } else {
-		  defs[pname] = (*decl)[idx];
+		  defs[pname.peek_name(0)] = (*decl)[idx];
 	    }
       }
 
@@ -359,7 +353,7 @@ void pform_make_udp(const char*name, list<string>*parms,
 	    assert(id);
 
 	      // XXXX
-	    assert(id->name() == pins[0]->name());
+	      //assert(id->name() == pins[0]->name());
 
 	    const PENumber*np = dynamic_cast<const PENumber*>(pa->rval());
 	    assert(np);
@@ -380,7 +374,7 @@ void pform_make_udp(const char*name, list<string>*parms,
 
 	      // Make the port list for the UDP
 	    for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1)
-		  udp->ports[idx] = pins[idx]->name();
+		  udp->ports[idx] = pins[idx]->path().peek_name(0);
 
 	    udp->tinput   = input;
 	    udp->tcurrent = current;
@@ -410,7 +404,7 @@ static void pform_set_net_range(const char*name,
       assert(range);
       assert(range->count() == 2);
 
-      PWire*cur = pform_cur_module->get_wire(scoped_name(name));
+      PWire*cur = pform_cur_module->get_wire(hier_name(name));
       if (cur == 0) {
 	    VLerror("error: name is not a valid net.");
 	    return;
@@ -677,9 +671,9 @@ void pform_make_pgassign_list(svector<PExpr*>*alist,
  * BTF-B14.
  */
 void pform_make_reginit(const struct vlltype&li,
-			const string&name, PExpr*expr)
+			const char*name, PExpr*expr)
 {
-      const string sname = scoped_name(name);
+      const hname_t sname = hier_name(name);
       PWire*cur = pform_cur_module->get_wire(sname);
       if (cur == 0) {
 	    VLerror(li, "internal error: reginit to non-register?");
@@ -718,10 +712,10 @@ void pform_make_reginit(const struct vlltype&li,
  * do check to see if the name has already been declared, as this
  * function is called for every declaration.
  */
-void pform_makewire(const vlltype&li, const string&nm,
+void pform_makewire(const vlltype&li, const char*nm,
 		    NetNet::Type type)
 {
-      const string name = scoped_name(nm);
+      hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur) {
 	    if ((cur->get_wire_type() != NetNet::IMPLICIT)
@@ -792,10 +786,10 @@ void pform_makewire(const vlltype&li,
 	    if (range)
 		  pform_set_net_range(first->name, range, false);
 
-	    string name = scoped_name(first->name);
+	    hname_t name = hier_name(first->name);
 	    PWire*cur = pform_cur_module->get_wire(name);
 	    if (cur != 0) {
-		  PEIdent*lval = new PEIdent(first->name);
+		  PEIdent*lval = new PEIdent(hname_t(first->name));
 		  pform_make_pgassign(lval, first->expr, delay, str);
 	    }
 
@@ -808,7 +802,7 @@ void pform_makewire(const vlltype&li,
 void pform_set_port_type(const char*nm, NetNet::PortType pt,
 			 const char*file, unsigned lineno)
 {
-      const string name = scoped_name(nm);
+      hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::IMPLICIT, pt);
@@ -872,7 +866,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		 ; cur != names->end() ; cur ++ ) {
 
 	    char*txt = *cur;
-	    string name = scoped_name(txt);
+	    hname_t name = hier_name(txt);
 
 	      /* Look for a preexisting wire. If it exists, set the
 		 port direction. If not, create it. */
@@ -913,9 +907,11 @@ void pform_set_task(const string&name, PTask*task)
  * with the trappings that are discovered after the basic function
  * name is parsed.
  */
-void pform_set_function(const string&name, svector<PExpr*>*ra, PFunction *func)
+void pform_set_function(const char*name, svector<PExpr*>*ra, PFunction *func)
 {
-      PWire*out = new PWire(name+"."+name, NetNet::REG, NetNet::POUTPUT);
+      hname_t path_return (name);
+      path_return.append(name);
+      PWire*out = new PWire(path_return, NetNet::REG, NetNet::POUTPUT);
       if (ra) {
 	    assert(ra->count() == 2);
 	    out->set_range((*ra)[0], (*ra)[1]);
@@ -926,10 +922,11 @@ void pform_set_function(const string&name, svector<PExpr*>*ra, PFunction *func)
       pform_cur_module->add_function(name, func);
 }
 
-void pform_set_attrib(const string&name, const string&key, const string&value)
+void pform_set_attrib(const char*name, const string&key, const string&value)
 {
-      PWire*cur = pform_cur_module->get_wire(name);
-      if (PWire*cur = pform_cur_module->get_wire(name)) {
+      hname_t path (name);
+
+      if (PWire*cur = pform_cur_module->get_wire(path)) {
 	    cur->attributes[key] = value;
 
       } else if (PGate*cur = pform_cur_module->get_gate(name)) {
@@ -961,9 +958,9 @@ void pform_set_type_attrib(const string&name, const string&key,
  * This function attaches a memory index range to an existing
  * register. (The named wire must be a register.
  */
-void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r)
+void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r)
 {
-      PWire*cur = pform_cur_module->get_wire(scoped_name(name));
+      PWire*cur = pform_cur_module->get_wire(hier_name(name));
       if (cur == 0) {
 	    VLerror("internal error: name is not a valid memory for index.");
 	    return;
@@ -985,7 +982,7 @@ void pform_set_localparam(const string&name, PExpr*expr)
       pform_cur_module->localparams[name] = expr;
 }
 
-void pform_set_defparam(const string&name, PExpr*expr)
+void pform_set_defparam(const hname_t&name, PExpr*expr)
 {
       assert(expr);
       pform_cur_module->defparms[name] = expr;
@@ -1013,7 +1010,7 @@ void pform_set_port_type(const struct vlltype&li,
 
 static void pform_set_reg_integer(const char*nm)
 {
-      string name = scoped_name(nm);
+      hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT);
@@ -1045,7 +1042,7 @@ void pform_set_reg_integer(list<char*>*names)
 
 static void pform_set_reg_time(const char*nm)
 {
-      string name = scoped_name(nm);
+      hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
 	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT);
@@ -1139,6 +1136,10 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.86  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.85  2001/11/29 17:37:51  steve
  *  Properly parse net_decl assignments with delays.
  *

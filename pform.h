@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.52 2001/11/29 17:37:51 steve Exp $"
+#ident "$Id: pform.h,v 1.53 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  "HName.h"
 # include  "named.h"
 # include  "Module.h"
 # include  "Statement.h"
@@ -126,16 +127,18 @@ extern void pform_make_udp(const char*name, list<string>*parms,
 			   const char*file, unsigned lineno);
 
 /*
- * Enter/exit name scopes.
+ * Enter/exit name scopes. The push_scope function pushes the scope
+ * name string onto the scope hierarchy. The pop pulls it off and
+ * deletes it. Thus, the string pushed must be allocated.
  */
-extern void pform_push_scope(const string&name);
+extern void pform_push_scope(char*name);
 extern void pform_pop_scope();
 
 /*
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.
  */
-extern void pform_makewire(const struct vlltype&li, const string&name,
+extern void pform_makewire(const struct vlltype&li, const char*name,
 			   NetNet::Type type = NetNet::IMPLICIT);
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
@@ -147,23 +150,23 @@ extern void pform_makewire(const struct vlltype&li,
 			   net_decl_assign_t*assign_list,
 			   NetNet::Type type);
 extern void pform_make_reginit(const struct vlltype&li,
-			       const string&name, PExpr*expr);
+			       const char*name, PExpr*expr);
 extern void pform_set_port_type(const struct vlltype&li,
 				list<char*>*names, svector<PExpr*>*,
 				NetNet::PortType);
 extern void pform_set_net_range(list<char*>*names, svector<PExpr*>*, bool);
-extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
+extern void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<char*>*names);
 extern void pform_set_reg_time(list<char*>*names);
 extern void pform_set_task(const string&, PTask*);
-extern void pform_set_function(const string&, svector<PExpr*>*, PFunction*);
-extern void pform_set_attrib(const string&name, const string&key,
+extern void pform_set_function(const char*, svector<PExpr*>*, PFunction*);
+extern void pform_set_attrib(const char*name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  const string&value);
 extern void pform_set_parameter(const string&name, PExpr*expr);
 extern void pform_set_localparam(const string&name, PExpr*expr);
-extern void pform_set_defparam(const string&name, PExpr*expr);
+extern void pform_set_defparam(const hname_t&name, PExpr*expr);
 extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<char*>*);
@@ -214,6 +217,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.53  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.52  2001/11/29 17:37:51  steve
  *  Properly parse net_decl assignments with delays.
  *

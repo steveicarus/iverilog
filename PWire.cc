@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.cc,v 1.6 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: PWire.cc,v 1.7 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,14 +25,31 @@
 # include  "PWire.h"
 # include  <assert.h>
 
-PWire::PWire(const string&n, NetNet::Type t, NetNet::PortType pt)
-: name_(n), type_(t), port_type_(pt), signed_(false), lidx_(0), ridx_(0)
+PWire::PWire(const hname_t&n, NetNet::Type t, NetNet::PortType pt)
+: hname_(n), type_(t), port_type_(pt), signed_(false), lidx_(0), ridx_(0)
+{
+}
+
+PWire::PWire(char*n, NetNet::Type t, NetNet::PortType pt)
+: hname_(n), type_(t), port_type_(pt), signed_(false), lidx_(0), ridx_(0)
 {
 }
 
 NetNet::Type PWire::get_wire_type() const
 {
       return type_;
+}
+#if 0
+string PWire::name() const
+{
+      string name = hname_[0];
+      for (unsigned idx = 1 ;  hname_[idx] ;  idx += 1)
+	    name = name + "." + hname_[idx];
+}
+#endif
+const hname_t& PWire::path() const
+{
+      return hname_;
 }
 
 bool PWire::set_wire_type(NetNet::Type t)
@@ -110,6 +127,10 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.7  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.6  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

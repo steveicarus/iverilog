@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PEvent.h,v 1.4 2001/01/16 02:44:18 steve Exp $"
+#ident "$Id: PEvent.h,v 1.5 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -30,7 +30,8 @@ class NetScope;
 
 /*
  * The PEvent class represents event objects. These are things that
- * are declared in Verilog as ``event foo;''
+ * are declared in Verilog as ``event foo;'' The name passed to the
+ * constructure is the "foo" part of the declaration.
  */
 class PEvent : public LineInfo {
 
@@ -52,6 +53,10 @@ class PEvent : public LineInfo {
 
 /*
  * $Log: PEvent.h,v $
+ * Revision 1.5  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.4  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.81 2001/11/10 02:08:49 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.82 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1034,24 +1034,24 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 			       Link::strength_t drive0,
 			       Link::strength_t drive1) const
 {
-      string path = scope->name();
-      NetNet*sig = des->find_signal(scope, text_);
+      NetNet*sig = des->find_signal(scope, path_);
 
       if (sig == 0) {
 	      /* If the identifier is a memory instead of a signal,
 		 then handle it elsewhere. Create a RAM. */
-	    if (NetMemory*mem = des->find_memory(scope, text_))
+	    if (NetMemory*mem = des->find_memory(scope, path_))
 		  return elaborate_net_ram_(des, scope, mem, lwidth,
 					    rise, fall, decay);
 
 
-	    if (const NetExpr*pe = des->find_parameter(scope, text_)) {
+	    if (const NetExpr*pe = des->find_parameter(scope, path_)) {
 
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
 		  verinum pvalue = pc->value();
-		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT,
-				   pc->expr_width());
+		  sig = new NetNet(scope,
+				   scope->name()+"."+path_.peek_name(0),
+				   NetNet::IMPLICIT, pc->expr_width());
 		  NetConst*cp = new NetConst(scope, scope->local_hsymbol(),
 					     pvalue);
 		  des->add_node(cp);
@@ -1060,12 +1060,13 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	    } else {
 
-		  sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT, 1);
+		  sig = new NetNet(scope, scope->name()+"."+path_.peek_name(0),
+				   NetNet::IMPLICIT, 1);
 
 		  if (warn_implicit)
 			cerr << get_line() << ": warning: implicit "
-			      "definition of wire " << path << "." <<
-			      text_ << "." << endl;
+			      "definition of wire " << scope->name()
+			     << "." << path_ << "." << endl;
 	    }
       }
 
@@ -1143,7 +1144,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
-		  cerr << get_line() << ": error: index of " << text_ <<
+		  cerr << get_line() << ": error: index of " << path_ <<
 			" needs to be constant in this context." <<
 			endl;
 		  des->errors += 1;
@@ -1221,23 +1222,24 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 {
       string path = scope->name();
 
-      NetNet*sig = des->find_signal(scope, text_);
+      NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	      /* Don't allow memories here. Is it a memory? */
-	    if (des->find_memory(scope, text_)) {
-		  cerr << get_line() << ": error: memories (" << text_
+	    if (des->find_memory(scope, path_)) {
+		  cerr << get_line() << ": error: memories (" << path_
 		       << ") cannot be l-values in continuous "
 		       << "assignments." << endl;
 		  return 0;
 	    }
 
 	      /* Fine, create an implicit wire as an l-value. */
-	    sig = new NetNet(scope, path+"."+text_, NetNet::IMPLICIT, 1);
+	    sig = new NetNet(scope, path+"."+path_.peek_name(0),
+			     NetNet::IMPLICIT, 1);
 
 	    if (warn_implicit)
 		  cerr << get_line() << ": warning: implicit "
 			" definition of wire " << path << "." <<
-			text_ << "." << endl;
+			path_.peek_name(0) << "." << endl;
       }
 
       assert(sig);
@@ -1306,7 +1308,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
-		  cerr << get_line() << ": error: index of " << text_ <<
+		  cerr << get_line() << ": error: index of " << path_ <<
 			" needs to be constant in l-value of assignment." <<
 			endl;
 		  des->errors += 1;
@@ -1335,9 +1337,9 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
  */
 NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 {
-      NetNet*sig = des->find_signal(scope, text_);
+      NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
-	    cerr << get_line() << ": error: no wire/reg " << text_
+	    cerr << get_line() << ": error: no wire/reg " << path_
 		 << " in module " << scope->name() << "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -1354,7 +1356,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 		 matching input/output/inout declaration. */
 
 	  case NetNet::NOT_A_PORT:
-	    cerr << get_line() << ": error: signal " << text_ << " in"
+	    cerr << get_line() << ": error: signal " << path_ << " in"
 		 << " module " << scope->name() << " is not a port." << endl;
 	    cerr << get_line() << ":      : Are you missing an input/"
 		 << "output/inout declaration?" << endl;
@@ -1366,7 +1368,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 		 function should turn it into an output.... I think. */
 
 	  case NetNet::PIMPLICIT:
-	    cerr << get_line() << ": internal error: signal " << text_
+	    cerr << get_line() << ": internal error: signal " << path_
 		 << " in module " << scope->name() << " is left as "
 		 << "port type PIMPLICIT." << endl;
 	    des->errors += 1;
@@ -1412,7 +1414,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       } else if (msb_) {
 	    verinum*mval = msb_->eval_const(des, scope);
 	    if (mval == 0) {
-		  cerr << get_line() << ": index of " << text_ <<
+		  cerr << get_line() << ": index of " << path_ <<
 			" needs to be constant in port context." <<
 			endl;
 		  des->errors += 1;
@@ -1878,6 +1880,10 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.82  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.81  2001/11/10 02:08:49  steve
  *  Coerse input to inout when assigned to.
  *

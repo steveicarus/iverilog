@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.24 2001/11/22 06:20:59 steve Exp $"
+#ident "$Id: Statement.cc,v 1.25 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -105,13 +105,18 @@ PBlock::~PBlock()
 	    delete list_[idx];
 }
 
-PCallTask::PCallTask(const string&n, const svector<PExpr*>&p)
-: name_(n), parms_(p)
+PCallTask::PCallTask(const hname_t&n, const svector<PExpr*>&p)
+: path_(n), parms_(p)
 {
 }
 
 PCallTask::~PCallTask()
 {
+}
+
+const hname_t& PCallTask::path() const
+{
+      return path_;
 }
 
 PCase::PCase(NetCase::TYPE t, PExpr*ex, svector<PCase::Item*>*l)
@@ -171,7 +176,7 @@ PDelayStatement::~PDelayStatement()
 {
 }
 
-PDisable::PDisable(const string&sc)
+PDisable::PDisable(const hname_t&sc)
 : scope_(sc)
 {
 }
@@ -260,7 +265,7 @@ PRepeat::~PRepeat()
       delete statement_;
 }
 
-PTrigger::PTrigger(const string&e)
+PTrigger::PTrigger(const hname_t&e)
 : event_(e)
 {
 }
@@ -282,6 +287,10 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.25  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.24  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.52 2001/11/08 05:15:50 steve Exp $"
+#ident "$Id: PExpr.h,v 1.53 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include  <string>
@@ -202,7 +202,7 @@ class PEFNumber : public PExpr {
 class PEIdent : public PExpr {
 
     public:
-      explicit PEIdent(const string&s);
+      explicit PEIdent(const hname_t&s);
       ~PEIdent();
 
       virtual void dump(ostream&) const;
@@ -236,10 +236,10 @@ class PEIdent : public PExpr {
       verinum* eval_const(const Design*des, const NetScope*sc) const;
       verireal*eval_rconst(const Design*des, const NetScope*sc) const;
 
-      string name() const;
+      const hname_t& path() const;
 
     private:
-      string text_;
+      hname_t path_;
 
     public:
 	// Use these to support bit- and part-select operators.
@@ -433,15 +433,15 @@ class PETernary : public PExpr {
  */
 class PECallFunction : public PExpr {
     public:
-      explicit PECallFunction(const char*n, const svector<PExpr *> &parms);
-      explicit PECallFunction(const char*n);
+      explicit PECallFunction(const hname_t&n, const svector<PExpr *> &parms);
+      explicit PECallFunction(const hname_t&n);
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope) const;
 
     private:
-      string name_;
+      hname_t path_;
       svector<PExpr *> parms_;
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope) const;
@@ -449,6 +449,10 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.53  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.52  2001/11/08 05:15:50  steve
  *  Remove string paths from PExpr elaboration.
  *

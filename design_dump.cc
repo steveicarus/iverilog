@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.119 2001/11/19 01:46:38 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.120 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -700,7 +700,7 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump the saved defparam assignments here. */
       {
-	    map<string,NetExpr*>::const_iterator pp;
+	    map<hname_t,NetExpr*>::const_iterator pp;
 	    for (pp = defparams.begin()
 		       ; pp != defparams.end() ;  pp ++ ) {
 		  o << "    defparam " << (*pp).first << " = " <<
@@ -970,6 +970,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.120  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.119  2001/11/19 01:46:38  steve
  *  Print typename is fallback expression node dump.
  *

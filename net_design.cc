@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.22 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: net_design.cc,v 1.23 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -108,27 +108,27 @@ const list<NetScope*> Design::find_root_scopes() const
  * more step down the tree until the name runs out or the search
  * fails.
  */
-NetScope* Design::find_scope(const string&key) const
+NetScope* Design::find_scope(const hname_t&path) const
 {
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin(); 
-	   scope != root_scopes_.end(); scope++) {
-	    if (key == (*scope)->name())
-		  return *scope;
-
-	    string path = key;
-	    string root = parse_first_name(path);
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
+		 ; scope != root_scopes_.end(); scope++) {
 
 	    NetScope*cur = *scope;
-	    if (root != cur->name())
+	    if (strcmp(path.peek_name(0), cur->basename()) != 0)
 		  continue;
 
+	    unsigned hidx = 1;
 	    while (cur) {
-		  string next = parse_first_name(path);
-		  cur = cur->child(next);
-		  if (path == "") return cur;
+		  const char*name = path.peek_name(hidx);
+		  if (name == 0)
+			return cur;
+
+		  cur = cur->child(name);
+		  hidx += 1;
 	    }
-	    return cur;
+
       }
+
       return 0;
 }
 
@@ -139,26 +139,27 @@ NetScope* Design::find_scope(const string&key) const
  * start looking in parent scopes until I find it, or I run out of
  * parent scopes.
  */
-NetScope* Design::find_scope(NetScope*scope, const string&name) const
+NetScope* Design::find_scope(NetScope*scope, const hname_t&path) const
 {
       assert(scope);
 
       for ( ; scope ;  scope = scope->parent()) {
-	    string path = name;
-	    string key = parse_first_name(path);
+	    unsigned hidx = 0;
+	    const char*key = path.peek_name(hidx);
 
 	    NetScope*cur = scope;
 	    do {
 		  cur = cur->child(key);
 		  if (cur == 0) break;
-		  key = parse_first_name(path);
-	    } while (key != "");
+		  hidx += 1;
+		  key = path.peek_name(hidx);
+	    } while (key);
 
 	    if (cur) return cur;
       }
 
 	// Last chance. Look for the name starting at the root.
-      return find_scope(name);
+      return find_scope(path);
 }
 
 /*
@@ -170,22 +171,23 @@ NetScope* Design::find_scope(NetScope*scope, const string&name) const
  * follow the scopes of the name down to to key.
  */
 const NetExpr* Design::find_parameter(const NetScope*scope,
-				      const string&name) const
+				      const hname_t&path) const
 {
       for ( ; scope ;  scope = scope->parent()) {
-	    string path = name;
-	    string key = parse_first_name(path);
+	    unsigned hidx = 0;
 
 	    const NetScope*cur = scope;
-	    while (path != "") {
-		  cur = cur->child(key);
-		  if (cur == 0) break;
-		  key = parse_first_name(path);
+	    while (path.peek_name(hidx+1)) {
+		  cur = cur->child(path.peek_name(hidx));
+		  if (cur == 0)
+			break;
+		  hidx += 1;
 	    }
 
-	    if (cur == 0) continue;
+	    if (cur == 0)
+		  continue;
 
-	    if (const NetExpr*res = cur->get_parameter(key))
+	    if (const NetExpr*res = cur->get_parameter(path.peek_name(hidx)))
 		  return res;
       }
 
@@ -215,16 +217,18 @@ void NetScope::run_defparams(Design*des)
 	    cur = cur->sib_;
       }
 
-      map<string,NetExpr*>::const_iterator pp;
+      map<hname_t,NetExpr*>::const_iterator pp;
       for (pp = defparams.begin() ;  pp != defparams.end() ;  pp ++ ) {
 	    NetExpr*val = (*pp).second;
-	    string path = (*pp).first;
-	    string name = parse_last_name(path);
+	    hname_t path = (*pp).first;
+
+	    char*name = path.remove_tail_name();
 
 	    NetScope*targ_scope = des->find_scope(this, path);
 	    if (targ_scope == 0) {
 		  cerr << val->get_line() << ": warning: scope of " <<
 			path << "." << name << " not found." << endl;
+		  delete[]name;
 		  continue;
 	    }
 
@@ -236,6 +240,8 @@ void NetScope::run_defparams(Design*des)
 	    } else {
 		  delete val;
 	    }
+
+	    delete[]name;
       }
 }
 
@@ -310,87 +316,52 @@ string Design::get_flag(const string&key) const
  * It is the job of this function to properly implement Verilog scope
  * rules as signals are concerned.
  */
-NetNet* Design::find_signal(NetScope*scope, const string&name)
+NetNet* Design::find_signal(NetScope*scope, hname_t path)
 {
       assert(scope);
 
-	/* If the name has a path attached to it, parse it off and use
-	   that to locate the desired starting scope. */
-      string path = name;
-      string key = parse_last_name(path);
-      if (path != "")
+      char*key = path.remove_tail_name();
+      if (path.peek_name(0))
 	    scope = find_scope(scope, path);
 
-	/* Now from the starting point, scan upwards until we find the
-	   signal or we find a module boundary. */
       while (scope) {
-
-	    if (NetNet*net = scope->find_signal(key))
+	    if (NetNet*net = scope->find_signal(key)) {
+		  delete key;
 		  return net;
+	    }
 
 	    if (scope->type() == NetScope::MODULE)
 		  break;
-
 	    scope = scope->parent();
       }
 
+      delete key;
       return 0;
 }
 
-NetMemory* Design::find_memory(NetScope*scope, const string&name)
+NetMemory* Design::find_memory(NetScope*scope, hname_t path)
 {
       assert(scope);
 
-	/* If the name has a path attached to it, parse it off and use
-	   that to locate the desired scope. */
-      string path = name;
-      string key = parse_last_name(path);
-      if (path != "")
+      char*key = path.remove_tail_name();
+      if (path.peek_name(0))
 	    scope = find_scope(scope, path);
 
       while (scope) {
-
-	    if (NetMemory*mem = scope->find_memory(key))
+	    if (NetMemory*mem = scope->find_memory(key)) {
+		  delete key;
 		  return mem;
+	    }
+
 	    scope = scope->parent();
       }
+
+      delete key;
       return 0;
 }
 
-void Design::find_symbol(NetScope*scope, const string&name,
-			 NetNet*&sig, NetMemory*&mem)
-{
-      sig = 0;
-      mem = 0;
 
-
-	/* If the name has a path attached to it, parse it off and use
-	   that to locate the desired scope. Then locate the key
-	   within that scope. */
-      string path = name;
-      string key = parse_last_name(path);
-      if (path != "")
-	    scope = find_scope(scope, path);
-
-
-	/* If there is no path, then just search upwards for the key. */
-      while (scope) {
-
-	    if (NetNet*cur = scope->find_signal(key)) {
-		  sig = cur;
-		  return;
-	    }
-
-	    if (NetMemory*cur = scope->find_memory(key)) {
-		  mem = cur;
-		  return;
-	    }
-
-	    scope = scope->parent();
-      }
-}
-
-NetFuncDef* Design::find_function(NetScope*scope, const string&name)
+NetFuncDef* Design::find_function(NetScope*scope, const hname_t&name)
 {
       assert(scope);
       NetScope*func = find_scope(scope, name);
@@ -400,7 +371,7 @@ NetFuncDef* Design::find_function(NetScope*scope, const string&name)
       return 0;
 }
 
-NetFuncDef* Design::find_function(const string&key)
+NetFuncDef* Design::find_function(const hname_t&key)
 {
       NetScope*func = find_scope(key);
       if (func && (func->type() == NetScope::FUNC))
@@ -409,7 +380,7 @@ NetFuncDef* Design::find_function(const string&key)
       return 0;
 }
 
-NetScope* Design::find_task(NetScope*scope, const string&name)
+NetScope* Design::find_task(NetScope*scope, const hname_t&name)
 {
       NetScope*task = find_scope(scope, name);
       if (task && (task->type() == NetScope::TASK))
@@ -418,7 +389,7 @@ NetScope* Design::find_task(NetScope*scope, const string&name)
       return 0;
 }
 
-NetScope* Design::find_task(const string&key)
+NetScope* Design::find_task(const hname_t&key)
 {
       NetScope*task = find_scope(key);
       if (task && (task->type() == NetScope::TASK))
@@ -489,6 +460,10 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.23  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.22  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

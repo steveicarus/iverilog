@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_scope.cc,v 1.11 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.12 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -55,6 +55,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// place of the elaborated expression.
 
       typedef map<string,PExpr*>::const_iterator mparm_it_t;
+      typedef map<hname_t,PExpr*>::const_iterator hparm_it_t;
 
 
 	// This loop scans the parameters in the module, and creates
@@ -112,7 +113,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// here becuase the parameter receiving the assignment may be
 	// in a scope not discovered by this pass.
 
-      for (mparm_it_t cur = defparms.begin()
+      for (hparm_it_t cur = defparms.begin()
 		 ; cur != defparms.end() ;  cur ++ ) {
 
 	    PExpr*ex = (*cur).second;
@@ -205,13 +206,11 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// Missing module instance names have already been rejected.
       assert(get_name() != "");
 
-      string path = sc->name();
-
 	// Check for duplicate scopes. Simply look up the scope I'm
 	// about to create, and if I find it then somebody beat me to
 	// it.
 
-      if (NetScope*tmp = des->find_scope(path + "." + get_name())) {
+      if (NetScope*tmp = sc->child(get_name())) {
 	    cerr << get_line() << ": error: Instance/Scope name " <<
 		  get_name() << " already used in this context." <<
 		  endl;
@@ -308,7 +307,9 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 /*
  * The isn't really able to create new scopes, but it does create the
  * event name in the current scope, so can be done during the
- * elaborate_scope scan.
+ * elaborate_scope scan. Note that the name_ of the PEvent object has
+ * no hierarchy, but neither does the NetEvent, until it is stored in
+ * the NetScope object.
  */
 void PEvent::elaborate_scope(Design*des, NetScope*scope) const
 {
@@ -458,6 +459,10 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.12  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.11  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

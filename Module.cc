@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.cc,v 1.16 2001/10/20 05:21:51 steve Exp $"
+#ident "$Id: Module.cc,v 1.17 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -57,7 +57,7 @@ void Module::add_function(const string &name, PFunction *func)
 
 PWire* Module::add_wire(PWire*wire)
 {
-      PWire*&ep = wires_[wire->name()];
+      PWire*&ep = wires_[wire->path()];
       if (ep) return ep;
 
       assert(ep == 0);
@@ -102,9 +102,9 @@ unsigned Module::find_port(const string&name) const
 }
 
 
-PWire* Module::get_wire(const string&name) const
+PWire* Module::get_wire(const hname_t&name) const
 {
-      map<string,PWire*>::const_iterator obj = wires_.find(name);
+      map<hname_t,PWire*>::const_iterator obj = wires_.find(name);
       if (obj == wires_.end())
 	    return 0;
       else
@@ -124,7 +124,7 @@ PGate* Module::get_gate(const string&name)
       return 0;
 }
 
-const map<string,PWire*>& Module::get_wires() const
+const map<hname_t,PWire*>& Module::get_wires() const
 {
       return wires_;
 }
@@ -142,6 +142,10 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.17  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.16  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
  *

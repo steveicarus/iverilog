@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.23 2001/10/31 03:11:15 steve Exp $"
+#ident "$Id: Module.h,v 1.24 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include  <list>
 # include  <map>
 # include  "svector.h"
+# include  "HName.h"
 # include  "named.h"
 # include  "LineInfo.h"
 # include  <string>
@@ -73,7 +74,7 @@ class Module : public LineInfo {
 	   new parameters within the module, but may be used to set
 	   values within this module (when instantiated) or in other
 	   instantiated modules. */
-      map<string,PExpr*>defparms;
+      map<hname_t,PExpr*>defparms;
 
         /* Parameters may be overridden at instantiation time;
            the overrides do not contain explicit parameter names,
@@ -109,10 +110,10 @@ class Module : public LineInfo {
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
-      PWire* get_wire(const string&name) const;
+      PWire* get_wire(const hname_t&name) const;
       PGate* get_gate(const string&name);
 
-      const map<string,PWire*>& get_wires() const;
+      const map<hname_t,PWire*>& get_wires() const;
       const list<PGate*>& get_gates() const;
       const list<PProcess*>& get_behaviors() const;
 
@@ -130,7 +131,7 @@ class Module : public LineInfo {
 	   named array of PEident pointers. */
       svector<port_t*> ports_;
 
-      map<string,PWire*> wires_;
+      map<hname_t,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
       map<string,PTask*> tasks_;
@@ -144,6 +145,10 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.24  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.23  2001/10/31 03:11:15  steve
  *  detect module ports not declared within the module.
  *

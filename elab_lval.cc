@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.16 2001/11/08 05:15:50 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.17 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -135,16 +135,16 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 {
 	/* Get the signal referenced by the identifier, and make sure
 	   it is a register. (Wires are not allows in this context. */
-      NetNet*reg = des->find_signal(scope, name());
+      NetNet*reg = des->find_signal(scope, path_);
 
       if (reg == 0) {
-	    NetMemory*mem = des->find_memory(scope, name());
+	    NetMemory*mem = des->find_memory(scope, path_);
 	    if (mem != 0) {
 		  cerr << get_line() << ": sorry: I cannot handle "
 		       << "memories in this l-value context." << endl;
 	    } else {
 		  cerr << get_line() << ": error: Could not find variable ``"
-		       << name() << "'' in ``" << scope->name() <<
+		       << path_ << "'' in ``" << scope->name() <<
 			"''" << endl;
 	    }
 	    des->errors += 1;
@@ -153,7 +153,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       assert(reg);
 
       if (reg->type() != NetNet::REG) {
-	    cerr << get_line() << ": error: " << name() <<
+	    cerr << get_line() << ": error: " << path_ <<
 		  " is not a reg/integer/time in " << scope->name() <<
 		  "." << endl;
 	    des->errors += 1;
@@ -277,6 +277,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.17  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.16  2001/11/08 05:15:50  steve
  *  Remove string paths from PExpr elaboration.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.45 2001/11/19 02:54:12 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.46 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -164,7 +164,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 {
       unsigned wid = 32;
 
-      if (name_ == "$time")
+      if (strcmp(path_.peek_name(0), "$time") == 0)
 	    wid = 64;
 
 
@@ -180,7 +180,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       if ((nparms == 1) && (parms_[0] == 0))
 	    nparms = 0;
 
-      NetESFunc*fun = new NetESFunc(name_, wid, nparms);
+      NetESFunc*fun = new NetESFunc(path_.peek_name(0), wid, nparms);
 
 	/* Now run through the expected parameters. If we find that
 	   there are missing parameters, print an error message.
@@ -208,7 +208,8 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
       }
 
       if (missing_parms > 0) {
-	    cerr << get_line() << ": error: The function " << name_
+	    cerr << get_line() << ": error: The function "
+		 << path_.peek_name(0)
 		 << " has been called with empty parameters." << endl;
 	    cerr << get_line() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
@@ -220,19 +221,19 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 {
-      if (name_[0] == '$')
+      if (path_.peek_name(0)[0] == '$')
 	    return elaborate_sfunc_(des, scope);
 
-      NetFuncDef*def = des->find_function(scope, name_);
+      NetFuncDef*def = des->find_function(scope, path_);
       if (def == 0) {
-	    cerr << get_line() << ": error: No function " << name_ <<
+	    cerr << get_line() << ": error: No function " << path_ <<
 		  " in this context (" << scope->name() << ")." << endl;
 	    des->errors += 1;
 	    return 0;
       }
       assert(def);
 
-      NetScope*dscope = des->find_scope(def->name());
+      NetScope*dscope = def->scope();
       assert(dscope);
 
 	/* How many parameters have I got? Normally the size of the
@@ -280,7 +281,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       }
 
       if (missing_parms > 0) {
-	    cerr << get_line() << ": error: The function " << name_
+	    cerr << get_line() << ": error: The function " << path_
 		 << " has been called with empty parameters." << endl;
 	    cerr << get_line() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
@@ -296,11 +297,10 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
 	   dscope, in this case, is the scope of the function, so the
 	   return value is the name within that scope. */
 
-      string rname = name_;
-      NetNet*res = des->find_signal(dscope, parse_last_name(rname));
+      NetNet*res = dscope->find_signal(dscope->basename());
       if (res == 0) {
 	    cerr << get_line() << ": internal error: Unable to locate "
-		  "function return value for " << name_ << " in " <<
+		  "function return value for " << path_ << " in " <<
 		  def->name() << "." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -371,19 +371,18 @@ NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope) const
 
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 {
-      assert(text_[0] != '$');
+      assert(path_.peek_name(0)[0] != '$');
 
-	//string name = path+"."+text_;
       assert(scope);
 
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
-      if (const NetExpr*ex = des->find_parameter(scope, text_)) {
+      if (const NetExpr*ex = des->find_parameter(scope, path_)) {
 	    NetExpr*tmp;
 	    if (dynamic_cast<const NetExpr*>(ex))
 		  tmp = ex->dup_expr();
 	    else
-		  tmp = new NetEParam(des, scope, text_);
+		  tmp = new NetEParam(des, scope, path_);
 
 	    tmp->set_line(*this);
 	    return tmp;
@@ -391,7 +390,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
-      if (NetNet*net = des->find_signal(scope, text_)) {
+      if (NetNet*net = des->find_signal(scope, path_)) {
 
 	      // If this is a part select of a signal, then make a new
 	      // temporary signal that is connected to just the
@@ -505,7 +504,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	// If the identifier names a memory, then this is a
 	// memory reference and I must generate a NetEMemory
 	// object to handle it.
-      if (NetMemory*mem = des->find_memory(scope, text_)) {
+      if (NetMemory*mem = des->find_memory(scope, path_)) {
 	    if (msb_ == 0) {
 		  NetEMemory*node = new NetEMemory(mem);
 		  node->set_line(*this);
@@ -537,16 +536,17 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	// Finally, if this is a scope name, then return that. Look
 	// first to see if this is a name of a local scope. Failing
 	// that, search globally for a heirarchical name.
-      if (NetScope*nsc = scope->child(text_)) {
-	    NetEScope*tmp = new NetEScope(nsc);
-	    tmp->set_line(*this);
-	    return tmp;
-      }
+      if ((path_.peek_name(1) == 0))
+	    if (NetScope*nsc = scope->child(path_.peek_name(0))) {
+		  NetEScope*tmp = new NetEScope(nsc);
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
 
 	// NOTE: This search pretty much assumes that text_ is a
 	// complete hierarchical name, since there is no mention of
 	// the current scope in the call to find_scope.
-      if (NetScope*nsc = des->find_scope(text_)) {
+      if (NetScope*nsc = des->find_scope(path_)) {
 	    NetEScope*tmp = new NetEScope(nsc);
 	    tmp->set_line(*this);
 	    return tmp;
@@ -554,7 +554,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 
 	// I cannot interpret this identifier. Error message.
       cerr << get_line() << ": error: Unable to bind wire/reg/memory "
-	    "`" << text_ << "' in `" << scope->name() << "'" << endl;
+	    "`" << path_ << "' in `" << scope->name() << "'" << endl;
       des->errors += 1;
       return 0;
 }
@@ -642,6 +642,10 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.46  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.45  2001/11/19 02:54:12  steve
  *  Handle division and modulus by zero while
  *  evaluating run-time constants.

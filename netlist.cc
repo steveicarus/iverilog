@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.177 2001/11/19 04:26:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.178 2001/12/03 04:47:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2123,7 +2123,7 @@ NetEParam::NetEParam()
 {
 }
 
-NetEParam::NetEParam(Design*d, NetScope*s, const string&n)
+NetEParam::NetEParam(Design*d, NetScope*s, const hname_t&n)
 : des_(d), scope_(s), name_(n)
 {
 }
@@ -2407,6 +2407,10 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.178  2001/12/03 04:47:15  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.177  2001/11/19 04:26:46  steve
  *  Unary reduction operators are all 1-bit results.
  *

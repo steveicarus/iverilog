@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_anet.cc,v 1.3 2001/07/25 03:10:48 steve Exp $"
+#ident "$Id: elab_anet.cc,v 1.4 2001/12/03 04:47:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -104,10 +104,10 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 
 NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 {
-      NetNet*sig = des->find_signal(scope, text_);
+      NetNet*sig = des->find_signal(scope, path_);
 
       if (sig == 0) {
-	    if (NetMemory*mem = des->find_memory(scope, text_)) {
+	    if (NetMemory*mem = des->find_memory(scope, path_)) {
 		  cerr << get_line() << ": error: memories not allowed "
 		       << "on left side of procedural continuous "
 		       << "asignment." << endl;
@@ -115,7 +115,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	    cerr << get_line() << ": error: reg ``" << text_ << "'' "
+	    cerr << get_line() << ": error: reg ``" << path_ << "'' "
 		 << "is undefined in this scope." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -127,7 +127,7 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 	    break;
 
 	  default:
-	    cerr << get_line() << ": error: " << text_ << " is not "
+	    cerr << get_line() << ": error: " << path_ << " is not "
 		 << "a reg in this context." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -149,6 +149,10 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_anet.cc,v $
+ * Revision 1.4  2001/12/03 04:47:14  steve
+ *  Parser and pform use hierarchical names as hname_t
+ *  objects instead of encoded strings.
+ *
  * Revision 1.3  2001/07/25 03:10:48  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)
