@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.293 2003/10/26 04:49:51 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.294 2004/01/13 03:42:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1962,6 +1962,22 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	// If the condition expression is more then 1 bits, then
+	// generate a comparison operator to get the result down to
+	// one bit. Turn <e> into |<e>;
+
+      if (expr->expr_width() < 1) {
+	    cerr << get_line() << ": internal error: "
+		  "incomprehensible wait expression width (0)." << endl;
+	    return 0;
+      }
+
+      if (expr->expr_width() > 1) {
+	    assert(expr->expr_width() > 1);
+	    NetEUReduce*cmp = new NetEUReduce('|', expr);
+	    expr = cmp;
+      }
+
       assert(expr->expr_width() == 1);
       expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
       NetExpr*tmp = expr->eval_tree();
@@ -2612,6 +2628,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.294  2004/01/13 03:42:49  steve
+ *  Handle wide expressions in wait condition.
+ *
  * Revision 1.293  2003/10/26 04:49:51  steve
  *  Attach line number information to for loop parts.
  *
