@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.77 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.78 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 /*
@@ -584,6 +584,12 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
       }
 }
 
+void NetRelease::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "release " << lval_->name() << "; "
+	<< "/* " << get_line() << " */" << endl;
+}
+
 void NetRepeat::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
@@ -902,6 +908,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.78  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.77  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *
@@ -948,275 +957,5 @@ void Design::dump(ostream&o) const
  *  in a separate pass over the pform. Once the scopes
  *  are generated, I can process overrides and evalutate
  *  paremeters before elaboration begins.
- *
- * Revision 1.67  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.66  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.65  2000/01/10 01:35:23  steve
- *  Elaborate parameters afer binding of overrides.
- *
- * Revision 1.64  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
- *
- * Revision 1.63  1999/12/12 06:03:14  steve
- *  Allow memories without indices in expressions.
- *
- * Revision 1.62  1999/12/05 02:24:08  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.61  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.60  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.59  1999/11/24 04:01:58  steve
- *  Detect and list scope names.
- *
- * Revision 1.58  1999/11/21 00:13:08  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.57  1999/11/14 23:43:45  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.56  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.55  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.54  1999/11/04 01:12:41  steve
- *  Elaborate combinational UDP devices.
- *
- * Revision 1.53  1999/11/01 02:07:40  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.52  1999/10/31 20:08:24  steve
- *  Include subtraction in LPM_ADD_SUB device.
- *
- * Revision 1.51  1999/10/31 04:11:27  steve
- *  Add to netlist links pin name and instance number,
- *  and arrange in vvm for pin connections by name
- *  and instance number.
- *
- * Revision 1.50  1999/10/10 01:59:54  steve
- *  Structural case equals device.
- *
- * Revision 1.49  1999/10/08 02:00:35  steve
- *  Fix dump of sase statements.
- *
- * Revision 1.48  1999/10/07 05:25:33  steve
- *  Add non-const bit select in l-value of assignment.
- *
- * Revision 1.47  1999/10/06 05:06:16  steve
- *  Move the rvalue into NetAssign_ common code.
- *
- * Revision 1.46  1999/10/05 06:19:46  steve
- *  Add support for reduction NOR.
- *
- * Revision 1.45  1999/09/30 02:43:01  steve
- *  Elaborate ~^ and ~| operators.
- *
- * Revision 1.44  1999/09/29 18:36:03  steve
- *  Full case support
- *
- * Revision 1.43  1999/09/21 00:13:40  steve
- *  Support parameters that reference other paramters.
- *
- * Revision 1.42  1999/09/20 02:21:10  steve
- *  Elaborate parameters in phases.
- *
- * Revision 1.41  1999/09/19 01:06:36  steve
- *  dump the repeat count, if applicable.
- *
- * Revision 1.40  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.39  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.38  1999/09/03 04:28:38  steve
- *  elaborate the binary plus operator.
- *
- * Revision 1.37  1999/09/01 20:46:19  steve
- *  Handle recursive functions and arbitrary function
- *  references to other functions, properly pass
- *  function parameters and save function results.
- *
- * Revision 1.36  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.35  1999/08/25 22:22:41  steve
- *  elaborate some aspects of functions.
- *
- * Revision 1.34  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.33  1999/07/24 02:11:20  steve
- *  Elaborate task input ports.
- *
- * Revision 1.32  1999/07/17 19:50:59  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.31  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.30  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.29  1999/06/15 05:38:15  steve
- *  Handle total lack of signals or nodes.
- *
- * Revision 1.28  1999/06/09 03:00:05  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.27  1999/06/06 20:45:38  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.26  1999/05/31 15:46:20  steve
- *  Compilation warning.
- *
- * Revision 1.25  1999/05/30 01:11:46  steve
- *  Exressions are trees that can duplicate, and not DAGS.
- *
- * Revision 1.24  1999/05/17 04:53:47  steve
- *  translate the letter synonyms for operators.
- *
- * Revision 1.23  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.22  1999/05/06 02:29:32  steve
- *  Excesss endl.
- *
- * Revision 1.21  1999/05/05 03:04:46  steve
- *  Fix handling of null delay statements.
- *
- * Revision 1.20  1999/05/01 20:43:55  steve
- *  Handle wide events, such as @(a) where a has
- *  many bits in it.
- *
- *  Add to vvm the binary ^ and unary & operators.
- *
- *  Dump events a bit more completely.
- *
- * Revision 1.19  1999/05/01 02:57:52  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.18  1999/04/25 00:44:10  steve
- *  Core handles subsignal expressions.
- *
- * Revision 1.17  1999/04/19 01:59:36  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.16  1999/03/15 02:43:32  steve
- *  Support more operators, especially logical.
- *
- * Revision 1.15  1999/03/01 03:27:53  steve
- *  Prevent the duplicate allocation of ESignal objects.
- *
- * Revision 1.14  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.13  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- * Revision 1.12  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.11  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.10  1999/02/01 00:26:48  steve
- *  Carry some line info to the netlist,
- *  Dump line numbers for processes.
- *  Elaborate prints errors about port vector
- *  width mismatch
- *  Emit better handles null statements.
- *
- * Revision 1.9  1998/12/20 02:05:41  steve
- *  Function to calculate wire initial value.
- *
- * Revision 1.8  1998/12/14 02:01:34  steve
- *  Fully elaborate Sequential UDP behavior.
- *
- * Revision 1.7  1998/12/07 04:53:17  steve
- *  Generate OBUF or IBUF attributes (and the gates
- *  to garry them) where a wire is a pad. This involved
- *  figuring out enough of the netlist to know when such
- *  was needed, and to generate new gates and signales
- *  to handle what's missing.
- *
- * Revision 1.6  1998/12/02 04:37:13  steve
- *  Add the nobufz function to eliminate bufz objects,
- *  Object links are marked with direction,
- *  constant propagation is more careful will wide links,
- *  Signal folding is aware of attributes, and
- *  the XNF target can dump UDP objects based on LCA
- *  attributes.
- *
- * Revision 1.5  1998/12/01 00:42:13  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.4  1998/11/23 00:20:22  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.3  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:28:56  steve
- *  Introduce verilog to CVS.
- *
  */
 

@@ -19,10 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.h,v 1.2 2000/04/22 04:20:20 steve Exp $"
+#ident "$Id: vvm_nexus.h,v 1.3 2000/04/23 03:45:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
+
+
+class vvm_force;
 
 /*
  * The nexus class represents a connection point for drivers and
@@ -102,6 +105,7 @@ class vvm_nexus {
 
 	// This method causes the specified value to be forced onto
 	// the nexus. This overrides all drivers that are attached.
+      void force_set(class vvm_force*frc, unsigned key);
       void force_assign(vpip_bit_t val);
       void release();
 
@@ -125,6 +129,8 @@ class vvm_nexus {
       unsigned  nival_;
 
       vpip_bit_t force_;
+      vvm_force *forcer_;
+      unsigned   forcer_key_;
 
     private: // not implemented
       vvm_nexus(const vvm_nexus&);
@@ -142,6 +148,9 @@ extern void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.h,v $
+ * Revision 1.3  2000/04/23 03:45:25  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.2  2000/04/22 04:20:20  steve
  *  Add support for force assignment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.161 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.162 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 /*
@@ -1969,9 +1969,16 @@ void PFunction::elaborate_2(Design*des, NetScope*scope) const
 
 NetProc* PRelease::elaborate(Design*des, const string&path) const
 {
-      cerr << get_line() << ": sorry: I do not elaborate release yet."
-	   << endl;
-      return 0;
+      NetScope*scope = des->find_scope(path);
+      assert(scope);
+
+      NetNet*lval = lval_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lval == 0)
+	    return 0;
+
+      NetRelease*dev = new NetRelease(lval);
+      dev->set_line( *this );
+      return dev;
 }
 
 NetProc* PRepeat::elaborate(Design*des, const string&path) const
@@ -2261,6 +2268,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.162  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.161  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.127 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.128 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 /*
@@ -1515,6 +1515,28 @@ class NetRepeat : public NetProc {
 };
 
 /*
+ * The procedural release statement (the opposite of force) releases
+ * any force expressions attached to the bits of the wire or reg. The
+ * lval is the expression of the "release <expr>;" statement with the
+ * expr elaborated to a net.
+ */
+class NetRelease : public NetProc {
+
+    public:
+      explicit NetRelease(NetNet*l);
+      ~NetRelease();
+
+      const NetNet*lval() const;
+
+      virtual bool emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetNet*lval_;
+};
+
+
+/*
  * The NetSTask class is a call to a system task. These kinds of tasks
  * are generally handled very simply in the target. They certainly are
  * handled differently from user defined tasks because ivl knows all
@@ -2418,6 +2440,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.128  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.127  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

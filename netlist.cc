@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.117 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: netlist.cc,v 1.118 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2300,6 +2300,20 @@ NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
       }
 }
 
+NetRelease::NetRelease(NetNet*l)
+: lval_(l)
+{
+}
+
+NetRelease::~NetRelease()
+{
+}
+
+const NetNet*NetRelease::lval() const
+{
+      return lval_;
+}
+
 NetRepeat::NetRepeat(NetExpr*e, NetProc*p)
 : expr_(e), statement_(p)
 {
@@ -2502,6 +2516,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.118  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.117  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.138 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.139 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -94,6 +94,7 @@ class target_vvm : public target_t {
               void proc_condit_fun(ostream&os, const NetCondit*);
       virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
+      virtual bool target_vvm::proc_release(ostream&os, const NetRelease*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_stask(ostream&os, const NetSTask*);
       virtual bool proc_trigger(ostream&os, const NetEvTrig*);
@@ -2384,6 +2385,20 @@ void target_vvm::proc_forever(ostream&os, const NetForever*net)
 	   << out_step << "_(vvm_thread*thr) {" << endl;
 }
 
+bool target_vvm::proc_release(ostream&os, const NetRelease*dev)
+{
+      const NetNet*lval = dev->lval();
+      for (unsigned idx = 0 ;  idx < lval->pin_count() ;  idx += 1) {
+	    string nexus = nexus_from_link(&lval->pin(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    defn << "      nexus_wire_table["<<ncode<<"].release();"
+		 << endl;
+      }
+
+      return true;
+}
+
 void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 {
       string expr = emit_proc_rval(defn, 8, net->expr());
@@ -2661,6 +2676,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.139  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.138  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

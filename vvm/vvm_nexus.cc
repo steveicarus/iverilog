@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.6 2000/04/22 04:20:20 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.7 2000/04/23 03:45:25 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
+# include  "vvm_gates.h"
 # include  <assert.h>
 
 vvm_nexus::vvm_nexus()
@@ -30,6 +31,9 @@ vvm_nexus::vvm_nexus()
       ival_ = 0;
       nival_ = 0;
       value_ = HiZ;
+      force_ = 0;
+      forcer_ = 0;
+      forcer_key_ = 0;
 }
 
 vvm_nexus::~vvm_nexus()
@@ -128,18 +132,41 @@ void vvm_nexus::reg_assign(vpip_bit_t val)
 {
       assert(drivers_ == 0);
       value_ = val;
-      if (force_ != 0)
+      if (forcer_)
 	    return;
 
       for (recvr_cell*cur = recvrs_;  cur ;  cur = cur->next)
 	    cur->dev->take_value(cur->key, value_);
 }
 
+void vvm_nexus::force_set(vvm_force*f, unsigned k)
+{
+      if (forcer_)
+	    forcer_->release(forcer_key_);
+
+      forcer_ = f;
+      forcer_key_ = k;
+}
+
 void vvm_nexus::force_assign(vpip_bit_t val)
 {
+      assert(forcer_);
       force_ = val;
       for (recvr_cell*cur = recvrs_;  cur ;  cur = cur->next)
 	    cur->dev->take_value(cur->key, force_);
+}
+
+void vvm_nexus::release()
+{
+      if (forcer_) {
+	    forcer_->release(forcer_key_);
+	    forcer_ = 0;
+      }
+
+	/* Now deliver that output value to all the receivers
+	   connected to this nexus. */
+      for (recvr_cell*cur = recvrs_;  cur ;  cur = cur->next)
+	    cur->dev->take_value(cur->key, value_);
 }
 
 /*
@@ -169,7 +196,7 @@ void vvm_nexus::run_values()
       if (value_ == val) return;
       value_ = val;
 
-      if (force_ != 0)
+      if (forcer_)
 	    return;
 
 	/* Now deliver that output value to all the receivers
@@ -238,6 +265,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.7  2000/04/23 03:45:25  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.6  2000/04/22 04:20:20  steve
  *  Add support for force assignment.
  *

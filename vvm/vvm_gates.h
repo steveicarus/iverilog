@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.58 2000/04/22 04:20:20 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.59 2000/04/23 03:45:25 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -294,7 +294,7 @@ class vvm_force  : public vvm_nexus::recvr_t {
       void init_I(unsigned key, vpip_bit_t val);
 
       void force(unsigned key, vvm_nexus*tgt);
-      void release();
+      void release(unsigned key);
 
     private:
       void take_value(unsigned key, vpip_bit_t val);
@@ -916,6 +916,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.59  2000/04/23 03:45:25  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.58  2000/04/22 04:20:20  steve
  *  Add support for force assignment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_force.cc,v 1.1 2000/04/22 04:20:20 steve Exp $"
+#ident "$Id: vvm_force.cc,v 1.2 2000/04/23 03:45:25 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -59,12 +59,25 @@ void vvm_force::force(unsigned key, vvm_nexus*tgt)
       assert(key < width_);
       assert(target_[key] == 0);
       target_[key] = tgt;
+      target_[key]->force_set(this, key);
       target_[key]->force_assign(bits_[key]);
 }
 
+/*
+ * This method is to be called from the vvm_nexus only when it has
+ * been told to release me.
+ */
+void vvm_force::release(unsigned key)
+{
+      assert(target_[key]);
+      target_[key] = 0;
+}
 
 /*
  * $Log: vvm_force.cc,v $
+ * Revision 1.2  2000/04/23 03:45:25  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.1  2000/04/22 04:20:20  steve
  *  Add support for force assignment.
  *

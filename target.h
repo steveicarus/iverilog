@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.35 2000/04/22 04:20:20 steve Exp $"
+#ident "$Id: target.h,v 1.36 2000/04/23 03:45:25 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -108,6 +108,7 @@ struct target_t {
       virtual void proc_condit(ostream&os, const NetCondit*);
       virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
+      virtual bool proc_release(ostream&os, const NetRelease*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual bool proc_trigger(ostream&os, const NetEvTrig*);
       virtual void proc_stask(ostream&os, const NetSTask*);
@@ -154,6 +155,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.36  2000/04/23 03:45:25  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.35  2000/04/22 04:20:20  steve
  *  Add support for force assignment.
  *

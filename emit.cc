@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.40 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: emit.cc,v 1.41 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 /*
@@ -192,6 +192,11 @@ bool NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 void NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
       if (statement_) statement_->emit_proc(o, tgt);
+}
+
+bool NetRelease::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      return tgt->proc_release(o, this);
 }
 
 bool NetRepeat::emit_proc(ostream&o, struct target_t*tgt) const
@@ -426,6 +431,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.41  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.40  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

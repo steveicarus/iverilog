@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.36 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: target.cc,v 1.37 2000/04/23 03:45:24 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -238,6 +238,14 @@ void target_t::proc_forever(ostream&os, const NetForever*)
 	    "Unhandled proc_forever." << endl;
 }
 
+bool target_t::proc_release(ostream&os, const NetRelease*dev)
+{
+      cerr << dev->get_line() << ": internal error: "
+	   << "target (" << typeid(*this).name() <<  "): "
+	   << "Unhandled proc_repeat." << endl;
+      return false;
+}
+
 void target_t::proc_repeat(ostream&os, const NetRepeat*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -353,6 +361,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.37  2000/04/23 03:45:24  steve
+ *  Add support for the procedural release statement.
+ *
  * Revision 1.36  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *
