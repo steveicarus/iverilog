@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.154 2005/03/12 06:43:35 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.155 2005/03/13 01:26:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2155,7 +2155,7 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
       net->local_flag(true);
 
 	/* Make a verinum that is filled with the 0 pad. */
-      verinum num(verinum::V0, net->pin_count());
+      verinum num(verinum::V0, net->vector_width());
 
       unsigned idx;
       for (idx = 0 ;  idx < num.len() && idx < strbits; idx += 1) {
@@ -2165,13 +2165,11 @@ NetNet* PEString::elaborate_net(Design*des, NetScope*scope,
       }
 
       NetConst*tmp = new NetConst(scope, scope->local_symbol(), num);
-      for (idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-	    tmp->pin(idx).drive0(drive0);
-	    tmp->pin(idx).drive1(drive1);
-	    connect(net->pin(idx), tmp->pin(idx));
-      }
-
+      tmp->set_line(*this);
       des->add_node(tmp);
+
+      connect(net->pin(0), tmp->pin(0));
+
       return net;
 }
 
@@ -2494,6 +2492,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.155  2005/03/13 01:26:48  steve
+ *  UPdate elabrate continuous assighn of string to net.
+ *
  * Revision 1.154  2005/03/12 06:43:35  steve
  *  Update support for LPM_MOD.
  *
