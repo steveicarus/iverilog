@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.15 2000/10/07 19:45:43 steve Exp $"
+#ident "$Id: stub.c,v 1.16 2000/10/08 05:00:04 steve Exp $"
 #endif
 
 /*
@@ -69,7 +69,7 @@ int target_net_const(const char*name, ivl_net_const_t net)
 
       fprintf(out, " (%s", ivl_nexus_name(ivl_const_pin(net, 0)));
       for (idx = 1 ;  idx < wid ;  idx += 1)
-	    fprintf(", %s", ivl_nexus_name(ivl_const_pin(net, idx)));
+	    fprintf(out, ", %s", ivl_nexus_name(ivl_const_pin(net, idx)));
 
       fprintf(out, ")\n");
       return 0;
@@ -299,6 +299,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.16  2000/10/08 05:00:04  steve
+ *  Missing stream in call to fprintf.
+ *
  * Revision 1.15  2000/10/07 19:45:43  steve
  *  Put logic devices into scopes.
  *
