@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.9 2002/05/31 18:25:51 steve Exp $"
+#ident "$Id: veriuser.h,v 1.10 2002/06/02 18:54:59 steve Exp $"
 #endif
 
 /*
@@ -89,6 +89,8 @@ extern int tf_dostop(void);
 extern void tf_error(const char*, ...)
       __attribute__((format (printf,1,2)));
 
+extern void tf_getinstance(void);
+
 extern int tf_getlongtime(int*high_bits);
 
 extern int tf_nump(void);
@@ -100,6 +102,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.10  2002/06/02 18:54:59  steve
+ *  Add tf_getinstance function.
+ *
  * Revision 1.9  2002/05/31 18:25:51  steve
  *  Add tf_getlongtime (mruff)
  *
