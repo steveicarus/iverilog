@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.8 2003/04/23 02:22:47 steve Exp $"
+#ident "$Id: eval_real.c,v 1.9 2003/05/25 02:50:08 steve Exp $"
 #endif
 
 /*
@@ -57,7 +57,7 @@ void clr_word(int res)
 
 static int draw_binary_real(ivl_expr_t exp)
 {
-      int l, r;
+      int l, r = -1;
 
       l = draw_eval_real(ivl_expr_oper1(exp));
       r = draw_eval_real(ivl_expr_oper2(exp));
@@ -80,12 +80,23 @@ static int draw_binary_real(ivl_expr_t exp)
 	    fprintf(vvp_out, "    %%div/wr %d, %d;\n", l, r);
 	    break;
 
+	  case '%':
+	      { struct vector_info res = draw_eval_expr(exp, STUFF_OK_XZ);
+		l = allocate_word();
+		fprintf(vvp_out, "    %%ix/get %d, %u, %u;\n",
+			l, res.base, res.wid);
+		fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", l, l);
+	        clr_vector(res);
+	      }
+	      break;
+
 	  default:
 	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
 		    ivl_expr_opcode(exp));
 	    assert(0);
       }
-      clr_word(r);
+
+      if (r >= 0) clr_word(r);
 
       return l;
 }
@@ -287,6 +298,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.9  2003/05/25 02:50:08  steve
+ *  Add % in real expressions.
+ *
  * Revision 1.8  2003/04/23 02:22:47  steve
  *  Fix word register leak.
  *
