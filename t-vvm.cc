@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.192 2000/12/15 20:05:16 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.193 2000/12/15 21:40:26 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -370,6 +370,7 @@ class vvm_parm_rval  : public expr_scan_t {
 
     private:
       virtual void expr_binary(const NetEBinary*);
+      virtual void expr_concat(const NetEConcat*);
       virtual void expr_const(const NetEConst*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
@@ -380,6 +381,8 @@ class vvm_parm_rval  : public expr_scan_t {
 
     private:
       target_vvm*tgt_;
+
+      void expr_default_(const NetExpr*);
 };
 
 /*
@@ -818,7 +821,12 @@ static string emit_proc_rval(target_vvm*tgt, const NetExpr*expr)
       return scan.result;
 }
 
-void vvm_parm_rval::expr_binary(const NetEBinary*expr)
+/*
+ * This is the default implementation for the expressions that are to
+ * be passed as parameters to system tasks. This uses the proc_rval
+ * class to make a vvm_bitset_t, then makes a vpiNumberConst out of that.
+ */
+void vvm_parm_rval::expr_default_(const NetExpr*expr)
 {
       string rval = emit_proc_rval(tgt_, expr);
 
@@ -827,28 +835,26 @@ void vvm_parm_rval::expr_binary(const NetEBinary*expr)
       tgt_->defn << "      vpip_make_number_const(&" << tmp << ", "
 		 << rval << ".bits, " << expr->expr_width() << ");" << endl;
       result = "&" + tmp + ".base";
+}
+
+void vvm_parm_rval::expr_binary(const NetEBinary*expr)
+{
+      expr_default_(expr);
+}
+
+void vvm_parm_rval::expr_concat(const NetEConcat*expr)
+{
+      expr_default_(expr);
 }
 
 void vvm_parm_rval::expr_ufunc(const NetEUFunc*expr)
 {
-      string rval = emit_proc_rval(tgt_, expr);
-
-      string tmp = make_temp();
-      tgt_->defn << "      struct __vpiNumberConst " << tmp << ";" << endl;
-      tgt_->defn << "      vpip_make_number_const(&" << tmp << ", "
-		 << rval << ".bits, " << expr->expr_width() << ");" << endl;
-      result = "&" + tmp + ".base";
+      expr_default_(expr);
 }
 
 void vvm_parm_rval::expr_unary(const NetEUnary*expr)
 {
-      string rval = emit_proc_rval(tgt_, expr);
-
-      string tmp = make_temp();
-      tgt_->defn << "      struct __vpiNumberConst " << tmp << ";" << endl;
-      tgt_->defn << "      vpip_make_number_const(&" << tmp << ", "
-		 << rval << ".bits, " << expr->expr_width() << ");" << endl;
-      result = "&" + tmp + ".base";
+      expr_default_(expr);
 }
 
 void vvm_parm_rval::expr_const(const NetEConst*expr)
@@ -3404,6 +3410,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.193  2000/12/15 21:40:26  steve
+ *  concatenation as parameter to system tasks. PR#64)
+ *
  * Revision 1.192  2000/12/15 20:05:16  steve
  *  Fix memory access in vvm. (PR#70)
  *
