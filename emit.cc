@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.9 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: emit.cc,v 1.10 1999/05/07 01:21:18 steve Exp $"
 #endif
 
 /*
@@ -164,7 +164,7 @@ void Design::emit(ostream&o, struct target_t*tgt) const
       tgt->start_design(o, this);
 
 	// emit signals
-      {
+      if (signals_) {
 	    NetNet*cur = signals_->sig_next_;
 	    do {
 		  tgt->signal(o, cur);
@@ -183,7 +183,7 @@ void Design::emit(ostream&o, struct target_t*tgt) const
 
 
 	// emit nodes
-      {
+      if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
 	    do {
 		  cur->emit_node(o, tgt);
@@ -253,6 +253,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.10  1999/05/07 01:21:18  steve
+ *  Handle total lack of nodes and signals.
+ *
  * Revision 1.9  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *
