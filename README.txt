@@ -360,7 +360,7 @@ alphabetical order):
 	Guy Hutchison <ghutchis@pacbell.net>
 	Ales Hvezda <ahvezda@seul.org>
 	Yasuhisa Kato <ykato@mac.com>
-        James Lee <jml@seva.com>
+        James Lee <jml@jmlzone.com>
 	Peter Monta <pmonta@halibut.imedia.com>
 	Daniel H. Nelsen <dhn@qedinc.com>
 	Stefan Petersen <spe@geda.seul.org>
