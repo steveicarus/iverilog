@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.10 2003/07/26 03:34:42 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.11 2003/10/26 04:50:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -259,7 +259,10 @@ NexusSet* NetCase::nex_input()
 
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 
-	    assert(items_[idx].statement);
+	      /* Skip cases that have empty statements. */
+	    if (items_[idx].statement == 0)
+		  continue;
+
 	    NexusSet*tmp = items_[idx].statement->nex_input();
 	    assert(tmp);
 	    result->add(*tmp);
@@ -377,6 +380,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.11  2003/10/26 04:50:46  steve
+ *  Case with empty statements has no inputs.
+ *
  * Revision 1.10  2003/07/26 03:34:42  steve
  *  Start handling pad of expressions in code generators.
  *
