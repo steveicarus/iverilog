@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.5 2004/08/24 16:16:23 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.6 2005/01/09 20:12:22 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -52,28 +52,16 @@ static int sys_fopen_calltf(char *name)
 	    argv = 0;
       }
 
-      if (! is_constant(item)) {
-	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
-      if (vpi_get(vpiConstType, item) != vpiStringConst) {
-	    vpi_printf("ERROR: %s parameter must be a string.\n", name);
-	    vpi_free_object(argv);
-	    return 0;
-      }
-
       if (mode) {
 	    if (! is_constant(mode)) {
 		vpi_printf("ERROR: %s parameter must be a constant\n", name);
-		vpi_free_object(argv);
+		if (argv) vpi_free_object(argv);
 	        return 0;
 	    }
 
            if (vpi_get(vpiConstType, mode) != vpiStringConst) {
                vpi_printf("ERROR: %s parameter must be a string.\n", name);
-               vpi_free_object(argv);
+               if (argv) vpi_free_object(argv);
                return 0;
            }
            value.format = vpiStringVal;
@@ -81,8 +69,19 @@ static int sys_fopen_calltf(char *name)
            mode_string = strdup(value.value.str);
       }
 
+	/* Get the string form of the file name from the file name
+	   argument. */
       value.format = vpiStringVal;
       vpi_get_value(item, &value);
+
+      if ((value.format != vpiStringVal) || !value.value.str) {
+	    vpi_printf("ERROR: %s: File name argument (type=%d)"
+		       " does not have a string value\n",
+		       name, vpi_get(vpiType, item));
+	    if (mode) free(mode_string);
+	    if (argv) vpi_free_object(argv);
+	    return 0;
+      }
 
       value.format = vpiIntVal;
       if (mode) {
@@ -480,6 +479,12 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.6  2005/01/09 20:12:22  steve
+ *  Merge $fopen robustness fix from 0.8
+ *
+ * Revision 1.5.2.1  2005/01/01 20:07:41  steve
+ *  More robust handling of file name argument to $fopen.
+ *
  * Revision 1.5  2004/08/24 16:16:23  steve
  *  Fix read count passed to fgets.
  *
