@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.14 2000/10/25 05:41:55 steve Exp $"
+#ident "$Id: verilog.c,v 1.15 2000/10/26 00:32:28 steve Exp $"
 #endif
 
 /*
@@ -32,6 +32,88 @@
 # include  <assert.h>
 
 static FILE*out;
+
+/*
+ * Scoped objects are the signals, reg and wire and what-not. What
+ * this function does is draw the objects of the scope, along with a
+ * fake scope context so that the hierarchical name remains
+ * pertinent.
+ */
+static void draw_scoped_objects(ivl_design_t des)
+{
+      ivl_scope_t root = ivl_design_root(des);
+      unsigned cnt, idx;
+
+      cnt = ivl_scope_sigs(root);
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    ivl_signal_t sig = ivl_scope_sig(root, idx);
+
+	    switch (ivl_signal_type(sig)) {
+		case IVL_SIT_REG:
+		  fprintf(out, "    reg %s;\n", ivl_signal_basename(sig));
+		  break;
+		case IVL_SIT_WIRE:
+		  fprintf(out, "    wire %s;\n", ivl_signal_basename(sig));
+		  break;
+		default:
+		  assert(0);
+	    }
+      }
+
+}
+
+/*
+ * Draw a single logic gate. Escape the name so that it is preserved
+ * completely. This drawing is happening in the root scope so signal
+ * references can remain hierarchical.
+ */
+static int draw_logic(ivl_net_logic_t net)
+{
+      unsigned npins, idx;
+      const char*name = ivl_logic_name(net);
+
+      switch (ivl_logic_type(net)) {
+	  case IVL_LO_AND:
+	    fprintf(out, "    and \\%s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUF:
+	    fprintf(out, "    buf \\%s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_OR:
+	    fprintf(out, "    or \\%s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_XOR:
+	    fprintf(out, "    xor \\%s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  default:
+	    fprintf(out, "STUB: %s: unsupported gate\n", name);
+	    return -1;
+      }
+
+      npins = ivl_logic_pins(net);
+      for (idx = 1 ;  idx < npins ;  idx += 1)
+	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
+
+      fprintf(out, ");\n");
+      return 0;
+}
+
+static int draw_scope_logic(ivl_scope_t scope)
+{
+      unsigned cnt = ivl_scope_logs(scope);
+      unsigned idx;
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    draw_logic(ivl_scope_log(scope, idx));
+      }
+
+      ivl_scope_children(scope, draw_scope_logic);
+      return 0;
+}
 
 static void show_expression(ivl_expr_t net)
 {
@@ -224,14 +306,19 @@ static void show_statement(ivl_statement_t net, unsigned ind)
       }
 }
 
+/*
+ * Processes are all collected by ivl and I draw them here in the root
+ * scope. This way, I don't need to do anything about scope
+ * references.
+ */
 static int show_process(ivl_process_t net)
 {
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
-	    fprintf(out, "      initial\n");
+	    fprintf(out, "    initial\n");
 	    break;
 	  case IVL_PR_ALWAYS:
-	    fprintf(out, "      always\n");
+	    fprintf(out, "    always\n");
 	    break;
       }
 
@@ -255,6 +342,13 @@ int target_design(ivl_design_t des)
 
       fprintf(out, "module %s;\n", ivl_scope_name(ivl_design_root(des)));
 
+	/* Declare all the signals. */
+      draw_scoped_objects(des);
+
+	/* Declare logic gates. */
+      draw_scope_logic(ivl_design_root(des));
+
+	/* Write out processes. */
       ivl_design_process(des, show_process);
 
       fprintf(out, "endmodule\n");
@@ -263,40 +357,6 @@ int target_design(ivl_design_t des)
       return 0;
 }
 
-int target_net_logic(const char*name, ivl_net_logic_t net)
-{
-      unsigned npins, idx;
-
-      switch (ivl_logic_type(net)) {
-	  case IVL_LO_AND:
-	    fprintf(out, "      and %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_BUF:
-	    fprintf(out, "      buf %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_OR:
-	    fprintf(out, "      or %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  case IVL_LO_XOR:
-	    fprintf(out, "      xor %s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
-	    break;
-	  default:
-	    fprintf(out, "STUB: %s: unsupported gate\n", name);
-	    return -1;
-      }
-
-      npins = ivl_logic_pins(net);
-      for (idx = 1 ;  idx < npins ;  idx += 1)
-	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
-
-      fprintf(out, ");\n");
-
-      return 0;
-}
 
 #ifdef __CYGWIN32__
 #include <cygwin/cygwin_dll.h>
@@ -305,6 +365,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.15  2000/10/26 00:32:28  steve
+ *  emit declarations of signals and gates.
+ *
  * Revision 1.14  2000/10/25 05:41:55  steve
  *  Scan the processes, and get the target signals
  *
