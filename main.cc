@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.30 2000/03/17 21:50:25 steve Exp $"
+#ident "$Id: main.cc,v 1.31 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -92,7 +92,6 @@ extern void synth(Design*des);
 extern void nobufz(Design*des);
 extern void nodangle(Design*des);
 extern void xnfio(Design*des);
-extern void xnfsyn(Design*des);
 
 typedef void (*net_func)(Design*);
 static struct net_func_map {
@@ -105,7 +104,6 @@ static struct net_func_map {
       { "propinit",&propinit },
       { "synth",   &synth },
       { "xnfio",   &xnfio },
-      { "xnfsyn",  &xnfsyn },
       { 0, 0 }
 };
 
@@ -307,6 +305,12 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.31  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.30  2000/03/17 21:50:25  steve
  *  Switch to control warnings.
  *

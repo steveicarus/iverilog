@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.75 2000/04/12 04:23:57 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.76 2000/04/12 20:02:52 steve Exp $"
 #endif
 
 /*
@@ -370,29 +370,6 @@ void NetUDP_COMB::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetNEvent::dump_node(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "event: ";
-      switch (edge_) {
-	  case ANYEDGE:
-	    o << "anyedge ";
-	      break;
-	  case POSEDGE:
-	    o << "posedge ";
-	    break;
-	  case NEGEDGE:
-	    o << "negedge ";
-	    break;
-	  case POSITIVE:
-	    o << "positive ";
-	    break;
-      }
-
-      o << name() << " --> " << event_->name() << endl;
-
-      dump_node_pins(o, ind+4);
-}
-
 void NetProcTop::dump(ostream&o, unsigned ind) const
 {
       switch (type_) {
@@ -593,47 +570,6 @@ void NetPDelay::dump(ostream&o, unsigned ind) const
       } else {
 	    o << " /* noop */;" << endl;
       }
-}
-
-void NetPEvent::dump(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "" << "@(";
-
-      if (src_) {
-	    const NetNEvent*cur = src_;
-	    for (cur = src_->next_ ;  cur ;  cur = cur->next_) {
-		  o << " or ";
-		  cur->dump_proc(o);
-	    }
-      }
-
-      o << ") /* " << name_ << " */";
-
-      if (statement_) {
-	    o << endl;
-	    statement_->dump(o, ind+2);
-      } else {
-	    o << " /* noop */;" << endl;
-      }
-}
-
-void NetNEvent::dump_proc(ostream&o) const
-{
-      switch (edge_) {
-	  case ANYEDGE:
-	    o << "anyedge ";
-	    break;
-	  case POSEDGE:
-	    o << "posedge ";
-	    break;
-	  case NEGEDGE:
-	    o << "negedge ";
-	    break;
-	  case POSITIVE:
-	    o << "positive ";
-	    break;
-      }
-      o << name();
 }
 
 void NetRepeat::dump(ostream&o, unsigned ind) const
@@ -954,6 +890,12 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.76  2000/04/12 20:02:52  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.75  2000/04/12 04:23:57  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

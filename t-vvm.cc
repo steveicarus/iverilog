@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.133 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.134 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1760,14 +1760,14 @@ void target_vvm::net_probe(ostream&os, const NetEvProbe*net)
 	       << "(&" << mevent << ");" << endl;
 	    break;
 
-	  case NetNEvent::NEGEDGE:
+	  case NetEvProbe::NEGEDGE:
 	    assert(net->pin_count() == 1);
 	    os << "static vvm_negedge " << mname
 	       << "(&" << mevent << ");" << endl;
 	    break;
 
 
-	  case NetNEvent::ANYEDGE:
+	  case NetEvProbe::ANYEDGE:
 	    os << "static vvm_anyedge " << mname
 	       << "(&" << mevent << ", " << net->pin_count() << ");" << endl;
 	    break;
@@ -2509,6 +2509,12 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.134  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.133  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

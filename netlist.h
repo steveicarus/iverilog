@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.120 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.121 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 /*
@@ -1044,11 +1044,12 @@ class NetAssign_ : public NetProc, public NetNode {
 	// the pin that gets the value.
       const NetExpr*bmux() const;
 
+      void set_rval(NetExpr*);
+
     protected:
       NetAssign_(const string&n, unsigned w);
       virtual ~NetAssign_() =0;
 
-      void set_rval(NetExpr*);
       void set_bmux(NetExpr*);
 
     private:
@@ -1271,6 +1272,7 @@ class NetCondit  : public NetProc {
 class NetEvent : public LineInfo {
 
       friend class NetScope;
+      friend class NetEvProbe;
 
     public:
       explicit NetEvent (const string&n);
@@ -1278,6 +1280,10 @@ class NetEvent : public LineInfo {
 
       string name() const;
       string full_name() const;
+
+	// Get information about probes connected to me.
+      unsigned nprobe() const;
+      NetEvProbe* probe(unsigned);
 
       NetScope* scope();
       const NetScope* scope() const;
@@ -1288,6 +1294,9 @@ class NetEvent : public LineInfo {
 	// The NetScope class uses these to list the events.
       NetScope*scope_;
       NetEvent*snext_;
+
+	// Use these methods to list the probes attached to me.
+      NetEvProbe*probes_;
 
     private: // not implemented
       NetEvent(const NetEvent&);
@@ -1319,9 +1328,13 @@ class NetEvWait  : public NetProc {
 
       unsigned nevents() const;
       const NetEvent*event(unsigned) const;
+      NetEvent*event(unsigned);
+
+      NetProc*statement();
 
       virtual bool emit_proc(ostream&, struct target_t*) const;
       bool emit_recurse(ostream&, struct target_t*) const;
+      virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1332,6 +1345,8 @@ class NetEvWait  : public NetProc {
 };
 
 class NetEvProbe  : public NetNode {
+
+      friend class NetEvent;
 
     public:
       enum edge_t { ANYEDGE, POSEDGE, NEGEDGE };
@@ -1349,6 +1364,8 @@ class NetEvProbe  : public NetNode {
     private:
       NetEvent*event_;
       edge_t edge_;
+	// The NetEvent class uses this to list me.
+      NetEvProbe*enext_;
 };
 
 /*
@@ -1416,78 +1433,6 @@ class NetPDelay  : public NetProc {
       unsigned long delay_;
       NetProc*statement_;
 };
-
-/*
- * The NetPEvent is associated with NetNEvents. The NetPEvent receives
- * events from any one of the associated NetNEvents and in response
- * causes the attached statement to be executed. Objects of this type
- * are not nodes, but require a name anyhow so that backends can
- * generate objects to refer to it.
- *
- * The NetPEvent is the procedural part of the event.
- */
-class NetPEvent : public NetProc {
-
-      friend class NetNEvent;
-
-    public:
-      NetPEvent(const string&n, NetProc*st);
-      ~NetPEvent();
-
-      string name() const;
-      NetProc* statement();
-      const NetProc* statement() const;
-
-      NetNEvent* first();
-      NetNEvent* next();
-
-      const NetNEvent* first() const;
-      const NetNEvent* next() const;
-
-      virtual int match_proc(struct proc_match_t*);
-      virtual void dump(ostream&, unsigned ind) const;
-
-    private:
-      string name_;
-      NetProc*statement_;
-	// This is a list of the source events that can trigger me.
-      NetNEvent*src_;
-      mutable NetNEvent*idx_;
-};
-
-/*
- * The NetNEvent is a NetNode that connects to the structural part of
- * the design. It has only inputs, which cause the side effect of
- * triggering an event that the procedural part of the design can use.
- *
- * The NetNEvent may have wide input if is is an ANYEDGE type
- * device. This allows detecting changes in wide expressions.
- */
-class NetNEvent  : public NetNode {
-
-      friend class NetPEvent;
-
-    public:
-      enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
-
-	// Use this constructor to create NEvent objects that receive
-	// their status from the structural netlist.
-      NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe);
-
-      ~NetNEvent();
-
-      Type type() const;
-      const NetPEvent*pevent() const;
-
-      void dump_proc(ostream&) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
-
-    private:
-      Type edge_;
-      NetPEvent*event_;
-      NetNEvent*next_;
-};
-
 
 /*
  * A repeat statement is executed some fixed number of times.
@@ -2399,6 +2344,12 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.121  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.120  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

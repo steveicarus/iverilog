@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.112 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: netlist.cc,v 1.113 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1461,7 +1461,7 @@ NetAssign_::~NetAssign_()
 
 void NetAssign_::set_rval(NetExpr*r)
 {
-      assert(rval_ == 0);
+      if (rval_) delete rval_;
       rval_ = r;
 }
 
@@ -1753,90 +1753,6 @@ const NetNet* NetFuncDef::port(unsigned idx) const
 {
       assert(idx < ports_.count());
       return ports_[idx];
-}
-
-NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
-: NetNode(ev, wid), edge_(e)
-{
-      event_ = pe;
-      next_ = pe->src_;
-      pe->src_ = this;
-
-      for (unsigned idx = 0 ;  idx < wid ; idx += 1) {
-	    pin(idx).set_name("P", idx);
-      }
-}
-
-NetNEvent::~NetNEvent()
-{
-}
-
-NetNEvent::Type NetNEvent::type() const
-{
-      return edge_;
-}
-
-const NetPEvent* NetNEvent::pevent() const
-{
-      return event_;
-}
-
-NetPEvent::NetPEvent(const string&n, NetProc*st)
-: name_(n), statement_(st), src_(0)
-{
-      idx_ = 0;
-}
-
-NetPEvent::~NetPEvent()
-{
-      while (src_) {
-	    NetNEvent*cur = src_;
-	    src_ = src_->next_;
-	    delete cur;
-      }
-
-      delete statement_;
-}
-
-string NetPEvent::name() const
-{
-      return name_;
-}
-
-NetProc* NetPEvent::statement()
-{
-      return statement_;
-}
-
-const NetProc* NetPEvent::statement() const
-{
-      return statement_;
-}
-
-NetNEvent* NetPEvent::first()
-{
-      idx_ = src_;
-      return idx_;
-}
-
-NetNEvent* NetPEvent::next()
-{
-      assert(idx_);
-      idx_ = idx_->next_;
-      return idx_;
-}
-
-const NetNEvent* NetPEvent::first() const
-{
-      idx_ = src_;
-      return idx_;
-}
-
-const NetNEvent* NetPEvent::next() const
-{
-      assert(idx_);
-      idx_ = idx_->next_;
-      return idx_;
 }
 
 NetSTask::NetSTask(const string&na, const svector<NetExpr*>&pa)
@@ -2530,6 +2446,12 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.113  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.112  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.3 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: net_event.cc,v 1.4 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -27,6 +27,7 @@ NetEvent::NetEvent(const string&n)
 {
       scope_ = 0;
       snext_ = 0;
+      probes_ = 0;
 }
 
 NetEvent::~NetEvent()
@@ -42,6 +43,28 @@ string NetEvent::full_name() const
 {
       assert(scope_);
       return scope_->name() + "." + name_;
+}
+
+unsigned NetEvent::nprobe() const
+{
+      unsigned cnt = 0;
+      NetEvProbe*cur = probes_;
+      while (cur) {
+	    cnt += 1;
+	    cur = cur->enext_;
+      }
+
+      return cnt;
+}
+
+NetEvProbe* NetEvent::probe(unsigned idx)
+{
+      NetEvProbe*cur = probes_;
+      while (cur && idx) {
+	    cur = cur->enext_;
+	    idx -= 1;
+      }
+      return cur;
 }
 
 NetEvTrig::NetEvTrig(NetEvent*ev)
@@ -66,6 +89,9 @@ NetEvProbe::NetEvProbe(const string&n, NetEvent*tgt,
 	    pin(idx).set_dir(Link::INPUT);
 	    pin(idx).set_name("P", idx);
       }
+
+      enext_ = event_->probes_;
+      event_->probes_ = this;
 }
 
 NetEvProbe::~NetEvProbe()
@@ -124,8 +150,25 @@ const NetEvent* NetEvWait::event(unsigned idx) const
       return events_[idx];
 }
 
+NetEvent* NetEvWait::event(unsigned idx)
+{
+      assert(idx < nevents_);
+      return events_[idx];
+}
+
+NetProc* NetEvWait::statement()
+{
+      return statement_;
+}
+
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.4  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.3  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

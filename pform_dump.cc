@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.53 2000/04/12 04:23:58 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.54 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 /*
@@ -82,15 +82,15 @@ void PECallFunction::dump(ostream &out) const
 void PEEvent::dump(ostream&out) const
 {
       switch (type_) {
-	  case NetNEvent::ANYEDGE:
+	  case PEEvent::ANYEDGE:
 	    break;
-	  case NetNEvent::POSEDGE:
+	  case PEEvent::POSEDGE:
 	    out << "posedge ";
 	    break;
-	  case NetNEvent::NEGEDGE:
+	  case PEEvent::NEGEDGE:
 	    out << "negedge ";
 	    break;
-	  case NetNEvent::POSITIVE:
+	  case PEEvent::POSITIVE:
 	    out << "positive ";
 	    break;
       }
@@ -733,6 +733,12 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.54  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.53  2000/04/12 04:23:58  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

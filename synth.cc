@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.7 2000/04/02 04:26:07 steve Exp $"
+#ident "$Id: synth.cc,v 1.8 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,55 @@
  */
 # include  "functor.h"
 # include  "netlist.h"
+
+/*
+ * This functor scans the behavioral code, looking for expressions to
+ * synthesize. Although it uses the proc_match_t class, it doesn't
+ * actually match anything, but transforms expressions into structural
+ * netlists. The product of this should be a process where all the
+ * expressions have been reduced to a signal ident, which references
+ * the NetNet of the now synthesized expression.
+ */
+class do_expr  : public proc_match_t {
+
+    public:
+      do_expr(Design*d)
+      : des_(d) { }
+
+    private:
+
+      Design*des_;
+
+      virtual int assign(NetAssign*);
+      virtual int event_wait(NetEvWait*);
+	//virtual int assign_mem(NetAssignMem*);
+	//virtual int condit(NetCondit*);
+};
+
+
+int do_expr::assign(NetAssign*stmt)
+{
+      if (dynamic_cast<NetESignal*>(stmt->rval()))
+	    return 0;
+
+      NetNet*tmp = stmt->rval()->synthesize(des_);
+      if (tmp == 0)
+	    return 0;
+
+      NetESignal*tmpe = new NetESignal(tmp);
+      stmt->set_rval(tmpe);
+
+      return 0;
+}
+
+int do_expr::event_wait(NetEvWait*stmt)
+{
+      NetProc*tmp = stmt->statement();
+      if (tmp)
+	    return tmp->match_proc(this);
+      else
+	    return 0;
+}
 
 /*
  * This transform recognizes the following patterns:
@@ -55,7 +104,7 @@ class match_dff : public proc_match_t {
 
     public:
       match_dff(Design*d, NetProcTop*t)
-      : des_(d), top_(t), pclk_(0), nclk_(0), con_(0), ce_(0),
+      : des_(d), top_(t), wclk_(0), eclk_(0), pclk_(0), con_(0), ce_(0),
 	asn_(0), asm_(0), d_(0)
       { }
 
@@ -70,12 +119,14 @@ class match_dff : public proc_match_t {
       virtual int assign(NetAssign*);
       virtual int assign_mem(NetAssignMem*);
       virtual int condit(NetCondit*);
-      virtual int pevent(NetPEvent*);
+      virtual int event_wait(NetEvWait*);
 
       Design*des_;
       NetProcTop*top_;
-      NetPEvent*pclk_;
-      NetNEvent*nclk_;
+
+      NetEvWait*wclk_;
+      NetEvent *eclk_;
+      NetEvProbe*pclk_;
 
       NetCondit *con_;
       NetNet*ce_;
@@ -133,21 +184,20 @@ int match_dff::condit(NetCondit*co)
       return con_->if_clause()->match_proc(this);
 }
 
-int match_dff::pevent(NetPEvent*pe)
+int match_dff::event_wait(NetEvWait*evw)
 {
-      if (pclk_ || con_ || asn_ || asm_)
+      if (evw->nevents() != 1)
 	    return 0;
 
-      pclk_ = pe;
+      wclk_ = evw;
+      eclk_ = evw->event(0);
 
-      NetNEvent*tmp = pclk_->first();
-      if (tmp == 0)
-	    return 0;
-      if (pclk_->next())
+      if (eclk_->nprobe() != 1)
 	    return 0;
 
-      nclk_ = tmp;
-      return pclk_->statement()->match_proc(this);
+      pclk_ = eclk_->probe(0);
+
+      return wclk_->statement()->match_proc(this);
 }
 
 void match_dff::make_it()
@@ -170,11 +220,11 @@ void match_dff::make_dff_()
 	    connect(ff->pin_Q(idx), asn_->pin(idx));
       }
 
-      connect(ff->pin_Clock(), nclk_->pin(0));
+      connect(ff->pin_Clock(), pclk_->pin(0));
       if (ce_) connect(ff->pin_Enable(), ce_->pin(0));
 
       ff->attribute("LPM_FFType", "DFF");
-      if (nclk_->type() == NetNEvent::NEGEDGE)
+      if (pclk_->edge() == NetEvProbe::NEGEDGE)
 	    ff->attribute("Clock:LPM_Polarity", "INVERT");
 
       des_->add_node(ff);
@@ -195,8 +245,8 @@ void match_dff::make_ram_()
       if (ce_)
 	    connect(ram->pin_WE(), ce_->pin(0));
 
-      assert(nclk_->type() == NetNEvent::POSEDGE);
-      connect(ram->pin_InClock(), nclk_->pin(0));
+      assert(pclk_->edge() == NetEvProbe::POSEDGE);
+      connect(ram->pin_InClock(), pclk_->pin(0));
 
       ram->absorb_partners();
       des_->add_node(ram);
@@ -248,6 +298,9 @@ void synth_f::process(class Design*des, class NetProcTop*top)
  */
 void synth_f::proc_always_(class Design*des)
 {
+      do_expr expr_pat(des);
+      top_->statement()->match_proc(&expr_pat);
+
       match_dff dff_pat(des, top_);
       if (top_->statement()->match_proc(&dff_pat)) {
 	    dff_pat.make_it();
@@ -270,6 +323,12 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.8  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.7  2000/04/02 04:26:07  steve
  *  Remove the useless sref template.
  *

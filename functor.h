@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.10 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: functor.h,v 1.11 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 /*
@@ -67,13 +67,19 @@ struct proc_match_t {
       virtual int assign(class NetAssign*);
       virtual int assign_mem(class NetAssignMem*);
       virtual int condit(class NetCondit*);
-      virtual int pevent(class NetPEvent*);
+      virtual int event_wait(class NetEvWait*);
       virtual int block(class NetBlock*);
 };
 
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.11  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.10  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *

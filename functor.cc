@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.13 2000/04/01 21:40:22 steve Exp $"
+#ident "$Id: functor.cc,v 1.14 2000/04/12 20:02:53 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -177,18 +177,24 @@ int NetCondit::match_proc(proc_match_t*that)
       return that->condit(this);
 }
 
-int proc_match_t::pevent(NetPEvent*)
+int NetEvWait::match_proc(proc_match_t*that)
+{
+      return that->event_wait(this);
+}
+
+int proc_match_t::event_wait(NetEvWait*)
 {
       return 0;
 }
 
-int NetPEvent::match_proc(proc_match_t*that)
-{
-      return that->pevent(this);
-}
-
 /*
  * $Log: functor.cc,v $
+ * Revision 1.14  2000/04/12 20:02:53  steve
+ *  Finally remove the NetNEvent and NetPEvent classes,
+ *  Get synthesis working with the NetEvWait class,
+ *  and get started supporting multiple events in a
+ *  wait in vvm.
+ *
  * Revision 1.13  2000/04/01 21:40:22  steve
  *  Add support for integer division.
  *
