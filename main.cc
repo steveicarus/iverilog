@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.16 1999/06/15 03:44:53 steve Exp $"
+#ident "$Id: main.cc,v 1.17 1999/06/17 05:33:12 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -30,7 +30,6 @@
 # include  "netlist.h"
 # include  "target.h"
 
-extern void pform_parse();
 
 const char*target = "null";
 string start_module = "";
@@ -249,6 +248,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.17  1999/06/17 05:33:12  steve
+ *  Redundant declaration of pform_parse.
+ *
  * Revision 1.16  1999/06/15 03:44:53  steve
  *  Get rid of the STL vector template.
  *
