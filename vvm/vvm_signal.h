@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.6 2000/03/25 05:02:25 steve Exp $"
+#ident "$Id: vvm_signal.h,v 1.7 2000/03/26 16:28:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -31,26 +31,25 @@
  * single bits. The fixed array is used when possible because of the
  * more thorough type checking and (hopefully) better optimization.
  */
-template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
+class vvm_bitset_t  : public vvm_bits_t {
 
     public:
-      vvm_bitset_t()
-	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-		  bits[idx] = HiZ;
-	    }
+      explicit vvm_bitset_t(vpip_bit_t*b, unsigned nb)
+      : bits(b), nbits(nb) { }
 
       vpip_bit_t operator[] (unsigned idx) const { return bits[idx]; }
       vpip_bit_t&operator[] (unsigned idx) { return bits[idx]; }
 
-      unsigned get_width() const { return WIDTH; }
+      unsigned get_width() const { return nbits; }
       vpip_bit_t get_bit(unsigned idx) const { return bits[idx]; }
 
     public:
-      vpip_bit_t bits[WIDTH];
+      vpip_bit_t*bits;
+      unsigned nbits;
 
     private: // not implemented
-      vvm_bitset_t(const vvm_bitset_t<WIDTH>&);
-      vvm_bitset_t<WIDTH>& operator= (const vvm_bitset_t<WIDTH>&);
+      vvm_bitset_t(const vvm_bitset_t&);
+      vvm_bitset_t& operator= (const vvm_bitset_t&);
 };
 
 /*
@@ -88,8 +87,7 @@ class vvm_memory_t : public __vpiMemory {
 	    { cb_list_ = 0;
 	    }
 
-      void set_word(unsigned addr,
-		    const vvm_bitset_t<WIDTH>&val)
+      void set_word(unsigned addr, const vvm_bitset_t&val)
 	    { unsigned base = WIDTH * addr;
 	      assert(addr < size);
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
@@ -106,7 +104,7 @@ class vvm_memory_t : public __vpiMemory {
 	      call_list_(addr);
 	    }
 
-      void get_word(unsigned addr, vvm_bitset_t<WIDTH>&val) const
+      void get_word(unsigned addr, vvm_bitset_t&val) const
 	    { unsigned base = WIDTH * addr;
 	      assert(addr < size);
 	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
@@ -121,8 +119,8 @@ class vvm_memory_t : public __vpiMemory {
       class assign_nb  : public vvm_event {
 	  public:
 	    assign_nb(vvm_memory_t<WIDTH,SIZE>&m, unsigned i,
-		      const vvm_bitset_t<WIDTH>&v)
-	    : mem_(m), index_(i)
+		      const vvm_bitset_t&v)
+	    : mem_(m), index_(i), val_(bits_, WIDTH)
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  val_[idx] = v[idx];
 	    }
@@ -132,7 +130,8 @@ class vvm_memory_t : public __vpiMemory {
 	  private:
 	    vvm_memory_t<WIDTH,SIZE>&mem_;
 	    unsigned index_;
-	    vvm_bitset_t<WIDTH> val_;
+	    vpip_bit_t bits_[WIDTH];
+	    vvm_bitset_t val_;
       };
 
     private:
@@ -146,6 +145,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.7  2000/03/26 16:28:31  steve
+ *  vvm_bitset_t is no longer a template.
+ *
  * Revision 1.6  2000/03/25 05:02:25  steve
  *  signal bits are referenced at run time by the vpiSignal struct.
  *

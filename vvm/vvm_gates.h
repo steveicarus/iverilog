@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.51 2000/03/25 02:43:57 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.52 2000/03/26 16:28:31 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -488,7 +488,8 @@ class vvm_ram_dq  : protected vvm_ram_callback,  public vvm_nexus::recvr_t {
 	    }
 
       void send_out_()
-	    { vvm_bitset_t<WIDTH>ov;
+	    { vpip_bit_t*ov_bits[WIDTH];
+	      vvm_bitset_t ov(bits, WIDTH);
 	      mem_->get_word(addr_val_, ov);
 	      for (unsigned bit = 0 ;  bit < WIDTH ;  bit += 1) {
 		    vvm_out_event*ev = new vvm_out_event(ov[bit], out_+bit);
@@ -785,7 +786,7 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
     private:
       vvm_sync*target_;
-      vvm_bitset_t<WIDTH> value_;
+      vpip_bit_t value_[WIDTH];
       EDGE edge_;
 
     private: // not implemented
@@ -795,6 +796,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.52  2000/03/26 16:28:31  steve
+ *  vvm_bitset_t is no longer a template.
+ *
  * Revision 1.51  2000/03/25 02:43:57  steve
  *  Remove all remain vvm_bitset_t return values,
  *  and disallow vvm_bitset_t copying.

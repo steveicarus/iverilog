@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.4 2000/03/25 02:43:56 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.5 2000/03/26 16:28:31 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
@@ -44,6 +44,13 @@ vpip_bit_t vvm_unop_lnot(const vvm_bits_t&r)
       return B_NOT(v);
 }
 
+void vvm_unop_not(vvm_bitset_t&v, const vvm_bitset_t&p)
+{
+      assert(v.nbits == p.nbits);
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = B_NOT(p[idx]);
+}
+
 vpip_bit_t vvm_unop_or(const vvm_bits_t&r)
 {
       for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
@@ -58,6 +65,15 @@ vpip_bit_t vvm_unop_nor(const vvm_bits_t&r)
 {
       vpip_bit_t v = vvm_unop_or(r);
       return B_NOT(v);
+}
+
+void vvm_unop_uminus(vvm_bitset_t&v, const vvm_bitset_t&l)
+{
+      vvm_unop_not(v, l);
+      vpip_bit_t carry = St1;
+      for (unsigned i = 0 ;  i < v.nbits ;  i += 1)
+	    v[i] = add_with_carry(v[i], St0, carry);
+
 }
 
 vpip_bit_t vvm_unop_xor(const vvm_bits_t&r)
@@ -75,6 +91,84 @@ vpip_bit_t vvm_unop_xnor(const vvm_bits_t&r)
 {
       vpip_bit_t v = vvm_unop_xor(r);
       return B_NOT(v);
+}
+
+void vvm_binop_and(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      assert(v.nbits == l.nbits);
+      assert(v.nbits == r.nbits);
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = B_AND(l[idx], r[idx]);
+}
+
+void vvm_binop_minus(vvm_bitset_t&v, const vvm_bitset_t&l,
+		     const vvm_bitset_t&r)
+{
+      vvm_unop_not(v, r);
+      vpip_bit_t carry = St1;
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = add_with_carry(l[idx], v[idx], carry);
+}
+
+void vvm_binop_nor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      assert(v.nbits == l.nbits);
+      assert(v.nbits == r.nbits);
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = B_NOT(B_OR(l[idx], r[idx]));
+}
+
+void vvm_binop_or(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      assert(v.nbits == l.nbits);
+      assert(v.nbits == r.nbits);
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = B_OR(l[idx], r[idx]);
+}
+
+void vvm_binop_plus(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      assert(v.nbits == l.nbits);
+      assert(v.nbits == r.nbits);
+      vpip_bit_t carry = St0;
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = add_with_carry(l[idx], r[idx], carry);
+}
+
+void vvm_binop_shiftl(vvm_bitset_t&v,
+		      const vvm_bitset_t&l,
+		      const vvm_bits_t&r)
+{
+      assert(v.nbits == l.nbits);
+      vvm_u32 s = r.as_unsigned();
+      for (unsigned idx = 0 ;  idx < v.nbits; idx += 1)
+	    v[idx] = (idx < s) ? St0 : l[idx-s];
+}
+
+void vvm_binop_shiftr(vvm_bitset_t&v,
+		      const vvm_bitset_t&l,
+		      const vvm_bits_t&r)
+{
+      assert(v.nbits == l.nbits);
+      vvm_u32 s = r.as_unsigned();
+      for (unsigned idx = 0 ;  idx < v.nbits ; idx += 1)
+	    v[idx] = (idx < (v.nbits-s)) ? l[idx+s] : St0;
+}
+
+void vvm_binop_xnor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      assert(v.nbits == l.nbits);
+      assert(v.nbits == r.nbits);
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = B_NOT(B_XOR(l[idx], r[idx]));
+}
+
+void vvm_binop_xor(vvm_bitset_t&v, const vvm_bitset_t&l, const vvm_bitset_t&r)
+{
+      assert(v.nbits == l.nbits);
+      assert(v.nbits == r.nbits);
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+	    v[idx] = B_XOR(l[idx], r[idx]);
 }
 
 vpip_bit_t vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r)
@@ -363,9 +457,38 @@ vpip_bit_t vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r)
       return B_OR(res1, res2);
 }
 
+void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
+		 const vvm_bitset_t&t,
+		 const vvm_bitset_t&f)
+{
+      assert(v.nbits == t.nbits);
+      assert(v.nbits == f.nbits);
+
+      if (B_IS0(c)) {
+	    for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+		  v[idx] = f[idx];
+	    return;
+      }
+      if (B_IS1(c)) {
+	    for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1)
+		  v[idx] = t[idx];
+	    return;
+      }
+
+      for (unsigned idx = 0 ;  idx < v.nbits ;  idx += 1) {
+	    if (B_EQ(t[idx], f[idx]))
+		  v[idx] = t[idx];
+	    else
+		  v[idx] = StX;
+      }
+}
+
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.5  2000/03/26 16:28:31  steve
+ *  vvm_bitset_t is no longer a template.
+ *
  * Revision 1.4  2000/03/25 02:43:56  steve
  *  Remove all remain vvm_bitset_t return values,
  *  and disallow vvm_bitset_t copying.

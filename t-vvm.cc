@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.125 2000/03/25 05:02:24 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.126 2000/03/26 16:28:31 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -133,6 +133,8 @@ class target_vvm : public target_t {
       map<string,bool>esignal_printed_flag;
       map<string,bool>pevent_printed_flag;
 
+      unsigned signal_bit_counter;
+
       map<string,unsigned>nexus_wire_map;
       unsigned nexus_wire_counter;
 
@@ -196,8 +198,11 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 {
       assert(expr->repeat() > 0);
       string tname = make_temp();
-      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
-	    expr->expr_width() << "> " << tname << ";" << endl;
+
+      os_ << "      vpip_bit_t " << tname << "_bits["
+	  << expr->expr_width() << "];" << endl;
+      os_ << "      vvm_bitset_t " << tname << "(" << tname << "_bits, "
+	  << expr->expr_width() << ");" << endl;
 
       unsigned pos = 0;
       for (unsigned rep = 0 ;  rep < expr->repeat() ;  rep += 1)
@@ -229,10 +234,11 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 void vvm_proc_rval::expr_const(const NetEConst*expr)
 {
       string tname = make_temp();
-      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
-	    expr->expr_width() << "> " << tname << ";" << endl;
+
+      os_ << "      vpip_bit_t " << tname<<"_bits["
+	  << expr->expr_width() << "];" << endl;
       for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
-	    os_ << setw(indent_) << "" << tname << "[" << idx << "] = ";
+	    os_ << "      " << tname << "_bits["<<idx<<"] = ";
 	    switch (expr->value().get(idx)) {
 		case verinum::V0:
 		  os_ << "St0";
@@ -250,6 +256,9 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
 	    os_ << ";" << endl;
       }
 
+      os_ << "      vvm_bitset_t " << tname << "(" << tname
+	  << "_bits, " << expr->expr_width() << ");" << endl;
+
       result = tname;
 }
 
@@ -263,21 +272,43 @@ void vvm_proc_rval::expr_ident(const NetEIdent*expr)
  */
 void vvm_proc_rval::expr_memory(const NetEMemory*mem)
 {
+	/* Make a temporary to hold the word from the memory. */
       const string tname = make_temp();
-      os_ << setw(indent_) << "" << "vvm_bitset_t<"
-	  << mem->expr_width() << "> " << tname << ";" << endl;
+      os_ << "      vpip_bit_t " << tname << "_bits["
+	  << mem->expr_width() << "];" << endl;
+      os_ << "      vvm_bitset_t " << tname << "(" << tname << "_bits, "
+	  << mem->expr_width() << ");" << endl;
 
       const string mname = mangle(mem->name());
+
+	/* Evaluate the memory index */
       assert(mem->index());
       mem->index()->expr_scan(this);
-      os_ << setw(indent_) << "" << mname << ".get_word(" <<
-	    result<<".as_unsigned(), " << tname << ");";
+
+
+	/* Write code to use the calculated index to get the word from
+	   the memory into the temporary we created earlier. */
+
+      os_ << "      " << mname << ".get_word(" <<
+	    result << ".as_unsigned(), " << tname << ");" << endl;
+
       result = tname;
 }
 
+/*
+ * A bitset reference to a signal can be done simply by referring to
+ * the same bits as the signal. We onlt need to copy the bits pointer
+ * from the vvm_signal_t object to get our reference.
+ */
 void vvm_proc_rval::expr_signal(const NetESignal*expr)
 {
-      result = mangle(expr->name()) + "_bits";
+      const string tname = make_temp();
+
+      os_ << "      vvm_bitset_t " << tname << "("
+	  << mangle(expr->name()) << ".bits, "
+	  << expr->expr_width() << ");" << endl;
+
+      result = tname;
 }
 
 void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
@@ -285,19 +316,23 @@ void vvm_proc_rval::expr_subsignal(const NetESubSignal*sig)
       string idx = make_temp();
       string val = make_temp();
       if (const NetEConst*cp = dynamic_cast<const NetEConst*>(sig->index())) {
-	    os_ << setw(indent_) << "" << "const unsigned " << idx <<
+	    os_ << "      const unsigned " << idx <<
 		  " = " << cp->value().as_ulong() << ";" << endl;
 
       } else {
 	    sig->index()->expr_scan(this);
-	    os_ << setw(indent_) << "" << "const unsigned " <<
+	    os_ << "      const unsigned " <<
 		  idx << " = " << result << ".as_unsigned();" <<
 		  endl;
       }
 
-      os_ << setw(indent_) << "" << "vvm_bitset_t<1>" << val << ";" << endl;
-      os_ << setw(indent_) << "" << val << "[0] = " <<
-	    mangle(sig->name()) << "_bits[" << idx << "];" << endl;
+	/* Get the bit select of a signal by making a vvm_bitset_t
+	   object that refers to the single bit within the signal that
+	   is of interest. */
+
+      os_ << "      vvm_bitset_t " << val << "("
+	  << mangle(sig->name()) << ".bits+" << idx << ", 1);" << endl;
+
       result = val;
 }
 
@@ -312,11 +347,13 @@ void vvm_proc_rval::expr_ternary(const NetETernary*expr)
 
       result = make_temp();
 
-      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
-	    expr->expr_width() << ">" << result << ";" << endl;
-      os_ << setw(indent_) << "" << "vvm_ternary(" << result << ", "
-	  << cond_val << "[0], " << true_val << ", " << false_val << ");"
-	  << endl;
+      os_ << "      vpip_bit_t " << result << "_bits["
+	  << expr->expr_width() << "];" << endl;
+      os_ << "      vvm_bitset_t " << result << "(" << result<<"_bits, "
+	  << expr->expr_width() << ");" << endl;
+
+      os_ << "      vvm_ternary(" << result << ", " << cond_val<<"[0], "
+	  << true_val << ", " << false_val << ");" << endl;
 }
 
 /*
@@ -342,7 +379,7 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 	    for (unsigned bit = 0 ; 
 		 bit < expr->parm(idx)->expr_width() ;  bit += 1) {
 
-		  os_ << "      " << bname << "_bits["<<bit<<"] = " <<
+		  os_ << "      " << bname << ".bits["<<bit<<"] = " <<
 			result << "["<<bit<<"];" << endl;
 	    }
       }
@@ -350,17 +387,21 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 	/* Make the function call. */
       os_ << "        " << mangle(expr->name()) << "();" << endl;
 
-	/* Save the return value in a temporary. */
+	/* rbits is the bits of the signal that hold the result. */
+      string rbits = mangle(expr->result()->name()) + ".bits";
+
+	/* Make a temporary to hold the result... */
       result = make_temp();
-      string rbits = mangle(expr->result()->name()) + "_bits";
+      os_ << "      vpip_bit_t " << result << "_bits["
+	  << expr->expr_width() << "];" << endl;
+      os_ << "      vvm_bitset_t " << result << "("
+	  << result<<"_bits, " << expr->expr_width() << ");" << endl;
 
-      os_ << "      vvm_bitset_t<" << expr->expr_width() << "> " <<
-	    result << ";" << endl;
+	/* Copy the result into the new temporary. */
+      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1)
+	    os_ << "      " << result << "_bits[" << idx << "] = "
+		<< rbits << "[" << idx << "];" << endl;
 
-      for (unsigned idx = 0 ;  idx < expr->expr_width() ;  idx += 1) {
-	    os_ << "      " << result<<"["<<idx<<"] = " <<
-		  rbits<<"["<<idx<<"];" << endl;
-      }
 }
 
 void vvm_proc_rval::expr_unary(const NetEUnary*expr)
@@ -368,8 +409,10 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
       expr->expr()->expr_scan(this);
       string tname = make_temp();
 
-      os_ << "      vvm_bitset_t<" << expr->expr_width() << "> "
-	  << tname << ";" << endl;
+      os_ << "      vpip_bit_t " << tname << "_bits["
+	  << expr->expr_width() << "];" << endl;
+      os_ << "      vvm_bitset_t " << tname << "(" << tname<<"_bits, "
+	  << expr->expr_width() << ");" << endl;
 
       switch (expr->op()) {
 	  case '~':
@@ -424,10 +467,12 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       string rres = result;
 
       result = make_temp();
-      os_ << setw(indent_) << "" << "// " << expr->get_line() <<
-	    ": expression node." << endl;
-      os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
-	    expr->expr_width() << ">" << result << ";" << endl;
+      os_ << "      // " << expr->get_line() << ": expression node." << endl;
+      os_ << "      vpip_bit_t " << result<<"_bits[" << expr->expr_width()
+	  << "];" << endl;
+      os_ << "      vvm_bitset_t " << result << "(" << result << "_bits, "
+	  << expr->expr_width() << ");" << endl;
+
       switch (expr->op()) {
 	  case 'a': // logical and (&&)
 	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_land("
@@ -690,6 +735,7 @@ void target_vvm::start_design(ostream&os, const Design*mod)
       os << "# include \"vpi_user.h\"" << endl;
       os << "# include \"vpi_priv.h\"" << endl;
 
+      signal_bit_counter = 0;
       process_counter = 0;
       string_counter = 1;
       number_counter = 1;
@@ -740,6 +786,9 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 	    number_counter+1 << "];" << endl;
       os << "static vvm_nexus_wire nexus_wire_table[" <<
 	    nexus_wire_counter << "];" << endl;
+      os << "static vpip_bit_t signal_bit_table[" <<
+	    signal_bit_counter << "];" << endl;
+
       defn.close();
 
       os << "// **** Definition code" << endl;
@@ -830,14 +879,15 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 		  "].connect(&" << net_name << ", " << idx << ");" << endl;
       }
 
-      os << "static vvm_bitset_t<" << sig->pin_count() << "> " <<
-	    net_name<< "_bits; /* " << sig->name() <<
-	    " */" << endl;
       os << "static vvm_signal_t " << net_name << ";" << endl;
 
       init_code << "      vpip_make_reg(&" << net_name
-		<< ", \"" << sig->name() << "\"," << net_name<<"_bits.bits, "
-		<< sig->pin_count() << ");" << endl;
+		<< ", \"" << sig->name() << "\", signal_bit_table+"
+		<< signal_bit_counter << ", " << sig->pin_count()
+		<< ");" << endl;
+
+
+      signal_bit_counter += sig->pin_count();
 
       if (const NetScope*scope = sig->scope()) {
 	    string sname = mangle(scope->name()) + "_scope";
@@ -849,8 +899,6 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	/* Scan the signals of the vector, passing the initial value
 	   to the inputs of all the connected devices. */
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
-	    if (sig->get_ival(idx) == verinum::Vz)
-		  continue;
 
 	    init_code << "      " << mangle(sig->name()) << ".init_P("
 		      << idx << ", ";
@@ -973,7 +1021,12 @@ void target_vvm::emit_init_value_(const NetObj::Link&lnk, verinum::V val)
 	    if (! dynamic_cast<const NetObj*>(cur->get_obj()))
 		  continue;
 
-	    if (dynamic_cast<const NetNet*>(cur->get_obj()))
+	      /* If the caller lnk is a signal, then we are declaring
+		 signals so we skip signal initializations as they
+		 take care of themselves. */
+
+	    if (dynamic_cast<const NetNet*>(cur->get_obj())
+		&& dynamic_cast<const NetNet*>(lnk.get_obj()))
 		  continue;
 
 	      // Build an init statement for the link, that writes the
@@ -1754,28 +1807,31 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
  */
 void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 {
-      string index = mangle(amem->index()->name()) + "_bits";
+	/* make a temporary to reference the index signal. */
+      string index = make_temp();
+
+      defn << "      vvm_bitset_t " << index << "("
+	   << mangle(amem->index()->name()) << ".bits, "
+	   << mangle(amem->index()->name()) << ".nbits);" << endl;
+
+	/* Evaluate the rval that gets written into the memory word. */
       string rval = emit_proc_rval(defn, 8, amem->rval());
+
+
       const NetMemory*mem = amem->memory();
+      assert(mem->width() <= amem->rval()->expr_width());
 
       defn << "      /* " << amem->get_line() << " */" << endl;
-      if (mem->width() == amem->rval()->expr_width()) {
-	    defn << "      " << mangle(mem->name()) <<
-		  ".set_word(" << index << ".as_unsigned(), " <<
-		  rval << ");" << endl;
 
-      } else {
-	    assert(mem->width() <= amem->rval()->expr_width());
-	    string tmp = make_temp();
-	    defn << "      vvm_bitset_t<" << mem->width() << ">" <<
-		  tmp << ";" << endl;
-	    for (unsigned idx = 0 ;  idx < mem->width() ;  idx += 1)
-		  defn << "      " << tmp << "[" << idx << "] = " <<
-			rval << "[" << idx << "];" << endl;
+	/* Set the indexed word from the rval. Note that this
+	   assignment will work even if the rval is too wide, because
+	   the set_word method takes only the low bits of the width of
+	   the memory. */
 
-	    defn << "      " << mangle(mem->name()) << ".set_word("
-		 << index << ".as_unsigned(), " << tmp << ");" << endl;
-      }
+      defn << "      " << mangle(mem->name()) <<
+	    ".set_word(" << index << ".as_unsigned(), " <<
+	    rval << ");" << endl;
+
 }
 
 void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
@@ -1821,33 +1877,27 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 
 void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
 {
+	/* make a temporary to reference the index signal. */
+      string index = make_temp();
 
-      string index = mangle(amem->index()->name()) + "_bits";
+      defn << "      vvm_bitset_t " << index << "("
+	   << mangle(amem->index()->name()) << ".bits, "
+	   << mangle(amem->index()->name()) << ".nbits);" << endl;
+
+
+	/* Evaluate the rval that gets written into the memory word. */
       string rval = emit_proc_rval(defn, 8, amem->rval());
+
       const NetMemory*mem = amem->memory();
 
       defn << "      /* " << amem->get_line() << " */" << endl;
-      if (mem->width() == amem->rval()->expr_width()) {
-	    defn << "      (new vvm_memory_t<" << mem->width() << ","
-		 << mem->count() << ">::assign_nb(" << mangle(mem->name())
-		 << ", " << index << ".as_unsigned(), " << rval <<
-		  ")) -> schedule();" << endl;
 
-      } else {
+      assert(mem->width() <= amem->rval()->expr_width());
 
-	    assert(mem->width() <= amem->rval()->expr_width());
-	    string tmp = make_temp();
-	    defn << "      vvm_bitset_t<" << mem->width() << ">" <<
-		  tmp << ";" << endl;
-	    for (unsigned idx = 0 ;  idx < mem->width() ;  idx += 1)
-		  defn << "      " << tmp << "[" << idx << "] = " <<
-			rval << "[" << idx << "];" << endl;
-
-	    defn << "      (new vvm_memory_t<" << mem->width() << ","
-		 << mem->count() << ">::assign_nb(" << mangle(mem->name())
-		 << ", " << index << ".as_unsigned(), " << tmp <<
-		  ")) -> schedule();" << endl;
-      }
+      defn << "      (new vvm_memory_t<" << mem->width() << ","
+	   << mem->count() << ">::assign_nb(" << mangle(mem->name())
+	   << ", " << index << ".as_unsigned(), " << rval <<
+	    ")) -> schedule();" << endl;
 }
 
 bool target_vvm::proc_block(ostream&os, const NetBlock*net)
@@ -2390,6 +2440,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.126  2000/03/26 16:28:31  steve
+ *  vvm_bitset_t is no longer a template.
+ *
  * Revision 1.125  2000/03/25 05:02:24  steve
  *  signal bits are referenced at run time by the vpiSignal struct.
  *
