@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.85 2002/01/03 04:19:01 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.86 2002/01/23 05:23:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1280,14 +1280,11 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 		  return 0;
 	    }
 
-	      /* Fine, create an implicit wire as an l-value. */
-	    sig = new NetNet(scope, path+"."+path_.peek_name(0),
-			     NetNet::IMPLICIT, 1);
-
-	    if (warn_implicit)
-		  cerr << get_line() << ": warning: implicit "
-			" definition of wire " << path << "." <<
-			path_.peek_name(0) << "." << endl;
+	    cerr << get_line() << ": error: Net " << path_
+		 << " is not defined in this context." << endl;
+	    cerr << get_line() << ":      : Do you mean this? wire "
+		 << path_ << " = <expr>;" << endl;
+	    return 0;
       }
 
       assert(sig);
@@ -1977,6 +1974,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.86  2002/01/23 05:23:17  steve
+ *  No implicit declaration in assign l-values.
+ *
  * Revision 1.85  2002/01/03 04:19:01  steve
  *  Add structural modulus support down to vvp.
  *
