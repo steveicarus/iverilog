@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.8 2003/02/07 02:44:25 steve Exp $"
+#ident "$Id: sys_time.c,v 1.9 2003/06/18 00:54:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -80,15 +80,22 @@ static int sys_time_calltf(char*name)
 	    units -= 1;
       }
 
-      val.format = vpiIntVal;
-      val.value.integer = now.low;
-      assert(now.high == 0);
+      assert(8*sizeof(long long) >= 64);
+      { long long tmp_now = ((long long)now.high) << 32;
+        tmp_now += (long long)now.low;
+	frac = tmp_now % (long long)scale;
+	tmp_now /= (long long)scale;
 
-      frac = val.value.integer % scale;
-      val.value.integer /= scale;
-	/* Round to the nearest integer, which may be up. */
-      if ((scale > 1) && (frac >= scale/2))
-	    val.value.integer += 1;
+	  /* Round to the nearest integer, which may be up. */
+	if ((scale > 1) && (frac >= scale/2))
+	      tmp_now += 1;
+
+	now.low = tmp_now & 0xffffffff;
+	now.high = tmp_now >> 32LL;
+      }
+
+      val.format = vpiTimeVal;
+      val.value.time = &now;
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
@@ -162,6 +169,9 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.9  2003/06/18 00:54:28  steve
+ *  Account for all 64 bits in results of $time.
+ *
  * Revision 1.8  2003/02/07 02:44:25  steve
  *  Properly round inter time values from $time.
  *

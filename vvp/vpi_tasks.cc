@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_tasks.cc,v 1.23 2003/03/14 05:00:44 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.24 2003/06/18 00:54:28 steve Exp $"
 #endif
 
 /*
@@ -164,6 +164,22 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp,
 		}
 		break;
 	  }
+
+	  case vpiTimeVal:
+		for (int idx = 0 ;  idx < rfp->vwid ;  idx += 1) {
+		      PLI_INT32 word;
+		      if (idx >= 32)
+			    word = vp->value.time->high;
+		      else
+			    word = vp->value.time->low;
+
+		      word >>= idx % 32;
+
+		      vthread_put_bit(vpip_current_vthread,
+				      rfp->vbit+idx, word&1);
+		}
+		break;
+
 
 	  case vpiScalarVal:
 	    switch (vp->value.scalar) {
@@ -471,6 +487,9 @@ void* vpi_get_userdata(vpiHandle ref)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.24  2003/06/18 00:54:28  steve
+ *  Account for all 64 bits in results of $time.
+ *
  * Revision 1.23  2003/03/14 05:00:44  steve
  *  Support vpi_get of vpiTimeUnit.
  *
