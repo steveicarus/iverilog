@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.40 1999/06/12 23:16:37 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.41 1999/06/13 04:46:54 steve Exp $"
 #endif
 
 /*
@@ -1111,10 +1111,26 @@ NetProc* PAssignNB::elaborate(Design*des, const string&path) const
 	   node. */
       NetAssignNB*cur;
       if (id->msb_ && id->lsb_) {
-	    cerr << get_line() << ": Sorry, bit ranges not supported"
-		  " in l-values." << endl;
-	    des->errors += 1;
-	    return 0;
+	    verinum*vl = id->lsb_->eval_const(des, path);
+	    if (vl == 0) {
+		  cerr << id->lsb_->get_line() << ": Expression must be"
+			" constant in this context: " << *id->lsb_;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    verinum*vm = id->msb_->eval_const(des, path);
+	    if (vl == 0) {
+		  cerr << id->msb_->get_line() << ": Expression must be"
+			" constant in this context: " << *id->msb_;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    unsigned wid = vm->as_ulong()-vl->as_ulong()+1;
+	    cur = new NetAssignNB(des->local_symbol(path), des, wid, rval);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  connect(cur->pin(idx), reg->pin(idx+vl->as_ulong()));
+
 
       } else if (id->msb_) {
 	    assert(id->lsb_ == 0);
@@ -1482,6 +1498,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.41  1999/06/13 04:46:54  steve
+ *  Add part select lvalues to AssignNB.
+ *
  * Revision 1.40  1999/06/12 23:16:37  steve
  *  Handle part selects as l-values to continuous assign.
  *
