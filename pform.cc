@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.100 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: pform.cc,v 1.101 2002/08/19 02:39:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1166,17 +1166,33 @@ void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r)
       cur->set_memory_idx(l, r);
 }
 
-void pform_set_parameter(const string&name, PExpr*expr)
+void pform_set_parameter(const string&name, svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module->parameters[name] = expr;
+      pform_cur_module->parameters[name].expr = expr;
+
+      if (range) {
+	    assert(range->count() == 2);
+	    assert((*range)[0]);
+	    assert((*range)[1]);
+	    pform_cur_module->parameters[name].msb = (*range)[0];
+	    pform_cur_module->parameters[name].lsb = (*range)[1];
+      } else {
+	    pform_cur_module->parameters[name].msb = 0;
+	    pform_cur_module->parameters[name].lsb = 0;
+      }
+      pform_cur_module->parameters[name].signed_flag = false;
+
       pform_cur_module->param_names.push_back(name);
 }
 
 void pform_set_localparam(const string&name, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module->localparams[name] = expr;
+      pform_cur_module->localparams[name].expr = expr;
+      pform_cur_module->localparams[name].msb  = 0;
+      pform_cur_module->localparams[name].lsb  = 0;
+      pform_cur_module->localparams[name].signed_flag = false;
 }
 
 void pform_set_defparam(const hname_t&name, PExpr*expr)
@@ -1343,6 +1359,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.101  2002/08/19 02:39:17  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.100  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

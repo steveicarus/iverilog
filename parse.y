@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.157 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: parse.y,v 1.158 2002/08/19 02:39:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,8 @@
 
 extern void lex_start_table();
 extern void lex_end_table();
+
+static svector<PExpr*>* active_range = 0;
 
 /*
  * These are some common strength pairs that are used as defaults when
@@ -287,7 +289,7 @@ block_item_decl
 		{ delete $2;
 		  yyerror(@1, "sorry: realtime variables not supported.");
 		}
-	| K_parameter parameter_assign_list ';'
+	| K_parameter parameter_assign_decl ';'
 	| K_localparam localparam_assign_list ';'
 
   /* Recover from errors that happen within variable lists. Use the
@@ -399,8 +401,7 @@ defparam_assign
 defparam_assign_list
 	: defparam_assign
 	| range defparam_assign
-		{ yywarn(@1, "Ranges in parameter definition "
-		             "are not supported.");
+		{ yyerror(@1, "error: defparam may not include a range.");
 		  delete $1;
 		}
 	| defparam_assign_list ',' defparam_assign
@@ -1618,19 +1619,21 @@ parameter_assign
 			delete tmp;
 			tmp = 0;
 		  } else {
-			pform_set_parameter($1, tmp);
+			pform_set_parameter($1, active_range, tmp);
 		  }
 		  delete $1;
 		}
 	;
 
+parameter_assign_decl
+	: parameter_assign_list
+	| range { active_range = $1; } parameter_assign_list
+		{ active_range = 0;
+		}
+	;
+
 parameter_assign_list
 	: parameter_assign
-	| range parameter_assign
-		{ yywarn(@1, "Ranges in parameter definition "
-		          "are not supported.");
-		  delete $1;
-		}
 	| parameter_assign_list ',' parameter_assign
 	;
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.34 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: verinum.cc,v 1.35 2002/08/19 02:39:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,14 +95,27 @@ verinum::verinum(const verinum&that)
 
 verinum::verinum(const verinum&that, unsigned nbits)
 {
-      assert(nbits <= that.nbits_);
       string_flag_ = false;
       nbits_ = nbits;
       bits_ = new V[nbits_];
       has_len_ = true;
-      has_sign_ = false;
-      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+      has_sign_ = that.has_sign_;
+
+      unsigned copy = nbits;
+      if (copy > that.nbits_)
+	    copy = that.nbits_;
+      for (unsigned idx = 0 ;  idx < copy ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
+
+      if (copy < nbits_) {
+	    if (has_sign_) {
+		  for (unsigned idx = copy ;  idx < nbits_ ;  idx += 1)
+			bits_[idx] = bits_[idx-1];
+	    } else {
+		  for (unsigned idx = copy ;  idx < nbits_ ;  idx += 1)
+			bits_[idx] = verinum::V0;
+	    }
+      }
 }
 
 verinum::verinum(long that)
@@ -802,6 +815,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.35  2002/08/19 02:39:17  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.34  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

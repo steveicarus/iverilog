@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.62 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: pform.h,v 1.63 2002/08/19 02:39:17 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -196,7 +196,9 @@ extern void pform_set_attrib(const char*name, const string&key,
 extern void pform_set_type_attrib(const string&name, const string&key,
 				  char*value);
 
-extern void pform_set_parameter(const string&name, PExpr*expr);
+extern void pform_set_parameter(const string&name,
+				svector<PExpr*>*range,
+				PExpr*expr);
 extern void pform_set_localparam(const string&name, PExpr*expr);
 extern void pform_set_defparam(const hname_t&name, PExpr*expr);
 
@@ -256,6 +258,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.63  2002/08/19 02:39:17  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.62  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.cc,v 1.30 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.31 2002/08/19 02:39:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -161,12 +161,12 @@ bool PEIdent::is_constant(Module*mod) const
 {
       if (mod == 0) return false;
 
-      { map<string,PExpr*>::const_iterator cur;
+      { map<string,Module::param_expr_t>::const_iterator cur;
         cur = mod->parameters.find(path_.peek_name(0));
 	if (cur != mod->parameters.end()) return true;
       }
 
-      { map<string,PExpr*>::const_iterator cur;
+      { map<string,Module::param_expr_t>::const_iterator cur;
         cur = mod->localparams.find(path_.peek_name(0));
 	if (cur != mod->localparams.end()) return true;
       }
@@ -256,6 +256,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.31  2002/08/19 02:39:16  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.30  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.14 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.15 2002/08/19 02:39:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -54,7 +54,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// the pform and just place a NetEParam placeholder in the
 	// place of the elaborated expression.
 
-      typedef map<string,PExpr*>::const_iterator mparm_it_t;
+      typedef map<string,param_expr_t>::const_iterator mparm_it_t;
       typedef map<hname_t,PExpr*>::const_iterator hparm_it_t;
 
 
@@ -82,10 +82,40 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    PExpr*ex = (*cur).second;
+	    PExpr*ex = (*cur).second.expr;
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
+
+	      /* If the parameter declaration includes msb and lsb,
+		 then use them to calculate a width for the
+		 result. Then make sure the constant expression of the
+		 parameter value is coerced to have the correct
+		 and defined width. */
+	    if ((*cur).second.msb) {
+		  verinum*msb = (*cur).second.msb ->eval_const(des, scope);
+		  assert(msb);
+		  verinum*lsb = (*cur).second.lsb ->eval_const(des, scope);
+		  assert(lsb);
+
+		  long msl = msb->as_long();
+		  long lsl = lsb->as_long();
+		  delete msb;
+		  delete lsb;
+
+		  unsigned width;
+		  if (msl >= lsl)
+			width = msl - lsl + 1;
+		  else
+			width = lsl - msl + 1;
+
+		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(val)) {
+			verinum tval (tmp->value(), width);
+			val = new NetEConst(tval);
+			delete tmp;
+		  }
+	    }
+
 	    val = scope->set_parameter((*cur).first, val);
 	    assert(val);
 	    delete val;
@@ -94,7 +124,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  cur ++) {
 
-	    PExpr*ex = (*cur).second;
+	    PExpr*ex = (*cur).second.expr;
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
@@ -467,6 +497,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.15  2002/08/19 02:39:16  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.14  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

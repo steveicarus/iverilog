@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.75 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.76 2002/08/19 02:39:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -707,22 +707,30 @@ void Module::dump(ostream&out) const
 	    out << ")" << endl;
       }
 
-      typedef map<string,PExpr*>::const_iterator parm_iter_t;
+      typedef map<string,param_expr_t>::const_iterator parm_iter_t;
       typedef map<hname_t,PExpr*>::const_iterator parm_hiter_t;
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
-	    out << "    parameter " << (*cur).first << " = ";
-	    if ((*cur).second)
-		  out << *(*cur).second << ";" << endl;
+	    out << "    parameter ";
+	    if ((*cur).second.msb)
+		  out << "[" << *(*cur).second.msb << ":"
+		      << *(*cur).second.lsb << "] ";
+	    out << (*cur).first << " = ";
+	    if ((*cur).second.expr)
+		  out << *(*cur).second.expr << ";" << endl;
 	    else
 		  out << "/* ERROR */;" << endl;
       }
 
       for (parm_iter_t cur = localparams.begin()
 		 ; cur != localparams.end() ; cur ++) {
-	    out << "    localparam " << (*cur).first << " = ";
-	    if ((*cur).second)
-		  out << *(*cur).second << ";" << endl;
+	    out << "    localparam ";
+	    if ((*cur).second.msb)
+		  out << "[" << *(*cur).second.msb << ":"
+		      << *(*cur).second.lsb << "] ";
+	    out << (*cur).first << " = ";
+	    if ((*cur).second.expr)
+		  out << *(*cur).second.expr << ";" << endl;
 	    else
 		  out << "/* ERROR */;" << endl;
       }
@@ -838,6 +846,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.76  2002/08/19 02:39:17  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.75  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.62 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.63 2002/08/19 02:39:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -201,7 +201,7 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 
 	    PExpr*expr = parms_[0];
 	    NetExpr*sub = expr->elaborate_expr(des, scope, true);
-	    verinum val (sub->expr_width(), sizeof(unsigned));
+	    verinum val (sub->expr_width(), 8*sizeof(unsigned));
 	    delete sub;
 
 	    sub = new NetEConst(val);
@@ -874,6 +874,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.63  2002/08/19 02:39:16  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.62  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

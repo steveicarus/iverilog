@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.26 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: Module.h,v 1.27 2002/08/19 02:39:16 steve Exp $"
 #endif
 
 # include  <list>
@@ -67,8 +67,14 @@ class Module : public LineInfo {
 	/* The module has parameters that are evaluated when the
 	   module is elaborated. During parsing, I put the parameters
 	   into this map. */
-      map<string,PExpr*>parameters;
-      map<string,PExpr*>localparams;
+      struct param_expr_t {
+	    PExpr*expr;
+	    PExpr*msb;
+	    PExpr*lsb;
+	    bool signed_flag;
+      };
+      map<string,param_expr_t>parameters;
+      map<string,param_expr_t>localparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
@@ -145,6 +151,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.27  2002/08/19 02:39:16  steve
+ *  Support parameters with defined ranges.
+ *
  * Revision 1.26  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
