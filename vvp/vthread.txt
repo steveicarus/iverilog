@@ -1,0 +1,17 @@
+
+THREAD DETAILS
+
+Thread objects in vvp are created by ``.thread'' statements in the
+input source file. These cause
+
+A thread object includes a program counter and private bit
+registers. The program counter is used to step the processor through
+the code space as it executes instructions. The bit registers are for
+use by the arithmetic operators as they operate.
+
+Instructions that use the bit registers have as an operand a <bit>
+value. There is space in the instruction for 2 <bit> operands. The
+special values 0, 1, 2 and 3 are special constant bits 0, 1, x and z
+and are used as immediate values for instructions that take single-bit
+values. The remaining of 64K possible <bit> values are read-write bit
+registers that can be accessed singly or as vectors.
