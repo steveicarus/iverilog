@@ -17,10 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.2 2001/03/20 01:44:14 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.3 2001/03/21 01:49:43 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
+# include  <assert.h>
+
+static void show_statement(ivl_statement_t net);
 
 /*
  * This file includes the code needed to generate VVP code for
@@ -28,6 +31,100 @@
  * executable code for the processes.
  */
 
+/*
+ * These functions handle the blocking assignment. Use the %set
+ * instruction to perform the actual assignment, and calculate any
+ * lvalues and rvalues that need calculating.
+ *
+ * The set_to_nexus function takes a particular nexus and generates
+ * the %set statements to assign the value.
+ *
+ * The show_stmt_assign function looks at the assign statement, scans
+ * the l-values, and matches bits of the r-value with the correct
+ * nexus.
+ */
+
+static void set_to_nexus(ivl_nexus_t nex, char bit)
+{
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    unsigned pin = ivl_nexus_ptr_pin(ptr);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+
+	    if (sig == 0)
+		  continue;
+
+	    switch (bit) {
+		case '0':
+		case '1':
+		  break;
+		case 'x':
+		  bit = '2';
+		  break;
+		case 'z':
+		  bit = '3';
+		  break;
+	    }
+	    fprintf(vvp_out, "    %%set V_%s[%u], %c\n",
+		    ivl_signal_name(sig), pin, bit);
+      }
+}
+
+static void show_stmt_assign(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+      ivl_expr_t rval = ivl_stmt_rval(net);
+
+
+	/* Handle the special case that the r-value is a constant. We
+	   can generate the %set statement directly, without any worry
+	   about generating code to evaluate the r-value expressions. */
+
+      if (ivl_expr_type(rval) == IVL_EX_NUMBER) {
+	    unsigned idx;
+	    const char*bits = ivl_expr_bits(rval);
+
+	      /* XXXX Only single l-value supported for now */
+	    assert(ivl_stmt_lvals(net) == 1);
+
+	    lval = ivl_stmt_lval(net, 0);
+	      /* XXXX No mux support yet. */
+	    assert(ivl_lval_mux(lval) == 0);
+
+	    for (idx = 0 ;  idx < ivl_lval_pins(lval) ;  idx += 1)
+		  set_to_nexus(ivl_lval_pin(lval, idx), bits[idx]);
+
+	    return;
+      }
+
+      fprintf(stderr, "XXXX EXPRESSION TOO COMPLEX FOR ME?\n");
+}
+
+/*
+ * The delay statement is easy. Simply write a ``%delay <n>''
+ * instruction to delay the thread, then draw the included statement.
+ * The delay statement comes from verilog code like this:
+ *
+ *        ...
+ *        #<delay> <stmt>;
+ */
+static void show_stmt_delay(ivl_statement_t net)
+{
+      unsigned long delay = ivl_stmt_delay_val(net);
+      ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
+
+      fprintf(vvp_out, "    %%delay %lu;\n", delay);
+      show_statement(stmt);
+}
+
+/*
+ * noop statements are implemented by doing nothing.
+ */
+static void show_stmt_noop(ivl_statement_t net)
+{
+}
 
 static void show_system_task_call(ivl_statement_t net)
 {
@@ -69,6 +166,10 @@ static void show_statement(ivl_statement_t net)
 
       switch (code) {
 
+	  case IVL_ST_ASSIGN:
+	    show_stmt_assign(net);
+	    break;
+
 	      /* Begin-end blocks simply draw their contents. */
 	  case IVL_ST_BLOCK: {
 		unsigned idx;
@@ -78,6 +179,14 @@ static void show_statement(ivl_statement_t net)
 		}
 		break;
 	  }
+
+	  case IVL_ST_DELAY:
+	    show_stmt_delay(net);
+	    break;
+
+	  case IVL_ST_NOOP:
+	    show_stmt_noop(net);
+	    break;
 
 	  case IVL_ST_STASK:
 	    show_system_task_call(net);
@@ -136,6 +245,10 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.3  2001/03/21 01:49:43  steve
+ *  Scan the scopes of a design, and draw behavioral
+ *  blocking  assignments of constants to vectors.
+ *
  * Revision 1.2  2001/03/20 01:44:14  steve
  *  Put processes in the proper scope.
  *

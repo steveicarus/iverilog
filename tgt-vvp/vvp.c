@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvp.c,v 1.1 2001/03/19 01:20:46 steve Exp $"
+#ident "$Id: vvp.c,v 1.2 2001/03/21 01:49:43 steve Exp $"
 #endif
 
 /*
@@ -41,8 +41,7 @@ int target_design(ivl_design_t des)
       }
 
       root = ivl_design_root(des);
-      fprintf(vvp_out, "S_%s .scope \"%s\";\n", ivl_scope_name(root),
-	      ivl_scope_name(root));
+      draw_scope(root, 0);
 
       ivl_design_process(des, draw_process, 0);
 

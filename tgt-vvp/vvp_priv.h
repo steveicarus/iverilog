@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.1 2001/03/19 01:20:46 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.2 2001/03/21 01:49:43 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -37,8 +37,14 @@ extern FILE* vvp_out;
  */
 extern int draw_process(ivl_process_t net, void*x);
 
+extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
+
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.2  2001/03/21 01:49:43  steve
+ *  Scan the scopes of a design, and draw behavioral
+ *  blocking  assignments of constants to vectors.
+ *
  * Revision 1.1  2001/03/19 01:20:46  steve
  *  Add the tgt-vvp code generator target.
  *
