@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.36 1999/06/10 05:33:12 steve Exp $"
+#ident "$Id: parse.y,v 1.37 1999/06/12 03:42:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -147,9 +147,12 @@ source_file
 	;
 
 case_item
-	: expression ':' statement_opt
+	: expression_list ':' statement_opt
 		{ PCase::Item*tmp = new PCase::Item;
-		  tmp->expr = $1;
+		  if ($1->count() > 1) {
+			yyerror(@1, "Sorry, case expression lists not supported.");
+		  }
+		  tmp->expr = (*$1)[0];
 		  tmp->stat = $3;
 		  $$ = tmp;
 		}
@@ -164,6 +167,10 @@ case_item
 		  tmp->expr = 0;
 		  tmp->stat = $2;
 		  $$ = tmp;
+		}
+	| error ':' statement_opt
+		{ yyerror(@1, "Incomprehensible case expression.");
+		  yyerrok;
 		}
 	;
 
@@ -861,10 +868,14 @@ module_item
 			delete $2;
 		  }
 		}
-	| K_assign lavalue '=' expression ';'
-		{ PGAssign*tmp = pform_make_pgassign($2, $4);
+	| K_assign delay_opt lavalue '=' expression ';'
+		{ PGAssign*tmp = pform_make_pgassign($3, $5);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
+		  if ($2) {
+			yyerror(@2, "Sorry, assign delays not supported.");
+			delete $2;
+		  }
 		}
 	| K_assign error '=' expression ';'
 	| K_always statement
@@ -882,6 +893,9 @@ module_item
 		}
 	| K_function range_or_type_opt  IDENTIFIER ';' func_body K_endfunction
 		{ yyerror(@1, "Sorry, function declarations not supported.");
+		}
+	| K_specify specify_item_list K_endspecify
+		{
 		}
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
 		{ pform_set_attrib(*$3, *$5, *$7);
@@ -908,6 +922,14 @@ net_decl_assign
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = $1;
+		}
+	| delay IDENTIFIER '=' expression
+		{ PEIdent*id = new PEIdent(*$2);
+		  PGAssign*tmp = pform_make_pgassign(id, $4);
+		  tmp->set_file(@2.text);
+		  tmp->set_lineno(@2.first_line);
+		  $$ = $2;
+		  yyerror(@1, "Sorry, net assign delay not supported.");
 		}
 	;
 
@@ -987,7 +1009,7 @@ port
 			        "must be constant.");
 			delete $5;
 		  } else {
-			tmp->msb = $5;
+			tmp->lsb = $5;
 		  }
 		  delete $1;
 		  $$ = tmp;
@@ -1115,6 +1137,28 @@ register_variable_list
 		}
 	;
 
+specify_item
+	: K_specparam specparam_list ';'
+	;
+
+specify_item_list
+	: specify_item
+	| specify_item_list specify_item
+	;
+
+specparam
+	: IDENTIFIER '=' expression
+		{ yyerror(@1, "Sorry, specparam assignments not supported.");
+		  delete $1;
+		  delete $3;
+		}
+	;
+
+specparam_list
+	: specparam
+	| specparam_list ',' specparam
+	;
+
 statement
 	: K_assign lavalue '=' expression ';'
 		{ yyerror(@1, "Sorry, procedural continuous assign not supported.");
@@ -1122,9 +1166,21 @@ statement
 		}
 	| K_begin statement_list K_end
 		{ $$ = pform_make_block(PBlock::BL_SEQ, $2); }
+	| K_begin ':' IDENTIFIER statement_list K_end
+		{ yyerror(@3, "Sorry, block identifiers not supported.");
+		  $$ = pform_make_block(PBlock::BL_SEQ, $4);
+		}
+	| K_begin error K_end
+		{ yyerrok; }
+	| K_disable IDENTIFIER ';'
+		{ yyerror(@1, "Sorry, disable statements not supported.");
+		  delete $2;
+		}
 	| K_fork statement_list K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, $2); }
 	| K_begin K_end
+		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
+	| K_begin ':' IDENTIFIER K_end
 		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
 	| K_fork K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, 0); }
@@ -1148,6 +1204,12 @@ statement
 		  yywarn(@1, "casez not properly supported, using case.");
 		  $$ = tmp;
 		}
+	| K_case '(' expression ')' error K_endcase
+		{ yyerrok; }
+	| K_casex '(' expression ')' error K_endcase
+		{ yyerrok; }
+	| K_casez '(' expression ')' error K_endcase
+		{ yyerrok; }
 	| K_if '(' expression ')' statement_opt
 		{ PCondit*tmp = new PCondit($3, $5, 0);
 		  tmp->set_file(@1.text);
@@ -1255,6 +1317,7 @@ statement
 		}
 	| error ';'
 		{ yyerror(@1, "malformed statement");
+		  yyerrok;
 		  $$ = new PNoop;
 		}
 	;
@@ -1278,7 +1341,7 @@ statement_opt
 	;
 
 task_body
-	: task_item_list statement
+	: task_item_list_opt statement_opt
 	;
 
 task_item
@@ -1291,6 +1354,11 @@ task_item
 task_item_list
 	: task_item_list task_item
 	| task_item
+	;
+
+task_item_list_opt
+	: task_item_list
+	|
 	;
 
 udp_body
