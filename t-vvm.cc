@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.98 2000/01/18 04:53:57 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.99 2000/02/13 19:18:27 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -581,8 +581,26 @@ void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 
 void vvm_parm_rval::expr_memory(const NetEMemory*mem)
 {
-      assert(mem->index() == 0);
-      result = string("&") + mangle(mem->name()) + ".base";
+      if (mem->index() == 0) {
+	      /* If the expression is a memory without an index, then
+		 return the handle for the memory object. System tasks
+		 can take such things as parameters. */
+	    result = string("&") + mangle(mem->name()) + ".base";
+
+      } else if (const NetEConst*idx = dynamic_cast<const NetEConst*>(mem->index())){
+
+	      /* If the expression is a memory with a constant index,
+		 then generate a call to vpi_handle_by_index() to get
+		 the memory word handle. */
+	    unsigned long val = idx->value().as_ulong();
+	    ostrstream res;
+	    res << "vpi_handle_by_index(&" << mangle(mem->name()) <<
+		  ".base, " << val << ")" << ends;
+	    result = res.str();
+
+      } else {
+	    assert(0);
+      }
 }
 
 void vvm_parm_rval::expr_scope(const NetEScope*escope)
@@ -2041,6 +2059,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.99  2000/02/13 19:18:27  steve
+ *  Accept memory words as parameter to $display.
+ *
  * Revision 1.98  2000/01/18 04:53:57  steve
  *  missing break is switch.
  *

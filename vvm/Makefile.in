@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.18 2000/01/24 00:18:20 steve Exp $"
+#ident "$Id: Makefile.in,v 1.19 2000/02/13 19:18:28 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -117,4 +117,4 @@ uninstall:
 	rm -f $(includedir)/vpi_priv.h
 
 
--include $(patsubst %.o, dep/%.d, $O)
+-include $(patsubst %.o, dep/%.d, $O $P)

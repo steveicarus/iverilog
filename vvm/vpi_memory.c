@@ -26,7 +26,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_memory.c,v 1.3 1999/12/15 04:15:17 steve Exp $"
+#ident "$Id: vpi_memory.c,v 1.4 2000/02/13 19:18:28 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -82,6 +82,23 @@ static vpiHandle memory_iterate(int code, vpiHandle ref)
       }
 }
 
+static vpiHandle memory_index(vpiHandle ref, int index)
+{
+      struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
+      assert(ref->vpi_type->type_code==vpiMemory);
+
+      if (rfp->args == 0) {
+	    unsigned idx;
+	    rfp->args = calloc(rfp->size, sizeof(vpiHandle));
+	    for (idx = 0 ;  idx < rfp->size ;  idx += 1)
+		  rfp->args[idx] = &rfp->words[idx].base;
+      }
+
+      if (index > rfp->size) return 0;
+      if (index < 0) return 0;
+      return &(rfp->words[index].base);
+}
+
 static int memory_word_get(int code, vpiHandle ref)
 {
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
@@ -128,6 +145,15 @@ static vpiHandle memory_word_put(vpiHandle ref, p_vpi_value val,
       return 0;
 }
 
+static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
+{
+      struct __vpiMemoryWord*rfp = (struct __vpiMemorWord*)ref;
+      assert(ref->vpi_type->type_code==vpiMemoryWord);
+
+      vpip_bits_get_value(rfp->mem->bits+rfp->index*rfp->mem->width,
+			  rfp->mem->width, vp);
+}
+
 static const struct __vpirt vpip_memory_rt = {
       vpiMemory,
       memory_get,
@@ -135,15 +161,17 @@ static const struct __vpirt vpip_memory_rt = {
       0,
       0,
       0,
-      memory_iterate
+      memory_iterate,
+      memory_index
 };
 
 static const struct __vpirt vpip_memory_word_rt = {
       vpiMemoryWord,
       memory_word_get,
       0,
-      0,
+      memory_word_get_value,
       memory_word_put,
+      0,
       0,
       0
 };
@@ -171,6 +199,9 @@ vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
 }
 /*
  * $Log: vpi_memory.c,v $
+ * Revision 1.4  2000/02/13 19:18:28  steve
+ *  Accept memory words as parameter to $display.
+ *
  * Revision 1.3  1999/12/15 04:15:17  steve
  *  Implement vpi_put_value for memory words.
  *

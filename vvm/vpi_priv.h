@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.9 1999/12/15 04:01:14 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.10 2000/02/13 19:18:28 steve Exp $"
 #endif
 
 /*
@@ -66,6 +66,7 @@ struct __vpirt {
 	/* These methods follow references. */
       vpiHandle (*handle_)(int, vpiHandle);
       vpiHandle (*iterate_)(int, vpiHandle);
+      vpiHandle (*index_)(vpiHandle, int);
 };
 
 /*
@@ -284,6 +285,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.10  2000/02/13 19:18:28  steve
+ *  Accept memory words as parameter to $display.
+ *
  * Revision 1.9  1999/12/15 04:01:14  steve
  *  Add the VPI implementation of $readmemh.
  *

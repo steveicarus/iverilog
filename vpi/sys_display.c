@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.9 1999/11/07 02:25:07 steve Exp $"
+#ident "$Id: sys_display.c,v 1.10 2000/02/13 19:18:27 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -188,6 +188,7 @@ static void do_display(struct strobe_cb_info*info)
 
 		case vpiNet:
 		case vpiReg:
+		case vpiMemoryWord:
 		  value.format = vpiBinStrVal;
 		  vpi_get_value(item, &value);
 		  vpi_printf("%s", value.value.str);
@@ -412,6 +413,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.10  2000/02/13 19:18:27  steve
+ *  Accept memory words as parameter to $display.
+ *
  * Revision 1.9  1999/11/07 02:25:07  steve
  *  Add the $monitor implementation.
  *

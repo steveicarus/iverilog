@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.c,v 1.3 2000/01/20 06:04:55 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.4 2000/02/13 19:18:28 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -145,6 +145,12 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
       return (ref->vpi_type->iterate_)(type, ref);
 }
 
+vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
+{
+      assert(ref->vpi_type->index_);
+      return (ref->vpi_type->index_)(ref, idx);
+}
+
 void vpi_printf(const char*fmt, ...)
 {
       va_list ap;
@@ -168,6 +174,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.4  2000/02/13 19:18:28  steve
+ *  Accept memory words as parameter to $display.
+ *
  * Revision 1.3  2000/01/20 06:04:55  steve
  *  $dumpall checkpointing in VCD dump.
  *

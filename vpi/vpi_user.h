@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.11 2000/01/20 06:04:55 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.12 2000/02/13 19:18:28 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -207,6 +207,7 @@ extern void vpi_sim_control(int operation, ...);
 extern vpiHandle  vpi_handle(int type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
+extern vpiHandle  vpi_handle_by_index(vpiHandle ref, int index);
 
 extern void  vpi_get_time(vpiHandle obj, s_vpi_time*t);
 extern int   vpi_get(int property, vpiHandle ref);
@@ -227,6 +228,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.12  2000/02/13 19:18:28  steve
+ *  Accept memory words as parameter to $display.
+ *
  * Revision 1.11  2000/01/20 06:04:55  steve
  *  $dumpall checkpointing in VCD dump.
  *
