@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.10 2001/01/06 06:31:58 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.11 2001/01/10 03:13:23 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -169,7 +169,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 		  cerr << get_line() << ": sorry: I cannot handle "
 		       << "memories in this l-value context." << endl;
 	    } else {
-		  cerr << get_line() << ": error: Could not match signal ``"
+		  cerr << get_line() << ": error: Could not find variable ``"
 		       << name() << "'' in ``" << scope->name() <<
 			"''" << endl;
 	    }
@@ -306,6 +306,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.11  2001/01/10 03:13:23  steve
+ *  Build task outputs as lval instead of nets. (PR#98)
+ *
  * Revision 1.10  2001/01/06 06:31:58  steve
  *  declaration initialization for time variables.
  *

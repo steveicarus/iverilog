@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.203 2001/01/09 05:58:47 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.204 2001/01/10 03:13:23 steve Exp $"
 #endif
 
 /*
@@ -1448,70 +1448,33 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    if (port->port_type() == NetNet::PINPUT)
 		  continue;
 
-	    const PEIdent*id;
-	    NetNet*val = 0;
-	    NetMemory*mem = 0;
-	    if ( (id = dynamic_cast<const PEIdent*>(parms_[idx])) )
-		  des->find_symbol(scope, id->name(), val, mem);
+	      /* Handle the special case that the output parameter is
+		 a memory word. Generate a NetAssignMem instead of a
+		 NetAssign. */
+	    NetMemory*mem;
+	    const PEIdent*id = dynamic_cast<const PEIdent*>(parms_[idx]);
+	    if (id && (mem = des->find_memory(scope, id->name()))) {
 
-	      /* Catch the case of memory words passed as an out
-		 parameter. Generate an assignment to memory instead
-		 of a normal assignment. */
-	    if (mem != 0) {
-		  assert(id->msb_);
 		  NetExpr*ix = id->msb_->elaborate_expr(des, scope);
 		  assert(ix);
 
-		  NetExpr*rv = new NetESignal(port);
-		  if (rv->expr_width() < mem->width())
-			rv = pad_to_width(rv, mem->width());
-
-		  NetAssignMem*am = new NetAssignMem(mem, ix, rv);
-		  am->set_line(*this);
+		  NetExpr*rx = new NetESignal(port);
+		  NetAssignMem*am = new NetAssignMem(mem, ix, rx);
 		  block->append(am);
 		  continue;
 	    }
 
 
-	      /* Elaborate the parameter expression as a net so that
-		 it can be used as an l-value. Then check that the
-		 parameter width match up.
+	    NetAssign_*lv = parms_[idx]
+		  ? parms_[idx]->elaborate_lval(des, scope)
+		  : 0;
+	    if (lv == 0)
+		  continue;
 
-		 XXXX FIXME XXXX This goes nuts if the parameter is a
-		 memory word. that must be handled by generating
-		 NetAssignMem objects instead. */
-	    if (val == 0)
-		  val = parms_[idx]->elaborate_net(des, path,
-						   0, 0, 0, 0);
-	    assert(val);
-
-
-	      /* Make an expression out of the actual task port. If
-		 the port is smaller then the expression to receive
-		 the result, then expand the port by padding with
-		 zeros. */
 	    NetESignal*sig = new NetESignal(port);
-	    NetExpr*pexp = sig;
-	    if (sig->expr_width() < val->pin_count()) {
-		  unsigned cwid = val->pin_count()-sig->expr_width();
-		  verinum pad (verinum::V0, cwid);
-		  NetEConst*cp = new NetEConst(pad);
-		  cp->set_width(cwid);
-
-		  NetEConcat*con = new NetEConcat(2);
-		  con->set(0, cp);
-		  con->set(1, sig);
-		  con->set_width(val->pin_count());
-		  pexp = con;
-	    }
-
 
 	      /* Generate the assignment statement. */
-	    NetAssign_*lv = new NetAssign_("@", val->pin_count());
-	    des->add_node(lv);
-	    for (unsigned pi = 0 ; pi < val->pin_count() ;  pi += 1)
-		  connect(val->pin(pi), lv->pin(pi));
-	    NetAssign*ass = new NetAssign(lv, pexp);
+	    NetAssign*ass = new NetAssign(lv, sig);
 
 	    block->append(ass);
       }
@@ -2388,6 +2351,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.204  2001/01/10 03:13:23  steve
+ *  Build task outputs as lval instead of nets. (PR#98)
+ *
  * Revision 1.203  2001/01/09 05:58:47  steve
  *  Cope with width mismatches to module ports (PR#89)
  *

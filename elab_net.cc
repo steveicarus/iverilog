@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.56 2001/01/05 03:19:47 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.57 2001/01/10 03:13:23 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1059,7 +1059,7 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 
 		  if (warn_implicit)
 			cerr << get_line() << ": warning: implicit "
-			      " definition of wire " << path << "." <<
+			      "definition of wire " << path << "." <<
 			      text_ << "." << endl;
 	    }
       }
@@ -1797,6 +1797,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.57  2001/01/10 03:13:23  steve
+ *  Build task outputs as lval instead of nets. (PR#98)
+ *
  * Revision 1.56  2001/01/05 03:19:47  steve
  *  Fix net division to cope with small output sizes.
  *
