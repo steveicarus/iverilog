@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.13 1999/02/01 00:26:49 steve Exp $"
+#ident "$Id: main.cc,v 1.14 1999/04/23 04:34:32 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -92,17 +92,15 @@ net_func name_to_net_func(const string&name)
 
 int main(int argc, char*argv[])
 {
-      bool dump_flag = false;
       bool help_flag = false;
+      const char* net_path = 0;
       const char* out_path = 0;
+      const char* pf_path = 0;
       int opt;
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
 
-      while ((opt = getopt(argc, argv, "DF:f:ho:s:t:")) != EOF) switch (opt) {
-	  case 'D':
-	    dump_flag = true;
-	    break;
+      while ((opt = getopt(argc, argv, "F:f:hN:o:P:s:t:")) != EOF) switch (opt) {
 	  case 'F': {
 		net_func tmp = name_to_net_func(optarg);
 		if (tmp == 0) {
@@ -120,8 +118,14 @@ int main(int argc, char*argv[])
 	  case 'h':
 	    help_flag = true;
 	    break;
+	  case 'N':
+	    net_path = optarg;
+	    break;
 	  case 'o':
 	    out_path = optarg;
+	    break;
+	  case 'P':
+	    pf_path = optarg;
 	    break;
 	  case 's':
 	    start_module = optarg;
@@ -161,8 +165,8 @@ int main(int argc, char*argv[])
 	    return rc;
       }
 
-      if (dump_flag) {
-	    ofstream out ("a.pf");
+      if (pf_path) {
+	    ofstream out (pf_path);
 	    out << "PFORM DUMP MODULES:" << endl;
 	    for (map<string,Module*>::iterator mod = modules.begin()
 		       ; mod != modules.end()
@@ -202,8 +206,8 @@ int main(int argc, char*argv[])
 	    func(des);
       }
 
-      if (dump_flag) {
-	    ofstream out ("a.net");
+      if (net_path) {
+	    ofstream out (net_path);
 	    des->dump(out);
       }
 
@@ -228,6 +232,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.14  1999/04/23 04:34:32  steve
+ *  Make debug output file parameters.
+ *
  * Revision 1.13  1999/02/01 00:26:49  steve
  *  Carry some line info to the netlist,
  *  Dump line numbers for processes.
