@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.38 2003/05/15 01:24:46 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.39 2003/05/15 16:51:09 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -592,17 +592,23 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       return 0;
 }
 
-extern "C" void vpi_vprintf(const char*fmt, va_list ap)
+extern "C" PLI_INT32 vpi_vprintf(const char*fmt, va_list ap)
 {
-      vprintf(fmt, ap);
+      return vpi_mcd_vprintf(1, fmt, ap);
 }
 
-extern "C" void vpi_printf(const char *fmt, ...)
+extern "C" PLI_INT32 vpi_printf(const char *fmt, ...)
 {
       va_list ap;
       va_start(ap, fmt);
-      vpi_vprintf(fmt, ap);
+      int r = vpi_mcd_vprintf(1, fmt, ap);
       va_end(ap);
+      return r;
+}
+
+extern "C" PLI_INT32 vpi_flush(void)
+{
+      return vpi_mcd_flush(1);
 }
 
 
@@ -640,6 +646,17 @@ extern "C" void vpi_control(int operation, ...)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.39  2003/05/15 16:51:09  steve
+ *  Arrange for mcd id=00_00_00_01 to go to stdout
+ *  as well as a user specified log file, set log
+ *  file to buffer lines.
+ *
+ *  Add vpi_flush function, and clear up some cunfused
+ *  return codes from other vpi functions.
+ *
+ *  Adjust $display and vcd/lxt messages to use the
+ *  standard output/log file.
+ *
  * Revision 1.38  2003/05/15 01:24:46  steve
  *  Return all 64bits of time in vpi_get_time.
  *

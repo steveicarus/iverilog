@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.35 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: main.cc,v 1.36 2003/05/15 16:51:09 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -191,11 +191,13 @@ int main(int argc, char*argv[])
       if (logfile_name) {
 	    if (!strcmp(logfile_name, "-"))
 		  logfile = stderr;
-	    else 
+	    else {
 		  logfile = fopen(logfile_name, "w");
-	    if (!logfile) {
-		  perror(logfile_name);
-		  exit(1);
+		  if (!logfile) {
+		        perror(logfile_name);
+		        exit(1);
+		  }
+		  setlinebuf(logfile);
 	    }
       }
 
@@ -285,6 +287,17 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.36  2003/05/15 16:51:09  steve
+ *  Arrange for mcd id=00_00_00_01 to go to stdout
+ *  as well as a user specified log file, set log
+ *  file to buffer lines.
+ *
+ *  Add vpi_flush function, and clear up some cunfused
+ *  return codes from other vpi functions.
+ *
+ *  Adjust $display and vcd/lxt messages to use the
+ *  standard output/log file.
+ *
  * Revision 1.35  2003/03/13 04:36:57  steve
  *  Remove the obsolete functor delete functions.
  *

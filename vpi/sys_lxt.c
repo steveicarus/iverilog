@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.20 2003/04/28 01:03:11 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.21 2003/05/15 16:51:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -290,7 +290,7 @@ inline static int install_dumpvars_callback(void)
 	    return 0;
 
       if (dumpvars_status == 2) {
-	    vpi_mcd_printf(6, "VCD Error:"
+	    vpi_mcd_printf(1, "VCD Error:"
 			   " $dumpvars ignored,"
 			   " previously called at simtime %lu\n",
 			   dumpvars_time);
@@ -396,14 +396,14 @@ static void open_dumpfile(const char*path)
       dump_file = lt_init(path);
 
       if (dump_file == 0) {
-	    vpi_mcd_printf(6, 
+	    vpi_mcd_printf(1, 
 			   "LXT Error: Unable to open %s for output.\n", 
 			   path);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
 
-	    vpi_mcd_printf(4, 
+	    vpi_mcd_printf(1, 
 			   "LXT info: dumpfile %s opened for output.\n", 
 			   path);
 	    
@@ -430,7 +430,7 @@ static int sys_dumpfile_calltf(char*name)
 
 	    if (vpi_get(vpiType, item) != vpiConstant
 		|| vpi_get(vpiConstType, item) != vpiStringConst) {
-		  vpi_mcd_printf(6, 
+		  vpi_mcd_printf(1, 
 				 "LXT Error:"
 				 " %s parameter must be a string constant\n", 
 				 name);
@@ -590,17 +590,18 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  const char* fullname =
 			vpi_get_str(vpiFullName, item);
 
-		  vpi_mcd_printf(4, 
+#if 0
+		  vpi_mcd_printf(1, 
 				 "LXT info:"
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
-
+#endif
 		  nskip = 0 != vcd_names_search(&lxt_tab, fullname);
 		  
 		  if (!nskip) 
 			vcd_names_add(&lxt_tab, fullname);
 		  else 
-		    vpi_mcd_printf(6,
+		    vpi_mcd_printf(1,
 				   "LXT warning:"
 				   " ignoring signals"
 				   " in previously scanned scope %s\n",
@@ -623,7 +624,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 	    
 	  default:
-	    vpi_mcd_printf(6,
+	    vpi_mcd_printf(1,
 			   "LXT Error: $lxtdumpvars: Unsupported parameter "
 			   "type (%d)\n", vpi_get(vpiType, item));
       }
@@ -793,6 +794,17 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.21  2003/05/15 16:51:09  steve
+ *  Arrange for mcd id=00_00_00_01 to go to stdout
+ *  as well as a user specified log file, set log
+ *  file to buffer lines.
+ *
+ *  Add vpi_flush function, and clear up some cunfused
+ *  return codes from other vpi functions.
+ *
+ *  Adjust $display and vcd/lxt messages to use the
+ *  standard output/log file.
+ *
  * Revision 1.20  2003/04/28 01:03:11  steve
  *  Fix stringheap list management failure.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_mcd.cc,v 1.8 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.9 2003/05/15 16:51:09 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -27,12 +27,19 @@
 # include  <stdlib.h>
 # include  <string.h>
 
+/*
+ * This table keeps track of the MCD files. Note that there may be
+ * only 31 such files, and mcd bit0 (32'h00_00_00_01) is the special
+ * standard output file, which may be replicated to a logfile
+ * depending on flags to the command line.
+ */
 struct mcd_entry {
 	FILE *fp;
 	char *filename;
 };
 
 static struct mcd_entry mcd_table[32];
+static FILE* logfile;
 
 /* Initialize mcd portion of vpi.  Must be called before
  * any vpi_mcd routines can be used.
@@ -41,21 +48,19 @@ void vpi_mcd_init(FILE *log)
 {
 	mcd_table[0].fp = stdout;
 	mcd_table[0].filename = "<stdout>";
-	mcd_table[1].fp = stderr;
-	mcd_table[1].filename = "<stderr>";
-	mcd_table[2].fp = log;
-	mcd_table[2].filename = "<stdlog>";
+
+	logfile = log;
 }
 
 /*
  * close one or more channels.  we silently refuse to close the preopened ones.
  */
-unsigned int vpi_mcd_close(unsigned int mcd)
+extern "C" PLI_UINT32 vpi_mcd_close(unsigned int mcd)
 {
 	int i;
 	int rc;
 	rc = 0;
-	for(i = 3; i < 31; i++) {
+	for(i = 1; i < 31; i++) {
 		if( ((mcd>>i) & 1) && mcd_table[i].filename) {
 			if(fclose(mcd_table[i].fp) != 0)
 				rc |= 1<<i;				
@@ -69,7 +74,7 @@ unsigned int vpi_mcd_close(unsigned int mcd)
 	return rc;
 }
 
-char *vpi_mcd_name(unsigned int mcd)
+extern "C" char *vpi_mcd_name(unsigned int mcd)
 {
 	int i;
 	for(i = 0; i < 31; i++) {
@@ -79,7 +84,7 @@ char *vpi_mcd_name(unsigned int mcd)
 	return NULL;
 }
 
-unsigned int vpi_mcd_open_x(char *name, char *mode)
+extern "C" PLI_UINT32 vpi_mcd_open_x(char *name, char *mode)
 {
 	int i;
 	for(i = 0; i < 31; i++) {
@@ -96,27 +101,27 @@ got_entry:
 	return 1<<i;
 }
 
-unsigned int vpi_mcd_open(char *name)
+extern "C" PLI_UINT32 vpi_mcd_open(char *name)
 {
 	return vpi_mcd_open_x(name,"w");
 }
 
-extern "C" int vpi_mcd_vprintf(unsigned int mcd, const char*fmt, va_list ap)
+extern "C" PLI_INT32
+vpi_mcd_vprintf(unsigned int mcd, const char*fmt, va_list ap)
 {
 	int i;
 	int len;
 	int rc;
 
-	// don't print to stderr twice
-	if (mcd_table[1].fp == mcd_table[2].fp  &&  (mcd&6) == 6)
-	      mcd &= ~2;
-
 	rc = len = 0;
 	for(i = 0; i < 31; i++) {
 		if( (mcd>>i) & 1) {
-			if(mcd_table[i].fp)
+			if(mcd_table[i].fp) {
+				// echo to logfile
+				if (i == 0 && logfile)
+				      vfprintf(logfile, fmt, ap);
 				len = vfprintf(mcd_table[i].fp, fmt, ap);
-			else
+			} else
 				rc = EOF;
 		}
 	}
@@ -127,13 +132,23 @@ extern "C" int vpi_mcd_vprintf(unsigned int mcd, const char*fmt, va_list ap)
 		return len;
 }
 
-extern "C" int vpi_mcd_printf(unsigned int mcd, const char *fmt, ...)
+extern "C" PLI_INT32 vpi_mcd_printf(unsigned int mcd, const char *fmt, ...)
 {
       va_list ap;
       va_start(ap, fmt);
       int r = vpi_mcd_vprintf(mcd,fmt,ap);
       va_end(ap);
       return r;
+}
+
+extern "C" PLI_INT32 vpi_mcd_flush(unsigned int mcd)
+{
+	int i, rc = 0;
+	for(i = 0; i < 31; i++) {
+		if( (mcd>>i) & 1)
+		        if (fflush(mcd_table[i].fp)) rc |= 1<<i;
+	}
+	return rc;
 }
 
 int vpi_mcd_fputc(unsigned int mcd, unsigned char x)
@@ -162,6 +177,17 @@ int vpi_mcd_fgetc(unsigned int mcd)
 
 /*
  * $Log: vpi_mcd.cc,v $
+ * Revision 1.9  2003/05/15 16:51:09  steve
+ *  Arrange for mcd id=00_00_00_01 to go to stdout
+ *  as well as a user specified log file, set log
+ *  file to buffer lines.
+ *
+ *  Add vpi_flush function, and clear up some cunfused
+ *  return codes from other vpi functions.
+ *
+ *  Adjust $display and vcd/lxt messages to use the
+ *  standard output/log file.
+ *
  * Revision 1.8  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

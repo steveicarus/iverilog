@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.59 2003/05/02 15:45:43 steve Exp $"
+#ident "$Id: sys_display.c,v 1.60 2003/05/15 16:51:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -899,10 +899,10 @@ static int sys_display_calltf(char *name)
 	    vpi_put_userdata(sys, info);
       }
 
-      do_display(5, info);
+      do_display(1, info);
 
       if (strncmp(name,"$display",8) == 0)
-	    vpi_mcd_printf(5, "\n");
+	    vpi_mcd_printf(1, "\n");
 
       return 0;
 }
@@ -1666,6 +1666,17 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.60  2003/05/15 16:51:08  steve
+ *  Arrange for mcd id=00_00_00_01 to go to stdout
+ *  as well as a user specified log file, set log
+ *  file to buffer lines.
+ *
+ *  Add vpi_flush function, and clear up some cunfused
+ *  return codes from other vpi functions.
+ *
+ *  Adjust $display and vcd/lxt messages to use the
+ *  standard output/log file.
+ *
  * Revision 1.59  2003/05/02 15:45:43  steve
  *  Certain constants are allowed as mcd parameters.
  *
