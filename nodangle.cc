@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.6 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.7 2000/05/31 02:26:49 steve Exp $"
 #endif
 
 /*
@@ -37,6 +37,10 @@ class nodangle_f  : public functor_t {
 
 void nodangle_f::event(Design*des, NetEvent*ev)
 {
+      if (NetEvent*match = ev->find_similar_event()) {
+	    ev->replace_event(match);
+      }
+
       if (ev->nwait() != 0)
 	    return;
 
@@ -94,6 +98,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.7  2000/05/31 02:26:49  steve
+ *  Globally merge redundant event objects.
+ *
  * Revision 1.6  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

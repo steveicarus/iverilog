@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.139 2000/05/27 19:33:23 steve Exp $"
+#ident "$Id: netlist.h,v 1.140 2000/05/31 02:26:49 steve Exp $"
 #endif
 
 /*
@@ -1405,7 +1405,14 @@ class NetEvent : public LineInfo {
       NetScope* scope();
       const NetScope* scope() const;
 
+	// Locate the first event that matches my behavior and
+	// monitors the same signals.
       NetEvent* find_similar_event();
+
+	// This method replaces pointers to me with pointers to
+	// that. It is typically used to replace similar events
+	// located by the find_similar_event method.
+      void replace_event(NetEvent*that);
 
     private:
       string name_;
@@ -1422,6 +1429,11 @@ class NetEvent : public LineInfo {
 
 	// Use This member to count references by NetEvWait objects.
       unsigned waitref_;
+      struct wcell_ {
+	    NetEvWait*obj;
+	    struct wcell_*next;
+      };
+      struct wcell_ *wlist_;
 
     private: // not implemented
       NetEvent(const NetEvent&);
@@ -1454,6 +1466,7 @@ class NetEvWait  : public NetProc {
       ~NetEvWait();
 
       void add_event(NetEvent*tgt);
+      void replace_event(NetEvent*orig, NetEvent*repl);
 
       unsigned nevents() const;
       const NetEvent*event(unsigned) const;
@@ -2582,6 +2595,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.140  2000/05/31 02:26:49  steve
+ *  Globally merge redundant event objects.
+ *
  * Revision 1.139  2000/05/27 19:33:23  steve
  *  Merge similar probes within a module.
  *

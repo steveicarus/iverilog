@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.7 2000/05/27 19:33:23 steve Exp $"
+#ident "$Id: net_event.cc,v 1.8 2000/05/31 02:26:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -30,6 +30,7 @@ NetEvent::NetEvent(const string&n)
       probes_ = 0;
       trig_ = 0;
       waitref_ = 0;
+      wlist_ = 0;
 }
 
 NetEvent::~NetEvent()
@@ -160,6 +161,13 @@ NetEvent* NetEvent::find_similar_event()
       return 0;
 }
 
+void NetEvent::replace_event(NetEvent*that)
+{
+      while (wlist_) {
+	    wlist_->obj->replace_event(this, that);
+      }
+}
+
 NetEvTrig::NetEvTrig(NetEvent*ev)
 : event_(ev)
 {
@@ -243,6 +251,20 @@ NetEvWait::~NetEvWait()
 	    for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
 		  NetEvent*tgt = events_[idx];
 		  tgt->waitref_ -= 1;
+
+		  struct NetEvent::wcell_*tmp = tgt->wlist_;
+		  if (tmp->obj == this) {
+			tgt->wlist_ = tmp->next;
+			delete tmp;
+		  } else {
+			assert(tmp->next);
+			while (tmp->next->obj != this) {
+			      tmp = tmp->next;
+			      assert(tmp->next);
+			}
+			tmp->next = tmp->next->next;
+			delete tmp;
+		  }
 	    }
 	    delete[]events_;
       }
@@ -271,6 +293,51 @@ void NetEvWait::add_event(NetEvent*tgt)
 	// Remember to tell the NetEvent that there is someone
 	// pointing to it.
       tgt->waitref_ += 1;
+
+      struct NetEvent::wcell_*tmp = new NetEvent::wcell_;
+      tmp->obj = this;
+      tmp->next = tgt->wlist_;
+      tgt->wlist_ = tmp;
+}
+
+void NetEvWait::replace_event(NetEvent*src, NetEvent*repl)
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < nevents_ ;  idx += 1) {
+	    if (events_[idx] == src)
+		  break;
+      }
+
+      assert(idx < nevents_);
+
+	/* First, remove me from the list held by the src NetEvent. */
+      assert(src->waitref_ > 0);
+      src->waitref_ -= 1;
+      struct NetEvent::wcell_*tmp = src->wlist_;
+      if (tmp->obj == this) {
+	    src->wlist_ = tmp->next;
+	    delete tmp;
+      } else {
+	    assert(tmp->next);
+	    while (tmp->next->obj != this) {
+		  tmp = tmp->next;
+		  assert(tmp->next);
+	    }
+	    tmp->next = tmp->next->next;
+	    delete tmp;
+      }
+
+      events_[idx] = repl;
+
+	// Remember to tell the replacement NetEvent that there is
+	// someone pointing to it.
+      repl->waitref_ += 1;
+
+      tmp = new NetEvent::wcell_;
+      tmp->obj = this;
+      tmp->next = repl->wlist_;
+      repl->wlist_ = tmp;
+
 }
 
 unsigned NetEvWait::nevents() const
@@ -297,6 +364,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.8  2000/05/31 02:26:49  steve
+ *  Globally merge redundant event objects.
+ *
  * Revision 1.7  2000/05/27 19:33:23  steve
  *  Merge similar probes within a module.
  *
