@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.12 2000/01/09 05:50:48 steve Exp $"
+#ident "$Id: Module.h,v 1.13 2000/01/09 20:37:57 steve Exp $"
 #endif
 
 # include  <list>
@@ -77,7 +77,12 @@ class Module {
       const string&get_name() const { return name_; }
 
       void add_gate(PGate*gate);
-      void add_wire(PWire*wire);
+
+	// The add_wire method adds a wire by name, but only if the
+	// wire name doesn't already exist. Either way, the result is
+	// the existing wire or the pointer passed in.
+      PWire* add_wire(PWire*wire);
+
       void add_behavior(PProcess*behave);
       void add_task(const string&name, PTask*def);
       void add_function(const string&name, PFunction*def);
@@ -88,10 +93,10 @@ class Module {
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
-      PWire* get_wire(const string&name);
+      PWire* get_wire(const string&name) const;
       PGate* get_gate(const string&name);
 
-      const list<PWire*>& get_wires() const { return wires_; }
+      const map<string,PWire*>& get_wires() const { return wires_; }
       const list<PGate*>& get_gates() const { return gates_; }
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
@@ -104,7 +109,7 @@ class Module {
       const string name_;
 
       svector<port_t*> ports_;
-      list<PWire*> wires_;
+      map<string,PWire*> wires_;
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
       map<string,PTask*> tasks_;
@@ -118,6 +123,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.13  2000/01/09 20:37:57  steve
+ *  Careful with wires connected to multiple ports.
+ *
  * Revision 1.12  2000/01/09 05:50:48  steve
  *  Support named parameter override lists.
  *

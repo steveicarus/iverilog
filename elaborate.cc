@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.139 2000/01/09 05:50:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.140 2000/01/09 20:37:57 steve Exp $"
 #endif
 
 /*
@@ -1863,13 +1863,13 @@ bool Module::elaborate(Design*des, NetScope*scope,
 
 	// Get all the explicitly declared wires of the module and
 	// start the signals list with them.
-      const list<PWire*>&wl = get_wires();
+      const map<string,PWire*>&wl = get_wires();
 
-      for (list<PWire*>::const_iterator wt = wl.begin()
+      for (map<string,PWire*>::const_iterator wt = wl.begin()
 		 ; wt != wl.end()
 		 ; wt ++ ) {
 
-	    (*wt)->elaborate(des, scope);
+	    (*wt).second->elaborate(des, scope);
       }
 
 	// Elaborate functions.
@@ -1981,6 +1981,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.140  2000/01/09 20:37:57  steve
+ *  Careful with wires connected to multiple ports.
+ *
  * Revision 1.139  2000/01/09 05:50:48  steve
  *  Support named parameter override lists.
  *

@@ -17,24 +17,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.8 1999/12/11 05:45:41 steve Exp $"
+#ident "$Id: Module.cc,v 1.9 2000/01/09 20:37:57 steve Exp $"
 #endif
 
 # include  "Module.h"
 # include  "PGate.h"
 # include  "PWire.h"
+# include  <assert.h>
 
 Module::Module(const string&name, const svector<Module::port_t*>*pp)
 : name_(name)
 {
       if (pp) {
+	      // Save the list of ports, then scan the list to make
+	      // the implicit wires. Add those wires to the wire map.
 	    ports_ = *pp;
 	    for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
 		  port_t*cur = ports_[idx];
 		  if (cur == 0)
 			continue;
-		  for (unsigned jdx = 0 ;  jdx < cur->wires.count() ; jdx += 1)
-			add_wire(cur->wires[jdx]);
+
+		    // The port can actually be a list of wires, to
+		    // remember to scan the set. Also note the case
+		    // where a wire may be connected to multiple
+		    // ports, and reuse the link if that happens.
+		  for (unsigned jdx = 0; jdx < cur->wires.count(); jdx += 1) {
+			PWire*tmp = add_wire(cur->wires[jdx]);
+			if (tmp != cur->wires[jdx]) {
+			      delete cur->wires[jdx];
+			      cur->wires[jdx] = tmp;
+			}
+		  }
 	    }
       }
 }
@@ -54,9 +67,14 @@ void Module::add_function(const string &name, PFunction *func)
       funcs_[name] = func;
 }
 
-void Module::add_wire(PWire*wire)
+PWire* Module::add_wire(PWire*wire)
 {
-      wires_.push_back(wire);
+      PWire*&ep = wires_[wire->name()];
+      if (ep) return ep;
+
+      assert(ep == 0);
+      ep = wire;
+      return wire;
 }
 
 void Module::add_behavior(PProcess*b)
@@ -86,17 +104,13 @@ unsigned Module::find_port(const string&name) const
 }
 
 
-PWire* Module::get_wire(const string&name)
+PWire* Module::get_wire(const string&name) const
 {
-      for (list<PWire*>::iterator cur = wires_.begin()
-		 ; cur != wires_.end()
-		 ; cur ++ ) {
-
-	    if ((*cur)->name() == name)
-		  return *cur;
-      }
-
-      return 0;
+      map<string,PWire*>::const_iterator obj = wires_.find(name);
+      if (obj == wires_.end())
+	    return 0;
+      else
+	    return (*obj).second;
 }
 
 PGate* Module::get_gate(const string&name)
@@ -115,6 +129,9 @@ PGate* Module::get_gate(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.9  2000/01/09 20:37:57  steve
+ *  Careful with wires connected to multiple ports.
+ *
  * Revision 1.8  1999/12/11 05:45:41  steve
  *  Fix support for attaching attributes to primitive gates.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.46 2000/01/09 05:50:49 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.47 2000/01/09 20:37:57 steve Exp $"
 #endif
 
 /*
@@ -599,11 +599,11 @@ void Module::dump(ostream&out) const
       }
 
 	// Iterate through and display all the wires.
-      for (list<PWire*>::const_iterator wire = wires_.begin()
+      for (map<string,PWire*>::const_iterator wire = wires_.begin()
 		 ; wire != wires_.end()
 		 ; wire ++ ) {
 
-	    (*wire)->dump(out);
+	    (*wire).second->dump(out);
       }
 
 	// Dump the task definitions.
@@ -691,6 +691,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.47  2000/01/09 20:37:57  steve
+ *  Careful with wires connected to multiple ports.
+ *
  * Revision 1.46  2000/01/09 05:50:49  steve
  *  Support named parameter override lists.
  *
