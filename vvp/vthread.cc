@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.120 2004/06/19 15:52:53 steve Exp $"
+#ident "$Id: vthread.cc,v 1.121 2004/06/19 16:17:02 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1855,9 +1855,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 		  goto x_out;
 
 	      /* Sign extend the signed operands. */
-	    if (lv & (1 << (cp->number-1)))
+	    if (lv & (1LL << (cp->number-1)))
 		  lv |= -1LL << cp->number;
-	    if (rv & (1 << (cp->number-1)))
+	    if (rv & (1LL << (cp->number-1)))
 		  rv |= -1LL << cp->number;
 
 	    lv %= rv;
@@ -2874,6 +2874,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.121  2004/06/19 16:17:02  steve
+ *  Watch type of mak bit matches masked value.
+ *
  * Revision 1.120  2004/06/19 15:52:53  steve
  *  Add signed modulus operator.
  *
