@@ -27,7 +27,7 @@
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.13 2002/07/03 23:16:27 steve Exp $"
+#ident "$Id: vpi_memory.cc,v 1.14 2002/07/03 23:39:57 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -39,7 +39,7 @@
 # include  <stdio.h>
 
 extern const char hex_digits[256];
-extern char*need_result_buf(size_t);
+extern char*need_result_buf(size_t, int);
 
 static void memory_make_word_handles(struct __vpiMemory*rfp);
 
@@ -109,20 +109,18 @@ static char* memory_get_str(int code, vpiHandle ref)
 
       struct __vpiMemory*rfp = (struct __vpiMemory*)ref;
 
-      static char buf[4096];
-
       char *bn = vpi_get_str(vpiFullName, &rfp->scope->base);
       char *nm = memory_name(rfp->mem);
 
-      assert ((strlen(bn) + strlen(nm) + 1) < 4096);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, 1);
 
       switch (code) {
 	  case vpiFullName:
-	    sprintf(buf, "%s.%s", bn, nm);
-	    return buf;
+	    sprintf(rbuf, "%s.%s", bn, nm);
+	    return rbuf;
 	  case vpiName:
-	    strcpy(buf, nm);
-	    return buf;
+	    strcpy(rbuf, nm);
+	    return rbuf;
       }
 
       return 0;
@@ -346,21 +344,19 @@ static char* memory_word_get_str(int code, vpiHandle ref)
 
       struct __vpiMemoryWord*rfp = (struct __vpiMemoryWord*)ref;
 
-      static char buf[4096];
-
       char *bn = vpi_get_str(vpiFullName, &rfp->mem->scope->base);
       char *nm = memory_name(rfp->mem->mem);
 
-      assert ((strlen(bn) + strlen(nm) + 16) < 4096);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, 1);
 
       switch (code) {
 	  case vpiFullName:
-	    sprintf(buf, "%s.%s[%d]", bn, nm, rfp->index.value);
-	    return buf;
+	    sprintf(rbuf, "%s.%s[%d]", bn, nm, rfp->index.value);
+	    return rbuf;
 	    break;
 	  case vpiName: {
-	    sprintf(buf, "%s[%d]", nm, rfp->index.value);
-	    return buf;
+	    sprintf(rbuf, "%s[%d]", nm, rfp->index.value);
+	    return rbuf;
 	    break;
 	  }
       }
@@ -384,7 +380,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	    assert("format not implemented");
 
 	  case vpiBinStrVal:
-	      rbuf = need_result_buf(width+1);
+	      rbuf = need_result_buf(width+1, 0);
 	      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		  unsigned bit = memory_get(rfp->mem->mem, bidx+idx);
 
@@ -408,7 +404,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 			    bits[bb] |= val << bs;
 		}
 
-		rbuf = need_result_buf(hwid+1);
+		rbuf = need_result_buf(hwid+1, 0);
 		vpip_bits_to_oct_str(bits, width, rbuf, hwid+1, false);
 
 		delete[]bits;
@@ -420,7 +416,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned hval, hwid;
 		hwid = (width + 3) / 4;
 
-		rbuf = need_result_buf(hwid+1);
+		rbuf = need_result_buf(hwid+1, 0);
 		rbuf[hwid] = 0;
 
 		hval = 0;
@@ -461,7 +457,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 		      bits[idx] = memory_get(rfp->mem->mem, bidx+idx);
 
-		rbuf = need_result_buf(width+1);
+		rbuf = need_result_buf(width+1, 0);
 		vpip_bits_to_dec_str(bits, width, rbuf, width+1, false);
 
 		delete[]bits;
@@ -488,7 +484,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiVectorVal: {
 		  unsigned hwid = (width - 1)/32 + 1;
 
-		  rbuf = need_result_buf(hwid);
+		  rbuf = need_result_buf(hwid, 0);
 		  s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 		  vp->value.vector = op;
 
@@ -583,6 +579,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.14  2002/07/03 23:39:57  steve
+ *  Dynamic size result buffer for _str and _get_value functions.
+ *
  * Revision 1.13  2002/07/03 23:16:27  steve
  *  don't pollute name space
  *  fix vecval for Z/X cases

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.38 2002/07/03 23:16:27 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.39 2002/07/03 23:39:57 steve Exp $"
 #endif
 
 /*
@@ -54,19 +54,20 @@ extern const char oct_digits[256];
  * buffer can be reused for that purpose. Whenever I have a need, the
  * need_result_buf function makes sure that need can be met.
  */
-char *need_result_buf(size_t cnt)
+char *need_result_buf(size_t cnt, int type)
 {
-      static char*result_buf = 0;
-      static size_t result_buf_size = 0;
+      static char*result_buf[2] = {0, 0};
+      static size_t result_buf_size[2] = {0, 0};
+      int idx = type ? 1 : 0;
 
-      if (result_buf_size == 0) {
-	    result_buf = (char*)malloc(cnt);
-      } else if (result_buf_size < cnt) {
-	    result_buf = (char*)realloc(result_buf, cnt);
+      if (result_buf_size[idx] == 0) {
+	    result_buf[idx] = (char*)malloc(cnt);
+      } else if (result_buf_size[idx] < cnt) {
+	    result_buf[idx] = (char*)realloc(result_buf[idx], cnt);
       }
-      result_buf_size = cnt;
+      result_buf_size[idx] = cnt;
 
-      return result_buf;
+      return result_buf[idx];
 }
 
 /*
@@ -108,22 +109,20 @@ static char* signal_get_str(int code, vpiHandle ref)
 
       struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 
-      static char buf[4096];
-
       char *bn = vpi_get_str(vpiFullName, &rfp->scope->base);
       char *nm = (char*)rfp->name;
 
-      assert((strlen(bn) + strlen(nm) + 1) < 4096);
+      char *rbuf = need_result_buf(strlen(bn) + strlen(nm) + 1, 1);
 
       switch (code) {
 
 	  case vpiFullName:
-	    sprintf(buf, "%s.%s", bn, nm);
-	    return buf;
+	    sprintf(rbuf, "%s.%s", bn, nm);
+	    return rbuf;
 
 	  case vpiName:
-	    strcpy(buf, nm);
-	    return buf;
+	    strcpy(rbuf, nm);
+	    return rbuf;
       }
 
       return 0;
@@ -159,7 +158,7 @@ static char *signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       }
 
       unsigned hwid = (wid+2) / 3 + 1;
-      char *rbuf = need_result_buf(hwid);
+      char *rbuf = need_result_buf(hwid, 0);
 
       vpip_bits_to_dec_str(bits, wid, rbuf, hwid, rfp->signed_flag);
 
@@ -179,7 +178,7 @@ static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
       /* The result will use a character for each 8 bits of the
 	 vector. Add one extra character for the highest bits that
 	 don't form an 8 bit group. */
-      char *rbuf = need_result_buf(wid/8 + ((wid&7)!=0) + 1);
+      char *rbuf = need_result_buf(wid/8 + ((wid&7)!=0) + 1, 0);
       char *cp = rbuf;
 
       char tmp = 0;
@@ -247,7 +246,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiBinStrVal:
-	    rbuf = need_result_buf(wid+1);
+	    rbuf = need_result_buf(wid+1, 0);
 
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  vvp_ipoint_t fptr = vvp_fvector_get(rfp->bits, idx);
@@ -261,7 +260,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
 
-		rbuf = need_result_buf(hwid+1);
+		rbuf = need_result_buf(hwid+1, 0);
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -298,7 +297,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		unsigned hval, hwid;
 		hwid = (wid + 2) / 3;
 
-		rbuf = need_result_buf(hwid+1);
+		rbuf = need_result_buf(hwid+1, 0);
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -343,7 +342,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	      unsigned int obit = 0;
 	      unsigned hwid = (wid - 1)/32 + 1;
 
-	      rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval));
+	      rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), 0);
 	      s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 	      vp->value.vector = op;
 
@@ -674,6 +673,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.39  2002/07/03 23:39:57  steve
+ *  Dynamic size result buffer for _str and _get_value functions.
+ *
  * Revision 1.38  2002/07/03 23:16:27  steve
  *  don't pollute name space
  *  fix vecval for Z/X cases
