@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: codes.h,v 1.45 2002/07/05 02:50:58 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: codes.h,v 1.46 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 
@@ -152,6 +152,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.46  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.45  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
  *

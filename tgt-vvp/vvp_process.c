@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.62 2002/08/07 00:54:39 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvp_process.c,v 1.63 2002/08/12 01:35:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1226,6 +1226,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.63  2002/08/12 01:35:04  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.62  2002/08/07 00:54:39  steve
  *  Add force to nets.
  *

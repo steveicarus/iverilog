@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth.cc,v 1.13 2002/06/05 03:44:25 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: synth.cc,v 1.14 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -162,6 +162,9 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.14  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.13  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

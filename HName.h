@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: HName.h,v 1.2 2002/06/14 03:25:51 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: HName.h,v 1.3 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -79,6 +79,9 @@ extern bool operator == (const hname_t&, const hname_t&);
 
 /*
  * $Log: HName.h,v $
+ * Revision 1.3  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2002/06/14 03:25:51  steve
  *  Compiler portability.
  *

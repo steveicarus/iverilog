@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_dlfcn.h,v 1.4 2002/01/23 04:54:38 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: ivl_dlfcn.h,v 1.5 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -77,6 +77,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.5  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.4  2002/01/23 04:54:38  steve
  *  Load modules with RTLD_LAZY
  *

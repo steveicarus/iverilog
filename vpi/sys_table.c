@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.16 2002/04/07 04:37:53 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: sys_table.c,v 1.17 2002/08/12 01:35:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -86,6 +86,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.17  2002/08/12 01:35:05  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.16  2002/04/07 04:37:53  steve
  *  Add $plusargs system functions.
  *

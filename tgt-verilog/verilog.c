@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.26 2001/12/15 02:13:17 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: verilog.c,v 1.27 2002/08/12 01:35:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -439,6 +439,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.27  2002/08/12 01:35:03  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.26  2001/12/15 02:13:17  steve
  *  The IVL_SIT_WIRE type does not exist, it is a
  *  synonym for IVL_SIT_TRI.

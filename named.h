@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: named.h,v 1.2 2000/02/23 02:56:54 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: named.h,v 1.3 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include  <string>
@@ -36,6 +36,9 @@ template <class T> struct named {
 
 /*
  * $Log: named.h,v $
+ * Revision 1.3  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Module.h,v 1.25 2002/05/19 23:37:28 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: Module.h,v 1.26 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  <list>
@@ -145,6 +145,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.26  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.25  2002/05/19 23:37:28  steve
  *  Parse port_declaration_lists from the 2001 Standard.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.136 2002/07/15 00:21:42 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: compile.cc,v 1.137 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1433,6 +1433,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.137  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.136  2002/07/15 00:21:42  steve
  *  Fix initialization of symbol table string heap.
  *

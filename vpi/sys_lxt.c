@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.9 2002/07/17 05:13:43 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: sys_lxt.c,v 1.10 2002/08/12 01:35:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -813,6 +813,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.10  2002/08/12 01:35:04  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.9  2002/07/17 05:13:43  steve
  *  Implementation of vpi_handle_by_name, and
  *  add the vpiVariables iterator.

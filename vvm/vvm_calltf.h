@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_calltf.h,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_calltf.h,v 1.6 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -35,6 +35,9 @@ extern void vvm_load_vpi_module(const char*path);
 
 /*
  * $Log: vvm_calltf.h,v $
+ * Revision 1.6  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

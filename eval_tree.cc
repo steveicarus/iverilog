@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.40 2002/05/25 16:43:47 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: eval_tree.cc,v 1.41 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1134,6 +1134,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.41  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.40  2002/05/25 16:43:47  steve
  *  Eval ^ and &0 expressions.
  *

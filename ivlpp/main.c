@@ -16,8 +16,8 @@ const char COPYRIGHT[] =
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.c,v 1.15 2002/04/04 05:26:13 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: main.c,v 1.16 2002/08/12 01:35:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -288,6 +288,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.16  2002/08/12 01:35:02  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.15  2002/04/04 05:26:13  steve
  *  Add dependency generation.
  *

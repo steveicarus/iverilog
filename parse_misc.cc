@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse_misc.cc,v 1.6 2002/06/06 18:57:18 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: parse_misc.cc,v 1.7 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -60,6 +60,9 @@ int VLwrap()
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.7  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.6  2002/06/06 18:57:18  steve
  *  Use standard name for iostream.
  *

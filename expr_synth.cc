@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.35 2002/07/07 22:31:39 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: expr_synth.cc,v 1.36 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -608,6 +608,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.36  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.35  2002/07/07 22:31:39  steve
  *  Smart synthesis of binary AND expressions.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpithunk.c,v 1.5 2002/08/11 23:47:04 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpithunk.c,v 1.6 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -232,6 +232,9 @@ extern int vpi_chk_error(p_vpi_error_info info)
 
 /*
  * $Log: vpithunk.c,v $
+ * Revision 1.6  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.5  2002/08/11 23:47:04  steve
  *  Add missing Log and Ident strings.
  *

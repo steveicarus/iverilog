@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm.h,v 1.37 2001/01/16 02:44:18 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm.h,v 1.38 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -123,6 +123,9 @@ class vvm_event {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.38  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.37  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

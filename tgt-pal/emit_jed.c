@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit_jed.c,v 1.4 2001/09/15 18:27:04 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: emit_jed.c,v 1.5 2002/08/12 01:35:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -134,6 +134,9 @@ int emit_jedec(const char*path)
 
 /*
  * $Log: emit_jed.c,v $
+ * Revision 1.5  2002/08/12 01:35:03  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.4  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

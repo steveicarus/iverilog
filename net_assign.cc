@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.14 2002/08/04 18:28:15 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: net_assign.cc,v 1.15 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -241,6 +241,9 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.15  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.14  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

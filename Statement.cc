@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.cc,v 1.27 2002/04/21 22:31:02 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: Statement.cc,v 1.28 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -295,6 +295,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.28  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.27  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated

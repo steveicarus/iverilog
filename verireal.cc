@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verireal.cc,v 1.7 2002/06/15 02:35:49 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: verireal.cc,v 1.8 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -140,6 +140,9 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.8  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.7  2002/06/15 02:35:49  steve
  *  Rounding error.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.85 2002/08/07 02:17:14 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: t-dll-api.cc,v 1.86 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1550,6 +1550,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.86  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.85  2002/08/07 02:17:14  steve
  *  Dead code.
  *

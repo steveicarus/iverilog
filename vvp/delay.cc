@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: delay.cc,v 1.1 2001/11/10 18:07:11 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: delay.cc,v 1.2 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 #include "delay.h"
@@ -247,6 +247,9 @@ vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src, unsigned mask)
 
 /*
 ** $Log: delay.cc,v $
+** Revision 1.2  2002/08/12 01:35:08  steve
+**  conditional ident string using autoconfig.
+**
 ** Revision 1.1  2001/11/10 18:07:11  steve
 **  Runtime support for functor delays. (Stephan Boettcher)
 **

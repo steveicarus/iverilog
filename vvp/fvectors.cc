@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: fvectors.cc,v 1.5 2002/08/11 23:47:05 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: fvectors.cc,v 1.6 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -90,6 +90,9 @@ vvp_fvector_t vvp_fvector_new(unsigned size)
 
 /*
  * $Log: fvectors.cc,v $
+ * Revision 1.6  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.5  2002/08/11 23:47:05  steve
  *  Add missing Log and Ident strings.
  *

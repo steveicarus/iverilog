@@ -22,8 +22,8 @@
  *    binary (compiled) form. If you have not received it, contact
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
-#if !defined(WINNT)
-#ident "$Id: StringHeap.cc,v 1.1 2002/08/04 19:13:16 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: StringHeap.cc,v 1.2 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  "StringHeap.h"
@@ -67,6 +67,9 @@ const char* StringHeap::add(const char*text)
 
 /*
  * $Log: StringHeap.cc,v $
+ * Revision 1.2  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.1  2002/08/04 19:13:16  steve
  *  dll uses StringHeap for named items.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_signal.c,v 1.2 2001/10/26 02:29:10 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_signal.c,v 1.3 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -127,6 +127,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name,
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.3  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2001/10/26 02:29:10  steve
  *  const/non-const warnings. (Stephan Boettcher)
  *

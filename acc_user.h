@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: acc_user.h,v 1.5 2002/06/11 15:19:12 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: acc_user.h,v 1.6 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 /*
@@ -136,6 +136,9 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.6  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.5  2002/06/11 15:19:12  steve
  *  Add acc_fetch_argc/argv/version (mruff)
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: a_set_value.c,v 1.1 2002/06/07 02:58:59 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: a_set_value.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -112,6 +112,9 @@ int acc_set_value(handle object, p_setval_value value, p_setval_delay delay)
 
 /*
  * $Log: a_set_value.c,v $
+ * Revision 1.2  2002/08/12 01:35:02  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.1  2002/06/07 02:58:59  steve
  *  Add a bunch of acc/tf functions. (mruff)
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.12 2002/01/12 04:02:16 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: draw_tt.c,v 1.13 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -643,6 +643,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.13  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.12  2002/01/12 04:02:16  steve
  *  Support the BUFZ logic device.
  *

@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_thread.h,v 1.10 2000/10/28 00:51:42 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_thread.h,v 1.11 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -96,6 +96,9 @@ class vvm_thread {
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.11  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.10  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

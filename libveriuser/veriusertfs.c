@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: veriusertfs.c,v 1.4 2002/06/04 01:42:58 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: veriusertfs.c,v 1.5 2002/08/12 01:35:02 steve Exp $"
 #endif
 
 /*
@@ -207,6 +207,9 @@ static int callback(p_cb_data data)
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.5  2002/08/12 01:35:02  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.4  2002/06/04 01:42:58  steve
  *  Add misctf support to libveriuser
  *

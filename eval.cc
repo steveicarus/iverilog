@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.29 2002/06/07 02:57:54 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: eval.cc,v 1.30 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -219,6 +219,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.30  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.29  2002/06/07 02:57:54  steve
  *  Simply give up on constants with indices.
  *

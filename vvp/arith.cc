@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.23 2002/05/07 04:15:43 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: arith.cc,v 1.24 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -551,6 +551,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.24  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.23  2002/05/07 04:15:43  steve
  *  Fix uninitialized memory accesses.
  *

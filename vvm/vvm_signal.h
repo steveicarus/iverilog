@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_signal.h,v 1.12 2001/01/16 02:44:18 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_signal.h,v 1.13 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -119,6 +119,9 @@ class vvm_memory_t : public __vpiMemory {
 
 /*
  * $Log: vvm_signal.h,v $
+ * Revision 1.13  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.12  2001/01/16 02:44:18  steve
  *  Use the iosfwd header if available.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_force.cc,v 1.7 2002/01/19 19:02:08 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: net_force.cc,v 1.8 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -130,6 +130,9 @@ const NetNet*NetRelease::lval() const
 
 /*
  * $Log: net_force.cc,v $
+ * Revision 1.8  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.7  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

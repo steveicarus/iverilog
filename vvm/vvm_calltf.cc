@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_calltf.cc,v 1.15 2001/09/15 18:27:04 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_calltf.cc,v 1.16 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -139,6 +139,9 @@ void vvm_load_vpi_module(const char*name)
 
 /*
  * $Log: vvm_calltf.cc,v $
+ * Revision 1.16  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.15  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *

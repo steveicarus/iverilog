@@ -1,5 +1,5 @@
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_vpi.cc,v 1.2 2002/08/11 23:47:05 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_vpi.cc,v 1.3 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 #include <stdarg.h>
@@ -38,6 +38,9 @@ void vvm_vpi_init()
 
 /*
  * $Log: vvm_vpi.cc,v $
+ * Revision 1.3  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2002/08/11 23:47:05  steve
  *  Add missing Log and Ident strings.
  *

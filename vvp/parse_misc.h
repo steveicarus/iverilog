@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: parse_misc.h,v 1.6 2001/07/11 04:43:57 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: parse_misc.h,v 1.7 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 
@@ -77,6 +77,9 @@ extern void argv_sym_lookup(struct argv_s*obj);
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.7  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.6  2001/07/11 04:43:57  steve
  *  support postpone of $systask parameters. (Stephan Boettcher)
  *

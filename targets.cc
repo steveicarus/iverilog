@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: targets.cc,v 1.10 2002/08/11 23:39:33 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: targets.cc,v 1.11 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -36,6 +36,9 @@ const struct target *target_table[] = {
 
 /*
  * $Log: targets.cc,v $
+ * Revision 1.11  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.10  2002/08/11 23:39:33  steve
  *  Remove VVM option.
  *

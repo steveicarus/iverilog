@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: synth2.cc,v 1.6 2002/08/10 22:07:08 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: synth2.cc,v 1.7 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -319,6 +319,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.7  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.6  2002/08/10 22:07:08  steve
  *  Observe attributes to control synthesis.
  *

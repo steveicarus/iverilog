@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: functor.h,v 1.47 2002/08/07 00:54:20 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: functor.h,v 1.48 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -352,6 +352,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.48  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.47  2002/08/07 00:54:20  steve
  *  Documentation, and excessive inlines.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.130 2002/08/04 18:28:14 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: design_dump.cc,v 1.131 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -984,6 +984,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.131  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.130  2002/08/04 18:28:14  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

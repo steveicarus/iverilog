@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.256 2002/08/05 04:18:45 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: netlist.h,v 1.257 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 /*
@@ -3008,6 +3008,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.257  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.256  2002/08/05 04:18:45  steve
  *  Store only the base name of memories.
  *

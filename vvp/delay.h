@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: delay.h,v 1.2 2001/12/06 03:31:24 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: delay.h,v 1.3 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 #include "pointers.h"
@@ -113,6 +113,9 @@ vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src,
 
 /*
 ** $Log: delay.h,v $
+** Revision 1.3  2002/08/12 01:35:08  steve
+**  conditional ident string using autoconfig.
+**
 ** Revision 1.2  2001/12/06 03:31:24  steve
 **  Support functor delays for gates and UDP devices.
 **  (Stephan Boettcher)

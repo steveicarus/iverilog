@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: main.cc,v 1.29 2002/07/15 00:21:42 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: main.cc,v 1.30 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -280,6 +280,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.30  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.29  2002/07/15 00:21:42  steve
  *  Fix initialization of symbol table string heap.
  *

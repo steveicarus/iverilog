@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.10 2002/05/12 23:44:41 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: schedule.h,v 1.11 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -93,6 +93,9 @@ extern bool schedule_finished(void);
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.11  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.10  2002/05/12 23:44:41  steve
  *  task calls and forks push the thread event in the queue.
  *

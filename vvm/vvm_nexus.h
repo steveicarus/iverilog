@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.h,v 1.6 2000/11/20 00:58:41 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_nexus.h,v 1.7 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -166,6 +166,9 @@ extern void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.h,v $
+ * Revision 1.7  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.6  2000/11/20 00:58:41  steve
  *  Add support for supply nets (PR#17)
  *

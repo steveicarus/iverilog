@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: arith.h,v 1.13 2002/05/07 04:15:43 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: arith.h,v 1.14 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -135,6 +135,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.14  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.13  2002/05/07 04:15:43  steve
  *  Fix uninitialized memory accesses.
  *

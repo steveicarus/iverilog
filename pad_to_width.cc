@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pad_to_width.cc,v 1.10 2002/05/25 16:43:22 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: pad_to_width.cc,v 1.11 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,6 +95,9 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.11  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.10  2002/05/25 16:43:22  steve
  *  Better padding of constants.
  *

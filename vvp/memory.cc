@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: memory.cc,v 1.17 2002/08/11 23:47:05 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: memory.cc,v 1.18 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 #include "memory.h"
@@ -507,6 +507,9 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
 
 /*
  * $Log: memory.cc,v $
+ * Revision 1.18  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.17  2002/08/11 23:47:05  steve
  *  Add missing Log and Ident strings.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.9 2002/07/15 00:21:42 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: symbols.cc,v 1.10 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -422,6 +422,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.10  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.9  2002/07/15 00:21:42  steve
  *  Fix initialization of symbol table string heap.
  *

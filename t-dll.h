@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.92 2002/08/07 02:36:10 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: t-dll.h,v 1.93 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -617,6 +617,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.93  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.92  2002/08/07 02:36:10  steve
  *  Get local StringHeap.h
  *

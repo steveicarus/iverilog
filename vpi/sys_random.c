@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_random.c,v 1.4 2001/07/25 03:10:50 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: sys_random.c,v 1.5 2002/08/12 01:35:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -170,6 +170,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
+ * Revision 1.5  2002/08/12 01:35:05  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.4  2001/07/25 03:10:50  steve
  *  Create a config.h.in file to hold all the config
  *  junk, and support gcc 3.0. (Stephan Boettcher)

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: build_string.c,v 1.10 2002/05/28 02:25:03 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: build_string.c,v 1.11 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -165,6 +165,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.11  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.10  2002/05/28 02:25:03  steve
  *  Pass library paths through -Cfile instead of command line.
  *

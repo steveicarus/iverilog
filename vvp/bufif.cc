@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: bufif.cc,v 1.7 2002/07/05 20:08:44 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: bufif.cc,v 1.8 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "bufif.h"
@@ -98,6 +98,9 @@ void vvp_bufif_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned)
 
 /*
  * $Log: bufif.cc,v $
+ * Revision 1.8  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.7  2002/07/05 20:08:44  steve
  *  Count different types of functors.
  *

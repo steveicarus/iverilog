@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.11 2002/07/05 03:46:43 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: codes.cc,v 1.12 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -116,6 +116,9 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.12  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.11  2002/07/05 03:46:43  steve
  *  Track opcode memory space.
  *

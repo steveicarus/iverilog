@@ -26,8 +26,8 @@
  *    binary (compiled) form. If you have not received it, contact
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_memory.cc,v 1.17 2002/07/09 03:24:37 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_memory.cc,v 1.18 2002/08/12 01:35:09 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -580,6 +580,9 @@ vpiHandle vpip_make_memory(vvp_memory_t mem)
 
 /*
  * $Log: vpi_memory.cc,v $
+ * Revision 1.18  2002/08/12 01:35:09  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.17  2002/07/09 03:24:37  steve
  *  Dynamic resizevpi result buf in more places.
  *

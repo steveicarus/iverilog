@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: force.cc,v 1.6 2002/08/07 00:54:20 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: force.cc,v 1.7 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -268,6 +268,9 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.7  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.6  2002/08/07 00:54:20  steve
  *  Documentation, and excessive inlines.
  *

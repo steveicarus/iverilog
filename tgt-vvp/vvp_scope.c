@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.76 2002/08/04 18:28:15 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvp_scope.c,v 1.77 2002/08/12 01:35:04 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1488,6 +1488,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.77  2002/08/12 01:35:04  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.76  2002/08/04 18:28:15  steve
  *  Do not use hierarchical names of memories to
  *  generate vvp labels. -tdll target does not

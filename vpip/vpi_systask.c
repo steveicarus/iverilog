@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.4 2001/09/30 16:45:10 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_systask.c,v 1.5 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -120,6 +120,9 @@ const struct __vpirt *vpip_get_sysfunc_rt(void)
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.5  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.4  2001/09/30 16:45:10  steve
  *  Fix some Cygwin DLL handling. (Venkat Iyer)
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: HName.cc,v 1.3 2002/01/05 04:36:06 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: HName.cc,v 1.4 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -253,6 +253,9 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.4  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.3  2002/01/05 04:36:06  steve
  *  include malloc.h only when available.
  *

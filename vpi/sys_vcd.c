@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.35 2002/07/17 05:13:43 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: sys_vcd.c,v 1.36 2002/08/12 01:35:05 steve Exp $"
 #endif
 
 # include "config.h"
@@ -801,6 +801,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.36  2002/08/12 01:35:05  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.35  2002/07/17 05:13:43  steve
  *  Implementation of vpi_handle_by_name, and
  *  add the vpiVariables iterator.

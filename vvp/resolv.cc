@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.13 2002/07/05 20:08:44 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: resolv.cc,v 1.14 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -203,6 +203,9 @@ void resolv_functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.14  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.13  2002/07/05 20:08:44  steve
  *  Count different types of functors.
  *

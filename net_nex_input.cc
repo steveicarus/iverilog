@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: net_nex_input.cc,v 1.4 2002/07/14 23:47:58 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: net_nex_input.cc,v 1.5 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -318,6 +318,9 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.5  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.4  2002/07/14 23:47:58  steve
  *  Infinite loop in nex_input of NetBlock objects.
  *

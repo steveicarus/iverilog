@@ -19,8 +19,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: cfparse_misc.h,v 1.3 2002/01/02 02:39:34 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: cfparse_misc.h,v 1.4 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 /*
@@ -40,6 +40,9 @@ extern YYLTYPE yylloc;
 
 /*
  * $Log: cfparse_misc.h,v $
+ * Revision 1.4  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.3  2002/01/02 02:39:34  steve
  *  Use my own cfltype to defend against bison 1.30.
  *

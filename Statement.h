@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.35 2002/06/04 05:38:44 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: Statement.h,v 1.36 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  <string>
@@ -453,6 +453,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.36  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.35  2002/06/04 05:38:44  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

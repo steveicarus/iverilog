@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PDelays.cc,v 1.8 2001/12/29 20:19:31 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: PDelays.cc,v 1.9 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -131,6 +131,9 @@ void PDelays::eval_delays(Design*des, NetScope*scope,
 
 /*
  * $Log: PDelays.cc,v $
+ * Revision 1.9  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.8  2001/12/29 20:19:31  steve
  *  Do not delete delay expressions of UDP instances.
  *

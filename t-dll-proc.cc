@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.51 2002/08/07 00:54:39 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: t-dll-proc.cc,v 1.52 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -812,6 +812,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.52  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.51  2002/08/07 00:54:39  steve
  *  Add force to nets.
  *

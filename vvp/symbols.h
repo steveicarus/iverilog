@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: symbols.h,v 1.3 2001/05/09 04:23:19 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: symbols.h,v 1.4 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 /*
@@ -79,6 +79,9 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key);
 
 /*
  * $Log: symbols.h,v $
+ * Revision 1.4  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.3  2001/05/09 04:23:19  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.259 2002/07/31 23:55:38 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: elaborate.cc,v 1.260 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2502,6 +2502,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.260  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.259  2002/07/31 23:55:38  steve
  *  Add port name to pin size error message.
  *

@@ -19,8 +19,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpithunk.h,v 1.3 2002/08/11 23:47:04 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpithunk.h,v 1.4 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 /* These functions are actually defined in lieu of the vpi functions
@@ -75,6 +75,9 @@ DLLEXPORT int vpi_register_sim(p_vpi_thunk tp);
 
 /*
  * $Log: vpithunk.h,v $
+ * Revision 1.4  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.3  2002/08/11 23:47:04  steve
  *  Add missing Log and Ident strings.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.41 2002/07/25 03:35:51 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: sys_display.c,v 1.42 2002/08/12 01:35:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1348,6 +1348,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.42  2002/08/12 01:35:04  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.41  2002/07/25 03:35:51  steve
  *  Add monitoron and monitoroff system tasks.
  *

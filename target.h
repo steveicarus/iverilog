@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.59 2002/06/05 03:44:25 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: target.h,v 1.60 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -162,6 +162,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.60  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.59  2002/06/05 03:44:25  steve
  *  Add support for memory words in l-value of
  *  non-blocking assignments, and remove the special

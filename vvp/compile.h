@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: compile.h,v 1.44 2002/07/15 00:21:42 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: compile.h,v 1.45 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -251,6 +251,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.45  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.44  2002/07/15 00:21:42  steve
  *  Fix initialization of symbol table string heap.
  *

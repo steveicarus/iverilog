@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: dup_expr.cc,v 1.7 2002/01/28 00:52:41 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: dup_expr.cc,v 1.8 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -74,6 +74,9 @@ NetEUnary* NetEUnary::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.8  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.7  2002/01/28 00:52:41  steve
  *  Add support for bit select of parameters.
  *  This leads to a NetESelect node and the

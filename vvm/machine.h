@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: machine.h,v 1.2 2000/02/23 02:56:56 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: machine.h,v 1.3 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 #ifdef NEED_LU
@@ -36,6 +36,9 @@
 
 /*
  * $Log: machine.h,v $
+ * Revision 1.3  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

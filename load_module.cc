@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.10 2002/08/03 22:30:00 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: load_module.cc,v 1.11 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -193,6 +193,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.11  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.10  2002/08/03 22:30:00  steve
  *  Fix suffix parsing of library index.
  *

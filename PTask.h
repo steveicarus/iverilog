@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PTask.h,v 1.11 2001/11/22 06:20:59 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: PTask.h,v 1.12 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -98,6 +98,9 @@ class PFunction : public LineInfo {
 
 /*
  * $Log: PTask.h,v $
+ * Revision 1.12  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.11  2001/11/22 06:20:59  steve
  *  Use NetScope instead of string for scope path.
  *

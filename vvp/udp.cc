@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.16 2002/01/20 23:27:51 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: udp.cc,v 1.17 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -350,6 +350,9 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.17  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.16  2002/01/20 23:27:51  steve
  *  return calculated oval from UDP (Stephan Boettcher)
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_time.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_time.c,v 1.2 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -75,6 +75,9 @@ vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref, const char*val)
 
 /*
  * $Log: vpi_time.c,v $
+ * Revision 1.2  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *

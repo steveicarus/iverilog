@@ -10,8 +10,8 @@
  *
  *    Change the function prototypes to use ANSI/ISO C syntax.
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: mt19937int.c,v 1.2 2002/08/11 23:47:04 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: mt19937int.c,v 1.3 2002/08/12 01:35:04 steve Exp $"
 #endif
 
 /* A C-program for MT19937: Integer version (1998/4/6)            */
@@ -118,6 +118,9 @@ genrand()
 
 /*
  * $Log: mt19937int.c,v $
+ * Revision 1.3  2002/08/12 01:35:04  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2002/08/11 23:47:04  steve
  *  Add missing Log and Ident strings.
  *

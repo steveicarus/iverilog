@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.33 2002/04/27 23:26:24 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: verinum.cc,v 1.34 2002/08/12 01:35:01 steve Exp $"
 #endif
 
 # include "config.h"
@@ -802,6 +802,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.34  2002/08/12 01:35:01  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.33  2002/04/27 23:26:24  steve
  *  Trim leading nulls from string forms.
  *

@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.72 2001/10/14 03:50:53 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_gates.h,v 1.73 2002/08/12 01:35:07 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -984,6 +984,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.73  2002/08/12 01:35:07  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.72  2001/10/14 03:50:53  steve
  *  vvm support for pullup/down gates (PR#288)
  *

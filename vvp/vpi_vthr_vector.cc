@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_vthr_vector.cc,v 1.7 2002/05/12 00:32:21 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_vthr_vector.cc,v 1.8 2002/08/12 01:35:09 steve Exp $"
 #endif
 
 /*
@@ -363,6 +363,9 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.8  2002/08/12 01:35:09  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.7  2002/05/12 00:32:21  steve
  *  Get thread vectors by vpiIntVal.
  *

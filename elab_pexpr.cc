@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.15 2002/05/06 02:30:27 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: elab_pexpr.cc,v 1.16 2002/08/12 01:34:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -222,6 +222,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.16  2002/08/12 01:34:59  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.15  2002/05/06 02:30:27  steve
  *  Allow parameters in concatenation of widths are defined.
  *

@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.30 2000/12/11 00:31:44 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vvm_func.h,v 1.31 2002/08/12 01:35:06 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -210,6 +210,9 @@ extern void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.31  2002/08/12 01:35:06  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.30  2000/12/11 00:31:44  steve
  *  Add support for signed reg variables,
  *  simulate in t-vvm signed comparisons.

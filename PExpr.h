@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.61 2002/06/04 05:38:43 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: PExpr.h,v 1.62 2002/08/12 01:34:58 steve Exp $"
 #endif
 
 # include  <string>
@@ -501,6 +501,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.62  2002/08/12 01:34:58  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.61  2002/06/04 05:38:43  steve
  *  Add support for memory words in l-value of
  *  blocking assignments, and remove the special

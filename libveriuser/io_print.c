@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: io_print.c,v 1.2 2002/05/30 02:10:08 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: io_print.c,v 1.3 2002/08/12 01:35:02 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -58,6 +58,9 @@ void tf_error(const char *fmt, ...)
 
 /*
  * $Log: io_print.c,v $
+ * Revision 1.3  2002/08/12 01:35:02  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2002/05/30 02:10:08  steve
  *  Add tf_error and tf_warning from mruff
  *

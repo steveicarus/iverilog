@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.22 2002/07/31 03:22:23 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_callback.cc,v 1.23 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 /*
@@ -467,6 +467,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.23  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.22  2002/07/31 03:22:23  steve
  *  Set vpi_mode_flag to represent cpReadOnlySync actions.
  *

@@ -19,8 +19,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lxt_write.h,v 1.2 2002/08/11 23:47:04 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: lxt_write.h,v 1.3 2002/08/12 01:35:04 steve Exp $"
 #endif
 
 #ifndef DEFS_LXT_H
@@ -160,6 +160,9 @@ int 			lt_emit_value_bit_string(struct lt_trace *lt, struct lt_symbol *s, unsign
 
 /*
  * $Log: lxt_write.h,v $
+ * Revision 1.3  2002/08/12 01:35:04  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.2  2002/08/11 23:47:04  steve
  *  Add missing Log and Ident strings.
  *

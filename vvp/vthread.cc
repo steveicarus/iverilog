@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.78 2002/06/02 18:55:58 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vthread.cc,v 1.79 2002/08/12 01:35:09 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -2208,6 +2208,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.79  2002/08/12 01:35:09  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.78  2002/06/02 18:55:58  steve
  *  Add %cmpi/u instruction.
  *

@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.99 2002/06/21 04:59:35 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: pform.cc,v 1.100 2002/08/12 01:35:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1343,6 +1343,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.100  2002/08/12 01:35:00  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.99  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *

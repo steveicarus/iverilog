@@ -16,8 +16,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.45 2002/07/23 15:11:41 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: vpi_signal.cc,v 1.46 2002/08/12 01:35:09 steve Exp $"
 #endif
 
 /*
@@ -673,6 +673,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.46  2002/08/12 01:35:09  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.45  2002/07/23 15:11:41  steve
  *  integral type/ptrdiff_t warning.
  *

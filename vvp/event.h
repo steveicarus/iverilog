@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: event.h,v 1.3 2002/07/17 18:30:01 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: event.h,v 1.4 2002/08/12 01:35:08 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -80,6 +80,9 @@ struct callback_functor_s *vvp_fvector_make_callback
 
 /*
  * $Log: event.h,v $
+ * Revision 1.4  2002/08/12 01:35:08  steve
+ *  conditional ident string using autoconfig.
+ *
  * Revision 1.3  2002/07/17 18:30:01  steve
  *  Fix uninitialized thread pointer in named event.
  *
