@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.155 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: netlist.h,v 1.156 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 /*
@@ -263,7 +263,7 @@ class NetNode  : public NetObj {
 	// connected to the same of my own pins.
       NetNode*next_node();
 
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned) const;
 
 	// This is used to scan a modifiable netlist, one node at a time.
@@ -388,7 +388,7 @@ class NetAddSub  : public NetNode {
       const Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 };
 
@@ -419,7 +419,7 @@ class NetCLShift  : public NetNode {
       const Link& pin_Distance(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
@@ -467,7 +467,7 @@ class NetCompare  : public NetNode {
 
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
@@ -502,7 +502,7 @@ class NetDivide  : public NetNode {
       const Link& pin_Result(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
@@ -541,7 +541,7 @@ class NetFF  : public NetNode {
       const Link& pin_Q(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 };
 
@@ -638,7 +638,7 @@ class NetMult  : public NetNode {
       const Link& pin_Sum(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
@@ -684,7 +684,7 @@ class NetMux  : public NetNode {
       const Link& pin_Sel(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
 
     private:
@@ -727,7 +727,7 @@ class NetRamDq  : public NetNode {
       const Link& pin_Q(unsigned idx) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 
 	// Use this method to absorb other NetRamDq objects that are
 	// connected to the same memory, and have compatible pin
@@ -849,7 +849,7 @@ class NetBUFZ  : public NetNode {
       ~NetBUFZ();
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 };
 
 /*
@@ -870,7 +870,7 @@ class NetCaseCmp  : public NetNode {
       ~NetCaseCmp();
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 };
 
 /*
@@ -890,7 +890,7 @@ class NetConst  : public NetNode {
 
       verinum::V value(unsigned idx) const;
 
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
 
@@ -919,7 +919,7 @@ class NetLogic  : public NetNode {
       TYPE type() const { return type_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
 
     private:
@@ -985,7 +985,7 @@ class NetUDP  : public NetNode {
     public:
       explicit NetUDP(const string&n, unsigned pins, bool sequ =false);
 
-      virtual void emit_node( struct target_t*) const;
+      virtual bool emit_node( struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
 	/* return false if the entry conflicts with an existing
@@ -1045,7 +1045,7 @@ class NetUDP_COMB  : public NetNode {
     public:
       explicit NetUDP_COMB(const string&n, unsigned pins);
 
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
 	/* append a new truth table row. */
@@ -1153,7 +1153,7 @@ class NetAssign  : public NetAssign_ {
       ~NetAssign();
 
       virtual bool emit_proc(struct target_t*) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1173,7 +1173,7 @@ class NetAssignNB  : public NetAssign_ {
 
 
       virtual bool emit_proc(struct target_t*) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -1336,7 +1336,7 @@ class NetCAssign  : public NetProc, public NetNode {
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 
     private:
       NetNet*lval_;
@@ -1580,7 +1580,7 @@ class NetEvProbe  : public NetNode {
       NetEvent* event();
       const NetEvent* event() const;
 
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
@@ -1611,7 +1611,7 @@ class NetForce  : public NetProc, public NetNode {
       virtual void dump(ostream&, unsigned ind) const;
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
-      virtual void emit_node(struct target_t*) const;
+      virtual bool emit_node(struct target_t*) const;
 
     private:
       NetNet*lval_;
@@ -2722,6 +2722,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.156  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.155  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

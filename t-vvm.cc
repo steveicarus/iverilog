@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.167 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.168 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -162,14 +162,14 @@ class target_vvm : public target_t {
       virtual void lpm_ram_dq(const NetRamDq*);
 
       virtual void logic(const NetLogic*);
-      virtual void bufz(const NetBUFZ*);
+      virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
       virtual void udp_comb(const NetUDP_COMB*);
               void udp_sequ_(ostream&os, const NetUDP*);
       virtual void net_assign_nb(const NetAssignNB*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
-      virtual void net_const(const NetConst*);
+      virtual bool net_const(const NetConst*);
       virtual bool net_force(const NetForce*);
       virtual void net_probe(const NetEvProbe*);
       virtual bool process(const NetProcTop*);
@@ -1808,7 +1808,7 @@ void target_vvm::logic(const NetLogic*gate)
       }
 }
 
-void target_vvm::bufz(const NetBUFZ*gate)
+bool target_vvm::bufz(const NetBUFZ*gate)
 {
       string mname = mangle(gate->name());
       string nexus;
@@ -1849,6 +1849,7 @@ void target_vvm::bufz(const NetBUFZ*gate)
       init_code << "      nexus_wire_table["<<ncode<<"].connect(&" <<
 	    mname << ",0);" << endl;
 
+      return true;
 }
 
 void target_vvm::udp_comb(const NetUDP_COMB*gate)
@@ -2034,7 +2035,7 @@ bool target_vvm::net_cassign(const NetCAssign*dev)
  * has its input connected to nothing but is initialized to the
  * desired constant value.
  */
-void target_vvm::net_const(const NetConst*gate)
+bool target_vvm::net_const(const NetConst*gate)
 {
       const string mname = mangle(gate->name());
 
@@ -2055,6 +2056,7 @@ void target_vvm::net_const(const NetConst*gate)
 		       << val_str << ");" << endl;
       }
 
+      return true;
 }
 
 
@@ -3115,6 +3117,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.168  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.167  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

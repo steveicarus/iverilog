@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.43 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: target.cc,v 1.44 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -63,10 +63,11 @@ void target_t::logic(const NetLogic*)
 {
 }
 
-void target_t::bufz(const NetBUFZ*)
+bool target_t::bufz(const NetBUFZ*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled continuous assign (BUFZ)." << endl;
+      return false;
 }
 
 void target_t::udp(const NetUDP*)
@@ -152,10 +153,11 @@ bool target_t::net_cassign(const NetCAssign*dev)
       return false;
 }
 
-void target_t::net_const(const NetConst*)
+bool target_t::net_const(const NetConst*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled CONSTANT node." << endl;
+      return false;
 }
 
 bool target_t::net_force(const NetForce*dev)
@@ -394,6 +396,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.44  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.43  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

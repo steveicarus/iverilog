@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.50 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: emit.cc,v 1.51 2000/08/14 04:39:56 steve Exp $"
 #endif
 
 /*
@@ -29,99 +29,116 @@
 # include  <typeinfo>
 # include  <cassert>
 
-void NetNode::emit_node(struct target_t*tgt) const
+bool NetNode::emit_node(struct target_t*tgt) const
 {
       cerr << "EMIT: Gate type? " << typeid(*this).name() << endl;
+      return false;
 }
 
-void NetLogic::emit_node(struct target_t*tgt) const
+bool NetLogic::emit_node(struct target_t*tgt) const
 {
       tgt->logic(this);
+      return true;
 }
 
-void NetUDP_COMB::emit_node(struct target_t*tgt) const
+bool NetUDP_COMB::emit_node(struct target_t*tgt) const
 {
       tgt->udp_comb(this);
+      return true;
 }
 
-void NetUDP::emit_node(struct target_t*tgt) const
+bool NetUDP::emit_node(struct target_t*tgt) const
 {
       tgt->udp(this);
+      return true;
 }
 
-void NetAddSub::emit_node(struct target_t*tgt) const
+bool NetAddSub::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_add_sub(this);
+      return true;
 }
 
-void NetAssign::emit_node(struct target_t*tgt) const
+bool NetAssign::emit_node(struct target_t*tgt) const
 {
       tgt->net_assign(this);
+      return true;
 }
 
-void NetAssignNB::emit_node(struct target_t*tgt) const
+bool NetAssignNB::emit_node(struct target_t*tgt) const
 {
       tgt->net_assign_nb(this);
+      return true;
 }
 
-void NetCaseCmp::emit_node(struct target_t*tgt) const
+bool NetCaseCmp::emit_node(struct target_t*tgt) const
 {
       tgt->net_case_cmp(this);
+      return true;
 }
 
-void NetCAssign::emit_node(struct target_t*tgt) const
+bool NetCAssign::emit_node(struct target_t*tgt) const
 {
       tgt->net_cassign(this);
+      return true;
 }
 
-void NetCLShift::emit_node(struct target_t*tgt) const
+bool NetCLShift::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_clshift(this);
+      return true;
 }
 
-void NetCompare::emit_node(struct target_t*tgt) const
+bool NetCompare::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_compare(this);
+      return true;
 }
 
-void NetConst::emit_node(struct target_t*tgt) const
+bool NetConst::emit_node(struct target_t*tgt) const
 {
-      tgt->net_const(this);
+      return tgt->net_const(this);
 }
 
-void NetDivide::emit_node(struct target_t*tgt) const
+bool NetDivide::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_divide(this);
+      return true;
 }
 
-void NetFF::emit_node(struct target_t*tgt) const
+bool NetFF::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_ff(this);
+      return true;
 }
 
-void NetForce::emit_node(struct target_t*tgt) const
+bool NetForce::emit_node(struct target_t*tgt) const
 {
       tgt->net_force(this);
+      return true;
 }
 
-void NetMult::emit_node(struct target_t*tgt) const
+bool NetMult::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_mult(this);
+      return true;
 }
 
-void NetMux::emit_node(struct target_t*tgt) const
+bool NetMux::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_mux(this);
+      return true;
 }
 
-void NetRamDq::emit_node(struct target_t*tgt) const
+bool NetRamDq::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_ram_dq(this);
+      return true;
 }
 
-void NetBUFZ::emit_node(struct target_t*tgt) const
+bool NetBUFZ::emit_node(struct target_t*tgt) const
 {
-      tgt->bufz(this);
+      return tgt->bufz(this);
 }
 
 bool NetProcTop::emit(struct target_t*tgt) const
@@ -266,9 +283,10 @@ void NetCondit::emit_recurse_else(struct target_t*tgt) const
 	    else_->emit_proc(tgt);
 }
 
-void NetEvProbe::emit_node(struct target_t*tgt) const
+bool NetEvProbe::emit_node(struct target_t*tgt) const
 {
       tgt->net_probe(this);
+      return true;
 }
 
 bool NetEvTrig::emit_proc(struct target_t*tgt) const
@@ -366,7 +384,7 @@ bool Design::emit(struct target_t*tgt) const
       if (nodes_) {
 	    NetNode*cur = nodes_->node_next_;
 	    do {
-		  cur->emit_node(tgt);
+		  rc = rc && cur->emit_node(tgt);
 		  cur = cur->node_next_;
 	    } while (cur != nodes_->node_next_);
       }
@@ -463,6 +481,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.51  2000/08/14 04:39:56  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.50  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.42 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: target.h,v 1.43 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -84,14 +84,14 @@ struct target_t {
 
 	/* Output a gate (called for each gate) */
       virtual void logic(const NetLogic*);
-      virtual void bufz(const NetBUFZ*);
+      virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
       virtual void udp_comb(const NetUDP_COMB*);
       virtual void net_assign(const NetAssign*);
       virtual void net_assign_nb(const NetAssignNB*);
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
-      virtual void net_const(const NetConst*);
+      virtual bool net_const(const NetConst*);
       virtual bool net_force(const NetForce*);
       virtual void net_probe(const NetEvProbe*);
 
@@ -160,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.43  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.42  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

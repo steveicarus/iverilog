@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-verilog.cc,v 1.13 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.14 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 /*
@@ -41,7 +41,7 @@ class target_verilog : public target_t {
       virtual bool start_design(const Design*);
       virtual void signal(const NetNet*);
       virtual void logic(const NetLogic*);
-      virtual void bufz(const NetBUFZ*);
+      virtual bool bufz(const NetBUFZ*);
 
       virtual bool process(const NetProcTop*);
       virtual bool proc_block(const NetBlock*);
@@ -132,7 +132,7 @@ void target_verilog::logic(const NetLogic*net)
       out << ");" << endl;
 }
 
-void target_verilog::bufz(const NetBUFZ*net)
+bool target_verilog::bufz(const NetBUFZ*net)
 {
       assert( net->pin_count() == 2 );
       out << "    assign ";
@@ -143,6 +143,7 @@ void target_verilog::bufz(const NetBUFZ*net)
 
       sig = find_link_signal(net, 1, sidx);
       out << mangle(sig->name()) << "[" << sidx << "];" << endl;
+      return true;
 }
 
 bool target_verilog::process(const NetProcTop*top)
@@ -264,6 +265,9 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.14  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.13  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *

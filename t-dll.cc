@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.1 2000/08/12 16:34:37 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.2 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -26,6 +26,14 @@
 
 struct ivl_design_s {
       const Design*des_;
+};
+
+struct ivl_net_const_s {
+      const NetConst*con_;
+};
+
+struct ivl_process_s {
+      const NetProcTop*top_;
 };
 
 /*
@@ -40,21 +48,33 @@ struct dll_target  : public target_t {
       bool start_design(const Design*);
       void end_design(const Design*);
 
+      bool bufz(const NetBUFZ*);
+      bool net_const(const NetConst*);
+
+      bool process(const NetProcTop*);
+
       void*dll_;
+      string dll_path_;
 
       struct ivl_design_s ivl_des;
 
       start_design_f start_design_;
       end_design_f   end_design_;
 
+      net_bufz_f     net_bufz_;
+      net_const_f    net_const_;
+
+      process_f      process_;
+
 } dll_target_obj;
 
 
 bool dll_target::start_design(const Design*des)
 {
-      dll_ = dlopen(des->get_flag("DLL").c_str(), RTLD_NOW);
+      dll_path_ = des->get_flag("DLL");
+      dll_ = dlopen(dll_path_.c_str(), RTLD_NOW);
       if (dll_ == 0) {
-	    cerr << des->get_flag("DLL") << ": " << dlerror() << endl;
+	    cerr << dll_path_ << ": " << dlerror() << endl;
 	    return false;
       }
 
@@ -62,6 +82,10 @@ bool dll_target::start_design(const Design*des)
 
       start_design_ = (start_design_f)dlsym(dll_, "target_start_design");
       end_design_   = (end_design_f)  dlsym(dll_, "target_end_design");
+      net_bufz_     = (net_bufz_f)    dlsym(dll_, "target_net_bufz");
+      net_const_    = (net_const_f)   dlsym(dll_, "target_net_const");
+      process_      = (process_f)     dlsym(dll_, "target_process");
+
       (start_design_)(&ivl_des);
       return true;
 }
@@ -70,6 +94,59 @@ void dll_target::end_design(const Design*)
 {
       (end_design_)(&ivl_des);
       dlclose(dll_);
+}
+
+bool dll_target::bufz(const NetBUFZ*net)
+{
+      if (net_bufz_) {
+	    int rc = (net_bufz_)(net->name().c_str(), 0);
+	    return rc == 0;
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_net_bufz function." << endl;
+	    return false;
+      }
+
+      return false;
+}
+
+bool dll_target::net_const(const NetConst*net)
+{
+      struct ivl_net_const_s obj;
+
+      obj.con_ = net;
+
+      if (net_const_) {
+	    int rc = (net_const_)(net->name().c_str(), &obj);
+	    return rc == 0;
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_net_const function." << endl;
+	    return false;
+      }
+
+      return false;
+}
+
+bool dll_target::process(const NetProcTop*net)
+{
+      struct ivl_process_s obj;
+
+      obj.top_ = net;
+
+      if (process_) {
+	    int rc = (process_)(&obj);
+	    return rc == 0;
+
+      } else {
+	    cerr << dll_path_ << ": internal error: target DLL lacks "
+		 << "target_process function." << endl;
+	    return false;
+      }
+
+      return false;
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
@@ -84,6 +161,9 @@ extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.2  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.1  2000/08/12 16:34:37  steve
  *  Start stub for loadable targets.
  *

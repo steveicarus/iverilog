@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.1 2000/08/12 16:34:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.2 2000/08/14 04:39:56 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -45,6 +45,9 @@ _BEGIN_DECL
    requesting an operation that affects the entire netlist. */
 typedef struct ivl_design_s *ivl_design_t;
 
+typedef struct ivl_net_bufz_s *ivl_net_bufz_t;
+typedef struct ivl_net_const_s*ivl_net_const_t;
+typedef struct ivl_process_s  *ivl_process_t;
 
 /* This function returns the string value of the named flag. The key
    is used to select the flag. If the key does not exist or the flag
@@ -59,7 +62,7 @@ extern const char* ivl_get_flag(ivl_design_t, const char*key);
    The "target_start_design" function is called once before
    any other functions in order to start the processing of the
    netlist. The function returns a value <0 if there is an error. */
-typedef int  (*start_design_f)(ivl_design_t);
+typedef int  (*start_design_f)(ivl_design_t des);
 
 
 /* target_end_design  (required)
@@ -67,13 +70,42 @@ typedef int  (*start_design_f)(ivl_design_t);
    The target_end_design function in the loaded module is called once
    to clean up (for example to close files) from handling of the
    netlist. */
-typedef void (*end_design_f)(ivl_design_t);
+typedef void (*end_design_f)(ivl_design_t des);
 
+
+/* target_net_bufz
+
+   The "target_net_bufz" function is called for all the BUFZ devices
+   in the netlist. */
+typedef int (*net_bufz_f)(const char*name, ivl_net_bufz_t net);
+
+/* target_net_const
+
+   The "target_net_const" function is called for structural constant
+   values that appear in the design. the DLL is expected to return 0
+   for success, or <0 for some sort of error. If this function is not
+   implemented by the DLL, ivl will generate an error when a constant
+   is detected in the design. */
+typedef int (*net_const_f)(const char*name, ivl_net_const_t net);
+
+
+/* target_process
+
+   The "target_process" function is called for each always and initial
+   block in the design. In principle, the target creates a thread for
+   each process in the Verilog original.
+
+   XXXX I have not yet decided if it it up to the target to scan the
+   process statements, or if I will do that myself. Hmm... */
+typedef int (*process_f)(ivl_process_t net);
 
 _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.2  2000/08/14 04:39:56  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.1  2000/08/12 16:34:37  steve
  *  Start stub for loadable targets.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.1 2000/08/12 16:34:37 steve Exp $"
+#ident "$Id: stub.c,v 1.2 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 # include  <ivl_target.h>
@@ -48,8 +48,29 @@ void target_end_design(ivl_design_t des)
       fclose(out);
 }
 
+int target_net_bufz(const char*name, ivl_net_bufz_t net)
+{
+      fprintf(out, "STUB: %s: BUFZ\n", name);
+      return 0;
+}
+
+int target_net_const(const char*name, ivl_net_const_t net)
+{
+      fprintf(out, "STUB: %s: constant\n", name);
+      return 0;
+}
+
+int target_process(ivl_process_t net)
+{
+      fprintf(out, "STUB: process\n");
+      return 0;
+}
+
 /*
  * $Log: stub.c,v $
+ * Revision 1.2  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.1  2000/08/12 16:34:37  steve
  *  Start stub for loadable targets.
  *

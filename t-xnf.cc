@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.34 2000/08/09 03:43:45 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.35 2000/08/14 04:39:57 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -108,9 +108,9 @@ class target_xnf  : public target_t {
       void lpm_mux(const NetMux*);
       void lpm_ram_dq(const NetRamDq*);
 
-      void net_const(const NetConst*);
+      bool net_const(const NetConst*);
       void logic(const NetLogic*);
-      void bufz(const NetBUFZ*);
+      bool bufz(const NetBUFZ*);
       void udp(const NetUDP*);
 
     private:
@@ -748,7 +748,7 @@ void target_xnf::lpm_ram_dq(const NetRamDq*ram)
       }
 }
 
-void target_xnf::net_const(const NetConst*c)
+bool target_xnf::net_const(const NetConst*c)
 {
       for (unsigned idx = 0 ;  idx < c->pin_count() ;  idx += 1) {
 	    verinum::V v=c->value(idx);
@@ -761,6 +761,8 @@ void target_xnf::net_const(const NetConst*c)
 
 	    out_ << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
       }
+
+      return true;
 }
 
 /*
@@ -848,7 +850,7 @@ void target_xnf::logic(const NetLogic*net)
       out_ << "END" << endl;
 }
 
-void target_xnf::bufz(const NetBUFZ*net)
+bool target_xnf::bufz(const NetBUFZ*net)
 {
       static int warned_once=0;
       if (!warned_once) {
@@ -861,6 +863,8 @@ void target_xnf::bufz(const NetBUFZ*net)
       draw_pin(out_, "O", net->pin(0));
       draw_pin(out_, "I", net->pin(1));
       out_ << "END" << endl;
+
+      return true;
 }
 
 void target_xnf::udp(const NetUDP*net)
@@ -883,6 +887,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.35  2000/08/14 04:39:57  steve
+ *  add th t-dll functions for net_const, net_bufz and processes.
+ *
  * Revision 1.34  2000/08/09 03:43:45  steve
  *  Move all file manipulation out of target class.
  *
