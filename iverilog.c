@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.17 2000/06/30 04:42:23 steve Exp $"
+#ident "$Id: iverilog.c,v 1.18 2000/07/11 23:30:03 steve Exp $"
 #endif
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #ifndef IVL_ROOT
 # define IVL_ROOT "."
@@ -87,7 +90,15 @@ static int t_null(char*cmd, unsigned ncmd)
 	    printf("translate: %s\n", cmd);
 
       rc = system(cmd);
-      return rc;
+      if (rc != 0) {
+	    if (WIFEXITED(rc))
+		  return WEXITSTATUS(rc);
+
+	    fprintf(stderr, "Command signaled: %s\n", cmd);
+	    return -1;
+      }
+
+      return 0;
 }
 
 /*
@@ -140,8 +151,13 @@ static int t_vvm(char*cmd, unsigned ncmd)
 
       rc = system(cmd);
       if (rc != 0) {
-	    fprintf(stderr, "errors translating Verilog program. (%d)\n",rc);
-	    return (rc & 0xff)? rc : -1;
+	    if (WIFEXITED(rc)) {
+		  fprintf(stderr, "errors translating Verilog program.\n");
+		  return WEXITSTATUS(rc);
+	    } else {
+		  fprintf(stderr, "Command signaled: %s\n", cmd);
+		  return -1;
+	    }
       }
 
       sprintf(tmp, "%s -O " RDYNAMIC " -fno-exceptions -o %s -I%s "
@@ -153,8 +169,13 @@ static int t_vvm(char*cmd, unsigned ncmd)
 
       rc = system(tmp);
       if (rc != 0) {
-	    fprintf(stderr, "errors compiling translated program.\n");
-	    return rc;
+	    if (WIFEXITED(rc)) {
+		  fprintf(stderr, "errors compiling translated program.\n");
+		  return WEXITSTATUS(rc);
+	    } else {
+		  fprintf(stderr, "Command signaled: %s\n", tmp);
+		  return -1;
+	    }
       }
 
       sprintf(tmp, "%s.cc", opath);
@@ -199,8 +220,17 @@ static int t_xnf(char*cmd, unsigned ncmd)
 	    printf("translate: %s\n", cmd);
 
       rc = system(cmd);
+      if (rc != 0) {
+	    if (WIFEXITED(rc)) {
+		  fprintf(stderr, "errors translating Verilog program.\n");
+		  return WEXITSTATUS(rc);
+	    }
 
-      return rc;
+	    fprintf(stderr, "Command signaled: %s\n", cmd);
+	    return -1;
+      }
+
+      return 0;
 }
 
 static void process_warning_switch(const char*name)
@@ -351,6 +381,7 @@ int main(int argc, char **argv)
 	   do is run the preprocessor and put the output where the
 	   user wants it. */
       if (e_flag) {
+	    int rc;
 	    if (strcmp(opath,"-") != 0) {
 		  sprintf(tmp, " > %s", opath);
 		  cmd = realloc(cmd, ncmd+strlen(tmp)+1);
@@ -361,7 +392,18 @@ int main(int argc, char **argv)
 	    if (verbose_flag)
 		  printf("preprocess: %s\n", cmd);
 
-	    return system(cmd);
+	    rc = system(cmd);
+	    if (rc != 0) {
+		  if (WIFEXITED(rc)) {
+			fprintf(stderr, "errors preprocessing Verilog program.\n");
+			return WEXITSTATUS(rc);
+		  }
+
+		  fprintf(stderr, "Command signaled: %s\n", cmd);
+		  return -1;
+	    }
+
+	    return 0;
       }
 
       if (strcmp(targ,"null") == 0)
@@ -380,6 +422,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.18  2000/07/11 23:30:03  steve
+ *  More detailed handling of exit status from commands.
+ *
  * Revision 1.17  2000/06/30 04:42:23  steve
  *  Catch errors from compile that leave the low 8 bits empty.
  *
