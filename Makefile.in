@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.120 2002/05/06 00:50:38 steve Exp $"
+#ident "$Id: Makefile.in,v 1.121 2002/05/15 01:25:07 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -98,7 +98,7 @@ check: all
 	vvp/vvp -M./vpi ./check.vvp | grep 'Hello, World'
 
 clean:
-	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc ivl@EXEEXT@ libivl.a libvpi.a
+	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc ivl@EXEEXT@ libivl.a libvpi.a iverilog-vpi
 	cd vpi ; $(MAKE) clean
 	cd driver ; $(MAKE) clean
 	cd ivlpp ; $(MAKE) clean
