@@ -16,7 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.52 2003/02/22 04:55:36 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: main.c,v 1.53 2003/08/26 16:26:02 steve Exp $"
+#endif
 
 # include "config.h"
 
@@ -697,6 +699,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.53  2003/08/26 16:26:02  steve
+ *  ifdef idents correctly.
+ *
  * Revision 1.52  2003/02/22 04:55:36  steve
  *  portbind adds p, not i, flag.
  *

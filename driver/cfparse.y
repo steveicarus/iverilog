@@ -17,8 +17,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.8 2002/06/23 20:10:51 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: cfparse.y,v 1.9 2003/08/26 16:26:02 steve Exp $"
 #endif
 
 

@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.9 2003/07/03 16:29:55 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: config.h.in,v 1.10 2003/08/26 16:26:01 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -50,6 +50,9 @@
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.10  2003/08/26 16:26:01  steve
+ *  ifdef idents correctly.
+ *
  * Revision 1.9  2003/07/03 16:29:55  steve
  *  spemm WORDS_BIGENDIAN correctly.
  *

@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.15 2003/05/20 03:48:23 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: config.h.in,v 1.16 2003/08/26 16:26:02 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG_LONG 0
@@ -94,6 +94,9 @@ typedef unsigned long vvp_time64_t;
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.16  2003/08/26 16:26:02  steve
+ *  ifdef idents correctly.
+ *
  * Revision 1.15  2003/05/20 03:48:23  steve
  *  Fix spelling of HAVE_LIBREADLINE
  *

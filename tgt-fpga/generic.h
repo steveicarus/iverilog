@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifndef HAVE_CVS_IDENT
-#ident "$Id: generic.h,v 1.2 2003/07/03 17:46:33 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: generic.h,v 1.3 2003/08/26 16:26:02 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -45,6 +45,9 @@ extern edif_cell_t cell_iopad;
 
 /*
  * $Log: generic.h,v $
+ * Revision 1.3  2003/08/26 16:26:02  steve
+ *  ifdef idents correctly.
+ *
  * Revision 1.2  2003/07/03 17:46:33  steve
  *  IOPAD support.
  *

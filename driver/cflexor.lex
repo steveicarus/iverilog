@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cflexor.lex,v 1.6 2002/05/28 20:40:37 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: cflexor.lex,v 1.7 2003/08/26 16:26:02 steve Exp $"
 #endif
 
 # include  "cfparse.h"

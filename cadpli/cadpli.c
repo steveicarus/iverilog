@@ -16,7 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: cadpli.c,v 1.4 2003/04/30 01:28:06 steve Exp $"
+#ifdef HAVE_CVS_IDENT
+#ident "$Id: cadpli.c,v 1.5 2003/08/26 16:26:02 steve Exp $"
+#endif
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
@@ -89,6 +91,9 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: cadpli.c,v $
+ * Revision 1.5  2003/08/26 16:26:02  steve
+ *  ifdef idents correctly.
+ *
  * Revision 1.4  2003/04/30 01:28:06  steve
  *  Remove veriusertfs stuf.
  *
