@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.47 2001/04/30 03:53:19 steve Exp $"
+#ident "$Id: compile.cc,v 1.48 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "functor.h"
 # include  "udp.h" 
+# include  "memory.h" 
 # include  "symbols.h"
 # include  "codes.h"
 # include  "schedule.h"
@@ -54,7 +55,10 @@ enum operand_e {
 	/* The operand is a pointer to code space */
       OA_CODE_PTR,
 	/* The operand is a variable or net pointer */
-      OA_FUNC_PTR
+      OA_FUNC_PTR,
+        /* The operand is a memory, with index ... */
+      OA_MEM_X3, /* ... hardwired index register 3  */
+      OA_MEM_I1  /* ... index register in bit1      */
 };
 
 struct opcode_table_s {
@@ -69,6 +73,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_X3, OA_BIT1,     OA_BIT2} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -76,17 +81,22 @@ const static struct opcode_table_s opcode_table[] = {
       { "%delay",  of_DELAY,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
+      { "%ix/load",of_IX_LOAD,3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%jmp",    of_JMP,    1,  {OA_CODE_PTR, OA_NONE,     OA_NONE} },
       { "%jmp/0",  of_JMP0,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%load",   of_LOAD,   2,  {OA_BIT1,     OA_FUNC_PTR, OA_NONE} },
+      { "%load/m", of_LOAD_MEM,2, {OA_BIT2,     OA_MEM_I1,   OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%set",    of_SET,    2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%set/m",  of_SET_MEM,2,  {OA_MEM_I1,   OA_BIT1,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%xor",    of_XOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -94,6 +104,9 @@ const static struct opcode_table_s opcode_table[] = {
 };
 
 static unsigned opcode_count = 0;
+//static const unsigned opcode_count 
+//                  = sizeof(opcode_table)/sizeof(*opcode_table) - 1; 
+// No?
 
 static int opcode_compare(const void*k, const void*r)
 {
@@ -406,6 +419,60 @@ void compile_udp_functor(char*label, char*type,
 }
 
 
+void compile_memory(char *label, char *name, int msb, int lsb,
+		    unsigned idxs, long *idx)
+{
+  vvp_memory_t mem = memory_create(label);
+  free(label);
+  memory_new(mem, name, lsb, msb, idxs, idx);
+}
+
+void compile_memory_port(char *label, char *memid, 
+			 unsigned msb, unsigned lsb,
+			 unsigned argc, struct symb_s *argv)
+{
+  vvp_memory_t mem = memory_find(memid);
+  free(memid);
+  assert(mem);
+
+  // These is not a Verilog bit range. 
+  // These is a data port bit range. 
+  assert (lsb >= 0  &&  lsb<=msb);
+  assert (msb < memory_data_width(mem));
+  unsigned nbits = msb-lsb+1;
+
+  unsigned awidth = memory_addr_width(mem);
+  unsigned nfun = (awidth + 3)/4;
+  if (nfun < nbits)
+    nfun = nbits;
+      
+  vvp_ipoint_t ix = functor_allocate(nfun);
+
+  assert(argc == awidth);
+  define_functor_symbol(label, ix);
+  free(label);
+
+  inputs_connect(ix, argc, argv);
+
+  memory_port_new(mem, ix, nbits, lsb);
+}
+
+void compile_memory_init(char *memid, unsigned i, unsigned char val)
+{
+  static vvp_memory_t mem = 0x0;
+  static unsigned idx;
+  if (memid)
+    {
+      mem = memory_find(memid);
+      free(memid);
+      idx = i/4;
+    }
+  assert(mem);
+  memory_init_nibble(mem, idx, val);
+  idx++;
+}
+
+
 void compile_event(char*label, char*type,
 		   unsigned argc, struct symb_s*argv)
 {
@@ -623,6 +690,40 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  code->number = opa->argv[idx].numb;
+		  break;
+
+        	case OA_MEM_I1:
+	        case OA_MEM_X3:
+		  if (opa->argv[idx].ltype != L_SYMB) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  code->mem = memory_find(opa->argv[idx].symb.text);
+		  if (code->mem == 0) {
+			yyerror("functor undefined");
+			break;
+		  }
+
+		  if (opa->argv[idx].symb.idx >= 4) {
+		        yyerror("index operand out of range (0..3)");
+		        break;
+		  }
+
+		  switch(op->argt[idx]) {
+		      case OA_MEM_I1:
+		        code->bit_idx1 = (unsigned short) 
+			  opa->argv[idx].symb.idx;
+		        break;
+		      case OA_MEM_X3:
+		        if (opa->argv[idx].symb.idx != 3)
+			      yyerror("index operand must be 3");
+			break;
+		      default:
+			break;
+		  }
+
+		  free(opa->argv[idx].symb.text);
 		  break;
 
 	    }
@@ -963,6 +1064,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.48  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.47  2001/04/30 03:53:19  steve
  *  Fix up functor inputs to support C<?> values.
  *

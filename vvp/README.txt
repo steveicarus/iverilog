@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.20 2001/04/30 04:51:27 steve Exp $
+ *  $Id: README.txt,v 1.21 2001/05/01 01:09:39 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -280,6 +280,77 @@ declared like so:
 This prevents any real functor being created and connected, and
 instead leaves the input unconnected and initializes the wire with the
 specified value, instead of the default z.
+
+MEMORY STATEMENTS:
+
+Three types of memory stetement perform (1) creation of a memory, (2)
+connecting a read port to an existing memory, and (3) initializing the
+memory's contents.
+
+       <label> .mem "name", <msb>,<lsb>, <last>,<first> ... ;
+
+The pair of numbers <msb>,<lsb> defines the data port width.  The pair
+<last>,<first> defines the address range.  Multiple address ranges are
+allowed for multidimensional indexing.  
+
+Procedural access to the memory references the memory as single array
+of bits.  For this purpose, the number of bits in a memory word is
+rounded up to the next multiple of four.  That is, for an 18 bit wide
+data bus, bit 0 is the lsb of the first word, bit 20 is the lsb of the
+second word.
+
+Structural read access is implemented in terms of address and data
+ports.  An address port is the concatinations of the smallest number of
+address bits required to express each address range.  The addresses
+applied to the address port are expected to be withing the ranges
+specified. 
+
+An port is a vector of functors that is wide enough to accept all
+address bits and at least as wide as the requested subset of the data
+port.
+
+	<label> .mem/port <memid>, <msb>,<lsb>, <symbols_list> ;
+
+<label> identifies the vector of output functors, to allow connections
+to the data output.  <memid> is the label of the memory. <msb>,<lsb>
+select a part of the data width.  These are not relative to the data
+port range defined for the memory.  The LSB of the data word if here
+referred to as 0, regardless to the range specified in the memory
+definition.  The <symbols_list> connects to the address inputs of this
+port. 
+
+Any address change, or any change in the addressed memory contents is
+imediately propagated to the port outputs.
+
+To initialize a memory, use:
+
+	        .mem/init <memid>[<start>],
+			val val val ...
+			;
+
+<memid> is the lavbel of the memory.  [<start>] is optional,
+identifying the bits locattion where the first value is loaded.
+<start> must be a multiple of four, and defaults to zero, if omitted.
+
+The values are decimal or hex numbers (0x prefix), which may be
+optionally separated by commata ','.  Each number in the range 0..256
+initializes four memory bits.  Two bits form each byte for each memory
+bit, in the ususal encoding.
+
+Procedural access to the memory employs an index register to address a
+bit location in the mememory, via the commands:
+
+	%load/mem   <bit>, <memid>[<ix>] ;
+	%set/mem    <memid>[<ix>], <bit> ;
+	%assign/mem <memid>[<ix>], <delay>, <bit> ;
+
+???  is "/mem" required, or shall functors and memories share a
+namespace? ???
+
+<ix> identifies one of the four index registers of the current
+thread.  The value of register <ix> is the index in the memories bit
+space, where each data word occupies a multiple of four bits.
+
 
 EVENT STATEMENTS
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.14 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: lexor.lex,v 1.15 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -77,7 +77,9 @@
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }
-
+".mem" 	       { return K_MEM; }
+".mem/p"(ort)? { return K_MEM_P; }
+".mem/i"(nit)? { return K_MEM_I; }
 
   /* instructions start with a % character. The compiler decides what
      kind of instruction this really is. The few exceptions (that have
@@ -130,6 +132,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.15  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.14  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

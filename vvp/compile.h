@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.18 2001/04/25 04:35:05 steve Exp $"
+#ident "$Id: compile.h,v 1.19 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -82,6 +82,20 @@ extern void compile_udp_functor(char*label, char*type,
 				unsigned argc, struct symb_s*argv);
 
 extern char **compile_udp_table(char **table, char *row);
+
+/*
+ * Memory Instances, Ports, and Initialization
+ */
+
+extern void compile_memory(char *label, char *name, int lsb, int msb,
+			   unsigned idxs, long *idx);
+
+extern void compile_memory_port(char *label, char *memid, 
+				unsigned lsb, unsigned msb,
+				unsigned argc, struct symb_s *argv);
+
+extern void compile_memory_init(char *memid, unsigned idx, unsigned char val);
+
 
 /*
  * The compile_event function takes the parts of the event statement
@@ -160,6 +174,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.19  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.18  2001/04/25 04:35:05  steve
  *  Document the UDP implementation.
  *

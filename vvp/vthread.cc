@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.29 2001/04/21 00:34:39 steve Exp $"
+#ident "$Id: vthread.cc,v 1.30 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -82,6 +82,7 @@ struct vthread_s {
       unsigned long pc;
 	/* These hold the private thread bits. */
       unsigned char *bits;
+      long index[4];
       unsigned nbits :16;
 	/* My parent sets this when it wants me to wake it up. */
       unsigned schedule_parent_on_end :1;
@@ -325,6 +326,13 @@ bool of_ASSIGN(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
       schedule_assign(cp->iptr, bit_val, cp->bit_idx1);
+      return true;
+}
+
+bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t cp)
+{
+      unsigned char bit_val = thr_get_bit(thr, cp->bit_idx2);
+      schedule_memory(cp->mem, thr->index[3], bit_val, cp->bit_idx1);
       return true;
 }
 
@@ -615,6 +623,32 @@ bool of_INV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+
+/*
+** Index registers, signed arithmetic.
+*/
+
+bool of_IX_ADD(vthread_t thr, vvp_code_t cp)
+{
+  int number = (int)cp->number; // signed
+  thr->index[cp->bit_idx1 & 3] += number;
+  return true;
+}
+
+bool of_IX_MUL(vthread_t thr, vvp_code_t cp)
+{
+  int number = (int)cp->number; // signed
+  thr->index[cp->bit_idx1 & 3] *= number;
+  return true;
+}
+
+bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
+{
+  // TODO
+  return true;
+}
+
+
 /*
  * The various JMP instruction work simply by pulling the new program
  * counter from the instruction and resuming. If the jump is
@@ -673,6 +707,15 @@ bool of_LOAD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
       thr_put_bit(thr, cp->bit_idx1, functor_get(cp->iptr));
+      return true;
+}
+
+bool of_LOAD_MEM(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx1 >= 4);
+      assert(cp->bit_idx2 < 4);
+      unsigned char val = memory_get(cp->mem, thr->index[cp->bit_idx1]);
+      thr_put_bit(thr, cp->bit_idx2, val);
       return true;
 }
 
@@ -759,6 +802,15 @@ bool of_SET(vthread_t thr, vvp_code_t cp)
 {
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx1);
       functor_set(cp->iptr, bit_val, true);
+
+      return true;
+}
+
+bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx2 < 4);
+      unsigned char val = thr_get_bit(thr, cp->bit_idx2);
+      memory_set(cp->mem, thr->index[cp->bit_idx1], val);
 
       return true;
 }
@@ -873,6 +925,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.30  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.29  2001/04/21 00:34:39  steve
  *  Working %disable and reap handling references from scheduler.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.4 2001/03/31 19:00:43 steve Exp $"
+#ident "$Id: schedule.h,v 1.5 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -45,6 +45,20 @@ extern void schedule_functor(vvp_ipoint_t fun, unsigned delay);
  */
 extern void schedule_assign(vvp_ipoint_t fun, unsigned char val,
 			    unsigned delay);
+
+/*
+ * Create an abstract event.
+ */
+
+typedef struct vvp_gen_event_s *vvp_gen_event_t;
+
+extern void schedule_generic(vvp_gen_event_t obj, unsigned char val,
+			     unsigned delay);
+
+struct vvp_gen_event_s
+{
+  void (*run)(vvp_gen_event_t obj, unsigned char val);
+};
 
 /*
  * This runs the simulator. It runs until all the functors run out or
@@ -74,6 +88,9 @@ extern bool schedule_finished(void);
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.5  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.4  2001/03/31 19:00:43  steve
  *  Add VPI support for the simulation time.
  *

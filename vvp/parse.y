@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.22 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: parse.y,v 1.23 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -54,6 +54,7 @@ extern FILE*yyin;
 
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_SCOPE K_THREAD
 %token K_UDP K_UDP_C K_UDP_S
+%token K_MEM K_MEM_P K_MEM_I
 %token K_VAR K_VAR_S K_vpi_call K_disable K_fork
 %token K_vpi_module
 
@@ -65,7 +66,7 @@ extern FILE*yyin;
 %token <vect> T_VECTOR
 
 %type <symb>  symbol symbol_opt
-%type <symbv> symbols symbols_net
+%type <symbv> symbols symbols_net numbers
 %type <text> label_opt
 %type <opa>  operand operands operands_opt
 %type <table> udp_table
@@ -126,6 +127,17 @@ statement
 
 	| T_LABEL K_UDP T_SYMBOL ',' symbols ';'
 		{ compile_udp_functor($1, $3, $5.cnt, $5.vect); }
+
+
+  /* Memory.  Definition, port, initialization */
+
+        | T_LABEL K_MEM T_STRING ',' T_NUMBER ',' T_NUMBER ',' numbers ';'
+		{ compile_memory($1, $3, $5, $7, $9.cnt, $9.nvec); }
+
+        | T_LABEL K_MEM_P T_SYMBOL ',' T_NUMBER ',' T_NUMBER ',' symbols ';'
+		{ compile_memory_port($1, $3, $5, $7, $9.cnt, $9.vect); }
+
+	| mem_init_stmt
 
 
   /* Event statements take a label, a type (the first T_SYMBOL) and a
@@ -323,6 +335,21 @@ symbols
 	;
 
 
+numbers
+	: T_NUMBER
+		{ struct numbv_s obj;
+		  numbv_init(&obj);
+		  numbv_add(&obj, $1);
+		  $$ = obj;
+		}
+	| numbers ',' T_NUMBER
+		{ struct numbv_s obj = $1;
+		  numbv_add(&obj, $3);
+		  $$ = obj;
+		}
+	;
+
+
 symbols_net
 	: symbol_opt
 		{ struct symbv_s obj;
@@ -358,12 +385,25 @@ symbol_opt
 		{ $$.text = 0;
 		  $$.idx = 0;
 		}
+	;
 
 udp_table
 	: T_STRING
 		{ $$ = compile_udp_table(0x0, $1); }
 	| udp_table ',' T_STRING
 		{ $$ = compile_udp_table($1,  $3); }
+	;
+
+mem_init_stmt
+	: K_MEM_I symbol ',' T_NUMBER o_komma 
+		{ compile_memory_init($2.text, $2.idx, $4); }
+        | mem_init_stmt T_NUMBER o_komma 
+		{ compile_memory_init(0x0,     0,      $2); }
+	;
+
+o_komma
+	: /* empty */
+	| ','
 	;
 
 %%
@@ -385,6 +425,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.23  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.22  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

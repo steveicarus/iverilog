@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.6 2001/04/21 00:34:39 steve Exp $"
+#ident "$Id: schedule.cc,v 1.7 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 # include  "schedule.h"
 # include  "functor.h"
+# include  "memory.h"
 # include  "vthread.h"
 # include  <malloc.h>
 # include  <assert.h>
@@ -32,6 +33,7 @@ struct event_s {
       union {
 	    vthread_t thr;
 	    vvp_ipoint_t fun;
+            vvp_gen_event_t obj;
       };
       unsigned val  :2;
       unsigned type :2;
@@ -39,10 +41,39 @@ struct event_s {
       struct event_s*next;
       struct event_s*last;
 };
-const unsigned TYPE_NOOP   = 0;
+const unsigned TYPE_GEN    = 0;
 const unsigned TYPE_THREAD = 1;
 const unsigned TYPE_PROP   = 2;
 const unsigned TYPE_ASSIGN = 3;
+
+/*
+** These event_s will be required a lot, at high frequency.
+** Once allocated, we never free them, but stash them away for next time. 
+*/
+
+static struct event_s* free_list = 0;
+
+inline static struct event_s* e_alloc()
+{
+  struct event_s* cur = free_list;
+  if (!cur)
+    {
+      cur = (struct event_s*) malloc(sizeof(struct event_s));
+      // cur = (struct event_s*) calloc(1, sizeof(struct event_s));
+    }
+  else
+    {
+      free_list = cur->next;
+      // memset(cur, 0, sizeof(struct event_s));
+    }
+  return cur;
+}
+
+inline static void e_free(struct event_s* cur)
+{
+  cur->next = free_list;
+  free_list = cur;
+}
 
 /*
  * This is the head of the list of pending events.
@@ -114,8 +145,7 @@ static void schedule_event_(struct event_s*cur)
 
 void schedule_vthread(vthread_t thr, unsigned delay)
 {
-      struct event_s*cur = (struct event_s*)
-	    calloc(1, sizeof(struct event_s));
+      struct event_s*cur = e_alloc();
 
       cur->delay = delay;
       cur->thr = thr;
@@ -127,8 +157,7 @@ void schedule_vthread(vthread_t thr, unsigned delay)
 
 void schedule_functor(vvp_ipoint_t fun, unsigned delay)
 {
-      struct event_s*cur = (struct event_s*)
-	    calloc(1, sizeof(struct event_s));
+      struct event_s*cur = e_alloc();
 
       cur->delay = delay;
       cur->fun = fun;
@@ -139,8 +168,7 @@ void schedule_functor(vvp_ipoint_t fun, unsigned delay)
 
 void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
 {
-      struct event_s*cur = (struct event_s*)
-	    calloc(1, sizeof(struct event_s));
+      struct event_s*cur = e_alloc();
 
       cur->delay = delay;
       cur->fun = fun;
@@ -148,7 +176,18 @@ void schedule_assign(vvp_ipoint_t fun, unsigned char val, unsigned delay)
       cur->type= TYPE_ASSIGN;
 
       schedule_event_(cur);
+}
 
+void schedule_generic(vvp_gen_event_t obj, unsigned char val, unsigned delay)
+{
+      struct event_s*cur = e_alloc();
+
+      cur->delay = delay;
+      cur->obj = obj;
+      cur->val = val;
+      cur->type= TYPE_GEN;
+
+      schedule_event_(cur);
 }
 
 static unsigned long schedule_time;
@@ -188,14 +227,22 @@ void schedule_simulate(void)
 		  functor_set(cur->fun, cur->val);
 		  break;
 
+		case TYPE_GEN:
+		  if (cur->obj && cur->obj->run)
+		    cur->obj->run(cur->obj, cur->val);
+		  break;
+
 	    }
 
-	    free(cur);
+	    e_free(cur);
       }
 }
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.7  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.6  2001/04/21 00:34:39  steve
  *  Working %disable and reap handling references from scheduler.
  *

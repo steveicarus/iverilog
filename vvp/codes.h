@@ -19,11 +19,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.20 2001/04/18 04:21:23 steve Exp $"
+#ident "$Id: codes.h,v 1.21 2001/05/01 01:09:39 steve Exp $"
 #endif
 
 
 # include  "pointers.h"
+# include  "memory.h"
 # include  "vthread.h"
 # include  <stdio.h>
 
@@ -38,6 +39,7 @@ typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
 extern bool of_ADD(vthread_t thr, vvp_code_t code);
 extern bool of_AND(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
@@ -47,17 +49,22 @@ extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
+extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
+extern bool of_IX_LOAD(vthread_t thr, vvp_code_t code);
+extern bool of_IX_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_JMP(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
+extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_XNOR(vthread_t thr, vvp_code_t code);
@@ -75,6 +82,7 @@ struct vvp_code_s {
 	    unsigned number;
 	    vvp_ipoint_t iptr;
 	    vvp_cpoint_t cptr;
+	    vvp_memory_t mem;
 	    struct __vpiHandle*handle;
 	    struct fork_extend*fork;
       };
@@ -117,6 +125,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.21  2001/05/01 01:09:39  steve
+ *  Add support for memory objects. (Stephan Boettcher)
+ *
  * Revision 1.20  2001/04/18 04:21:23  steve
  *  Put threads into scopes.
  *
