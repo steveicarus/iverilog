@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.71 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: vthread.cc,v 1.72 2002/05/24 04:55:13 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -791,6 +791,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	    unsigned char*rbits = new unsigned char[cp->number];
 	    unsigned idx1 = cp->bit_idx[0];
 	    unsigned idx2 = cp->bit_idx[1];
+	    bool rval_is_zero = true;
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 		  lbits[idx] = thr_get_bit(thr, idx1);
 		  rbits[idx] = thr_get_bit(thr, idx2);
@@ -800,9 +801,19 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 			goto x_out;
 		  }
 
+		  if (rbits[idx] != 0)
+			rval_is_zero = false;
+
 		  idx1 += 1;
 		  if (idx2 >= 4)
 			idx2 += 1;
+	    }
+
+	      /* Notice the special case of divide by 0. */
+	    if (rval_is_zero) {
+		  delete[]lbits;
+		  delete[]rbits;
+		  goto x_out;
 	    }
 
 	    divide_bits(cp->number, lbits, rbits);
@@ -880,6 +891,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 	    unsigned char*rbits = new unsigned char[cp->number];
 	    unsigned idx1 = cp->bit_idx[0];
 	    unsigned idx2 = cp->bit_idx[1];
+	    bool rval_is_zero = true;
 	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
 		  lbits[idx] = thr_get_bit(thr, idx1);
 		  rbits[idx] = thr_get_bit(thr, idx2);
@@ -889,9 +901,19 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 			goto x_out;
 		  }
 
+		  if (rbits[idx] != 0)
+			rval_is_zero = false;
+
 		  idx1 += 1;
 		  if (idx2 >= 4)
 			idx2 += 1;
+	    }
+
+	      /* Notice the special case of divide by 0. */
+	    if (rval_is_zero) {
+		  delete[]lbits;
+		  delete[]rbits;
+		  goto x_out;
 	    }
 
 	      /* Signed division is unsigned division on the absolute
@@ -1263,11 +1285,12 @@ if(cp->number <= 8*sizeof(unsigned long)) {
 
 	if((mxa>mxz)||(mxa==-1))
 	        {
-	        if(mxa==-1)
-	                {
-			fprintf(stderr, "Division By Zero error, exiting.\n");
-			exit(255);
-	                }
+	        if(mxa==-1) {
+		      delete []t;
+		      delete []z;
+		      delete []a;
+		      goto x_out;
+		}
 	                 
 	        goto tally;
 	        }
@@ -1884,6 +1907,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.72  2002/05/24 04:55:13  steve
+ *  Detect long division by zero.
+ *
  * Revision 1.71  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *
