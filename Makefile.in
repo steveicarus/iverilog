@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.80 2000/11/21 03:55:20 steve Exp $"
+#ident "$Id: Makefile.in,v 1.81 2000/11/29 23:59:29 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -64,7 +64,7 @@ check: all
 	./check | grep 'Hello, World'
 
 clean:
-	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog iverilog@EXEEXT@
+	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog ivl@EXEEXT@ libivl.a
 	cd vvm ; $(MAKE) clean
 	cd vpi ; $(MAKE) clean
 	cd driver ; $(MAKE) clean
