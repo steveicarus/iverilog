@@ -18,6 +18,12 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_HEADERS(getopt.h iosfwd sys/wait.h)
 
 AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
+AC_ARG_WITH(ipal,enable PAL target,
+if test "$with_ipal" = no; then
+       echo Disabling ipal support
+       HAVE_IPAL=
+fi
+)
 AC_SUBST(HAVE_IPAL)
 
 # --
