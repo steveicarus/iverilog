@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.2 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: eval_real.c,v 1.3 2003/01/28 04:15:50 steve Exp $"
 #endif
 
 /*
@@ -114,28 +114,47 @@ static int draw_realnum_real(ivl_expr_t exp)
       double value = ivl_expr_dvalue(exp);
 
       double fract;
-      int vexp;
+      int expo, vexp;
       unsigned long mant;
       int sign = 0;
 
       if (value < 0) {
-	    sign = 0x4000;;
+	    sign = 0x4000;
 	    value *= -1;
       }
 
-      fract = frexp(value, &vexp);
-      fract *= 0x10000;
-      fract *= 0x10000;
+      fract = frexp(value, &expo);
+      fract = ldexp(fract, 31);
       mant = fract;
-      vexp -= 32;
+      expo -= 31;
 
-      vexp += 0x1000;
+      vexp = expo + 0x1000;
       assert(vexp >= 0);
       assert(vexp < 0x2000);
       vexp += sign;
 
       fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%f\n",
 	      res, mant, vexp, ivl_expr_dvalue(exp));
+
+	/* Capture the residual bits, if there are any. */
+      fract -= floor(fract);
+      fract = ldexp(fract, 32);
+      mant = fract;
+      expo -= 32;
+
+      vexp = expo + 0x1000;
+      assert(vexp >= 0);
+      assert(vexp < 0x2000);
+      vexp += sign;
+
+      if (mant != 0) {
+	    int tmp_word = allocate_word();
+	    fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%f\n",
+		    tmp_word, mant, vexp, ivl_expr_dvalue(exp));
+	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", res, tmp_word);
+	    clr_word(tmp_word);
+      }
+
       return res;
 }
 
@@ -211,6 +230,9 @@ int draw_eval_real(ivl_expr_t exp)
 
 /*
  * $Log: eval_real.c,v $
+ * Revision 1.3  2003/01/28 04:15:50  steve
+ *  Deliver residual bits of real value.
+ *
  * Revision 1.2  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.
