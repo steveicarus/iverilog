@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.116 2005/02/10 04:55:45 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.117 2005/02/12 06:25:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -135,6 +135,16 @@ static void draw_C4_repeated_constant(char bit_char, unsigned width)
 	    fprintf(vvp_out, "%c", bit_char);
 
       fprintf(vvp_out, ">");
+}
+
+static void str_repeat(char*buf, const char*str, unsigned rpt)
+{
+      unsigned idx;
+      size_t len = strlen(str);
+      for (idx = 0 ;  idx < rpt ;  idx += 1) {
+	    strcpy(buf, str);
+	    buf += len;
+      }
 }
 
 /*
@@ -335,6 +345,82 @@ static int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
       return 1;
 }
 
+static void draw_C4_to_string(char*result, size_t nresult,
+			      ivl_net_const_t cptr)
+{
+      const char*bits = ivl_const_bits(cptr);
+      unsigned idx;
+
+      char*dp = result;
+      strcpy(dp, "C4<");
+      dp += strlen(dp);
+
+      for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
+	    switch (bits[ivl_const_width(cptr)-idx-1]) {
+		case '0':
+		  *dp++ = '0';
+		  break;
+		case '1':
+		  *dp++ = '1';
+		  break;
+		default:
+		  *dp++ = bits[idx];
+		  break;
+	    }
+	    assert(dp - result < nresult);
+      }
+
+      strcpy(dp, ">");
+}
+
+static void draw_C8_to_string(char*result, size_t nresult,
+			      ivl_net_const_t cptr,
+			      ivl_drive_t dr0, ivl_drive_t dr1)
+{
+      const char*bits = ivl_const_bits(cptr);
+      unsigned idx;
+
+      char dr0c = "01234567"[dr0];
+      char dr1c = "01234567"[dr1];
+      char*dp = result;
+
+      strcpy(dp, "C8<");
+      dp += strlen(dp);
+
+      for (idx = 0 ;  idx < ivl_const_width(cptr) ;  idx += 1) {
+	    switch (bits[ivl_const_width(cptr)-idx-1]) {
+		case '0':
+		  *dp++ = dr0c;
+		  *dp++ = dr0c;
+		  *dp++ = '0';
+		  break;
+		case '1':
+		  *dp++ = dr1c;
+		  *dp++ = dr1c;
+		  *dp++ = '1';
+		  break;
+		case 'x':
+		case 'X':
+		  *dp++ = dr0c;
+		  *dp++ = dr1c;
+		  *dp++ = 'x';
+		  break;
+		case 'z':
+		case 'Z':
+		  *dp++ = '0';
+		  *dp++ = '0';
+		  *dp++ = 'z';
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    assert(dp - result < nresult);
+      }
+
+      strcpy(dp, ">");
+}
+
 /*
  * This function takes a nexus and looks for an input functor. It then
  * draws to the output a string that represents that functor. What we
@@ -361,12 +447,71 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  return draw_net_input(ivl_logic_pin(lptr, 1));
 	    } while(0);
 
+	/* If this is a pulldown device, then there is a single pin
+	   that drives a constant value to the entire width of the
+	   vector. The driver normally drives a pull0 value, so a C8<>
+	   constant is appropriate, but if the drive is really strong,
+	   then we can draw a C4<> constant instead. */
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
-	    return "C<pu0>";
+	    if (ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG) {
+		  char*dp = result;
+		  strcpy(dp, "C4<");
+		  dp += strlen(dp);
+		  str_repeat(dp, "0", ivl_logic_width(lptr));
+		  dp += ivl_logic_width(lptr);
+		  *dp++ = '>';
+		  *dp = 0;
+		  assert((dp-result) <= sizeof result);
+		  return result;
+	    } else {
+		  char val[4];
+		  char*dp = result;
+
+		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
+		  val[1] = val[0];
+		  val[2] = '0';
+		  val[3] = 0;
+
+		  strcpy(dp, "C8<");
+		  dp += strlen(dp);
+		  str_repeat(dp, val, ivl_logic_width(lptr));
+		  dp += 3*ivl_logic_width(lptr);
+		  *dp++ = '>';
+		  *dp = 0;
+		  assert((dp-result) <= sizeof result);
+		  return result;
+	    }
       }
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
-	    return "C<pu1>";
+	    if (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG) {
+		  char*dp = result;
+		  strcpy(dp, "C4<");
+		  dp += strlen(dp);
+		  str_repeat(dp, "1", ivl_logic_width(lptr));
+		  dp += ivl_logic_width(lptr);
+		  *dp++ = '>';
+		  *dp = 0;
+		  assert((dp-result) <= sizeof result);
+		  return result;
+	    } else {
+		  char val[4];
+		  char*dp = result;
+
+		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
+		  val[1] = val[0];
+		  val[2] = '1';
+		  val[3] = 0;
+
+		  strcpy(dp, "C8<");
+		  dp += strlen(dp);
+		  str_repeat(dp, val, ivl_logic_width(lptr));
+		  dp += 3*ivl_logic_width(lptr);
+		  *dp++ = '>';
+		  *dp = 0;
+		  assert((dp-result) <= sizeof result);
+		  return result;
+	    }
       }
 
       if (lptr && (nptr_pin == 0)) {
@@ -386,43 +531,19 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       cptr = ivl_nexus_ptr_con(nptr);
       if (cptr) {
-	      /* Constants should have exactly 1 pin, with a vector
-		 result. */
+	      /* Constants should have exactly 1 pin, with a vector value. */
 	    assert(nptr_pin == 0);
-	    const char*bits = ivl_const_bits(cptr);
-	    ivl_drive_t drive;
-	    unsigned idx;
 
-	    char*dp = result;
-	    strcpy(dp, "C4<");
-	    dp += strlen(dp);
+	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG)
+		&& (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG)) {
 
-	    for (idx = 0 ; idx < ivl_const_width(cptr) ;  idx += 1) {
-		  switch (bits[ivl_const_width(cptr)-idx-1]) {
-		      case '0':
-			drive = ivl_nexus_ptr_drive0(nptr);
-			if (drive == IVL_DR_HiZ) {
-			      *dp++ = 'z';
-			} else {
-			      *dp++ = '0';
-			}
-			break;
-		      case '1':
-			drive = ivl_nexus_ptr_drive1(nptr);
-			if (drive == IVL_DR_HiZ) {
-			      *dp++ = 'z';
-			} else {
-			      *dp++ = '1';
-			}
-			break;
-		      default:
-			*dp++ = bits[idx];
-			break;
-		  }
-		  assert(dp - result < sizeof result);
+		  draw_C4_to_string(result, sizeof(result), cptr);
+
+	    } else {
+		  draw_C8_to_string(result, sizeof(result), cptr,
+				    ivl_nexus_ptr_drive0(nptr),
+				    ivl_nexus_ptr_drive1(nptr));
 	    }
-
-	    strcpy(dp, ">");
 	    return result;
       }
 
@@ -1920,6 +2041,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.117  2005/02/12 06:25:15  steve
+ *  Draw C4 and C8 constants to account for strength.
+ *
  * Revision 1.116  2005/02/10 04:55:45  steve
  *  Get the C4 width right for undriven nexa.
  *
