@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.37 1999/06/12 03:42:57 steve Exp $"
+#ident "$Id: parse.y,v 1.38 1999/06/12 20:35:27 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -53,7 +53,7 @@ extern void lex_end_table();
       NetNet::PortType porttype;
 
       PWire*wire;
-      list<PWire*>*wires;
+      svector<PWire*>*wires;
 
       PEventStatement*event_statement;
       Statement*statement;
@@ -222,9 +222,9 @@ delay_value
 	;
 
 delay_value_list
-	: delay_value
+	: expression
 		{ $$ = $1; }
-	| delay_value_list ',' delay_value
+	| delay_value_list ',' expression
 		{ yyerror(@1, "Sorry, delay value lists not supported.");
 		  $$ = $1;
 		  delete $3;
@@ -698,13 +698,13 @@ identifier
 
 list_of_ports
 	: port
-		{ list<PWire*>*tmp = new list<PWire*>;
-		  tmp->push_back($1);
+		{ svector<PWire*>*tmp = new svector<PWire*>(1);
+		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	| list_of_ports ',' port
-		{ list<PWire*>*tmp = $1;
-		  tmp->push_back($3);
+		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, $3);
+		  delete $1;
 		  $$ = tmp;
 		}
 	;
@@ -1111,6 +1111,12 @@ register_variable
 		{ pform_makewire(@1, *$1, NetNet::REG);
 		  $$ = $1;
 		}
+	| IDENTIFIER '=' expression
+		{ pform_makewire(@1, *$1, NetNet::REG);
+		  yyerror(@2, "net declaration assignment to reg/integer not allowed.");
+		  delete $3;
+		  $$ = $1;
+		}
 	| IDENTIFIER '[' expression ':' expression ']'
 		{ pform_makewire(@1, *$1, NetNet::REG);
 		  if (! pform_expression_is_constant($3))
@@ -1175,9 +1181,21 @@ statement
 	| K_disable IDENTIFIER ';'
 		{ yyerror(@1, "Sorry, disable statements not supported.");
 		  delete $2;
+		  $$ = 0;
+		}
+	| K_forever statement
+		{ yyerror(@1, "Sorry, forever statements not supported.");
+		  delete $2;
+		  $$ = 0;
 		}
 	| K_fork statement_list K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, $2); }
+	| K_repeat '(' expression ')' statement
+		{ yyerror(@1, "Sorry, repeat statements not supported.");
+		  delete $3;
+		  delete $5;
+		  $$ = 0;
+		}
 	| K_begin K_end
 		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
 	| K_begin ':' IDENTIFIER K_end
@@ -1479,16 +1497,16 @@ udp_port_decl
 	| K_output IDENTIFIER ';'
 		{ PWire*pp = new PWire(*$2);
 		  pp->port_type = NetNet::POUTPUT;
-		  list<PWire*>*tmp = new list<PWire*>;
-		  tmp->push_back(pp);
+		  svector<PWire*>*tmp = new svector<PWire*>(1);
+		  (*tmp)[0] = pp;
 		  delete $2;
 		  $$ = tmp;
 		}
 	| K_reg IDENTIFIER ';'
 		{ PWire*pp = new PWire(*$2, NetNet::REG);
 		  pp->port_type = NetNet::PIMPLICIT;
-		  list<PWire*>*tmp = new list<PWire*>;
-		  tmp->push_back(pp);
+		  svector<PWire*>*tmp = new svector<PWire*>(1);
+		  (*tmp)[0] = pp;
 		  delete $2;
 		  $$ = tmp;
 		}
@@ -1498,8 +1516,8 @@ udp_port_decls
 	: udp_port_decl
 		{ $$ = $1; }
 	| udp_port_decls udp_port_decl
-		{ list<PWire*>*tmp = $1;
-		  tmp->merge(*$2);
+		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
+		  delete $1;
 		  delete $2;
 		  $$ = tmp;
 		}

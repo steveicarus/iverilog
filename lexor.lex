@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.18 1999/06/12 03:41:30 steve Exp $"
+#ident "$Id: lexor.lex,v 1.19 1999/06/12 20:35:27 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -57,6 +57,7 @@ static verinum*make_unsized_hex(const char*txt);
 %x CSTRING
 %s UDPTABLE
 %x PPINCLUDE
+%x PPTIMESCALE
 
 %%
 
@@ -167,6 +168,14 @@ static verinum*make_unsized_hex(const char*txt);
       yylval.number = new verinum(bits, nbits, false);
       delete[]bits;
       return NUMBER; }
+
+`timescale { BEGIN(PPTIMESCALE); }
+<PPTIMESCALE>. { ; }
+<PPTIMESCALE>\n {
+      cerr << yylloc.text << ":" << yylloc.first_line
+	   << ": Sorry, `timescale not supported." << endl;
+      yylloc.first_line += 1;
+      BEGIN(0); }
 
 `include {
       BEGIN(PPINCLUDE); }

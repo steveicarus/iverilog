@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.18 1999/06/06 20:45:39 steve Exp $"
+#ident "$Id: pform.h,v 1.19 1999/06/12 20:35:27 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -95,11 +95,11 @@ struct lgate {
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
  */
-extern void pform_startmodule(const string&, list<PWire*>*ports);
+extern void pform_startmodule(const string&, svector<PWire*>*ports);
 extern void pform_endmodule(const string&);
 
 extern void pform_make_udp(string*name, list<string>*parms,
-			   list<PWire*>*decl, list<string>*table,
+			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init);
 
 /*
@@ -123,7 +123,7 @@ extern PProcess*  pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_calltask(string*t, svector<PExpr*>* =0);
 
-extern list<PWire*>* pform_make_udp_input_ports(list<string>*);
+extern svector<PWire*>* pform_make_udp_input_ports(list<string>*);
 
 extern bool pform_expression_is_constant(const PExpr*);
 
@@ -152,6 +152,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.19  1999/06/12 20:35:27  steve
+ *  parse more verilog.
+ *
  * Revision 1.18  1999/06/06 20:45:39  steve
  *  Add parse and elaboration of non-blocking assignments,
  *  Replace list<PCase::Item*> with an svector version,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.24 1999/06/12 03:42:17 steve Exp $"
+#ident "$Id: pform.cc,v 1.25 1999/06/12 20:35:27 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -57,20 +57,16 @@ static unsigned long evaluate_delay(PExpr*delay)
       return pp->value().as_ulong();
 }
 
-void pform_startmodule(const string&name, list<PWire*>*ports)
+void pform_startmodule(const string&name, svector<PWire*>*ports)
 {
       assert( cur_module == 0 );
-      cur_module = new Module(name, ports? ports->size() : 0);
+      cur_module = new Module(name, ports? ports->count() : 0);
 
       if (ports) {
-	    unsigned idx = 0;
-	    for (list<PWire*>::iterator cur = ports->begin()
-		       ; cur != ports->end()
-		       ; cur ++ ) {
-		  cur_module->add_wire(*cur);
-		  cur_module->ports[idx++] = *cur;
+	    for (unsigned idx = 0 ;  idx < ports->count() ;  idx += 1) {
+		  cur_module->add_wire((*ports)[idx]);
+		  cur_module->ports[idx] = (*ports)[idx];
 	    }
-
 	    delete ports;
       }
 }
@@ -89,7 +85,7 @@ bool pform_expression_is_constant(const PExpr*ex)
 }
 
 void pform_make_udp(string*name, list<string>*parms,
-		    list<PWire*>*decl, list<string>*table,
+		    svector<PWire*>*decl, list<string>*table,
 		    Statement*init_expr)
 {
       assert(parms->size() > 0);
@@ -98,28 +94,26 @@ void pform_make_udp(string*name, list<string>*parms,
 	   off with the parameters in the list. I will rebuild a list
 	   of parameters for the PUdp object. */
       map<string,PWire*> defs;
-      for (list<PWire*>::iterator cur = decl->begin()
-		 ; cur != decl->end()
-		 ; cur ++ )
+      for (unsigned idx = 0 ;  idx < decl->count() ;  idx += 1)
 
-	    if (defs[(*cur)->name] == 0) {
-		  defs[(*cur)->name] = *cur;
+	    if (defs[(*decl)[idx]->name] == 0) {
+		  defs[(*decl)[idx]->name] = (*decl)[idx];
 
-	    } else switch ((*cur)->port_type) {
+	    } else switch ((*decl)[idx]->port_type) {
 
 		case NetNet::PIMPLICIT:
 		case NetNet::POUTPUT:
-		  assert(defs[(*cur)->name]->port_type != NetNet::PINPUT);
+		  assert(defs[(*decl)[idx]->name]->port_type != NetNet::PINPUT);
 		    // OK, merge the output definitions.
-		  defs[(*cur)->name]->port_type = NetNet::POUTPUT;
-		  if ((*cur)->type == NetNet::REG)
-			defs[(*cur)->name]->type = NetNet::REG;
+		  defs[(*decl)[idx]->name]->port_type = NetNet::POUTPUT;
+		  if ((*decl)[idx]->type == NetNet::REG)
+			defs[(*decl)[idx]->name]->type = NetNet::REG;
 		  break;
 
 		case NetNet::PINPUT:
 		    // Allow duplicate input declarations.
-		  assert(defs[(*cur)->name]->port_type == NetNet::PINPUT);
-		  delete *cur;
+		  assert(defs[(*decl)[idx]->name]->port_type == NetNet::PINPUT);
+		  delete (*decl)[idx];
 		  break;
 
 		default:
@@ -453,8 +447,14 @@ static void pform_set_net_range(const string&name, const svector<PExpr*>*range)
 	    cur->msb = (*range)[0];
 	    cur->lsb = (*range)[1];
       } else {
-	    assert(cur->msb);
-	    assert(cur->lsb);
+	    if (cur->msb == 0) {
+		  VLerror(yylloc, "missing msb of range.");
+		  return;
+	    }
+	    if (cur->lsb == 0) {
+		  VLerror(yylloc, "missing lsb of range.");
+		  return;
+	    }
 	    PExpr*msb = (*range)[0];
 	    PExpr*lsb = (*range)[1];
 	    assert(msb);
@@ -519,16 +519,17 @@ void pform_set_reg_integer(list<string>*names)
       }
 }
 
-list<PWire*>* pform_make_udp_input_ports(list<string>*names)
+svector<PWire*>* pform_make_udp_input_ports(list<string>*names)
 {
-      list<PWire*>*out = new list<PWire*>;
+      svector<PWire*>*out = new svector<PWire*>(names->size());
 
+      unsigned idx = 0;
       for (list<string>::const_iterator cur = names->begin()
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    PWire*pp = new PWire(*cur);
 	    pp->port_type = NetNet::PINPUT;
-	    out->push_back(pp);
+	    (*out)[idx] = pp;
       }
 
       delete names;
@@ -589,6 +590,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.25  1999/06/12 20:35:27  steve
+ *  parse more verilog.
+ *
  * Revision 1.24  1999/06/12 03:42:17  steve
  *  Assert state of bit range expressions.
  *
