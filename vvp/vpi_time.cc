@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.14 2003/03/13 20:31:41 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.15 2003/03/14 18:01:00 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -165,14 +165,19 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
+	      /* The default format is vpiTimeVal. */
+	    vp->format = vpiTimeVal;
 	  case vpiTimeVal:
 	    vp->value.time = &time_value;
 	    vp->value.time->type = vpiSimTime;
 	    vpip_time_to_timestruct(vp->value.time, simtime);
-	    vp->format = vpiTimeVal;
 	    break;
 
 	  case vpiRealVal:
+	      /* Oops, in this case I want a double power of 10 to do
+		 the scaling, instead of the integer scaling done
+		 everywhere else. */
+	    units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
 	    vp->value.real = pow(10, vpi_time_precision - units);
 	    vp->value.real *= schedule_simtime();
 	    break;
@@ -269,6 +274,9 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.15  2003/03/14 18:01:00  steve
+ *  Refix vpiRealVal scaling of time.
+ *
  * Revision 1.14  2003/03/13 20:31:41  steve
  *  Warnings about long long time.
  *
