@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.30 2002/06/21 04:59:36 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.31 2002/07/12 02:08:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -531,6 +531,21 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       const char* ident;
       int nexus_id;
 
+      /* list of types to iterate upon */
+      int i, types[] = {
+	    /* Scope */
+	    vpiFunction,
+	    vpiModule,
+	    vpiNamedBegin,
+	    vpiNamedFork,
+	    vpiTask,
+	    /* Value */
+	    vpiNet,
+	    vpiReg,
+	    vpiIntegerVar,
+	    -1
+      };
+
       switch (vpi_get(vpiType, item)) {
 
 	  case vpiMemory:
@@ -622,14 +637,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  name = vpi_get_str(vpiName, item);
 
 		  fprintf(dump_file, "$scope %s %s $end\n", type, name);
-		  
-		  argv = vpi_iterate(vpiInternalScope, item);
-		  if (argv) {
-			for (item = vpi_scan(argv) ;  
-			     item ;  
-			     item = vpi_scan(argv)) {
-			      
-			      scan_item(depth-1, item, nskip);
+
+		  for (i=0; types[i]>0; i++) {
+			vpiHandle hand;
+			argv = vpi_iterate(types[i], item);
+			while (argv && (hand = vpi_scan(argv))) {
+			      scan_item(depth-1, hand, nskip);
 			}
 		  }
 		  
@@ -786,6 +799,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.31  2002/07/12 02:08:10  steve
+ *  Eliminate use of vpiInternalScope.
+ *
  * Revision 1.30  2002/06/21 04:59:36  steve
  *  Carry integerness throughout the compilation.
  *
