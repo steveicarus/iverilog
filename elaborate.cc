@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.283 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.284 2003/07/02 04:19:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1387,6 +1387,23 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       NetProc*i = if_? if_->elaborate(des, scope) : 0;
       NetProc*e = else_? else_->elaborate(des, scope) : 0;
 
+	// Detect the special cases that the if or else statements are
+	// empty blocks. If this is the case, remove the blocks as
+	// null statements.
+      if (NetBlock*tmp = dynamic_cast<NetBlock*>(i)) {
+	    if (tmp->proc_first() == 0) {
+		  delete i;
+		  i = 0;
+	    }
+      }
+
+      if (NetBlock*tmp = dynamic_cast<NetBlock*>(e)) {
+	    if (tmp->proc_first() == 0) {
+		  delete e;
+		  e = 0;
+	    }
+      }
+
       NetCondit*res = new NetCondit(expr, i, e);
       res->set_line(*this);
       return res;
@@ -2560,6 +2577,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.284  2003/07/02 04:19:16  steve
+ *  Elide empty begin-end in conditionals.
+ *
  * Revision 1.283  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *

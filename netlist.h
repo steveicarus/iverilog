@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.292 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.293 2003/07/02 04:19:16 steve Exp $"
 #endif
 
 /*
@@ -1628,8 +1628,11 @@ class NetCAssign  : public NetProc, public NetNode {
 };
 
 
-/* A condit represents a conditional. It has an expression to test,
-   and a pair of statements to select from. */
+/*
+ * A condit represents a conditional. It has an expression to test,
+ * and a pair of statements to select from. If the original statement
+ * has empty clauses, then the NetProc for it will be a nul pointer.
+ */
 class NetCondit  : public NetProc {
 
     public:
@@ -3306,6 +3309,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.293  2003/07/02 04:19:16  steve
+ *  Elide empty begin-end in conditionals.
+ *
  * Revision 1.292  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *
