@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.55 2003/06/24 01:38:02 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.56 2003/08/01 02:12:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -773,7 +773,7 @@ NetEConst* NetEBLogic::eval_tree()
 	    if (v.get(idx) == verinum::V1)
 		  rv = verinum::V1;
 
-      if (lv == verinum::V0)
+      if (rv == verinum::V0)
 	    for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
 		  if (v.get(idx) != verinum::V0)
 			rv = verinum::Vx;
@@ -1458,6 +1458,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.56  2003/08/01 02:12:30  steve
+ *  Fix || with true case on the right.
+ *
  * Revision 1.55  2003/06/24 01:38:02  steve
  *  Various warnings fixed.
  *
