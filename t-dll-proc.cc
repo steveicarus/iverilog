@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.2 2000/09/19 04:15:27 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.3 2000/09/22 03:58:30 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -200,6 +200,7 @@ void dll_target::proc_stask(const NetSTask*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_STASK;
+      stmt_cur_->u_.stask_.name_ = strdup(net->name());
 }
 
 bool dll_target::proc_wait(const NetEvWait*net)
@@ -242,6 +243,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.3  2000/09/22 03:58:30  steve
+ *  Access to the name of a system task call.
+ *
  * Revision 1.2  2000/09/19 04:15:27  steve
  *  Introduce the means to get statement types.
  *

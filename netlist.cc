@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.135 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: netlist.cc,v 1.136 2000/09/22 03:58:30 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1602,8 +1602,10 @@ const NetNet* NetFuncDef::port(unsigned idx) const
 }
 
 NetSTask::NetSTask(const string&na, const svector<NetExpr*>&pa)
-: name_(na), parms_(pa)
+: name_(0), parms_(pa)
 {
+      name_ = new char[na.length() + 1];
+      strcpy(name_, na.c_str());
       assert(name_[0] == '$');
 }
 
@@ -1612,6 +1614,17 @@ NetSTask::~NetSTask()
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    delete parms_[idx];
 
+      delete[]name_;
+}
+
+const char*NetSTask::name() const
+{
+      return name_;
+}
+
+unsigned NetSTask::nparms() const
+{
+      return parms_.count();
 }
 
 const NetExpr* NetSTask::parm(unsigned idx) const
@@ -2362,6 +2375,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.136  2000/09/22 03:58:30  steve
+ *  Access to the name of a system task call.
+ *
  * Revision 1.135  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *

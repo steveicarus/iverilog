@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.2 2000/09/19 04:15:27 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.3 2000/09/22 03:58:30 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -121,6 +121,18 @@ extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
       return net->u_.delay_.delay_;
 }
 
+extern "C" const char* ivl_stmt_name(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_STASK:
+	    return net->u_.stask_.name_;
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
 extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 {
       switch (net->type_) {
@@ -139,6 +151,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.3  2000/09/22 03:58:30  steve
+ *  Access to the name of a system task call.
+ *
  * Revision 1.2  2000/09/19 04:15:27  steve
  *  Introduce the means to get statement types.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.163 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.164 2000/09/22 03:58:30 steve Exp $"
 #endif
 
 /*
@@ -1830,9 +1830,9 @@ class NetSTask  : public NetProc {
       NetSTask(const string&na, const svector<NetExpr*>&);
       ~NetSTask();
 
-      const string& name() const { return name_; }
+      const char* name() const;
 
-      unsigned nparms() const { return parms_.count(); }
+      unsigned nparms() const;
 
       const NetExpr* parm(unsigned idx) const;
 
@@ -1840,7 +1840,7 @@ class NetSTask  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
-      string name_;
+      char* name_;
       svector<NetExpr*>parms_;
 };
 
@@ -2800,6 +2800,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.164  2000/09/22 03:58:30  steve
+ *  Access to the name of a system task call.
+ *
  * Revision 1.163  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *

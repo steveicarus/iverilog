@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.8 2000/09/19 04:15:27 steve Exp $"
+#ident "$Id: stub.c,v 1.9 2000/09/22 03:58:30 steve Exp $"
 #endif
 
 /*
@@ -162,7 +162,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  case IVL_ST_STASK:
-	    fprintf(out, "%*s$?(...);\n", ind, "");
+	    fprintf(out, "%*s%s(...);\n", ind, "", ivl_stmt_name(net));
 	    break;
 
 	  case IVL_ST_WAIT:
@@ -198,6 +198,9 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.9  2000/09/22 03:58:30  steve
+ *  Access to the name of a system task call.
+ *
  * Revision 1.8  2000/09/19 04:15:27  steve
  *  Introduce the means to get statement types.
  *

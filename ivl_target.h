@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.8 2000/09/19 04:15:27 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.9 2000/09/22 03:58:30 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -192,6 +192,8 @@ extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
+  /* IVL_ST_STASK */
+extern const char* ivl_stmt_name(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
@@ -301,6 +303,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.9  2000/09/22 03:58:30  steve
+ *  Access to the name of a system task call.
+ *
  * Revision 1.8  2000/09/19 04:15:27  steve
  *  Introduce the means to get statement types.
  *
