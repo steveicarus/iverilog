@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.92 2002/11/07 03:11:43 steve Exp $"
+#ident "$Id: vthread.cc,v 1.93 2002/11/08 04:59:58 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -484,6 +484,32 @@ bool of_ASSIGN_D(vthread_t thr, vvp_code_t cp)
       assert(cp->bit_idx[0] < 4);
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
       schedule_assign(cp->iptr, bit_val, thr->index[cp->bit_idx[0]]);
+      return true;
+}
+
+/*
+ * This is %assign/v0 <label>, <delay>, <bit>
+ * Index register 0 contains a vector width.
+ */
+bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = thr->index[0];
+      assert(wid > 0);
+      assert(wid < 0x10000);
+
+      unsigned delay = cp->bit_idx[0];
+      unsigned bit = cp->bit_idx[1];
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_ipoint_t iptr = ipoint_index(cp->iptr, idx);
+
+	    unsigned char bit_val = thr_get_bit(thr, bit);
+	    schedule_assign(iptr, bit_val, delay);
+
+	    if (bit >= 4)
+		  bit += 1;
+      }
+
       return true;
 }
 
@@ -2466,6 +2492,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.93  2002/11/08 04:59:58  steve
+ *  Add the %assign/v0 instruction.
+ *
  * Revision 1.92  2002/11/07 03:11:43  steve
  *  functor_set takes bit and strength, not 2 strengths.
  *

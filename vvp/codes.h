@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.52 2002/11/07 02:32:39 steve Exp $"
+#ident "$Id: codes.h,v 1.53 2002/11/08 04:59:57 steve Exp $"
 #endif
 
 
@@ -42,6 +42,7 @@ extern bool of_ANDR(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_D(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_ASSIGN_V0(vthread_t thr, vvp_code_t code);
 extern bool of_ASSIGN_X0(vthread_t thr, vvp_code_t code);
 extern bool of_BLEND(vthread_t thr, vvp_code_t code);
 extern bool of_BREAKPOINT(vthread_t thr, vvp_code_t code);
@@ -159,6 +160,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.53  2002/11/08 04:59:57  steve
+ *  Add the %assign/v0 instruction.
+ *
  * Revision 1.52  2002/11/07 02:32:39  steve
  *  Add vector set and load instructions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.144 2002/11/07 02:32:39 steve Exp $"
+#ident "$Id: compile.cc,v 1.145 2002/11/08 04:59:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -87,8 +87,9 @@ const static struct opcode_table_s opcode_table[] = {
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%assign", of_ASSIGN, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%assign/d", of_ASSIGN_D, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%assign/d", of_ASSIGN_D, 3,  {OA_FUNC_PTR, OA_BIT1, OA_BIT2} },
       { "%assign/m",of_ASSIGN_MEM,3,{OA_MEM_PTR,OA_BIT1,     OA_BIT2} },
+      { "%assign/v0",of_ASSIGN_V0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%blend",  of_BLEND,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
@@ -1482,6 +1483,9 @@ void compile_net(char*label, char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.145  2002/11/08 04:59:58  steve
+ *  Add the %assign/v0 instruction.
+ *
  * Revision 1.144  2002/11/07 02:32:39  steve
  *  Add vector set and load instructions.
  *

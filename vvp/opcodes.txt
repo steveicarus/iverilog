@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.43 2002/11/07 02:32:39 steve Exp $
+ *  $Id: opcodes.txt,v 1.44 2002/11/08 04:59:58 steve Exp $
  */
 
 
@@ -49,6 +49,7 @@ means the following:
 
 * %assign <var-label>, <delay>, <bit>
 * %assign/d <var-label>, <delay>, <bit>
+* %assign/v0 <var-label>, <delay>, <bit>
 
 This does a non-blocking assignment to a variable. The <label>
 identifies the affected variable, and the <delay> gives the delay when
@@ -60,6 +61,8 @@ The %assign/d instruction is exactly the same as the %assign
 instruction, except that the <delay> specifies one of the index
 registers, that contain a calculated delay.
 
+The %assign/v0 instruction is a vector version of %assign, with the
+vector width in index register 0.
 
 * %assign/m <memory-label>, <delay>, <bit>
 
