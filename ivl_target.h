@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.62 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.63 2001/05/20 01:06:16 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -391,7 +391,7 @@ extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
   /* IVL_EX_CONCAT IVL_EX_UFUNC */
 extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
-  /* IVL_EX_CONCAT IVL_EX_UFUNC */
+  /* IVL_EX_CONCAT IVL_EX_SFUNC IVL_EX_UFUNC */
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);
@@ -852,6 +852,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.63  2001/05/20 01:06:16  steve
+ *  stub ivl_expr_parms for sfunctions.
+ *
  * Revision 1.62  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *

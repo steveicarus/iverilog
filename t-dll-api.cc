@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.45 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.46 2001/05/20 01:06:16 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -306,6 +306,9 @@ extern "C" unsigned ivl_expr_parms(ivl_expr_t net)
 
 	  case IVL_EX_CONCAT:
 	    return net->u_.concat_.parms;
+
+	  case IVL_EX_SFUNC:
+	    return 0; /* XXXX not supported yet. */
 
 	  case IVL_EX_UFUNC:
 	    return net->u_.ufunc_.parms;
@@ -1143,6 +1146,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.46  2001/05/20 01:06:16  steve
+ *  stub ivl_expr_parms for sfunctions.
+ *
  * Revision 1.45  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *
