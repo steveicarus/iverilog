@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.75 2000/10/28 03:58:11 steve Exp $"
+#ident "$Id: Makefile.in,v 1.76 2000/10/28 17:51:45 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -61,8 +61,9 @@ all: ivl@EXEEXT@
 # This rule rules the compiler in the trivial hello.vl program to make
 # sure the basics were compiled properly.
 check: all
-	driver/iverilog -Ccheck.conf -B./ivlpp examples/hello.vl
-	./a.out | grep 'Hello, World'
+	driver/iverilog -Ccheck.conf -ocheck -tvvm-check -B./ivlpp examples/hello.vl
+	$(CXX) -o check $(rdynamic) -fno-exceptions -Ivvm -Lvvm check.cc -lvvm -lvpip $(dllib)
+	./check | grep 'Hello, World'
 
 clean:
 	rm -f *.o parse.cc parse.cc.output parse.h dep/*.d lexor.cc lexor_keyword.cc verilog iverilog@EXEEXT@
