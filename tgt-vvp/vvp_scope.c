@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.40 2001/07/16 18:31:49 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.41 2001/07/18 02:44:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -249,9 +249,10 @@ static const char* draw_net_input(ivl_nexus_t nex)
 {
       static char result[512];
       unsigned idx;
-      ivl_nexus_ptr_t drivers[64]; /* TODO: Arbitrary limit */
       int level;
       unsigned ndrivers = 0;
+      static ivl_nexus_ptr_t *drivers = 0x0;
+      static unsigned adrivers = 0;
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
@@ -262,9 +263,14 @@ static const char* draw_net_input(ivl_nexus_t nex)
 		  continue;
 
 	      /* Save this driver. */
+	    if (ndrivers >= adrivers) {
+		  adrivers += 4;
+		  drivers = (ivl_nexus_ptr_t*)
+			realloc(drivers, adrivers*sizeof(ivl_nexus_ptr_t));
+		  assert(drivers);
+	    }
 	    drivers[ndrivers] = nptr;
 	    ndrivers += 1;
-	    assert(ndrivers <= 64);
       }
 
 	/* If the nexus has no drivers, then send a constant HiZ into
@@ -1092,6 +1098,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.41  2001/07/18 02:44:39  steve
+ *  Relax driver limit from 64 to forever (Stephan Boettcher)
+ *
  * Revision 1.40  2001/07/16 18:31:49  steve
  *  Nest resolvers when there are lots of drivers (Stephan Boettcher)
  *
