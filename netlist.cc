@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.109 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: netlist.cc,v 1.110 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -930,6 +930,80 @@ NetObj::Link& NetCompare::pin_DataB(unsigned idx)
 const NetObj::Link& NetCompare::pin_DataB(unsigned idx) const
 {
       return pin(8+width_+idx);
+}
+
+NetDivide::NetDivide(const string&n, unsigned wr,
+		     unsigned wa, unsigned wb)
+: NetNode(n, wr+wa+wb), width_r_(wr), width_a_(wa), width_b_(wb)
+{
+      unsigned p = 0;
+      for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::OUTPUT);
+	    pin(p).set_name("Result", idx);
+      }
+      for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_name("DataA", idx);
+      }
+      for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
+	    pin(p).set_dir(NetObj::Link::INPUT);
+	    pin(p).set_name("DataB", idx);
+      }
+}
+
+NetDivide::~NetDivide()
+{
+}
+
+unsigned NetDivide::width_r() const
+{
+      return width_r_;
+}
+
+unsigned NetDivide::width_a() const
+{
+      return width_a_;
+}
+
+unsigned NetDivide::width_b() const
+{
+      return width_b_;
+}
+
+NetObj::Link& NetDivide::pin_Result(unsigned idx)
+{
+      assert(idx < width_r_);
+      return pin(idx);
+}
+
+const NetObj::Link& NetDivide::pin_Result(unsigned idx) const
+{
+      assert(idx < width_r_);
+      return pin(idx);
+}
+
+NetObj::Link& NetDivide::pin_DataA(unsigned idx)
+{
+      assert(idx < width_a_);
+      return pin(idx+width_r_);
+}
+
+const NetObj::Link& NetDivide::pin_DataA(unsigned idx) const
+{
+      assert(idx < width_a_);
+      return pin(idx+width_r_);
+}
+
+NetObj::Link& NetDivide::pin_DataB(unsigned idx)
+{
+      assert(idx < width_b_);
+      return pin(idx+width_r_+width_a_);
+}
+
+const NetObj::Link& NetDivide::pin_DataB(unsigned idx) const
+{
+      assert(idx < width_b_);
+      return pin(idx+width_r_+width_a_);
 }
 
 NetMult::NetMult(const string&n, unsigned wr, unsigned wa, unsigned wb,
@@ -2523,6 +2597,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.110  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.109  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

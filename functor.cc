@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.cc,v 1.12 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: functor.cc,v 1.13 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -40,6 +40,10 @@ void functor_t::lpm_add_sub(class Design*, class NetAddSub*)
 }
 
 void functor_t::lpm_const(class Design*, class NetConst*)
+{
+}
+
+void functor_t::lpm_divide(class Design*, class NetDivide*)
 {
 }
 
@@ -99,6 +103,11 @@ void NetAddSub::functor_node(Design*des, functor_t*fun)
 void NetConst::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_const(des, this);
+}
+
+void NetDivide::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_divide(des, this);
 }
 
 void NetFF::functor_node(Design*des, functor_t*fun)
@@ -180,6 +189,9 @@ int NetPEvent::match_proc(proc_match_t*that)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.13  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.12  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

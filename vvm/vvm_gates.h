@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.53 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.54 2000/04/01 21:40:23 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -277,6 +277,34 @@ class vvm_ff  : public vvm_nexus::recvr_t {
     private: // not implemeneted
       vvm_ff(const vvm_ff&);
       vvm_ff& operator= (const vvm_ff&);
+};
+
+/*
+ * This class behaves like a combinational divider. There isn't really
+ * such a practical device, but this is useful for simulating code
+ * that includes a / operator in structural contexts.
+ */
+class vvm_idiv  : public vvm_nexus::recvr_t {
+
+    public:
+      explicit vvm_idiv(unsigned rwid, unsigned awid, unsigned bwid);
+      ~vvm_idiv();
+
+      void init_DataA(unsigned idx, vpip_bit_t val);
+      void init_DataB(unsigned idx, vpip_bit_t val);
+
+      vvm_nexus::drive_t* config_rout(unsigned idx);
+      unsigned key_DataA(unsigned idx) const;
+      unsigned key_DataB(unsigned idx) const;
+
+    private:
+      void take_value(unsigned key, vpip_bit_t val);
+
+      unsigned rwid_;
+      unsigned awid_;
+      unsigned bwid_;
+      vpip_bit_t*bits_;
+      vvm_nexus::drive_t*out_;
 };
 
 /*
@@ -839,6 +867,9 @@ template <unsigned WIDTH> class vvm_pevent : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.54  2000/04/01 21:40:23  steve
+ *  Add support for integer division.
+ *
  * Revision 1.53  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.9 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: functor.h,v 1.10 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 /*
@@ -48,6 +48,9 @@ struct functor_t {
 	/* This method is called for each structural constant. */
       virtual void lpm_const(class Design*des, class NetConst*);
 
+	/* This method is called for each structural constant. */
+      virtual void lpm_divide(class Design*des, class NetDivide*);
+
 	/* This method is called for each FF in the design. */
       virtual void lpm_ff(class Design*des, class NetFF*);
 
@@ -71,6 +74,9 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.10  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.9  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *
@@ -85,20 +91,5 @@ struct proc_match_t {
  *
  * Revision 1.5  1999/12/17 06:18:16  steve
  *  Rewrite the cprop functor to use the functor_t interface.
- *
- * Revision 1.4  1999/12/05 02:24:08  steve
- *  Synthesize LPM_RAM_DQ for writes into memories.
- *
- * Revision 1.3  1999/12/01 06:06:16  steve
- *  Redo synth to use match_proc_t scanner.
- *
- * Revision 1.2  1999/11/01 02:07:40  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.1  1999/07/17 22:01:13  steve
- *  Add the functor interface for functor transforms.
- *
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.28 2000/03/27 04:38:15 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.29 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -38,9 +38,10 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
 {
       switch (op_) {
 	  case '*':
-	      //case '/':
-	      //case '%':
 	    return elaborate_net_mul_(des, path, width, rise, fall, decay);
+	      //case '%':
+	  case '/':
+	    return elaborate_net_div_(des, path, width, rise, fall, decay);
 	  case '+':
 	  case '-':
 	    return elaborate_net_add_(des, path, width, rise, fall, decay);
@@ -496,6 +497,57 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
       gate->fall_time(fall);
       gate->decay_time(decay);
       des->add_node(gate);
+
+      return osig;
+}
+
+/*
+ * Elaborate a divider gate.
+ */
+NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
+				     unsigned lwidth,
+				     unsigned long rise,
+				     unsigned long fall,
+				     unsigned long decay) const
+{
+      NetNet*lsig = left_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (lsig == 0) return 0;
+      NetNet*rsig = right_->elaborate_net(des, path, 0, 0, 0, 0);
+      if (rsig == 0) return 0;
+
+      unsigned rwidth = lsig->pin_count();
+      if (rsig->pin_count() > rwidth)
+	    rwidth = rsig->pin_count();
+      NetDivide*div = new NetDivide(des->local_symbol(path), rwidth,
+				    lsig->pin_count(),
+				    rsig->pin_count());
+      des->add_node(div);
+
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
+	    connect(div->pin_DataA(idx), lsig->pin(idx));
+      for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
+	    connect(div->pin_DataB(idx), rsig->pin(idx));
+
+      if (lwidth == 0) lwidth = rwidth;
+      NetNet*osig = new NetNet(0, des->local_symbol(path),
+			       NetNet::IMPLICIT, lwidth);
+      osig->local_flag(true);
+      des->add_signal(osig);
+
+      unsigned cnt = osig->pin_count();
+      if (cnt > rwidth) cnt = rwidth;
+
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+	    connect(div->pin_Result(idx), osig->pin(idx));
+
+	/* If the lvalue is larger then the result, then pad the
+	   output with constant 0. */
+      if (cnt < osig->pin_count()) {
+	    NetConst*tmp = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(tmp);
+	    for (unsigned idx = cnt ;  idx < osig->pin_count() ;  idx += 1)
+		  connect(osig->pin(idx), tmp->pin(0));
+      }
 
       return osig;
 }
@@ -1356,6 +1408,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.29  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.28  2000/03/27 04:38:15  steve
  *  Speling error.
  *

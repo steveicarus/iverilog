@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.31 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: target.cc,v 1.32 2000/04/01 21:40:23 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -95,6 +95,12 @@ void target_t::lpm_compare(ostream&, const NetCompare*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
 	    "Unhandled NetCompare." << endl;
+}
+
+void target_t::lpm_divide(ostream&, const NetDivide*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetDivide." << endl;
 }
 
 void target_t::lpm_ff(ostream&, const NetFF*)
@@ -320,6 +326,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.32  2000/04/01 21:40:23  steve
+ *  Add support for integer division.
+ *
  * Revision 1.31  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

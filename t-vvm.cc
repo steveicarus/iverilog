@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.127 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.128 2000/04/01 21:40:23 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -65,6 +65,7 @@ class target_vvm : public target_t {
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
       virtual void lpm_clshift(ostream&os, const NetCLShift*);
       virtual void lpm_compare(ostream&os, const NetCompare*);
+      virtual void lpm_divide(ostream&os, const NetDivide*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mult(ostream&os, const NetMult*);
       virtual void lpm_mux(ostream&os, const NetMux*);
@@ -553,12 +554,12 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  case '/':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_idiv("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_idiv(" << result
+		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  case '%':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_imod("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_imod(" << result
+		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm: Unhandled binary op `" << expr->op() << "': "
@@ -1243,6 +1244,44 @@ void target_vvm::lpm_compare(ostream&os, const NetCompare*gate)
 
 	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
 		      << mname << ".config_AGEB_out());" << endl;
+      }
+}
+
+void target_vvm::lpm_divide(ostream&os, const NetDivide*mul)
+{
+      string mname = mangle(mul->name());
+
+      os << "static vvm_idiv " << mname << "(" << mul->width_r() <<
+	    "," << mul->width_a() << "," << mul->width_b() << ");" << endl;
+
+
+	/* Connect the DataA inputs... */
+      for (unsigned idx = 0 ;  idx < mul->width_a() ;  idx += 1) {
+	    string nexus = nexus_from_link(&mul->pin_DataA(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_DataA("
+		      << idx << "));" << endl;
+      }
+
+	/* Connect the DataB inputs... */
+      for (unsigned idx = 0 ;  idx < mul->width_b() ;  idx += 1) {
+	    string nexus = nexus_from_link(&mul->pin_DataB(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect(&"
+		      << mname << ", " << mname << ".key_DataB("
+		      << idx << "));" << endl;
+      }
+
+	/* Connect the output pins... */
+      for (unsigned idx = 0 ;  idx < mul->width_r() ;  idx += 1) {
+	    string nexus = nexus_from_link(&mul->pin_Result(idx));
+	    unsigned ncode = nexus_wire_map[nexus];
+
+	    init_code << "      nexus_wire_table["<<ncode<<"].connect("
+		      << mname << ".config_rout(" << idx << "));" << endl;
       }
 }
 
@@ -2489,6 +2528,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.128  2000/04/01 21:40:23  steve
+ *  Add support for integer division.
+ *
  * Revision 1.127  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

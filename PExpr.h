@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.33 2000/04/01 19:31:57 steve Exp $"
+#ident "$Id: PExpr.h,v 1.34 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 # include  <string>
@@ -289,6 +289,11 @@ class PEBinary : public PExpr {
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const;
+      NetNet* elaborate_net_div_(Design*des, const string&path,
+				 unsigned lwidth,
+				 unsigned long rise,
+				 unsigned long fall,
+				 unsigned long decay) const;
       NetNet* elaborate_net_log_(Design*des, const string&path,
 				 unsigned lwidth,
 				 unsigned long rise,
@@ -353,6 +358,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.34  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.33  2000/04/01 19:31:57  steve
  *  Named events as far as the pform.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.70 2000/03/29 04:37:10 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.71 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 /*
@@ -143,6 +143,13 @@ void NetCLShift::dump_node(ostream&o, unsigned ind) const
 void NetCompare::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_COMPARE (NetCompare): " << name() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetDivide::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "NET_DIVIDE (NetDivide): " << name() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
@@ -897,6 +904,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.71  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.70  2000/03/29 04:37:10  steve
  *  New and improved combinational primitives.
  *

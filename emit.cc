@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.35 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: emit.cc,v 1.36 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 /*
@@ -83,6 +83,11 @@ void NetCompare::emit_node(ostream&o, struct target_t*tgt) const
 void NetConst::emit_node(ostream&o, struct target_t*tgt) const
 {
       tgt->net_const(o, this);
+}
+
+void NetDivide::emit_node(ostream&o, struct target_t*tgt) const
+{
+      tgt->lpm_divide(o, this);
 }
 
 void NetFF::emit_node(ostream&o, struct target_t*tgt) const
@@ -402,6 +407,9 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.36  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.35  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

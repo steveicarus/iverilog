@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.115 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: netlist.h,v 1.116 2000/04/01 21:40:22 steve Exp $"
 #endif
 
 /*
@@ -409,6 +409,44 @@ class NetCompare  : public NetNode {
 
     private:
       unsigned width_;
+};
+
+/*
+ * This class represents a theoretical (though not necessarily
+ * practical) integer divider gate. This is not to represent any real
+ * hardware, but to support the / operator in Verilog, when it shows
+ * up in structural contexts.
+ *
+ * The operands of the operation are the DataA<i> and DataB<i> inputs,
+ * and the Result<i> output reflects the value DataA/DataB.
+ */
+
+class NetDivide  : public NetNode {
+
+    public:
+      NetDivide(const string&n, unsigned width, unsigned wa, unsigned wb);
+      ~NetDivide();
+
+      unsigned width_r() const;
+      unsigned width_a() const;
+      unsigned width_b() const;
+
+      NetObj::Link& pin_DataA(unsigned idx);
+      NetObj::Link& pin_DataB(unsigned idx);
+      NetObj::Link& pin_Result(unsigned idx);
+
+      const NetObj::Link& pin_DataA(unsigned idx) const;
+      const NetObj::Link& pin_DataB(unsigned idx) const;
+      const NetObj::Link& pin_Result(unsigned idx) const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual void emit_node(ostream&, struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      unsigned width_r_;
+      unsigned width_a_;
+      unsigned width_b_;
 };
 
 /*
@@ -2228,6 +2266,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.116  2000/04/01 21:40:22  steve
+ *  Add support for integer division.
+ *
  * Revision 1.115  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

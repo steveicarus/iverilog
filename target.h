@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.30 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: target.h,v 1.31 2000/04/01 21:40:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -73,6 +73,7 @@ struct target_t {
       virtual void lpm_add_sub(ostream&os, const NetAddSub*);
       virtual void lpm_clshift(ostream&os, const NetCLShift*);
       virtual void lpm_compare(ostream&os, const NetCompare*);
+      virtual void lpm_divide(ostream&os, const NetDivide*);
       virtual void lpm_ff(ostream&os, const NetFF*);
       virtual void lpm_mult(ostream&os, const NetMult*);
       virtual void lpm_mux(ostream&os, const NetMux*);
@@ -148,6 +149,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.31  2000/04/01 21:40:23  steve
+ *  Add support for integer division.
+ *
  * Revision 1.30  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *
@@ -192,84 +196,5 @@ extern const struct target *target_table[];
  *
  * Revision 1.20  1999/10/10 01:59:55  steve
  *  Structural case equals device.
- *
- * Revision 1.19  1999/09/22 16:57:24  steve
- *  Catch parallel blocks in vvm emit.
- *
- * Revision 1.18  1999/09/15 01:55:06  steve
- *  Elaborate non-blocking assignment to memories.
- *
- * Revision 1.17  1999/09/03 04:28:38  steve
- *  elaborate the binary plus operator.
- *
- * Revision 1.16  1999/08/31 22:38:29  steve
- *  Elaborate and emit to vvm procedural functions.
- *
- * Revision 1.15  1999/07/17 19:51:00  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.14  1999/07/17 03:39:11  steve
- *  simplified process scan for targets.
- *
- * Revision 1.13  1999/07/03 02:12:52  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.12  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.11  1999/06/09 03:00:06  steve
- *  Add support for procedural concatenation expression.
- *
- * Revision 1.10  1999/06/06 20:45:39  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.9  1999/05/12 04:03:20  steve
- *  emit NetAssignMem objects in vvm target.
- *
- * Revision 1.8  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.7  1999/04/25 00:44:10  steve
- *  Core handles subsignal expressions.
- *
- * Revision 1.6  1999/04/19 01:59:37  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.5  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.4  1998/12/01 00:42:15  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.3  1998/11/09 18:55:35  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:05:06  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:06  steve
- *  Introduce verilog to CVS.
- *
  */
 #endif
