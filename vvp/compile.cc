@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.118 2002/01/03 04:19:02 steve Exp $"
+#ident "$Id: compile.cc,v 1.119 2002/01/06 03:15:13 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -529,6 +529,9 @@ void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 	    if (strcmp(argv[idx].text, "C<0>") == 0) 
 		  iobj->set(ifdx, false, 0, St0);
 
+	    else if (strcmp(argv[idx].text, "C<we0>") == 0)
+		  iobj->set(ifdx, false, 0, We0);
+
 	    else if (strcmp(argv[idx].text, "C<pu0>") == 0)
 		  iobj->set(ifdx, false, 0, Pu0);
 
@@ -537,6 +540,9 @@ void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
 
 	    else if (strcmp(argv[idx].text, "C<1>") == 0)
 		  iobj->set(ifdx, false, 1, St1);
+
+	    else if (strcmp(argv[idx].text, "C<we1>") == 0)
+		  iobj->set(ifdx, false, 1, We1);
 
 	    else if (strcmp(argv[idx].text, "C<pu1>") == 0)
 		  iobj->set(ifdx, false, 1, Pu1);
@@ -600,6 +606,9 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
       else if (strcmp(lab, "C<pu0>") == 0) 
 	    *ref = make_const_functor(0,5,5);
 
+      else if (strcmp(lab, "C<we0>") == 0) 
+	    *ref = make_const_functor(0,3,3);
+
       else if (strcmp(lab, "C<1>") == 0)
 	    *ref = make_const_functor(1,6,6);
 
@@ -608,6 +617,9 @@ static void functor_reference(vvp_ipoint_t *ref, char *lab, unsigned idx)
 
       else if (strcmp(lab, "C<pu1>") == 0)
 	    *ref = make_const_functor(1,5,5);
+ 
+      else if (strcmp(lab, "C<we1>") == 0)
+	    *ref = make_const_functor(1,3,3);
  
       else if (strcmp(lab, "C<x>") == 0)
 	    *ref = make_const_functor(2,6,6);
@@ -1366,6 +1378,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.119  2002/01/06 03:15:13  steve
+ *  Support weak functor inputs.
+ *
  * Revision 1.118  2002/01/03 04:19:02  steve
  *  Add structural modulus support down to vvp.
  *
@@ -1401,96 +1416,5 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
  *
  * Revision 1.108  2001/10/16 02:47:37  steve
  *  Add arith/div object.
- *
- * Revision 1.107  2001/10/16 01:26:54  steve
- *  Add %div support (Anthony Bybell)
- *
- * Revision 1.106  2001/10/14 03:41:58  steve
- *  Handle mode-42 functor init.
- *
- * Revision 1.105  2001/10/12 03:00:08  steve
- *  M42 implementation of mode 2 (Stephan Boettcher)
- *
- * Revision 1.104  2001/10/12 02:53:47  steve
- *  functor lookup includes vpi signal search.
- *
- * Revision 1.103  2001/10/11 18:29:21  steve
- *  Propagate initial value of UDP.
- *
- * Revision 1.102  2001/10/09 16:57:47  steve
- *  Collect functor reference handling into a single function. (Stephan Boettcher)
- *
- * Revision 1.101  2001/10/09 02:28:16  steve
- *  Add the PMOS and NMOS functor types.
- *
- * Revision 1.100  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.99  2001/09/11 01:54:58  steve
- *  initial structural memory propagation (Stephan Boettcher)
- *
- * Revision 1.98  2001/08/26 22:59:32  steve
- *  Add the assign/x0 and set/x opcodes.
- *
- * Revision 1.97  2001/08/25 17:22:32  steve
- *  Only use fvectors for nets and vars.
- *
- * Revision 1.96  2001/08/10 04:31:09  steve
- *  Neaten and document the resolv object.
- *
- * Revision 1.95  2001/08/10 00:50:50  steve
- *  Make sure arithmetic objects run at time 0.
- *
- * Revision 1.94  2001/08/09 19:38:23  steve
- *  Nets (wires) do not use their own functors.
- *  Modifications to propagation of values.
- *  (Stephan Boettcher)
- *
- * Revision 1.93  2001/08/08 01:05:06  steve
- *  Initial implementation of vvp_fvectors.
- *  (Stephan Boettcher)
- *
- * Revision 1.92  2001/07/30 03:53:01  steve
- *  Initialize initial functor tables.
- *
- * Revision 1.91  2001/07/28 03:12:39  steve
- *  Support C<su0> and C<su1> special symbols.
- *
- * Revision 1.90  2001/07/26 03:13:51  steve
- *  Make the -M flag add module search paths.
- *
- * Revision 1.89  2001/07/22 00:04:50  steve
- *  Add the load/x instruction for bit selects.
- *
- * Revision 1.88  2001/07/19 04:40:55  steve
- *  Add support for the delayx opcode.
- *
- * Revision 1.87  2001/07/11 04:43:57  steve
- *  support postpone of $systask parameters. (Stephan Boettcher)
- *
- * Revision 1.86  2001/07/07 02:57:33  steve
- *  Add the .shift/r functor.
- *
- * Revision 1.85  2001/07/06 05:02:43  steve
- *  Properly initialize unconnected shift inputs.
- *
- * Revision 1.84  2001/07/06 04:46:44  steve
- *  Add structural left shift (.shift/l)
- *
- * Revision 1.83  2001/06/30 23:03:16  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.82  2001/06/30 21:07:26  steve
- *  Support non-const right shift (unsigned).
- *
- * Revision 1.81  2001/06/23 18:26:26  steve
- *  Add the %shiftl/i0 instruction.
- *
- * Revision 1.80  2001/06/23 01:04:07  steve
- *  Allow forward references of task scopes. (Stephan Boettcher)
- *
- * Revision 1.79  2001/06/19 03:01:10  steve
- *  Add structural EEQ gates (Stephan Boettcher)
  */
 

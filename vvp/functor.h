@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.42 2001/12/18 05:32:11 steve Exp $"
+#ident "$Id: functor.h,v 1.43 2002/01/06 03:15:13 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -91,9 +91,11 @@ enum strength_e {
       Su0 = 0x77, /* Su0-Su0 */
       St0 = 0x66, /* St0-St0 */
       Pu0 = 0x55, /* Pu0-Pu0 */
+      We0 = 0x33, /* We0-We0 */
       Su1 = 0x77|0x88, /* Su1 - Su1 */
       St1 = 0x66|0x88, /* St1 - St1 */
       Pu1 = 0x55|0x88, /* Pu1 - Pu1 */
+      We1 = 0x33|0x88, /* We1 - We1 */
       StX = 0x66|0x80, /* St0 - St1 */
 };
 
@@ -379,6 +381,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.43  2002/01/06 03:15:13  steve
+ *  Support weak functor inputs.
+ *
  * Revision 1.42  2001/12/18 05:32:11  steve
  *  Improved functor debug dumps.
  *
