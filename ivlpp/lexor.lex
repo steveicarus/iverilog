@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.7 1999/07/11 18:03:56 steve Exp $"
+#ident "$Id: lexor.lex,v 1.8 1999/07/15 03:39:17 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -82,6 +82,7 @@ static int comment_enter = 0;
 %x PPINCLUDE
 %x PPDEFINE
 %x CCOMMENT
+%x CSTRING
 
 %x IFDEF_FALSE
 %s IFDEF_TRUE
@@ -100,6 +101,12 @@ W [ \t\b\f]+
 <CCOMMENT>\n   { istack->lineno += 1; ECHO; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); ECHO; }
 
+  /* Strings do not contain macros or preprocessor directives. */
+\"            { comment_enter = YY_START; BEGIN(CSTRING); ECHO; }
+<CSTRING>\\\" { yymore(); }
+<CSTRING>\n   { yymore(); }
+<CSTRING>\"   { BEGIN(comment_enter);  ECHO; }
+<CSTRING>.    { yymore(); }
 
   /* This set of patterns matches the include directive and the name
      that follows it. when the directive ends, the do_include function
