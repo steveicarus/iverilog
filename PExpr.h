@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.18 1999/08/31 22:38:29 steve Exp $"
+#ident "$Id: PExpr.h,v 1.19 1999/09/15 04:17:52 steve Exp $"
 #endif
 
 # include  <string>
@@ -47,11 +47,20 @@ class PExpr : public LineInfo {
       virtual ~PExpr();
 
       virtual void dump(ostream&) const;
+
+	// Procedural elaboration of the expression.
+      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+
+	// This method elaborate the expression as gates, for use in a
+	// continuous assign or other wholy structural context.
       virtual NetNet* elaborate_net(Design*des, const string&path,
 				    unsigned long rise =0,
 				    unsigned long fall =0,
 				    unsigned long decay =0) const;
-      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+
+	// This method elaborates the expression as gates, but
+	// restricted for use as l-values of continuous assignments.
+      virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
 
 	// This attempts to evaluate a constant expression, and return
 	// a verinum as a result. If the expression cannot be
@@ -80,6 +89,7 @@ class PEConcat : public PExpr {
       ~PEConcat();
 
       virtual void dump(ostream&) const;
+      virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
 				    unsigned long rise =0,
 				    unsigned long fall =0,
@@ -116,11 +126,18 @@ class PEIdent : public PExpr {
       : text_(s), msb_(0), lsb_(0), idx_(0) { }
 
       virtual void dump(ostream&) const;
+
+	// Identifiers are allowed (with restrictions) is assign l-values.
+      virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
+
+	// Structural r-values are OK.
       virtual NetNet* elaborate_net(Design*des, const string&path,
 				    unsigned long rise =0,
 				    unsigned long fall =0,
 				    unsigned long decay =0) const;
+
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
+
       virtual bool is_constant(Module*) const;
       verinum* eval_const(const Design*des, const string&path) const;
 
@@ -263,6 +280,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.19  1999/09/15 04:17:52  steve
+ *  separate assign lval elaboration for error checking.
+ *
  * Revision 1.18  1999/08/31 22:38:29  steve
  *  Elaborate and emit to vvm procedural functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.7 1999/07/22 02:05:20 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.8 1999/09/15 04:17:52 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -36,6 +36,23 @@ bool PExpr::is_the_same(const PExpr*that) const
 bool PExpr::is_constant(Module*) const
 {
       return false;
+}
+
+NetNet* PExpr::elaborate_net(Design*des, const string&path,
+			     unsigned long,
+			     unsigned long,
+			     unsigned long) const
+{
+      cerr << "Don't know how to elaborate `" << *this
+	   << "' as gates." << endl;
+      return 0;
+}
+
+NetNet* PExpr::elaborate_lnet(Design*des, const string&path) const
+{
+      cerr << get_line() << ": expression not valid in assign l-value: "
+	   << *this << endl;
+      return 0;
 }
 
 bool PEBinary::is_constant(Module*mod) const
@@ -102,6 +119,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.8  1999/09/15 04:17:52  steve
+ *  separate assign lval elaboration for error checking.
+ *
  * Revision 1.7  1999/07/22 02:05:20  steve
  *  is_constant method for PEConcat.
  *

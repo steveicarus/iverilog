@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.85 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.86 1999/09/15 04:17:52 steve Exp $"
 #endif
 
 /*
@@ -204,8 +204,10 @@ void PGate::elaborate(Design*des, const string&path) const
       cerr << "what kind of gate? " << typeid(*this).name() << endl;
 }
 
-/* Elaborate the continuous assign. (This is *not* the procedural
-   assign.) Elaborate the lvalue and rvalue, and do the assignment. */
+/*
+ * Elaborate the continuous assign. (This is *not* the procedural
+ * assign.) Elaborate the lvalue and rvalue, and do the assignment.
+ */
 void PGAssign::elaborate(Design*des, const string&path) const
 {
       unsigned long rise_time, fall_time, decay_time;
@@ -213,17 +215,20 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
       assert(pin(0));
       assert(pin(1));
-      NetNet*lval = pin(0)->elaborate_net(des, path);
-      NetNet*rval = pin(1)->elaborate_net(des, path, rise_time,
-					  fall_time, decay_time);
 
+	/* Elaborate the l-value. */
+      NetNet*lval = pin(0)->elaborate_lnet(des, path);
       if (lval == 0) {
-	    cerr << get_line() << ": Unable to elaborate l-value: " <<
-		  *pin(0) << endl;
 	    des->errors += 1;
 	    return;
       }
 
+
+	/* Elaborate the r-value. Account for the initial decays,
+	   which are going to be attached to the last gate before the
+	   generated NetNet. */
+      NetNet*rval = pin(1)->elaborate_net(des, path, rise_time,
+					  fall_time, decay_time);
       if (rval == 0) {
 	    cerr << get_line() << ": Unable to elaborate r-value: " <<
 		  *pin(1) << endl;
@@ -617,15 +622,6 @@ void PGModule::elaborate(Design*des, const string&path) const
       cerr << get_line() << ": Unknown module: " << type_ << endl;
 }
 
-NetNet* PExpr::elaborate_net(Design*des, const string&path,
-			     unsigned long,
-			     unsigned long,
-			     unsigned long) const
-{
-      cerr << "Don't know how to elaborate `" << *this << "' as gates." << endl;
-      return 0;
-}
-
 /*
  * Elaborating binary operations generally involves elaborating the
  * left and right expressions, then making an output wire and
@@ -891,6 +887,61 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
       return osig;
 }
 
+/*
+ * The concatenation is also OK an an l-value. This method elaborates
+ * it as a structural l-value.
+ */
+NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
+{
+      svector<NetNet*>nets (parms_.count());
+      unsigned pins = 0;
+      unsigned errors = 0;
+
+      if (repeat_) {
+	    cerr << get_line() << ": Sorry, I do not know how to"
+		  " elaborate repeat concatenation nets." << endl;
+	    return 0;
+      }
+
+	/* Elaborate the operands of the concatenation. */
+      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+	    nets[idx] = parms_[idx]->elaborate_lnet(des, path);
+	    if (nets[idx] == 0)
+		  errors += 1;
+	    else
+		  pins += nets[idx]->pin_count();
+      }
+
+	/* If any of the sub expressions failed to elaborate, then
+	   delete all those that did and abort myself. */
+      if (errors) {
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  if (nets[idx]) delete nets[idx];
+	    }
+	    des->errors += 1;
+	    return 0;
+      }
+
+	/* Make the temporary signal that connects to all the
+	   operands, and connect it up. Scan the operands of the
+	   concat operator from least significant to most significant,
+	   which is opposite from how they are given in the list. */
+      NetNet*osig = new NetNet(des->local_symbol(path),
+			       NetNet::IMPLICIT, pins);
+      pins = 0;
+      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
+	    NetNet*cur = nets[idx-1];
+	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
+		  connect(osig->pin(pins), cur->pin(pin));
+		  pins += 1;
+	    }
+      }
+
+      osig->local_flag(true);
+      des->add_signal(osig);
+      return osig;
+}
+
 NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 			       unsigned long rise,
 			       unsigned long fall,
@@ -952,6 +1003,103 @@ NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 	    }
 	    assert(mval);
 	    unsigned idx = sig->sb_to_idx(mval->as_long());
+	    if (idx >= sig->pin_count()) {
+		  cerr << get_line() << "; index " << sig->name() <<
+			"[" << mval->as_long() << "] out of range." << endl;
+		  des->errors += 1;
+		  idx = 0;
+	    }
+	    NetTmp*tmp = new NetTmp(1);
+	    connect(tmp->pin(0), sig->pin(idx));
+	    sig = tmp;
+      }
+
+      return sig;
+}
+
+/*
+ * Identifiers in continuous assignment l-values are limited to wires
+ * and that ilk. Detect registers and memories here and report errors.
+ */
+NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
+{
+      NetNet*sig = des->find_signal(path, text_);
+      if (sig == 0) {
+	      /* Don't allow memories here. Is it a memory? */
+	    if (des->find_memory(path+"."+text_)) {
+		  cerr << get_line() << ": memories (" << text_
+		       << ") cannot be l-values in continuous "
+		       << "assignments." << endl;
+		  return 0;
+	    }
+
+	      /* Fine, create an implicit wire as an l-value. */
+	    sig = new NetNet(path+"."+text_, NetNet::IMPLICIT, 1);
+	    des->add_signal(sig);
+	    cerr << get_line() << ": warning: Implicitly defining "
+		  "wire " << path << "." << text_ << "." << endl;
+      }
+
+      assert(sig);
+
+	/* Don't allow registers as assign l-values. */
+      if (sig->type() == NetNet::REG) {
+	    cerr << get_line() << ": registers (" << sig->name()
+		 << ") cannot be l-values in continuous"
+		 << " assignments." << endl;
+	    return 0;
+      }
+
+      if (msb_ && lsb_) {
+	      /* Detect a part select. Evaluate the bits and elaborate
+		 the l-value by creating a sub-net that links to just
+		 the right pins. */ 
+	    verinum*mval = msb_->eval_const(des, path);
+	    assert(mval);
+	    verinum*lval = lsb_->eval_const(des, path);
+	    assert(lval);
+	    unsigned midx = sig->sb_to_idx(mval->as_long());
+	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+
+	    if (midx >= lidx) {
+		  NetTmp*tmp = new NetTmp(midx-lidx+1);
+		  if (tmp->pin_count() > sig->pin_count()) {
+			cerr << get_line() << ": bit select out of "
+			     << "range for " << sig->name() << endl;
+			return sig;
+		  }
+
+		  for (unsigned idx = lidx ;  idx <= midx ;  idx += 1)
+			connect(tmp->pin(idx-lidx), sig->pin(idx));
+
+		  sig = tmp;
+
+	    } else {
+		  NetTmp*tmp = new NetTmp(lidx-midx+1);
+		  assert(tmp->pin_count() <= sig->pin_count());
+		  for (unsigned idx = lidx ;  idx >= midx ;  idx -= 1)
+			connect(tmp->pin(idx-midx), sig->pin(idx));
+
+		  sig = tmp;
+	    }
+
+      } else if (msb_) {
+	    verinum*mval = msb_->eval_const(des, path);
+	    if (mval == 0) {
+		  cerr << get_line() << ": index of " << text_ <<
+			" needs to be constant in this context." <<
+			endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+	    assert(mval);
+	    unsigned idx = sig->sb_to_idx(mval->as_long());
+	    if (idx >= sig->pin_count()) {
+		  cerr << get_line() << "; index " << sig->name() <<
+			"[" << mval->as_long() << "] out of range." << endl;
+		  des->errors += 1;
+		  idx = 0;
+	    }
 	    NetTmp*tmp = new NetTmp(1);
 	    connect(tmp->pin(0), sig->pin(idx));
 	    sig = tmp;
@@ -2432,6 +2580,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.86  1999/09/15 04:17:52  steve
+ *  separate assign lval elaboration for error checking.
+ *
  * Revision 1.85  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *
