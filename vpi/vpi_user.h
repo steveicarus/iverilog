@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.1 1999/08/15 01:23:56 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.2 1999/08/18 03:44:49 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -120,6 +120,27 @@ typedef struct t_vpi_value {
 extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
 extern void vpi_printf(const char*fmt, ...);
 
+/*
+ * This function allows a vpi application to control the simulation
+ * engine. The operation parameter specifies the function to
+ * perform. The remaining parameters (if any) are interpreted by the
+ * operation. The vpi_sim_control definition was added to P1364-2000
+ * 14 July 1999. See PLI Task Force ID: PTF-161
+ *
+ * vpiFinish - perform the $finish operation, as soon as the user
+ *             function returns. This operation takes a single
+ *             parameter, a diagnostic exit code.
+ *
+ * vpiStop -
+ * vpiReset -
+ * vpiSetInteractiveScope -
+ */
+extern int  vpi_sim_control(int operation, ...);
+#define vpiStop 1
+#define vpiFinish 2
+#define vpiReset  3
+#define vpiSetInteractiveScope 4
+
 extern vpiHandle  vpi_handle(int type, vpiHandle ref);
 extern vpiHandle  vpi_iterate(int type, vpiHandle ref);
 extern vpiHandle  vpi_scan(vpiHandle iter);
@@ -140,6 +161,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.2  1999/08/18 03:44:49  steve
+ *  declare vou_sim_control
+ *
  * Revision 1.1  1999/08/15 01:23:56  steve
  *  Convert vvm to implement system tasks with vpi.
  *
