@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.10 2001/04/04 04:33:09 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.11 2001/04/04 17:43:19 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -101,6 +101,8 @@ struct __vpiSignal {
       char*name;
 	/* The indices that define the width and access offset. */
       int msb, lsb;
+	/* Flags */
+      unsigned signed_flag  : 1;
 	/* The represented value is here. */
       vvp_ipoint_t bits;
 };
@@ -191,6 +193,9 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.11  2001/04/04 17:43:19  steve
+ *  support decimal strings from signals.
+ *
  * Revision 1.10  2001/04/04 04:33:09  steve
  *  Take vector form as parameters to vpi_call.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.5 2001/03/25 20:45:10 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.6 2001/04/04 17:43:19 steve Exp $"
 #endif
 
 /*
@@ -58,7 +58,7 @@ static int signal_get(int code, vpiHandle ref)
       switch (code) {
 
 	  case vpiSigned:
-	    return 0;
+	    return rfp->signed_flag != 0;
 
 	  case vpiSize:
 	    if (rfp->msb >= rfp->lsb)
@@ -89,6 +89,68 @@ static char* signal_get_str(int code, vpiHandle ref)
 
 static char buf[4096];
 
+static void signal_vpiDecStrVal(struct __vpiSignal*rfp, s_vpi_value*vp)
+{
+      unsigned wid = (rfp->msb >= rfp->lsb)
+	    ? (rfp->msb - rfp->lsb + 1)
+	    : (rfp->lsb - rfp->msb + 1);
+
+      unsigned long val = 0;
+      unsigned count_x = 0, count_z = 0;
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+	    val *= 2;
+	    switch (functor_oval(fptr)) {
+		case 0:
+		  break;
+		case 1:
+		  val += 1;
+		  break;
+		case 2:
+		  count_x += 1;
+		  break;
+		case 3:
+		  count_z += 1;
+		  break;
+	    }
+      }
+
+      if (count_x == wid) {
+	    buf[0] = 'x';
+	    buf[1] = 0;
+	    return;
+      }
+
+      if (count_x > 0) {
+	    buf[0] = 'X';
+	    buf[1] = 0;
+	    return;
+      }
+
+      if (count_z == wid) {
+	    buf[0] = 'z';
+	    buf[1] = 0;
+	    return;
+      }
+
+      if (count_z > 0) {
+	    buf[0] = 'Z';
+	    buf[1] = 0;
+	    return;
+      }
+
+      if (rfp->signed_flag) {
+	    long tmp = -1;
+	    assert(sizeof(tmp) == sizeof(val));
+	    tmp <<= wid;
+	    tmp |= val;
+	    sprintf(buf, "%ld", tmp);
+      } else {
+	    sprintf(buf, "%lu", val);
+      }
+}
+
 /*
  * The get_value method reads the values of the functors and returns
  * the vector to the caller. This causes no side-effect, and reads the
@@ -96,8 +158,6 @@ static char buf[4096];
  */
 static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      static const char bit_char[4] = { '0', '1', 'x', 'z' };
-
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
@@ -112,8 +172,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiBinStrVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
-		  functor_t fp = functor_index(fptr);
-		  buf[wid-idx-1] = bit_char[fp->oval&3];
+		  buf[wid-idx-1] = "01xz"[functor_oval(fptr)];
 	    }
 	    buf[wid] = 0;
 	    vp->value.str = buf;
@@ -126,8 +185,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
-		      functor_t fp = functor_index(fptr);
-		      hval = hval | ((fp->oval&3) << 2*(idx % 4));
+		      hval = hval | (functor_oval(fptr) << 2*(idx % 4));
 
 		      if (idx%4 == 3) {
 			    hwid -= 1;
@@ -152,8 +210,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		      vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
-		      functor_t fp = functor_index(fptr);
-		      hval = hval | ((fp->oval&3) << 2*(idx % 3));
+		      hval = hval | (functor_oval(fptr) << 2*(idx % 3));
 
 		      if (idx%3 == 2) {
 			    hwid -= 1;
@@ -170,6 +227,10 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 		vp->value.str = buf;
 		break;
 	  }
+
+	  case vpiDecStrVal:
+	    signal_vpiDecStrVal(rfp, vp);
+	    break;
 
 	  default:
 	      /* XXXX Not implemented yet. */
@@ -230,6 +291,7 @@ vpiHandle vpip_make_reg(char*name, int msb, int lsb, vvp_ipoint_t base)
       obj->name = name;
       obj->msb = msb;
       obj->lsb = lsb;
+      obj->signed_flag = 0;
       obj->bits = base;
 
       obj->scope = vpip_peek_current_scope();
@@ -250,6 +312,7 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
       obj->name = name;
       obj->msb = msb;
       obj->lsb = lsb;
+      obj->signed_flag = 0;
       obj->bits = base;
 
       obj->scope = vpip_peek_current_scope();
@@ -260,6 +323,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, vvp_ipoint_t base)
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.6  2001/04/04 17:43:19  steve
+ *  support decimal strings from signals.
+ *
  * Revision 1.5  2001/03/25 20:45:10  steve
  *  Add vpiOctStrVal access to signals.
  *

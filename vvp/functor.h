@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.9 2001/04/03 03:18:34 steve Exp $"
+#ident "$Id: functor.h,v 1.10 2001/04/04 17:43:19 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -131,6 +131,16 @@ extern void functor_propagate(vvp_ipoint_t ptr);
 extern functor_t functor_index(vvp_ipoint_t point);
 
 /*
+ * This is a convenience function that returns the current output
+ * value of the functor.
+ */
+inline unsigned functor_oval(vvp_ipoint_t fptr)
+{
+      functor_t fp = functor_index(fptr);
+      return fp->oval & 3;
+}
+
+/*
  * Dump a readable version of the functor address space to the file.
  */
 extern void functor_dump(FILE*fd);
@@ -145,6 +155,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.10  2001/04/04 17:43:19  steve
+ *  support decimal strings from signals.
+ *
  * Revision 1.9  2001/04/03 03:18:34  steve
  *  support functor_set push for blocking assignment.
  *
