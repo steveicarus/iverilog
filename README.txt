@@ -331,4 +331,5 @@ especially testing from many people, including (in alphabetical order):
 	Steve Wilson <stevew@home.com>
 
 and others. Testers in particular include a larger community of people
-interested in a GPL Verilog for Linux.
+interested in a GPL Verilog for Linux. Special thanks to Steve Wilson
+for collecting and organizing the test suite code for all those testers.
