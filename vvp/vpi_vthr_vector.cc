@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.18 2003/06/17 19:17:42 steve Exp $"
+#ident "$Id: vpi_vthr_vector.cc,v 1.19 2004/02/20 01:52:25 steve Exp $"
 #endif
 
 /*
@@ -146,8 +146,13 @@ static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 	}
 
 	if ((bitnr&7)==0){
-	    *cp++ = tmp? tmp : ' ';
-	    tmp = 0;
+		// Don't including leading nulls
+	      if (tmp == 0 && cp == rbuf)
+		    continue;
+
+		// Translated embedded nulls to space.
+	      *cp++ = tmp? tmp : ' ';
+	      tmp = 0;
 	}
     }
     *cp++ = 0;
@@ -519,6 +524,9 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
 /*
  * $Log: vpi_vthr_vector.cc,v $
+ * Revision 1.19  2004/02/20 01:52:25  steve
+ *  vpiStringVal does not include leading nulls.
+ *
  * Revision 1.18  2003/06/17 19:17:42  steve
  *  Remove short int restrictions from vvp opcodes.
  *

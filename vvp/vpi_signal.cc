@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.59 2004/02/19 21:31:59 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.60 2004/02/20 01:52:25 steve Exp $"
 #endif
 
 /*
@@ -216,8 +216,13 @@ static char *signal_vpiStringVal(struct __vpiSignal*rfp, s_vpi_value*vp)
 	  }
 
 	  if ((bitnr&7)==0){
-	      *cp++ = tmp? tmp : ' ';
-	      tmp = 0;
+		  /* Skip leading nulls. */
+		if (tmp == 0 && cp == rbuf)
+		      continue;
+
+		  /* Nulls in the middle get turned into spaces. */
+		*cp++ = tmp? tmp : ' ';
+		tmp = 0;
 	  }
       }
       *cp++ = 0;
@@ -845,6 +850,9 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.60  2004/02/20 01:52:25  steve
+ *  vpiStringVal does not include leading nulls.
+ *
  * Revision 1.59  2004/02/19 21:31:59  steve
  *  vpiStringVal writes need to set all the bits of a reg.
  *
