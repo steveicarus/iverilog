@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.13 1999/09/16 00:49:05 steve Exp $"
+#ident "$Id: lexor.lex,v 1.14 1999/10/08 17:27:56 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -467,7 +467,8 @@ static void do_include()
       yy_switch_to_buffer(yy_new_buffer(istack->file, YY_BUF_SIZE));
 
       if (line_direct_flag && istack->path)
-	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
+	    fprintf(yyout, "\n#line \"%s\" %u\n",
+		    istack->path, istack->lineno);
 }
 
 /*
@@ -519,7 +520,7 @@ static int yywrap()
 	    }
 
 	    if (line_direct_flag)
-		  fprintf(yyout, "#line \"%s\" 0\n", istack->path);
+		  fprintf(yyout, "\n#line \"%s\" 0\n", istack->path);
 
 	    yyrestart(isp->file);
 	    return 0;
@@ -532,7 +533,8 @@ static int yywrap()
       yy_switch_to_buffer(istack->yybs);
 
       if (line_direct_flag && istack->path && !line_mask_flag)
-	    fprintf(yyout, "#line \"%s\" %u\n", istack->path, istack->lineno);
+	    fprintf(yyout, "\n#line \"%s\" %u\n",
+		    istack->path, istack->lineno);
 
       return 0;
 }
