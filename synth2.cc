@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.24 2003/03/25 04:04:29 steve Exp $"
+#ident "$Id: synth2.cc,v 1.25 2003/04/03 04:30:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -425,7 +425,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		 otherwise used) then move the Aset input to Aclr. */
 	    if (tmp_aset.len() == ff->width()) {
 
-		  if ((aset_value2.as_ulong() == 0)
+		  if (aset_value2.is_zero()
 		      && ff2->pin_Aset().is_linked()
 		      && !ff2->pin_Aclr().is_linked()) {
 
@@ -518,7 +518,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  }
 
 		  assert(tmp.is_defined());
-		  if (tmp.as_ulong() == 0) {
+		  if (tmp.is_zero()) {
 			connect(ff->pin_Aclr(), ce->pin(0));
 
 		  } else {
@@ -779,6 +779,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.25  2003/04/03 04:30:00  steve
+ *  Prevent overrun comparing verinums to zero.
+ *
  * Revision 1.24  2003/03/25 04:04:29  steve
  *  Handle defaults in synthesized case statements.
  *

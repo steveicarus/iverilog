@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.37 2003/02/02 00:43:16 steve Exp $"
+#ident "$Id: verinum.cc,v 1.38 2003/04/03 04:30:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -290,6 +290,14 @@ bool verinum::is_defined() const
 	    if (bits_[idx] == Vx) return false;
 	    if (bits_[idx] == Vz) return false;
       }
+      return true;
+}
+
+bool verinum::is_zero() const
+{
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
+	    if (bits_[idx] != V0) return false;
+
       return true;
 }
 
@@ -818,6 +826,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.38  2003/04/03 04:30:00  steve
+ *  Prevent overrun comparing verinums to zero.
+ *
  * Revision 1.37  2003/02/02 00:43:16  steve
  *  Fix conversion of signed numbes to long
  *
