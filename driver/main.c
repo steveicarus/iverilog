@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.c,v 1.12 2001/05/20 18:06:57 steve Exp $"
+#ident "$Id: main.c,v 1.13 2001/05/20 18:22:02 steve Exp $"
 #endif
 
 const char HELP[] =
@@ -56,11 +56,11 @@ extern const char*optarg;
 #endif
 
 #if !defined(WIFEXITED)
-# define WIFEXITED(rc) ((rc&~0xff) == 0)
+# define WIFEXITED(rc) ((rc&0x7f) == 0)
 #endif
 
 #if !defined(WEXITSTATUS)
-# define WEXITSTATUS(rc) (rc)
+# define WEXITSTATUS(rc) (rc>>8)
 #endif
 
 #ifndef IVL_ROOT
@@ -596,6 +596,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.13  2001/05/20 18:22:02  steve
+ *  Fix WIFEXITED macro.
+ *
  * Revision 1.12  2001/05/20 18:06:57  steve
  *  local declares if the header is missing.
  *
