@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.cc,v 1.18 2000/09/07 22:37:10 steve Exp $"
+#ident "$Id: verinum.cc,v 1.19 2000/09/27 18:28:37 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -482,7 +482,48 @@ verinum operator - (const verinum&left, const verinum&r)
 }
 
 /*
+ * This multiplies two verinum numbers together into a verinum
+ * result. The resulting number is as large as the sum of the sizes of
+ * the operand.
+ *
+ * The algorithm used is sucessive shift and add operations,
+ * implemented as the nested loops.
+ *
+ * If either value is not completely defined, then the result is not
+ * defined either.
+ */
+verinum operator * (const verinum&left, const verinum&right)
+{
+      if (! (left.is_defined() && right.is_defined())) {
+	    verinum result (verinum::Vx, left.len() + right.len());
+	    result.has_sign(left.has_sign() || right.has_sign());
+	    return result;
+      }
+
+      verinum result(verinum::V0, left.len() + right.len());
+
+      for (unsigned rdx = 0 ;  rdx < right.len() ;  rdx += 1) {
+
+	    if (right.get(rdx) == verinum::V0)
+		  continue;
+
+	    verinum::V carry = verinum::V0;
+	    for (unsigned ldx = 0 ;  ldx < left.len() ;  ldx += 1) {
+		  result.set(ldx+rdx, add_with_carry(left[ldx],
+						     result[rdx+ldx],
+						     carry));
+	    }
+      }
+
+      result.has_sign(left.has_sign() || right.has_sign());
+      return result;
+}
+
+/*
  * $Log: verinum.cc,v $
+ * Revision 1.19  2000/09/27 18:28:37  steve
+ *  multiply in parameter expressions.
+ *
  * Revision 1.18  2000/09/07 22:37:10  steve
  *  The + operator now preserves signedness.
  *

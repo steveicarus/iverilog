@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verinum.h,v 1.11 2000/02/23 04:43:43 steve Exp $"
+#ident "$Id: verinum.h,v 1.12 2000/09/27 18:28:37 steve Exp $"
 #endif
 
 # include  <string>
@@ -101,11 +101,16 @@ extern verinum::V operator == (const verinum&left, const verinum&right);
 extern verinum::V operator <= (const verinum&left, const verinum&right);
 extern verinum operator + (const verinum&left, const verinum&right);
 extern verinum operator - (const verinum&left, const verinum&right);
+extern verinum operator * (const verinum&left, const verinum&right);
+extern verinum operator / (const verinum&left, const verinum&right);
 
 extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.12  2000/09/27 18:28:37  steve
+ *  multiply in parameter expressions.
+ *
  * Revision 1.11  2000/02/23 04:43:43  steve
  *  Some compilers do not accept the not symbol.
  *

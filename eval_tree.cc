@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.11 2000/07/07 04:53:54 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.12 2000/09/27 18:28:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -147,7 +147,16 @@ NetEConst* NetEBLogic::eval_tree()
 NetEConst* NetEBMult::eval_tree()
 {
       eval_sub_tree_();
-      return 0;
+
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      if (lc == 0) return 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (rc == 0) return 0;
+
+      verinum lval = lc->value();
+      verinum rval = rc->value();
+
+      return new NetEConst(lval * rval);
 }
 
 /*
@@ -317,6 +326,9 @@ NetEConst* NetEUnary::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.12  2000/09/27 18:28:37  steve
+ *  multiply in parameter expressions.
+ *
  * Revision 1.11  2000/07/07 04:53:54  steve
  *  Add support for non-constant delays in delay statements,
  *  Support evaluating ! in constant expressions, and
