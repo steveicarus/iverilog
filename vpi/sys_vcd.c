@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.54 2004/02/15 03:17:15 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.55 2004/02/15 20:46:01 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -450,6 +450,14 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
+static int sys_dumpflush_calltf(char*name)
+{
+      if (dump_file)
+	    fflush(dump_file);
+
+      return 0;
+}
+
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
@@ -809,6 +817,14 @@ void sys_vcd_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpflush";
+      tf_data.calltf    = sys_dumpflush_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpflush";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
       tf_data.compiletf = sys_vcd_dumpvars_compiletf;
@@ -819,6 +835,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.55  2004/02/15 20:46:01  steve
+ *  Add the $dumpflush function
+ *
  * Revision 1.54  2004/02/15 03:17:15  steve
  *  dumpfile selects file at compiletf time.
  *

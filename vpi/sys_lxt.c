@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.24 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.25 2004/02/15 20:46:01 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -467,6 +467,14 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
+/*
+ * The LXT1 format has no concept of file flushing.
+ */
+static int sys_dumpflush_calltf(char*name)
+{
+      return 0;
+}
+
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
@@ -793,6 +801,14 @@ void sys_lxt_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpflush";
+      tf_data.calltf    = sys_dumpflush_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpflush";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
       tf_data.compiletf = sys_vcd_dumpvars_compiletf;
@@ -803,6 +819,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.25  2004/02/15 20:46:01  steve
+ *  Add the $dumpflush function
+ *
  * Revision 1.24  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

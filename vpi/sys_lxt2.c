@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt2.c,v 1.6 2004/02/06 18:23:30 steve Exp $"
+#ident "$Id: sys_lxt2.c,v 1.7 2004/02/15 20:46:01 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -472,6 +472,20 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
+/*
+ * The LXT2 format is a binary format, but a $dumpflush causes what is
+ * in the binary file at the moment to be consistent with itself so
+ * that the waveforms can be read by another process. LXT2 normally
+ * writes checkpoints out, but this makes it happen at a specific
+ * time.
+ */
+static int sys_dumpflush_calltf(char*name)
+{
+      if (dump_file) lxt2_wr_flush(dump_file);
+      return 0;
+}
+
+
 static void scan_item(unsigned depth, vpiHandle item, int skip)
 {
       struct t_cb_data cb;
@@ -807,6 +821,14 @@ void sys_lxt2_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$dumpflush";
+      tf_data.calltf    = sys_dumpflush_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$dumpflush";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
       tf_data.tfname    = "$dumpvars";
       tf_data.calltf    = sys_dumpvars_calltf;
       tf_data.compiletf = sys_vcd_dumpvars_compiletf;
@@ -817,6 +839,9 @@ void sys_lxt2_register()
 
 /*
  * $Log: sys_lxt2.c,v $
+ * Revision 1.7  2004/02/15 20:46:01  steve
+ *  Add the $dumpflush function
+ *
  * Revision 1.6  2004/02/06 18:23:30  steve
  *  Add support for lxt2 break size
  *
