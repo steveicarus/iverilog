@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.53 2002/04/14 03:55:25 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.54 2002/04/14 21:16:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -687,6 +687,43 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 	    break;
 
 	  case '!': // Logical NOT
+	      /* If the operand to unary ! is a constant, then I can
+		 evaluate this expression here and return a logical
+		 constant in its place. */
+	    if (NetEConst*ipc = dynamic_cast<NetEConst*>(ip)) {
+		  verinum val = ipc->value();
+		  unsigned v1 = 0;
+		  unsigned vx = 0;
+		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+			switch (val[idx]) {
+			    case verinum::V0:
+			      break;
+			    case verinum::V1:
+			      v1 += 1;
+			      break;
+			    default:
+			      vx += 1;
+			      break;
+			}
+
+		  verinum::V res;
+		  if (v1 > 0)
+			res = verinum::V0;
+		  else if (vx > 0)
+			res = verinum::Vx;
+		  else
+			res = verinum::V1;
+
+		  verinum vres (res, 1, true);
+		  tmp = new NetEConst(vres);
+		  tmp->set_line(*this);
+		  delete ip;
+	    } else {
+		  tmp = new NetEUReduce(op_, ip);
+		  tmp->set_line(*this);
+	    }
+	    break;
+
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
 	  case '^': // Reduction XOR
@@ -708,6 +745,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.54  2002/04/14 21:16:48  steve
+ *  Evaluate logical not at elaboration time.
+ *
  * Revision 1.53  2002/04/14 03:55:25  steve
  *  Precalculate unary - if possible.
  *
