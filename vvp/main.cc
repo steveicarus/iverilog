@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.15 2001/06/12 03:53:11 steve Exp $"
+#ident "$Id: main.cc,v 1.16 2001/06/23 18:26:26 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -27,6 +27,7 @@
 # include  "schedule.h"
 # include  "vpi_priv.h"
 # include  <stdio.h>
+# include  <stdlib.h>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
@@ -111,6 +112,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.16  2001/06/23 18:26:26  steve
+ *  Add the %shiftl/i0 instruction.
+ *
  * Revision 1.15  2001/06/12 03:53:11  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.

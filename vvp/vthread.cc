@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.45 2001/06/22 00:03:05 steve Exp $"
+#ident "$Id: vthread.cc,v 1.46 2001/06/23 18:26:26 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -30,6 +30,7 @@
 # include  <string.h>
 # include  <assert.h>
 
+#include  <stdio.h>
 /*
  * This vhtread_s structure describes all there is to know about a
  * thread, including its program counter, all the private bits it
@@ -1076,6 +1077,28 @@ bool of_SET_MEM(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
+{
+      unsigned base = cp->bit_idx1;
+      unsigned wid = cp->number;
+      long shift = thr->index[0];
+
+      if (shift >= wid) {
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  thr_put_bit(thr, base+idx, 0);
+
+      } else if (shift > 0) {
+	    for (unsigned idx = wid ;  idx > shift ;  idx -= 1) {
+		  unsigned src = base+idx-shift-1;
+		  unsigned dst = base + idx - 1;
+		  thr_put_bit(thr, dst, thr_get_bit(thr, src));
+	    }
+	    for (unsigned idx = 0 ;  idx < shift ;  idx += 1)
+		  thr_put_bit(thr, base+idx, 0);
+      }
+      return true;
+}
+
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx1 >= 4);
@@ -1226,6 +1249,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.46  2001/06/23 18:26:26  steve
+ *  Add the %shiftl/i0 instruction.
+ *
  * Revision 1.45  2001/06/22 00:03:05  steve
  *  Infinitely wide behavioral add.
  *

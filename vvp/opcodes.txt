@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.23 2001/06/16 23:45:05 steve Exp $
+ *  $Id: opcodes.txt,v 1.24 2001/06/23 18:26:26 steve Exp $
  */
 
 
@@ -292,6 +292,13 @@ register bit. The memory bit is addressed by index register 3.  Bit
 address zero is the LSB of the first memory word.  This instruction
 sets only a single bit.
 
+
+* %shiftl/i0 <bit>, <wid>
+
+This instruction shifts the vector left (towards more significant
+bits) by the amount in index register 0. The <bit> is the address of
+the lsb of the vector, and <wid> the width of the vector. The shift is
+done in place. Zero values are shifted in.
 
 * %sub <bit-l>, <bit-r>, <wid>
 

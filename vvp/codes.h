@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.29 2001/06/18 01:09:32 steve Exp $"
+#ident "$Id: codes.h,v 1.30 2001/06/23 18:26:26 steve Exp $"
 #endif
 
 
@@ -72,6 +72,7 @@ extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_SET(vthread_t thr, vvp_code_t code);
 extern bool of_SET_MEM(vthread_t thr, vvp_code_t code);
+extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
@@ -134,6 +135,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.30  2001/06/23 18:26:26  steve
+ *  Add the %shiftl/i0 instruction.
+ *
  * Revision 1.29  2001/06/18 01:09:32  steve
  *  More behavioral unary reduction operators.
  *  (Stephan Boettcher)
