@@ -405,6 +405,8 @@ constructs.
 
   - trireg is not supported. tri0 and tri1 are supported.
 
+  - force to nets are not supported. Force to variables, and
+    assign/deassign, are supported.
 
 6.0 CREDITS
 
@@ -430,6 +432,7 @@ Verilog guidance, and especially testing from many people, including
 	Stuart Sutherland <stuart@sutherland.com>
 	Stephen Tell <tell@cs.unc.edu>
         Stefan Theide <Stefan.Thiede@sv.sc.philips.com>
+	Tom Verbeure
 	Steve Wilson <stevew@home.com>
 
 and others. Testers in particular include a larger community of people

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.21 2001/12/31 00:08:14 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.22 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -159,6 +159,28 @@ void dll_target::expr_scope(const NetEScope*net)
 
       expr_->type_ = IVL_EX_SCOPE;
       expr_->u_.scope_.scope = lookup_scope_(net->scope());
+}
+
+void dll_target::expr_select(const NetESelect*net)
+{
+      assert(expr_ == 0);
+
+      net->sub_expr()->expr_scan(this);
+      ivl_expr_t left = expr_;
+
+      expr_ = 0;
+      net->select()->expr_scan(this);
+      ivl_expr_t rght = expr_;
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_SELECT;
+      expr_->width_= net->expr_width();
+      expr_->signed_ = net->has_sign()? 1 : 0;
+
+      expr_->u_.binary_.lef_ = left;
+      expr_->u_.binary_.rig_ = rght;
 }
 
 void dll_target::expr_sfunc(const NetESFunc*net)
@@ -347,6 +369,11 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.22  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.21  2001/12/31 00:08:14  steve
  *  Support $signed cast of expressions.
  *

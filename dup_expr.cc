@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: dup_expr.cc,v 1.6 2001/11/19 01:54:14 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.7 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,12 @@ NetEScope* NetEScope::dup_expr() const
 {
       assert(0);
       return 0;
+}
+
+NetESelect* NetESelect::dup_expr() const
+{
+      return new NetESelect(expr_->dup_expr(), base_->dup_expr(),
+			    expr_width());
 }
 
 NetESFunc* NetESFunc::dup_expr() const
@@ -68,6 +74,11 @@ NetEUnary* NetEUnary::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.7  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.6  2001/11/19 01:54:14  steve
  *  Port close cropping behavior from mcrgb
  *  Move window array reset to libmc.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.54 2002/01/11 05:23:05 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.55 2002/01/28 00:52:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -977,6 +977,55 @@ static struct vector_info draw_memory_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info subv, shiv, res;
+      ivl_expr_t sube  = ivl_expr_oper1(exp);
+      ivl_expr_t shift = ivl_expr_oper2(exp);
+
+	/* Evaluate the sub-expression. */
+      subv = draw_eval_expr(sube);
+
+	/* Any bit select of a constant zero is another constant zero,
+	   so short circuit and return the value we know. */
+      if (subv.base == 0) {
+	    subv.wid = wid;
+	    return subv;
+      }
+
+	/* Evaluate the bit select base expression and store the
+	   result into index register 0. */
+      shiv = draw_eval_expr(shift);
+      fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
+      clr_vector(shiv);
+
+	/* If the subv result is a magic constant, then make a copy in
+	   writeable vector space and work from there instead. */
+      if (subv.base < 0) {
+	    res.base = allocate_vector(subv.wid);
+	    res.wid = wid;
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base,
+		    subv.base, res.wid);
+	    subv = res;
+      }
+
+      fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", subv.base, subv.wid);
+
+      assert(subv.wid >= wid);
+      if (subv.wid > wid) {
+	    res.base = subv.base;
+	    res.wid = wid;
+
+	    subv.base += wid;
+	    clr_vector(subv);
+
+      } else if (subv.wid == wid) {
+	    res = subv;
+      }
+
+      return res;
+}
+
 static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res, tmp;
@@ -1415,6 +1464,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    res = draw_number_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_SELECT:
+	    res = draw_select_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_SIGNAL:
 	    res = draw_signal_expr(exp, wid);
 	    break;
@@ -1450,6 +1503,11 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.55  2002/01/28 00:52:42  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.54  2002/01/11 05:23:05  steve
  *  Handle certain special cases of stime.
  *
@@ -1499,70 +1557,5 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
  *
  * Revision 1.39  2001/07/27 02:41:56  steve
  *  Fix binding of dangling function ports. do not elide them.
- *
- * Revision 1.38  2001/07/22 19:33:51  steve
- *  Handle repeat for concatenation expressions.
- *
- * Revision 1.37  2001/07/22 00:17:50  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.36  2001/07/09 15:38:35  steve
- *  Properly step through wide inputs. (Stephan Boettcher)
- *
- * Revision 1.35  2001/07/07 20:20:10  steve
- *  Pass parameters to system functions.
- *
- * Revision 1.34  2001/06/30 21:07:26  steve
- *  Support non-const right shift (unsigned).
- *
- * Revision 1.33  2001/06/23 18:40:34  steve
- *  Generate %shiftl instructions for shift.
- *
- * Revision 1.32  2001/06/21 04:53:59  steve
- *  Escaped identifiers in behavioral expressions. (Stephan Boettcher)
- *
- * Revision 1.31  2001/06/18 01:09:32  steve
- *  More behavioral unary reduction operators.
- *  (Stephan Boettcher)
- *
- * Revision 1.30  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.29  2001/05/24 04:20:10  steve
- *  Add behavioral modulus.
- *
- * Revision 1.28  2001/05/20 01:18:38  steve
- *  Implement reduction nor.
- *
- * Revision 1.27  2001/05/20 01:02:55  steve
- *  Initial support for system functions.
- *
- * Revision 1.26  2001/05/17 04:37:02  steve
- *  Behavioral ternary operators for vvp.
- *
- * Revision 1.25  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.24  2001/05/06 17:54:33  steve
- *  Behavioral code to read memories. (Stephan Boettcher)
- *
- * Revision 1.23  2001/05/02 01:57:25  steve
- *  Support behavioral subtraction.
- *
- * Revision 1.22  2001/05/01 02:07:34  steve
- *  Comparisons cant leave their results in the opcode
- *  result area or their values will be clobbered by other
- *  parts of a complex expression.
- *
- * Revision 1.21  2001/04/30 05:11:18  steve
- *  OR is %or. Get this right.
- *
- * Revision 1.20  2001/04/29 20:47:39  steve
- *  Evalulate logical or (||)
  */
 

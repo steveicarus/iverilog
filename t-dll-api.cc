@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.74 2002/01/03 04:19:01 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.75 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -272,6 +272,7 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
       assert(net);
       switch (net->type_) {
 	  case IVL_EX_BINARY:
+	  case IVL_EX_SELECT:
 	    return net->u_.binary_.lef_;
 
 	  case IVL_EX_BITSEL:
@@ -298,6 +299,7 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
       assert(net);
       switch (net->type_) {
 	  case IVL_EX_BINARY:
+	  case IVL_EX_SELECT:
 	    return net->u_.binary_.rig_;
 
 	  case IVL_EX_TERNARY:
@@ -1450,6 +1452,11 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.75  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.74  2002/01/03 04:19:01  steve
  *  Add structural modulus support down to vvp.
  *

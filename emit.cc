@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.64 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: emit.cc,v 1.65 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -434,6 +434,11 @@ void NetEScope::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_scope(this);
 }
 
+void NetESelect::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_select(this);
+}
+
 void NetESFunc::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_sfunc(this);
@@ -477,6 +482,11 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.65  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.64  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

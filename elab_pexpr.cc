@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.12 2001/12/03 04:47:14 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.13 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -152,6 +152,12 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (msb_ || lsb_ || idx_) {
+	    cerr << get_line() << ": error: Cannot bit/part select "
+		  "bits of parameters." << endl;
+	    des->errors += 1;
+      }
+
       NetExpr*res = new NetEParam(des, pscope, hname_t(name));
       assert(res);
       delete name;
@@ -218,6 +224,11 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.13  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.12  2001/12/03 04:47:14  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.

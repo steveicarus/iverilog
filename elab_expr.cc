@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.49 2002/01/11 05:25:45 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.50 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -415,6 +415,23 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 	    else
 		  tmp = new NetEParam(des, scope, path_);
 
+	    if (msb_ && lsb_) {
+		  cerr << get_line() << ": error: part select of "
+		       << "parameter " << path_ << " in " << scope->name()
+		       << " is illegal." << endl;
+		  des->errors += 1;
+
+	    } else if (msb_) {
+		    /* Handle the case where a parameter has a bit
+		       select attached to it. Generate a NetESelect
+		       object to select the bit as desired. */
+		  NetExpr*mtmp = msb_->elaborate_expr(des, scope);
+		  NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
+		  tmp->set_line(*this);
+		  tmp = stmp;
+	    }
+
+
 	    tmp->set_line(*this);
 	    return tmp;
       }
@@ -673,6 +690,11 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.50  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.49  2002/01/11 05:25:45  steve
  *  The stime system function is 32bits.
  *

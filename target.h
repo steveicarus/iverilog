@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.55 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: target.h,v 1.56 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -132,6 +132,7 @@ struct expr_scan_t {
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
+      virtual void expr_select(const NetESelect*);
       virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetEBitSel*);
@@ -162,6 +163,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.56  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.55  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

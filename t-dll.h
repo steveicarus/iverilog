@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.74 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: t-dll.h,v 1.75 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -131,6 +131,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_memory(const NetEMemory*);
       void expr_const(const NetEConst*);
       void expr_scope(const NetEScope*);
+      void expr_select(const NetESelect*);
       void expr_sfunc(const NetESFunc*);
       void expr_subsignal(const NetEBitSel*);
       void expr_ternary(const NetETernary*);
@@ -590,6 +591,11 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.75  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.74  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.91 2002/01/03 04:19:01 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.92 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -164,6 +164,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_MEMORY,
       IVL_EX_NUMBER,
       IVL_EX_SCOPE,
+      IVL_EX_SELECT,
       IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
@@ -977,6 +978,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.92  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.91  2002/01/03 04:19:01  steve
  *  Add structural modulus support down to vvp.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.58 2002/01/19 19:02:08 steve Exp $"
+#ident "$Id: target.cc,v 1.59 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -340,6 +340,12 @@ void expr_scan_t::expr_scope(const NetEScope*)
 	    "unhandled expr_scope." << endl;
 }
 
+void expr_scan_t::expr_select(const NetESelect*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_select." << endl;
+}
+
 void expr_scan_t::expr_sfunc(const NetESFunc*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -384,6 +390,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.59  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.58  2002/01/19 19:02:08  steve
  *  Pass back target errors processing conditionals.
  *

@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.230 2002/01/22 01:40:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.231 2002/01/28 00:52:41 steve Exp $"
 #endif
 
 /*
@@ -2309,6 +2309,32 @@ class NetEParam  : public NetExpr {
 
 
 /*
+ * This expression node supports bit/part selects from general
+ * expressions. The sub-expression is self-sized, and has bits
+ * selected from it. The base is the expression that identifies the
+ * lsb of the expression, and the wid is the width of the part select,
+ * or 1 for a bit select.
+ */
+class NetESelect  : public NetExpr {
+
+    public:
+      NetESelect(NetExpr*exp, NetExpr*base, unsigned wid);
+      ~NetESelect();
+
+      const NetExpr*sub_expr() const;
+      const NetExpr*select() const;
+
+      virtual bool set_width(unsigned w);
+      virtual bool has_width() const;
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetESelect* dup_expr() const;
+
+    private:
+      NetExpr*expr_;
+      NetExpr*base_;
+};
+
+/*
  * This class is a special (and magical) expression node type that
  * represents scope names. These can only be found as parameters to
  * NetSTask objects.
@@ -2865,6 +2891,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.231  2002/01/28 00:52:41  steve
+ *  Add support for bit select of parameters.
+ *  This leads to a NetESelect node and the
+ *  vvp code generator to support that.
+ *
  * Revision 1.230  2002/01/22 01:40:04  steve
  *  Precalculate constant results of memory index expressions.
  *
