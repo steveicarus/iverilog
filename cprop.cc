@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-20035 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.50 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: cprop.cc,v 1.51 2005/02/12 22:52:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -980,6 +980,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.51  2005/02/12 22:52:45  steve
+ *  Fix copyright notice.
+ *
  * Revision 1.50  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,
