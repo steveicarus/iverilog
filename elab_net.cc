@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.140 2005/01/09 20:16:00 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.141 2005/01/13 00:23:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -350,14 +350,14 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
       if (! val.is_defined())
 	    return 0;
 
-      if (val.len() < lsig->pin_count())
-	    val = verinum(val, lsig->pin_count());
+      if (val.len() < lsig->vector_width())
+	    val = verinum(val, lsig->vector_width());
 
 	/* Look for the very special case that we know the compare
 	   results a priori due to different high bits, that are
 	   constant pad in the signal. */
-      if (val.len() > lsig->pin_count()) {
-	    unsigned idx = lsig->pin_count();
+      if (val.len() > lsig->vector_width()) {
+	    unsigned idx = lsig->vector_width();
 	    verinum::V lpad = verinum::V0;
 
 	    while (idx < val.len()) {
@@ -369,6 +369,13 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 			NetEConst*ogate = new NetEConst(oval);
 			NetNet*osig = ogate->synthesize(des);
 			delete ogate;
+
+			if (debug_elaborate)
+			      cerr << lsig->get_line() << ": debug: "
+				   << "Equality replaced with "
+				   << oval << " due to high pad mismatch"
+				   << endl;
+
 			return osig;
 		  }
 
@@ -378,12 +385,18 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 
       unsigned zeros = 0;
       unsigned ones = 0;
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < lsig->vector_width() ;  idx += 1) {
 	    if (val.get(idx) == verinum::V0)
 		  zeros += 1;
 	    if (val.get(idx) == verinum::V1)
 		  ones += 1;
       }
+
+      if (debug_elaborate)
+	    cerr << lsig->get_line() << ": debug: "
+		 << "Replace net==" << val << " equality with "
+		 << ones << "-input AND and "
+		 << zeros << "-input NOR gates." << endl;
 
 	/* Now make reduction logic to test that all the 1 bits are 1,
 	   and all the 0 bits are 0. The results will be ANDed
@@ -394,44 +407,67 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 	   will put the invert on that instead. */
       NetLogic*zero_gate = 0;
       NetLogic*ones_gate = 0;
-      if (zeros > 0)
+      if (zeros > 0) {
 	    zero_gate = new NetLogic(scope,
 			   scope->local_symbol(), zeros + 1,
 			   (op_code == 'n') ? NetLogic::OR : NetLogic::NOR, 1);
-      if (ones > 0)
+	    zero_gate->set_line(*lsig);
+      }
+      if (ones > 0) {
 	    ones_gate = new NetLogic(scope,
 			 scope->local_symbol(), ones + 1,
 			 (op_code == 'n') ? NetLogic::NAND : NetLogic::AND, 1);
+	    ones_gate->set_line(*lsig);
+      }
 
       unsigned zidx = 0;
       unsigned oidx = 0;
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < lsig->vector_width() ;  idx += 1) {
+	    NetPartSelect*ps = new NetPartSelect(lsig, idx, 1,
+						 NetPartSelect::VP);
+	    ps->set_line(*lsig);
+	    des->add_node(ps);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, 0, 0);
+	    tmp->local_flag(true);
+	    tmp->set_line(*lsig);
+	    connect(tmp->pin(0), ps->pin(0));
 	    if (val.get(idx) == verinum::V0) {
 		  zidx += 1;
-		  connect(zero_gate->pin(zidx), lsig->pin(idx));
+		  connect(zero_gate->pin(zidx), ps->pin(0));
 	    }
 	    if (val.get(idx) == verinum::V1) {
 		  oidx += 1;
-		  connect(ones_gate->pin(oidx), lsig->pin(idx));
+		  connect(ones_gate->pin(oidx), ps->pin(0));
 	    }
       }
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, 1);
+      osig->set_line(*lsig);
       osig->local_flag(true);
 
       if (zero_gate && ones_gate) {
-	    NetNet*and_sig = new NetNet(scope, scope->local_symbol(),
-					NetNet::WIRE, 2);
-	    and_sig->local_flag(true);
-	    connect(and_sig->pin(0), zero_gate->pin(0));
-	    connect(and_sig->pin(1), ones_gate->pin(0));
+	    if (debug_elaborate)
+		  cerr << lsig->get_line() << ": debug: "
+		       << "AND together AND and OR gate results" << endl;
+
+	    NetNet*and0_sig = new NetNet(scope, scope->local_symbol(),
+					NetNet::WIRE, 1);
+	    and0_sig->set_line(*lsig);
+	    and0_sig->local_flag(true);
+	    NetNet*and1_sig = new NetNet(scope, scope->local_symbol(),
+					NetNet::WIRE, 1);
+	    and1_sig->set_line(*lsig);
+	    and1_sig->local_flag(true);
+	    connect(and0_sig->pin(0), zero_gate->pin(0));
+	    connect(and1_sig->pin(0), ones_gate->pin(0));
 	    NetLogic*and_gate = new NetLogic(scope,
 			        scope->local_symbol(), 3,
 			        (op_code == 'n') ? NetLogic::OR : NetLogic::AND, 1);
 	    connect(and_gate->pin(0), osig->pin(0));
-	    connect(and_gate->pin(1), and_sig->pin(0));
-	    connect(and_gate->pin(2), and_sig->pin(1));
+	    connect(and_gate->pin(1), and0_sig->pin(0));
+	    connect(and_gate->pin(2), and1_sig->pin(0));
 
 	    des->add_node(and_gate);
 	    des->add_node(zero_gate);
@@ -2487,6 +2523,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.141  2005/01/13 00:23:10  steve
+ *  Fix elaboration of == compared to constants.
+ *
  * Revision 1.140  2005/01/09 20:16:00  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *
