@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-xnf.cc,v 1.38 2000/11/29 02:54:49 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.39 2000/11/29 23:15:54 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -875,7 +875,9 @@ bool target_xnf::bufz(const NetBUFZ*net)
 {
       static int warned_once=0;
       if (!warned_once) {
-	    cerr << "Warning: BUFZ object found for xnf output."
+	    cerr << "0:0: internal warning: BUFZ objects found "
+		 << "in XNF netlist." << endl;
+	    cerr << "0:0:                 : I'll make BUFs for them."
 		 << endl;
 	    warned_once=1;
       }
@@ -908,6 +910,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.39  2000/11/29 23:15:54  steve
+ *  More informative BUFZ warning.
+ *
  * Revision 1.38  2000/11/29 02:54:49  steve
  *  Add XNF support for NE comparators.
  *
