@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.136 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: netlist.h,v 1.137 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 /*
@@ -2035,17 +2035,20 @@ class NetEScope  : public NetExpr {
 /*
  * This node represents a system function call in an expression. The
  * object contains the name of the system function, which the backend
- * uses to to VPI matching.
- *
- * XXXX NOTE: parameters are not net supported.
+ * uses to do VPI matching.
  */
 class NetESFunc  : public NetExpr {
 
     public:
-      NetESFunc(const string&name, unsigned width);
+      NetESFunc(const string&name, unsigned width, unsigned nprms);
       ~NetESFunc();
 
       const string& name() const;
+
+      unsigned nparms() const;
+      void parm(unsigned idx, NetExpr*expr);
+      NetExpr* parm(unsigned idx);
+      const NetExpr* parm(unsigned idx) const;
 
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
@@ -2055,6 +2058,8 @@ class NetESFunc  : public NetExpr {
 
     private:
       string name_;
+      unsigned nparms_;
+      NetExpr**parms_;
 
     private: // not implemented
       NetESFunc(const NetESFunc&);
@@ -2510,6 +2515,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.137  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.136  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

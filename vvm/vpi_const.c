@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_const.c,v 1.7 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vpi_const.c,v 1.8 2000/05/07 18:20:08 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -36,6 +36,7 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
       char*cp;
       unsigned val;
       unsigned idx;
+      int isx;
 
       cp = buff;
 
@@ -53,6 +54,8 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 			*cp++ = 'x';
 		  }
 	    vp->format = vpiBinStrVal;
+	    *cp++ = 0;
+	    vp->value.str = buff;
 	    break;
 
 	  case vpiDecStrVal:
@@ -64,6 +67,8 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 	    }
 	    sprintf(cp, "%u", val);
 	    cp += strlen(cp);
+	    *cp++ = 0;
+	    vp->value.str = buff;
 	    break;
 
 	  case vpiOctStrVal:
@@ -123,6 +128,8 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  else
 			*cp++ = "01234567"[v];
 	    }
+	    *cp++ = 0;
+	    vp->value.str = buff;
 	    break;
 
 	  case vpiHexStrVal:
@@ -184,17 +191,36 @@ void vpip_bits_get_value(vpip_bit_t*bits, unsigned nbits, s_vpi_value*vp)
 		  else
 			*cp++ = "0123456789abcdef"[v];
 	    }
+	    *cp++ = 0;
+	    vp->value.str = buff;
+	    break;
+
+	  case vpiIntVal:
+	    val = 0;
+	    isx = 0;
+	    for (idx = 0 ;  idx < nbits ;  idx += 1) {
+		  val *= 2;
+		  if (B_ISXZ(bits[nbits-idx-1]))
+			  isx = 1;
+		  else if (B_IS1(bits[nbits-idx-1]))
+			  val += 1;
+	    }
+	    if(isx)
+		    vp->value.integer = 0;
+	    else
+		    vp->value.integer = val;
 	    break;
 
 	  default:
 	    *cp++ = '(';
 	    *cp++ = '?';
 	    *cp++ = ')';
+	    *cp++ = 0;
+	    vp->format = vpiStringVal;
+	    vp->value.str = buff;
+
 	    break;
       }
-
-      *cp++ = 0;
-      vp->value.str = buff;
 }
 
 static int string_get(int code, vpiHandle ref)
@@ -291,6 +317,10 @@ vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 
 /*
  * $Log: vpi_const.c,v $
+ * Revision 1.8  2000/05/07 18:20:08  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.7  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit

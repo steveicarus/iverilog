@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.123 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: netlist.cc,v 1.124 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2234,19 +2234,52 @@ const NetScope* NetEScope::scope() const
       return scope_;
 }
 
-NetESFunc::NetESFunc(const string&n, unsigned width)
+NetESFunc::NetESFunc(const string&n, unsigned width, unsigned np)
 : name_(n)
 {
       expr_width(width);
+      nparms_ = np;
+      parms_ = new NetExpr*[np];
+      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
+	    parms_[idx] = 0;
 }
 
 NetESFunc::~NetESFunc()
 {
+      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
+	    if (parms_[idx]) delete parms_[idx];
+
+      delete[]parms_;
 }
 
 const string& NetESFunc::name() const
 {
       return name_;
+}
+
+unsigned NetESFunc::nparms() const
+{
+      return nparms_;
+}
+
+void NetESFunc::parm(unsigned idx, NetExpr*v)
+{
+      assert(idx < nparms_);
+      if (parms_[idx])
+	    delete parms_[idx];
+      parms_[idx] = v;
+}
+
+const NetExpr* NetESFunc::parm(unsigned idx) const
+{
+      assert(idx < nparms_);
+      return parms_[idx];
+}
+
+NetExpr* NetESFunc::parm(unsigned idx)
+{
+      assert(idx < nparms_);
+      return parms_[idx];
 }
 
 NetESignal::NetESignal(NetNet*n)
@@ -2604,6 +2637,10 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.124  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.123  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.6 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.7 2000/05/07 18:20:08 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -75,16 +75,15 @@ void vpip_calltask(const char*fname, unsigned nparms, vpiHandle*parms)
 /*
  * System functions are kept in the same sort of table as the system
  * tasks, and we call them in a similar manner.
- *
- * XXXX Haven't handled the return value yet.
  */
-void vpip_callfunc(const char*fname, vpip_bit_t*res, unsigned nres)
+void vpip_callfunc(const char*fname, unsigned nres, vpip_bit_t*res,
+		   unsigned nparms, vpiHandle*parms)
 {
       struct systf_entry*idx;
       struct __vpiSysTaskCall cur_task;
       cur_task.base.vpi_type = &vpip_sysfunc_rt;
-      cur_task.args  = 0;
-      cur_task.nargs = 0;
+      cur_task.args  = parms;
+      cur_task.nargs = nparms;
       cur_task.res = res;
       cur_task.nres = nres;
 
@@ -220,6 +219,10 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.7  2000/05/07 18:20:08  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.6  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

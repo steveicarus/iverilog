@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.17 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.18 2000/05/07 18:20:08 steve Exp $"
 #endif
 
 /*
@@ -305,7 +305,8 @@ extern void vpip_calltask(const char*name, unsigned nparms, vpiHandle*parms);
  * This calls a system function with a given name. The return value is
  * taken by the res[] array.
  */
-extern void vpip_callfunc(const char*name, vpip_bit_t*res, unsigned nres);
+extern void vpip_callfunc(const char*name, unsigned nres, vpip_bit_t*res,
+			  unsigned nparms, vpiHandle*parms);
 
 extern void vpip_run_value_changes(struct __vpiSignal*sig);
 
@@ -366,6 +367,10 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.18  2000/05/07 18:20:08  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.17  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

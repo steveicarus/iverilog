@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.13 2000/04/21 02:00:35 steve Exp $"
+#ident "$Id: sys_display.c,v 1.14 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -55,7 +55,7 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
  * well so that I can look for arguments as I move forward through the
  * string.
  */
-static int format_str(char*fmt, int argc, vpiHandle*argv)
+static int format_str(unsigned int mcd, char*fmt, int argc, vpiHandle*argv)
 {
       s_vpi_value value;
       char buf[256];
@@ -73,7 +73,7 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 			cnt = sizeof buf - 1;
 		  strncpy(buf, cp, cnt);
 		  buf[cnt] = 0;
-		  vpi_printf("%s", buf);
+		  vpi_mcd_printf(mcd, "%s", buf);
 		  cp += cnt;
 
 	    } else if (*cp == '%') {
@@ -90,14 +90,14 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 		      case 'B':
 			value.format = vpiBinStrVal;
 			vpi_get_value(argv[idx++], &value);
-			vpi_printf("%s", value.value.str);
+			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 'd':
 		      case 'D':
 			value.format = vpiDecStrVal;
 			vpi_get_value(argv[idx++], &value);
-			vpi_printf("%s", value.value.str);
+			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 'h':
@@ -110,11 +110,11 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 			}
 			value.format = vpiHexStrVal;
 			vpi_get_value(argv[idx++], &value);
-			vpi_printf("%s", value.value.str);
+			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 'm':
-			vpi_printf("%s", vpi_get_str(vpiFullName, argv[idx]));
+			vpi_mcd_printf(mcd, "%s", vpi_get_str(vpiFullName, argv[idx]));
 			idx += 1;
 			cp += 1;
 			break;
@@ -122,22 +122,22 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 		      case 'O':
 			value.format = vpiOctStrVal;
 			vpi_get_value(argv[idx++], &value);
-			vpi_printf("%s", value.value.str);
+			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case 't':
 		      case 'T':
 			value.format = vpiDecStrVal;
 			vpi_get_value(argv[idx++], &value);
-			vpi_printf("%s", value.value.str);
+			vpi_mcd_printf(mcd, "%s", value.value.str);
 			cp += 1;
 			break;
 		      case '%':
-			vpi_printf("%%");
+			vpi_mcd_printf(mcd, "%%");
 			cp += 1;
 			break;
 		      default:
-			vpi_printf("%c", *cp);
+			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
 			break;
 		  }
@@ -149,11 +149,11 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
 		      case 0:
 			break;
 		      case 'n':
-			vpi_printf("\n");
+			vpi_mcd_printf(mcd, "\n");
 			cp += 1;
 			break;
 		      default:
-			vpi_printf("%c", *cp);
+			vpi_mcd_printf(mcd, "%c", *cp);
 			cp += 1;
 		  }
 	    }
@@ -162,7 +162,7 @@ static int format_str(char*fmt, int argc, vpiHandle*argv)
       return idx;
 }
 
-static void do_display(struct strobe_cb_info*info)
+static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 {
       s_vpi_value value;
       int idx;
@@ -173,20 +173,20 @@ static void do_display(struct strobe_cb_info*info)
 	    switch (vpi_get(vpiType, item)) {
 
 		case 0:
-		  vpi_printf(" ");
+		  vpi_mcd_printf(mcd, " ");
 		  break;
 
 		case vpiConstant:
 		  if (vpi_get(vpiConstType, item) == vpiStringConst) {
 			value.format = vpiStringVal;
 			vpi_get_value(item, &value);
-			idx += format_str(value.value.str,
+			idx += format_str(mcd, value.value.str,
 					  info->nitems-idx-1,
 					  info->items+idx+1);
 		  } else {
 			value.format = vpiBinStrVal;
 			vpi_get_value(item, &value);
-			vpi_printf("%s", value.value.str);
+			vpi_mcd_printf(mcd, "%s", value.value.str);
 		  }
 		  break;
 
@@ -195,17 +195,17 @@ static void do_display(struct strobe_cb_info*info)
 		case vpiMemoryWord:
 		  value.format = vpiBinStrVal;
 		  vpi_get_value(item, &value);
-		  vpi_printf("%s", value.value.str);
+		  vpi_mcd_printf(mcd, "%s", value.value.str);
 		  break;
 
 		case vpiTimeVar:
 		  value.format = vpiTimeVal;
 		  vpi_get_value(item, &value);
-		  vpi_printf("%u", value.value.time->low);
+		  vpi_mcd_printf(mcd, "%u", value.value.time->low);
 		  break;
 
 		default:
-		  vpi_printf("?");
+		  vpi_mcd_printf(mcd, "?");
 		  break;
 	    }
       }
@@ -220,7 +220,7 @@ static int sys_display_calltf(char *name)
 
       array_from_iterator(&info, argv);
 
-      do_display(&info);
+      do_display(1, &info);
 
       free(info.items);
 
@@ -242,7 +242,7 @@ static int strobe_cb(p_cb_data cb)
 {
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
-      do_display(info);
+      do_display(1, info);
 
       vpi_printf("\n");
 
@@ -294,7 +294,7 @@ static vpiHandle *monitor_callbacks = 0;
 
 static int monitor_cb_2(p_cb_data cb)
 {
-      do_display(&monitor_info);
+      do_display(1, &monitor_info);
       vpi_printf("\n");
       monitor_scheduled = 0;
       return 0;
@@ -385,6 +385,126 @@ static int sys_monitor_calltf(char*name)
       return 0;
 }
 
+/*
+ * Implement the $fopen system function.
+ */
+static int sys_fopen_calltf(char *name)
+{
+      s_vpi_value val, value;
+
+      vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: file name parameter missing.\n", name);
+	    return 0;
+      }
+
+      if (vpi_get(vpiType, item) != vpiConstant) {
+	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      if (vpi_get(vpiConstType, item) != vpiStringConst) {
+	    vpi_printf("ERROR: %s parameter must be a constant\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiStringVal;
+      vpi_get_value(item, &value);
+
+      val.format = vpiIntVal;
+      val.value.integer = vpi_mcd_open( value.value.str );
+
+      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+
+      return 0;
+}
+
+static int sys_fopen_sizetf(char*x)
+{
+      return 32;
+}
+
+/* Implement $fdisplay and $fwrite.  
+ * Perhaps this could be merged into sys_display_calltf.
+ */
+static int sys_fdisplay_calltf(char *name)
+{
+      struct strobe_cb_info info;
+      unsigned int mcd;
+      int type;
+      s_vpi_value value;
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    return 0;
+      }
+
+      type = vpi_get(vpiType, item);
+      if (type != vpiReg && type != vpiReadVal) {
+	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
+		       name, type);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiIntVal;
+      vpi_get_value(item, &value);
+      mcd = value.value.integer;
+
+      array_from_iterator(&info, argv);
+      do_display(mcd, &info);
+      free(info.items);
+
+      if (strcmp(name,"$fdisplay") == 0)
+	    vpi_mcd_printf(mcd, "\n");
+
+      return 0;
+}
+
+
+/*
+ * Implement $fclose system function
+ */
+static int sys_fclose_calltf(char *name)
+{
+      unsigned int mcd;
+      int type;
+      s_vpi_value value;
+
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    return 0;
+      }
+      type = vpi_get(vpiType, item);
+      if (type != vpiReg && type != vpiReadVal) {
+	    vpi_printf("ERROR: %s mcd parameter must be of integral type, got vpiType=%d\n",
+		       name, type);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiIntVal;
+      vpi_get_value(item, &value);
+      mcd = value.value.integer;
+
+      vpi_printf("in fclose_calltf mcd=%d type=%d\n", mcd, value.format);
+      vpi_mcd_close(mcd);
+      return 0;
+}
+
+
 void sys_display_register()
 {
       s_vpi_systf_data tf_data;
@@ -420,11 +540,49 @@ void sys_display_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$monitor";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.tfname    = "$fopen";
+      tf_data.calltf    = sys_fopen_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = sys_fopen_sizetf;
+      tf_data.user_data = "$fopen";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fclose";
+      tf_data.calltf    = sys_fclose_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fclose";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fdisplay";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fdisplay";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fwrite";
+      tf_data.calltf    = sys_fdisplay_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fwrite";
+      vpi_register_systf(&tf_data);
+
+      vpi_mcd_init();
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.14  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.13  2000/04/21 02:00:35  steve
  *  exit if hex value is missing.
  *

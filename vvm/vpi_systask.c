@@ -17,17 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.4 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.5 2000/05/07 18:20:08 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdlib.h>
 # include  <assert.h>
 
+/*
+ * the iter function only supports getting an iterator of the
+ * arguments. This works equally well for tasks and functions.
+ */
 static vpiHandle systask_iter(int type, vpiHandle ref)
 {
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-      assert(ref->vpi_type->type_code == vpiSysTaskCall);
+      assert((ref->vpi_type->type_code == vpiSysTaskCall)
+	     || (ref->vpi_type->type_code == vpiSysFuncCall));
 
       if (rfp->nargs == 0)
 	    return 0;
@@ -88,6 +93,10 @@ const struct __vpirt vpip_sysfunc_rt = {
 
 /*
  * $Log: vpi_systask.c,v $
+ * Revision 1.5  2000/05/07 18:20:08  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.4  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: dup_expr.cc,v 1.3 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.4 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,11 +31,19 @@ NetEScope* NetEScope::dup_expr() const
 
 NetESFunc* NetESFunc::dup_expr() const
 {
-      return new NetESFunc(name_, expr_width());
+      NetESFunc*tmp = new NetESFunc(name_, expr_width(), nparms());
+      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1)
+	    tmp->parm(idx, tmp->parm(idx)->dup_expr());
+
+      return tmp;
 }
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.4  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.3  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

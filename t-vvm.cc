@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.144 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.145 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -94,7 +94,7 @@ class target_vvm : public target_t {
               void proc_condit_fun(ostream&os, const NetCondit*);
       virtual bool proc_force(ostream&os, const NetForce*);
       virtual void proc_forever(ostream&os, const NetForever*);
-      virtual bool target_vvm::proc_release(ostream&os, const NetRelease*);
+      virtual bool proc_release(ostream&os, const NetRelease*);
       virtual void proc_repeat(ostream&os, const NetRepeat*);
       virtual void proc_stask(ostream&os, const NetSTask*);
       virtual bool proc_trigger(ostream&os, const NetEvTrig*);
@@ -222,14 +222,14 @@ target_vvm::~target_vvm()
 class vvm_proc_rval  : public expr_scan_t {
 
     public:
-      explicit vvm_proc_rval(ostream&os, unsigned i)
-      : result(""), os_(os), indent_(i) { }
+      explicit vvm_proc_rval(ostream&os, target_vvm*t)
+      : result(""), os_(os), tgt_(t) { }
 
       string result;
 
     private:
       ostream&os_;
-      unsigned indent_;
+      target_vvm*tgt_;
 
     private:
       virtual void expr_const(const NetEConst*);
@@ -243,6 +243,34 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
       virtual void expr_ufunc(const NetEUFunc*);
+};
+
+/*
+ * The vvm_parm_rval class scans expressions for the purpose of making
+ * parameters for system tasks/functions. Thus, the generated code is
+ * geared towards making the handles needed to make the call.
+ *
+ * The result of any parm rval scan is a vpiHandle, or a string that
+ * automatically converts to a vpiHandle on assignment.
+ */
+class vvm_parm_rval  : public expr_scan_t {
+
+    public:
+      explicit vvm_parm_rval(ostream&o, target_vvm*t)
+      : result(""), os_(o), tgt_(t) { }
+
+      string result;
+
+    private:
+      virtual void expr_const(const NetEConst*);
+      virtual void expr_memory(const NetEMemory*);
+      virtual void expr_scope(const NetEScope*);
+      virtual void expr_sfunc(const NetESFunc*);
+      virtual void expr_signal(const NetESignal*);
+
+    private:
+      ostream&os_;
+      target_vvm*tgt_;
 };
 
 /*
@@ -269,7 +297,7 @@ void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 		  pp->expr_scan(this);
 
 		  for (unsigned bit = 0 ; bit < pp->expr_width() ; bit += 1) {
-			os_ << setw(indent_) << "" << tname << "[" << pos <<
+			os_ << "      " << tname << "[" << pos <<
 			      "] = " << result << "[" << bit << "];" <<
 			      endl;
 			pos+= 1;
@@ -359,10 +387,38 @@ void vvm_proc_rval::expr_sfunc(const NetESFunc*fun)
       const string retval = make_temp();
       const unsigned retwid = fun->expr_width();
 
+	/* Make any parameters that might be needed to be passed to
+	   the function. */
+
+      const string parmtab = make_temp();
+      if (fun->nparms() > 0) {
+	    os_ << "      vpiHandle " << parmtab
+		<< "["<<fun->nparms()<<"];" << endl;
+
+	    for (unsigned idx = 0 ;  idx < fun->nparms() ;  idx += 1) {
+		  vvm_parm_rval scan(os_, tgt_);
+		  fun->parm(idx)->expr_scan(&scan);
+
+		  os_ << "      " << parmtab <<"["<<idx<<"] = "
+		      << scan.result << ";" << endl;
+	    }
+      }
+
+	/* Draw the call to the function. Create a vpip_bit_t array to
+	   receive the return value, and make it into a vvm_bitset_t
+	   when the call returns. */
+
       os_ << "      vpip_bit_t " << retval << "_bits["<<retwid<<"];" << endl;
 
       os_ << "      vpip_callfunc(\"" << fun->name() << "\", "
-	  << retval<<"_bits, " << retwid << ");" << endl;
+	  << retwid << ", " << retval<<"_bits";
+
+      if (fun->nparms() == 0)
+	    os_ << ", 0, 0";
+      else
+	    os_ << ", " << fun->nparms() << ", " << parmtab;
+
+      os_ << ");" << endl;
 
       os_ << "      vvm_bitset_t " << retval << "(" << retval<<"_bits, "
 	  << retwid << ");" << endl;
@@ -555,87 +611,87 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 
       switch (expr->op()) {
 	  case 'a': // logical and (&&)
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_land("
+	    os_ << "      " << result << "[0] = vvm_binop_land("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'E': // ===
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_eeq("
+	    os_ << "      " << result << "[0] = vvm_binop_eeq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'e': // ==
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_eq("
+	    os_ << "      " << result << "[0] = vvm_binop_eq("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'G': // >=
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_ge("
+	    os_ << "      " << result << "[0] = vvm_binop_ge("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'l': // left shift(<<)
-	    os_ << setw(indent_) << "" << "vvm_binop_shiftl(" << result
+	    os_ << "      " << "vvm_binop_shiftl(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'L': // <=
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_le("
+	    os_ << "      " << result << "[0] = vvm_binop_le("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'N': // !==
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_nee("
+	    os_ << "      " << result << "[0] = vvm_binop_nee("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'n':
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_ne("
+	    os_ << "      " << result << "[0] = vvm_binop_ne("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '<':
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_lt("
+	    os_ << "      " << result << "[0] = vvm_binop_lt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case '>':
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_gt("
+	    os_ << "      " << result << "[0] = vvm_binop_gt("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'o': // logical or (||)
-	    os_ << setw(indent_) << "" << result << "[0] = vvm_binop_lor("
+	    os_ << "      " << result << "[0] = vvm_binop_lor("
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'r': // right shift(>>)
-	    os_ << setw(indent_) << "" << "vvm_binop_shiftr(" << result
+	    os_ << "      " << "vvm_binop_shiftr(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'X':
-	    os_ << setw(indent_) << "" << "vvm_binop_xnor(" << result
+	    os_ << "      " << "vvm_binop_xnor(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '+':
-	    os_ << setw(indent_) << "" << "vvm_binop_plus(" << result
+	    os_ << "      " << "vvm_binop_plus(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '-':
-	    os_ << setw(indent_) << "" << "vvm_binop_minus(" << result
+	    os_ << "      " << "vvm_binop_minus(" << result
 		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '&':
-	    os_ << setw(indent_) << "" << "vvm_binop_and(" << result
+	    os_ << "      " << "vvm_binop_and(" << result
 		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '|':
-	    os_ << setw(indent_) << "" << "vvm_binop_or(" << result
+	    os_ << "      " << "vvm_binop_or(" << result
 		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '^':
-	    os_ << setw(indent_) << "" << "vvm_binop_xor(" << result
+	    os_ << "      " << "vvm_binop_xor(" << result
 		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '*':
-	    os_ << setw(indent_) << "" << "vvm_binop_mult(" << result
+	    os_ << "      " << "vvm_binop_mult(" << result
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  case '/':
-	    os_ << setw(indent_) << "" << "vvm_binop_idiv(" << result
+	    os_ << "      " << "vvm_binop_idiv(" << result
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  case '%':
-	    os_ << setw(indent_) << "" << "vvm_binop_imod(" << result
+	    os_ << "      " << "vvm_binop_imod(" << result
 		<< "," << lres << "," << rres << ");" << endl;
 	    break;
 	  default:
@@ -648,40 +704,12 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
       }
 }
 
-static string emit_proc_rval(ostream&os, unsigned indent, const NetExpr*expr)
+static string emit_proc_rval(ostream&os, target_vvm*tgt, const NetExpr*expr)
 {
-      vvm_proc_rval scan (os, indent);
+      vvm_proc_rval scan (os, tgt);
       expr->expr_scan(&scan);
       return scan.result;
 }
-
-/*
- * The vvm_parm_rval class scans expressions for the purpose of making
- * parameters for system tasks/functions. Thus, the generated code is
- * geared towards making the handles needed to make the call.
- *
- * The result of any parm rval scan is a vpiHandle, or a string that
- * automatically converts to a vpiHandle on assignment.
- */
-class vvm_parm_rval  : public expr_scan_t {
-
-    public:
-      explicit vvm_parm_rval(ostream&o, target_vvm*t)
-      : result(""), os_(o), tgt_(t) { }
-
-      string result;
-
-    private:
-      virtual void expr_const(const NetEConst*);
-      virtual void expr_memory(const NetEMemory*);
-      virtual void expr_scope(const NetEScope*);
-      virtual void expr_sfunc(const NetESFunc*);
-      virtual void expr_signal(const NetESignal*);
-
-    private:
-      ostream&os_;
-      target_vvm*tgt_;
-};
 
 void vvm_parm_rval::expr_const(const NetEConst*expr)
 {
@@ -770,7 +798,7 @@ void vvm_parm_rval::expr_memory(const NetEMemory*mem)
 
 	      /* Otherwise, evaluate the index at run time and use
 		 that to select the memory word. */
-	    string rval = emit_proc_rval(tgt_->defn, 6, mem->index());
+	    string rval = emit_proc_rval(tgt_->defn, tgt_, mem->index());
 	    result = "vpi_handle_by_index(&" + mangle(mem->name()) +
 		  ".base, " + rval + ".as_unsigned())";
       }
@@ -1934,7 +1962,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    return;
       }
 
-      string rval = emit_proc_rval(defn, 8, net->rval());
+      string rval = emit_proc_rval(defn, this, net->rval());
 
       defn << "      // " << net->get_line() << ": " << endl;
 
@@ -1942,7 +1970,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
 	      // This is a bit select. Assign the low bit of the rval
 	      // to the selected bit of the lval.
-	    string bval = emit_proc_rval(defn, 8, net->bmux());
+	    string bval = emit_proc_rval(defn, this, net->bmux());
 
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
@@ -1997,7 +2025,7 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 	   << mangle(amem->index()->name()) << ".nbits);" << endl;
 
 	/* Evaluate the rval that gets written into the memory word. */
-      string rval = emit_proc_rval(defn, 8, amem->rval());
+      string rval = emit_proc_rval(defn, this, amem->rval());
 
 
       const NetMemory*mem = amem->memory();
@@ -2018,7 +2046,7 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 
 void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 {
-      string rval = emit_proc_rval(defn, 8, net->rval());
+      string rval = emit_proc_rval(defn, this, net->rval());
       const unsigned long delay = net->rise_time();
 
       if (net->bmux()) {
@@ -2030,7 +2058,7 @@ void target_vvm::proc_assign_nb(ostream&os, const NetAssignNB*net)
 		 better generating a demux device and doing the assign
 		 to the device input. Food for thought. */
 
-	    string bval = emit_proc_rval(defn, 8, net->bmux());
+	    string bval = emit_proc_rval(defn, this, net->bmux());
 	    defn << "      switch (" << bval << ".as_unsigned()) {" << endl;
 
 	    for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
@@ -2068,7 +2096,7 @@ void target_vvm::proc_assign_mem_nb(ostream&os, const NetAssignMemNB*amem)
 
 
 	/* Evaluate the rval that gets written into the memory word. */
-      string rval = emit_proc_rval(defn, 8, amem->rval());
+      string rval = emit_proc_rval(defn, this, amem->rval());
 
       const NetMemory*mem = amem->memory();
 
@@ -2198,7 +2226,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
       }
 
       defn << "      /* case (" << *net->expr() << ") */" << endl;
-      string expr = emit_proc_rval(defn, 8, net->expr());
+      string expr = emit_proc_rval(defn, this, net->expr());
 
       unsigned exit_step = thread_step_ + 1;
       thread_step_ += 1;
@@ -2219,7 +2247,7 @@ void target_vvm::proc_case(ostream&os, const NetCase*net)
 	    thread_step_ += 1;
 
 	    defn << "      /* " << *net->expr(idx) << " */" << endl;
-	    string guard = emit_proc_rval(defn, 8, net->expr(idx));
+	    string guard = emit_proc_rval(defn, this, net->expr(idx));
 
 	    defn << "      if (B_IS1(" << test_func << "(" << guard << ","
 	       << expr << "))) {" << endl;
@@ -2323,7 +2351,7 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 
       defn << "      do {" << endl;
 
-      string expr = emit_proc_rval(defn, 6, net->expr());
+      string expr = emit_proc_rval(defn, this, net->expr());
 
       unsigned default_idx = net->nitems();
       for (unsigned idx = 0 ;  idx < net->nitems() ;  idx += 1) {
@@ -2335,7 +2363,7 @@ void target_vvm::proc_case_fun(ostream&os, const NetCase*net)
 		  continue;
 	    }
 
-	    string guard = emit_proc_rval(defn, 6, net->expr(idx));
+	    string guard = emit_proc_rval(defn, this, net->expr(idx));
 
 	    defn << "      if (B_IS1(" << test_func << "(" <<
 		  guard << "," << expr << "))) {" << endl;
@@ -2360,7 +2388,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 	    return;
       }
 
-      string expr = emit_proc_rval(defn, 8, net->expr());
+      string expr = emit_proc_rval(defn, this, net->expr());
 
       unsigned if_step   = ++thread_step_;
       unsigned else_step = ++thread_step_;
@@ -2408,7 +2436,7 @@ void target_vvm::proc_condit(ostream&os, const NetCondit*net)
 
 void target_vvm::proc_condit_fun(ostream&os, const NetCondit*net)
 {
-      string expr = emit_proc_rval(defn, 8, net->expr());
+      string expr = emit_proc_rval(defn, this, net->expr());
 
       defn << "      // " << net->get_line() << ": conditional (if-else)"
 	   << endl;
@@ -2489,7 +2517,7 @@ bool target_vvm::proc_release(ostream&os, const NetRelease*dev)
 
 void target_vvm::proc_repeat(ostream&os, const NetRepeat*net)
 {
-      string expr = emit_proc_rval(defn, 8, net->expr());
+      string expr = emit_proc_rval(defn, this, net->expr());
       unsigned top_step = ++thread_step_;
       unsigned out_step = ++thread_step_;
 
@@ -2696,7 +2724,7 @@ void target_vvm::proc_while(ostream&os, const NetWhile*net)
       defn << "static bool " << thread_class_ << "_step_"
 	   << head_step << "_(vvm_thread*thr) {" << endl;
 
-      string expr = emit_proc_rval(defn, 8, net->expr());
+      string expr = emit_proc_rval(defn, this, net->expr());
 
       defn << "// " << net->expr()->get_line() <<
 	    ": test while condition." << endl;
@@ -2764,6 +2792,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.145  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.144  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

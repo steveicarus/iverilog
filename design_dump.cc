@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.83 2000/05/07 04:37:56 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.84 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 /*
@@ -850,7 +850,12 @@ void NetEScope::dump(ostream&o) const
 
 void NetESFunc::dump(ostream&o) const
 {
-      o << name_ << "()";
+      o << name_ << "(";
+      if (nparms() > 0)
+	    o << *parm(0);
+      for (unsigned idx = 1 ;  idx < nparms() ;  idx += 1)
+	    o << ", " << *parm(idx);
+      o << ")";
 }
 
 void NetESignal::dump(ostream&o) const
@@ -955,6 +960,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.84  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.83  2000/05/07 04:37:56  steve
  *  Carry strength values from Verilog source to the
  *  pform and netlist for gates.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.15 2000/05/04 03:37:59 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.16 2000/05/07 18:20:08 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -145,6 +145,11 @@ typedef struct t_vpi_value {
 extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
 extern void vpi_printf(const char*fmt, ...);
 
+extern unsigned int vpi_mcd_close(unsigned int mcd);
+extern char *vpi_mcd_name(unsigned int mcd);
+extern unsigned int vpi_mcd_open(char *name);
+extern int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
+
 /*
  * support for VPI callback functions.
  */
@@ -231,6 +236,10 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.16  2000/05/07 18:20:08  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.15  2000/05/04 03:37:59  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.

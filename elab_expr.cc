@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.24 2000/05/04 03:37:58 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.25 2000/05/07 18:20:07 steve Exp $"
 #endif
 
 
@@ -142,25 +142,21 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
       return tmp;
 }
 
-NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*) const
+NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope) const
 {
-      if (parms_.count() > 0) {
-	    cerr << get_line() << ": sorry: system function "
-		  "parmaeters not supported." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      unsigned wid = 32;
 
       if (name_ == "$time")
-	    return new NetESFunc(name_, 64);
+	    wid = 64;
 
-      if (name_ == "$random")
-	    return new NetESFunc(name_, 32);
+      NetESFunc*fun = new NetESFunc(name_, wid, parms_.count());
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+	    PExpr*expr = parms_[idx];
+	    NetExpr*tmp = expr->elaborate_expr(des, scope);
+	    fun->parm(idx, tmp);
+      }
 
-      cerr << get_line() << ": sorry: system function " << name_
-	   << " not supported." << endl;
-      des->errors += 1;
-      return 0;
+      return fun;
 }
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
@@ -467,6 +463,10 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.25  2000/05/07 18:20:07  steve
+ *  Import MCD support from Stephen Tell, and add
+ *  system function parameter support to the IVL core.
+ *
  * Revision 1.24  2000/05/04 03:37:58  steve
  *  Add infrastructure for system functions, move
  *  $time to that structure and add $random.
