@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.17 2002/02/02 06:13:38 steve Exp $"
+#ident "$Id: net_event.cc,v 1.18 2002/06/30 02:21:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -260,6 +260,29 @@ void NetEvent::replace_event(NetEvent*that)
       }
 }
 
+NexusSet* NetEvent::nex_async_()
+{
+	/* If there are behavioral trigger statements attached to me,
+	   then this is not an asynchronous event. */
+      if (trig_ != 0)
+	    return 0;
+
+      
+      NexusSet*tmp = new NexusSet;
+      for (NetEvProbe*cur = probes_ ;  cur != 0 ;  cur = cur->enext_) {
+	    if (cur->edge() != NetEvProbe::ANYEDGE) {
+		  delete tmp;
+		  return 0;
+	    }
+
+	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
+		  tmp->add(cur->pin(idx).nexus());
+
+      }
+
+      return tmp;
+}
+
 NetEvTrig::NetEvTrig(NetEvent*ev)
 : event_(ev)
 {
@@ -456,6 +479,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.18  2002/06/30 02:21:31  steve
+ *  Add structure for asynchronous logic synthesis.
+ *
  * Revision 1.17  2002/02/02 06:13:38  steve
  *  event find_similar should not find self.
  *

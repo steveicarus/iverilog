@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.60 2002/06/24 01:49:39 steve Exp $"
+#ident "$Id: main.cc,v 1.61 2002/06/30 02:21:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -193,6 +193,7 @@ extern Design* elaborate(list <const char*>root);
 
 extern void cprop(Design*des);
 extern void synth(Design*des);
+extern void synth2(Design*des);
 extern void syn_rules(Design*des);
 extern void nodangle(Design*des);
 extern void xnfio(Design*des);
@@ -205,6 +206,7 @@ static struct net_func_map {
       { "cprop",   &cprop },
       { "nodangle",&nodangle },
       { "synth",   &synth },
+      { "synth2",  &synth2 },
       { "syn-rules",   &syn_rules },
       { "xnfio",   &xnfio },
       { 0, 0 }
@@ -594,6 +596,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.61  2002/06/30 02:21:31  steve
+ *  Add structure for asynchronous logic synthesis.
+ *
  * Revision 1.60  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.

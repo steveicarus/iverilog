@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.7 2002/06/24 01:49:39 steve Exp $"
+#ident "$Id: net_link.cc,v 1.8 2002/06/30 02:21:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -414,13 +414,13 @@ void NexusSet::add(const NexusSet&that)
 	    add(that.items_[idx]);
 }
 
-Nexus* NexusSet::operator[] (unsigned idx)
+Nexus* NexusSet::operator[] (unsigned idx) const
 {
       assert(idx < nitems_);
       return items_[idx];
 }
 
-unsigned NexusSet::bsearch_(Nexus*that)
+unsigned NexusSet::bsearch_(Nexus*that) const
 {
       for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
 	    if (items_[idx] < that)
@@ -432,9 +432,24 @@ unsigned NexusSet::bsearch_(Nexus*that)
       return nitems_;
 }
 
+bool NexusSet::contains(const NexusSet&that) const
+{
+      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1) {
+	    unsigned where = bsearch_(that[idx]);
+	    if (where == nitems_)
+		  return false;
+	    if (items_[where] != that[idx])
+		  return false;
+      }
+
+      return true;
+}
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.8  2002/06/30 02:21:31  steve
+ *  Add structure for asynchronous logic synthesis.
+ *
  * Revision 1.7  2002/06/24 01:49:39  steve
  *  Make link_drive_constant cache its results in
  *  the Nexus, to improve cprop performance.

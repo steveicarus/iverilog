@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.247 2002/06/25 01:33:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.248 2002/06/30 02:21:32 steve Exp $"
 #endif
 
 /*
@@ -285,13 +285,16 @@ class NexusSet {
       void add(Nexus*that);
       void add(const NexusSet&that);
 
-      Nexus* operator[] (unsigned idx);
+      Nexus* operator[] (unsigned idx) const;
+
+	// Return true if this set contains every nexus in that set.
+      bool contains(const NexusSet&that) const;
 
     private:
       Nexus**items_;
       unsigned nitems_;
 
-      unsigned bsearch_(Nexus*that);
+      unsigned bsearch_(Nexus*that) const;
 
     private: // not implemented
       NexusSet(const NexusSet&);
@@ -1184,6 +1187,10 @@ class NetProc : public LineInfo {
 	// sensitivity list.
       virtual NexusSet* nex_input();
 
+	// Find the nexa that are set by the statement. Add the output
+	// values to the set passed as a parameter.
+      virtual void nex_output(NexusSet&);
+
 	// This method is called to emit the statement to the
 	// target. The target returns true if OK, false for errors.
       virtual bool emit_proc(struct target_t*) const;
@@ -1191,6 +1198,13 @@ class NetProc : public LineInfo {
 	// This method is called by functors that want to scan a
 	// process in search of matchable patterns.
       virtual int match_proc(struct proc_match_t*);
+
+	// Return true if this represents the root of a combinational
+	// process. Most process types are not.
+      virtual bool is_asynchronous();
+
+	// synthesize as asynchronous logic, and return true.
+      virtual bool synth_async(Design*, NetScope*scope);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -1303,6 +1317,8 @@ class NetAssignBase : public NetProc {
 	// accounts for any grouping of NetAssign_ objects that might happen.
       unsigned lwidth() const;
 
+      bool synth_async(Design*des, NetScope*scope);
+
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
 
@@ -1317,6 +1333,10 @@ class NetAssign : public NetAssignBase {
     public:
       explicit NetAssign(NetAssign_*lv, NetExpr*rv);
       ~NetAssign();
+
+      bool is_asynchronous();
+
+      void nex_output(NexusSet&o);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -1480,6 +1500,11 @@ class NetCondit  : public NetProc {
       bool emit_recurse_else(struct target_t*) const;
 
       virtual NexusSet* nex_input();
+      virtual void nex_output(NexusSet&o);
+
+      bool is_asynchronous();
+      bool synth_async(Design*des, NetScope*scope);
+
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
@@ -1611,6 +1636,11 @@ class NetEvent : public LineInfo {
       void replace_event(NetEvent*that);
 
     private:
+	// This returns a nexus set if it represents possibly
+	// asynchronous inputs, otherwise 0.
+      NexusSet*nex_async_();
+
+    private:
       char* name_;
 
 	// The NetScope class uses these to list the events.
@@ -1673,6 +1703,13 @@ class NetEvWait  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       bool emit_recurse(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
+
+	// It is possible that this is the root of a combinational
+	// process. This method checks.
+      virtual bool is_asynchronous();
+
+      virtual bool synth_async(Design*des, NetScope*scope);
+
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -2043,6 +2080,13 @@ class NetProcTop  : public LineInfo, public Attrib {
 
       NetScope*scope();
       const NetScope*scope() const;
+
+	/* Return true of this process represents combinational logic. */
+      bool is_asynchronous();
+
+	/* Create asynchronous logic from this thread and return true,
+	   or return false if that cannot be done. */
+      bool synth_async(Design*des);
 
       void dump(ostream&, unsigned ind) const;
       bool emit(struct target_t*tgt) const;
@@ -2941,6 +2985,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.248  2002/06/30 02:21:32  steve
+ *  Add structure for asynchronous logic synthesis.
+ *
  * Revision 1.247  2002/06/25 01:33:22  steve
  *  Cache calculated driven value.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.128 2002/06/14 04:17:12 steve Exp $"
+#ident "$Id: Makefile.in,v 1.129 2002/06/30 02:21:31 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -124,15 +124,15 @@ TT_VVM = mangle.o t-vvm.o
 endif
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o $(TT_VVM) t-xnf.o
-FF = nodangle.o synth.o syn-rules.o xnfio.o
+FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o xnfio.o
 
-O = main.o cprop.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
+O = main.o async.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_lval.o elab_net.o elab_anet.o elab_pexpr.o elab_scope.o \
 elab_sig.o emit.o eval.o eval_attrib.o eval_rconst.o \
 eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
 load_module.o netlist.o netmisc.o net_assign.o \
 net_design.o net_event.o net_expr.o net_force.o net_func.o \
-net_link.o net_modulo.o net_nex_input.o \
+net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_udp.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_dump.o \
 set_width.o \
