@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.15 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.16 1999/10/31 04:11:28 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -49,14 +49,65 @@ class vvm_out_event  : public vvm_event {
       const vpip_bit_t val_;
 };
 
+/*
+ * This template implements the LPM_ADD_SUB device type. The width of
+ * the device is a template parameter.
+ */
+template <unsigned WIDTH> class vvm_add_sub {
+
+    public:
+      vvm_add_sub() { }
+
+      void config_rout(unsigned idx, vvm_out_event::action_t a)
+	    { o_[idx] = a;
+	    }
+
+      void init_DataA(unsigned idx, vpip_bit_t val)
+	    { a_[idx] = val;
+	    }
+
+      void init_DataB(unsigned idx, vpip_bit_t val)
+	    { b_[idx] = val;
+	    }
+
+      void set_DataA(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { a_[idx] = val;
+	      compute_(sim);
+	    }
+      void set_DataB(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { b_[idx] = val;
+	      compute_(sim);
+	    }
+
+    private:
+      vpip_bit_t a_[WIDTH];
+      vpip_bit_t b_[WIDTH];
+      vpip_bit_t r_[WIDTH];
+
+      vvm_out_event::action_t o_[WIDTH];
+
+      void compute_(vvm_simulation*sim)
+	    { vpip_bit_t carry = V0;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1) {
+		    vpip_bit_t val;
+		    val = add_with_carry(a_[idx], b_[idx], carry);
+		    if (val == r_[idx]) continue;
+		    r_[idx] = val;
+		    if (o_[idx] == 0) continue;
+		    vvm_event*ev = new vvm_out_event(sim, val, o_[idx]);
+		    sim->insert_event(0, ev);
+	      }
+	    }
+};
+
 template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
 
     public:
       explicit vvm_and(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vpip_bit_t val)
-	    { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
 	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
@@ -66,10 +117,10 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
 		    sim->active_event(ev);
 	    }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		  return;
-	      input_[idx-1] = val;
+	      input_[idx] = val;
 
 	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
@@ -96,8 +147,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_or {
       explicit vvm_or(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vpip_bit_t val)
-	    { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
 	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
@@ -107,10 +158,10 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_or {
 		    sim->active_event(ev);
 	    }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		  return;
-	      input_[idx-1] = val;
+	      input_[idx] = val;
 
 	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
@@ -137,8 +188,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nor {
       explicit vvm_nor(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vpip_bit_t val)
-	    { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
 	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
@@ -148,10 +199,10 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_nor {
 		    sim->active_event(ev);
 	    }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		  return;
-	      input_[idx-1] = val;
+	      input_[idx] = val;
 
 	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
@@ -251,10 +302,10 @@ template <unsigned long DELAY> class vvm_not {
       : output_(o)
       { }
 
-      void init(unsigned, vpip_bit_t) { }
+      void init_I(unsigned, vpip_bit_t) { }
       void start(vvm_simulation*) { }
 
-      void set(vvm_simulation*sim, unsigned, vpip_bit_t val)
+      void set_I(vvm_simulation*sim, unsigned, vpip_bit_t val)
 	    { vpip_bit_t outval = not(val);
 	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
 	      if (DELAY > 0)
@@ -273,7 +324,7 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xnor {
       explicit vvm_xnor(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vpip_bit_t val) { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val) { input_[idx] = val; }
       void start(vvm_simulation*sim)
 	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
@@ -284,10 +335,10 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xnor {
 
 
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		    return;
-	      input_[idx-1] = val;
+	      input_[idx] = val;
 	      vpip_bit_t outval = compute_();
 	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
 	      if (DELAY > 0)
@@ -315,8 +366,8 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
       explicit vvm_xor(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vpip_bit_t val)
-	    { input_[idx-1] = val; }
+      void init_I(unsigned idx, vpip_bit_t val)
+	    { input_[idx] = val; }
 
       void start(vvm_simulation*sim)
 	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
@@ -326,10 +377,10 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
 		    sim->active_event(ev);
 	    }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
-	    { if (input_[idx-1] == val)
+      void set_I(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+	    { if (input_[idx] == val)
 		    return;
-	      input_[idx-1] = val;
+	      input_[idx] = val;
 	      start(sim);
 	    }
 
@@ -502,7 +553,7 @@ template <unsigned WIDTH> class vvm_pevent {
 
       vvm_bitset_t<WIDTH> get() const { return value_; }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+      void set_P(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { if (value_[idx] == val) return;
 	      switch (edge_) {
 		  case ANYEDGE:
@@ -520,7 +571,7 @@ template <unsigned WIDTH> class vvm_pevent {
 	      value_[idx] = val;
 	    }
 
-      void init(int idx, vpip_bit_t val)
+      void init_P(int idx, vpip_bit_t val)
 	    { assert(idx < WIDTH);
 	      value_[idx] = val;
 	    }
@@ -537,6 +588,11 @@ template <unsigned WIDTH> class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.16  1999/10/31 04:11:28  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.15  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

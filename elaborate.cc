@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.118 1999/10/18 00:02:21 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.119 1999/10/31 04:11:27 steve Exp $"
 #endif
 
 /*
@@ -186,8 +186,9 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	/* Elaborate the r-value. Account for the initial decays,
 	   which are going to be attached to the last gate before the
 	   generated NetNet. */
-      NetNet*rval = pin(1)->elaborate_net(des, path, rise_time,
-					  fall_time, decay_time);
+      NetNet*rval = pin(1)->elaborate_net(des, path,
+					  lval->pin_count(),
+					  rise_time, fall_time, decay_time);
       if (rval == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate r-value: "
 		 << *pin(1) << endl;
@@ -199,7 +200,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 
       if (lval->pin_count() > rval->pin_count()) {
 	    cerr << get_line() << ": sorry: lval width (" <<
-		  lval->pin_count() << ") < rval width (" <<
+		  lval->pin_count() << ") > rval width (" <<
 		  rval->pin_count() << ")." << endl;
 	    delete lval;
 	    delete rval;
@@ -338,7 +339,7 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
-	    NetNet*sig = ex->elaborate_net(des, path);
+	    NetNet*sig = ex->elaborate_net(des, path, 0, 0, 0, 0);
 	    if (sig == 0)
 		  continue;
 
@@ -455,14 +456,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	      // Skip unconnected module ports.
 	    if ((*pins)[idx] == 0)
 		  continue;
-	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path);
-	    if (sig == 0) {
-		  cerr << "internal error: Expression too complicated "
-			"for elaboration." << endl;
-		  continue;
-	    }
-
-	    assert(sig);
 
 	      // Inside the module, the port is one or more signals,
 	      // that were already elaborated. List all those signals,
@@ -477,6 +470,17 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		  assert(prts[ldx]);
 		  prts_pin_count += prts[ldx]->pin_count();
 	    }
+
+	    NetNet*sig = (*pins)[idx]->elaborate_net(des, path,
+						     prts_pin_count,
+						     0, 0, 0);
+	    if (sig == 0) {
+		  cerr << "internal error: Expression too complicated "
+			"for elaboration." << endl;
+		  continue;
+	    }
+
+	    assert(sig);
 
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths.
@@ -525,7 +529,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, const string&path) const
 	    if (pin(idx) == 0)
 		  continue;
 
-	    NetNet*sig = pin(idx)->elaborate_net(des, path);
+	    NetNet*sig = pin(idx)->elaborate_net(des, path, 1, 0, 0, 0);
 	    if (sig == 0) {
 		  cerr << "internal error: Expression too complicated "
 			"for elaboration:" << *pin(idx) << endl;
@@ -593,12 +597,13 @@ void PGModule::elaborate(Design*des, const string&path) const
  * connecting the lot together with the right kind of gate.
  */
 NetNet* PEBinary::elaborate_net(Design*des, const string&path,
+				unsigned width,
 				unsigned long rise,
 				unsigned long fall,
 				unsigned long decay) const
 {
-      NetNet*lsig = left_->elaborate_net(des, path),
-	    *rsig = right_->elaborate_net(des, path);
+      NetNet*lsig = left_->elaborate_net(des, path, width, 0, 0, 0),
+	    *rsig = right_->elaborate_net(des, path, width, 0, 0, 0);
       if (lsig == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
 	    left_->dump(cerr);
@@ -848,6 +853,7 @@ NetNet* PEBinary::elaborate_net(Design*des, const string&path,
  * connected to all the pins of the elaborated expression nets.
  */
 NetNet* PEConcat::elaborate_net(Design*des, const string&path,
+				unsigned,
 				unsigned long rise,
 				unsigned long fall,
 				unsigned long decay) const
@@ -864,7 +870,8 @@ NetNet* PEConcat::elaborate_net(Design*des, const string&path,
 
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    nets[idx] = parms_[idx]->elaborate_net(des, path, rise,fall,decay);
+	    nets[idx] = parms_[idx]->elaborate_net(des, path, 0,
+						   rise,fall,decay);
 	    if (nets[idx] == 0)
 		  errors += 1;
 	    else
@@ -957,6 +964,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 }
 
 NetNet* PEIdent::elaborate_net(Design*des, const string&path,
+			       unsigned lwidth,
 			       unsigned long rise,
 			       unsigned long fall,
 			       unsigned long decay) const
@@ -1158,13 +1166,18 @@ NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
 }
 
 /*
+ * Elaborate a number as a NetConst object.
  */
 NetNet* PENumber::elaborate_net(Design*des, const string&path,
+				unsigned lwidth,
 				unsigned long rise,
 				unsigned long fall,
 				unsigned long decay) const
 {
       unsigned width = value_->len();
+      if (lwidth < width)
+	    width = lwidth;
+
       NetNet*net = new NetNet(des->local_symbol(path),
 			      NetNet::IMPLICIT, width);
       net->local_flag(true);
@@ -1180,13 +1193,14 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 }
 
 NetNet* PETernary::elaborate_net(Design*des, const string&path,
+				 unsigned width,
 				 unsigned long rise,
 				 unsigned long fall,
 				 unsigned long decay) const
 {
-      NetNet* expr_sig = expr_->elaborate_net(des, path);
-      NetNet* tru_sig = tru_->elaborate_net(des, path);
-      NetNet* fal_sig = fal_->elaborate_net(des, path);
+      NetNet* expr_sig = expr_->elaborate_net(des, path, 0, 0, 0, 0);
+      NetNet* tru_sig = tru_->elaborate_net(des, path, width, 0, 0, 0);
+      NetNet* fal_sig = fal_->elaborate_net(des, path, width, 0, 0, 0);
       if (expr_sig == 0 || tru_sig == 0 || fal_sig == 0) {
 	    des->errors += 1;
 	    return 0;
@@ -1243,11 +1257,13 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 }
 
 NetNet* PEUnary::elaborate_net(Design*des, const string&path,
+			       unsigned width,
 			       unsigned long rise,
 			       unsigned long fall,
 			       unsigned long decay) const
 {
-      NetNet* sub_sig = expr_->elaborate_net(des, path);
+      NetNet* sub_sig = expr_->elaborate_net(des, path, width,
+					     0, 0, 0);
       if (sub_sig == 0) {
 	    des->errors += 1;
 	    return 0;
@@ -1459,7 +1475,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	   elaboration. Make a synthetic register that connects to the
 	   generated circuit and return that as the l-value. */
       if (id == 0) {
-	    NetNet*ll = lval_->elaborate_net(des, path);
+	    NetNet*ll = lval_->elaborate_net(des, path, 0, 0, 0, 0);
 	    if (ll == 0) {
 		  cerr << get_line() << ": Assignment l-value too complex."
 		       << endl;
@@ -2094,7 +2110,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	      /* Elaborate the parameter expression as a net so that
 		 it can be used as an l-value. Then check that the
 		 parameter width match up. */
-	    NetNet*val = parms_[idx]->elaborate_net(des, path);
+	    NetNet*val = parms_[idx]->elaborate_net(des, path,
+						    0, 0, 0, 0);
 	    assert(val);
 
 
@@ -2169,7 +2186,8 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 
       NetPEvent*pe = new NetPEvent(des->local_symbol(path), enet);
       for (unsigned idx = 0 ;  idx < expr_.count() ;  idx += 1) {
-	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path);
+	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path,
+							    0, 0, 0, 0);
 	    if (expr == 0) {
 		  expr_[0]->dump(cerr);
 		  cerr << endl;
@@ -2643,6 +2661,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.119  1999/10/31 04:11:27  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.118  1999/10/18 00:02:21  steve
  *  Catch unindexed memory reference.
  *

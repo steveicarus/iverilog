@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.18 1999/10/29 03:37:22 steve Exp $"
+#ident "$Id: vvm.h,v 1.19 1999/10/31 04:11:28 steve Exp $"
 #endif
 
 # include  <vector>
@@ -237,15 +237,15 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 	    }
       ~vvm_signal_t() { }
 
-      void init(unsigned idx, vpip_bit_t val)
+      void init_P(unsigned idx, vpip_bit_t val)
 	    { bits[idx] = val; }
 
-      void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
+      void set_P(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { bits[idx] = val;
 	      vpip_run_value_changes(this);
 	    }
 
-      void set(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
+      void set_P(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  set(sim, idx, val[idx]);
 	    }
@@ -253,6 +253,11 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.19  1999/10/31 04:11:28  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.18  1999/10/29 03:37:22  steve
  *  Support vpiValueChance callbacks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.77 1999/10/10 23:29:37 steve Exp $"
+#ident "$Id: netlist.cc,v 1.78 1999/10/31 04:11:27 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -95,6 +95,28 @@ void connect(NetObj::Link&l, NetObj::Link&r)
       } while (cur != &l);
 }
 
+NetObj::Link::Link()
+: dir_(PASSIVE), inst_(0), next_(this), prev_(this)
+{
+}
+
+NetObj::Link::~Link()
+{
+      unlink();
+}
+
+void NetObj::Link::unlink()
+{
+      next_->prev_ = prev_;
+      prev_->next_ = next_;
+      next_ = prev_ = this;
+}
+
+bool NetObj::Link::is_linked() const
+{
+      return next_ != this;
+}
+
 bool NetObj::Link::is_linked(const NetObj&that) const
 {
       for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
@@ -111,6 +133,37 @@ bool NetObj::Link::is_linked(const NetObj::Link&that) const
 		  return true;
 
       return false;
+}
+
+const NetObj*NetObj::Link::get_obj() const
+{
+      return node_;
+}
+
+NetObj*NetObj::Link::get_obj()
+{
+      return node_;
+}
+
+unsigned NetObj::Link::get_pin() const
+{
+      return pin_;
+}
+
+void NetObj::Link::set_name(const string&n, unsigned i)
+{
+      name_ = n;
+      inst_ = i;
+}
+
+const string& NetObj::Link::get_name() const
+{
+      return name_;
+}
+
+unsigned NetObj::Link::get_inst() const
+{
+      return inst_;
 }
 
 bool connected(const NetObj&l, const NetObj&r)
@@ -338,16 +391,19 @@ const NetProc* NetProcTop::statement() const
 NetAddSub::NetAddSub(const string&n, unsigned w)
 : NetNode(n, w*3+6)
 {
-      pin(0).set_dir(NetObj::Link::INPUT);
-      pin(1).set_dir(NetObj::Link::INPUT);
-      pin(2).set_dir(NetObj::Link::INPUT);
-      pin(3).set_dir(NetObj::Link::INPUT);
-      pin(4).set_dir(NetObj::Link::OUTPUT);
-      pin(5).set_dir(NetObj::Link::OUTPUT);
+      pin(0).set_dir(NetObj::Link::INPUT); pin(0).set_name("Add_Sub", 0);
+      pin(1).set_dir(NetObj::Link::INPUT); pin(1).set_name("Aclr", 0);
+      pin(2).set_dir(NetObj::Link::INPUT); pin(2).set_name("Clock", 0);
+      pin(3).set_dir(NetObj::Link::INPUT); pin(3).set_name("Cin", 0);
+      pin(4).set_dir(NetObj::Link::OUTPUT); pin(4).set_name("Cout", 0);
+      pin(5).set_dir(NetObj::Link::OUTPUT); pin(5).set_name("Overflow", 0);
       for (unsigned idx = 0 ;  idx < w ;  idx += 1) {
 	    pin_DataA(idx).set_dir(NetObj::Link::INPUT);
 	    pin_DataB(idx).set_dir(NetObj::Link::INPUT);
 	    pin_Result(idx).set_dir(NetObj::Link::OUTPUT);
+	    pin_DataA(idx).set_name("DataA", idx);
+	    pin_DataB(idx).set_name("DataB", idx);
+	    pin_Result(idx).set_name("Result", idx);
       }
 }
 
@@ -381,11 +437,20 @@ NetObj::Link& NetAddSub::pin_Result(unsigned idx)
       return pin(idx);
 }
 
+const NetObj::Link& NetAddSub::pin_Result(unsigned idx) const
+{
+      idx = 8 + idx*3;
+      assert(idx < pin_count());
+      return pin(idx);
+}
+
 NetAssign_::NetAssign_(const string&n, unsigned w)
 : NetNode(n, w), rval_(0), bmux_(0)
 {
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    pin(idx).set_dir(NetObj::Link::OUTPUT);
+	    pin(idx).set_name("P", idx);
+      }
 
 }
 
@@ -565,6 +630,20 @@ void NetBlock::append(NetProc*cur)
       }
 }
 
+NetBUFZ::NetBUFZ(const string&n)
+: NetNode(n, 2)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(0).set_name("O", 0);
+      pin(1).set_name("I", 0);
+}
+
+NetBUFZ::~NetBUFZ()
+{
+}
+
+
 NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
 : type_(c), expr_(ex), nitems_(cnt)
 {
@@ -647,6 +726,7 @@ NetConst::NetConst(const string&n, verinum::V v)
 : NetNode(n, 1), value_(v)
 {
       pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name("O", 0);
 }
 
 NetConst::~NetConst()
@@ -693,6 +773,9 @@ const NetNet* NetFuncDef::port(unsigned idx) const
 NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
 : NetNode(ev, wid), sref<NetPEvent,NetNEvent>(pe), edge_(e)
 {
+      for (unsigned idx = 0 ;  idx < wid ; idx += 1) {
+	    pin(idx).set_name("P", idx);
+      }
 }
 
 NetNEvent::~NetNEvent()
@@ -1067,6 +1150,7 @@ NetESignal::NetESignal(NetNet*n)
 {
       set_line(*n);
       for (unsigned idx = 0 ;  idx < n->pin_count() ;  idx += 1) {
+	    pin(idx).set_name("P", idx);
 	    connect(pin(idx), n->pin(idx));
       }
 }
@@ -1075,6 +1159,8 @@ NetESignal::NetESignal(const string&n, unsigned np)
 : NetExpr(np), NetNode(n, np)
 {
       expr_width(pin_count());
+      for(unsigned idx = 0 ;  idx < np ;  idx += 1)
+	    pin(idx).set_name("P", idx);
 }
 
 NetESignal::~NetESignal()
@@ -1089,7 +1175,7 @@ NetESignal* NetESignal::dup_expr() const
 NetESubSignal::NetESubSignal(NetESignal*sig, NetExpr*ex)
 : sig_(sig), idx_(ex)
 {
-	// This suppots mux type indexing of an expression, so the
+	// This supports mux type indexing of an expression, so the
 	// with is by definition 1 bit.
       expr_width(1);
 }
@@ -1177,8 +1263,11 @@ NetLogic::NetLogic(const string&n, unsigned pins, TYPE t)
 : NetNode(n, pins), type_(t)
 {
       pin(0).set_dir(Link::OUTPUT);
-      for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
+      pin(0).set_name("O", 0);
+      for (unsigned idx = 1 ;  idx < pins ;  idx += 1) {
 	    pin(idx).set_dir(Link::INPUT);
+	    pin(idx).set_name("I", idx-1);
+      }
 }
 
 NetRepeat::NetRepeat(NetExpr*e, NetProc*p)
@@ -1789,6 +1878,11 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.78  1999/10/31 04:11:27  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.77  1999/10/10 23:29:37  steve
  *  Support evaluating + operator at compile time.
  *

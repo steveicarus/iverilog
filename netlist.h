@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.80 1999/10/10 23:29:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.81 1999/10/31 04:11:27 steve Exp $"
 #endif
 
 /*
@@ -76,8 +76,8 @@ class NetObj {
 
 	  public:
 	    enum DIR { PASSIVE, INPUT, OUTPUT };
-	    Link() : dir_(PASSIVE), next_(this), prev_(this) { }
-	    ~Link() { unlink(); }
+	    Link();
+	    ~Link();
 
 	      // Manipulate the link direction.
 	    void set_dir(DIR d) { dir_ = d; }
@@ -103,14 +103,10 @@ class NetObj {
 
 	      // Remove this link from the set of connected pins. The
 	      // destructor will automatically do this if needed.
-	    void unlink()
-		  { next_->prev_ = prev_;
-		    prev_->next_ = next_;
-		    next_ = prev_ = this;
-		  }
+	    void unlink();
 
 	      // Return true if this link is connected to anything else.
-	    bool is_linked() const { return next_ != this; }
+	    bool is_linked() const;
 
 	      // Return true if these pins are connected.
 	    bool is_linked(const NetObj::Link&that) const;
@@ -123,9 +119,13 @@ class NetObj {
 
 	      // Return information about the object that this link is
 	      // a part of.
-	    const NetObj*get_obj() const { return node_; }
-	    NetObj*get_obj() { return node_; }
-	    unsigned get_pin() const { return pin_; }
+	    const NetObj*get_obj() const;
+	    NetObj*get_obj();
+	    unsigned get_pin() const;
+
+	    void set_name(const string&, unsigned inst =0);
+	    const string& get_name() const;
+	    unsigned get_inst() const;
 
 	  private:
 	      // The NetNode manages these. They point back to the
@@ -133,6 +133,12 @@ class NetObj {
 	    NetObj *node_;
 	    unsigned pin_;
 	    DIR dir_;
+
+	      // These members name the pin of the link. If the name
+	      // has width, then the ninst_ member is the index of the
+	      // pin.
+	    string   name_;
+	    unsigned inst_;
 
 	  private:
 	    Link *next_;
@@ -309,6 +315,8 @@ class NetAddSub  : public NetNode {
       NetObj::Link& pin_DataB(unsigned idx);
       NetObj::Link& pin_Result(unsigned idx);
 
+      const NetObj::Link& pin_Result(unsigned idx) const;
+
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
 };
@@ -444,11 +452,8 @@ class NetTmp  : public NetNet {
 class NetBUFZ  : public NetNode {
 
     public:
-      explicit NetBUFZ(const string&n)
-      : NetNode(n, 2)
-      { pin(0).set_dir(Link::OUTPUT);
-        pin(1).set_dir(Link::INPUT);
-      }
+      explicit NetBUFZ(const string&n);
+      ~NetBUFZ();
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -1744,6 +1749,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.81  1999/10/31 04:11:27  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.80  1999/10/10 23:29:37  steve
  *  Support evaluating + operator at compile time.
  *

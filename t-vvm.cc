@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.68 1999/10/28 21:51:21 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.69 1999/10/31 04:11:28 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -82,7 +82,8 @@ class target_vvm : public target_t {
       void end_process(ostream&os, const NetProcTop*);
 
     private:
-      void emit_gate_outputfun_(const NetNode*);
+      void emit_gate_outputfun_(const NetNode*, unsigned);
+      string defn_gate_outputfun_(ostream&os, const NetNode*, unsigned);
 
 	// This is the name of the thread (process or task) that is
 	// being generated.
@@ -681,11 +682,11 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 		  written[lnk->get_obj()->name()] = true;
 
 
-		  const NetNode*net;
-		  if ((net = dynamic_cast<const NetNode*>(lnk->get_obj()))) {
+		  if (dynamic_cast<const NetNode*>(lnk->get_obj())) {
 			init_code << "      " <<
 			      mangle(lnk->get_obj()->name()) <<
-			      ".init(" << lnk->get_pin() << ", V" <<
+			      ".init_" << lnk->get_name() << "(" <<
+			      lnk->get_inst() << ", V" <<
 			      sig->get_ival(idx) << ");" << endl;
 		  }
 	    }
@@ -752,28 +753,52 @@ void target_vvm::func_def(ostream&os, const NetFuncDef*def)
       defn << "}" << endl;
 }
 
+string target_vvm::defn_gate_outputfun_(ostream&os,
+					const NetNode*gate,
+					unsigned gpin)
+{
+      const NetObj::Link&lnk = gate->pin(gpin);
+
+      ostrstream tmp;
+      tmp << mangle(gate->name()) << "_output_" << lnk.get_name() <<
+	    "_" << lnk.get_inst() << ends;
+      string name = tmp.str();
+
+      os << "static void " << name << "(vvm_simulation*, vpip_bit_t);" << endl;
+      return name;
+}
+
 /*
  * This method handles writing output functions for gates that have a
  * single output (at pin 0). This writes the output_fun method into
  * the delayed stream to be emitted to the output file later.
  */
-void target_vvm::emit_gate_outputfun_(const NetNode*gate)
+void target_vvm::emit_gate_outputfun_(const NetNode*gate, unsigned gpin)
 {
+      const NetObj::Link&lnk = gate->pin(gpin);
+
       delayed << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*sim, vpip_bit_t val)" <<
+	    "_output_" << lnk.get_name() << "_" << lnk.get_inst() <<
+	    "(vvm_simulation*sim, vpip_bit_t val)" <<
 	    endl << "{" << endl;
 
-	/* The output function connects to pin 0 of the netlist part
+	/* The output function connects to gpin of the netlist part
 	   and causes the inputs that it is connected to to be set
 	   with the new value. */
 
       const NetObj*cur;
       unsigned pin;
-      gate->pin(0).next_link(cur, pin);
+      gate->pin(gpin).next_link(cur, pin);
       while (cur != gate) {
 
 	    if (dynamic_cast<const NetNet*>(cur)) {
 		    // Skip signals
+	    } else if (cur->pin(pin).get_name() != "") {
+
+		  delayed << "      " << mangle(cur->name()) << ".set_"
+			  << cur->pin(pin).get_name() << "(sim, " <<
+			cur->pin(pin).get_inst() << ", val);" << endl;
+
 	    } else {
 
 		  delayed << "      " << mangle(cur->name()) << ".set(sim, "
@@ -788,15 +813,22 @@ void target_vvm::emit_gate_outputfun_(const NetNode*gate)
 
 void target_vvm::lpm_add_sub(ostream&os, const NetAddSub*gate)
 {
-      os << "#error \"adders not yet supported in vvm.\"" << endl;
       os << "static vvm_add_sub<" << gate->width() << "> " <<
 	    mangle(gate->name()) << ";" << endl;
+
+      for (unsigned idx = 0 ; idx < gate->width() ;  idx += 1) {
+	    unsigned pin = gate->pin_Result(idx).get_pin();
+	    string outfun = defn_gate_outputfun_(os, gate, pin);
+	    init_code << "      " << mangle(gate->name()) <<
+		  ".config_rout(" << idx << ", &" << outfun << ");" << endl;
+	    emit_gate_outputfun_(gate, pin);
+      }
+
 }
 
 void target_vvm::logic(ostream&os, const NetLogic*gate)
 {
-      os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
+      string outfun = defn_gate_outputfun_(os, gate, 0);
 
       switch (gate->type()) {
 	  case NetLogic::AND:
@@ -834,10 +866,9 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	    break;
       }
 
-      os << mangle(gate->name()) << "(&" <<
-	    mangle(gate->name()) << "_output_fun);" << endl;
+      os << mangle(gate->name()) << "(&" << outfun << ");" << endl;
 
-      emit_gate_outputfun_(gate);
+      emit_gate_outputfun_(gate, 0);
 
       start_code << "      " << mangle(gate->name()) <<
 	    ".start(&sim);" << endl;
@@ -845,13 +876,12 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
 {
-      os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
+      string outfun = defn_gate_outputfun_(os, gate, 0);
 
       os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
-	    mangle(gate->name()) << "_output_fun);" << endl;
+	    outfun << ");" << endl;
 
-      emit_gate_outputfun_(gate);
+      emit_gate_outputfun_(gate, 0);
 }
 
 static string state_to_string(unsigned state, unsigned npins)
@@ -912,17 +942,16 @@ void target_vvm::udp(ostream&os, const NetUDP*gate)
       }
       os << "};" << dec << setfill(' ') << endl;
 
-      os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
+      string outfun = defn_gate_outputfun_(os, gate, 0);
 
       os << "static vvm_udp_ssequ<" << gate->pin_count()-1 << "> " <<
-	    mangle(gate->name()) << "(&" << mangle(gate->name()) <<
-	    "_output_fun, V" << gate->get_initial() << ", " <<
-	    mangle(gate->name()) << "_table);" << endl;
+	    mangle(gate->name()) << "(&" << outfun << ", V" <<
+	    gate->get_initial() << ", " << mangle(gate->name()) <<
+	    "_table);" << endl;
 
 	/* The UDP output function is much like other logic gates. Use
 	   this general method to output the output function. */
-      emit_gate_outputfun_(gate);
+      emit_gate_outputfun_(gate, 0);
 
 }
 
@@ -982,6 +1011,8 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			     ; net->pin(idx) != cur->pin(pin)
 			     ; cur->pin(pin).next_link(cur, pin)) {
 
+			const NetObj::Link&lnk = cur->pin(pin);
+
 			  // Skip output only pins.
 			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
 			      continue;
@@ -991,8 +1022,9 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			if (dynamic_cast<const NetNet*>(cur))
 			      continue;
 
-			delayed << "          " << mangle(cur->name()) <<
-			      ".set(sim_, " << pin << ", value_[0]);" << endl;
+			delayed << "        " << mangle(cur->name())
+				<< ".set_" << lnk.get_name() << "sim_, "
+				<< lnk.get_inst() << ", value_[0]);" << endl;
 		  }
 
 		  delayed << "          break;" << endl;
@@ -1011,6 +1043,8 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			     ; net->pin(idx) != cur->pin(pin)
 			     ; cur->pin(pin).next_link(cur, pin)) {
 
+			const NetObj::Link&lnk = cur->pin(pin);
+
 			  // Skip output only pins.
 			if (cur->pin(pin).get_dir() == NetObj::Link::OUTPUT)
 			      continue;
@@ -1021,7 +1055,8 @@ void target_vvm::net_assign_nb(ostream&os, const NetAssignNB*net)
 			      continue;
 
 			delayed << "      " << mangle(cur->name()) <<
-			      ".set(sim_, " << pin << ", value_[" <<
+			      ".set_" << lnk.get_name() << "(sim_, "
+				<< lnk.get_inst() << ", value_[" <<
 			      idx << "]);" << endl;
 		  }
 	    }
@@ -1039,7 +1074,7 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
 	 << mangle(gate->name()) << "(&" << mangle(gate->name()) <<
 	    "_output_fun);" << endl;
 
-      emit_gate_outputfun_(gate);
+      emit_gate_outputfun_(gate, 0);
 
       start_code << "      " << mangle(gate->name()) <<
 	    ".start(&sim);" << endl;
@@ -1053,11 +1088,10 @@ void target_vvm::net_case_cmp(ostream&os, const NetCaseCmp*gate)
  */
 void target_vvm::net_const(ostream&os, const NetConst*gate)
 {
-      os << "static void " << mangle(gate->name()) <<
-	    "_output_fun(vvm_simulation*, vpip_bit_t);" << endl;
+      string outfun = defn_gate_outputfun_(os, gate, 0);
 
       os << "static vvm_bufz " << mangle(gate->name()) << "(&" <<
-	    mangle(gate->name()) << "_output_fun);" << endl;
+	    outfun << ");" << endl;
 
       init_code << "      " << mangle(gate->name()) << ".set(&sim, 1, ";
       switch (gate->value()) {
@@ -1076,8 +1110,7 @@ void target_vvm::net_const(ostream&os, const NetConst*gate)
       }
       init_code << ");" << endl;
 
-
-      emit_gate_outputfun_(gate);
+      emit_gate_outputfun_(gate, 0);
 }
 
 void target_vvm::net_esignal(ostream&os, const NetESignal*net)
@@ -1211,8 +1244,9 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
 			written[cur->name()] = true;
 			defn << "        " << mangle(cur->name()) <<
-			      ".set(sim_, " << pin << ", " <<
-			      rval << "[0]);" << endl;
+			      ".set_" << cur->pin(pin).get_name() <<
+			      "(sim_, " << cur->pin(pin).get_inst() <<
+			      ", " << rval << "[0]);" << endl;
 		  }
 
 		  defn << "        break;" << endl;
@@ -1251,8 +1285,9 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 
 			written[cur->name()] = true;
 			defn << "      " << mangle(cur->name()) <<
-			      ".set(sim_, " << pin << ", " <<
-			      rval << "[" << idx << "]);" << endl;
+			      ".set_" << cur->pin(pin).get_name() <<
+			      "(sim_, " << cur->pin(pin).get_inst() <<
+			      ", " << rval << "[" << idx << "]);" << endl;
 		  }
 	    }
       }
@@ -1758,6 +1793,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.69  1999/10/31 04:11:28  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.68  1999/10/28 21:51:21  steve
  *  gate output pins use vpip_bit_t (Eric Aardoom)
  *

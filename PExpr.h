@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.20 1999/09/25 02:57:29 steve Exp $"
+#ident "$Id: PExpr.h,v 1.21 1999/10/31 04:11:27 steve Exp $"
 #endif
 
 # include  <string>
@@ -52,11 +52,12 @@ class PExpr : public LineInfo {
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
 	// This method elaborate the expression as gates, for use in a
-	// continuous assign or other wholy structural context.
+	// continuous assign or other wholly structural context.
       virtual NetNet* elaborate_net(Design*des, const string&path,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned lwidth,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const;
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
@@ -91,9 +92,10 @@ class PEConcat : public PExpr {
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned width,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual bool is_constant(Module*) const;
 
@@ -132,9 +134,10 @@ class PEIdent : public PExpr {
 
 	// Structural r-values are OK.
       virtual NetNet* elaborate_net(Design*des, const string&path,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned lwidth,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const;
 
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
@@ -168,9 +171,10 @@ class PENumber : public PExpr {
 
       virtual void dump(ostream&) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned lwidth,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
@@ -205,9 +209,10 @@ class PEUnary : public PExpr {
 
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned width,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
     private:
@@ -225,9 +230,10 @@ class PEBinary : public PExpr {
 
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
-				    unsigned long rise =0,
-				    unsigned long fall =0,
-				    unsigned long decay =0) const;
+				    unsigned width,
+				    unsigned long rise,
+				    unsigned long fall,
+				    unsigned long decay) const;
       virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
@@ -251,6 +257,7 @@ class PETernary : public PExpr {
 
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
+				    unsigned width,
 				    unsigned long rise =0,
 				    unsigned long fall =0,
 				    unsigned long decay =0) const;
@@ -283,6 +290,11 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.21  1999/10/31 04:11:27  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.20  1999/09/25 02:57:29  steve
  *  Parse system function calls.
  *

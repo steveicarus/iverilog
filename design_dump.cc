@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.50 1999/10/10 01:59:54 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.51 1999/10/31 04:11:27 steve Exp $"
 #endif
 
 /*
@@ -84,7 +84,9 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    o << setw(ind) << "" << idx;
+	    o << setw(ind) << "" << idx << " " << pin(idx).get_name()
+	      << "<" << pin(idx).get_inst() << ">";
+
 	    switch (pin(idx).get_dir()) {
 		case Link::PASSIVE:
 		  o << " p";
@@ -795,6 +797,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.51  1999/10/31 04:11:27  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.50  1999/10/10 01:59:54  steve
  *  Structural case equals device.
  *

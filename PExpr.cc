@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.10 1999/09/25 02:57:29 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.11 1999/10/31 04:11:27 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -38,7 +38,7 @@ bool PExpr::is_constant(Module*) const
       return false;
 }
 
-NetNet* PExpr::elaborate_net(Design*des, const string&path,
+NetNet* PExpr::elaborate_net(Design*des, const string&path, unsigned,
 			     unsigned long,
 			     unsigned long,
 			     unsigned long) const
@@ -128,6 +128,11 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.11  1999/10/31 04:11:27  steve
+ *  Add to netlist links pin name and instance number,
+ *  and arrange in vvm for pin connections by name
+ *  and instance number.
+ *
  * Revision 1.10  1999/09/25 02:57:29  steve
  *  Parse system function calls.
  *
