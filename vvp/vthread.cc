@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.31 2001/05/01 05:00:02 steve Exp $"
+#ident "$Id: vthread.cc,v 1.32 2001/05/02 01:37:38 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -165,6 +165,7 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
       }
 
       thr->schedule_parent_on_end = 0;
+      thr->is_scheduled = 0;
       thr->i_have_ended = 0;
       thr->waiting_for_event = 0;
 
@@ -925,6 +926,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.32  2001/05/02 01:37:38  steve
+ *  initialize is_schedule.
+ *
  * Revision 1.31  2001/05/01 05:00:02  steve
  *  Implement %ix/load.
  *
