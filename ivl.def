@@ -148,6 +148,8 @@ ivl_signal_attr_cnt
 ivl_signal_attr_val
 ivl_signal_integer
 ivl_signal_local
+ivl_signal_lsb
+ivl_signal_msb
 ivl_signal_pin
 ivl_signal_pins
 ivl_signal_port
