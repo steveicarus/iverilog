@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.224 2004/06/13 04:56:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.225 2004/06/30 02:16:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -794,9 +794,11 @@ const Link& NetAddSub::pin_Result(unsigned idx) const
  *    3+2W -- Distance(0)
  */
 NetCLShift::NetCLShift(NetScope*s, perm_string n,
-		       unsigned width, unsigned width_dist)
+		       unsigned width, unsigned width_dist,
+		       bool right_flag, bool signed_flag)
 : NetNode(s, n, 3+2*width+width_dist),
-  width_(width), width_dist_(width_dist)
+  width_(width), width_dist_(width_dist),
+    right_flag_(right_flag), signed_flag_(signed_flag)
 {
       pin(0).set_dir(Link::INPUT); pin(0).set_name(
 				     perm_string::literal("Direction"), 0);
@@ -833,6 +835,17 @@ unsigned NetCLShift::width_dist() const
       return width_dist_;
 }
 
+bool NetCLShift::right_flag() const
+{
+      return right_flag_;
+}
+
+bool NetCLShift::signed_flag() const
+{
+      return signed_flag_;
+}
+
+#if 0
 Link& NetCLShift::pin_Direction()
 {
       return pin(0);
@@ -842,6 +855,7 @@ const Link& NetCLShift::pin_Direction() const
 {
       return pin(0);
 }
+#endif
 
 Link& NetCLShift::pin_Underflow()
 {
@@ -1049,7 +1063,7 @@ const Link& NetCompare::pin_DataB(unsigned idx) const
 NetDivide::NetDivide(NetScope*sc, perm_string n, unsigned wr,
 		     unsigned wa, unsigned wb)
 : NetNode(sc, n, wr+wa+wb),
-  width_r_(wr), width_a_(wa), width_b_(wb)
+    width_r_(wr), width_a_(wa), width_b_(wb), signed_flag_(false)
 {
       unsigned p = 0;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
@@ -1083,6 +1097,16 @@ unsigned NetDivide::width_a() const
 unsigned NetDivide::width_b() const
 {
       return width_b_;
+}
+
+void NetDivide::set_signed(bool flag)
+{
+      signed_flag_ = flag;
+}
+
+bool NetDivide::get_signed() const
+{
+      return signed_flag_;
 }
 
 Link& NetDivide::pin_Result(unsigned idx)
@@ -2257,6 +2281,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.225  2004/06/30 02:16:26  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.224  2004/06/13 04:56:54  steve
  *  Add support for the default_nettype directive.
  *

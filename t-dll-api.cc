@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.106 2003/12/03 02:46:24 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.107 2004/06/30 02:16:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -983,6 +983,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	    return net->u_.arith.signed_flag;
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
+	    return net->u_.shift.signed_flag;
 	    return 0;
 	  case IVL_LPM_UFUNC:
 	    return 0;
@@ -1934,6 +1935,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.107  2004/06/30 02:16:27  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.106  2003/12/03 02:46:24  steve
  *  Add support for wait on list of named events.
  *

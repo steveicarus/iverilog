@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.113 2004/05/31 23:34:39 steve Exp $"
+#ident "$Id: t-dll.h,v 1.114 2004/06/30 02:16:27 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -335,6 +335,7 @@ struct ivl_lpm_s {
 	    struct ivl_lpm_shift_s {
 		  unsigned width;
 		  unsigned select;
+		  unsigned signed_flag :1;
 		  ivl_nexus_t*q;
 		  ivl_nexus_t*d;
 		  ivl_nexus_t*s;
@@ -683,6 +684,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.114  2004/06/30 02:16:27  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.113  2004/05/31 23:34:39  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

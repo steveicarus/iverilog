@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.132 2004/06/24 15:22:23 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.133 2004/06/30 02:16:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,6 +94,7 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 	    return elaborate_net_log_(des, scope, width, rise, fall, decay);
 	  case 'l': // <<
 	  case 'r': // >>
+	  case 'R': // >>>
 	    return elaborate_net_shift_(des, scope, width, rise, fall, decay);
       }
 
@@ -138,6 +139,7 @@ NetNet* PEBinary::elaborate_net(Design*des, NetScope*scope,
 
 	  case 'l':
 	  case 'r':
+	  case 'R':
 	    assert(0);
 	    break;
 	  default:
@@ -771,6 +773,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 				    rsig->pin_count());
       des->add_node(div);
 
+      div->set_signed(lsig->get_signed() && rsig->get_signed());
 
 	// Connect the left and right inputs of the divider to the
 	// nets that are the left and right expressions.
@@ -789,6 +792,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, lwidth);
       osig->local_flag(true);
+      osig->set_signed(div->get_signed());
 
       for (unsigned idx = 0 ;  idx < rwidth ;  idx += 1)
 	    connect(div->pin_Result(idx), osig->pin(idx));
@@ -1048,6 +1052,9 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       if (lsig->pin_count() > lwidth)
 	    lwidth = lsig->pin_count();
 
+      bool right_flag  =  op_ == 'r' || op_ == 'R';
+      bool signed_flag =  op_ == 'R';
+
 	/* Handle the special case of a constant shift amount. There
 	   is no reason in this case to create a gate at all, just
 	   connect the lsig to the osig with the bit positions
@@ -1070,6 +1077,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	    des->add_node(zero);
 
 	    if (op_ == 'l') {
+		    /* Left shift means put some zeros on the bottom
+		       of the vector. */
 		  unsigned idx;
 		  for (idx = 0 ;  idx < dist ;  idx += 1)
 			connect(osig->pin(idx), zero->pin(0));
@@ -1079,7 +1088,17 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 		  for (    ;  idx < lwidth ;  idx += 1)
 			connect(osig->pin(idx), zero->pin(0));
 
+	    } else if (op_ == 'R') {
+		    /* Signed right shift. */
+		  unsigned idx;
+		  unsigned keep = lsig->pin_count()-dist;
+		  for (idx = 0 ;  idx < keep ;  idx += 1)
+			connect(osig->pin(idx), lsig->pin(idx+dist));
+		  for (idx = keep ;  idx < lwidth ;  idx += 1)
+			connect(osig->pin(idx), lsig->pin(keep+dist-1));
+
 	    } else {
+		    /* Unsigned right shift. */
 		  assert(op_ == 'r');
 		  unsigned idx;
 		  unsigned keep = lsig->pin_count()-dist;
@@ -1104,7 +1123,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	// Make the shift device itself, and the output
 	// NetNet. Connect the Result output pins to the osig signal
       NetCLShift*gate = new NetCLShift(scope, scope->local_symbol(),
-				       lwidth, rsig->pin_count());
+				       lwidth, rsig->pin_count(),
+				       right_flag, signed_flag);
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, lwidth);
@@ -1134,17 +1154,6 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	// Distance input.
       for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
 	    connect(rsig->pin(idx), gate->pin_Distance(idx));
-
-      if (op_ == 'r') {
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::IMPLICIT, 1);
-	    tmp->local_flag(true);
-	    NetConst*dir = new NetConst(scope, scope->local_symbol(),
-					verinum::V1);
-	    connect(dir->pin(0), gate->pin_Direction());
-	    connect(tmp->pin(0), gate->pin_Direction());
-	    des->add_node(dir);
-      }
 
       des->add_node(gate);
 
@@ -1980,6 +1989,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	    NetNet*net = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, lwidth);
 	    net->local_flag(true);
+	    net->set_signed(value_->has_sign());
 
 	      /* when expanding a constant to fit into the net, extend
 		 the Vx or Vz values if they are in the sign position,
@@ -2020,6 +2030,7 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 	    NetNet*net = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, value_->len());
 	    net->local_flag(true);
+	    net->set_signed(value_->has_sign());
 	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
 					*value_);
 	    for (unsigned idx = 0 ;  idx < value_->len() ;  idx += 1)
@@ -2462,6 +2473,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.133  2004/06/30 02:16:26  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.132  2004/06/24 15:22:23  steve
  *  Code cleanup from Larry.
  *

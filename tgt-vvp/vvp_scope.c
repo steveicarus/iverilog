@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.99 2004/06/16 23:33:42 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.100 2004/06/30 02:16:27 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1141,7 +1141,10 @@ static void draw_lpm_add(ivl_lpm_t net)
 	    type = "mult";
 	    break;
 	  case IVL_LPM_DIVIDE:
-	    type = "div";
+	    if (ivl_lpm_signed(net))
+		  type = "div.s";
+	    else
+		  type = "div";
 	    break;
 	  case IVL_LPM_MOD:
 	    type = "mod";
@@ -1586,6 +1589,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.100  2004/06/30 02:16:27  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.99  2004/06/16 23:33:42  steve
  *  Generate .cmp/eq nodes instead of sea of gates.
  *

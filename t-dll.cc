@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.129 2004/02/20 18:53:35 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.130 2004/06/30 02:16:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1182,20 +1182,12 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 
 	/* Look at the direction input of the device, and select the
 	   shift direction accordingly. */
-      if (net->pin_Direction().is_linked()) {
-	    assert( net->pin_Direction().nexus()->drivers_constant() );
-
-	    verinum::V dir = net->pin_Direction().nexus()->driven_value();
-	    switch (dir) {
-		case verinum::V0:
-		  break;
-		case verinum::V1:
-		  obj->type = IVL_LPM_SHIFTR;
-		  break;
-		default:
-		  assert(0);
-	    }
-      }
+      if (net->right_flag())
+	    obj->type = IVL_LPM_SHIFTR;
+      if (net->signed_flag())
+	    obj->u_.shift.signed_flag = 1;
+      else
+	    obj->u_.shift.signed_flag = 0;
 
       obj->u_.shift.width = net->width();
       obj->u_.shift.select = net->width_dist();
@@ -1372,6 +1364,7 @@ void dll_target::lpm_divide(const NetDivide*net)
       unsigned wid = net->width_r();
 
       obj->u_.arith.width = wid;
+      obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
 
       obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
       obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
@@ -1396,7 +1389,18 @@ void dll_target::lpm_divide(const NetDivide*net)
 		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
 				IVL_DR_HiZ, IVL_DR_HiZ);
 
+	    } else if (obj->u_.arith.signed_flag) {
+		    /* If this is signed divide, sign extend the perand. */
+		  nex = net->pin_DataA(net->width_a()-1).nexus();
+		  assert(nex);
+		  assert(nex->t_cookie());
+
+		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+
 	    } else {
+		    /* Unsigned divide: pad the operand. */
 		  obj->u_.arith.a[idx] = 0;
 	    }
 
@@ -2176,6 +2180,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.130  2004/06/30 02:16:27  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.129  2004/02/20 18:53:35  steve
  *  Addtrbute keys are perm_strings.
  *

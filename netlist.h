@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.313 2004/06/13 04:56:55 steve Exp $"
+#ident "$Id: netlist.h,v 1.314 2004/06/30 02:16:26 steve Exp $"
 #endif
 
 /*
@@ -493,11 +493,14 @@ class NetCLShift  : public NetNode {
 
     public:
       NetCLShift(NetScope*s, perm_string n, unsigned width,
-		 unsigned width_dist);
+		 unsigned width_dist, bool right_flag, bool signed_flag);
       ~NetCLShift();
 
       unsigned width() const;
       unsigned width_dist() const;
+
+      bool right_flag() const;
+      bool signed_flag() const;
 
       Link& pin_Direction();
       Link& pin_Underflow();
@@ -519,6 +522,8 @@ class NetCLShift  : public NetNode {
     private:
       unsigned width_;
       unsigned width_dist_;
+      bool right_flag_;
+      bool signed_flag_;
 };
 
 /*
@@ -597,6 +602,9 @@ class NetDivide  : public NetNode {
       unsigned width_a() const;
       unsigned width_b() const;
 
+      void set_signed(bool);
+      bool get_signed() const;
+
       Link& pin_DataA(unsigned idx);
       Link& pin_DataB(unsigned idx);
       Link& pin_Result(unsigned idx);
@@ -613,6 +621,8 @@ class NetDivide  : public NetNode {
       unsigned width_r_;
       unsigned width_a_;
       unsigned width_b_;
+
+      bool signed_flag_;
 };
 
 /*
@@ -3331,6 +3341,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.314  2004/06/30 02:16:26  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.313  2004/06/13 04:56:55  steve
  *  Add support for the default_nettype directive.
  *

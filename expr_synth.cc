@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.58 2004/06/16 16:21:34 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.59 2004/06/30 02:16:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -508,6 +508,9 @@ NetNet* NetEBShift::synthesize(Design*des)
       if (lsig == 0)
 	    return 0;
 
+      bool right_flag  =  op_ == 'r' || op_ == 'R';
+      bool signed_flag =  op_ == 'R';
+
       NetScope*scope = lsig->scope();
 
 	/* Detect the special case where the shift amount is
@@ -566,7 +569,8 @@ NetNet* NetEBShift::synthesize(Design*des)
       assert(op() == 'l');
       NetCLShift*dev = new NetCLShift(scope, scope->local_symbol(),
 				      osig->pin_count(),
-				      rsig->pin_count());
+				      rsig->pin_count(),
+				      right_flag, signed_flag);
       des->add_node(dev);
 
       for (unsigned idx = 0 ; idx < dev->width() ;  idx += 1)
@@ -578,14 +582,6 @@ NetNet* NetEBShift::synthesize(Design*des)
 
       for (unsigned idx = 0 ;  idx < dev->width_dist() ;  idx += 1)
 	    connect(dev->pin_Distance(idx), rsig->pin(idx));
-
-      verinum dir_v = (op() == 'r')? verinum::V1 : verinum::V0;
-      NetNet*dir_n = new NetNet(scope, scope->local_symbol(),
-				NetNet::WIRE, 1);
-      NetConst*dir = new NetConst(scope, scope->local_symbol(), dir_v);
-      des->add_node(dir);
-      connect(dev->pin_Direction(), dir->pin(0));
-      connect(dev->pin_Direction(), dir_n->pin(0));
 
       return osig;
 }
@@ -879,6 +875,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.59  2004/06/30 02:16:26  steve
+ *  Implement signed divide and signed right shift in nets.
+ *
  * Revision 1.58  2004/06/16 16:21:34  steve
  *  Connect rsif of multiply to DataB.
  *
