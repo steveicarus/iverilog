@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.124 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.125 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -475,16 +475,6 @@ void NetAssignNB::dump(ostream&o, unsigned ind) const
 #endif
       o << *rval() << ";" << endl;
 
-}
-
-void NetAssignMem::dump(ostream&o, unsigned ind) const
-{
-      o << setw(ind) << "";
-      o << "/* " << get_line() << " */" << endl;
-      o << setw(ind) << "";
-      o << memory()->name() << "[" << *index() << "] = ";
-      rval()->dump(o);
-      o << ";" << endl;
 }
 
 void NetAssignMemNB::dump(ostream&o, unsigned ind) const
@@ -985,6 +975,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.125  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.124  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

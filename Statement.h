@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: Statement.h,v 1.34 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: Statement.h,v 1.35 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include  <string>
@@ -119,8 +119,6 @@ class PAssign  : public PAssign_ {
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
-      NetProc*assign_to_memory_(class NetMemory*, PExpr*,
-				Design*des, NetScope*scope) const;
 };
 
 class PAssignNB  : public PAssign_ {
@@ -455,6 +453,11 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.35  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.34  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

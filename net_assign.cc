@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_assign.cc,v 1.10 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.11 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,11 +39,19 @@ unsigned count_lval_width(const NetAssign_*idx)
 }
 
 NetAssign_::NetAssign_(NetNet*s)
-: sig_(s), bmux_(0)
+: sig_(s), mem_(0), bmux_(0)
 {
       loff_ = 0;
       lwid_ = sig_->pin_count();
       sig_->incr_lref();
+      more = 0;
+}
+
+NetAssign_::NetAssign_(NetMemory*s)
+: sig_(0), mem_(s), bmux_(0)
+{
+      loff_ = 0;
+      lwid_ = mem_->width();
       more = 0;
 }
 
@@ -67,7 +75,8 @@ const NetExpr* NetAssign_::bmux() const
 
 unsigned NetAssign_::lwidth() const
 {
-      if (bmux_) return 1;
+      if (mem_)  return lwid_;
+      else if (bmux_) return 1;
       else return lwid_;
 }
 
@@ -75,6 +84,8 @@ const char*NetAssign_::name() const
 {
       if (sig_) {
 	    return sig_->name();
+      } else if (mem_) {
+	    return mem_->name().c_str();
       } else {
 	    return "";
       }
@@ -82,15 +93,25 @@ const char*NetAssign_::name() const
 
 NetNet* NetAssign_::sig() const
 {
-      assert(sig_);
       return sig_;
 }
+
+const NetMemory* NetAssign_::mem() const
+{
+      return mem_;
+}
+
 
 void NetAssign_::set_part(unsigned lo, unsigned lw)
 {
       loff_ = lo;
       lwid_ = lw;
-      assert(sig_->pin_count() >= (lo + lw));
+      if (sig_) {
+	    assert(sig_->pin_count() >= (lo + lw));
+      } else {
+	    assert(mem_);
+	    assert(lwid_ == mem_->width());
+      }
 }
 
 unsigned NetAssign_::get_loff() const
@@ -210,6 +231,11 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.11  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.10  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

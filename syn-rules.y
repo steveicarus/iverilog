@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: syn-rules.y,v 1.18 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.19 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -298,18 +298,6 @@ struct tokenize : public proc_match_t {
 	    cur = new syn_token_t;
 	    cur->token = dev->l_val(0)->bmux() ? S_ASSIGN_MUX : S_ASSIGN;
 	    cur->assign = dev;
-	    cur->next_ = 0;
-	    last_->next_ = cur;
-	    last_ = cur;
-	    return 0;
-      }
-
-      int assign_mem(NetAssignMem*dev)
-      {
-	    syn_token_t*cur;
-	    cur = new syn_token_t;
-	    cur->token = S_ASSIGN_MEM;
-	    cur->assign_mem = dev;
 	    cur->next_ = 0;
 	    last_->next_ = cur;
 	    last_ = cur;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.239 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: netlist.h,v 1.240 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 /*
@@ -1222,6 +1222,7 @@ class NetAssign_ {
 
     public:
       NetAssign_(NetNet*sig);
+      NetAssign_(NetMemory*mem);
       ~NetAssign_();
 
 	// If this expression exists, then only a single bit is to be
@@ -1243,6 +1244,7 @@ class NetAssign_ {
       const char*name() const;
 
       NetNet* sig() const;
+      const NetMemory*mem() const;
 
 	// This pointer is for keeping simple lists.
       NetAssign_* more;
@@ -1251,6 +1253,7 @@ class NetAssign_ {
 
     private:
       NetNet *sig_;
+      NetMemory*mem_;
       NetExpr*bmux_;
 
       unsigned loff_;
@@ -1344,19 +1347,6 @@ class NetAssignMem_ : public NetProc {
       NetMemory*mem_;
       NetExpr* index_;
       NetExpr* rval_;
-};
-
-class NetAssignMem : public NetAssignMem_ {
-
-    public:
-      explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
-      ~NetAssignMem();
-
-      virtual int match_proc(struct proc_match_t*);
-      virtual bool emit_proc(struct target_t*) const;
-      virtual void dump(ostream&, unsigned ind) const;
-
-    private:
 };
 
 class NetAssignMemNB : public NetAssignMem_ {
@@ -2975,6 +2965,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.240  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.239  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.45 2002/05/29 22:05:55 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.46 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -142,14 +142,28 @@ void dll_target::proc_assign(const NetAssign*net)
 
 	    cur->width_ = asn->lwidth();
 	    cur->loff_  = asn->get_loff();
-	    cur->type_  = IVL_LVAL_REG;
-	    cur->n.sig  = find_signal(des_, asn->sig());
+	    if (asn->sig()) {
+		  cur->type_  = IVL_LVAL_REG;
+		  cur->n.sig  = find_signal(des_, asn->sig());
 
-	    cur->idx = 0;
-	    if (asn->bmux()) {
+		  cur->idx = 0;
+		  if (asn->bmux()) {
+			assert(expr_ == 0);
+			asn->bmux()->expr_scan(this);
+			cur->type_ = IVL_LVAL_MUX;
+			cur->idx = expr_;
+			expr_ = 0;
+		  }
+
+	    } else {
+		  assert(asn->mem());
+		  cur->type_ = IVL_LVAL_MEM;
+		  cur->n.mem = lookup_memory_(asn->mem());
+		  assert(cur->n.mem);
+		  cur->width_ = ivl_memory_width(cur->n.mem);
+
 		  assert(expr_ == 0);
 		  asn->bmux()->expr_scan(this);
-		  cur->type_ = IVL_LVAL_MUX;
 		  cur->idx = expr_;
 		  expr_ = 0;
 	    }
@@ -190,6 +204,7 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 	    cur->type_ = IVL_LVAL_REG;
 	    cur->width_ = asn->lwidth();
 	    cur->loff_  = asn->get_loff();
+	    assert(asn->sig());
 	    cur->n.sig = find_signal(des_, asn->sig());
 
 	    cur->idx = 0;
@@ -225,35 +240,6 @@ void dll_target::proc_assign_nb(const NetAssignNB*net)
 	    stmt_cur_->u_.assign_.delay = expr_;
 	    expr_ = 0;
       }
-}
-
-void dll_target::proc_assign_mem(const NetAssignMem*net)
-{
-      assert(stmt_cur_);
-      assert(stmt_cur_->type_ == IVL_ST_NONE);
-
-      stmt_cur_->type_ = IVL_ST_ASSIGN;
-
-      stmt_cur_->u_.assign_.lvals_ = 1;
-      stmt_cur_->u_.assign_.lval_  = new struct ivl_lval_s[1];
-      stmt_cur_->u_.assign_.delay  = 0;
-      struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_;
-
-      cur->type_ = IVL_LVAL_MEM;
-      cur->n.mem = lookup_memory_(net->memory());
-      assert(cur->n.mem);
-      cur->width_ = ivl_memory_width(cur->n.mem);
-      
-      assert(expr_ == 0);
-
-      net->index()->expr_scan(this);
-      cur->type_ = IVL_LVAL_MEM;
-      cur->idx = expr_;
-      expr_ = 0;
-
-      net->rval()->expr_scan(this);
-      stmt_cur_->u_.assign_.rval_ = expr_;
-      expr_ = 0;
 }
 
 void dll_target::proc_assign_mem_nb(const NetAssignMemNB*net)
@@ -817,6 +803,11 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.46  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.45  2002/05/29 22:05:55  steve
  *  Offset lvalue index expressions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.60 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: PExpr.h,v 1.61 2002/06/04 05:38:43 steve Exp $"
 #endif
 
 # include  <string>
@@ -270,6 +270,10 @@ class PEIdent : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
 
+    private:
+      NetAssign_* elaborate_mem_lval_(Design*des, NetScope*scope,
+				      NetMemory*mem) const;
+
 };
 
 class PENumber : public PExpr {
@@ -497,6 +501,11 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.61  2002/06/04 05:38:43  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.60  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

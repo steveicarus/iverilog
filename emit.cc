@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.66 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: emit.cc,v 1.67 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -158,12 +158,6 @@ bool NetAssign::emit_proc(struct target_t*tgt) const
 bool NetAssignNB::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_assign_nb(this);
-      return true;
-}
-
-bool NetAssignMem::emit_proc(struct target_t*tgt) const
-{
-      tgt->proc_assign_mem(this);
       return true;
 }
 
@@ -487,6 +481,11 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.67  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.66  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

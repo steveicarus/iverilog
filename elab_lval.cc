@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.18 2002/03/09 04:02:26 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.19 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -67,7 +67,7 @@
  */
 NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
 {
-      NetNet*ll = 0; //XXXXelaborate_net(des, scope, 0, 0, 0, 0);
+      NetNet*ll = 0;
       if (ll == 0) {
 	    cerr << get_line() << ": Assignment l-value too complex."
 		 << endl;
@@ -139,14 +139,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
       if (reg == 0) {
 	    NetMemory*mem = des->find_memory(scope, path_);
-	    if (mem != 0) {
-		  cerr << get_line() << ": sorry: I cannot handle "
-		       << "memories in this l-value context." << endl;
-	    } else {
-		  cerr << get_line() << ": error: Could not find variable ``"
-		       << path_ << "'' in ``" << scope->name() <<
-			"''" << endl;
-	    }
+	    if (mem != 0)
+		  return elaborate_mem_lval_(des, scope, mem);
+
+	    cerr << get_line() << ": error: Could not find variable ``"
+		 << path_ << "'' in ``" << scope->name() <<
+		  "''" << endl;
+
 	    des->errors += 1;
 	    return 0;
       }
@@ -275,6 +274,21 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       return lv;
 }
 
+NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
+					NetMemory*mem) const
+{
+      assert(msb_ && !lsb_);
+
+      NetExpr*ix = msb_->elaborate_expr(des, scope);
+      if (ix == 0)
+	    return 0;
+
+      NetAssign_*lv = new NetAssign_(mem);
+      lv->set_bmux(ix);
+      lv->set_part(0, mem->width());
+      return lv;
+}
+
 NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 {
       cerr << get_line() << ": error: Constant values not allowed "
@@ -285,6 +299,11 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.19  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.18  2002/03/09 04:02:26  steve
  *  Constant expressions are not l-values for task ports.
  *

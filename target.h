@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.57 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: target.h,v 1.58 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -100,7 +100,6 @@ struct target_t {
 
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(const NetAssign*);
-      virtual void proc_assign_mem(const NetAssignMem*);
       virtual void proc_assign_nb(const NetAssignNB*);
       virtual void proc_assign_mem_nb(const NetAssignMemNB*);
       virtual bool proc_block(const NetBlock*);
@@ -164,6 +163,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.58  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.57  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

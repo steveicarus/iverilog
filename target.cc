@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.60 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: target.cc,v 1.61 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -181,12 +181,6 @@ void target_t::proc_assign(const NetAssign*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled procedural assignment." << endl;
-}
-
-void target_t::proc_assign_mem(const NetAssignMem*)
-{
-      cerr << "target (" << typeid(*this).name() <<  "): "
-	    "Unhandled memory assignment." << endl;
 }
 
 void target_t::proc_assign_nb(const NetAssignNB*)
@@ -397,6 +391,11 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.61  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.60  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

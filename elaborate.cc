@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.251 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.252 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -863,41 +863,10 @@ NetProc* Statement::elaborate(Design*des, NetScope*) const
       return cur;
 }
 
-NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
-				    Design*des, NetScope*scope) const
-{
-      assert(scope);
-      NetExpr*rv = rval()->elaborate_expr(des, scope);
-      if (rv == 0)
-	    return 0;
-
-      assert(rv);
-
-      rv->set_width(mem->width());
-      if (ix == 0) {
-	    cerr << get_line() << ": internal error: No index in lval "
-		 << "of assignment to memory?" << endl;
-	    return 0;
-      }
-
-      assert(ix);
-      NetExpr*idx = ix->elaborate_expr(des, scope);
-      if (idx == 0) {
-	      /* Elaboration failed. The error message was already
-		 printed, so just give up here. */
-	    return 0;
-      }
-
-      if (rv->expr_width() < mem->width())
-	    rv = pad_to_width(rv, mem->width());
-
-      NetAssignMem*am = new NetAssignMem(mem, idx, rv);
-      am->set_line(*this);
-      return am;
-}
 
 NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 {
+      assert(lval_);
       return lval_->elaborate_lval(des, scope);
 }
 
@@ -955,22 +924,6 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
-
-	/* Catch the case where the lvalue is a reference to a memory
-	   item. These are handled differently. */
-      do {
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
-	    if (id == 0) break;
-
-	    NetNet*net = des->find_signal(scope, id->path());
-	    if (net && (net->scope() == scope))
-		  break;
-
-	    if (NetMemory*mem = des->find_memory(scope, id->path()))
-		  return assign_to_memory_(mem, id->msb_, des, scope);
-
-      } while(0);
-
 
 	/* elaborate the lval. This detects any part selects and mux
 	   expressions that might exist. */
@@ -1558,22 +1511,6 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    assert(port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::PINPUT)
 		  continue;
-
-	      /* Handle the special case that the output parameter is
-		 a memory word. Generate a NetAssignMem instead of a
-		 NetAssign. */
-	    NetMemory*mem;
-	    const PEIdent*id = dynamic_cast<const PEIdent*>(parms_[idx]);
-	    if (id && (mem = des->find_memory(scope, id->path()))) {
-
-		  NetExpr*ix = id->msb_->elaborate_expr(des, scope);
-		  assert(ix);
-
-		  NetExpr*rx = new NetESignal(port);
-		  NetAssignMem*am = new NetAssignMem(mem, ix, rx);
-		  block->append(am);
-		  continue;
-	    }
 
 
 	      /* Elaborate an l-value version of the port expression
@@ -2569,6 +2506,11 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.252  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.251  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have

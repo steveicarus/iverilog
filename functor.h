@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: functor.h,v 1.17 2000/09/17 21:26:15 steve Exp $"
+#ident "$Id: functor.h,v 1.18 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 /*
@@ -83,7 +83,6 @@ struct proc_match_t {
       virtual ~proc_match_t();
 
       virtual int assign(class NetAssign*);
-      virtual int assign_mem(class NetAssignMem*);
       virtual int assign_nb(class NetAssignNB*);
       virtual int assign_mem_nb(class NetAssignMemNB*);
       virtual int condit(class NetCondit*);
@@ -94,6 +93,11 @@ struct proc_match_t {
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.18  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.17  2000/09/17 21:26:15  steve
  *  Add support for modulus (Eric Aardoom)
  *

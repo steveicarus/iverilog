@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.188 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: netlist.cc,v 1.189 2002/06/04 05:38:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1465,15 +1465,6 @@ NetAssignMem_::~NetAssignMem_()
 {
 }
 
-NetAssignMem::NetAssignMem(NetMemory*m, NetExpr*i, NetExpr*r)
-: NetAssignMem_(m, i, r)
-{
-}
-
-NetAssignMem::~NetAssignMem()
-{
-}
-
 NetAssignMemNB::NetAssignMemNB(NetMemory*m, NetExpr*i, NetExpr*r)
 : NetAssignMem_(m, i, r)
 {
@@ -2357,6 +2348,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.189  2002/06/04 05:38:44  steve
+ *  Add support for memory words in l-value of
+ *  blocking assignments, and remove the special
+ *  NetAssignMem class.
+ *
  * Revision 1.188  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have
@@ -2383,235 +2379,5 @@ const NetProc*NetTaskDef::proc() const
  *  to be used in repeat expresions.
  *
  *  Add the builtin $signed system function.
- *
- * Revision 1.184  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.183  2002/04/14 19:02:34  steve
- *  Ternary expressions can be signed.
- *
- * Revision 1.182  2002/04/14 18:41:34  steve
- *  Support signed integer division.
- *
- * Revision 1.181  2002/02/01 05:09:14  steve
- *  Propagate sign in unary minus.
- *
- * Revision 1.180  2002/01/22 01:40:04  steve
- *  Precalculate constant results of memory index expressions.
- *
- * Revision 1.179  2001/12/31 00:08:14  steve
- *  Support $signed cast of expressions.
- *
- * Revision 1.178  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.177  2001/11/19 04:26:46  steve
- *  Unary reduction operators are all 1-bit results.
- *
- * Revision 1.176  2001/11/19 01:54:14  steve
- *  Port close cropping behavior from mcrgb
- *  Move window array reset to libmc.
- *
- * Revision 1.175  2001/11/06 04:32:37  steve
- *  shift expressions can have definite widths.
- *
- * Revision 1.174  2001/10/28 01:14:53  steve
- *  NetObj constructor finally requires a scope.
- *
- * Revision 1.173  2001/10/16 02:19:27  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.172  2001/10/07 03:38:08  steve
- *  parameter names do not have defined size.
- *
- * Revision 1.171  2001/09/29 01:53:22  steve
- *  Fix the size of unsized constant operants to compare (PR#274)
- *
- * Revision 1.170  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.169  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.168  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.167  2001/07/22 00:17:49  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.166  2001/07/07 03:01:37  steve
- *  Detect and make available to t-dll the right shift.
- *
- * Revision 1.165  2001/07/04 22:59:25  steve
- *  handle left shifter in dll output.
- *
- * Revision 1.164  2001/07/01 00:27:34  steve
- *  Make NetFF constructor take const char* for the name.
- *
- * Revision 1.163  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.162  2001/06/15 04:14:18  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.161  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.160  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.159  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.158  2001/04/02 02:28:12  steve
- *  Generate code for task calls.
- *
- * Revision 1.157  2001/02/10 21:20:38  steve
- *  Binary operators with operands of indefinite width
- *  has itself an indefinite width.
- *
- * Revision 1.156  2001/02/08 01:10:30  steve
- *  Remove dead code.
- *
- * Revision 1.155  2001/02/07 21:47:13  steve
- *  Fix expression widths for rvalues and parameters (PR#131,132)
- *
- * Revision 1.154  2001/01/18 03:16:35  steve
- *  NetMux needs a scope. (PR#115)
- *
- * Revision 1.153  2001/01/06 06:31:58  steve
- *  declaration initialization for time variables.
- *
- * Revision 1.152  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.151  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.150  2000/12/05 06:29:33  steve
- *  Make signal attributes available to ivl_target API.
- *
- * Revision 1.149  2000/12/04 17:37:04  steve
- *  Add Attrib class for holding NetObj attributes.
- *
- * Revision 1.148  2000/11/29 23:16:19  steve
- *  Do not delete synthesized signals used in expressions.
- *
- * Revision 1.147  2000/11/29 05:24:00  steve
- *  synthesis for unary reduction ! and N operators.
- *
- * Revision 1.146  2000/11/20 00:58:40  steve
- *  Add support for supply nets (PR#17)
- *
- * Revision 1.145  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.144  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.143  2000/10/28 00:51:42  steve
- *  Add scope to threads in vvm, pass that scope
- *  to vpi sysTaskFunc objects, and add vpi calls
- *  to access that information.
- *
- *  $display displays scope in %m (PR#1)
- *
- * Revision 1.142  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.141  2000/10/06 23:46:50  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.140  2000/10/05 05:03:01  steve
- *  xor and constant devices.
- *
- * Revision 1.139  2000/09/26 05:05:58  steve
- *  Detect indefinite widths where definite widths are required.
- *
- * Revision 1.138  2000/09/26 01:35:42  steve
- *  Remove the obsolete NetEIdent class.
- *
- * Revision 1.137  2000/09/24 15:44:44  steve
- *  Move some NetNet method out of the header file.
- *
- * Revision 1.136  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.135  2000/09/02 20:54:20  steve
- *  Rearrange NetAssign to make NetAssign_ separate.
- *
- * Revision 1.134  2000/08/27 15:51:50  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.133  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.132  2000/07/07 04:53:54  steve
- *  Add support for non-constant delays in delay statements,
- *  Support evaluating ! in constant expressions, and
- *  move some code from netlist.cc to net_proc.cc.
- *
- * Revision 1.131  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- * Revision 1.130  2000/06/24 22:55:19  steve
- *  Get rid of useless next_link method.
- *
- * Revision 1.129  2000/06/13 03:24:48  steve
- *  Index in memory assign should be a NetExpr.
- *
- * Revision 1.128  2000/06/12 03:57:10  steve
- *  NetEParam supports dup_expr.
- *
- * Revision 1.127  2000/05/27 19:33:23  steve
- *  Merge similar probes within a module.
- *
- * Revision 1.126  2000/05/19 01:43:16  steve
- *  Accept different widths for add operands.
- *
- * Revision 1.125  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.124  2000/05/07 18:20:07  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.123  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.122  2000/05/04 03:37:58  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
  */
 
