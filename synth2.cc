@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.13 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: synth2.cc,v 1.14 2002/09/26 03:42:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -313,13 +313,9 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  assert(asig->pin(0).nexus()->drivers_constant());
 		  switch (asig->pin(0).nexus()->driven_value()) {
 		      case verinum::V0:
-			cerr << get_line() << ": debug: Detected an"
-			     << " asynchronous reset." << endl;
 			connect(ff->pin_Aclr(), ce->pin(0));
 			break;
 		      case verinum::V1:
-			cerr << get_line() << ": debug: Detected an"
-			     << " asynchronous set." << endl;
 			connect(ff->pin_Aset(), ce->pin(0));
 			break;
 		      default:
@@ -552,6 +548,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.14  2002/09/26 03:42:10  steve
+ *  Remove excess debug messages.
+ *
  * Revision 1.13  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *
