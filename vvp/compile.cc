@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.9 2001/03/22 05:08:00 steve Exp $"
+#ident "$Id: compile.cc,v 1.10 2001/03/22 05:28:41 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -121,6 +121,18 @@ struct resolv_list_s {
 
 static struct resolv_list_s*resolv_list = 0;
 
+/*
+ * Instructions may make forward references to labels. In this case,
+ * the compile makes one of these to remember to retry the
+ * resolution.
+ */
+struct cresolv_list_s {
+      struct cresolv_list_s*next;
+      struct vvp_code_s*cp;
+      char*lab;
+};
+
+static struct cresolv_list_s*cresolv_list = 0;
 
 /*
  * Initialize the compiler by allocation empty symbol tables and
@@ -287,11 +299,18 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  tmp = sym_get_value(sym_codespace, opa->argv[idx].symb.text);
 		  code->cptr = tmp.num;
 		  if (code->cptr == 0) {
-			yyerror("functor undefined");
-			break;
+			struct cresolv_list_s*res = (struct cresolv_list_s*)
+			      calloc(1, sizeof(struct cresolv_list_s));
+			res->cp = code;
+			res->lab = opa->argv[idx].symb.text;
+			res->next = cresolv_list;
+			cresolv_list = res;
+
+		  } else {
+
+			free(opa->argv[idx].symb.text);
 		  }
 
-		  free(opa->argv[idx].symb.text);
 		  break;
 
 		case OA_FUNC_PTR:
@@ -455,6 +474,26 @@ void compile_cleanup(void)
 	    }
       }
 
+      struct cresolv_list_s*tmp_clist = cresolv_list;
+      cresolv_list = 0;
+
+      while (tmp_clist) {
+	    struct cresolv_list_s*res = tmp_clist;
+	    tmp_clist = res->next;
+
+	    symbol_value_t val = sym_get_value(sym_codespace, res->lab);
+	    vvp_cpoint_t tmp = val.num;
+
+	    if (tmp != 0) {
+		  res->cp->cptr = tmp;
+		  free(res->lab);
+		  
+	    } else {
+		  fprintf(stderr, "unresolved code label: %s\n", res->lab);
+		  res->next = cresolv_list;
+		  cresolv_list = res;
+	    }
+      }
 }
 
 void compile_dump(FILE*fd)
@@ -476,6 +515,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.10  2001/03/22 05:28:41  steve
+ *  Add code label forward references.
+ *
  * Revision 1.9  2001/03/22 05:08:00  steve
  *  implement %load, %inv, %jum/0 and %cmp/u
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.4 2001/03/22 05:08:00 steve Exp $"
+#ident "$Id: codes.cc,v 1.5 2001/03/22 05:28:41 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -106,6 +106,9 @@ void codespace_dump(FILE*fd)
 	    } else if (cop->opcode == &of_JMP) {
 		  fprintf(fd, "%%jmp 0x%u\n", cop->cptr);
 
+	    } else if (cop->opcode == &of_JMP0) {
+		  fprintf(fd, "%%jmp/0 0x%u\n", cop->cptr);
+
 	    } else if (cop->opcode == &of_SET) {
 		  fprintf(fd, "%%set 0x%u, %u\n", cop->iptr, cop->bit_idx1);
 
@@ -118,6 +121,9 @@ void codespace_dump(FILE*fd)
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.5  2001/03/22 05:28:41  steve
+ *  Add code label forward references.
+ *
  * Revision 1.4  2001/03/22 05:08:00  steve
  *  implement %load, %inv, %jum/0 and %cmp/u
  *
