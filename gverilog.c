@@ -66,6 +66,10 @@ struct target {
 };
 struct target target  = {VVM, {"-t", "vvm", 0}};
 
+
+/* functors setup */
+struct compset functors = {"-F","", 0};
+
 /* output file */
 struct compset outputfile = {"-o", "", 0};
 
@@ -98,12 +102,16 @@ void sorry(char optelem)
 
 targettype resolvtarget(char *target)
 {
-  if (strcmp(target, "vvm") == 0)
+  if (strcmp(target, "vvm") == 0) {
     return VVM;
-  else if (strcmp(target, "xnf") == 0)
+  } else if (strcmp(target, "xnf") == 0) {
+    sprintf(functors.name, "%ssynth %snodangle %sxnfio", 
+	    functors.compsw, functors.compsw, functors.compsw);
+    functors.set = 1;
     return XNF;
-  else 
+  } else {
     return OTHER;
+  }
 }
 
 
@@ -117,20 +125,17 @@ void error_exit(void)
 
 void create_outputfilename(char *input, char *output)
 {
-  int dotpos=0;
-  int spacepos=0;
-  int i=0;
+  char *dotpos, *spacepos;
 
-  for(i=strlen(input); i!=0; i--){
-    if ((dotpos == 0) && (input[i] == '.')) dotpos = i;
-    if ((spacepos == 0) && (input[i] == ' ')) spacepos = i;
-  }
-  
-  if (dotpos == 0) {
-    dotpos = strlen(input);
+  if ((dotpos = strrchr(input, (int)'.')) == NULL) {  
+    dotpos = input + strlen(input);
   }
 
-  output = strncpy(output, &input[spacepos+1], dotpos-spacepos-1);
+  if ((spacepos = strrchr(input, (int)' ')) == NULL) { 
+    spacepos = input;
+  }
+
+  output = strncpy(output, spacepos, dotpos-spacepos);
 
   return;
 }
@@ -225,10 +230,13 @@ void postprocess(void)
     unlink(tmpCCfile);
     break;
   case XNF:   /* Just move file as is */
+    sprintf(outputfile.name, "%s.xnf", outputfile.name);
     if (compileinfo.debug) {
       printf("Moving file %s to %s\n", tmpCCfile, outputfile.name);
     } else {
-      rename(tmpCCfile, outputfile.name);
+      if (rename(tmpCCfile, outputfile.name) == -1) {
+	perror("Failed moving file. gverilog:postprocess\n");
+      }
     }
     break;
   case OTHER: /* Just move file as is */
@@ -236,7 +244,9 @@ void postprocess(void)
     if (compileinfo.debug) {
       printf("Moving file %s to %s\n", tmpCCfile, outputfile.name);
     } else {
-      rename(tmpCCfile, outputfile.name);
+      if (rename(tmpCCfile, outputfile.name) == -1) {
+	perror("Failed moving file. gverilog:postprocess\n");
+      }
     }
     break;
   default:
