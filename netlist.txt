@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.4 1999/09/29 00:03:27 steve Exp $"
+#ident "$Id: netlist.txt,v 1.5 1999/11/02 04:55:34 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -56,6 +56,31 @@ connections accumulate on a link as items are connected to it. The
 destructors for nets and nodes automatically arrange for pins to be
 disconnected when the item is deleted, so that the netlist can be
 changed during processing.
+
+STRUCTURAL LINKS
+
+The NetNode and NetNet classes contain arrays of Link objects, one
+object per pin. Each pin is a single bit. The Link objects link
+circularly to all the NetNode and NetNet objects' links that are
+connected together in the design. This way, code that examines a node
+of the design can discover what is connected to each pin.
+
+See the NetObj::Link class definition for a description of the link
+methods.
+
+Currently, a link has 3 possible direction properties:
+
+	PASSIVE -- These pins are sampled by the object that holds the
+		   pin based on some external event. These are used,
+		   for example, by NetESignal objects that read a
+		   point for a procedural expression.
+
+	INPUT   -- These pins potentially react to the setting of its
+		   input.
+
+	OUTPUT  -- These pins potentially drive the node. (They may be
+		   three-state.)
+
 
 BEHAVIORAL ITEMS: NetProcTop, NetProc and derived classes
 
@@ -189,6 +214,13 @@ some task calls. C++ programmers recognize this as inlining a task.)
 
 
  $Log: netlist.txt,v $
+ Revision 1.5  1999/11/02 04:55:34  steve
+  Add the synthesize method to NetExpr to handle
+  synthesis of expressions, and use that method
+  to improve r-value handling of LPM_FF synthesis.
+
+  Modify the XNF target to handle LPM_FF objects.
+
  Revision 1.4  1999/09/29 00:03:27  steve
   Spelling fixes from Larry.
 

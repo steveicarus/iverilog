@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.9 1999/08/25 22:22:08 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.10 1999/11/02 04:55:34 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -70,6 +70,9 @@ class target_xnf  : public target_t {
       void start_design(ostream&os, const Design*);
       void end_design(ostream&os, const Design*);
       void signal(ostream&os, const NetNet*);
+
+      void lpm_ff(ostream&os, const NetFF*);
+
       void logic(ostream&os, const NetLogic*);
       void bufz(ostream&os, const NetBUFZ*);
       void udp(ostream&os,  const NetUDP*);
@@ -176,8 +179,9 @@ void target_xnf::draw_sym_with_lcaname(ostream&os, string lca,
 void target_xnf::start_design(ostream&os, const Design*des)
 {
       os << "LCANET,6" << endl;
-      os << "PROG,verilog,0.0,\"Icarus Verilog\"" << endl;
-      os << "PART," << des->get_flag("part") << endl;
+      os << "PROG,verilog,0.2PRE,\"Icarus Verilog\"" << endl;
+      if (des->get_flag("part") != "")
+	    os << "PART," << des->get_flag("part") << endl;
 }
 
 void target_xnf::end_design(ostream&os, const Design*)
@@ -252,6 +256,35 @@ void target_xnf::signal(ostream&os, const NetNet*net)
       scrape_pad_info(pad, dir, num);
       os << "EXT, " << mangle(net->name()) << ", " << dir
 	 << ", " << num << endl;
+}
+
+void target_xnf::lpm_ff(ostream&os, const NetFF*net)
+{
+      string type = net->attribute("LPM_FFType");
+      if (type == "") type = "DFF";
+
+	// XXXX For now, only support DFF
+      assert(type == "DFF");
+	// XXXX For now, I do not now how to deal with XNF-LCA attributes.
+      assert(net->attribute("XNF-LCA") == "");
+
+      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
+
+	    os << "SYM, " << mangle(net->name()) << "<" << idx
+	       << ">, DFF, LIBVER=2.0.0" << endl;
+	    draw_pin(os, "Q", net->pin_Q(idx));
+	    draw_pin(os, "D", net->pin_Data(idx));
+
+	    if (net->attribute("Clock:LPM_Polarity") == "INVERT")
+		  draw_pin(os, "~C", net->pin_Clock());
+	    else
+		  draw_pin(os, "C", net->pin_Clock());
+
+	    if (count_outputs(net->pin_Enable()) > 0)
+		  draw_pin(os, "CE", net->pin_Enable());
+
+	    os << "END" << endl;
+      }
 }
 
 /*
@@ -349,6 +382,13 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.10  1999/11/02 04:55:34  steve
+ *  Add the synthesize method to NetExpr to handle
+ *  synthesis of expressions, and use that method
+ *  to improve r-value handling of LPM_FF synthesis.
+ *
+ *  Modify the XNF target to handle LPM_FF objects.
+ *
  * Revision 1.9  1999/08/25 22:22:08  steve
  *  handle bufz in XNF backend.
  *

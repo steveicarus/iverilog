@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: synth.cc,v 1.1 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: synth.cc,v 1.2 1999/11/02 04:55:34 steve Exp $"
 #endif
 
 /*
@@ -132,14 +132,9 @@ void synth_f::proc_always_(class Design*des)
  */
 void synth_f::proc_casn_(class Design*des)
 {
-
-	// ... and the rval must be a simple signal.
-      NetESignal*sig = dynamic_cast<NetESignal*>(asn_->rval());
-      if (sig == 0) {
-	    cerr << "Noted complex rval in DFF, name " << asn_->name() <<
-		", not yet implemented" << endl;
-	    return ;
-      }
+	// Turn the r-value into gates.
+      NetNet*sig = asn_->rval()->synthesize(des);
+      assert(sig);
 
 	// The signal and the assignment must be the same width...
       assert(asn_->pin_count() == sig->pin_count());
@@ -185,9 +180,8 @@ void synth_f::proc_ccon_(class Design*des)
       if (asn_ == 0)
 	    return;
 
-      NetESignal*sig = dynamic_cast<NetESignal*>(asn_->rval());
-      if (sig == 0)
-	    return;
+      NetNet*sig = asn_->rval()->synthesize(des);
+      assert(sig);
 
 	// The signal and the assignment must be the same width...
       assert(asn_->pin_count() == sig->pin_count());
@@ -235,6 +229,13 @@ void synth(Design*des)
 
 /*
  * $Log: synth.cc,v $
+ * Revision 1.2  1999/11/02 04:55:34  steve
+ *  Add the synthesize method to NetExpr to handle
+ *  synthesis of expressions, and use that method
+ *  to improve r-value handling of LPM_FF synthesis.
+ *
+ *  Modify the XNF target to handle LPM_FF objects.
+ *
  * Revision 1.1  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

@@ -78,7 +78,7 @@ fi
 case "$target" in
  vvm) targetSuffix="" ;;
  xnf) targetSuffix=".xnf"
-      functors="-Fxnfsyn -Fsigfold -Fxnfio" ;;
+      functors="-Fsynth -Fsigfold -Fxnfio" ;;
    *) targetSuffix=".$target" ;;
 esac
 

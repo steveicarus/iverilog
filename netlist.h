@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.82 1999/11/01 02:07:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.83 1999/11/02 04:55:34 steve Exp $"
 #endif
 
 /*
@@ -347,6 +347,9 @@ class NetFF  : public NetNode {
       NetObj::Link& pin_Data(unsigned);
       NetObj::Link& pin_Q(unsigned);
 
+      const NetObj::Link& pin_Clock() const;
+      const NetObj::Link& pin_Enable() const;
+      const NetObj::Link& pin_Data(unsigned) const;
       const NetObj::Link& pin_Q(unsigned) const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -427,6 +430,11 @@ class NetExpr  : public LineInfo {
 	// Make a duplicate of myself, and subexpressions if I have
 	// any. This is a deep copy operation.
       virtual NetExpr*dup_expr() const =0;
+
+	// Return a version of myself that is structural. This is used
+	// for converting expressions to gates.
+      virtual NetNet*synthesize(Design*);
+
 
     protected:
       void expr_width(unsigned w) { width_ = w; }
@@ -1306,6 +1314,8 @@ class NetEBBits : public NetEBinary {
 
       virtual bool set_width(unsigned w);
       virtual NetEBBits* dup_expr() const;
+
+      virtual NetNet* synthesize(Design*);
 };
 
 /*
@@ -1600,6 +1610,8 @@ class NetESignal  : public NetExpr, public NetNode {
 
       virtual NetESignal* dup_expr() const;
 
+      NetNet* synthesize(Design*des);
+
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
       virtual void dump(ostream&) const;
@@ -1782,6 +1794,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.83  1999/11/02 04:55:34  steve
+ *  Add the synthesize method to NetExpr to handle
+ *  synthesis of expressions, and use that method
+ *  to improve r-value handling of LPM_FF synthesis.
+ *
+ *  Modify the XNF target to handle LPM_FF objects.
+ *
  * Revision 1.82  1999/11/01 02:07:40  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.79 1999/11/01 02:07:40 steve Exp $"
+#ident "$Id: netlist.cc,v 1.80 1999/11/02 04:55:34 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -433,7 +433,17 @@ NetObj::Link& NetFF::pin_Clock()
       return pin(0);
 }
 
+const NetObj::Link& NetFF::pin_Clock() const
+{
+      return pin(0);
+}
+
 NetObj::Link& NetFF::pin_Enable()
+{
+      return pin(1);
+}
+
+const NetObj::Link& NetFF::pin_Enable() const
 {
       return pin(1);
 }
@@ -469,6 +479,13 @@ NetObj::Link& NetFF::pin_Sclr()
 }
 
 NetObj::Link& NetFF::pin_Data(unsigned w)
+{
+      unsigned pn = 8 + 2*w;
+      assert(pn < pin_count());
+      return pin(pn);
+}
+
+const NetObj::Link& NetFF::pin_Data(unsigned w) const
 {
       unsigned pn = 8 + 2*w;
       assert(pn < pin_count());
@@ -687,47 +704,6 @@ NetAssignMemNB::~NetAssignMemNB()
 {
 }
 
-#if 0
-/*
- * This method looks at the objects connected to me, and searches for
- * a signal that I am fully connected to. Return that signal, and the
- * range of bits that I use.
- */
-void NetAssign::find_lval_range(const NetNet*&net, unsigned&msb,
-				unsigned&lsb) const
-{
-      const NetObj*cur;
-      unsigned cpin;
-
-      for (pin(0).next_link(cur,cpin) ; pin(0) != cur->pin(cpin)
-		 ; cur->pin(cpin).next_link(cur, cpin)) {
-	    const NetNet*s = dynamic_cast<const NetNet*>(cur);
-	    if (s == 0)
-		  continue;
-
-	    if (!connected(*this, *s))
-		  continue;
-
-	    unsigned idx;
-	    for (idx = 1 ;  idx < pin_count() ;  idx += 1) {
-		  if (idx+cpin > s->pin_count())
-			break;
-		  if (! connected(pin(idx), s->pin(idx+cpin)))
-			break;
-	    }
-
-	    if (idx < pin_count())
-		  continue;
-
-	    net = s;
-	    lsb = cpin;
-	    msb = cpin+pin_count()-1;
-	    return;
-      }
-
-      assert(0); // No suitable signals??
-}
-#endif
 
 NetBlock::~NetBlock()
 {
@@ -1993,6 +1969,13 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.80  1999/11/02 04:55:34  steve
+ *  Add the synthesize method to NetExpr to handle
+ *  synthesis of expressions, and use that method
+ *  to improve r-value handling of LPM_FF synthesis.
+ *
+ *  Modify the XNF target to handle LPM_FF objects.
+ *
  * Revision 1.79  1999/11/01 02:07:40  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of
