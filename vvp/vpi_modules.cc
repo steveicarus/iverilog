@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,20 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_modules.cc,v 1.12 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.13 2003/01/10 03:06:32 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
-# include  "vpithunk.h"
 # include  <stdio.h>
 # include  <string.h>
 # include  <sys/types.h>
 # include  <sys/stat.h>
 
 typedef void (*vlog_startup_routines_t)(void);
-typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
 
 
 const char* vpip_module_path[64] = {
@@ -107,22 +105,6 @@ void vpip_load_module(const char*name)
       }
 
 
-      void *regsub = ivl_dlsym(dll, LU "vpi_register_sim" TU);
-      vpi_register_sim_t simreg = (vpi_register_sim_t)regsub;
-      if (regsub == 0) {
-	    fprintf(stderr, "%s: Unable to locate vpi_register_sim", name);
-	    ivl_dlclose(dll);
-	    return;
-      }
-
-      extern vpi_thunk vvpt;
-      if (((simreg)(&vvpt)) == 0) {
-	fprintf(stderr, "%s: vpi_register_sim returned zero", name);
-	ivl_dlclose(dll);
-	return;
-      }
-
-
       void*table = ivl_dlsym(dll, LU "vlog_startup_routines" TU);
       if (table == 0) {
 	    fprintf(stderr, "%s: no vlog_startup_routines\n", name);
@@ -139,6 +121,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.13  2003/01/10 03:06:32  steve
+ *  Remove vpithunk, and move libvpi to vvp directory.
+ *
  * Revision 1.12  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *
@@ -162,23 +147,5 @@ void vpip_load_module(const char*name)
  *
  * Revision 1.6  2001/07/26 03:13:51  steve
  *  Make the -M flag add module search paths.
- *
- * Revision 1.5  2001/06/12 03:53:11  steve
- *  Change the VPI call process so that loaded .vpi modules
- *  use a function table instead of implicit binding.
- *
- * Revision 1.4  2001/05/22 02:14:47  steve
- *  Update the mingw build to not require cygwin files.
- *
- * Revision 1.3  2001/03/23 02:40:22  steve
- *  Add the :module header statement.
- *
- * Revision 1.2  2001/03/22 05:39:34  steve
- *  Test print that interferes with output.
- *
- * Revision 1.1  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
  */
 

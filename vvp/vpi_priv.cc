@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.26 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.27 2003/01/10 03:06:32 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -354,6 +354,14 @@ extern "C" void vpi_vprintf(const char*fmt, va_list ap)
       vprintf(fmt, ap);
 }
 
+extern "C" void vpi_printf(const char *fmt, ...)
+{
+      va_list ap;
+      va_start(ap, fmt);
+      vpi_vprintf(fmt, ap);
+      va_end(ap);
+}
+
 
 extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 {
@@ -367,8 +375,19 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
       }
 }
 
+extern "C" void vpi_sim_control(int operation, ...)
+{
+      va_list ap;
+      va_start(ap, operation);
+      vpi_sim_vcontrol(operation, ap);
+      va_end(ap);
+}
+
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.27  2003/01/10 03:06:32  steve
+ *  Remove vpithunk, and move libvpi to vvp directory.
+ *
  * Revision 1.26  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal
@@ -391,56 +410,4 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
  *
  * Revision 1.21  2002/07/19 01:12:50  steve
  *  vpi_iterate returns 0 on error.
- *
- * Revision 1.20  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.19  2002/07/12 02:04:44  steve
- *  vpi_iterate return null if there is nothing to iterate.
- *
- * Revision 1.18  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.17  2002/06/21 04:58:55  steve
- *  Add support for special integer vectors.
- *
- * Revision 1.16  2002/06/02 19:05:50  steve
- *  Check for null pointers from users.
- *
- * Revision 1.15  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.14  2002/05/03 15:44:11  steve
- *  Add vpiModule iterator to vpiScope objects.
- *
- * Revision 1.13  2002/04/07 00:46:21  steve
- *  minor cleanup of formatting.
- *
- * Revision 1.12  2002/01/09 03:15:23  steve
- *  Add vpi_get_vlog_info support.
- *
- * Revision 1.11  2002/01/06 00:48:39  steve
- *  VPI access to root module scopes.
- *
- * Revision 1.10  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.9  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.8  2001/07/11 02:27:21  steve
- *  Add support for REadOnlySync and monitors.
- *
- * Revision 1.7  2001/06/30 23:03:17  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.6  2001/06/21 22:54:12  steve
- *  Support cbValueChange callbacks.
  */

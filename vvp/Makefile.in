@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.40 2002/08/12 00:27:10 steve Exp $"
+#ident "$Id: Makefile.in,v 1.41 2003/01/10 03:06:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -50,10 +50,10 @@ LIBS = @LIBS@ @EXTRALIBS@
 dllib=@DLLIB@
 rdynamic=@rdynamic@
 
-all: vvp
+all: vvp@EXEEXT@ libvpi.a
 
 clean:
-	rm -rf vvp *.o *~ parse.cc parse.cc.output parse.h lexor.cc dep
+	rm -rf vvp@EXEEXT@ *.o *~ parse.cc parse.cc.output parse.h lexor.cc dep
 
 distclean: clean
 	rm -f config.h Makefile config.cache config.log config.status
@@ -70,9 +70,25 @@ functor.o fvectors.o npmos.o resolv.o symbols.o ufunc.o codes.o vthread.o \
 schedule.o statistics.o tables.o udp.o memory.o force.o event.o \
 logic.o delay.o $V
 
+ifeq (@WIN32@,yes)
+# Under Windows (mingw) I need to make the ivl.exe in two steps.
+# The first step makes an ivl.exe that dlltool can use to make an
+# export and import library, and the last link makes a, ivl.exe
+# that really exports the things that the import library imports.
+vvp@EXEEXT@ libvpi.a: $O vvp.def
+	$(CXX) -o vvp@EXEEXT@ $O $(dllib) @EXTRALIBS@	
+	dlltool --dllname vvp@EXEEXT@ --def vvp.def \
+		--output-lib libvpi.a --output-exp vvp.exp
+	$(CXX) -o vvp@EXEEXT@ vvp.exp $O $(dllib) @EXTRALIBS@
+else
+libvpi.a: libvpi.c
+	$(CC) -c $(srcdir)/libvpi.c
+	rm -f libvpi.a
+	ar cqv libvpi.a libvpi.o
+
 vvp: $O 
 	$(CXX) $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
-
+endif
 
 %.o: %.cc
 	@[ -d dep ] || mkdir dep
@@ -113,10 +129,13 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp $(INSTALL_DOC)
+install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir)/libvpi.a $(INSTALL_DOC)
 
-$(bindir)/vvp: ./vvp
-	$(INSTALL_PROGRAM) ./vvp $(bindir)/vvp
+$(bindir)/vvp@EXEEXT@: ./vvp@EXEEXT@
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(bindir)/vvp@EXEEXT@
+
+$(libdir)/libvpi.a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a $(libdir)/libvpi.a
 
 $(mandir)/man1/vvp.1: $(srcdir)/vvp.man
 	$(INSTALL_DATA) $(srcdir)/vvp.man $(mandir)/man1/vvp.1
@@ -129,7 +148,8 @@ installdirs: $(srcdir)/mkinstalldirs
 
 
 uninstall:
-	rm -f $(bindir)/vvp
+	rm -f $(bindir)/vvp@EXEEXT@
+	rm -f $(libdir)/libvpi.a
 	rm -f $(mandir)/man1/vvp.1
 
 -include $(patsubst %.o, dep/%.d, $O)
