@@ -1,0 +1,78 @@
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *  $Id: vpi.txt,v 1.1 2001/03/14 19:26:58 steve Exp $
+ */
+
+
+VPI WITHIN VVP
+
+System tasks and functions in Verilog are implemented in Icarus
+Verilog by C routines written with VPI. This implies that the vvp
+engine must provide at least a subset of the Verilog VPI
+interface. The minimalist concepts of vvp, however, make the method
+less then obvious.
+
+Within a Verilog design, there is a more or less fixed web of
+vpiHandles that is the design database as is available to VPI
+functions. The Verilog standard defines quite a lot of types, but the
+vvp only implements the ones it needs. The VPI web is added into the
+design using special pseudo-ops that create the needed objects.
+
+
+LOADING VPI MODULES
+
+The vvp runtime loads VPI modules at runtime before the parser reads
+in the source files. This gives the modules a chance to register tasks
+and functions before the source is compiled. This allows the compiler
+to resolve references to system tasks and system functions to a
+vpiHandle at compile time. References to missing tasks/function can
+thus be caught before the simulation is run.
+
+     NOTE: This also, miraculously, allows for some minimal support of
+     the compiletf call. From the perspective of VPI code, compilation
+     of the VVP source is not unlike compilation of the original
+     Verilog.
+
+The handle that the vvp threads have to the VPI are the vpiHandles of
+the system tasks and functions. The %stask instruction, once compiled,
+carries the vpiHandle of the system task.
+
+
+SYSTEM TASK CALLS
+
+A system task call invokes a VPI routine, and makes available to that
+routine the arguments to the system task. The called routine gets
+access to the system task call by calling back the VPI requesting the
+handle. It uses the handle, in turn, to get hold of the operands for
+the task.
+
+In VPI Land, there is a vpiHandle for each system task call. However,
+since only one is accessible at a time, there is no need for more then
+the one that is active. Therefore, vvp will construct the vpiHande for
+the task call at the time the call is made.
+
+All that vvp needs to know about a system task call is the handle of
+the system task (created by the vpi_register_systf function) and the
+arguments of the actual call. The arguments are tricky because the
+list has no bound, even though each particular call in the Verilog
+source has a specific set of parameters.
+
+/*
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
