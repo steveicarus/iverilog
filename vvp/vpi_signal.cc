@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.11 2001/05/09 04:23:19 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.12 2001/05/14 00:42:32 steve Exp $"
 #endif
 
 /*
@@ -249,22 +249,29 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp,
 				  p_vpi_time when, int flags)
 {
+      unsigned wid;
+      struct __vpiSignal*rfp;
+
       assert((ref->vpi_type->type_code==vpiNet)
 	     || (ref->vpi_type->type_code==vpiReg));
 
-      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+      rfp = (struct __vpiSignal*)ref;
 
 	/* XXXX delays are not yet supported. */
       assert(flags == vpiNoDelay);
 
-      unsigned wid = (rfp->msb >= rfp->lsb)
+      wid = (rfp->msb >= rfp->lsb)
 	    ? (rfp->msb - rfp->lsb + 1)
 	    : (rfp->lsb - rfp->msb + 1);
 
       switch (vp->format) {
 
 	  case vpiIntVal: {
-		assert(wid <= sizeof(long));
+		if (wid > 8*sizeof(long)) {
+		      fprintf(stderr, "internal error: wid(%u) "
+			      "too large.\n", wid);
+		      assert(0);
+		}
 
 		long val = vp->value.integer;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -400,6 +407,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.12  2001/05/14 00:42:32  steve
+ *  test width of target with bit size of long.
+ *
  * Revision 1.11  2001/05/09 04:23:19  steve
  *  Now that the interactive debugger exists,
  *  there is no use for the output dump.
