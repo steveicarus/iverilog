@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.60 2004/12/11 02:31:26 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.61 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,6 +171,8 @@ NetNet* NetEBComp::synthesize(Design*des)
 	   0. We can use an OR gate to do the comparison. Synthesize
 	   the non-const side as normal, then or(nor) the signals
 	   together to get result. */
+#if 0
+	// XXXX Need to check this for vector_width and wide logic.
       if ((rcon && (rcon->value() == verinum(0UL,rcon->expr_width())))
 	  || (lcon && (lcon->value() == verinum(0UL,lcon->expr_width())))) {
 
@@ -234,6 +236,7 @@ NetNet* NetEBComp::synthesize(Design*des)
 	    des->add_node(gate);
 	    return osig;
       }
+#endif
 
       NetNet*lsig = left_->synthesize(des);
       NetNet*rsig = right_->synthesize(des);
@@ -241,9 +244,9 @@ NetNet* NetEBComp::synthesize(Design*des)
       NetScope*scope = lsig->scope();
       assert(scope);
 
-      unsigned width = lsig->pin_count();
-      if (rsig->pin_count() > lsig->pin_count())
-	    width = rsig->pin_count();
+      unsigned width = lsig->vector_width();
+      if (rsig->vector_width() > width)
+	    width = rsig->vector_width();
 
       lsig = pad_to_width(des, lsig, width);
       rsig = pad_to_width(des, rsig, width);
@@ -281,11 +284,8 @@ NetNet* NetEBComp::synthesize(Design*des)
       NetCompare*dev = new NetCompare(scope, scope->local_symbol(), width);
       des->add_node(dev);
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-	    connect(dev->pin_DataA(idx), lsig->pin(idx));
-
-      for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-	    connect(dev->pin_DataB(idx), rsig->pin(idx));
+      connect(dev->pin_DataA(), lsig->pin(0));
+      connect(dev->pin_DataB(), rsig->pin(0));
 
 
       switch (op_) {
@@ -627,12 +627,11 @@ NetNet* NetEConst::synthesize(Design*des)
       perm_string path = scope->local_symbol();
       unsigned width=expr_width();
 
-      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
+      NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width-1,0);
       osig->local_flag(true);
       osig->set_signed(has_sign());
       NetConst*con = new NetConst(scope, scope->local_symbol(), value());
-      for (unsigned idx = 0 ;  idx < width;  idx += 1)
-	    connect(osig->pin(idx), con->pin(idx));
+      connect(osig->pin(0), con->pin(0));
 
       des->add_node(con);
       return osig;
@@ -857,6 +856,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.61  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.60  2004/12/11 02:31:26  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

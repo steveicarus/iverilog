@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.325 2005/01/12 03:17:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.326 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 /*
@@ -558,8 +558,8 @@ class NetCompare  : public NetNode {
       Link& pin_ALB();
       Link& pin_ALEB();
 
-      Link& pin_DataA(unsigned idx);
-      Link& pin_DataB(unsigned idx);
+      Link& pin_DataA();
+      Link& pin_DataB();
 
       const Link& pin_Aclr() const;
       const Link& pin_Clock() const;
@@ -570,8 +570,8 @@ class NetCompare  : public NetNode {
       const Link& pin_ALB() const;
       const Link& pin_ALEB() const;
 
-      const Link& pin_DataA(unsigned idx) const;
-      const Link& pin_DataB(unsigned idx) const;
+      const Link& pin_DataA() const;
+      const Link& pin_DataB() const;
 
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
@@ -3411,6 +3411,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.326  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.325  2005/01/12 03:17:37  steve
  *  Properly pad vector widths in pgassign.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.141 2005/01/13 00:23:10 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.142 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -581,41 +581,23 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    delete rexp;
       }
 
-      unsigned dwidth = lsig->pin_count();
-      if (rsig->pin_count() > dwidth) dwidth = rsig->pin_count();
+      unsigned dwidth = lsig->vector_width();
+      if (rsig->vector_width() > dwidth) dwidth = rsig->vector_width();
 
 	/* Operands of binary compare need to be padded to equal
 	   size. Figure the pad bit needed to extend the narrowest
 	   vector. */
-      NetNet*padbit = 0;
-      if (lsig->pin_count() != rsig->pin_count()) {
-	    unsigned lwid = lsig->pin_count();
-	    unsigned rwid = rsig->pin_count();
+      if (lsig->vector_width() < dwidth)
+	    lsig = pad_to_width(des, lsig, dwidth);
+      if (rsig->vector_width() < dwidth)
+	    rsig = pad_to_width(des, rsig, dwidth);
 
-	    padbit = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    padbit->local_flag(true);
-
-	    if (lsig->get_signed() && (lwid < rwid)) {
-
-		  connect(padbit->pin(0), lsig->pin(lwid-1));
-
-	    } else if (rsig->get_signed() && (rwid < lwid)) {
-
-		  connect(padbit->pin(0), rsig->pin(rwid-1));
-
-	    } else {
-		  NetConst*tmp = new NetConst(scope, scope->local_symbol(),
-					      verinum::V0);
-		  des->add_node(tmp);
-		  connect(tmp->pin(0), padbit->pin(0));
-	    }
-      }
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
+      osig->set_line(*this);
       osig->local_flag(true);
 
       NetNode*gate;
-	//NetNode*gate_t;
 
       switch (op_) {
 	  case '<':
@@ -624,14 +606,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	  case 'G': {
 		NetCompare*cmp = new
 		      NetCompare(scope, scope->local_symbol(), dwidth);
-		for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
-		      connect(cmp->pin_DataA(idx), lsig->pin(idx));
-		for (unsigned idx = lsig->pin_count(); idx < dwidth ; idx += 1)
-		      connect(cmp->pin_DataA(idx), padbit->pin(0));
-		for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-		      connect(cmp->pin_DataB(idx), rsig->pin(idx));
-		for (unsigned idx = rsig->pin_count(); idx < dwidth ; idx += 1)
-		      connect(cmp->pin_DataB(idx), padbit->pin(0));
+		connect(cmp->pin_DataA(), lsig->pin(0));
+		connect(cmp->pin_DataB(), rsig->pin(0));
 
 		switch (op_) {
 		    case '<':
@@ -660,7 +636,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	  case 'N': // Case equals (!==)
 	      // The comparison generates gates to bitwise compare
 	      // each pair, and AND all the comparison results.
-
+#if 0
 	    gate = new NetLogic(scope, scope->local_symbol(),
 				1+dwidth,
 				(op_ == 'E')? NetLogic::AND : NetLogic::NAND, 1);
@@ -688,6 +664,11 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 		  tmp->local_flag(true);
 		  connect(cmp->pin(0), tmp->pin(0));
 	    }
+#else
+	    cerr << get_line() << ": internal error: Forgot how to "
+		 << "elab_net === operators." << endl;
+	    des->errors += 1;
+#endif
 	    break;
 
 
@@ -707,19 +688,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	      /* Oh well, do the general case with a NetCompare. */
 	    { NetCompare*cmp = new NetCompare(scope, scope->local_symbol(),
 					      dwidth);
-	      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-
-		    if (idx < lsig->pin_count())
-			  connect(cmp->pin_DataA(idx), lsig->pin(idx));
-		    else
-			  connect(cmp->pin_DataA(idx), padbit->pin(0));
-
-		    if (idx < rsig->pin_count())
-			  connect(cmp->pin_DataB(idx), rsig->pin(idx));
-		    else
-			  connect(cmp->pin_DataB(idx), padbit->pin(0));
-
-	      }
+	      connect(cmp->pin_DataA(), lsig->pin(0));
+	      connect(cmp->pin_DataB(), rsig->pin(0));
 	      connect(cmp->pin_AEB(), osig->pin(0));
 	      gate = cmp;
 	    }
@@ -741,19 +711,8 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	      /* Oh well, do the general case with a NetCompare. */
 	    { NetCompare*cmp = new NetCompare(scope, scope->local_symbol(),
 					      dwidth);
-	      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-
-		    if (idx < lsig->pin_count())
-			  connect(cmp->pin_DataA(idx), lsig->pin(idx));
-		    else
-			  connect(cmp->pin_DataA(idx), padbit->pin(0));
-
-		    if (idx < rsig->pin_count())
-			  connect(cmp->pin_DataB(idx), rsig->pin(idx));
-		    else
-			  connect(cmp->pin_DataB(idx), padbit->pin(0));
-
-	      }
+	      connect(cmp->pin_DataA(), lsig->pin(0));
+	      connect(cmp->pin_DataB(), rsig->pin(0));
 	      connect(cmp->pin_ANEB(), osig->pin(0));
 	      gate = cmp;
 	    }
@@ -2523,6 +2482,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.142  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.141  2005/01/13 00:23:10  steve
  *  Fix elaboration of == compared to constants.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.109 2005/01/12 05:31:50 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.110 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -432,6 +432,8 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
@@ -448,8 +450,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
 	    break;
 
-	  case IVL_LPM_CMP_GE:
-	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	    if (ivl_lpm_q(lpm, 0) == nex) {
@@ -1188,7 +1188,7 @@ static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
       fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
 
       sig = 0;
-      nex = ivl_lpm_datab(net, 0);
+      nex = ivl_lpm_data(net, 1);
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    np = ivl_nexus_ptr(nex,idx);
 	    sig = ivl_nexus_ptr_sig(np);
@@ -1256,6 +1256,7 @@ static void draw_lpm_add(ivl_lpm_t net)
 
 static void draw_lpm_cmp(ivl_lpm_t net)
 {
+      const char*src_table[2];
       unsigned width;
       const char*type = "";
       const char*signed_string = ivl_lpm_signed(net)? ".s" : "";
@@ -1273,14 +1274,10 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "L_%s.%s .cmp/%s%s %u",
-	      vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
-	      vvp_mangle_id(ivl_lpm_basename(net)), type,
-	      signed_string, width);
-
-      draw_lpm_arith_a_b_inputs(net);
-
-      fprintf(vvp_out, ";\n");
+      draw_lpm_data_inputs(net, 0, 2, src_table);
+      fprintf(vvp_out, "L_%p .cmp/%s%s %u, %s, %s;\n",
+	      net, type, signed_string, width,
+	      src_table[0], src_table[1]);
 }
 
 /*
@@ -1827,6 +1824,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.110  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.109  2005/01/12 05:31:50  steve
  *  More robust input code generation for LPM_ADD.
  *

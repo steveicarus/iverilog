@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.229 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: netlist.cc,v 1.230 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -957,7 +957,7 @@ const Link& NetCLShift::pin_Distance(unsigned idx) const
 }
 
 NetCompare::NetCompare(NetScope*s, perm_string n, unsigned wi)
-: NetNode(s, n, 8+2*wi), width_(wi)
+: NetNode(s, n, 10), width_(wi)
 {
       signed_flag_ = false;
       pin(0).set_dir(Link::INPUT); pin(0).set_name(
@@ -976,12 +976,10 @@ NetCompare::NetCompare(NetScope*s, perm_string n, unsigned wi)
 				perm_string::literal("ALB"));
       pin(7).set_dir(Link::OUTPUT); pin(7).set_name(
 				perm_string::literal("ALEB"));
-      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    pin(8+idx).set_dir(Link::INPUT);
-	    pin(8+idx).set_name(perm_string::literal("DataA"), idx);
-	    pin(8+width_+idx).set_dir(Link::INPUT);
-	    pin(8+width_+idx).set_name(perm_string::literal("DataB"), idx);
-      }
+      pin(8).set_dir(Link::INPUT);
+      pin(8).set_name(perm_string::literal("DataA"));
+      pin(9).set_dir(Link::INPUT);
+      pin(9).set_name(perm_string::literal("DataB"));
 }
 
 NetCompare::~NetCompare()
@@ -1083,24 +1081,24 @@ const Link& NetCompare::pin_ALEB() const
       return pin(7);
 }
 
-Link& NetCompare::pin_DataA(unsigned idx)
+Link& NetCompare::pin_DataA()
 {
-      return pin(8+idx);
+      return pin(8);
 }
 
-const Link& NetCompare::pin_DataA(unsigned idx) const
+const Link& NetCompare::pin_DataA() const
 {
-      return pin(8+idx);
+      return pin(8);
 }
 
-Link& NetCompare::pin_DataB(unsigned idx)
+Link& NetCompare::pin_DataB()
 {
-      return pin(8+width_+idx);
+      return pin(9);
 }
 
-const Link& NetCompare::pin_DataB(unsigned idx) const
+const Link& NetCompare::pin_DataB() const
 {
-      return pin(8+width_+idx);
+      return pin(9);
 }
 
 NetDivide::NetDivide(NetScope*sc, perm_string n, unsigned wr,
@@ -2344,6 +2342,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.230  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.229  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.134 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.135 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1240,104 +1240,90 @@ void dll_target::lpm_compare(const NetCompare*net)
 
       obj->u_.arith.width = net->width();
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
-#if 0
-      obj->u_.arith.q = new ivl_nexus_t[1 + 2 * obj->u_.arith.width];
-      obj->u_.arith.a = obj->u_.arith.q + 1;
-      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
+
+      const Nexus*nex;
+
+      nex = net->pin_DataA().nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+
+      nex = net->pin_DataB().nexus();
+      assert(nex->t_cookie());
+
+      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+
 
       if (net->pin_AGEB().is_linked()) {
-	    const Nexus*nex = net->pin_AGEB().nexus();
+	    nex = net->pin_AGEB().nexus();
 	    obj->type = IVL_LPM_CMP_GE;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
       } else if (net->pin_AGB().is_linked()) {
-	    const Nexus*nex = net->pin_AGB().nexus();
+	    nex = net->pin_AGB().nexus();
 	    obj->type = IVL_LPM_CMP_GT;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
       } else if (net->pin_ALEB().is_linked()) {
-	    const Nexus*nex = net->pin_ALEB().nexus();
+	    nex = net->pin_ALEB().nexus();
 	    obj->type = IVL_LPM_CMP_GE;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
 	    swap_operands = true;
 
       } else if (net->pin_ALB().is_linked()) {
-	    const Nexus*nex = net->pin_ALB().nexus();
+	    nex = net->pin_ALB().nexus();
 	    obj->type = IVL_LPM_CMP_GT;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
 	    swap_operands = true;
 
       } else if (net->pin_AEB().is_linked()) {
-	    const Nexus*nex = net->pin_AEB().nexus();
+	    nex = net->pin_AEB().nexus();
 	    obj->type = IVL_LPM_CMP_EQ;
 
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
       } else if (net->pin_ANEB().is_linked()) {
-	    const Nexus*nex = net->pin_ANEB().nexus();
+	    nex = net->pin_ANEB().nexus();
 	    obj->type = IVL_LPM_CMP_NE;
 
-	    if (! nex->t_cookie()) {
-		  cerr << "internal error: COMPARE_NE device " <<
-			net->name()<<" ANEB pin nexus has no cookie."<<endl;
-		  assert(0);
-	    }
 	    assert(nex->t_cookie());
-	    obj->u_.arith.q[0] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[0], obj, 0,
+	    obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q, obj, 0,
 			  IVL_DR_STRONG, IVL_DR_STRONG);
 
       } else {
 	    assert(0);
       }
 
-      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
-	    const Nexus*nex;
-
-	    nex = swap_operands
-		  ? net->pin_DataB(idx).nexus()
-		  : net->pin_DataA(idx).nexus();
-
-	    assert(nex->t_cookie());
-
-	    obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    nex = swap_operands
-		  ? net->pin_DataA(idx).nexus()
-		  : net->pin_DataB(idx).nexus();
-
-	    assert(nex->t_cookie());
-
-	    obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
+      if (swap_operands) {
+	    ivl_nexus_t tmp = obj->u_.arith.a;
+	    obj->u_.arith.a = obj->u_.arith.b;
+	    obj->u_.arith.b = tmp;
       }
-#else
-      cerr << "XXXX: t-dll.cc: Forgot how to handle lpm_compare." << endl;
-#endif
+
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -2239,6 +2225,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.135  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.134  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.95 2005/01/09 20:16:01 steve Exp $"
+#ident "$Id: stub.c,v 1.96 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -179,6 +179,20 @@ void show_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+/* IVL_LPM_CMP_GE
+ * This LPM node supports two-input compare.
+ */
+static void show_lpm_cmp_ge(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_CMP_GE %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    A: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+      fprintf(out, "    B: %s\n", ivl_nexus_name(ivl_lpm_data(net,1)));
+}
 
 /* IVL_LPM_CONCAT
  * The concat device takes N inputs (N=ivl_lpm_selects) and generates
@@ -261,6 +275,10 @@ static void show_lpm(ivl_lpm_t net)
 		}
 		break;
 	  }
+
+	  case IVL_LPM_CMP_GE:
+	    show_lpm_cmp_ge(net);
+	    break;
 
 	  case IVL_LPM_CMP_NE: {
 		fprintf(out, "  LPM_COMPARE(NE) %s: <width=%u>\n",
@@ -827,6 +845,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.96  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.95  2005/01/09 20:16:01  steve
  *  Use PartSelect/PV and VP to handle part selects through ports.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.48 2004/12/11 02:31:25 steve Exp $"
+#ident "$Id: cprop.cc,v 1.49 2005/01/16 04:20:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -73,6 +73,8 @@ void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
 
 void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 {
+#if 0
+	/* XXXX Need to reimplement this code to account for vectors. */
       NetScope*scope = obj->scope();
 
       unsigned const_count = 0;
@@ -191,6 +193,7 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
       delete obj;
       des->add_node(tmp);
       count += 1;
+#endif
 }
 
 void cprop_functor::lpm_ff(Design*des, NetFF*obj)
@@ -958,6 +961,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.49  2005/01/16 04:20:32  steve
+ *  Implement LPM_COMPARE nodes as two-input vector functors.
+ *
  * Revision 1.48  2004/12/11 02:31:25  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
