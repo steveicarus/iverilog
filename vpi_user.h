@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.7 2002/01/24 04:19:39 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.8 2002/05/17 16:13:08 steve Exp $"
 #endif
 
 
@@ -157,6 +157,7 @@ typedef struct t_vpi_value {
 #define vpiSysTaskCall 57
 #define vpiTask        59
 #define vpiTimeVar     63
+#define vpiIndex       78
 #define vpiLeftRange   79
 #define vpiRightRange  83
 #define vpiScope       84
@@ -311,6 +312,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.8  2002/05/17 16:13:08  steve
+ *  Add vpiIndex update.
+ *
  * Revision 1.7  2002/01/24 04:19:39  steve
  *  Add the vpiLeft.. and vpiRightRange constants
  *
