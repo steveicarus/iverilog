@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.107 2005/01/10 01:42:59 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.108 2005/01/12 03:16:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1201,29 +1201,18 @@ static void draw_lpm_arith_a_b_inputs(ivl_lpm_t net)
       fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
 }
 
-static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base, unsigned ndata)
+/*
+ * This function draws any functors needed to calculate the input to
+ * this nexus, and leaves in the data array strings that can be used
+ * as functor arguments.
+ */
+static void draw_lpm_data_inputs(ivl_lpm_t net, unsigned base,
+				 unsigned ndata, const char**src_table)
 {
       unsigned idx;
       for (idx = 0 ;  idx < ndata ;  idx += 1) {
-	    unsigned width = ivl_lpm_width(net);
-	    unsigned pdx;
-
-	    assert(width > 0);
-
 	    ivl_nexus_t nex = ivl_lpm_data(net, base+idx);
-	    ivl_signal_t sig = 0;
-
-	    ivl_nexus_ptr_t np;
-	    for (pdx = 0 ;  pdx < ivl_nexus_ptrs(nex) ;  pdx += 1) {
-		  np = ivl_nexus_ptr(nex,pdx);
-		  sig = ivl_nexus_ptr_sig(np);
-		  if (sig != 0)
-			break;
-	    }
-
-	    assert(sig != 0);
-
-	    fprintf(vvp_out, ", V_%s", vvp_signal_label(sig));
+	    src_table[idx] = draw_net_input(nex);
       }
 }
 
@@ -1302,7 +1291,8 @@ static void draw_lpm_cmp(ivl_lpm_t net)
  *
  * Return the width of the final concatenation.
  */
-static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start, unsigned cnt)
+static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start,
+				  unsigned cnt, const char*src_table[])
 {
       unsigned idx;
       unsigned wid = 0;
@@ -1325,8 +1315,10 @@ static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start, unsigned cnt)
 
       fprintf(vvp_out, "]");
 
-	/* Now draw the input references themselves. */
-      draw_lpm_data_inputs(net, start, cnt);
+
+      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+	    fprintf(vvp_out, ", %s", src_table[idx]);
+      }
 
       fprintf(vvp_out, ";\n");
       return wid;
@@ -1334,11 +1326,13 @@ static unsigned lpm_concat_inputs(ivl_lpm_t net, unsigned start, unsigned cnt)
 
 static void draw_lpm_concat(ivl_lpm_t net)
 {
+      const char*src_table[4];
       unsigned icnt = ivl_lpm_selects(net);
 
       if (icnt <= 4) {
+	    draw_lpm_data_inputs(net, 0, icnt, src_table);
 	    fprintf(vvp_out, "L_%p .concat ", net);
-	    lpm_concat_inputs(net, 0, icnt);
+	    lpm_concat_inputs(net, 0, icnt, src_table);
 
       } else {
 	    unsigned idx, depth;
@@ -1355,8 +1349,9 @@ static void draw_lpm_concat(ivl_lpm_t net)
 		  if ((idx + trans) > icnt)
 			trans = icnt - idx;
 
+		  draw_lpm_data_inputs(net, idx, trans, src_table);
 		  fprintf(vvp_out, "LS_%p_0_%u .concat ", net, idx);
-		  wid = lpm_concat_inputs(net, idx, trans);
+		  wid = lpm_concat_inputs(net, idx, trans, src_table);
 
 		  tree[idx/4].base = idx;
 		  tree[idx/4].wid  = wid;
@@ -1831,6 +1826,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.108  2005/01/12 03:16:35  steve
+ *  More complete drawing of concat inputs.
+ *
  * Revision 1.107  2005/01/10 01:42:59  steve
  *  Handle concatenations with up to 16 inputs.
  *
