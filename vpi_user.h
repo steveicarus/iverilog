@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.9 2002/05/18 02:34:11 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.10 2002/05/23 03:34:46 steve Exp $"
 #endif
 
 
@@ -38,6 +38,8 @@
 #endif
 
 EXTERN_C_START
+
+# include  <stdarg.h>
 
 typedef struct __vpiHandle *vpiHandle;
 
@@ -199,6 +201,8 @@ typedef struct t_vpi_value {
 /* VPI FUNCTIONS */
 extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
 extern void vpi_printf(const char*fmt, ...);
+  /* vpi_vprintf is non-standard. */
+extern void vpi_vprintf(const char*fmt, va_list ap);
 
 extern unsigned int vpi_mcd_close(unsigned int mcd);
 extern char *vpi_mcd_name(unsigned int mcd);
@@ -313,6 +317,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.10  2002/05/23 03:34:46  steve
+ *  Export the vpi_vprintf function.
+ *
  * Revision 1.9  2002/05/18 02:34:11  steve
  *  Add vpi support for named events.
  *
