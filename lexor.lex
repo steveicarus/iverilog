@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.51 2000/10/22 22:27:59 steve Exp $"
+#ident "$Id: lexor.lex,v 1.52 2000/11/04 01:54:01 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -966,7 +966,7 @@ static void process_timescale(const char*txt)
       pform_set_timescale(unit, prec);
 }
 
-static int yywrap()
+int yywrap()
 {
       return 1;
 }

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.47 2000/09/26 01:35:43 steve Exp $"
+#ident "$Id: target.h,v 1.48 2000/11/04 01:54:01 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -38,7 +38,7 @@
  * pointer to a target_t object that is the actual driver.
  */
 struct target {
-      string name;
+      const char* name;
       struct target_t* meth;
 };
 
@@ -159,6 +159,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.48  2000/11/04 01:54:01  steve
+ *  Modifications in support of gcc 2.96
+ *
  * Revision 1.47  2000/09/26 01:35:43  steve
  *  Remove the obsolete NetEIdent class.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.54 2000/09/26 01:35:42 steve Exp $"
+#ident "$Id: emit.cc,v 1.55 2000/11/04 01:54:01 steve Exp $"
 #endif
 
 /*
@@ -467,7 +467,7 @@ bool emit(const Design*des, const char*type)
 {
       for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
 	    const struct target*tgt = target_table[idx];
-	    if (tgt->name == type)
+	    if (strcmp(tgt->name, type) == 0)
 		  return des->emit(tgt->meth);
 
       }
@@ -476,6 +476,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.55  2000/11/04 01:54:01  steve
+ *  Modifications in support of gcc 2.96
+ *
  * Revision 1.54  2000/09/26 01:35:42  steve
  *  Remove the obsolete NetEIdent class.
  *
