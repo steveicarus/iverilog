@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.18 1999/06/19 03:46:42 steve Exp $"
+#ident "$Id: main.cc,v 1.19 1999/07/10 23:29:21 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -184,10 +184,6 @@ int main(int argc, char*argv[])
       map<string,PUdp*>   primitives;
       int rc = pform_parse(argv[optind], modules, primitives);
 
-      if (rc) {
-	    return rc;
-      }
-
       if (pf_path) {
 	    ofstream out (pf_path);
 	    out << "PFORM DUMP MODULES:" << endl;
@@ -202,6 +198,10 @@ int main(int argc, char*argv[])
 		       ; idx ++ ) {
 		  (*idx).second->dump(out);
 	    }
+      }
+
+      if (rc) {
+	    return rc;
       }
 
       if (start_module == "") {
@@ -272,6 +272,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.19  1999/07/10 23:29:21  steve
+ *  pform even on parse errors.
+ *
  * Revision 1.18  1999/06/19 03:46:42  steve
  *  Add the -v switch.
  *
