@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.255 2002/07/03 05:34:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.256 2002/07/18 00:24:22 steve Exp $"
 #endif
 
 # include "config.h"
@@ -124,8 +124,10 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	    if ((rid->type() == lval->type()) && (rise_time == 0)) {
 		  unsigned idx;
-		  for (idx = 0 ;  idx < cnt; idx += 1)
-			connect(lval->pin(idx), rid->pin(idx));
+		  for (idx = 0 ;  idx < cnt; idx += 1) {
+			if (! lval->pin(idx) .is_linked (rid->pin(idx)))
+			      connect(lval->pin(idx), rid->pin(idx));
+		  }
 
 		  if (cnt < lval->pin_count()) {
 			verinum tmpv (0UL, lval->pin_count()-cnt);
@@ -2464,6 +2466,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.256  2002/07/18 00:24:22  steve
+ *  Careful with assign to self.
+ *
  * Revision 1.255  2002/07/03 05:34:59  steve
  *  Fix scope search for events.
  *
