@@ -71,6 +71,8 @@ pull1,		K_pull1
 pulldown,	K_pulldown
 pullup,		K_pullup
 rcmos,		K_rcmos
+real,		K_real
+realtime,	K_realtime
 reg,		K_reg
 release,	K_release
 repeat,		K_repeat

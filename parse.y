@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.109 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: parse.y,v 1.110 2000/12/05 22:32:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -212,6 +212,14 @@ block_item_decl
 		}
 	| K_time list_of_variables ';'
 		{ pform_set_reg_time($2);
+		}
+	| K_real list_of_variables ';'
+		{ delete $2;
+		  yyerror(@1, "sorry: real variables not supported.");
+		}
+	| K_realtime list_of_variables ';'
+		{ delete $2;
+		  yyerror(@1, "sorry: reatime variables not supported.");
 		}
 	;
 
@@ -1682,6 +1690,7 @@ range_opt
 	| { $$ = 0; }
 	;
 
+  /* This is used to express the retur type of a function. */
 range_or_type_opt
 	: range { $$ = $1; }
 	| K_integer { $$ = 0; }
@@ -1690,6 +1699,7 @@ range_or_type_opt
 	| K_time { $$ = 0; }
 	| { $$ = 0; }
 	;
+
   /* The register_variable rule is matched only when I am parsing
      variables in a "reg" definition. I therefore know that I am
      creating registers and I do not need to let the containing rule
