@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.48 2003/10/02 21:30:06 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.49 2003/10/08 23:14:29 steve Exp $"
 #endif
 
 # include "config.h"
@@ -293,7 +293,7 @@ static int sys_dumpoff_calltf(char*name)
       now64 = timerec_to_time64(&now);
 
       if (now64 > vcd_cur_time)
-	    fprintf(dump_file, "#" TIME_FMT "\n", now64);
+	    fprintf(dump_file, "#%" TIME_FMT "\n", now64);
       vcd_cur_time = now64;
 
       fprintf(dump_file, "$dumpoff\n");
@@ -815,6 +815,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.49  2003/10/08 23:14:29  steve
+ *  TIME_FMT does not include the % character.
+ *
  * Revision 1.48  2003/10/02 21:30:06  steve
  *  Use configured TIME_FMT in vcd dump printf.
  *
