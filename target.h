@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.8 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: target.h,v 1.9 1999/05/12 04:03:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -75,6 +75,7 @@ struct target_t {
 
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(ostream&os, const NetAssign*);
+      virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os,  const NetCase*);
       virtual void proc_condit(ostream&os, const NetCondit*);
@@ -121,6 +122,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.9  1999/05/12 04:03:20  steve
+ *  emit NetAssignMem objects in vvm target.
+ *
  * Revision 1.8  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.23 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: netlist.cc,v 1.24 1999/05/12 04:03:19 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -457,6 +457,7 @@ NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 	  case 'e':
 	  case 'n':
 	    expr_width(1);
+	    right_->set_width(left_->expr_width());
 	    break;
 	  default:
 	    expr_width(left_->expr_width() > right_->expr_width()
@@ -469,8 +470,8 @@ void NetEBinary::set_width(unsigned w)
 {
       switch (op_) {
 	      /* Comparison operators allow the subexpressions to have
-		 their own natural width. Do not recurse the
-		 set_width(). */
+		 their own natural width. However, I do need to make
+		 sure that the subexpressions have the same width. */
 	  case 'e':
 	    assert(w == 1);
 	    expr_width(w);
@@ -1050,6 +1051,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.24  1999/05/12 04:03:19  steve
+ *  emit NetAssignMem objects in vvm target.
+ *
  * Revision 1.23  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

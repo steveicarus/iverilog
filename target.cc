@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.8 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: target.cc,v 1.9 1999/05/12 04:03:19 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -85,6 +85,12 @@ void target_t::start_process(ostream&os, const NetProcTop*)
 
 void target_t::proc_assign(ostream&os, const NetAssign*)
 {
+}
+
+void target_t::proc_assign_mem(ostream&os, const NetAssignMem*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled memory assignment." << endl;
 }
 
 void target_t::proc_block(ostream&os, const NetBlock*)
@@ -184,6 +190,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.9  1999/05/12 04:03:19  steve
+ *  emit NetAssignMem objects in vvm target.
+ *
  * Revision 1.8  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.10 1999/05/07 01:21:18 steve Exp $"
+#ident "$Id: emit.cc,v 1.11 1999/05/12 04:03:19 steve Exp $"
 #endif
 
 /*
@@ -83,6 +83,11 @@ void NetProc::emit_proc(ostream&o, struct target_t*tgt) const
 void NetAssign::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_assign(o, this);
+}
+
+void NetAssignMem::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_assign_mem(o, this);
 }
 
 void NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
@@ -253,6 +258,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.11  1999/05/12 04:03:19  steve
+ *  emit NetAssignMem objects in vvm target.
+ *
  * Revision 1.10  1999/05/07 01:21:18  steve
  *  Handle total lack of nodes and signals.
  *

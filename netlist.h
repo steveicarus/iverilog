@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.29 1999/05/10 00:16:58 steve Exp $"
+#ident "$Id: netlist.h,v 1.30 1999/05/12 04:03:19 steve Exp $"
 #endif
 
 /*
@@ -624,6 +624,11 @@ class NetAssignMem : public NetProc, public LineInfo {
       explicit NetAssignMem(NetMemory*, NetExpr*idx, NetExpr*rv);
       ~NetAssignMem();
 
+      const NetMemory*memory()const { return mem_; }
+      const NetExpr*index()const { return index_.ref(); }
+      const NetExpr*rval()const { return rval_.ref(); }
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
@@ -1173,6 +1178,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.30  1999/05/12 04:03:19  steve
+ *  emit NetAssignMem objects in vvm target.
+ *
  * Revision 1.29  1999/05/10 00:16:58  steve
  *  Parse and elaborate the concatenate operator
  *  in structural contexts, Replace vector<PExpr*>

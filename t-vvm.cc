@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.20 1999/05/03 01:51:29 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.21 1999/05/12 04:03:19 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -50,6 +50,7 @@ class target_vvm : public target_t {
       virtual void net_event(ostream&os, const NetNEvent*);
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
+      virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_block(ostream&os, const NetBlock*);
       virtual void proc_case(ostream&os, const NetCase*net);
       virtual void proc_condit(ostream&os, const NetCondit*);
@@ -700,6 +701,17 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       }
 }
 
+void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
+{
+      string index = emit_proc_rval(os, 8, amem->index());
+      string rval = emit_proc_rval(os, 8, amem->rval());
+      const NetMemory*mem = amem->memory();
+
+      os << "        /* " << amem->get_line() << " */" << endl;
+      os << "        " << mangle(mem->name())
+	 << "[" << index << ".as_unsigned()] = " << rval << ";" << endl;
+}
+
 void target_vvm::proc_block(ostream&os, const NetBlock*net)
 {
       net->emit_recurse(os, this);
@@ -946,6 +958,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.21  1999/05/12 04:03:19  steve
+ *  emit NetAssignMem objects in vvm target.
+ *
  * Revision 1.20  1999/05/03 01:51:29  steve
  *  Restore support for wait event control.
  *
