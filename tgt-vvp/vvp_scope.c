@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.39 2001/07/09 15:38:35 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.40 2001/07/16 18:31:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -249,7 +249,8 @@ static const char* draw_net_input(ivl_nexus_t nex)
 {
       static char result[512];
       unsigned idx;
-      ivl_nexus_ptr_t drivers[4];
+      ivl_nexus_ptr_t drivers[64]; /* TODO: Arbitrary limit */
+      int level;
       unsigned ndrivers = 0;
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -263,6 +264,7 @@ static const char* draw_net_input(ivl_nexus_t nex)
 	      /* Save this driver. */
 	    drivers[ndrivers] = nptr;
 	    ndrivers += 1;
+	    assert(ndrivers <= 64);
       }
 
 	/* If the nexus has no drivers, then send a constant HiZ into
@@ -275,23 +277,41 @@ static const char* draw_net_input(ivl_nexus_t nex)
       if (ndrivers == 1)
 	    return draw_net_input_drive(nex, drivers[0]);
 
-
-      assert(ndrivers <= 4);
-
-	/* Draw a resolver to combine the inputs. */
-      fprintf(vvp_out, "RS_%s .resolv tri", 
-	      vvp_mangle_id(ivl_nexus_name(nex)));
-      fprintf(vvp_out, ", %s",
-	      draw_net_input_drive(nex, drivers[0]));
-
-      for (idx = 1 ;  idx < ndrivers ;  idx += 1)
-	    fprintf(vvp_out, ", %s", draw_net_input_drive(nex, drivers[idx]));
-
-      for ( ;  idx < 4 ;  idx += 1)
-	    fprintf(vvp_out, ", C<z>");
-
-      fprintf(vvp_out, ";\n");
-
+      level = 0;
+      while (ndrivers) {
+	    int inst;
+	    for (inst = 0; inst < ndrivers; inst += 4) {
+		  if (ndrivers > 4)
+			fprintf(vvp_out, "RS_%s/%d/%d .resolv tri", 
+				vvp_mangle_id(ivl_nexus_name(nex)),
+				level, inst);
+		  else 
+			fprintf(vvp_out, "RS_%s .resolv tri", 
+				vvp_mangle_id(ivl_nexus_name(nex)));
+		  
+		  for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
+			if (level) {
+			      fprintf(vvp_out, ", RS_%s/%d/%d",
+				      vvp_mangle_id(ivl_nexus_name(nex)),
+				      level - 1,
+				      idx*4);
+			} else {
+			      fprintf(vvp_out, ", %s",
+				      draw_net_input_drive(nex, drivers[idx]));
+			}
+		  }
+		  for ( ;  idx < inst+4 ;  idx += 1)
+			fprintf(vvp_out, ", C<z>");
+		  
+		  fprintf(vvp_out, ";\n");
+	    }
+	    if (ndrivers > 4)
+		  ndrivers = (ndrivers+3) / 4;
+	    else
+		  ndrivers = 0;
+	    level += 1;
+      }
+      
       sprintf(result, "RS_%s", vvp_mangle_id(ivl_nexus_name(nex)));
       return result;
 }
@@ -1072,6 +1092,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.40  2001/07/16 18:31:49  steve
+ *  Nest resolvers when there are lots of drivers (Stephan Boettcher)
+ *
  * Revision 1.39  2001/07/09 15:38:35  steve
  *  Properly step through wide inputs. (Stephan Boettcher)
  *
