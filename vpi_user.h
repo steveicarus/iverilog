@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.1 2001/03/19 01:21:45 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.2 2001/03/22 02:23:17 steve Exp $"
 #endif
 
 
@@ -177,7 +177,10 @@ extern void vpi_printf(const char*fmt, ...);
 extern unsigned int vpi_mcd_close(unsigned int mcd);
 extern char *vpi_mcd_name(unsigned int mcd);
 extern unsigned int vpi_mcd_open(char *name);
+extern unsigned int vpi_mcd_open_x(char *name, char *mode);
 extern int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...);
+extern int vpi_mcd_fputc(unsigned int mcd, unsigned char x);
+extern int vpi_mcd_fgetc(unsigned int mcd);
 
 /*
  * support for VPI callback functions.
@@ -266,6 +269,9 @@ extern DLLEXPORT void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.2  2001/03/22 02:23:17  steve
+ *  fgetc patch from Peter Monta.
+ *
  * Revision 1.1  2001/03/19 01:21:45  steve
  *  vpi_user header file is a root header.
  *

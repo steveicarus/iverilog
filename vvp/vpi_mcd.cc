@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_mcd.cc,v 1.1 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: vpi_mcd.cc,v 1.2 2001/03/22 02:24:05 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -81,6 +81,11 @@ char *vpi_mcd_name(unsigned int mcd)
 
 unsigned int vpi_mcd_open(char *name)
 {
+	return vpi_mcd_open_x(name,"w");
+}
+
+unsigned int vpi_mcd_open_x(char *name, char *mode)
+{
 	int i;
 	for(i = 0; i < 31; i++) {
 		if(mcd_table[i].filename == NULL)
@@ -89,7 +94,7 @@ unsigned int vpi_mcd_open(char *name)
 	return 0;  /* too many open mcd's */
 
 got_entry:
-	mcd_table[i].fp = fopen(name, "w");
+	mcd_table[i].fp = fopen(name, mode);
 	if(mcd_table[i].fp == NULL)
 		return 0;
 	mcd_table[i].filename = strdup(name);
@@ -121,3 +126,26 @@ int vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
 		return len;
 }
 
+int vpi_mcd_fputc(unsigned int mcd, unsigned char x)
+{
+	int i;
+
+	for(i = 0; i < 31; i++) {
+		if( (mcd>>i) & 1) {
+			return fputc(x, mcd_table[i].fp);
+		}
+	}
+	return 0;
+}
+
+int vpi_mcd_fgetc(unsigned int mcd)
+{
+	int i;
+
+	for(i = 0; i < 31; i++) {
+		if( (mcd>>i) & 1) {
+			return fgetc(mcd_table[i].fp);
+		}
+	}
+	return 0;
+}

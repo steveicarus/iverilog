@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.23 2001/03/18 00:31:32 steve Exp $"
+#ident "$Id: sys_display.c,v 1.24 2001/03/22 02:23:40 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -420,11 +420,13 @@ static int sys_monitor_calltf(char*name)
  */
 static int sys_fopen_calltf(char *name)
 {
-      s_vpi_value val, value;
+      s_vpi_value val, value, modevalue;
+      unsigned char *mode_string;
 
       vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
       vpiHandle item = vpi_scan(argv);
+      vpiHandle mode = vpi_scan(argv);
 
       if (item == 0) {
 	    vpi_printf("%s: file name parameter missing.\n", name);
@@ -443,11 +445,30 @@ static int sys_fopen_calltf(char *name)
 	    return 0;
       }
 
+      if (mode == 0) {
+            mode_string = "w";
+      } else {
+	    if (vpi_get(vpiType, mode) != vpiConstant) {
+		vpi_printf("ERROR: %s parameter must be a constant\n", name);
+		vpi_free_object(argv);
+	        return 0;
+	    }
+
+           if (vpi_get(vpiConstType, mode) != vpiStringConst) {
+               vpi_printf("ERROR: %s parameter must be a string.\n", name);
+               vpi_free_object(argv);
+               return 0;
+           }
+           modevalue.format = vpiStringVal;
+           vpi_get_value(mode, &modevalue);
+           mode_string = modevalue.value.str;
+      }
+
       value.format = vpiStringVal;
       vpi_get_value(item, &value);
 
       val.format = vpiIntVal;
-      val.value.integer = vpi_mcd_open( value.value.str );
+      val.value.integer = vpi_mcd_open_x( value.value.str, mode_string );
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
@@ -533,6 +554,80 @@ static int sys_fclose_calltf(char *name)
       return 0;
 }
 
+static int sys_fputc_calltf(char *name)
+{
+      unsigned int mcd;
+      int type;
+      unsigned char x;
+      s_vpi_value value, xvalue;
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    return 0;
+      }
+
+      type = vpi_get(vpiType, item);
+      if (type != vpiReg && type != vpiRealVal) {
+	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
+		       name, type);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiIntVal;
+      vpi_get_value(item, &value);
+      mcd = value.value.integer;
+
+      item = vpi_scan(argv);
+
+      xvalue.format = vpiIntVal;
+      vpi_get_value(item, &xvalue);
+      x = xvalue.value.integer;
+
+      return vpi_mcd_fputc( mcd, x );
+}
+
+static int sys_fgetc_calltf(char *name)
+{
+      unsigned int mcd;
+      int type;
+      s_vpi_value value, rval;
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+
+      if (item == 0) {
+	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    return 0;
+      }
+
+      type = vpi_get(vpiType, item);
+      if (type != vpiReg && type != vpiRealVal) {
+	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
+		       name, type);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      value.format = vpiIntVal;
+      vpi_get_value(item, &value);
+      mcd = value.value.integer;
+
+      rval.format = vpiIntVal;
+      rval.value.integer = vpi_mcd_fgetc( mcd );
+
+      vpi_put_value(sys, &rval, 0, vpiNoDelay);
+
+      return 0;
+}
+
+static int sys_fgetc_sizetf(char*x)
+{
+      return 32;
+}
 
 void sys_display_register()
 {
@@ -601,11 +696,30 @@ void sys_display_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$fwrite";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$fputc";
+      tf_data.calltf    = sys_fputc_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fputc";
+      vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysFunc;
+      tf_data.tfname    = "$fgetc";
+      tf_data.calltf    = sys_fgetc_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = sys_fgetc_sizetf;
+      tf_data.user_data = "$fgetc";
+      vpi_register_systf(&tf_data);
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.24  2001/03/22 02:23:40  steve
+ *  fgetc patch from Peter Monta.
+ *
  * Revision 1.23  2001/03/18 00:31:32  steve
  *  $display can take 0 arguments.
  *
