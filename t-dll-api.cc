@@ -17,12 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.3 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.4 2000/09/23 05:15:07 steve Exp $"
 #endif
 
 # include  "t-dll.h"
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
+
+extern "C" ivl_expr_type_t ivl_expr_type(ivl_expr_t net)
+{
+      return net->type_;
+}
 
 extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
 {
@@ -32,6 +37,12 @@ extern "C" const char*ivl_get_flag(ivl_design_t des, const char*key)
 extern "C" const char*ivl_get_root_name(ivl_design_t des)
 {
       return ((const Design*)des)->find_root_scope()->name().c_str();
+}
+
+extern "C" const char* ivl_expr_string(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_STRING);
+      return net->u_.string_.value_;
 }
 
 extern "C" ivl_logic_t ivl_get_logic_type(ivl_net_logic_t net)
@@ -133,6 +144,30 @@ extern "C" const char* ivl_stmt_name(ivl_statement_t net)
       return 0;
 }
 
+extern "C" ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx)
+{
+      switch (net->type_) {
+	  case IVL_ST_STASK:
+	    assert(idx < net->u_.stask_.nparm_);
+	    return net->u_.stask_.parms_[idx];
+
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
+extern "C" unsigned ivl_stmt_parm_count(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_STASK:
+	    return net->u_.stask_.nparm_;
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
 extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 {
       switch (net->type_) {
@@ -151,6 +186,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.4  2000/09/23 05:15:07  steve
+ *  Add enough tgt-verilog code to support hello world.
+ *
  * Revision 1.3  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *

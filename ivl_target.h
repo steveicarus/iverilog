@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.9 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.10 2000/09/23 05:15:07 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -58,7 +58,7 @@ _BEGIN_DECL
  * around.
  */
 typedef struct ivl_design_s *ivl_design_t;
-
+typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_net_bufz_s *ivl_net_bufz_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_event_s*ivl_net_event_t;
@@ -75,6 +75,12 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * explicit values so that the binary API is a bit more resilient to
  * changes and additions to the enumerations.
  */
+
+typedef enum ivl_expr_type_e {
+      IVL_EX_NONE = 0,
+      IVL_EX_NUMBER,
+      IVL_EX_STRING
+} ivl_expr_type_t;
 
 typedef enum ivl_logic_e {
       IVL_LO_NONE = 0,
@@ -125,6 +131,17 @@ extern const char* ivl_get_flag(ivl_design_t, const char*key);
 
 /* Get the name of the root module. This can be used as the design name. */
 extern const char* ivl_get_root_name(ivl_design_t net);
+
+/* EXPRESSION
+ * These methods operate on expression objects from the
+ * design. Expressions mainly exist in behavioral code. The
+ * ivl_expr_type() function returns the type of the expression node,
+ * and the remaining functions access value bits of the expression.
+ */
+extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
+
+extern const char* ivl_expr_string(ivl_expr_t net);
+
 
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
@@ -194,6 +211,10 @@ extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
+  /* IVL_ST_STASK */
+extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
+  /* IVL_ST_STASK */
+extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
@@ -303,6 +324,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.10  2000/09/23 05:15:07  steve
+ *  Add enough tgt-verilog code to support hello world.
+ *
  * Revision 1.9  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *

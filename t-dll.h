@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.3 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: t-dll.h,v 1.4 2000/09/23 05:15:07 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -32,7 +32,7 @@
  * DLL will call me back to get information out of the netlist in
  * particular.
  */
-struct dll_target  : public target_t {
+struct dll_target  : public target_t, public expr_scan_t {
 
       bool start_design(const Design*);
       void end_design(const Design*);
@@ -75,13 +75,24 @@ struct dll_target  : public target_t {
       void proc_stask(const NetSTask*);
       bool proc_wait(const NetEvWait*);
       void proc_while(const NetWhile*);
-};
 
+      struct ivl_expr_s*expr_;
+      void expr_const(const NetEConst*net);
+};
 
 /*
  * These are various private declarations used by the t-dll target.
  */
 
+struct ivl_expr_s {
+      ivl_expr_type_t type_;
+
+      union {
+	    struct {
+		  char*value_;
+	    } string_;
+      } u_;
+};
 
 struct ivl_net_const_s {
       const NetConst*con_;
@@ -125,6 +136,8 @@ struct ivl_statement_s {
 
 	    struct { /* IVL_ST_STASK */
 		  char* name_;
+		  unsigned nparm_;
+		  ivl_expr_t*parms_;
 	    } stask_;
 
 	    struct { /* IVL_ST_WAIT */
@@ -141,6 +154,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.4  2000/09/23 05:15:07  steve
+ *  Add enough tgt-verilog code to support hello world.
+ *
  * Revision 1.3  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *

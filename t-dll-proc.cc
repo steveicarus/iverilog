@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.3 2000/09/22 03:58:30 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.4 2000/09/23 05:15:07 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -196,11 +196,22 @@ bool dll_target::proc_delay(const NetPDelay*net)
 
 void dll_target::proc_stask(const NetSTask*net)
 {
+      unsigned nparms = net->nparms();
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_STASK;
       stmt_cur_->u_.stask_.name_ = strdup(net->name());
+      stmt_cur_->u_.stask_.nparm_= nparms;
+      stmt_cur_->u_.stask_.parms_= (ivl_expr_t*)
+	    calloc(nparms, sizeof(ivl_expr_t));
+
+      for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
+	    expr_ = 0;
+	    net->parm(idx)->expr_scan(this);
+	    stmt_cur_->u_.stask_.parms_[idx] = expr_;
+      }
+
 }
 
 bool dll_target::proc_wait(const NetEvWait*net)
@@ -243,6 +254,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.4  2000/09/23 05:15:07  steve
+ *  Add enough tgt-verilog code to support hello world.
+ *
  * Revision 1.3  2000/09/22 03:58:30  steve
  *  Access to the name of a system task call.
  *
