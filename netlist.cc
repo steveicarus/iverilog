@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.63 1999/09/16 00:33:45 steve Exp $"
+#ident "$Id: netlist.cc,v 1.64 1999/09/16 04:18:15 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -749,6 +749,22 @@ NetExpr* NetExpr::eval_tree()
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
 : NetEBinary(op, l, r)
 {
+      if (l->expr_width() > r->expr_width())
+	    r->set_width(l->expr_width());
+
+      if (r->expr_width() > l->expr_width())
+	    l->set_width(r->expr_width());
+
+      if (l->expr_width() < r->expr_width())
+	    r->set_width(l->expr_width());
+
+      if (r->expr_width() < l->expr_width())
+	    l->set_width(r->expr_width());
+
+      if (r->expr_width() != l->expr_width())
+	    expr_width(0);
+      else
+	    expr_width(l->expr_width());
 }
 
 NetEBAdd::~NetEBAdd()
@@ -834,8 +850,6 @@ NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
       switch (op_) {
-	  case '+':
-	  case '-':
 	  case '^':
 	  case '&':
 	  case '|':
@@ -950,8 +964,8 @@ NetExpr* NetEBinary::eval_tree()
       }
 }
 
-NetEConcat::NetEConcat(unsigned cnt)
-: parms_(cnt)
+NetEConcat::NetEConcat(unsigned cnt, unsigned r)
+: parms_(cnt), repeat_(r)
 {
       expr_width(0);
 }
@@ -970,12 +984,24 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       expr_width( expr_width() + e->expr_width() );
 }
 
+/*
+ * Add up the widths from all the expressions that are concatenated
+ * together. This is the width of the expression, tough luck if you
+ * want it otherwise.
+ *
+ * If during the course of elaboration one of the sub-expressions is
+ * broken, then don't count it in the width. This doesn't really
+ * matter because the null expression is indication of an error and
+ * the compiler will not go beyond elaboration.
+ */
 bool NetEConcat::set_width(unsigned w)
 {
       unsigned sum = 0;
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
-	    sum += parms_[idx]->expr_width();
+	    if (parms_[idx] != 0)
+		  sum += parms_[idx]->expr_width();
 
+      sum *= repeat_;
       expr_width(sum);
       if (sum != w) return false;
       return true;
@@ -983,7 +1009,16 @@ bool NetEConcat::set_width(unsigned w)
 
 NetEConcat* NetEConcat::dup_expr() const
 {
-      assert(0);
+      NetEConcat*dup = new NetEConcat(parms_.count());
+      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+	    if (parms_[idx]) {
+		  assert(parms_[idx]->dup_expr());
+		  dup->parms_[idx] = parms_[idx]->dup_expr();
+	    }
+
+
+      dup->expr_width(expr_width());
+      return dup;
 }
 
 NetEConst::~NetEConst()
@@ -1801,6 +1836,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.64  1999/09/16 04:18:15  steve
+ *  elaborate concatenation repeats.
+ *
  * Revision 1.63  1999/09/16 00:33:45  steve
  *  Handle implicit !=0 in if statements.
  *

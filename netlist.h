@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.64 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: netlist.h,v 1.65 1999/09/16 04:18:15 steve Exp $"
 #endif
 
 /*
@@ -1236,12 +1236,13 @@ class NetEBComp : public NetEBinary {
 class NetEConcat  : public NetExpr {
 
     public:
-      NetEConcat(unsigned cnt);
+      NetEConcat(unsigned cnt, unsigned repeat =1);
       ~NetEConcat();
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
 
+      unsigned repeat() const { return repeat_; }
       unsigned nparms() const { return parms_.count() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
@@ -1252,6 +1253,7 @@ class NetEConcat  : public NetExpr {
 
     private:
       svector<NetExpr*>parms_;
+      unsigned repeat_;
 };
 
 class NetEConst  : public NetExpr {
@@ -1582,6 +1584,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.65  1999/09/16 04:18:15  steve
+ *  elaborate concatenation repeats.
+ *
  * Revision 1.64  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *

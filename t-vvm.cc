@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.41 1999/09/11 04:43:17 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.42 1999/09/16 04:18:15 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -129,6 +129,7 @@ class vvm_proc_rval  : public expr_scan_t {
 
 void vvm_proc_rval::expr_concat(const NetEConcat*expr)
 {
+      assert(expr->repeat() == 1);
       string tname = make_temp();
       os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
 	    expr->expr_width() << "> " << tname << ";" << endl;
@@ -1441,6 +1442,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.42  1999/09/16 04:18:15  steve
+ *  elaborate concatenation repeats.
+ *
  * Revision 1.41  1999/09/11 04:43:17  steve
  *  Support ternary and <= operators in vvm.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.cc,v 1.8 1999/09/15 04:17:52 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.9 1999/09/16 04:18:15 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -62,7 +62,7 @@ bool PEBinary::is_constant(Module*mod) const
 
 bool PEConcat::is_constant(Module *mod) const
 {
-      bool constant = repeat_->is_constant(mod);
+      bool constant = repeat_? repeat_->is_constant(mod) : true;
       for (unsigned i = 0; constant && i < parms_.count(); ++i) {
 	    constant = constant && parms_[i]->is_constant(mod);
       }
@@ -119,6 +119,9 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.9  1999/09/16 04:18:15  steve
+ *  elaborate concatenation repeats.
+ *
  * Revision 1.8  1999/09/15 04:17:52  steve
  *  separate assign lval elaboration for error checking.
  *

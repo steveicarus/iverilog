@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.87 1999/09/16 00:33:45 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.88 1999/09/16 04:18:15 steve Exp $"
 #endif
 
 /*
@@ -1370,17 +1370,32 @@ NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
 
 NetExpr* PEConcat::elaborate_expr(Design*des, const string&path) const
 {
+      unsigned repeat = 1;
+
+	/* If there is a repeat expression, then evaluate the constant
+	   value and set the repeat count. */
       if (repeat_) {
-	    cerr << get_line() << ": Sorry, I do not know how to"
-		  " elaborate repeat concatenation expressions." << endl;
-	    return 0;
+	    verinum*vrep = repeat_->eval_const(des, path);
+	    if (vrep == 0) {
+		  cerr << get_line() << ": concatenation repeat expression"
+			" cannot be evaluated." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    repeat = vrep->as_ulong();
+	    delete vrep;
       }
 
-      NetEConcat*tmp = new NetEConcat(parms_.count());
+	/* Make the empty concat expression. */
+      NetEConcat*tmp = new NetEConcat(parms_.count(), repeat);
       tmp->set_line(*this);
 
+	/* Elaborate all the parameters and attach them to the concat node. */
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    assert(parms_[idx]);
+	    NetExpr*ex = parms_[idx]->elaborate_expr(des, path);
+	    if (ex == 0) continue;
 	    tmp->set(idx, parms_[idx]->elaborate_expr(des, path));
       }
 
@@ -2585,6 +2600,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.88  1999/09/16 04:18:15  steve
+ *  elaborate concatenation repeats.
+ *
  * Revision 1.87  1999/09/16 00:33:45  steve
  *  Handle implicit !=0 in if statements.
  *
