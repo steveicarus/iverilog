@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.63 2003/06/18 03:55:19 steve Exp $"
+#ident "$Id: codes.h,v 1.64 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 
@@ -27,7 +27,6 @@
 # include  "memory.h"
 # include  "vthread.h"
 
-typedef struct vvp_code_s *vvp_code_t;
 typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
 
 /*
@@ -122,6 +121,8 @@ extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 extern bool of_FORK_UFUNC(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t code);
 
+extern bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code);
+
 /*
  * This is the format of a machine code instruction.
  */
@@ -131,7 +132,7 @@ struct vvp_code_s {
       union {
 	    unsigned long number;
 	    vvp_ipoint_t iptr;
-	    vvp_cpoint_t cptr;
+	    vvp_code_t   cptr;
 	    vvp_memory_t mem;
 	    struct __vpiHandle*handle;
 	    struct __vpiScope*scope;
@@ -141,7 +142,7 @@ struct vvp_code_s {
       union {
 	    unsigned bit_idx[2];
 	    vvp_ipoint_t iptr2;
-	    vvp_cpoint_t cptr2;
+	    vvp_code_t   cptr2;
 	    struct ufunc_core*ufunc_core_ptr;
       };
 };
@@ -155,25 +156,21 @@ extern void codespace_init(void);
 
 /*
  * This function returns a pointer to the next free instruction in the
- * code address space.
+ * code address space. The codespace_next returns a pointer to the
+ * next opcode that will be allocated. This is used by label
+ * statements to get the address that will be attached to a label in
+ * the code.
  */
-extern vvp_cpoint_t codespace_allocate(void);
-
-extern vvp_cpoint_t codespace_next(void);
-
-
-/*
- * Return a pointer to the indexed instruction in the codespace. The
- * ptr must be a value returned from codespace_allocate. The compiler
- * can use this to get a handle on the instruction to be created, and
- * the runtime uses this to get the instruction addressed by the PC or
- * by a branch instruction.
- */
-extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
+extern vvp_code_t codespace_allocate(void);
+extern vvp_code_t codespace_next(void);
+extern vvp_code_t codespace_null(void);
 
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.64  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.63  2003/06/18 03:55:19  steve
  *  Add arithmetic shift operators.
  *

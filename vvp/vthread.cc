@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.111 2003/06/18 03:55:19 steve Exp $"
+#ident "$Id: vthread.cc,v 1.112 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -93,7 +93,7 @@
 
 struct vthread_s {
 	/* This is the program counter. */
-      unsigned long pc;
+      vvp_code_t pc;
 	/* These hold the private thread bits. */
       unsigned long *bits;
 
@@ -221,7 +221,7 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 /*
  * Create a new thread with the given start address.
  */
-vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
+vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
@@ -236,7 +236,7 @@ vthread_t vthread_new(unsigned long pc, struct __vpiScope*scope)
 	   easier to work with. */
       if (scope->threads == 0) {
 	    scope->threads = new struct vthread_s;
-	    scope->threads->pc = 0;
+	    scope->threads->pc = codespace_null();
 	    scope->threads->bits   = 0;
 	    scope->threads->nbits  = 0;
 	    scope->threads->child  = 0;
@@ -291,7 +291,7 @@ static void vthread_reap(vthread_t thr)
       thr->scope_next->scope_prev = thr->scope_prev;
       thr->scope_prev->scope_next = thr->scope_next;
 
-      thr->pc = 0;
+      thr->pc = codespace_null();
 
 	/* If this thread is not scheduled, then is it safe to delete
 	   it now. Otherwise, let the schedule event (which will
@@ -327,7 +327,7 @@ void vthread_run(vthread_t thr)
 	    thr->is_scheduled = 0;
 
 	    for (;;) {
-		  vvp_code_t cp = codespace_index(thr->pc);
+		  vvp_code_t cp = thr->pc;
 		  thr->pc += 1;
 
 		  assert(cp);
@@ -343,6 +343,17 @@ void vthread_run(vthread_t thr)
 
 	    thr = tmp;
       }
+}
+
+/*
+ * The CHUNK_LINK instruction is a specla next pointer for linking
+ * chunks of code space. It's like a simplified %jmp.
+ */
+bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code)
+{
+      assert(code->cptr);
+      thr->pc = code->cptr;
+      return true;
 }
 
 /*
@@ -868,7 +879,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 
 	/* Turn the thread off by setting is program counter to
 	   zero and setting an OFF bit. */
-      thr->pc = 0;
+      thr->pc = codespace_null();
       thr->i_have_ended = 1;
 
 	/* Turn off all the children of the thread. Simulate a %join
@@ -1288,7 +1299,7 @@ bool of_END(vthread_t thr, vvp_code_t)
       assert(! thr->waiting_for_event);
       assert( thr->fork_count == 0 );
       thr->i_have_ended = 1;
-      thr->pc = 0;
+      thr->pc = codespace_null();
 
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
@@ -2691,7 +2702,7 @@ bool of_XOR(vthread_t thr, vvp_code_t cp)
 
 bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 {
-      thr->pc = 0;
+      thr->pc = codespace_null();
       if ((thr->parent == 0) && (thr->child == 0))
 	    delete thr;
 
@@ -2745,6 +2756,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.112  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.111  2003/06/18 03:55:19  steve
  *  Add arithmetic shift operators.
  *
@@ -2780,44 +2794,5 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
  *
  * Revision 1.100  2003/02/06 17:41:47  steve
  *  Add the %sub/wr instruction.
- *
- * Revision 1.99  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.98  2003/01/26 18:16:22  steve
- *  Add %cvt/ir and %cvt/ri instructions, and support
- *  real values passed as arguments to VPI tasks.
- *
- * Revision 1.97  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.96  2003/01/06 23:57:26  steve
- *  Schedule wait lists of threads as a single event,
- *  to save on events. Also, improve efficiency of
- *  event_s allocation. Add some event statistics to
- *  get an idea where performance is really going.
- *
- * Revision 1.95  2002/11/22 00:01:50  steve
- *  Careful of left operands to shift that are constant.
- *
- * Revision 1.94  2002/11/21 22:43:14  steve
- *  %set/x0 instruction to support bounds checking.
- *
- * Revision 1.93  2002/11/08 04:59:58  steve
- *  Add the %assign/v0 instruction.
- *
- * Revision 1.92  2002/11/07 03:11:43  steve
- *  functor_set takes bit and strength, not 2 strengths.
- *
- * Revision 1.91  2002/11/07 02:32:39  steve
- *  Add vector set and load instructions.
- *
- * Revision 1.90  2002/11/05 03:46:44  steve
- *  Fix mask calculate when MOV_b is right on the word boundary.
- *
- * Revision 1.89  2002/09/21 23:47:30  steve
- *  Remove some now useless asserts.
  */
 

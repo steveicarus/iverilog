@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pointers.h,v 1.9 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: pointers.h,v 1.10 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 /*
@@ -88,8 +88,6 @@ inline unsigned ipoint_port(vvp_ipoint_t func)
       return func & 3;
 }
 
-typedef unsigned vvp_cpoint_t;
-
 /*
  * The functor event mode uses a pointer of this type to point to the
  * extended event data.
@@ -111,6 +109,9 @@ typedef struct vvp_delay_s *vvp_delay_t;
 
 /*
  * $Log: pointers.h,v $
+ * Revision 1.10  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.9  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

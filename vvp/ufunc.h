@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.h,v 1.2 2002/08/12 01:35:08 steve Exp $"
+#ident "$Id: ufunc.h,v 1.3 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -45,7 +45,7 @@ class ufunc_core {
     public:
       ufunc_core(unsigned ow, vvp_ipoint_t ob, vvp_ipoint_t*op,
 		 unsigned np, vvp_ipoint_t*p,
-		 vvp_cpoint_t start_address,
+		 vvp_code_t start_address,
 		 struct __vpiScope*run_scope);
       ~ufunc_core();
 
@@ -70,7 +70,7 @@ class ufunc_core {
 	// function.
       vthread_t thread_;
       struct __vpiScope*scope_;
-      vvp_cpoint_t code_;
+      vvp_code_t code_;
 
 	// Save the input bits as I receive them.
       unsigned char*ibits_;
@@ -78,6 +78,9 @@ class ufunc_core {
 
 /*
  * $Log: ufunc.h,v $
+ * Revision 1.3  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.2  2002/08/12 01:35:08  steve
  *  conditional ident string using autoconfig.
  *

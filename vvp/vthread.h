@@ -1,7 +1,7 @@
 #ifndef __vthread_H
 #define __vthread_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.h,v 1.10 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: vthread.h,v 1.11 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 /*
@@ -33,14 +33,15 @@
  * fetching the next instruction.
  */
 
-typedef struct vthread_s*vthread_t;
+typedef struct vthread_s* vthread_t;
+typedef struct vvp_code_s*vvp_code_t;
 
 /*
  * This creates a new simulation thread, with the given start
  * address. The generated thread is ready to run, but is not yet
  * scheduled.
  */
-extern vthread_t vthread_new(unsigned long sa, struct __vpiScope*scope);
+extern vthread_t vthread_new(vvp_code_t sa, struct __vpiScope*scope);
 
 /*
  * This function marks the thread as scheduled. It is used only by the
@@ -76,6 +77,9 @@ extern void vthread_put_real(struct vthread_s*thr, unsigned addr, double val);
 
 /*
  * $Log: vthread.h,v $
+ * Revision 1.11  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.10  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.3 2003/05/07 03:39:12 steve Exp $"
+#ident "$Id: ufunc.cc,v 1.4 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -41,7 +41,7 @@
 
 ufunc_core::ufunc_core(unsigned ow, vvp_ipoint_t ob, vvp_ipoint_t*op,
 		       unsigned np, vvp_ipoint_t*p,
-		       vvp_cpoint_t start_address,
+		       vvp_code_t start_address,
 		       struct __vpiScope*run_scope)
 : owid_(ow), obase_(ob), oports_(op), nports_(np), ports_(p)
 {
@@ -186,24 +186,19 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   $join_ufunc then copies the output values to the
 	   destination net functors. */
 
-      vvp_cpoint_t start_address = codespace_allocate();
-      vvp_code_t start_code = codespace_index(start_address);
+      vvp_code_t start_code = codespace_allocate();
       start_code->opcode = of_FORK_UFUNC;
       code_label_lookup(start_code, code);
 
-      { vvp_cpoint_t cur = codespace_allocate();
-        vvp_code_t codep = codespace_index(cur);
+      { vvp_code_t codep = codespace_allocate();
 	codep->opcode = &of_JOIN;
       }
 
       vvp_code_t ujoin_code;
-      { vvp_cpoint_t cur = codespace_allocate();
-        ujoin_code = codespace_index(cur);
-	ujoin_code->opcode = &of_JOIN_UFUNC;
-      }
+      ujoin_code = codespace_allocate();
+      ujoin_code->opcode = &of_JOIN_UFUNC;
 
-      { vvp_cpoint_t cur = codespace_allocate();
-        vvp_code_t codep = codespace_index(cur);
+      { vvp_code_t codep = codespace_allocate();
 	codep->opcode = &of_END;
       }
 
@@ -213,7 +208,7 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   point to this core to deliver input. */
       ufunc_core*core = new ufunc_core(wid, obase, rets,
 				       portc, ports,
-				       start_address,
+				       start_code,
 				       vpip_peek_current_scope());
       start_code->ufunc_core_ptr = core;
       ujoin_code->ufunc_core_ptr = core;
@@ -241,6 +236,9 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 
 /*
  * $Log: ufunc.cc,v $
+ * Revision 1.4  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.3  2003/05/07 03:39:12  steve
  *  ufunc calls to functions can have scheduling complexities.
  *

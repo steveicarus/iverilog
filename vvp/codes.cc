@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.cc,v 1.12 2002/08/12 01:35:07 steve Exp $"
+#ident "$Id: codes.cc,v 1.13 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -25,97 +25,79 @@
 # include  <string.h>
 # include  <assert.h>
 
+/*
+ * The code space is broken into chunks, to make for efficient
+ * allocation of large amounts. Each chunk is an array of vvp_code_s
+ * structures, with the last opcode loaded with an of_CHUNK_LINK
+ * instruction to branch to the next chunk. This handles the case
+ * where the program counter steps off the end of a chunk.
+ */
+const unsigned code_chunk_size = 1024;
 
-const unsigned code_index0_size = 2 << 9;
-const unsigned code_index1_size = 2 << 11;
-const unsigned code_index2_size = 2 << 10;
-
-struct code_index0 {
-      struct vvp_code_s table[code_index0_size];
-};
-
-struct code_index1 {
-      struct code_index0* table[code_index1_size];
-};
-
-static vvp_cpoint_t code_count = 0;
-static struct code_index1*code_table[code_index2_size] = { 0 };
+static struct vvp_code_s *first_chunk = 0;
+static struct vvp_code_s *current_chunk = 0;
+static unsigned current_within_chunk = 0;
 
 /*
- * This initializes the code space. It sets up a code table and places
- * at address 0 a ZOMBIE instruction.
+ * This initializes the code space. It sets up the first code chunk,
+ * and places at address 0 a ZOMBIE instruction.
  */
 void codespace_init(void)
 {
-      code_table[0] = new struct code_index1;
-      memset(code_table[0], 0, sizeof (struct code_index1));
-      code_table[0]->table[0] = new struct code_index0;
-      memset(code_table[0]->table[0], 0, sizeof(struct code_index0));
+      assert(current_chunk == 0);
+      first_chunk = new struct vvp_code_s [code_chunk_size];
+      current_chunk = first_chunk;
 
-      vvp_code_t cp = code_table[0]->table[0]->table + 0;
-      cp->opcode = &of_ZOMBIE;
+      current_chunk[0].opcode = &of_ZOMBIE;
 
-      code_count = 1;
-      size_opcodes += sizeof(struct code_index1);
-      size_opcodes += sizeof(struct code_index0);
+      current_chunk[code_chunk_size-1].opcode = &of_CHUNK_LINK;
+      current_chunk[code_chunk_size-1].cptr = 0;
+
+      current_within_chunk = 1;
+
+      count_opcodes = 0;
+      size_opcodes += code_chunk_size * sizeof (struct vvp_code_s);
 }
 
-vvp_cpoint_t codespace_allocate(void)
+vvp_code_t codespace_next(void)
 {
-      vvp_cpoint_t idx = code_count;
+      if (current_within_chunk == (code_chunk_size-1)) {
+	    current_chunk[code_chunk_size-1].cptr
+		  = new struct vvp_code_s [code_chunk_size];
+	    current_chunk = current_chunk[code_chunk_size-1].cptr;
 
-      idx /= code_index0_size;
+	      /* Put a link opcode on the end of the chunk. */
+	    current_chunk[code_chunk_size-1].opcode = &of_CHUNK_LINK;
+	    current_chunk[code_chunk_size-1].cptr   = 0;
 
-      unsigned index1 = idx % code_index1_size;
-      idx /= code_index1_size;
+	    current_within_chunk = 0;
 
-      assert(idx < code_index2_size);
-
-      if (code_table[idx] == 0) {
-	    code_table[idx] = new struct code_index1;
-	    memset(code_table[idx], 0, sizeof(struct code_index1));
-	    size_opcodes += sizeof(struct code_index1);
+	    size_opcodes += code_chunk_size * sizeof (struct vvp_code_s);
       }
 
-      if (code_table[idx]->table[index1] == 0) {
-	    code_table[idx]->table[index1] = new struct code_index0;
-	    memset(code_table[idx]->table[index1],
-		   0, sizeof(struct code_index0));
-	    size_opcodes += sizeof(struct code_index0);
-      }
-
-      vvp_cpoint_t res = code_count;
-      code_count += 1;
-      count_opcodes += 1;
+      vvp_code_t res = current_chunk + current_within_chunk;
       return res;
 }
 
-vvp_cpoint_t codespace_next(void)
+vvp_code_t codespace_allocate(void)
 {
-      return code_count;
+      vvp_code_t res = codespace_next();
+      current_within_chunk += 1;
+      count_opcodes += 1;
+
+      return res;
 }
 
-unsigned code_limit(void)
+vvp_code_t codespace_null(void)
 {
-      return code_count;
+      return first_chunk + 0;
 }
-
-vvp_code_t codespace_index(vvp_cpoint_t point)
-{
-      assert(point < code_count);
-
-      unsigned index0 = point % code_index0_size;
-      point /= code_index0_size;
-
-      unsigned index1 = point % code_index1_size;
-      point /= code_index1_size;
-
-      return code_table[point]->table[index1]->table + index0;
-}
-
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.13  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.12  2002/08/12 01:35:07  steve
  *  conditional ident string using autoconfig.
  *
@@ -124,34 +106,5 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
  *
  * Revision 1.10  2002/07/05 02:50:58  steve
  *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.9  2002/03/01 05:43:59  steve
- *  Initialize all the codes tables.
- *
- * Revision 1.8  2001/05/09 04:23:18  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.7  2001/04/13 03:55:18  steve
- *  More complete reap of all threads.
- *
- * Revision 1.6  2001/04/01 06:40:44  steve
- *  Support empty statements for hanging labels.
- *
- * Revision 1.5  2001/03/22 05:28:41  steve
- *  Add code label forward references.
- *
- * Revision 1.4  2001/03/22 05:08:00  steve
- *  implement %load, %inv, %jum/0 and %cmp/u
- *
- * Revision 1.3  2001/03/20 06:16:23  steve
- *  Add support for variable vectors.
- *
- * Revision 1.2  2001/03/11 23:06:49  steve
- *  Compact the vvp_code_s structure.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
  */
 

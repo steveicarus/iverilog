@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.166 2003/06/18 03:55:19 steve Exp $"
+#ident "$Id: compile.cc,v 1.167 2003/07/03 20:03:36 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -495,9 +495,9 @@ bool code_label_resolv_list_s::resolve(bool mes)
       symbol_value_t val = sym_get_value(sym_codespace, label);
       if (val.num) {
 	    if (code->opcode == of_FORK)
-		  code->cptr2 = val.num;
+		  code->cptr2 = reinterpret_cast<vvp_code_t>(val.ptr);
 	    else
-		  code->cptr = val.num;
+		  code->cptr = reinterpret_cast<vvp_code_t>(val.ptr);
 	    free(label);
 	    return true;
       }
@@ -1218,8 +1218,6 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       if (label) 
 	    compile_codelabel(label);
 
-      vvp_cpoint_t ptr = codespace_allocate();
-
 	/* Lookup the opcode in the opcode table. */
       struct opcode_table_s*op = (struct opcode_table_s*)
 	    bsearch(mnem, opcode_table, opcode_count,
@@ -1233,7 +1231,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 
 	/* Build up the code from the information about the opcode and
 	   the information from the compiler. */
-      vvp_code_t code = codespace_index(ptr);
+      vvp_code_t code = codespace_allocate();
       code->opcode = op->opcode;
 
       if (op->argc != (opa? opa->argc : 0)) {
@@ -1362,9 +1360,9 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 void compile_codelabel(char*label)
 {
       symbol_value_t val;
-      vvp_cpoint_t ptr = codespace_next();
+      vvp_code_t ptr = codespace_next();
 
-      val.num = ptr;
+      val.ptr = ptr;
       sym_set_value(sym_codespace, label, val);
 
       free(label);
@@ -1376,10 +1374,8 @@ void compile_disable(char*label, struct symb_s symb)
       if (label) 
 	    compile_codelabel(label);
 
-      vvp_cpoint_t ptr = codespace_allocate();
-
 	/* Fill in the basics of the %disable in the instruction. */
-      vvp_code_t code = codespace_index(ptr);
+      vvp_code_t code = codespace_allocate();
       code->opcode = of_DISABLE;
 
       compile_vpi_lookup(&code->handle, symb.text);
@@ -1396,10 +1392,9 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       if (label) 
 	    compile_codelabel(label);
 
-      vvp_cpoint_t ptr = codespace_allocate();
 
 	/* Fill in the basics of the %fork in the instruction. */
-      vvp_code_t code = codespace_index(ptr);
+      vvp_code_t code = codespace_allocate();
       code->opcode = of_FORK;
 
 	/* Figure out the target PC. */
@@ -1414,10 +1409,8 @@ void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
       if (label)
 	    compile_codelabel(label);
 
-      vvp_cpoint_t ptr = codespace_allocate();
-
 	/* Create an instruction in the code space. */
-      vvp_code_t code = codespace_index(ptr);
+      vvp_code_t code = codespace_allocate();
       code->opcode = &of_VPI_CALL;
 
 	/* Create a vpiHandle that bundles the call information, and
@@ -1437,10 +1430,8 @@ void compile_vpi_func_call(char*label, char*name,
       if (label) 
 	    compile_codelabel(label);
       
-      vvp_cpoint_t ptr = codespace_allocate();
-
 	/* Create an instruction in the code space. */
-      vvp_code_t code = codespace_index(ptr);
+      vvp_code_t code = codespace_allocate();
       code->opcode = &of_VPI_CALL;
 
 	/* Create a vpiHandle that bundles the call information, and
@@ -1461,7 +1452,7 @@ void compile_vpi_func_call(char*label, char*name,
 void compile_thread(char*start_sym)
 {
       symbol_value_t tmp = sym_get_value(sym_codespace, start_sym);
-      vvp_cpoint_t pc = tmp.num;
+      vvp_code_t pc = reinterpret_cast<vvp_code_t>(tmp.ptr);
       if (pc == 0) {
 	    yyerror("unresolved address");
 	    return;
@@ -1541,6 +1532,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.167  2003/07/03 20:03:36  steve
+ *  Remove the vvp_cpoint_t indirect code pointer.
+ *
  * Revision 1.166  2003/06/18 03:55:19  steve
  *  Add arithmetic shift operators.
  *
@@ -1561,40 +1555,5 @@ void compile_param_string(char*label, char*name, char*str, char*value)
  *
  * Revision 1.160  2003/04/23 03:09:25  steve
  *  VPI Access to named events.
- *
- * Revision 1.159  2003/04/11 05:15:38  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.158  2003/03/28 02:33:56  steve
- *  Add support for division of real operands.
- *
- * Revision 1.157  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.156  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.155  2003/02/27 20:36:29  steve
- *  Add the cvt/vr instruction.
- *
- * Revision 1.154  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.153  2003/02/06 17:41:47  steve
- *  Add the %sub/wr instruction.
- *
- * Revision 1.152  2003/02/03 01:09:20  steve
- *  Allow $display of $simtime.
- *
- * Revision 1.151  2003/02/01 05:50:04  steve
- *  Make $time and $realtime available to $display uniquely.
- *
- * Revision 1.150  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.149  2003/01/26 18:16:22  steve
- *  Add %cvt/ir and %cvt/ri instructions, and support
- *  real values passed as arguments to VPI tasks.
  */
 
