@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.29 2003/02/27 06:45:11 steve Exp $"
+#ident "$Id: Module.h,v 1.30 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include  <list>
@@ -61,6 +61,8 @@ class Module : public LineInfo {
       };
 
     public:
+	/* The name passed here is the module name, not the instance
+	   name. This make must be a permallocated string. */
       explicit Module(const char*name);
       ~Module();
 
@@ -145,7 +147,7 @@ class Module : public LineInfo {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
-      char* name_;
+      const char* name_;
 
       map<hname_t,PWire*> wires_;
       list<PGate*> gates_;
@@ -161,6 +163,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.30  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.29  2003/02/27 06:45:11  steve
  *  specparams as far as pform.
  *
@@ -176,97 +181,5 @@ class Module : public LineInfo {
  *
  * Revision 1.25  2002/05/19 23:37:28  steve
  *  Parse port_declaration_lists from the 2001 Standard.
- *
- * Revision 1.24  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.23  2001/10/31 03:11:15  steve
- *  detect module ports not declared within the module.
- *
- * Revision 1.22  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.21  2000/11/05 06:05:59  steve
- *  Handle connectsion to internally unconnected modules (PR#38)
- *
- * Revision 1.20  2000/07/22 22:09:03  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.19  2000/05/16 04:05:15  steve
- *  Module ports are really special PEIdent
- *  expressions, because a name can be used
- *  many places in the port list.
- *
- * Revision 1.18  2000/05/02 16:27:38  steve
- *  Move signal elaboration to a seperate pass.
- *
- * Revision 1.17  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
- * Revision 1.16  2000/03/12 17:09:40  steve
- *  Support localparam.
- *
- * Revision 1.15  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.14  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.13  2000/01/09 20:37:57  steve
- *  Careful with wires connected to multiple ports.
- *
- * Revision 1.12  2000/01/09 05:50:48  steve
- *  Support named parameter override lists.
- *
- * Revision 1.11  1999/12/11 05:45:41  steve
- *  Fix support for attaching attributes to primitive gates.
- *
- * Revision 1.10  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.9  1999/08/23 16:48:39  steve
- *  Parameter overrides support from Peter Monta
- *  AND and XOR support wide expressions.
- *
- * Revision 1.8  1999/08/04 02:13:02  steve
- *  Elaborate module ports that are concatenations of
- *  module signals.
- *
- * Revision 1.7  1999/08/03 04:14:49  steve
- *  Parse into pform arbitrarily complex module
- *  port declarations.
- *
- * Revision 1.6  1999/07/31 19:14:47  steve
- *  Add functions up to elaboration (Ed Carter)
- *
- * Revision 1.5  1999/07/03 02:12:51  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.4  1999/06/15 03:44:53  steve
- *  Get rid of the STL vector template.
- *
- * Revision 1.3  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.2  1999/01/25 05:45:56  steve
- *  Add the LineInfo class to carry the source file
- *  location of things. PGate, Statement and PProcess.
- *
- *  elaborate handles module parameter mismatches,
- *  missing or incorrect lvalues for procedural
- *  assignment, and errors are propogated to the
- *  top of the elaboration call tree.
- *
- *  Attach line numbers to processes, gates and
- *  assignment statements.
- *
- * Revision 1.1  1998/11/03 23:28:52  steve
- *  Introduce verilog to CVS.
- *
  */
 #endif

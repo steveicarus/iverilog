@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.34 2003/02/01 23:37:34 steve Exp $"
+#ident "$Id: net_design.cc,v 1.35 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -84,7 +84,9 @@ NetScope* Design::make_root_scope(const char*root)
 {
       NetScope *root_scope_;
       root_scope_ = new NetScope(0, root, NetScope::MODULE);
-      root_scope_->set_module_name(root);
+	/* This relies on the fact that the basename return value is
+	   permallocated. */
+      root_scope_->set_module_name(root_scope_->basename());
       root_scopes_.push_back(root_scope_);
       return root_scope_;
 }
@@ -649,6 +651,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.35  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.34  2003/02/01 23:37:34  steve
  *  Allow parameter expressions to be type real.
  *

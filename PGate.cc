@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.cc,v 1.14 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PGate.cc,v 1.15 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,7 +146,7 @@ PGModule::PGModule(const char*type, const string&name, svector<PExpr*>*pins)
 : PGate(name, pins), overrides_(0), pins_(0),
   npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
-      type_ = strdup(type);
+      type_ = type;
 }
 
 PGModule::PGModule(const char*type, const string&name,
@@ -154,12 +154,11 @@ PGModule::PGModule(const char*type, const string&name,
 : PGate(name, 0), overrides_(0), pins_(pins),
   npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
-      type_ = strdup(type);
+      type_ = type;
 }
 
 PGModule::~PGModule()
 {
-      free(type_);
 }
 
 void PGModule::set_parameters(svector<PExpr*>*o)
@@ -192,6 +191,9 @@ const char* PGModule::get_type()
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.15  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.14  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.110 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: pform.cc,v 1.111 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -152,8 +152,8 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno)
 {
       assert( pform_cur_module == 0 );
 
-
-      pform_cur_module = new Module(name);
+      const char*lex_name = lex_strings.add(name);
+      pform_cur_module = new Module(lex_name);
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
 
@@ -717,6 +717,8 @@ void pform_make_modgates(const char*type,
 			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
+	// Get a permallocated version of the type string.
+      type = lex_strings.add(type);
 
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];
@@ -1412,6 +1414,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.111  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.110  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.cc,v 1.19 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: Module.cc,v 1.20 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -27,14 +27,14 @@
 # include  "PWire.h"
 # include  <assert.h>
 
-Module::Module(const char*name)
-: name_(strdup(name))
+/* n is a permallocated string. */
+Module::Module(const char*n)
+: name_(n)
 {
 }
 
 Module::~Module()
 {
-      free(name_);
 }
 
 void Module::add_gate(PGate*gate)
@@ -139,6 +139,9 @@ const list<PProcess*>& Module::get_behaviors() const
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.20  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.19  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.26 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.27 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include "config.h"
@@ -185,7 +185,7 @@ const NetFuncDef* NetScope::func_def() const
 void NetScope::set_module_name(const char*n)
 {
       assert(type_ == MODULE);
-      module_name_ = lex_strings.add(n);
+      module_name_ = n; /* NOTE: n mus have been permallocated. */
 }
 
 const char* NetScope::module_name() const
@@ -448,6 +448,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.27  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.26  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

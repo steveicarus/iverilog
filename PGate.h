@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.24 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PGate.h,v 1.25 2003/03/06 04:37:12 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -171,6 +171,9 @@ class PGBuiltin  : public PGate {
 class PGModule  : public PGate {
 
     public:
+	// NOTE: The type parameter to all the constructors is assumed
+	// to have been permallocated.
+
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
       explicit PGModule(const char*type, const string&name,
@@ -198,10 +201,12 @@ class PGModule  : public PGate {
       virtual void elaborate_scope(Design*des, NetScope*sc) const;
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
+	// This returns the module name of this module. It is a
+	// permallocated string.
       const char* get_type();
 
     private:
-      char* type_;
+      const char* type_;
       svector<PExpr*>*overrides_;
       named<PExpr*>*pins_;
       unsigned npins_;
@@ -222,6 +227,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.25  2003/03/06 04:37:12  steve
+ *  lex_strings.add module names earlier.
+ *
  * Revision 1.24  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
