@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.54 2003/06/05 04:28:24 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.55 2003/06/24 01:38:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1198,11 +1198,11 @@ NetEConst* NetESelect::eval_tree()
       verinum oval (verinum::V0, expr_width(), true);
       long bval = base->value().as_long();
 
-      for (long idx = 0 ;  idx < expr_width() ;  idx += 1) {
-	    if ((bval >= eval.len()) || (bval < 0))
-		  oval.set(idx, verinum::Vx);
-	    else 
+      for (unsigned long idx = 0 ;  idx < expr_width() ;  idx += 1) {
+	    if ((bval >= 0) && ((unsigned long) bval < eval.len()))
 		  oval.set(idx, eval.get(bval));
+	    else 
+		  oval.set(idx, verinum::Vx);
 
 	    bval += 1;
       }
@@ -1458,6 +1458,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.55  2003/06/24 01:38:02  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.54  2003/06/05 04:28:24  steve
  *  Evaluate <= with real operands.
  *

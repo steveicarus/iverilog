@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.36 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: net_design.cc,v 1.37 2003/06/24 01:38:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -439,7 +439,7 @@ void NetScope::evaluate_parameters(Design*des)
 	      /* If the parameter has range information, then make
 		 sure the value is set right. */
 	    if (range_flag) {
-		  long wid = (msb >= lsb)? msb - lsb : lsb - msb;
+		  unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
 		  wid += 1;
 
 		  NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr);
@@ -685,6 +685,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.37  2003/06/24 01:38:02  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.36  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-xnf.cc,v 1.47 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.48 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,7 +87,7 @@ verinum::V link_get_ival(const Link&lnk)
 	    if (cur == &lnk)
 		  continue;
 
-	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
+	    if (dynamic_cast<const NetNet*>(cur->get_obj()))
 		  return cur->nexus()->get_init();
 
       }
@@ -173,7 +173,7 @@ void target_xnf::draw_pin(ostream&os, const string&name,
 	    use_name = use_name.substr(1);
       }
 
-      char type;
+      char type=0;
       switch (lnk.get_dir()) {
 	  case Link::INPUT:
 	  case Link::PASSIVE:
@@ -183,6 +183,7 @@ void target_xnf::draw_pin(ostream&os, const string&name,
 	    type = 'O';
 	    break;
       }
+      assert(type);
 
       os << "    PIN, " << use_name << ", " << type << ", " <<
 	    choose_sig_name(&lnk);
@@ -754,8 +755,6 @@ void target_xnf::lpm_ram_dq(const NetRamDq*ram)
 {
       assert(ram->count_partners() == 1);
 
-      const NetMemory*mem = ram->mem();
-
       for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
 	    out_ << "SYM, " << mangle(ram->name())
 	       << "<" << idx << ">, RAMS" << endl;
@@ -927,6 +926,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.48  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.47  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *

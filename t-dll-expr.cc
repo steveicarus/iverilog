@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.36 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.37 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -235,8 +235,6 @@ void dll_target::expr_memory(const NetEMemory*net)
 void dll_target::expr_const(const NetEConst*net)
 {
       assert(expr_ == 0);
-
-      ivl_expr_t idx = 0;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
@@ -603,6 +601,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.37  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.36  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *

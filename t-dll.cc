@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.114 2003/06/23 01:25:44 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.115 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1005,7 +1005,7 @@ void dll_target::udp(const NetUDP*net)
 	  u->name = strings_.add(net->udp_name().c_str());
 	  string inp;
 	  char out;
-	  int i = 0;
+	  unsigned int i = 0;
 	  if (net->first(inp, out))
 	    do
 	      {
@@ -2132,6 +2132,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.115  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.114  2003/06/23 01:25:44  steve
  *  Module attributes make it al the way to ivl_target.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.59 2003/05/14 05:26:41 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.60 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -758,7 +758,6 @@ bool dll_target::proc_wait(const NetEvWait*net)
 	   the signals weren't scanned yet. */
 
       if (ev->nprobe() >= 1) {
-	    const NetEvProbe*pr = ev->probe(0);
 	    ivl_event_t evnt = stmt_cur_->u_.wait_.event_;
 
 	    unsigned iany = 0;
@@ -834,6 +833,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.60  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.59  2003/05/14 05:26:41  steve
  *  Support real expressions in case statements.
  *

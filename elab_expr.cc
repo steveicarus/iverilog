@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.79 2003/06/18 03:55:18 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.80 2003/06/24 01:38:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -498,6 +498,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			des->errors += 1;
 			return 0;
 		  }
+		  unsigned long ulsb=lsb;
+		  unsigned long umsb=msb;
 
 		  NetEConst*le = dynamic_cast<NetEConst*>(tmp);
 		  assert(le);
@@ -511,7 +513,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       the range, we sign extend signed unsized
 		       numbers, zero extend unsigned unsigned numbers,
 		       and X extend sized numbers. */
-		  for (long idx = lsb ;  idx <= msb ;  idx += 1) {
+		  for (unsigned long idx = ulsb ;  idx <= umsb ;  idx += 1) {
 			if (idx < exl.len())
 			      result.set(idx-lsb, exl.get(idx));
 		        else if (exl.is_string())
@@ -562,7 +564,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			verinum::V rb = verinum::Vx;
 
 			long ridx = rv.as_long();
-			if ((ridx >= 0) && (ridx < lv.len())) {
+			if ((ridx >= 0) && ((unsigned long) ridx < lv.len())) {
 			      rb = lv[ridx];
 
 			} else if ((ridx >= 0) && (!lv.has_len())) {
@@ -962,6 +964,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.80  2003/06/24 01:38:02  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.79  2003/06/18 03:55:18  steve
  *  Add arithmetic shift operators.
  *

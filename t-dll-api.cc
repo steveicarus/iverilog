@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.100 2003/06/23 01:25:44 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.101 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1320,8 +1320,6 @@ extern "C" const char* ivl_scope_name(ivl_scope_t net)
       if (net->parent == 0)
 	    return net->name_;
 
-      ivl_scope_t cur;
-
       unsigned needlen = scope_name_len(net);
 
       if (name_size < needlen) {
@@ -1850,6 +1848,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.101  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.100  2003/06/23 01:25:44  steve
  *  Module attributes make it al the way to ivl_target.
  *

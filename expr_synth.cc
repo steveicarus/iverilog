@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.44 2003/04/19 04:52:56 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.45 2003/06/24 01:38:02 steve Exp $"
 #endif
 
 # include "config.h"
@@ -427,6 +427,7 @@ NetNet* NetEBShift::synthesize(Design*des)
 	    assert(shift >= 0);
 	    if (shift == 0)
 		  return lsig;
+	    unsigned long ushift=shift;
 
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, expr_width());
@@ -440,10 +441,10 @@ NetNet* NetEBShift::synthesize(Design*des)
 	    connect(zcon->pin(0), zsig->pin(0));
 
 	    for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1) {
-		  if (idx < shift) {
+		  if (idx < ushift) {
 			connect(osig->pin(idx), zsig->pin(0));
 		  } else {
-			connect(osig->pin(idx), lsig->pin(idx-shift));
+			connect(osig->pin(idx), lsig->pin(idx-ushift));
 		  }
 	    }
 
@@ -731,6 +732,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.45  2003/06/24 01:38:02  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.44  2003/04/19 04:52:56  steve
  *  Less picky about expression widths while synthesizing ternary.
  *

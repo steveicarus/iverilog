@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.24 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.25 2003/06/24 01:38:02 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -257,7 +257,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	// about to create, and if I find it then somebody beat me to
 	// it.
 
-      if (NetScope*tmp = sc->child(get_name())) {
+      if (sc->child(get_name())) {
 	    cerr << get_line() << ": error: Instance/Scope name " <<
 		  get_name() << " already used in this context." <<
 		  endl;
@@ -549,6 +549,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.25  2003/06/24 01:38:02  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.24  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.116 2003/06/20 00:53:19 steve Exp $"
+#ident "$Id: pform.cc,v 1.117 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -181,21 +181,6 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
       delete siz;
       delete val;
       return res;
-}
-
-/*
- * This function evaluates delay expressions. The result should be a
- * simple constant that I can interpret as an unsigned number.
- */
-static unsigned long evaluate_delay(PExpr*delay)
-{
-      PENumber*pp = dynamic_cast<PENumber*>(delay);
-      if (pp == 0) {
-	    VLerror("Sorry, delay expression is too complicated.");
-	    return 0;
-      }
-
-      return pp->value().as_ulong();
 }
 
 void pform_startmodule(const char*name, const char*file, unsigned lineno,
@@ -1477,6 +1462,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.117  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.116  2003/06/20 00:53:19  steve
  *  Module attributes from the parser
  *  through to elaborated form.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.26 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.27 2003/06/24 01:38:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -264,7 +264,6 @@ static void make_ibuf(Design*des, NetNet*net)
 
 void xnfio_f::signal(Design*des, NetNet*net)
 {
-      NetNode*buf;
       if (! is_a_pad(net))
 	    return;
 
@@ -362,6 +361,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.27  2003/06/24 01:38:03  steve
+ *  Various warnings fixed.
+ *
  * Revision 1.26  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *
