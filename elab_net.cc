@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.78 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.79 2001/11/07 04:26:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1237,10 +1237,10 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, const string&path,
  * Identifiers in continuous assignment l-values are limited to wires
  * and that ilk. Detect registers and memories here and report errors.
  */
-NetNet* PEIdent::elaborate_lnet(Design*des, const string&path) const
+NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
+      string path = scope->name();
 
       NetNet*sig = des->find_signal(scope, text_);
       if (sig == 0) {
@@ -1899,6 +1899,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.79  2001/11/07 04:26:46  steve
+ *  elaborate_lnet uses scope instead of string path.
+ *
  * Revision 1.78  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *

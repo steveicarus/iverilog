@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.230 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.231 2001/11/07 04:26:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -84,7 +84,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
       assert(pin(1));
 
 	/* Elaborate the l-value. */
-      NetNet*lval = pin(0)->elaborate_lnet(des, path);
+      NetNet*lval = pin(0)->elaborate_lnet(des, scope);
       if (lval == 0) {
 	    des->errors += 1;
 	    return;
@@ -771,9 +771,8 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
  * The concatenation is also OK an an l-value. This method elaborates
  * it as a structural l-value.
  */
-NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
+NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
 {
-      NetScope*scope = des->find_scope(path);
       assert(scope);
 
       svector<NetNet*>nets (parms_.count());
@@ -788,7 +787,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 
 	/* Elaborate the operands of the concatenation. */
       for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    nets[idx] = parms_[idx]->elaborate_lnet(des, path);
+	    nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
 	    if (nets[idx] == 0)
 		  errors += 1;
 	    else
@@ -809,7 +808,7 @@ NetNet* PEConcat::elaborate_lnet(Design*des, const string&path) const
 	   operands, and connect it up. Scan the operands of the
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(scope, des->local_symbol(path),
+      NetNet*osig = new NetNet(scope, des->local_symbol(scope->name()),
 			       NetNet::IMPLICIT, pins);
       pins = 0;
       for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
@@ -2409,6 +2408,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.231  2001/11/07 04:26:46  steve
+ *  elaborate_lnet uses scope instead of string path.
+ *
  * Revision 1.230  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.25 2001/11/06 06:11:55 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.26 2001/11/07 04:26:46 steve Exp $"
 #endif
 
 # include "config.h"
@@ -58,7 +58,7 @@ NetNet* PExpr::elaborate_net(Design*des, const string&path, unsigned,
       return 0;
 }
 
-NetNet* PExpr::elaborate_lnet(Design*des, const string&path) const
+NetNet* PExpr::elaborate_lnet(Design*des, NetScope*) const
 {
       cerr << get_line() << ": error: expression not valid in assign l-value: "
 	   << *this << endl;
@@ -264,6 +264,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.26  2001/11/07 04:26:46  steve
+ *  elaborate_lnet uses scope instead of string path.
+ *
  * Revision 1.25  2001/11/06 06:11:55  steve
  *  Support more real arithmetic in delay constants.
  *

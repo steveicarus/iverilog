@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.50 2001/11/07 04:01:59 steve Exp $"
+#ident "$Id: PExpr.h,v 1.51 2001/11/07 04:26:46 steve Exp $"
 #endif
 
 # include  <string>
@@ -77,7 +77,7 @@ class PExpr : public LineInfo {
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
-      virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
 
 	// Expressions that can be in the l-value of procedural
 	// assignments can be elaborated with this method.
@@ -123,7 +123,7 @@ class PEConcat : public PExpr {
 	// continuous assignments.
       virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
 
-      virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_net(Design*des, const string&path,
 				    unsigned width,
 				    unsigned long rise,
@@ -211,7 +211,7 @@ class PEIdent : public PExpr {
       virtual NetNet* elaborate_anet(Design*des, NetScope*scope) const;
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
-      virtual NetNet* elaborate_lnet(Design*des, const string&path) const;
+      virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
 
 	// Identifiers are also allowed as procedural assignment l-values.
       virtual NetAssign_* elaborate_lval(Design*des, NetScope*scope) const;
@@ -449,6 +449,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.51  2001/11/07 04:26:46  steve
+ *  elaborate_lnet uses scope instead of string path.
+ *
  * Revision 1.50  2001/11/07 04:01:59  steve
  *  eval_const uses scope instead of a string path.
  *
