@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.305 2004/06/30 15:32:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.306 2004/09/05 17:44:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -492,22 +492,8 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
  */
 void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 {
-	// Missing module instance names have already been rejected.
-      assert(get_name() != 0);
-
-      if (msb_) {
-	    cerr << get_line() << ": sorry: Module instantiation arrays "
-		  "are not yet supported." << endl;
-	    des->errors += 1;
-	    return;
-      }
 
       assert(scope);
-
-	// I know a priori that the elaborate_scope created the scope
-	// already, so just look it up as a child of the current scope.
-      NetScope*my_scope = scope->child(get_name());
-      assert(my_scope);
 
 	// This is the array of pin expressions, shuffled to match the
 	// order of the declaration. If the source instantiation uses
@@ -589,11 +575,18 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    pins = get_pins();
       }
 
-	// Elaborate this instance of the module. The recursive
+
+	// Elaborate these instances of the module. The recursive
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
 	// later.
-      rmod->elaborate(des, my_scope);
+
+      NetScope::scope_vec_t&instance = scope->instance_arrays[get_name()];
+      for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
+	    rmod->elaborate(des, instance[inst]);
+      }
+
+
 
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters. Scan
@@ -621,7 +614,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			if (mport.count() == 0)
 			      continue;
 
-			NetNet*tmp = des->find_signal(my_scope,
+			NetNet*tmp = des->find_signal(instance[0],
 						      mport[0]->path());
 			assert(tmp);
 
@@ -639,36 +632,48 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 
 
-
 	      // Inside the module, the port is zero or more signals
 	      // that were already elaborated. List all those signals
-	      // and the NetNet equivalents.
+	      // and the NetNet equivalents, for all the instances.
 	    svector<PEIdent*> mport = rmod->get_port(idx);
-	    svector<NetNet*>prts (mport.count());
+	    svector<NetNet*>prts (mport.count() * instance.count());
 
 	      // Count the internal pins of the port.
 	    unsigned prts_pin_count = 0;
-	    for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
-		  PEIdent*pport = mport[ldx];
-		  assert(pport);
-		  prts[ldx] = pport->elaborate_port(des, my_scope);
-		  if (prts[ldx] == 0)
-			continue;
 
-		  assert(prts[ldx]);
-		  prts_pin_count += prts[ldx]->pin_count();
+	    for (unsigned inst = 0 ;  inst < instance.count() ;  inst += 1) {
+		  NetScope*inst_scope = instance[inst];
+
+		    // Scan the module sub-ports for this instance...
+		  for (unsigned ldx = 0 ;  ldx < mport.count() ;  ldx += 1) {
+			unsigned lbase = inst * mport.count();
+			PEIdent*pport = mport[ldx];
+			assert(pport);
+			prts[lbase + ldx]
+			      = pport->elaborate_port(des, inst_scope);
+			if (prts[lbase + ldx] == 0)
+			      continue;
+
+			assert(prts[lbase + ldx]);
+			prts_pin_count += prts[lbase + ldx]->pin_count();
+		  }
 	    }
 
 	      // If I find that the port in unconnected inside the
 	      // module, then there is nothing to connect. Skip the
-	      // parameter.
+	      // argument.
 	    if (prts_pin_count == 0) {
 		  continue;
 	    }
 
-	      // Elaborate the expression that connects to the module
-	      // port. sig is the thing outside the module that
-	      // connects to the port.
+	      // We know by design that each instance has the same
+	      // width port. Therefore, the prts_pin_count must be an
+	      // even multiple of the instance count.
+	    assert(prts_pin_count % instance.count() == 0);
+
+	      // Elaborate the expression that connects to the
+	      // module[s] port. sig is the thing outside the module
+	      // that connects to the port.
 
 	    NetNet*sig;
 	    if ((prts.count() >= 1)
@@ -687,9 +692,18 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 	    } else {
+		    /* Input to module. elaborate the expression to
+		       the desired width. If this in an instance
+		       array, then let the net determine it's own
+		       width. We use that, then, to decide how to hook
+		       it up. */
+		  unsigned desired_pin_count = prts_pin_count;
+		  if (instance.count() != 1)
+			desired_pin_count = 0;
+
 		  sig = pins[idx]->elaborate_net(des, scope,
-						    prts_pin_count,
-						    0, 0, 0);
+						 desired_pin_count,
+						 0, 0, 0);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_line()
 			     << ": internal error: Port expression "
@@ -707,10 +721,25 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    }
 #endif
 
+	      /* If we are working with an instance array, then the
+		 signal width must match the port width exactly. */
+	    if ((instance.count() != 1)
+		&& (sig->pin_count() != prts_pin_count)
+		&& (sig->pin_count() != prts_pin_count/instance.count())) {
+		  cerr << pins[idx]->get_line() << ": error: "
+		       << "Port expression width " << sig->pin_count()
+		       << " does not match expected width " << prts_pin_count
+		       << " or " << (prts_pin_count/instance.count())
+		       << "." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
 	      // Check that the parts have matching pin counts. If
 	      // not, they are different widths. Note that idx is 0
 	      // based, but users count parameter positions from 1.
-	    if (prts_pin_count != sig->pin_count()) {
+	    if ((instance.count() == 1)
+		&& (prts_pin_count != sig->pin_count())) {
 		  cerr << get_line() << ": warning: Port " << (idx+1)
 		       << " (" << rmod->ports[idx]->name << ") of "
 		       << type_ << " expects " << prts_pin_count <<
@@ -741,8 +770,16 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // Connect this many of the port pins. If the expression
 	      // is too small, the reduce the number of connects.
 	    unsigned ccount = prts_pin_count;
-	    if (sig->pin_count() < ccount)
+	    if (instance.count() == 1 && sig->pin_count() < ccount)
 		  ccount = sig->pin_count();
+
+	      // The spin_modulus is the width of the signal (not the
+	      // port) if this is an instance array. This causes
+	      // signals wide enough for a single instance to be
+	      // connected to all the instances.
+	    unsigned spin_modulus = prts_pin_count;
+	    if (instance.count() != 1)
+		  spin_modulus = sig->pin_count();
 
 	      // Now scan the concatenation that makes up the port,
 	      // connecting pins until we run out of port pins or sig
@@ -754,7 +791,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  if (cnt > ccount)
 			cnt = ccount;
 		  for (unsigned p = 0 ;  p < cnt ;  p += 1) {
-			connect(sig->pin(spin), prts[ldx-1]->pin(p));
+			connect(sig->pin(spin%spin_modulus),
+				prts[ldx-1]->pin(p));
 			ccount -= 1;
 			spin += 1;
 		  }
@@ -766,6 +804,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    if (NetSubnet*tmp = dynamic_cast<NetSubnet*>(sig))
 		  delete tmp;
       }
+
 }
 
 /*
@@ -2720,6 +2759,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.306  2004/09/05 17:44:41  steve
+ *  Add support for module instance arrays.
+ *
  * Revision 1.305  2004/06/30 15:32:02  steve
  *  Propagate source line number in synthetic delay statements.
  *

@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.82 2004/03/10 04:51:24 steve Exp $"
+#ident "$Id: main.cc,v 1.83 2004/09/05 17:44:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -105,6 +105,11 @@ bool warn_timescale = false;
 bool warn_portbinding = false;
 
 bool error_implicit = false;
+
+/*
+ * Debug message class flags.
+ */
+bool debug_scopes = false;
 
 /*
  * Verbose messages enabled.
@@ -228,6 +233,9 @@ static void parm_to_flagmap(const string&flag)
  *    basedir:<path>
  *        Location to look for installed sub-components
  *
+ *    debug:<name>
+ *        Activate a class of debug messages.
+ *
  *    depfile:<path>
  *        Give the path to an output dependency file.
  *
@@ -294,6 +302,13 @@ static void read_iconfig_file(const char*ipath)
 
 	    if (strcmp(buf, "basedir") == 0) {
 		  basedir = strdup(cp);
+
+	    } else if (strcmp(buf, "debug") == 0) {
+		  if (strcmp(cp, "scope") == 0) {
+			debug_scopes = true;
+			cerr << "debug: Enable scope debug" << endl;
+		  } else {
+		  }
 
 	    } else if (strcmp(buf, "depfile") == 0) {
 		  depfile_name = strdup(cp);
@@ -722,6 +737,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.83  2004/09/05 17:44:42  steve
+ *  Add support for module instance arrays.
+ *
  * Revision 1.82  2004/03/10 04:51:24  steve
  *  Add support for system function table files.
  *

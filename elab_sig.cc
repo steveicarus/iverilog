@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.34 2004/05/31 23:34:37 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.35 2004/09/05 17:44:41 steve Exp $"
 #endif
 
 # include "config.h"
@@ -211,23 +211,31 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
 				  Module*rmod) const
 {
-	// Missing module instance names have already been rejected.
-      assert(get_name() != "");
+      bool flag = true;
 
-      if (msb_) {
-	    cerr << get_line() << ": sorry: Module instantiation arrays "
-		  "are not yet supported." << endl;
-	    des->errors += 1;
-	    return false;
+      NetScope::scope_vec_t instance = scope->instance_arrays[get_name()];
+
+      for (unsigned idx = 0 ;  idx < instance.count() ;  idx += 1) {
+	      // I know a priori that the elaborate_scope created the scope
+	      // already, so just look it up as a child of the current scope.
+	    NetScope*my_scope = instance[idx];
+	    assert(my_scope);
+
+	    if (my_scope->parent() != scope) {
+		  cerr << get_line() << ": internal error: "
+		       << "Instance " << my_scope->name()
+		       << " is in parent " << my_scope->parent()->name()
+		       << " instead of " << scope->name()
+		       << endl;
+	    }
+	    assert(my_scope->parent() == scope);
+
+	    if (! rmod->elaborate_sig(des, my_scope))
+		  flag = false;
+
       }
 
-
-	// I know a priori that the elaborate_scope created the scope
-	// already, so just look it up as a child of the current scope.
-      NetScope*my_scope = scope->child(get_name());
-      assert(my_scope);
-
-      return rmod->elaborate_sig(des, my_scope);
+      return flag;
 }
 
 /*
@@ -607,6 +615,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.35  2004/09/05 17:44:41  steve
+ *  Add support for module instance arrays.
+ *
  * Revision 1.34  2004/05/31 23:34:37  steve
  *  Rewire/generalize parsing an elaboration of
  *  function return values to allow for better

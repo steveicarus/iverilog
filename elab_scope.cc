@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.33 2004/08/26 04:02:03 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.34 2004/09/05 17:44:41 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -46,6 +46,11 @@
 
 bool Module::elaborate_scope(Design*des, NetScope*scope) const
 {
+      if (debug_scopes) {
+	    cerr << get_line() << ": debug: Elaborate scope "
+		 << scope->name() << "." << endl;
+      }
+
 	// Generate all the parameters that this instance of this
 	// module introduces to the design. This loop elaborates the
 	// parameters, but doesn't evaluate references to
@@ -219,7 +224,6 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	// scan all of them to create those scopes.
 
       typedef list<PGate*>::const_iterator gates_it_t;
-
       for (gates_it_t cur = gates_.begin()
 		 ; cur != gates_.end() ;  cur ++ ) {
 
@@ -305,80 +309,142 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 	    return;
       }
 
-	// Create the new scope as a MODULE with my name.
-      NetScope*my_scope = new NetScope(sc, get_name(), NetScope::MODULE);
-      my_scope->set_module_name(mod->mod_name());
-      my_scope->default_nettype(mod->default_nettype);
+      verinum*msb = msb_ ? msb_->eval_const(des, sc) : 0;
+      verinum*lsb = lsb_ ? lsb_->eval_const(des, sc) : 0;
 
-	// Set time units and precision.
-      my_scope->time_unit(mod->time_unit);
-      my_scope->time_precision(mod->time_precision);
-      des->set_precision(mod->time_precision);
+      assert( (msb == 0) || (lsb != 0) );
 
-	// This call actually arranges for the description of the
-	// module type to process this instance and handle parameters
-	// and sub-scopes that might occur. Parameters are also
-	// created in that scope, as they exist. (I'll override them
-	// later.)
-      mod->elaborate_scope(des, my_scope);
+      long instance_low  = 0;
+      long instance_high = 0;
+      long instance_count  = 1;
+      bool instance_array = false;
 
-	// Look for module parameter replacements. The "replace" map
-	// maps parameter name to replacement expression that is
-	// passed. It is built up by the ordered overrides or named
-	// overrides.
+      if (msb) {
+	    instance_array = true;
+	    instance_high = msb->as_long();
+	    instance_low  = lsb->as_long();
+	    if (instance_high > instance_low)
+		  instance_count = instance_high - instance_low + 1;
+	    else
+		  instance_count = instance_low - instance_high + 1;
+      }
 
-      typedef map<perm_string,PExpr*>::const_iterator mparm_it_t;
-      map<perm_string,PExpr*> replace;
+      NetScope::scope_vec_t instances (instance_count);
+      if (debug_scopes) {
+	    cerr << get_line() << ": debug: Create " << instance_count
+		 << " instances of " << get_name()
+		 << "." << endl;
+      }
+
+	// Run through the module instances, and make scopes out of
+	// them. Also do parameter overrides that are done on the
+	// instantiation line.
+      for (int idx = 0 ;  idx < instance_count ;  idx += 1) {
+
+	    perm_string use_name = get_name();
+
+	    if (instance_array) {
+		  char name_buf[128];
+		  int instance_idx = idx;
+		  if (instance_low < instance_high)
+			instance_idx = instance_low + idx;
+		  else
+			instance_idx = instance_low - idx;
+
+		  snprintf(name_buf, sizeof name_buf,
+			   "%s[%d]", get_name().str(), instance_idx);
+		  use_name = lex_strings.make(name_buf);
+	    }
+
+	    if (debug_scopes) {
+		  cerr << get_line() << ": debug: Module instance " << use_name
+		       << " becomes child of " << sc->name()
+		       << "." << endl;
+	    }
+
+	      // Create the new scope as a MODULE with my name.
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE);
+	    my_scope->set_module_name(mod->mod_name());
+	    my_scope->default_nettype(mod->default_nettype);
+
+	    instances[idx] = my_scope;
+
+	      // Set time units and precision.
+	    my_scope->time_unit(mod->time_unit);
+	    my_scope->time_precision(mod->time_precision);
+	    des->set_precision(mod->time_precision);
+
+	      // This call actually arranges for the description of the
+	      // module type to process this instance and handle parameters
+	      // and sub-scopes that might occur. Parameters are also
+	      // created in that scope, as they exist. (I'll override them
+	      // later.)
+	    mod->elaborate_scope(des, my_scope);
+
+	      // Look for module parameter replacements. The "replace" map
+	      // maps parameter name to replacement expression that is
+	      // passed. It is built up by the ordered overrides or named
+	      // overrides.
+
+	    typedef map<perm_string,PExpr*>::const_iterator mparm_it_t;
+	    map<perm_string,PExpr*> replace;
 
 
-	// Positional parameter overrides are matched to parameter
-	// names by using the param_names list of parameter
-	// names. This is an ordered list of names so the first name
-	// is parameter 0, the second parameter 1, and so on.
+	      // Positional parameter overrides are matched to parameter
+	      // names by using the param_names list of parameter
+	      // names. This is an ordered list of names so the first name
+	      // is parameter 0, the second parameter 1, and so on.
 
-      if (overrides_) {
-	    assert(parms_ == 0);
-	    list<perm_string>::const_iterator cur = mod->param_names.begin();
-	    unsigned idx = 0;
-	    for (;;) {
-		  if (idx >= overrides_->count())
-			break;
-		  if (cur == mod->param_names.end())
-			break;
+	    if (overrides_) {
+		  assert(parms_ == 0);
+		  list<perm_string>::const_iterator cur
+			= mod->param_names.begin();
+		  unsigned idx = 0;
+		  for (;;) {
+			if (idx >= overrides_->count())
+			      break;
+			if (cur == mod->param_names.end())
+			      break;
 
-		  replace[*cur] = (*overrides_)[idx];
+			replace[*cur] = (*overrides_)[idx];
 
-		  idx += 1;
-		  cur ++;
+			idx += 1;
+			cur ++;
+		  }
+	    }
+
+	      // Named parameter overrides carry a name with each override
+	      // so the mapping into the replace list is much easier.
+	    if (parms_) {
+		  assert(overrides_ == 0);
+		  for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
+			replace[parms_[idx].name] = parms_[idx].parm;
+
+	    }
+
+
+	      // And here we scan the replacements we collected. Elaborate
+	      // the expression in my context, then replace the sub-scope
+	      // parameter value with the new expression.
+
+	    for (mparm_it_t cur = replace.begin()
+		       ; cur != replace.end() ;  cur ++ ) {
+
+		  PExpr*tmp = (*cur).second;
+		  NetExpr*val = tmp->elaborate_pexpr(des, sc);
+		  bool flag = my_scope->replace_parameter((*cur).first, val);
+		  if (! flag) {
+			cerr << val->get_line() << ": warning: parameter "
+			     << (*cur).first << " not found in "
+			     << sc->name() << "." << endl;
+		  }
 	    }
       }
 
-	// Named parameter overrides carry a name with each override
-	// so the mapping into the replace list is much easier.
-      if (parms_) {
-	    assert(overrides_ == 0);
-	    for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
-		  replace[parms_[idx].name] = parms_[idx].parm;
-
-      }
-
-
-	// And here we scan the replacements we collected. Elaborate
-	// the expression in my context, then replace the sub-scope
-	// parameter value with the new expression.
-
-      for (mparm_it_t cur = replace.begin()
-		 ; cur != replace.end() ;  cur ++ ) {
-
-	    PExpr*tmp = (*cur).second;
-	    NetExpr*val = tmp->elaborate_pexpr(des, sc);
-	    bool flag = my_scope->replace_parameter((*cur).first, val);
-	    if (! flag) {
-		  cerr << val->get_line() << ": warning: parameter "
-		       << (*cur).first << " not found in "
-		       << sc->name() << "." << endl;
-	    }
-      }
+	/* Stash the instance array of scopes into the parent
+	   scope. Later elaboration passes will use this vector to
+	   further elaborate the array. */
+      sc->instance_arrays[get_name()] = instances;
 }
 
 /*
@@ -568,6 +634,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.34  2004/09/05 17:44:41  steve
+ *  Add support for module instance arrays.
+ *
  * Revision 1.33  2004/08/26 04:02:03  steve
  *  Add support for localparam ranges.
  *

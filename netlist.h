@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.318 2004/09/04 04:24:15 steve Exp $"
+#ident "$Id: netlist.h,v 1.319 2004/09/05 17:44:42 steve Exp $"
 #endif
 
 /*
@@ -3168,6 +3168,11 @@ class NetScope : public Attrib {
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;
 
+	/* Module instance arrays are collected here for access during
+	   the multiple elaboration passes. */
+      typedef svector<NetScope*> scope_vec_t;
+      map<perm_string, scope_vec_t>instance_arrays;
+
     private:
       TYPE type_;
       perm_string name_;
@@ -3356,6 +3361,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.319  2004/09/05 17:44:42  steve
+ *  Add support for module instance arrays.
+ *
  * Revision 1.318  2004/09/04 04:24:15  steve
  *  PR1026: assignment statements can have sensitivities in the l-values.
  *

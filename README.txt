@@ -344,9 +344,6 @@ constructs.
   - tran primitives, i.e. tran, tranif1, tranif0, rtran, rtranif1
     and rtranif0 are not supported.
 
-  - Module instance arrays are not supported, although gate instance
-    arrays do work.
-
   - Net delays, of the form "wire #N foo;" do not work. Delays in
     every other context do work properly, including the V2001 form
     "wire #5 foo = bar;"
