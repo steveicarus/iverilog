@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.96 2002/08/14 03:57:27 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.97 2002/08/21 02:28:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1859,12 +1859,39 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       NetMux*mux = new NetMux(scope, scope->local_hsymbol(), dwidth, 2, 1);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
+	/* Connect the data inputs. */
       for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-	    connect(mux->pin_Result(idx), sig->pin(idx));
 	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
 	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
       }
 
+	/* If there are non-zero output delays, then create bufz
+	   devices to carry the propagation delays. Otherwise, just
+	   connect the result to the output. */
+      if (rise || fall || decay) {
+	    NetNet*tmp = new NetNet(scope, scope->local_hsymbol(),
+				    NetNet::WIRE, dwidth);
+	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
+
+		  NetBUFZ*tmpz = new NetBUFZ(scope, scope->local_hsymbol());
+		  tmpz->rise_time(rise);
+		  tmpz->fall_time(fall);
+		  tmpz->decay_time(decay);
+		  tmpz->pin(0).drive0(drive0);
+		  tmpz->pin(0).drive1(drive1);
+
+		  connect(mux->pin_Result(idx), tmp->pin(idx));
+		  connect(tmp->pin(idx), tmpz->pin(1));
+		  connect(sig->pin(idx), tmpz->pin(0));
+
+		  des->add_node(tmpz);
+	    }
+
+      } else {
+	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
+		  connect(mux->pin_Result(idx), sig->pin(idx));
+	    }
+      }
 
 	/* If the MUX device result is too narrow to fill out the
 	   desired result, pad with zeros by creating a NetConst device. */
@@ -2134,6 +2161,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.97  2002/08/21 02:28:03  steve
+ *  Carry mux output delays.
+ *
  * Revision 1.96  2002/08/14 03:57:27  steve
  *  Constants can self-size themselves in unsized contexts.
  *
