@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.330 2005/01/28 05:39:33 steve Exp $"
+#ident "$Id: netlist.h,v 1.331 2005/01/30 01:43:48 steve Exp $"
 #endif
 
 /*
@@ -372,7 +372,10 @@ class NetNet  : public NetObj {
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
-      explicit NetNet(NetScope*s, perm_string n, Type t, unsigned npins =1);
+	// The width in this case is a shorthand for ms=width-1 and
+	// ls=0. Only one pin is created, the width is of the vector
+	// that passed through.
+      explicit NetNet(NetScope*s, perm_string n, Type t, unsigned width =1);
 
       explicit NetNet(NetScope*s, perm_string n, Type t, long ms, long ls);
 
@@ -3367,6 +3370,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.331  2005/01/30 01:43:48  steve
+ *  Clarify width argument to NetNet constructor.
+ *
  * Revision 1.330  2005/01/28 05:39:33  steve
  *  Simplified NetMult and IVL_LPM_MULT.
  *
