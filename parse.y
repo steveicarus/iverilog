@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.167 2002/12/07 02:49:24 steve Exp $"
+#ident "$Id: parse.y,v 1.168 2002/12/10 05:49:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,6 +32,13 @@ extern void lex_end_table();
 
 static svector<PExpr*>* active_range = 0;
 static bool active_signed = false;
+
+/* Later version of bison (including 1.35) will not compile in stack
+   extension if the output is compiled with C++ and either the YYSTYPE
+   or YYLTYPE are provided by the source code. However, I can get the
+   old behavior back by defining these symbols. */
+# define YYSTYPE_IS_TRIVIAL 1
+# define YYLTYPE_IS_TRIVIAL 1
 
 /*
  * These are some common strength pairs that are used as defaults when
