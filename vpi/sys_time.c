@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_time.c,v 1.6 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: sys_time.c,v 1.7 2003/01/28 04:41:55 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "vpi_user.h"
 # include  <string.h>
+# include  <math.h>
 # include  <assert.h>
 
 static vpiHandle module_of_function(vpiHandle obj)
@@ -96,7 +97,6 @@ static int sys_realtime_calltf(char*name)
       vpiHandle call_handle;
       vpiHandle mod;
       int units, prec;
-      double scale;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
@@ -106,26 +106,12 @@ static int sys_realtime_calltf(char*name)
       now.type = vpiSimTime;
       vpi_get_time(0, &now);
 
-	/* All the variants but $simtime return the time in units of
-	   the local scope. The $simtime function returns the
-	   simulation time. */
-      if (strcmp(name, "$simtime") == 0)
-	    units = vpi_get(vpiTimePrecision, 0);
-      else
-	    units = vpi_get(vpiTimeUnit, mod);
-
+      units = vpi_get(vpiTimeUnit, mod);
       prec  = vpi_get(vpiTimePrecision, 0);
-      scale = 1;
-      while (units > prec) {
-	    scale *= 10;
-	    units -= 1;
-      }
 
       val.format = vpiRealVal;
-      val.value.real = now.low;
+      val.value.real = pow(10.0, prec-units) * now.low;
       assert(now.high == 0);
-
-      val.value.real /= scale;
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
@@ -171,6 +157,9 @@ void sys_time_register()
 
 /*
  * $Log: sys_time.c,v $
+ * Revision 1.7  2003/01/28 04:41:55  steve
+ *  Use more precise pow function to scale time by units.
+ *
  * Revision 1.6  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.
