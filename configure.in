@@ -46,7 +46,8 @@ do_times=no
 AC_MSG_RESULT($do_times)
 
 AC_CHECK_HEADER(ipal.h, HAVE_IPAL=yes, HAVE_IPAL=)
-AC_ARG_WITH(ipal,enable PAL target,
+AC_ARG_WITH(ipal,
+    [  --with-ipal             enable PAL target],
 if test "$with_ipal" = no; then
        echo Disabling ipal support
        HAVE_IPAL=
