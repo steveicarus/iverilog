@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.54 1999/08/01 21:48:11 steve Exp $"
+#ident "$Id: netlist.h,v 1.55 1999/08/06 04:05:28 steve Exp $"
 #endif
 
 /*
@@ -1328,7 +1328,7 @@ class Design {
 
 	// PARAMETERS
       void set_parameter(const string&, NetExpr*);
-      const NetExpr*get_parameter(const string&name) const;
+      const NetExpr*find_parameter(const string&path, const string&name) const;
 
 	// SIGNALS
       void add_signal(NetNet*);
@@ -1440,6 +1440,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.55  1999/08/06 04:05:28  steve
+ *  Handle scope of parameters.
+ *
  * Revision 1.54  1999/08/01 21:48:11  steve
  *  set width of procedural r-values when then
  *  l-value is a memory word.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.51 1999/08/01 21:48:11 steve Exp $"
+#ident "$Id: netlist.cc,v 1.52 1999/08/06 04:05:28 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -980,6 +980,7 @@ bool NetEUnary::set_width(unsigned w)
       bool flag = true;
       switch (op_) {
 	  case '~':
+	  case '-':
 	    flag = expr_->set_width(w);
 	    break;
 	  case '&':
@@ -1326,13 +1327,31 @@ void Design::set_parameter(const string&key, NetExpr*expr)
       parameters_[key] = expr;
 }
 
-const NetExpr* Design::get_parameter(const string&key) const
+/*
+ * Find a parameter from within a specified context. If the name is
+ * not here, keep looking up until I run out of up to look at.
+ */
+const NetExpr* Design::find_parameter(const string&path,
+				      const string&name) const
 {
-      map<string,NetExpr*>::const_iterator cur = parameters_.find(key);
-      if (cur == parameters_.end())
-	    return 0;
-      else
-	    return (*cur).second;
+      string root = path;
+
+      for (;;) {
+	    string fulname = root + "." + name;
+	    map<string,NetExpr*>::const_iterator cur
+		  = parameters_.find(fulname);
+
+	    if (cur != parameters_.end())
+		  return (*cur).second;
+
+	    unsigned pos = root.rfind('.');
+	    if (pos > root.length())
+		  break;
+
+	    root = root.substr(0, pos);
+      }
+
+      return 0;
 }
 
 string Design::get_flag(const string&key) const
@@ -1552,6 +1571,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.52  1999/08/06 04:05:28  steve
+ *  Handle scope of parameters.
+ *
  * Revision 1.51  1999/08/01 21:48:11  steve
  *  set width of procedural r-values when then
  *  l-value is a memory word.

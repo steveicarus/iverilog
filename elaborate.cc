@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.68 1999/08/05 04:58:57 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.69 1999/08/06 04:05:28 steve Exp $"
 #endif
 
 /*
@@ -1035,7 +1035,7 @@ NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 
 	// If the identifier name a paramter name, then return
 	// the expression that it represents.
-      if (const NetExpr*ex = des->get_parameter(name))
+      if (const NetExpr*ex = des->find_parameter(path, text_))
 	    return ex->dup_expr();
 
 	// If the identifier names a signal (a register or wire)
@@ -1698,9 +1698,19 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 		  continue;
 
 	      /* Elaborate the parameter expression as a net so that
-		 it can be used as an l-value. */
+		 it can be used as an l-value. Then check that the
+		 parameter width match up. */
 	    NetNet*val = parms_[idx]->elaborate_net(des, path);
 	    assert(val);
+
+	    if (val->pin_count() != port->pin_count()) {
+		  cerr << get_line() << ": Expression " << idx+1 <<
+			" width (" << val->pin_count() <<
+			") does not match task port width (" <<
+			port->pin_count() << ")." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 
 	    assert(val->pin_count() == port->pin_count());
 
@@ -2041,6 +2051,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.69  1999/08/06 04:05:28  steve
+ *  Handle scope of parameters.
+ *
  * Revision 1.68  1999/08/05 04:58:57  steve
  *  Allow integers as register lvalues.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.4 1999/07/17 19:51:00 steve Exp $"
+#ident "$Id: eval.cc,v 1.5 1999/08/06 04:05:28 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -59,7 +59,7 @@ verinum* PEBinary::eval_const(const Design*des, const string&path) const
 verinum* PEIdent::eval_const(const Design*des, const string&path) const
 {
       assert(msb_ == 0);
-      const NetExpr*expr = des->get_parameter(path + "." + text_);
+      const NetExpr*expr = des->find_parameter(path, text_);
       if (expr == 0) return 0;
       const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       assert(eval);
@@ -79,6 +79,9 @@ verinum* PETernary::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.5  1999/08/06 04:05:28  steve
+ *  Handle scope of parameters.
+ *
  * Revision 1.4  1999/07/17 19:51:00  steve
  *  netlist support for ternary operator.
  *

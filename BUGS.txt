@@ -5,12 +5,13 @@ Before I can fix an error, I need to understand what the problem
 is. Try to explain what is wrong and why you think it is wrong. Please
 try to include sample code that demonstrates the problem. Include a
 description of what ivl does that is wrong, and what you expect should
-happen.
+happen. And include the command line flags passed to the compiler to make
+the error happen. (This is often overlooked, and sometimes important.)
 
 * The Compiler Doesn't Compile
 
-If the tools don't compile, I need to know about the compilation tools
-you are using. Specifically, I need to know:
+If the Icarus Verilog don't compile, I need to know about the
+compilation tools you are using. Specifically, I need to know:
 
 	- Operating system and processor type,
 	- Compiler w/ version,
@@ -18,7 +19,7 @@ you are using. Specifically, I need to know:
 	- anything else you think relevent.
 
 Be aware that I do not have at my disposal a porting lab. I have the
-alpha on my desk, and the Linux/Intel box with logic analyzer and
+alpha on my desk, and the Linux/Intel box with a logic analyzer and
 'scope hanging off it.
 
 * The Compiler Crashes
@@ -103,7 +104,11 @@ module may not be needed as long as the ``-s <name>'' switch is
 given.
 
 So when you send a test case, ask yourself "Can poor overworked Steve
-invoke the error without any Verilog other then what is included?"
+invoke the error without any Verilog other then what is included?" And
+while we are at it, please place a copyright notice in your test
+program and include a GPL license statement if you can. Your test
+program may find its way into the test suite, and the notices will
+make it all nice and legal.
 
 HOW TO SEND PATCHES
 
@@ -111,12 +116,12 @@ Bug reports with patches are very welcome, especially if they are
 formatted such that I can inspect them, decide that they are obviously
 correct, and apply them without worry.
 
-I prefer context or unified diffs as emitted by diff from GNU
-diffutils.  Human beings can read such things, and they are resilient
-to changing originals. A good set of flags to diff are ``diff -cNB''.
-With such diffs, I can look at the changes you are offering and
-probably tell at a glance that they are plausible. Then I can use
-patch(1) to apply them. Or I can apply them by hand.
+I prefer context diffs as emitted by diff from GNU diffutils.  Human
+beings can read such things, and they are resilient to changing
+originals. A good set of flags to diff are ``diff -cNB''.  With such
+diffs, I can look at the changes you are offering and probably tell at
+a glance that they are plausible. Then I can use patch(1) to apply
+them. Or I can apply them by hand.
 
 However, if you send patches, *please* tell me what this patch is
 supposed to accomplish, and if appropriate include a test program that
@@ -135,3 +140,9 @@ then falls under the "otherwise noted" category.
 
 I must insist that any copyright material submitted for inclusion
 include the GPL license notice as shown in the rest of the source.
+
+$Id: BUGS.txt,v 1.2 1999/08/06 04:05:28 steve Exp $
+$Log: BUGS.txt,v $
+Revision 1.2  1999/08/06 04:05:28  steve
+ Handle scope of parameters.
+
