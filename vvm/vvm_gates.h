@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_gates.h,v 1.4 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.5 1999/01/01 01:44:56 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -55,17 +55,23 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
       explicit vvm_and(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vvm_bit_t val) { input_[idx-1] = val; }
+      void init(unsigned idx, vvm_bit_t val)
+	    { input_[idx-1] = val; }
+
+      void start(vvm_simulation*sim)
+	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
+	      if (DELAY > 0)
+		    sim->insert_event(DELAY, ev);
+	      else
+		    sim->active_event(ev);
+	    }
 
       void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
 	    { if (input_[idx-1] == val)
 		  return;
 	      input_[idx-1] = val;
-	      vvm_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval & input_[i];
 
-	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
+	      vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
 		    sim->insert_event(DELAY, ev);
 	      else
@@ -73,6 +79,13 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_and {
 	    }
 
     private:
+      vvm_bit_t compute_() const
+	    { vvm_bit_t outval = input_[0];
+	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
+		    outval = outval & input_[i];
+	      return outval;
+	    }
+
       vvm_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
 };
@@ -122,6 +135,7 @@ template <unsigned long DELAY> class vvm_not {
       { }
 
       void init(unsigned, vvm_bit_t) { }
+      void start(vvm_simulation*) { }
 
       void set(vvm_simulation*sim, unsigned, vvm_bit_t val)
 	    { vvm_bit_t outval = not(val);
@@ -171,24 +185,33 @@ template <unsigned WIDTH, unsigned long DELAY> class vvm_xor {
       explicit vvm_xor(vvm_out_event::action_t o)
       : output_(o) { }
 
-      void init(unsigned idx, vvm_bit_t val) { input_[idx-1] = val; }
+      void init(unsigned idx, vvm_bit_t val)
+	    { input_[idx-1] = val; }
 
-      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
-	    { if (input_[idx-1] == val)
-		    return;
-	      input_[idx-1] = val;
-	      vvm_bit_t outval = input_[0];
-	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
-		    outval = outval ^ input_[i];
-
-	      vvm_event*ev = new vvm_out_event(sim, outval, output_);
+      void start(vvm_simulation*sim)
+	    { vvm_event*ev = new vvm_out_event(sim, compute_(), output_);
 	      if (DELAY > 0)
 		    sim->insert_event(DELAY, ev);
 	      else
 		    sim->active_event(ev);
 	    }
 
+      void set(vvm_simulation*sim, unsigned idx, vvm_bit_t val)
+	    { if (input_[idx-1] == val)
+		    return;
+	      input_[idx-1] = val;
+	      start(sim);
+	    }
+
     private:
+
+      vvm_bit_t compute_() const
+	    { vvm_bit_t outval = input_[0];
+	      for (unsigned i = 1 ;  i < WIDTH ;  i += 1)
+		    outval = outval ^ input_[i];
+	      return outval;
+	    }
+
       vvm_bit_t input_[WIDTH];
       vvm_out_event::action_t output_;
 };
@@ -292,6 +315,9 @@ class vvm_pevent {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.5  1999/01/01 01:44:56  steve
+ *  Support the start() method.
+ *
  * Revision 1.4  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *
