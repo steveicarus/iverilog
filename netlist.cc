@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.219 2003/09/03 23:32:10 steve Exp $"
+#ident "$Id: netlist.cc,v 1.220 2003/11/10 19:44:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1840,6 +1840,7 @@ bool NetEBinary::has_width() const
 NetEBinary* NetEBinary::dup_expr() const
 {
       assert(0);
+      return 0;
 }
 
 NetEBLogic::NetEBLogic(char op, NetExpr*l, NetExpr*r)
@@ -1958,6 +1959,7 @@ unsigned NetMemory::index_to_address(long idx) const
 NetEMemory* NetEMemory::dup_expr() const
 {
       assert(0);
+      return 0;
 }
 
 NetEEvent::NetEEvent(NetEvent*e)
@@ -2072,6 +2074,7 @@ const NetNet* NetEBitSel::sig() const
 NetEBitSel* NetEBitSel::dup_expr() const
 {
       assert(0);
+      return 0;
 }
 
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
@@ -2199,6 +2202,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.220  2003/11/10 19:44:30  steve
+ *  Fix return value warnings.
+ *
  * Revision 1.219  2003/09/03 23:32:10  steve
  *  Oops, missing pin_Sset implementation.
  *
