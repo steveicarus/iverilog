@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.1 2002/03/09 21:54:49 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.2 2002/04/06 20:25:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -245,13 +245,7 @@ static void vcd_checkpoint_x()
 static int variable_cb(p_cb_data cause)
 {
       unsigned long now = cause->time->low;
-      struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
-
-	/* Reschedule this event so that it happens for the next
-	   trigger on this variable. */
-      cb = *cause;
-      vpi_register_cb(&cb);
 
       if (dump_is_off)
 	    return 0;
@@ -778,6 +772,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.2  2002/04/06 20:25:45  steve
+ *  cbValueChange automatically replays.
+ *
  * Revision 1.1  2002/03/09 21:54:49  steve
  *  Add LXT dumper support. (Anthony Bybell)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.26 2001/10/26 02:29:10 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.27 2002/04/06 20:25:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -230,13 +230,7 @@ static void vcd_checkpoint_x()
 static int variable_cb(p_cb_data cause)
 {
       unsigned long now = cause->time->low;
-      struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
-
-	/* Reschedule this event so that it happens for the next
-	   trigger on this variable. */
-      cb = *cause;
-      vpi_register_cb(&cb);
 
       if (dump_is_off)
 	    return 0;
@@ -782,6 +776,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.27  2002/04/06 20:25:45  steve
+ *  cbValueChange automatically replays.
+ *
  * Revision 1.26  2001/10/26 02:29:10  steve
  *  const/non-const warnings. (Stephan Boettcher)
  *

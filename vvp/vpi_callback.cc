@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.10 2001/11/06 03:07:22 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.11 2002/04/06 20:25:45 steve Exp $"
 #endif
 
 /*
@@ -56,16 +56,28 @@ const struct __vpirt callback_rt = {
  * Callback handles are created when the VPI function registers a
  * callback. The handle is stored by the run time, and it triggered
  * when the run-time thing that it is waiting for happens.
+ *
+ * This is the thing that the VPI code references by the vpiHandle. It
+ * also points to callback data that the caller attached to the event,
+ * as well as the time structure to receive data.
+ *
+ * The cb_sync is a private member that points to the schedulable
+ * event that is triggered when the event happens. The sync_cb class
+ * represents the action to execute when the scheduler gets to this
+ * event. This member is only used for things like cbReadOnlySync.
  */
 
 struct __vpiCallback {
       struct __vpiHandle base;
 
+	// user supplied callback data
       struct t_cb_data cb_data;
       struct t_vpi_time cb_time;
 
+	// scheduled event
       struct sync_cb* cb_sync;
 
+	// Used for listing callbacks.
       struct __vpiCallback*next;
 };
 
@@ -73,31 +85,29 @@ struct sync_cb  : public vvp_gen_event_s {
       struct __vpiCallback*handle;
 };
 
-static struct __vpiCallback* free_callback_root = 0x0;
 
 inline static struct __vpiCallback* new_vpi_callback()
 {
       struct __vpiCallback* obj;
-      if (!free_callback_root) {
-	    obj = new __vpiCallback;
-	    obj->base.vpi_type = &callback_rt;
-      } else {
-	    obj = free_callback_root;
-	    free_callback_root = obj->next;
-      }
-      obj->next = 0x0;
+
+      obj = new __vpiCallback;
+
+      obj->base.vpi_type = &callback_rt;
+      obj->cb_sync = 0;
+      obj->next    = 0;
       return obj;
 }
 
 inline static void free_vpi_callback(struct __vpiCallback* obj)
 {
-      obj->next = free_callback_root;
-      free_callback_root = obj;
+      delete obj;
 }
 
 /*
- * A signal get equipped with a callback_functor_s to trigger 
- * callbacks.
+ * The callback_functor_s functor is used to support cbValueChange
+ * callbacks. When a value change callback is created, instances of
+ * this functor are created to receive values and detect changes in
+ * the functor web at the right spot.
  */
 
 struct callback_functor_s: public functor_s {
@@ -105,16 +115,21 @@ struct callback_functor_s: public functor_s {
       virtual ~callback_functor_s();
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
       struct __vpiCallback *cb_handle;
-      unsigned permanent : 1;
 };
 
-inline callback_functor_s::callback_functor_s() 
-      : permanent(0) 
+callback_functor_s::callback_functor_s() 
 {}
 
 callback_functor_s::~callback_functor_s()
 {}
 
+/*
+ * Make the functors necessary to support an edge callback. This is a
+ * single event functor that is in turn fed by edge detector functors
+ * attached to all the input bit functors. (Just like an event-or.)
+ * This function creates the callback_functor and the necessary event
+ * functors, and attaches the event functors to the net.
+ */
 struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 						     event_functor_s::edge_t edge)
 {
@@ -164,7 +179,6 @@ struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 	    vfu->out = ipt;
       }
 
-      obj->permanent = 0;
       obj->cb_handle = 0;
       return obj;
 }
@@ -172,8 +186,9 @@ struct callback_functor_s *vvp_fvector_make_callback(vvp_fvector_t vec,
 /*
  * A value change callback is tripped when a bit of a signal
  * changes. This function creates that value change callback and
- * attaches it to the relevent vpiSignal object. Also flag the
- * functors associated with the signal so that they know to trip.
+ * attaches it to the relevent vpiSignal object. Also, if the signal
+ * does not already have them, create some callback functors to do the
+ * actual value change detection.
  */
 static struct __vpiCallback* make_value_change(p_cb_data data)
 {
@@ -188,11 +203,15 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	     || (data->obj->vpi_type->type_code == vpiNet));
       struct __vpiSignal*sig = reinterpret_cast<__vpiSignal*>(data->obj);
 
-      if (!sig->callback) {
+	/* Create callback functors, if necessary, to do the value
+	   change detection and carry the callback objects. */
+      if (sig->callback == 0) {
 	    sig->callback = vvp_fvector_make_callback(sig->bits);
 	    assert(sig->callback);
       }
-      
+
+	/* Attach the __vpiCallback object to the signals callback
+	   functors. */
       obj->next = sig->callback->cb_handle;
       sig->callback->cb_handle = obj;
 
@@ -270,14 +289,15 @@ int vpi_remove_cb(vpiHandle ref)
 }
 
 /*
- * A callback event happened.
+ * A callback_functor_s functor uses its set method to detect value
+ * changes. When a value comes in, the __vpiCallback objects that are
+ * associated with this callback functor are all called.
  */
 
 void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 {
       struct __vpiCallback *next = cb_handle;
-      if (!permanent)
-	    cb_handle = 0;
+
       while (next) {
 	    struct __vpiCallback * cur = next;
 	    next = cur->next;
@@ -296,8 +316,7 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 	    cur->cb_data.time->low = schedule_simtime();
 	    cur->cb_data.time->high = 0;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    if (!permanent)
-		  free_vpi_callback(cur);
+
       }
 }
 
@@ -309,6 +328,9 @@ void vpip_trip_monitor_callbacks(void)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.11  2002/04/06 20:25:45  steve
+ *  cbValueChange automatically replays.
+ *
  * Revision 1.10  2001/11/06 03:07:22  steve
  *  Code rearrange. (Stephan Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.35 2002/02/06 04:50:04 steve Exp $"
+#ident "$Id: sys_display.c,v 1.36 2002/04/06 20:25:45 steve Exp $"
 #endif
 
 # include "config.h"
@@ -593,21 +593,7 @@ static int monitor_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
       struct t_vpi_time time;
-	/* The user_data of the callback is a pointer to the callback
-	   handle. I use this to reschedule the callback if needed. */
-      vpiHandle*cbh = (vpiHandle*) (cause->user_data);
 
-      	/* Reschedule this event so that it happens for the next
-	   trigger on this variable. */
-      time.type = vpiSuppressTime;
-      cb.reason = cbValueChange;
-      cb.cb_rtn = monitor_cb_1;
-      cb.time = &time;
-      cb.obj  = cause->obj;
-      cb.value = 0;
-      cb.user_data = cause->user_data;
-      *cbh = vpi_register_cb(&cb);
-      
       if (monitor_scheduled) return 0;
 
 	/* This this action caused the first trigger, then schedule
@@ -1125,6 +1111,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.36  2002/04/06 20:25:45  steve
+ *  cbValueChange automatically replays.
+ *
  * Revision 1.35  2002/02/06 04:50:04  steve
  *  Detect and skip suppressed values in display
  *
@@ -1144,90 +1133,5 @@ void sys_display_register()
  *
  * Revision 1.30  2001/10/25 04:19:53  steve
  *  VPI support for callback to return values.
- *
- * Revision 1.29  2001/08/16 03:26:04  steve
- *  Add some missing print escape sequences.
- *
- * Revision 1.28  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.27  2001/07/16 18:40:19  steve
- *  Add a stdlog output for vvp, and vvp options
- *  to direct them around. (Stephan Boettcher.)
- *
- * Revision 1.26  2001/07/11 02:22:17  steve
- *  Manually create the stage-2 callback structure.
- *
- * Revision 1.25  2001/06/25 03:11:41  steve
- *  More robust about incorrect arguments.
- *
- * Revision 1.24  2001/03/22 02:23:40  steve
- *  fgetc patch from Peter Monta.
- *
- * Revision 1.23  2001/03/18 00:31:32  steve
- *  $display can take 0 arguments.
- *
- * Revision 1.22  2001/02/10 19:50:33  steve
- *  Slightly more specific error message.
- *
- * Revision 1.21  2000/12/02 02:40:56  steve
- *  Support for %s in $display (PR#62)
- *
- * Revision 1.20  2000/11/04 05:49:22  steve
- *  Integrate parameter count changes (PR#34)
- *
- * Revision 1.19  2000/11/04 01:52:57  steve
- *  Scope information is needed by all types of display tasks.
- *
- * Revision 1.18  2000/10/28 00:51:42  steve
- *  Add scope to threads in vvm, pass that scope
- *  to vpi sysTaskFunc objects, and add vpi calls
- *  to access that information.
- *
- *  $display displays scope in %m (PR#1)
- *
- * Revision 1.17  2000/08/20 17:49:05  steve
- *  Clean up warnings and portability issues.
- *
- * Revision 1.16  2000/05/31 02:15:43  steve
- *  typo: fix vpiReadVal to vpiRealVal
- *
- * Revision 1.15  2000/05/09 00:02:29  steve
- *  Remove test print.
- *
- * Revision 1.14  2000/05/07 18:20:07  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.13  2000/04/21 02:00:35  steve
- *  exit if hex value is missing.
- *
- * Revision 1.12  2000/03/31 07:08:39  steve
- *  allow cancelling of cbValueChange events.
- *
- * Revision 1.11  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.10  2000/02/13 19:18:27  steve
- *  Accept memory words as parameter to $display.
- *
- * Revision 1.9  1999/11/07 02:25:07  steve
- *  Add the $monitor implementation.
- *
- * Revision 1.8  1999/11/06 23:32:14  steve
- *  Unify display and strobe format routines.
- *
- * Revision 1.7  1999/11/06 22:16:50  steve
- *  Get the $strobe task working.
- *
- * Revision 1.6  1999/10/29 03:37:22  steve
- *  Support vpiValueChance callbacks.
- *
- * Revision 1.5  1999/10/28 00:47:25  steve
- *  Rewrite vvm VPI support to make objects more
- *  persistent, rewrite the simulation scheduler
- *  in C (to interface with VPI) and add VPI support
- *  for callbacks.
  */
 
