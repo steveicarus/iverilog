@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.15 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.16 2003/10/31 02:47:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -121,6 +121,13 @@ NetEUnary* NetEUnary::dup_expr() const
       return tmp;
 }
 
+NetEUReduce* NetEUReduce::dup_expr() const
+{
+      NetEUReduce*tmp = new NetEUReduce(op_, expr_->dup_expr());
+      assert(tmp);
+      return tmp;
+}
+
 NetEVariable* NetEVariable::dup_expr() const
 {
       NetEVariable*tmp = new NetEVariable(var_);
@@ -129,6 +136,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.16  2003/10/31 02:47:11  steve
+ *  NetEUReduce has its own dup_expr method.
+ *
  * Revision 1.15  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and

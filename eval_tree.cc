@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.58 2003/10/26 04:54:56 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.59 2003/10/31 02:47:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1419,6 +1419,8 @@ NetEConst* NetEUnary::eval_tree()
 		return new NetEConst(val);
 	  }
 
+	  case '!':
+	    assert(0);
 	  default:
 	    return 0;
       }
@@ -1513,6 +1515,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.59  2003/10/31 02:47:11  steve
+ *  NetEUReduce has its own dup_expr method.
+ *
  * Revision 1.58  2003/10/26 04:54:56  steve
  *  Support constant evaluation of binary ^ operator.
  *

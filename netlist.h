@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.303 2003/10/26 04:51:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.304 2003/10/31 02:47:11 steve Exp $"
 #endif
 
 /*
@@ -2869,6 +2869,7 @@ class NetEUReduce : public NetEUnary {
 
       virtual bool set_width(unsigned w);
       virtual NetNet* synthesize(Design*);
+      virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree();
 
 };
@@ -3309,6 +3310,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.304  2003/10/31 02:47:11  steve
+ *  NetEUReduce has its own dup_expr method.
+ *
  * Revision 1.303  2003/10/26 04:51:38  steve
  *  Output of While is output of while substatement.
  *
