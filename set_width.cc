@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.14 2000/06/18 03:29:52 steve Exp $"
+#ident "$Id: set_width.cc,v 1.15 2001/01/27 05:41:48 steve Exp $"
 #endif
 
 /*
@@ -201,9 +201,15 @@ bool NetEConcat::set_width(unsigned w)
 bool NetEConst::set_width(unsigned w)
 {
       if (w > value_.len()) {
+	    verinum::V pad = verinum::V0;
+	    if (value_.has_sign())
+		  pad = value_.get(value_.len()-1);
+
 	    verinum tmp (verinum::V0, w);
 	    for (unsigned idx = 0 ;  idx < value_.len() ;  idx += 1)
 		  tmp.set(idx, value_[idx]);
+	    for (unsigned idx = value_.len() ;  idx < w  ; idx += 1)
+		  tmp.set(idx, pad);
 
 	    value_ = tmp;
 
@@ -307,6 +313,9 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.15  2001/01/27 05:41:48  steve
+ *  Fix sign extension of evaluated constants. (PR#91)
+ *
  * Revision 1.14  2000/06/18 03:29:52  steve
  *  Handle width expansion of shift operators.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.18 2001/01/14 23:04:56 steve Exp $"
+#ident "$Id: eval.cc,v 1.19 2001/01/27 05:41:48 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -173,9 +173,18 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 	  case '+':
 	    return val;
 
-	  case '-':
-	    *val = v_not(*val) + verinum(verinum::V1, 1);
-	    return val;
+	  case '-': {
+		  /* We need to expand the value a bit if we are
+		     taking the 2's complement so that we are
+		     guaranteed to not overflow. */
+		verinum tmp (0UL, val->len()+1);
+		for (unsigned idx = 0 ;  idx < val->len() ;  idx += 1)
+		      tmp.set(idx, val->get(idx));
+
+		*val = v_not(tmp) + verinum(verinum::V1, 1);
+		val->has_sign(true);
+		return val;
+	  }
 
       }
 	    delete val;
@@ -185,6 +194,9 @@ verinum* PEUnary::eval_const(const Design*des, const string&path) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.19  2001/01/27 05:41:48  steve
+ *  Fix sign extension of evaluated constants. (PR#91)
+ *
  * Revision 1.18  2001/01/14 23:04:56  steve
  *  Generalize the evaluation of floating point delays, and
  *  get it working with delay assignment statements.
