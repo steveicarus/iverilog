@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.28 2001/06/15 03:28:30 steve Exp $
+ *  $Id: README.txt,v 1.29 2001/06/15 04:07:57 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -435,6 +435,23 @@ number of symbols must be an even multiple of the width of the operator.
 
 Subtraction is similar to addition, except that the 2nd, 3rd and 4th
 vectors are subtracted from the first.
+
+
+STRUCTURAL COMPARE STATEMENTS:
+
+The arithmetic statements handle various arithmetic operators that
+have wide outputs, but the comparators have single bit output, so they
+are implemented a bit differently. The syntax, however, is very
+similar:
+
+	<label> .cmp/ge  <wid>, <symbols_list>;
+	<label> .cmp/gt  <wid>, <symbols_list>;
+
+Whereas the arithmetic statements create an array of functor outputs,
+there is only one useful functor output for the comparators. That
+functor output is 1 of the comparison is true, 0 if false, and x
+otherwise.
+
 
 THREAD STATEMENTS:
 

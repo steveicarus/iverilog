@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.30 2001/06/15 03:28:31 steve Exp $"
+#ident "$Id: parse.y,v 1.31 2001/06/15 04:07:58 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -54,7 +54,8 @@ extern FILE*yyin;
 };
 
 
-%token K_ARITH_SUB K_ARITH_SUM K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
+%token K_ARITH_SUB K_ARITH_SUM K_CMP_GE K_CMP_GT
+%token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S
 %token K_RESOLV K_SCOPE K_THREAD
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
@@ -164,6 +165,16 @@ statement
 	| T_LABEL K_ARITH_SUM T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_sum($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_GE T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_ge($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_GT T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_gt($1, $3, obj.cnt, obj.vect);
 		}
 
 
@@ -458,6 +469,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.31  2001/06/15 04:07:58  steve
+ *  Add .cmp statements for structural comparison.
+ *
  * Revision 1.30  2001/06/15 03:28:31  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.

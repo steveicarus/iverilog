@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.75 2001/06/15 03:28:31 steve Exp $"
+#ident "$Id: compile.cc,v 1.76 2001/06/15 04:07:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -485,6 +485,46 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       vvp_arith_sum*arith = new vvp_arith_sum(fdx, wid);
 
       connect_arith_inputs(fdx, wid, arith, argc, argv);
+
+}
+
+void compile_cmp_ge(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2*wid) {
+	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_cmp_ge*cmp = new vvp_cmp_ge(fdx, wid);
+
+      connect_arith_inputs(fdx, wid, cmp, argc, argv);
+
+}
+
+void compile_cmp_gt(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2*wid) {
+	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    free(label);
+	    return;
+      }
+
+      vvp_ipoint_t fdx = functor_allocate(wid);
+      define_functor_symbol(label, fdx);
+
+      vvp_cmp_gt*cmp = new vvp_cmp_gt(fdx, wid);
+
+      connect_arith_inputs(fdx, wid, cmp, argc, argv);
 
 }
 
@@ -1340,6 +1380,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.76  2001/06/15 04:07:58  steve
+ *  Add .cmp statements for structural comparison.
+ *
  * Revision 1.75  2001/06/15 03:28:31  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.

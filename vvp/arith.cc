@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.2 2001/06/07 03:09:03 steve Exp $"
+#ident "$Id: arith.cc,v 1.3 2001/06/15 04:07:58 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -154,8 +154,93 @@ void vvp_arith_sub::set(vvp_ipoint_t i, functor_t f, bool push)
       }
 }
 
+vvp_cmp_ge::vvp_cmp_ge(vvp_ipoint_t b, unsigned w)
+: vvp_arith_(b, w)
+{
+}
+
+void vvp_cmp_ge::set(vvp_ipoint_t i, functor_t f, bool push)
+{
+      functor_t base_obj = functor_index(base_);
+      assert(wid_ <= sizeof(unsigned long));
+      unsigned long a = 0, b = 0;
+      unsigned out_val = 0;
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned ival = obj->ival;
+	    if (ival & 0x0a) {
+		  out_val = 2;
+		  break;
+	    }
+
+	    if (ival & 0x01)
+		  a += 1 << idx;
+	    if (ival & 0x04)
+		  b += 1 << idx;
+      }
+	    
+
+      if (out_val == 0)
+	    out_val = (a >= b) ? 1 : 0;
+
+      if (out_val != base_obj->oval) {
+	    base_obj->oval = out_val;
+	    if (push)
+		  functor_propagate(base_);
+	    else
+		  schedule_functor(base_, 0);
+      }
+}
+
+vvp_cmp_gt::vvp_cmp_gt(vvp_ipoint_t b, unsigned w)
+: vvp_arith_(b, w)
+{
+}
+
+void vvp_cmp_gt::set(vvp_ipoint_t i, functor_t f, bool push)
+{
+      functor_t base_obj = functor_index(base_);
+      assert(wid_ <= sizeof(unsigned long));
+      unsigned long a = 0, b = 0;
+      unsigned out_val = 0;
+
+      for (unsigned idx = 0 ;  idx < wid_ ;  idx += 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base_,idx);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned ival = obj->ival;
+	    if (ival & 0x0a) {
+		  out_val = 2;
+		  break;
+	    }
+
+	    if (ival & 0x01)
+		  a += 1 << idx;
+	    if (ival & 0x04)
+		  b += 1 << idx;
+      }
+	    
+
+      if (out_val == 0)
+	    out_val = (a > b) ? 1 : 0;
+
+      if (out_val != base_obj->oval) {
+	    base_obj->oval = out_val;
+	    if (push)
+		  functor_propagate(base_);
+	    else
+		  schedule_functor(base_, 0);
+      }
+}
+
 /*
  * $Log: arith.cc,v $
+ * Revision 1.3  2001/06/15 04:07:58  steve
+ *  Add .cmp statements for structural comparison.
+ *
  * Revision 1.2  2001/06/07 03:09:03  steve
  *  Implement .arith/sub subtraction.
  *

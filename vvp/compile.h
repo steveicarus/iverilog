@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.26 2001/06/15 03:28:31 steve Exp $"
+#ident "$Id: compile.h,v 1.27 2001/06/15 04:07:58 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -70,12 +70,17 @@ extern void compile_resolver(char*label, char*type,
 			     unsigned argc, struct symb_s*argv);
 
 /*
- * This is called by the parser to make an adder.
+ * This is called by the parser to make the various arithmetic and
+ * comparison functors.
  */
 extern void compile_arith_sum(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
+extern void compile_cmp_ge(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_gt(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
 
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
@@ -191,6 +196,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.27  2001/06/15 04:07:58  steve
+ *  Add .cmp statements for structural comparison.
+ *
  * Revision 1.26  2001/06/15 03:28:31  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.

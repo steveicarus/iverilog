@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.2 2001/06/07 03:09:03 steve Exp $"
+#ident "$Id: arith.h,v 1.3 2001/06/15 04:07:58 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -71,8 +71,34 @@ class vvp_arith_sub  : public vvp_arith_ {
       vvp_arith_sub& operator= (const vvp_arith_sub&);
 };
 
+class vvp_cmp_ge  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_ge(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private: // not implemented
+      vvp_cmp_ge(const vvp_cmp_ge&);
+      vvp_cmp_ge& operator= (const vvp_cmp_ge&);
+};
+
+class vvp_cmp_gt  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_gt(vvp_ipoint_t b, unsigned wid);
+
+      void set(vvp_ipoint_t i, functor_t f, bool push);
+
+    private: // not implemented
+      vvp_cmp_gt(const vvp_cmp_gt&);
+      vvp_cmp_gt& operator= (const vvp_cmp_gt&);
+};
 /*
  * $Log: arith.h,v $
+ * Revision 1.3  2001/06/15 04:07:58  steve
+ *  Add .cmp statements for structural comparison.
+ *
  * Revision 1.2  2001/06/07 03:09:03  steve
  *  Implement .arith/sub subtraction.
  *
