@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.8 2002/01/15 03:21:18 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.9 2002/01/25 03:24:19 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -29,21 +29,40 @@
 # include  <string.h>
 # include  <assert.h>
 
+static char buf[4096];
+
 static int string_get(int code, vpiHandle ref)
 {
+    struct __vpiStringConst*rfp;
 
       switch (code) {
+          case vpiSize:
+	      rfp = (struct __vpiStringConst*)ref;
+	      assert(ref->vpi_type->type_code == vpiConstant);
+
+	      //fprintf(stderr, "String:|%s|, Length: %d\n", rfp->value, strlen(rfp->value));
+	      return strlen(rfp->value)*8;
+
+          case vpiSigned:
+	      return 0;
+
 	  case vpiConstType:
-	    return vpiStringConst;
+	      return vpiStringConst;
 
 	  default:
-	    assert(0);
-	    return 0;
+	      fprintf(stderr, "vvp error: get %d not supported "
+		      "by vpiStringConst\n", code);
+	      assert(0);
+	      return 0;
       }
 }
 
 static void string_value(vpiHandle ref, p_vpi_value vp)
 {
+      int size;
+      unsigned uint_value;
+      char *cp;
+
       struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
       assert(ref->vpi_type->type_code == vpiConstant);
 
@@ -54,7 +73,76 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 	    vp->format = vpiStringVal;
 	    break;
 
+          case vpiDecStrVal:
+	      size = strlen(rfp->value);
+	      if (size > 4){
+		  // We only support standard integers. Ignore other bytes...
+		  size = 4;	
+		  fprintf(stderr, "Warning (vpi_const.cc): %%d on constant strings only looks "
+			  "at first 4 bytes!\n");
+	      }
+
+	      uint_value = 0;
+	      for(int i=0; i<size;i ++){
+		  uint_value <<=8;
+		  uint_value += (unsigned char)(rfp->value[i]);
+	      }
+
+	      sprintf(buf, "%u", uint_value);
+
+	      vp->format = vpiDecStrVal;
+	      vp->value.str = buf;
+	      break;
+
+          case vpiBinStrVal:
+	      size = strlen(rfp->value);
+	      if (size*8 > (int)(sizeof(buf)/sizeof(char))-1 ){
+		  // Avoid overflow of 'buf'
+		  // 4096 should be sufficient for most cases though. ;-)
+		  size = (sizeof(buf)/sizeof(char)-2)/8;	
+	      }
+
+	      cp = buf;
+	      for(int i=0; i<size;i ++){
+		  for(int bit=7;bit>=0; bit--){
+		      *cp++ = "01"[ (rfp->value[i]>>bit)&1 ];
+		  }
+	      }
+	      *cp = 0;
+
+	      vp->format = vpiBinStrVal;
+	      vp->value.str = buf;
+	      break;
+
+          case vpiHexStrVal:
+	      size = strlen(rfp->value);
+	      if (size*2 > (int)(sizeof(buf)/sizeof(char))-1 ){
+		  // Avoid overflow of 'buf'
+		  // 4096 should be sufficient for most cases though. ;-)
+		  size = (sizeof(buf)/sizeof(char)-2)/2;	
+	      }
+
+	      cp = buf;
+	      for(int i=0; i<size;i++){
+		  for(int nibble=1;nibble>=0; nibble--){
+		      *cp++ = "0123456789abcdef"[ (rfp->value[i]>>(nibble*4))&15 ];
+		  }
+	      }
+	      *cp = 0;
+
+	      vp->format = vpiHexStrVal;
+	      vp->value.str = buf;
+	      break;
+
+          case vpiOctStrVal:
+	      fprintf(stderr, "ERROR (vpi_const.cc): %%o display of constant strings not yet implemented\n");
+	      assert(0);
+	      break;
+
 	  default:
+	    fprintf(stderr, "ERROR (vpi_const.cc): vp->format: %d\n", vp->format);
+	    assert(0);
+
 	    vp->format = vpiSuppressVal;
 	    break;
       }
@@ -108,7 +196,6 @@ static int binary_get(int code, vpiHandle ref)
       }
 }
 
-static char buf[4096];
 
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
@@ -251,6 +338,9 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.9  2002/01/25 03:24:19  steve
+ *  Support display of strings with umber formats. (Tom Verbeure)
+ *
  * Revision 1.8  2002/01/15 03:21:18  steve
  *  Support DesSTrVal for binary constants.
  *
