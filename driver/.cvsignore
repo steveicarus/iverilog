@@ -10,3 +10,6 @@ cfparse.output
 cflexor.c
 foo.*
 iverilog
+iverilog.ps
+iverilog.pdf
+tmp.pdf
