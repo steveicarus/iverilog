@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_net.cc,v 1.10 1999/11/30 04:33:41 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.11 1999/12/02 04:08:10 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -493,6 +493,87 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, const string&path,
       return osig;
 }
 
+/*
+ * The concatenation operator, as a net, is a wide signal that is
+ * connected to all the pins of the elaborated expression nets.
+ */
+NetNet* PEConcat::elaborate_net(Design*des, const string&path,
+				unsigned,
+				unsigned long rise,
+				unsigned long fall,
+				unsigned long decay) const
+{
+      svector<NetNet*>nets (parms_.count());
+      unsigned pins = 0;
+      unsigned errors = 0;
+
+      if (repeat_) {
+	    verinum*rep = repeat_->eval_const(des, path);
+	    if (rep == 0) {
+		  cerr << get_line() << ": internal error: Unable to "
+		       << "evaluate constant repeat expression." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    unsigned long repeat = rep->as_ulong();
+
+	    assert(parms_.count() == 1);
+	    NetNet*obj = parms_[0]->elaborate_net(des, path, 0, rise,
+						  fall, decay);
+	    NetTmp*tmp = new NetTmp(des->local_symbol(path),
+				    repeat * obj->pin_count());
+
+	    for (unsigned idx = 0 ;  idx < repeat ;  idx += 1) {
+		  unsigned base = obj->pin_count() * idx;
+		  for (unsigned pin = 0 ;  pin < obj->pin_count() ; pin += 1)
+			connect(tmp->pin(base+pin), obj->pin(pin));
+	    }
+
+	    des->add_signal(tmp);
+	    return tmp;
+      }
+
+	/* Elaborate the operands of the concatenation. */
+      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+	    nets[idx] = parms_[idx]->elaborate_net(des, path, 0,
+						   rise,fall,decay);
+	    if (nets[idx] == 0)
+		  errors += 1;
+	    else
+		  pins += nets[idx]->pin_count();
+      }
+
+	/* If any of the sub expressions failed to elaborate, then
+	   delete all those that did and abort myself. */
+      if (errors) {
+	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
+		  if (nets[idx]) delete nets[idx];
+	    }
+	    des->errors += 1;
+	    return 0;
+      }
+
+	/* Make the temporary signal that connects to all the
+	   operands, and connect it up. Scan the operands of the
+	   concat operator from least significant to most significant,
+	   which is opposite from how they are given in the list. */
+      NetNet*osig = new NetNet(0, des->local_symbol(path),
+			       NetNet::IMPLICIT, pins);
+      pins = 0;
+      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
+	    NetNet*cur = nets[idx-1];
+	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
+		  connect(osig->pin(pins), cur->pin(pin));
+		  pins += 1;
+	    }
+      }
+
+      osig->local_flag(true);
+      des->add_signal(osig);
+      return osig;
+}
+
 NetNet* PEIdent::elaborate_net(Design*des, const string&path,
 			       unsigned lwidth,
 			       unsigned long rise,
@@ -817,6 +898,9 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.11  1999/12/02 04:08:10  steve
+ *  Elaborate net repeat concatenations.
+ *
  * Revision 1.10  1999/11/30 04:33:41  steve
  *  Put implicitly defined signals in the scope.
  *

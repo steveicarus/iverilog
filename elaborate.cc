@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.131 1999/11/28 23:42:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.132 1999/12/02 04:08:10 steve Exp $"
 #endif
 
 /*
@@ -591,66 +591,6 @@ void PGModule::elaborate(Design*des, const string&path) const
       }
 
       cerr << get_line() << ": error: Unknown module: " << type_ << endl;
-}
-
-/*
- * The concatenation operator, as a net, is a wide signal that is
- * connected to all the pins of the elaborated expression nets.
- */
-NetNet* PEConcat::elaborate_net(Design*des, const string&path,
-				unsigned,
-				unsigned long rise,
-				unsigned long fall,
-				unsigned long decay) const
-{
-      svector<NetNet*>nets (parms_.count());
-      unsigned pins = 0;
-      unsigned errors = 0;
-
-      if (repeat_) {
-	    cerr << get_line() << ": sorry: I do not know how to"
-		  " elaborate repeat concatenation nets." << endl;
-	    return 0;
-      }
-
-	/* Elaborate the operands of the concatenation. */
-      for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-	    nets[idx] = parms_[idx]->elaborate_net(des, path, 0,
-						   rise,fall,decay);
-	    if (nets[idx] == 0)
-		  errors += 1;
-	    else
-		  pins += nets[idx]->pin_count();
-      }
-
-	/* If any of the sub expressions failed to elaborate, then
-	   delete all those that did and abort myself. */
-      if (errors) {
-	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-		  if (nets[idx]) delete nets[idx];
-	    }
-	    des->errors += 1;
-	    return 0;
-      }
-
-	/* Make the temporary signal that connects to all the
-	   operands, and connect it up. Scan the operands of the
-	   concat operator from least significant to most significant,
-	   which is opposite from how they are given in the list. */
-      NetNet*osig = new NetNet(0, des->local_symbol(path),
-			       NetNet::IMPLICIT, pins);
-      pins = 0;
-      for (unsigned idx = nets.count() ;  idx > 0 ;  idx -= 1) {
-	    NetNet*cur = nets[idx-1];
-	    for (unsigned pin = 0 ;  pin < cur->pin_count() ;  pin += 1) {
-		  connect(osig->pin(pins), cur->pin(pin));
-		  pins += 1;
-	    }
-      }
-
-      osig->local_flag(true);
-      des->add_signal(osig);
-      return osig;
 }
 
 /*
@@ -2150,6 +2090,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.132  1999/12/02 04:08:10  steve
+ *  Elaborate net repeat concatenations.
+ *
  * Revision 1.131  1999/11/28 23:42:02  steve
  *  NetESignal object no longer need to be NetNode
  *  objects. Let them keep a pointer to NetNet objects.
