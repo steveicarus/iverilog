@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.2 2000/09/10 02:18:16 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.3 2000/09/10 03:59:59 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -79,28 +79,56 @@ NetAssign_* PExpr::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * Concatenation expressions can appear as l-values. Handle them here.
+ *
+ * If adjacent l-values in the concatenation are not bit selects, then
+ * merge them into a single NetAssign_ object. This can happen is code
+ * like ``{ ...a, b, ...}''. As long as "a" and "b" do not have bit
+ * selects (or the bit selects are constant) we can merge the
+ * NetAssign_ objects.
+ *
+ * Be careful to get the bit order right. In the expression ``{a, b}''
+ * a is the MSB and b the LSB. Connect the LSB to the low pins of the
+ * NetAssign_ object.
  */
 NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 {
-#if 0
-      NetNet*ll = elaborate_net(des, scope->name(), 0, 0, 0, 0,
-				Link::STRONG, Link::STRONG);
-      if (ll != 0) {
-	    NetAssign_*lv = new NetAssign_(scope->local_symbol(),
-					   ll->pin_count());
-	    for (unsigned idx = 0 ; idx < ll->pin_count() ;  idx += 1)
-		  connect(lv->pin(idx), ll->pin(idx));
-	    des->add_node(lv);
-	    return lv;
-      }
-#endif
+
       NetAssign_*res = 0;
+
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope);
 	    assert(tmp);
 
-	    tmp->more = res;
-	    res = tmp;
+	      /* If adjacent l-values in the concatenation are not bit
+		 selects, then merge them into a single NetAssign_
+		 object.
+
+		 If we cannot merge, then just link the new one to the
+		 previous one. */
+
+	    if (res && (res->bmux() == 0) && (tmp->bmux() == 0)) {
+		  unsigned wid1 = tmp->pin_count();
+		  unsigned wid2 = res->pin_count() + tmp->pin_count();
+		  NetAssign_*tmp2 = new NetAssign_(res->name(), wid2);
+
+		  tmp2->more = res->more;
+		  res->more = 0;
+
+		  for (unsigned idx = 0 ;  idx < wid1 ; idx += 1)
+			connect(tmp2->pin(idx), tmp->pin(idx));
+
+		  for (unsigned idx = 0 ;  idx < res->pin_count() ; idx += 1)
+			connect(tmp2->pin(idx+wid1), res->pin(idx));
+
+		  delete res;
+		  delete tmp;
+		  res = tmp2;
+		  des->add_node(res);
+
+	    } else {
+		  tmp->more = res;
+		  res = tmp;
+	    }
       }
 
       return res;
@@ -234,6 +262,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.3  2000/09/10 03:59:59  steve
+ *  Agressively merge NetAssign_ within concatenations.
+ *
  * Revision 1.2  2000/09/10 02:18:16  steve
  *  elaborate complex l-values
  *
