@@ -1215,12 +1215,13 @@ if(lt)
 		while(s)
 			{
 			free(s->name);
-			s2=s->next;
+			s2=s->symchain;
 			free(s);
 			s=s2;
 			}
 		}
-	
+
+	free(lt->sorted_facs);
 	fclose(lt->handle);
 	free(lt);
 	}
