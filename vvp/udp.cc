@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.28 2005/04/03 05:45:51 steve Exp $"
+#ident "$Id: udp.cc,v 1.29 2005/04/04 05:13:59 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -76,25 +76,43 @@ unsigned vvp_udp_s::port_count() const
       return ports_;
 }
 
+/*
+ * The cur table that is passed in must have for every valid bit
+ * position exactly one of the three mask bits set. This represents an
+ * actual vector of inputs to be tested.
+ *
+ * The levels0_ and levels1_ tables have levels_table objects that
+ * eack represent a single row. For the row to match the input vector,
+ * all the bits that are set in the cur table must also be set in the
+ * row being tested.
+ *
+ * It is possible for a row to match multiple different vectors. This
+ * is seen from the compile_table function, where bit positions for
+ * multiple masks can be test for certain row positions. For example,
+ * if the row bit position is '?', then mask 0/1/x are all set in the
+ * row for that bit position. This means it doesn't matter which of
+ * the three bit positions is set in the cur input table, the bit
+ * position will generate a match.
+ */
 vvp_bit4_t vvp_udp_s::test_levels(const udp_levels_table&cur)
 {
       for (unsigned idx = 0 ;  idx < nlevels0_ ;  idx += 1) {
-	    if (cur.mask0 != levels0_[idx].mask0)
+	    if (cur.mask0 != (cur.mask0 & levels0_[idx].mask0))
 		  continue;
-	    if (cur.mask1 != levels0_[idx].mask1)
+	    if (cur.mask1 != (cur.mask1 & levels0_[idx].mask1))
 		  continue;
-	    if (cur.maskx != levels0_[idx].maskx)
+	    if (cur.maskx != (cur.maskx & levels0_[idx].maskx))
 		  continue;
 
 	    return BIT4_0;
       }
 
       for (unsigned idx = 0 ;  idx < nlevels1_ ;  idx += 1) {
-	    if (cur.mask0 != levels1_[idx].mask0)
+	    if (cur.mask0 != (cur.mask0 & levels1_[idx].mask0))
 		  continue;
-	    if (cur.mask1 != levels1_[idx].mask1)
+	    if (cur.mask1 != (cur.mask1 & levels1_[idx].mask1))
 		  continue;
-	    if (cur.maskx != levels1_[idx].maskx)
+	    if (cur.maskx != (cur.maskx & levels1_[idx].maskx))
 		  continue;
 
 	    return BIT4_1;
@@ -150,6 +168,23 @@ void vvp_udp_s::compile_table(char**tab)
 			break;
 		      case 'x':
 			cur.maskx |= mask_bit;
+			break;
+		      case 'b':
+			cur.mask0 |= mask_bit;
+			cur.mask1 |= mask_bit;
+			break;
+		      case 'l':
+			cur.mask0 |= mask_bit;
+			cur.maskx |= mask_bit;
+			break;
+		      case 'h':
+			cur.maskx |= mask_bit;
+			cur.mask1 |= mask_bit;
+			break;
+		      case '?':
+			cur.mask0 |= mask_bit;
+			cur.maskx |= mask_bit;
+			cur.mask1 |= mask_bit;
 			break;
 		      default:
 			assert(0);
@@ -254,6 +289,9 @@ void compile_udp_functor(char*label, char*type,
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.29  2005/04/04 05:13:59  steve
+ *  Support row level wildcards.
+ *
  * Revision 1.28  2005/04/03 05:45:51  steve
  *  Rework the vvp_delay_t class.
  *
