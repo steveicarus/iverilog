@@ -29,6 +29,15 @@ ivl_logic_type
 ivl_logic_pin
 ivl_logic_pins
 
+ivl_lpm_name
+ivl_lpm_type
+ivl_lpm_width
+
+ivl_lpm_ff
+ivl_lpm_ff_clk
+ivl_lpm_ff_data
+ivl_lpm_ff_q
+
 ivl_lval_mux
 ivl_lval_pin
 ivl_lval_pins
@@ -43,6 +52,8 @@ ivl_nexus_ptr_sig
 ivl_scope_children
 ivl_scope_logs
 ivl_scope_log
+ivl_scope_lpms
+ivl_scope_lpm
 ivl_scope_name
 ivl_scope_sigs
 ivl_scope_sig
