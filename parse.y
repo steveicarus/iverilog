@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.122 2001/06/18 00:51:23 steve Exp $"
+#ident "$Id: parse.y,v 1.123 2001/06/23 00:31:06 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1147,7 +1147,7 @@ assign_list
 	;
 
 module
-	: K_module IDENTIFIER list_of_ports_opt ';'
+	: module_start IDENTIFIER list_of_ports_opt ';'
 		{ pform_startmodule($2, $3);
 		}
 	  module_item_list
@@ -1155,7 +1155,7 @@ module
 		{ pform_endmodule($2);
 		  delete $2;
 		}
-	| K_module IDENTIFIER list_of_ports_opt ';'
+	| module_start IDENTIFIER list_of_ports_opt ';'
 		{ pform_startmodule($2, $3);
 		}
 	  K_endmodule
@@ -1163,6 +1163,8 @@ module
 		  delete $2;
 		}
 	;
+
+module_start : K_module | K_macromodule ;
 
 module_item
 	: net_type range_opt list_of_variables ';'
