@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: load_module.cc,v 1.12 2003/06/05 04:31:09 steve Exp $"
+#ident "$Id: load_module.cc,v 1.13 2005/03/22 15:53:48 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -88,7 +88,7 @@ bool load_module(const char*type)
 			cerr << "Executing: " << cmdline << endl;
 
 		  pform_parse(path, file);
-		  fclose(file);
+		  pclose(file);
 		  free(cmdline);
 
 	    } else {
@@ -193,6 +193,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.13  2005/03/22 15:53:48  steve
+ *  popen must be matched by pclose.
+ *
  * Revision 1.12  2003/06/05 04:31:09  steve
  *  INclude missing assert.h in load_module.
  *
