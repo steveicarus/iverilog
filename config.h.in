@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.6 2003/01/10 19:01:04 steve Exp $"
+#ident "$Id: config.h.in,v 1.7 2003/02/20 00:49:24 steve Exp $"
 #endif
 
 #if defined(__cplusplus)
@@ -43,10 +43,15 @@
 # undef HAVE_DL_H
 # undef HAVE_FCHMOD
 # undef HAVE_LIBREADLINE
+# undef HAVE_LIBZ
+# undef HAVE_LIBBZ2
 # undef HAVE_SYS_WAIT_H
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.7  2003/02/20 00:49:24  steve
+ *  detect -lz and -lbz2 libraries.
+ *
  * Revision 1.6  2003/01/10 19:01:04  steve
  *  Only use libiberty.h if available.
  *

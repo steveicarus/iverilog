@@ -34,6 +34,9 @@ AC_LANG_CPLUSPLUS
 
 AC_CHECK_HEADERS(getopt.h malloc.h libiberty.h iosfwd sys/wait.h)
 
+AC_CHECK_LIB(z, gzwrite)
+AC_CHECK_LIB(bz2, BZ2_bzdopen)
+
 AC_MSG_CHECKING(for sys/times)
 AC_TRY_LINK(
 #include <unistd.h>
