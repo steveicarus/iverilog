@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.30 1999/05/30 03:12:56 steve Exp $"
+#ident "$Id: parse.y,v 1.31 1999/06/02 02:56:29 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -95,6 +95,9 @@ extern void lex_end_table();
 %type <text> identifier register_variable
 %type <strings> register_variable_list
 %type <strings> list_of_variables
+
+%type <text> net_decl_assign
+%type <strings> net_decl_assigns
 
 %type <wire> port
 %type <wires> list_of_ports list_of_ports_opt
@@ -799,6 +802,14 @@ module_item
 		  }
 		  delete $3;
 		}
+	| net_type range_opt net_decl_assigns ';'
+		{ pform_makewire($3, $1);
+		  if ($2) {
+			pform_set_net_range($3, $2);
+			delete $2;
+		  }
+		  delete $3;
+		}
 	| port_type range_opt list_of_variables ';'
 		{ pform_set_port_type($3, $1);
 		  if ($2) {
@@ -863,6 +874,34 @@ module_item
 module_item_list
 	: module_item_list module_item
 	| module_item
+	;
+
+  /* A net declaration assignment allows the programmer to combine the
+     net declaration and the continuous assignment into a single
+     statement. */
+net_decl_assign
+	: IDENTIFIER '=' expression
+		{ PEIdent*id = new PEIdent(*$1);
+		  PGAssign*tmp = pform_make_pgassign(id, $3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = $1;
+		}
+	;
+
+net_decl_assigns
+	: net_decl_assigns ',' net_decl_assign
+		{ list<string>*tmp = $1;
+		  tmp->push_back(*$3);
+		  delete $3;
+		  $$ = tmp;
+		}
+	| net_decl_assign
+		{ list<string>*tmp = new list<string>;
+		  tmp->push_back(*$1);
+		  delete $1;
+		  $$ = tmp;
+		}
 	;
 
 net_type
