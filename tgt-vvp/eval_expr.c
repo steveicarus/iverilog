@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.113 2005/01/24 05:28:31 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.114 2005/01/28 05:37:48 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1570,6 +1570,17 @@ static struct vector_info draw_select_expr(ivl_expr_t exp, unsigned wid)
 	/* Evaluate the bit select base expression and store the
 	   result into index register 0. */
       shiv = draw_eval_expr(shift, STUFF_OK_XZ);
+
+	/* Detect and handle the special case that the shift is a
+	   constant 0. Skip the shift, and return the subexpression
+	   with the width trimmed down to the desired width. */
+      if (shiv.base == 0) {
+	    assert(subv.wid >= wid);
+	    res.base = subv.base;
+	    res.wid = wid;
+	    return res;
+      }
+
       fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       clr_vector(shiv);
 
@@ -2088,6 +2099,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.114  2005/01/28 05:37:48  steve
+ *  Special handling of constant shift 0.
+ *
  * Revision 1.113  2005/01/24 05:28:31  steve
  *  Remove the NetEBitSel and combine all bit/part select
  *  behavior into the NetESelect node and IVL_EX_SELECT
