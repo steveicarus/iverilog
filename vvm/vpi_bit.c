@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_bit.c,v 1.1 2000/03/22 04:26:40 steve Exp $"
+#ident "$Id: vpi_bit.c,v 1.2 2000/03/22 05:16:38 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
+# include  <stdio.h>
 
-#define UNAMBIG(v) ((v)&0x0f == (v)>>4)
+#define UNAMBIG(v) (((v)&0x0f) == ((v)>>4))
 
 
 # define STREN1(v) ( ((v)&0x80)? ((v)&0xf0) : (0x70 - ((v)&0xf0)) )
@@ -30,9 +31,16 @@
 
 vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 {
+      unsigned idx;
       vpip_bit_t res = bits[0];
 
-      for (idx = 1 ;  idx < nbits ;  idx += 1) {
+      idx = 1;
+      while ((idx < nbits) && B_ISZ(res)) {
+	    res = bits[idx];
+	    idx += 1;
+      }
+
+      for ( ;  idx < nbits ;  idx += 1) {
 	      /* High-impedence drives do not affect the result. */
 	    if (bits[idx] == HiZ)
 		  continue;
@@ -42,9 +50,9 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 		    /* If both signals are unambiguous, simply choose
 		       the stronger. */
 
-		  if (bits[idx]&0x77 > res&0x77)
+		  if ((bits[idx]&0x77) > (res&0x77))
 			res = bits[idx];
-		  else if (bits[idx]*0x77 == res&0x77)
+		  else if (bits[idx]*0x77 == (res&0x77))
 			res = (res&0xf0) + (bits[idx]&0x0f);
 		  else
 			;
@@ -58,12 +66,12 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 
 		  vpip_bit_t tmp = 0;
 
-		  if (res&0x70 > bits[idx]&0x70)
+		  if ((res&0x70) > (bits[idx]&0x70))
 			tmp |= res&0xf0;
 		  else
 			tmp |= bits[idx]&0xf0;
 
-		  if (res&0x07 > bits[idx]&0x07)
+		  if ((res&0x07) > (bits[idx]&0x07))
 			tmp |= res&0x0f;
 		  else
 			tmp |= bits[idx]&0x0f;
@@ -90,7 +98,7 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 
       }
 
-      if (res&0x77 == 0)
+      if ((res&0x77) == 0)
 	    res = HiZ;
 
       return res;
@@ -98,6 +106,9 @@ vpip_bit_t vpip_bits_resolve(const vpip_bit_t*bits, unsigned nbits)
 
 /*
  * $Log: vpi_bit.c,v $
+ * Revision 1.2  2000/03/22 05:16:38  steve
+ *  Integrate drive resolution function.
+ *
  * Revision 1.1  2000/03/22 04:26:40  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit

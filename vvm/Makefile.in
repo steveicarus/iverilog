@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.25 2000/03/18 23:22:37 steve Exp $"
+#ident "$Id: Makefile.in,v 1.26 2000/03/22 05:16:38 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -63,7 +63,7 @@ vvm_event.o vvm_ff.o \
 vvm_func.o vvm_gates.o vvm_mult.o vvm_mux.o \
 vvm_nexus.o vvm_pevent.o vvm_signal.o vvm_thread.o vpip.o
 
-P = vpi_callback.o \
+P = vpi_bit.o vpi_callback.o \
 vpi_const.o vpi_iter.o vpi_memory.o vpi_null.o \
 vpi_priv.o vpi_scope.o vpi_signal.o vpi_simulation.o vpi_systask.o vpi_time.o
 

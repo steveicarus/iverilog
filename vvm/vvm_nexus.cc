@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.4 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.5 2000/03/22 05:16:38 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -209,7 +209,7 @@ vpip_bit_t vvm_nexus_wire::resolution_function(const vpip_bit_t*bits,
 					       unsigned nbits) const
 {
       if (nbits == 0) return HiZ;
-      return bits[0];
+      return vpip_bits_resolve(bits, nbits);
 }
 
 class delayed_assign_event  : public vvm_event {
@@ -233,6 +233,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.5  2000/03/22 05:16:38  steve
+ *  Integrate drive resolution function.
+ *
  * Revision 1.4  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
