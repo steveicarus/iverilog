@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.8 2000/04/08 05:28:39 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.9 2000/04/09 04:18:16 steve Exp $"
 #endif
 
 /*
@@ -39,6 +39,7 @@ struct vcd_info {
       vpiHandle cb;
       struct t_vpi_time time;
       char*ident;
+      char*fullname;
       struct vcd_info*next;
 };
 
@@ -63,6 +64,26 @@ static void gen_new_vcd_id(void)
 static struct vcd_info*vcd_list = 0;
 unsigned long vcd_cur_time = 0;
 
+static char *truncate_bitvec(char *s)
+{
+      char l, r;
+
+      r=*s;
+      if(r=='1')
+	    return s;
+      else
+	    s += 1;
+            
+      for(;;s++) { 
+	    l=r; r=*s;
+	    if(!r) return (s-1);
+                 
+	    if(l!=r)
+		  return(((l=='0')&&(r='1'))?s:s-1);
+
+      }
+}
+
 static void show_this_item(struct vcd_info*info)
 {
       s_vpi_value value;
@@ -74,7 +95,67 @@ static void show_this_item(struct vcd_info*info)
       } else {
 	    value.format = vpiBinStrVal;
 	    vpi_get_value(info->item, &value);
-	    fprintf(dump_file, "b%s %s\n", value.value.str, info->ident);
+	    fprintf(dump_file, "b%s %s\n",
+		    truncate_bitvec(value.value.str),
+		    info->ident);
+      }
+}
+
+
+/*
+ * managed qsorted list of vcd_info structs for duplicates bsearching
+ */
+static int nident=0, old_nident=0;
+static struct vcd_info **vcd_info_name_sorted=NULL;
+
+static int vcd_info_name_bsearch_compare(const void *s1, const void *s2)
+{
+      char *v1;
+      struct vcd_info *v2;
+
+      v1=(char *)s1;
+      v2=*((struct vcd_info **)s2);
+
+      return(strcmp(v1, v2->fullname));
+}
+
+static struct vcd_info *bsearch_vcd_info(char *key)
+{
+      struct vcd_info **v;
+
+      v=(struct vcd_info **)bsearch(key, vcd_info_name_sorted, old_nident,
+				    sizeof(struct vcd_info *), vcd_info_name_bsearch_compare);
+
+      return(v ? (*v) : NULL);
+}
+
+static int vcd_info_name_compare(const void *s1, const void *s2)
+{
+      struct vcd_info *v1, *v2;
+
+      v1=*((struct vcd_info **)s1);
+      v2=*((struct vcd_info **)s2);
+
+      return(strcmp(v1->fullname, v2->fullname));
+}  
+
+void vcd_info_post_process(void)
+{
+      if(nident) {
+	    struct vcd_info **l, *r;
+
+	    if (vcd_info_name_sorted) free(vcd_info_name_sorted);
+	
+	    old_nident+=nident;
+	    nident=0;
+	    l=vcd_info_name_sorted=(struct vcd_info **)malloc(old_nident*(sizeof(struct vcd_info *)));
+	    r=vcd_list;
+	    while(r) {
+		  *(l++)=r;
+		  r=r->next;
+	    }
+
+	    qsort(vcd_info_name_sorted, old_nident, sizeof(struct vcd_info *), vcd_info_name_compare);
       }
 }
 
@@ -192,10 +273,15 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 
       for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
 	    const char*type;
+	    char*fullname;
 
 	    switch (vpi_get(vpiType, item)) {
 		case vpiNet:
 		case vpiReg:
+		  fullname=vpi_get_str(vpiFullName, item);
+		  if((old_nident)&&(fullname)&&(bsearch_vcd_info(fullname)))
+			continue;
+
 		  type = "wire";
 		  if (vpi_get(vpiType, item) == vpiReg)
 			type = "reg";
@@ -207,19 +293,23 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		  cb.obj = item;
 		  info->item  = item;
 		  info->ident = strdup(vcdid);
+		  info->fullname = fullname;
 		  info->cb    = vpi_register_cb(&cb);
 		  info->next = vcd_list;
 		  vcd_list   = info;
 		  fprintf(dump_file, "$var %s %u %s %s $end\n",
 			  type, vpi_get(vpiSize, item), info->ident,
-			  vpi_get_str(vpiFullName, item));
+			  info->fullname);
 		  gen_new_vcd_id();
+		  nident += 1;
 		  break;
 
 		case vpiModule:
 		  sublist = vpi_iterate(vpiInternalScope, item);
-		  if (sublist && (depth > 0))
+		  if (sublist && (depth > 0)) {
+			vcd_info_post_process();
 			scan_scope(depth-1, sublist);
+		  }
 		  break;
 
 		default:
@@ -227,6 +317,9 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 	    }
 
       }
+
+	/* close + sort this level so parent collisions are found */
+      vcd_info_post_process();
 }
 
 static int sys_dumpvars_calltf(char*name)
@@ -288,6 +381,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.9  2000/04/09 04:18:16  steve
+ *  Catch duplicate $dumpvars of symbols (ajb)
+ *
  * Revision 1.8  2000/04/08 05:28:39  steve
  *  Revamped VCD id generation and duplicates removal. (ajb)
  *
