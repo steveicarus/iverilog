@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.53 2000/05/11 23:37:26 steve Exp $"
+#ident "$Id: Makefile.in,v 1.54 2000/05/12 05:23:15 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -48,7 +48,7 @@ CPPFLAGS = @CPPFLAGS@ @DEFS@
 CXXFLAGS = @CXXFLAGS@ -I$(srcdir)
 LDFLAGS = @LDFLAGS@
 
-all: ivl verilog gverilog iverilog
+all: ivl verilog iverilog
 	cd vpi ; $(MAKE) all
 	cd vvm ; $(MAKE) all
 	cd ivlpp ; $(MAKE) all
