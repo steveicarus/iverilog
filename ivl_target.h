@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.110 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.111 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -438,7 +438,7 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *
  * ivl_expr_opcode
  *    IVL_EX_BINARY and IVL_EX_UNARY expression nodes include an
- *    upcode from this table:
+ *    opcode from this table:
  *              &   -- AND
  *              A   -- NAND (~&)
  *              X   -- XNOR (~^)
@@ -968,7 +968,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    This function returns the fully scoped hierarchical name for the
  *    signal. The name refers to the entire vector that is the signal.
  *
- *    NOTE: This function is deprecated. The heirarchical name is too
+ *    NOTE: This function is deprecated. The hierarchical name is too
  *    vague a construct when escaped names can have . characters in
  *    them. Do no use this function in new code, it will disappear.
  *
@@ -1143,6 +1143,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.111  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.110  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

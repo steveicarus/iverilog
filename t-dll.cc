@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.103 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.104 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1898,7 +1898,7 @@ void dll_target::signal(const NetNet*net)
       }
 #endif
 
-	/* Save the privitive properties of the signal in the
+	/* Save the primitive properties of the signal in the
 	   ivl_signal_t object. */
 
       obj->width_ = net->pin_count();
@@ -2033,6 +2033,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.104  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.103  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-xnf.cc,v 1.46 2003/01/14 21:16:18 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.47 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,7 +29,7 @@
  * use by Xilinx tools, and other tools that accepts Xilinx designs.
  *
  * The code generator automatically detects ports to top level modules
- * and generates SIG records that make the XNF useable as a schematic.
+ * and generates SIG records that make the XNF usable as a schematic.
  *
  * FLAGS
  * The XNF backend uses the following flags from the command line to
@@ -61,7 +61,7 @@
  *      Specify the LCA library part type for the gate. The lname
  *      is the name of the symbol to use (i.e. DFF) and the comma
  *      separated list is the names of the pins, in the order they
- *      appear in the verilog source. If the name is prefixed with a
+ *      appear in the Verilog source. If the name is prefixed with a
  *      tilde (~) then the pin is inverted, and the proper "INV" token
  *      will be added to the PIN record.
  *
@@ -927,6 +927,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.47  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.46  2003/01/14 21:16:18  steve
  *  Move strstream to ostringstream for compatibility.
  *

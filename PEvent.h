@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PEvent.h,v 1.6 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PEvent.h,v 1.7 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -31,7 +31,7 @@ class NetScope;
 /*
  * The PEvent class represents event objects. These are things that
  * are declared in Verilog as ``event foo;'' The name passed to the
- * constructure is the "foo" part of the declaration.
+ * constructor is the "foo" part of the declaration.
  */
 class PEvent : public LineInfo {
 
@@ -53,6 +53,9 @@ class PEvent : public LineInfo {
 
 /*
  * $Log: PEvent.h,v $
+ * Revision 1.7  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.6  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

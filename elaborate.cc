@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.270 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.271 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -285,7 +285,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       }
 
 
-	/* Allocate all the getlist nodes for the gates. */
+	/* Allocate all the netlist nodes for the gates. */
       NetLogic**cur = new NetLogic*[count];
       assert(cur);
 
@@ -1780,7 +1780,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	         <statement>
 	       end
 
-	   This is equivalent, and uses the existing capapilities of
+	   This is equivalent, and uses the existing capabilities of
 	   the netlist format. The resulting netlist should look like
 	   this:
 
@@ -2467,7 +2467,7 @@ Design* elaborate(list<const char*>roots)
       des->run_defparams();
 
 
-	// At this point, all parameter overrides are done. Scane the
+	// At this point, all parameter overrides are done. Scan the
 	// scopes and evaluate the parameters all the way down to
 	// constants.
       des->evaluate_parameters();
@@ -2507,6 +2507,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.271  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.270  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

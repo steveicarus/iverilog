@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.31 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.32 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -34,7 +34,7 @@
 
 /*
  * This is a little convenience function for converting a NetExpr
- * expresion type to the expression type used by ivl_expr_t objects.
+ * expression type to the expression type used by ivl_expr_t objects.
  */
 static ivl_variable_type_t get_expr_type(const NetExpr*net)
 {
@@ -561,6 +561,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.32  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.31  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

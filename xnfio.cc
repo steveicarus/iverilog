@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.24 2003/01/14 21:16:18 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.25 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,7 +227,7 @@ static void make_ibuf(Design*des, NetNet*net)
 	    if (tmp->attribute("XNF-LCA") != verinum())
 		  continue;
 
-	      // Found a BUF, it is only useable if the only input is
+	      // Found a BUF, it is only usable if the only input is
 	      // the signal and there are no other inputs.
 	    if ((tmp->type() == NetLogic::BUF) &&
 		(count_inputs(tmp->pin(1)) == 1) &&
@@ -362,6 +362,9 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.25  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.24  2003/01/14 21:16:18  steve
  *  Move strstream to ostringstream for compatibility.
  *

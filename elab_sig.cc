@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.26 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.27 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -525,6 +525,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.27  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.26  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *
@@ -619,7 +622,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
  *  for regs that are not really values.
  *
  * Revision 1.1  2000/05/02 16:27:38  steve
- *  Move signal elaboration to a seperate pass.
+ *  Move signal elaboration to a separate pass.
  *
  */
 

@@ -13,7 +13,7 @@ home page at <http://www.icarus.com/eda/verilog>.
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
 tools. These back-end tools currently include a simulator engine
-called VVP, an XNF (Xilinx Netlist Format) generator and an EDIF fpga
+called VVP, an XNF (Xilinx Netlist Format) generator and an EDIF FPGA
 netlist generator. In the future, backends are expected for EDIF/LPM,
 structural Verilog, VHDL, etc.
 
@@ -363,7 +363,7 @@ language that are defined.
 	can theoretically be evaluated at compile time, instead of
 	using runtime VPI code. Doing so means that VPI cannot
 	override the definitions of functions handled in this
-	manner. On the other hand, this makes them synthesizeable, and
+	manner. On the other hand, this makes them synthesizable, and
 	also allows for more aggressive constant propagation. The
 	functions handled in this manner are:
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.40 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: cprop.cc,v 1.41 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -806,7 +806,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 }
 
 /*
- * This detects the case where the mux selects between a value an
+ * This detects the case where the mux selects between a value and
  * Vz. In this case, replace the device with a bufif with the sel
  * input used to enable the output.
  */
@@ -980,7 +980,7 @@ void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
 
 void cprop(Design*des)
 {
-	// Continually propogate constants until a scan finds nothing
+	// Continually propagate constants until a scan finds nothing
 	// to do.
       cprop_functor prop;
       do {
@@ -994,6 +994,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.41  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.40  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

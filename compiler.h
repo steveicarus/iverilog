@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.13 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: compiler.h,v 1.14 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include  <list>
@@ -69,13 +69,13 @@
 extern bool warn_implicit;
 extern bool error_implicit;
 
-/* inherit timescales accross files. */
+/* inherit timescales across files. */
 extern bool warn_timescale;
 
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 
-/* This is an ordered list of library suffixxes to search. */
+/* This is an ordered list of library suffixes to search. */
 extern list<const char*>library_suff;
 extern int build_library_index(const char*path, bool key_case_sensitive);
 
@@ -95,6 +95,9 @@ extern char*ivlpp_string;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.14  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.13  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

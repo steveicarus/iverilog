@@ -19,13 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.16 2002/08/31 03:48:50 steve Exp $"
+#ident "$Id: netmisc.h,v 1.17 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include  "netlist.h"
 
 /*
- * This funciton transforms an expression by padding the high bits
+ * This function transforms an expression by padding the high bits
  * with V0 until the expression has the desired width. This may mean
  * not transforming the expression at all, if it is already wide
  * enough.
@@ -57,6 +57,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.17  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.16  2002/08/31 03:48:50  steve
  *  Fix reverse bit ordered bit select in continuous assignment.
  *

@@ -6,7 +6,7 @@ MINGW PORT OF ICARUS VERILOG
 
 
 Icarus Verilog source can be compiled with the mingw C/C++ compilers
-to get a Windows binary that does not require the posix compatibility
+to get a Windows binary that does not require the POSIX compatibility
 cruft of the Cygwin.dll library. The configure scripts automatically
 detect that the compilers in use are the mingw compilers and will
 configure the Makefiles appropriately.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.273 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: netlist.h,v 1.274 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 /*
@@ -908,13 +908,13 @@ class NetUserFunc  : public NetNode {
 
 /* =========
  * There are cases where expressions need to be represented. The
- * NetExpr class is the root of a heirarchy that serves that purpose.
+ * NetExpr class is the root of a hierarchy that serves that purpose.
  *
  * The expr_width() is the width of the expression, that accounts
  * for the widths of the sub-expressions I might have. It is up to the
  * derived classes to properly set the expr width, if need be. The
  * set_width() method is used to compel an expression to have a
- * certain width, and is used particulary when the expression is an
+ * certain width, and is used particularly when the expression is an
  * rvalue in an assignment statement.
  */
 class NetExpr  : public LineInfo {
@@ -939,7 +939,7 @@ class NetExpr  : public LineInfo {
       unsigned expr_width() const { return width_; }
 
 	// Coerce the expression to have a specific width. If the
-	// coersion works, then return true. Otherwise, return false.
+	// coercion works, then return true. Otherwise, return false.
       virtual bool set_width(unsigned);
 
 	// This method returns true if the expression is
@@ -959,7 +959,7 @@ class NetExpr  : public LineInfo {
 
 
 	// This method evaluates the expression and returns an
-	// equivilent expression that is reduced as far as compile
+	// equivalent expression that is reduced as far as compile
 	// time knows how. Essentially, this is designed to fold
 	// constants.
       virtual NetExpr*eval_tree();
@@ -1075,7 +1075,7 @@ class NetBUFZ  : public NetNode {
 
 /*
  * This node is used to represent case equality in combinational
- * logic. Although this is not normally synthesizeable, it makes sense
+ * logic. Although this is not normally synthesizable, it makes sense
  * to support an abstract gate that can compare x and z.
  *
  * This pins are assigned as:
@@ -1671,7 +1671,7 @@ class NetDisable  : public NetProc {
  * event or trigger the event. Event waits refer to this object, as do
  * the event trigger statements. The NetEvent class may have a name and
  * a scope. The name is a simple name (no hierarchy) and the scope is
- * the NetScope that contains the object. The socpe member is written
+ * the NetScope that contains the object. The scope member is written
  * by the NetScope object when the NetEvent is stored.
  *
  * The NetEvWait class represents a thread wait for an event. When
@@ -1685,7 +1685,7 @@ class NetDisable  : public NetProc {
  * turn awakens the waiting threads. Each NetEvTrig object references
  * exactly one event object.
  *
- * The NetEvProbe class is the structural equivilent of the NetEvTrig,
+ * The NetEvProbe class is the structural equivalent of the NetEvTrig,
  * in that it is a node and watches bit values that it receives. It
  * checks for edges then if appropriate triggers the associated
  * NetEvent. Each NetEvProbe references exactly one event object, and
@@ -2054,8 +2054,8 @@ class NetSTask  : public NetProc {
  * The task also introduces a scope, and the parameters are actually
  * reg objects in the new scope. The task is called by the calling
  * thread assigning (blocking assignment) to the in and inout
- * paramters, then invoking the thread, and finally assigning out the
- * output and inout variables. The variables accessable as ports are
+ * parameters, then invoking the thread, and finally assigning out the
+ * output and inout variables. The variables accessible as ports are
  * also elaborated and accessible as ordinary reg objects.
  */
 class NetTaskDef {
@@ -2119,7 +2119,7 @@ class NetVariable : public LineInfo {
  *
  * The NetNet parameter to the constructor is the *register* NetNet
  * that receives the result of the function, and the NetExpr list is
- * the paraneters passed to the function.
+ * the parameters passed to the function.
  */
 class NetEUFunc  : public NetExpr {
 
@@ -2541,9 +2541,9 @@ class NetEVariable  : public NetExpr {
 };
 
 /*
- * This clas is a placeholder for a parameter expression. When
+ * This class is a placeholder for a parameter expression. When
  * parameters are first created, an instance of this object is used to
- * hold the place where the parameter exression goes. Then, when the
+ * hold the place where the parameter expression goes. Then, when the
  * parameters are resolved, these objects are removed.
  *
  * If the parameter object is created with a path and name, then the
@@ -2790,7 +2790,7 @@ class NetEMemory  : public NetExpr {
  * A signal shows up as a node in the netlist so that structural
  * activity can invoke the expression. This node also supports part
  * select by indexing a range of the NetNet that is associated with
- * it. The msi() is the mose significant index, and lsi() the least
+ * it. The msi() is the more significant index, and lsi() the least
  * significant index.
  */
 class NetESignal  : public NetExpr {
@@ -2873,7 +2873,7 @@ class NetScope {
 
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
-	   *simple* name of the paramter, the heirarchy is implicit in
+	   *simple* name of the parameter, the hierarchy is implicit in
 	   the scope. The return value from set_parameter is the
 	   previous expression, if there was one. */
 
@@ -3191,6 +3191,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.274  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.273  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

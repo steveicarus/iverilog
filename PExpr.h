@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.63 2002/11/09 19:20:48 steve Exp $"
+#ident "$Id: PExpr.h,v 1.64 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include  <string>
@@ -51,7 +51,7 @@ class PExpr : public LineInfo {
 
       virtual void dump(ostream&) const;
 
-	// Procedural elaboration of the expression. Set thie
+	// Procedural elaboration of the expression. Set the
 	// bare_memory_ok flag if the result is allowed to be a
 	// NetEMemory without an index.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -105,7 +105,7 @@ class PExpr : public LineInfo {
 	// Return true if this expression is a valid constant
 	// expression. the Module pointer is needed to find parameter
 	// identifiers and any other module specific interpretations
-	// of expresions.
+	// of expressions.
       virtual bool is_constant(Module*) const;
 
     private: // not implemented
@@ -504,6 +504,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.64  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.63  2002/11/09 19:20:48  steve
  *  Port expressions for output ports are lnets, not nets.
  *

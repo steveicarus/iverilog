@@ -77,7 +77,7 @@ xnf2pcf <$2.xnf >! $2.pcf
 
    There is now a "Xilinx on Linux HOWTO" at
          http://www.polybus.com/xilinx_on_linux.html
-   I havn't tried this yet, it looks interesting.
+   I haven't tried this yet, it looks interesting.
 
 Downloading:
 

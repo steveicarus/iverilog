@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.55 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.56 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -597,7 +597,7 @@ bool dll_target::proc_release(const NetRelease*net)
       stmt_cur_->type_ = IVL_ST_RELEASE;
 
 	/* If there is no signal attached to the release, then it is
-	   the victom of an elided net. In that case, simply state
+	   the victim of an elided net. In that case, simply state
 	   that there are no lvals, and that's all. */
       const NetNet*lsig = net->lval();
       if (lsig == 0) {
@@ -827,6 +827,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.56  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.55  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

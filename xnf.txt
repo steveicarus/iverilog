@@ -86,7 +86,7 @@ an I/OBUF by attaching an attribute to the device, like so:
 	buf b1 (sig, foo);
 	$attribute(b1, "XNF-LCA", "OBUF:O,I");
 
-This latter feature is not entirely recomended as it expects that the
+This latter feature is not entirely recommended as it expects that the
 programmer really knows how the pins of the XNF device are to be
 connected. It also bypasses the efforts of the compiler, so is not
 checked for correctness.
@@ -94,7 +94,7 @@ checked for correctness.
 XNF STORAGE ELEMENTS
 
 Storage elements in XNF include flip-flops, latches and CLB
-rams. These devices are generated from the LPM equivilents that the
+rams. These devices are generated from the LPM equivalents that the
 -Fsynth functor synthesizes from behavioral descriptions.
 
 Flip-flops, or more specifically DFF devices, are generated to
@@ -104,14 +104,14 @@ implement behavioral code like this:
 	always @(posedge clk) Q <= <expr>;
 
 The edge can be positive or negative, and the expression can be any
-synthesizeable expression. Furthermore, the register "Q" can have
+synthesizable expression. Furthermore, the register "Q" can have
 width, which will cause the appropriate number of flip-flops to be
 created. A clock enable expression can also be added like so:
 
 	reg Q;
 	always @(posedge clk) if (<ce>) Q <= <expr>;
 
-The <ce> expression can be any synthesizeable expression.
+The <ce> expression can be any synthesizable expression.
 
 With or without the CE, the generated DFF devices are written into the
 XNF output one bit at a time, with the clock input inverted if necessary.
@@ -130,7 +130,7 @@ device can be modeled with ordinary structural code, i.e.:
 
 	assign foo <= M[<addr>];
 
-For the memory to be synthesizeable in the XNF target, the address
+For the memory to be synthesizable in the XNF target, the address
 lines for writes and reads must be connected. This corresponds to the
 limitations of the real hardware.
 
@@ -245,6 +245,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.15  2003/01/30 16:23:08  steve
+  Spelling fixes.
+
  Revision 1.14  2000/08/01 21:32:40  steve
   Use the iverilog command in documentation.
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.45 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.46 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -523,7 +523,7 @@ NetEConst* NetEBComp::eval_tree()
 	  case 'L': // <=
 	    return eval_leeq_();
 
-	  case 'N': // Cse inequality (!==)
+	  case 'N': // Case inequality (!==)
 	    return eval_neeqeq_();
 
 	  case 'n': // not-equal (!=)
@@ -1187,6 +1187,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.46  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.45  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

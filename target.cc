@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.64 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: target.cc,v 1.65 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,7 +146,7 @@ bool target_t::net_cassign(const NetCAssign*dev)
 {
 	cerr << "target (" << typeid(*this).name() <<  "): ";
 	cerr << dev->get_line();
-	cerr << ": Target does not support procedural continous assignment." << endl;
+	cerr << ": Target does not support procedural continuous assignment." << endl;
       return false;
 }
 
@@ -213,7 +213,7 @@ bool target_t::proc_cassign(const NetCAssign*dev)
 {
 	cerr << "target (" << typeid(*this).name() <<  "): ";
 	cerr << dev->get_line();
-	cerr << ": Target does not support procedural continous assignment." << endl;
+	cerr << ": Target does not support procedural continuous assignment." << endl;
       return false;
 }
 
@@ -403,6 +403,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.65  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.64  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

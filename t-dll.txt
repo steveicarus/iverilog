@@ -50,7 +50,7 @@ documentation in the ivl_target.h header file.
 * IVL_EX_NUMBER
 
   This is a constant number. The width is fully known, and the bit
-  values are all represented by the ascii characters 0, 1, x or z. The
+  values are all represented by the ASCII characters 0, 1, x or z. The
   ivl_expr_bits method returns a pointer to the least significant bit,
   and the remaining bits are ordered from least significant to most
   significant. For example, 5'b1zzx0 is the 5 character string "0xzz1".

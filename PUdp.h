@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.7 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PUdp.h,v 1.8 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include  <map>
@@ -53,7 +53,7 @@ svector<string>::svector<string>(unsigned size)
  * the current output.
  *
  * If the UDP is sequential, the "initial" member is taken to be the
- * intial value assigned in the source, or 'x' if none is given.
+ * initial value assigned in the source, or 'x' if none is given.
  */
 class PUdp {
 
@@ -84,6 +84,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.8  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.7  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Statement.h,v 1.36 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: Statement.h,v 1.37 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include  <string>
@@ -287,7 +287,7 @@ class PDelayStatement  : public Statement {
 
 
 /*
- * This represends the parsing of a disable <scope> statement.
+ * This represents the parsing of a disable <scope> statement.
  */
 class PDisable  : public Statement {
 
@@ -453,6 +453,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.37  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.36  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

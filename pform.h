@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.65 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: pform.h,v 1.66 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -61,7 +61,7 @@ struct vlltype;
 
 /*
  * The min:typ:max expression s selected at parse time using the
- * enumeration. When the compiler makes a choise, it also prints a
+ * enumeration. When the compiler makes a choice, it also prints a
  * warning if min_typ_max_warn > 0.
  */
 extern enum MIN_TYP_MAX { MIN, TYP, MAX } min_typ_max_flag;
@@ -264,6 +264,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.66  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.65  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

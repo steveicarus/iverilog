@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.21 2003/01/30 04:23:25 steve Exp $"
+#ident "$Id: verinum.h,v 1.22 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include  <string>
@@ -32,7 +32,7 @@ class ostream;
 #endif
 
 /*
- * Numbers in verlog are multibit strings, where each bit has 4
+ * Numbers in Verilog are multibit strings, where each bit has 4
  * possible values: 0, 1, x or z. The verinum number is store in
  * little-endian format. This means that if the long value is 2b'10,
  * get(0) is 0 and get(1) is 1.
@@ -73,7 +73,7 @@ class verinum {
       bool is_defined() const;
 
 	// A number is "a string" if its value came directly from
-	// an ascii description instead of a number value.
+	// an ASCII description instead of a number value.
       bool is_string() const { return string_flag_; }
 
 	// Comparison for use in sorting algorithms.
@@ -131,6 +131,9 @@ extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.22  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.21  2003/01/30 04:23:25  steve
  *  include config.h to get iosfwd flags.
  *

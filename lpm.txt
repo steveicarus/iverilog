@@ -1,7 +1,7 @@
 
 WHAT IS LPM
 
-LPM (Library of Paramaterized Modules) is EIS-IS standard 103-A. It is
+LPM (Library of Parameterized Modules) is EIS-IS standard 103-A. It is
 a standard library of abstract devices that are designed to be close
 enough to the target hardware to be easily translated, yet abstract
 enough to support a variety of target technologies without excessive

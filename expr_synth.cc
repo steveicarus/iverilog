@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.38 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.39 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -455,7 +455,7 @@ NetNet* NetEConst::synthesize(Design*des)
 NetNet* NetECReal::synthesize(Design*des)
 {
       cerr << get_line() << ": error: Real constants are "
-	   << "not synthesizeable." << endl;
+	   << "not synthesizable." << endl;
       des->errors += 1;
       return 0;
 }
@@ -643,6 +643,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.39  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.38  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

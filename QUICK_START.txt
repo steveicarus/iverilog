@@ -79,5 +79,5 @@ Verilog packages from the main Debian software site.
 
 * Install From Source
 
-In this case, see the readme and other documentation that comes with
+In this case, see README.txt and other documentation that comes with
 the source.

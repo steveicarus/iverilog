@@ -1,6 +1,12 @@
 
 This file describes the build procedure under cygwin32 (Windows 95/98/NT/2K)
 ----------------------------------------------------------------------------
+
+Note: Icarus Verilog also compiles to native Windows binaries if you
+use the instructions in the mingw.txt file. Some people prefer cygwin
+binaries, and these instructions apply.
+
+
 To build using cygwin:
 
 Prerequisites:
@@ -8,7 +14,7 @@ Prerequisites:
  o Latest net release (1.1.4) of cygwin (sources.redhat.com/cygwin)
 
 Procedure:
- o Get the source code - see the main icarus verilog page for how to 
+ o Get the source code - see the main Icarus Verilog page for how to 
    do this
  o cd to the verilog directory
  o autoconf.sh

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.35 2002/08/19 02:39:17 steve Exp $"
+#ident "$Id: verinum.cc,v 1.36 2003/01/30 16:23:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -201,7 +201,7 @@ unsigned long verinum::as_ulong() const
  *
  * This function presumes that the native format is 2s compliment
  * (pretty safe these days) and masks/sets bits accordingly. If the
- * value is too large for the lative form, it truncates the high bits.
+ * value is too large for the native form, it truncates the high bits.
  */
 signed long verinum::as_long() const
 {
@@ -626,7 +626,7 @@ verinum operator - (const verinum&left, const verinum&r)
  * result. The resulting number is as large as the sum of the sizes of
  * the operand.
  *
- * The algorithm used is sucessive shift and add operations,
+ * The algorithm used is successive shift and add operations,
  * implemented as the nested loops.
  *
  * If either value is not completely defined, then the result is not
@@ -815,6 +815,9 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.36  2003/01/30 16:23:08  steve
+ *  Spelling fixes.
+ *
  * Revision 1.35  2002/08/19 02:39:17  steve
  *  Support parameters with defined ranges.
  *

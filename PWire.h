@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.15 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: PWire.h,v 1.16 2003/01/30 16:23:07 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -38,7 +38,7 @@ class Design;
 
 /*
  * Wires include nets, registers and ports. A net or register becomes
- * a port by declaration, so ports are not seperate. The module
+ * a port by declaration, so ports are not separate. The module
  * identifies a port by keeping it in its port list.
  *
  * The hname parameter to the constructor is a hierarchical name. It
@@ -100,6 +100,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.16  2003/01/30 16:23:07  steve
+ *  Spelling fixes.
+ *
  * Revision 1.15  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

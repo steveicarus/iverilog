@@ -28,14 +28,14 @@ warning.)
 (* ivl_synthesis_on *)
 
     This attribute tells the compiler that the marked always statement
-    is synthesizeable. The compiler will attempt to synthesize the
+    is synthesizable. The compiler will attempt to synthesize the
     code in the marked "always" statement. If it cannot in any way
     synthesize it, then it will report an error.
 
 (* ivl_synthesis_off *)
 
     If this value is attached to an "always" statement, then the
-    compiler will *not* synthesize the "always" statment. This can be
+    compiler will *not* synthesize the "always" statement. This can be
     used, for example, to mark embedded test bench code.
 
 
