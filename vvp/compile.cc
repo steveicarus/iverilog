@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.176 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: compile.cc,v 1.177 2004/12/15 17:17:42 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -112,7 +112,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%div/s",  of_DIV_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%div/wr", of_DIV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%force",  of_FORCE,  2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%force/v",of_FORCE_V,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/get", of_IX_GET, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1259,6 +1259,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		    sizeof(struct opcode_table_s), &opcode_compare);
       if (op == 0) {
 	    yyerror("Invalid opcode");
+	    compile_errors += 1;
 	    return;
       }
 
@@ -1271,6 +1272,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 
       if (op->argc != (opa? opa->argc : 0)) {
 	    yyerror("operand count");
+	    compile_errors += 1;
 	    return;
       }
 
@@ -1560,6 +1562,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.177  2004/12/15 17:17:42  steve
+ *  Add the force/v instruction.
+ *
  * Revision 1.176  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.56 2004/12/11 02:31:29 steve Exp $
+ *  $Id: opcodes.txt,v 1.57 2004/12/15 17:17:42 steve Exp $
  */
 
 
@@ -135,12 +135,8 @@ out, then this function is a no-op.
 Perform a continuous assign of a constant value to the target
 variable. This is similar to %set, but it uses the cassign port
 (port-1) of the signal functor instead of the normal assign, so the
-signal responds differently.
-
-* %deassign <var-label>
-
-Deactivate and disconnect a procedural continuous assignment to a
-variable. The <var-label> identifies the affected variable.
+signal responds differently. See "VARIABLE STATEMENTS" in the
+README.txt file.
 
 
 * %cmp/u <bit-l>, <bit-r>, <wid>
@@ -203,6 +199,11 @@ The %cvt/vr opcode converts a real word <bit-r> to a thread vector
 starting at <bit-l> and with the width <wid>. Non-integer precision is
 lost in the conversion.
 
+* %deassign <var-label>
+
+Deactivate and disconnect a procedural continuous assignment to a
+variable. The <var-label> identifies the affected variable.
+
 * %delay <delay>
 
 This opcode pauses the thread, and causes it to be rescheduled for a
@@ -240,13 +241,13 @@ This opcode divides the left operand by the right operand. If the
 right operand is 0, then the result is NaN.
 
 
-* %force <fofu-label>, <width>
+* %force/v <label>, <bit>, <wid>
 
-Activate a force represented by the force functors <fofu-label>, which
-were created with a .force directive.  If any force was active on the
-signal, that force is released first.  A vector of force functors may
-be specified with <width> greater than 1.
-
+Force a constant value to the target variable. This is similar to %set
+and %cassign/v, but it uses the force port (port-2) of the signal
+functor instead of the normal assign port (port-0), so the signal
+responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
+in the README.txt file.
 
 * %fork <code-label>, <scope-label>
 

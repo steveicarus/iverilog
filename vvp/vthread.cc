@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.123 2004/12/11 02:31:30 steve Exp $"
+#ident "$Id: vthread.cc,v 1.124 2004/12/15 17:17:42 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -1422,6 +1422,34 @@ bool of_END(vthread_t thr, vvp_code_t)
 	   to %join me. Remain a zombie so that it can. */
 
       return false;
+}
+
+/*
+ * The %force/v instruction invokes a force assign of a constant value
+ * to a signal. The instruction arguments are:
+ *
+ *     %force/v <net>, <base>, <wid> ;
+ *
+ * where the <net> is the net label assembled into a vvp_net pointer,
+ * and the <base> and <wid> are stashed in the bit_idx array.
+ *
+ * The instruction writes a vvp_vector4_t value to port-2 of the
+ * target signal.
+ */
+bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net  = cp->net;
+      unsigned  base = cp->bit_idx[0];
+      unsigned  wid  = cp->bit_idx[1];
+
+	/* Collect the thread bits into a vector4 item. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
+
+	/* set the value into port 1 of the destination. */
+      vvp_net_ptr_t ptr (net, 2);
+      vvp_send_vec4(ptr, value);
+
+      return true;
 }
 
 /*
@@ -2979,6 +3007,9 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.124  2004/12/15 17:17:42  steve
+ *  Add the force/v instruction.
+ *
  * Revision 1.123  2004/12/11 02:31:30  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes

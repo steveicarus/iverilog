@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: force.cc,v 1.9 2004/12/11 02:31:29 steve Exp $"
+#ident "$Id: force.cc,v 1.10 2004/12/15 17:17:42 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -96,57 +96,6 @@ static bool release_force(vvp_ipoint_t itgt, functor_t tgt)
       return false;
 }
 
-/*
- * The %force instruction causes the referenced force functor[s] to
- * interpose themselves in front of the precompiled target
- * functors. The operand of the %force is the label of the force
- * functor, and the width of the functor array.
- */
-bool of_FORCE(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      unsigned wid = cp->bit_idx[0];
-
-      for (unsigned i=0; i<wid; i++) {
-	    vvp_ipoint_t ifofu = ipoint_index(cp->iptr, i);
-	    functor_t fofu = functor_index(ifofu);
-	    force_functor_s *ff = dynamic_cast<force_functor_s *>(fofu);
-
-	    assert(ff);
-
-	    if (ff->active)
-		  return true;
-
-	    ff->active = 1;
-
-	      // tgt is the functor who's output I plan to force. The
-	      // compiler stored the target pointer is the out pointer
-	      // of the force functor. (The out pointer is not
-	      // otherwise used.)
-	    vvp_ipoint_t itgt = fofu->out;
-	    functor_t tgt = functor_index(itgt);
-
-	      // This turns OFF the target functor's output
-	      // driver. If it is already off, then detach the
-	      // previous force before continuing.
-	    if (tgt->disable(itgt))
-		  release_force(itgt, tgt);
-
-	      // Link the functor as the first functor driven by the
-	      // target. This allows the functor to track the unforced
-	      // drive value, and also aids in releasing the force.
-	    fofu->port[3] = tgt->out;
-	    tgt->out = ipoint_make(ifofu, 3);
-
-	      // Set the value to cause the overridden functor to take
-	      // on its forced value.
-	    fofu->set(ifofu, false, fofu->get_oval(), fofu->get_ostr());
-      }
-#else
-      fprintf(stderr, "XXXX forgot how to implement %%force\n");
-#endif
-      return true;
-}
 
 /*
  * The %release instruction causes any force functors driving the
@@ -222,6 +171,9 @@ bool var_functor_s::deassign(vvp_ipoint_t itgt)
 
 /*
  * $Log: force.cc,v $
+ * Revision 1.10  2004/12/15 17:17:42  steve
+ *  Add the force/v instruction.
+ *
  * Revision 1.9  2004/12/11 02:31:29  steve
  *  Rework of internals to carry vectors through nexus instead
  *  of single bits. Make the ivl, tgt-vvp and vvp initial changes
