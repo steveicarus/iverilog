@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.4 1998/11/11 03:13:04 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.5 1998/11/21 19:19:44 steve Exp $"
 #endif
 
 /*
@@ -219,11 +219,17 @@ void PGModule::elaborate(Design*des, const string&path) const
 	    return;
       }
 
+      string my_name;
+      if (get_name() == "")
+	    my_name = local_symbol(path);
+      else
+	    my_name = path + "." + get_name();
+
 	// Elaborate this instance of the module. The recursive
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
 	// later.
-      rmod->elaborate(des, path + "." + get_name());
+      rmod->elaborate(des, my_name);
 
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters.
@@ -241,7 +247,7 @@ void PGModule::elaborate(Design*des, const string&path) const
 	    }
 
 	    assert(sig);
-	    NetNet*prt = des->find_signal(path + "." + get_name() + "." + 
+	    NetNet*prt = des->find_signal(my_name + "." +
 					  rmod->ports[idx]->name);
 	    assert(prt);
 
@@ -700,6 +706,9 @@ Design* elaborate(const list<Module*>&modules, const string&root)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.5  1998/11/21 19:19:44  steve
+ *  Give anonymous modules a name when elaborated.
+ *
  * Revision 1.4  1998/11/11 03:13:04  steve
  *  Handle while loops.
  *
