@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.1 1998/11/03 23:28:54 steve Exp $"
+#ident "$Id: PExpr.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  <string>
@@ -128,6 +128,7 @@ class PEBinary : public PExpr {
 
       virtual void dump(ostream&out) const;
       virtual NetNet* elaborate_net(Design*des, const string&path) const;
+      virtual NetExpr*elaborate_expr(Design*des, const string&path) const;
 
     private:
       char op_;
@@ -137,6 +138,13 @@ class PEBinary : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:54  steve
  *  Introduce verilog to CVS.
  *

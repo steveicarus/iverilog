@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.1 1998/11/03 23:29:00 steve Exp $"
+#ident "$Id: netlist.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -129,8 +129,26 @@ NetExpr::~NetExpr()
 {
 }
 
+NetEBinary::~NetEBinary()
+{
+}
+
 NetEConst::~NetEConst()
 {
+}
+
+NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
+: op_(op), left_(l), right_(r)
+{
+      switch (op_) {
+	  case 'e':
+	    natural_width(1);
+	    break;
+	  default:
+	    natural_width(left_->natural_width() > right_->natural_width()
+			  ? left_->natural_width() : right_->natural_width());
+	    break;
+      }
 }
 
 void Design::add_signal(NetNet*net)
@@ -235,6 +253,13 @@ void Design::add_process(NetProcTop*pro)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:00  steve
  *  Introduce verilog to CVS.
  *

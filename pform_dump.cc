@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.1 1998/11/03 23:29:04 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
 #endif
 
 /*
@@ -71,7 +71,25 @@ void PEUnary::dump(ostream&out) const
 
 void PEBinary::dump(ostream&out) const
 {
-      out << "(" << *left_ << ")" << op_ << "(" << *right_ << ")";
+      out << "(" << *left_ << ")";
+      switch (op_) {
+	  case 'e':
+	    out << "==";
+	    break;
+	  case 'E':
+	    out << "===";
+	    break;
+	  case 'n':
+	    out << "!=";
+	    break;
+	  case 'N':
+	    out << "!==";
+	    break;
+	  default:
+	    out << op_;
+	    break;
+      }
+      out << "(" << *right_ << ")";
 }
 
 
@@ -210,6 +228,15 @@ void PCallTask::dump(ostream&out, unsigned ind) const
       out << ";" << endl;
 }
 
+void PCondit::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "if (" << *expr_ << ")" << endl;
+      if_->dump(out, ind+3);
+      if (else_) {
+	    out << setw(ind) << "" << "else" << endl;
+	    else_->dump(out, ind+3);
+      }
+}
 
 void PDelayStatement::dump(ostream&out, unsigned ind) const
 {
@@ -287,6 +314,13 @@ void pform_dump(ostream&out, Module*mod)
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.2  1998/11/07 17:05:06  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:04  steve
  *  Introduce verilog to CVS.
  *

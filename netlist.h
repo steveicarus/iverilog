@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.1 1998/11/03 23:29:01 steve Exp $"
+#ident "$Id: netlist.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 /*
@@ -343,6 +343,27 @@ class NetBlock  : public NetProc {
       NetProc*last_;
 };
 
+/* A condit represents a conditional. It has an expression to test,
+   and a pair of statements to select from. */
+class NetCondit  : public NetProc {
+
+    public:
+      NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
+      : expr_(ex), if_(i), else_(e) { }
+
+      NetExpr*expr() const { return expr_; }
+      void emit_recurse_if(ostream&, struct target_t*) const;
+      void emit_recurse_else(ostream&, struct target_t*) const;
+
+      virtual void emit_proc(ostream&, struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+
+    private:
+      NetExpr*expr_;
+      NetProc*if_;
+      NetProc*else_;
+};
+
 class NetPDelay  : public NetProc {
 
     public:
@@ -457,21 +478,50 @@ class NetProcTop {
  */
 class NetExpr {
     public:
-      NetExpr() { }
+      explicit NetExpr(unsigned w =0) : width_(w)  { }
       virtual ~NetExpr() =0;
 
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
+
+      unsigned natural_width() const { return width_; }
+
+    protected:
+      void natural_width(unsigned w) { width_ = w; }
+
+    private:
+      unsigned width_;
 
     private: // not implemented
       NetExpr(const NetExpr&);
       NetExpr& operator=(const NetExpr&);
 };
 
+class NetEBinary  : public NetExpr {
+
+    public:
+      NetEBinary(char op, NetExpr*l, NetExpr*r);
+      ~NetEBinary();
+
+      const NetExpr*left() const { return left_; }
+      const NetExpr*right() const { return right_; }
+
+      char op() const { return op_; }
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+    private:
+      char op_;
+      NetExpr*left_;
+      NetExpr*right_;
+};
+
 class NetEConst  : public NetExpr {
 
     public:
-      NetEConst(const verinum&val) : value_(val) { }
+      NetEConst(const verinum&val)
+      : NetExpr(val.len()), value_(val) { }
       ~NetEConst();
 
       const verinum&value() const { return value_; }
@@ -487,7 +537,7 @@ class NetEUnary  : public NetExpr {
 
     public:
       NetEUnary(char op, NetExpr*ex)
-      : op_(op), expr_(ex) { }
+      : NetExpr(ex->natural_width()), op_(op), expr_(ex) { }
 
       char op() const { return op_; }
       const NetExpr* expr() const { return expr_; }
@@ -500,14 +550,12 @@ class NetEUnary  : public NetExpr {
       NetExpr*expr_;
 };
 
-/* XXXX Note: I do not know what to do about this. Elaboration should
-   expand vectors to scalers, but identifiers identify vectors, and
-   other issues. This class exists for now until I figure out the
-   right way to deal with identifiers. */
+/* System identifiers are represented here. */
 class NetEIdent  : public NetExpr {
 
     public:
-      NetEIdent(const string&n) : name_(n) { }
+      NetEIdent(const string&n, unsigned w)
+      : NetExpr(w), name_(n) { }
 
       const string& name() const { return name_; }
 
@@ -516,6 +564,24 @@ class NetEIdent  : public NetExpr {
 
     private:
       string name_;
+};
+
+/* When a signal shows up in an expression, this type represents
+   it. From this the expression can get any kind of access to the
+   structural signal. */
+class NetESignal  : public NetExpr {
+
+    public:
+      NetESignal(NetNet*n)
+      : NetExpr(n->pin_count()), sig_(n) { }
+
+      const string& name() const { return sig_->name(); }
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+    private:
+      NetNet*sig_;
 };
 
 /*
@@ -587,6 +653,13 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:01  steve
  *  Introduce verilog to CVS.
  *

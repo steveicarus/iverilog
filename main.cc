@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.1 1998/11/03 23:28:59 steve Exp $"
+#ident "$Id: main.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -88,7 +88,6 @@ int main(int argc, char*argv[])
       int rc = pform_parse(input, modules);
 
       if (rc) {
-	    cerr << "I give up." << endl;
 	    return rc;
       }
 
@@ -145,6 +144,13 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:59  steve
  *  Introduce verilog to CVS.
  *

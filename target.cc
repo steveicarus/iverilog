@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.1 1998/11/03 23:29:06 steve Exp $"
+#ident "$Id: target.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -67,6 +67,13 @@ void target_t::proc_block(ostream&os, const NetBlock*)
 {
 }
 
+void target_t::proc_condit(ostream&os, const NetCondit*condit)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled conditional:" << endl;
+      condit->dump(cerr, 6);
+}
+
 void target_t::proc_delay(ostream&os, const NetPDelay*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
@@ -107,14 +114,33 @@ void expr_scan_t::expr_ident(const NetEIdent*)
 	    "unhandled expr_ident." << endl;
 }
 
+void expr_scan_t::expr_signal(const NetESignal*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_signal." << endl;
+}
+
 void expr_scan_t::expr_unary(const NetEUnary*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
 	    "unhandled expr_unary." << endl;
 }
 
+void expr_scan_t::expr_binary(const NetEBinary*ex)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_binary: " <<*ex  << endl;
+}
+
 /*
  * $Log: target.cc,v $
+ * Revision 1.2  1998/11/07 17:05:06  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:06  steve
  *  Introduce verilog to CVS.
  *

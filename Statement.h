@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.1 1998/11/03 23:28:56 steve Exp $"
+#ident "$Id: Statement.h,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  <string>
@@ -146,6 +146,26 @@ class PCallTask  : public Statement {
       PExpr**const parms_;
 };
 
+class PCondit  : public Statement {
+
+    public:
+      PCondit(PExpr*ex, Statement*i, Statement*e)
+      : expr_(ex), if_(i), else_(e) { }
+      ~PCondit();
+
+      virtual NetProc* elaborate(Design*des, const string&path) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*expr_;
+      Statement*if_;
+      Statement*else_;
+
+    private: // not implemented
+      PCondit(const PCondit&);
+      PCondit& operator= (const PCondit&);
+};
+
 class PDelayStatement  : public Statement {
 
     public:
@@ -186,6 +206,13 @@ class PNoop  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:56  steve
  *  Introduce verilog to CVS.
  *

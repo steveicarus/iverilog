@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.1 1998/11/03 23:28:55 steve Exp $"
+#ident "$Id: Statement.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -57,9 +57,23 @@ PCallTask::PCallTask(const string&n, const list<PExpr*>&p)
 
 }
 
+PCondit::~PCondit()
+{
+      delete expr_;
+      delete if_;
+      delete else_;
+}
+
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:55  steve
  *  Introduce verilog to CVS.
  *

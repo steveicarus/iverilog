@@ -17,21 +17,25 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.1 1998/11/03 23:29:02 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
 # include  <iostream.h>
 
 extern const char*vl_file;
+unsigned error_count = 0;
+unsigned warn_count = 0;
 
 void VLerror(const char*msg)
 {
+      error_count += 1;
       cerr << yylloc.text << ":" << yylloc.first_line << ": " << msg << endl;
 }
 
 void VLerror(const YYLTYPE&loc, const char*msg)
 {
+      error_count += 1;
       if (loc.text)
 	    cerr << loc.text << ":";
 
@@ -40,6 +44,7 @@ void VLerror(const YYLTYPE&loc, const char*msg)
 
 void yywarn(const YYLTYPE&loc, const char*msg)
 {
+      warn_count += 1;
       if (loc.text)
 	    cerr << loc.text << ":";
 
@@ -53,6 +58,13 @@ int VLwrap()
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:02  steve
  *  Introduce verilog to CVS.
  *

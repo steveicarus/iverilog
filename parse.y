@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.1 1998/11/03 23:29:01 steve Exp $"
+#ident "$Id: parse.y,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -53,7 +53,7 @@
 
 %token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING
 %token <number> NUMBER
-%token K_LE K_GE
+%token K_LE K_GE K_EQ K_NE K_CEQ K_CNE
 %token K_always K_and K_assign K_begin K_buf K_bufif0 K_bufif1 K_case
 %token K_casex K_casez K_cmos K_deassign K_default K_defparam K_disable
 %token K_edge K_else K_end K_endcase K_endfunction K_endmodule
@@ -95,6 +95,7 @@
 %left UNARY_PREC
 %left '+' '-'
 %left K_GE K_LE '<' '>'
+%left K_EQ K_NE K_CEQ K_CNE
 %left '&'
 %left '^'
 
@@ -178,6 +179,18 @@ expression
 		}
 	| expression '&' expression
 		{ $$ = new PEBinary('&', $1, $3);
+		}
+	| expression K_EQ expression
+		{ $$ = new PEBinary('e', $1, $3);
+		}
+	| expression K_CEQ expression
+		{ $$ = new PEBinary('E', $1, $3);
+		}
+	| expression K_NE expression
+		{ $$ = new PEBinary('n', $1, $3);
+		}
+	| expression K_CNE expression
+		{ $$ = new PEBinary('N', $1, $3);
 		}
 	;
 
@@ -501,6 +514,22 @@ statement
 		{ $$ = pform_make_block(PBlock::BL_SEQ, 0); }
 	| K_fork K_join
 		{ $$ = pform_make_block(PBlock::BL_PAR, 0); }
+	| K_if '(' expression ')' statement_opt
+		{ PCondit*tmp = new PCondit($3, $5, 0);
+		  $$ = tmp;
+		}
+	| K_if '(' expression ')' statement_opt K_else statement_opt
+		{ PCondit*tmp = new PCondit($3, $5, $7);
+		  $$ = tmp;
+		}
+	| K_if '(' error ')' statement_opt
+		{ yyerror(@1, "Malformed conditional expression.");
+		  $$ = $5;
+		}
+	| K_if '(' error ')' statement_opt K_else statement_opt
+		{ yyerror(@1, "Malformed conditional expression.");
+		  $$ = $5;
+		}
 	| delay statement_opt
 		{ PDelayStatement*tmp = new PDelayStatement($1, $2);
 		  $$ = tmp;

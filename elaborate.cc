@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.1 1998/11/03 23:28:56 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 /*
@@ -54,7 +54,7 @@ static void do_assign(Design*des, const string&path,
 		  connect(lval->pin(idx), tmp->pin(idx));
 	    delete tmp;
 
-	    if (tmp = dynamic_cast<NetTmp*>(lval))
+	    if ((tmp = dynamic_cast<NetTmp*>(lval)))
 		  delete tmp;
 
       } else if (NetTmp* tmp = dynamic_cast<NetTmp*>(lval)) {
@@ -407,6 +407,12 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path) const
       return sig;
 }
 
+NetExpr* PEBinary::elaborate_expr(Design*des, const string&path) const
+{
+      return new NetEBinary(op_, left_->elaborate_expr(des, path),
+			    right_->elaborate_expr(des, path));
+}
+
 NetExpr* PENumber::elaborate_expr(Design*des, const string&path) const
 {
       assert(value_);
@@ -421,9 +427,13 @@ NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
 NetExpr*PEIdent::elaborate_expr(Design*des, const string&path) const
 {
       if (text_[0] == '$')
-	    return new NetEIdent(text_);
-      else
-	    return new NetEIdent(path+"."+text_);
+	    return new NetEIdent(text_, 64);
+      else {
+	    string name = path+"."+text_;
+	    NetNet*net = des->find_signal(name);
+	    assert(net);
+	    return new NetESignal(net);
+      }
 }
 
 NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
@@ -472,6 +482,16 @@ NetProc* PBlock::elaborate(Design*des, const string&path) const
       }
 
       return cur;
+}
+
+NetProc* PCondit::elaborate(Design*des, const string&path) const
+{
+      NetExpr*expr = expr_->elaborate_expr(des, path);
+      NetProc*i = if_->elaborate(des, path);
+      NetProc*e = else_->elaborate(des, path);
+
+      NetCondit*res = new NetCondit(expr, i, e);
+      return res;
 }
 
 NetProc* PCallTask::elaborate(Design*des, const string&path) const
@@ -598,6 +618,13 @@ Design* elaborate(const list<Module*>&modules, const string&root)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:56  steve
  *  Introduce verilog to CVS.
  *

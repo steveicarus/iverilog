@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.1 1998/11/03 23:28:57 steve Exp $"
+#ident "$Id: emit.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 /*
@@ -79,6 +79,11 @@ void NetBlock::emit_proc(ostream&o, struct target_t*tgt) const
       tgt->proc_block(o, this);
 }
 
+void NetCondit::emit_proc(ostream&o, struct target_t*tgt) const
+{
+      tgt->proc_condit(o, this);
+}
+
 void NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 {
       tgt->proc_delay(o, this);
@@ -116,6 +121,18 @@ void NetBlock::emit_recurse(ostream&o, struct target_t*tgt) const
       } while (cur != last_);
 }
 
+void NetCondit::emit_recurse_if(ostream&o, struct target_t*tgt) const
+{
+      if (if_)
+	    if_->emit_proc(o, tgt);
+}
+
+void NetCondit::emit_recurse_else(ostream&o, struct target_t*tgt) const
+{
+      if (else_)
+	    else_->emit_proc(o, tgt);
+}
+
 void Design::emit(ostream&o, struct target_t*tgt) const
 {
       tgt->start_design(o, this);
@@ -147,6 +164,11 @@ void Design::emit(ostream&o, struct target_t*tgt) const
       tgt->end_design(o, this);
 }
 
+void NetEBinary::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_binary(this);
+}
+
 void NetEConst::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_const(this);
@@ -155,6 +177,11 @@ void NetEConst::expr_scan(struct expr_scan_t*tgt) const
 void NetEIdent::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_ident(this);
+}
+
+void NetESignal::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_signal(this);
 }
 
 void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
@@ -176,6 +203,13 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:57  steve
  *  Introduce verilog to CVS.
  *

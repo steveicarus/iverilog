@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.1 1998/11/03 23:29:06 steve Exp $"
+#ident "$Id: target.h,v 1.2 1998/11/07 17:05:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -70,6 +70,7 @@ struct target_t {
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
+      virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_task(ostream&os, const NetTask*);
 
       virtual void proc_event(ostream&os, const NetPEvent*);
@@ -88,7 +89,9 @@ struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
       virtual void expr_ident(const NetEIdent*);
+      virtual void expr_signal(const NetESignal*);
       virtual void expr_unary(const NetEUnary*);
+      virtual void expr_binary(const NetEBinary*);
 };
 
 
@@ -108,6 +111,13 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.2  1998/11/07 17:05:06  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:06  steve
  *  Introduce verilog to CVS.
  *

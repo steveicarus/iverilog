@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.1 1998/11/03 23:28:56 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
 #endif
 
 /*
@@ -202,6 +202,18 @@ void NetBlock::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "end" << endl;
 }
 
+void NetCondit::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "if (";
+      expr_->dump(o);
+      o << ")" << endl;
+      if_->dump(o, ind+4);
+      if (else_) {
+	    o << setw(ind) << "" << "else" << endl;
+	    else_->dump(o, ind+4);
+      }
+}
+
 void NetPDelay::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "#" << delay_ << endl;
@@ -261,6 +273,24 @@ void NetExpr::dump(ostream&o) const
       o << "(?)";
 }
 
+void NetEBinary::dump(ostream&o) const
+{
+      o << "(";
+      left_->dump(o);
+      o << ")";
+      switch (op_) {
+	  default:
+	    o << op_;
+	    break;
+	  case 'e':
+	    o << "==";
+	    break;
+      }
+      o << "(";
+      right_->dump(o);
+      o << ")";
+}
+
 void NetEConst::dump(ostream&o) const
 {
       if (value_.is_string())
@@ -272,6 +302,11 @@ void NetEConst::dump(ostream&o) const
 void NetEIdent::dump(ostream&o) const
 {
       o << name_;
+}
+
+void NetESignal::dump(ostream&o) const
+{
+      o << sig_->name();
 }
 
 void NetEUnary::dump(ostream&o) const
@@ -316,6 +351,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.2  1998/11/07 17:05:05  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:28:56  steve
  *  Introduce verilog to CVS.
  *

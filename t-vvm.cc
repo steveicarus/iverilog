@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.1 1998/11/03 23:29:05 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.2 1998/11/07 17:05:06 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -46,6 +46,7 @@ class target_vvm : public target_t {
       virtual void start_process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_block(ostream&os, const NetBlock*);
+      virtual void proc_condit(ostream&os, const NetCondit*);
       virtual void proc_task(ostream&os, const NetTask*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
@@ -60,6 +61,11 @@ class target_vvm : public target_t {
       unsigned thread_step_;
 };
 
+/*
+ * This class emits code for the rvalue of a procedural
+ * assignment. The expression is evaluated to fit the width
+ * specified.
+ */
 class vvm_proc_rval  : public expr_scan_t {
 
     public:
@@ -75,7 +81,9 @@ class vvm_proc_rval  : public expr_scan_t {
     private:
       virtual void expr_const(const NetEConst*);
       virtual void expr_ident(const NetEIdent*);
+      virtual void expr_signal(const NetESignal*);
       virtual void expr_unary(const NetEUnary*);
+      virtual void expr_binary(const NetEBinary*);
 };
 
 void vvm_proc_rval::expr_const(const NetEConst*expr)
@@ -109,6 +117,11 @@ void vvm_proc_rval::expr_ident(const NetEIdent*expr)
       result = mangle(expr->name());
 }
 
+void vvm_proc_rval::expr_signal(const NetESignal*expr)
+{
+      result = mangle(expr->name());
+}
+
 void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 {
       expr->expr()->expr_scan(this);
@@ -130,6 +143,34 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
       result = tname;
 }
 
+void vvm_proc_rval::expr_binary(const NetEBinary*expr)
+{
+      if (width_ == 0) {
+	    width_ = expr->left()->natural_width();
+      }
+
+      expr->left()->expr_scan(this);
+      string lres = result;
+
+      expr->right()->expr_scan(this);
+      string rres = result;
+
+      switch (expr->op()) {
+	  case 'e':
+	    result = string("vvm_binop_eq(") + lres + "," + rres + ")";
+	    break;
+	  case '+':
+	    result = string("vvm_binop_plus(") + lres + "," + rres + ")";
+	    break;
+	  default:
+	    cerr << "vvm: Unhandled binary op `" << expr->op() << "': "
+		 << *expr << endl;
+	    os_ << lres << ";" << endl;
+	    result = lres;
+	    break;
+      }
+}
+
 static string emit_proc_rval(ostream&os, unsigned width, const NetExpr*expr)
 {
       vvm_proc_rval scan (os, width);
@@ -148,6 +189,7 @@ class vvm_parm_rval  : public expr_scan_t {
     private:
       virtual void expr_const(const NetEConst*);
       virtual void expr_ident(const NetEIdent*);
+      virtual void expr_signal(const NetESignal*);
 
     private:
       ostream&os_;
@@ -170,14 +212,19 @@ void vvm_parm_rval::expr_ident(const NetEIdent*expr)
 		  "(vvm_calltf_parm::TIME);" << endl;
 	    result = res;
       } else {
-	    string res = make_temp();
-	    os_ << "        vvm_calltf_parm::SIG " << res << ";" << endl;
-	    os_ << "        " << res << ".bits = &" <<
-		  mangle(expr->name()) << ";" << endl;
-	    os_ << "        " << res << ".mon = &" <<
-		  mangle(expr->name()) << "_mon;" << endl;
-	    result = res;
+	    cerr << "Unhandled identifier: " << expr->name() << endl;
       }
+}
+
+void vvm_parm_rval::expr_signal(const NetESignal*expr)
+{
+      string res = make_temp();
+      os_ << "        vvm_calltf_parm::SIG " << res << ";" << endl;
+      os_ << "        " << res << ".bits = &" <<
+	    mangle(expr->name()) << ";" << endl;
+      os_ << "        " << res << ".mon = &" <<
+	    mangle(expr->name()) << "_mon;" << endl;
+      result = res;
 }
 
 static string emit_parm_rval(ostream&os, const NetExpr*expr)
@@ -401,6 +448,16 @@ void target_vvm::proc_block(ostream&os, const NetBlock*net)
       net->emit_recurse(os, this);
 }
 
+void target_vvm::proc_condit(ostream&os, const NetCondit*net)
+{
+      string expr = emit_proc_rval(os, 0, net->expr());
+      os << "        if (" << expr << "[0] == V1) {" << endl;
+      net->emit_recurse_if(os, this);
+      os << "        } else {" << endl;
+      net->emit_recurse_else(os, this);
+      os << "        }" << endl;
+}
+
 void target_vvm::proc_task(ostream&os, const NetTask*net)
 {
       if (net->name()[0] == '$') {
@@ -486,6 +543,13 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.2  1998/11/07 17:05:06  steve
+ *  Handle procedural conditional, and some
+ *  of the conditional expressions.
+ *
+ *  Elaborate signals and identifiers differently,
+ *  allowing the netlist to hold signal information.
+ *
  * Revision 1.1  1998/11/03 23:29:05  steve
  *  Introduce verilog to CVS.
  *
