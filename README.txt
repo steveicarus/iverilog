@@ -1,12 +1,12 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM 
-				5/7/99		
+			     May 9, 1999		
 
 
 1.0 What is ICARUS Verilog(IVL)?
 
 Icarus Verilog is intended to compile ALL of the Verilog HDL as described
-in the IEEE-1364 standard. Of course, it's not quite there yet. I do
-handle a mix of structural and behavioral constructs.
+in the IEEE-1364 standard. Of course, it's not quite there yet. It does
+currently handle a mix of structural and behavioral constructs.
  
 IVL is not aimed at being a simulator in the traditional sense, but a
 compiler that generates code employed by back-end tools. These back-
@@ -16,8 +16,8 @@ and an XNF (Xilinx Netlist Format) generator. See "vvm.txt" and
 
 2.0 How IVL Works
 
-This tool includes a parser which read in Verilog (plus extensions) and
-generates an internal netlist. The netlist is passed to various
+This tool includes a parser which reads in Verilog (plus extensions)
+and generates an internal netlist. The netlist is passed to various
 processing steps that transform the design to more optimal/practical
 forms, then passed to a code generator for final output. The
 processing steps and the code generator are selected by command line
@@ -31,6 +31,10 @@ output of the parse in a list of Module objects in PFORM. The pform
 unit. There may be dangling references, and it is not yet clear which
 module is the root.
 
+One can see a human readable version of the final PFORM by using the
+``-P <path>'' flag to the compiler. This will cause ivl to dump the
+PFORM into the file named <path>.
+
 2.2 Elaboration
 
 This phase takes the pform and generates a netlist. The driver selects
@@ -39,6 +43,11 @@ resolves references and expands the instantiations to form the design
 netlist.
 
 The elaborate() function performs the elaboration.
+
+One can see a human readable version of the final, elaborated and
+optimized netlist by using the ``-N <path>'' flag to the compiler. If
+elaboration succeeds, the final netlist (i.e. after optimizations but
+before code generation) will be dumped into the file named <path>.
 
 2.3 Optimization
 
@@ -199,6 +208,9 @@ setenv LD_LIBRARY_PATH /usr/local/lib:$LD_LIBRARY_PATH
 
 ivl -t vvm -o hello.cc hello.vl
 g++ hello.cc -o hello -lvvm
+
+(The above presumes that /usr/local/include and /usr/local/lib are
+part of the compiler search path, which is usually the case for egcs.)
 
 To run the program
 
