@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.h,v 1.27 2004/02/20 18:53:33 steve Exp $"
+#ident "$Id: PGate.h,v 1.28 2004/03/08 00:47:44 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -88,7 +88,7 @@ class PGate : public LineInfo {
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     protected:
-      const svector<PExpr*>* get_pins() const { return pins_; }
+      const svector<PExpr*>& get_pins() const { return *pins_; }
 
       void dump_pins(ostream&out) const;
       void dump_delays(ostream&out) const;
@@ -227,6 +227,9 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.28  2004/03/08 00:47:44  steve
+ *  primitive ports can bind bi name.
+ *
  * Revision 1.27  2004/02/20 18:53:33  steve
  *  Addtrbute keys are perm_strings.
  *

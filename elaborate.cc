@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.299 2004/03/08 00:10:29 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.300 2004/03/08 00:47:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -509,7 +509,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
       NetScope*my_scope = scope->child(get_name());
       assert(my_scope);
 
-      const svector<PExpr*>*pins;
+	// This is the array of pin expressions, shuffled to match the
+	// order of the declaration. If the source instantiation uses
+	// bind by order, this is the same as the source
+	// list. Otherwise, the source list is rearranged by name
+	// binding into this list.
+      svector<PExpr*>pins (rmod->port_count());
 
 	// Detect binding by name. If I am binding by name, then make
 	// up a pins array that reflects the positions of the named
@@ -517,7 +522,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// place, then get the binding from the base class.
       if (pins_) {
 	    unsigned nexp = rmod->port_count();
-	    svector<PExpr*>*exp = new svector<PExpr*>(nexp);
 
 	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
@@ -540,7 +544,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // If I already bound something to this port, then
 		    // the (*exp) array will already have a pointer
 		    // value where I want to place this expression.
-		  if ((*exp)[pidx]) {
+		  if (pins[pidx]) {
 			cerr << get_line() << ": error: port ``" <<
 			      pins_[idx].name << "'' already bound." <<
 			      endl;
@@ -550,10 +554,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 		    // OK, do the binding by placing the expression in
 		    // the right place.
-		  (*exp)[pidx] = pins_[idx].parm;
+		  pins[pidx] = pins_[idx].parm;
 	    }
 
-	    pins = exp;
 
       } else if (pin_count() == 0) {
 
@@ -562,11 +565,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		 connect-by-name list, so we'll allow it and assume
 		 that is the case. */
 
-	    svector<PExpr*>*tmp = new svector<PExpr*>(rmod->port_count());
 	    for (unsigned idx = 0 ;  idx < rmod->port_count() ;  idx += 1)
-		  (*tmp)[idx] = 0;
-
-	    pins = tmp;
+		  pins[idx] = 0;
 
       } else {
 
@@ -605,12 +605,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// to a concatenation, or connected to an internally
 	// unconnected port.
 
-      for (unsigned idx = 0 ;  idx < pins->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1) {
 
 	      // Skip unconnected module ports. This happens when a
 	      // null parameter is passed in.
 
-	    if ((*pins)[idx] == 0) {
+	    if (pins[idx] == 0) {
 
 		    // While we're here, look to see if this
 		    // unconnected (from the outside) port is an
@@ -674,12 +674,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    if ((prts.count() >= 1)
 		&& (prts[0]->port_type() != NetNet::PINPUT)) {
 
-		  sig = (*pins)[idx]->elaborate_lnet(des, scope, true);
+		  sig = pins[idx]->elaborate_lnet(des, scope, true);
 		  if (sig == 0) {
-			cerr << (*pins)[idx]->get_line() << ": error: "
+			cerr << pins[idx]->get_line() << ": error: "
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
-			cerr << (*pins)[idx]->get_line() << ":      : "
+			cerr << pins[idx]->get_line() << ":      : "
 			     << "Port of " << rmod->mod_name()
 			     << " is " << rmod->ports[idx]->name << endl;
 			des->errors += 1;
@@ -687,11 +687,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  }
 
 	    } else {
-		  sig = (*pins)[idx]->elaborate_net(des, scope,
+		  sig = pins[idx]->elaborate_net(des, scope,
 						    prts_pin_count,
 						    0, 0, 0);
 		  if (sig == 0) {
-			cerr << (*pins)[idx]->get_line()
+			cerr << pins[idx]->get_line()
 			     << ": internal error: Port expression "
 			     << "too complicated for elaboration." << endl;
 			continue;
@@ -808,15 +808,87 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
       delete[]attrib_list;
 
+
+	// This is the array of pin expressions, shuffled to match the
+	// order of the declaration. If the source instantiation uses
+	// bind by order, this is the same as the source
+	// list. Otherwise, the source list is rearranged by name
+	// binding into this list.
+      svector<PExpr*>pins;
+
+	// Detect binding by name. If I am binding by name, then make
+	// up a pins array that reflects the positions of the named
+	// ports. If this is simply positional binding in the first
+	// place, then get the binding from the base class.
+      if (pins_) {
+	    unsigned nexp = udp->ports.count();
+	    pins = svector<PExpr*>(nexp);
+
+	      // Scan the bindings, matching them with port names.
+	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+
+		    // Given a binding, look at the module port names
+		    // for the position that matches the binding name.
+		  unsigned pidx = udp->find_port(pins_[idx].name);
+
+		    // If the port name doesn't exist, the find_port
+		    // method will return the port count. Detect that
+		    // as an error.
+		  if (pidx == nexp) {
+			cerr << get_line() << ": error: port ``" <<
+			      pins_[idx].name << "'' is not a port of "
+			     << get_name() << "." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // If I already bound something to this port, then
+		    // the (*exp) array will already have a pointer
+		    // value where I want to place this expression.
+		  if (pins[pidx]) {
+			cerr << get_line() << ": error: port ``" <<
+			      pins_[idx].name << "'' already bound." <<
+			      endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // OK, do the binding by placing the expression in
+		    // the right place.
+		  pins[pidx] = pins_[idx].parm;
+	    }
+
+      } else {
+
+	      /* Otherwise, this is a positional list of port
+		 connections. In this case, the port count must be
+		 right. Check that is is, the get the pin list. */
+
+	    if (pin_count() != udp->ports.count()) {
+		  cerr << get_line() << ": error: Wrong number "
+			"of ports. Expecting " << udp->ports.count() <<
+			", got " << pin_count() << "."
+		       << endl;
+		  des->errors += 1;
+		  return;
+	    }
+
+	      // No named bindings, just use the positional list I
+	      // already have.
+	    assert(pin_count() == udp->ports.count());
+	    pins = get_pins();
+      }
+
+
 	/* Handle the output port of the primitive special. It is an
 	   output port (the only output port) so must be passed an
 	   l-value net. */
-      if (pin(0) == 0) {
+      if (pins[0] == 0) {
 	    cerr << get_line() << ": warning: output port unconnected."
 		 << endl;
 
       } else {
-	    NetNet*sig = pin(0)->elaborate_lnet(des, scope, true);
+	    NetNet*sig = pins[0]->elaborate_lnet(des, scope, true);
 	    if (sig == 0) {
 		  cerr << get_line() << ": error: "
 		       << "Output port expression is not valid." << endl;
@@ -833,13 +905,13 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	   expressions and connecting them to the pin in question. All
 	   of this is independent of the nature of the UDP. */
       for (unsigned idx = 1 ;  idx < net->pin_count() ;  idx += 1) {
-	    if (pin(idx) == 0)
+	    if (pins[idx] == 0)
 		  continue;
 
-	    NetNet*sig = pin(idx)->elaborate_net(des, scope, 1, 0, 0, 0);
+	    NetNet*sig = pins[idx]->elaborate_net(des, scope, 1, 0, 0, 0);
 	    if (sig == 0) {
 		  cerr << "internal error: Expression too complicated "
-			"for elaboration:" << *pin(idx) << endl;
+			"for elaboration:" << pins[idx] << endl;
 		  continue;
 	    }
 
@@ -2607,6 +2679,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.300  2004/03/08 00:47:44  steve
+ *  primitive ports can bind bi name.
+ *
  * Revision 1.299  2004/03/08 00:10:29  steve
  *  Verilog2001 new style port declartions for primitives.
  *

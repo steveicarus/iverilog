@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.cc,v 1.2 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: PUdp.cc,v 1.3 2004/03/08 00:47:44 steve Exp $"
 #endif
 
 # include  "PUdp.h"
@@ -27,8 +27,22 @@ PUdp::PUdp(perm_string n, unsigned nports)
 {
 }
 
+unsigned PUdp::find_port(const char*name)
+{
+      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
+
+	    if (ports[idx] == name)
+		  return idx;
+      }
+
+      return ports.count();
+}
+
 /*
  * $Log: PUdp.cc,v $
+ * Revision 1.3  2004/03/08 00:47:44  steve
+ *  primitive ports can bind bi name.
+ *
  * Revision 1.2  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *

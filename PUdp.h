@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PUdp.h,v 1.11 2004/02/18 17:11:54 steve Exp $"
+#ident "$Id: PUdp.h,v 1.12 2004/03/08 00:47:44 steve Exp $"
 #endif
 
 # include  <map>
@@ -56,6 +56,8 @@ class PUdp {
       explicit PUdp(perm_string n, unsigned nports);
 
       svector<string>ports;
+      unsigned find_port(const char*name);
+
       bool sequential;
 
       svector<string>tinput;
@@ -78,6 +80,9 @@ class PUdp {
 
 /*
  * $Log: PUdp.h,v $
+ * Revision 1.12  2004/03/08 00:47:44  steve
+ *  primitive ports can bind bi name.
+ *
  * Revision 1.11  2004/02/18 17:11:54  steve
  *  Use perm_strings for named langiage items.
  *
