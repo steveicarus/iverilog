@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.27 2003/09/19 03:30:05 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.28 2004/08/28 14:59:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -176,6 +176,8 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 	    cerr << get_line() << ": error: " << path_ <<
 		  " is not a reg/integer/time in " << scope->name() <<
 		  "." << endl;
+	    cerr << reg->get_line() << ":      : " << path_ <<
+		  " is declared here as " << reg->type() << "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -350,6 +352,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.28  2004/08/28 14:59:44  steve
+ *  More detailed error message about bad variable.
+ *
  * Revision 1.27  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
  *
