@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_pexpr.cc,v 1.5 2000/06/13 05:22:16 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.6 2000/12/16 19:03:30 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -138,6 +138,17 @@ NetEConst* PEString::elaborate_pexpr(Design*des, NetScope*scope) const
       return elaborate_expr(des, scope);
 }
 
+NetETernary* PETernary::elaborate_pexpr(Design*des, NetScope*scope) const
+{
+      NetExpr*c = expr_->elaborate_pexpr(des, scope);
+      NetExpr*t = tru_->elaborate_pexpr(des, scope);
+      NetExpr*f = fal_->elaborate_pexpr(des, scope);
+      if (c == 0) return 0;
+      if (t == 0) return 0;
+      if (f == 0) return 0;
+      return new NetETernary(c, t, f);
+}
+
 NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 {
       NetExpr*ip = expr_->elaborate_pexpr(des, scope);
@@ -163,6 +174,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.6  2000/12/16 19:03:30  steve
+ *  Evaluate <= and ?: in parameter expressions (PR#81)
+ *
  * Revision 1.5  2000/06/13 05:22:16  steve
  *  Support concatenation in parameter expressions.
  *

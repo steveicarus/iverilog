@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval_tree.cc,v 1.13 2000/09/29 04:42:56 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.14 2000/12/16 19:03:30 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -101,6 +101,10 @@ NetEConst* NetEBComp::eval_leeq_()
       if (r == 0) return 0;
 
       verinum rv = r->value();
+      if (! rv.is_defined()) {
+	    verinum result(verinum::Vx, 1);
+	    return new NetEConst(result);
+      }
 
 	/* Detect the case where the right side is greater that or
 	   equal to the largest value the left side can possibly
@@ -112,7 +116,26 @@ NetEConst* NetEBComp::eval_leeq_()
 	    return new NetEConst(result);
       }
 
-      return 0;
+	/* Now go on to the normal test of the values. */
+      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      lv = l->value();
+      if (! lv.is_defined()) {
+	    verinum result(verinum::Vx, 1);
+	    return new NetEConst(result);
+      }
+
+      if (lv.has_sign() && rv.has_sign() && (lv.as_long() <= rv.as_long())) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
+      }
+
+      if (lv.as_ulong() <= rv.as_ulong()) {
+	    verinum result(verinum::V1, 1);
+	    return new NetEConst(result);
+      }
+
+      verinum result(verinum::V0, 1);
+      return new NetEConst(result);
 }
 
 NetEConst* NetEBComp::eval_neeq_()
@@ -290,7 +313,7 @@ NetEConst* NetEBShift::eval_tree()
       return res;
 }
 
-NetExpr* NetEConcat::eval_tree()
+NetEConst* NetEConcat::eval_tree()
 {
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
 
@@ -369,6 +392,93 @@ NetExpr* NetEParam::eval_tree()
       return res->dup_expr();
 }
 
+/*
+ * A ternary expression evaluation is controlled by the condition
+ * expression. If the condition evaluates to true or false, then
+ * return the evaluated true or false expression. If the condition
+ * evaluates to x or z, then merge the constant bits of the true and
+ * false expressions.
+ */
+NetExpr* NetETernary::eval_tree()
+{
+      NetExpr*tmp;
+
+	/* Evaluate the cond_ to a constant. If it already is a
+	   constant, then there is nothing to do. */
+
+      NetEConst*c = dynamic_cast<NetEConst*>(cond_);
+      if (c == 0) {
+	    tmp = cond_->eval_tree();
+	    c = dynamic_cast<NetEConst*>(tmp);
+	    if (c == 0)
+		  return 0;
+
+	    delete cond_;
+	    cond_ = c;
+      }
+
+
+	/* If the condition is 1 or 0, return the true or false
+	   expression. Try to evaluate the expression down as far as
+	   we can. */
+
+      if (c->value().get(0) == verinum::V1) {
+	    tmp = true_val_->eval_tree();
+	    return tmp? tmp : true_val_;
+      }
+
+      if (c->value().get(0) == verinum::V0) {
+	    tmp = false_val_->eval_tree();
+	    return tmp? tmp : false_val_;
+      }
+
+
+	/* Here we have a more complex case. We need to evaluate both
+	   expressions down to constants then compare the values to
+	   build up a constant result. */
+
+      NetEConst*t = dynamic_cast<NetEConst*>(true_val_);
+      if (t == 0) {
+	    tmp = true_val_->eval_tree();
+	    t = dynamic_cast<NetEConst*>(tmp);
+	    if (t == 0)
+		  return 0;
+
+	    delete true_val_;
+	    true_val_ = t;
+      }
+
+
+      NetEConst*f = dynamic_cast<NetEConst*>(false_val_);
+      if (f == 0) {
+	    tmp = false_val_->eval_tree();
+	    f = dynamic_cast<NetEConst*>(tmp);
+	    if (f == 0)
+		  return 0;
+
+	    delete false_val_;
+	    false_val_ = f;
+      }
+
+      unsigned size = t->expr_width();
+      assert(size == f->expr_width());
+
+      verinum val (verinum::V0, size);
+      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
+	    verinum::V tv = t->value().get(idx);
+	    verinum::V fv = f->value().get(idx);
+
+	    if (tv == fv)
+		  val.set(idx, tv);
+	    else
+		  val.set(idx, verinum::Vx);
+      }
+
+      NetEConst*rc = new NetEConst(val);
+      rc->set_line(*this);
+      return rc;
+}
+
 NetEConst* NetEUnary::eval_tree()
 {
       NetExpr*oper = expr_->eval_tree();
@@ -413,6 +523,9 @@ NetEConst* NetEUnary::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.14  2000/12/16 19:03:30  steve
+ *  Evaluate <= and ?: in parameter expressions (PR#81)
+ *
  * Revision 1.13  2000/09/29 04:42:56  steve
  *  Cnstant evaluation of NE.
  *

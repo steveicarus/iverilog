@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.187 2000/12/16 01:45:48 steve Exp $"
+#ident "$Id: netlist.h,v 1.188 2000/12/16 19:03:30 steve Exp $"
 #endif
 
 /*
@@ -2262,7 +2262,7 @@ class NetEConcat  : public NetExpr {
 
       virtual bool set_width(unsigned w);
       virtual NetEConcat* dup_expr() const;
-      virtual NetExpr* eval_tree();
+      virtual NetEConst*  eval_tree();
       virtual NetNet*synthesize(Design*);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2375,6 +2375,7 @@ class NetETernary  : public NetExpr {
       const NetExpr*false_expr() const;
 
       virtual NetETernary* dup_expr() const;
+      virtual NetExpr* eval_tree();
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -2837,6 +2838,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.188  2000/12/16 19:03:30  steve
+ *  Evaluate <= and ?: in parameter expressions (PR#81)
+ *
  * Revision 1.187  2000/12/16 01:45:48  steve
  *  Detect recursive instantiations (PR#2)
  *

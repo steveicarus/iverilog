@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.46 2000/12/10 22:01:35 steve Exp $"
+#ident "$Id: PExpr.h,v 1.47 2000/12/16 19:03:30 steve Exp $"
 #endif
 
 # include  <string>
@@ -401,6 +401,7 @@ class PETernary : public PExpr {
 				    Link::strength_t drive0,
 				    Link::strength_t drive1) const;
       virtual NetETernary*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(const Design*des, const string&path) const;
 
     private:
@@ -431,6 +432,9 @@ class PECallFunction : public PExpr {
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.47  2000/12/16 19:03:30  steve
+ *  Evaluate <= and ?: in parameter expressions (PR#81)
+ *
  * Revision 1.46  2000/12/10 22:01:35  steve
  *  Support decimal constants in behavioral delays.
  *

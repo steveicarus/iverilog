@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.20 2000/12/10 22:01:35 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.21 2000/12/16 19:03:30 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -222,9 +222,11 @@ PETernary::~PETernary()
 {
 }
 
-bool PETernary::is_constant(Module*) const
+bool PETernary::is_constant(Module*m) const
 {
-      return false;
+      return expr_->is_constant(m)
+	    && tru_->is_constant(m)
+	    && fal_->is_constant(m);
 }
 
 PEUnary::PEUnary(char op, PExpr*ex)
@@ -243,6 +245,9 @@ bool PEUnary::is_constant(Module*m) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.21  2000/12/16 19:03:30  steve
+ *  Evaluate <= and ?: in parameter expressions (PR#81)
+ *
  * Revision 1.20  2000/12/10 22:01:35  steve
  *  Support decimal constants in behavioral delays.
  *
