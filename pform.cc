@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.107 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: pform.cc,v 1.108 2003/02/02 19:02:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -941,6 +941,7 @@ void pform_makewire(const vlltype&li, const char*nm,
 
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
+		    bool signed_flag,
 		    list<char*>*names,
 		    NetNet::Type type,
 		    svector<named_pexpr_t*>*attr)
@@ -950,7 +951,7 @@ void pform_makewire(const vlltype&li,
 		 ; cur ++ ) {
 	    char*txt = *cur;
 	    pform_makewire(li, txt, type, attr);
-	    pform_set_net_range(txt, range, false);
+	    pform_set_net_range(txt, range, signed_flag);
 	    free(txt);
       }
 
@@ -961,6 +962,7 @@ void pform_makewire(const vlltype&li,
 
 void pform_makewire(const vlltype&li,
 		    svector<PExpr*>*range,
+		    bool signed_flag,
 		    svector<PExpr*>*delay,
 		    str_pair_t str,
 		    net_decl_assign_t*decls,
@@ -973,7 +975,7 @@ void pform_makewire(const vlltype&li,
 	    net_decl_assign_t*next = first->next;
 
 	    pform_makewire(li, first->name, type, 0);
-	    pform_set_net_range(first->name, range, false);
+	    pform_set_net_range(first->name, range, signed_flag);
 
 	    hname_t name = hier_name(first->name);
 	    PWire*cur = pform_cur_module->get_wire(name);
@@ -1238,6 +1240,7 @@ void pform_set_defparam(const hname_t&name, PExpr*expr)
 void pform_set_port_type(const struct vlltype&li,
 			 list<char*>*names,
 			 svector<PExpr*>*range,
+			 bool signed_flag,
 			 NetNet::PortType pt)
 {
       for (list<char*>::iterator cur = names->begin()
@@ -1246,7 +1249,7 @@ void pform_set_port_type(const struct vlltype&li,
 	    char*txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    if (range)
-		  pform_set_net_range(txt, range, false);
+		  pform_set_net_range(txt, range, signed_flag);
 	    free(txt);
       }
 
@@ -1393,6 +1396,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.108  2003/02/02 19:02:39  steve
+ *  Add support for signed ports and nets.
+ *
  * Revision 1.107  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

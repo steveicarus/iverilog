@@ -18,8 +18,8 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.170 2003/01/26 21:15:59 steve Exp $"
+#if HAVE_CVS_IDENT
+#ident "$Id: parse.y,v 1.171 2003/02/02 19:02:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -282,17 +282,11 @@ attribute
      integers. This rule matches those declarations. The containing
      rule has presumably set up the scope. */
 block_item_decl
-	: K_reg range register_variable_list ';'
-		{ pform_set_net_range($3, $2, false);
+	: K_reg signed_opt range register_variable_list ';'
+		{ pform_set_net_range($4, $3, $2);
 		}
-	| K_reg register_variable_list ';'
-		{ pform_set_net_range($2, 0, false);
-		}
-	| K_reg K_signed range register_variable_list ';'
-		{ pform_set_net_range($4, $3, true);
-		}
-	| K_reg K_signed register_variable_list ';'
-		{ pform_set_net_range($3, 0, true);
+	| K_reg signed_opt register_variable_list ';'
+		{ pform_set_net_range($3, 0, $2);
 		}
 	| K_integer register_variable_list ';'
 		{ pform_set_reg_integer($2);
@@ -1366,27 +1360,27 @@ range_delay : range_opt delay3_opt
 
 
 module_item
-	: attribute_list_opt net_type range_delay list_of_identifiers ';'
-		{ pform_makewire(@2, $3.range, $4, $2, $1);
-		  if ($3.delay != 0) {
-			yyerror(@3, "sorry: net delays not supported.");
-			delete $3.delay;
+	: attribute_list_opt net_type signed_opt range_delay list_of_identifiers ';'
+		{ pform_makewire(@2, $4.range, $3, $5, $2, $1);
+		  if ($4.delay != 0) {
+			yyerror(@4, "sorry: net delays not supported.");
+			delete $4.delay;
 		  }
 		  if ($1) delete $1;
 		}
-	| attribute_list_opt net_type range_delay net_decl_assigns ';'
-		{ pform_makewire(@2, $3.range, $3.delay, str_strength,
-				 $4, $2);
+	| attribute_list_opt net_type signed_opt range_delay net_decl_assigns ';'
+		{ pform_makewire(@2, $4.range, $3, $4.delay,
+				 str_strength, $5, $2);
 		  if ($1) {
 			yyerror(@3, "sorry: Attributes not supported "
 				"on net declaration assignments.");
 			delete $1;
 		  }
 		}
-	| attribute_list_opt net_type drive_strength net_decl_assigns ';'
-		{ pform_makewire(@2, 0, 0, $3, $4, $2);
+	| attribute_list_opt net_type signed_opt drive_strength net_decl_assigns ';'
+		{ pform_makewire(@2, 0, $3, 0, $4, $5, $2);
 		  if ($1) {
-			yyerror(@3, "sorry: Attributes not supported "
+			yyerror(@4, "sorry: Attributes not supported "
 				"on net declaration assignments.");
 			delete $1;
 		  }
@@ -1397,14 +1391,14 @@ module_item
 		  delete $3.delay;
 		}
 
-	| port_type range_delay list_of_identifiers ';'
-		{ pform_set_port_type(@1, $3, $2.range, $1);
+	| port_type signed_opt range_delay list_of_identifiers ';'
+		{ pform_set_port_type(@1, $4, $3.range, $2, $1);
 		}
-	| port_type range_delay error ';'
+	| port_type signed_opt range_delay error ';'
 		{ yyerror(@3, "error: Invalid variable list"
 			  " in port declaration.");
-		  if ($2.range) delete $2.range;
-		  if ($2.delay) delete $2.delay;
+		  if ($3.range) delete $3.range;
+		  if ($3.delay) delete $3.delay;
 		  yyerrok;
 		}
 	| block_item_decl

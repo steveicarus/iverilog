@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.66 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: pform.h,v 1.67 2003/02/02 19:02:40 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -158,11 +158,13 @@ extern void pform_makewire(const struct vlltype&li, const char*name,
 
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
+			   bool signed_flag,
 			   list<char*>*names,
 			   NetNet::Type type,
 			   svector<named_pexpr_t*>*attr);
 extern void pform_makewire(const struct vlltype&li,
 			   svector<PExpr*>*range,
+			   bool signed_flag,
 			   svector<PExpr*>*delay,
 			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
@@ -174,7 +176,9 @@ extern void pform_make_reginit(const struct vlltype&li,
      i.e. input, output or inout. If the wire does not exist, create
      it. The second form takes a single name. */
 extern void pform_set_port_type(const struct vlltype&li,
-				list<char*>*names, svector<PExpr*>*,
+				list<char*>*names,
+				svector<PExpr*>*range,
+				bool signed_flag,
 				NetNet::PortType);
 extern void pform_set_port_type(const char*nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
@@ -264,6 +268,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.67  2003/02/02 19:02:40  steve
+ *  Add support for signed ports and nets.
+ *
  * Revision 1.66  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *
