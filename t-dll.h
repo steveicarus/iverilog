@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.16 2000/10/28 17:55:03 steve Exp $"
+#ident "$Id: t-dll.h,v 1.17 2000/10/28 22:32:34 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -107,6 +107,12 @@ struct ivl_expr_s {
 		  ivl_expr_t lef_;
 		  ivl_expr_t rig_;
 	    } binary_;
+
+	    struct {
+		  unsigned   rept  :16;
+		  unsigned   parms :16;
+		  ivl_expr_t*parm;
+	    } concat_;
 
 	    struct {
 		  char*bits_;
@@ -311,6 +317,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.17  2000/10/28 22:32:34  steve
+ *  API for concatenation expressions.
+ *
  * Revision 1.16  2000/10/28 17:55:03  steve
  *  stub for the concat operator.
  *

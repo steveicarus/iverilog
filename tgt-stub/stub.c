@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.22 2000/10/28 17:55:03 steve Exp $"
+#ident "$Id: stub.c,v 1.23 2000/10/28 22:32:34 steve Exp $"
 #endif
 
 /*
@@ -34,6 +34,7 @@ static FILE*out;
 
 static void show_expression(ivl_expr_t net, unsigned ind)
 {
+      unsigned idx;
       const ivl_expr_type_t code = ivl_expr_type(net);
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
@@ -48,12 +49,15 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_CONCAT:
-	    fprintf(out, "%*s<concat width=%u, %s>\n", ind, "", width, sign);
+	    fprintf(out, "%*s<concat repeat=%u, width=%u, %s>\n", ind, "",
+		    ivl_expr_repeat(net), width, sign);
+	    for (idx = 0 ;  idx < ivl_expr_parms(net) ;  idx += 1)
+		  show_expression(ivl_expr_parm(net, idx), ind+3);
+
 	    break;
 
 	  case IVL_EX_NUMBER: {
 		const char*bits = ivl_expr_bits(net);
-		unsigned idx;
 
 		fprintf(out, "%*s<number=%u'b", ind, "", width);
 		for (idx = width ;  idx > 0 ;  idx -= 1)
@@ -336,6 +340,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.23  2000/10/28 22:32:34  steve
+ *  API for concatenation expressions.
+ *
  * Revision 1.22  2000/10/28 17:55:03  steve
  *  stub for the concat operator.
  *

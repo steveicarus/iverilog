@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.24 2000/10/28 17:55:03 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.25 2000/10/28 22:32:34 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -258,12 +258,30 @@ extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx);
 extern unsigned    ivl_const_pins(ivl_net_const_t net);
 extern int         ivl_const_signed(ivl_net_const_t net);
 
-/* EXPRESSION
+/* EXPRESSIONS
+ *
  * These methods operate on expression objects from the
  * design. Expressions mainly exist in behavioral code. The
  * ivl_expr_type() function returns the type of the expression node,
  * and the remaining functions access value bits of the expression.
+ *
+ * ivl_expr_signed
+ *    This method returns true (!= 0) if the expression node
+ *    represents a signed expression. It is possible for sub-
+ *    expressions to be unsigned even if a node is signed, but the
+ *    IVL core figures all this out for you. At any rate, this method
+ *    can be applied to any expression node.
+ *
+ * ivl_expr_type
+ *    Get the type of the expression node. Every expression node has a
+ *    type, which can affect how some of the other expression methods
+ *    operate on the node
+ *
+ * ivl_expr_width
+ *    This method returns the bit width of the expression at this
+ *    node. It can be applied to any expression node.
  */
+
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 
   /* IVL_EX_NUMBER */
@@ -278,6 +296,12 @@ extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
   /* */
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
+  /* IVL_EX_CONCAT */
+extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
+  /* IVL_EX_CONCAT */
+extern unsigned    ivl_expr_parms(ivl_expr_t net);
+  /* IVL_EX_CONCAT */
+extern unsigned    ivl_expr_repeat(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
   /* IVL_EX_STRING */
@@ -524,6 +548,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.25  2000/10/28 22:32:34  steve
+ *  API for concatenation expressions.
+ *
  * Revision 1.24  2000/10/28 17:55:03  steve
  *  stub for the concat operator.
  *

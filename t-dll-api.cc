@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.15 2000/10/25 05:41:24 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.16 2000/10/28 22:32:34 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -150,6 +150,39 @@ extern "C" ivl_expr_t ivl_expr_oper3(ivl_expr_t net)
 {
       assert(net);
       return 0;
+}
+
+extern "C" ivl_expr_t ivl_expr_parm(ivl_expr_t net, unsigned idx)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_EX_CONCAT:
+	    assert(idx < net->u_.concat_.parms);
+	    return net->u_.concat_.parm[idx];
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" unsigned ivl_expr_parms(ivl_expr_t net)
+{
+      assert(net);
+      switch (net->type_) {
+	  case IVL_EX_CONCAT:
+	    return net->u_.concat_.parms;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" unsigned ivl_expr_repeat(ivl_expr_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_EX_CONCAT);
+      return net->u_.concat_.rept;
 }
 
 extern "C" int ivl_expr_signed(ivl_expr_t net)
@@ -503,6 +536,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.16  2000/10/28 22:32:34  steve
+ *  API for concatenation expressions.
+ *
  * Revision 1.15  2000/10/25 05:41:24  steve
  *  Get target signal from nexus_ptr.
  *

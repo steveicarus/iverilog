@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.6 2000/10/28 17:55:03 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.7 2000/10/28 22:32:34 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -59,11 +59,24 @@ void dll_target::expr_concat(const NetEConcat*net)
 {
       assert(expr_ == 0);
 
-      expr_ = new struct ivl_expr_s;
-      assert(expr_);
+      ivl_expr_t cur = new struct ivl_expr_s;
+      assert(cur);
 
-      expr_->type_ = IVL_EX_CONCAT;
-      expr_->width_= net->expr_width();
+      cur->type_ = IVL_EX_CONCAT;
+      cur->width_= net->expr_width();
+
+      cur->u_.concat_.rept  = net->repeat();
+      cur->u_.concat_.parms = net->nparms();
+      cur->u_.concat_.parm  = new ivl_expr_t [net->nparms()];
+
+      for (unsigned idx = 0 ;  idx < net->nparms() ;  idx += 1) {
+	    expr_ = 0;
+	    net->parm(idx)->expr_scan(this);
+	    assert(expr_);
+	    cur->u_.concat_.parm[idx] = expr_;
+      }
+
+      expr_ = cur;
 }
 
 void dll_target::expr_const(const NetEConst*net)
@@ -133,6 +146,9 @@ void dll_target::expr_signal(const NetESignal*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.7  2000/10/28 22:32:34  steve
+ *  API for concatenation expressions.
+ *
  * Revision 1.6  2000/10/28 17:55:03  steve
  *  stub for the concat operator.
  *

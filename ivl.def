@@ -16,6 +16,9 @@ ivl_expr_opcode
 ivl_expr_oper1
 ivl_expr_oper2
 ivl_expr_oper3
+ivl_expr_parm
+ivl_expr_parms
+ivl_expr_repeat
 ivl_expr_signed
 ivl_expr_string
 ivl_expr_width

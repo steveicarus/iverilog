@@ -28,3 +28,29 @@ The target module API is defined in the ivl_target.h header file. This
 declares all the type and functions that a loadable module needs to
 access the design.
 
+
+ABOUT SPECIFIC EXPRESSION TYPES
+
+In this section find notes about the various kinds of expression
+nodes. The notes here are in addition to the more generation
+documentation in the ivl_target.h header file.
+
+* IVL_EX_CONCAT
+
+  The concatenation operator forms an expression node that holds the
+  repeat count and all the parameter expressions. The repeat count is
+  an integer that is calculated by the core compiler so it fully
+  evaluated, and *not* an expression.
+
+  The parameter expressions are retrieved by the ivl_expr_parm method,
+  with the index increasing as parameters go from left to right, from
+  most significant to least significant. (Note that this is different
+  from the order of bits within an expression node.)
+
+* IVL_EX_NUMBER
+
+  This is a constant number. The width is fully know, and the bit
+  values are all represented by the ascii characters 0, 1, x or z. The
+  ivl_expr_bits method returns a pointer to the least significant bit,
+  and the remaining bits are ordered from least significant to most
+  significant. For example, 5'b1zzx0 is the 5 character string "0xzz1".
