@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.28 2000/04/01 21:40:23 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.29 2000/05/19 04:22:56 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -87,9 +87,12 @@ extern void vvm_binop_plus(vvm_bitset_t&v,
 			   const vvm_bitset_t&r);
 
 /*
- * Integer division.
+ * Integer division and modulus
  */
 extern void vvm_binop_idiv(vvm_bitset_t&v,
+			   const vvm_bitset_t&l,
+			   const vvm_bitset_t&r);
+extern void vvm_binop_imod(vvm_bitset_t&v,
 			   const vvm_bitset_t&l,
 			   const vvm_bitset_t&r);
 
@@ -203,6 +206,9 @@ extern void vvm_ternary(vvm_bitset_t&v, vpip_bit_t c,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.29  2000/05/19 04:22:56  steve
+ *  Add the integer modulus function.
+ *
  * Revision 1.28  2000/04/01 21:40:23  steve
  *  Add support for integer division.
  *
