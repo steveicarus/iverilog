@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: acc_user.h,v 1.1 2002/05/23 03:46:42 steve Exp $"
+#ident "$Id: acc_user.h,v 1.2 2002/05/30 02:06:05 steve Exp $"
 #endif
 
 /*
@@ -46,11 +46,15 @@ extern int acc_error_flag;
 
 extern int acc_initialize(void);
 extern void acc_close(void);
+extern char*acc_product_version(void);
 
 EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.2  2002/05/30 02:06:05  steve
+ *  Implement acc_product_version.
+ *
  * Revision 1.1  2002/05/23 03:46:42  steve
  *  Add the acc_user.h header file.
  *

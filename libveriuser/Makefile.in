@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.4 2002/05/24 20:29:07 steve Exp $"
+#ident "$Id: Makefile.in,v 1.5 2002/05/30 02:06:05 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -44,7 +44,7 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
-A = a_close.o a_initialize.o
+A = a_close.o a_initialize.o a_product_version.o
 O = finish.o io_print.o mc_scan_plusargs.o $A
 
 all: libveriuser.a
