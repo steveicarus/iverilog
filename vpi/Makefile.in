@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 1999/10/22 23:58:13 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 1999/11/07 20:33:30 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,7 +52,7 @@ all: system.vpi
 	$(CC) -Wall $(CPPFLAGS) -I$(srcdir) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = sys_table.o sys_display.o sys_finish.o
+O = sys_table.o sys_display.o sys_finish.o sys_vcd.o
 
 system.vpi: $O
 	$(CC) -shared -o $@ $O

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.5 1999/11/07 02:25:08 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.6 1999/11/07 20:33:30 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -109,6 +109,7 @@ typedef struct t_vpi_value {
 #define vpiType       1
 #define vpiName       2
 #define vpiFullName   3
+#define vpiSize       4
 #define vpiConstType 43
 #   define vpiDecConst    1
 #   define vpiRealConst   2
@@ -204,6 +205,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.6  1999/11/07 20:33:30  steve
+ *  Add VCD output and related system tasks.
+ *
  * Revision 1.5  1999/11/07 02:25:08  steve
  *  Add the $monitor implementation.
  *

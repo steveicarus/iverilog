@@ -17,12 +17,28 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.c,v 1.4 1999/11/07 02:25:08 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.5 1999/11/07 20:33:30 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <assert.h>
 
+
+static int signal_get(int code, vpiHandle ref)
+{
+      struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
+
+      assert((ref->vpi_type->type_code==vpiNet)
+	     || (ref->vpi_type->type_code==vpiReg));
+
+      switch (code) {
+	  case vpiSize:
+	    return rfp->nbits;
+
+	  default:
+	    return 0;
+      }
+}
 
 static char* signal_get_str(int code, vpiHandle ref)
 {
@@ -51,7 +67,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 
 static const struct __vpirt vpip_net_rt = {
       vpiNet,
-      0,
+      signal_get,
       signal_get_str,
       signal_get_value,
       0,
@@ -68,7 +84,7 @@ vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name)
 
 static const struct __vpirt vpip_reg_rt = {
       vpiReg,
-      0,
+      signal_get,
       signal_get_str,
       signal_get_value,
       0,
@@ -85,6 +101,9 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name)
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.5  1999/11/07 20:33:30  steve
+ *  Add VCD output and related system tasks.
+ *
  * Revision 1.4  1999/11/07 02:25:08  steve
  *  Add the $monitor implementation.
  *

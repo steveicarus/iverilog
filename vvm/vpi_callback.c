@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.c,v 1.3 1999/10/29 03:37:22 steve Exp $"
+#ident "$Id: vpi_callback.c,v 1.4 1999/11/07 20:33:30 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -40,8 +40,22 @@ static struct __vpirt vpip_callback_rt = {
  */
 static void vpip_call_callback(void*cp)
 {
+      unsigned long now;
       struct __vpiCallback*rfp = (struct __vpiCallback*)cp;
       assert(rfp->base.vpi_type->type_code == vpiCallback);
+
+      switch (rfp->cb_data.time->type) {
+	  case vpiSuppressTime:
+	  case vpiScaledRealTime: // XXXX not supported
+	    break;
+
+	  case vpiSimTime:
+	    now = ((struct __vpiTimeVar*)vpip_sim_time())->time;
+	    rfp->cb_data.time->low = now;
+	    rfp->cb_data.time->high = 0;
+	    break;
+      }
+
       rfp->cb_data.cb_rtn(&rfp->cb_data);
       free(rfp);
 }
@@ -155,6 +169,9 @@ int vpi_remove_cb(vpiHandle ref)
 
 /*
  * $Log: vpi_callback.c,v $
+ * Revision 1.4  1999/11/07 20:33:30  steve
+ *  Add VCD output and related system tasks.
+ *
  * Revision 1.3  1999/10/29 03:37:22  steve
  *  Support vpiValueChance callbacks.
  *
