@@ -30,12 +30,33 @@ then
         exit 1
 fi
 
+AC_CYGWIN
+AC_EXEEXT
+AC_MINGW32
+
+WIN32=no
+AC_MSG_CHECKING("Checking for windows")
+if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
+then
+    WIN32=yes
+fi
+
+AC_SUBST(MINGW32)
+AC_SUBST(WIN32)
+AC_MSG_RESULT($WIN32)
+AC_SUBST(EXEEXT)
+
+
 AC_LANG_CPLUSPLUS
 
 AC_CHECK_HEADERS(getopt.h malloc.h libiberty.h iosfwd sys/wait.h)
 
 AC_CHECK_LIB(z, gzwrite)
+if test "$WIN32" = "yes"; then
+AC_CHECK_LIB(bz2, main)
+else
 AC_CHECK_LIB(bz2, BZ2_bzdopen)
+fi
 
 AC_MSG_CHECKING(for sys/times)
 AC_TRY_LINK(
@@ -182,24 +203,6 @@ AC_MSG_RESULT($shared)
 ## test for underscores. The vpi module loader needs to know this
 ## in order to know the name of the start symbol for the .vpi module.
 #######################
-
-AC_CYGWIN
-AC_EXEEXT
-AC_MINGW32
-
-
-WIN32=no
-AC_MSG_CHECKING("Checking for windows")
-if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
-then
-    WIN32=yes
-fi
-
-AC_SUBST(MINGW32)
-AC_SUBST(WIN32)
-AC_MSG_RESULT($WIN32)
-AC_SUBST(EXEEXT)
-
 
 AC_MSG_CHECKING("for leading and/or trailing underscores")
 cat << EOF > underscore.c
