@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.8 2001/04/01 06:49:32 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.9 2001/04/01 07:22:42 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -189,6 +189,49 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
+static struct vector_info draw_binary_expr_le(ivl_expr_t exp, unsigned wid)
+{
+      ivl_expr_t le = ivl_expr_oper1(exp);
+      ivl_expr_t re = ivl_expr_oper2(exp);
+
+      struct vector_info lv;
+      struct vector_info rv;
+
+      unsigned owid = ivl_expr_width(le);
+      if (ivl_expr_width(re) > owid)
+	    owid = ivl_expr_width(re);
+
+      lv = draw_eval_expr_wid(le, owid);
+      rv = draw_eval_expr_wid(re, owid);
+
+      switch (ivl_expr_opcode(exp)) {
+	  case 'L':
+	    assert(lv.wid == rv.wid);
+	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
+		    rv.base, lv.wid);
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    break;
+
+	  case '<':
+	    assert(lv.wid == rv.wid);
+	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
+		    rv.base, lv.wid);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      clr_vector(lv);
+      clr_vector(rv);
+
+      lv.base = 5;
+      lv.wid = 1;
+      assert(wid == 1);
+
+      return lv;
+}
+
 static struct vector_info draw_binary_expr_plus(ivl_expr_t exp, unsigned wid)
 {
       ivl_expr_t le = ivl_expr_oper1(exp);
@@ -225,6 +268,11 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp, unsigned wid)
 	  case 'n': /* != */
 	    assert(wid == 1);
 	    rv = draw_binary_expr_eq(exp);
+	    break;
+
+	  case '<':
+	  case 'L': /* <= */
+	    rv = draw_binary_expr_le(exp, wid);
 	    break;
 
 	  case '+':
@@ -448,6 +496,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.9  2001/04/01 07:22:42  steve
+ *  Generate code for < and <=.
+ *
  * Revision 1.8  2001/04/01 06:49:32  steve
  *  Evaluate the logical AND operator.
  *
