@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.271 2003/01/30 16:23:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.272 2003/02/07 02:49:24 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1574,80 +1574,81 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-	/* Catch the special case that the delay is given as a
-	   floating point number. In this case, we need to scale the
-	   delay to the units of the design. */
+      NetExpr*dex = delay_->elaborate_expr(des, scope);
+      if (NetExpr*tmp = dex->eval_tree()) {
+	    delete dex;
+	    dex = tmp;
+      }
 
-      if (verireal*fn = delay_? delay_->eval_rconst(des, scope) : 0) {
+	/* Catch the case that the expression is a constant real
+	   value. Scale the delay to the units of the design, and make
+	   the delay statement. */
+      if (NetECReal*tmp = dynamic_cast<NetECReal*>(dex)) {
+	    verireal fn = tmp->value();
+
 	    int shift = scope->time_unit() - des->get_precision();
-
-	    long delay = fn->as_long(shift);
+	    long delay = fn.as_long(shift);
 	    if (delay < 0)
 		  delay = 0;
 
-	    delete fn;
+	    delete tmp;
 
 	    if (statement_)
 		return new NetPDelay(delay, statement_->elaborate(des, scope));
 	    else
 		return new NetPDelay(delay, 0);
-
       }
 
+	/* OK, Maybe the expression is a constant integer. If so,
+	   scale the delay to simulation units and make the delay
+	   statement. */
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
+	    verinum fn = tmp->value();
 
-      verinum*num = delay_->eval_const(des, scope);
-      if (num == 0) {
-	      /* Ah, the delay is not constant. OK, elaborate the
-		 expression and let the run-time handle it. */
-	    NetExpr*dex = delay_->elaborate_expr(des, scope);
+	    unsigned long delay =
+		  des->scale_to_precision(fn.as_ulong(), scope);
 
-	      /* If the local scope units are different from the
-		 simulation precision, then extend the expression to
-		 convert the delay to simulation time. */
-	    if (scope->time_unit() != des->get_precision()) {
-		  long scale = 1;
-		  int unit = scope->time_unit();
-		  int prec = des->get_precision();
-		  while (unit > prec) {
-			scale *= 10;
-			unit -= 1;
-		  }
-
-		  verinum scale_v (scale);
-		  NetEConst*scale_e = new NetEConst(scale_v);
-		  NetEBMult*scale_m = new NetEBMult('*', scale_e, dex);
-		  if (NetExpr*tmp = scale_m->eval_tree()) {
-			dex = tmp;
-			delete scale_m;
-		  } else {
-			dex = scale_m;
-		  }
-	    }
+	    delete tmp;
 
 	    if (statement_)
-		  return new NetPDelay(dex, statement_->elaborate(des, scope));
+		return new NetPDelay(delay, statement_->elaborate(des, scope));
 	    else
-		  return new NetPDelay(dex, 0);
+		return new NetPDelay(delay, 0);
       }
-      assert(num);
 
-	/* Convert the delay in the units of the scope to the
-	   precision of the design as a whole. */
-      unsigned long val = des->scale_to_precision(num->as_ulong(), scope);
-      delete num;
 
-	/* If there is a statement, then elaborate it and create a
-	   NetPDelay statement to contain it. Note that we create a
-	   NetPDelay statement even if the value is 0 because #0 does
-	   in fact have a well defined meaning in Verilog. */
+	/* Ah well, the delay is not constant. OK, elaborate the
+	   expression and let the run-time handle it. */
 
-      if (statement_) {
-	    NetProc*stmt = statement_->elaborate(des, scope);
-	    return new NetPDelay(val, stmt);
 
-      }  else {
-	    return new NetPDelay(val, 0);
+	/* If the local scope units are different from the
+	   simulation precision, then extend the expression to
+	   convert the delay to simulation time. */
+      if (scope->time_unit() != des->get_precision()) {
+	    long scale = 1;
+	    int unit = scope->time_unit();
+	    int prec = des->get_precision();
+	    while (unit > prec) {
+		  scale *= 10;
+		  unit -= 1;
+	    }
+
+	    verinum scale_v (scale);
+	    NetEConst*scale_e = new NetEConst(scale_v);
+	    NetEBMult*scale_m = new NetEBMult('*', scale_e, dex);
+	    if (NetExpr*tmp = scale_m->eval_tree()) {
+		  dex = tmp;
+		  delete scale_m;
+	    } else {
+		  dex = scale_m;
+	    }
       }
+
+      if (statement_)
+	    return new NetPDelay(dex, statement_->elaborate(des, scope));
+      else
+	    return new NetPDelay(dex, 0);
+
 }
 
 /*
@@ -2507,6 +2508,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.272  2003/02/07 02:49:24  steve
+ *  Rewrite delay statement elaboration of handle real expressions.
+ *
  * Revision 1.271  2003/01/30 16:23:07  steve
  *  Spelling fixes.
  *
