@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.34 2002/01/22 00:18:10 steve Exp $"
+#ident "$Id: sys_display.c,v 1.35 2002/02/06 04:50:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -289,6 +289,10 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 					 fmt);
 			} else {
 			      vpi_get_value(argv[idx], &value);
+			      if (value.format == vpiSuppressVal){
+				  vpi_printf("\nERROR: parameter does not have a printable value!\n", fmt);
+				  goto bail_out;
+			      }
 
 			      switch(format_char){
 			      case 'c':
@@ -361,7 +365,6 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 				      vpi_mcd_printf(mcd, "%*s", fsize, value_str);
 				  }
 				  break;
-				  
 
 			      default:
 				    if (fsize > 0)
@@ -371,7 +374,8 @@ static int format_str(vpiHandle scope, unsigned int mcd,
 					  vpi_mcd_printf(mcd, "%s",
 							 value.value.str);
 			      }
-			      
+
+			bail_out:
 			      idx++;
 			}
 		  }
@@ -1121,6 +1125,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.35  2002/02/06 04:50:04  steve
+ *  Detect and skip suppressed values in display
+ *
  * Revision 1.34  2002/01/22 00:18:10  steve
  *  Better calcuation of dec string width (Larry Doolittle)
  *
