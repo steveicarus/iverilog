@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-generic.c,v 1.5 2001/09/01 02:01:30 steve Exp $"
+#ident "$Id: d-generic.c,v 1.6 2001/09/01 02:28:42 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -257,16 +257,64 @@ static void generic_show_cmp_eq(ivl_lpm_t net)
       fprintf(xnf, "END\n");
 }
 
+/*
+ * This function draws N-bit wide binary mux devices. These are so
+ * very popular because they are the result of such expressions as:
+ *
+ *        x = sel? a : b;
+ *
+ * This code only supports the case where sel is a single bit. It
+ * works by drawing for each bit of the width an EQN device that takes
+ * as inputs I0 and I1 the alternative inputs, and I2 the select. The
+ * select bit is common with all the generated mux devices.
+ */
+static void generic_show_mux(ivl_lpm_t net)
+{
+      char name[1024];
+      ivl_nexus_t nex, sel;
+      unsigned idx;
+
+      mangle_lpm_name(net, name, sizeof name);
+
+	/* Access the single select bit. This is common to the whole
+	   width of the mux. */
+      assert(ivl_lpm_selects(net) == 1);
+      sel = ivl_lpm_select(net, 0);
+
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    fprintf(xnf, "SYM, %s/M%u, EQN, "
+		    "EQN=((I0 * ~I2) + (I1 * I2))\n",
+		    name, idx);
+
+	    nex = ivl_lpm_q(net, idx);
+	    draw_pin(nex, "O", 'O');
+
+	    nex = ivl_lpm_data2(net, 0, idx);
+	    draw_pin(nex, "I0", 'I');
+
+	    nex = ivl_lpm_data2(net, 1, idx);
+	    draw_pin(nex, "I1", 'I');
+
+	    draw_pin(sel, "I2", 'I');
+
+	    fprintf(xnf, "END\n");
+      }
+}
+
 const struct device_s d_generic = {
       generic_show_logic,
       generic_show_dff,
       generic_show_cmp_eq,
-      generic_show_cmp_eq
+      generic_show_cmp_eq,
+      generic_show_mux
 };
 
 
 /*
  * $Log: d-generic.c,v $
+ * Revision 1.6  2001/09/01 02:28:42  steve
+ *  Generate code for MUX devices.
+ *
  * Revision 1.5  2001/09/01 02:01:30  steve
  *  identity compare, and PWR records for constants.
  *

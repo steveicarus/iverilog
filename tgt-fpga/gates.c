@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: gates.c,v 1.3 2001/09/01 02:01:30 steve Exp $"
+#ident "$Id: gates.c,v 1.4 2001/09/01 02:28:42 steve Exp $"
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -62,6 +62,10 @@ static void show_gate_lpm(ivl_lpm_t net)
 	    device->show_dff(net);
 	    break;
 
+	  case IVL_LPM_MUX:
+	    device->show_mux(net);
+	    break;
+
 	  default:
 	    fprintf(stderr, "fpga.tgt: unknown LPM type %u\n",
 		    ivl_lpm_type(net));
@@ -84,6 +88,9 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
 /*
  * $Log: gates.c,v $
+ * Revision 1.4  2001/09/01 02:28:42  steve
+ *  Generate code for MUX devices.
+ *
  * Revision 1.3  2001/09/01 02:01:30  steve
  *  identity compare, and PWR records for constants.
  *

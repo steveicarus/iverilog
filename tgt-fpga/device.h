@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: device.h,v 1.3 2001/09/01 02:01:30 steve Exp $"
+#ident "$Id: device.h,v 1.4 2001/09/01 02:28:42 steve Exp $"
 
 # include  <ivl_target.h>
 
@@ -43,11 +43,16 @@ struct device_s {
 	/* These methods show various comparators */
       void (*show_cmp_eq)(ivl_lpm_t net);
       void (*show_cmp_ne)(ivl_lpm_t net);
+	/* This method draws MUX devices */
+      void (*show_mux)(ivl_lpm_t net);
 };
 
 
 /*
  * $Log: device.h,v $
+ * Revision 1.4  2001/09/01 02:28:42  steve
+ *  Generate code for MUX devices.
+ *
  * Revision 1.3  2001/09/01 02:01:30  steve
  *  identity compare, and PWR records for constants.
  *
