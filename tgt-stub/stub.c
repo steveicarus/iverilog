@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.62 2002/05/29 22:05:55 steve Exp $"
+#ident "$Id: stub.c,v 1.63 2002/06/05 03:43:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -230,8 +230,9 @@ static void show_assign_lval(ivl_lval_t lval, unsigned ind)
 
       if ( (mem = ivl_lval_mem(lval)) ) {
 
-	    fprintf(out, "%*s%s[", ind, "", ivl_memory_name(mem));
-	    fprintf(out, "]\n");
+	    fprintf(out, "%*s%s[\n", ind, "", ivl_memory_name(mem));
+	    show_expression(ivl_lval_idx(lval), ind+4);
+	    fprintf(out, "%*s]\n", ind, "");
 
       } else {
 	    unsigned pp;
@@ -696,6 +697,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.63  2002/06/05 03:43:14  steve
+ *  Dump l-value memory indices.
+ *
  * Revision 1.62  2002/05/29 22:05:55  steve
  *  Offset lvalue index expressions.
  *
