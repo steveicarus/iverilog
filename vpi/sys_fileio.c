@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.2 2003/11/07 19:40:05 steve Exp $"
+#ident "$Id: sys_fileio.c,v 1.3 2004/02/19 21:33:13 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -244,6 +244,89 @@ static int sys_fgetc_sizetf(char*x)
       return 32;
 }
 
+static int sys_fgets_compiletf(char*name)
+{
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item = vpi_scan(argv);
+      int type;
+
+      if (item == 0) {
+	    vpi_printf("%s: string parameter missing.\n", name);
+	    return 0;
+      }
+
+      type = vpi_get(vpiType, item);
+
+      if (type != vpiReg) {
+	    vpi_printf("%s: string parameter must be a reg.\n", name);
+	    vpi_free_object(argv);
+	    return 0;
+      }
+
+      item = vpi_scan(argv);
+      if (item == 0) {
+	    vpi_printf("%s: mcd parameter missing.\n", name);
+	    return 0;
+      }
+
+	/* That should be all the arguments. */
+      item = vpi_scan(argv);
+      assert(item == 0);
+
+      return 0;
+}
+
+static int sys_fgets_calltf(char *name)
+{
+      unsigned int mcd;
+      FILE*fd;
+      int type;
+      s_vpi_value value, rval;
+
+      char*txt;
+      unsigned txt_len;
+
+      vpiHandle sys  = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle str  = vpi_scan(argv);
+      vpiHandle mch  = vpi_scan(argv);
+
+      value.format = vpiIntVal;
+      vpi_get_value(mch, &value);
+      mcd = value.value.integer;
+
+      fd = vpi_get_file(mcd);
+      if (!fd || IS_MCD(mcd)) {
+	    rval.format = vpiIntVal;
+	    rval.value.integer = 0;
+	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
+	    return 0;
+      }
+
+      txt_len = vpi_get(vpiSize, str) / 8;
+      txt = malloc(txt_len + 1);
+
+      if (fgets(txt, txt_len, fd) == 0) {
+	    rval.format = vpiIntVal;
+	    rval.value.integer = 0;
+	    vpi_put_value(sys, &rval, 0, vpiNoDelay);
+	    free(txt);
+	    return 0;
+      }
+
+      rval.format = vpiIntVal;
+      rval.value.integer = strlen(txt);
+      vpi_put_value(sys, &rval, 0, vpiNoDelay);
+
+      value.format = vpiStringVal;
+      value.value.str = txt;
+      vpi_put_value(str, &value, 0, vpiNoDelay);
+
+      free(txt);
+
+      return 0;
+}
 
 static int sys_ungetc_compiletf(char*name)
 {
@@ -366,6 +449,7 @@ void sys_fileio_register()
 
       //============================== fgetc
       tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
       tf_data.tfname    = "$fgetc";
       tf_data.calltf    = sys_fgetc_calltf;
       tf_data.compiletf = 0;
@@ -373,8 +457,19 @@ void sys_fileio_register()
       tf_data.user_data = "$fgetc";
       vpi_register_systf(&tf_data);
 
+      //============================== fgets
+      tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
+      tf_data.tfname    = "$fgets";
+      tf_data.calltf    = sys_fgets_calltf;
+      tf_data.compiletf = sys_fgets_compiletf;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$fgets";
+      vpi_register_systf(&tf_data);
+
       //============================== ungetc
       tf_data.type      = vpiSysFunc;
+      tf_data.sysfunctype = vpiSysFuncInt;
       tf_data.tfname    = "$ungetc";
       tf_data.calltf    = sys_ungetc_calltf;
       tf_data.compiletf = sys_ungetc_compiletf;
@@ -386,6 +481,9 @@ void sys_fileio_register()
 
 /*
  * $Log: sys_fileio.c,v $
+ * Revision 1.3  2004/02/19 21:33:13  steve
+ *  Add the $fgets function.
+ *
  * Revision 1.2  2003/11/07 19:40:05  steve
  *  Implement basic fflush.
  *
