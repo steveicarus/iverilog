@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.138 2004/10/04 03:09:38 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.138.2.1 2005/01/29 00:18:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1312,21 +1312,25 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
       unsigned repeat = 1;
 
       if (repeat_) {
-	    verinum*rep = repeat_->eval_const(des, scope);
-	    if (rep == 0) {
+	    NetExpr*etmp = elab_and_eval(des, scope, repeat_);
+	    assert(etmp);
+	    NetEConst*erep = dynamic_cast<NetEConst*>(etmp);
+
+	    if (erep == 0) {
 		  cerr << get_line() << ": internal error: Unable to "
 		       << "evaluate constant repeat expression." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    repeat = rep->as_ulong();
+	    repeat = erep->value().as_ulong();
+	    delete etmp;
 
 	    if (repeat == 0) {
-		  cerr << get_line() << ": error: Invalid repeat value."
+		  cerr << get_line() << ": error: Concatenation epeat "
+			"may not be 0."
 		       << endl;
 		  des->errors += 1;
-		  delete rep;
 		  return 0;
 	    }
       }
@@ -2513,6 +2517,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.138.2.1  2005/01/29 00:18:23  steve
+ *  Fix evaluate of constants in netlist concatenation repeats.
+ *
  * Revision 1.138  2004/10/04 03:09:38  steve
  *  Fix excessive error message.
  *
