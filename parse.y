@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.164 2002/11/09 02:22:07 steve Exp $"
+#ident "$Id: parse.y,v 1.165 2002/11/21 17:40:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2139,9 +2139,9 @@ specparam
 		  delete $5;
 		  delete $7;
 		}
-	| PATHPULSE_IDENTIFIER '=' '(' expression ')'
+	| PATHPULSE_IDENTIFIER '=' expression
 		{ delete $1;
-		  delete $4;
+		  delete $3;
 		}
 	| PATHPULSE_IDENTIFIER '=' '(' expression ',' expression ')'
 		{ delete $1;
