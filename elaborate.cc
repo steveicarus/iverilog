@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.159 2000/04/18 01:02:53 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.160 2000/04/21 04:38:15 steve Exp $"
 #endif
 
 /*
@@ -748,6 +748,9 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       assert(ix);
       NetNet*idx = ix->elaborate_net(des, path, 0, 0, 0, 0);
       assert(idx);
+
+      if (rv->expr_width() < mem->width())
+	    rv = pad_to_width(rv, mem->width());
 
       NetAssignMem*am = new NetAssignMem(mem, idx, rv);
       am->set_line(*this);
@@ -2225,6 +2228,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.160  2000/04/21 04:38:15  steve
+ *  Bit padding in assignment to memory.
+ *
  * Revision 1.159  2000/04/18 01:02:53  steve
  *  Minor cleanup of NetTaskDef.
  *
