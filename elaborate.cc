@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.247 2002/05/07 05:06:07 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.248 2002/05/12 19:16:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -861,7 +861,11 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
 
       assert(ix);
       NetExpr*idx = ix->elaborate_expr(des, scope);
-      assert(idx);
+      if (idx == 0) {
+	      /* Elaboration failed. The error message was already
+		 printed, so just give up here. */
+	    return 0;
+      }
 
       if (rv->expr_width() < mem->width())
 	    rv = pad_to_width(rv, mem->width());
@@ -2526,6 +2530,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.248  2002/05/12 19:16:58  steve
+ *  Accept errors in memory index expression.
+ *
  * Revision 1.247  2002/05/07 05:06:07  steve
  *  Use else clause instead of ! to preface wait events.
  *
