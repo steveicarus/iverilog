@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_lval.cc,v 1.7 2000/12/01 02:55:37 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.8 2000/12/12 06:14:51 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -164,8 +164,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
       NetNet*reg = des->find_signal(scope, name());
 
       if (reg == 0) {
-	    cerr << get_line() << ": error: Could not match signal ``" <<
-		  name() << "'' in ``" << scope->name() << "''" << endl;
+	    NetMemory*mem = des->find_memory(scope, name());
+	    if (mem != 0) {
+		  cerr << get_line() << ": sorry: I cannot handle "
+		       << "memories in this l-value context." << endl;
+	    } else {
+		  cerr << get_line() << ": error: Could not match signal ``"
+		       << name() << "'' in ``" << scope->name() <<
+			"''" << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }
@@ -301,6 +308,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.8  2000/12/12 06:14:51  steve
+ *  sorry for concatenated memories in l-values. (PR#76)
+ *
  * Revision 1.7  2000/12/01 02:55:37  steve
  *  Detect part select errors on l-values.
  *
