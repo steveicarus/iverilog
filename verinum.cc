@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: verinum.cc,v 1.6 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: verinum.cc,v 1.7 1999/05/09 01:38:33 steve Exp $"
 #endif
 
 # include  "verinum.h"
@@ -67,6 +67,17 @@ verinum::verinum(verinum::V val, unsigned n)
       bits_ = new V[nbits_];
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = val;
+}
+
+verinum::verinum(unsigned long val, unsigned n)
+: string_flag_(false)
+{
+      nbits_ = n;
+      bits_ = new V[nbits_];
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
+	    bits_[idx] = (val&1) ? V1 : V0;
+	    val >>= 1;
+      }
 }
 
 verinum::verinum(const verinum&that)
@@ -230,6 +241,9 @@ bool operator == (const verinum&left, const verinum&right)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.7  1999/05/09 01:38:33  steve
+ *  Add implementation of integer to verunum constructor.
+ *
  * Revision 1.6  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *
