@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.23 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: net_design.cc,v 1.24 2002/06/25 02:39:34 steve Exp $"
 #endif
 
 # include "config.h"
@@ -110,6 +110,9 @@ const list<NetScope*> Design::find_root_scopes() const
  */
 NetScope* Design::find_scope(const hname_t&path) const
 {
+      if (path.peek_name(0) == 0)
+	    return 0;
+
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
 		 ; scope != root_scopes_.end(); scope++) {
 
@@ -142,6 +145,8 @@ NetScope* Design::find_scope(const hname_t&path) const
 NetScope* Design::find_scope(NetScope*scope, const hname_t&path) const
 {
       assert(scope);
+      if (path.peek_name(0) == 0)
+	    return scope;
 
       for ( ; scope ;  scope = scope->parent()) {
 	    unsigned hidx = 0;
@@ -211,10 +216,11 @@ void Design::run_defparams()
 
 void NetScope::run_defparams(Design*des)
 {
-      NetScope*cur = sub_;
-      while (cur) {
-	    cur->run_defparams(des);
-	    cur = cur->sib_;
+      { NetScope*cur = sub_;
+        while (cur) {
+	      cur->run_defparams(des);
+	      cur = cur->sib_;
+	}
       }
 
       map<hname_t,NetExpr*>::const_iterator pp;
@@ -224,6 +230,8 @@ void NetScope::run_defparams(Design*des)
 
 	    char*name = path.remove_tail_name();
 
+	      /* If there is no path on the name, then the targ_scope
+		 is the current scope. */
 	    NetScope*targ_scope = des->find_scope(this, path);
 	    if (targ_scope == 0) {
 		  cerr << val->get_line() << ": warning: scope of " <<
@@ -232,13 +240,13 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
-	    val = targ_scope->set_parameter(name, val);
-	    if (val == 0) {
+	    NetExpr*tmp = targ_scope->set_parameter(name, val);
+	    if (tmp == 0) {
 		  cerr << val->get_line() << ": warning: parameter "
 		       << name << " not found in " << targ_scope->name()
 		       << "." << endl;
 	    } else {
-		  delete val;
+		  delete tmp;
 	    }
 
 	    delete[]name;
@@ -460,6 +468,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.24  2002/06/25 02:39:34  steve
+ *  Fix mishandling of incorect defparam error message.
+ *
  * Revision 1.23  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
