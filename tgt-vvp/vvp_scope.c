@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.124 2005/04/04 05:29:53 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.125 2005/04/06 05:29:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1265,7 +1265,7 @@ static void draw_lpm_ram(ivl_lpm_t net)
 
       fprintf(vvp_out, "L_%p .mem/port M_%s, ", net, vvp_memory_label(mem));
 
-      pin = ivl_lpm_select(net,0);
+      pin = ivl_lpm_select(net);
       draw_input_from_net(pin);
 
       if (clk) {
@@ -1274,7 +1274,7 @@ static void draw_lpm_ram(ivl_lpm_t net)
 	    if (pin)
 		  draw_input_from_net(pin);
 	    else
-		  fprintf(vvp_out, "C<1>");
+		  fprintf(vvp_out, "C4<1>");
 
 	    pin = ivl_lpm_data(net, 0);
 	    fprintf(vvp_out, ", ");
@@ -1987,6 +1987,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.125  2005/04/06 05:29:09  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.124  2005/04/04 05:29:53  steve
  *  Generate the right coes for unconnected UDP port.
  *

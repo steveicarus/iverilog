@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.148 2005/04/01 06:04:30 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.149 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -895,7 +895,12 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * that the port access. The ivl_lpm_width for the port then must
  * match the ivl_memory_width of the memory device.
  *
- * Read or write, the ivl_lpm_select nexus is the address.
+ * Read or write, the ivl_lpm_select nexus is the address. The
+ * ivl_lpm_selects function returns the vector width of the address.
+ *
+ * Read ports use the ivl_lpm_q as the data output, and write ports
+ * use the ivl_lpm_data(0) as the input. In either case the width of
+ * the vector matches the width of the memory itself.
  *
  * - Reduction operators (IVL_LPM_RE_*)
  * These devices have one input, a vector, and generate a single bit
@@ -977,7 +982,7 @@ extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_MUX IVL_LPM_RAM */
 extern unsigned ivl_lpm_selects(ivl_lpm_t net);
   /* IVL_LPM_MUX IVL_LPM_RAM */
-extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx);
+extern ivl_nexus_t ivl_lpm_select(ivl_lpm_t net);
   /* IVL_LPM_CONCAT IVL_LPM_MUX IVL_LPM_REPEAT IVL_LPM_UFUNC */
 extern unsigned ivl_lpm_size(ivl_lpm_t net);
   /* IVL_LPM_RAM */
@@ -1628,6 +1633,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.149  2005/04/06 05:29:08  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.148  2005/04/01 06:04:30  steve
  *  Clean up handle of UDPs.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.158 2005/03/19 06:59:53 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.159 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1655,18 +1655,16 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
 	    return 0;
 
       NetRamDq*ram = new NetRamDq(scope, scope->local_symbol(),
-				  mem, adr->pin_count());
+				  mem, adr->vector_width());
       des->add_node(ram);
 
-      for (unsigned idx = 0 ;  idx < adr->pin_count() ;  idx += 1)
-	    connect(ram->pin_Address(idx), adr->pin(idx));
+      connect(ram->pin_Address(), adr->pin(0));
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, ram->width());
       osig->local_flag(true);
 
-      for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
-	    connect(ram->pin_Q(idx), osig->pin(idx));
+      connect(ram->pin_Q(), osig->pin(0));
 
       return osig;
 }
@@ -2492,6 +2490,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.159  2005/04/06 05:29:08  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.158  2005/03/19 06:59:53  steve
  *  Handle wide operands to logical AND.
  *

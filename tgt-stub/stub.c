@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.120 2005/04/01 06:04:30 steve Exp $"
+#ident "$Id: stub.c,v 1.121 2005/04/06 05:29:09 steve Exp $"
 #endif
 
 # include "config.h"
@@ -473,7 +473,7 @@ static void show_lpm_mux(ivl_lpm_t net)
 
 	/* The select input is a vector with the width from the
 	   ivl_lpm_selects function. */
-      nex = ivl_lpm_select(net,0);
+      nex = ivl_lpm_select(net);
       fprintf(out, "    S: %s <width=%u>\n",
 	      ivl_nexus_name(nex),
 	      ivl_lpm_selects(net));
@@ -535,22 +535,30 @@ static void show_lpm_ram(ivl_lpm_t net)
 
       fprintf(out, "  LPM_RAM: <width=%u>\n", width);
       nex = ivl_lpm_q(net, 0);
+      assert(nex);
       fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
-      nex = ivl_lpm_select(net, 0);
-      fprintf(out, "    Address: %s\n", ivl_nexus_name(nex));
+      nex = ivl_lpm_select(net);
+      fprintf(out, "    Address: %s (address width=%u)\n",
+	      ivl_nexus_name(nex), ivl_lpm_selects(net));
 
 
       if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
-	    fprintf(out, "    ERROR: Data width doesn't match nexus width=%u\n",
-		    width_of_nexus(ivl_lpm_q(net,0)));
+	    fprintf(out, "    ERROR: Data width doesn't match "
+		    "nexus width=%u\n", width_of_nexus(ivl_lpm_q(net,0)));
+	    stub_errors += 1;
+      }
+
+      if (width_of_nexus(ivl_lpm_select(net)) != ivl_lpm_selects(net)) {
+	    fprintf(out, "    ERROR: Width of address doesn't match "
+		    "nexus width=%u\n", width_of_nexus(ivl_lpm_select(net)));
 	    stub_errors += 1;
       }
 
 	/* The width of the port must match the width of the memory
 	   word. the compile assures that for us. */
       if (width != ivl_memory_width(mem)) {
-	    fprintf(out, "    ERROR: Width doesn't match memory word width=%u\n",
-		    ivl_memory_width(mem));
+	    fprintf(out, "    ERROR: Width doesn't match"
+		    " memory word width=%u\n", ivl_memory_width(mem));
 	    stub_errors += 1;
       }
 }
@@ -1329,6 +1337,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.121  2005/04/06 05:29:09  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.120  2005/04/01 06:04:30  steve
  *  Clean up handle of UDPs.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.338 2005/03/18 02:56:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.339 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 /*
@@ -897,17 +897,17 @@ class NetRamDq  : public NetNode {
       Link& pin_OutClock();
       Link& pin_WE();
 
-      Link& pin_Address(unsigned idx);
-      Link& pin_Data(unsigned idx);
-      Link& pin_Q(unsigned idx);
+      Link& pin_Address();
+      Link& pin_Data();
+      Link& pin_Q();
 
       const Link& pin_InClock() const;
       const Link& pin_OutClock() const;
       const Link& pin_WE() const;
 
-      const Link& pin_Address(unsigned idx) const;
-      const Link& pin_Data(unsigned idx) const;
-      const Link& pin_Q(unsigned idx) const;
+      const Link& pin_Address() const;
+      const Link& pin_Data() const;
+      const Link& pin_Q() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -3416,6 +3416,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.339  2005/04/06 05:29:08  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.338  2005/03/18 02:56:03  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

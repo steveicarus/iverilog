@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.8 2005/02/12 22:54:29 steve Exp $"
+#ident "$Id: draw_mux.c,v 1.9 2005/04/06 05:29:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -152,7 +152,7 @@ static void draw_lpm_mux_ab(ivl_lpm_t net)
       fprintf(vvp_out, "L_%p .functor MUXZ", net);
       fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,0)));
       fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_data(net,1)));
-      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_select(net,0)));
+      fprintf(vvp_out, ", %s", draw_net_input(ivl_lpm_select(net)));
       fprintf(vvp_out, ", C4<>;\n");
 }
 
@@ -174,6 +174,9 @@ void draw_lpm_mux(ivl_lpm_t net)
 
 /*
  * $Log: draw_mux.c,v $
+ * Revision 1.9  2005/04/06 05:29:09  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.8  2005/02/12 22:54:29  steve
  *  Implement a-b muxes as vector devices
  *

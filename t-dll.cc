@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.146 2005/04/01 06:04:30 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.147 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1579,70 +1579,23 @@ void dll_target::lpm_ram_dq(const NetRamDq*net)
 
       // Connect the address bus
 
-      if (obj->u_.ff.swid == 1) {
-	    nex = net->pin_Address(0).nexus();
-	    assert(nex->t_cookie());
-	    obj->u_.ff.s.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.s.pin, obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
-      }
-      else {
-	    obj->u_.ff.s.pins = new ivl_nexus_t [obj->u_.ff.swid];
-
-	    for (unsigned idx = 0 ;  idx < obj->u_.ff.swid ;  idx += 1) {
-		  nex = net->pin_Address(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.s.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.s.pins[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
-      }
+      nex = net->pin_Address().nexus();
+      assert(nex->t_cookie());
+      obj->u_.ff.s.pin = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.ff.s.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       // Connect the data busses
 
-      if (obj->u_.ff.width == 1) {
-	    nex = net->pin_Q(0).nexus();
+      nex = net->pin_Q().nexus();
+      assert(nex->t_cookie());
+      obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.ff.q.pin, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+
+      if (has_write_port) {
+	    nex = net->pin_Data().nexus();
 	    assert(nex->t_cookie());
-	    obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
-
-	    if (has_write_port) {
-		  nex = net->pin_Data(0).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.d.pin, obj,
-				0, IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
-      }
-      else if (has_write_port) {
-	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
-	    obj->u_.ff.d.pins = obj->u_.ff.q.pins + obj->u_.ff.width;
-
-	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
-		  nex = net->pin_Q(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
-				IVL_DR_STRONG, IVL_DR_STRONG);
-
-		  nex = net->pin_Data(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-	    }
-      }
-      else {
-	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width];
-
-	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
-		  nex = net->pin_Q(idx).nexus();
-		  assert(nex->t_cookie());
-		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
-				IVL_DR_STRONG, IVL_DR_STRONG);
-	    }
+	    obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       }
 }
 
@@ -2137,6 +2090,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.147  2005/04/06 05:29:08  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.146  2005/04/01 06:04:30  steve
  *  Clean up handle of UDPs.
  *

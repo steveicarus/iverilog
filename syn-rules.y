@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.31 2004/10/04 01:10:55 steve Exp $"
+#ident "$Id: syn-rules.y,v 1.32 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -149,15 +149,11 @@ static void hookup_RAMDQ(NetRamDq*ram, NetESignal*d, NetNet*adr,
 
 	/* Connect the input Data bits of the RAM, from the r-value of
 	   the assignment. */
-      for (unsigned idx = 0 ;  idx < ram->width() ;  idx += 1) {
-	    connect(ram->pin_Data(idx), d->bit(idx+rval_pinoffset));
-      }
+      connect(ram->pin_Data(), d->bit(rval_pinoffset));
 
 	/* Connect the Address pins from the addr net discovered by the
 	   caller. */
-      for (unsigned idx = 0 ;  idx < ram->awidth() ;  idx += 1) {
-	    connect(ram->pin_Address(idx), adr->pin(idx));
-      }
+      connect(ram->pin_Address(), adr->pin(0));
 
 	/* Connect the input clock and the WE of the RAM. */
       assert(pclk);

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.122 2005/04/01 06:04:30 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.123 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -780,8 +780,11 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    else
 		  return net->u_.shift.s;
 
-	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
+	    assert(idx == 0);
+	    return net->u_.ff.d.pin;
+
+	  case IVL_LPM_FF:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.d.pin;
@@ -927,8 +930,11 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.arith.q;
 
-	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
+	    assert(idx == 0);
+	    return net->u_.ff.q.pin;
+
+	  case IVL_LPM_FF:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.q.pin;
@@ -981,18 +987,13 @@ extern "C" ivl_scope_t ivl_lpm_scope(ivl_lpm_t net)
       return net->scope;
 }
 
-extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
+extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net)
 {
       switch (net->type) {
 	  case IVL_LPM_RAM:
-	    assert(idx < net->u_.ff.swid);
-	    if (net->u_.ff.swid == 1)
-		  return net->u_.ff.s.pin;
-	    else
-		  return net->u_.ff.s.pins[idx];
+	    return net->u_.ff.s.pin;
 
 	  case IVL_LPM_MUX:
-	    assert(idx == 0);
 	    return net->u_.mux.s;
 
 	  default:
@@ -2003,6 +2004,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.123  2005/04/06 05:29:08  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.122  2005/04/01 06:04:30  steve
  *  Clean up handle of UDPs.
  *

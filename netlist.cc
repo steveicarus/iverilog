@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.239 2005/03/09 05:52:04 steve Exp $"
+#ident "$Id: netlist.cc,v 1.240 2005/04/06 05:29:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1281,27 +1281,21 @@ const Link& NetMux::pin_Data(unsigned s) const
 
 
 NetRamDq::NetRamDq(NetScope*s, perm_string n, NetMemory*mem, unsigned awid)
-: NetNode(s, n, 3+2*mem->width()+awid),
+: NetNode(s, n, 6),
   mem_(mem), awidth_(awid)
 {
-      pin(0).set_dir(Link::INPUT); pin(0).set_name(perm_string::literal("InClock"), 0);
-      pin(1).set_dir(Link::INPUT); pin(1).set_name(perm_string::literal("OutClock"), 0);
-      pin(2).set_dir(Link::INPUT); pin(2).set_name(perm_string::literal("WE"), 0);
-
-      for (unsigned idx = 0 ;  idx < awidth_ ;  idx += 1) {
-	    pin(3+idx).set_dir(Link::INPUT);
-	    pin(3+idx).set_name(perm_string::literal("Address"), idx);
-      }
-
-      for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-	    pin(3+awidth_+idx).set_dir(Link::INPUT);
-	    pin(3+awidth_+idx).set_name(perm_string::literal("Data"), idx);
-      }
-
-      for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-	    pin(3+awidth_+width()+idx).set_dir(Link::OUTPUT);
-	    pin(3+awidth_+width()+idx).set_name(perm_string::literal("Q"), idx);
-      }
+      pin(0).set_dir(Link::INPUT);
+      pin(0).set_name(perm_string::literal("InClock"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("OutClock"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("WE"), 0);
+      pin(3).set_dir(Link::INPUT);
+      pin(3).set_name(perm_string::literal("Address"), 0);
+      pin(4).set_dir(Link::INPUT);
+      pin(4).set_name(perm_string::literal("Data"), 0);
+      pin(5).set_dir(Link::OUTPUT);
+      pin(5).set_name(perm_string::literal("Q"), 0);
 
       next_ = mem_->ram_list_;
       mem_->ram_list_ = this;
@@ -1361,8 +1355,7 @@ void NetRamDq::absorb_partners()
 	    if (cur == this) continue;
 
 	    bool ok_flag = true;
-	    for (unsigned idx = 0 ;  idx < awidth() ;  idx += 1)
-		  ok_flag &= pin_Address(idx).is_linked(cur->pin_Address(idx));
+	    ok_flag &= pin_Address().is_linked(cur->pin_Address());
 
 	    if (!ok_flag) continue;
 
@@ -1381,20 +1374,15 @@ void NetRamDq::absorb_partners()
 		&& ! pin_WE().is_linked(cur->pin_WE()))
 		  continue;
 
-	    for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-		  if (!pin_Data(idx).is_linked()) continue;
-		  if (! cur->pin_Data(idx).is_linked()) continue;
-
-		  ok_flag &= pin_Data(idx).is_linked(cur->pin_Data(idx));
+	    if (pin_Data().is_linked() && cur->pin_Data().is_linked()) {
+		  ok_flag &= pin_Data().is_linked(cur->pin_Data());
 	    }
 
 	    if (! ok_flag) continue;
 
-	    for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-		  if (!pin_Q(idx).is_linked()) continue;
-		  if (! cur->pin_Q(idx).is_linked()) continue;
+	    if (pin_Q().is_linked() && cur->pin_Q().is_linked()) {
 
-		  ok_flag &= pin_Q(idx).is_linked(cur->pin_Q(idx));
+		  ok_flag &= pin_Q().is_linked(cur->pin_Q());
 	    }
 
 	    if (! ok_flag) continue;
@@ -1405,13 +1393,9 @@ void NetRamDq::absorb_partners()
 	    connect(pin_OutClock(), cur->pin_OutClock());
 	    connect(pin_WE(), cur->pin_WE());
 
-	    for (unsigned idx = 0 ;  idx < awidth() ;  idx += 1)
-		  connect(pin_Address(idx), cur->pin_Address(idx));
-
-	    for (unsigned idx = 0 ;  idx < width() ;  idx += 1) {
-		  connect(pin_Data(idx), cur->pin_Data(idx));
-		  connect(pin_Q(idx), cur->pin_Q(idx));
-	    }
+	    connect(pin_Address(), cur->pin_Address());
+	    connect(pin_Data(), cur->pin_Data());
+	    connect(pin_Q(), cur->pin_Q());
 
 	    tmp = cur->next_;
 	    delete cur;
@@ -1449,40 +1433,34 @@ const Link& NetRamDq::pin_WE() const
       return pin(2);
 }
 
-Link& NetRamDq::pin_Address(unsigned idx)
+Link& NetRamDq::pin_Address()
 {
-      assert(idx < awidth_);
-      return pin(3+idx);
+      return pin(3);
 }
 
-const Link& NetRamDq::pin_Address(unsigned idx) const
+const Link& NetRamDq::pin_Address() const
 {
-      assert(idx < awidth_);
-      return pin(3+idx);
+      return pin(3);
 }
 
-Link& NetRamDq::pin_Data(unsigned idx)
+Link& NetRamDq::pin_Data()
 {
-      assert(idx < width());
-      return pin(3+awidth_+idx);
+      return pin(4);
 }
 
-const Link& NetRamDq::pin_Data(unsigned idx) const
+const Link& NetRamDq::pin_Data() const
 {
-      assert(idx < width());
-      return pin(3+awidth_+idx);
+      return pin(4);
 }
 
-Link& NetRamDq::pin_Q(unsigned idx)
+Link& NetRamDq::pin_Q()
 {
-      assert(idx < width());
-      return pin(3+awidth_+width()+idx);
+      return pin(5);
 }
 
-const Link& NetRamDq::pin_Q(unsigned idx) const
+const Link& NetRamDq::pin_Q() const
 {
-      assert(idx < width());
-      return pin(3+awidth_+width()+idx);
+      return pin(5);
 }
 
 NetBUFZ::NetBUFZ(NetScope*s, perm_string n, unsigned w)
@@ -2196,6 +2174,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.240  2005/04/06 05:29:08  steve
+ *  Rework NetRamDq and IVL_LPM_RAM nodes.
+ *
  * Revision 1.239  2005/03/09 05:52:04  steve
  *  Handle case inequality in netlists.
  *
