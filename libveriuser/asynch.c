@@ -17,13 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: asynch.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: asynch.c,v 1.3 2003/04/23 15:01:29 steve Exp $"
 #endif
 
 # include  <veriuser.h>
 
 /* Enables async misctf callbacks */
-int async_misctf_enable;
+int async_misctf_enable = 0;
 
 /*
  * Implement misctf async enable
@@ -42,6 +42,9 @@ int tf_asynchoff(void)
 
 /*
  * $Log: asynch.c,v $
+ * Revision 1.3  2003/04/23 15:01:29  steve
+ *  Add tf_synchronize and tf_multiply_long.
+ *
  * Revision 1.2  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *

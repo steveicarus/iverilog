@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.23 2003/04/12 18:57:13 steve Exp $"
+#ident "$Id: veriuser.h,v 1.24 2003/04/23 15:01:29 steve Exp $"
 #endif
 
 /*
@@ -164,6 +164,8 @@ extern void veriusertfs_register_table(p_tfcell vtable);
 #define reason_checktf 1
 #define reason_calltf 3
 #define reason_paramvc 7
+#define reason_synch  8
+#define REASON_SYNCH  reason_synch
 #define reason_finish 9
 #define reason_endofcompile 16
 
@@ -262,6 +264,9 @@ extern PLI_INT32 tf_message(PLI_INT32 level, char*facility,
 			    char*messno, char*fmt, ...)
       __attribute__((format (printf,4,5)));
 
+extern void tf_multiply_long(PLI_INT32*aof_low1, PLI_INT32*aof_high1,
+			     PLI_INT32 aof_low2, PLI_INT32 aof_high2);
+
 extern int tf_nump(void);
 
 /* IEEE1364 NOTE: tf_putlongp is listed as returning in in the header
@@ -281,6 +286,9 @@ extern PLI_INT32 tf_setworkarea(void*workarea);
    task call. */
 extern char* tf_spname(void);
 
+extern PLI_INT32 tf_synchronize(void);
+extern PLI_INT32 tf_isynchronize(void* sys);
+
 extern PLI_INT32 tf_typep(PLI_INT32 narg);
 
 extern void tf_warning(const char*, ...)
@@ -290,6 +298,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.24  2003/04/23 15:01:29  steve
+ *  Add tf_synchronize and tf_multiply_long.
+ *
  * Revision 1.23  2003/04/12 18:57:13  steve
  *  More acc_ function stubs.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.6 2003/02/16 02:23:14 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.7 2003/04/23 15:01:29 steve Exp $"
 #endif
 
 /*
@@ -46,7 +46,8 @@ static int calltf(char *);
 static int callback(p_cb_data);
 
 /*
- * Register veriusertfs routines/wrappers.
+ * Register veriusertfs routines/wrappers. Iterate over the tfcell
+ * array, registering each function.
  */
 void veriusertfs_register_table(p_tfcell vtable)
 {
@@ -69,20 +70,22 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    assert(data != NULL);
 	    data->tf = tf;
 
-	    /* build callback structure */
+	      /* Build a VPI system task/function structure, and point
+		 it to the pli_data that represents this
+		 function. Supply wrapper functions for the system
+		 task actions. */
 	    (void) memset(&tf_data, 0, sizeof(s_vpi_systf_data));
 	    switch (tf->type) {
-		  case usertask:
-			tf_data.type = vpiSysTask;
+		case usertask:
+		  tf_data.type = vpiSysTask;
 		  break;
-		  case userfunction:
-			tf_data.type = vpiSysFunc;
+		case userfunction:
+		  tf_data.type = vpiSysFunc;
 		  break;
-		  default:
-			vpi_printf("veriusertfs: %s, unsupported type %d\n",
-			      tf->tfname, tf->type);
-			continue;
-		  break;
+		default:
+		  vpi_printf("veriusertfs: %s, unsupported type %d\n",
+			     tf->tfname, tf->type);
+		  continue;
 	    }
 
 	    tf_data.tfname = tf->tfname;
@@ -119,6 +122,13 @@ static int compiletf(char *data)
       /* get call handle */
       call_h = vpi_handle(vpiSysTfCall, NULL);
 
+	/* Attach the pli_data structure to the vpi handle of the
+	   system task. This is how I manage the map from vpiHandle to
+	   PLI1 pli data. We do it here (instead of during register)
+	   because this is the first that I have both the vpiHandle
+	   and the pli_data. */
+      vpi_put_userdata(call_h, pli);
+
       /* default cb_data */
       (void) memset(&cb_data, 0, sizeof(s_cb_data));
       cb_data.cb_rtn = callback;
@@ -129,10 +139,13 @@ static int compiletf(char *data)
       cb_data.obj = call_h;
       vpi_register_cb(&cb_data);
 
-      /* register paramvc misctf callback(s) */
-      cb_data.reason = cbValueChange;
-      arg_i = vpi_iterate(vpiArgument, call_h);
-      if (arg_i != NULL) {
+	/* If there is a misctf function, then create a value change
+	   callback for all the arguments. In the tf_* API, misctf
+	   functions get value change callbacks, controlled by the
+	   tf_asyncon and tf_asyncoff functions. */
+      if (tf->misctf && ((arg_i = vpi_iterate(vpiArgument, call_h)) != NULL)) {
+
+	    cb_data.reason = cbValueChange;
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {
 		  /* replicate user_data for each instance */
 		  dp = (p_pli_data)calloc(1, sizeof(s_pli_data));
@@ -160,6 +173,7 @@ static int compiletf(char *data)
  */
 static int calltf(char *data)
 {
+      int rc = 0;
       p_pli_data pli;
       p_tfcell tf;
 
@@ -168,7 +182,10 @@ static int calltf(char *data)
       tf = pli->tf;
 
       /* execute calltf */
-      return (tf->calltf) ? tf->calltf(tf->data, reason_calltf) : 0;
+      if (tf->calltf)
+	    rc = tf->calltf(tf->data, reason_calltf);
+
+      return rc;
 }
 
 /*
@@ -183,31 +200,62 @@ static int callback(p_cb_data data)
       int reason;
       int paramvc = 0;
 
-      /* not enabled */
-      if (data->reason == cbValueChange && !async_misctf_enable) return 0;
+	/* not enabled */
+      if (data->reason == cbValueChange && !async_misctf_enable)
+	    return 0;
 
-      /* cast back from opaque */
+	/* cast back from opaque */
       pli = (p_pli_data)data->user_data;
       tf = pli->tf;
 
       switch (data->reason) {
-	    case cbValueChange:
-		  reason = reason_paramvc;
-		  paramvc = pli->paramvc;
-		  break;
-	    case cbEndOfSimulation:
-		  reason = reason_finish;
-		  break;
-	    default:
-		  abort();
+	  case cbValueChange:
+	    reason = reason_paramvc;
+	    paramvc = pli->paramvc;
+	    break;
+	  case cbEndOfSimulation:
+	    reason = reason_finish;
+	    break;
+	  case cbReadWriteSynch:
+	    reason = reason_synch;
+	    break;
+	  default:
+	    assert(0);
       }
 
       /* execute misctf */
       return (tf->misctf) ? tf->misctf(tf->data, reason, paramvc) : 0;
 }
 
+PLI_INT32 tf_isynchronize(void*obj)
+{
+      vpiHandle sys = (vpiHandle)obj;
+      p_pli_data pli = vpi_get_userdata(sys);
+      s_cb_data cb;
+      s_vpi_time ti;
+
+      ti.type = vpiSuppressTime;
+
+      cb.reason = cbReadWriteSynch;
+      cb.cb_rtn = callback;
+      cb.obj = sys;
+      cb.time = &ti;
+      cb.user_data = pli;
+
+      vpi_register_cb(&cb);
+      return 0;
+}
+
+PLI_INT32 tf_synchronize(void)
+{
+      return tf_isynchronize(tf_getinstance());
+}
+
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.7  2003/04/23 15:01:29  steve
+ *  Add tf_synchronize and tf_multiply_long.
+ *
  * Revision 1.6  2003/02/16 02:23:14  steve
  *  Change the IV veriusertfs_register to accept table pointers.
  *
