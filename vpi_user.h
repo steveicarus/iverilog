@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.16 2003/01/09 04:10:17 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.17 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 
@@ -161,6 +161,7 @@ typedef struct t_vpi_value {
 #define vpiNamedEvent  34
 #define vpiNamedFork   35
 #define vpiNet         36
+#define vpiRealVar     47
 #define vpiReg         48
 #define vpiSysFuncCall 56
 #define vpiSysTaskCall 57
@@ -366,6 +367,10 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.17  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.16  2003/01/09 04:10:17  steve
  *  Add vpi_put_userdata
  *

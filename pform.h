@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.64 2002/09/01 03:01:48 steve Exp $"
+#ident "$Id: pform.h,v 1.65 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -216,6 +216,11 @@ extern bool pform_expression_is_constant(const PExpr*);
 
 extern void pform_make_events(list<char*>*names,
 			      const char*file, unsigned lineno);
+/*
+ * Make real datum objects.
+ */
+extern void pform_make_reals(list<char*>*names,
+			     const char*file, unsigned lineno);
 
 /*
  * The makegate function creates a new gate (which need not have a
@@ -259,6 +264,10 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.65  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.64  2002/09/01 03:01:48  steve
  *  Properly cast signedness of parameters with ranges.
  *

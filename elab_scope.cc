@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.17 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.18 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,6 +32,7 @@
  */
 
 # include  "Module.h"
+# include  "PData.h"
 # include  "PEvent.h"
 # include  "PExpr.h"
 # include  "PGate.h"
@@ -40,6 +41,7 @@
 # include  "Statement.h"
 # include  "netlist.h"
 # include  <typeinfo>
+# include  <assert.h>
 
 bool Module::elaborate_scope(Design*des, NetScope*scope) const
 {
@@ -217,6 +219,12 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    (*et).second->elaborate_scope(des, scope);
       }
 
+      for (map<string,PData*>::const_iterator cur = datum.begin()
+		 ; cur != datum.end() ;  cur ++ ) {
+
+	    (*cur).second->elaborate_scope(des, scope);
+      }
+
       return des->errors == 0;
 }
 
@@ -339,6 +347,14 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 		       << sc->name() << "." << endl;
 	    }
       }
+}
+
+void PData::elaborate_scope(Design*des, NetScope*scope) const
+{
+      assert(hname_.component_count() == 1);
+      NetVariable*tmp = new NetVariable(hname_.peek_tail_name());
+      tmp->set_line(*this);
+      scope->add_variable(tmp);
 }
 
 /*
@@ -496,6 +512,10 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.18  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.17  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.

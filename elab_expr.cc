@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.67 2002/12/21 00:55:57 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.68 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -406,8 +406,9 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, bool) const
 {
-      long val = value_->as_long();
-      return new NetEConst(verinum(val));
+      NetECReal*tmp = new NetECReal(*value_);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 /*
@@ -721,6 +722,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return node;
       }
 
+	// If the identifier names a variable of some sort, then this
+	// is a variable reference.
+      if (NetVariable*var = des->find_variable(scope, path_)) {
+
+	    NetEVariable*node = new NetEVariable(var);
+	    node->set_line(*this);
+	    return node;
+      }
+
 	// Finally, if this is a scope name, then return that. Look
 	// first to see if this is a name of a local scope. Failing
 	// that, search globally for a heirarchical name.
@@ -812,10 +822,13 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 	  case '-':
 	    if (NetEConst*ipc = dynamic_cast<NetEConst*>(ip)) {
+		    /* When taking the - of a number, turn it into a
+		       signed expression and extend it one bit to
+		       accommodate a possible sign bit. */
 		  verinum val = ipc->value();
-		  verinum zero (verinum::V0, val.len(), val.has_len());
+		  verinum zero (verinum::V0, val.len()+1, val.has_len());
 		  val = zero - val;
-		  val.has_sign(ipc->has_sign());
+		  val.has_sign(true);
 		  tmp = new NetEConst(val);
 		  delete ip;
 	    } else {
@@ -887,6 +900,10 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.68  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.67  2002/12/21 00:55:57  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.24 2003/01/19 00:35:39 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.25 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -138,17 +138,24 @@ NetAssign_* PEConcat::elaborate_lval(Design*des, NetScope*scope) const
 /*
  * Handle the ident as an l-value. This includes bit and part selects
  * of that ident.
+ *
+ * XXXX FIXME: The search order looks for signals all the way up the
+ * scope tree, then looks for memories then variables. It should be
+ * looking for signals, memories and variables in parallel.
  */
 NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 {
-	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. (Wires are not allows in this context. */
       NetNet*reg = des->find_signal(scope, path_);
 
       if (reg == 0) {
-	    NetMemory*mem = des->find_memory(scope, path_);
-	    if (mem != 0)
+	    if (NetMemory*mem = des->find_memory(scope, path_)) {
 		  return elaborate_mem_lval_(des, scope, mem);
+	    }
+
+	    if (NetVariable*var = des->find_variable(scope, path_)) {
+		  NetAssign_*cur = new NetAssign_(var);
+		  return cur;
+	    }
 
 	    cerr << get_line() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope->name() <<
@@ -157,8 +164,11 @@ NetAssign_* PEIdent::elaborate_lval(Design*des, NetScope*scope) const
 	    des->errors += 1;
 	    return 0;
       }
+
       assert(reg);
 
+	/* Get the signal referenced by the identifier, and make sure
+	   it is a register. (Wires are not allows in this context. */
       if (reg->type() != NetNet::REG) {
 	    cerr << get_line() << ": error: " << path_ <<
 		  " is not a reg/integer/time in " << scope->name() <<
@@ -337,6 +347,10 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.25  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.24  2003/01/19 00:35:39  steve
  *  Detect null arguments to concatenation operator.
  *

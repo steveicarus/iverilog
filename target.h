@@ -1,7 +1,7 @@
 #ifndef __target_H
 #define __target_H
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.60 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: target.h,v 1.61 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -67,6 +67,9 @@ struct target_t {
 
 	/* Output a memory (called for each memory object) */
       virtual void memory(const NetMemory*);
+
+	/* Output an event object. Called for each named event in the scope. */
+      virtual void variable(const NetVariable*);
 
 	/* Output a defined task. */
       virtual void task_def(const NetScope*);
@@ -128,6 +131,7 @@ struct target_t {
 struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
+      virtual void expr_creal(const NetECReal*);
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
@@ -138,6 +142,7 @@ struct expr_scan_t {
       virtual void expr_ternary(const NetETernary*);
       virtual void expr_ufunc(const NetEUFunc*);
       virtual void expr_unary(const NetEUnary*);
+      virtual void expr_variable(const NetEVariable*);
       virtual void expr_binary(const NetEBinary*);
 };
 
@@ -162,6 +167,10 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.61  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.60  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-proc.cc,v 1.54 2002/08/19 00:06:12 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.55 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -162,6 +162,11 @@ void dll_target::proc_assign(const NetAssign*net)
 			cur->idx = expr_;
 			expr_ = 0;
 		  }
+
+	    } else if (asn->var()) {
+		  cur->type_ = IVL_LVAL_VAR;
+		  cur->idx = 0;
+		  cur->n.var = find_variable(des_, asn->var());
 
 	    } else {
 		  assert(asn->mem());
@@ -822,6 +827,10 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.55  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.54  2002/08/19 00:06:12  steve
  *  Allow release to handle removal of target net.
  *

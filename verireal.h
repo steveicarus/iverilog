@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.h,v 1.6 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: verireal.h,v 1.7 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 #ifdef HAVE_IOSFWD
@@ -53,6 +53,7 @@ class verireal {
 	   is 25. */
       long as_long(int shift =0) const;
 
+      double as_double() const;
 
     private:
       bool sign_;
@@ -65,6 +66,10 @@ extern verireal operator* (const verireal&, const verireal&);
 
 /*
  * $Log: verireal.h,v $
+ * Revision 1.7  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.6  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

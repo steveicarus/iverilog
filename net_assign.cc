@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.15 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_assign.cc,v 1.16 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,7 +39,7 @@ unsigned count_lval_width(const NetAssign_*idx)
 }
 
 NetAssign_::NetAssign_(NetNet*s)
-: sig_(s), mem_(0), bmux_(0)
+: sig_(s), mem_(0), var_(0), bmux_(0)
 {
       loff_ = 0;
       lwid_ = sig_->pin_count();
@@ -48,10 +48,18 @@ NetAssign_::NetAssign_(NetNet*s)
 }
 
 NetAssign_::NetAssign_(NetMemory*s)
-: sig_(0), mem_(s), bmux_(0)
+: sig_(0), mem_(s), var_(0), bmux_(0)
 {
       loff_ = 0;
       lwid_ = mem_->width();
+      more = 0;
+}
+
+NetAssign_::NetAssign_(NetVariable*s)
+: sig_(0), mem_(0), var_(s), bmux_(0)
+{
+      loff_ = 0;
+      lwid_ = 0;
       more = 0;
 }
 
@@ -109,6 +117,11 @@ NetNet* NetAssign_::sig() const
 NetMemory* NetAssign_::mem() const
 {
       return mem_;
+}
+
+NetVariable* NetAssign_::var() const
+{
+      return var_;
 }
 
 
@@ -241,6 +254,10 @@ NetAssignNB::~NetAssignNB()
 
 /*
  * $Log: net_assign.cc,v $
+ * Revision 1.16  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.15  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

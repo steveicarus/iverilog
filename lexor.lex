@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.74 2002/12/04 02:07:00 steve Exp $"
+#ident "$Id: lexor.lex,v 1.75 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -974,7 +974,8 @@ static verinum*make_sized_dec(const char*txt)
 
 static verinum*make_unsized_dec(const char*txt)
 {
-      return make_dec_with_size(INTEGER_WIDTH, false, txt+1);
+      verinum*tmp = make_dec_with_size(INTEGER_WIDTH, false, txt+1);
+      tmp->has_sign(true);
 }
 
 /*

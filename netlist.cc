@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.203 2002/11/09 00:25:27 steve Exp $"
+#ident "$Id: netlist.cc,v 1.204 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1827,28 +1827,6 @@ NetEBComp* NetEBComp::dup_expr() const
       return result;
 }
 
-NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
-{
-      unsigned w = l->expr_width();
-      if (r->expr_width() > w)
-	    w = r->expr_width();
-
-      expr_width(w);
-      cast_signed(l->has_sign() && r->has_sign());
-}
-
-NetEBDiv::~NetEBDiv()
-{
-}
-
-NetEBDiv* NetEBDiv::dup_expr() const
-{
-      NetEBDiv*result = new NetEBDiv(op_, left_->dup_expr(),
-				       right_->dup_expr());
-      return result;
-}
-
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
@@ -1884,24 +1862,6 @@ NetEBLogic* NetEBLogic::dup_expr() const
 {
       NetEBLogic*result = new NetEBLogic(op_, left_->dup_expr(),
 					 right_->dup_expr());
-      return result;
-}
-
-NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
-: NetEBinary(op, l, r)
-{
-      expr_width(l->expr_width() + r->expr_width());
-      cast_signed(l->has_sign() && r->has_sign());
-}
-
-NetEBMult::~NetEBMult()
-{
-}
-
-NetEBMult* NetEBMult::dup_expr() const
-{
-      NetEBMult*result = new NetEBMult(op_, left_->dup_expr(),
-				       right_->dup_expr());
       return result;
 }
 
@@ -2286,6 +2246,10 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.204  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.203  2002/11/09 00:25:27  steve
  *  Add dup_expr for user defined function calls.
  *

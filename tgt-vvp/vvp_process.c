@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.76 2002/11/21 22:43:13 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.77 2003/01/26 21:16:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -164,7 +164,7 @@ static void calculate_into_x1(ivl_expr_t expr)
       clr_vector(vec);
 }
 
-static int show_stmt_assign(ivl_statement_t net)
+static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_lval_t lval;
       ivl_expr_t rval = ivl_stmt_rval(net);
@@ -321,6 +321,56 @@ static int show_stmt_assign(ivl_statement_t net)
 	      clr_vector(res);
       }
 
+
+      return 0;
+}
+
+static int show_stmt_assign_real(ivl_statement_t net)
+{
+      int res;
+      ivl_lval_t lval;
+      ivl_variable_t var;
+
+      res = draw_eval_real(ivl_stmt_rval(net));
+      clr_word(res);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      lval = ivl_stmt_lval(net, 0);
+      var = ivl_lval_var(lval);
+      assert(var != 0);
+
+      fprintf(vvp_out, "    %%set/wr W_%s, %d;\n",
+	      vvp_word_label(var), res);
+
+      return 0;
+}
+
+static int show_stmt_assign(ivl_statement_t net)
+{
+      ivl_lval_t lval;
+      ivl_variable_t var;
+
+      lval = ivl_stmt_lval(net, 0);
+
+      if ( (var = ivl_lval_var(lval)) != 0 ) {
+	    switch (ivl_variable_type(var)) {
+		case IVL_VT_VOID:
+		  assert(0);
+		  return 1;
+
+		case IVL_VT_VECTOR:
+		    /* Can't happen. */
+		  assert(0);
+		  return 1;
+
+		case IVL_VT_REAL:
+		  return show_stmt_assign_real(net);
+
+	    }
+
+      } else {
+	    return show_stmt_assign_vector(net);
+      }
 
       return 0;
 }
@@ -834,9 +884,25 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
       ivl_expr_t exp = ivl_stmt_delay_expr(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
 
-      { struct vector_info del = draw_eval_expr(exp, 0);
-        fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", del.base, del.wid);
-	clr_vector(del);
+      switch (ivl_expr_value(exp)) {
+
+	  case IVL_VT_VECTOR: {
+		struct vector_info del = draw_eval_expr(exp, 0);
+		fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n",
+			del.base, del.wid);
+		clr_vector(del);
+		break;
+	  }
+
+	  case IVL_VT_REAL: {
+		int word = draw_eval_real(exp);
+		fprintf(vvp_out, "    %%cvt/ir 0, %d;\n", word);
+		clr_word(word);
+		break;
+	  }
+
+	  default:
+	    assert(0);
       }
 
       fprintf(vvp_out, "    %%delayx 0;\n");
@@ -1131,21 +1197,33 @@ static int show_system_task_call(ivl_statement_t net)
 	    return 0;
       }
 
+	/* Figure out how many expressions are going to be evaluated
+	   for this task call. I won't need to evaluate expressions
+	   for items that are VPI objects directly. */
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
 	    
 	    switch (ivl_expr_type(expr)) {
+
+		    /* These expression types can be handled directly,
+		       with VPI handles of their own. Therefore, skip
+		       them in the process of evaluating expressions. */
 		case IVL_EX_NONE:
 		case IVL_EX_NUMBER:
 		case IVL_EX_STRING:
 		case IVL_EX_SCOPE:
 		case IVL_EX_SFUNC:
+		case IVL_EX_VARIABLE:
 		  continue;
 
 		case IVL_EX_SIGNAL:
 		    /* If the signal node is narrower then the signal
 		       itself, then this is a part select so I'm going
-		       to need to evaluate the expression. */
+		       to need to evaluate the expression.
+
+		       If I don't need to do any evaluating, then skip
+		       it as I'll be passing the handle to the signal
+		       itself. */
 		  if (ivl_expr_width(expr) !=
 		      ivl_signal_pins(ivl_expr_signal(expr))) {
 			break;
@@ -1153,17 +1231,32 @@ static int show_system_task_call(ivl_statement_t net)
 			continue;
 		  }
 
+
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
 			continue;
 		  }
+
+		    /* Everything else will need to be evaluated and
+		       passed as a constant to the vpi task. */
 		default:
 		  break;
 	    }
 
 	    vec = (struct vector_info *)
 		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
-	    vec[vecs] = draw_eval_expr(expr, 0);
+
+	    switch (ivl_expr_value(expr)) {
+		case IVL_VT_VECTOR:
+		  vec[vecs] = draw_eval_expr(expr, 0);
+		  break;
+		case IVL_VT_REAL:
+		  vec[vecs].base = draw_eval_real(expr);
+		  vec[vecs].wid = 0;
+		  break;
+		default:
+		  assert(0);
+	    }
 	    vecs++;
       }
       
@@ -1200,6 +1293,12 @@ static int show_system_task_call(ivl_statement_t net)
 			continue;
 		  }
 
+		case IVL_EX_VARIABLE: {
+		      ivl_variable_t var = ivl_expr_variable(expr);
+		      fprintf(vvp_out, ", W_%s", vvp_word_label(var));
+		      continue;
+		}
+
 		case IVL_EX_STRING:
 		  fprintf(vvp_out, ", \"%s\"", 
 			  ivl_expr_string(expr));
@@ -1231,16 +1330,31 @@ static int show_system_task_call(ivl_statement_t net)
 		  break;
 	    }
 	    assert(veci < vecs);
-	    fprintf(vvp_out, ", T<%u,%u,%s>", vec[veci].base,
-		    vec[veci].wid, ivl_expr_signed(expr)? "s" : "u");
+
+	    switch (ivl_expr_value(expr)) {
+
+		case IVL_VT_VECTOR:
+		  fprintf(vvp_out, ", T<%u,%u,%s>", vec[veci].base,
+			  vec[veci].wid, ivl_expr_signed(expr)? "s" : "u");
+		  break;
+
+		case IVL_VT_REAL:
+		  fprintf(vvp_out, ", W<%u,r>", vec[veci].base);
+		  break;
+
+		default:
+		  assert(0);
+	    }
 	    veci++;
       }
       
       assert(veci == vecs);
 
       if (vecs) {
-	    for (idx = 0; idx < vecs; idx++)
-		  clr_vector(vec[idx]);
+	    for (idx = 0; idx < vecs; idx++) {
+		  if (vec[idx].wid > 0)
+			clr_vector(vec[idx]);
+	    }
 	    free(vec);
       }
 
@@ -1449,6 +1563,10 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.77  2003/01/26 21:16:00  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.76  2002/11/21 22:43:13  steve
  *  %set/x0 instruction to support bounds checking.
  *

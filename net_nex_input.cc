@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.7 2002/11/16 05:45:41 steve Exp $"
+#ident "$Id: net_nex_input.cc,v 1.8 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -78,6 +78,11 @@ NexusSet* NetEConcat::nex_input()
  * A constant has not inputs, so always return an empty set.
  */
 NexusSet* NetEConst::nex_input()
+{
+      return new NexusSet;
+}
+
+NexusSet* NetECReal::nex_input()
 {
       return new NexusSet;
 }
@@ -165,6 +170,11 @@ NexusSet* NetEUFunc::nex_input()
 NexusSet* NetEUnary::nex_input()
 {
       return expr_->nex_input();
+}
+
+NexusSet* NetEVariable::nex_input()
+{
+      return new NexusSet;
 }
 
 NexusSet* NetAssignBase::nex_input()
@@ -362,6 +372,10 @@ NexusSet* NetWhile::nex_input()
 
 /*
  * $Log: net_nex_input.cc,v $
+ * Revision 1.8  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.7  2002/11/16 05:45:41  steve
  *  Handle default: case in net_inputs for NetCase.
  *

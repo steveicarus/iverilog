@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.82 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.83 2003/01/26 21:16:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -133,6 +133,13 @@ const char *vvp_mangle_name(const char *id)
  * copy it out.
  */
 const char* vvp_signal_label(ivl_signal_t sig)
+{
+      static char buf[32];
+      sprintf(buf, "$%p", sig);
+      return buf;
+}
+
+const char* vvp_word_label(ivl_variable_t sig)
 {
       static char buf[32];
       sprintf(buf, "$%p", sig);
@@ -1568,6 +1575,16 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       }
 
 
+	/* Scan the scope for word variables. */
+      for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1) {
+	    ivl_variable_t var = ivl_scope_var(net, idx);
+	    const char*type = "real";
+
+	    fprintf(vvp_out, "W_%s .word %s, \"%s\";\n",
+		    vvp_word_label(var), type,
+		    ivl_variable_name(var));
+      }
+
 	/* Scan the signals (reg and net) and draw the appropriate
 	   statements to make the signal function. */
 
@@ -1611,6 +1628,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.83  2003/01/26 21:16:00  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.82  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.71 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: stub.c,v 1.72 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,6 +40,19 @@ static void show_expression(ivl_expr_t net, unsigned ind)
       const ivl_expr_type_t code = ivl_expr_type(net);
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*vt = "?";
+
+      switch (ivl_expr_value(net)) {
+	  case IVL_VT_VOID:
+	    vt = "void";
+	    break;
+	  case IVL_VT_REAL:
+	    vt = "real";
+	    break;
+	  case IVL_VT_VECTOR:
+	    vt = "vector";
+	    break;
+      }
 
       switch (code) {
 
@@ -50,15 +63,15 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_BINARY:
-	    fprintf(out, "%*s<\"%c\" width=%u, %s>\n", ind, "",
-		    ivl_expr_opcode(net), width, sign);
+	    fprintf(out, "%*s<\"%c\" width=%u, %s, type=%s>\n", ind, "",
+		    ivl_expr_opcode(net), width, sign, vt);
 	    show_expression(ivl_expr_oper1(net), ind+3);
 	    show_expression(ivl_expr_oper2(net), ind+3);
 	    break;
 
 	  case IVL_EX_CONCAT:
-	    fprintf(out, "%*s<concat repeat=%u, width=%u, %s>\n", ind, "",
-		    ivl_expr_repeat(net), width, sign);
+	    fprintf(out, "%*s<concat repeat=%u, width=%u, %s, type=%s>\n",
+		    ind, "", ivl_expr_repeat(net), width, sign, vt);
 	    for (idx = 0 ;  idx < ivl_expr_parms(net) ;  idx += 1)
 		  show_expression(ivl_expr_parm(net, idx), ind+3);
 
@@ -114,6 +127,15 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    fprintf(out, "%*s<unary \"%c\" width=%u, %s>\n", ind, "",
 		    ivl_expr_opcode(net), width, sign);
 	    show_expression(ivl_expr_oper1(net), ind+4);
+	    break;
+
+	  case IVL_EX_VARIABLE:
+	    fprintf(out, "%*s<variable %s, type=%s>\n",
+		    ind, "", ivl_expr_name(net), vt);
+	    break;
+
+	  case IVL_EX_REALNUM:
+	    fprintf(out, "%*s<realnum=%f>\n", ind, "", ivl_expr_dvalue(net));
 	    break;
 
 	  default:
@@ -244,6 +266,7 @@ static void show_lpm(ivl_lpm_t net)
 static void show_assign_lval(ivl_lval_t lval, unsigned ind)
 {
       ivl_memory_t mem;
+      ivl_variable_t var;
 
       if ( (mem = ivl_lval_mem(lval)) ) {
 
@@ -253,6 +276,10 @@ static void show_assign_lval(ivl_lval_t lval, unsigned ind)
 		    ivl_memory_basename(mem));
 	    show_expression(ivl_lval_idx(lval), ind+4);
 	    fprintf(out, "%*s]\n", ind, "");
+
+      } else if ( (var = ivl_lval_var(lval)) ) {
+
+	    fprintf(out, "%*svariable %s\n", ind, "", ivl_variable_name(var));
 
       } else {
 	    unsigned pp;
@@ -448,6 +475,26 @@ static int show_process(ivl_process_t net, void*x)
       show_statement(ivl_process_stmt(net), 4);
 
       return 0;
+}
+
+static void show_variable(ivl_variable_t net)
+{
+      const char*type = "?";
+      const char*name = ivl_variable_name(net);
+
+      switch (ivl_variable_type(net)) {
+	  case IVL_VT_VOID:
+	    type = "void";
+	    break;
+	  case IVL_VT_REAL:
+	    type = "real";
+	    break;
+	  case IVL_VT_VECTOR:
+	    type = "vector";
+	    break;
+      }
+
+      fprintf(out, "  variable %s %s;\n", type, name);
 }
 
 static void show_event(ivl_event_t net)
@@ -688,6 +735,9 @@ static int show_scope(ivl_scope_t net, void*x)
 
       fprintf(out, " time units = 10e%d\n", ivl_scope_time_units(net));
 
+      for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1)
+	    show_variable(ivl_scope_var(net, idx));
+
       for (idx = 0 ;  idx < ivl_scope_events(net) ;  idx += 1)
 	    show_event(ivl_scope_event(net, idx));
 
@@ -730,6 +780,10 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.72  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.71  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

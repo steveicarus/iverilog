@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.169 2003/01/17 05:48:02 steve Exp $"
+#ident "$Id: parse.y,v 1.170 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -301,12 +301,10 @@ block_item_decl
 		{ pform_set_reg_time($2);
 		}
 	| K_real list_of_identifiers ';'
-		{ delete $2;
-		  yyerror(@1, "sorry: real variables not supported.");
+		{ pform_make_reals($2, @1.text, @1.first_line);
 		}
 	| K_realtime list_of_identifiers ';'
-		{ delete $2;
-		  yyerror(@1, "sorry: realtime variables not supported.");
+		{ pform_make_reals($2, @1.text, @1.first_line);
 		}
 	| K_parameter parameter_assign_decl ';'
 	| K_localparam localparam_assign_list ';'

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.27 2002/08/19 02:39:16 steve Exp $"
+#ident "$Id: Module.h,v 1.28 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include  <list>
@@ -29,6 +29,7 @@
 # include  "named.h"
 # include  "LineInfo.h"
 # include  <string>
+class PData;
 class PEvent;
 class PExpr;
 class PEIdent;
@@ -97,6 +98,9 @@ class Module : public LineInfo {
 	/* Keep a table of named events declared in the module. */
       map<string,PEvent*>events;
 
+	/* Keep a table of datum variables declared in the module. */
+      map<string,PData*>datum;
+
 	/* These are the timescale for this module. The default is
 	   set by the `timescale directive. */
       int time_unit, time_precision;
@@ -151,6 +155,10 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.28  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.27  2002/08/19 02:39:16  steve
  *  Support parameters with defined ranges.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.135 2002/10/23 01:47:17 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.136 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -447,6 +447,8 @@ void NetAssign_::dump_lval(ostream&o) const
 	    if (bmux_) o << *bmux_;
 	      else     o << "**oops**";
 	    o << "]";
+      } else if (var_) {
+	    o << "<real " << var_->basename() << ">";
       } else {
 	    o << "";
       }
@@ -733,6 +735,11 @@ void NetScope::dump(ostream&o) const
 	    }
       }
 
+      for (NetVariable*cur = vars_ ;  cur ;  cur = cur->snext_) {
+	    o << "    real " << cur->basename() << " // "
+	      << cur->get_line() << endl;
+      }
+
 	/* Dump the events in this scope. */
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
 	    o << "    event " << cur->name() << "; nprobe="
@@ -896,6 +903,11 @@ void NetEConst::dump(ostream&o) const
 	    o << value_;
 }
 
+void NetECReal::dump(ostream&o) const
+{
+      o << value_;
+}
+
 void NetEScope::dump(ostream&o) const
 {
       o << "<scope=" << scope_->name() << ">";
@@ -975,6 +987,11 @@ void NetEUnary::dump(ostream&o) const
       o << ")";
 }
 
+void NetEVariable::dump(ostream&o) const
+{
+      o << var_->basename();
+}
+
 void Design::dump(ostream&o) const
 {
       o << "DESIGN TIME PRECISION: 10e" << get_precision() << endl;
@@ -1004,6 +1021,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.136  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.135  2002/10/23 01:47:17  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.

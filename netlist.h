@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.271 2002/12/07 02:49:24 steve Exp $"
+#ident "$Id: netlist.h,v 1.272 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 /*
@@ -32,6 +32,7 @@
 # include  <map>
 # include  <list>
 # include  "verinum.h"
+# include  "verireal.h"
 # include  "HName.h"
 # include  "LineInfo.h"
 # include  "svector.h"
@@ -51,6 +52,7 @@ class NetProc;
 class NetProcTop;
 class NetRelease;
 class NetScope;
+class NetVariable;
 class NetEvProbe;
 class NetExpr;
 class NetESignal;
@@ -923,6 +925,16 @@ class NetExpr  : public LineInfo {
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
 
+	// Expressions have type. The most common type is ET_VECTOR,
+	// which is a vector (possibly 1 bit) of 4-value bits. The
+	// ET_VOID is not generally used.
+	//
+	// ET_VOID     - No value at all.
+	// ET_VECTOR   - Vector of Verilog 4-value bits
+	// ET_REAL     - real/realtime expression
+      enum TYPE { ET_VOID=0, ET_VECTOR, ET_REAL };
+      virtual TYPE expr_type() const;
+
 	// How wide am I?
       unsigned expr_width() const { return width_; }
 
@@ -1004,6 +1016,31 @@ class NetEConst  : public NetExpr {
 
     private:
       verinum value_;
+};
+
+/*
+ * This class represents a constant real value.
+ */
+class NetECReal  : public NetExpr {
+
+    public:
+      explicit NetECReal(const verireal&val);
+      ~NetECReal();
+
+      const verireal&value() const;
+
+	// The type of this expression is ET_REAL
+      TYPE expr_type() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+      virtual NetECReal* dup_expr() const;
+      virtual NetNet*synthesize(Design*);
+      virtual NexusSet* nex_input();
+
+    private:
+      verireal value_;
 };
 
 /*
@@ -1285,6 +1322,7 @@ class NetAssign_ {
     public:
       NetAssign_(NetNet*sig);
       NetAssign_(NetMemory*mem);
+      NetAssign_(NetVariable*var);
       ~NetAssign_();
 
 	// If this expression exists, then only a single bit is to be
@@ -1308,6 +1346,7 @@ class NetAssign_ {
 
       NetNet* sig() const;
       NetMemory*mem() const;
+      NetVariable*var() const;
 
 	// This pointer is for keeping simple lists.
       NetAssign_* more;
@@ -1317,6 +1356,7 @@ class NetAssign_ {
     private:
       NetNet *sig_;
       NetMemory*mem_;
+      NetVariable*var_;
       NetExpr*bmux_;
 
       unsigned loff_;
@@ -2045,6 +2085,34 @@ class NetTaskDef {
 };
 
 /*
+ * Variable object such as real and realtime are represented by
+ * instances of this class.
+ */
+class NetVariable : public LineInfo {
+
+      friend class NetScope;
+
+    public:
+      NetVariable(const char* name);
+      ~NetVariable();
+
+      const char* basename() const;
+
+      NetScope* scope();
+      const NetScope* scope() const;
+
+    private:
+      char* name_;
+
+      NetScope*scope_;
+      NetVariable*snext_;
+
+    private:
+      NetVariable(const NetVariable&);
+      NetVariable& operator= (const NetVariable&);
+};
+
+/*
  * This node represents a function call in an expression. The object
  * contains a pointer to the function definition, which is used to
  * locate the value register and input expressions.
@@ -2252,6 +2320,8 @@ class NetEBAdd : public NetEBinary {
       NetEBAdd(char op, NetExpr*l, NetExpr*r);
       ~NetEBAdd();
 
+      virtual TYPE expr_type() const;
+
       virtual bool set_width(unsigned w);
       virtual NetEBAdd* dup_expr() const;
       virtual NetEConst* eval_tree();
@@ -2268,6 +2338,8 @@ class NetEBDiv : public NetEBinary {
     public:
       NetEBDiv(char op, NetExpr*l, NetExpr*r);
       ~NetEBDiv();
+
+      virtual TYPE expr_type() const;
 
       virtual bool set_width(unsigned w);
       virtual NetEBDiv* dup_expr() const;
@@ -2370,6 +2442,8 @@ class NetEBMult : public NetEBinary {
       NetEBMult(char op, NetExpr*l, NetExpr*r);
       ~NetEBMult();
 
+      virtual TYPE expr_type() const;
+
       virtual bool set_width(unsigned w);
       virtual NetEBMult* dup_expr() const;
       virtual NetEConst* eval_tree();
@@ -2441,6 +2515,29 @@ class NetEConcat  : public NetExpr {
       NetExpr* repeat_;
       unsigned repeat_value_;
       bool repeat_calculated_;
+};
+
+/*
+ * This node represents a reference to a variable.
+ */
+class NetEVariable  : public NetExpr {
+
+    public:
+      NetEVariable(NetVariable*);
+      ~NetEVariable();
+
+      const NetVariable* variable() const;
+
+      TYPE expr_type() const;
+
+      void expr_scan(struct expr_scan_t*) const;
+      void dump(ostream&) const;
+
+      NetEVariable*dup_expr() const;
+      NexusSet* nex_input();
+
+    private:
+      NetVariable*var_;
 };
 
 /*
@@ -2797,6 +2894,10 @@ class NetScope {
       void rem_event(NetEvent*);
       NetEvent*find_event(const char*name);
 
+      void add_variable(NetVariable*);
+      void rem_variable(NetVariable*);
+      NetVariable*find_variable(const char*name);
+
 
 	/* These methods manage signals. The add_ and rem_signal
 	   methods are used by the NetNet objects to make themselves
@@ -2900,6 +3001,7 @@ class NetScope {
       map<string,param_expr_t>localparams_;
 
       NetEvent *events_;
+      NetVariable*vars_;
       NetNet   *signals_;
       NetMemory*memories_;
 
@@ -2999,6 +3101,9 @@ class Design {
         // Events
       NetEvent* find_event(NetScope*scope, const hname_t&path);
 
+	// Variables
+      NetVariable* find_variable(NetScope*scope, const hname_t&path);
+
 	// NODES
       void add_node(NetNode*);
       void del_node(NetNode*);
@@ -3085,6 +3190,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.272  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.271  2002/12/07 02:49:24  steve
  *  Named event triggers can take hierarchical names.
  *

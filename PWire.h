@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.h,v 1.14 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: PWire.h,v 1.15 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -53,7 +53,6 @@ class PWire : public LineInfo {
       PWire(char*name, NetNet::Type t, NetNet::PortType pt);
 
 	// Return a hierarchical name.
-	//const string name() const;
       const hname_t&path() const;
 
       NetNet::Type get_wire_type() const;
@@ -101,6 +100,10 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.15  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.14  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

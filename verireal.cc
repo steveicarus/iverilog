@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verireal.cc,v 1.8 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: verireal.cc,v 1.9 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -25,6 +25,7 @@
 # include  "verireal.h"
 # include  <ctype.h>
 # include  <iostream>
+# include  <math.h>
 # include  <assert.h>
 
 verireal::verireal()
@@ -123,6 +124,11 @@ long verireal::as_long(int shift) const
 	    return val;
 }
 
+double verireal::as_double() const
+{
+      return mant_ * pow(10.0, exp10_) * (sign_? -1 : 1);
+}
+
 verireal operator* (const verireal&l, const verireal&r)
 {
       verireal res;
@@ -140,6 +146,10 @@ ostream& operator<< (ostream&out, const verireal&v)
 
 /*
  * $Log: verireal.cc,v $
+ * Revision 1.9  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.8  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

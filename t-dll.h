@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.96 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: t-dll.h,v 1.97 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -68,6 +68,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       bool bufz(const NetBUFZ*);
       void event(const NetEvent*);
+      void variable(const NetVariable*);
       void logic(const NetLogic*);
       void net_case_cmp(const NetCaseCmp*);
       void udp(const NetUDP*);
@@ -130,6 +131,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_concat(const NetEConcat*);
       void expr_memory(const NetEMemory*);
       void expr_const(const NetEConst*);
+      void expr_creal(const NetECReal*);
       void expr_scope(const NetEScope*);
       void expr_select(const NetESelect*);
       void expr_sfunc(const NetESFunc*);
@@ -138,6 +140,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
       void expr_signal(const NetESignal*);
+      void expr_variable(const NetEVariable*);
 
       ivl_scope_t lookup_scope_(const NetScope*scope);
 
@@ -150,6 +153,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       static ivl_scope_t find_scope(ivl_design_s &des, const NetScope*cur);
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
       static ivl_memory_t find_memory(ivl_design_s &des, const NetMemory*net);
+      static ivl_variable_t find_variable(ivl_design_s &des, const NetVariable*net);
       void add_root(ivl_design_s &des_, const NetScope *s);
 
       void sub_off_from_expr_(long);
@@ -177,6 +181,7 @@ struct ivl_event_s {
  */
 struct ivl_expr_s {
       ivl_expr_type_t type_;
+      ivl_variable_type_t value_;
 
       unsigned width_  :24;
       unsigned signed_ : 1;
@@ -244,10 +249,17 @@ struct ivl_expr_s {
 	    } ulong_;
 
 	    struct {
+		  double value;
+	    } real_;
+
+	    struct {
 		  char op_;
 		  ivl_expr_t sub_;
 	    } unary_;
 
+	    struct {
+		  ivl_variable_t var;
+	    } variable_;
       } u_;
 };
 
@@ -334,7 +346,8 @@ enum ivl_lval_type_t {
       IVL_LVAL_REG = 0,
       IVL_LVAL_MUX = 1,
       IVL_LVAL_MEM = 2,
-      IVL_LVAL_NET = 3 /* Only force can have NET l-values */
+      IVL_LVAL_NET = 3, /* Only force can have NET l-values */
+      IVL_LVAL_VAR = 4
 };
 
 struct ivl_lval_s {
@@ -345,6 +358,7 @@ struct ivl_lval_s {
       union {
 	    ivl_signal_t sig;
 	    ivl_memory_t mem;
+	    ivl_variable_t var;
       } n;
 };
 
@@ -495,6 +509,9 @@ struct ivl_scope_s {
       unsigned nmem_;
       ivl_memory_t* mem_;
 
+      unsigned nvar_;
+      ivl_variable_t* var_;
+
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
 
@@ -623,7 +640,20 @@ struct ivl_statement_s {
 };
 
 /*
+ * This holds the details about a variable object.
+ */
+struct ivl_variable_s {
+      ivl_variable_type_t type;
+      const char* name;
+      ivl_scope_t scope;
+};
+
+/*
  * $Log: t-dll.h,v $
+ * Revision 1.97  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.96  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.31 2003/01/14 21:16:18 steve Exp $"
+#ident "$Id: net_design.cc,v 1.32 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -526,6 +526,30 @@ NetEvent* Design::find_event(NetScope*scope, const hname_t&p)
       return 0;
 }
 
+NetVariable* Design::find_variable(NetScope*scope, const hname_t&p)
+{
+      hname_t path = p;
+      assert(scope);
+
+      char*key = path.remove_tail_name();
+      if (path.peek_name(0))
+	    scope = find_scope(scope, path);
+
+      while (scope) {
+	    if (NetVariable*ev = scope->find_variable(key)) {
+		  delete key;
+		  return ev;
+	    }
+
+	    if (scope->type() == NetScope::MODULE)
+		  break;
+	    scope = scope->parent();
+      }
+
+      delete key;
+      return 0;
+}
+
 void Design::add_node(NetNode*net)
 {
       assert(net->design_ == 0);
@@ -601,6 +625,10 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.32  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.31  2003/01/14 21:16:18  steve
  *  Move strstream to ostringstream for compatibility.
  *

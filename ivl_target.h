@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.109 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.110 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -137,6 +137,7 @@ typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
 typedef struct ivl_memory_s   *ivl_memory_t;
 typedef struct ivl_statement_s*ivl_statement_t;
+typedef struct ivl_variable_s *ivl_variable_t;
 
 /*
  * These are types that are defined as enumerations. These have
@@ -171,7 +172,9 @@ typedef enum ivl_expr_type_e {
       IVL_EX_TERNARY,
       IVL_EX_UFUNC,
       IVL_EX_ULONG,
-      IVL_EX_UNARY
+      IVL_EX_UNARY,
+      IVL_EX_VARIABLE,
+      IVL_EX_REALNUM
 } ivl_expr_type_t;
 
 /* This is the type code for an ivl_net_logic_t object. */
@@ -291,6 +294,14 @@ typedef enum ivl_statement_type_e {
       IVL_ST_WAIT,
       IVL_ST_WHILE
 } ivl_statement_type_t;
+
+/* This is the type of a variable, and also used as the type for an
+   expression. */
+typedef enum ivl_variable_type_e {
+      IVL_VT_VOID = 0,  /* Not used */
+      IVL_VT_REAL,
+      IVL_VT_VECTOR
+} ivl_variable_type_t;
 
 /* This is the type of the function to apply to a process. */
 typedef int (*ivl_process_f)(ivl_process_t net, void*cd);
@@ -416,6 +427,10 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *    type, which can affect how some of the other expression methods
  *    operate on the node
  *
+ * ivl_expr_value
+ *    Get the data type of the expression node. This uses the variable
+ *    type enum to express the type of the expression node.
+ *
  * ivl_expr_width
  *    This method returns the bit width of the expression at this
  *    node. It can be applied to any expression node, and returns the
@@ -430,14 +445,17 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
+extern ivl_variable_type_t ivl_expr_value(ivl_expr_t net);
 
   /* IVL_EX_NUMBER */
 extern const char* ivl_expr_bits(ivl_expr_t net);
   /* IVL_EX_UFUNC */
 extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
+  /* IVL_EX_REALNUM */
+extern double ivl_expr_dvalue(ivl_expr_t net);
   /* IVL_EX_SIGNAL */
 extern unsigned    ivl_expr_lsi(ivl_expr_t net);
-  /* IVL_EX_SIGNAL, IVL_EX_SFUNC */
+  /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
@@ -463,6 +481,8 @@ extern int         ivl_expr_signed(ivl_expr_t net);
 extern const char* ivl_expr_string(ivl_expr_t net);
   /* IVL_EX_ULONG */
 extern unsigned long ivl_expr_uvalue(ivl_expr_t net);
+  /* IVL_EX_VARIABLE */
+extern ivl_variable_t ivl_expr_variable(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
 
@@ -671,6 +691,12 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
  *    If the l-value is a variable, this method returns the signal
  *    object that is the target of the assign.
  *
+ * ivl_lval_var
+ *    If the l-value is a non-signal variable (i.e. a real) this
+ *    method returns the ivl_variable_t object that represents it.
+ *    If the lval is this sort of variable, then the part_off, idx and
+ *    pin methods do not apply.
+ *
  * ivl_lval_part_off
  *    The part select of the signal is based here. This is the
  *    canonical index of bit-0 of the part select.
@@ -690,6 +716,7 @@ extern ivl_memory_t ivl_lpm_memory(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_memory_t ivl_lval_mem(ivl_lval_t net);
+extern ivl_variable_t ivl_lval_var(ivl_lval_t net);
 extern unsigned    ivl_lval_part_off(ivl_lval_t net);
 extern unsigned    ivl_lval_pins(ivl_lval_t net);
 extern ivl_nexus_t ivl_lval_pin(ivl_lval_t net, unsigned idx);
@@ -825,6 +852,10 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  * ivl_scope_events
  *    Scopes have 0 or more event objects in them.
  *
+ * ivl_scope_var
+ * ivl_scope_vars
+ *    Scopes have 0 or more variable objects in them.
+ *
  * ivl_scope_log
  * ivl_scope_logs
  *    Scopes have 0 or more logic devices in them. A logic device is
@@ -887,6 +918,8 @@ extern unsigned     ivl_scope_lpms(ivl_scope_t net);
 extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
 extern unsigned     ivl_scope_mems(ivl_scope_t net);
 extern ivl_memory_t ivl_scope_mem(ivl_scope_t net, unsigned idx);
+extern unsigned     ivl_scope_vars(ivl_scope_t net);
+extern ivl_variable_t ivl_scope_var(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
@@ -1071,6 +1104,19 @@ extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
      IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
+/*
+ * These functions manipulate variable objects.
+ *
+ * ivl_variable_name
+ *   Return the base name of the variable.
+ *
+ * ivl_variable_type
+ *   Return the type of the variable. The ivl_variable_type_t is an
+ *   enumeration that is defined earlier.
+ */
+extern const char*         ivl_variable_name(ivl_variable_t net);
+extern ivl_variable_type_t ivl_variable_type(ivl_variable_t net);
+
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)
@@ -1097,6 +1143,10 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.110  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.109  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal

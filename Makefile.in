@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.142 2003/01/18 23:56:06 steve Exp $"
+#ident "$Id: Makefile.in,v 1.143 2003/01/26 21:15:58 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -128,11 +128,11 @@ eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
 load_module.o netlist.o netmisc.o net_assign.o \
 net_design.o net_event.o net_expr.o net_force.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
-net_proc.o net_scope.o net_udp.o pad_to_width.o \
+net_proc.o net_scope.o net_udp.o net_variable.o pad_to_width.o \
 parse.o parse_misc.o pform.o pform_dump.o \
 set_width.o sync.o \
 verinum.o verireal.o target.o targets.o \
-Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o \
+Attrib.o HName.o LineInfo.o Module.o PData.o PDelays.o PEvent.o \
 PExpr.o PGate.o \
 PTask.o PFunction.o PWire.o Statement.o StringHeap.o \
 $(FF) $(TT)

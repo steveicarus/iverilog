@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.89 2002/12/21 00:55:58 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.90 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -218,6 +218,12 @@ extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
       return 0;
 }
 
+extern "C" double ivl_expr_dvalue(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_REALNUM);
+      return net->u_.real_.value;
+}
+
 extern "C" unsigned ivl_expr_lsi(ivl_expr_t net)
 {
       switch (net->type_) {
@@ -241,6 +247,9 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig->name_;
+
+	  case IVL_EX_VARIABLE:
+	    return net->u_.variable_.var->name;
 
 	  default:
 	    assert(0);
@@ -414,6 +423,12 @@ extern "C" unsigned long ivl_expr_uvalue(ivl_expr_t net)
       return net->u_.ulong_.value;
 }
 
+extern "C" ivl_variable_type_t ivl_expr_value(ivl_expr_t net)
+{
+      assert(net);
+      return net->value_;
+}
+
 extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 {
       assert(net);
@@ -424,6 +439,12 @@ extern "C" ivl_memory_t ivl_expr_memory(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_MEMORY);
       return net->u_.memory_.mem_;
+}
+
+extern "C" ivl_variable_t ivl_expr_variable(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_VARIABLE);
+      return net->u_.variable_.var;
 }
 
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
@@ -899,6 +920,14 @@ extern "C" ivl_memory_t ivl_lval_mem(ivl_lval_t net)
       return 0x0;
 }
 
+extern "C" ivl_variable_t ivl_lval_var(ivl_lval_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_LVAL_VAR)
+	    return net->n.var;
+      return 0x0;
+}
+
 extern "C" unsigned ivl_lval_part_off(ivl_lval_t net)
 {
       assert(net);
@@ -1077,6 +1106,19 @@ extern "C" ivl_event_t ivl_scope_event(ivl_scope_t net, unsigned idx)
       assert(net);
       assert(idx < net->nevent_);
       return net->event_[idx];
+}
+
+extern "C" unsigned ivl_scope_vars(ivl_scope_t net)
+{
+      assert(net);
+      return net->nvar_;
+}
+
+extern "C" ivl_variable_t ivl_scope_var(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nvar_);
+      return net->var_[idx];
 }
 
 extern "C" unsigned ivl_scope_logs(ivl_scope_t net)
@@ -1484,6 +1526,9 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 		case IVL_LVAL_MEM:
 		  sum += ivl_memory_width(ivl_lval_mem(cur));
 		  break;
+		case IVL_LVAL_VAR:
+		  sum += 0;
+		  break;
 		default:
 		  assert(0);
 	    }
@@ -1589,8 +1634,24 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
       return 0;
 }
 
+extern "C" const char* ivl_variable_name(ivl_variable_t net)
+{
+      assert(net);
+      return net->name;
+}
+
+extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
+{
+      assert(net);
+      return net->type;
+}
+
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.90  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.89  2002/12/21 00:55:58  steve
  *  The $time system task returns the integer time
  *  scaled to the local units. Change the internal
@@ -1634,278 +1695,5 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
  *
  * Revision 1.79  2002/05/24 04:36:23  steve
  *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.78  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.77  2002/03/17 19:30:47  steve
- *  Add API to support user defined function.
- *
- * Revision 1.76  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.75  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.74  2002/01/03 04:19:01  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.73  2001/12/06 03:11:00  steve
- *  Add ivl_logic_delay function to ivl_target.
- *
- * Revision 1.72  2001/11/14 03:28:49  steve
- *  DLL target support for force and release.
- *
- * Revision 1.71  2001/11/01 04:25:31  steve
- *  ivl_target support for cassign.
- *
- * Revision 1.70  2001/10/31 05:24:52  steve
- *  ivl_target support for assign/deassign.
- *
- * Revision 1.69  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.68  2001/10/16 02:19:27  steve
- *  Support IVL_LPM_DIVIDE for structural divide.
- *
- * Revision 1.67  2001/09/16 22:19:42  steve
- *  Support attributes to logic gates.
- *
- * Revision 1.66  2001/09/01 01:57:31  steve
- *  Make constants available through the design root
- *
- * Revision 1.65  2001/08/31 22:58:40  steve
- *  Support DFF CE inputs.
- *
- * Revision 1.64  2001/08/28 04:07:18  steve
- *  Add some ivl_target convenience functions.
- *
- * Revision 1.63  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.62  2001/08/10 00:40:45  steve
- *  tgt-vvp generates code that skips nets as inputs.
- *
- * Revision 1.61  2001/07/28 01:17:40  steve
- *  Support getting the signal from IVL_EX_SIGNAL expressions.
- *
- * Revision 1.60  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.59  2001/07/27 02:41:55  steve
- *  Fix binding of dangling function ports. do not elide them.
- *
- * Revision 1.58  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.57  2001/07/22 00:17:49  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.56  2001/07/19 04:55:06  steve
- *  Support calculated delays in vvp.tgt.
- *
- * Revision 1.55  2001/07/07 20:20:10  steve
- *  Pass parameters to system functions.
- *
- * Revision 1.54  2001/07/07 03:01:37  steve
- *  Detect and make available to t-dll the right shift.
- *
- * Revision 1.53  2001/07/04 22:59:25  steve
- *  handle left shifter in dll output.
- *
- * Revision 1.52  2001/06/30 23:03:16  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.51  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.50  2001/06/16 02:41:41  steve
- *  Generate code to support memory access in continuous
- *  assignment statements. (Stephan Boettcher)
- *
- * Revision 1.49  2001/06/15 04:14:19  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.48  2001/06/07 03:09:37  steve
- *  support subtraction in tgt-vvp.
- *
- * Revision 1.47  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.46  2001/05/20 01:06:16  steve
- *  stub ivl_expr_parms for sfunctions.
- *
- * Revision 1.45  2001/05/17 04:37:02  steve
- *  Behavioral ternary operators for vvp.
- *
- * Revision 1.44  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.43  2001/05/06 17:48:20  steve
- *  Support memory objects. (Stephan Boettcher)
- *
- * Revision 1.42  2001/04/29 23:17:38  steve
- *  Carry drive strengths in the ivl_nexus_ptr_t, and
- *  handle constant devices in targets.'
- *
- * Revision 1.41  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.40  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.39  2001/04/21 00:55:46  steve
- *  Generate code for disable.
- *
- * Revision 1.38  2001/04/15 02:58:11  steve
- *  vvp support for <= with internal delay.
- *
- * Revision 1.37  2001/04/06 02:28:02  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.36  2001/04/05 03:20:57  steve
- *  Generate vvp code for the repeat statement.
- *
- * Revision 1.35  2001/04/05 01:12:28  steve
- *  Get signed compares working correctly in vvp.
- *
- * Revision 1.34  2001/04/04 04:50:35  steve
- *  Support forever loops in the tgt-vvp target.
- *
- * Revision 1.33  2001/04/03 04:50:37  steve
- *  Support non-blocking assignments.
- *
- * Revision 1.32  2001/04/02 02:28:12  steve
- *  Generate code for task calls.
- *
- * Revision 1.31  2001/04/02 00:28:35  steve
- *  Support the scope expression node.
- *
- * Revision 1.30  2001/04/01 06:52:27  steve
- *  support the NetWhile statement.
- *
- * Revision 1.29  2001/04/01 01:48:21  steve
- *  Redesign event information to support arbitrary edge combining.
- *
- * Revision 1.28  2001/03/31 17:36:38  steve
- *  Generate vvp code for case statements.
- *
- * Revision 1.27  2001/03/30 05:49:52  steve
- *  Generate code for fork/join statements.
- *
- * Revision 1.26  2001/03/29 03:47:38  steve
- *  Behavioral trigger statements.
- *
- * Revision 1.25  2001/03/29 02:52:39  steve
- *  Add unary ~ operator to tgt-vvp.
- *
- * Revision 1.24  2001/03/28 06:07:39  steve
- *  Add the ivl_event_t to ivl_target, and use that to generate
- *  .event statements in vvp way ahead of the thread that uses it.
- *
- * Revision 1.23  2001/03/27 06:27:40  steve
- *  Generate code for simple @ statements.
- *
- * Revision 1.22  2001/03/20 01:44:13  steve
- *  Put processes in the proper scope.
- *
- * Revision 1.21  2001/01/15 00:47:02  steve
- *  Pass scope type information to the target module.
- *
- * Revision 1.20  2001/01/15 00:05:39  steve
- *  Add client data pointer for scope and process scanners.
- *
- * Revision 1.19  2000/12/05 06:29:33  steve
- *  Make signal attributes available to ivl_target API.
- *
- * Revision 1.18  2000/11/12 17:47:29  steve
- *  flip-flop pins for ivl_target API.
- *
- * Revision 1.17  2000/11/11 00:03:36  steve
- *  Add support for the t-dll backend grabing flip-flops.
- *
- * Revision 1.16  2000/10/28 22:32:34  steve
- *  API for concatenation expressions.
- *
- * Revision 1.15  2000/10/25 05:41:24  steve
- *  Get target signal from nexus_ptr.
- *
- * Revision 1.14  2000/10/18 20:04:39  steve
- *  Add ivl_lval_t and support for assignment l-values.
- *
- * Revision 1.13  2000/10/16 22:44:54  steve
- *  Stubs so that cygwin port will link ivl.
- *
- * Revision 1.12  2000/10/15 04:46:23  steve
- *  Scopes and processes are accessible randomly from
- *  the design, and signals and logic are accessible
- *  from scopes. Remove the target calls that are no
- *  longer needed.
- *
- *  Add the ivl_nexus_ptr_t and the means to get at
- *  them from nexus objects.
- *
- *  Give names to methods that manipulate the ivl_design_t
- *  type more consistent names.
- *
- * Revision 1.11  2000/10/08 04:01:54  steve
- *  Back pointers in the nexus objects into the devices
- *  that point to it.
- *
- *  Collect threads into a list in the design.
- *
- * Revision 1.10  2000/10/06 23:46:50  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.9  2000/10/05 05:03:01  steve
- *  xor and constant devices.
- *
- * Revision 1.8  2000/09/30 02:18:15  steve
- *  ivl_expr_t support for binary operators,
- *  Create a proper ivl_scope_t object.
- *
- * Revision 1.7  2000/09/26 00:30:07  steve
- *  Add EX_NUMBER and ST_TRIGGER to dll-api.
- *
- * Revision 1.6  2000/09/24 15:46:00  steve
- *  API access to signal type and port type.
- *
- * Revision 1.5  2000/09/24 02:21:53  steve
- *  Add support for signal expressions.
- *
- * Revision 1.4  2000/09/23 05:15:07  steve
- *  Add enough tgt-verilog code to support hello world.
- *
- * Revision 1.3  2000/09/22 03:58:30  steve
- *  Access to the name of a system task call.
- *
- * Revision 1.2  2000/09/19 04:15:27  steve
- *  Introduce the means to get statement types.
- *
- * Revision 1.1  2000/09/18 01:24:32  steve
- *  Get the structure for ivl_statement_t worked out.
- *
  */
 

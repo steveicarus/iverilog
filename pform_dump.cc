@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.77 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.78 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -29,6 +29,7 @@
  * module in question.
  */
 # include  "pform.h"
+# include  "PData.h"
 # include  "PEvent.h"
 # include  <iostream>
 # include  <iomanip>
@@ -753,6 +754,13 @@ void Module::dump(ostream&out) const
 		<< ev->get_line() << endl;
       }
 
+      for (map<string,PData*>::const_iterator cur = datum.begin()
+		 ; cur != datum.end() ;  cur ++ ) {
+	    PData*tmp = (*cur).second;
+	    out << "    real " << tmp->name() << "; // "
+		<< tmp->get_line() << endl;
+      }
+
 	// Iterate through and display all the wires.
       for (map<hname_t,PWire*>::const_iterator wire = wires_.begin()
 		 ; wire != wires_.end()
@@ -848,6 +856,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.78  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.77  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.
@@ -890,235 +902,5 @@ void PUdp::dump(ostream&out) const
  * Revision 1.68  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
- *
- * Revision 1.67  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.66  2001/01/13 22:20:08  steve
- *  Parse parameters within nested scopes.
- *
- * Revision 1.65  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.64  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.63  2000/11/11 01:52:09  steve
- *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
- *  change set to correct behavior of bufif0 and bufif1
- *  (Tim Leight)
- *
- *  Also includes fix for PR#27
- *
- * Revision 1.62  2000/10/14 02:23:02  steve
- *  Check for missing concat subexpressions (PR#11)
- *
- * Revision 1.61  2000/07/26 05:08:07  steve
- *  Parse disable statements to pform.
- *
- * Revision 1.60  2000/05/23 16:03:13  steve
- *  Better parsing of expressions lists will empty expressoins.
- *
- * Revision 1.59  2000/05/16 04:05:16  steve
- *  Module ports are really special PEIdent
- *  expressions, because a name can be used
- *  many places in the port list.
- *
- * Revision 1.58  2000/05/11 23:37:27  steve
- *  Add support for procedural continuous assignment.
- *
- * Revision 1.57  2000/05/06 15:41:57  steve
- *  Carry assignment strength to pform.
- *
- * Revision 1.56  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.55  2000/04/22 04:20:19  steve
- *  Add support for force assignment.
- *
- * Revision 1.54  2000/04/12 20:02:53  steve
- *  Finally remove the NetNEvent and NetPEvent classes,
- *  Get synthesis working with the NetEvWait class,
- *  and get started supporting multiple events in a
- *  wait in vvm.
- *
- * Revision 1.53  2000/04/12 04:23:58  steve
- *  Named events really should be expressed with PEIdent
- *  objects in the pform,
- *
- *  Handle named events within the mix of net events
- *  and edges. As a unified lot they get caught together.
- *  wait statements are broken into more complex statements
- *  that include a conditional.
- *
- *  Do not generate NetPEvent or NetNEvent objects in
- *  elaboration. NetEvent, NetEvWait and NetEvProbe
- *  take over those functions in the netlist.
- *
- * Revision 1.52  2000/04/01 19:31:57  steve
- *  Named events as far as the pform.
- *
- * Revision 1.51  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- * Revision 1.50  2000/03/08 04:36:54  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.49  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.48  2000/02/18 05:15:03  steve
- *  Catch module instantiation arrays.
- *
- * Revision 1.47  2000/01/09 20:37:57  steve
- *  Careful with wires connected to multiple ports.
- *
- * Revision 1.46  2000/01/09 05:50:49  steve
- *  Support named parameter override lists.
- *
- * Revision 1.45  1999/10/10 01:59:55  steve
- *  Structural case equals device.
- *
- * Revision 1.44  1999/09/30 02:43:02  steve
- *  Elaborate ~^ and ~| operators.
- *
- * Revision 1.43  1999/09/30 00:48:50  steve
- *  Cope with errors during ternary operator elaboration.
- *
- * Revision 1.42  1999/09/29 21:15:58  steve
- *  Handle some mor missing names.
- *
- * Revision 1.41  1999/09/29 20:23:53  steve
- *  Handle empty named ports in the dump.
- *
- * Revision 1.40  1999/09/29 18:36:04  steve
- *  Full case support
- *
- * Revision 1.39  1999/09/17 02:06:26  steve
- *  Handle unconnected module ports.
- *
- * Revision 1.38  1999/09/08 02:24:39  steve
- *  Empty conditionals (pmonta@imedia.com)
- *
- * Revision 1.37  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.36  1999/08/25 22:22:41  steve
- *  elaborate some aspects of functions.
- *
- * Revision 1.35  1999/08/23 16:48:39  steve
- *  Parameter overrides support from Peter Monta
- *  AND and XOR support wide expressions.
- *
- * Revision 1.34  1999/08/03 04:49:13  steve
- *  Proper port type names.
- *
- * Revision 1.33  1999/08/03 04:14:49  steve
- *  Parse into pform arbitrarily complex module
- *  port declarations.
- *
- * Revision 1.32  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.31  1999/07/31 19:14:47  steve
- *  Add functions up to elaboration (Ed Carter)
- *
- * Revision 1.30  1999/07/30 00:43:17  steve
- *  Handle dumping tasks with no ports.
- *
- * Revision 1.29  1999/07/24 02:11:20  steve
- *  Elaborate task input ports.
- *
- * Revision 1.28  1999/07/17 19:51:00  steve
- *  netlist support for ternary operator.
- *
- * Revision 1.27  1999/07/12 00:59:36  steve
- *  procedural blocking assignment delays.
- *
- * Revision 1.26  1999/07/03 02:12:52  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.25  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.24  1999/06/19 21:06:16  steve
- *  Elaborate and supprort to vvm the forever
- *  and repeat statements.
- *
- * Revision 1.23  1999/06/17 05:34:42  steve
- *  Clean up interface of the PWire class,
- *  Properly match wire ranges.
- *
- * Revision 1.22  1999/06/15 05:38:39  steve
- *  Support case expression lists.
- *
- * Revision 1.21  1999/06/15 03:44:53  steve
- *  Get rid of the STL vector template.
- *
- * Revision 1.20  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.19  1999/06/10 04:03:53  steve
- *  Add support for the Ternary operator,
- *  Add support for repeat concatenation,
- *  Correct some seg faults cause by elaboration
- *  errors,
- *  Parse the casex anc casez statements.
- *
- * Revision 1.18  1999/06/06 20:45:39  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.17  1999/05/29 02:36:17  steve
- *  module parameter bind by name.
- *
- * Revision 1.16  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.15  1999/05/05 03:04:46  steve
- *  Fix handling of null delay statements.
- *
- * Revision 1.14  1999/05/01 02:57:53  steve
- *  Handle much more complex event expressions.
- *
- * Revision 1.13  1999/04/29 02:16:26  steve
- *  Parse OR of event expressions.
- *
- * Revision 1.12  1999/04/19 01:59:37  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.11  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.10  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- * Revision 1.9  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.8  1999/02/01 00:26:49  steve
- *  Carry some line info to the netlist,
- *  Dump line numbers for processes.
- *  Elaborate prints errors about port vector
- *  width mismatch
- *  Emit better handles null statements.
  */
 

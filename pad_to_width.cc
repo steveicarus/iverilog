@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pad_to_width.cc,v 1.11 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.12 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,13 +40,17 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
 	   const. This is a more efficient result. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
 	    verinum eval = tmp->value();
+	    bool signed_flag = eval.has_sign();
 
 	    verinum::V pad = verinum::V0;
+	    if (signed_flag)
+		  pad = eval.get(eval.len()-1);
 	    verinum oval (pad, wid, eval.has_len());
 
 	    for (unsigned idx = 0 ;  idx < eval.len() ;  idx += 1)
 		  oval.set(idx, eval.get(idx));
 
+	    oval.has_sign(signed_flag);
 	    tmp = new NetEConst(oval);
 	    delete expr;
 	    return tmp;
@@ -95,6 +99,10 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.12  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.11  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

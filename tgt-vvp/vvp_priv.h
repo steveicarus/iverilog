@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.22 2002/09/27 16:33:34 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.23 2003/01/26 21:16:00 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -47,6 +47,8 @@ extern const char* vvp_signal_label(ivl_signal_t sig);
  * This generates a label string for a memory.
  */
 extern const char* vvp_memory_label(ivl_memory_t mem);
+
+extern const char* vvp_word_label(ivl_variable_t var);
 
 /*
  * This function draws a process (initial or always) into the output
@@ -159,6 +161,19 @@ extern int number_is_immediate(ivl_expr_t ex, unsigned lim_wid);
 extern unsigned long get_number_immediate(ivl_expr_t ex);
 
 /*
+ * draw_eval_real evaluates real value expressions. The return code
+ * from the function is the index of the word register that contains
+ * the result.
+ */
+extern int draw_eval_real(ivl_expr_t ex);
+
+/*
+ * These functions manage word register allocation.
+ */
+extern int allocate_word(void);
+extern void clr_word(int idx);
+
+/*
  * These are used to count labels as I generate code.
  */
 extern unsigned local_count;
@@ -166,6 +181,10 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.23  2003/01/26 21:16:00  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.22  2002/09/27 16:33:34  steve
  *  Add thread expression lookaside map.
  *
@@ -211,37 +230,5 @@ extern unsigned thread_count;
  *   2. Id and name mangling
  *   3. A memory leak in draw_net_in_scope()
  *   (Stephan Boettcher)
- *
- * Revision 1.10  2001/05/17 04:37:02  steve
- *  Behavioral ternary operators for vvp.
- *
- * Revision 1.9  2001/05/06 17:54:33  steve
- *  Behavioral code to read memories. (Stephan Boettcher)
- *
- * Revision 1.8  2001/04/06 02:28:03  steve
- *  Generate vvp code for functions with ports.
- *
- * Revision 1.7  2001/04/02 02:28:13  steve
- *  Generate code for task calls.
- *
- * Revision 1.6  2001/03/31 17:36:39  steve
- *  Generate vvp code for case statements.
- *
- * Revision 1.5  2001/03/27 06:27:41  steve
- *  Generate code for simple @ statements.
- *
- * Revision 1.4  2001/03/27 03:31:07  steve
- *  Support error code from target_t::end_design method.
- *
- * Revision 1.3  2001/03/22 05:06:21  steve
- *  Geneate code for conditional statements.
- *
- * Revision 1.2  2001/03/21 01:49:43  steve
- *  Scan the scopes of a design, and draw behavioral
- *  blocking  assignments of constants to vectors.
- *
- * Revision 1.1  2001/03/19 01:20:46  steve
- *  Add the tgt-vvp code generator target.
- *
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.88 2002/12/20 01:11:14 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.89 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -189,7 +189,8 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
 
       } else if (lv.wid < ewid) {
 	    unsigned short base = allocate_vector(ewid);
-	    clr_vector(lv);
+	    if (lv.base >= 8)
+		  clr_vector(lv);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", base,
 		    lv.base, lv.wid);
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
@@ -199,6 +200,43 @@ static struct vector_info draw_eq_immediate(ivl_expr_t exp, unsigned ewid,
       }
 
       return lv;
+}
+
+/*
+ * This handles the special case that the operands of the comparison
+ * are real valued expressions.
+ */
+static struct vector_info draw_binary_expr_eq_real(ivl_expr_t exp)
+{
+      struct vector_info res;
+      int lword, rword;
+
+      res.base = allocate_vector(1);
+      res.wid  = 1;
+
+      lword = draw_eval_real(ivl_expr_oper1(exp));
+      rword = draw_eval_real(ivl_expr_oper2(exp));
+
+      clr_word(lword);
+      clr_word(rword);
+
+      fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+      switch (ivl_expr_opcode(exp)) {
+
+	  case 'e':
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    break;
+
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
 }
 
 static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
@@ -222,6 +260,14 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	  && number_is_immediate(re, 16))
 	    return draw_eq_immediate(exp, ewid, le, re, stuff_ok_flag);
 
+      if (ivl_expr_value(le) == IVL_VT_REAL) {
+	    assert(ivl_expr_value(re) == IVL_VT_REAL);
+	    return draw_binary_expr_eq_real(exp);
+      }
+
+      assert(ivl_expr_value(le) == IVL_VT_VECTOR);
+      assert(ivl_expr_value(re) == IVL_VT_VECTOR);
+
       wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
 	    wid = ivl_expr_width(re);
@@ -234,8 +280,10 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t exp,
 	    assert(lv.wid == rv.wid);
 	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", lv.base,
 		    rv.base, lv.wid);
-	    clr_vector(lv);
-	    clr_vector(rv);
+	    if (lv.base >= 8)
+		  clr_vector(lv);
+	    if (rv.base >= 8)
+		  clr_vector(rv);
 	    lv.base = 6;
 	    lv.wid = 1;
 	    break;
@@ -462,6 +510,40 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t exp, unsigned wid)
       return lv;
 }
 
+static struct vector_info draw_binary_expr_le_real(ivl_expr_t exp)
+{
+      struct vector_info res;
+
+      ivl_expr_t le = ivl_expr_oper1(exp);
+      ivl_expr_t re = ivl_expr_oper2(exp);
+
+      int lword = draw_eval_real(le);
+      int rword = draw_eval_real(re);
+
+      res.base = allocate_vector(1);
+      res.wid  = 1;
+
+      clr_word(lword);
+      clr_word(rword);
+
+      switch (ivl_expr_opcode(exp)) {
+	  case '<':
+	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  case '>':
+	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
 static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
 					      unsigned wid,
 					      int stuff_ok_flag)
@@ -477,6 +559,14 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t exp,
       unsigned owid = ivl_expr_width(le);
       if (ivl_expr_width(re) > owid)
 	    owid = ivl_expr_width(re);
+
+      if (ivl_expr_value(le) == IVL_VT_REAL) {
+	    assert(ivl_expr_value(re) == IVL_VT_REAL);
+	    return draw_binary_expr_le_real(exp);
+      }
+
+      assert(ivl_expr_value(le) == IVL_VT_VECTOR);
+      assert(ivl_expr_value(re) == IVL_VT_VECTOR);
 
       lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
       rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -834,6 +924,12 @@ static struct vector_info draw_binary_expr_arith(ivl_expr_t exp, unsigned wid)
       lv = draw_eval_expr_wid(le, wid, STUFF_OK_XZ);
       rv = draw_eval_expr_wid(re, wid, STUFF_OK_XZ);
 
+      if (lv.wid != wid) {
+	    fprintf(stderr, "XXXX ivl_expr_opcode(exp) = %c,"
+		    " lv.wid=%u, wid=%u\n", ivl_expr_opcode(exp),
+		    lv.wid, wid);
+      }
+
       assert(lv.wid == wid);
       assert(rv.wid == wid);
 
@@ -1160,6 +1256,19 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, exp, wid);
+
+      return res;
+}
+
+static struct vector_info draw_realnum_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+      double val = ivl_expr_dvalue(exp);
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      fprintf(vvp_out, "    ; XXXX draw_realnum_expr(%f, %u)\n", val, wid);
 
       return res;
 }
@@ -1861,6 +1970,18 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_variable_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+      ivl_variable_t var = ivl_expr_variable(exp);
+      fprintf(vvp_out, "    ; XXXX Read variable %s\n",
+	      ivl_variable_name(var));
+
+      res.base = 0;
+      res.wid = wid;
+      return res;
+}
+
 /*
  * Sometimes we know ahead of time where we want the expression value
  * to go. In that case, call this function. It will check to see if
@@ -1931,6 +2052,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	    res = draw_number_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_REALNUM:
+	    res = draw_realnum_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_SELECT:
 	    res = draw_select_expr(exp, wid);
 	    break;
@@ -1958,6 +2083,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid,
 	  case IVL_EX_UNARY:
 	    res = draw_unary_expr(exp, wid);
 	    break;
+
+	  case IVL_EX_VARIABLE:
+	    res = draw_variable_expr(exp, wid);
+	    break;
       }
 
       return res;
@@ -1970,79 +2099,15 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.89  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.88  2002/12/20 01:11:14  steve
  *  Evaluate shift index after shift operand because
  *  the chift operand may use the index register itself.
  *
  * Revision 1.87  2002/12/19 23:11:29  steve
  *  Keep bit select subexpression width if it is constant.
- *
- * Revision 1.86  2002/11/22 00:01:50  steve
- *  Careful of left operands to shift that are constant.
- *
- * Revision 1.85  2002/11/21 22:42:48  steve
- *  Allow right values of right shift to shift in.
- *
- * Revision 1.84  2002/11/07 03:12:17  steve
- *  Vectorize load from REG variables.
- *
- * Revision 1.83  2002/11/06 05:41:37  steve
- *  Concatenation can evaluate sub-expressions in place.
- *
- * Revision 1.82  2002/10/20 02:55:37  steve
- *  Properly set or clear expression lookaside for binary expressions.
- *
- * Revision 1.81  2002/09/27 20:24:42  steve
- *  Allow expression lookaside map to spam statements.
- *
- * Revision 1.80  2002/09/27 16:33:34  steve
- *  Add thread expression lookaside map.
- *
- * Revision 1.79  2002/09/24 04:20:32  steve
- *  Allow results in register bits 47 in certain cases.
- *
- * Revision 1.78  2002/09/18 04:29:55  steve
- *  Add support for binary NOR operator.
- *
- * Revision 1.77  2002/09/13 04:09:51  steve
- *  single bit optimization for != in expressions,
- *  and expand ++ and != results if needed.
- *
- * Revision 1.76  2002/09/13 03:12:50  steve
- *  Optimize ==1 when in context where x vs z doesnt matter.
- *
- * Revision 1.75  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.74  2002/09/01 01:42:34  steve
- *  Fix leaking vthread bits in ?: eval.
- *
- * Revision 1.73  2002/08/28 18:38:07  steve
- *  Add the %subi instruction, and use it where possible.
- *
- * Revision 1.72  2002/08/28 17:15:35  steve
- *  Generate %load/nx for indexed load of nets.
- *
- * Revision 1.71  2002/08/27 05:39:57  steve
- *  Fix l-value indexing of memories and vectors so that
- *  an unknown (x) index causes so cell to be addresses.
- *
- *  Fix tangling of label identifiers in the fork-join
- *  code generator.
- *
- * Revision 1.70  2002/08/22 03:38:40  steve
- *  Fix behavioral eval of x?a:b expressions.
- *
- * Revision 1.69  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.68  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.67  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
  */
 

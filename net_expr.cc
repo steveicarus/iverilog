@@ -17,12 +17,17 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.10 2002/11/09 01:40:19 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.11 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include  "config.h"
 # include  "netlist.h"
 # include  <iostream>
+
+NetExpr::TYPE NetExpr::expr_type() const
+{
+      return ET_VECTOR;
+}
 
 /*
  * Create an add/sub node from the two operands. Make a best guess of
@@ -88,6 +93,79 @@ NetEBAdd* NetEBAdd::dup_expr() const
       NetEBAdd*result = new NetEBAdd(op_, left_->dup_expr(),
 				     right_->dup_expr());
       return result;
+}
+
+NetExpr::TYPE NetEBAdd::expr_type() const
+{
+      if (left_->expr_type() == ET_REAL)
+	    return ET_REAL;
+
+      if (right_->expr_type() == ET_REAL)
+	    return ET_REAL;
+
+      return ET_VECTOR;
+}
+
+NetEBDiv::NetEBDiv(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      unsigned w = l->expr_width();
+      if (r->expr_width() > w)
+	    w = r->expr_width();
+
+      expr_width(w);
+      cast_signed(l->has_sign() && r->has_sign());
+}
+
+NetEBDiv::~NetEBDiv()
+{
+}
+
+NetEBDiv* NetEBDiv::dup_expr() const
+{
+      NetEBDiv*result = new NetEBDiv(op_, left_->dup_expr(),
+				       right_->dup_expr());
+      return result;
+}
+
+NetExpr::TYPE NetEBDiv::expr_type() const
+{
+      if (left_->expr_type() == ET_REAL)
+	    return ET_REAL;
+
+      if (right_->expr_type() == ET_REAL)
+	    return ET_REAL;
+
+      return ET_VECTOR;
+}
+
+NetEBMult::NetEBMult(char op, NetExpr*l, NetExpr*r)
+: NetEBinary(op, l, r)
+{
+      expr_width(l->expr_width() + r->expr_width());
+      cast_signed(l->has_sign() && r->has_sign());
+}
+
+NetEBMult::~NetEBMult()
+{
+}
+
+NetEBMult* NetEBMult::dup_expr() const
+{
+      NetEBMult*result = new NetEBMult(op_, left_->dup_expr(),
+				       right_->dup_expr());
+      return result;
+}
+
+NetExpr::TYPE NetEBMult::expr_type() const
+{
+      if (left_->expr_type() == ET_REAL)
+	    return ET_REAL;
+
+      if (right_->expr_type() == ET_REAL)
+	    return ET_REAL;
+
+      return ET_VECTOR;
 }
 
 NetEConcat::NetEConcat(unsigned cnt, NetExpr* r)
@@ -181,6 +259,32 @@ unsigned NetEConcat::repeat() const
       return repeat_value_;
 }
 
+NetECReal::NetECReal(const verireal&val)
+: value_(val)
+{
+}
+
+NetECReal::~NetECReal()
+{
+}
+
+const verireal& NetECReal::value() const
+{
+      return value_;
+}
+
+NetECReal* NetECReal::dup_expr() const
+{
+      NetECReal*tmp = new NetECReal(value_);
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetExpr::TYPE NetECReal::expr_type() const
+{
+      return ET_REAL;
+}
+
 NetEParam::NetEParam()
 : des_(0), scope_(0)
 {
@@ -242,6 +346,10 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.11  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.10  2002/11/09 01:40:19  steve
  *  Postpone parameter width check to evaluation.
  *

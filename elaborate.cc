@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.268 2003/01/14 21:16:18 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.269 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -926,23 +926,12 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
 
-	/* Elaborate the r-value expression. */
+	/* Elaborate the r-value expression, then try to evaluate it. */
+
       assert(rval());
-
-      NetExpr*rv;
-
-      if (verinum*val = rval()->eval_const(des, scope)) {
-	    rv = new NetEConst(*val);
-	    delete val;
-
-      } else if (rv = rval()->elaborate_expr(des, scope)) {
-
-	      /* OK, go on. */
-
-      } else {
-	      /* Unable to elaborate expression. Retreat. */
+      NetExpr*rv = rval()->elaborate_expr(des, scope);
+      if (rv == 0)
 	    return 0;
-      }
 
       assert(rv);
 
@@ -1028,10 +1017,15 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    return bl;
       }
 
-      { unsigned wid = count_lval_width(lv);
-        rv->set_width(wid);
-	rv = pad_to_width(rv, wid);
-	assert(rv->expr_width() >= wid);
+	/* Based on the specific type of the l-value, do cleanup
+	   processing on the r-value. */
+      if (NetVariable*tmp = lv->var()) {
+
+      } else {
+	    unsigned wid = count_lval_width(lv);
+	    rv->set_width(wid);
+	    rv = pad_to_width(rv, wid);
+	    assert(rv->expr_width() >= wid);
       }
 
       NetAssign*cur = new NetAssign(lv, rv);
@@ -2513,6 +2507,10 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.269  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.268  2003/01/14 21:16:18  steve
  *  Move strstream to ostringstream for compatibility.
  *

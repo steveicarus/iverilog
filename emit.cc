@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.70 2002/11/03 20:36:10 steve Exp $"
+#ident "$Id: emit.cc,v 1.71 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -312,6 +312,9 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
+      for (NetVariable*cur = vars_ ;  cur ;  cur = cur->snext_)
+	    tgt->variable(cur);
+
       for (NetScope*cur = sub_ ;  cur ;  cur = cur->sib_)
 	    cur->emit_scope(tgt);
 
@@ -411,6 +414,11 @@ void NetEConst::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_const(this);
 }
 
+void NetECReal::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_creal(this);
+}
+
 void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_memory(this);
@@ -462,6 +470,11 @@ void NetEUnary::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_unary(this);
 }
 
+void NetEVariable::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_variable(this);
+}
+
 bool emit(const Design*des, const char*type)
 {
       for (unsigned idx = 0 ;  target_table[idx] ;  idx += 1) {
@@ -479,6 +492,10 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.71  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.70  2002/11/03 20:36:10  steve
  *  Error message for mising code generator type.
  *

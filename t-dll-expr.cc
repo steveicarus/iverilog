@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.29 2002/10/23 01:47:17 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.30 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,26 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+
+/*
+ * This is a little convenience function for converting a NetExpr
+ * expresion type to the expression type used by ivl_expr_t objects.
+ */
+static ivl_variable_type_t get_expr_type(const NetExpr*net)
+{
+      switch (net->expr_type()) {
+	  case NetExpr::ET_VOID:
+	    return IVL_VT_VOID;
+
+	  case NetExpr::ET_REAL:
+	    return IVL_VT_REAL;
+
+	  case NetExpr::ET_VECTOR:
+	    return IVL_VT_VECTOR;
+      }
+
+      return IVL_VT_VOID;
+}
 
 /*
  * These methods implement the expression scan that generates the
@@ -50,6 +70,7 @@ void dll_target::sub_off_from_expr_(long off)
       char*bits;
       ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmpc->type_   = IVL_EX_NUMBER;
+      tmpc->value_  = IVL_VT_VECTOR;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
       tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
@@ -63,6 +84,7 @@ void dll_target::sub_off_from_expr_(long off)
 	   the constant to subtract. */
       ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmps->type_  = IVL_EX_BINARY;
+      tmps->value_ = IVL_VT_VECTOR;
       tmps->width_ = tmpc->width_;
       tmps->signed_ = tmpc->signed_;
       tmps->u_.binary_.op_  = '-';
@@ -80,6 +102,7 @@ void dll_target::mul_expr_by_const_(long val)
       char*bits;
       ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmpc->type_   = IVL_EX_NUMBER;
+      tmpc->value_  = IVL_VT_VECTOR;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
       tmpc->u_.number_.bits_ = bits = (char*)malloc(tmpc->width_);
@@ -93,6 +116,7 @@ void dll_target::mul_expr_by_const_(long val)
 	   the constant to subtract. */
       ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmps->type_  = IVL_EX_BINARY;
+      tmps->value_ = IVL_VT_VECTOR;
       tmps->width_ = tmpc->width_;
       tmps->signed_ = tmpc->signed_;
       tmps->u_.binary_.op_  = '*';
@@ -111,6 +135,7 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       unsigned idx;
       char*bits;
       expr->type_ = IVL_EX_NUMBER;
+      expr->value_= IVL_VT_VECTOR;
       expr->width_= val.len();
       expr->signed_ = val.has_sign()? 1 : 0;
       expr->u_.number_.bits_ = bits = (char*)malloc(expr->width_);
@@ -150,6 +175,7 @@ void dll_target::expr_binary(const NetEBinary*net)
       assert(expr_);
 
       expr_->type_ = IVL_EX_BINARY;
+      expr_->value_= get_expr_type(net);
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
 
@@ -165,8 +191,9 @@ void dll_target::expr_concat(const NetEConcat*net)
       ivl_expr_t cur = new struct ivl_expr_s;
       assert(cur);
 
-      cur->type_ = IVL_EX_CONCAT;
-      cur->width_= net->expr_width();
+      cur->type_  = IVL_EX_CONCAT;
+      cur->value_ = IVL_VT_VECTOR;
+      cur->width_ = net->expr_width();
 
       cur->u_.concat_.rept  = net->repeat();
       cur->u_.concat_.parms = net->nparms();
@@ -194,6 +221,7 @@ void dll_target::expr_memory(const NetEMemory*net)
       assert(cur);
 
       cur->type_ = IVL_EX_MEMORY;
+      cur->value_ = IVL_VT_VECTOR;
       cur->width_= net->expr_width();
       cur->signed_ = net->has_sign()? 1 : 0;
       cur->u_.memory_.mem_ = find_memory(des_, net->memory());
@@ -210,6 +238,7 @@ void dll_target::expr_const(const NetEConst*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       assert(expr_);
+      expr_->value_= IVL_VT_VECTOR;
 
       if (net->value().is_string()) {
 	    expr_->type_ = IVL_EX_STRING;
@@ -245,6 +274,17 @@ void dll_target::expr_const(const NetEConst*net)
       }
 }
 
+void dll_target::expr_creal(const NetECReal*net)
+{
+      assert(expr_ == 0);
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_->width_  = net->expr_width();
+      expr_->signed_ = 1;
+      expr_->type_ = IVL_EX_REALNUM;
+      expr_->value_= IVL_VT_REAL;
+      expr_->u_.real_.value = net->value().as_double();
+}
+
 void dll_target::expr_scope(const NetEScope*net)
 {
       assert(expr_ == 0);
@@ -253,6 +293,7 @@ void dll_target::expr_scope(const NetEScope*net)
       assert(expr_);
 
       expr_->type_ = IVL_EX_SCOPE;
+      expr_->value_= IVL_VT_VOID;
       expr_->u_.scope_.scope = lookup_scope_(net->scope());
 }
 
@@ -271,6 +312,7 @@ void dll_target::expr_select(const NetESelect*net)
       assert(expr_);
 
       expr_->type_ = IVL_EX_SELECT;
+      expr_->value_= IVL_VT_VECTOR;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
 
@@ -286,6 +328,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_SFUNC;
+      expr->value_= IVL_VT_VECTOR;
       expr->width_= net->expr_width();
       expr->u_.sfunc_.name_ = strdup(net->name());
 
@@ -312,6 +355,7 @@ void dll_target::expr_ternary(const NetETernary*net)
       assert(expr);
 
       expr->type_  = IVL_EX_TERNARY;
+      expr->value_= IVL_VT_VECTOR;
       expr->width_ = net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
 
@@ -340,6 +384,7 @@ void dll_target::expr_signal(const NetESignal*net)
       assert(expr_);
 
       expr_->type_ = IVL_EX_SIGNAL;
+      expr_->value_= IVL_VT_VECTOR;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.signal_.sig = find_signal(des_, net->sig());
@@ -355,6 +400,7 @@ void dll_target::expr_subsignal(const NetEBitSel*net)
       assert(expr);
 
       expr->type_ = IVL_EX_BITSEL;
+      expr->value_= IVL_VT_VECTOR;
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->u_.bitsel_.sig = find_signal(des_, net->sig());
@@ -450,6 +496,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       assert(expr);
 
       expr->type_ = IVL_EX_UFUNC;
+      expr->value_= IVL_VT_VECTOR;
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
 
@@ -482,14 +529,31 @@ void dll_target::expr_unary(const NetEUnary*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->type_ = IVL_EX_UNARY;
+      expr_->value_= IVL_VT_VECTOR;
       expr_->width_ = net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->u_.unary_.op_ = net->op();
       expr_->u_.unary_.sub_ = sub;
 }
 
+void dll_target::expr_variable(const NetEVariable*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_->type_  = IVL_EX_VARIABLE;
+      expr_->value_ = IVL_VT_REAL;
+      expr_->width_ = 0;
+      expr_->signed_= net->has_sign()? 1 : 0;
+      expr_->u_.variable_.var = find_variable(des_, net->variable());
+}
+
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.30  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.29  2002/10/23 01:47:17  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.

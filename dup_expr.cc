@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.9 2002/11/09 00:25:27 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.10 2003/01/26 21:15:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,8 +87,18 @@ NetEUnary* NetEUnary::dup_expr() const
       return tmp;
 }
 
+NetEVariable* NetEVariable::dup_expr() const
+{
+      NetEVariable*tmp = new NetEVariable(var_);
+      return tmp;
+}
+
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.10  2003/01/26 21:15:58  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.9  2002/11/09 00:25:27  steve
  *  Add dup_expr for user defined function calls.
  *

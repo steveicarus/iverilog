@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.106 2003/01/17 05:47:30 steve Exp $"
+#ident "$Id: pform.cc,v 1.107 2003/01/26 21:15:59 steve Exp $"
 #endif
 
 # include "config.h"
@@ -26,6 +26,7 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "parse_api.h"
+# include  "PData.h"
 # include  "PEvent.h"
 # include  "PUdp.h"
 # include  <list>
@@ -551,6 +552,26 @@ void pform_make_events(list<char*>*names, const char*fn, unsigned ln)
       for (cur = names->begin() ;  cur != names->end() ;  cur++) {
 	    char*txt = *cur;
 	    pform_make_event(txt, fn, ln);
+	    free(txt);
+      }
+
+      delete names;
+}
+
+static void pform_make_datum(const char*name, const char*fn, unsigned ln)
+{
+      PData*datum = new PData(hname_t(name));
+      datum->set_file(fn);
+      datum->set_lineno(ln);
+      pform_cur_module->datum[name] = datum;
+}
+
+void pform_make_reals(list<char*>*names, const char*fn, unsigned ln)
+{
+      list<char*>::iterator cur;
+      for (cur = names->begin() ;  cur != names->end() ;  cur++) {
+	    char*txt = *cur;
+	    pform_make_datum(txt, fn, ln);
 	    free(txt);
       }
 
@@ -1372,6 +1393,10 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.107  2003/01/26 21:15:59  steve
+ *  Rework expression parsing and elaboration to
+ *  accommodate real/realtime values and expressions.
+ *
  * Revision 1.106  2003/01/17 05:47:30  steve
  *  Missed a case of setting line on an PEident.
  *
