@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.49 2003/01/26 18:18:36 steve Exp $"
+#ident "$Id: sys_display.c,v 1.50 2003/02/01 05:49:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -779,6 +779,31 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 		  vpi_get_value(item, &value);
 		  vpi_mcd_printf(mcd, "%f", value.value.real);
 		  break;
+
+		case vpiSysFuncCall: {
+		      char*tmp = vpi_get_str(vpiName, item);
+		      vpiHandle scope = vpi_handle(vpiScope, item);
+
+		      if (strcmp(tmp,"$time") == 0) {
+			    value.format = vpiTimeVal;
+			    vpi_get_value(item, &value);
+			    vpi_mcd_printf(mcd, "%20u", value.value.time->low);
+		      } else if (strcmp(tmp,"$realtime") == 0) {
+			    int time_units = vpi_get(vpiTimeUnit, scope);
+			    int time_prec = vpi_get(vpiTimePrecision, 0);
+			    int use_prec = time_units - time_prec;
+			    if (use_prec < 0)
+				  use_prec = 0;
+
+			    value.format = vpiRealVal;
+			    vpi_get_value(item, &value);
+			    vpi_mcd_printf(mcd, "%0.*f", use_prec,
+					   value.value.real);
+		      } else {
+			    vpi_mcd_printf(mcd, "<%s>", tmp);
+		      }
+		      break;
+		}
 
 		default:
 		  vpi_mcd_printf(mcd, "?");
@@ -1574,6 +1599,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.50  2003/02/01 05:49:13  steve
+ *  Display $time and $realtime specially.
+ *
  * Revision 1.49  2003/01/26 18:18:36  steve
  *  Support display of real values and constants.
  *
