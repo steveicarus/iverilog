@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.32 1999/07/11 17:15:16 steve Exp $"
+#ident "$Id: lexor.lex,v 1.33 1999/07/17 18:25:38 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -651,12 +651,12 @@ static verinum*make_sized_hex(const char*txt)
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
 
-      verinum::V*bits = new verinum::V[size];
+      verinum::V*bits = new verinum::V[(size+3)&~3];
 
       unsigned idx = 0;
       char*eptr = ptr + strlen(ptr) - 1;
 
-      while ((eptr >= ptr) && (idx <= (size-4))) {
+      while ((eptr >= ptr) && (idx < size)) {
 	    switch (*eptr) {
 		case 'x': case 'X':
 		  bits[idx++] = verinum::Vx;
