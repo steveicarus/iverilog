@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.31 2002/07/12 02:08:10 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.32 2002/07/12 02:10:20 steve Exp $"
 #endif
 
 # include "config.h"
@@ -532,7 +532,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       int nexus_id;
 
       /* list of types to iterate upon */
-      int i, types[] = {
+      int i;
+      static int types[] = {
 	    /* Scope */
 	    vpiFunction,
 	    vpiModule,
@@ -799,6 +800,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.32  2002/07/12 02:10:20  steve
+ *  Make types array static, not on stack.
+ *
  * Revision 1.31  2002/07/12 02:08:10  steve
  *  Eliminate use of vpiInternalScope.
  *
