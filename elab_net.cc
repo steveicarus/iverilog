@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.45 2000/09/02 20:54:20 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.46 2000/09/07 21:28:51 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1444,15 +1444,26 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 	    return 0;
       }
 
-      assert(tru_sig->pin_count() == fal_sig->pin_count());
+
+	/* The natural width of the expression is the width of the
+	   largest condition. Normally they should be the same size,
+	   but if we do not get a size from the context, or the
+	   expressions resist, we need to cope. */
+      unsigned iwidth = tru_sig->pin_count();
+      if (fal_sig->pin_count() > iwidth)
+	    iwidth = fal_sig->pin_count();
+
+
+	/* If the width is not passed from the context, then take the
+	   widest result as our width. */
       if (width == 0)
-	    width = tru_sig->pin_count();
+	    width = iwidth;
 
       assert(width >= tru_sig->pin_count());
 
 	/* If the expression has width, then generate a boolean result
 	   by connecting an OR gate to calculate the truth value of
-	   the result. */
+	   the result. In the end, the result needs to be a single bit. */
       if (expr_sig->pin_count() > 1) {
 	    NetLogic*log = new NetLogic(des->local_symbol(path),
 					expr_sig->pin_count()+1,
@@ -1476,32 +1487,52 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
 
 	   Create a NetNet object wide enough to hold the result. */
 
-      unsigned dwidth = tru_sig->pin_count();
+      unsigned dwidth = (iwidth > width)? width : iwidth;
+	    
 
-      NetNet*sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE,
-		       width);
+      NetNet*sig = new NetNet(scope, des->local_symbol(path),
+			      NetNet::WIRE, width);
       sig->local_flag(true);
 
 
 	/* Make the device and connect its outputs to the osig and
 	   inputs to the tru and false case nets. Also connect the
-	   selector bit to the sel input. */
+	   selector bit to the sel input.
 
+	   The inputs are the 0 (false) connected to fal_sig and 1
+	   (true) connected to tru_sig. Pad the inputs with driven 0
+	   if the tru_sig or fal_sig values are too narrow. */
+
+      NetConst*pad = 0;
       NetMux*mux = new NetMux(des->local_symbol(path), dwidth, 2, 1);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
-      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-	    connect(mux->pin_Result(idx), sig->pin(idx));
-	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
-	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
+      if ((fal_sig->pin_count() < dwidth) || (tru_sig->pin_count() < dwidth)) {
+	    pad = new NetConst(des->local_symbol(path), verinum::V0);
+	    des->add_node(pad);
       }
 
-	/* If the device is too narrow to fill out the desired result,
-	   pad with zeros by creating a NetConst device. */
+      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
+	    connect(mux->pin_Result(idx), sig->pin(idx));
+
+	    if (idx < fal_sig->pin_count())
+		  connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
+	    else
+		  connect(mux->pin_Data(idx,0), pad->pin(0));
+
+	    if (idx < tru_sig->pin_count())
+		  connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
+	    else
+		  connect(mux->pin_Data(idx,1), pad->pin(0));
+      }
+
+
+	/* If the MUX device result is too narrow to fill out the
+	   desired result, pad with zeros by creating a NetConst device. */
 
       if (dwidth < width) {
 	    verinum vpad (verinum::V0, width-dwidth);
-	    NetConst*pad = new NetConst(des->local_symbol(path), vpad);
+	    pad = new NetConst(des->local_symbol(path), vpad);
 	    des->add_node(pad);
 	    for (unsigned idx = dwidth ;  idx < width ;  idx += 1)
 		  connect(sig->pin(idx), pad->pin(idx-dwidth));
@@ -1662,6 +1693,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.46  2000/09/07 21:28:51  steve
+ *  more robust abut ternary bit widths.
+ *
  * Revision 1.45  2000/09/02 20:54:20  steve
  *  Rearrange NetAssign to make NetAssign_ separate.
  *
