@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.h,v 1.23 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.24 2000/03/24 02:43:37 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -30,47 +30,44 @@
  * vector of a certain width and returns a result of the same width.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_unop_not(const vvm_bitset_t<WIDTH>&p)
+void vvm_unop_not(vvm_bitset_t<WIDTH>&v, const vvm_bitset_t<WIDTH>&p)
 {
-      vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = B_NOT(p[idx]);
-
-      return result;
+	    v[idx] = B_NOT(p[idx]);
 }
 
 /*
  * The unary AND is the reduction AND. It returns a single bit.
  */
-extern vvm_bitset_t<1> vvm_unop_and(const vvm_bits_t&r);
-extern vvm_bitset_t<1> vvm_unop_nand(const vvm_bits_t&r);
+extern vpip_bit_t vvm_unop_and(const vvm_bits_t&r);
+extern vpip_bit_t vvm_unop_nand(const vvm_bits_t&r);
+
+extern vpip_bit_t vvm_unop_lnot(const vvm_bits_t&r);
 
 /*
  * The unary OR is the reduction OR. It returns a single bit.
  */
-extern vvm_bitset_t<1> vvm_unop_or(const vvm_bits_t&r);
-extern vvm_bitset_t<1> vvm_unop_nor(const vvm_bits_t&r);
+extern vpip_bit_t vvm_unop_or(const vvm_bits_t&r);
+extern vpip_bit_t vvm_unop_nor(const vvm_bits_t&r);
 
 
 /*
  * The unary XOR is the reduction XOR. It returns a single bit.
  */
-extern vvm_bitset_t<1> vvm_unop_xor(const vvm_bits_t&r);
-extern vvm_bitset_t<1> vvm_unop_xnor(const vvm_bits_t&r);
+extern vpip_bit_t vvm_unop_xor(const vvm_bits_t&r);
+extern vpip_bit_t vvm_unop_xnor(const vvm_bits_t&r);
 
 //
 // simple-minded unary minus operator (two's complement)
 //
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_unop_uminus(const vvm_bitset_t<WIDTH>&l)
+void vvm_unop_uminus(vvm_bitset_t<WIDTH>&v, const vvm_bitset_t<WIDTH>&l)
 {
-      vvm_bitset_t<WIDTH> res;
-      res = vvm_unop_not(l);
+      vvm_unop_not(v, l);
       vpip_bit_t carry = St1;
       for (int i = 0; i < WIDTH; i++)
-	    res[i] = add_with_carry(res[i], St0, carry);
+	    v[i] = add_with_carry(v[i], St0, carry);
 
-      return res;
 }
 
 /*
@@ -78,14 +75,12 @@ vvm_bitset_t<WIDTH> vvm_unop_uminus(const vvm_bitset_t<WIDTH>&l)
  * the parameters and the result having the same width.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_and(const vvm_bitset_t<WIDTH>&l,
-				  const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_and(vvm_bitset_t<WIDTH>&v,
+		   const vvm_bitset_t<WIDTH>&l,
+		   const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = B_AND(l[idx], r[idx]);
-
-      return result;
+	    v[idx] = B_AND(l[idx], r[idx]);
 }
 
 /*
@@ -93,25 +88,21 @@ vvm_bitset_t<WIDTH> vvm_binop_and(const vvm_bitset_t<WIDTH>&l,
  * the parameters and the result having the same width.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_or(const vvm_bitset_t<WIDTH>&l,
-				 const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_or(vvm_bitset_t<WIDTH>&v,
+		  const vvm_bitset_t<WIDTH>&l,
+		  const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = B_OR(l[idx], r[idx]);
-
-      return result;
+	    v[idx] = B_OR(l[idx], r[idx]);
 }
 
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_nor(const vvm_bitset_t<WIDTH>&l,
-				 const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_nor(vvm_bitset_t<WIDTH>&v,
+		   const vvm_bitset_t<WIDTH>&l,
+		   const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = B_NOT(B_OR(l[idx], r[idx]));
-
-      return result;
+	    v[idx] = B_NOT(B_OR(l[idx], r[idx]));
 }
 
 /*
@@ -120,15 +111,13 @@ vvm_bitset_t<WIDTH> vvm_binop_nor(const vvm_bitset_t<WIDTH>&l,
  * that contains the arithmetic sum. Z values are converted to X.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_plus(const vvm_bitset_t<WIDTH>&l,
-				   const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_plus(vvm_bitset_t<WIDTH>&v,
+		    const vvm_bitset_t<WIDTH>&l,
+		    const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> result;
       vpip_bit_t carry = St0;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = add_with_carry(l[idx], r[idx], carry);
-
-      return result;
+	    v[idx] = add_with_carry(l[idx], r[idx], carry);
 }
 
 /*
@@ -137,16 +126,14 @@ vvm_bitset_t<WIDTH> vvm_binop_plus(const vvm_bitset_t<WIDTH>&l,
  * carry of 1 to the 0 bit position.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_minus(const vvm_bitset_t<WIDTH>&l,
-				    const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_minus(vvm_bitset_t<WIDTH>&v,
+		     const vvm_bitset_t<WIDTH>&l,
+		     const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> res;
-      res = vvm_unop_not(r);
+      vvm_unop_not(v, r);
       vpip_bit_t carry = St1;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    res[idx] = add_with_carry(l[idx], res[idx], carry);
-
-      return res;
+	    v[idx] = add_with_carry(l[idx], v[idx], carry);
 }
 
 /*
@@ -172,25 +159,21 @@ void vvm_binop_mult(vvm_bitset_t<WR>&r,
  * to generate the corresponsing output.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_xor(const vvm_bitset_t<WIDTH>&l,
-				  const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_xor(vvm_bitset_t<WIDTH>&v,
+		   const vvm_bitset_t<WIDTH>&l,
+		   const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = B_XOR(l[idx], r[idx]);
-
-      return result;
+	    v[idx] = B_XOR(l[idx], r[idx]);
 }
 
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_xnor(const vvm_bitset_t<WIDTH>&l,
-				   const vvm_bitset_t<WIDTH>&r)
+void vvm_binop_xnor(vvm_bitset_t<WIDTH>&v,
+		    const vvm_bitset_t<WIDTH>&l,
+		    const vvm_bitset_t<WIDTH>&r)
 {
-      vvm_bitset_t<WIDTH> result;
       for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
-	    result[idx] = B_NOT(B_XOR(l[idx], r[idx]));
-
-      return result;
+	    v[idx] = B_NOT(B_XOR(l[idx], r[idx]));
 }
 
 /*
@@ -199,15 +182,13 @@ vvm_bitset_t<WIDTH> vvm_binop_xnor(const vvm_bitset_t<WIDTH>&l,
  * internally as a 32-bit bitvector.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_shiftl(const vvm_bitset_t<WIDTH>&l,
-				     const vvm_bits_t&r)
+void vvm_binop_shiftl(vvm_bitset_t<WIDTH>&v,
+		      const vvm_bitset_t<WIDTH>&l,
+		      const vvm_bits_t&r)
 {
-      vvm_bitset_t<WIDTH> result;
       vvm_u32 s = r.as_unsigned();
       for (unsigned idx = 0; idx < WIDTH; idx++)
-	    result[idx] = (idx < s) ? St0 : l[idx-s];
- 
-      return result;
+	    v[idx] = (idx < s) ? St0 : l[idx-s];
 }
 
 /*
@@ -216,15 +197,13 @@ vvm_bitset_t<WIDTH> vvm_binop_shiftl(const vvm_bitset_t<WIDTH>&l,
  * internally by a 32-bit bitvector.
  */
 template <unsigned WIDTH>
-vvm_bitset_t<WIDTH> vvm_binop_shiftr(const vvm_bitset_t<WIDTH>&l,
-				     const vvm_bits_t&r)
+void vvm_binop_shiftr(vvm_bitset_t<WIDTH>&v,
+		      const vvm_bitset_t<WIDTH>&l,
+		      const vvm_bits_t&r)
 {
-      vvm_bitset_t<WIDTH> result;
       vvm_u32 s = r.as_unsigned();
       for (unsigned idx = 0; idx < WIDTH; idx++)
-	    result[idx] = (idx < (WIDTH-s)) ? l[idx+s] : St0;
-
-      return result;
+	    v[idx] = (idx < (WIDTH-s)) ? l[idx+s] : St0;
 }
 
 /*
@@ -273,29 +252,36 @@ extern vvm_bitset_t<1> vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r);
 
 extern vvm_bitset_t<1> vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r);
 
-extern vvm_bitset_t<1> vvm_unop_lnot(const vvm_bits_t&r);
-
 template <unsigned W>
-vvm_bitset_t<W> vvm_ternary(vpip_bit_t c, const vvm_bitset_t<W>&t,
-			    const vvm_bitset_t<W>&f)
+void vvm_ternary(vvm_bitset_t<W>&v, vpip_bit_t c,
+		 const vvm_bitset_t<W>&t,
+		 const vvm_bitset_t<W>&f)
 {
-      if (B_IS0(c))
-	    return f;
-      if (B_IS1(c))
-	    return t;
+      if (B_IS0(c)) {
+	    for (unsigned idx = 0 ;  idx < W ;  idx += 1)
+		  v[idx] = f[idx];
+	    return;
+      }
+      if (B_IS1(c)) {
+	    for (unsigned idx = 0 ;  idx < W ;  idx += 1)
+		  v[idx] = t[idx];
+	    return;
+      }
 
-      vvm_bitset_t<W> res;
       for (unsigned idx = 0 ;  idx < W ;  idx += 1) {
 	    if (B_EQ(t[idx], f[idx]))
-		  res[idx] = t[idx];
+		  v[idx] = t[idx];
 	    else
-		  res[idx] = StX;
+		  v[idx] = StX;
       }
-      return res;
 }
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.24  2000/03/24 02:43:37  steve
+ *  vvm_unop and vvm_binop pass result by reference
+ *  instead of returning a value.
+ *
  * Revision 1.23  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.121 2000/03/23 03:24:39 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.122 2000/03/24 02:43:36 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -305,8 +305,8 @@ void vvm_proc_rval::expr_ternary(const NetETernary*expr)
 
       os_ << setw(indent_) << "" << "vvm_bitset_t<" <<
 	    expr->expr_width() << ">" << result << ";" << endl;
-      os_ << setw(indent_) << "" << result << " = vvm_ternary(" <<
-	    cond_val << "[0], " << true_val << ", " << false_val << ");"
+      os_ << setw(indent_) << "" << "vvm_ternary(" << result << ", "
+	  << cond_val << "[0], " << true_val << ", " << false_val << ");"
 	  << endl;
 }
 
@@ -350,31 +350,38 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
       string tname = make_temp();
 
       os_ << "      vvm_bitset_t<" << expr->expr_width() << "> "
-	  << tname << " = ";
+	  << tname << ";" << endl;
+
       switch (expr->op()) {
 	  case '~':
-	    os_ << "vvm_unop_not(" << result << ");" << endl;
+	    os_ << "vvm_unop_not(" << tname << "," << result << ");" << endl;
 	    break;
 	  case '&':
-	    os_ << "vvm_unop_and(" << result << ");" << endl;
+	    os_ << "      " << tname << "[0] "
+		  "= vvm_unop_and("<<result<<");" << endl;
 	    break;
 	  case '|':
-	    os_ << "vvm_unop_or(" << result << ");" << endl;
+	    os_ << "      " << tname << "[0] "
+		  "= vvm_unop_or("<<result<<");" << endl;
 	    break;
 	  case '^':
-	    os_ << "vvm_unop_xor(" << result << ");" << endl;
+	    os_ << "      " << tname << "[0] "
+		  "= vvm_unop_xor("<<result<<");" << endl;
 	    break;
 	  case '!':
-	    os_ << "vvm_unop_lnot(" << result << ");" << endl;
+	    os_ << "      " << tname << "[0] "
+		  "= vvm_unop_lnot("<<result<<");" << endl;
 	    break;
 	  case '-':
-	    os_ << "vvm_unop_uminus(" << result << ");" << endl;
+	    os_ << "vvm_unop_uminus(" <<tname<< "," << result << ");" << endl;
 	    break;
 	  case 'N':
-	    os_ << "vvm_unop_nor(" << result << ");" << endl;
+	    os_ << "      " << tname << "[0] "
+		  "= vvm_unop_nor("<<result<<");" << endl;
 	    break;
 	  case 'X':
-	    os_ << "vvm_unop_xnor(" << result << ");" << endl;
+	    os_ << "      " << tname << "[0] "
+		  "= vvm_unop_xnor("<<result<<");" << endl;
 	    break;
 	  default:
 	    cerr << "vvm error: Unhandled unary op `" << expr->op() << "'"
@@ -419,8 +426,8 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'l': // left shift(<<)
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftl("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_shiftl(" << result
+		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'L': // <=
 	    os_ << setw(indent_) << "" << result << " = vvm_binop_le("
@@ -447,32 +454,32 @@ void vvm_proc_rval::expr_binary(const NetEBinary*expr)
 		<< lres << "," << rres << ");" << endl;
 	    break;
 	  case 'r': // right shift(>>)
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_shiftr("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_shiftr(" << result
+		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case 'X':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_xnor("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_xnor(" << result
+		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '+':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_plus("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_plus(" << result
+		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '-':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_minus("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_minus(" << result
+		<< ", " << lres << "," << rres << ");" << endl;
 	    break;
 	  case '&':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_and("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_and(" << result
+		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '|':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_or("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_or(" << result
+		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '^':
-	    os_ << setw(indent_) << "" << result << " = vvm_binop_xor("
-		<< lres << "," << rres << ");" << endl;
+	    os_ << setw(indent_) << "" << "vvm_binop_xor(" << result
+		<< ", " << lres << ", " << rres << ");" << endl;
 	    break;
 	  case '*':
 	    os_ << setw(indent_) << "" << "vvm_binop_mult(" << result
@@ -926,6 +933,9 @@ string target_vvm::defn_gate_outputfun_(ostream&os,
 					const NetNode*gate,
 					unsigned gpin)
 {
+      cerr << "internal error: outputfun_ called for gate " <<
+	    gate->name() << " (" << typeid(*gate).name() << ")" <<
+	    endl;
       assert(0);
       return "";
 }
@@ -2307,6 +2317,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.122  2000/03/24 02:43:36  steve
+ *  vvm_unop and vvm_binop pass result by reference
+ *  instead of returning a value.
+ *
  * Revision 1.121  2000/03/23 03:24:39  steve
  *  Do not create 0 length parameters to system tasks.
  *

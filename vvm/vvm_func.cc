@@ -17,68 +17,64 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_func.cc,v 1.2 2000/03/22 04:26:41 steve Exp $"
+#ident "$Id: vvm_func.cc,v 1.3 2000/03/24 02:43:37 steve Exp $"
 #endif
 
 # include  "vvm_func.h"
 
-vvm_bitset_t<1> vvm_unop_and(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_and(const vvm_bits_t&r)
 {
-      vvm_bitset_t<1> res;
-      res[0] = r.get_bit(0);
+      vpip_bit_t v = r.get_bit(0);
 
       for (unsigned idx = 1 ;  idx < r.get_width() ;  idx += 1)
-	    res[0] = B_AND(res[0], r.get_bit(idx));
+	    v = B_AND(v, r.get_bit(idx));
 
-      return res;
+      return v;
 }
 
-vvm_bitset_t<1> vvm_unop_nand(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_nand(const vvm_bits_t&r)
 {
-      vvm_bitset_t<1>res = vvm_unop_and(r);
-      res[0] = B_NOT(res[0]);
-      return res;
+      vpip_bit_t v = vvm_unop_and(r);
+      return B_NOT(v);
 }
 
-vvm_bitset_t<1> vvm_unop_or(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_lnot(const vvm_bits_t&r)
 {
-      vvm_bitset_t<1> res;
-      res[0] = St1;
+      vpip_bit_t v = vvm_unop_or(r);
+      return B_NOT(v);
+}
+
+vpip_bit_t vvm_unop_or(const vvm_bits_t&r)
+{
+      for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
+	    if (B_IS1(r.get_bit(idx)))
+		  return St1;
+      }
+
+      return St0;
+}
+
+vpip_bit_t vvm_unop_nor(const vvm_bits_t&r)
+{
+      vpip_bit_t v = vvm_unop_or(r);
+      return B_NOT(v);
+}
+
+vpip_bit_t vvm_unop_xor(const vvm_bits_t&r)
+{
+      vpip_bit_t v = St0;
 
       for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
 	    if (B_IS1(r.get_bit(idx)))
-		  return res;
+		  v = B_NOT(v);
       }
-
-      res[0] = St0;
-      return res;
+      return v;
 }
 
-vvm_bitset_t<1> vvm_unop_nor(const vvm_bits_t&r)
+vpip_bit_t vvm_unop_xnor(const vvm_bits_t&r)
 {
-      vvm_bitset_t<1>res = vvm_unop_or(r);
-      res[0] = B_NOT(res[0]);
-      return res;
-}
-
-vvm_bitset_t<1> vvm_unop_xor(const vvm_bits_t&r)
-{
-      vvm_bitset_t<1> res;
-      res[0] = St0;
-
-      for (unsigned idx = 0 ;  idx < r.get_width() ;  idx += 1) {
-	    if (B_IS1(r.get_bit(idx)))
-		  res[0] = B_NOT(res[0]);
-      }
-
-      return res;
-}
-
-vvm_bitset_t<1> vvm_unop_xnor(const vvm_bits_t&r)
-{
-      vvm_bitset_t<1>res = vvm_unop_xor(r);
-      res[0] = B_NOT(res[0]);
-      return res;
+      vpip_bit_t v = vvm_unop_xor(r);
+      return B_NOT(v);
 }
 
 vvm_bitset_t<1> vvm_binop_eq(const vvm_bits_t&l, const vvm_bits_t&r)
@@ -420,29 +416,31 @@ vvm_bitset_t<1> vvm_binop_ge(const vvm_bits_t&l, const vvm_bits_t&r)
 
 vvm_bitset_t<1> vvm_binop_land(const vvm_bits_t&l, const vvm_bits_t&r)
 {
-      vvm_bitset_t<1> res1 = vvm_unop_or(l);
-      vvm_bitset_t<1> res2 = vvm_unop_or(r);
+      vvm_bitset_t<1> res1;
+      res1[0] = vvm_unop_or(l);
+      vvm_bitset_t<1> res2;
+      res2[0] = vvm_unop_or(r);
       res1[0] = B_AND(res1[0], res2[0]);
       return res1;
 }
 
 vvm_bitset_t<1> vvm_binop_lor(const vvm_bits_t&l, const vvm_bits_t&r)
 {
-      vvm_bitset_t<1> res1 = vvm_unop_or(l);
-      vvm_bitset_t<1> res2 = vvm_unop_or(r);
+      vvm_bitset_t<1> res1;
+      res1[0] = vvm_unop_or(l);
+      vvm_bitset_t<1> res2;
+      res2[0] = vvm_unop_or(r);
       res1[0] = B_OR(res1[0], res2[0]);
       return res1;
-}
-
-vvm_bitset_t<1> vvm_unop_lnot(const vvm_bits_t&r)
-{
-      vvm_bitset_t<1> res = vvm_unop_or(r);
-      return vvm_unop_not(res);
 }
 
 
 /*
  * $Log: vvm_func.cc,v $
+ * Revision 1.3  2000/03/24 02:43:37  steve
+ *  vvm_unop and vvm_binop pass result by reference
+ *  instead of returning a value.
+ *
  * Revision 1.2  2000/03/22 04:26:41  steve
  *  Replace the vpip_bit_t with a typedef and
  *  define values for all the different bit
