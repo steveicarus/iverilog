@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.16 2003/11/01 04:22:51 steve Exp $"
+#ident "$Id: Makefile.in,v 1.17 2003/12/07 19:28:43 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -43,7 +43,7 @@ CXXFLAGS = @CXXFLAGS@
 CFLAGS  = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: dep vvp.tgt
+all: dep vvp.tgt vvp.conf vvp-s.conf
 
 dep:
 	mkdir dep
@@ -66,6 +66,12 @@ endif
 
 vvp.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+
+vvp.conf: $(srcdir)/vvp.conf.in
+	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp' | cat $(srcdir)/vvp.conf.in - > vvp.conf
+
+vvp-s.conf: $(srcdir)/vvp-s.conf.in
+	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp' | cat $(srcdir)/vvp-s.conf.in - > vvp-s.conf
 
 Makefile: Makefile.in config.status
 	./config.status
