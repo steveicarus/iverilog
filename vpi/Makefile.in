@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.22 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: Makefile.in,v 1.23 2001/03/20 01:43:16 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -50,7 +50,7 @@ all: system.vpi
 
 %.o: %.c
 	@[ -d dep ] || mkdir dep
-	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -I$(srcdir) -I$(srcdir)/../vpip -MD -c $< -o $*.o
+	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -I$(srcdir) -I$(srcdir)/.. -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = sys_table.o sys_display.o sys_finish.o sys_random.o \
