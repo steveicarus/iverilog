@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.21 2001/04/03 04:50:37 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.22 2001/04/04 04:14:09 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -470,25 +470,12 @@ static int show_system_task_call(ivl_statement_t net)
 	    switch (ivl_expr_type(expr)) {
 
 		case IVL_EX_NUMBER: {
-			/* CHEAT! For now, only draw decimal values. I
-			   should draw this as a vector, but I'm lazy. */
 		      unsigned bit, wid = ivl_expr_width(expr);
 		      const char*bits = ivl_expr_bits(expr);
-		      unsigned long val = 0, mask;
-		      assert(wid < 8*sizeof val);
 
-		      for (bit = 0, mask = 1; bit < wid; bit += 1, mask <<= 1)
-			    switch (bits[bit]) {
-				case '1':
-				  val |= mask;
-				  break;
-				case '0':
-				  break;
-				default:
-				  assert(0);
-			    }
-
-		      fprintf(vvp_out, ", %lu", val);
+		      fprintf(vvp_out, ", %u'b", wid);
+		      for (bit = wid ;  wid > 0 ;  bit -= 1)
+			    fputc(bits[bit-1], vvp_out);
 		      break;
 		}
 
@@ -669,6 +656,9 @@ int draw_task_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.22  2001/04/04 04:14:09  steve
+ *  emit vpi parameters values as vectors.
+ *
  * Revision 1.21  2001/04/03 04:50:37  steve
  *  Support non-blocking assignments.
  *
