@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.44 2001/09/15 18:27:04 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.45 2001/09/20 03:46:38 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -577,38 +577,61 @@ static struct vector_info draw_bitsel_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+/*
+ * The concatenation operator is evaluated by evaluating each sub-
+ * expression, then copying it into the continguous vector of the
+ * result. Do this until the result vector is filled.
+ */
 static struct vector_info draw_concat_expr(ivl_expr_t exp, unsigned wid)
 {
       unsigned off, rep;
       struct vector_info res;
 
-      assert(wid >= ivl_expr_width(exp));
-
+	/* Allocate a vector to hold the result. */
       res.base = allocate_vector(wid);
       res.wid = wid;
 
+	/* Get the repeat count. This must be a constant that has been
+	   evaluated at compile time. The operands will be repeated to
+	   form the result. */
       rep = ivl_expr_repeat(exp);
       off = 0;
 
       while (rep > 0) {
+
+	      /* Each repeat, evaluate the sub-expressions, from lsb
+		 to msb, and copy each into the result vector. The
+		 expressions are arranged in the concatenation from
+		 MSB to LSB, to go through them backwards.
+
+		 Abort the loop if the result vector gets filled up. */
+
 	    unsigned idx = ivl_expr_parms(exp);
-	    while (idx > 0) {
+	    while ((idx > 0) && (off < wid)) {
 		  ivl_expr_t arg = ivl_expr_parm(exp, idx-1);
 		  unsigned awid = ivl_expr_width(arg);
 
+		    /* Evaluate this sub expression. */
 		  struct vector_info avec = draw_eval_expr_wid(arg, awid);
 
+		  unsigned trans = awid;
+		  if ((off + awid) > wid)
+			trans = wid - off;
+
+		  assert(awid == avec.wid);
+
 		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n", res.base+off,
-			  avec.base, avec.wid);
+			  avec.base, trans);
 		  clr_vector(avec);
 
 		  idx -= 1;
-		  off += awid;
+		  off += trans;
 		  assert(off <= wid);
 	    }
 	    rep -= 1;
       }
 
+	/* Pad the result with 0, if necessary. */
       if (off < wid) {
 	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
 		    res.base+off, wid-off);
@@ -1200,6 +1223,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.45  2001/09/20 03:46:38  steve
+ *  Handle short l-values to concatenation.
+ *
  * Revision 1.44  2001/09/15 18:27:04  steve
  *  Make configure detect malloc.h
  *
