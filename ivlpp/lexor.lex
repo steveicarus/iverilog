@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.15 2000/03/05 06:13:29 steve Exp $"
+#ident "$Id: lexor.lex,v 1.16 2000/03/18 06:12:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -122,6 +122,7 @@ W [ \t\b\f]+
 <PPINCLUDE>[ \t\b\f] { ; }
 
 <PPINCLUDE>\n { istack->lineno += 1; BEGIN(0); do_include(); }
+<PPINCLUDE><<EOF>> { istack->lineno += 1; BEGIN(0); do_include(); }
 
 
   /* Detect the define directive, and match the name. Match any
@@ -131,8 +132,15 @@ W [ \t\b\f]+
 
 `define{W}[a-zA-Z][a-zA-Z0-9_]*{W}? { BEGIN(PPDEFINE); def_start(); }
 
-<PPDEFINE>.*\n {
-      do_define();
+<PPDEFINE>.* { do_define(); }
+
+<PPDEFINE>\n {
+      istack->lineno += 1;
+      fputc('\n', yyout);
+      BEGIN(0);
+  }
+
+<PPDEFINE><<EOF>> {
       istack->lineno += 1;
       fputc('\n', yyout);
       BEGIN(0);
