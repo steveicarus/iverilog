@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.9 2001/10/20 01:03:42 steve Exp $"
+#ident "$Id: config.h.in,v 1.10 2002/04/20 04:33:23 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG 0
@@ -39,6 +39,20 @@
 
 #ifndef MODULE_DIR
 # define MODULE_DIR "."
+#endif
+
+#if SIZEOF_UNSIGNED >= 8
+typedef unsigned vvp_time64_t;
+#else
+# if SIZEOF_UNSIGNED_LONG >= 8
+typedef unsigned long vvp_time64_t;
+# else
+#  if SIZEOF_UNSIGNED_LONG_LONG > SIZEOF_UNSIGNED_LONG
+typedef unsigned long long vvp_time64_t;
+#  else
+typedef unsigned long vvp_time64_t;
+#  endif
+# endif
 #endif
 
 #if defined(HAVE_LIBREADLINE) && defined(ENABLE_VVP_DEBUG)
@@ -70,6 +84,11 @@
 
 /*
  * $Log: config.h.in,v $
+ * Revision 1.10  2002/04/20 04:33:23  steve
+ *  Support specified times in cbReadOnlySync, and
+ *  add support for cbReadWriteSync.
+ *  Keep simulation time in a 64bit number.
+ *
  * Revision 1.9  2001/10/20 01:03:42  steve
  *  Print memory usage information if requested (Stephan Boettcher)
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.h,v 1.8 2001/10/31 04:27:47 steve Exp $"
+#ident "$Id: schedule.h,v 1.9 2002/04/20 04:33:23 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -71,7 +71,7 @@ extern void schedule_simulate(void);
  * internally by the scheduler (which uses time differences instead)
  * but is used for printouts and stuff.
  */
-extern unsigned long schedule_simtime(void);
+extern vvp_time64_t schedule_simtime(void);
 
 /*
  * This function is the equivilent of the $finish system task. It
@@ -88,6 +88,11 @@ extern bool schedule_finished(void);
 
 /*
  * $Log: schedule.h,v $
+ * Revision 1.9  2002/04/20 04:33:23  steve
+ *  Support specified times in cbReadOnlySync, and
+ *  add support for cbReadWriteSync.
+ *  Keep simulation time in a 64bit number.
+ *
  * Revision 1.8  2001/10/31 04:27:47  steve
  *  Rewrite the functor type to have fewer functor modes,
  *  and use objects to manage the different types.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: schedule.cc,v 1.15 2002/03/17 03:23:55 steve Exp $"
+#ident "$Id: schedule.cc,v 1.16 2002/04/20 04:33:23 steve Exp $"
 #endif
 
 # include  "schedule.h"
@@ -276,8 +276,8 @@ void schedule_generic(vvp_gen_event_t obj, unsigned char val, unsigned delay)
       schedule_event_(cur);
 }
 
-static unsigned long schedule_time;
-unsigned long schedule_simtime(void)
+static vvp_time64_t schedule_time;
+vvp_time64_t schedule_simtime(void)
 { return schedule_time; }
 
 void schedule_simulate(void)
@@ -364,6 +364,11 @@ void schedule_simulate(void)
 
 /*
  * $Log: schedule.cc,v $
+ * Revision 1.16  2002/04/20 04:33:23  steve
+ *  Support specified times in cbReadOnlySync, and
+ *  add support for cbReadWriteSync.
+ *  Keep simulation time in a 64bit number.
+ *
  * Revision 1.15  2002/03/17 03:23:55  steve
  *  Force the push flags to be explicit.
  *

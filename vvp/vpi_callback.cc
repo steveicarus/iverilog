@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.11 2002/04/06 20:25:45 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.12 2002/04/20 04:33:23 steve Exp $"
 #endif
 
 /*
@@ -226,14 +226,13 @@ static void make_sync_run(vvp_gen_event_t obj, unsigned char)
 
       struct __vpiCallback*cur = cb->handle;
       cur->cb_data.time->type = vpiSimTime;
-      cur->cb_data.time->low = schedule_simtime();
-      cur->cb_data.time->high = 0;
+      vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
       free_vpi_callback(cur);
 }
 
-static struct __vpiCallback* make_sync(p_cb_data data)
+static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 {
       struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
@@ -243,12 +242,31 @@ static struct __vpiCallback* make_sync(p_cb_data data)
       obj->next = 0;
 
       struct sync_cb*cb = new sync_cb;
-      cb->sync_flag = true;
+      cb->sync_flag = readonly_flag? true : false;
       cb->run = &make_sync_run;
       cb->handle = obj;
       obj->cb_sync = cb;
 
-      schedule_generic(cb, 0, 0);
+      switch (obj->cb_time.type) {
+	  case vpiSuppressTime:
+	    schedule_generic(cb, 0, 0);
+	    break;
+
+	  case vpiSimTime:
+	      { vvp_time64_t tv = vpip_timestruct_to_time(&obj->cb_time);
+		vvp_time64_t tn = schedule_simtime();
+		if (tv < tn) {
+		      schedule_generic(cb, 0, 0);
+		} else {
+		      schedule_generic(cb, 0, tv - tn);
+		}
+		break;
+	      }
+
+	  default:
+	    assert(0);
+	    break;
+      }
       return obj;
 }
 
@@ -263,7 +281,11 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	    break;
 
 	  case cbReadOnlySynch:
-	    obj = make_sync(data);
+	    obj = make_sync(data, true);
+	    break;
+
+	  case cbReadWriteSynch:
+	    obj = make_sync(data, false);
 	    break;
 
 	  default:
@@ -313,21 +335,21 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 		  }
 	    }
 	    cur->cb_data.time->type = vpiSimTime;
-	    cur->cb_data.time->low = schedule_simtime();
-	    cur->cb_data.time->high = 0;
+	    vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 
       }
 }
 
 
-void vpip_trip_monitor_callbacks(void)
-{
-}
-
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.12  2002/04/20 04:33:23  steve
+ *  Support specified times in cbReadOnlySync, and
+ *  add support for cbReadWriteSync.
+ *  Keep simulation time in a 64bit number.
+ *
  * Revision 1.11  2002/04/06 20:25:45  steve
  *  cbValueChange automatically replays.
  *

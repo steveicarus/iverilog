@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_time.cc,v 1.6 2002/01/15 03:06:29 steve Exp $"
+#ident "$Id: vpi_time.cc,v 1.7 2002/04/20 04:33:23 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -27,6 +27,20 @@
 
 
 static int vpi_time_precision = 0;
+
+void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti)
+{
+      ts->low  = ti & 0xFFFFFFFF;
+      ts->high = (ti >> 32) & 0xFFFFFFFF;
+}
+
+vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
+{
+      vvp_time64_t ti = ts->high;
+      ti <<= 32;
+      ti += ts->low & 0xffffffff;
+      return ti;
+}
 
 static struct __vpiSystemTime {
       struct __vpiHandle base;
@@ -60,8 +74,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiTimeVal:
 	    vp->value.time = &time_handle.value;
 	    vp->value.time->type = vpiSimTime;
-	    vp->value.time->high = 0;
-	    vp->value.time->low = schedule_simtime();
+	    vpip_time_to_timestruct(vp->value.time, schedule_simtime());
 	    vp->format = vpiTimeVal;
 	    break;
 
@@ -129,6 +142,11 @@ void vpip_set_time_precision(int pre)
 
 /*
  * $Log: vpi_time.cc,v $
+ * Revision 1.7  2002/04/20 04:33:23  steve
+ *  Support specified times in cbReadOnlySync, and
+ *  add support for cbReadWriteSync.
+ *  Keep simulation time in a 64bit number.
+ *
  * Revision 1.6  2002/01/15 03:06:29  steve
  *  Support vpiSize and vpiSigned for time objects.
  *

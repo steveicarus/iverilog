@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.30 2002/04/14 03:53:20 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.31 2002/04/20 04:33:23 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -248,6 +248,9 @@ vpiHandle vpip_sim_time(void);
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
 
+extern void vpip_time_to_timestruct(struct t_vpi_time*ts, vvp_time64_t ti);
+extern vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts);
+
 
 /*
 **  Functions defined in vpi_scope.cc, to keep track of functor scope.
@@ -269,6 +272,11 @@ extern unsigned vpip_bits_to_dec_str(const unsigned char *bits,
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.31  2002/04/20 04:33:23  steve
+ *  Support specified times in cbReadOnlySync, and
+ *  add support for cbReadWriteSync.
+ *  Keep simulation time in a 64bit number.
+ *
  * Revision 1.30  2002/04/14 03:53:20  steve
  *  Allow signed constant vectors for call_vpi parameters.
  *
