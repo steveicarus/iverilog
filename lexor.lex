@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.48 2000/10/14 01:31:30 steve Exp $"
+#ident "$Id: lexor.lex,v 1.49 2000/10/14 04:07:54 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -334,6 +334,12 @@ static verinum*make_binary_with_size(unsigned size, bool fixed, const char*ptr)
 
       unsigned idx = 0;
       const char*eptr = ptr + strlen(ptr) - 1;
+
+      if ((strlen(ptr) * 1) > size)
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric binary constant ``" << ptr <<
+           "'' truncated to " << size << " bits." << endl;
+
       while ((eptr >= ptr) && (idx < size)) {
 
 	    switch (*eptr) {
@@ -473,6 +479,11 @@ static verinum*make_sized_octal(const char*txt)
 
 	/* Find the end of the digits. ptr already points to the start. */
       char*eptr = ptr + strlen(ptr);
+
+      if ((strlen(ptr) * 3) > ((size+2)/3) * 3)
+	    cerr << yylloc.text << ":" << yylloc.first_line <<
+		  ": warning: Numeric octal constant ``" << ptr <<
+		  "'' truncated to " << size << " bits." << endl;
 
 	/* From the last digit and forward, build up the number, least
 	   significant bit first. This loop will not get the last few
@@ -629,6 +640,11 @@ static verinum*make_sized_hex(const char*txt)
       unsigned idx = 0;
       char*eptr = ptr + strlen(ptr) - 1;
 
+      if ((strlen(ptr) * 4) > ((size+3)/4) * 4)
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric hex constant ``" << ptr <<
+           "'' truncated to " << size << " bits." << endl;
+
       while ((eptr >= ptr) && (idx < size)) {
 	    switch (*eptr) {
 		case 'x': case 'X':
@@ -776,6 +792,11 @@ static verinum*make_dec_with_size(unsigned size, bool fixed, const char*ptr)
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
       
+      if ((strlen(ptr) * 4) > size)
+        cerr << yylloc.text << ":" << yylloc.first_line <<
+          ": warning: Numeric decimal constant ``" << ptr <<
+           "'' truncated to " << size << " bits." << endl;
+
       unsigned long value = 0;
       for ( ; *ptr ; ptr += 1)
 	    if (isdigit(*ptr)) {
