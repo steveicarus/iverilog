@@ -94,12 +94,18 @@ configure script that modify its behavior:
 	    common to use --prefix=/opt.  You can configure for a non-root
 	    install with --prefix=$HOME.
 
+	--enable-vvp32 (experimental)
+	    If compiling on AMD64 systems, this enables the
+	    compilation of 32bit compatible vvp (vvp32) and the vpi
+	    modules that match.
+
 NOTE FOR AMD64: If you are building on an AMD64 system, you probably
 want to put libraries in a lib64 directory instead of the usual lib
 directory. This is how Linux/AMD64 keeps 64bit libraries segregated
 from 32bit libraries. This is done by configuring like this:
 
-  ./configure libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=.
+  ./configure libdir64='$(prefix)/lib64' vpidir1=vpi64 vpidir2=. --enable-vvp32
+
 
 2.3 (Optional) Testing
 

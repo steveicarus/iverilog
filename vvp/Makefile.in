@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.55 2003/10/02 21:30:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.56 2003/10/06 18:58:33 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -113,6 +113,22 @@ tables.cc: $(srcdir)/draw_tt.c
 	$(HOSTCC) -o draw_tt $(srcdir)/draw_tt.c
 	./draw_tt > tables.cc
 	rm draw_tt@EXEEXT@
+
+ifeq (@enable_vvp32@,yes)
+bin32:
+	mkdir bin32
+
+bin32/%.o: %.cc bin32
+	$(CXX) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $@
+
+bin32/%.o: %.c bin32
+	$(CC) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $@
+
+bin32/lexor.o: lexor.cc parse.h
+
+vvp32: $(addprefix bin32/,$O)
+	$(CXX) -m32 $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp32 $(addprefix bin32/,$O) $(LIBS) $(dllib)
+endif
 
 lexor.o: lexor.cc parse.h
 

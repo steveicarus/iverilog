@@ -11,6 +11,10 @@ AC_EXEEXT
 AC_MINGW32
 AC_SUBST(EXEEXT)
 
+# vvp32 is by default disabled
+#enable_vvp32=no
+AC_SUBST(enable_vvp32)
+
 AC_CHECK_PROGS(LEX,flex,none)
 if test "$LEX" = "none"
 then
