@@ -4,6 +4,10 @@ on Mac OS X.  I assume that you have experience with Unix and
 Terminal.app and a basic knowledge of how to download, compile and
 install software from source form.
 
+Yasukisa Kato wrote another set of instructions that has also been
+known to work: <http://adwis.com/verilog/index.html>. You may try
+those instructions instead of these, although they are essentially
+quite similar.
 
 1)  Obtain and install a libdl compatibility library.
 
