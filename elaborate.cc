@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.51 1999/07/10 02:19:26 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.52 1999/07/10 03:00:05 steve Exp $"
 #endif
 
 /*
@@ -177,6 +177,14 @@ void PWire::elaborate(Design*des, const string&path) const
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_attributes(attributes);
+
+	    verinum::V iv = verinum::Vz;
+	    if (wtype == NetNet::REG)
+		  iv = verinum::Vx;
+
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		  sig->set_ival(idx, iv);
+
 	    des->add_signal(sig);
       }
 }
@@ -1715,6 +1723,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.52  1999/07/10 03:00:05  steve
+ *  Proper initialization of registers.
+ *
  * Revision 1.51  1999/07/10 02:19:26  steve
  *  Support concatenate in l-values.
  *

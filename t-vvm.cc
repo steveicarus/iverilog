@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.29 1999/07/10 01:02:08 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.30 1999/07/10 03:00:05 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -428,8 +428,12 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 	    if (sig->get_ival(idx) == verinum::Vz)
 		  continue;
 
-	    for (const NetObj::Link*lnk = sig->pin(0).next_link()
-		       ; (*lnk) != sig->pin(0) ;  lnk = lnk->next_link()) {
+	    for (const NetObj::Link*lnk = sig->pin(idx).next_link()
+		       ; (*lnk) != sig->pin(idx) ;  lnk = lnk->next_link()) {
+
+		  if (lnk->get_dir() == NetObj::Link::OUTPUT)
+			continue;
+
 		  const NetNode*net;
 		  if ((net = dynamic_cast<const NetNode*>(lnk->get_obj()))) {
 			init_code << "      " <<
@@ -1263,6 +1267,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.30  1999/07/10 03:00:05  steve
+ *  Proper initialization of registers.
+ *
  * Revision 1.29  1999/07/10 01:02:08  steve
  *  Handle number constants as parameters.
  *
