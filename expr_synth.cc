@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.41 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.42 2003/04/08 04:33:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -398,6 +398,48 @@ NetNet* NetEBLogic::synthesize(Design*des)
       return osig;
 }
 
+NetNet* NetEBShift::synthesize(Design*des)
+{
+      NetNet*lsig = left_->synthesize(des);
+      NetNet*rsig = right_->synthesize(des);
+
+      if (lsig == 0)
+	    return 0;
+
+      if (rsig == 0)
+	    return 0;
+
+      NetScope*scope = lsig->scope();
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::IMPLICIT, expr_width());
+
+      assert(op() == 'l');
+      NetCLShift*dev = new NetCLShift(scope, scope->local_symbol(),
+				      osig->pin_count(),
+				      rsig->pin_count());
+      des->add_node(dev);
+
+      for (unsigned idx = 0 ; idx < dev->width() ;  idx += 1)
+	    connect(dev->pin_Result(idx), osig->pin(idx));
+
+      assert(lsig->pin_count() >= dev->width());
+      for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1)
+	    connect(dev->pin_Data(idx), lsig->pin(idx));
+
+      for (unsigned idx = 0 ;  idx < dev->width_dist() ;  idx += 1)
+	    connect(dev->pin_Distance(idx), rsig->pin(idx));
+
+      verinum dir_v = (op() == 'r')? verinum::V1 : verinum::V0;
+      NetNet*dir_n = new NetNet(scope, scope->local_symbol(),
+				NetNet::WIRE, 1);
+      NetConst*dir = new NetConst(scope, scope->local_symbol(), dir_v);
+      connect(dev->pin_Direction(), dir->pin(0));
+      connect(dev->pin_Direction(), dir_n->pin(0));
+
+      return osig;
+}
+
 NetNet* NetEConcat::synthesize(Design*des)
 {
 	/* First, synthesize the operands. */
@@ -641,6 +683,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.42  2003/04/08 04:33:55  steve
+ *  Synthesize shift expressions.
+ *
  * Revision 1.41  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *
@@ -672,131 +717,5 @@ NetNet* NetESignal::synthesize(Design*des)
  *
  *  Divide signal reference counts between rval
  *  and lval references.
- *
- * Revision 1.32  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.31  2001/12/30 17:06:52  steve
- *  Synthesize reduction logic.
- *
- * Revision 1.30  2001/12/18 05:34:02  steve
- *  Comments about MUX synthesis.
- *
- * Revision 1.29  2001/11/29 01:58:18  steve
- *  Handle part selects in l-values of DFF devices.
- *
- * Revision 1.28  2001/10/28 01:14:53  steve
- *  NetObj constructor finally requires a scope.
- *
- * Revision 1.27  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.26  2001/08/31 22:59:48  steve
- *  synthesize the special case of compare with 0.
- *
- * Revision 1.25  2001/08/05 02:49:07  steve
- *  Properly synthesize part selects.
- *
- * Revision 1.24  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.23  2001/07/07 01:38:45  steve
- *  Put synthesized signals in proper scope.
- *
- * Revision 1.22  2001/06/15 04:14:18  steve
- *  Generate vvp code for GT and GE comparisons.
- *
- * Revision 1.21  2001/06/07 02:12:43  steve
- *  Support structural addition.
- *
- * Revision 1.20  2001/02/15 06:59:36  steve
- *  FreeBSD port has a maintainer now.
- *
- * Revision 1.19  2001/01/18 03:16:35  steve
- *  NetMux needs a scope. (PR#115)
- *
- * Revision 1.18  2000/11/29 23:16:18  steve
- *  Do not delete synthesized signals used in expressions.
- *
- * Revision 1.17  2000/11/29 05:24:00  steve
- *  synthesis for unary reduction ! and N operators.
- *
- * Revision 1.16  2000/11/29 02:09:52  steve
- *  Add support for || synthesis (PR#53)
- *
- * Revision 1.15  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.14  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.13  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.12  2000/04/20 00:28:03  steve
- *  Catch some simple identity compareoptimizations.
- *
- * Revision 1.11  2000/04/16 23:32:18  steve
- *  Synthesis of comparator in expressions.
- *
- *  Connect the NetEvent and related classes
- *  together better.
- *
- * Revision 1.10  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.9  2000/01/01 06:18:00  steve
- *  Handle synthesis of concatenation.
- *
- * Revision 1.8  1999/12/17 06:18:15  steve
- *  Rewrite the cprop functor to use the functor_t interface.
- *
- * Revision 1.7  1999/12/17 03:38:46  steve
- *  NetConst can now hold wide constants.
- *
- * Revision 1.6  1999/11/28 23:42:02  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.5  1999/11/27 19:07:57  steve
- *  Support the creation of scopes.
- *
- * Revision 1.4  1999/11/19 03:00:59  steve
- *  Whoops, created a signal with a duplicate name.
- *
- * Revision 1.3  1999/11/05 04:40:40  steve
- *  Patch to synthesize LPM_ADD_SUB from expressions,
- *  Thanks to Larry Doolittle. Also handle constants
- *  in expressions.
- *
- *  Synthesize adders in XNF, based on a patch from
- *  Larry. Accept synthesis of constants from Larry
- *  as is.
- *
- * Revision 1.2  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.1  1999/11/02 04:55:34  steve
- *  Add the synthesize method to NetExpr to handle
- *  synthesis of expressions, and use that method
- *  to improve r-value handling of LPM_FF synthesis.
- *
- *  Modify the XNF target to handle LPM_FF objects.
- *
  */
 

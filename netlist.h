@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.283 2003/03/29 05:51:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.284 2003/04/08 04:33:55 steve Exp $"
 #endif
 
 /*
@@ -2514,6 +2514,8 @@ class NetEBShift : public NetEBinary {
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual NetNet* synthesize(Design*);
+
     private:
 };
 
@@ -3244,6 +3246,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.284  2003/04/08 04:33:55  steve
+ *  Synthesize shift expressions.
+ *
  * Revision 1.283  2003/03/29 05:51:25  steve
  *  Sign extend NetMult inputs if result is signed.
  *
