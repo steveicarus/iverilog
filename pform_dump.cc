@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.30 1999/07/30 00:43:17 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.31 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 /*
@@ -59,6 +59,17 @@ void PEConcat::dump(ostream&out) const
       out << "}";
 
       if (repeat_) out << "}";
+}
+
+void PECallFunction::dump(ostream &out) const
+{
+      out << name_ << "(";
+      parms_[0]->dump(out);
+      for (unsigned idx = 0; idx < parms_.count(); ++idx) {
+	    out << ", ";
+	    parms_[idx]->dump(out);
+      }
+      out << ")";
 }
 
 void PEEvent::dump(ostream&out) const
@@ -401,6 +412,17 @@ void PForStatement::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+3);
 }
 
+void PFunction::dump(ostream&out, unsigned ind) const
+{
+      for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+	    out << setw(ind) << "";
+	    out << "input ";
+	    out << (*ports_)[idx]->name() << ";" << endl;
+      }
+
+      statement_->dump(out, ind);
+}
+
 void PRepeat::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
@@ -480,6 +502,15 @@ void Module::dump(ostream&out) const
 	    out << "    endtask;" << endl;
       }
 
+	// Dump the function definitions.
+      typedef map<string,PFunction*>::const_iterator func_iter_t;
+      for (func_iter_t cur = funcs_.begin()
+		 ; cur != funcs_.end() ; cur ++) {
+	    out << "    function " << (*cur).first << ";" << endl;
+	    (*cur).second->dump(out, 6);
+	    out << "    endfunction;" << endl;
+      }
+
 
 	// Iterate through and display all the gates
       for (list<PGate*>::const_iterator gate = gates_.begin()
@@ -547,6 +578,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.31  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.30  1999/07/30 00:43:17  steve
  *  Handle dumping tasks with no ports.
  *

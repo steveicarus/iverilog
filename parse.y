@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.53 1999/07/28 03:47:24 steve Exp $"
+#ident "$Id: parse.y,v 1.54 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -53,6 +53,7 @@ extern void lex_end_table();
       NetNet::PortType porttype;
 
       PTask*task;
+      PFunction*function;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -108,6 +109,7 @@ extern void lex_end_table();
 %type <wire> port
 %type <wires> list_of_ports list_of_ports_opt
 %type <wires> task_item task_item_list task_item_list_opt
+%type <wires> function_item function_item_list
 
 %type <portname> port_name
 %type <portnames> port_name_list
@@ -129,6 +131,7 @@ extern void lex_end_table();
 %type <porttype> port_type
 
 %type <task> task_body
+%type <function> func_body
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_opt
@@ -609,8 +612,10 @@ expr_primary
 		  $$ = tmp;
 		}
 	| identifier '(' expression_list ')'
-		{ yyerror(@2, "Sorry, function calls not supported.");
-		  $$ = 0;
+                { PECallFunction*tmp = new PECallFunction($1, *$3);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER '(' expression_list ')'
 		{ yyerror(@2, "Sorry, function calls not supported.");
@@ -650,19 +655,34 @@ expr_primary
 
 func_body
 	: function_item_list statement
+                { $$ = new PFunction($1, $2); }
 	| function_item_list
 		{ yyerror(@1, "function body has no statement."); }
 	;
 
 function_item
 	: K_input range_opt list_of_variables ';'
+                { svector<PWire*>*tmp
+			= pform_make_task_ports(NetNet::PINPUT, $2, $3);
+		  delete $2;
+		  delete $3;
+		  $$ = tmp;
+		}
 	| K_reg range_opt list_of_variables ';'
+                { $$ = 0; }
 	| K_integer list_of_variables ';'
+                { $$ = 0; }
 	;
 
 function_item_list
 	: function_item
+                { $$ = $1; }
 	| function_item_list function_item
+		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
+		  delete $1;
+		  delete $2;
+		  $$ = tmp;
+		}
 	;
 
   /* A gate_instance is a module instantiation or a built in part
@@ -996,8 +1016,16 @@ module_item
 		  pform_set_task($2, $5);
 		  delete $2;
 		}
-	| K_function range_or_type_opt  IDENTIFIER ';' func_body K_endfunction
-		{ yyerror(@1, "Sorry, function declarations not supported.");
+        | K_function range_or_type_opt IDENTIFIER ';'
+                { pform_push_scope($3); }
+          func_body
+                { pform_pop_scope(); }
+          K_endfunction
+                { PFunction *tmp = $6;
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  pform_set_function($3, $6);
+		  delete $3;
 		}
 	| K_specify specify_item_list K_endspecify
 		{

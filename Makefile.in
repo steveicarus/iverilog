@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.9 1999/07/18 05:52:46 steve Exp $"
+#ident "$Id: Makefile.in,v 1.10 1999/07/31 19:14:47 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -58,7 +58,7 @@ FF = nobufz.o propinit.o sigfold.o xnfio.o xnfsyn.o
 O = main.o cprop.o design_dump.o elaborate.o emit.o eval.o functor.o \
 lexor.o mangle.o netlist.o parse.o parse_misc.o pform.o pform_dump.o \
 verinum.o verireal.o target.o targets.o Module.o PExpr.o PGate.o \
-PTask.o PWire.o Statement.o \
+PTask.o PFunction.o PWire.o Statement.o \
 $(FF) $(TT)
 
 Makefile: Makefile.in config.status

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.49 1999/07/31 03:16:54 steve Exp $"
+#ident "$Id: netlist.cc,v 1.50 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -29,6 +29,9 @@ ostream& operator<< (ostream&o, NetNet::Type t)
       switch (t) {
 	  case NetNet::IMPLICIT:
 	    o << "wire /*implicit*/";
+	    break;
+	  case NetNet::IMPLICIT_REG:
+	    o << "reg /*implicit*/";
 	    break;
 	  case NetNet::INTEGER:
 	    o << "integer";
@@ -1527,6 +1530,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.50  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.49  1999/07/31 03:16:54  steve
  *  move binary operators to derived classes.
  *

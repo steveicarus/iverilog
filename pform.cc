@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.33 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: pform.cc,v 1.34 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -435,7 +435,7 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
  * but we know that if the name matches it is a part of the current
  * task, so in that case I just assign direction to it.
  *
- * The following example demonstrates some if the issues:
+ * The following example demonstrates some of the issues:
  *
  *   task foo;
  *      input a;
@@ -449,7 +449,21 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
  * the wire is declared as a register, so I create the foo.a
  * wire. For ``b'', I will find that there is already a foo.b and I
  * just set the port direction. In either case, the ``reg a, b''
- * statement is caught by the block_item non-terminal and processed there.
+ * statement is caught by the block_item non-terminal and processed
+ * there.
+ *
+ * Ports are implicitly type reg, because it must be possible for the
+ * port to act as an l-value in a procedural assignment. It is obvious
+ * for output and inout ports that the type is reg, because the task
+ * only contains behavior (no structure) to a procedural assignment is
+ * the *only* way to affect the put. It is less obvious for input
+ * ports, but in practice an input port receives its value as if by a
+ * procedural assignment from the calling behavior.
+ *
+ * This function also handles the input ports of function
+ * definitions. Input ports to function definitions have the same
+ * constraints as those of tasks, so this works fine. Functions have
+ * no output or inout ports.
  */
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      const svector<PExpr*>*range,
@@ -486,6 +500,11 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 void pform_set_task(const string&name, PTask*task)
 {
       pform_cur_module->add_task(name, task);
+}
+
+void pform_set_function(const string&name, PFunction *func)
+{
+      pform_cur_module->add_function(name, func);
 }
 
 void pform_set_attrib(const string&name, const string&key, const string&value)
@@ -638,6 +657,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.34  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.33  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *

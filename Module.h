@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.5 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: Module.h,v 1.6 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  <list>
@@ -29,6 +29,7 @@
 class PExpr;
 class PGate;
 class PTask;
+class PFunction;
 class PWire;
 class PProcess;
 class Design;
@@ -57,6 +58,7 @@ class Module {
       void add_wire(PWire*wire);
       void add_behavior(PProcess*behave);
       void add_task(const string&name, PTask*def);
+      void add_function(const string&name, PFunction*def);
 
 	// Find a wire by name. This is used for connecting gates to
 	// existing wires, etc.
@@ -76,6 +78,7 @@ class Module {
       list<PGate*> gates_;
       list<PProcess*> behaviors_;
       map<string,PTask*> tasks_;
+      map<string,PFunction*> funcs_;
 
     private: // Not implemented
       Module(const Module&);
@@ -85,6 +88,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.6  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.5  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *

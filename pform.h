@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.24 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: pform.h,v 1.25 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -121,6 +121,7 @@ extern void pform_set_net_range(list<string>*names, const svector<PExpr*>*);
 extern void pform_set_reg_idx(const string&name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<string>*names);
 extern void pform_set_task(const string&, PTask*);
+extern void pform_set_function(const string&, PFunction*);
 extern void pform_set_attrib(const string&name, const string&key,
 			     const string&value);
 extern void pform_set_type_attrib(const string&name, const string&key,
@@ -165,6 +166,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.25  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.24  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *

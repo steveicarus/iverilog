@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.cc,v 1.3 1999/07/03 02:12:51 steve Exp $"
+#ident "$Id: Module.cc,v 1.4 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  "Module.h"
@@ -31,6 +31,11 @@ void Module::add_gate(PGate*gate)
 void Module::add_task(const string&name, PTask*task)
 {
       tasks_[name] = task;
+}
+
+void Module::add_function(const string &name, PFunction *func)
+{
+      funcs_[name] = func;
 }
 
 void Module::add_wire(PWire*wire)
@@ -59,6 +64,9 @@ PWire* Module::get_wire(const string&name)
 
 /*
  * $Log: Module.cc,v $
+ * Revision 1.4  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.3  1999/07/03 02:12:51  steve
  *  Elaborate user defined tasks.
  *

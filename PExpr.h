@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PExpr.h,v 1.15 1999/07/22 02:05:20 steve Exp $"
+#ident "$Id: PExpr.h,v 1.16 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  <string>
@@ -225,8 +225,25 @@ class PETernary : public PExpr {
       PExpr*fal_;
 };
 
+
+class PECallFunction : public PExpr {
+ public:
+      explicit PECallFunction(const string &n, const svector<PExpr *> &parms) 
+	    : name_(n), parms_(parms) {}
+      ~PECallFunction() {}
+
+      virtual void dump(ostream &) const;
+
+ private:
+      string name_;
+      svector<PExpr *> parms_;
+};
+
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.16  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.15  1999/07/22 02:05:20  steve
  *  is_constant method for PEConcat.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PTask.h,v 1.2 1999/07/24 02:11:19 steve Exp $"
+#ident "$Id: PTask.h,v 1.3 1999/07/31 19:14:47 steve Exp $"
 #endif
 
 # include  "LineInfo.h"
@@ -50,8 +50,24 @@ class PTask  : public LineInfo {
       PTask& operator=(const PTask&);
 };
 
+class PFunction : public LineInfo {
+ public:
+      explicit PFunction(svector<PWire *> *p, Statement *s);
+      ~PFunction();
+
+      //virtual void elaborate(Design *des, const string &path) const {}
+      void dump(ostream&, unsigned) const;
+
+ private:
+      svector<PWire *> *ports_;
+      Statement *statement_;
+};
+
 /*
  * $Log: PTask.h,v $
+ * Revision 1.3  1999/07/31 19:14:47  steve
+ *  Add functions up to elaboration (Ed Carter)
+ *
  * Revision 1.2  1999/07/24 02:11:19  steve
  *  Elaborate task input ports.
  *
