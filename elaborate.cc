@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.5 1998/11/21 19:19:44 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.6 1998/11/23 00:20:22 steve Exp $"
 #endif
 
 /*
@@ -125,6 +125,7 @@ void PWire::elaborate(Design*des, const string&path) const
 
       NetNet*sig = new NetNet(path + "." + name, wtype, wid);
       sig->port_type(port_type);
+      sig->set_attributes(attributes);
       des->add_signal(sig);
 }
 
@@ -706,6 +707,14 @@ Design* elaborate(const list<Module*>&modules, const string&root)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.6  1998/11/23 00:20:22  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.5  1998/11/21 19:19:44  steve
  *  Give anonymous modules a name when elaborated.
  *

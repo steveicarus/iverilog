@@ -1,4 +1,13 @@
 
+THE ICARUS VERILOG COMPILATION SYSTEM
+
+This tool includes a parser that parses Verilog (plus extensions) and
+generates an internal netlist. The netlist is passed to various
+processing steps that transform the design to more optimal/practical
+forms, then passed to a code generator for final output. The
+processing steps and the code generator are selected by command line
+switches.
+
 INVOKING
 
 The vl command is the compiler driver, that invokes the parser,
@@ -42,6 +51,23 @@ Usage: vl [-s <module>] [-o <file>] [-D] [-F <name>] [-t <name>] file
 	Select the output format for the compiled result. Use the
 	"vl -h" command to get a list of configured targets.
 
+ATTRIBUTES
+
+The parser accepts as an extension to Verilog the $attribute module
+item. The syntax of the $attribute item is:
+
+	$attribute (<identifier>, <key>, <value>);
+
+The $attribute keyword looks like a system task invocation. The
+difference here is that the parameters are more restricted then those
+of a system task. The <identifier> must be an identifier. This will be
+the item to get an attribute. The <key> and <value> are strings, not
+expressions, that give the key and the value of the attribute to be
+attached to the identified object.
+
+Attributes are [<key> <value>] pairs and are used to communicate with
+the various processing steps. See the documentation for the processing
+step for a list of the pertinent attributes.
 
 HOW IT WORKS -- STAGES OF PROCESSING
 

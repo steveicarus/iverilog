@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.4 1998/11/11 03:13:04 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.5 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 /*
@@ -130,6 +130,12 @@ void PWire::dump(ostream&out) const
       }
 
       out << name << ";" << endl;
+      for (map<string,string>::const_iterator idx = attributes.begin()
+		 ; idx != attributes.end()
+		 ; idx ++) {
+	    out << "        " << (*idx).first << " = \"" <<
+		  (*idx).second << "\"" << endl;
+      }
 }
 
 void PGate::dump_pins(ostream&out) const
@@ -329,6 +335,14 @@ void pform_dump(ostream&out, Module*mod)
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.5  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.4  1998/11/11 03:13:04  steve
  *  Handle while loops.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.5 1998/11/10 00:48:31 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.6 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -462,14 +462,23 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 {
       string rval = emit_proc_rval(os, indent_, net->rval());
 
-      os << setw(indent_) << "" << "// " << net->lval()->name() << " = ";
-      net->rval()->dump(os);
-      os << endl;
+      const NetNet*lval;
+      unsigned msb, lsb;
+      net->find_lval_range(lval, msb, lsb);
 
-      os << setw(indent_) << "" << mangle(net->lval()->name()) << " = "
-	 << rval << ";" << endl;
+      if ((lsb == 0) && (msb == (lval->pin_count()-1))) {
+	    os << setw(indent_) << "" << "// " << lval->name()
+	       << " = ";
+	    net->rval()->dump(os);
+	    os << endl;
 
-      os << setw(indent_) << "" << mangle(net->lval()->name()) <<
+	    os << setw(indent_) << "" << mangle(lval->name())
+	       << " = " << rval << ";" << endl;
+      } else {
+	    assert(0);
+      }
+
+      os << setw(indent_) << "" << mangle(lval->name()) <<
 	    "_mon.trigger(sim_);" << endl;
 
 
@@ -479,8 +488,8 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
       for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
 	    const NetObj*cur;
 	    unsigned pin;
-	    for (net->lval()->pin(idx).next_link(cur, pin)
-		       ; cur != net->lval()
+	    for (net->pin(idx).next_link(cur, pin)
+		       ; net->pin(idx) != cur->pin(pin)
 		       ; cur->pin(pin).next_link(cur, pin)) {
 
 		    // Skip NetAssign nodes. They are output-only.
@@ -662,6 +671,14 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.6  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.5  1998/11/10 00:48:31  steve
  *  Add support it vvm target for level-sensitive
  *  triggers (i.e. the Verilog wait).

@@ -19,12 +19,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.5 1998/11/11 03:13:04 steve Exp $"
+#ident "$Id: parse.y,v 1.6 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
 # include  "pform.h"
 
+extern void lex_start_table();
+extern void lex_end_table();
 %}
 
 %union {
@@ -69,6 +71,8 @@
 %token K_time K_tran K_tranif0 K_tranif1 K_tri K_tri0 K_tri1 K_triand
 %token K_trior K_vectored K_wait K_wand K_weak0 K_weak1 K_while K_wire
 %token K_wor K_xnor K_xor
+
+%token KK_attribute
 
 %type <text> identifier lvalue register_variable
 %type <strings> list_of_register_variables
@@ -138,7 +142,7 @@ delay_opt
 
 description
 	: module
-	| primitive
+	| udp_primitive
 	;
 
 event_control
@@ -433,6 +437,14 @@ module_item
 	| K_initial statement
 		{ pform_make_behavior(PProcess::PR_INITIAL, $2);
 		}
+	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
+		{ pform_set_attrib(*$3, *$5, *$7);
+		  delete $3;
+		  delete $5;
+		  delete $7;
+		}
+	| KK_attribute '(' error ')' ';'
+		{ yyerror(@1, "Misformed $attribute parameter list."); }
 	;
 
 module_item_list
@@ -478,11 +490,6 @@ port_type
 	: K_input { $$ = NetNet::PINPUT; }
 	| K_output { $$ = NetNet::POUTPUT; }
 	| K_inout { $$ = NetNet::PINOUT; }
-	;
-
-primitive
-	: K_primitive IDENTIFIER '(' error ')' ';' K_endprimitive
-		{ yyerror(@1, "Sorry, primitives not supported."); }
 	;
 
 range
@@ -611,4 +618,50 @@ statement_list
 statement_opt
 	: statement
 	| ';' { $$ = 0; }
+	;
+
+udp_body
+	: K_table { lex_start_table(); }
+	    udp_comb_entry_list
+	  K_endtable { lex_end_table(); }
+	;
+
+udp_comb_entry
+	: udp_input_list ':' udp_output_sym ';'
+	;
+
+udp_comb_entry_list
+	: udp_comb_entry
+	| udp_comb_entry_list udp_comb_entry
+	;
+
+udp_input_list
+	: udp_input_sym
+	| udp_input_list udp_input_sym
+	;
+
+udp_input_sym : '0' | '1' | 'x' | 'X' | '?' | 'b' | 'B' ;
+udp_output_sym : '0' | '1' | 'x' | 'X' ;
+
+udp_port_decl
+	: K_input list_of_variables ';'
+	| K_output IDENTIFIER ';'
+	;
+
+udp_port_decls
+	: udp_port_decl
+	| udp_port_decls udp_port_decl
+	;
+
+udp_port_list
+	: IDENTIFIER { ; }
+	| udp_port_list ',' IDENTIFIER { ; }
+	;
+
+udp_primitive
+	: K_primitive IDENTIFIER '(' udp_port_list ')' ';'
+	    udp_port_decls
+	    udp_body
+	  K_endprimitive
+		{ yyerror(@1, "Sorry, UDP primitives not supported."); }
 	;

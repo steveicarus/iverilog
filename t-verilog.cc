@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.1 1998/11/03 23:29:05 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.2 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 /*
@@ -117,6 +117,9 @@ void target_verilog::logic(ostream&os, const NetLogic*net)
 	  case NetLogic::OR:
 	    os << "    or";
 	    break;
+	  case NetLogic::XNOR:
+	    os << "    xnor";
+	    break;
 	  case NetLogic::XOR:
 	    os << "    xor";
 	    break;
@@ -166,9 +169,22 @@ void target_verilog::proc_assign(ostream&os, const NetAssign*net)
 {
       os << setw(indent_) << "";
 
-      const NetNet*lval = net->lval();
+      const NetNet*lval;
+      unsigned msb, lsb;
+      net->find_lval_range(lval, msb, lsb);
 
-      os << mangle(lval->name()) << " = ";
+      if ((lsb == 0) && (msb == (lval->pin_count()-1))) {
+	    os << mangle(lval->name());
+
+      } else if (msb == lsb) {
+	    os << mangle(lval->name()) << "[" << msb << "]";
+
+      } else {
+	    os << mangle(lval->name()) << "[" << msb << ":" << lsb <<
+		  "]";
+      }
+
+      os << " = ";
 
       emit_expr_(os, net->rval());
 
@@ -291,6 +307,14 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.2  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.1  1998/11/03 23:29:05  steve
  *  Introduce verilog to CVS.
  *

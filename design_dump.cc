@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.4 1998/11/23 00:20:22 steve Exp $"
 #endif
 
 /*
@@ -66,6 +66,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    o << " (local)";
       o << " #(" << delay1() << "," << delay2() << "," << delay3() <<
 	    ")"  << endl;
+      dump_obj_attr(o, ind+4);
 }
 
 
@@ -80,6 +81,7 @@ void NetNode::dump_node(ostream&o, unsigned ind) const
 	<< endl;
 
       dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
 }
 
 /* This is the generic dumping of all the signals connected to each
@@ -100,6 +102,16 @@ void NetObj::dump_node_pins(ostream&o, unsigned ind) const
 		  if (sig) o << " " << sig->name() << "[" << cpin << "]";
 	    }
 	    o << endl;
+      }
+}
+
+void NetObj::dump_obj_attr(ostream&o, unsigned ind) const
+{
+      for (map<string,string>::const_iterator idx = attributes_.begin()
+		 ; idx != attributes_.end()
+		 ; idx ++) {
+	    o << setw(ind) << "" << (*idx).first << " = \"" <<
+		  (*idx).second << "\"" << endl;
       }
 }
 
@@ -193,7 +205,16 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 /* Dump an assignment statement */
 void NetAssign::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << lval_->name() << " = ";
+      o << setw(ind) << "";
+
+      NetNet*sig;
+      unsigned msb, lsb;
+      find_lval_range(sig, msb, lsb);
+      o << sig->name() << "[" << msb;
+      if (pin_count() > 1)
+	    o << ":" << lsb;
+      o << "] = ";
+      
       rval_->dump(o);
       o << ";" << endl;
 }
@@ -375,6 +396,14 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.4  1998/11/23 00:20:22  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.3  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

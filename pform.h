@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.1 1998/11/03 23:29:04 steve Exp $"
+#ident "$Id: pform.h,v 1.2 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -85,6 +85,8 @@ extern void pform_makewire(const string&name, NetNet::Type type);
 extern void pform_makewire(const list<string>*names, NetNet::Type type);
 extern void pform_set_port_type(list<string>*names, NetNet::PortType);
 extern void pform_set_net_range(list<string>*names, list<PExpr*>*);
+extern void pform_set_attrib(const string&name, const string&key,
+			     const string&value);
 extern void pform_make_behavior(PProcess::Type, Statement*);
 extern Statement* pform_make_block(PBlock::BL_TYPE, list<Statement*>*);
 extern Statement* pform_make_assignment(string*t, PExpr*e);
@@ -120,6 +122,14 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.2  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.1  1998/11/03 23:29:04  steve
  *  Introduce verilog to CVS.
  *

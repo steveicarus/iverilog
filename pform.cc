@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.3 1998/11/11 00:01:51 steve Exp $"
+#ident "$Id: pform.cc,v 1.4 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 # include  "pform.h"
@@ -195,6 +195,13 @@ void pform_set_port_type(const string&name, NetNet::PortType pt)
       cur->port_type = pt;
 }
 
+void pform_set_attrib(const string&name, const string&key, const string&value)
+{
+      PWire*cur = cur_module->get_wire(name);
+      assert(cur);
+      cur->attributes[key] = value;
+}
+
 static void pform_set_net_range(const string&name, list<PExpr*>*range)
 {
       assert(range->size() == 2);
@@ -293,6 +300,14 @@ int pform_parse(FILE*input, list<Module*>&modules)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.4  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.3  1998/11/11 00:01:51  steve
  *  Check net ranges in declarations.
  *

@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PWire.h,v 1.1 1998/11/03 23:28:55 steve Exp $"
+#ident "$Id: PWire.h,v 1.2 1998/11/23 00:20:22 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include <map>
 class ostream;
 class PExpr;
 class Design;
@@ -46,6 +47,8 @@ class PWire {
       PExpr*msb;
       PExpr*lsb;
 
+      map<string,string> attributes;
+
 	// Write myself to the specified stream.
       void dump(ostream&out) const;
 
@@ -58,6 +61,14 @@ class PWire {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.2  1998/11/23 00:20:22  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.1  1998/11/03 23:28:55  steve
  *  Introduce verilog to CVS.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.3 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: lexor.lex,v 1.4 1998/11/23 00:20:23 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -48,6 +48,7 @@ static verinum*make_sized_hex(const char*txt);
 
 %x CCOMMENT
 %x CSTRING
+%s UDPTABLE
 
 %%
 
@@ -81,6 +82,8 @@ static verinum*make_sized_hex(const char*txt);
 		return STRING; }
 <CSTRING>.    { yymore(); }
 
+<UDPTABLE>[xXbB01\?] { return yytext[0]; }
+
 [a-zA-Z_][a-zA-Z0-9$_]* {
       int rc = check_identifier(yytext);
       if (rc == IDENTIFIER)
@@ -95,6 +98,8 @@ static verinum*make_sized_hex(const char*txt);
       return IDENTIFIER; }
 
 \$([a-zA-Z0-9$_]+)        {
+      if (strcmp(yytext,"$attribute") == 0)
+	    return KK_attribute;
       yylval.text = new string(yytext);
       return SYSTEM_IDENTIFIER; }
 
@@ -135,6 +140,21 @@ static verinum*make_sized_hex(const char*txt);
       cerr << ")" << endl; }
 
 %%
+
+/*
+ * The UDP state table needs some slightly different treatment by the
+ * lexor. The level characters are normally accepted as other things,
+ * so the parser needs to switch my mode when it believes in needs to.
+ */
+void lex_start_table()
+{
+      BEGIN(UDPTABLE);
+}
+
+void lex_end_table()
+{
+      BEGIN(INITIAL);
+}
 
 static const struct { const char*name; int code; } key_table[] = {
       { "always", K_always },

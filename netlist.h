@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.7 1998/11/18 04:25:22 steve Exp $"
+#ident "$Id: netlist.h,v 1.8 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 /*
@@ -87,6 +87,15 @@ class NetObj {
 	      // Return true if this link is connected to anything else.
 	    bool is_linked() const { return next_ != this; }
 
+	      // Return true if these pins are connected.
+	    bool is_linked(const NetObj::Link&that) const;
+
+	      // Return true if this link is connected to any pin of r.
+	    bool is_linked(const NetObj&r) const;
+
+	    bool is_equal(const NetObj::Link&that) const
+		  { return (node_ == that.node_) && (pin_ == that.pin_); }
+
 	  private:
 	      // The NetNode manages these. They point back to the
 	      // NetNode so that following the links can get me here.
@@ -118,6 +127,9 @@ class NetObj {
       void delay2(unsigned d) { delay2_ = d; }
       void delay3(unsigned d) { delay3_ = d; }
 
+      void set_attributes(const map<string,string>&);
+      string attribute(const string&key) const;
+
       bool test_mark() const { return mark_; }
       void set_mark(bool flag=true) { mark_ = flag; }
 
@@ -125,7 +137,7 @@ class NetObj {
       const Link&pin(unsigned idx) const { return pins_[idx]; }
 
       void dump_node_pins(ostream&, unsigned) const;
-
+      void dump_obj_attr(ostream&, unsigned) const;
 
     private:
       string name_;
@@ -134,6 +146,8 @@ class NetObj {
       unsigned delay1_;
       unsigned delay2_;
       unsigned delay3_;
+
+      map<string,string> attributes_;
 
       bool mark_;
 };
@@ -323,8 +337,10 @@ class NetAssign  : public NetProc, public NetNode {
       explicit NetAssign(NetNet*lv, NetExpr*rv);
       ~NetAssign();
 
-      const NetNet* lval() const { return lval_; }
       const NetExpr*rval() const { return rval_; }
+
+      void find_lval_range(const NetNet*&net, unsigned&msb,
+			   unsigned&lsb) const;
 
       virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void emit_node(ostream&, struct target_t*) const;
@@ -332,7 +348,6 @@ class NetAssign  : public NetProc, public NetNode {
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      NetNet*const lval_;
       NetExpr*const rval_;
 };
 
@@ -711,10 +726,23 @@ class Design {
 /* =======
  */
 
+inline bool operator == (const NetObj::Link&l, const NetObj::Link&r)
+{ return l.is_equal(r); }
+
+inline bool operator != (const NetObj::Link&l, const NetObj::Link&r)
+{ return ! l.is_equal(r); }
 
 /* Connect the pins of two nodes together. Either may already be
    connected to other things, connect is transitive. */
 extern void connect(NetObj::Link&, NetObj::Link&);
+
+inline bool connected(const NetObj::Link&l, const NetObj::Link&r)
+{ return l.is_linked(r); }
+
+/* Return true if l is fully connected to r. This means, every pin in
+   l is connected to a pin in r. This is expecially useful for
+   checking signal vectors. */
+extern bool connected(const NetObj&l, const NetObj&r);
 
 /* Find the signal connected to the given node pin. There should
    always be exactly one signal. The bidx parameter get filled with
@@ -727,6 +755,14 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.8  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.7  1998/11/18 04:25:22  steve
  *  Add -f flags for generic flag key/values.
  *

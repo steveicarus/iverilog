@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.7 1998/11/18 04:25:22 steve Exp $"
+#ident "$Id: netlist.cc,v 1.8 1998/11/23 00:20:23 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -42,6 +42,33 @@ void connect(NetObj::Link&l, NetObj::Link&r)
 	      // Go to the next item in the left list.
 	    cur = tmp;
       } while (cur != &l);
+}
+
+bool NetObj::Link::is_linked(const NetObj&that) const
+{
+      for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
+	    if (idx->node_ == &that)
+		  return true;
+
+      return false;
+}
+
+bool NetObj::Link::is_linked(const NetObj::Link&that) const
+{
+      for (const Link*idx = next_ ; this != idx ;  idx = idx->next_)
+	    if (idx == &that)
+		  return true;
+
+      return false;
+}
+
+bool connected(const NetObj&l, const NetObj&r)
+{
+      for (unsigned idx = 0 ;  idx < l.pin_count() ;  idx += 1)
+	    if (! l.pin(idx).is_linked(r))
+		  return false;
+
+      return true;
 }
 
 const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
@@ -77,6 +104,21 @@ NetObj::~NetObj()
       delete[]pins_;
 }
 
+void NetObj::set_attributes(const map<string,string>&attr)
+{
+      assert(attributes_.size() == 0);
+      attributes_ = attr;
+}
+
+string NetObj::attribute(const string&key) const
+{
+      map<string,string>::const_iterator idx = attributes_.find(key);
+      if (idx == attributes_.end())
+	    return "";
+
+      return (*idx).second;
+}
+
 NetNode::~NetNode()
 {
       if (design_)
@@ -94,17 +136,57 @@ NetProc::~NetProc()
 }
 
 NetAssign::NetAssign(NetNet*lv, NetExpr*rv)
-: NetNode("@assign", lv->pin_count()), lval_(lv), rval_(rv)
+: NetNode("@assign", lv->pin_count()), rval_(rv)
 {
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    connect(pin(idx), lv->pin(idx));
       }
 
-      rval_->set_width(lval_->pin_count());
+      rval_->set_width(lv->pin_count());
 }
 
 NetAssign::~NetAssign()
 {
+}
+
+/*
+ * This method looks at the objects connected to me, and searches for
+ * a signal that I am fully connected to. Return that signal, and the
+ * range of bits that I use.
+ */
+void NetAssign::find_lval_range(const NetNet*&net, unsigned&msb,
+				unsigned&lsb) const
+{
+      const NetObj*cur;
+      unsigned cpin;
+
+      for (pin(0).next_link(cur,cpin) ; pin(0) != cur->pin(cpin)
+		 ; cur->pin(cpin).next_link(cur, cpin)) {
+	    const NetNet*s = dynamic_cast<const NetNet*>(cur);
+	    if (s == 0)
+		  continue;
+
+	    if (!connected(*this, *s))
+		  continue;
+
+	    unsigned idx;
+	    for (idx = 1 ;  idx < pin_count() ;  idx += 1) {
+		  if (idx+cpin > s->pin_count())
+			break;
+		  if (! connected(pin(idx), s->pin(idx+cpin)))
+			break;
+	    }
+
+	    if (idx < pin_count())
+		  continue;
+
+	    net = s;
+	    lsb = cpin;
+	    msb = cpin+pin_count()-1;
+	    return;
+      }
+
+      assert(0); // No suitable signals??
 }
 
 NetBlock::~NetBlock()
@@ -370,6 +452,14 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.8  1998/11/23 00:20:23  steve
+ *  NetAssign handles lvalues as pin links
+ *  instead of a signal pointer,
+ *  Wire attributes added,
+ *  Ability to parse UDP descriptions added,
+ *  XNF generates EXT records for signals with
+ *  the PAD attribute.
+ *
  * Revision 1.7  1998/11/18 04:25:22  steve
  *  Add -f flags for generic flag key/values.
  *
