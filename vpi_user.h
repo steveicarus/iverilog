@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.34 2004/03/09 04:29:26 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.35 2004/09/05 21:30:16 steve Exp $"
 #endif
 
 
@@ -60,7 +60,7 @@ typedef struct t_vpi_systf_data {
       const char *tfname;
       PLI_INT32 (*calltf)(char*);
       PLI_INT32 (*compiletf)(char*);
-      PLI_INT32 (*sizetf)();
+      PLI_INT32 (*sizetf)(char*);
       char      *user_data;
 } s_vpi_systf_data, *p_vpi_systf_data;
 
@@ -419,6 +419,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.35  2004/09/05 21:30:16  steve
+ *  Better type safety.
+ *
  * Revision 1.34  2004/03/09 04:29:26  steve
  *  Define function types.
  *
