@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.157 2000/06/13 03:24:48 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.158 2000/06/15 04:23:17 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -360,6 +360,7 @@ class vvm_parm_rval  : public expr_scan_t {
       string result;
 
     private:
+      virtual void expr_binary(const NetEBinary*);
       virtual void expr_const(const NetEConst*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
@@ -787,6 +788,17 @@ static string emit_proc_rval(ostream&os, target_vvm*tgt, const NetExpr*expr)
       vvm_proc_rval scan (os, tgt);
       expr->expr_scan(&scan);
       return scan.result;
+}
+
+void vvm_parm_rval::expr_binary(const NetEBinary*expr)
+{
+      string rval = emit_proc_rval(tgt_->defn, tgt_, expr);
+
+      string tmp = make_temp();
+      tgt_->defn << "      struct __vpiNumberConst " << tmp << ";" << endl;
+      tgt_->defn << "      vpip_make_number_const(&" << tmp << ", "
+		 << rval << ".bits, " << expr->expr_width() << ");" << endl;
+      result = "&" + tmp + ".base";
 }
 
 void vvm_parm_rval::expr_const(const NetEConst*expr)
@@ -3055,6 +3067,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.158  2000/06/15 04:23:17  steve
+ *  Binary expressions as operands to system tasks.
+ *
  * Revision 1.157  2000/06/13 03:24:48  steve
  *  Index in memory assign should be a NetExpr.
  *
