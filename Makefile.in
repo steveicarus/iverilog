@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.101 2001/08/04 05:53:44 steve Exp $"
+#ident "$Id: Makefile.in,v 1.102 2001/08/05 17:28:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -212,13 +212,16 @@ $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 # into the destination directory.
 ifeq (@WIN32@,yes)
 $(prefix)/hello.vl: $(srcdir)/examples/hello.vl
-	./dosify.exe $(srcdir)/examples/hello.vl $(prefix)/hello.vl
+	./dosify.exe $(srcdir)/examples/hello.vl tmp.vl
+	mv tmp.vl $(prefix)/hello.vl
 
 $(prefix)/sqrt.vl: $(srcdir)/examples/sqrt.vl
-	./dosify.exe $(srcdir)/examples/sqrt.vl $(prefix)/sqrt.vl
+	./dosify.exe $(srcdir)/examples/sqrt.vl tmp.vl
+	mv tmp.vl $(prefix)/sqrt.vl
 
 $(prefix)/QUICK_START.txt: $(srcdir)/QUICK_START.txt
-	./dosify.exe $(srcdir)/QUICK_START.txt $(prefix)/QUICK_START.txt
+	./dosify.exe $(srcdir)/QUICK_START.txt tmp.txt
+	mv tmp.txt $(prefix)/QUICK_START.txt
 endif
 
 installdirs: mkinstalldirs
