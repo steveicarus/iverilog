@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.32 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.33 2000/05/03 21:21:36 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -1221,7 +1221,17 @@ NetNet* PENumber::elaborate_net(Design*des, const string&path,
 
 /*
  * Elaborate the ternary operator in a netlist by creating a LPM_MUX
- * with width matching the result, size == 2 and 1 select input.
+ * with width matching the result, size == 2 and 1 select input. These
+ * expressions come from code like:
+ *
+ *        res = test ? a : b;
+ *
+ * The res has the width requested of this method, and the a and b
+ * expressions have their own similar widths. The test expression is
+ * only a single bit wide. The output from this function is a NetNet
+ * object the width of the <res> expression and connected to the
+ * Result pins of the LPM_MUX device. Any width not covered by the
+ * width of the mux is padded with a NetConst device.
  */
 NetNet* PETernary::elaborate_net(Design*des, const string&path,
 				 unsigned width,
@@ -1241,20 +1251,47 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       }
 
       assert(tru_sig->pin_count() == fal_sig->pin_count());
-      assert(width == tru_sig->pin_count());
+      if (width == 0)
+	    width = tru_sig->pin_count();
+
+      assert(width >= tru_sig->pin_count());
       assert(expr_sig->pin_count() == 1);
 
+	/* This is the width of the LPM_MUX device that I'm about to
+	   create. It may be smaller then the desired output, but I'll
+	   handle padding below.
+
+	   Create a NetNet object wide enough to hold the result. */
+
+      unsigned dwidth = tru_sig->pin_count();
+
       NetNet*sig = new NetNet(scope, des->local_symbol(path), NetNet::WIRE,
-		       tru_sig->pin_count());
+		       width);
       sig->local_flag(true);
 
-      NetMux*mux = new NetMux(des->local_symbol(path), width, 2, 1);
+
+	/* Make the device and connect its outputs to the osig and
+	   inputs to the tru and false case nets. Also connect the
+	   selector bit to the sel input. */
+
+      NetMux*mux = new NetMux(des->local_symbol(path), dwidth, 2, 1);
       connect(mux->pin_Sel(0), expr_sig->pin(0));
 
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
 	    connect(mux->pin_Result(idx), sig->pin(idx));
 	    connect(mux->pin_Data(idx,0), fal_sig->pin(idx));
 	    connect(mux->pin_Data(idx,1), tru_sig->pin(idx));
+      }
+
+	/* If the device is too narrow to fill out the desired result,
+	   pad with zeros by creating a NetConst device. */
+
+      if (dwidth < width) {
+	    verinum vpad (verinum::V0, width-dwidth);
+	    NetConst*pad = new NetConst(des->local_symbol(path), vpad);
+	    des->add_node(pad);
+	    for (unsigned idx = dwidth ;  idx < width ;  idx += 1)
+		  connect(sig->pin(idx), pad->pin(idx-dwidth));
       }
 
       des->add_node(mux);
@@ -1410,6 +1447,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.33  2000/05/03 21:21:36  steve
+ *  Allow ternary result to be padded to result width.
+ *
  * Revision 1.32  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *
