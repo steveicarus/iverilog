@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.17 2001/04/25 04:35:05 steve Exp $
+ *  $Id: README.txt,v 1.18 2001/04/26 03:10:55 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -125,13 +125,23 @@ the output becomes 1'bx.
 The output state can be specified as "0", "1", or "x".	Sequential
 UDPs may also have "-": no change.
 
-An input or current output state can be "1", "0", "x", or "?" (don't
-care).	For Sequential UDPs, at most one input state specification may
-be replaced by an edge specification.  Valid edges are:
+An input or current output state can be 
+
+	"1": 1
+	"0": 0
+	"x": x
+	"b": 1, 0
+	"h": 1, x
+	"l": 0, x
+	"?": 1, 0, x
+
+For Sequential UDPs, at most one input state specification may be
+replaced by an edge specification.  Valid edges are:
 
 	"*": (??)	"_": (?0)	"+": (?1)	"%": (?x)
-	"r": (01)	"R": (x1)	"f": (10)	"F": (x0)
-	"p": (0?)	"n": (1?)	"P": (0x)	"N": (1x)
+	"p": (0?)			"r": (01)	"P": (0x)
+	"n": (1?)	"f": (10)			"N": (1x)
+	"B": (x?)	"F": (x0)	"R": (x1)	
 
 A combinatorial UDP is defined like this:
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pointers.h,v 1.3 2001/03/26 04:00:39 steve Exp $"
+#ident "$Id: pointers.h,v 1.4 2001/04/26 03:10:55 steve Exp $"
 #endif
 
 /*
@@ -67,6 +67,14 @@ inline vvp_ipoint_t ipoint_index(vvp_ipoint_t base, unsigned idx)
 }
 
 /*
+ * Return the ipoint of an input into a multi-functor input vector.
+ */
+inline vvp_ipoint_t ipoint_input_index(vvp_ipoint_t base, unsigned idx)
+{
+      return (base & ~3) + idx;
+}
+
+/*
  * This function returns the port index of a functor given a complete
  * vvp_ipoint_t pointer.
  */
@@ -94,6 +102,9 @@ typedef struct vthread_s*vthread_t;
 
 /*
  * $Log: pointers.h,v $
+ * Revision 1.4  2001/04/26 03:10:55  steve
+ *  Redo and simplify UDP behavior.
+ *
  * Revision 1.3  2001/03/26 04:00:39  steve
  *  Add the .event statement and the %wait instruction.
  *

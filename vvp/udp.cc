@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: udp.cc,v 1.1 2001/04/24 02:23:59 steve Exp $"
+#ident "$Id: udp.cc,v 1.2 2001/04/26 03:10:55 steve Exp $"
 #endif
 
 #include "udp.h"
@@ -56,35 +56,12 @@ struct vvp_udp_s *udp_find(char *label)
   return (struct vvp_udp_s *)v.ptr;
 }
 
-void udp_init_links(vvp_ipoint_t fdx, struct vvp_udp_s *u)
-{
-  udp_idx_t ux(fdx, u);
-  do
-    {
-      vvp_ipoint_t pa = ux.parent();
-      if (pa)
-	{
-	  functor_t fu = ux.functor();
-	  functor_t fp = functor_index(pa);
-	  fp->port[ipoint_port(pa)] = 0x0;
-	  fu->out = pa;
-	  fu->udp = 0x0;
-	  fu->mode = 3;
-	  
-	  fu->ival = 0xaa;
-	  fu->old_ival = fu->ival;
-	}
-    } while (ux.next_node());
-}
-
 unsigned char udp_propagate(vvp_ipoint_t uix)
 {
   functor_t fu = functor_index(uix);
   struct vvp_udp_s *u = fu->udp;
   assert(u);
   assert(u->table);
-
-  udp_idx_t ux(uix, u);
 
   unsigned char ret = 2;
 
@@ -94,24 +71,34 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 
       if (u->sequ)
 	{
-	  if (row[0]=='?' || row[0]==(fu->oval&3)["01xx"])
+	  char old_out = (fu->oval&3)["01xx"];
+	  if (  row[0]=='?' 
+	    ||  row[0]==old_out
+	    || (row[0]=='b' && old_out!='x')
+	    || (row[0]=='l' && old_out!='1')
+	    || (row[0]=='h' && old_out!='0') )
 	    row++;
 	  else
 	    continue;
 	}
 
-      ux.reset();
+      int i;
 
-      do
+      for (i=0;  i < u->nin;  i++, row++)
 	{
 	  assert (*row);
 	  
-	  int port = ipoint_port(ux.ipoint());
-	  functor_t pfun = ux.functor();
+	  int idx = ipoint_input_index(uix, i);
+	  int port = ipoint_port(idx);
+	  functor_t pfun = functor_index(idx);
 	  
 	  char new_bit = ((pfun->ival >> (2*port))&3)["01xx"];
 
-	  if (*row != new_bit  &&  *row != '?')
+	  if (    *row != new_bit  
+	      &&  *row != '?'
+	      && (*row != 'b' || new_bit == 'x')
+	      && (*row != 'l' || new_bit == '1')
+	      && (*row != 'h' || new_bit == '0') )
 	    {
 	      char old_bit = ((pfun->old_ival >> (2*port))&3)["01xx"];
 	      if (new_bit == old_bit)
@@ -131,6 +118,10 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 		  break;
 		case '%':
 		  if (new_bit == 'x')
+		    continue;
+		  break;
+		case 'B':
+		  if (old_bit == 'x')
 		    continue;
 		  break;
 		case 'r':
@@ -168,9 +159,9 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 		}
 	      break;
 	    }
-	} while (row++, ux.next());
+	}
       
-      if (ux.done())
+      if (i == u->nin)
 	{
 	  assert(*row);
 	  if (*row == '-')
@@ -192,18 +183,20 @@ unsigned char udp_propagate(vvp_ipoint_t uix)
 	}
     }
  
-  ux.reset();
-  do
+  for (int i=0;  i < u->nin;  i+=4)
     {
-      functor_t fu = ux.functor();
+      functor_t fu = functor_index(ipoint_input_index(uix, i));
       fu->old_ival = fu->ival;
-    } while (ux.next_node());
+    }
   
   return ret;
 }
 
 /*
  * $Log: udp.cc,v $
+ * Revision 1.2  2001/04/26 03:10:55  steve
+ *  Redo and simplify UDP behavior.
+ *
  * Revision 1.1  2001/04/24 02:23:59  steve
  *  Support for UDP devices in VVP (Stephen Boettcher)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.40 2001/04/24 03:48:53 steve Exp $"
+#ident "$Id: compile.cc,v 1.41 2001/04/26 03:10:55 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -319,7 +319,7 @@ void compile_udp_functor(char*label, char*type,
   struct vvp_udp_s *u = udp_find(type);
   assert (argc == u->nin);
 
-  int nfun = argc<=4 ? 1 : (argc-2) / 3 + 1;
+  int nfun = (argc+3)/4;
 
   vvp_ipoint_t fdx = functor_allocate(nfun);
   functor_t obj = functor_index(fdx);
@@ -330,6 +330,26 @@ void compile_udp_functor(char*label, char*type,
     sym_set_value(sym_functors, label, val);
   }
 
+  for (unsigned idx = 0;  idx < argc;  idx += 4) 
+    {
+      vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
+      functor_t iobj = functor_index(ifdx);
+
+      iobj->ival = 0xaa;
+      iobj->old_ival = obj->ival;
+      iobj->oval = u->init;
+      iobj->mode = 3;
+      if (idx)
+	{
+	  iobj->out = fdx;
+	  iobj->udp = 0;
+	}
+      else
+	{
+	  iobj->udp = u;
+	}
+    }
+  
   /* Run through the arguments looking for the functors that are
      connected to my input ports. For each source functor that I
      find, connect the output of that functor to the indexed
@@ -338,15 +358,11 @@ void compile_udp_functor(char*label, char*type,
      
      If the source functor is not declared yet, then don't do
      the link yet. Save the reference to be resolved later. */
-  
-  udp_init_links(fdx, u);
-  
-  udp_idx_t ux(fdx, u);
+
   for (unsigned idx = 0;  idx < argc;  idx += 1) 
     {
-      vvp_ipoint_t ifdx = ux.ipoint();
-      functor_t iobj = ux.functor();
-      ux.next();
+      vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
+      functor_t iobj = functor_index(ifdx);
 
       symbol_value_t val = sym_get_value(sym_functors, argv[idx].text);
       vvp_ipoint_t tmp = val.num;
@@ -365,12 +381,6 @@ void compile_udp_functor(char*label, char*type,
 	  postpone_functor_input(ifdx, argv[idx].text, argv[idx].idx);
 	}
     }
-  
-  obj->ival = 0xaa;
-  obj->old_ival = obj->ival;
-  obj->oval = u->init;
-  obj->mode = 3;
-  obj->udp = u;
   
   free(argv);
   free(label);
@@ -944,6 +954,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.41  2001/04/26 03:10:55  steve
+ *  Redo and simplify UDP behavior.
+ *
  * Revision 1.40  2001/04/24 03:48:53  steve
  *  Fix underflow when UDP has 1 input.
  *
