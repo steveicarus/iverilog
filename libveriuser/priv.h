@@ -19,8 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: priv.h,v 1.1 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: priv.h,v 1.2 2003/05/18 00:16:35 steve Exp $"
 #endif
+
+# include  <stdio.h>
 
 /*
  * This function implements the acc_ string buffer, by adding the
@@ -30,7 +32,18 @@
 extern char* __acc_newstring(const char*txt);
 
 /*
+ * Trace file for loggint ACC and TF calls.
+ */
+FILE* pli_trace;
+
+/*
  * $Log: priv.h,v $
+ * Revision 1.2  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.1  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.11 2003/04/24 18:57:05 steve Exp $"
+#ident "$Id: acc_user.h,v 1.12 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 /*
@@ -84,10 +84,38 @@ typedef struct __vpiHandle *handle;
 #define accStringVal 8
 #define accVectorVal 9
 
+/* Scalar values */
+#define acc0 0
+#define acc1 1
+#define accX 2
+#define accZ 3
+
 /* type VALUES FOR t_acc_time STRUCTURE */
 #define accTime 1
 #define accSimTime 2
 #define accRealTime 3
+
+/* reason codes */
+#define logic_value_change     1
+#define strength_value_change  2
+#define real_value_change      3
+#define vector_value_change    4
+#define event_value_change     5
+#define integer_value_change   6
+#define time_value_change      7
+#define sregister_value_change 8
+#define vregister_value_change 9
+#define realtime_value_change 10
+
+/* VCL strength values */
+#define vclSupply  7
+#define vclStrong  6
+#define vclPull    5
+#define vclLarge   4
+#define vclWeak    3
+#define vclMedium  2
+#define vclSmall   1
+#define vclHighZ   0
 
 /* Constants used by acc_vcl_add */
 #define vcl_verilog_logic 2
@@ -140,6 +168,7 @@ typedef struct t_vc_record {
 	    s_strengths strengths_s;
       } out_value;
 } s_vc_record, *p_vc_record;
+
 
 typedef struct t_location {
       PLI_INT32 line_no;
@@ -214,6 +243,12 @@ EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.12  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.11  2003/04/24 18:57:05  steve
  *  Add acc_fetch_fulltype function.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_tfarg.c,v 1.5 2003/03/14 04:58:50 steve Exp $"
+#ident "$Id: a_fetch_tfarg.c,v 1.6 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -48,6 +48,13 @@ int acc_fetch_tfarg_int(int n)
 	    rtn = 0;
       }
 
+
+      if (pli_trace) {
+	    fprintf(pli_trace, "%s: acc_fetch_tfarg_int(%d) --> %d\n",
+		    vpi_get_str(vpiName, sys_h), n, rtn);
+	    fflush(pli_trace);
+      }
+
       return rtn;
 }
 
@@ -74,11 +81,23 @@ char *acc_fetch_tfarg_str(int n)
 	    rtn = (char *) 0;
       }
 
+      if (pli_trace) {
+	    fprintf(pli_trace, "%s: acc_fetch_tfarg_str(%d) --> \"%s\"\n",
+		    vpi_get_str(vpiName, sys_h), n, rtn? rtn : "");
+	    fflush(pli_trace);
+      }
+
       return rtn;
 }
 
 /*
  * $Log: a_fetch_tfarg.c,v $
+ * Revision 1.6  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.5  2003/03/14 04:58:50  steve
  *  Free the iterator when Im done.
  *

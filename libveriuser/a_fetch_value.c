@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_value.c,v 1.3 2003/04/24 02:02:37 steve Exp $"
+#ident "$Id: a_fetch_value.c,v 1.4 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -35,19 +35,58 @@ static char* fetch_struct_value(handle obj, s_acc_value*value)
 	  case accScalarVal:
 	    val.format = vpiScalarVal;
 	    vpi_get_value(obj, &val);
-	    value->value.scalar = val.value.scalar;
+	    switch (val.value.scalar) {
+		case vpi0:
+		  value->value.scalar = acc0;
+		  break;
+		case vpi1:
+		  value->value.scalar = acc1;
+		  break;
+		case vpiX:
+		  value->value.scalar = accX;
+		  break;
+		case vpiZ:
+		  value->value.scalar = accZ;
+		  break;
+		default:
+		  assert(0);
+	    }
+
+	    if (pli_trace) {
+		  fprintf(pli_trace, "acc_fetch_value(<%s>, "
+			  "accScalarVal) --> %d\n",
+			  vpi_get_str(vpiFullName,obj),
+			  value->value.scalar);
+		  fflush(pli_trace);
+	    }
 	    break;
 
 	  case accIntVal:
 	    val.format = vpiIntVal;
 	    vpi_get_value(obj, &val);
 	    value->value.integer = val.value.integer;
+
+	    if (pli_trace) {
+		  fprintf(pli_trace, "acc_fetch_value(<%s>, "
+			  "accIntVal) --> %d\n",
+			  vpi_get_str(vpiFullName,obj),
+			  value->value.integer);
+		  fflush(pli_trace);
+	    }
 	    break;
 
 	  case accRealVal:
 	    val.format = vpiRealVal;
 	    vpi_get_value(obj, &val);
 	    value->value.real = val.value.real;
+
+	    if (pli_trace) {
+		  fprintf(pli_trace, "acc_fetch_value(<%s>, "
+			  "accRealVal) --> %g\n",
+			  vpi_get_str(vpiFullName,obj),
+			  value->value.real);
+		  fflush(pli_trace);
+	    }
 	    break;
 
 	  default:
@@ -70,6 +109,12 @@ static char* fetch_strength_value(handle obj)
 
       vpip_format_strength(str, &val);
 
+      if (pli_trace) {
+	    fprintf(pli_trace, "acc_fetch_value(<%s>, \"%%v\") --> %s\n",
+		    vpi_get_str(vpiFullName,obj), str);
+	    fflush(pli_trace);
+      }
+
       return __acc_newstring(str);
 }
 
@@ -88,6 +133,12 @@ char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value)
 
 /*
  * $Log: a_fetch_value.c,v $
+ * Revision 1.4  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.3  2003/04/24 02:02:37  steve
  *  Clean up some simple warnings.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.24 2003/04/23 15:01:29 steve Exp $"
+#ident "$Id: veriuser.h,v 1.25 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 /*
@@ -245,7 +245,7 @@ extern void tf_error(const char*, ...)
 
 extern char* tf_getcstringp(int nparam);
 
-extern char* tf_getinstance(void);
+extern PLI_BYTE8* tf_getinstance(void);
 
 extern int tf_getlongp(int*aof_highvalue, int pnum);
 
@@ -276,6 +276,13 @@ extern void tf_putlongp(int pnum, int lowvalue, int highvalue);
 
 extern void tf_putp(int pnum, int value);
 
+/* Activate the misctf function after a delay. The units are of the
+   current scope. The tf_isetdelay variant specifies a particular
+   system task instance to use as the context for the
+   units. tf_getinstance gets that value. */
+extern int tf_setdelay(PLI_INT32 delay);
+extern int tf_isetdelay(PLI_INT32 delay, void* sys);
+
 /* IEEE1364 NOTE: tf_setworkarea is listed as taking a PLI_BYTE8*, but
    that is silly, it really takes any kind of pointer. Taking void* is
    compatible with those who pass a PLI_BYTE8*. */
@@ -298,6 +305,12 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.25  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.24  2003/04/23 15:01:29  steve
  *  Add tf_synchronize and tf_multiply_long.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriusertfs.c,v 1.7 2003/04/23 15:01:29 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.8 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include <assert.h>
 # include "vpi_user.h"
 # include "veriuser.h"
+# include "priv.h"
 
 /*
  * local structure used to hold the persistent veriusertfs data
@@ -51,9 +52,17 @@ static int callback(p_cb_data);
  */
 void veriusertfs_register_table(p_tfcell vtable)
 {
+      const char*path;
       p_tfcell tf;
       s_vpi_systf_data tf_data;
       p_pli_data data;
+
+      if ((pli_trace == 0) && (path = getenv("PLI_TRACE"))) {
+	    if (strcmp(path,"-") == 0)
+		  pli_trace = stdout;
+	    else
+		  pli_trace = fopen(path, "w");
+      }
 
       for (tf = vtable; tf; tf++) {
 	    /* last element */
@@ -93,6 +102,14 @@ void veriusertfs_register_table(p_tfcell vtable)
 	    tf_data.calltf = calltf;
 	    tf_data.sizetf = tf->sizetf;
 	    tf_data.user_data = (char *)data;
+
+	    if (pli_trace) {
+		  fprintf(pli_trace, "Registering system task/function\n");
+		  fprintf(pli_trace, "    tfname: %s\n", tf->tfname);
+		  fprintf(pli_trace, "    type:   %d\n", tf->type);
+		  fprintf(pli_trace, "    data:   %d\n", tf->data);
+		  fflush(pli_trace);
+	    }
 
 	    /* register */
 	    vpi_register_systf(&tf_data);
@@ -162,8 +179,26 @@ static int compiletf(char *data)
        * Since we are in compiletf, checktf and misctf need to
        * be executed. Check runs first to match other simulators.
        */
-      rtn = (tf->checktf) ? tf->checktf(tf->data, reason_checktf) : 0;
-      if (tf->misctf) tf->misctf(tf->data, reason_endofcompile, 0);
+      if (tf->checktf) {
+	    if (pli_trace) {
+		  fprintf(pli_trace, "Call %s->checktf(reason_checktf)\n",
+			  tf->tfname);
+		  fflush(pli_trace);
+	    }
+
+	    rtn = tf->checktf(tf->data, reason_checktf);
+      }
+
+      if (tf->misctf) {
+	    if (pli_trace) {
+		  fprintf(pli_trace, "Call %s->misctf"
+			  "(user_data=%d, reason=%d, paramvc=%d);\n",
+			  tf->tfname, tf->data, reason_endofcompile, 0);
+		  fflush(pli_trace);
+	    }
+
+	    tf->misctf(tf->data, reason_endofcompile, 0);
+      }
 
       return rtn;
 }
@@ -182,8 +217,15 @@ static int calltf(char *data)
       tf = pli->tf;
 
       /* execute calltf */
-      if (tf->calltf)
+      if (tf->calltf) {
+	    if (pli_trace) {
+		  fprintf(pli_trace, "Call %s->calltf(%d, %d)\n",
+			  tf->data, reason_calltf);
+		  fflush(pli_trace);
+	    }
+
 	    rc = tf->calltf(tf->data, reason_calltf);
+      }
 
       return rc;
 }
@@ -199,6 +241,7 @@ static int callback(p_cb_data data)
       p_tfcell tf;
       int reason;
       int paramvc = 0;
+      int rc;
 
 	/* not enabled */
       if (data->reason == cbValueChange && !async_misctf_enable)
@@ -223,8 +266,17 @@ static int callback(p_cb_data data)
 	    assert(0);
       }
 
+      if (pli_trace) {
+	    fprintf(pli_trace, "Call %s->misctf"
+		    "(user_data=%d, reason=%d, paramvc=%d);\n",
+		    tf->tfname, tf->data, reason, paramvc);
+	    fflush(pli_trace);
+      }
+
       /* execute misctf */
-      return (tf->misctf) ? tf->misctf(tf->data, reason, paramvc) : 0;
+      rc = (tf->misctf) ? tf->misctf(tf->data, reason, paramvc) : 0;
+
+      return rc;
 }
 
 PLI_INT32 tf_isynchronize(void*obj)
@@ -253,6 +305,12 @@ PLI_INT32 tf_synchronize(void)
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.8  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.7  2003/04/23 15:01:29  steve
  *  Add tf_synchronize and tf_multiply_long.
  *

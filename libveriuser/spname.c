@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: spname.c,v 1.1 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: spname.c,v 1.2 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -27,14 +27,30 @@
 
 char* tf_spname(void)
 {
+      char*rtn;
+
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle scope = vpi_handle(vpiScope, sys);
 
-      return __acc_newstring(vpi_get_str(vpiFullName, scope));
+      rtn = __acc_newstring(vpi_get_str(vpiFullName, scope));
+
+      if (pli_trace) {
+	    fprintf(pli_trace, "%s: tf_spname() --> %s\n",
+		    vpi_get_str(vpiName,sys), rtn);
+	    fflush(pli_trace);
+      }
+
+      return rtn;
 }
 
 /*
  * $Log: spname.c,v $
+ * Revision 1.2  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.1  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *

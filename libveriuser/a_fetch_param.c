@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_param.c,v 1.2 2003/03/14 04:59:54 steve Exp $"
+#ident "$Id: a_fetch_param.c,v 1.3 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 #include  <assert.h>
 #include  <vpi_user.h>
 #include  <acc_user.h>
+#include  "priv.h"
 
 double acc_fetch_paramval(handle object)
 {
@@ -34,6 +35,11 @@ double acc_fetch_paramval(handle object)
       switch (val.format) {
 
 	  case vpiStringVal:
+	    if (pli_trace) {
+		  fprintf(pli_trace, "acc_fetch_paramval(%s) --> \"%s\"\n",
+			  vpi_get_str(vpiName, object), val.value.str);
+		  fflush(pli_trace);
+	    }
 	    return (double) (long)val.value.str;
 
 	  default:
@@ -46,6 +52,12 @@ double acc_fetch_paramval(handle object)
 
 /*
  * $Log: a_fetch_param.c,v $
+ * Revision 1.3  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.2  2003/03/14 04:59:54  steve
  *  Better message when asserting funky value type.
  *

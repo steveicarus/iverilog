@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_set_value.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: a_set_value.c,v 1.3 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -101,7 +101,11 @@ int acc_set_value(handle object, p_setval_value value, p_setval_delay delay)
 		  val.format = vpiVectorVal;
 		  val.value.vector = (p_vpi_vecval)value->value.vector;
 		  break;
-	    default: assert(0); break;
+	    default:
+	      vpi_printf("XXXX acc_set_value(value->format=%d)\n",
+			 value->format);
+	      assert(0);
+	      break;
       }
 
       /* put value */
@@ -112,6 +116,12 @@ int acc_set_value(handle object, p_setval_value value, p_setval_delay delay)
 
 /*
  * $Log: a_set_value.c,v $
+ * Revision 1.3  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.2  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *

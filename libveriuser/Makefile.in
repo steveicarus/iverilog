@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.22 2003/05/16 03:23:17 steve Exp $"
+#ident "$Id: Makefile.in,v 1.23 2003/05/18 00:16:35 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -51,7 +51,7 @@ a_fetch_type.o a_fetch_type_str.o a_fetch_value.o \
 a_handle_object.o a_handle_parent.o a_handle_tfarg.o \
 a_initialize.o a_next_topmod.o a_object_of_type.o a_product_version.o \
 a_set_value.o a_vcl.o a_version.o
-O = asynch.o finish.o getcstringp.o getinstance.o getlongp.o \
+O = asynch.o delay.o finish.o getcstringp.o getinstance.o getlongp.o \
 getp.o getsimtime.o io_print.o math.o mc_scan_plusargs.o nump.o putlongp.o \
 putp.o spname.o typep.o workarea.o veriusertfs.o priv.o $A
 

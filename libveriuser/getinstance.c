@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getinstance.c,v 1.3 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: getinstance.c,v 1.4 2003/05/18 00:16:35 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -26,13 +26,19 @@
 /*
  * tf_getinstance implemented using VPI interface
  */
-char *tf_getinstance(void)
+PLI_BYTE8* tf_getinstance(void)
 {
       return (char *)vpi_handle(vpiSysTfCall, 0 /* NULL */);
 }
 
 /*
  * $Log: getinstance.c,v $
+ * Revision 1.4  2003/05/18 00:16:35  steve
+ *  Add PLI_TRACE tracing of PLI1 modules.
+ *
+ *  Add tf_isetdelay and friends, and add
+ *  callback return values for acc_vcl support.
+ *
  * Revision 1.3  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
