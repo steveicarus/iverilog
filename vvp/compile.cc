@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.95 2001/08/10 00:50:50 steve Exp $"
+#ident "$Id: compile.cc,v 1.96 2001/08/10 04:31:09 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -168,26 +168,41 @@ static symbol_table_t sym_vpi = 0;
 
 
 /*
- * Postponed lookups got out of hand, so here is a generic framework.
+ * The resolv_list_s is the base class for a symbol resolve action, and
+ * the resolv_list is an unordered list of these resolve actions. Some
+ * function creates an instance of a resolv_list_s object that
+ * contains the data pertinent to that resolution request, and
+ * executes it with the resolv_submit function. If the operation can
+ * complete, then the resolv_submit deletes the object. Otherwise, it
+ * pushes it onto the resolv_list for later processing.
+ *
+ * Derived classes implement the resolve function to perform the
+ * actual binding or resolution that the instance requires. If the
+ * function succeeds, the resolve method returns true and the object
+ * can be deleted any time.
+ *
+ * The mes parameter of the resolve method tells the resolver that
+ * this call is its last chance. If it cannot complete the operation,
+ * it must print an error message and return false.
  */
 static struct resolv_list_s*resolv_list = 0;
 
 struct resolv_list_s {
       struct resolv_list_s*next;
-      struct resolv_list_s* submit();
       virtual bool resolve(bool mes = false) = 0;
 };
 
-inline struct resolv_list_s *resolv_list_s::submit()
+static void resolv_submit(struct resolv_list_s*cur)
 {
-      if (resolve())
-	    return this;
+      if (cur->resolve()) {
+	    delete cur;
+	    return;
+      }
 
-      next = resolv_list;
-      resolv_list = this;
-      
-      return 0x0;
+      cur->next = resolv_list;
+      resolv_list = cur;
 }
+
 
 /*
  *  And the application to functor input lookup
@@ -226,15 +241,13 @@ bool functor_resolv_list_s::resolve(bool mes)
 inline static 
 void postpone_functor_input(vvp_ipoint_t ptr, char*lab, unsigned idx)
 {
-      static struct functor_resolv_list_s*res =0x0;
-      if (!res)
-	    res = new struct functor_resolv_list_s;
+      struct functor_resolv_list_s*res = new struct functor_resolv_list_s;
 
       res->port   = ptr;
       res->source = lab;
       res->idx    = idx;
 
-      res = dynamic_cast<functor_resolv_list_s*>(res->submit());
+      resolv_submit(res);
 }
 
 /*
@@ -275,16 +288,14 @@ inline static
 void postpone_fvector_input(vvp_fvector_t vec, unsigned vidx,
 			    char*lab, unsigned idx)
 {
-      static struct fvector_resolv_list_s*res =0x0;
-      if (!res)
-	    res = new struct fvector_resolv_list_s;
+      struct fvector_resolv_list_s*res = new struct fvector_resolv_list_s;
 
       res->vec = vec;
       res->vidx = vidx;
       res->source = lab;
       res->idx = idx;
 
-      res = dynamic_cast<fvector_resolv_list_s*>(res->submit());
+      resolv_submit(res);
 }
 
 /*
@@ -329,14 +340,12 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 
 void compile_vpi_lookup(vpiHandle *handle, char*label)
 {
-      static struct vpi_handle_resolv_list_s*res =0x0;
-      if (!res)
-	    res = new struct vpi_handle_resolv_list_s;
+      struct vpi_handle_resolv_list_s*res
+	    = new struct vpi_handle_resolv_list_s;
 
       res->handle = handle;
       res->label  = label;
-
-      res = dynamic_cast<vpi_handle_resolv_list_s*>(res->submit());
+      resolv_submit(res);
 }
 
 /*
@@ -372,14 +381,13 @@ bool code_label_resolv_list_s::resolve(bool mes)
 inline static
 void code_label_lookup(struct vvp_code_s *code, char *label)
 {
-      static struct code_label_resolv_list_s *res =0x0;
-      if (!res)
-	    res = new struct code_label_resolv_list_s;
+      struct code_label_resolv_list_s *res
+	    = new struct code_label_resolv_list_s;
 
       res->code  = code;
       res->label = label;
 
-      res = dynamic_cast<code_label_resolv_list_s *>(res->submit());
+      resolv_submit(res);
 }
 
 /*
@@ -416,15 +424,14 @@ bool code_functor_resolv_list_s::resolve(bool mes)
 inline static
 void code_functor_lookup(struct vvp_code_s *code, char *label, unsigned idx)
 {
-      static struct code_functor_resolv_list_s *res =0x0;
-      if (!res)
-	    res = new struct code_functor_resolv_list_s;
+      struct code_functor_resolv_list_s *res
+	    = new struct code_functor_resolv_list_s;
 
       res->code  = code;
       res->label = label;
       res->idx   = idx; 
 
-      res = dynamic_cast<code_functor_resolv_list_s *>(res->submit());
+      resolv_submit(res);
 }
 
 /*
@@ -1590,6 +1597,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.96  2001/08/10 04:31:09  steve
+ *  Neaten and document the resolv object.
+ *
  * Revision 1.95  2001/08/10 00:50:50  steve
  *  Make sure arithmetic objects run at time 0.
  *
@@ -1644,119 +1654,5 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
  *
  * Revision 1.79  2001/06/19 03:01:10  steve
  *  Add structural EEQ gates (Stephan Boettcher)
- *
- * Revision 1.78  2001/06/18 01:09:32  steve
- *  More behavioral unary reduction operators.
- *  (Stephan Boettcher)
- *
- * Revision 1.77  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.76  2001/06/15 04:07:58  steve
- *  Add .cmp statements for structural comparison.
- *
- * Revision 1.75  2001/06/15 03:28:31  steve
- *  Change the VPI call process so that loaded .vpi modules
- *  use a function table instead of implicit binding.
- *
- * Revision 1.74  2001/06/10 17:12:51  steve
- *  Instructions can forward reference functors.
- *
- * Revision 1.73  2001/06/10 16:47:49  steve
- *  support scan of scope from VPI.
- *
- * Revision 1.72  2001/06/07 03:09:03  steve
- *  Implement .arith/sub subtraction.
- *
- * Revision 1.71  2001/06/05 03:05:41  steve
- *  Add structural addition.
- *
- * Revision 1.70  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
- * Revision 1.69  2001/05/30 03:02:35  steve
- *  Propagate strength-values instead of drive strengths.
- *
- * Revision 1.68  2001/05/24 04:20:10  steve
- *  Add behavioral modulus.
- *
- * Revision 1.67  2001/05/22 04:08:16  steve
- *  Get the initial inputs to functors set at xxxx.
- *
- * Revision 1.66  2001/05/22 02:14:47  steve
- *  Update the mingw build to not require cygwin files.
- *
- * Revision 1.65  2001/05/20 00:46:12  steve
- *  Add support for system function calls.
- *
- * Revision 1.64  2001/05/13 21:05:06  steve
- *  calculate the output of resolvers.
- *
- * Revision 1.63  2001/05/12 20:38:06  steve
- *  A resolver that understands some simple strengths.
- *
- * Revision 1.62  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.61  2001/05/09 04:23:18  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.60  2001/05/09 02:53:25  steve
- *  Implement the .resolv syntax.
- *
- * Revision 1.59  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.58  2001/05/08 23:32:26  steve
- *  Add to the debugger the ability to view and
- *  break on functors.
- *
- *  Add strengths to functors at compile time,
- *  and Make functors pass their strengths as they
- *  propagate their output.
- *
- * Revision 1.57  2001/05/06 17:42:22  steve
- *  Add the %ix/get instruction. (Stephan Boettcher)
- *
- * Revision 1.56  2001/05/06 03:51:37  steve
- *  Regularize the mode-42 functor handling.
- *
- * Revision 1.55  2001/05/06 00:18:13  steve
- *  Propagate non-x constant net values.
- *
- * Revision 1.54  2001/05/05 23:55:46  steve
- *  Add the beginnings of an interactive debugger.
- *
- * Revision 1.53  2001/05/02 23:16:50  steve
- *  Document memory related opcodes,
- *  parser uses numbv_s structures instead of the
- *  symbv_s and a mess of unions,
- *  Add the %is/sub instruction.
- *        (Stephan Boettcher)
- *
- * Revision 1.52  2001/05/02 04:05:17  steve
- *  Remove the init parameter of functors, and instead use
- *  the special C<?> symbols to initialize inputs. This is
- *  clearer and more regular.
- *
- * Revision 1.51  2001/05/02 01:57:25  steve
- *  Support behavioral subtraction.
- *
- * Revision 1.50  2001/05/01 05:00:02  steve
- *  Implement %ix/load.
- *
- * Revision 1.49  2001/05/01 02:18:15  steve
- *  Account for ipoint_input_index behavior in inputs_connect.
- *
- * Revision 1.48  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
  */
 
