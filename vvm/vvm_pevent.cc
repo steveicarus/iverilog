@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_pevent.cc,v 1.7 2000/04/12 01:53:07 steve Exp $"
+#ident "$Id: vvm_pevent.cc,v 1.8 2000/04/12 16:08:46 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -42,7 +42,7 @@ void vvm_sync::wakeup()
       while (hold_) {
 	    vvm_thread*tmp = hold_;
 	    hold_ = tmp->sync_next_;
-	    assert(tmp->sync_back_ == 0);
+	    assert(tmp->sync_back_ == this);
 	    tmp->sync_back_ = 0;
 	    tmp->thread_yield();
       }
@@ -136,6 +136,9 @@ void vvm_anyedge::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_pevent.cc,v $
+ * Revision 1.8  2000/04/12 16:08:46  steve
+ *  Backwards sense of assert test.
+ *
  * Revision 1.7  2000/04/12 01:53:07  steve
  *  Multiple thread can block on an event.
  *
