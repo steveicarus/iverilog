@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.22 2000/12/15 05:45:25 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.23 2000/12/15 18:06:47 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -47,6 +47,9 @@ inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 
 inline void ivl_dlclose(ivl_dll_t dll)
 { shl_unload(dll); }
+
+inline const char*dlerror(void)
+{ return strerror( errno ); }
 #endif
 
 static struct dll_target dll_target_obj;
@@ -641,6 +644,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.23  2000/12/15 18:06:47  steve
+ *  A dlerror implementatin that HP/UX might like.
+ *
  * Revision 1.22  2000/12/15 05:45:25  steve
  *  Autoconfigure the dlopen functions.
  *
