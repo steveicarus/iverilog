@@ -1,5 +1,5 @@
 /* vi:sw=6
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002,2003 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.6 2003/05/27 16:22:10 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.7 2003/05/28 03:14:20 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -30,7 +30,7 @@
  */
 
 static long long
-scale(int high, int low, char *obj) {
+scale(int high, int low, void*obj) {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
       long long scaled;
 
@@ -77,7 +77,7 @@ PLI_INT32 tf_getlongtime(PLI_INT32 *high)
       return scaled & 0xffffffff;
 }
 
-PLI_INT32 tf_igetlongtime(PLI_INT32 *high, char *obj)
+PLI_INT32 tf_igetlongtime(PLI_INT32 *high, void*obj)
 {
       s_vpi_time time;
       long long scaled;
@@ -113,7 +113,7 @@ PLI_INT32 tf_gettimeunit()
       return vpi_get(vpiTimeUnit, hand);
 }
 
-PLI_INT32 tf_igettimeunit(char *obj)
+PLI_INT32 tf_igettimeunit(void*obj)
 {
       return vpi_get(!obj ? vpiTimePrecision : vpiTimeUnit, (vpiHandle)obj);
 }
@@ -121,6 +121,9 @@ PLI_INT32 tf_igettimeunit(char *obj)
 
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.7  2003/05/28 03:14:20  steve
+ *  Missing time related declarations.
+ *
  * Revision 1.6  2003/05/27 16:22:10  steve
  *  PLI get time units/precision.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.25 2003/05/18 00:16:35 steve Exp $"
+#ident "$Id: veriuser.h,v 1.26 2003/05/28 03:14:20 steve Exp $"
 #endif
 
 /*
@@ -249,14 +249,19 @@ extern PLI_BYTE8* tf_getinstance(void);
 
 extern int tf_getlongp(int*aof_highvalue, int pnum);
 
-extern int tf_getlongtime(int*high_bits);
-
 extern int tf_getp(int pnum);
 
+extern char *tf_strgettime(void);
 extern PLI_INT32 tf_gettime(void);
+
+extern PLI_INT32 tf_getlongtime(PLI_INT32*);
+extern PLI_INT32 tf_igetlongtime(PLI_INT32*, void*);
 
 extern PLI_INT32 tf_gettimeprecision(void);
 extern PLI_INT32 tf_igettimeprecision(void*);
+
+extern PLI_INT32 tf_gettimeunit(void);
+extern PLI_INT32 tf_igettimeunit(void*);
 
 extern PLI_BYTE8* tf_getworkarea(void);
 
@@ -305,6 +310,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.26  2003/05/28 03:14:20  steve
+ *  Missing time related declarations.
+ *
  * Revision 1.25  2003/05/18 00:16:35  steve
  *  Add PLI_TRACE tracing of PLI1 modules.
  *
