@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.30 2003/07/02 03:02:15 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.31 2003/07/04 00:10:09 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -617,6 +617,77 @@ void virtex_ge(ivl_lpm_t net)
 }
 
 /*
+ * A 4-input N-wide mux can be made on Virtex devices using MUXF5 and
+ * LUT devices. The MUXF5 selects a LUT device (and is connected to
+ * S[1]) and the LUT devices, connected to S[0], select the input.
+ */
+static void virtex_mux4(ivl_lpm_t net)
+{
+      unsigned idx;
+      assert(ivl_lpm_selects(net) == 2);
+
+      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    edif_joint_t jnt;
+	    edif_cellref_t lut01;
+	    edif_cellref_t lut23;
+	    edif_cellref_t muxf5;
+
+	    lut01 = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
+	    edif_cellref_pstring(lut01, "INIT", "CA");
+
+	    lut23 = edif_cellref_create(edf, xilinx_cell_lut3(xlib));
+	    edif_cellref_pstring(lut23, "INIT", "CA");
+
+	    muxf5 = edif_cellref_create(edf, xilinx_cell_muxf5(xlib));
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data2(net, 0, idx));
+	    edif_add_to_joint(jnt, lut01, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data2(net, 1, idx));
+	    edif_add_to_joint(jnt, lut01, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data2(net, 2, idx));
+	    edif_add_to_joint(jnt, lut23, LUT_I0);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_data2(net, 3, idx));
+	    edif_add_to_joint(jnt, lut23, LUT_I1);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_select(net, 0));
+	    edif_add_to_joint(jnt, lut01, LUT_I2);
+	    edif_add_to_joint(jnt, lut23, LUT_I2);
+
+	    jnt = edif_joint_create(edf);
+	    edif_add_to_joint(jnt, muxf5, MUXF_I0);
+	    edif_add_to_joint(jnt, lut01, LUT_O);
+
+	    jnt = edif_joint_create(edf);
+	    edif_add_to_joint(jnt, muxf5, MUXF_I1);
+	    edif_add_to_joint(jnt, lut23, LUT_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, idx));
+	    edif_add_to_joint(jnt, muxf5, MUXF_O);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_select(net, 1));
+	    edif_add_to_joint(jnt, muxf5, MUXF_S);
+      }
+}
+
+void virtex_mux(ivl_lpm_t net)
+{
+
+      switch (ivl_lpm_selects(net)) {
+
+	  case 2:
+	    virtex_mux4(net);
+	    break;
+
+	  default:
+	    xilinx_mux(net);
+	    break;
+      }
+}
+
+/*
  * This function generates ADD/SUB devices for Virtex devices,
  * based on the documented implementations of ADD8/ADD16, etc., from
  * the Libraries Guide.
@@ -750,7 +821,7 @@ const struct device_s d_virtex_edif = {
       virtex_eq,
       virtex_eq,
       virtex_ge,
-      xilinx_mux,
+      virtex_mux,
       virtex_add,
       virtex_add,
       xilinx_shiftl,
@@ -760,6 +831,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.31  2003/07/04 00:10:09  steve
+ *  Generate MUXF5 based 4-input N-wide muxes.
+ *
  * Revision 1.30  2003/07/02 03:02:15  steve
  *  More xilinx common code.
  *

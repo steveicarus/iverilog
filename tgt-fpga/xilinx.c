@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.7 2003/07/03 17:46:33 steve Exp $"
+#ident "$Id: xilinx.c,v 1.8 2003/07/04 00:10:09 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -96,6 +96,32 @@ edif_cell_t xilinx_cell_inv(edif_xlibrary_t xlib)
       cell = edif_xcell_create(xlib, "INV", 2);
       edif_cell_portconfig(cell, BUF_O, "O", IVL_SIP_OUTPUT);
       edif_cell_portconfig(cell, BUF_I, "I", IVL_SIP_INPUT);
+      return cell;
+}
+
+edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib)
+{
+      static edif_cell_t cell = 0;
+      if (cell) return cell;
+
+      cell = edif_xcell_create(xlib, "MUXF5", 4);
+      edif_cell_portconfig(cell, MUXF_O,  "O",  IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, MUXF_I0, "I0", IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, MUXF_I1, "I1", IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, MUXF_S,  "S",  IVL_SIP_INPUT);
+      return cell;
+}
+
+edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib)
+{
+      static edif_cell_t cell = 0;
+      if (cell) return cell;
+
+      cell = edif_xcell_create(xlib, "MUXF6", 4);
+      edif_cell_portconfig(cell, MUXF_O,  "O",  IVL_SIP_OUTPUT);
+      edif_cell_portconfig(cell, MUXF_I0, "I0", IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, MUXF_I1, "I1", IVL_SIP_INPUT);
+      edif_cell_portconfig(cell, MUXF_S,  "S",  IVL_SIP_INPUT);
       return cell;
 }
 
@@ -899,6 +925,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.8  2003/07/04 00:10:09  steve
+ *  Generate MUXF5 based 4-input N-wide muxes.
+ *
  * Revision 1.7  2003/07/03 17:46:33  steve
  *  IOPAD support.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.6 2003/07/02 03:02:15 steve Exp $"
+#ident "$Id: xilinx.h,v 1.7 2003/07/04 00:10:09 steve Exp $"
 #endif
 
 /*
@@ -96,12 +96,23 @@ extern edif_cell_t xilinx_cell_xorcy(edif_xlibrary_t xlib);
 #define XORCY_CI 1
 #define XORCY_LI 2
 
+/* === Virtex/Virtex2 MUX devices */
+extern edif_cell_t xilinx_cell_muxf5(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_muxf6(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_muxf7(edif_xlibrary_t xlib);
+extern edif_cell_t xilinx_cell_muxf8(edif_xlibrary_t xlib);
+#define MUXF_O  0
+#define MUXF_I0 1
+#define MUXF_I1 2
+#define MUXF_S  3
+
 /* === Inheritable Methods === */
 
 extern void virtex_logic(ivl_net_logic_t net);
 extern void virtex_generic_dff(ivl_lpm_t net);
 extern void virtex_eq(ivl_lpm_t net);
 extern void virtex_ge(ivl_lpm_t net);
+extern void virtex_mux(ivl_lpm_t net);
 extern void virtex_add(ivl_lpm_t net);
 
 extern void xilinx_common_header(ivl_design_t des);
@@ -115,6 +126,9 @@ extern void xilinx_shiftl(ivl_lpm_t net);
 
 /*
  * $Log: xilinx.h,v $
+ * Revision 1.7  2003/07/04 00:10:09  steve
+ *  Generate MUXF5 based 4-input N-wide muxes.
+ *
  * Revision 1.6  2003/07/02 03:02:15  steve
  *  More xilinx common code.
  *

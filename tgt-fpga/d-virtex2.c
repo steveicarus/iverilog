@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.17 2003/07/02 03:02:15 steve Exp $"
+#ident "$Id: d-virtex2.c,v 1.18 2003/07/04 00:10:09 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -84,7 +84,7 @@ const struct device_s d_virtex2_edif = {
       virtex_eq,
       virtex_eq,
       virtex_ge,
-      xilinx_mux,
+      virtex_mux,
       virtex_add,
       virtex_add,
       xilinx_shiftl, /* show_shiftl */
@@ -94,6 +94,9 @@ const struct device_s d_virtex2_edif = {
 
 /*
  * $Log: d-virtex2.c,v $
+ * Revision 1.18  2003/07/04 00:10:09  steve
+ *  Generate MUXF5 based 4-input N-wide muxes.
+ *
  * Revision 1.17  2003/07/02 03:02:15  steve
  *  More xilinx common code.
  *
