@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.156 2003/10/14 00:31:31 steve Exp $"
+#ident "$Id: Makefile.in,v 1.157 2003/11/01 04:22:50 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -215,7 +215,9 @@ else
 WIN32_INSTALL = $(bindir)/iverilog-vpi
 endif
 
-install: all installdirs $(libdir)/ivl/ivl@EXEEXT@ $(libdir)/ivl/iverilog.conf $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+CONF_INSTALL = $(libdir)/ivl/iverilog.conf
+
+install: all installdirs $(libdir)/ivl/ivl@EXEEXT@  $(CONF_INSTALL) $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp driver; \
@@ -231,7 +233,7 @@ $(libdir)/ivl/ivl@EXEEXT@: ./ivl@EXEEXT@
 # Install iverilog.conf whenever ivl.exe is installed. This
 # forces iverilog.conf to be treated similarly, in spite of
 # dates in the source bundle.
-$(libdir)/ivl/iverilog.conf: $(libdir)/ivl/ivl@EXEEXT@
+$(libdir)/ivl/iverilog.conf: $(srcdir)/iverilog.conf
 	$(INSTALL_DATA) $(srcdir)/iverilog.conf $(libdir)/ivl/iverilog.conf
 
 $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h

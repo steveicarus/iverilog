@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.15 2003/02/28 20:21:13 steve Exp $"
+#ident "$Id: Makefile.in,v 1.16 2003/11/01 04:22:51 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -78,10 +78,16 @@ distclean: clean
 
 check: all
 
-install: all installdirs $(libdir)/ivl/vvp.tgt
+install: all installdirs $(libdir)/ivl/vvp.tgt $(libdir)/ivl/vvp.conf $(libdir)/ivl/vvp-s.conf
 
 $(libdir)/ivl/vvp.tgt: ./vvp.tgt
 	$(INSTALL_PROGRAM) ./vvp.tgt $(libdir)/ivl/vvp.tgt
+
+$(libdir)/ivl/vvp.conf: $(srcdir)/vvp.conf
+	$(INSTALL_DATA) $(srcdir)/vvp.conf $(libdir)/ivl/vvp.conf
+
+$(libdir)/ivl/vvp-s.conf: $(srcdir)/vvp-s.conf
+	$(INSTALL_DATA) $(srcdir)/vvp-s.conf $(libdir)/ivl/vvp-s.conf
 
 
 installdirs: ../mkinstalldirs
