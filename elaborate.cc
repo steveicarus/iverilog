@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.107 1999/09/30 21:28:34 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.108 1999/10/05 02:00:06 steve Exp $"
 #endif
 
 /*
@@ -1370,6 +1370,9 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	/* Get the l-value, and assume that it is an identifier. */
       const PEIdent*id = dynamic_cast<const PEIdent*>(lval());
 
+	/* If the l-value is not a register, then make a structural
+	   elaboration. Make a synthetic register that connects to the
+	   generated circuit and return that as the l-value. */
       if (id == 0) {
 	    NetNet*ll = lval_->elaborate_net(des, path);
 	    if (ll == 0) {
@@ -1387,7 +1390,7 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       assert(id);
 
 	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. */
+	   it is a register. (Wires are not allows in this context. */
       NetNet*reg = des->find_signal(path, id->name());
 
       if (reg == 0) {
@@ -1405,6 +1408,10 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
       }
 
       if (id->msb_ && id->lsb_) {
+	      /* This handles part selects. In this case, there are
+		 two bit select expressions, and both must be
+		 constant. Evaluate them and pass the results back to
+		 the caller. */
 	    verinum*vl = id->lsb_->eval_const(des, path);
 	    if (vl == 0) {
 		  cerr << id->lsb_->get_line() << ": error: "
@@ -1426,6 +1433,12 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	    mux = 0;
 
       } else if (id->msb_) {
+
+	      /* If there is only a single select expression, it is a
+		 bit select. Evaluate the constant value and treat it
+		 as a part select with a bit width of 1. If the
+		 expression it not constant, then return the
+		 expression as a mux. */
 	    assert(id->lsb_ == 0);
 	    verinum*v = id->msb_->eval_const(des, path);
 	    if (v == 0) {
@@ -1443,6 +1456,10 @@ NetNet* PAssign_::elaborate_lval(Design*des, const string&path,
 	    }
 
       } else {
+
+	      /* No select expressions, so presume a part select the
+		 width of the register. */
+
 	    assert(id->msb_ == 0);
 	    assert(id->lsb_ == 0);
 	    msb = reg->msb();
@@ -1598,8 +1615,10 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		  connect(cur->pin(idx), reg->pin(idx+off));
 
       } else {
-	    assert(reg->pin_count() == 1);
-	    cerr << get_line() << ": Sorry: l-value bit select expression"
+
+	    assert(msb == lsb);
+	    unsigned wid = 1;
+	    cerr << get_line() << ": sorry: l-value bit select expression"
 		  " must be constant." << endl;
 	    delete reg;
 	    delete rv;
@@ -2528,6 +2547,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.108  1999/10/05 02:00:06  steve
+ *  sorry message for non-constant l-value bit select.
+ *
  * Revision 1.107  1999/09/30 21:28:34  steve
  *  Handle mutual reference of tasks by elaborating
  *  task definitions in two passes, like functions.
