@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.14 2002/05/04 03:17:29 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.15 2002/05/09 03:34:31 steve Exp $"
 #endif
 
 /*
@@ -200,7 +200,11 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 {
       struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
-      obj->cb_time = *(data->time);
+      if (data->time) {
+	    obj->cb_time = *(data->time);
+      } else {
+	    obj->cb_time.type = vpiSuppressTime;
+      }
       obj->cb_data.time = &obj->cb_time;
 
       assert(data->obj);
@@ -242,6 +246,7 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 {
       struct __vpiCallback*obj = new_vpi_callback();
       obj->cb_data = *data;
+      assert(data->time);
       obj->cb_time = *(data->time);
       obj->cb_data.time = &obj->cb_time;
 
@@ -426,6 +431,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.15  2002/05/09 03:34:31  steve
+ *  Handle null time and calltf pointers.
+ *
  * Revision 1.14  2002/05/04 03:17:29  steve
  *  Properly free vpi callback objects.
  *

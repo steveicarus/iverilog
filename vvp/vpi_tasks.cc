@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.12 2002/05/03 15:44:11 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.13 2002/05/09 03:34:31 steve Exp $"
 #endif
 
 /*
@@ -305,8 +305,8 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 
       vpip_cur_task = (struct __vpiSysTaskCall*)ref;
 
-      assert(vpip_cur_task->defn->info.calltf);
-      vpip_cur_task->defn->info.calltf (vpip_cur_task->defn->info.user_data);
+      if (vpip_cur_task->defn->info.calltf)
+	    vpip_cur_task->defn->info.calltf(vpip_cur_task->defn->info.user_data);
 }
 
 /*
@@ -335,6 +335,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.13  2002/05/09 03:34:31  steve
+ *  Handle null time and calltf pointers.
+ *
  * Revision 1.12  2002/05/03 15:44:11  steve
  *  Add vpiModule iterator to vpiScope objects.
  *
