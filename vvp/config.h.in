@@ -19,12 +19,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: config.h.in,v 1.7 2001/09/15 18:27:05 steve Exp $"
+#ident "$Id: config.h.in,v 1.8 2001/09/17 22:26:33 steve Exp $"
 #endif
 
 # define SIZEOF_UNSIGNED_LONG 0
 # define SIZEOF_UNSIGNED 0
 
+# undef NEED_LU
+# undef NEED_TU  
+# undef WLU
+# undef WTU
 # undef HAVE_DLFCN_H
 # undef HAVE_DL_H
 # undef HAVE_GETOPT_H
@@ -32,9 +36,6 @@
 # undef HAVE_LIBREADLINE
 
 # undef ENABLE_VVP_DEBUG
-
-# define LU ""
-# define TU ""
 
 #ifndef MODULE_DIR
 # define MODULE_DIR "."
@@ -46,8 +47,30 @@
 
 # undef HAVE_TIMES
 
+
+/*
+ * When doing dynamic linking, we need a uniform way to identify the
+ * symbol. Some compilers put leading _, some trailing _. The
+ * configure script figures out which is the local convention and
+ * defines NEED_LU and NEED_TU as required.
+ */
+#ifdef NEED_LU
+#define LU "_"
+#else
+#define LU ""
+#endif
+
+#ifdef NEED_TU
+#define TU "_"
+#else
+#define TU ""
+#endif
+
 /*
  * $Log: config.h.in,v $
+ * Revision 1.8  2001/09/17 22:26:33  steve
+ *  Detect C name mangling for dlsym.
+ *
  * Revision 1.7  2001/09/15 18:27:05  steve
  *  Make configure detect malloc.h
  *

@@ -93,4 +93,63 @@ esac
 AC_SUBST(EXTRALIBS)
 AC_MSG_RESULT($EXTRALIBS)
 
+#######################
+## test for underscores. The vpi module loader in vvm needs to know this
+## in order to know the name of the start symbol for the .vpi module.
+#######################
+
+AC_CYGWIN
+AC_EXEEXT
+AC_MINGW32
+
+
+WIN32=no
+AC_MSG_CHECKING("Checking for windows")
+if test "$CYGWIN" = "yes" -o "$MINGW32" = "yes"
+then
+    WIN32=yes
+fi
+AC_SUBST(WIN32)
+AC_MSG_RESULT($WIN32)
+AC_SUBST(EXEEXT)
+
+
+AC_MSG_CHECKING("for leading and/or trailing underscores")
+cat << EOF > underscore.c
+       void underscore(void){}
+EOF
+$CC -shared -c underscore.c > /dev/null 2>&1
+
+CC_LEADING_UNDERSCORE=no
+CC_TRAILING_UNDERSCORE=no
+
+output=`nm underscore.o|grep _underscore 2>&1`
+if test ! -z "$output" -a -z "$CYGWIN" -a -z "$MINGW32"; then
+  CC_LEADING_UNDERSCORE=yes
+  AC_DEFINE(NEED_LU)
+fi
+
+
+
+output=`nm underscore.o|grep underscore_ 2>&1`
+if test ! -z "$output"; then
+  CC_TRAILING_UNDERSCORE=yes
+  AC_DEFINE(NEED_TU)
+fi
+
+if test "$CC_LEADING_UNDERSCORE" = yes; then
+  AC_DEFINE(WLU)
+fi
+if test "$CC_TRAILING_UNDERSCORE" = yes; then
+  AC_DEFINE(WTU)
+fi
+
+rm underscore.c underscore.o
+
+AC_MSG_RESULT("$CC_LEADING_UNDERSCORE $CC_TRAILING_UNDERSCORE")
+
+#######################
+## end of test for underscores
+#######################
+
 AC_OUTPUT(Makefile)
