@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.55 2003/03/10 20:52:42 steve Exp $"
+#ident "$Id: sys_display.c,v 1.56 2003/03/12 03:11:00 steve Exp $"
 #endif
 
 # include "config.h"
@@ -739,13 +739,20 @@ static int format_str_char(vpiHandle scope, unsigned int mcd,
  * string.
  */
 static int format_str(vpiHandle scope, unsigned int mcd,
-		      char*fmt, int argc, vpiHandle*argv)
+		      char*format, int argc, vpiHandle*argv)
 {
-      char buf[256];
+      char buf[256], fmt[256];
       char*cp = fmt;
       int idx;
 
-      assert(fmt);
+      assert(format);
+
+      /*
+       * Copy format out of value buffer since it will be
+       * clobbered by successive vpi_get_value() calls.
+       */
+      strncpy(fmt, format, sizeof fmt - 1);
+      fmt[sizeof fmt - 1] = 0;
 
       idx = 0;
 
@@ -1719,6 +1726,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.56  2003/03/12 03:11:00  steve
+ *  Donot rely on persistence of format string.
+ *
  * Revision 1.55  2003/03/10 20:52:42  steve
  *  Account for constants being vpiParameters.
  *
