@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.25 2003/02/23 06:41:54 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.26 2003/02/27 21:54:44 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -290,7 +290,7 @@ static const struct __vpirt vpip_scope_module_rt = {
 
 static const struct __vpirt vpip_scope_task_rt = {
       vpiTask,
-      0,
+      scope_get,
       scope_get_str,
       0,
       0,
@@ -300,7 +300,7 @@ static const struct __vpirt vpip_scope_task_rt = {
 
 static const struct __vpirt vpip_scope_function_rt = {
       vpiFunction,
-      0,
+      scope_get,
       scope_get_str,
       0,
       0,
@@ -310,7 +310,7 @@ static const struct __vpirt vpip_scope_function_rt = {
 
 static const struct __vpirt vpip_scope_begin_rt = {
       vpiNamedBegin,
-      0,
+      scope_get,
       scope_get_str,
       0,
       0,
@@ -320,7 +320,7 @@ static const struct __vpirt vpip_scope_begin_rt = {
 
 static const struct __vpirt vpip_scope_fork_rt = {
       vpiNamedFork,
-      0,
+      scope_get,
       scope_get_str,
       0,
       0,
@@ -454,6 +454,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.26  2003/02/27 21:54:44  steve
+ *  Add scope type have a vpi_get function.
+ *
  * Revision 1.25  2003/02/23 06:41:54  steve
  *  Add to interactive stop mode support for
  *  current scope, the ability to scan/traverse
