@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.23 2003/03/13 18:26:12 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.24 2003/04/20 02:49:07 steve Exp $"
 #endif
 
 
@@ -218,13 +218,12 @@ extern void vpi_register_systf(const struct t_vpi_systf_data*ss);
 extern void vpi_printf(const char*fmt, ...)
       __attribute__((format (printf,1,2)));
 
-  /* vpi_vprintf is non-standard. */
 extern void vpi_vprintf(const char*fmt, va_list ap);
 
 extern PLI_UINT32 vpi_mcd_close(unsigned int mcd);
 extern char      *vpi_mcd_name(PLI_UINT32 mcd);
 extern PLI_UINT32 vpi_mcd_open(char      *name);
-extern PLI_UINT32 vpi_mcd_open_x(char      *name, char *mode);
+extern PLI_UINT32 vpi_mcd_open_x(char    *name, char *mode);
 extern PLI_INT32  vpi_mcd_printf(unsigned int mcd, const char*fmt, ...)
       __attribute__((format (printf,2,3)));
 extern PLI_INT32  vpi_mcd_fputc(unsigned int mcd, unsigned char x);
@@ -370,10 +369,28 @@ extern PLI_INT32 vpi_chk_error(p_vpi_error_info info);
 /* This is the table of startup routines included in each module. */
 extern DLLEXPORT void (*vlog_startup_routines[])();
 
+
+/*
+ * ICARUS VERILOG EXTENSIONS
+ *
+ * The vpip_* functions are Icarus Verilog extensions. They are not
+ * standard VPI functions, so use these at your own risk.
+ *
+ * The vpip_format_* functions format values in string format in the
+ * manner of the $display system task.
+ */
+
+  /* Format a scaler a la %v. The str points to a 4byte character
+     buffer. The value must be a vpiStrengthVal. */
+extern void vpip_format_strength(char*str, s_vpi_value*value);
+
 EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.24  2003/04/20 02:49:07  steve
+ *  acc_fetch_value support for %v format.
+ *
  * Revision 1.23  2003/03/13 18:26:12  steve
  *  Verilog 2001 standart types.
  *

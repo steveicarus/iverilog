@@ -30,3 +30,5 @@ vpi_scan
 vpi_sim_control
 vpi_sim_vcontrol
 vpi_vprintf
+
+vpip_format_strength

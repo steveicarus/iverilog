@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_value.c,v 1.1 2003/04/12 18:57:14 steve Exp $"
+#ident "$Id: a_fetch_value.c,v 1.2 2003/04/20 02:49:07 steve Exp $"
 #endif
 
 # include  <acc_user.h>
@@ -62,18 +62,23 @@ static char* fetch_struct_value(handle obj, s_acc_value*value)
 static char* fetch_strength_value(handle obj)
 {
       struct t_vpi_value val;
+      char str[4];
 
       val.format = vpiStrengthVal;
       vpi_get_value(obj, &val);
 
-      vpi_printf("XXXX acc_fetch_value(..., \"%%v\")\n");
-      return __acc_newstring("StX");
+      vpip_format_strength(str, &val);
+
+      return __acc_newstring(str);
 }
 
 char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value)
 {
       if (strcmp(fmt, "%%") == 0)
 	    return fetch_struct_value(obj, value);
+
+      if (strcmp(fmt, "%v") == 0)
+	    return fetch_strength_value(obj);
 
       vpi_printf("XXXX acc_fetch_value(..., \"%s\", ...)\n", fmt);
       return "<acc_fetch_value>";
@@ -82,6 +87,9 @@ char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value)
 
 /*
  * $Log: a_fetch_value.c,v $
+ * Revision 1.2  2003/04/20 02:49:07  steve
+ *  acc_fetch_value support for %v format.
+ *
  * Revision 1.1  2003/04/12 18:57:14  steve
  *  More acc_ function stubs.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.48 2003/03/13 04:36:57 steve Exp $"
+#ident "$Id: Makefile.in,v 1.49 2003/04/20 02:49:07 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -66,7 +66,7 @@ check: all
 V = vpi_modules.o vpi_callback.o vpi_const.o vpi_event.o vpi_iter.o vpi_mcd.o \
 vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_tasks.o vpi_time.o \
 vpi_memory.o vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
-vpip_to_dec.o vvp_vpi.o
+vpip_to_dec.o vpip_format.o vvp_vpi.o
 
 O = main.o parse.o parse_misc.o lexor.o arith.o bufif.o compile.o \
 functor.o fvectors.o npmos.o resolv.o stop.o symbols.o ufunc.o codes.o \
