@@ -17,11 +17,26 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.56 2003/09/26 21:25:58 steve Exp $"
+#ident "$Id: main.c,v 1.57 2003/10/26 22:43:42 steve Exp $"
 #endif
 
 # include "config.h"
 
+const char NOTICE[] =
+"  This program is free software; you can redistribute it and/or modify\n"
+"  it under the terms of the GNU General Public License as published by\n"
+"  the Free Software Foundation; either version 2 of the License, or\n"
+"  (at your option) any later version.\n"
+"\n"
+"  This program is distributed in the hope that it will be useful,\n"
+"  but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"  GNU General Public License for more details.\n"
+"\n"
+"  You should have received a copy of the GNU General Public License\n"
+"  along with this program; if not, write to the Free Software\n"
+"  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA\n"
+;
 
 const char HELP[] =
 "Usage: iverilog [-ESvV] [-B base] [-C path] [-c cmdfile] [-g1|-g2|-g3.0]\n"
@@ -545,9 +560,9 @@ int main(int argc, char **argv)
       }
 
       if (version_flag || verbose_flag) {
-	    printf("Icarus Verilog version " VERSION "\n");
+	    printf("Icarus Verilog version " VERSION " ($Name:  $)\n");
 	    printf("Copyright 1998-2003 Stephen Williams\n");
-	    printf("$Name:  $\n");
+	    puts(NOTICE);
 
 	    if (version_flag)
 		  return 0;
@@ -693,6 +708,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.57  2003/10/26 22:43:42  steve
+ *  Improve -V messages,
+ *
  * Revision 1.56  2003/09/26 21:25:58  steve
  *  Warnings cleanup.
  *

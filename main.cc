@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.72 2003/09/26 02:17:14 steve Exp $"
+#ident "$Id: main.cc,v 1.73 2003/10/26 22:43:42 steve Exp $"
 #endif
 
 # include "config.h"
@@ -75,7 +75,7 @@ extern "C" const char*optarg;
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
 
-const char VERSION[] = "$Name:  $ $State: Exp $";
+const char VERSION[] = "$Name:  $";
 
 const char*target = "null";
 
@@ -684,6 +684,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.73  2003/10/26 22:43:42  steve
+ *  Improve -V messages,
+ *
  * Revision 1.72  2003/09/26 02:17:14  steve
  *  Delete pform when done with it.
  *
