@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.29 2002/01/06 04:51:31 steve Exp $"
+#ident "$Id: lexor.lex,v 1.30 2002/02/15 05:20:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,6 +89,7 @@ static int comment_enter = 0;
 %x PPINCLUDE
 %x PPDEFINE
 %x CCOMMENT
+%x PCOMENT
 %x CSTRING
 %x ERROR_LINE
 
@@ -110,6 +111,15 @@ W [ \t\b\f]+
 <CCOMMENT>.    { ECHO; }
 <CCOMMENT>\n   { istack->lineno += 1; ECHO; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); ECHO; }
+
+  /* Detect and pass multiline pragma comments. As with C-style
+     comments, pragma comments are passed through, and CPP directives
+     contained within are ignored. */
+
+"(*" { comment_enter = YY_START; BEGIN(PCOMENT); ECHO; }
+<PCOMENT>.    { ECHO; }
+<PCOMENT>\n   { istack->lineno += 1; ECHO; }
+<PCOMENT>"*)" { BEGIN(comment_enter); ECHO; }
 
   /* Strings do not contain macros or preprocessor directives. */
 \"            { comment_enter = YY_START; BEGIN(CSTRING); ECHO; }

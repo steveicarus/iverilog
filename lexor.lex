@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.68 2001/12/29 19:00:13 steve Exp $"
+#ident "$Id: lexor.lex,v 1.69 2002/02/15 05:20:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -95,6 +95,7 @@ static int comment_enter;
 %}
 
 %x CCOMMENT
+%x PCOMMENT
 %x LCOMMENT
 %x CSTRING
 %s UDPTABLE
@@ -110,14 +111,28 @@ W [ \t\b\f\r]+
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
 
+  /* C++ style comments start with / / and run to the ene of the
+     current line. These are very easy to handle. */
+
 "//".* { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
+
+
+  /* The contents of C-style comments are ignored, like white space. */
 
 "/*" { comment_enter = YY_START; BEGIN(CCOMMENT); }
 <CCOMMENT>.    { yymore(); }
 <CCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
+
+  /* Pragma comments are very similar to C-style comments, except that
+     they are allowed to carry tool-specific pragma strings. */
+
+"(*" { comment_enter = YY_START; BEGIN(PCOMMENT); }
+<PCOMMENT>.    { yymore(); }
+<PCOMMENT>\n   { yylloc.first_line += 1; yymore(); }
+<PCOMMENT>"*)" { BEGIN(comment_enter); }
 
 "<<" { return K_LS; }
 ">>" { return K_RS; }
