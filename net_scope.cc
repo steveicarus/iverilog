@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.16 2001/12/03 04:47:15 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.17 2002/07/22 21:07:08 steve Exp $"
 #endif
 
 # include "config.h"
@@ -40,6 +40,7 @@ NetScope::NetScope(NetScope*up, const char*n, NetScope::TYPE t)
       memories_ = 0;
       signals_ = 0;
       events_ = 0;
+      lcounter_ = 0;
 
       if (up) {
 	    time_unit_ = up->time_unit();
@@ -402,6 +403,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.17  2002/07/22 21:07:08  steve
+ *  Initialize the lcounter_ to 0.
+ *
  * Revision 1.16  2001/12/03 04:47:15  steve
  *  Parser and pform use hierarchical names as hname_t
  *  objects instead of encoded strings.
