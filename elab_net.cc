@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.131 2004/06/22 18:41:48 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.132 2004/06/24 15:22:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -244,15 +244,8 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
       gate->decay_time(decay);
       des->add_node(gate);
 
-      switch (op_) {
-	  case '+':
-	    gate->attribute(perm_string::literal("LPM_Direction"), verinum("ADD"));
-	    break;
-	  case '-':
-	    gate->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
-	    break;
-      }
-
+      gate->attribute(perm_string::literal("LPM_Direction"),
+		      verinum(op_ == '+' ? "ADD" : "SUB"));
 
       return osig;
 }
@@ -303,95 +296,28 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 			       lsig->pin_count());
       osig->local_flag(true);
 
+      NetLogic::TYPE gtype=NetLogic::AND;
       switch (op_) {
-	  case '^': // XOR
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, NetLogic::XOR);
-		  connect(gate->pin(1), lsig->pin(idx));
-		  connect(gate->pin(2), rsig->pin(idx));
-		  connect(gate->pin(0), osig->pin(idx));
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  des->add_node(gate);
-	    }
-	    break;
-
-	  case 'X': // XNOR
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, NetLogic::XNOR);
-		  connect(gate->pin(1), lsig->pin(idx));
-		  connect(gate->pin(2), rsig->pin(idx));
-		  connect(gate->pin(0), osig->pin(idx));
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  des->add_node(gate);
-	    }
-	    break;
-
-	  case '&': // AND
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, NetLogic::AND);
-		  connect(gate->pin(1), lsig->pin(idx));
-		  connect(gate->pin(2), rsig->pin(idx));
-		  connect(gate->pin(0), osig->pin(idx));
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  des->add_node(gate);
-	    }
-	    break;
-
-	  case 'A': // NAND (~&)
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, NetLogic::NAND);
-		  connect(gate->pin(1), lsig->pin(idx));
-		  connect(gate->pin(2), rsig->pin(idx));
-		  connect(gate->pin(0), osig->pin(idx));
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  des->add_node(gate);
-	    }
-	    break;
-
-	  case '|': // Bitwise OR
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, NetLogic::OR);
-		  connect(gate->pin(1), lsig->pin(idx));
-		  connect(gate->pin(2), rsig->pin(idx));
-		  connect(gate->pin(0), osig->pin(idx));
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  des->add_node(gate);
-	    }
-	    break;
-
-	  case 'O': // Bitwise NOR
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
-		  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					       3, NetLogic::NOR);
-		  connect(gate->pin(1), lsig->pin(idx));
-		  connect(gate->pin(2), rsig->pin(idx));
-		  connect(gate->pin(0), osig->pin(idx));
-		  gate->rise_time(rise);
-		  gate->fall_time(fall);
-		  gate->decay_time(decay);
-		  des->add_node(gate);
-	    }
-	    break;
-
-	  default:
-	    assert(0);
+	  case '^': gtype = NetLogic::XOR;  break;  // XOR
+	  case 'X': gtype = NetLogic::XNOR; break;  // XNOR
+	  case '&': gtype = NetLogic::AND;  break;  // AND
+	  case 'A': gtype = NetLogic::NAND; break;  // NAND (~&)
+	  case '|': gtype = NetLogic::OR;   break;  // Bitwise OR
+	  case 'O': gtype = NetLogic::NOR;  break;  // Bitwise NOR
+	  default: assert(0);
       }
 
+      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1) {
+	  NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
+					       3, gtype);
+	  connect(gate->pin(1), lsig->pin(idx));
+	  connect(gate->pin(2), rsig->pin(idx));
+	  connect(gate->pin(0), osig->pin(idx));
+	  gate->rise_time(rise);
+	  gate->fall_time(fall);
+	  gate->decay_time(decay);
+	  des->add_node(gate);
+       }
 
       return osig;
 }
@@ -464,20 +390,14 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 	   will put the invert on that instead. */
       NetLogic*zero_gate = 0;
       NetLogic*ones_gate = 0;
-      if (zeros > 0 && op_code == 'e')
-	    zero_gate = new NetLogic(scope, scope->local_symbol(),
-				     zeros + 1, NetLogic::NOR);
-      if (zeros > 0 && op_code == 'n')
-	    zero_gate = new NetLogic(scope, scope->local_symbol(),
-				     zeros + 1,
-				     ones > 0? NetLogic::NOR : NetLogic::OR);
-      if (ones > 0 && op_code == 'e')
-	    ones_gate = new NetLogic(scope, scope->local_symbol(),
-				     ones + 1, NetLogic::AND);
-      if (ones > 0 && op_code == 'n')
-	    ones_gate = new NetLogic(scope, scope->local_symbol(),
-				     ones + 1,
-				     zeros > 0? NetLogic::AND : NetLogic::NAND);
+      if (zeros > 0)
+	    zero_gate = new NetLogic(scope,
+			    scope->local_symbol(), zeros + 1,
+			    (op_code == 'n') ? NetLogic::OR : NetLogic::NOR);
+      if (ones > 0)
+	    ones_gate = new NetLogic(scope,
+			    scope->local_symbol(), ones + 1,
+			    (op_code == 'n') ? NetLogic::NAND : NetLogic::AND);
 
       unsigned zidx = 0;
       unsigned oidx = 0;
@@ -503,8 +423,8 @@ static NetNet* compare_eq_constant(Design*des, NetScope*scope,
 	    connect(and_sig->pin(0), zero_gate->pin(0));
 	    connect(and_sig->pin(1), ones_gate->pin(0));
 	    NetLogic*and_gate = new NetLogic(scope,
-			       scope->local_symbol(), 3,
-			       op_code == 'n'? NetLogic::NAND : NetLogic::AND);
+			        scope->local_symbol(), 3,
+			        (op_code == 'n') ? NetLogic::OR : NetLogic::AND);
 	    connect(and_gate->pin(0), osig->pin(0));
 	    connect(and_gate->pin(1), and_sig->pin(0));
 	    connect(and_gate->pin(2), and_sig->pin(1));
@@ -2368,7 +2288,7 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    break;
       }
 
-      NetNet* sig;
+      NetNet* sig = 0;
       NetLogic*gate;
 
 	// Handle the special case of a 2's complement of a constant
@@ -2407,6 +2327,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
       }
       assert(sub_sig);
 
+      bool reduction=false;
+      NetLogic::TYPE gtype = NetLogic::AND;
+
       switch (op_) {
 	  case '~': // Bitwise NOT
 	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE,
@@ -2426,95 +2349,17 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 	  case 'N': // Reduction NOR
 	  case '!': // Reduction NOT
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), NetLogic::NOR);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
-
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    break;
-
+	    reduction=true; gtype = NetLogic::NOR; break;
 	  case '&': // Reduction AND
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), NetLogic::AND);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
-
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    break;
-
+	    reduction=true; gtype = NetLogic::AND; break;
 	  case '|': // Reduction OR
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), NetLogic::OR);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
-
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    break;
-
+	    reduction=true; gtype = NetLogic::OR; break;
 	  case '^': // Reduction XOR
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), NetLogic::XOR);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
-
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    break;
-
+	    reduction=true; gtype = NetLogic::XOR; break;
 	  case 'A': // Reduction NAND (~&)
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), NetLogic::NAND);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
-
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    break;
-
-
+	    reduction=true; gtype = NetLogic::NAND; break;
 	  case 'X': // Reduction XNOR (~^)
-	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-	    sig->local_flag(true);
-	    gate = new NetLogic(scope, scope->local_symbol(),
-				1+sub_sig->pin_count(), NetLogic::XNOR);
-	    connect(gate->pin(0), sig->pin(0));
-	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
-		  connect(gate->pin(idx+1), sub_sig->pin(idx));
-
-	    des->add_node(gate);
-	    gate->rise_time(rise);
-	    gate->fall_time(fall);
-	    gate->decay_time(decay);
-	    break;
+	    reduction=true; gtype = NetLogic::XNOR; break;
 
 	  case '-': // Unary 2's complement.
 	    sig = new NetNet(scope, scope->local_symbol(),
@@ -2597,13 +2442,29 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 	    cerr << "internal error: Unhandled UNARY '" << op_ << "'" << endl;
 	    sig = 0;
       }
+      if (reduction) {
+	    sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
+	    sig->local_flag(true);
+	    gate = new NetLogic(scope, scope->local_symbol(),
+				1+sub_sig->pin_count(), gtype);
+	    connect(gate->pin(0), sig->pin(0));
+	    for (unsigned idx = 0 ;  idx < sub_sig->pin_count() ;  idx += 1)
+		  connect(gate->pin(idx+1), sub_sig->pin(idx));
 
+	    des->add_node(gate);
+	    gate->rise_time(rise);
+	    gate->fall_time(fall);
+	    gate->decay_time(decay);
+      }
 
       return sig;
 }
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.132  2004/06/24 15:22:23  steve
+ *  Code cleanup from Larry.
+ *
  * Revision 1.131  2004/06/22 18:41:48  steve
  *  Fix broken calcuation of NE for constant.
  *
