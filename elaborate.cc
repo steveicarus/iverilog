@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.284 2003/07/02 04:19:16 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.285 2003/08/05 03:01:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -446,7 +446,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
 	    const PExpr*ex = pin(idx);
-	    NetNet*sig = ex->elaborate_net(des, scope, 0, 0, 0, 0);
+	    NetNet*sig = (idx == 0)
+		  ? ex->elaborate_lnet(des, scope, true)
+		  : ex->elaborate_net(des, scope, 0, 0, 0, 0);
 	    if (sig == 0)
 		  continue;
 
@@ -2577,6 +2579,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.285  2003/08/05 03:01:58  steve
+ *  Primitive outputs have same limitations as continuous assignment.
+ *
  * Revision 1.284  2003/07/02 04:19:16  steve
  *  Elide empty begin-end in conditionals.
  *

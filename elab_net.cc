@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.114 2003/06/21 01:21:43 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.115 2003/08/05 03:01:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1556,6 +1556,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 		  cerr << get_line() << ": error: memories (" << path_
 		       << ") cannot be l-values in continuous "
 		       << "assignments." << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
 
@@ -1575,6 +1576,7 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 		       << " is not defined in this context." << endl;
 		  cerr << get_line() << ":      : Do you mean this? wire "
 		       << path_ << " = <expr>;" << endl;
+		  des->errors += 1;
 		  return 0;
 	    }
       }
@@ -1584,8 +1586,9 @@ NetNet* PEIdent::elaborate_lnet(Design*des, NetScope*scope,
 	/* Don't allow registers as assign l-values. */
       if (sig->type() == NetNet::REG) {
 	    cerr << get_line() << ": error: reg " << sig->name()
-		 << "; cannot be an L-value in continuous"
-		 << " assignments." << endl;
+		 << "; cannot be driven by primitives"
+		 << " or continuous assignment." << endl;
+	    des->errors += 1;
 	    return 0;
       }
 
@@ -2323,6 +2326,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.115  2003/08/05 03:01:58  steve
+ *  Primitive outputs have same limitations as continuous assignment.
+ *
  * Revision 1.114  2003/06/21 01:21:43  steve
  *  Harmless fixup of warnings.
  *
