@@ -90,9 +90,7 @@ AC_MSG_CHECKING("for extra libs needed")
 EXTRALIBS=
 case "${host}" in
      *-*-cygwin*)
-	if test $ac_cv_mingw32 = yes; then
-	    EXTRALIBS="-liberty"
-	fi
+	EXTRALIBS="-liberty"
 	;;
 esac
 AC_SUBST(EXTRALIBS)
