@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dump_final.c,v 1.3 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: dump_final.c,v 1.4 2003/02/26 01:24:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -39,9 +39,13 @@ void dump_final_design(FILE*out)
 		  fprintf(out, "    pin enable=%s\n",
 			  pin->enable ? ivl_logic_name(pin->enable) : "1");
 
-		  fprintf(out, "    pin ff=%s.q%u\n",
-			  pin->reg ? ivl_lpm_name(pin->reg) : "*",
-			  pin->reg_q);
+		  if (pin->reg)
+			fprintf(out, "    pin ff=%s.%s.q%u\n",
+				ivl_scope_name(ivl_lpm_scope(pin->reg)),
+				ivl_lpm_basename(pin->reg),
+				pin->reg_q);
+		  else
+			fprintf(out, "    pin ff=*.q%u\n", pin->reg_q);
 	    } else {
 		  fprintf(out, "Input pin %u:\n", idx+1);
 		  fprintf(out, "    pin nexus=%s\n",
@@ -54,6 +58,9 @@ void dump_final_design(FILE*out)
 
 /*
  * $Log: dump_final.c,v $
+ * Revision 1.4  2003/02/26 01:24:35  steve
+ *  ivl_lpm_name is obsolete.
+ *
  * Revision 1.3  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

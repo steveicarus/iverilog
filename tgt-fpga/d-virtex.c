@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.21 2002/11/24 02:26:14 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.22 2003/02/26 01:24:42 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -307,17 +307,17 @@ static void edif_show_virtex_pad(ivl_signal_t sig, const char*str)
       free(pins);
 }
 
-static void edif_show_lut2(const char*name, unsigned uref,
+static void edif_show_lut2(const char*scope, const char*name, unsigned uref,
 			   ivl_nexus_t O, ivl_nexus_t I0, ivl_nexus_t I1,
 			   const char*truth_table)
 {
       char jbuf[1024];
 
-      fprintf(xnf, "(instance (rename U%u \"%s\")"
+      fprintf(xnf, "(instance (rename U%u \"%s.%s\")"
 	      " (viewRef net"
 	      " (cellRef LUT2 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"%s\")))\n",
-	      uref, name, truth_table);
+	      uref, scope, name, truth_table);
 
       sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
       edif_set_nexus_joint(O, jbuf);
@@ -329,7 +329,7 @@ static void edif_show_lut2(const char*name, unsigned uref,
       edif_set_nexus_joint(I1, jbuf);
 }
 
-static void edif_show_lut3(const char*name, unsigned uref,
+static void edif_show_lut3(const char*scope, const char*name, unsigned uref,
 			   ivl_nexus_t O,
 			   ivl_nexus_t I0,
 			   ivl_nexus_t I1,
@@ -338,11 +338,11 @@ static void edif_show_lut3(const char*name, unsigned uref,
 {
       char jbuf[1024];
 
-      fprintf(xnf, "(instance (rename U%u \"%s\")"
+      fprintf(xnf, "(instance (rename U%u \"%s.%s\")"
 	      " (viewRef net"
 	      " (cellRef LUT3 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"%s\")))\n",
-	      uref, name, truth_table);
+	      uref, scope, name, truth_table);
 
       sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
       edif_set_nexus_joint(O, jbuf);
@@ -357,7 +357,7 @@ static void edif_show_lut3(const char*name, unsigned uref,
       edif_set_nexus_joint(I2, jbuf);
 }
 
-static void edif_show_lut4(const char*name, unsigned uref,
+static void edif_show_lut4(const char*scope, const char*name, unsigned uref,
 			   ivl_nexus_t O,
 			   ivl_nexus_t I0, ivl_nexus_t I1,
 			   ivl_nexus_t I2, ivl_nexus_t I3,
@@ -365,11 +365,11 @@ static void edif_show_lut4(const char*name, unsigned uref,
 {
       char jbuf[1024];
 
-      fprintf(xnf, "(instance (rename U%u \"%s\")"
+      fprintf(xnf, "(instance (rename U%u \"%s.%s\")"
 	      " (viewRef net"
 	      " (cellRef LUT4 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"%s\")))\n",
-	      uref, name, truth_table);
+	      uref, scope, name, truth_table);
 
       sprintf(jbuf, "(portRef O (instanceRef U%u))", edif_uref);
       edif_set_nexus_joint(O, jbuf);
@@ -672,20 +672,23 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 
 	    switch (ivl_logic_pins(net)) {
 		case 3:
-		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+		  edif_show_lut2(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2), "8");
 		  break;
 		case 4:
-		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+		  edif_show_lut3(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3), "80");
 		  break;
 		case 5:
-		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+		  edif_show_lut4(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
@@ -735,20 +738,23 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 
 	    switch (ivl_logic_pins(net)) {
 		case 3:
-		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+		  edif_show_lut2(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2), "1");
 		  break;
 		case 4:
-		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+		  edif_show_lut3(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3), "01");
 		  break;
 		case 5:
-		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+		  edif_show_lut4(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
@@ -781,20 +787,23 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 
 	    switch (ivl_logic_pins(net)) {
 		case 3:
-		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+		  edif_show_lut2(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2), "E");
 		  break;
 		case 4:
-		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+		  edif_show_lut3(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3), "FE");
 		  break;
 		case 5:
-		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+		  edif_show_lut4(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
@@ -810,20 +819,23 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 
 	    switch (ivl_logic_pins(net)) {
 		case 3:
-		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+		  edif_show_lut2(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2), "9");
 		  break;
 		case 4:
-		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+		  edif_show_lut3(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3), "69");
 		  break;
 		case 5:
-		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+		  edif_show_lut4(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
@@ -839,20 +851,23 @@ static void edif_show_virtex_logic(ivl_net_logic_t net)
 
 	    switch (ivl_logic_pins(net)) {
 		case 3:
-		  edif_show_lut2(ivl_logic_name(net), edif_uref,
+		  edif_show_lut2(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2), "6");
 		  break;
 		case 4:
-		  edif_show_lut3(ivl_logic_name(net), edif_uref,
+		  edif_show_lut3(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
 				 ivl_logic_pin(net, 3), "96");
 		  break;
 		case 5:
-		  edif_show_lut4(ivl_logic_name(net), edif_uref,
+		  edif_show_lut4(ivl_scope_name(ivl_logic_scope(net)),
+				 ivl_logic_basename(net), edif_uref,
 				 ivl_logic_pin(net, 0),
 				 ivl_logic_pin(net, 1),
 				 ivl_logic_pin(net, 2),
@@ -916,14 +931,16 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 
       switch (ivl_lpm_width(net)) {
 	  case 1:
-	    edif_show_lut2(ivl_lpm_name(net), edif_uref,
+	    edif_show_lut2(ivl_scope_name(ivl_lpm_scope(net)),
+			   ivl_lpm_basename(net), edif_uref,
 			   ivl_lpm_q(net, 0),
 			   ivl_lpm_data(net, 0),
 			   ivl_lpm_datab(net, 0), eq? "9" : "6");
 	    break;
 
 	  case 2:
-	    edif_show_lut4(ivl_lpm_name(net), edif_uref,
+	    edif_show_lut4(ivl_scope_name(ivl_lpm_scope(net)),
+			   ivl_lpm_basename(net), edif_uref,
 			   ivl_lpm_q(net, 0),
 			   ivl_lpm_data(net, 0), ivl_lpm_datab(net, 0),
 			   ivl_lpm_data(net, 1), ivl_lpm_datab(net, 1),
@@ -1066,10 +1083,12 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			      " (cellRef LUT4 (libraryRef VIRTEX)))"
 			      " (property INIT (string \"9009\")))\n",
 			      edif_uref, pairs);
-		      fprintf(xnf, "(instance (rename U%uM%u \"%s\")"
+		      fprintf(xnf, "(instance (rename U%uM%u \"%s.%s\")"
 			      " (viewRef net"
 			      " (cellRef MUXCY (libraryRef VIRTEX))))\n",
-			      edif_uref, pairs, ivl_lpm_name(net));
+			      edif_uref, pairs,
+			      ivl_scope_name(ivl_lpm_scope(net)),
+			      ivl_lpm_basename(net));
 
 		      if (eq) {
 			    fprintf(xnf, "(instance U%uG%u"
@@ -1123,11 +1142,13 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 		} else {
 		      assert(tail == 1);
 
-		      fprintf(xnf, "(instance (rename U%uL%u \"%s\")"
+		      fprintf(xnf, "(instance (rename U%uL%u \"%s.%s\")"
 			      " (viewRef net"
 			      " (cellRef LUT2 (libraryRef VIRTEX)))"
 			      " (property INIT (string \"9\")))\n",
-			      edif_uref, pairs, ivl_lpm_name(net));
+			      edif_uref, pairs,
+			      ivl_scope_name(ivl_lpm_scope(net)),
+			      ivl_lpm_basename(net));
 		      fprintf(xnf, "(instance U%uM%u"
 			      " (viewRef net"
 			      " (cellRef MUXCY (libraryRef VIRTEX))))\n",
@@ -1207,9 +1228,10 @@ static void edif_show_virtex_muxs1(ivl_lpm_t net)
 	    char tmp_name[1024];
 
 	    edif_uref += 1;
-	    sprintf(tmp_name, "%s<%u>", ivl_lpm_name(net), idx);
+	    sprintf(tmp_name, "%s<%u>", ivl_lpm_basename(net), idx);
 
-	    edif_show_lut3(tmp_name, edif_uref,
+	    edif_show_lut3(ivl_scope_name(ivl_lpm_scope(net)),
+			   tmp_name, edif_uref,
 			   ivl_lpm_q(net, idx),
 			   ivl_lpm_data2(net, 0, idx),
 			   ivl_lpm_data2(net, 1, idx),
@@ -1235,7 +1257,9 @@ static void edif_show_virtex_muxs2(ivl_lpm_t net)
 	    char tmp_name[1024];
 
 	    edif_uref += 1;
-	    sprintf(tmp_name, "%s<%u>", ivl_lpm_name(net), idx);
+	    sprintf(tmp_name, "%s.%s<%u>",
+		    ivl_scope_name(ivl_lpm_scope(net)),
+		    ivl_lpm_basename(net), idx);
 
 	    fprintf(xnf, "(instance U%uA"
 		    " (viewRef net"
@@ -1296,7 +1320,9 @@ static void edif_show_virtex_muxs3(ivl_lpm_t net)
 	    char tmp_name[1024];
 
 	    edif_uref += 1;
-	    sprintf(tmp_name, "%s<%u>", ivl_lpm_name(net), idx);
+	    sprintf(tmp_name, "%s.%s<%u>",
+		    ivl_scope_name(ivl_lpm_scope(net)),
+		    ivl_lpm_basename(net), idx);
 
 	    fprintf(xnf, "(instance U%uAA"
 		    " (viewRef net"
@@ -1460,7 +1486,8 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 	   wide. Generate an XOR gate to perform the half-add. */
       if (ivl_lpm_width(net) == 1) {
 
-	    edif_show_lut2(ivl_lpm_name(net), edif_uref,
+	    edif_show_lut2(ivl_scope_name(ivl_lpm_scope(net)),
+			   ivl_lpm_basename(net), edif_uref,
 			   ivl_lpm_q(net, 0),
 			   ivl_lpm_data(net, 0),
 			   ivl_lpm_datab(net, 0),
@@ -1481,10 +1508,11 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 	      " (property INIT (string \"%u\")))\n",
 	      edif_uref, ha_init);
 
-      fprintf(xnf, "(instance (rename U%u_X0 \"%s[0]\")"
+      fprintf(xnf, "(instance (rename U%u_X0 \"%s.%s[0]\")"
 	      " (viewRef net"
 	      " (cellRef XORCY (libraryRef VIRTEX))))\n",
-	      edif_uref, ivl_lpm_name(net));
+	      edif_uref, ivl_scope_name(ivl_lpm_scope(net)),
+	      ivl_lpm_basename(net));
 
       fprintf(xnf, "(instance U%u_M0", edif_uref);
       fprintf(xnf, " (viewRef net"
@@ -1556,10 +1584,12 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 	    fprintf(xnf, " (viewRef net"
 		    " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
 
-	    fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")"
+	    fprintf(xnf, "(instance (rename U%u_X%u \"%s.%s[%u]\")"
 		    " (viewRef net"
 		    " (cellRef XORCY (libraryRef VIRTEX))))\n",
-		    edif_uref, idx, ivl_lpm_name(net), idx);
+		    edif_uref, idx,
+		    ivl_scope_name(ivl_lpm_scope(net)),
+		    ivl_lpm_basename(net), idx);
 
 	    fprintf(xnf, "(net U%uN%u (joined"
 		    " (portRef O (instanceRef U%u_L%u))"
@@ -1596,8 +1626,9 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 	      " (property INIT (string \"%u\")))\n",
 	      edif_uref, idx, ha_init);
 
-      fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")",
-	      edif_uref, idx, ivl_lpm_name(net), idx);
+      fprintf(xnf, "(instance (rename U%u_X%u \"%s.%s[%u]\")",
+	      edif_uref, idx, ivl_scope_name(ivl_lpm_scope(net)),
+	      ivl_lpm_basename(net), idx);
       fprintf(xnf, " (viewRef net"
 	      " (cellRef XORCY (libraryRef VIRTEX))))\n");
 
@@ -1635,7 +1666,8 @@ static void virtex_show_cmp_ge(ivl_lpm_t net)
       if (ivl_lpm_width(net) == 1) {
 	    edif_uref += 1;
 
-	    edif_show_lut2(ivl_lpm_name(net), edif_uref,
+	    edif_show_lut2(ivl_scope_name(ivl_lpm_scope(net)),
+			   ivl_lpm_basename(net), edif_uref,
 			   ivl_lpm_q(net, 0),
 			   ivl_lpm_data(net, 0),
 			   ivl_lpm_datab(net, 0),
@@ -1649,11 +1681,11 @@ static void virtex_show_cmp_ge(ivl_lpm_t net)
 	/* First, draw the bottom bit slice of the comparator. This
 	   includes the LUT2 device to perform the addition, and a
 	   MUXCY_L device to send the carry up to the next bit. */
-      fprintf(xnf, "(instance (rename U%u_L0 \"%s[0]\")"
+      fprintf(xnf, "(instance (rename U%u_L0 \"%s.%s[0]\")"
 	      " (viewRef net"
 	      " (cellRef LUT2 (libraryRef VIRTEX)))"
 	      " (property INIT (string \"9\")))\n", edif_uref,
-	      ivl_lpm_name(net));
+	      ivl_scope_name(ivl_lpm_scope(net)), ivl_lpm_basename(net));
       fprintf(xnf, "(instance U%u_M0", edif_uref);
       fprintf(xnf, " (viewRef net"
 	      " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
@@ -1908,6 +1940,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.22  2003/02/26 01:24:42  steve
+ *  ivl_lpm_name is obsolete.
+ *
  * Revision 1.21  2002/11/24 02:26:14  steve
  *  Fix instanceRef spelling.
  *

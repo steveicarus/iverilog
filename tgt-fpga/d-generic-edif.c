@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.12 2002/11/01 02:36:22 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.13 2003/02/26 01:24:42 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -385,8 +385,9 @@ void edif_show_generic_dff(ivl_lpm_t net)
 
 	    edif_uref += 1;
 
-	    fprintf(xnf, "(instance (rename U%u \"%s[%u]\")",
-		    edif_uref, ivl_lpm_name(net), idx);
+	    fprintf(xnf, "(instance (rename U%u \"%s.%s[%u]\")",
+		    edif_uref, ivl_scope_name(ivl_lpm_scope(net)),
+		    ivl_lpm_basename(net), idx);
 	    fprintf(xnf, " (viewRef net"
 		    " (cellRef %s (libraryRef VIRTEX))))\n",
 		    fdcell);
@@ -449,6 +450,9 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.13  2003/02/26 01:24:42  steve
+ *  ivl_lpm_name is obsolete.
+ *
  * Revision 1.12  2002/11/01 02:36:22  steve
  *  Give nets better names, if available.
  *
