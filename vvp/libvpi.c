@@ -17,15 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: libvpi.c,v 1.1 2003/01/10 03:06:32 steve Exp $"
+#ident "$Id: libvpi.c,v 1.2 2003/01/19 00:03:23 steve Exp $"
 #endif
 
 /*
  * Things that should be statically linked by VPI modules go here.
  */
 
+void __libvpi_c_dummy_function()
+{
+}
+
 /*
  * $Log: libvpi.c,v $
+ * Revision 1.2  2003/01/19 00:03:23  steve
+ *  Add a dummy function to reduce confusion on some systems.
+ *
  * Revision 1.1  2003/01/10 03:06:32  steve
  *  Remove vpithunk, and move libvpi to vvp directory.
  *
