@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.303 2004/06/13 04:56:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.304 2004/06/20 15:59:06 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1204,6 +1204,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
+ * Elaborate non-blocking assignments. The statement is of the general
+ * form:
+ *
+ *    <lval> <= #<delay> <rval> ;
  */
 NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 {
@@ -1220,10 +1224,16 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
       if (rv == 0)
 	    return 0;
 
+	/* Handle the (common) case that the r-value is a vector. This
+	   includes just about everything but reals. In this case, we
+	   need to pad the r-value to match the width of the l-value.
 
-      { unsigned wid = count_lval_width(lv);
-        rv->set_width(wid);
-	rv = pad_to_width(rv, wid);
+	   If in this case the l-val is a variable (i.e. real) then
+	   the width to pad to will be 0, so this code is harmless. */
+      if (rv->expr_type() == NetExpr::ET_VECTOR) {
+	    unsigned wid = count_lval_width(lv);
+	    rv->set_width(wid);
+	    rv = pad_to_width(rv, wid);
       }
 
       NetExpr*delay = 0;
@@ -2709,6 +2719,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.304  2004/06/20 15:59:06  steve
+ *  Only pad the width of vector r-values.
+ *
  * Revision 1.303  2004/06/13 04:56:54  steve
  *  Add support for the default_nettype directive.
  *
