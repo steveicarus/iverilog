@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.17 2000/11/07 06:14:06 steve Exp $"
+#ident "$Id: verilog.c,v 1.18 2000/11/09 05:14:07 steve Exp $"
 #endif
 
 /*
@@ -172,10 +172,28 @@ static void show_expression(ivl_expr_t net)
 		    case 'n':
 		      fprintf(out, "!=");
 		      break;
+		    case 'N':
+		      fprintf(out, "!==");
+		      break;
+		    case 'r':
+		      fprintf(out, ">>");
+		      break;
 		    default:
 		      fprintf(out, "%c", code);
 		}
 		show_expression(ivl_expr_oper2(net));
+		break;
+	  }
+
+	  case IVL_EX_CONCAT: {
+		unsigned idx;
+		fprintf(out, "{");
+		show_expression(ivl_expr_parm(net, 0));
+		for (idx = 1 ;  idx < ivl_expr_parms(net) ;  idx += 1) {
+		      fprintf(out, ", ");
+		      show_expression(ivl_expr_parm(net, idx));
+		}
+		fprintf(out, "}");
 		break;
 	  }
 
@@ -422,6 +440,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.18  2000/11/09 05:14:07  steve
+ *  show concatenation operators.
+ *
  * Revision 1.17  2000/11/07 06:14:06  steve
  *  Display l-values with width.
  *
