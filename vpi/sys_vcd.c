@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_vcd.c,v 1.2 1999/11/28 00:56:08 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.3 2000/01/13 04:48:50 steve Exp $"
 #endif
 
 /*
@@ -85,9 +85,9 @@ static int sys_dumpfile_calltf(char*name)
 
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
 
-      if (item) {
+      if (argv) {
+	    vpiHandle item = vpi_scan(argv);
 	    s_vpi_value value;
 
 	    if (vpi_get(vpiType, item) != vpiConstant) {
@@ -176,14 +176,16 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 
 static int sys_dumpvars_calltf(char*name)
 {
+      vpiHandle item;
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
-      vpiHandle item = vpi_scan(argv);
 
-      if (item == 0) {
+      if (argv == 0) {
 	    vpi_printf("SORRY: %s requires arguments\n", name);
 	    return 0;
       }
+
+      item = vpi_scan(argv);
 
       assert(dump_file);
 
@@ -226,6 +228,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.3  2000/01/13 04:48:50  steve
+ *  Catch some parameter problems.
+ *
  * Revision 1.2  1999/11/28 00:56:08  steve
  *  Build up the lists in the scope of a module,
  *  and get $dumpvars to scan the scope for items.
