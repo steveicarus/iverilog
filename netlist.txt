@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.3 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: netlist.txt,v 1.4 1999/09/29 00:03:27 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -53,14 +53,14 @@ in the vector.
 Node and net pins can be connected together via the connect
 function. Connections are transitive (A==B and B==c means A==C) so
 connections accumulate on a link as items are connected to it. The
-descructors for nets and nodes automatically arrange for pins to be
+destructors for nets and nodes automatically arrange for pins to be
 disconnected when the item is deleted, so that the netlist can be
 changed during processing.
 
 BEHAVIORAL ITEMS: NetProcTop, NetProc and derived classes
 
 Behavioral items are not in general linked to the netlist. Instead,
-they represent elabrated behavioral statements. The type of the object
+they represent elaborated behavioral statements. The type of the object
 implies what the behavior of the statement does. For example, a
 NetCondit object represents an ``if'' statement, and carries a
 condition expression and up to two alternative sub-statements.
@@ -105,7 +105,7 @@ structurally as events are like devices that trigger behavioral
 statements.
 
 However, typical expressions the behavioral description are
-represented as a tree of NetExpr nodes. The derived clas of the node
+represented as a tree of NetExpr nodes. The derived class of the node
 encodes what kind of operator the node represents.
 
 EXPRESSION BIT WIDTH
@@ -160,7 +160,7 @@ the NetESignal object.
 
 HIERARCHY IN NETLISTS
 
-The obvious hierarchical structure of verilog is the module. The
+The obvious hierarchical structure of Verilog is the module. The
 Verilog program may contain any number of instantiations of modules in
 order to form an hierarchical design. However, the elaboration of the
 design into a netlist erases module boundaries. Modules are expanded
@@ -189,6 +189,9 @@ some task calls. C++ programmers recognize this as inlining a task.)
 
 
  $Log: netlist.txt,v $
+ Revision 1.4  1999/09/29 00:03:27  steve
+  Spelling fixes from Larry.
+
  Revision 1.3  1999/07/24 02:11:20  steve
   Elaborate task input ports.
 
