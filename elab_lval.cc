@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.22 2002/11/21 18:15:40 steve Exp $"
+#ident "$Id: elab_lval.cc,v 1.23 2002/11/21 23:27:51 steve Exp $"
 #endif
 
 # include "config.h"
@@ -302,6 +302,17 @@ NetAssign_* PEIdent::elaborate_mem_lval_(Design*des, NetScope*scope,
       if (ix == 0)
 	    return 0;
 
+	/* Evaluate the memory index expression down as must as
+	   possible. Ideally, we can get it down to a constant. */
+      if (! dynamic_cast<NetEConst*>(ix)) {
+	    NetExpr*tmp = ix->eval_tree();
+	    if (tmp) {
+		  tmp->set_line(*ix);
+		  delete ix;
+		  ix = tmp;
+	    }
+      }
+
       NetAssign_*lv = new NetAssign_(mem);
       lv->set_bmux(ix);
       lv->set_part(0, mem->width());
@@ -318,6 +329,9 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
 
 /*
  * $Log: elab_lval.cc,v $
+ * Revision 1.23  2002/11/21 23:27:51  steve
+ *  Precalculate indices to l-value arrays.
+ *
  * Revision 1.22  2002/11/21 18:15:40  steve
  *  Fix const test of msb in assignment l-values.
  *
