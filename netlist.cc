@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.214 2003/04/27 16:33:16 steve Exp $"
+#ident "$Id: netlist.cc,v 1.215 2003/05/01 01:13:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -192,6 +192,13 @@ const NetScope* NetObj::scope() const
 
 Link& NetObj::pin(unsigned idx)
 {
+      if (idx >= npins_) {
+	    cerr << get_line() << ": internal error: pin("<<idx<<")"
+		 << " out of bounds("<<npins_<<")" << endl;
+	    cerr << get_line() << ":               : typeid="
+		 << typeid(*this).name() << endl;
+      }
+
       assert(idx < npins_);
       return pins_[idx];
 }
@@ -393,6 +400,14 @@ long NetNet::lsb() const
 long NetNet::msb() const
 {
       return msb_;
+}
+
+bool NetNet::sb_is_valid(long sb) const
+{
+      if (msb_ >= lsb_)
+	    return (sb <= msb_) && (sb >= lsb_);
+      else
+	    return (sb <= lsb_) && (sb >= msb_);
 }
 
 unsigned NetNet::sb_to_idx(long sb) const
@@ -2183,6 +2198,11 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.215  2003/05/01 01:13:57  steve
+ *  More complete bit range internal error message,
+ *  Better test of part select ranges on non-zero
+ *  signal ranges.
+ *
  * Revision 1.214  2003/04/27 16:33:16  steve
  *  Better guess of defualt ternary width.
  *
@@ -2201,109 +2221,5 @@ const NetProc*NetTaskDef::proc() const
  *
  * Revision 1.209  2003/03/15 18:08:43  steve
  *  Comparison operators do have defined width.
- *
- * Revision 1.208  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.207  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.206  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.205  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.204  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.203  2002/11/09 00:25:27  steve
- *  Add dup_expr for user defined function calls.
- *
- * Revision 1.202  2002/11/06 02:25:13  steve
- *  No need to keep excess width from an
- *  unsigned constant value, if it can
- *  be trimmed safely.
- *
- * Revision 1.201  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.200  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.199  2002/09/01 03:01:48  steve
- *  Properly cast signedness of parameters with ranges.
- *
- * Revision 1.198  2002/08/19 00:06:12  steve
- *  Allow release to handle removal of target net.
- *
- * Revision 1.197  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.196  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.195  2002/07/28 23:58:44  steve
- *  Fix NetBlock destructor to delete substatements.
- *
- * Revision 1.194  2002/07/24 16:24:45  steve
- *  Rewrite find_similar_event to support doing
- *  all event matching and replacement in one
- *  shot, saving time in the scans.
- *
- * Revision 1.193  2002/07/02 03:02:57  steve
- *  Change the signal to a net when assignments go away.
- *
- * Revision 1.192  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.191  2002/06/19 04:20:03  steve
- *  Remove NetTmp and add NetSubnet class.
- *
- * Revision 1.190  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.189  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.188  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.187  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.186  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.185  2002/05/05 21:11:50  steve
- *  Put off evaluation of concatenation repeat expresions
- *  until after parameters are defined. This allows parms
- *  to be used in repeat expresions.
- *
- *  Add the builtin $signed system function.
  */
 

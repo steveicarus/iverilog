@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.286 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: netlist.h,v 1.287 2003/05/01 01:13:57 steve Exp $"
 #endif
 
 /*
@@ -82,7 +82,7 @@ struct functor_t;
  * interpretation of the rise/fall/decay times is typically left to
  * the target to properly interpret.
  */
-class NetObj  : public Attrib {
+class NetObj  : public Attrib, public virtual LineInfo {
 
     public:
     public:
@@ -359,7 +359,7 @@ class NetNode  : public NetObj {
  * anything and they are not a data sink, per se. The pins follow the
  * values on the nexus.
  */
-class NetNet  : public NetObj, public LineInfo {
+class NetNet  : public NetObj {
 
     public:
       enum Type { IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1, SUPPLY0,
@@ -400,6 +400,11 @@ class NetNet  : public NetObj, public LineInfo {
 	   found in the verilog source) to a pin number. It accounts
 	   for variation in the definition of the reg/wire/whatever. */
       unsigned sb_to_idx(long sb) const;
+
+	/* This method checks that the signed index is valid for this
+	   signal. If it is, the above sb_to_idx can be used to get
+	   the pin# from the index. */
+      bool sb_is_valid(long sb) const;
 
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
@@ -1272,7 +1277,7 @@ class NetUDP  : public NetNode {
  * linked into the netlist. However, elaborating a process may cause
  * special nodes to be created to handle things like events.
  */
-class NetProc : public LineInfo {
+class NetProc : public virtual LineInfo {
 
     public:
       explicit NetProc();
@@ -3275,6 +3280,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.287  2003/05/01 01:13:57  steve
+ *  More complete bit range internal error message,
+ *  Better test of part select ranges on non-zero
+ *  signal ranges.
+ *
  * Revision 1.286  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *

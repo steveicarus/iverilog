@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.112 2003/04/11 05:18:08 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.113 2003/05/01 01:13:57 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1370,8 +1370,23 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 
 	    assert(mval);
 	    assert(lval);
-	    unsigned midx = sig->sb_to_idx(mval->as_long());
-	    unsigned lidx = sig->sb_to_idx(lval->as_long());
+
+	    long mbit = mval->as_long();
+	    long lbit = lval->as_long();
+
+	      /* Check that the part select is valid. Both ends of the
+		 constant part select must be within the range of the
+		 signal for the part select to be correct. */
+	    if (! (sig->sb_is_valid(mbit) && sig->sb_is_valid(lbit))) {
+		  cerr << get_line() << ": error: bit/part select ["
+		       << mval->as_long() << ":" << lval->as_long()
+		       << "] out of range for " << sig->name() << endl;
+		  des->errors += 1;
+		  return sig;
+	    }
+
+	    unsigned midx = sig->sb_to_idx(mbit);
+	    unsigned lidx = sig->sb_to_idx(lbit);
 
 	      /* This is a part select, create a new NetNet object
 		 that connects to just the desired parts of the
@@ -1396,18 +1411,6 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 	    }
 
 	    unsigned part_count = midx-lidx+1;
-
-	      /* Check that the bit or part select of the signal is
-		 within the range of the part. The lidx is the
-		 normalized index of the LSB, so that plus the desired
-		 width must be <= the width of the references signal. */
-	    if ((lidx + part_count) > sig->pin_count()) {
-		  cerr << get_line() << ": error: bit/part select ["
-		       << mval->as_long() << ":" << lval->as_long()
-		       << "] out of range for " << sig->name() << endl;
-		  des->errors += 1;
-		  return sig;
-	    }
 
 	    NetSubnet*tmp = new NetSubnet(sig, lidx, part_count);
 
@@ -2324,6 +2327,11 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.113  2003/05/01 01:13:57  steve
+ *  More complete bit range internal error message,
+ *  Better test of part select ranges on non-zero
+ *  signal ranges.
+ *
  * Revision 1.112  2003/04/11 05:18:08  steve
  *  Handle signed magnitude compare all the
  *  way through to the vvp code generator.
