@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.91 1999/09/18 02:51:35 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.92 1999/09/18 22:23:50 steve Exp $"
 #endif
 
 /*
@@ -2174,8 +2174,8 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       block->append(cur);
 
 	/* Generate assignment statement statements for the output and
-	   INOUT ports of the task. The r-value in this case is the
-	   expression passed as a parameter, and the l-value is the
+	   INOUT ports of the task. The l-value in this case is the
+	   expression passed as a parameter, and the r-value is the
 	   port to be copied out. */
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 
@@ -2190,22 +2190,29 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    NetNet*val = parms_[idx]->elaborate_net(des, path);
 	    assert(val);
 
-	    if (val->pin_count() != port->pin_count()) {
-		  cerr << get_line() << ": Expression " << idx+1 <<
-			" width (" << val->pin_count() <<
-			") does not match task port width (" <<
-			port->pin_count() << ")." << endl;
-		  des->errors += 1;
-		  continue;
+
+	      /* Make an expression out of the actual task port. If
+		 the port is smaller then the expression to redeive
+		 the result, then expand the port by padding with
+		 zeros. */
+	    NetESignal*sig = new NetESignal(port);
+	    NetExpr*pexp = sig;
+	    if (sig->expr_width() < val->pin_count()) {
+		  unsigned cwid = val->pin_count()-sig->expr_width();
+		  verinum pad (verinum::V0, cwid);
+		  NetEConst*cp = new NetEConst(pad);
+		  cp->set_width(cwid);
+
+		  NetEConcat*con = new NetEConcat(2);
+		  con->set(0, cp);
+		  con->set(1, sig);
+		  con->set_width(val->pin_count());
+		  pexp = con;
 	    }
 
-	    assert(val->pin_count() == port->pin_count());
-
-	      /* Make an expression out of the actual task port. */
-	    NetESignal*sig = new NetESignal(port);
 
 	      /* Generate the assignment statement. */
-	    NetAssign*ass = new NetAssign("@", des, val->pin_count(), sig);
+	    NetAssign*ass = new NetAssign("@", des, val->pin_count(), pexp);
 	    for (unsigned pi = 0 ; pi < val->pin_count() ;  pi += 1)
 		  connect(val->pin(pi), ass->pin(pi));
 
@@ -2639,6 +2646,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.92  1999/09/18 22:23:50  steve
+ *  Match bit widths comming out of task output ports.
+ *
  * Revision 1.91  1999/09/18 02:51:35  steve
  *  report non-constant part select expressions.
  *
