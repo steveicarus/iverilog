@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.59 2002/06/06 18:57:18 steve Exp $"
+#ident "$Id: main.cc,v 1.60 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -557,6 +557,9 @@ int main(int argc, char*argv[])
       }
 
       if (net_path) {
+	    if (verbose_flag)
+		  cerr<<" dumping netlist to " <<net_path<< "..." <<endl;
+
 	    ofstream out (net_path);
 	    des->dump(out);
       }
@@ -591,6 +594,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.60  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.59  2002/06/06 18:57:18  steve
  *  Use standard name for iostream.
  *

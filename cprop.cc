@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.35 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: cprop.cc,v 1.36 2002/06/24 01:49:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -64,8 +64,8 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 	// result. Don't reduce the adder smaller then a 1-bit
 	// adder. These will be eliminated later.
       while ((obj->width() > 1)
-	  && link_drivers_constant(obj->pin_DataA(0))
-	  && (driven_value(obj->pin_DataA(0)) == verinum::V0)) {
+	     && obj->pin_DataA(0).nexus()->drivers_constant()
+	     && (driven_value(obj->pin_DataA(0)) == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
 	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
@@ -89,8 +89,8 @@ void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
 
 	// Now do the same thing on the B side.
       while ((obj->width() > 1)
-	  && link_drivers_constant(obj->pin_DataB(0))
-	  && (driven_value(obj->pin_DataB(0)) == verinum::V0)) {
+	     && obj->pin_DataB(0).nexus()->drivers_constant()
+	     && (driven_value(obj->pin_DataB(0)) == verinum::V0)) {
 
 	    NetAddSub*tmp = 0;
 	    tmp = new NetAddSub(obj->scope(), obj->name(), obj->width()-1);
@@ -160,9 +160,9 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 	   be completely eliminated and replaced with a constant 0. */
 
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! link_drivers_constant(obj->pin_DataA(idx)))
+	    if (! obj->pin_DataA(idx).nexus()->drivers_constant())
 		  continue;
-	    if (! link_drivers_constant(obj->pin_DataB(idx)))
+	    if (! obj->pin_DataB(idx).nexus()->drivers_constant())
 		  continue;
 	    if (driven_value(obj->pin_DataA(idx)) ==
 		driven_value(obj->pin_DataB(idx)))
@@ -181,11 +181,11 @@ void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
 
       unsigned top = obj->width();
       for (unsigned idx = 0 ;  idx < top ; ) {
-	    if (! link_drivers_constant(obj->pin_DataA(idx))) {
+	    if (! obj->pin_DataA(idx).nexus()->drivers_constant()) {
 		  idx += 1;
 		  continue;
 	    }
-	    if (! link_drivers_constant(obj->pin_DataB(idx))) {
+	    if (! obj->pin_DataB(idx).nexus()->drivers_constant()) {
 		  idx += 1;
 		  continue;
 	    }
@@ -310,7 +310,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     on the output of an AND gate. */
 
 		while (idx < top) {
-		      if (! link_drivers_constant(obj->pin(idx))) {
+		      if (! obj->pin(idx).nexus()->drivers_constant()) {
 			    idx += 1;
 			    continue;
 		      }
@@ -457,7 +457,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     on the output of an OR gate. */
 
 		while (idx < top) {
-		      if (! link_drivers_constant(obj->pin(idx))) {
+		      if (! obj->pin(idx).nexus()->drivers_constant()) {
 			    idx += 1;
 			    continue;
 		      }
@@ -588,7 +588,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		     last input to this position. It's like bubbling
 		     all the 0 inputs to the end. */
 		while (idx < top) {
-		      if (! link_drivers_constant(obj->pin(idx))) {
+		      if (! obj->pin(idx).nexus()->drivers_constant()) {
 			    idx += 1;
 			    continue;
 		      }
@@ -618,7 +618,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 		unsigned one = 0, ones = 0;
 		idx = 1;
 		while (idx < top) {
-		      if (! link_drivers_constant(obj->pin(idx))) {
+		      if (! obj->pin(idx).nexus()->drivers_constant()) {
 			    idx += 1;
 			    continue;
 		      }
@@ -682,7 +682,7 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 
 		if ((top == 3) && (ones == 1)) {
 		      unsigned save;
-		      if (! link_drivers_constant(obj->pin(1)))
+		      if (! obj->pin(1).nexus()->drivers_constant())
 			    save = 1;
 		      else if (driven_value(obj->pin(1)) != verinum::V1)
 			    save = 1;
@@ -777,7 +777,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	   connected to the select input. */
       bool flag = true;
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! link_drivers_constant(obj->pin_Data(idx, 0))) {
+	    if (! obj->pin_Data(idx, 0).nexus()->drivers_constant()) {
 		  flag = false;
 		  break;
 	    }
@@ -809,7 +809,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	   NetMux with an array of BUFIF0 devices. */
       flag = true;
       for (unsigned idx = 0 ;  idx < obj->width() ;  idx += 1) {
-	    if (! link_drivers_constant(obj->pin_Data(idx, 1))) {
+	    if (! obj->pin_Data(idx, 1).nexus()->drivers_constant()) {
 		  flag = false;
 		  break;
 	    }
@@ -949,6 +949,10 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.36  2002/06/24 01:49:38  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.35  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

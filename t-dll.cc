@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.86 2002/06/21 04:59:35 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.87 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1028,7 +1028,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 	/* Look at the direction input of the device, and select the
 	   shift direction accordingly. */
       if (net->pin_Direction().is_linked()) {
-	    assert( link_drivers_constant(net->pin_Direction()) );
+	    assert( net->pin_Direction().nexus()->drivers_constant() );
 
 	    verinum::V dir = driven_value(net->pin_Direction());
 	    switch (dir) {
@@ -1950,6 +1950,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.87  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.86  2002/06/21 04:59:35  steve
  *  Carry integerness throughout the compilation.
  *

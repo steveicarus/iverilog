@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.6 2002/04/21 04:59:08 steve Exp $"
+#ident "$Id: net_link.cc,v 1.7 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,10 +42,14 @@ void connect(Nexus*l, Link&r)
 
 
       Nexus*tmp = r.nexus_;
-      while (Link*cur = tmp->first_nlink()) {
-	    tmp->unlink(cur);
+      while (Link*cur = tmp->list_) {
+	    tmp->list_ = cur->next_;
+	    cur->nexus_ = 0;
+	    cur->next_  = 0;
 	    l->relink(cur);
       }
+
+      l->driven_ = Nexus::NO_GUESS;
 
       assert(tmp->list_ == 0);
       delete tmp;
@@ -54,22 +58,7 @@ void connect(Nexus*l, Link&r)
 void connect(Link&l, Link&r)
 {
       assert(&l != &r);
-      assert(l.nexus_);
-      assert(r.nexus_);
-
-	/* If the links are already connected, then we're done. */
-      if (l.nexus_ == r.nexus_)
-	    return;
-
-      Nexus*tmp = r.nexus_;
-      while (Link*cur = tmp->first_nlink()) {
-	    tmp->unlink(cur);
-	    l.nexus_->relink(cur);
-      }
-
-      assert(tmp->list_ == 0);
-      assert(l.is_linked(r));
-      delete tmp;
+      connect(l.nexus_, r);
 }
 
 Link::Link()
@@ -226,6 +215,7 @@ Nexus::Nexus()
 {
       name_ = 0;
       list_ = 0;
+      driven_ = NO_GUESS;
       t_cookie_ = 0;
 }
 
@@ -445,6 +435,10 @@ unsigned NexusSet::bsearch_(Nexus*that)
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.7  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.6  2002/04/21 04:59:08  steve
  *  Add support for conbinational events by finding
  *  the inputs to expressions and some statements.

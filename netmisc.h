@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.12 2001/02/15 06:59:36 steve Exp $"
+#ident "$Id: netmisc.h,v 1.13 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -32,13 +32,6 @@
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
 extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
-
-/*
- * This local function returns true if all the the possible drivers of
- * this link are constant. It will also return true if there are no
- * drivers at all.
- */
-extern bool link_drivers_constant(const Link&lnk);
 
 /*
  * This function returns the value of the constant driving this link,
@@ -64,6 +57,10 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.13  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.12  2001/02/15 06:59:36  steve
  *  FreeBSD port has a maintainer now.
  *

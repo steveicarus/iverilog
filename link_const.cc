@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: link_const.cc,v 1.12 2002/06/19 04:18:46 steve Exp $"
+#ident "$Id: link_const.cc,v 1.13 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,17 +30,16 @@
  * the nexus has a known constant value. If there is a supply net,
  * then the nexus again has a known constant value.
  */
-bool link_drivers_constant(const Link&lnk)
+bool Nexus::drivers_constant() const
 {
-      const Nexus*nex = lnk.nexus();
+      if (driven_ == VAR)
+	    return false;
+      if (driven_ != NO_GUESS)
+	    return true;
 
-      for (const Link*cur = nex->first_nlink()
-		 ; cur  ;  cur = cur->next_nlink()) {
+      for (const Link*cur = list_ ; cur  ;  cur = cur->next_) {
 	    const NetNet*sig;
 	    Link::DIR cur_dir;
-
-	    if (cur == &lnk)
-		  continue;
 
 	    cur_dir = cur->get_dir();
 	    if (cur_dir == Link::INPUT)
@@ -74,23 +73,29 @@ bool link_drivers_constant(const Link&lnk)
 		  if (sig->port_type() == NetNet::POUTPUT)
 			continue;
 
+		  driven_ = VAR;
 		  return false;
 
 	    }
-
-	    if (! dynamic_cast<const NetConst*>(cur->get_obj()))
-		  return false;
 
 	      /* If there is a supply net, then this nexus will have a
 		 constant value independent of any drivers. */
 	    if (const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj()))
 		  switch (sig->type()) {
 		      case NetNet::SUPPLY0:
+			driven_ = V0;
+			return true;
 		      case NetNet::SUPPLY1:
+			driven_ = V1;
 			return true;
 		      default:
 			break;
 		  }
+
+	    if (! dynamic_cast<const NetConst*>(cur->get_obj())) {
+		  driven_ = VAR;
+		  return false;
+	    }
       }
 
       return true;
@@ -124,6 +129,10 @@ verinum::V driven_value(const Link&lnk)
 
 /*
  * $Log: link_const.cc,v $
+ * Revision 1.13  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.12  2002/06/19 04:18:46  steve
  *  Shuffle link_drivers_constant for speed.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: xnfio.cc,v 1.20 2002/05/23 03:08:52 steve Exp $"
+#ident "$Id: xnfio.cc,v 1.21 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -320,7 +320,7 @@ bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 	/* Is the B side all constant? */
       for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1) {
 
-	    if (! link_drivers_constant(dev->pin_DataB(idx)))
+	    if (! dev->pin_DataB(idx).nexus()->drivers_constant())
 		  return false;
 
 	    side.set(idx, driven_value(dev->pin_DataB(idx)));
@@ -363,6 +363,10 @@ void xnfio(Design*des)
 
 /*
  * $Log: xnfio.cc,v $
+ * Revision 1.21  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.20  2002/05/23 03:08:52  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

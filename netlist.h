@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.245 2002/06/23 18:22:43 steve Exp $"
+#ident "$Id: netlist.h,v 1.246 2002/06/24 01:49:39 steve Exp $"
 #endif
 
 /*
@@ -246,6 +246,11 @@ class Nexus {
       Link*first_nlink();
       const Link* first_nlink()const;
 
+	/* This method returns true if all the possible drivers of
+	   this nexus are constant. It will also return true if there
+	   are no drivers at all. */
+      bool drivers_constant() const;
+
       void* t_cookie() const;
       void* t_cookie(void*) const;
 
@@ -256,6 +261,9 @@ class Nexus {
 
       mutable char* name_; /* Cache the calculated name for the Nexus. */
       mutable void* t_cookie_;
+
+      enum VALUE { NO_GUESS, V0, V1, Vx, Vz, VAR };
+      mutable VALUE driven_;
 
     private: // not implemented
       Nexus(const Nexus&);
@@ -2929,6 +2937,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.246  2002/06/24 01:49:39  steve
+ *  Make link_drive_constant cache its results in
+ *  the Nexus, to improve cprop performance.
+ *
  * Revision 1.245  2002/06/23 18:22:43  steve
  *  spelling error.
  *
