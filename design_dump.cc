@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.101 2000/10/28 00:51:41 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.102 2000/11/04 06:36:24 steve Exp $"
 #endif
 
 /*
@@ -395,7 +395,7 @@ void NetUDP::dump_comb_(ostream&o, unsigned ind) const
 
 void NetUDP::dump_node(ostream&o, unsigned ind) const
 {
-      if (sequential_)
+      if (is_sequential())
 	    dump_sequ_(o, ind);
       else
 	    dump_comb_(o, ind);
@@ -975,6 +975,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.102  2000/11/04 06:36:24  steve
+ *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
+ *
  * Revision 1.101  2000/10/28 00:51:41  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls

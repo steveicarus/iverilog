@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.176 2000/10/31 17:49:02 steve Exp $"
+#ident "$Id: netlist.h,v 1.177 2000/11/04 06:36:24 steve Exp $"
 #endif
 
 /*
@@ -1044,11 +1044,52 @@ class NetLogic  : public NetNode {
  * 1 are listed.
  *
  */
-class NetUDP  : public NetNode {
+class NetUDP_COMB  : public NetNode {
 
     public:
-      explicit NetUDP(const string&n, unsigned pins, bool sequ =false);
+      explicit NetUDP_COMB(const string&n, unsigned pins, bool sequ = false);
 
+      virtual bool emit_node(struct target_t*) const;
+      virtual void dump_node(ostream&, unsigned ind) const;
+
+	/* append a new truth table row. */
+      bool set_table(const string&input, char output);
+
+	/* After the primitive is built up, this method is called to
+	   clean up redundancies, and possibly optimize the table. */
+      void cleanup_table();
+
+	/* Use these methods to scan the truth table of the
+	   device. "first" returns the first item in the table, and
+	   "next" returns the next item in the table. The method will
+	   return false when the scan is done. */
+      bool first(string&inp, char&out) const;
+      bool next(string&inp, char&out) const;
+
+      bool is_sequential() const { return sequential_; }
+
+    protected:
+
+	// A combinational primitive is more simply represented as a
+	// simple map of input signals to a single output.
+      typedef map<string,char> CM_;
+      CM_ cm_;
+
+    private:
+
+      bool sequential_;
+
+      mutable CM_::const_iterator idx_;
+};
+
+
+
+class NetUDP  : public NetUDP_COMB {
+
+    public:
+      explicit NetUDP(const string&n, unsigned pins, bool sequ = true)
+	: NetUDP_COMB(n, pins, sequ), init_('x') {};
+      
       virtual bool emit_node( struct target_t*) const;
       virtual void dump_node(ostream&, unsigned ind) const;
 
@@ -1065,10 +1106,7 @@ class NetUDP  : public NetNode {
       void set_initial(char);
       char get_initial() const { return init_; }
 
-      bool is_sequential() const { return sequential_; }
-
     private:
-      bool sequential_;
       char init_;
 
       struct state_t_;
@@ -1095,47 +1133,9 @@ class NetUDP  : public NetNode {
 
       state_t_*find_state_(const string&);
 
-	// A combinational primitive is more simply represented as a
-	// simple map of input signals to a single output.
-      typedef map<string,char> CM_;
-      CM_ cm_;
-
       void dump_sequ_(ostream&o, unsigned ind) const;
       void dump_comb_(ostream&o, unsigned ind) const;
 };
-
-class NetUDP_COMB  : public NetNode {
-
-    public:
-      explicit NetUDP_COMB(const string&n, unsigned pins);
-
-      virtual bool emit_node(struct target_t*) const;
-      virtual void dump_node(ostream&, unsigned ind) const;
-
-	/* append a new truth table row. */
-      void set_table(const string&input, char output);
-
-	/* After the primitive is built up, this method is called to
-	   clean up redundancies, and possibly optimize the table. */
-      void cleanup_table();
-
-	/* Use these methods to scan the truth table of the
-	   device. "first" returns the first item in the table, and
-	   "next" returns the next item in the table. The method will
-	   return false when the scan is done. */
-      bool first(string&inp, char&out) const;
-      bool next(string&inp, char&out) const;
-
-    private:
-
-	// A combinational primitive is more simply represented as a
-	// simple map of input signals to a single output.
-      map<string,char> cm_;
-
-      mutable map<string,char>::const_iterator idx_;
-};
-
-
 
 /* =========
  * A process is a behavioral-model description. A process is a
@@ -2811,6 +2811,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.177  2000/11/04 06:36:24  steve
+ *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
+ *
  * Revision 1.176  2000/10/31 17:49:02  steve
  *  Support time variables.
  *

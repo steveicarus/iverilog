@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_udp.cc,v 1.1 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: vvm_udp.cc,v 1.2 2000/11/04 06:36:24 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -25,7 +25,8 @@
 vvm_udp_comb::vvm_udp_comb(unsigned w, const char*t)
 : vvm_1bit_out(0), width_(w), table_(t)
 {
-      ibits_ = new vpip_bit_t[width_];
+      ibits_ = new char[width_];
+      obit_ = 'x';
 }
 
 vvm_udp_comb::~vvm_udp_comb()
@@ -36,54 +37,123 @@ vvm_udp_comb::~vvm_udp_comb()
 void vvm_udp_comb::init_I(unsigned idx, vpip_bit_t val)
 {
       assert(idx < width_);
-      ibits_[idx] = val;
+      if (B_IS1(val))
+	    ibits_[idx] = '1';
+      else if (B_IS0(val))
+	    ibits_[idx] = '0';
+      else
+	    ibits_[idx] = 'x';
+}
+
+void vvm_udp_sequ1::take_value(unsigned key, vpip_bit_t val)
+{
+  assert(key < width_ - 1);
+  ibits_[0] = obit_;
+  vvm_udp_comb::take_value(key+1, val);
 }
 
 void vvm_udp_comb::take_value(unsigned key, vpip_bit_t val)
 {
-      if (ibits_[key] == val)
+      char old_bit = ibits_[key];
+      init_I(key, val);
+
+      if (ibits_[key] == old_bit)
 	    return;
-
-      ibits_[key] = val;
-      char bit;
-      if (B_IS1(val))
-	    bit = '1';
-      else if (B_IS0(val))
-	    bit = '0';
-      else
-	    bit = 'x';
-
 
       for (const char*row = table_ ;  row[0] ;  row += width_+1) {
 
 	    unsigned idx;
 	    for (idx = 0 ;  idx < width_ ;  idx += 1)
-		  if (row[idx] != bit)
-			break;
+	      {
+		if (row[idx] != ibits_[idx]
+		    && row[idx] != '?')
+		  {
+		    if (idx == key)
+		      {
+			char new_bit = ibits_[idx];
+			switch (row[idx])
+			  {
+			  case '*':
+			    continue;
+			  case '_':
+			    if (new_bit == '0')
+			      continue;
+			    break;
+			  case '+':
+			    if (new_bit == '1')
+			      continue;
+			    break;
+			  case '%':
+			    if (new_bit == 'x')
+			      continue;
+			    break;
+			  case 'r':
+			    if (old_bit=='0' && new_bit=='1')
+			      continue;
+			    break;
+			  case 'R':
+			    if (old_bit=='x' && new_bit=='1')
+			      continue;
+			    break;
+			  case 'f':
+			    if (old_bit=='1' && new_bit=='0')
+			      continue;
+			    break;
+			  case 'F':
+			    if (old_bit=='x' && new_bit=='0')
+			      continue;
+			    break;
+			  case 'P':
+			    if (old_bit=='1' && new_bit=='x')
+			      continue;
+			    break;
+			  case 'N':
+			    if (old_bit=='0' && new_bit=='x')
+			      continue;
+			    break;
+			  }
+			// bad edge
+		      }
+		    break; // bad edge/level
+		  }
+	      }
 
-	    if (idx == width_) switch (row[width_]) {
+	    if (idx == width_) 
+	      {
+		if (row[width_] == '-'
+		    || row[width_] == obit_)
+		  return;
 
-		case '0':
-		  output(St0);
-		  return;
-		case '1':
-		  output(St1);
-		  return;
-		case 'z':
-		  output(HiZ);
-		  return;
-		default:
-		  output(StX);
-		  return;
-	    }
+		obit_ = row[width_];
+		
+		switch (obit_) 
+		  {
+		  case '0':
+		    output(St0);
+		    return;
+		  case '1':
+		    output(St1);
+		    return;
+		  case 'z':
+		    output(HiZ);
+		    return;
+		  default:
+		    output(StX);
+		    return;
+		  }
+	      }
       }
 
       output(StX);
+      obit_ = 'x';
 }
 
 
 /*
  * $Log: vvm_udp.cc,v $
+ * Revision 1.2  2000/11/04 06:36:24  steve
+ *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
+ *
  * Revision 1.1  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *

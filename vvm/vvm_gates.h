@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.65 2000/09/17 21:26:16 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.66 2000/11/04 06:36:24 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -792,74 +792,22 @@ class vvm_udp_comb  : public vvm_1bit_out, public vvm_nexus::recvr_t {
       void init_I(unsigned idx, vpip_bit_t val);
       void start();
 
-    private:
+    protected:
       void take_value(unsigned key, vpip_bit_t val);
-      vpip_bit_t*ibits_;
+      char*ibits_;
+      char obit_;
 
       unsigned width_;
       const char*table_;
 };
 
-/*
- * A Sequential UDP has a more complex truth table, and handles
- * edges. Pin 0 is an output, and all the remaining pins are
- * input. The WIDTH is the number of input pins.
- *
- * See vvm.txt for a description of the gate transition table.
- */
-template <unsigned WIDTH> class vvm_udp_ssequ {
-
-    public:
-      explicit vvm_udp_ssequ(vvm_out_event::action_t o, vpip_bit_t i,
-			    const vvm_u32*tab)
-      : output_(o), table_(tab)
-      { state_[0] = i;
-        for (unsigned idx = 1; idx < WIDTH+1 ;  idx += 1)
-	      state_[idx] = Vx;
-      }
-
-      void init(unsigned pin, vpip_bit_t val)
-	    { state_[pin] = val; }
-
-      void set(unsigned pin, vpip_bit_t val)
-	    { assert(pin > 0);
-	      assert(pin < WIDTH+1);
-	      if (val == Vz) val = Vx;
-	      if (state_[pin] == val) return;
-		// Convert the current state into a table index.
-	      unsigned entry = 0;
-	      for (unsigned idx = 0 ;  idx < WIDTH+1 ;  idx += 1) {
-		    entry *= 3;
-		    entry += state_[idx];
-	      }
-		// Get the table entry, and the 4bits that encode
-		// activity on this pin.
-	      vvm_u32 code = table_[entry];
-	      code >>= 4 * (WIDTH-pin);
-	      switch (state_[pin]*4 + val) {
-		  case (V0*4 + V1):
-		  case (V1*4 + V0):
-		  case (Vx*4 + V0):
-		    code = (code>>2) & 3;
-		    break;
-		  case (V0*4 + Vx):
-		  case (V1*4 + Vx):
-		  case (Vx*4 + V1):
-		    code &= 3;
-		    break;
-	      }
-		// Convert the code to a vpip_bit_t and run with it.
-	      vpip_bit_t outval = (code == 0)? V0 : (code == 1)? V1 : Vx;
-	      state_[0] = outval;
-	      state_[pin] = val;
-	      vvm_event*ev = new vvm_out_event(outval, output_);
-	      ev->schedule(1); // XXXX Delay not supported.
-	    }
-
-    private:
-      vvm_out_event::action_t output_;
-      const vvm_u32*const table_;
-      vpip_bit_t state_[WIDTH+1];
+class vvm_udp_sequ1 : public vvm_udp_comb 
+{
+ public:
+  explicit vvm_udp_sequ1(unsigned w, const char*t)
+    : vvm_udp_comb(w+1, t) {};
+ private:
+  void take_value(unsigned key, vpip_bit_t val);
 };
 
 /*
@@ -976,6 +924,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.66  2000/11/04 06:36:24  steve
+ *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
+ *
  * Revision 1.65  2000/09/17 21:26:16  steve
  *  Add support for modulus (Eric Aardoom)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.182 2000/10/29 17:10:02 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.183 2000/11/04 06:36:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -166,7 +166,6 @@ class target_vvm : public target_t {
       virtual bool bufz(const NetBUFZ*);
       virtual void udp(const NetUDP*);
       virtual void udp_comb(const NetUDP_COMB*);
-              void udp_sequ_(ostream&os, const NetUDP*);
       virtual void net_assign(const NetAssign_*) { }
       virtual void net_case_cmp(const NetCaseCmp*);
       virtual bool net_cassign(const NetCAssign*);
@@ -1922,7 +1921,9 @@ void target_vvm::udp_comb(const NetUDP_COMB*gate)
       }
       out << "    ;" << endl;
 
-      out << "static vvm_udp_comb " << mname << "("
+      out << (gate->is_sequential() ? "static vvm_udp_sequ1 " 
+	                            : "static vvm_udp_comb " )
+         << mname << "("
 	 << (gate->pin_count()-1) << ", " << mname<<"_ctab);" << endl;
 
 	/* Connect the output of the device... */
@@ -1945,81 +1946,11 @@ void target_vvm::udp_comb(const NetUDP_COMB*gate)
 
 }
 
-static string state_to_string(unsigned state, unsigned npins)
-{
-      static const char cur_table[3] = { '0', '1', 'x' };
-      string res = "";
-      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
-	    char cur = cur_table[state%3];
-	    res = cur + res;
-	    state /= 3;
-      }
-
-      return res;
-}
 
 void target_vvm::udp(const NetUDP*gate)
 {
       assert(gate->is_sequential());
-      udp_sequ_(out, gate);
-}
-
-void target_vvm::udp_sequ_(ostream&os, const NetUDP*gate)
-{
-      assert(gate->pin_count() <= 9);
-      assert(gate->is_sequential());
-      unsigned states = 1;
-      for (unsigned idx = 0 ;  idx < gate->pin_count() ;  idx += 1)
-	    states *= 3;
-
-      os << "static vvm_u32 " << mangle(gate->name()) << "_table[" <<
-	    states << "] = {" << endl;
-      os << hex;
-      for (unsigned state = 0 ;  state < states ;  state += 1) {
-	    string sstr = state_to_string(state, gate->pin_count());
-
-	    unsigned long entry = 0;
-	    for (unsigned idx = 1 ;  idx < sstr.length() ;  idx += 1) {
-		  char o[2];
-		  switch (sstr[idx]) {
-		      case '0':
-			o[0] = '1';
-			o[1] = 'x';
-			break;
-		      case '1':
-			o[0] = '0';
-			o[1] = 'x';
-			break;
-		      case 'x':
-			o[0] = '0';
-			o[1] = '1';
-			break;
-		  }
-
-		  o[0] = gate->table_lookup(sstr, o[0], idx);
-		  o[1] = gate->table_lookup(sstr, o[1], idx);
-		  entry <<= 2;
-		  entry |= (o[0] == '0')? 0 : (o[0] == '1')? 1 : 2;
-		  entry <<= 2;
-		  entry |= (o[1] == '0')? 0 : (o[1] == '1')? 1 : 2;
-	    }
-	    os << " 0x" << setw(8) << setfill('0') << entry << ",";
-	    if (state % 3 == 2)
-		  os << endl;
-      }
-      os << "};" << dec << setfill(' ') << endl;
-
-      string outfun = defn_gate_outputfun_(os, gate, 0);
-
-      os << "static vvm_udp_ssequ<" << gate->pin_count()-1 << "> " <<
-	    mangle(gate->name()) << "(&" << outfun << ", V" <<
-	    gate->get_initial() << ", " << mangle(gate->name()) <<
-	    "_table);" << endl;
-
-	/* The UDP output function is much like other logic gates. Use
-	   this general method to output the output function. */
-      emit_gate_outputfun_(gate, 0);
-
+      udp_comb(gate);
 }
 
 void target_vvm::net_case_cmp(const NetCaseCmp*gate)
@@ -3398,6 +3329,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.183  2000/11/04 06:36:24  steve
+ *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
+ *
  * Revision 1.182  2000/10/29 17:10:02  steve
  *  task threads ned their scope initialized. (PR#32)
  *

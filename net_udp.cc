@@ -17,26 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_udp.cc,v 1.1 2000/03/29 04:37:11 steve Exp $"
+#ident "$Id: net_udp.cc,v 1.2 2000/11/04 06:36:24 steve Exp $"
 #endif
 
 # include  "netlist.h"
 
-NetUDP::NetUDP(const string&n, unsigned pins, bool sequ)
-: NetNode(n, pins), sequential_(sequ), init_('x')
-{
-      pin(0).set_dir(Link::OUTPUT);
-      for (unsigned idx = 1 ;  idx < pins ;  idx += 1)
-	    pin(idx).set_dir(Link::INPUT);
-
-}
-
 bool NetUDP::set_table(const string&input, char output)
 {
-      assert((output == '0') || (output == '1') || (sequential_ &&
-						    (output == '-')));
+      assert((output == '0') || (output == '1') 
+	     || (is_sequential() && (output == '-')));
 
-      if (sequential_) {
+      cm_[input] = output;
+
+      if (is_sequential()) {
 	    assert(input.length() == pin_count());
 	      /* XXXX Need to check to make sure that the input vector
 		 contains a legal combination of characters. */
@@ -46,8 +39,7 @@ bool NetUDP::set_table(const string&input, char output)
 	    assert(input.length() == (pin_count()-1));
 	      /* XXXX Need to check to make sure that the input vector
 		 contains a legal combination of characters. In
-		 combinational UDPs, only 0, 1 and x are allowed. */
-	    cm_[input] = output;
+		 combinational UDPs, only 0, 1, x, and ? are allowed. */
 
 	    return true;
       }
@@ -124,7 +116,7 @@ char NetUDP::table_lookup(const string&from, char to, unsigned pin) const
 
 void NetUDP::set_initial(char val)
 {
-      assert(sequential_);
+      assert(is_sequential());
       assert((val == '0') || (val == '1') || (val == 'x'));
       init_ = val;
 }
@@ -145,8 +137,8 @@ NetUDP::state_t_* NetUDP::find_state_(const string&str)
       return st;
 }
 
-NetUDP_COMB::NetUDP_COMB(const string&n, unsigned pins)
-: NetNode(n, pins)
+NetUDP_COMB::NetUDP_COMB(const string&n, unsigned pins, bool sequ)
+  : NetNode(n, pins), sequential_(sequ)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(0).set_name("O", 0);
@@ -156,16 +148,17 @@ NetUDP_COMB::NetUDP_COMB(const string&n, unsigned pins)
       }
 }
 
-void NetUDP_COMB::set_table(const string&input, char output)
+bool NetUDP_COMB::set_table(const string&input, char output)
 {
       assert((output == '0') || (output == '1'));
 
       assert(input.length() == (pin_count()-1));
 	/* XXXX Need to check to make sure that the input vector
 	   contains a legal combination of characters. In
-	   combinational UDPs, only 0, 1 and x are allowed. */
+	   combinational UDPs, only 0, 1, x, and ? are allowed. */
       cm_[input] = output;
 
+      return true;
 }
 
 void NetUDP_COMB::cleanup_table()
@@ -198,6 +191,9 @@ bool NetUDP_COMB::next(string&inp, char&out) const
 
 /*
  * $Log: net_udp.cc,v $
+ * Revision 1.2  2000/11/04 06:36:24  steve
+ *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
+ *
  * Revision 1.1  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
  *
