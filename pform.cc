@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.104 2003/01/14 21:16:18 steve Exp $"
+#ident "$Id: pform.cc,v 1.105 2003/01/16 21:44:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -212,6 +212,16 @@ void pform_endmodule(const char*name)
 {
       assert(pform_cur_module);
       assert(strcmp(name, pform_cur_module->mod_name()) == 0);
+
+      map<string,Module*>::const_iterator test = pform_modules.find(name);
+      if (test != pform_modules.end()) {
+	    ostringstream msg;
+	    msg << "Module " << name << " was already declared here: "
+		<< (*test).second->get_line() << endl;
+	    VLerror(msg.str().c_str());
+	    pform_cur_module = 0;
+	    return;
+      }
       pform_modules[name] = pform_cur_module;
       pform_cur_module = 0;
 }
@@ -1360,6 +1370,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.105  2003/01/16 21:44:19  steve
+ *  Detect duplicate module declarations.
+ *
  * Revision 1.104  2003/01/14 21:16:18  steve
  *  Move strstream to ostringstream for compatibility.
  *
