@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.h,v 1.6 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: LineInfo.h,v 1.7 2003/01/17 05:49:03 steve Exp $"
 #endif
 
 # include  <string>
@@ -35,15 +35,15 @@
 
 class LineInfo {
     public:
-      LineInfo() : file_(0), lineno_(0) { }
+      LineInfo();
       ~LineInfo();
 
       string get_line() const;
 
       void set_line(const LineInfo&that);
 
-      void set_file(const char*f) { file_ = f; }
-      void set_lineno(unsigned n) { lineno_ = n; }
+      void set_file(const char*f);
+      void set_lineno(unsigned n);
 
     private:
       const char* file_;
@@ -52,6 +52,9 @@ class LineInfo {
 
 /*
  * $Log: LineInfo.h,v $
+ * Revision 1.7  2003/01/17 05:49:03  steve
+ *  Use stringstream in place of sprintf.
+ *
  * Revision 1.6  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

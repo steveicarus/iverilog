@@ -17,13 +17,18 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.cc,v 1.3 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: LineInfo.cc,v 1.4 2003/01/17 05:49:03 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "LineInfo.h"
-# include  <cstdio>
+# include  <sstream>
+
+LineInfo::LineInfo()
+: file_(0), lineno_(0)
+{
+}
 
 LineInfo::~LineInfo()
 {
@@ -31,9 +36,11 @@ LineInfo::~LineInfo()
 
 string LineInfo::get_line() const
 {
-      char buf[8];
-      sprintf(buf, "%u", lineno_);
-      return string(file_? file_ : "") + ":" + buf;
+      ostringstream buf;
+      buf << (file_? file_ : "") << ":" << lineno_;
+
+      string res = buf.str();
+      return res;
 }
 
 void LineInfo::set_line(const LineInfo&that)
@@ -42,8 +49,21 @@ void LineInfo::set_line(const LineInfo&that)
       lineno_ = that.lineno_;
 }
 
+void LineInfo::set_file(const char*f)
+{
+      file_ = f;
+}
+
+void LineInfo::set_lineno(unsigned n)
+{
+      lineno_ = n;
+}
+
 /*
  * $Log: LineInfo.cc,v $
+ * Revision 1.4  2003/01/17 05:49:03  steve
+ *  Use stringstream in place of sprintf.
+ *
  * Revision 1.3  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
