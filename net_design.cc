@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_design.cc,v 1.11 2000/07/22 22:09:03 steve Exp $"
+#ident "$Id: net_design.cc,v 1.12 2000/07/23 02:41:32 steve Exp $"
 #endif
 
 /*
@@ -77,7 +77,7 @@ unsigned long Design::scale_to_precision(unsigned long val,
 					 const NetScope*scope) const
 {
       int units = scope->time_unit();
-      assert( units > des_precision_ );
+      assert( units >= des_precision_ );
 
       while (units > des_precision_) {
 	    units -= 1;
@@ -497,6 +497,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.12  2000/07/23 02:41:32  steve
+ *  Excessive assert.
+ *
  * Revision 1.11  2000/07/22 22:09:03  steve
  *  Parse and elaborate timescale to scopes.
  *
