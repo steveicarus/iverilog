@@ -1,10 +1,10 @@
-.TH vvp 1 "$Date: 2001/07/29 22:50:44 $" Version "$Date: 2001/07/29 22:50:44 $"
+.TH vvp 1 "$Date: 2002/04/12 02:44:02 $" Version "$Date: 2002/04/12 02:44:02 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
 .SH SYNOPSIS
 .B vvp
-[-dv] [-Mpath] [-mmodule] [-llogfile] inputfile
+[-dv] [-Mpath] [-mmodule] [-llogfile] inputfile [extended-args...]
 
 .SH DESCRIPTION
 .PP
@@ -45,12 +45,26 @@ to be a complete file name.
 Turn on verbose messages. This will cause information about run time
 progress to be printed to standard out.
 
+.SH EXTENDED ARGUMENTS
+.PP
+The vvp options described above must come before the design file name.
+After the design file name, however, there may be any number of
+unspecified arguments. These arguments are not interpreted by vvp but
+are instead passed on to the executed design, and are available via
+the \fI$test$plusargs\fP and \fI$value$plusargs\fP system functions.
+.PP
+Arguments that do not start with the plus(+) character are not
+available to the standard system tasks, but can still be accessed via
+PLI code via the \fIvpi_get_vlog_info\fP function. This means that
+vpi modules may use arguments that do not start with + and be assured
+that they do not interfere with user defined plus-args.
 .SH "AUTHOR"
 .nf
 Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 iverilog(1),
+iverilog-vpi(0),
 .BR "<http://www.icarus.com/eda/verilog/>"
 
 .SH COPYRIGHT

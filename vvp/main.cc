@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.23 2002/03/01 05:43:14 steve Exp $"
+#ident "$Id: main.cc,v 1.24 2002/04/12 02:44:02 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -147,7 +147,7 @@ int main(int argc, char*argv[])
 	    break;
          case 'h':
            fprintf(stderr,
-                   "Usage: vvp [options] input-file\n"
+                   "Usage: vvp [options] input-file [+plusargs...]\n"
                    "Options:\n"
 #if defined(WITH_DEBUG)
                    " -d             Enter the debugger.\n"
@@ -210,7 +210,8 @@ int main(int argc, char*argv[])
 
       vvp_vpi_init();
 
-      vpi_set_vlog_info(argc, argv);
+	/* Make the extended arguments available to the simulation. */
+      vpi_set_vlog_info(argc-optind, argv+optind);
 
       compile_init();
 
@@ -264,6 +265,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.24  2002/04/12 02:44:02  steve
+ *  Formally define extended arguments to vvp.
+ *
  * Revision 1.23  2002/03/01 05:43:14  steve
  *  Add cleanup to verbose messages.
  *
