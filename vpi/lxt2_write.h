@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <zlib.h>
 
 #define LXT2_WR_HDRID (0x1380)
@@ -45,7 +46,7 @@
 #define LXT2_WR_GZWRITE_BUFFER 4096
 #define LXT2_WR_SYMPRIME 65519
 
-typedef unsigned long long lxttime_t;
+typedef uint64_t lxttime_t;
 
 
 #ifndef _MSC_VER
@@ -99,24 +100,24 @@ enum LXT2_WR_Encodings {
 /*
  * integer splay
  */
-typedef struct ds_tree_node ds_Tree;
-struct ds_tree_node {
-    ds_Tree * left, * right;
+typedef struct lxt2_wr_ds_tree_node lxt2_wr_ds_Tree;
+struct lxt2_wr_ds_tree_node {
+    lxt2_wr_ds_Tree * left, * right;
     granmsk_t item;
     int val;
-    ds_Tree * next;
+    lxt2_wr_ds_Tree * next;
 };
 
 
 /*
  * string splay
  */
-typedef struct dslxt_tree_node dslxt_Tree;
-struct dslxt_tree_node {
-    dslxt_Tree * left, * right;  
+typedef struct lxt2_wr_dslxt_tree_node lxt2_wr_dslxt_Tree;
+struct lxt2_wr_dslxt_tree_node {
+    lxt2_wr_dslxt_Tree * left, * right;  
     char *item;
     unsigned int val;
-    dslxt_Tree * next;
+    lxt2_wr_dslxt_Tree * next;
 };
                                         
 
@@ -125,16 +126,16 @@ struct lxt2_wr_trace
 FILE *handle;
 gzFile zhandle;
 
-dslxt_Tree *dict;		/* dictionary manipulation */
+lxt2_wr_dslxt_Tree *dict;	/* dictionary manipulation */
 unsigned int num_dict_entries;
 unsigned int dict_string_mem_required;
-dslxt_Tree *dict_head;
-dslxt_Tree *dict_curr;
+lxt2_wr_dslxt_Tree *dict_head;
+lxt2_wr_dslxt_Tree *dict_curr;
 
-ds_Tree *mapdict;		/* bitmap compression */
+lxt2_wr_ds_Tree *mapdict;	/* bitmap compression */
 unsigned int num_map_entries;
-ds_Tree *mapdict_head;
-ds_Tree *mapdict_curr;
+lxt2_wr_ds_Tree *mapdict_head;
+lxt2_wr_ds_Tree *mapdict_curr;
 
 unsigned int position;
 unsigned int zfacname_predec_size, zfacname_size, zfacgeometry_size;
@@ -148,7 +149,7 @@ int numfacs, numalias;
 int numfacbytes;
 int longestname;
 
-int numsections;
+int numsections, numblock;
 unsigned int facname_offset, facgeometry_offset;
 
 lxttime_t mintime, maxtime;
@@ -175,6 +176,8 @@ unsigned granule_dirty : 1;		/* for flushing out final block */
 unsigned blackout : 1;			/* blackout on/off */
 unsigned partial : 1;			/* partial (vertical) trace support */
 unsigned partial_zip : 1;		/* partial (vertical) trace support for zip subregions */
+unsigned no_checkpoint : 1;		/* turns off interblock checkpointing */
+unsigned partial_preference : 1;	/* partial preference encountered on some facs */
 
 char initial_value;
 
@@ -201,8 +204,10 @@ int msb, lsb;
 int len;
 int flags;
 
+unsigned partial_preference : 1;	/* in order to shove nets to the first partial group */
+
 unsigned int chgpos;
-granmsk_t msk;			/* must contain LXT2_WR_GRANULE_SIZE bits! */
+granmsk_t msk;				/* must contain LXT2_WR_GRANULE_SIZE bits! */
 unsigned int chg[LXT2_WR_GRANULE_SIZE];
 };
 
@@ -237,13 +242,17 @@ struct lxt2_wr_trace *	lxt2_wr_init(const char *name);
 void 			lxt2_wr_flush(struct lxt2_wr_trace *lt);
 void 			lxt2_wr_close(struct lxt2_wr_trace *lt);
 
-
 			/* 0 = no compression, 9 = best compression, 4 = default */
 void			lxt2_wr_set_compression_depth(struct lxt2_wr_trace *lt, unsigned int depth);
 
 			/* default is partial off, turning on makes for faster trace reads, nonzero zipmode causes vertical compression */
 void			lxt2_wr_set_partial_off(struct lxt2_wr_trace *lt);
 void			lxt2_wr_set_partial_on(struct lxt2_wr_trace *lt, int zipmode);
+void			lxt2_wr_set_partial_preference(struct lxt2_wr_trace *lt, const char *name);
+
+			/* turning off checkpointing makes for smaller files */
+void			lxt2_wr_set_checkpoint_off(struct lxt2_wr_trace *lt);
+void			lxt2_wr_set_checkpoint_on(struct lxt2_wr_trace *lt);
 
 			/* facility creation */
 void                    lxt2_wr_set_initial_value(struct lxt2_wr_trace *lt, char value);
@@ -271,11 +280,5 @@ int 			lxt2_wr_emit_value_int(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s
 int 			lxt2_wr_emit_value_double(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s, unsigned int row, double value);
 int 			lxt2_wr_emit_value_string(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s, unsigned int row, char *value);
 int 			lxt2_wr_emit_value_bit_string(struct lxt2_wr_trace *lt, struct lxt2_wr_symbol *s, unsigned int row, char *value);
-
-			/* old lxt dummy functions (might be used later) */
-void                    lxt2_wr_set_no_interlace(struct lxt2_wr_trace *lt);
-void                    lxt2_wr_set_chg_compress(struct lxt2_wr_trace *lt);
-void                    lxt2_wr_set_clock_compress(struct lxt2_wr_trace *lt);
-void                    lxt2_wr_set_dict_compress(struct lxt2_wr_trace *lt, unsigned int minwidth);
 
 #endif

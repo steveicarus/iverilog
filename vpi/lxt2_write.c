@@ -52,10 +52,10 @@ for(;;s++)
 
 /************************ splay ************************/
 
-static ds_Tree * ds_splay (granmsk_t i, ds_Tree * t) {
+static lxt2_wr_ds_Tree * lxt2_wr_ds_splay (granmsk_t i, lxt2_wr_ds_Tree * t) {
 /* Simple top down splay, not requiring i to be in the tree t.  */
 /* What it does is described above.                             */
-    ds_Tree N, *l, *r, *y;
+    lxt2_wr_ds_Tree N, *l, *r, *y;
     if (t == NULL) return t;
     N.left = N.right = NULL;
     l = r = &N;
@@ -97,12 +97,12 @@ static ds_Tree * ds_splay (granmsk_t i, ds_Tree * t) {
 }
 
 
-static ds_Tree * ds_insert(granmsk_t i, ds_Tree * t, int val) {
+static lxt2_wr_ds_Tree * lxt2_wr_ds_insert(granmsk_t i, lxt2_wr_ds_Tree * t, int val) {
 /* Insert i into the tree t, unless it's already there.    */
 /* Return a pointer to the resulting tree.                 */
-    ds_Tree * n;
+    lxt2_wr_ds_Tree * n;
     
-    n = (ds_Tree *) calloc (1, sizeof (ds_Tree));
+    n = (lxt2_wr_ds_Tree *) calloc (1, sizeof (lxt2_wr_ds_Tree));
     if (n == NULL) {
 	fprintf(stderr, "ds_insert: ran out of memory, exiting.\n");
 	exit(255);
@@ -113,7 +113,7 @@ static ds_Tree * ds_insert(granmsk_t i, ds_Tree * t, int val) {
 	n->left = n->right = NULL;
 	return n;
     }
-    t = ds_splay(i,t);
+    t = lxt2_wr_ds_splay(i,t);
     if (i < t->item) {
 	n->left = t->left;
 	n->right = t;
@@ -133,15 +133,15 @@ static ds_Tree * ds_insert(granmsk_t i, ds_Tree * t, int val) {
 
 /************************ splay ************************/
 
-static int dslxt_success;
+static int lxt2_wr_dslxt_success;
 
-static dslxt_Tree * dslxt_splay (char *i, dslxt_Tree * t) {
+static lxt2_wr_dslxt_Tree * lxt2_wr_dslxt_splay (char *i, lxt2_wr_dslxt_Tree * t) {
 /* Simple top down splay, not requiring i to be in the tree t.  */
 /* What it does is described above.                             */
-    dslxt_Tree N, *l, *r, *y;
+    lxt2_wr_dslxt_Tree N, *l, *r, *y;
     int dir;
 
-    dslxt_success = 0;
+    lxt2_wr_dslxt_success = 0;
 
     if (t == NULL) return t;
     N.left = N.right = NULL;
@@ -174,7 +174,7 @@ static dslxt_Tree * dslxt_splay (char *i, dslxt_Tree * t) {
 	    l = t;
 	    t = t->right;
 	} else {
-	    dslxt_success=1;
+	    lxt2_wr_dslxt_success=1;
 	    break;
 	}
     }
@@ -186,13 +186,13 @@ static dslxt_Tree * dslxt_splay (char *i, dslxt_Tree * t) {
 }
 
 
-static dslxt_Tree * dslxt_insert(char *i, dslxt_Tree * t, unsigned int val) {
+static lxt2_wr_dslxt_Tree * lxt2_wr_dslxt_insert(char *i, lxt2_wr_dslxt_Tree * t, unsigned int val) {
 /* Insert i into the tree t, unless it's already there.    */
 /* Return a pointer to the resulting tree.                 */
-    dslxt_Tree * n;
+    lxt2_wr_dslxt_Tree * n;
     int dir;
     
-    n = (dslxt_Tree *) calloc (1, sizeof (dslxt_Tree));
+    n = (lxt2_wr_dslxt_Tree *) calloc (1, sizeof (lxt2_wr_dslxt_Tree));
     if (n == NULL) {
 	fprintf(stderr, "dslxt_insert: ran out of memory, exiting.\n");
 	exit(255);
@@ -203,7 +203,7 @@ static dslxt_Tree * dslxt_insert(char *i, dslxt_Tree * t, unsigned int val) {
 	n->left = n->right = NULL;
 	return n;
     }
-    t = dslxt_splay(i,t);
+    t = lxt2_wr_dslxt_splay(i,t);
     dir = strcmp(i,t->item);
     if (dir<0) {
 	n->left = t->left;
@@ -540,7 +540,7 @@ if((lt)&&(lt->numfacs))
 	{
 	struct lxt2_wr_symbol *s = lt->symchain;
 	struct lxt2_wr_symbol **aliascache = calloc(lt->numalias, sizeof(struct lxt2_wr_symbol *));
-	int aliases_encountered = 0, facs_encountered = 0;
+	int aliases_encountered, facs_encountered;
 
 	lt->sorted_facs = (struct lxt2_wr_symbol **)calloc(lt->numfacs, sizeof(struct lxt2_wr_symbol *));
 
@@ -561,7 +561,39 @@ if((lt)&&(lt->numfacs))
 			}	
 		qsort((void *)lt->sorted_facs, lt->numfacs, sizeof(struct lxt2_wr_symbol *), lxt2_wr_compare);
 
+		if(lt->partial_preference)
+			{
+			/* move preferenced facs up */
+			struct lxt2_wr_symbol **prefcache = aliascache;
+			int prefs_encountered = 0; 
+
+			facs_encountered = 0;
+			for(i=0;i<lt->numfacs;i++)
+				{
+				if((lt->sorted_facs[i]->partial_preference)==0)
+					{
+					lt->sorted_facs[facs_encountered] = lt->sorted_facs[i];
+					facs_encountered++;
+					}
+					else
+					{
+					prefcache[prefs_encountered] = lt->sorted_facs[i];
+					prefs_encountered++;
+					}
+				}
+			/* then append the non-preferenced facs */
+			for(i=0;i<facs_encountered;i++)
+				{
+				prefcache[prefs_encountered+i] = lt->sorted_facs[i];
+				}
+
+			/* now make prefcache the main cache */
+			aliascache = lt->sorted_facs;
+			lt->sorted_facs = prefcache;
+			}
+
 		/* move facs up */
+		aliases_encountered = 0, facs_encountered = 0;
 		for(i=0;i<lt->numfacs;i++)
 			{
 			if((lt->sorted_facs[i]->flags&LXT2_WR_SYM_F_ALIAS)==0)
@@ -702,6 +734,45 @@ if(lt)
 	lt->partial = 1;
 	lt->partial_zip = (zipmode != 0);
 	lt->partial_iter = LXT2_WR_PARTIAL_SIZE; 
+	}
+}
+
+void lxt2_wr_set_partial_preference(struct lxt2_wr_trace *lt, const char *name)
+{
+struct lxt2_wr_symbol *s;
+         
+if((lt)&&(name)&&(!lt->sorted_facs)) 
+	{
+	s=lxt2_wr_symfind(lt, name);
+	if(s)
+		{
+		while(s->aliased_to)    /* find root alias */
+		        {
+		        s=s->aliased_to;
+		        }
+
+		s->partial_preference = 1;
+		}
+	}
+}
+
+
+/*
+ * enable/disable checkpointing (for smaller files)
+ */
+void lxt2_wr_set_checkpoint_off(struct lxt2_wr_trace *lt)
+{
+if(lt)
+	{
+	lt->no_checkpoint = 1;
+	}
+}
+
+void lxt2_wr_set_checkpoint_on(struct lxt2_wr_trace *lt)
+{
+if(lt)
+	{
+	lt->no_checkpoint = 0;
 	}
 }
 
@@ -940,10 +1011,10 @@ for(j=iter;j<iter_hi;j++)
 	{
 	granmsk_t msk = lt->sorted_facs[j]->msk;
 
-	lt->mapdict = ds_splay (msk, lt->mapdict);
+	lt->mapdict = lxt2_wr_ds_splay (msk, lt->mapdict);
 	if((!lt->mapdict)||(lt->mapdict->item != msk))
 		{
-		lt->mapdict = ds_insert(msk, lt->mapdict, lt->num_map_entries);
+		lt->mapdict = lxt2_wr_ds_insert(msk, lt->mapdict, lt->num_map_entries);
 		lt->num_map_entries++;
 
 		if(lt->mapdict_curr)
@@ -1022,7 +1093,7 @@ for(j=iter;j<iter_hi;j++)
 	{
 	unsigned int val;
         s=lt->sorted_facs[j];
-	lt->mapdict = ds_splay (s->msk, lt->mapdict);
+	lt->mapdict = lxt2_wr_ds_splay (s->msk, lt->mapdict);
 	val = lt->mapdict->val;
 
 	switch(map_nbytes)
@@ -1084,8 +1155,8 @@ lt->timegranule++;
 if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 	{
 	unsigned int unclen, clen;
-	ds_Tree *dt, *dt2;
-	dslxt_Tree *ds, *ds2;
+	lxt2_wr_ds_Tree *dt, *dt2;
+	lxt2_wr_dslxt_Tree *ds, *ds2;
 
 	if(using_partial_zip)
 		{
@@ -1204,8 +1275,10 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize))
 	lxt2_wr_emit_u64(lt, (lt->lasttime>>32)&0xffffffff, lt->lasttime&0xffffffff);
 
 	/* fprintf(stderr, "start: %Ld, end %Ld\n", lt->firsttime, lt->lasttime); */
+
 	lt->timegranule=0;
-	};
+	lt->numblock++;
+	}
 
 if(do_finalize)
 	{
@@ -1258,12 +1331,15 @@ if(lt)
 		lt->timetable[lt->timepos] = timeval;		
 		}
 
-	if((!lt->timepos)&&(!lt->timegranule))
-	        {
-	        struct lxt2_wr_symbol *s = lt->symchain;
-
+	if( (!lt->timepos) && (!lt->timegranule) )
+		{
 		lt->firsttime = timeval;
 		lt->lasttime = timeval;
+		}
+
+	if( (!lt->timepos) && (!lt->timegranule) && ((!lt->numblock)||(!lt->no_checkpoint)) )
+	        {
+	        struct lxt2_wr_symbol *s = lt->symchain;
 
 		/* fprintf(stderr, "initial value burst timepos==0, timegranule==0\n"); */
 		if(lt->blackout)
@@ -1414,15 +1490,15 @@ if(s->flags&LXT2_WR_SYM_F_DOUBLE)
 	free(s->value);
 	s->value = strdup(d_buf);
 
-	lt->dict = dslxt_splay (s->value, lt->dict);
+	lt->dict = lxt2_wr_dslxt_splay (s->value, lt->dict);
 
-	if(!dslxt_success)
+	if(!lxt2_wr_dslxt_success)
 		{
 		unsigned int vlen = strlen(d_buf)+1;
 		char *vcopy = (char *)malloc(vlen);
 		strcpy(vcopy, d_buf);
 		lt->dict_string_mem_required += vlen;
-		lt->dict = dslxt_insert(vcopy, lt->dict, lt->num_dict_entries);
+		lt->dict = lxt2_wr_dslxt_insert(vcopy, lt->dict, lt->num_dict_entries);
 
 		if(lt->dict_curr)
 			{
@@ -1494,15 +1570,15 @@ if(s->flags&LXT2_WR_SYM_F_STRING)
 	free(s->value);
 	s->value = strdup(value);
 
-	lt->dict = dslxt_splay (s->value, lt->dict);
+	lt->dict = lxt2_wr_dslxt_splay (s->value, lt->dict);
 
-	if(!dslxt_success)
+	if(!lxt2_wr_dslxt_success)
 		{
 		unsigned int vlen = strlen(value)+1;
 		char *vcopy = (char *)malloc(vlen);
 		strcpy(vcopy, value);
 		lt->dict_string_mem_required += vlen;
-		lt->dict = dslxt_insert(vcopy, lt->dict, lt->num_dict_entries);
+		lt->dict = lxt2_wr_dslxt_insert(vcopy, lt->dict, lt->num_dict_entries);
 
 		if(lt->dict_curr)
 			{
@@ -1716,15 +1792,15 @@ if(!(s->flags&(LXT2_WR_SYM_F_DOUBLE|LXT2_WR_SYM_F_STRING)))
 idxchk:	if(idx<0)
 		{
 		vpnt = lxt2_wr_vcd_truncate_bitvec(value);
-		lt->dict = dslxt_splay (vpnt, lt->dict);
+		lt->dict = lxt2_wr_dslxt_splay (vpnt, lt->dict);
 
-		if(!dslxt_success)
+		if(!lxt2_wr_dslxt_success)
 			{
 			unsigned int vlen = strlen(vpnt)+1;
 			char *vcopy = (char *)malloc(vlen);
 			strcpy(vcopy, vpnt);
 			lt->dict_string_mem_required += vlen;
-			lt->dict = dslxt_insert(vcopy, lt->dict, lt->num_dict_entries);
+			lt->dict = lxt2_wr_dslxt_insert(vcopy, lt->dict, lt->num_dict_entries);
 
 			if(lt->dict_curr)
 				{
@@ -1943,12 +2019,3 @@ if(lt)
 	sprintf(lt->zmode, "wb%d", depth);
 	}
 }
-
-
-/*
- * source level compatibility stub functions
- */
-void lxt2_wr_set_no_interlace(struct lxt2_wr_trace *lt) { }
-void lxt2_wr_set_chg_compress(struct lxt2_wr_trace *lt) { }
-void lxt2_wr_set_clock_compress(struct lxt2_wr_trace *lt) { }
-void lxt2_wr_set_dict_compress(struct lxt2_wr_trace *lt, unsigned int minwidth) { }
