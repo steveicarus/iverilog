@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.53 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: netlist.h,v 1.54 1999/08/01 21:48:11 steve Exp $"
 #endif
 
 /*
@@ -283,30 +283,26 @@ class NetNet  : public NetObj, public LineInfo {
  * This class represents the declared memory object. The parser
  * creates one of these for each declared memory in the elaborated
  * design. A reference to one of these is handled by the NetEMemory
- * object, which is derived from NetExpr.
+ * object, which is derived from NetExpr. This is not a node because
+ * memory objects can only be accessed by behavioral code.
  */
 class NetMemory  {
 
     public:
-      NetMemory(const string&n, long w, long s, long e)
-      : name_(n), width_(w), idxh_(s), idxl_(e) { }
+      NetMemory(const string&n, long w, long s, long e);
 
       const string&name() const { return name_; }
+
+	// This is the width (in bits) of a single memory position.
       unsigned width() const { return width_; }
 
-      unsigned count() const
-	    { if (idxh_ < idxl_)
-		    return idxl_ - idxh_ + 1;
-	      else
-		    return idxh_ - idxl_ + 1;
-	    }
+	// This is the number of memory positions.
+      unsigned count() const;
 
-      unsigned index_to_address(long idx) const
-	    { if (idxh_ < idxl_)
-		    return idx - idxh_;
-	      else
-		    return idx - idxl_;
-	    }
+	// This method returns a 0 based address of a memory entry as
+	// indexed by idx. The Verilog source may give index ranges
+	// that are not zero based.
+      unsigned index_to_address(long idx) const;
 
       void set_attributes(const map<string,string>&a);
 
@@ -1444,6 +1440,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.54  1999/08/01 21:48:11  steve
+ *  set width of procedural r-values when then
+ *  l-value is a memory word.
+ *
  * Revision 1.53  1999/08/01 16:34:50  steve
  *  Parse and elaborate rise/fall/decay times
  *  for gates, and handle the rules for partial

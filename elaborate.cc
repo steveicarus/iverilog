@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.64 1999/08/01 21:18:55 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.65 1999/08/01 21:48:11 steve Exp $"
 #endif
 
 /*
@@ -1163,6 +1163,7 @@ NetProc* PAssign::assign_to_memory_(NetMemory*mem, PExpr*ix,
       }
       assert(rv);
 
+      rv->set_width(mem->width());
       NetExpr*idx = ix->elaborate_expr(des, path);
       assert(idx);
 
@@ -2044,6 +2045,10 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.65  1999/08/01 21:48:11  steve
+ *  set width of procedural r-values when then
+ *  l-value is a memory word.
+ *
  * Revision 1.64  1999/08/01 21:18:55  steve
  *  elaborate rise/fall/decay for continuous assign.
  *

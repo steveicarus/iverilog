@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.50 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: netlist.cc,v 1.51 1999/08/01 21:48:11 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -841,6 +841,28 @@ NetEMemory::~NetEMemory()
 {
 }
 
+NetMemory::NetMemory(const string&n, long w, long s, long e)
+: name_(n), width_(w), idxh_(s), idxl_(e)
+{
+}
+
+unsigned NetMemory::count() const
+{
+      if (idxh_ < idxl_)
+	    return idxl_ - idxh_ + 1;
+      else
+	    return idxh_ - idxl_ + 1;
+}
+
+unsigned NetMemory::index_to_address(long idx) const
+{
+      if (idxh_ < idxl_)
+	    return idx - idxh_;
+      else
+	    return idx - idxl_;
+}
+
+
 void NetMemory::set_attributes(const map<string,string>&attr)
 {
       assert(attributes_.size() == 0);
@@ -1530,6 +1552,10 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.51  1999/08/01 21:48:11  steve
+ *  set width of procedural r-values when then
+ *  l-value is a memory word.
+ *
  * Revision 1.50  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *
