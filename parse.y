@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.94 2000/05/06 15:41:56 steve Exp $"
+#ident "$Id: parse.y,v 1.95 2000/05/08 05:30:19 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -27,6 +27,13 @@
 
 extern void lex_start_table();
 extern void lex_end_table();
+
+/*
+ * These are the strengths to use for net declaration
+ * assignments. They are stored here so that scope that contains the
+ * net_decl_assigns can change them during specific statements.
+ */
+static struct str_pair_t decl_strength = { PGate::STRONG, PGate::STRONG };
 %}
 
 %union {
@@ -946,8 +953,6 @@ gatetype
 	| K_not    { $$ = PGBuiltin::NOT; }
 	| K_notif0 { $$ = PGBuiltin::NOTIF0; }
 	| K_notif1 { $$ = PGBuiltin::NOTIF1; }
-	| K_pulldown { $$ = PGBuiltin::PULLDOWN; }
-	| K_pullup   { $$ = PGBuiltin::PULLUP; }
 	| K_nmos  { $$ = PGBuiltin::NMOS; }
 	| K_rnmos { $$ = PGBuiltin::RNMOS; }
 	| K_pmos  { $$ = PGBuiltin::PMOS; }
@@ -1143,10 +1148,21 @@ module_item
 		  }
 		  delete $3;
 		}
+	| net_type drive_strength { decl_strength = $2;} net_decl_assigns ';'
+		{ pform_makewire(@1, $4, $1);
+		    /* The strengths are handled in the
+		       net_decl_assigns using the decl_strength that I
+		       set in the rule. Right here, just restore the
+		       defaults for other rules. */
+		  decl_strength.str0 = PGate::STRONG;
+		  decl_strength.str1 = PGate::STRONG;
+		  delete $4;
+		}
 	| K_trireg charge_strength_opt range_opt delay3_opt list_of_variables ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
 		  delete $3;
 		}
+
 	| port_type range_opt list_of_variables ';'
 		{ pform_set_port_type($3, $1);
 		  if ($2) {
@@ -1162,17 +1178,54 @@ module_item
 		  delete $2;
 		}
 	| K_parameter parameter_assign_list ';'
-	| K_localparam localparam_assign_list ';'
-	| gatetype delay3_opt gate_instance_list ';'
-		{ pform_makegates($1, $2, $3);
+	| K_localparam localparam_assign_list ';' { }
+
+  /* Most gate types have an optional drive strength and optional
+     three-value delay. These rules handle the different cases. */
+
+	| gatetype gate_instance_list ';'
+		{ pform_makegates($1, decl_strength, 0, $2);
 		}
+
+	| gatetype delay3 gate_instance_list ';'
+		{ pform_makegates($1, decl_strength, $2, $3);
+		}
+
+	| gatetype drive_strength gate_instance_list ';'
+		{ pform_makegates($1, $2, 0, $3);
+		}
+
+	| gatetype drive_strength delay3 gate_instance_list ';'
+		{ pform_makegates($1, $2, $3, $4);
+		}
+
+  /* Pullup and pulldown devices cannot have delays, and their
+     strengths are limited. */
+
+	| K_pullup gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLUP, decl_strength, 0, $2);
+		}
+	| K_pulldown gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLDOWN, decl_strength, 0, $2);
+		}
+
+  /* This rule handles instantiations of modules and user defined
+     primitives. These devices to not have delay lists or strengths,
+     but then can have parameter lists. */
+
 	| IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ pform_make_modgates($1, $2, $3);
 		  delete $1;
 		}
+
+  /* Continuous assignment can have an optional drive strength, then
+     an optional delay3 that applies to all the assignments in the
+     assign_list. */
+
 	| K_assign drive_strength_opt delay3_opt assign_list ';'
 		{ pform_make_pgassign_list($4, $3, $2, @1.text, @1.first_line); }
 	| K_assign error '=' expression ';'
+
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
 		  tmp->set_file(@1.text);
@@ -1183,6 +1236,12 @@ module_item
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		}
+
+  /* The task declaration rule matches the task declaration
+     header, then pushes the function scope. This causes the
+     definitions in the task_body to take on the scope of the task
+     instead of the module. */
+
 	| K_task IDENTIFIER ';'
 		{ pform_push_scope($2); }
 	  task_body
@@ -1194,6 +1253,12 @@ module_item
 		  pform_set_task($2, $5);
 		  delete $2;
 		}
+
+  /* The function declaration rule matches the function declaration
+     header, then pushes the function scope. This causes the
+     definitions in the func_body to take on the scope of the function
+     instead of the module. */
+
         | K_function range_or_type_opt IDENTIFIER ';'
                 { pform_push_scope($3); }
           func_body
@@ -1205,9 +1270,16 @@ module_item
 		  pform_set_function($3, $2, $6);
 		  delete $3;
 		}
+
+  /* specify blocks are parsed but ignored. */
+
 	| K_specify specify_item_list K_endspecify
 		{
 		}
+
+  /* These rules are for the Icarus VErilog specific $attribute
+     extensions. Then catch the parameters of the $attribute keyword. */
+
 	| KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')' ';'
 		{ pform_set_attrib($3, $5, $7);
 		  delete $3;
@@ -1217,6 +1289,7 @@ module_item
 	| KK_attribute '(' error ')' ';'
 		{ yyerror(@1, "error: Misformed $attribute parameter list."); }
 	;
+
 
 module_item_list
 	: module_item_list module_item
@@ -1229,20 +1302,15 @@ module_item_list
 net_decl_assign
 	: IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($1);
-		  struct str_pair_t str;
-		  str.str0 = PGate::STRONG;
-		  str.str1 = PGate::STRONG;
-		  PGAssign*tmp = pform_make_pgassign(id, $3, 0, str);
+		  PGAssign*tmp = pform_make_pgassign(id, $3, 0, decl_strength);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = $1;
 		}
 	| delay1 IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($2);
-		  struct str_pair_t str;
-		  str.str0 = PGate::STRONG;
-		  str.str1 = PGate::STRONG;
-		  PGAssign*tmp = pform_make_pgassign(id, $4, $1, str);
+		  PGAssign*tmp = pform_make_pgassign(id, $4, $1,
+						     decl_strength);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = $2;

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.h,v 1.39 2000/05/06 15:41:57 steve Exp $"
+#ident "$Id: pform.h,v 1.40 2000/05/08 05:30:20 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -151,6 +151,7 @@ extern void pform_make_events(const list<string>*names,
  * name) and connects it to the specified wires.
  */
 extern void pform_makegates(PGBuiltin::Type type,
+			    struct str_pair_t str,
 			    svector<PExpr*>*delay,
 			    svector<lgate>*gates);
 
@@ -189,6 +190,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.40  2000/05/08 05:30:20  steve
+ *  Deliver gate output strengths to the netlist.
+ *
  * Revision 1.39  2000/05/06 15:41:57  steve
  *  Carry assignment strength to pform.
  *

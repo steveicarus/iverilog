@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.58 2000/05/06 15:41:57 steve Exp $"
+#ident "$Id: pform.cc,v 1.59 2000/05/08 05:30:20 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -291,6 +291,7 @@ void pform_make_events(const list<string>*names, const string&fn, unsigned ln)
  * gates and calls the pform_makegate function to make the individual gate.
  */
 void pform_makegate(PGBuiltin::Type type,
+		    struct str_pair_t str,
 		    svector<PExpr*>* delay,
 		    const lgate&info)
 {
@@ -305,6 +306,8 @@ void pform_makegate(PGBuiltin::Type type,
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
+      cur->strength0(str.str0);
+      cur->strength1(str.str1);
       cur->set_file(info.file);
       cur->set_lineno(info.lineno);
 
@@ -312,10 +315,12 @@ void pform_makegate(PGBuiltin::Type type,
 }
 
 void pform_makegates(PGBuiltin::Type type,
-		     svector<PExpr*>*delay, svector<lgate>*gates)
+		     struct str_pair_t str,
+		     svector<PExpr*>*delay,
+		     svector<lgate>*gates)
 {
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
-	    pform_makegate(type, delay, (*gates)[idx]);
+	    pform_makegate(type, str, delay, (*gates)[idx]);
       }
 
       delete gates;
@@ -859,6 +864,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.59  2000/05/08 05:30:20  steve
+ *  Deliver gate output strengths to the netlist.
+ *
  * Revision 1.58  2000/05/06 15:41:57  steve
  *  Carry assignment strength to pform.
  *
