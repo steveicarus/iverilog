@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.31 2003/10/10 02:57:45 steve Exp $"
+#ident "$Id: Makefile.in,v 1.32 2004/01/15 20:52:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -34,13 +34,11 @@ libdir64 = @libdir64@
 includedir = $(prefix)/include
 
 CC = @CC@ -I. -I.. -I$(srcdir) -I$(srcdir)/..
-CXX = @CXX@ -I. -I.. -I$(srcdir) -I$(srcdir)/..
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
-CXXFLAGS = @CXXFLAGS@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
@@ -86,7 +84,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall @ident_support@ $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 

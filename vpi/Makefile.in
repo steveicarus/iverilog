@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.49 2003/10/30 03:43:19 steve Exp $"
+#ident "$Id: Makefile.in,v 1.50 2004/01/15 20:52:32 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -61,7 +61,7 @@ dep:
 	mkdir dep
 
 %.o: %.c
-	$(CC) -Wall -I$(srcdir)/.. -I$(srcdir) -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
+	$(CC) -Wall @ident_support@ -I$(srcdir)/.. -I$(srcdir) -I.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
