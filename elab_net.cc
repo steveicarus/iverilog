@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.117 2003/09/03 04:29:18 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.118 2003/09/13 01:30:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1813,6 +1813,8 @@ NetNet* PENumber::elaborate_net(Design*des, NetScope*scope,
 		case verinum::Vz:
 		  top_v = verinum::Vz;
 		  break;
+		default:   /* V0 and V1, do nothing */
+		  break;
 	    }
 
 	    verinum num(top_v, net->pin_count());
@@ -2336,6 +2338,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.118  2003/09/13 01:30:07  steve
+ *  Missing case warnings.
+ *
  * Revision 1.117  2003/09/03 04:29:18  steve
  *  Only build a mux as wide as can be selected.
  *

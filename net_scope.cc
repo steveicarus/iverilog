@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.28 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.29 2003/09/13 01:30:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -64,6 +64,8 @@ NetScope::NetScope(NetScope*up, const char*n, NetScope::TYPE t)
 	    break;
 	  case NetScope::MODULE:
 	    module_name_ = 0;
+	    break;
+	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
 	    break;
       }
       name_ = lex_strings.add(n);
@@ -448,6 +450,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.29  2003/09/13 01:30:07  steve
+ *  Missing case warnings.
+ *
  * Revision 1.28  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *

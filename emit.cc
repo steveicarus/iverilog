@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.74 2003/05/30 02:55:32 steve Exp $"
+#ident "$Id: emit.cc,v 1.75 2003/09/13 01:30:07 steve Exp $"
 #endif
 
 # include "config.h"
@@ -350,6 +350,8 @@ void NetScope::emit_defs(struct target_t*tgt) const
 	  case TASK:
 	    tgt->task_def(this);
 	    break;
+	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
+	    break;
       }
 
 }
@@ -507,6 +509,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.75  2003/09/13 01:30:07  steve
+ *  Missing case warnings.
+ *
  * Revision 1.74  2003/05/30 02:55:32  steve
  *  Support parameters in real expressions and
  *  as real expressions, and fix multiply and
