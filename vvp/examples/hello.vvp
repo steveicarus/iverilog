@@ -28,7 +28,7 @@
 ; This tests that a simple %vpi_call works properly. This is very nearly
 ; the mode trivial VVP source file that can generate any output.
 
-main	.scope "main";
+main	.scope module, "main";
 
 code
 	%vpi_call "$display", "Hello, World.";
