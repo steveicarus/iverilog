@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.10 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: lexor.lex,v 1.11 1999/03/16 04:44:45 steve Exp $"
 #endif
 
       //# define YYSTYPE lexval
@@ -41,6 +41,7 @@ static int check_identifier(const char*name);
 static void ppinclude_filename();
 static void ppdo_include();
 static verinum*make_sized_binary(const char*txt);
+static verinum*make_sized_dec(const char*txt);
 static verinum*make_sized_octal(const char*txt);
 static verinum*make_sized_hex(const char*txt);
 
@@ -120,7 +121,7 @@ static verinum*make_sized_hex(const char*txt);
       yylval.text = new string(yytext);
       return SYSTEM_IDENTIFIER; }
 
-[0-9][0-9_]*\'d[0-9][0-9_]*    { yylval.number = 0;
+[0-9][0-9_]*\'d[0-9][0-9_]*    { yylval.number = make_sized_dec(yytext);
 				   return NUMBER; }
 [0-9][0-9_]*\'[bB][0-1xz_]+    { yylval.number = make_sized_binary(yytext);
 				   return NUMBER; }
@@ -473,6 +474,38 @@ static verinum*make_sized_hex(const char*txt)
 	    break;
 	  default:
 	    bits[idx++] = verinum::V0;
+      }
+
+      return new verinum(bits, size);
+}
+
+/*
+ * Making a deciman number is much easier then the other base numbers
+ * because there are no z or x values to worry about.
+ */
+static verinum*make_sized_dec(const char*txt)
+{
+      char*ptr;
+      unsigned size = strtoul(txt,&ptr,10);
+      assert(*ptr == '\'');
+      ptr += 1;
+      assert(tolower(*ptr) == 'd');
+
+      unsigned long value = 0;
+      for (ptr += 1 ; *ptr ; ptr += 1)
+	    if (isdigit(*ptr)) {
+		  value *= 10;
+		  value += *ptr - '0';
+	    } else  {
+		  assert(*ptr == '_');
+	    }
+
+
+      verinum::V*bits = new verinum::V[size];
+
+      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
+	    bits[idx] = (value&1)? verinum::V1 : verinum::V0;
+	    value /= 2;
       }
 
       return new verinum(bits, size);

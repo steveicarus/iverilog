@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.15 1999/03/15 02:43:32 steve Exp $"
+#ident "$Id: parse.y,v 1.16 1999/03/16 04:44:45 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -111,15 +111,15 @@ extern void lex_end_table();
 %type <statement> statement statement_opt
 %type <statement_list> statement_list
 
-%left UNARY_PREC
-%left '+' '-'
-%left K_GE K_LE '<' '>'
-%left K_EQ K_NE K_CEQ K_CNE
-%left '&'
-%left '^'
-%left '|'
-%left K_LAND
 %left K_LOR
+%left K_LAND
+%left '|'
+%left '^'
+%left '&'
+%left K_EQ K_NE K_CEQ K_CNE
+%left K_GE K_LE '<' '>'
+%left '+' '-'
+%left UNARY_PREC
 
 %%
 
@@ -169,7 +169,13 @@ case_items
 
 const_expression
 	: NUMBER
-		{ $$ = new PENumber($1);
+		{ verinum*tmp = $1;
+		  if (tmp == 0) {
+			yyerror(@1, "XXXX internal error: const_expression.");
+			$$ = 0;
+		  } else {
+			$$ = new PENumber(tmp);
+		  }
 		}
 	| STRING
 		{ $$ = new PEString(*$1);
@@ -179,7 +185,13 @@ const_expression
 
 delay
 	: '#' NUMBER
-		{ $$ = new PENumber($2);
+		{ verinum*tmp = $2;
+		  if (tmp == 0) {
+			yyerror(@2, "XXXX internal error: delay.");
+			$$ = 0;
+		  } else {
+			$$ = new PENumber(tmp);
+		  }
 		}
 	| '#' IDENTIFIER
 		{ $$ = new PEIdent(*$2);
@@ -293,7 +305,12 @@ expression_list
 
 expr_primary
 	: NUMBER
-		{ $$ = new PENumber($1);
+		{ if ($1 == 0) {
+		        yyerror(@1, "XXXX No number value in primary?");
+			$$ = 0;
+		  } else {
+			$$ = new PENumber($1);
+		  }
 		}
 	| STRING
 		{ $$ = new PEString(*$1);
