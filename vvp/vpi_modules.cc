@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_modules.cc,v 1.9 2001/10/14 18:42:46 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.10 2002/03/05 05:31:52 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -26,6 +26,8 @@
 # include  "vpithunk.h"
 # include  <stdio.h>
 # include  <string.h>
+# include  <sys/types.h>
+# include  <sys/stat.h>
 
 typedef void (*vlog_startup_routines_t)(void);
 typedef int (*vpi_register_sim_t)(p_vpi_thunk tp);
@@ -41,6 +43,10 @@ unsigned vpip_module_path_cnt = 1;
 
 void vpip_load_module(const char*name)
 {
+      struct stat sb;
+      int rc;
+      char buf[4096];
+
 #ifdef __MINGW32__
       const char sep = '\\';
 #else
@@ -48,41 +54,58 @@ void vpip_load_module(const char*name)
 #endif
 
       ivl_dll_t dll = 0;
-
+      buf[0] = 0;                     /* terminate the string */
       if (strchr(name, sep)) {
 	      /* If the name has at least one directory character in
-		 it, then assume it is a complete name, including any
+		 it, then assume it is a complete name, maybe including any
 		 possble .vpi suffix. */
-	    dll = ivl_dlopen(name);
+	    rc = stat(name, &sb);
 
-	    if (dll == 0) {
-		  char buf[4096];
+	    if (rc != 0) {            /* did we find a file? */
+	          /* no, try with a .vpi suffix too */
 		  sprintf(buf, "%s.vpi", name);
-		  dll = ivl_dlopen(buf);
+		  rc = stat(buf, &sb);
 
-		  if (dll == 0) {
-			fprintf(stderr, "%s: Unable to link module\n", name);
+		  if (rc != 0) {
+			fprintf(stderr, "%s: Unable to find module file `%s' "
+				"or `%s.vpi'.\n", name,name,buf);
 			return;
 		  }
+	    } else {
+	      strcpy(buf,name);   /* yes copy the name into the buffer */
 	    }
 
       } else {
+	    rc = -1;
 	    for (unsigned idx = 0
-		       ; (dll == 0) && (idx < vpip_module_path_cnt)
+		       ; (rc != 0) && (idx < vpip_module_path_cnt)
 		       ;  idx += 1) {
-		  char buf[4096];
 		  sprintf(buf, "%s%c%s.vpi", vpip_module_path[idx], sep, name);
 
-		  dll = ivl_dlopen(buf);
+		  rc = stat(buf,&sb);
 	    }
 
-	    if (dll == 0) {
+	    if (rc != 0) {
 		  fprintf(stderr, "%s: Unable to find a "
-			  "%s.vpi module\n", name, name); 
+			  "`%s.vpi' module on the search path.\n",
+			  name, name); 
 		  return;
 	    }
 
       }
+
+      /* must have found some file that could possibly be a vpi module 
+       * try to open it as a shared object.
+       */
+      dll = ivl_dlopen(buf);
+      if(dll==0) {
+	/* hmm, this failed, let the user know what has really gone wrong */
+	fprintf(stderr,"%s:`%s' failed to open using dlopen() because:\n"
+		"    %s.\n",name,buf,dlerror());
+
+	return;
+      }
+
 
       void *regsub = ivl_dlsym(dll, LU "vpi_register_sim" TU);
       vpi_register_sim_t simreg = (vpi_register_sim_t)regsub;
@@ -115,6 +138,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.10  2002/03/05 05:31:52  steve
+ *  Better linker error messages.
+ *
  * Revision 1.9  2001/10/14 18:42:46  steve
  *  Try appending .vpi to module names with directories.
  *
