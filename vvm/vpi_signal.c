@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.c,v 1.1 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_signal.c,v 1.2 1999/10/29 03:37:22 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -255,6 +255,7 @@ vpiHandle vpip_make_net(struct __vpiSignal*ref, const char*name)
 {
       ref->base.vpi_type = &vpip_net_rt;
       ref->name = name;
+      ref->monitor = 0;
       return &(ref->base);
 }
 
@@ -271,11 +272,15 @@ vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name)
 {
       ref->base.vpi_type = &vpip_reg_rt;
       ref->name = name;
+      ref->monitor = 0;
       return &(ref->base);
 }
 
 /*
  * $Log: vpi_signal.c,v $
+ * Revision 1.2  1999/10/29 03:37:22  steve
+ *  Support vpiValueChance callbacks.
+ *
  * Revision 1.1  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

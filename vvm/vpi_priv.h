@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.2 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.3 1999/10/29 03:37:22 steve Exp $"
 #endif
 
 /*
@@ -71,7 +71,9 @@ struct __vpirt {
 struct __vpiCallback {
       struct __vpiHandle base;
       struct t_cb_data cb_data;
+
       struct vpip_event*ev;
+      struct __vpiCallback*next;
 };
 
 /*
@@ -103,10 +105,13 @@ struct __vpiIterator {
  */
 struct __vpiSignal {
       struct __vpiHandle base;
-
+	/* The signal has a name (this points to static memory.) */
       const char*name;
+	/* The signal has a value and dimension. */
       enum vpip_bit_t*bits;
       unsigned nbits;
+	/* monitors are added here. */
+      struct __vpiCallback*monitor;
 };
 
 
@@ -162,6 +167,7 @@ extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 /* Use this function to call a registered task. */
 extern void vpip_calltask(const char*name, unsigned nparms, vpiHandle*parms);
 
+extern void vpip_run_value_changes(struct __vpiSignal*sig);
 
 /*
  * The simulation object holds the current state of the
@@ -220,6 +226,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.3  1999/10/29 03:37:22  steve
+ *  Support vpiValueChance callbacks.
+ *
  * Revision 1.2  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler

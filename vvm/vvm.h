@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.17 1999/10/28 21:36:00 steve Exp $"
+#ident "$Id: vvm.h,v 1.18 1999/10/29 03:37:22 steve Exp $"
 #endif
 
 # include  <vector>
@@ -242,6 +242,7 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 
       void set(vvm_simulation*sim, unsigned idx, vpip_bit_t val)
 	    { bits[idx] = val;
+	      vpip_run_value_changes(this);
 	    }
 
       void set(vvm_simulation*sim, const vvm_bitset_t<WIDTH>&val)
@@ -252,6 +253,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.18  1999/10/29 03:37:22  steve
+ *  Support vpiValueChance callbacks.
+ *
  * Revision 1.17  1999/10/28 21:36:00  steve
  *  Get rid of monitor_t and fold __vpiSignal into signal.
  *

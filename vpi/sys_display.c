@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_display.c,v 1.5 1999/10/28 00:47:25 steve Exp $"
+#ident "$Id: sys_display.c,v 1.6 1999/10/29 03:37:22 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -260,6 +260,40 @@ static int sys_strobe_calltf(char*name)
       return 0;
 }
 
+static int sys_monitor_calltf(char*name)
+{
+      struct t_cb_data cb;
+      struct t_vpi_time time;
+
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle item;
+
+      time.type = vpiSuppressTime;
+
+      for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
+
+	    switch (vpi_get(vpiType, item)) {
+
+		case vpiNet:
+		case vpiReg:
+		  cb.reason = cbValueChange;
+		  cb.cb_rtn = strobe_cb;
+		  cb.time = &time;
+		  cb.obj = item;
+		  cb.user_data = name;
+		  vpi_register_cb(&cb);
+		  break;
+
+		default:
+		  break;
+	    }
+
+      }
+
+      return 0;
+}
+
 void sys_display_register()
 {
       s_vpi_systf_data tf_data;
@@ -287,11 +321,22 @@ void sys_display_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$strobe";
       vpi_register_systf(&tf_data);
+
+      tf_data.type      = vpiSysTask;
+      tf_data.tfname    = "$monitor";
+      tf_data.calltf    = sys_monitor_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf    = 0;
+      tf_data.user_data = "$monitor";
+      vpi_register_systf(&tf_data);
 }
 
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.6  1999/10/29 03:37:22  steve
+ *  Support vpiValueChance callbacks.
+ *
  * Revision 1.5  1999/10/28 00:47:25  steve
  *  Rewrite vvm VPI support to make objects more
  *  persistent, rewrite the simulation scheduler
