@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.264 2002/11/09 19:20:48 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.265 2002/11/26 03:35:13 steve Exp $"
 #endif
 
 # include "config.h"
@@ -975,7 +975,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    rv->set_width(wid);
 	    rv = pad_to_width(rv, wid);
 
-	    if (! rv->set_width(wid)) {
+	    if (wid != rv->expr_width()) {
 		  cerr << get_line() << ": error: Unable to match "
 			"expression width of " << rv->expr_width() <<
 			" to l-value width of " << wid << "." << endl;
@@ -2472,6 +2472,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.265  2002/11/26 03:35:13  steve
+ *  Do not set width if width is already OK.
+ *
  * Revision 1.264  2002/11/09 19:20:48  steve
  *  Port expressions for output ports are lnets, not nets.
  *
