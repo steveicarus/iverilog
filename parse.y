@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.188 2004/01/21 03:37:12 steve Exp $"
+#ident "$Id: parse.y,v 1.189 2004/02/15 17:48:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2968,6 +2968,12 @@ udp_port_decl
 		}
 	| K_reg IDENTIFIER ';'
 		{ PWire*pp = new PWire($2, NetNet::REG, NetNet::PIMPLICIT);
+		  svector<PWire*>*tmp = new svector<PWire*>(1);
+		  (*tmp)[0] = pp;
+		  $$ = tmp;
+		}
+	| K_reg K_output IDENTIFIER ';'
+		{ PWire*pp = new PWire($3, NetNet::REG, NetNet::POUTPUT);
 		  svector<PWire*>*tmp = new svector<PWire*>(1);
 		  (*tmp)[0] = pp;
 		  $$ = tmp;
