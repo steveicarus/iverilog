@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.244 2002/04/21 22:31:02 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.245 2002/04/22 00:53:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,7 @@
 # include  "netmisc.h"
 # include  "util.h"
 # include  "parse_api.h"
+# include  "compiler.h"
 
 static Link::strength_t drive_type(PGate::strength_t drv)
 {
@@ -1817,8 +1818,12 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
       if ((expr_.count() == 1) && (expr_[0]->type() == PEEvent::POSITIVE)) {
 
+	    bool save_flag = error_implicit;
+	    error_implicit = true;
 	    NetNet*ex = expr_[0]->expr()->elaborate_net(des, scope,
 							1, 0, 0, 0);
+	    error_implicit = save_flag;
+
 	    if (ex == 0) {
 		  expr_[0]->dump(cerr);
 		  cerr << endl;
@@ -1944,8 +1949,11 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		 the sub-expression as a net and decide how to handle
 		 the edge. */
 
+	    bool save_flag = error_implicit;
+	    error_implicit = true;
 	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, scope,
 							    0, 0, 0, 0);
+	    error_implicit = save_flag;
 	    if (expr == 0) {
 		  expr_[idx]->dump(cerr);
 		  cerr << endl;
@@ -2504,6 +2512,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.245  2002/04/22 00:53:39  steve
+ *  Do not allow implicit wires in sensitivity lists.
+ *
  * Revision 1.244  2002/04/21 22:31:02  steve
  *  Redo handling of assignment internal delays.
  *  Leave it possible for them to be calculated

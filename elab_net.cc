@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.87 2002/03/09 02:10:22 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.88 2002/04/22 00:53:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1200,10 +1200,17 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		  sig = new NetNet(scope, scope->name()+"."+path_.peek_name(0),
 				   NetNet::IMPLICIT, 1);
 
-		  if (warn_implicit)
+		  if (error_implicit) {
+			cerr << get_line() << ": error: "
+			     << scope->name() << "." << path_.peek_name(0)
+			     << " not defined in this scope." << endl;
+			des->errors += 1;
+
+		  } else if (warn_implicit) {
 			cerr << get_line() << ": warning: implicit "
 			      "definition of wire " << scope->name()
-			     << "." << path_ << "." << endl;
+			     << "." << path_.peek_name(0) << "." << endl;
+		  }
 	    }
       }
 
@@ -2062,6 +2069,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.88  2002/04/22 00:53:39  steve
+ *  Do not allow implicit wires in sensitivity lists.
+ *
  * Revision 1.87  2002/03/09 02:10:22  steve
  *  Add the NetUserFunc netlist node.
  *

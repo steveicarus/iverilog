@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.53 2002/04/15 00:04:22 steve Exp $"
+#ident "$Id: main.cc,v 1.54 2002/04/22 00:53:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -87,6 +87,9 @@ FILE *depend_file = NULL;
  */
 bool warn_implicit  = false;
 bool warn_timescale = false;
+
+bool error_implicit = false;
+
 /*
  * Verbose messages enabled.
  */
@@ -493,6 +496,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.54  2002/04/22 00:53:39  steve
+ *  Do not allow implicit wires in sensitivity lists.
+ *
  * Revision 1.53  2002/04/15 00:04:22  steve
  *  Timescale warnings.
  *

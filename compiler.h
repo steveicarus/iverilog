@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.8 2002/04/15 00:04:22 steve Exp $"
+#ident "$Id: compiler.h,v 1.9 2002/04/22 00:53:39 steve Exp $"
 #endif
 
 # include  <list>
@@ -67,6 +67,7 @@
 
 /* Implicit definitions of wires. */
 extern bool warn_implicit;
+extern bool error_implicit;
 
 /* inherit timescales accross files. */
 extern bool warn_timescale;
@@ -80,6 +81,9 @@ extern list<const char*>library_suff;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.9  2002/04/22 00:53:39  steve
+ *  Do not allow implicit wires in sensitivity lists.
+ *
  * Revision 1.8  2002/04/15 00:04:22  steve
  *  Timescale warnings.
  *
