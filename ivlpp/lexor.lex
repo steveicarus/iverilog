@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: lexor.lex,v 1.28 2001/11/29 02:26:25 steve Exp $"
+#ident "$Id: lexor.lex,v 1.29 2002/01/06 04:51:31 steve Exp $"
 #endif
 
 # include "config.h"
@@ -525,7 +525,8 @@ static void do_include()
       }
 
       if (standby->file == 0) {
-	    perror(standby->path);
+	    fprintf(stderr, "%s:%u: Include file %s not found\n",
+		    istack->path, istack->lineno, standby->path);
 	    exit(1);
       }
 
