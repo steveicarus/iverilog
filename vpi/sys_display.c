@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.43 2002/08/22 23:34:52 steve Exp $"
+#ident "$Id: sys_display.c,v 1.44 2002/08/24 02:02:44 steve Exp $"
 #endif
 
 # include "config.h"
@@ -119,7 +119,8 @@ static void format_time(unsigned mcd, int fsize, const char*value)
       const char*cp;
       char*bp;
       unsigned len;
-      int cnt;
+
+      int idx, idx_point, idx_start, idx_value;
 
 	/* This is the time precision for the simulation. */
       int prec = vpi_get(vpiTimePrecision, 0);
@@ -127,71 +128,71 @@ static void format_time(unsigned mcd, int fsize, const char*value)
       if (fsize < 0)
 	    fsize = timeformat_info.width;
 
+	/* bp starts at the end of the buffer, and works forward as we
+	   build up the output value. */
       bp = buf + sizeof buf;
-      cp = value + strlen(value);
 
-      *--bp = 0;
+	/* cp points to digits of the value, starting with the least
+	   significant. If the value is only '0', then short circuit
+	   the value by setting cp = value. */
+      if (value[0] != '0')
+	    cp = value + strlen(value);
+      else
+	    cp = value;
+
 
 	/* Draw the suffix into the buffer. */
+      *--bp = 0;
       bp -= strlen(timeformat_info.suff);
       strcpy(bp, timeformat_info.suff);
 
-	/* cnt is the number of digits that the simulation precision
-	   units exceeds the time format units. For example, if the
-	   simulation is in 1ps (-12) and $timeformat units is 1ns (-9)
-	   then cnt is 3. */
+	/* This is the precision index where the decimal point goes. */
+      idx_point = timeformat_info.units;
 
-      cnt = timeformat_info.units - prec;
+	/* This is the precision index where we start drawing digits. */
+      idx_start =  idx_point - (int)timeformat_info.prec;
 
-	/* Draw 0s to pad out the precision to the requested count.
-	   This accounts for the case that the difference between
-	   simulation units and timeformat units is not enough for the
-	   requested timeformat precision. */
-      while (cnt < (int)timeformat_info.prec) {
-	    *--bp = '0';
-	    cnt += 1;
-      }
+	/* This is the precision index where the integer time value
+	   digits start. */
+      idx_value = prec;
 
+      idx = idx_start;
+      if (idx > idx_value)
+	    idx = idx_value;
 
-	/* Chop excess precision. This accounts for the case where the
-	   simulation precision is greater then the timeformat
-	   precision. Remove least significant digits from the integer
-	   value of the time strings. */
-      while (cnt > (int)timeformat_info.prec) {
-	    if (cp > value)
-		  cp -= 1;
-	    cnt -= 1;
-	    prec += 1;
-      }
+	/* If we want no precision, then set idx_point to a high value
+	   so that the '.' is never printed. */
+      if (timeformat_info.prec == 0)
+	    idx_point = idx - 1;
 
-      assert(cnt == timeformat_info.prec);
+	/* Now build up the time string, from the least significant
+	   digit up to the last. */
+      while ((cp > value) || (idx <= idx_point)) {
 
-
-	/* Draw the digits of the time that are to the right of the
-	   decimal point. Pad to the right with zeros if needed, to
-	   get to the decimal point. */
-      if (prec <= timeformat_info.units) {
-	    while (prec < timeformat_info.units) {
-		  char val;
-		  if (cp == value)
-			val = '0';
-		  else
-			val = *--cp;
-
-		  *--bp = val;
-		  prec += 1;
+	    if (idx == idx_point) {
+		  *--bp = '.';
 	    }
 
-	    *--bp = '.';
+	    if (idx >= idx_start) {
+
+		  if (idx < idx_value) {
+			*--bp = '0';
+		  } else if (cp > value) {
+			*--bp = cp[-1];
+		  } else {
+			*--bp = '0';
+		  }
+
+	    }
+
+	    if ((idx >= idx_value) && (cp > value))
+		  cp -= 1;
+
+	    idx += 1;
       }
 
-	/* Put the remaining characters to the left of the decimal
-	   point. */
-      while (cp > value) {
-	    *--bp = *--cp;
-      }
-
-      if (*bp == '.')
+	/* Patch up cases that need a leading 0. */
+      if ((*bp == '.') || (idx == idx_start))
 	    *--bp = '0';
 
 	/* Pad the string on the left to the requested minimum
@@ -1112,6 +1113,7 @@ static int sys_end_of_compile(p_cb_data cb_data)
 {
       timeformat_info.suff  = strdup("");
       timeformat_info.units = vpi_get(vpiTimePrecision, 0);
+      timeformat_info.prec  = 0;
       timeformat_info.width = 20;
       return 0;
 }
@@ -1364,6 +1366,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.44  2002/08/24 02:02:44  steve
+ *  Rewire time formatting to handle all cases.
+ *
  * Revision 1.43  2002/08/22 23:34:52  steve
  *  Watch signed comparisons, that lead to infinite loops.
  *
