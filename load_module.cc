@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.8 2002/06/06 18:57:18 steve Exp $"
+#ident "$Id: load_module.cc,v 1.9 2002/07/10 04:34:18 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -127,6 +127,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
       mlp->dir = strdup(path);
       mlp->key_case_sensitive = key_case_sensitive;
 
+	/* Scan the director for files. check each file name to see if
+	   it has one of the configured suffixes. If it does, then use
+	   the root of the name as the key and index the file name. */
       while (struct dirent*de = readdir(dir)) {
 	    unsigned namsiz = strlen(de->d_name);
 	    char*key = 0;
@@ -140,8 +143,14 @@ int build_library_index(const char*path, bool key_case_sensitive)
 		  if (sufsiz >= namsiz)
 			continue;
 
-		  if (strcmp(de->d_name + (namsiz-sufsiz), sufptr) != 0)
-			continue;
+		    /* If the directory is case insensitive, then so
+		       is the suffix. */
+		  if (key_case_sensitive)
+			if (strcmp(de->d_name + (namsiz-sufsiz), sufptr) != 0)
+			      continue;
+		  else
+			if (strcasecmp(de->d_name + (namsiz-sufsiz), sufptr) != 0)
+			      continue;
 
 		  key = new char[namsiz-sufsiz+1];
 		  strncpy(key, de->d_name, namsiz-sufsiz);
@@ -180,6 +189,9 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
 /*
  * $Log: load_module.cc,v $
+ * Revision 1.9  2002/07/10 04:34:18  steve
+ *  Library dir case insensitivity includes the suffix.
+ *
  * Revision 1.8  2002/06/06 18:57:18  steve
  *  Use standard name for iostream.
  *
