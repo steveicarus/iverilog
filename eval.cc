@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.33 2003/03/10 23:40:53 steve Exp $"
+#ident "$Id: eval.cc,v 1.34 2003/03/26 06:16:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -90,6 +90,26 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 		      long lv = l->as_long();
 		      long rv = r->as_long();
 		      res = new verinum(lv % rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
+		break;
+	  }
+	  case '>': {
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv > rv, l->len());
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
+		break;
+	  }
+	  case '<': {
+		if (l->is_defined() && r->is_defined()) {
+		      long lv = l->as_long();
+		      long rv = r->as_long();
+		      res = new verinum(lv < rv, l->len());
 		} else {
 		      res = new verinum(verinum::Vx, l->len());
 		}
@@ -227,6 +247,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.34  2003/03/26 06:16:18  steve
+ *  Evaluate > and < in constant expressions.
+ *
  * Revision 1.33  2003/03/10 23:40:53  steve
  *  Keep parameter constants for the ivl_target API.
  *
