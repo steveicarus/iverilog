@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: lexor.lex,v 1.9 1999/07/15 22:53:47 steve Exp $"
+#ident "$Id: lexor.lex,v 1.10 1999/07/17 05:10:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -303,6 +303,16 @@ static void do_define()
       char *cp;
       if(cp = strstr(yytext, "//"))
 	    *cp = 0;
+
+	/* Trim trailing white space. */
+      cp = yytext + strlen(yytext);
+      while (cp > yytext) {
+	    cp -= 1;
+	    if (!isspace(*cp))
+		  break;
+
+	    *cp = 0;
+      }
 
       define_macro(def_name, yytext);
 }
