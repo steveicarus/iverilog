@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.39 2002/06/21 04:59:36 steve Exp $"
+#ident "$Id: sys_display.c,v 1.40 2002/07/23 02:41:15 steve Exp $"
 #endif
 
 # include "config.h"
@@ -91,6 +91,13 @@ static void array_from_iterator(struct strobe_cb_info*info, vpiHandle argv)
 	    unsigned nitems = 1;
 	    vpiHandle*items = malloc(sizeof(vpiHandle));
 	    items[0] = vpi_scan(argv);
+	    if (items[0] == 0) {
+		  free(items);
+		  info->nitems = 0;
+		  info->items  = 0;
+		  return;
+	    }
+
 	    for (item = vpi_scan(argv) ;  item ;  item = vpi_scan(argv)) {
 		  items = realloc(items, (nitems+1)*sizeof(vpiHandle));
 		  items[nitems] = item;
@@ -1296,6 +1303,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.40  2002/07/23 02:41:15  steve
+ *  Fix display of no arguments.
+ *
  * Revision 1.39  2002/06/21 04:59:36  steve
  *  Carry integerness throughout the compilation.
  *
