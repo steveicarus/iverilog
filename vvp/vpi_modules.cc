@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_modules.cc,v 1.14 2003/02/09 23:33:26 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.15 2003/02/16 02:21:20 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -43,6 +43,7 @@ void vpip_load_module(const char*name)
 {
       struct stat sb;
       int rc;
+      bool export_flag = false;
       char buf[4096];
 
 #ifdef __MINGW32__
@@ -57,12 +58,21 @@ void vpip_load_module(const char*name)
 	      /* If the name has at least one directory character in
 		 it, then assume it is a complete name, maybe including any
 		 possible .vpi suffix. */
+	    export_flag = false;
 	    rc = stat(name, &sb);
 
 	    if (rc != 0) {            /* did we find a file? */
 	          /* no, try with a .vpi suffix too */
+		  export_flag = false;
 		  sprintf(buf, "%s.vpi", name);
 		  rc = stat(buf, &sb);
+
+		    /* Tray alwo with the .vpl suffix. */
+		  if (rc != 0) {
+			export_flag = true;
+			sprintf(buf, "%s.vpl", name);
+			rc = stat(buf, &sb);
+		  }
 
 		  if (rc != 0) {
 			fprintf(stderr, "%s: Unable to find module file `%s' "
@@ -78,9 +88,16 @@ void vpip_load_module(const char*name)
 	    for (unsigned idx = 0
 		       ; (rc != 0) && (idx < vpip_module_path_cnt)
 		       ;  idx += 1) {
+		  export_flag = false;
 		  sprintf(buf, "%s%c%s.vpi", vpip_module_path[idx], sep, name);
-
 		  rc = stat(buf,&sb);
+
+		  if (rc != 0) {
+			export_flag = true;
+			sprintf(buf, "%s%c%s.vpl",
+				vpip_module_path[idx], sep, name);
+			rc = stat(buf,&sb);
+		  }
 	    }
 
 	    if (rc != 0) {
@@ -95,7 +112,7 @@ void vpip_load_module(const char*name)
       /* must have found some file that could possibly be a vpi module 
        * try to open it as a shared object.
        */
-      dll = ivl_dlopen(buf);
+      dll = ivl_dlopen(buf, export_flag);
       if(dll==0) {
 	/* hmm, this failed, let the user know what has really gone wrong */
 	fprintf(stderr,"%s:`%s' failed to open using dlopen() because:\n"
@@ -121,6 +138,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.15  2003/02/16 02:21:20  steve
+ *  Support .vpl files as loadable LIBRARIES.
+ *
  * Revision 1.14  2003/02/09 23:33:26  steve
  *  Spelling fixes.
  *

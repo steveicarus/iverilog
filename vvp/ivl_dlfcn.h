@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.6 2002/11/05 02:11:56 steve Exp $"
+#ident "$Id: ivl_dlfcn.h,v 1.7 2003/02/16 02:21:20 steve Exp $"
 #endif
 
 #if defined(__MINGW32__)
@@ -61,8 +61,8 @@ inline const char *dlerror(void)
 }
 
 #elif defined(HAVE_DLFCN_H)
-inline ivl_dll_t ivl_dlopen(const char*name)
-{ return dlopen(name,RTLD_LAZY); }
+inline ivl_dll_t ivl_dlopen(const char*name, bool global_flag)
+{ return dlopen(name,RTLD_LAZY|(global_flag?RTLD_GLOBAL:0)); }
 
 inline void* ivl_dlsym(ivl_dll_t dll, const char*nm)
 { return dlsym(dll, nm); }
@@ -90,6 +90,9 @@ inline const char*dlerror(void)
 
 /*
  * $Log: ivl_dlfcn.h,v $
+ * Revision 1.7  2003/02/16 02:21:20  steve
+ *  Support .vpl files as loadable LIBRARIES.
+ *
  * Revision 1.6  2002/11/05 02:11:56  steve
  *  Better error message for load failure on Windows.
  *
