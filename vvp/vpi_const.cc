@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.20 2002/11/03 02:07:24 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.21 2002/11/03 20:33:43 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -370,7 +370,7 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		obit++;
 		if (!(obit % 32)) {
 		      op += 1;
-		      if ((op - vp->value.vector) < (ptrdiff_t)hwid)
+		      if ((op - vp->value.vector) < (long)hwid)
 			    op->aval = op->bval = 0;
 		      obit = 0;
 		}
@@ -557,6 +557,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.21  2002/11/03 20:33:43  steve
+ *  Compiler error wrt ptrdiff_t.
+ *
  * Revision 1.20  2002/11/03 02:07:24  steve
  *  Get VectorVals from constant values.
  *
