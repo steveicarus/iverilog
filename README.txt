@@ -1,5 +1,5 @@
 		THE ICARUS VERILOG COMPILATION SYSTEM 
-			     May 9, 1999		
+			     July 7, 1999		
 
 
 1.0 What is ICARUS Verilog(IVL)?
@@ -23,7 +23,14 @@ forms, then passed to a code generator for final output. The
 processing steps and the code generator are selected by command line
 switches.
 
-2.1 Parse
+2.1 Preprocessing
+
+There is a separate program, ivlpp, that does the preprocessing. This
+program implements the `include and `define directives producing
+output that is equivalent but without the directives. See
+ivlpp/ivlpp.txt for details.
+
+2.2 Parse
 
 The verilog compiler starts by parsing the verilog source file. The
 output of the parse in a list of Module objects in PFORM. The pform
@@ -35,7 +42,7 @@ One can see a human readable version of the final PFORM by using the
 ``-P <path>'' flag to the compiler. This will cause ivl to dump the
 PFORM into the file named <path>.
 
-2.2 Elaboration
+2.3 Elaboration
 
 This phase takes the pform and generates a netlist. The driver selects
 (by user request or lucky guess) the root module to elaborate,
@@ -49,7 +56,7 @@ optimized netlist by using the ``-N <path>'' flag to the compiler. If
 elaboration succeeds, the final netlist (i.e. after optimizations but
 before code generation) will be dumped into the file named <path>.
 
-2.3 Optimization
+2.4 Optimization
 
 This is actually a collection of processing steps that perform
 optimizations that do not depend on the target technology. Examples of
@@ -62,7 +69,7 @@ some useful transformations would be,
 The actual functions performed are specified on the command line by
 the -F flags (See below).
 
-2.4 Code Generation
+2.5 Code Generation
 
 This step takes the design netlist and uses it to drive the code
 generator. (See target.h.) This may require transforming the
@@ -248,8 +255,6 @@ verilog features.
 
   - Min/Typ/Max expressions: Example:  a = (1 : 6 : 14);
 
-  - The "!==" operator:  Example: if( a !== b) do = 1;
-
   - Expansion of a string into a larger variable:
     Example: reg [0:15] b;  b = "b"; 
 
@@ -268,7 +273,7 @@ verilog features.
 
   - `timescale directive
 
-  - Task declarations/calls.
+  - Task declarations/calls that take paramters. (Parameterless calls work.)
 
   - Specify blocks
 
@@ -277,3 +282,20 @@ verilog features.
 
     Note that binding to a port by name does work from the outside.
     i.e. ``foo foogate(.x(n[0]))'' is OK.
+
+6.0 CREDITS
+
+Except where otherwise noted, ivl and ivlpp are Copyright Stephen
+Williams. The proper notices are in the head of each file. However,
+I have received aid in the form of fixes, Verilog guidance, and
+especially testing from many people, including (in alphabetical order):
+
+	Ed Carter <r47652@email.sps.mot.com>
+	Ales Hvezda <ahvezda@seul.org>
+        James Lee <jml@seva.com>
+	Stuart Sutherland <stuart@sutherland.com>
+        Stefan Theide <Stefan.Thiede@sv.sc.philips.com>
+	Steve Wilson <stevew@home.com>
+
+and others. Testers in particular include a larger community of people
+interested in a GPL Verilog for Linux.
