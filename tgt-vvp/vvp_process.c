@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.93 2004/10/04 01:10:57 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.93.2.1 2004/12/12 04:25:10 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -429,7 +429,7 @@ static int show_stmt_assign(ivl_statement_t net)
  * This function handles the case of non-blocking assign to word
  * variables such as real, i.e:
  *
- *     read foo;
+ *     real foo;
  *     foo <= 1.0;
  *
  * In this case we know (by Verilog syntax) that there is only exactly
@@ -466,6 +466,8 @@ static int show_stmt_assign_nb_var(ivl_statement_t net)
 
       fprintf(vvp_out, "    %%assign/wr W_%s, %lu, %u;\n",
 	      vvp_word_label(var), delay, word);
+
+      clr_word(word);
 
       return 0;
 }
@@ -1626,6 +1628,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.93.2.1  2004/12/12 04:25:10  steve
+ *  Fix leak of word registers in code generator.
+ *
  * Revision 1.93  2004/10/04 01:10:57  steve
  *  Clean up spurious trailing white space.
  *
