@@ -22,7 +22,7 @@ line. The code generator needs to know the type of part to generate
 code for, so the ``-fpart=<type>'' flag is also needed. For example,
 to generate code for the 4010E the command line might start out as:
 
-	 ivl -txnf -fpart=4010e -Fxnfsyn -Fxnfio [...]
+	 ivl -txnf -fpart=4010e -Fxnfsyn -Fsigfold -Fxnfio [...]
 
 Icarus Verilog includes the functions ``xnfsyn'' and ``xnfio'' to
 perform transformations and optimizations on the design before code is
@@ -83,6 +83,9 @@ IBUF, NOT gates cannot be absorbed as in the OPAD case.
 
 
  $Log: xnf.txt,v $
+ Revision 1.4  1999/08/14 22:48:21  steve
+  Mention the sigfold function.
+
  Revision 1.3  1999/07/22 02:05:20  steve
   is_constant method for PEConcat.
 
