@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.128 2004/06/13 04:56:53 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.129 2004/06/16 23:32:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -397,6 +397,104 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, NetScope*scope,
 }
 
 /*
+ * This function attempts to handle the special case of == or !=
+ * compare to a constant value. The caller has determined already that
+ * one of the operands is a NetEConst, and has already elaborated the
+ * other.
+ */
+static NetNet* compare_eq_constant(Design*des, NetScope*scope,
+				   NetNet*lsig, NetEConst*rexp,
+				   char op_code,
+				   unsigned long rise,
+				   unsigned long fall,
+				   unsigned long decay)
+{
+      if (op_code != 'e' && op_code != 'n')
+	    return 0;
+
+      verinum val = rexp->value();
+
+	/* Abandon special case if there are x or z bits in the
+	   constant. We can't get the right behavior out of
+	   OR/NOR in this case. */
+      if (! val.is_defined())
+	    return 0;
+
+      if (val.len() < lsig->pin_count())
+	    val = verinum(val, lsig->pin_count());
+
+
+      unsigned zeros = 0;
+      unsigned ones = 0;
+      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+	    if (val.get(idx) == verinum::V0)
+		  zeros += 1;
+	    if (val.get(idx) == verinum::V1)
+		  ones += 1;
+      }
+
+      NetLogic*zero_gate = 0;
+      NetLogic*ones_gate = 0;
+      if (zeros > 0 && op_code == 'e')
+	    zero_gate = new NetLogic(scope, scope->local_symbol(),
+				     zeros + 1, NetLogic::NOR);
+      if (zeros > 0 && op_code == 'n')
+	    zero_gate = new NetLogic(scope, scope->local_symbol(),
+				     zeros + 1, NetLogic::OR);
+      if (ones > 0 && op_code == 'e')
+	    ones_gate = new NetLogic(scope, scope->local_symbol(),
+				     ones + 1, NetLogic::AND);
+      if (ones > 0 && op_code == 'n')
+	    ones_gate = new NetLogic(scope, scope->local_symbol(),
+				     ones + 1, NetLogic::NAND);
+
+      unsigned zidx = 0;
+      unsigned oidx = 0;
+      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+	    if (val.get(idx) == verinum::V0) {
+		  zidx += 1;
+		  connect(zero_gate->pin(zidx), lsig->pin(idx));
+	    }
+	    if (val.get(idx) == verinum::V1) {
+		  oidx += 1;
+		  connect(ones_gate->pin(oidx), lsig->pin(idx));
+	    }
+      }
+
+      NetNet*osig = new NetNet(scope, scope->local_symbol(),
+			       NetNet::WIRE, 1);
+      osig->local_flag(true);
+
+      if (zero_gate && ones_gate) {
+	    NetNet*and_sig = new NetNet(scope, scope->local_symbol(),
+					NetNet::WIRE, 2);
+	    and_sig->local_flag(true);
+	    connect(and_sig->pin(0), zero_gate->pin(0));
+	    connect(and_sig->pin(1), ones_gate->pin(0));
+	    NetLogic*and_gate = new NetLogic(scope,
+					     scope->local_symbol(),
+					     3, NetLogic::AND);
+	    connect(and_gate->pin(0), osig->pin(0));
+	    connect(and_gate->pin(1), and_sig->pin(0));
+	    connect(and_gate->pin(2), and_sig->pin(1));
+
+	    des->add_node(and_gate);
+	    des->add_node(zero_gate);
+	    des->add_node(ones_gate);
+
+      } else if (zero_gate) {
+	    connect(zero_gate->pin(0), osig->pin(0));
+	    des->add_node(zero_gate);
+      } else {
+	    assert(ones_gate);
+	    connect(ones_gate->pin(0), osig->pin(0));
+	    des->add_node(ones_gate);
+      }
+
+      return osig;
+}
+
+/*
  * Elaborate the various binary comparison operators. The comparison
  * operators return a single bit result, no matter what, so the left
  * and right values can have their own size. The only restriction is
@@ -425,10 +523,6 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    lexp = tmp;
       }
 
-      NetNet*lsig = lexp->synthesize(des);
-      assert(lsig);
-      delete lexp;
-
       NetExpr*rexp = right_->elaborate_expr(des, scope);
       if (rexp == 0) {
 	    cerr << get_line() << ": error: Cannot elaborate ";
@@ -442,9 +536,55 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 	    rexp = tmp;
       }
 
-      NetNet*rsig = rexp->synthesize(des);
-      assert(rsig);
-      delete rexp;
+      NetNet*lsig = 0;
+      NetNet*rsig = 0;
+
+	/* Handle the special case that the right or left
+	   sub-expression is a constant value. The compare_eq_constant
+	   function will return an elaborated result if it can make
+	   use of the situation, or 0 if it cannot. */
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(rexp)) {
+
+	    lsig = lexp->synthesize(des);
+	    assert(lsig);
+	    delete lexp;
+	    lexp = 0;
+
+	    NetNet*osig = compare_eq_constant(des, scope,
+					      lsig, tmp, op_,
+					      rise, fall, decay);
+	    if (osig != 0) {
+		  delete rexp;
+		  return osig;
+	    }
+      }
+
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(lexp)) {
+
+	    rsig = rexp->synthesize(des);
+	    assert(rsig);
+	    delete rexp;
+
+	    NetNet*osig = compare_eq_constant(des, scope,
+					      rsig, tmp, op_,
+					      rise, fall, decay);
+	    if (osig != 0) {
+		  delete lexp;
+		  return osig;
+	    }
+      }
+
+      if (lsig == 0) {
+	    lsig = lexp->synthesize(des);
+	    assert(lsig);
+	    delete lexp;
+      }
+
+      if (rsig == 0) {
+	    rsig = rexp->synthesize(des);
+	    assert(rsig);
+	    delete rexp;
+      }
 
       unsigned dwidth = lsig->pin_count();
       if (rsig->pin_count() > dwidth) dwidth = rsig->pin_count();
@@ -2433,6 +2573,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.129  2004/06/16 23:32:58  steve
+ *  Handle equality compare to constants specially.
+ *
  * Revision 1.128  2004/06/13 04:56:53  steve
  *  Add support for the default_nettype directive.
  *
