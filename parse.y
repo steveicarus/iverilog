@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.55 1999/08/01 16:34:50 steve Exp $"
+#ident "$Id: parse.y,v 1.56 1999/08/01 23:25:51 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -696,7 +696,7 @@ function_item_list
 gate_instance
 	: IDENTIFIER '(' expression_list ')'
 		{ lgate*tmp = new lgate;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parms = $3;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
@@ -705,7 +705,7 @@ gate_instance
 		}
 	| IDENTIFIER '(' ')'
 		{ lgate*tmp = new lgate;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parms = 0;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
@@ -715,7 +715,7 @@ gate_instance
 	| IDENTIFIER range '(' expression_list ')'
 		{ lgate*tmp = new lgate;
 		  svector<PExpr*>*rng = $2;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parms = $4;
 		  tmp->range[0] = (*rng)[0];
 		  tmp->range[1] = (*rng)[1];
@@ -735,7 +735,7 @@ gate_instance
 		}
 	| IDENTIFIER '(' port_name_list ')'
 		{ lgate*tmp = new lgate;
-		  tmp->name = *$1;
+		  tmp->name = $1;
 		  tmp->parms_by_name = $3;
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
