@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.13 2002/04/14 03:53:20 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.14 2002/04/27 22:36:39 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -234,6 +234,37 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 		break;
 	  }
 
+	  case vpiHexStrVal: {
+		unsigned nchar = (rfp->nbits+3)/4;
+		assert(nchar < sizeof buf);
+		unsigned cum_val = 0;
+		unsigned nz = 0;
+		unsigned nx = 0;
+		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 4) {
+		      unsigned nibble = idx/4;
+		      unsigned vals = rfp->bits[nibble];
+
+		      if (vals == 0xff) {
+			    buf[nchar-idx/4-1] = 'z';
+		      } else if (vals == 0xaa) {
+			    buf[nchar-idx/4-1] = 'x';
+		      } else if (vals & 0xaa) {
+			    buf[nchar-idx/4-1] = 'X';
+		      } else {
+			    unsigned val = vals&1;
+			    if (vals&0x04) val |= 2;
+			    if (vals&0x10) val |= 4;
+			    if (vals&0x40) val |= 8;
+			    buf[nchar-idx/4-1] = "0123456789abcdef"[val];
+		      }
+		}
+		      
+		buf[nchar] = 0;
+		vp->value.str = buf;
+		vp->format = vpiHexStrVal;
+		break;
+	  }
+
 	  case vpiIntVal: {
 		unsigned val = 0;
 
@@ -422,6 +453,9 @@ vpiHandle vpip_make_dec_const(int value)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.14  2002/04/27 22:36:39  steve
+ *  Support drawing vpiBinaryConst in hex.
+ *
  * Revision 1.13  2002/04/14 03:53:20  steve
  *  Allow signed constant vectors for call_vpi parameters.
  *
