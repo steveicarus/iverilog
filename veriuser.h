@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.20 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: veriuser.h,v 1.21 2003/02/26 01:25:51 steve Exp $"
 #endif
 
 /*
@@ -111,16 +111,47 @@ typedef struct t_tfcell
 /*
  * Normal PLI1.0 modules export a veriusertfs array that contains all
  * the function definitions for use by the simulator. The user code is
- * expected to supply that array.
+ * expected to supply that array. The method of export varies amongst
+ * Verilog simulators, but at least one vendor gets a pointer to the
+ * veriusertfs array by calling a boot function that takes no
+ * arguments and returns a pointer to the table.
  *
- * However, Icarus Verilog doesn't normally look for the veriusertfs
- * array, it instead looks for the vlog_startup_routines array, as
- * declared in vpi_user.h. So the veriuser library includes the
- * veriusertfs_register function that can be used to do the PLI 1.0
- * setup. Create a vlog_startup_routines table like this if you are
- * just interested in making your PLI1 functions work:
+ * The Icarus Verilog bootstrap process is a little bit different, and
+ * is described in the vpi_user.h header file. However, a fairly
+ * simple adaptation to your application fixes it so that it
+ * automatically boots with Icarus Verilog.
  *
- * void (*vlog_startup_routines[])() = { &veriusertfs_register };
+ * The trick is to write a vlog_startup_routine that calls the
+ * veriusertfs_register_table function. A simple example:
+ *
+ *   static struct s_tfcell my_veriusertfs_table[] = {
+ *          [... table entries, null terminated ...]
+ *   };
+ *
+ *   // Cadence compatibility
+ *   struct s_tfcell* my_bootstrap(void)
+ *   { return my_veriusertfs_table; }
+ *
+ *   // Icarus Verilog compatibility
+ *   static void veriusertfs_register(void)
+ *   {
+ *       veriusertfs_register_table(my_veriusertfs_table);
+ *   }
+ *   void (*vlog_startup_routines[])() = { &veriusertfs_register, 0 };
+ *
+ * The veriusertfs_register function and vlog_startup_routines table
+ * are specific to Icarus Verilog, and arrange for automatic loading
+ * of the PLI1 application. The vvp program will treat this as any
+ * other VPI module.
+ *
+ * By structuring the bootstrap process in this manner, it is
+ * plausible to make source code compatibility with a variety of
+ * Verilog simulators.
+ *
+ * NOTE: The cadpli module of Icarus Verilog also makes it possible to
+ * be *binary* compatible with other simulators. Create the
+ * my_bootstrap function and leave out the vlog_startup_routines, then
+ * use the "-mcadpli" module to load it in compatibility mode.
  */
 extern s_tfcell veriusertfs[];
 extern void veriusertfs_register_table(p_tfcell vtable);
@@ -251,6 +282,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.21  2003/02/26 01:25:51  steve
+ *  Document new PLI1 bootstrap interface.
+ *
  * Revision 1.20  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC
