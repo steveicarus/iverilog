@@ -5,4 +5,4 @@ dnl Checks for programs.
 AC_PROG_CXX
 AC_PROG_INSTALL
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile vvm/Makefile)
