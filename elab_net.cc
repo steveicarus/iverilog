@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.63 2001/02/09 20:18:15 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.64 2001/02/15 06:59:36 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -195,10 +195,10 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, const string&path,
 	// Pad out the operands, if necessary, the match the width of
 	// the adder device.
       if (lsig->pin_count() < width)
-	    lsig = pad_to_width(des, path, lsig, width);
+	    lsig = pad_to_width(des, lsig, width);
 
       if (rsig->pin_count() < width)
-	    rsig = pad_to_width(des, path, rsig, width);
+	    rsig = pad_to_width(des, rsig, width);
 
 	// Make the adder as wide as the widest operand
       osig = new NetNet(scope, des->local_symbol(path),
@@ -264,9 +264,9 @@ NetNet* PEBinary::elaborate_net_bit_(Design*des, const string&path,
       }
 
       if (lsig->pin_count() < rsig->pin_count())
-	    lsig = pad_to_width(des, path, lsig, rsig->pin_count());
+	    lsig = pad_to_width(des, lsig, rsig->pin_count());
       if (rsig->pin_count() < lsig->pin_count())
-	    rsig = pad_to_width(des, path, rsig, lsig->pin_count());
+	    rsig = pad_to_width(des, rsig, lsig->pin_count());
 
       if (lsig->pin_count() != rsig->pin_count()) {
 	    cerr << get_line() << ": internal error: lsig pin count ("
@@ -1641,10 +1641,10 @@ NetNet* PETernary::elaborate_net(Design*des, const string&path,
       sig->local_flag(true);
 
       if (fal_sig->pin_count() < dwidth)
-	    fal_sig = pad_to_width(des, path, fal_sig, dwidth);
+	    fal_sig = pad_to_width(des, fal_sig, dwidth);
 
       if (tru_sig->pin_count() < dwidth)
-	    tru_sig = pad_to_width(des, path, tru_sig, dwidth);
+	    tru_sig = pad_to_width(des, tru_sig, dwidth);
 
 
 	/* Make the device and connect its outputs to the osig and
@@ -1903,6 +1903,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.64  2001/02/15 06:59:36  steve
+ *  FreeBSD port has a maintainer now.
+ *
  * Revision 1.63  2001/02/09 20:18:15  steve
  *  Detect part select out of range in nets. (PR#138)
  *

@@ -388,7 +388,7 @@ bundled it into neat packages.(+) If you want to be added to the list (or
 removed from the list) send e-mail to me.
 
       FreeBSD/{Intel,alpha}
-	*maintainer needed*
+	Ying-Chieh Liao <ijliao@FreeBSD.org>
 
       Linux/{alpha,Intel} (RPMS)
 	Stephen Williams <steve@icarus.com>

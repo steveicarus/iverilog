@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.198 2001/02/10 21:20:38 steve Exp $"
+#ident "$Id: netlist.h,v 1.199 2001/02/15 06:59:36 steve Exp $"
 #endif
 
 /*
@@ -458,6 +458,10 @@ class NetCLShift  : public NetNode {
 
 /*
  * This class supports the LPM_COMPARE device.
+ *
+ * The width of the device is the width of the inputs. If one of the
+ * inputs is narrower then the other, it is up to the generator to
+ * make sure all the data pins are properly driven.
  *
  * NOTE: This is not the same as the device used to support case
  * compare. Case comparisons handle Vx and Vz values, whereas this
@@ -2865,6 +2869,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.199  2001/02/15 06:59:36  steve
+ *  FreeBSD port has a maintainer now.
+ *
  * Revision 1.198  2001/02/10 21:20:38  steve
  *  Binary operators with operands of indefinite width
  *  has itself an indefinite width.

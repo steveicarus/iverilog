@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netmisc.h,v 1.11 2001/02/10 20:29:39 steve Exp $"
+#ident "$Id: netmisc.h,v 1.12 2001/02/15 06:59:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -31,7 +31,7 @@
  * enough.
  */
 extern NetExpr*pad_to_width(NetExpr*expr, unsigned wid);
-extern NetNet*pad_to_width(Design*des, const string&p, NetNet*n, unsigned w);
+extern NetNet*pad_to_width(Design*des, NetNet*n, unsigned w);
 
 /*
  * This local function returns true if all the the possible drivers of
@@ -64,6 +64,9 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.12  2001/02/15 06:59:36  steve
+ *  FreeBSD port has a maintainer now.
+ *
  * Revision 1.11  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.

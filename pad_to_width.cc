@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pad_to_width.cc,v 1.5 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: pad_to_width.cc,v 1.6 2001/02/15 06:59:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -45,19 +45,20 @@ NetExpr*pad_to_width(NetExpr*expr, unsigned wid)
       return expr;
 }
 
-NetNet*pad_to_width(Design*des, const string&path, NetNet*net, unsigned wid)
+NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid)
 {
-      NetScope*scope = des->find_scope(path);
+      NetScope*scope = net->scope();
+      const string path = scope->name();
       assert(scope);
 
       if (net->pin_count() >= wid)
 	    return net;
 
       verinum pad(verinum::V0, wid - net->pin_count());
-      NetConst*con = new NetConst(des->local_symbol(path), pad);
+      NetConst*con = new NetConst(path + scope->local_symbol(), pad);
       des->add_node(con);
 
-      NetNet*tmp = new NetNet(scope, des->local_symbol(path),
+      NetNet*tmp = new NetNet(scope, path + scope->local_symbol(),
 			      NetNet::WIRE, wid);
       tmp->local_flag(true);
 
@@ -71,6 +72,9 @@ NetNet*pad_to_width(Design*des, const string&path, NetNet*net, unsigned wid)
 
 /*
  * $Log: pad_to_width.cc,v $
+ * Revision 1.6  2001/02/15 06:59:36  steve
+ *  FreeBSD port has a maintainer now.
+ *
  * Revision 1.5  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

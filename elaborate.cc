@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.207 2001/02/09 05:44:23 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.208 2001/02/15 06:59:36 steve Exp $"
 #endif
 
 /*
@@ -1497,7 +1497,7 @@ NetCAssign* PCAssign::elaborate(Design*des, const string&path) const
 	    return 0;
 
       if (rval->pin_count() < lval->pin_count())
-	    rval = pad_to_width(des, path, rval, lval->pin_count());
+	    rval = pad_to_width(des, rval, lval->pin_count());
 
       NetCAssign* dev = new NetCAssign(des->local_symbol(path), lval);
       des->add_node(dev);
@@ -1930,7 +1930,7 @@ NetProc* PForce::elaborate(Design*des, const string&path) const
 	    return 0;
 
       if (rval->pin_count() < lval->pin_count())
-	    rval = pad_to_width(des, path, rval, lval->pin_count());
+	    rval = pad_to_width(des, rval, lval->pin_count());
 
       NetForce* dev = new NetForce(des->local_symbol(path), lval);
       des->add_node(dev);
@@ -2367,6 +2367,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.208  2001/02/15 06:59:36  steve
+ *  FreeBSD port has a maintainer now.
+ *
  * Revision 1.207  2001/02/09 05:44:23  steve
  *  support evaluation of constant < in expressions.
  *

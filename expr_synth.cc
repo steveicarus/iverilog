@@ -17,11 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: expr_synth.cc,v 1.19 2001/01/18 03:16:35 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.20 2001/02/15 06:59:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
-
+# include  "netmisc.h"
 
 NetNet* NetExpr::synthesize(Design*des)
 {
@@ -134,6 +134,9 @@ NetNet* NetEBComp::synthesize(Design*des)
       unsigned width = lsig->pin_count();
       if (rsig->pin_count() > lsig->pin_count())
 	    width = rsig->pin_count();
+
+      lsig = pad_to_width(des, lsig, width);
+      rsig = pad_to_width(des, rsig, width);
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, 1);
       osig->local_flag(true);
@@ -444,6 +447,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.20  2001/02/15 06:59:36  steve
+ *  FreeBSD port has a maintainer now.
+ *
  * Revision 1.19  2001/01/18 03:16:35  steve
  *  NetMux needs a scope. (PR#115)
  *
