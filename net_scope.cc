@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.11 2000/12/16 01:45:48 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.12 2001/07/04 04:34:06 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -362,13 +362,16 @@ const NetScope* NetScope::parent() const
 string NetScope::local_symbol()
 {
       strstream res;
-      res << "_l" << (lcounter_++) << ends;
+      res << "_s" << (lcounter_++) << ends;
       return res.str();
 }
 
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.12  2001/07/04 04:34:06  steve
+ *  Scope-locals use _s instead of _l.
+ *
  * Revision 1.11  2000/12/16 01:45:48  steve
  *  Detect recursive instantiations (PR#2)
  *
@@ -389,27 +392,5 @@ string NetScope::local_symbol()
  *  signal enaboration, and carry these objects in the
  *  NetScope class instead of the extra, useless map in
  *  the Design class.
- *
- * Revision 1.7  2000/07/22 22:09:03  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.6  2000/05/02 03:13:31  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.5  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.4  2000/04/18 04:50:20  steve
- *  Clean up unneeded NetEvent objects.
- *
- * Revision 1.3  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.2  2000/04/09 17:04:56  steve
- *  uninitialized event_ list.
- *
- * Revision 1.1  2000/04/04 03:20:15  steve
- *  Simulate named event trigger and waits.
- *
  */
 
