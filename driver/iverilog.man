@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/10/20 23:02:40 $" Version "$Date: 2001/10/20 23:02:40 $"
+.TH iverilog 1 "$Date: 2001/10/23 00:37:30 $" Version "$Date: 2001/10/23 00:37:30 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -94,9 +94,10 @@ netlist format, the \fB-S\fP switch is unnecessary and has no effect.
 .TP 8
 .B -s \fItopmodule\fP
 Specify the top level module to elaborate. Icarus Verilog will by default
-choose the only module that has no ports. However, this simplistic
-heuristic is often not sufficient, and sometimes not what is wanted
-anyhow.
+choose modules that are not instantiated in any other modules, but
+sometimes that is not sufficient, or instantiates too many modules. If
+the user specifies one or more root modules with \fB-s\fP flags, then
+they will be used as root modules instead.
 .TP 8
 .B -T\fImin|typ|max\fP
 Use this switch to select min, typ or max times from min:typ:max

@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.24 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: main.c,v 1.25 2001/10/23 00:37:30 steve Exp $"
 
 # include "config.h"
 
@@ -84,7 +84,6 @@ const char*mtm  = 0;
 const char*opath = "a.out" EXEEXT;
 const char*npath = 0;
 const char*targ  = "vvp";
-const char*start = 0;
 
 char warning_flags[16] = "";
 char *library_flags = 0;
@@ -93,6 +92,7 @@ char*inc_list = 0;
 char*def_list = 0;
 char*mod_list = 0;
 char*command_filename = 0;
+char*start = 0;
 
 char*f_list = 0;
 
@@ -298,11 +298,9 @@ static int t_xnf(char*cmd, unsigned ncmd)
       }
 
       if (start) {
-	    sprintf(tmp, " -s%s", start);
-	    rc = strlen(tmp);
-	    cmd = realloc(cmd, ncmd+rc+1);
-	    strcpy(cmd+ncmd, tmp);
-	    ncmd += rc;
+	    cmd = realloc(cmd, ncmd+strlen(start)+1);
+	    strcpy(cmd+ncmd, start);
+	    ncmd += strlen(start);
       }
       sprintf(tmp, " -- -");
       rc = strlen(tmp);
@@ -488,7 +486,18 @@ int main(int argc, char **argv)
 		  synth_flag = 1;
 		  break;
 		case 's':
-		  start = optarg;
+	          if (start) {
+			static const char *s = " -s ";
+			size_t l = strlen(start);
+			start = realloc(start, l + strlen(optarg) + strlen(s) + 1);
+			strcpy(start + l, s);
+			strcpy(start + l + strlen(s), optarg);
+		  } else {
+			static const char *s = "-s ";
+			start = malloc(strlen(optarg) + strlen(s) + 1);
+			strcpy(start, s);
+			strcpy(start + strlen(s), optarg);
+		  }
 		  break;
 		case 'T':
 		  if (strcmp(optarg,"min") == 0) {
@@ -661,6 +670,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.25  2001/10/23 00:37:30  steve
+ *  The -s flag can now be repeated on the iverilog command.
+ *
  * Revision 1.24  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.5 2001/10/20 23:02:40 steve Exp $"
+#ident "$Id: globals.h,v 1.6 2001/10/23 00:37:30 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -42,8 +42,8 @@ extern const char*npath;
   /* This is the name of the output file that the user selected. */
 extern const char*opath;
 
-  /* This pointer is set if there was a -s<value> parameter. */
-extern const char*start;
+  /* This pointer is set if there were -s<value> parameters. */
+extern char*start;
 
   /* This flag is true if the -S flag was used on the command line. */
 extern int synth_flag;
@@ -65,6 +65,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.6  2001/10/23 00:37:30  steve
+ *  The -s flag can now be repeated on the iverilog command.
+ *
  * Revision 1.5  2001/10/20 23:02:40  steve
  *  Add automatic module libraries.
  *
