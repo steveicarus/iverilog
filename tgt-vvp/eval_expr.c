@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.81 2002/09/27 20:24:42 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.82 2002/10/20 02:55:37 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -842,6 +842,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 					   int stuff_ok_flag)
 {
       struct vector_info rv;
+      int stuff_ok_used_flag = 0;
 
       switch (ivl_expr_opcode(exp)) {
 	  case 'a': /* && (logical and) */
@@ -853,6 +854,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case 'N': /* !== */
 	  case 'n': /* != */
 	    rv = draw_binary_expr_eq(exp, wid, stuff_ok_flag);
+	    stuff_ok_used_flag = 1;
 	    break;
 
 	  case '<':
@@ -860,6 +862,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	  case 'L': /* <= */
 	  case 'G': /* >= */
 	    rv = draw_binary_expr_le(exp, wid, stuff_ok_flag);
+	    stuff_ok_used_flag = 1;
 	    break;
 
 	  case '+':
@@ -894,8 +897,21 @@ static struct vector_info draw_binary_expr(ivl_expr_t exp,
 	    assert(0);
       }
 
-      if ((rv.base >= 8) && (! stuff_ok_flag))
-	    save_expression_lookaside(rv.base, exp, wid);
+	/* Mark in the lookaside that this value is done. If any OK
+	   flags besides the STUFF_OK_47 flag are set, then the result
+	   may not be a pure one, so clear the lookaside for the range
+	   instead of setting in to the new expression result.
+
+	   The stuff_ok_used_flag tells me if the stuff_ok_flag was
+	   even used by anything. If not, then I can ignore it in the
+	   following logic. */
+      if (rv.base >= 8) {
+	    if (stuff_ok_used_flag && (stuff_ok_flag & ~STUFF_OK_47))
+		  save_expression_lookaside(rv.base, 0, wid);
+	    else
+		  save_expression_lookaside(rv.base, exp, wid);
+      }
+
       return rv;
 }
 
@@ -1852,6 +1868,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.82  2002/10/20 02:55:37  steve
+ *  Properly set or clear expression lookaside for binary expressions.
+ *
  * Revision 1.81  2002/09/27 20:24:42  steve
  *  Allow expression lookaside map to spam statements.
  *
