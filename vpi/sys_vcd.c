@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.32 2002/07/12 02:10:20 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.33 2002/07/12 17:02:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -534,16 +534,15 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       /* list of types to iterate upon */
       int i;
       static int types[] = {
+	    /* Value */
+	    vpiNet,
+	    vpiReg,
 	    /* Scope */
 	    vpiFunction,
 	    vpiModule,
 	    vpiNamedBegin,
 	    vpiNamedFork,
 	    vpiTask,
-	    /* Value */
-	    vpiNet,
-	    vpiReg,
-	    vpiIntegerVar,
 	    -1
       };
 
@@ -800,6 +799,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.33  2002/07/12 17:02:38  steve
+ *  Scan scope objects before subscopes.
+ *
  * Revision 1.32  2002/07/12 02:10:20  steve
  *  Make types array static, not on stack.
  *
