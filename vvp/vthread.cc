@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.72 2002/05/24 04:55:13 steve Exp $"
+#ident "$Id: vthread.cc,v 1.73 2002/05/27 00:53:10 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -622,6 +622,8 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 
       struct vthread_s*head = scope->threads;
 
+      bool disabled_myself_flag = false;
+
       while (head->scope_next != head) {
 	    vthread_t tmp = head->scope_next;
 
@@ -631,9 +633,13 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 
 	      /* XXXX I don't support disabling threads with children. */
 	    assert(tmp->child == 0);
-	    assert(tmp != thr);
-	      /* XXXX Not supported yet. */
+	      /* XXXX Don't know how to disable waiting threads. */
 	    assert(tmp->waiting_for_event == 0);
+
+	      /* If I am disabling myself, that remember that fact so
+		 that I can finish this statement differently. */
+	    if (tmp == thr)
+		  disabled_myself_flag = true;
 
 	    tmp->pc = 0;
 	    tmp->i_have_ended = 1;
@@ -655,7 +661,7 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 	    }
       }
 
-      return true;
+      return ! disabled_myself_flag;
 }
 
 static void divide_bits(unsigned len, unsigned char*lbits,
@@ -1907,6 +1913,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.73  2002/05/27 00:53:10  steve
+ *  Able to disable thread self.
+ *
  * Revision 1.72  2002/05/24 04:55:13  steve
  *  Detect long division by zero.
  *
