@@ -1,0 +1,78 @@
+.TH verilog 1 "August 25th, 1999" Version 19990825
+.SH NAME
+verilog - Icarus Verilog Driver
+.SH SYNOPSIS
+.B verilog
+[-Dmacro[=defn]] [-Iincludepath] [-X] [-o outputfilename] sourcefile
+.SH DESCRIPTION
+.PP
+\fIverilog\fP is the compiler driver script for compiling Verilog code
+to either a VVM-format (Verilog Virtual Machine) for simulation or to 
+XNF (Xilinx Netlist Format) to be used in Xilinx FPGA's.
+
+\fIverilog\fP is just massaging the input switches and then calls 
+the preprocessor (ivlpp), the compiler (ivl) and (optional) the C++
+compiler.
+
+Please read the official documentation (very minimal at this point)
+on how to use \fIivl et al\fP, since this man page just describes the 
+"easy startscript" \fIverilog\fP.
+
+.SH OPTIONS
+.l
+\fIverilog\fP accepts the following options:
+.TP 8
+.B -D\fImacro\fP
+Defines macro \fImacro\fP with the string  `1' as its definition.
+.TP 8
+.B -D\fImacro=defn\fP
+Defines macro \fImacro\fP as \fIdefn\fP.
+.TP 8
+.B -I\fIincludepath\fP 
+Append path \fIincludepath\fP to list of paths searched for include files.
+.TP 8
+.B -X
+Generate XNF files as output. Default is VVM-format.
+.TP 8
+.B -o \fIfile\fP
+Place output in the file \fIfile\fP. If not given, \fIverilog\fP tries to
+make a guess; if the input filename is "hello.vl", the output filename
+will be "hello" (for VVM target) or "hello.xnf" (for XNF target).
+
+.SH EXAMPLES 
+These examples assume that you have a Verilog source file called hello.vl in
+the current directory
+
+To compile hello.vl to an executable file called hello:
+
+	verilog hello.vl
+
+To compile hello.vl to an executable file called runnable:
+
+	verilog -o runnable hello.vl
+
+To compile hello.vl to a file in XNF-format called hello.xnf
+
+	verilog -X hello.vl
+
+
+.SH "ENVIRONMENT"
+.ta \w'VPI_MODULE_PATH   'u
+VPI_MODULE_PATH	path to PLI modules
+
+.SH "AUTHORS"
+.nf
+.ta \w'verilog  'u
+verilog	Stefan Petersen (spe@geda.seul.org)
+ivlpp	Steve Williams (steve@icarus.com)
+ivl	Steve Williams (steve@icarus.com)
+
+.SH SEE ALSO
+.BR ivlpp (N/A)
+.BR ivl (N/A)
+.SH COPYRIGHT
+.nf
+Copyright \(co  1999 Stefan Petersen
+
+This document can be freely redistributed according to the terms of the 
+GNU General Public License version 2.0
