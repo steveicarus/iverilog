@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.278 2003/03/29 05:51:25 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.279 2003/04/24 05:25:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -669,6 +669,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			cerr << (*pins)[idx]->get_line() << ": error: "
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
+			cerr << (*pins)[idx]->get_line() << ":      : "
+			     << "Port of " << rmod->mod_name()
+			     << " is " << rmod->ports[idx]->name << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -2521,6 +2524,9 @@ Design* elaborate(list<const char*>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.279  2003/04/24 05:25:55  steve
+ *  Include port name in port assignment error message.
+ *
  * Revision 1.278  2003/03/29 05:51:25  steve
  *  Sign extend NetMult inputs if result is signed.
  *
