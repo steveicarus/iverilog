@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.88 1999/11/19 03:02:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.89 1999/11/19 05:02:37 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -78,9 +78,19 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 void connect(NetObj::Link&l, NetObj::Link&r)
 {
       assert(&l != &r);
+      assert(l.next_->prev_ == &l);
+      assert(l.prev_->next_ == &l);
+      assert(r.next_->prev_ == &r);
+      assert(r.prev_->next_ == &r);
+
       NetObj::Link* cur = &l;
       do {
 	    NetObj::Link*tmp = cur->next_;
+
+	      // If I stumble on r in the nexus, then stop now because
+	      // we are already connected.
+	    if (tmp == &r) break;
+
 	      // Pull cur out of left list...
 	    cur->prev_->next_ = cur->next_;
 	    cur->next_->prev_ = cur->prev_;
@@ -94,6 +104,11 @@ void connect(NetObj::Link&l, NetObj::Link&r)
 	      // Go to the next item in the left list.
 	    cur = tmp;
       } while (cur != &l);
+
+      assert(l.next_->prev_ == &l);
+      assert(l.prev_->next_ == &l);
+      assert(r.next_->prev_ == &r);
+      assert(r.prev_->next_ == &r);
 }
 
 NetObj::Link::Link()
@@ -134,6 +149,36 @@ bool NetObj::Link::is_linked(const NetObj::Link&that) const
 		  return true;
 
       return false;
+}
+
+void NetObj::Link::next_link(NetObj*&net, unsigned&pin)
+{
+      assert(next_->prev_ == this);
+      assert(prev_->next_ == this);
+      net = next_->node_;
+      pin = next_->pin_;
+}
+
+void NetObj::Link::next_link(const NetObj*&net, unsigned&pin) const
+{
+      assert(next_->prev_ == this);
+      assert(prev_->next_ == this);
+      net = next_->node_;
+      pin = next_->pin_;
+}
+
+NetObj::Link* NetObj::Link::next_link()
+{
+      assert(next_->prev_ == this);
+      assert(prev_->next_ == this);
+      return next_;
+}
+
+const NetObj::Link* NetObj::Link::next_link() const
+{
+      assert(next_->prev_ == this);
+      assert(prev_->next_ == this);
+      return next_;
 }
 
 const NetObj*NetObj::Link::get_obj() const
@@ -2359,6 +2404,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.89  1999/11/19 05:02:37  steve
+ *  handle duplicate connect to a nexus.
+ *
  * Revision 1.88  1999/11/19 03:02:25  steve
  *  Detect flip-flops connected to opads and turn
  *  them into OUTFF devices. Inprove support for

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.90 1999/11/19 03:02:25 steve Exp $"
+#ident "$Id: netlist.h,v 1.91 1999/11/19 05:02:37 steve Exp $"
 #endif
 
 /*
@@ -88,18 +88,11 @@ class NetObj {
 		    pin = pin_;
 		  }
 
-	    void next_link(NetObj*&net, unsigned&pin)
-		  { net = next_->node_;
-		    pin = next_->pin_;
-		  }
+	    void next_link(NetObj*&net, unsigned&pin);
+	    void next_link(const NetObj*&net, unsigned&pin) const;
 
-	    void next_link(const NetObj*&net, unsigned&pin) const
-		  { net = next_->node_;
-		    pin = next_->pin_;
-		  }
-
-	    Link* next_link() { return next_; }
-	    const Link* next_link() const { return next_; }
+	    Link* next_link();
+	    const Link* next_link() const;
 
 	      // Remove this link from the set of connected pins. The
 	      // destructor will automatically do this if needed.
@@ -1940,6 +1933,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.91  1999/11/19 05:02:37  steve
+ *  handle duplicate connect to a nexus.
+ *
  * Revision 1.90  1999/11/19 03:02:25  steve
  *  Detect flip-flops connected to opads and turn
  *  them into OUTFF devices. Inprove support for
