@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.123 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: t-dll.h,v 1.124 2005/04/01 06:04:30 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -438,7 +438,7 @@ struct ivl_net_logic_s {
 struct ivl_udp_s {
       perm_string name;
       unsigned nin;
-      unsigned sequ;
+      int sequ; /* boolen */
       char init;
       unsigned nrows;
       typedef const char*ccharp_t;
@@ -685,6 +685,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.124  2005/04/01 06:04:30  steve
+ *  Clean up handle of UDPs.
+ *
  * Revision 1.123  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.147 2005/03/18 02:56:03 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.148 2005/04/01 06:04:30 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -378,10 +378,16 @@ typedef const struct ivl_attribute_s*ivl_attribute_t;
  *    scanned. This function will return 0, or the non-zero value that
  *    was returned from the last scanned process.
  *
- * ivl_design_root
+ * ivl_design_root (ANACHRONISM)
  *    A design has a root named scope that is an instance of the top
  *    level module in the design. This is a hook for naming the
  *    design, or for starting the scope scan.
+ *
+ * ivl_design_roots
+ *    A design has some number of root scopes. These are the starting
+ *    points for structural elaboration. This function returns to the
+ *    caller a pointer to an ivl_scope_t array, and the size of the
+ *    array.
  *
  * ivl_design_time_precision
  *    A design as a time precision. This is the size in seconds (a
@@ -675,6 +681,15 @@ extern ivl_memory_t ivl_expr_memory(ivl_expr_t net);
  * the outputs have the same characteristics as other logic
  * devices. They are special only in that they have zero inputs, and
  * their drivers typically have strength other then strong.
+ *
+ * - IVL_LO_UDP
+ * User defined primitives (UDPs) are like any other logic devices, in
+ * that they are bit-slice devices. If they have a width, then they
+ * are repeated to accommodate that width, and that implies that the
+ * output and all the inputs must have the same width.
+ *
+ * The IVL_LO_UDP represents instantiations of UDP devices. The
+ * ivl_udp_t describes the implementation.
  */
 
 extern const char* ivl_logic_name(ivl_net_logic_t net);
@@ -694,10 +709,43 @@ extern unsigned        ivl_logic_attr_cnt(ivl_net_logic_t net);
 extern ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net, unsigned idx);
 
 /* UDP
+ * These methods allow access to the ivl_udp_t definition of a UDP.
+ * The UDP definition is accessed through the ivl_logic_udp method of
+ * an ivl_net_logic_t object.
  *
+ * ivl_udp_name
+ *    This returns the name of the definition of the primitive.
+ *
+ * ivl_udp_nin
+ *    This is the number of inputs for the UDP definition.
+ *
+ * ivl_udp_rows
+ * ivl_udp_row
+ *    These methods give access to the rows that define the table of
+ *    the primitive.
+ *
+ * SEMANTIC NOTES
+ *
+ * - Combinational primitives
+ * These devices have no edge dependencies, and have no table entry
+ * for the current input value. These have ivl_udp_sequ return 0
+ * (false) and the length of each row is the number of inputs plus 1.
+ * The first N characters correspond to the N inputs of the
+ * device. The next character, the last character, is the output for
+ * that row.
+ *
+ * - Sequential primitives
+ * These devices allow edge transitions, and the rows are 1+N+1
+ * characters long. The first character is the current output, the
+ * next N characters the current input and the last character is the
+ * new output.
+ *
+ * The ivl_udp_init value is only valid if the device is
+ * sequential. It is the initial value for the output of the storage
+ * element.
  */
 
-extern unsigned    ivl_udp_sequ(ivl_udp_t net);
+extern int         ivl_udp_sequ(ivl_udp_t net);
 extern unsigned    ivl_udp_nin(ivl_udp_t net);
 extern unsigned    ivl_udp_init(ivl_udp_t net);
 extern const char* ivl_udp_row(ivl_udp_t net, unsigned idx);
@@ -1580,6 +1628,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.148  2005/04/01 06:04:30  steve
+ *  Clean up handle of UDPs.
+ *
  * Revision 1.147  2005/03/18 02:56:03  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.145 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.146 2005/04/01 06:04:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1045,6 +1045,10 @@ void dll_target::udp(const NetUDP*net)
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
 
       obj->type_ = IVL_LO_UDP;
+
+	/* The NetUDP class hasn't learned about width yet, so we
+	   assume a width of 1. */
+      obj->width_ = 1;
 
       static map<perm_string,ivl_udp_t> udps;
       ivl_udp_t u;
@@ -2133,6 +2137,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.146  2005/04/01 06:04:30  steve
+ *  Clean up handle of UDPs.
+ *
  * Revision 1.145  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *

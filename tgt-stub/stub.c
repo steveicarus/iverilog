@@ -17,15 +17,48 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.119 2005/03/19 06:59:53 steve Exp $"
+#ident "$Id: stub.c,v 1.120 2005/04/01 06:04:30 steve Exp $"
 #endif
 
 # include "config.h"
 # include "priv.h"
+# include <stdlib.h>
 # include <assert.h>
 
 FILE*out;
 int stub_errors = 0;
+
+static struct udp_define_cell {
+      ivl_udp_t udp;
+      unsigned ref;
+      struct udp_define_cell*next;
+}*udp_define_list = 0;
+
+static void reference_udp_definition(ivl_udp_t udp)
+{
+      struct udp_define_cell*cur;
+
+      if (udp_define_list == 0) {
+	    udp_define_list = calloc(1, sizeof(struct udp_define_cell));
+	    udp_define_list->udp = udp;
+	    udp_define_list->ref = 1;
+	    return;
+      }
+
+      cur = udp_define_list;
+      while (cur->udp != udp) {
+	    if (cur->next == 0) {
+		  cur->next = calloc(1, sizeof(struct udp_define_cell));
+		  cur->next->udp = udp;
+		  cur->next->ref = 1;
+		  return;
+	    }
+
+	    cur = cur->next;
+      }
+
+      cur->ref += 1;
+}
 
 /*
  * This function finds the vector width of a signal. It relies on the
@@ -1074,7 +1107,8 @@ static void show_logic(ivl_net_logic_t net)
 	    break;
 
 	  case IVL_LO_UDP:
-	    fprintf(out, "  primitive %s", name);
+	    fprintf(out, "  primitive<%s> %s",
+		    ivl_udp_name(ivl_logic_udp(net)), name);
 	    break;
 
 	  default:
@@ -1112,6 +1146,19 @@ static void show_logic(ivl_net_logic_t net)
 	    }
       }
 
+	/* If this is an instance of a UDP, then check that the
+	   instantiation is consistent with the definition. */
+      if (ivl_logic_type(net) == IVL_LO_UDP) {
+	    ivl_udp_t udp = ivl_logic_udp(net);
+	    if (npins != 1+ivl_udp_nin(udp)) {
+		  fprintf(out, "    ERROR: UDP %s expects %u inputs\n",
+			  ivl_udp_name(udp), ivl_udp_nin(udp));
+		  stub_errors += 1;
+	    }
+
+	      /* Add a reference to this udp definition. */
+	    reference_udp_definition(udp);
+      }
 
       npins = ivl_logic_attr_cnt(net);
       for (idx = 0 ;  idx < npins ;  idx += 1) {
@@ -1204,8 +1251,49 @@ static int show_scope(ivl_scope_t net, void*x)
       return ivl_scope_children(net, show_scope, 0);
 }
 
+static void show_primitive(ivl_udp_t net, unsigned ref_count)
+{
+      unsigned rdx;
+
+      fprintf(out, "primtive %s (referenced %u times)\n",
+	      ivl_udp_name(net), ref_count);
+
+      if (ivl_udp_sequ(net))
+	    fprintf(out, "    reg out = %u;\n", ivl_udp_init(net));
+      else
+	    fprintf(out, "    wire out;\n");
+      fprintf(out, "    table\n");
+      for (rdx = 0 ;  rdx < ivl_udp_rows(net) ;  rdx += 1) {
+
+	      /* Each row has the format:
+		 Combinational: iii...io
+		 Sequential:  oiii...io
+		 In the sequential case, the o value in the front is
+		 the current output value. */
+	    unsigned idx;
+	    const char*row = ivl_udp_row(net,rdx);
+
+	    fprintf(out, "    ");
+
+	    if (ivl_udp_sequ(net))
+		  fprintf(out, " cur=%c :", *row++);
+
+	    for (idx = 0 ;  idx < ivl_udp_nin(net) ;  idx += 1)
+		  fprintf(out, " %c", *row++);
+
+	    fprintf(out, " : out=%c\n", *row++);
+      }
+      fprintf(out, "    endtable\n");
+
+      fprintf(out, "endprimitive\n");
+}
+
 int target_design(ivl_design_t des)
 {
+      ivl_scope_t*root_scopes;
+      unsigned nroot = 0;
+      unsigned idx;
+
       const char*path = ivl_design_flag(des, "-o");
       if (path == 0) {
 	    return -1;
@@ -1217,10 +1305,21 @@ int target_design(ivl_design_t des)
 	    return -2;
       }
 
-      fprintf(out, "root module = %s;\n",
-	      ivl_scope_name(ivl_design_root(des)));
+      ivl_design_roots(des, &root_scopes, &nroot);
+      for (idx = 0 ;  idx < nroot ;  idx += 1) {
 
-      show_scope(ivl_design_root(des), 0);
+	    fprintf(out, "root module = %s;\n",
+		    ivl_scope_name(root_scopes[idx]));
+	    show_scope(root_scopes[idx], 0);
+      }
+
+      while (udp_define_list) {
+	    struct udp_define_cell*cur = udp_define_list;
+	    udp_define_list = cur->next;
+	    show_primitive(cur->udp, cur->ref);
+	    free(cur);
+      }
+
       ivl_design_process(des, show_process, 0);
       fclose(out);
 
@@ -1230,6 +1329,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.120  2005/04/01 06:04:30  steve
+ *  Clean up handle of UDPs.
+ *
  * Revision 1.119  2005/03/19 06:59:53  steve
  *  Handle wide operands to logical AND.
  *

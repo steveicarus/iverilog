@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.121 2005/03/18 02:56:04 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.122 2005/04/01 06:04:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -50,6 +50,9 @@ extern "C" int ivl_design_process(ivl_design_t des,
 
 extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
 {
+      cerr << "ANACHRONISM: ivl_design_root called. "
+	    "Use ivl_design_roots instead." << endl;
+
       assert (des->nroots_);
       return des->roots_[0];
 }
@@ -572,7 +575,7 @@ extern "C" unsigned ivl_logic_width(ivl_net_logic_t net)
       return net->width_;
 }
 
-extern "C" unsigned    ivl_udp_sequ(ivl_udp_t net)
+extern "C" int  ivl_udp_sequ(ivl_udp_t net)
 {
       return net->sequ;
 }
@@ -2000,6 +2003,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.122  2005/04/01 06:04:30  steve
+ *  Clean up handle of UDPs.
+ *
  * Revision 1.121  2005/03/18 02:56:04  steve
  *  Add support for LPM_UFUNC user defined functions.
  *
