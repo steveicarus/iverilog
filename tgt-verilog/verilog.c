@@ -17,20 +17,20 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.15 2000/10/26 00:32:28 steve Exp $"
+#ident "$Id: verilog.c,v 1.16 2000/10/26 16:42:25 steve Exp $"
 #endif
 
 /*
- * This is a sample target module. All this does is write to the
- * output file some information about each object handle when each of
- * the various object functions is called. This can be used to
- * understand the behavior of the core as it uses a target module.
+ * This target writes a Verilog description of the design. The output
+ * Verilog is a single module that has the name of the root module of
+ * the design, but is internally the complete design.
  */
 
 # include  <ivl_target.h>
 # include  <stdio.h>
 # include  <assert.h>
 
+/* This is the output file where the verilog program is sent. */
 static FILE*out;
 
 /*
@@ -63,6 +63,36 @@ static void draw_scoped_objects(ivl_design_t des)
 }
 
 /*
+ * Given a nexus, this function draws a signal reference. We don't
+ * care really whether the signal is a reg or wire, because this may
+ * be an input or output of a gate. Just print it. And if this is a
+ * bit of a vector, draw the bit select needed to get at the right bit.
+ */
+static void draw_nexus(ivl_nexus_t nex)
+{
+      ivl_signal_t sig;
+      ivl_nexus_ptr_t ptr;
+      unsigned idx;
+
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ptr = ivl_nexus_ptr(nex, idx);
+	    sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig)
+		  break;
+      }
+
+      assert(sig);
+
+      if (ivl_signal_pins(sig) == 1) {
+	    fprintf(out, "%s", ivl_signal_name(sig));
+
+      } else {
+	    fprintf(out, "%s[%u]", ivl_signal_name(sig),
+		    ivl_nexus_ptr_pin(ptr));
+      }
+}
+
+/*
  * Draw a single logic gate. Escape the name so that it is preserved
  * completely. This drawing is happening in the root scope so signal
  * references can remain hierarchical.
@@ -74,29 +104,29 @@ static int draw_logic(ivl_net_logic_t net)
 
       switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
-	    fprintf(out, "    and \\%s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "    and \\%s (", name);
 	    break;
 	  case IVL_LO_BUF:
-	    fprintf(out, "    buf \\%s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "    buf \\%s (", name);
 	    break;
 	  case IVL_LO_OR:
-	    fprintf(out, "    or \\%s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "    or \\%s (", name);
 	    break;
 	  case IVL_LO_XOR:
-	    fprintf(out, "    xor \\%s (%s", name,
-		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    fprintf(out, "    xor \\%s (", name);
 	    break;
 	  default:
 	    fprintf(out, "STUB: %s: unsupported gate\n", name);
 	    return -1;
       }
 
+      draw_nexus(ivl_logic_pin(net, 0));
+
       npins = ivl_logic_pins(net);
-      for (idx = 1 ;  idx < npins ;  idx += 1)
-	    fprintf(out, ", %s", ivl_nexus_name(ivl_logic_pin(net,idx)));
+      for (idx = 1 ;  idx < npins ;  idx += 1) {
+	    fprintf(out, ", ");
+	    draw_nexus(ivl_logic_pin(net,idx));
+      }
 
       fprintf(out, ");\n");
       return 0;
@@ -365,6 +395,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.16  2000/10/26 16:42:25  steve
+ *  draw proper signal references for the gates.
+ *
  * Revision 1.15  2000/10/26 00:32:28  steve
  *  emit declarations of signals and gates.
  *
