@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.10 2003/11/07 05:58:02 steve Exp $"
+#ident "$Id: stop.cc,v 1.11 2004/02/21 00:44:34 steve Exp $"
 #endif
 
 /*
@@ -83,7 +83,8 @@ static void cmd_call(unsigned argc, char*argv[])
 	    if (stop_current_scope && (strcmp(argv[idx+1], ".") == 0))
 		  handle = &stop_current_scope->base;
 
-	    if (argv[idx+1][0] == '"') {
+	      /* Is the argument a quoted string? */
+	    if (handle == 0 && argv[idx+1][0] == '"') {
 		  char*tmp = strdup(argv[idx+1]);
 		  tmp[strlen(tmp)-1] = 0;
 
@@ -93,6 +94,13 @@ static void cmd_call(unsigned argc, char*argv[])
 		  handle = vpip_make_string_const(strdup(tmp+1), false);
 		  add_to_free_list = true;
 		  free(tmp);
+	    }
+
+	      /* Is the argument a decimal constant? */
+	    if (handle == 0
+		&& strspn(argv[idx+1],"0123456789") == strlen(argv[idx+1])) {
+		  handle = vpip_make_dec_const(strtol(argv[idx+1],0,10));
+		  add_to_free_list = true;
 	    }
 
 	      /* Try to find the vpiHandle within this scope that has
@@ -199,6 +207,26 @@ static void cmd_list(unsigned, char*[])
 		  printf("module  : %s\n", scope->name);
 		  break;
 
+		case vpiTask:
+		  scope = (struct __vpiScope*) table[idx];
+		  printf("task    : %s\n", scope->name);
+		  break;
+
+		case vpiFunction:
+		  scope = (struct __vpiScope*) table[idx];
+		  printf("function: %s\n", scope->name);
+		  break;
+
+		case vpiNamedBegin:
+		  scope = (struct __vpiScope*) table[idx];
+		  printf("block   : %s\n", scope->name);
+		  break;
+
+		case vpiNamedFork:
+		  scope = (struct __vpiScope*) table[idx];
+		  printf("fork    : %s\n", scope->name);
+		  break;
+
 		case vpiParameter:
 		  printf("param   : %s\n", vpi_get_str(vpiName, table[idx]));
 		  break;
@@ -231,6 +259,16 @@ static void cmd_list(unsigned, char*[])
 		  break;
 	    }
 
+      }
+}
+
+static void cmd_load(unsigned argc, char*argv[])
+{
+      unsigned idx;
+
+      for (idx = 1 ;  idx < argc ;  idx += 1) {
+	    printf("Loading module %s...\n", argv[idx]);
+	    vpip_load_module(argv[idx]);
       }
 }
 
@@ -330,6 +368,10 @@ struct {
         "Get help."},
       { "list",   &cmd_list,
         "List items in the current scope."},
+      { "load",   &cmd_load,
+        "Load a VPI module, a la vvp -m."},
+      { "ls",     &cmd_list,
+        "Shorthand for \"list\"."},
       { "pop",    &cmd_pop,
         "Pop one scope from the scope stack."},
       { "push",   &cmd_push,
@@ -452,6 +494,10 @@ void stop_handler(int rc)
 
 /*
  * $Log: stop.cc,v $
+ * Revision 1.11  2004/02/21 00:44:34  steve
+ *  Add load command to interactive stop.
+ *  Support decimal constants passed interactive to system tasks.
+ *
  * Revision 1.10  2003/11/07 05:58:02  steve
  *  Fix conditional compilation of readline history.
  *
