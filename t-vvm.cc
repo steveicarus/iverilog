@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.154 2000/05/31 03:52:07 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.155 2000/06/03 02:13:43 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -943,6 +943,12 @@ void target_vvm::scope(ostream&os, const NetScope*scope)
 
       init_code << "      vpip_make_scope(&" << hname << ", " <<
 	    type_code << ", \"" << scope->name() << "\");" << endl;
+
+      if (const NetScope*par = scope->parent()) {
+	    string pname = mangle(par->name()) + "_scope";
+	    init_code << "      vpip_attach_to_scope(&" << pname << ", "
+		      << "&" << hname << ".base);" << endl;
+      }
 }
 
 void target_vvm::event(ostream&os, const NetEvent*event)
@@ -1096,7 +1102,9 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 
       signal_bit_counter += sig->pin_count();
 
-      if (const NetScope*scope = sig->scope()) {
+      if (! sig->local_flag()) {
+	    const NetScope*scope = sig->scope();
+	    assert(scope);
 	    string sname = mangle(scope->name()) + "_scope";
 	    init_code << "      vpip_attach_to_scope(&" << sname
 		      << ", &" << net_name << ".base);" << endl;
@@ -3051,6 +3059,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.155  2000/06/03 02:13:43  steve
+ *  Do not attach temporaries to scopes.
+ *
  * Revision 1.154  2000/05/31 03:52:07  steve
  *  The NetESignal shortcut cannot expand an rvalue.
  *
