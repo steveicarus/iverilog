@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.208 2001/06/12 03:53:10 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.209 2001/06/18 01:54:49 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -673,6 +673,10 @@ void vvm_proc_rval::expr_unary(const NetEUnary*expr)
 	    break;
 	  case '-':
 	    tgt_->defn << "vvm_unop_uminus(" <<tname<< "," << result << ");" << endl;
+	    break;
+	  case 'A':
+	    tgt_->defn << "      " << tname << "[0] "
+		  "= vvm_unop_nand("<<result<<");" << endl;
 	    break;
 	  case 'N':
 	    tgt_->defn << "      " << tname << "[0] "
@@ -3638,6 +3642,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.209  2001/06/18 01:54:49  steve
+ *  Add the ~& reduction operator.
+ *
  * Revision 1.208  2001/06/12 03:53:10  steve
  *  Change the VPI call process so that loaded .vpi modules
  *  use a function table instead of implicit binding.
