@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.5 2001/03/20 06:16:23 steve Exp $
+ *  $Id: README.txt,v 1.6 2001/03/21 05:12:15 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -243,6 +243,50 @@ is concerned, the functor net is a blob of structure that it pokes and
 prods via certain functor access instructions.
 
 
+VVP COMPILATION AND EXECUTION
+
+The vvp program operates in a few steps:
+
+	1) Initialization
+		Data structures are cleared to empty, and tables are
+		readied for compilation.
+
+	2) Compilation
+		The input file is read and compiled. Symbol tables are
+		build up as needed, objects are allocated and linked
+		together.
+
+	3) Cleanup
+		Symbol tables and other resources used only for
+		compilation are released to reduce the memory
+		footprint.
+
+	4) Simulation
+		Event simulation is run.
+
+
+The initialization step is performed by the compile_init() function in
+compile.cc. This function in turn calls all the *_init() functions in
+other parts of the source that need initialization for compile. All
+the various sub-init functions are called <foo>_init().
+
+Compilation is controlled by the parser, it parse.y. As the parser
+reads and parses input, the compilation proceeds in the rules by
+calling various compile_* functions. All these functions live in the
+compile.cc file. Compilation calls other sections of the code as
+needed.
+
+When the parser completes compilation, compile_cleanup() is called to
+finish the compilation process. Unresolved references are completed,
+then all the symbol tables and other compile-time-only resources are
+released. Once compile_cleanup() returns, there is no more use for the
+parser for the function in compile.cc.
+
+After cleanup, the simulation is started. This is done by executing
+the schedule_simulate() function. This does any final setup and starts
+the simulation running and the event queue running.
+
+
 HOW TO GET FROM THERE TO HERE
 
 The vvp simulation engine is designed to be able to take as input a
@@ -289,7 +333,9 @@ Each bit of a variable is created by a ``.var'' statement. For example:
 
 becomes:
 
-	a	.var;
+	a	.var "a", 0, 0;
+
+
 
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
