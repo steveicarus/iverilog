@@ -17,7 +17,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.13 2003/10/14 18:05:18 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.14 2004/05/20 00:40:34 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
@@ -45,6 +45,7 @@ CXSRC=
 OBJ=
 LIB=
 OUT=
+INCOPT=
 
 # --
 # parse the command line switches. This collects the source files
@@ -78,6 +79,10 @@ do
 	 ;;
 
     -l*) LIB="$LIB $parm"
+	 ;;
+
+    -I*) INCOPT="$INCOPT $parm"
+	 echo "$parm"
 	 ;;
 
     -m32) LDFLAGS="-m32 $LDFLAGS32"
@@ -125,7 +130,7 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CC -c -o $obj $CFLAGS $src || compile_errors=`expr $compile_errors + 1`
+    $CC -c -o $obj $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 
@@ -135,7 +140,7 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CXX -c -o $obj $CFLAGS $src || compile_errors=`expr $compile_errors + 1`
+    $CXX -c -o $obj $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 
