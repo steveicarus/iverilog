@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: veriusertfs.c,v 1.1 2002/05/30 02:37:26 steve Exp $"
+#ident "$Id: veriusertfs.c,v 1.2 2002/05/31 18:21:39 steve Exp $"
 #endif
 
 /*
@@ -26,22 +26,17 @@
  * via VPI. This is extremly ugly, so don't look after eating dinner.
  */
 
-# include <stdio.h>
 # include <string.h>
 # include <stdlib.h>
 # include "vpi_user.h"
 # include "veriuser.h"
 
-
 /*
  * local structure used to hold the persistent veriusertfs data
- * and anything else we decice to put it here like workarea data.
+ * and anything else we decide to put in here, like workarea data.
  */
 typedef struct t_pli_data {
-      short	data;			/* veriusertfs data */
-      int	(*checktf)();		/* pointer to checktf routine */
-      int	(*calltf)();		/* pointer to calltf routine */
-      int	(*misctf)();		/* pointer to misctf routine */
+      p_tfcell	tf;		/* pointer to veriusertfs cell */
 } s_pli_data, *p_pli_data;
 
 static int compiletf(char *);
@@ -53,30 +48,27 @@ static int callback(p_cb_data);
  */
 void veriusertfs_register()
 {
-      p_tfcell usertf;
+      p_tfcell tf;
       s_vpi_systf_data tf_data;
       p_pli_data data;
 
-      for (usertf = veriusertfs; usertf; usertf++) {
+      for (tf = veriusertfs; tf; tf++) {
 	    /* last element */
-	    if (usertf->type == 0) break;
+	    if (tf->type == 0) break;
 
 	    /* only forwref true */
-	    if (!usertf->forwref) {
+	    if (!tf->forwref) {
 		  vpi_printf("  skipping %s, forwref != true\n",
-			usertf->tfname);
+			tf->tfname);
 		  continue;
 	    }
 
-	    /* squirrel away some of veriusertfs in persistent user_data */
+	    /* squirrel away veriusertfs in persistent user_data */
 	    data = (p_pli_data) calloc(1, sizeof(s_pli_data));
-	    data->data = usertf->data;
-	    data->checktf = usertf->checktf;
-	    data->calltf = usertf->calltf;
-	    data->misctf = usertf->misctf;
+	    data->tf = tf;
 
 	    (void) memset(&tf_data, 0, sizeof(s_vpi_systf_data));
-	    switch (usertf->type) {
+	    switch (tf->type) {
 		  case usertask:
 			tf_data.type = vpiSysTask;
 		  break;
@@ -85,14 +77,14 @@ void veriusertfs_register()
 		  break;
 		  default:
 			vpi_printf("  skipping %s, unsupported type %d\n",
-			      usertf->tfname, usertf->type);
+			      tf->tfname, tf->type);
 			continue;
 		  break;
 	    }
-	    tf_data.tfname = usertf->tfname;
+	    tf_data.tfname = tf->tfname;
 	    tf_data.compiletf = compiletf;
 	    tf_data.calltf = calltf;
-	    tf_data.sizetf = usertf->sizetf;
+	    tf_data.sizetf = tf->sizetf;
 	    tf_data.user_data = (char *)data;
 
 	    /* register */
@@ -109,11 +101,13 @@ void veriusertfs_register()
 static int compiletf(char *data)
 {
       p_pli_data pli;
+      p_tfcell tf;
       vpiHandle call_h, arg_i, arg_h;
       s_cb_data cb_data;
 
       /* cast back from opaque */
       pli = (p_pli_data)data;
+      tf = pli->tf;
 
       /* get call handle */
       call_h = vpi_handle(vpiSysTfCall, NULL);
@@ -128,7 +122,7 @@ static int compiletf(char *data)
       cb_data.obj = call_h;
       vpi_register_cb(&cb_data);
 
-#if 0
+#ifdef FIXME
       /* register callbacks on each argument */
       cb_data.reason = cbValueChange;
       arg_i = vpi_iterate(vpiArgument, call_h);
@@ -140,11 +134,14 @@ static int compiletf(char *data)
       }
 #endif
 
-      /* since we are at compiletf, misctf needs to fire */
-      pli->misctf(pli->data, reason_endofcompile);
+      /* since we are in compiletf, misctf needs to fire */
+      if (tf->misctf) tf->misctf(tf->data, reason_endofcompile);
 
       /* similarly run checktf now */
-      return pli->checktf(pli->data, 0);
+      if (tf->checktf)
+	    return tf->checktf(tf->data, 0);
+      else
+	    return 0;
 }
 
 /*
@@ -153,12 +150,17 @@ static int compiletf(char *data)
 static int calltf(char *data)
 {
       p_pli_data pli;
+      p_tfcell tf;
 
       /* cast back from opaque */
       pli = (p_pli_data)data;
+      tf = pli->tf;
 
       /* execute calltf */
-      return pli->calltf(pli->data, 0);
+      if (tf->calltf)
+	    return tf->calltf(tf->data, 0);
+      else
+	    return 0;
 }
 
 /*
@@ -167,10 +169,12 @@ static int calltf(char *data)
 static int callback (p_cb_data data)
 {
       p_pli_data pli;
+      p_tfcell tf;
       int reason;
 
       /* cast back from opaque */
       pli = (p_pli_data)data->user_data;
+      tf = pli->tf;
 
       switch (data->reason) {
 	    case cbValueChange:
@@ -184,11 +188,19 @@ static int callback (p_cb_data data)
       }
 
       /* execute misctf */
-      return pli->misctf(pli->data, reason);
+      if (tf->misctf)
+	    return tf->misctf(tf->data, reason);
+      else
+	    return 0;
 }
 
 /*
  * $Log: veriusertfs.c,v $
+ * Revision 1.2  2002/05/31 18:21:39  steve
+ *  Check for and don't dereference null pointers,
+ *  Avoid copy of static objects.
+ *  (mruff)
+ *
  * Revision 1.1  2002/05/30 02:37:26  steve
  *  Add the veriusertf_register funciton.
  *
