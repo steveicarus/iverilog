@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.cc,v 1.20 2002/07/17 05:13:43 steve Exp $"
+#ident "$Id: vpi_priv.cc,v 1.21 2002/07/19 01:12:50 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -181,6 +181,10 @@ vpiHandle vpi_handle(int type, vpiHandle ref)
       }
 
       assert(ref);
+
+      if (ref->vpi_type->handle_ == 0)
+	    return 0;
+
       assert(ref->vpi_type->handle_);
       return (ref->vpi_type->handle_)(type, ref);
 }
@@ -196,8 +200,6 @@ static vpiHandle vpi_iterate_global(int type)
 	  case vpiModule:
 	    return vpip_make_root_iterator();
 
-	  default:
-	    assert(0);
       }
 
       return 0;
@@ -224,6 +226,10 @@ vpiHandle vpi_iterate(int type, vpiHandle ref)
 vpiHandle vpi_handle_by_index(vpiHandle ref, int idx)
 {
       assert(ref);
+
+      if (ref->vpi_type->index_ == 0)
+	    return 0;
+
       assert(ref->vpi_type->index_);
       return (ref->vpi_type->index_)(ref, idx);
 }
@@ -340,6 +346,9 @@ extern "C" void vpi_sim_vcontrol(int operation, va_list ap)
 
 /*
  * $Log: vpi_priv.cc,v $
+ * Revision 1.21  2002/07/19 01:12:50  steve
+ *  vpi_iterate returns 0 on error.
+ *
  * Revision 1.20  2002/07/17 05:13:43  steve
  *  Implementation of vpi_handle_by_name, and
  *  add the vpiVariables iterator.
