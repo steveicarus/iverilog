@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.48 2003/02/10 05:20:10 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.49 2003/02/23 06:41:54 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -157,6 +157,8 @@ struct __vpiScope {
 extern struct __vpiScope* vpip_peek_current_scope(void);
 extern void vpip_attach_to_current_scope(vpiHandle obj);
 extern vpiHandle vpip_make_root_iterator(void);
+extern void vpip_make_root_iterator(struct __vpiHandle**&table,
+				    unsigned&ntable);
 
 /*
  * Signals include the variable types (reg, integer, time) and are
@@ -397,6 +399,11 @@ extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.49  2003/02/23 06:41:54  steve
+ *  Add to interactive stop mode support for
+ *  current scope, the ability to scan/traverse
+ *  scopes, and the ability to call system tasks.
+ *
  * Revision 1.48  2003/02/10 05:20:10  steve
  *  Add value change callbacks to real variables.
  *

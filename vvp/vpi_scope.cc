@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.24 2003/02/11 05:20:45 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.25 2003/02/23 06:41:54 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -41,6 +41,12 @@ vpiHandle vpip_make_root_iterator(void)
       assert(vpip_root_table_cnt);
       return vpip_make_iterator(vpip_root_table_cnt,
 				vpip_root_table_ptr, false);
+}
+
+void vpip_make_root_iterator(struct __vpiHandle**&table, unsigned&ntable)
+{
+      table = vpip_root_table_ptr;
+      ntable = vpip_root_table_cnt;
 }
 
 static bool handle_is_scope(vpiHandle obj)
@@ -448,6 +454,11 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.25  2003/02/23 06:41:54  steve
+ *  Add to interactive stop mode support for
+ *  current scope, the ability to scan/traverse
+ *  scopes, and the ability to call system tasks.
+ *
  * Revision 1.24  2003/02/11 05:20:45  steve
  *  Include vpiRealVar objects in vpiVariables scan.
  *
