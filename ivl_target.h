@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.80 2001/09/01 01:57:31 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.81 2001/09/09 22:21:57 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -175,30 +175,30 @@ typedef enum ivl_expr_type_e {
 
 /* This is the type code for an ivl_net_logic_t object. */
 typedef enum ivl_logic_e {
-      IVL_LO_NONE = 0,
-      IVL_LO_AND,
-      IVL_LO_BUF,
-      IVL_LO_BUFIF0,
-      IVL_LO_BUFIF1,
-      IVL_LO_BUFZ,
-      IVL_LO_NAND,
-      IVL_LO_NMOS,
-      IVL_LO_NOR,
-      IVL_LO_NOT,
-      IVL_LO_NOTIF0,
-      IVL_LO_NOTIF1,
-      IVL_LO_OR,
-      IVL_LO_PULLDOWN,
-      IVL_LO_PULLUP,
-      IVL_LO_RNMOS,
-      IVL_LO_RPMOS,
-      IVL_LO_PMOS,
-      IVL_LO_XNOR,
-      IVL_LO_XOR,
+      IVL_LO_NONE   =  0,
+      IVL_LO_AND    =  1,
+      IVL_LO_BUF    =  2,
+      IVL_LO_BUFIF0 =  3,
+      IVL_LO_BUFIF1 =  4,
+      IVL_LO_BUFZ   =  5,
+      IVL_LO_NAND   =  6,
+      IVL_LO_NMOS   =  7,
+      IVL_LO_NOR    =  8,
+      IVL_LO_NOT    =  9,
+      IVL_LO_NOTIF0 = 10,
+      IVL_LO_NOTIF1 = 11,
+      IVL_LO_OR     = 12,
+      IVL_LO_PULLDOWN  = 13,
+      IVL_LO_PULLUP = 14,
+      IVL_LO_RNMOS  = 15,
+      IVL_LO_RPMOS  = 16,
+      IVL_LO_PMOS   = 17,
+      IVL_LO_XNOR   = 18,
+      IVL_LO_XOR    = 19,
 
-      IVL_LO_EEQ, 
+      IVL_LO_EEQ    = 20,
 
-      IVL_LO_UDP
+      IVL_LO_UDP    = 21
 } ivl_logic_t;
 
 /* This is the type of an LPM object. */
@@ -949,6 +949,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.81  2001/09/09 22:21:57  steve
+ *  pin down some enumerated constants.
+ *
  * Revision 1.80  2001/09/01 01:57:31  steve
  *  Make constants available through the design root
  *
