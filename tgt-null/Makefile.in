@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.3 2000/12/15 02:00:31 steve Exp $"
+#ident "$Id: Makefile.in,v 1.4 2001/05/17 03:22:18 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -47,7 +47,7 @@ all: null.tgt
 
 %.o: %.c
 	@[ -d dep ] || mkdir dep
-	$(CC) -Wall $(CPPFLAGS) -I$(srcdir)/.. -MD -c $< -o $*.o
+	$(CC) -Wall -I$(srcdir)/.. $(CPPFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
 O = null.o
