@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_thread.cc,v 1.2 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: vvm_thread.cc,v 1.3 2000/01/06 05:56:23 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -28,7 +28,11 @@ class delay_event : public vvm_event {
 
     public:
       delay_event(vvm_thread*thr) : thr_(thr) { }
-      void event_function() { while (thr_->go()) /* empty */; }
+      void event_function()
+      {
+	    while (thr_->go())
+		  /* empty */;
+      }
     private:
       vvm_thread*thr_;
 };
@@ -50,6 +54,9 @@ void vvm_thread::thread_yield(unsigned long delay)
 
 /*
  * $Log: vvm_thread.cc,v $
+ * Revision 1.3  2000/01/06 05:56:23  steve
+ *  Cleanup and some asserts.
+ *
  * Revision 1.2  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *

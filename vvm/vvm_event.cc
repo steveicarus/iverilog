@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_event.cc,v 1.3 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: vvm_event.cc,v 1.4 2000/01/06 05:56:22 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -30,6 +30,7 @@ vvm_event::vvm_event()
 
 vvm_event::~vvm_event()
 {
+      assert(event_ == 0);
 }
 
 void vvm_event::schedule(unsigned long delay)
@@ -40,12 +41,16 @@ void vvm_event::schedule(unsigned long delay)
 void vvm_event::callback_(void*cbd)
 {
       vvm_event*obj = reinterpret_cast<vvm_event*>(cbd);
+      obj->event_ = 0;
       obj->event_function();
       delete obj;
 }
 
 /*
  * $Log: vvm_event.cc,v $
+ * Revision 1.4  2000/01/06 05:56:22  steve
+ *  Cleanup and some asserts.
+ *
  * Revision 1.3  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *

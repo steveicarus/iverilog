@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_thread.h,v 1.3 1999/12/12 19:47:54 steve Exp $"
+#ident "$Id: vvm_thread.h,v 1.4 2000/01/06 05:56:23 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -46,11 +46,13 @@ class vvm_thread {
 	// will return false if it is ready to give up the CPU.
       virtual bool go() =0;
 
-    protected:
 };
 
 /*
  * $Log: vvm_thread.h,v $
+ * Revision 1.4  2000/01/06 05:56:23  steve
+ *  Cleanup and some asserts.
+ *
  * Revision 1.3  1999/12/12 19:47:54  steve
  *  Remove the useless vvm_simulation class.
  *
