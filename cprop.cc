@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cprop.cc,v 1.20 2000/11/18 05:13:27 steve Exp $"
+#ident "$Id: cprop.cc,v 1.21 2000/11/19 05:26:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -184,45 +184,152 @@ void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
 {
       switch (obj->type()) {
 
-	  case NetLogic::AND:
-	      // If there is one zero input to an AND gate, we know
-	      // the resulting output is going to be zero and can
-	      // elininate the gate.
-	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
-		  if (! link_drivers_constant(obj->pin(idx)))
-			continue;
-		  if (driven_value(obj->pin(idx)) == verinum::V0) {
-			connect(obj->pin(0), obj->pin(idx));
-			delete obj;
-			count += 1;
-			return;
-		  }
-	    }
+	  case NetLogic::NAND:
+	  case NetLogic::AND: {
+		unsigned top = obj->pin_count();
+		unsigned idx = 1;
+		unsigned xs = 0;
 
-	      // There are no zero constant drivers. If there are any
-	      // non-constant drivers, give up.
-	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
-		  if (! link_drivers_constant(obj->pin(idx)))
-			return;
-	    }
+		  /* Eliminate all the 1 inputs. They have no effect
+		     on the output of an AND gate. */
 
-	      // If there are any non-1 values (Vx or Vz) then the
-	      // result is Vx.
-	    for (unsigned idx = 1 ;  idx < obj->pin_count() ;  idx += 1) {
-		  if (driven_value(obj->pin(idx)) != verinum::V1) {
-			connect(obj->pin(0), obj->pin(idx));
-			delete obj;
-			count += 1;
-			return;
-		  }
-	    }
+		while (idx < top) {
+		      if (! link_drivers_constant(obj->pin(idx))) {
+			    idx += 1;
+			    continue;
+		      }
 
-	      // What's left? The inputs are all 1's, return the first
-	      // input as the output value and remove the gate.
-	    connect(obj->pin(0), obj->pin(1));
-	    delete obj;
-	    count += 1;
-	    return;
+		      if (driven_value(obj->pin(idx)) == verinum::V1) {
+			    obj->pin(idx).unlink();
+			    top -= 1;
+			    if (idx < top) {
+				  connect(obj->pin(idx), obj->pin(top));
+				  obj->pin(top).unlink();
+			    }
+
+			    continue;
+		      }
+
+		      if (driven_value(obj->pin(idx)) != verinum::V0) {
+			    idx += 1;
+			    xs += 1;
+			    continue;
+		      }
+
+			/* Oops! We just stumbled on a driven-0 input
+			   to the AND gate. That means we can replace
+			   the whole bloody thing with a constant
+			   driver and exit now. */
+		      NetConst*tmp;
+		      switch (obj->type()) {
+			  case NetLogic::AND:
+			    tmp = new NetConst(obj->name(), verinum::V0);
+			    break;
+			  case NetLogic::NAND:
+			    tmp = new NetConst(obj->name(), verinum::V1);
+			    break;
+			  default:
+			    assert(0);
+		      }
+
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If all the inputs were eliminated, then replace
+		     the gate with a constant 1 and I am done. */
+		if (top == 1) {
+		      NetConst*tmp;
+		      switch (obj->type()) {
+			  case NetLogic::AND:
+			    tmp = new NetConst(obj->name(), verinum::V1);
+			    break;
+			  case NetLogic::NAND:
+			    tmp = new NetConst(obj->name(), verinum::V0);
+			    break;
+			  default:
+			    assert(0);
+		      }
+
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If all the inputs are unknowns, then replace the
+		     gate with a Vx. */
+		if (xs == (top-1)) {
+		      NetConst*tmp;
+		      tmp = new NetConst(obj->name(), verinum::Vx);
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* If we are down to only one input, then replace
+		     the AND with a BUF and exit now. */
+		if (top == 2) {
+		      NetLogic*tmp;
+		      switch (obj->type()) {
+			  case NetLogic::AND:
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::BUF);
+			    break;
+			  case NetLogic::NAND:
+			    tmp = new NetLogic(obj->scope(),
+					       obj->name(), 2,
+					       NetLogic::NOT);
+			    break;
+			  default:
+			    assert(0);
+		      }
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      connect(obj->pin(0), tmp->pin(0));
+		      connect(obj->pin(1), tmp->pin(1));
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+
+		  /* Finally, this cleans up the gate by creating a
+		     new [N]OR gate that has the right number of
+		     inputs, connected in the right place. */
+		if (top < obj->pin_count()) {
+		      NetLogic*tmp = new NetLogic(obj->scope(),
+						  obj->name(), top,
+						  obj->type());
+		      des->add_node(tmp);
+		      tmp->pin(0).drive0(obj->pin(0).drive0());
+		      tmp->pin(0).drive1(obj->pin(0).drive1());
+		      for (unsigned idx = 0 ;  idx < top ;  idx += 1)
+			    connect(tmp->pin(idx), obj->pin(idx));
+
+		      delete obj;
+		      count += 1;
+		      return;
+		}
+		break;
+	  }
+
 
 	  case NetLogic::NOR:
 	  case NetLogic::OR: {
@@ -662,6 +769,9 @@ void cprop(Design*des)
 
 /*
  * $Log: cprop.cc,v $
+ * Revision 1.21  2000/11/19 05:26:58  steve
+ *  Replace AND constand propagation.
+ *
  * Revision 1.20  2000/11/18 05:13:27  steve
  *  Thorough constant propagation for or and nor gates.
  *
