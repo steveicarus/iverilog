@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.59 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.60 1999/07/24 19:19:06 steve Exp $"
 #endif
 
 /*
@@ -1592,7 +1592,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       NetBlock*block = new NetBlock(NetBlock::SEQU);
 
 	/* Generate assignment statement statements for the input and
-	   INOUT ports of the task. */
+	   INOUT ports of the task. These are managed by writing
+	   assignments with the task port the l-value and the passed
+	   expression the r-value. */
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 
 	    NetNet*port = def->port(idx);
@@ -1613,7 +1615,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
       block->append(cur);
 
 	/* Generate assignment statement statements for the output and
-	   INOUT ports of the task. */
+	   INOUT ports of the task. The r-value in this case is the
+	   expression passed as a parameter, and the l-value is the
+	   port to be copied out. */
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 
 	    NetNet*port = def->port(idx);
@@ -1621,9 +1625,24 @@ NetProc* PCallTask::elaborate_usr(Design*des, const string&path) const
 	    if (port->port_type() == NetNet::PINPUT)
 		  continue;
 
-	    cerr << get_line() << ": Sorry, output ports not yet "
-		  "implemented." << endl;
-	    des->errors += 1;
+	      /* Elaborate the parameter expression as a net so that
+		 it can be used as an l-value. */
+	    NetNet*val = parms_[idx]->elaborate_net(des, path);
+	    assert(val);
+
+	    assert(val->pin_count() == port->pin_count());
+
+	      /* Make an expression out of the actual task port. */
+	    NetESignal*sig = new NetESignal(port);
+
+	      /* Generate the assignment statement. */
+	    NetAssign*ass = new NetAssign("@", des, val->pin_count(), sig);
+	    for (unsigned pi = 0 ; pi < val->pin_count() ;  pi += 1)
+		  connect(val->pin(pi), ass->pin(pi));
+
+	    des->add_node(sig);
+	    des->add_node(ass);
+	    block->append(ass);
       }
 
       return block;
@@ -1950,6 +1969,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.60  1999/07/24 19:19:06  steve
+ *  Add support for task output and inout ports.
+ *
  * Revision 1.59  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *
