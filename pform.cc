@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.28 1999/06/17 05:34:42 steve Exp $"
+#ident "$Id: pform.cc,v 1.29 1999/06/21 01:02:16 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -100,8 +100,16 @@ void pform_make_udp(string*name, list<string>*parms,
 	    string pname = (*decl)[idx]->name();
 	    PWire*cur = defs[pname];
 	    if (PWire*cur = defs[pname]) {
-		  bool rc = cur->set_port_type((*decl)[idx]->get_port_type());
-		  assert(rc);
+		  bool rc = true;
+		  assert((*decl)[idx]);
+		  if ((*decl)[idx]->get_port_type() != NetNet::PIMPLICIT) {
+			rc = cur->set_port_type((*decl)[idx]->get_port_type());
+			assert(rc);
+		  }
+		  if ((*decl)[idx]->get_wire_type() != NetNet::IMPLICIT) {
+			rc = cur->set_wire_type((*decl)[idx]->get_wire_type());
+			assert(rc);
+		  }
 
 	    } else {
 		  defs[pname] = (*decl)[idx];
@@ -490,6 +498,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<string>*names)
 		 ; cur ++ ) {
 	    PWire*pp = new PWire(*cur, NetNet::IMPLICIT, NetNet::PINPUT);
 	    (*out)[idx] = pp;
+	    idx += 1;
       }
 
       delete names;
@@ -550,6 +559,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.29  1999/06/21 01:02:16  steve
+ *  Fix merging of UDP port type in decls.
+ *
  * Revision 1.28  1999/06/17 05:34:42  steve
  *  Clean up interface of the PWire class,
  *  Properly match wire ranges.
