@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.23 2001/06/21 22:54:12 steve Exp $"
+#ident "$Id: functor.cc,v 1.24 2001/07/16 18:06:01 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -27,6 +27,7 @@
 # include  "vpi_priv.h"
 # include  "debug.h"
 # include  <assert.h>
+# include  <string.h>
 
 /*
  * Functors are created as the source design is read in. Each is
@@ -89,11 +90,16 @@ static vvp_ipoint_t functor_allocate_(void)
 
       assert( idx < functor_index2_size);
 
-      if (functor_table[idx] == 0)
+      if (functor_table[idx] == 0) {
 	    functor_table[idx] = new struct functor_index1;
+	    memset(functor_table[idx], 0, sizeof(struct functor_index1));
+      }
 
-      if (functor_table[idx]->table[index1] == 0)
+      if (functor_table[idx]->table[index1] == 0) {
 	    functor_table[idx]->table[index1] = new struct functor_index0;
+	    memset(functor_table[idx]->table[index1], 
+		   0, sizeof(struct functor_index0));
+      }
 
       vvp_ipoint_t res = functor_count;
       functor_count += 1;
@@ -365,6 +371,9 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.24  2001/07/16 18:06:01  steve
+ *  Initialize allocated functors (Stephan Boettcher)
+ *
  * Revision 1.23  2001/06/21 22:54:12  steve
  *  Support cbValueChange callbacks.
  *
