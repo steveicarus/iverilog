@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.15 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: netlist.h,v 1.16 1999/02/01 00:26:49 steve Exp $"
 #endif
 
 /*
@@ -31,6 +31,7 @@
 # include  <string>
 # include  <map>
 # include  "verinum.h"
+# include  "LineInfo.h"
 
 class NetNode;
 class NetProc;
@@ -662,7 +663,7 @@ class NetWhile  : public NetProc {
 /* The is the top of any process. It carries the type (initial or
    always) and a pointer to the statement, probably a block, that
    makes up the process. */
-class NetProcTop {
+class NetProcTop  : public LineInfo {
 
     public:
       enum Type { KINITIAL, KALWAYS };
@@ -819,7 +820,7 @@ class NetESignal  : public NetExpr {
 class Design {
 
     public:
-      Design() : signals_(0), nodes_(0), procs_(0), lcounter_(0) { }
+      Design() : errors(0), signals_(0), nodes_(0), procs_(0), lcounter_(0) { }
 
 	/* The flags are a generic way of accepting command line
 	   parameters/flags and passing them to the processing steps
@@ -856,6 +857,9 @@ class Design {
       void clear_signal_marks();
       NetNet*find_signal(bool (*test)(const NetNet*));
 
+	// This is incremented by elaboration when an error is
+	// detected. It prevents code being emitted.
+      unsigned errors;
 
     public:
       string local_symbol(const string&path);
@@ -921,6 +925,13 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.16  1999/02/01 00:26:49  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.15  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *

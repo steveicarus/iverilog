@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.11 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.12 1999/02/01 00:26:49 steve Exp $"
 #endif
 
 /*
@@ -226,6 +226,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 		  "of parameters. Expecting " << rmod->ports.size() <<
 		  ", got " << pin_count() << "."
 		 << endl;
+	    des->errors += 1;
 	    return;
       }
 
@@ -245,6 +246,17 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	    NetNet*prt = des->find_signal(my_name + "." +
 					  rmod->ports[idx]->name);
 	    assert(prt);
+
+	      // Check that the parts have matching pin counts. If
+	      // not, they are different widths.
+	    if (prt->pin_count() != sig->pin_count()) {
+		  cerr << get_line() << ": Port " <<
+			rmod->ports[idx]->name << " of " << type_ <<
+			" expects " << prt->pin_count() << " pins, got " <<
+			sig->pin_count() << " from " << sig->name() << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 
 	    assert(prt->pin_count() == sig->pin_count());
 	    switch (prt->port_type()) {
@@ -672,14 +684,21 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
 /*
  * An event statement gets elaborated as a gate net that drives a
  * special node, the NetPEvent. The NetPEvent is also a NetProc class
- * becuase execution flows through it. Thus, the NetPEvent connects
+ * because execution flows through it. Thus, the NetPEvent connects
  * the structural and the behavioral.
+ *
+ * Note that it is possible for the statement_ pointer to be 0. This
+ * happens when the source has something like "@(E) ;". Note the null
+ * statement.
  */
 NetProc* PEventStatement::elaborate(Design*des, const string&path) const
 {
-      NetProc*enet = statement_->elaborate(des, path);
-      if (enet == 0)
-	    return 0;
+      NetProc*enet = 0;
+      if (statement_) {
+	    enet = statement_->elaborate(des, path);
+	    if (enet == 0)
+		  return 0;
+      }
 
       NetPEvent*ev = new NetPEvent(des->local_symbol(path), type_, enet);
 
@@ -794,6 +813,7 @@ bool Module::elaborate(Design*des, const string&path) const
 		  break;
 	    }
 
+	    top->set_line(*(*st));
 	    des->add_process(top);
       }
 
@@ -831,6 +851,13 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.12  1999/02/01 00:26:49  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.11  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

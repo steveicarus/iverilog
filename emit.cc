@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.4 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: emit.cc,v 1.5 1999/02/01 00:26:49 steve Exp $"
 #endif
 
 /*
@@ -67,6 +67,7 @@ void NetBUFZ::emit_node(ostream&o, struct target_t*tgt) const
 
 void NetProcTop::emit(ostream&o, struct target_t*tgt) const
 {
+      assert(statement_);
       tgt->start_process(o, this);
 
       statement_->emit_proc(o, tgt);
@@ -101,7 +102,7 @@ void NetPDelay::emit_proc(ostream&o, struct target_t*tgt) const
 
 void NetPDelay::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
-      statement_->emit_proc(o, tgt);
+      if (statement_) statement_->emit_proc(o, tgt);
 }
 
 void NetPEvent::emit_proc(ostream&o, struct target_t*tgt) const
@@ -111,7 +112,7 @@ void NetPEvent::emit_proc(ostream&o, struct target_t*tgt) const
 
 void NetPEvent::emit_proc_recurse(ostream&o, struct target_t*tgt) const
 {
-      statement_->emit_proc(o, tgt);
+      if (statement_) statement_->emit_proc(o, tgt);
 }
 
 void NetTask::emit_proc(ostream&o, struct target_t*tgt) const
@@ -223,6 +224,13 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.5  1999/02/01 00:26:49  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.4  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.9 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.10 1999/02/01 00:26:48 steve Exp $"
 #endif
 
 /*
@@ -260,10 +260,10 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 {
       switch (type_) {
 	  case NetProcTop::KINITIAL:
-	    o << "initial" << endl;
+	    o << "initial  /* " << get_line() << " */" << endl;
 	    break;
 	  case NetProcTop::KALWAYS:
-	    o << "always" << endl;
+	    o << "always  /* " << get_line() << " */" << endl;
 	    break;
       }
 
@@ -338,9 +338,13 @@ void NetPEvent::dump(ostream&o, unsigned ind) const
 	    o << "wait (" << name() << ")";
 	    break;
       }
-      o << endl;
 
-      statement_->dump(o, ind+2);
+      if (statement_) {
+	    o << endl;
+	    statement_->dump(o, ind+2);
+      } else {
+	    o << " /* noop */;" << endl;
+      }
 }
 
 
@@ -464,6 +468,13 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.10  1999/02/01 00:26:48  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.9  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: LineInfo.h,v 1.1 1999/01/25 05:45:56 steve Exp $"
+#ident "$Id: LineInfo.h,v 1.2 1999/02/01 00:26:48 steve Exp $"
 #endif
 
 # include  <cstdio>
@@ -34,6 +34,11 @@ class LineInfo {
 	      return file_ + ":" + buf;
 	    }
 
+      void set_line(const LineInfo&that)
+	    { file_ = that.file_;
+	      lineno_ = that.lineno_;
+	    }
+
       void set_file(const string&f) { file_ = f; }
       void set_lineno(unsigned n) { lineno_ = n; }
 
@@ -44,6 +49,13 @@ class LineInfo {
 
 /*
  * $Log: LineInfo.h,v $
+ * Revision 1.2  1999/02/01 00:26:48  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.1  1999/01/25 05:45:56  steve
  *  Add the LineInfo class to carry the source file
  *  location of things. PGate, Statement and PProcess.

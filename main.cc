@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.12 1999/01/24 01:35:36 steve Exp $"
+#ident "$Id: main.cc,v 1.13 1999/02/01 00:26:49 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -188,6 +188,10 @@ int main(int argc, char*argv[])
 	    cerr << "Unable to elaborate design." << endl;
 	    return 1;
       }
+      if (des->errors) {
+	    cerr << des->errors << " error(s) elaborating design." << endl;
+	    return des->errors;
+      }
 
       des->set_flags(flags);
 
@@ -224,6 +228,13 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.13  1999/02/01 00:26:49  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.12  1999/01/24 01:35:36  steve
  *  Support null target for generating no output.
  *

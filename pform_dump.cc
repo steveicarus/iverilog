@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.7 1998/12/01 00:42:14 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.8 1999/02/01 00:26:49 steve Exp $"
 #endif
 
 /*
@@ -99,16 +99,16 @@ void PWire::dump(ostream&out) const
 
       switch (port_type) {
 	  case NetNet::PIMPLICIT:
-	    out << "(implicit input) ";
+	    out << " (implicit input)";
 	    break;
 	  case NetNet::PINPUT:
-	    out << "(input) ";
+	    out << " (input)";
 	    break;
 	  case NetNet::POUTPUT:
-	    out << "(output) ";
+	    out << " (output)";
 	    break;
 	  case NetNet::PINOUT:
-	    out << "(input output) ";
+	    out << " (input output)";
 	    break;
 	  case NetNet::NOT_A_PORT:
 	    break;
@@ -116,10 +116,10 @@ void PWire::dump(ostream&out) const
 
       if (lsb || msb) {
 	    assert(lsb && msb);
-	    out << "[" << *msb << ":" << *lsb << "] ";
+	    out << " [" << *msb << ":" << *lsb << "]";
       }
 
-      out << name << ";" << endl;
+      out << " " << name << ";" << endl;
       for (map<string,string>::const_iterator idx = attributes.begin()
 		 ; idx != attributes.end()
 		 ; idx ++) {
@@ -182,13 +182,15 @@ void Statement::dump(ostream&out, unsigned ind) const
 	   so just print the C++ typeid and let the user figure
 	   it out. */
       out << setw(ind) << "";
-      out << "/* " << typeid(*this) .name() << " */ ;" << endl;
+      out << "/* " << get_line() << ": " << typeid(*this).name()
+	  << " */ ;" << endl;
 }
 
 void PAssign::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "";
-      out << to_name_ << " = " << *expr_ << ";" << endl;
+      out << to_name_ << " = " << *expr_ << ";";
+      out << "  /* " << get_line() << " */" << endl;
 }
 
 void PBlock::dump(ostream&out, unsigned ind) const
@@ -254,9 +256,14 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
 	    out << "positive ";
 	    break;
       }
-      out << *expr_ << ")" << endl;
+      out << *expr_ << ")";
 
-      statement_->dump(out, ind+2);
+      if (statement_) {
+	    out << endl;
+	    statement_->dump(out, ind+2);
+      } else {
+	    out << " ;" << endl;
+      }
 }
 
 void PForStatement::dump(ostream&out, unsigned ind) const
@@ -277,12 +284,14 @@ void PProcess::dump(ostream&out, unsigned ind) const
 {
       switch (type_) {
 	  case PProcess::PR_INITIAL:
-	    out << setw(ind) << "" << "initial" << endl;
+	    out << setw(ind) << "" << "initial";
 	    break;
 	  case PProcess::PR_ALWAYS:
-	    out << setw(ind) << "" << "always" << endl;
+	    out << setw(ind) << "" << "always";
 	    break;
       }
+
+      out << " /* " << get_line() << " */" << endl;
 
       statement_->dump(out, ind+2);
 }
@@ -364,6 +373,13 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.8  1999/02/01 00:26:49  steve
+ *  Carry some line info to the netlist,
+ *  Dump line numbers for processes.
+ *  Elaborate prints errors about port vector
+ *  width mismatch
+ *  Emit better handles null statements.
+ *
  * Revision 1.7  1998/12/01 00:42:14  steve
  *  Elaborate UDP devices,
  *  Support UDP type attributes, and
