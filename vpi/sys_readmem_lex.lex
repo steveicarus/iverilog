@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_readmem_lex.lex,v 1.5 2001/12/01 02:40:10 steve Exp $"
+#ident "$Id: sys_readmem_lex.lex,v 1.6 2002/02/06 04:49:24 steve Exp $"
 #endif
 # include "sys_readmem_lex.h"
 # include  <string.h>
@@ -39,7 +39,7 @@ static void make_bin_value();
 
 <*>@[0-9a-fA-F]+ { make_addr(); return MEM_ADDRESS; }
 <HEX>[0-9a-fA-FxXzZ_]+  { make_hex_value(); return MEM_WORD; }
-<BIN>[01_]+  { make_bin_value(); return MEM_WORD; }
+<BIN>[01xXzZ_]+  { make_bin_value(); return MEM_WORD; }
 
 %%
 static unsigned word_width = 0;
