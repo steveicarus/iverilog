@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.3 1999/09/29 21:15:31 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -48,7 +48,7 @@ void yywarn(const YYLTYPE&loc, const char*msg)
       if (loc.text)
 	    cerr << loc.text << ":";
 
-      cerr << loc.first_line << ": warning -- " << msg << endl;
+      cerr << loc.first_line << ": warning: " << msg << endl;
 }
 
 int VLwrap()
@@ -58,6 +58,9 @@ int VLwrap()
 
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.3  1999/09/29 21:15:31  steve
+ *  Standardize formatting of warning messages.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.
