@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_misc.h,v 1.6 2002/11/03 20:36:53 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.7 2003/03/08 20:58:18 steve Exp $"
 #endif
 
 # include  <list>
@@ -37,7 +37,7 @@ struct vlltype {
       unsigned last_column;
       const char*text;
 };
-# define YYLTYPE vlltype
+# define YYLTYPE struct vlltype
 
   /* This for compatibility with new and older bison versions. */
 #ifndef yylloc
@@ -58,6 +58,9 @@ extern unsigned error_count, warn_count;
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.7  2003/03/08 20:58:18  steve
+ *  More C-like use of vlltype.
+ *
  * Revision 1.6  2002/11/03 20:36:53  steve
  *  Support old/new bison yylloc.
  *
