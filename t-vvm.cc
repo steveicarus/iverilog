@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.190 2000/12/12 03:30:44 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.191 2000/12/15 03:06:04 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -603,7 +603,10 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
       }
 
 	/* Make the function call. */
-      tgt_->defn << "        " << mangle(expr->name()) << "();" << endl;
+      tgt_->defn << "      { bool flag;" << endl;
+      tgt_->defn << "        flag = " << mangle(expr->name())<<"(thr);"<< endl;
+      tgt_->defn << "        if (flag == false) return false;" << endl;
+      tgt_->defn << "      }" << endl;
 
 	/* rbits is the bits of the signal that hold the result. */
       string rbits = mangle(expr->result()->name()) + ".bits";
@@ -1298,9 +1301,10 @@ void target_vvm::func_def(const NetFuncDef*def)
       out << "static void " << name << "();" << endl;
 
       defn << "// Function " << def->name() << endl;
-      defn << "static void " << name << "()" << endl;
+      defn << "static bool " << name << "(vvm_thread*thr)" << endl;
       defn << "{" << endl;
       def->proc()->emit_proc(this);
+      defn << "      return true;" << endl;
       defn << "}" << endl;
 
       assert(function_def_flag_);
@@ -3402,6 +3406,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.191  2000/12/15 03:06:04  steve
+ *  functions with system tasks (PR#46)
+ *
  * Revision 1.190  2000/12/12 03:30:44  steve
  *  NetEUFuncs are allowed as system task parameters.
  *
