@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.9 2003/10/27 02:18:27 steve Exp $"
+#ident "$Id: d-lpm.c,v 1.10 2003/10/31 03:45:50 steve Exp $"
 #endif
 
 /*
@@ -644,6 +644,7 @@ static void lpm_show_mux(ivl_lpm_t net)
 static void lpm_show_add(ivl_lpm_t net)
 {
       unsigned idx;
+      unsigned cell_width;
       char cellname[32];
       edif_cell_t cell;
       edif_cellref_t ref;
@@ -654,18 +655,27 @@ static void lpm_show_add(ivl_lpm_t net)
       if (ivl_lpm_type(net) == IVL_LPM_SUB)
 	    type = "SUB";
 
+	/* Figure out the width of the cell. Normally, it is the LPM
+	   width known by IVL. But if the top data input bits are
+	   unconnected, then we really have a width one less, and we
+	   can use the cout to fill out the output width. */
+      cell_width = ivl_lpm_width(net);
+      if ( (ivl_lpm_data(net,cell_width-1) == 0)
+	   && (ivl_lpm_datab(net,cell_width-1) == 0) )
+	    cell_width -= 1;
+
 	/* Find the correct ADD/SUB device in the library, search by
 	   name. If the device is not there, then create it and put it
 	   in the library. */
-      sprintf(cellname, "%s%u", type, ivl_lpm_width(net));
+      sprintf(cellname, "%s%u", type, cell_width);
       cell = edif_xlibrary_findcell(xlib, cellname);
 
       if (cell == 0) {
-	    unsigned pins = ivl_lpm_width(net) * 3 + 1;
+	    unsigned pins = cell_width * 3 + 1;
 
 	    cell = edif_xcell_create(xlib, strdup(cellname), pins);
 
-	    for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    for (idx = 0 ;  idx < cell_width ;  idx += 1) {
 
 		  sprintf(cellname, "Result%u", idx);
 		  edif_cell_portconfig(cell, idx*3+0, strdup(cellname),
@@ -691,7 +701,7 @@ static void lpm_show_add(ivl_lpm_t net)
 
 	/* Connect the pins of the instance to the nexa. Access the
 	   cell pins by name. */
-      for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+      for (idx = 0 ;  idx < cell_width ;  idx += 1) {
 	    unsigned pin;
 
 	    sprintf(cellname, "Result%u", idx);
@@ -710,6 +720,13 @@ static void lpm_show_add(ivl_lpm_t net)
 	    pin = edif_cell_port_byname(cell, cellname);
 
 	    jnt = edif_joint_of_nexus(edf, ivl_lpm_datab(net, idx));
+	    edif_add_to_joint(jnt, ref, pin);
+      }
+
+      if (cell_width < ivl_lpm_width(net)) {
+	    unsigned pin = edif_cell_port_byname(cell, "Cout");
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_q(net, cell_width));
 	    edif_add_to_joint(jnt, ref, pin);
       }
 }
@@ -858,6 +875,9 @@ const struct device_s d_lpm_edif = {
 
 /*
  * $Log: d-lpm.c,v $
+ * Revision 1.10  2003/10/31 03:45:50  steve
+ *  Handle adders that use Cout for the top bit.
+ *
  * Revision 1.9  2003/10/27 02:18:27  steve
  *  Emit constants for LPM device.
  *
