@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.154 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.155 2000/04/09 16:43:50 steve Exp $"
 #endif
 
 /*
@@ -1572,6 +1572,17 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 	    return pr;
       }
 
+	/* Handle the special case of an event name as an identifier
+	   in an expression. Make a named event reference. */
+      if (expr_.count() == 1) {
+	    PEIdent*id = dynamic_cast<PEIdent*>(expr_[0]->expr());
+	    NetEvent*ev;
+	    if (id && (ev = scope->find_event(id->name()))) {
+		  NetEvWait*pr = new NetEvWait(ev, enet);
+		  pr->set_line(*this);
+		  return pr;
+	    }
+      }
 
 	/* Create a single NetPEvent, and a unique NetNEvent for each
 	   conjuctive event. An NetNEvent can have many pins only if
@@ -1585,6 +1596,16 @@ NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
 		       << "not supported." << endl;
 		  des->errors += 1;
 		  return 0;
+	    }
+
+	    if (PEIdent*id = dynamic_cast<PEIdent*>(expr_[idx]->expr())) {
+		  NetEvent*ev = scope->find_event(id->name());
+		  if (ev) {
+			cerr << get_line() << ": sorry: block on named events "
+			     << "not supported." << endl;
+			des->errors += 1;
+			return 0;
+		  }
 	    }
 
 	    NetNet*expr = expr_[idx]->expr()->elaborate_net(des, path,
@@ -2071,6 +2092,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.155  2000/04/09 16:43:50  steve
+ *  Catch event names in parentheses.
+ *
  * Revision 1.154  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *
