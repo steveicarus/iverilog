@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.16 2001/10/28 01:14:53 steve Exp $"
+#ident "$Id: net_event.cc,v 1.17 2002/02/02 06:13:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -171,7 +171,12 @@ NetEvent* NetEvent::find_similar_event()
 	    if (tmp->edge() != cur->edge())
 		  continue;
 
-	    table[ncand++].ev = tmp->event();
+	      /* Don't include myself in the list of candidates. */
+	    NetEvent*etmp = tmp->event();
+	    if (etmp == this)
+		  continue;
+
+	    table[ncand++].ev = etmp;
 	    assert(ncand <= max_cand);
       }
 
@@ -451,6 +456,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.17  2002/02/02 06:13:38  steve
+ *  event find_similar should not find self.
+ *
  * Revision 1.16  2001/10/28 01:14:53  steve
  *  NetObj constructor finally requires a scope.
  *

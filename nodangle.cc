@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: nodangle.cc,v 1.13 2001/07/27 02:41:55 steve Exp $"
+#ident "$Id: nodangle.cc,v 1.14 2002/02/02 06:13:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,6 +42,7 @@ class nodangle_f  : public functor_t {
 void nodangle_f::event(Design*des, NetEvent*ev)
 {
       if (NetEvent*match = ev->find_similar_event()) {
+	    assert(match != ev);
 	    ev->replace_event(match);
       }
 
@@ -130,6 +131,9 @@ void nodangle(Design*des)
 
 /*
  * $Log: nodangle.cc,v $
+ * Revision 1.14  2002/02/02 06:13:38  steve
+ *  event find_similar should not find self.
+ *
  * Revision 1.13  2001/07/27 02:41:55  steve
  *  Fix binding of dangling function ports. do not elide them.
  *
