@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.4 2001/04/04 05:07:19 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.5 2001/07/11 04:40:52 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -124,22 +124,19 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 
 	  case vpiIntVal: {
 		unsigned val = 0;
-		int isx = 0;
 
 		for (unsigned idx = 0 ;  idx < rfp->nbits ;  idx += 1) {
 		      unsigned nibble = idx/4;
 		      unsigned shift  = 2 * (idx%4);
 		      unsigned bit_val = (rfp->bits[nibble] >> shift) & 3;
-		      val *= 2;
-		      if (bit_val > 1)
-			    isx = 1;
-		      else
-			    val |= bit_val;
+		      if (bit_val > 1) {
+			    vp->value.integer = 0;
+			    return;
+		      } else {
+			    val |= bit_val << idx;
+		      }
 		}
-		if (isx)
-		      vp->value.integer = 0;
-		else
-		      vp->value.integer = val;
+		vp->value.integer = val;
 		break;
 	  }
 
@@ -201,6 +198,9 @@ vpiHandle vpip_make_binary_const(unsigned wid, char*bits)
 
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.5  2001/07/11 04:40:52  steve
+ *  Get endian of vpiIntVal from constants.
+ *
  * Revision 1.4  2001/04/04 05:07:19  steve
  *  Get intval from a binary constant.
  *
