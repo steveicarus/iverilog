@@ -1,7 +1,7 @@
 #ifndef __resolv_H
 #define __resolv_H
 /*
- * Copyright (c) 200 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.h,v 1.1 2001/05/09 02:53:53 steve Exp $"
+#ident "$Id: resolv.h,v 1.2 2001/05/12 01:48:57 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -34,6 +34,9 @@ class vvp_resolv_s  : public vvp_fobj_s {
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.2  2001/05/12 01:48:57  steve
+ *  Silly copyright typo.
+ *
  * Revision 1.1  2001/05/09 02:53:53  steve
  *  Implement the .resolv syntax.
  *
