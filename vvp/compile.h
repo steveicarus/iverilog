@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.31 2001/07/07 02:57:33 steve Exp $"
+#ident "$Id: compile.h,v 1.32 2001/07/11 04:43:57 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -92,7 +92,7 @@ extern void compile_shiftr(char*label, long width,
 
 
 extern void compile_vpi_symbol(const char*label, vpiHandle obj);
-extern vpiHandle compile_vpi_lookup(const char*label);
+extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
 /* 
  * The `compile_udp_def' function creates a UDP.  The `table' is a
@@ -204,6 +204,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.32  2001/07/11 04:43:57  steve
+ *  support postpone of $systask parameters. (Stephan Boettcher)
+ *
  * Revision 1.31  2001/07/07 02:57:33  steve
  *  Add the .shift/r functor.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.86 2001/07/07 02:57:33 steve Exp $"
+#ident "$Id: compile.cc,v 1.87 2001/07/11 04:43:57 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1110,33 +1110,6 @@ void compile_codelabel(char*label)
 }
 
 
-struct postponed_handles_list_s {
-      struct postponed_handles_list_s*next;
-      vpiHandle *handle;
-      char*name;
-};
-
-static struct postponed_handles_list_s *late_handles;
-
-static vpiHandle postpone_vpi_symbol_lookup(vpiHandle *handle, 
-					    char*name)
-{
-      *handle = compile_vpi_lookup(name);
-      if (*handle)
-	    free(name);
-      else {
-	    struct postponed_handles_list_s*res = 
-		  (struct postponed_handles_list_s*)
-		  malloc(sizeof(struct postponed_handles_list_s));
-
-	    res->handle  = handle;
-	    res->name    = name;
-	    res->next    = late_handles;
-	    late_handles = res;
-      }
-      return *handle;
-}
-
 void compile_disable(char*label, struct symb_s symb)
 {
       vvp_cpoint_t ptr = codespace_allocate();
@@ -1155,7 +1128,7 @@ void compile_disable(char*label, struct symb_s symb)
       vvp_code_t code = codespace_index(ptr);
       code->opcode = of_DISABLE;
 
-      postpone_vpi_symbol_lookup(&code->handle, symb.text);
+      compile_vpi_lookup(&code->handle, symb.text);
 
       free(label);
 }
@@ -1198,7 +1171,7 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
       }
 
 	/* Figure out the target SCOPE. */
-      postpone_vpi_symbol_lookup((vpiHandle*)&code->fork->scope, scope.text);
+      compile_vpi_lookup((vpiHandle*)&code->fork->scope, scope.text);
       
       free(label);
       free(dest.text);
@@ -1281,7 +1254,16 @@ void compile_thread(char*start_sym)
       free(start_sym);
 }
 
-vpiHandle compile_vpi_lookup(const char*label)
+
+struct postponed_handles_list_s {
+      struct postponed_handles_list_s*next;
+      vpiHandle *handle;
+      char*name;
+};
+
+static struct postponed_handles_list_s *late_handles;
+
+void compile_vpi_lookup(vpiHandle *handle, char*label)
 {
       symbol_value_t val;
 
@@ -1301,7 +1283,20 @@ vpiHandle compile_vpi_lookup(const char*label)
 	    // check for memory word  M<mem,base,wid>
       }
 
-      return (vpiHandle) val.ptr;
+      if (!val.ptr) {
+	    struct postponed_handles_list_s*res = 
+		  (struct postponed_handles_list_s*)
+		  malloc(sizeof(struct postponed_handles_list_s));
+	    
+	    res->handle  = handle;
+	    res->name    = label;
+	    res->next    = late_handles;
+	    late_handles = res;
+      } else {
+	    free(label);
+      }
+
+      *handle = (vpiHandle) val.ptr;
 }
 
 /*
@@ -1520,7 +1515,7 @@ void compile_cleanup(void)
       while (lhandle) {
 	    struct postponed_handles_list_s *tmp = lhandle;
 	    lhandle = lhandle->next;
-	    postpone_vpi_symbol_lookup(tmp->handle, tmp->name);
+	    compile_vpi_lookup(tmp->handle, tmp->name);
 	    free(tmp);
       }
       lhandle = late_handles;
@@ -1549,6 +1544,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.87  2001/07/11 04:43:57  steve
+ *  support postpone of $systask parameters. (Stephan Boettcher)
+ *
  * Revision 1.86  2001/07/07 02:57:33  steve
  *  Add the .shift/r functor.
  *

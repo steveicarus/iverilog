@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.5 2001/05/02 23:16:50 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.6 2001/07/11 04:43:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
+# include  "compile.h"
 # include  <stdio.h>
 # include  <malloc.h>
 
@@ -63,6 +64,7 @@ void argv_init(struct argv_s*obj)
 {
       obj->argc = 0;
       obj->argv = 0;
+      obj->syms = 0;
 }
 
 void argv_add(struct argv_s*obj, vpiHandle item)
@@ -73,8 +75,29 @@ void argv_add(struct argv_s*obj, vpiHandle item)
       obj->argc += 1;
 }
 
+void argv_sym_add(struct argv_s*obj, char *item)
+{
+      argv_add(obj, 0x0);
+      obj->syms = (char**)
+	    realloc(obj->syms, (obj->argc)*sizeof(char*));
+      obj->syms[obj->argc-1] = item;
+}
+
+void argv_sym_lookup(struct argv_s*obj)
+{
+      if (!obj->syms)
+	    return;
+      for (unsigned i=0; i < obj->argc; i++)
+	    if (!obj->argv[i])
+		  compile_vpi_lookup(&obj->argv[i], obj->syms[i]);
+      free(obj->syms);
+}
+
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.6  2001/07/11 04:43:57  steve
+ *  support postpone of $systask parameters. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/05/02 23:16:50  steve
  *  Document memory related opcodes,
  *  parser uses numbv_s structures instead of the

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.h,v 1.5 2001/05/02 23:16:50 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.6 2001/07/11 04:43:57 steve Exp $"
 #endif
 
 
@@ -64,18 +64,22 @@ struct numbv_s {
 extern void numbv_init(struct numbv_s*obj);
 extern void numbv_add(struct numbv_s*obj, long item);
 
-
-
 struct argv_s {
       unsigned  argc;
       vpiHandle*argv;
+      char    **syms;
 };
 
 extern void argv_init(struct argv_s*obj);
 extern void argv_add(struct argv_s*obj, vpiHandle);
+extern void argv_sym_add(struct argv_s*obj, char *);
+extern void argv_sym_lookup(struct argv_s*obj);
 
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.6  2001/07/11 04:43:57  steve
+ *  support postpone of $systask parameters. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/05/02 23:16:50  steve
  *  Document memory related opcodes,
  *  parser uses numbv_s structures instead of the

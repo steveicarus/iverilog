@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.5 2001/06/10 16:47:49 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.6 2001/07/11 04:43:57 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -107,18 +107,18 @@ void compile_scope_decl(char*label, char*name, char*parent)
       free(label);
 
       if (parent) {
-	    vpiHandle obj = compile_vpi_lookup(parent);
+	    static vpiHandle obj;
+	    compile_vpi_lookup(&obj, parent);
+	    assert(obj);
 	    struct __vpiScope*sp = (struct __vpiScope*) obj;
 	    attach_to_scope_(sp, &scope->base);
-	    free(parent);
       }
 }
 
 void compile_scope_recall(char*symbol)
 {
-      vpiHandle obj = compile_vpi_lookup(symbol);
-      current_scope = (struct __vpiScope*)obj;
-      free(symbol);
+      compile_vpi_lookup((vpiHandle*)&current_scope, symbol);
+      assert(current_scope);
 }
 
 struct __vpiScope* vpip_peek_current_scope(void)
@@ -134,6 +134,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.6  2001/07/11 04:43:57  steve
+ *  support postpone of $systask parameters. (Stephan Boettcher)
+ *
  * Revision 1.5  2001/06/10 16:47:49  steve
  *  support scan of scope from VPI.
  *

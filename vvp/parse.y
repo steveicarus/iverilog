@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.35 2001/07/07 02:57:33 steve Exp $"
+#ident "$Id: parse.y,v 1.36 2001/07/11 04:43:57 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -345,14 +345,20 @@ operand
      the struct argv_s type.
 
      Each argument of the call is represented as a vpiHandle
-     object. If the argument is a symbol, it is located in the sym_vpi
-     symbol table. if it is someother supported object, the necessary
+     object.  If the argument is a symbol, the symbol name will be 
+     kept, until the argument_list is complete.  Then, all symbol
+     lookups will be attemted.  Postoned lookups will point into the 
+     resulting $$->argv.
+     If it is some other supported object, the necessary
      vpiHandle object is created to support it. */
 
 argument_opt
 	: ',' argument_list
-		{ $$ = $2; }
-	|
+		{ 
+		  argv_sym_lookup(&$2);
+		  $$ = $2;
+		}
+	| /* empty */
 		{ struct argv_s tmp;
 		  argv_init(&tmp);
 		  $$ = tmp;
@@ -371,13 +377,22 @@ argument_list
 		  argv_add(&tmp, $3);
 		  $$ = tmp;
 		}
+	| T_SYMBOL
+		{ struct argv_s tmp;
+		  argv_init(&tmp);
+		  argv_sym_add(&tmp, $1);
+		  $$ = tmp;
+		}
+	| argument_list ',' T_SYMBOL
+		{ struct argv_s tmp = $1;
+		  argv_sym_add(&tmp, $3);
+		  $$ = tmp;
+		}
 	;
 
 argument
 	: T_STRING
 		{ $$ = vpip_make_string_const($1); }
-	| T_SYMBOL
-		{ $$ = compile_vpi_lookup($1); free($1); }
 	| T_VECTOR
 		{ $$ = vpip_make_binary_const($1.idx, $1.text); }
 	;
@@ -489,6 +504,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.36  2001/07/11 04:43:57  steve
+ *  support postpone of $systask parameters. (Stephan Boettcher)
+ *
  * Revision 1.35  2001/07/07 02:57:33  steve
  *  Add the .shift/r functor.
  *
