@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.5 1999/11/06 16:52:16 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.6 1999/11/10 02:52:24 steve Exp $"
 #endif
 
 /*
@@ -80,15 +80,6 @@ struct __vpiCallback {
 };
 
 /*
- * This type is occasionally useful. Really! And while we're at it,
- * create a single instance of the null object. (This is all we need.)
- */
-struct __vpiNull {
-      struct __vpiHandle base;
-};
-extern struct __vpiNull vpip_null;
-
-/*
  * The vpiHandle for an iterator has this structure. The definition of
  * the methods lives in vpi_iter.c
  */
@@ -99,6 +90,28 @@ struct __vpiIterator {
       unsigned  nargs;
       unsigned  next;
 };
+
+/*
+ * Memory is an array of bits that is accessible in N-bit chunks, with
+ * N being the width of a word.
+ */
+struct __vpiMemory {
+      struct __vpiHandle base;
+	/* The signal has a name (this points to static memory.) */
+      const char*name;
+      enum vpip_bit_t*bits;
+      unsigned width;
+      unsigned size;
+};
+
+/*
+ * This type is occasionally useful. Really! And while we're at it,
+ * create a single instance of the null object. (This is all we need.)
+ */
+struct __vpiNull {
+      struct __vpiHandle base;
+};
+extern struct __vpiNull vpip_null;
 
 /*
  * This structure represents nets and registers. You can tell which by
@@ -173,6 +186,8 @@ extern vpiHandle vpip_make_string_const(struct __vpiStringConst*ref,
 extern vpiHandle vpip_make_number_const(struct __vpiNumberConst*ref,
 					const enum vpip_bit_t*bits,
 					unsigned nbits);
+extern vpiHandle vpip_make_memory(struct __vpiMemory*ref, const char*name,
+				  unsigned width, unsigned size);
 extern vpiHandle vpip_make_reg(struct __vpiSignal*ref, const char*name);
 extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 				    const char*val);
@@ -239,6 +254,9 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.6  1999/11/10 02:52:24  steve
+ *  Create the vpiMemory handle type.
+ *
  * Revision 1.5  1999/11/06 16:52:16  steve
  *  complete value retrieval for number constants.
  *

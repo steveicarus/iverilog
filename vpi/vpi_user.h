@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_user.h,v 1.6 1999/11/07 20:33:30 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.7 1999/11/10 02:52:24 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -96,6 +96,8 @@ typedef struct t_vpi_value {
 /* OBJECT CODES */
 #define vpiConstant     7
 #define vpiIterator    27
+#define vpiMemory      29
+#define vpiMemoryWord  30
 #define vpiNet         36
 #define vpiReg         48
 #define vpiSysTaskCall 57
@@ -205,6 +207,9 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.7  1999/11/10 02:52:24  steve
+ *  Create the vpiMemory handle type.
+ *
  * Revision 1.6  1999/11/07 20:33:30  steve
  *  Add VCD output and related system tasks.
  *

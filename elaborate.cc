@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.122 1999/11/05 21:45:19 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.123 1999/11/10 02:52:24 steve Exp $"
 #endif
 
 /*
@@ -1671,6 +1671,11 @@ NetProc* PCallTask::elaborate(Design*des, const string&path) const
 /*
  * A call to a system task involves elaborating all the parameters,
  * then passing the list to the NetSTask object.
+ *XXXX
+ * There is a single special in the call to a system task. Normally,
+ * an expression cannot take an unindexed memory. However, it is
+ * possible to take a system task parameter a memory if the expression
+ * is trivial.
  */
 NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
 {
@@ -1678,6 +1683,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, const string&path) const
 
       for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
 	    PExpr*ex = parm(idx);
+
 	    eparms[idx] = ex? ex->elaborate_expr(des, path) : 0;
       }
 
@@ -2329,6 +2335,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.123  1999/11/10 02:52:24  steve
+ *  Create the vpiMemory handle type.
+ *
  * Revision 1.122  1999/11/05 21:45:19  steve
  *  Fix NetConst being set to zero width, and clean
  *  up elaborate_set_cmp_ for NetEBinary.

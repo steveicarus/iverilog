@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.72 1999/11/06 16:00:17 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.73 1999/11/10 02:52:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -154,15 +154,7 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_const(const NetEConst*);
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_ident(const NetEIdent*);
-      virtual void expr_memory(const NetEMemory*mem)
-	    {
-		  mem->index()->expr_scan(this);
-		  string idx = make_temp();
-		  os_ << setw(indent_) << "" << "const unsigned " <<
-			idx << " = " << result << ".as_unsigned();" <<
-			endl;
-		  result = mangle(mem->name()) + "[" + idx + "]";
-	    }
+      virtual void expr_memory(const NetEMemory*mem);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*sig);
       virtual void expr_ternary(const NetETernary*);
@@ -241,6 +233,13 @@ void vvm_proc_rval::expr_const(const NetEConst*expr)
 void vvm_proc_rval::expr_ident(const NetEIdent*expr)
 {
       result = mangle(expr->name());
+}
+
+void vvm_proc_rval::expr_memory(const NetEMemory*mem)
+{
+      const string mname = mangle(mem->name());
+      mem->index()->expr_scan(this);
+      result = mname + ".get_word(" + result + ".as_unsigned())";
 }
 
 void vvm_proc_rval::expr_signal(const NetESignal*expr)
@@ -482,6 +481,7 @@ class vvm_parm_rval  : public expr_scan_t {
     private:
       virtual void expr_const(const NetEConst*expr);
       virtual void expr_ident(const NetEIdent*);
+      virtual void expr_memory(const NetEMemory*mem);
       virtual void expr_signal(const NetESignal*);
 
     private:
@@ -551,6 +551,12 @@ void vvm_parm_rval::expr_ident(const NetEIdent*expr)
       } else {
 	    cerr << "Unhandled identifier: " << expr->name() << endl;
       }
+}
+
+void vvm_parm_rval::expr_memory(const NetEMemory*mem)
+{
+      assert(mem->index() == 0);
+      result = string("&") + mangle(mem->name()) + ".base";
 }
 
 void vvm_parm_rval::expr_signal(const NetESignal*expr)
@@ -717,9 +723,13 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 
 void target_vvm::memory(ostream&os, const NetMemory*mem)
 {
-      os << "static vvm_bitset_t<" << mem->width() << "> " <<
-	    mangle(mem->name()) << "[" << mem->count() << "]; " <<
-	    "/* " << mem->name() << " */" << endl;
+      const string mname = mangle(mem->name());
+      os << "static vvm_memory_t<" << mem->width() << ", " <<
+	    mem->count() << "> " << mname << ";"
+	    " /* " << mem->name() << " */" << endl;
+      init_code << "      vpip_make_memory(&" << mname << ", \"" <<
+	    mem->name() << "\", " << mem->width() << ", " <<
+	    mem->count() << ");" << endl;
 }
 
 void target_vvm::task_def(ostream&os, const NetTaskDef*def)
@@ -1352,9 +1362,8 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 
       defn << "      /* " << amem->get_line() << " */" << endl;
       if (mem->width() == amem->rval()->expr_width()) {
-	    defn << "      " << mangle(mem->name())
-		 << "[" << index << ".as_unsigned()] = " << rval <<
-		  ";" << endl;
+	    defn << "      " << mangle(mem->name()) << ".set_word(" <<
+		  index << ".as_unsigned(), " << rval << ");" << endl;
 
       } else {
 	    assert(mem->width() <= amem->rval()->expr_width());
@@ -1365,9 +1374,8 @@ void target_vvm::proc_assign_mem(ostream&os, const NetAssignMem*amem)
 		  defn << "      " << tmp << "[" << idx << "] = " <<
 			rval << "[" << idx << "];" << endl;
 
-	    defn << "      " << mangle(mem->name())
-		 << "[" << index << ".as_unsigned()] = " << tmp << ";"
-		 << endl;
+	    defn << "      " << mangle(mem->name()) << ".set_word(" <<
+		  index << ".as_unsigned(), " << tmp << ");" << endl;
       }
 }
 
@@ -1839,6 +1847,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.73  1999/11/10 02:52:24  steve
+ *  Create the vpiMemory handle type.
+ *
  * Revision 1.72  1999/11/06 16:00:17  steve
  *  Put number constants into a static table.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elab_expr.cc,v 1.7 1999/10/18 00:02:21 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.8 1999/11/10 02:52:24 steve Exp $"
 #endif
 
 
@@ -271,7 +271,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
 	    assert(lsb_ == 0);
 	    assert(idx_ == 0);
 	    NetExpr*i = msb_->elaborate_expr(des, path);
-	    if (i == 0) {
+	    if (msb_ && i == 0) {
 		  cerr << get_line() << ": error: Unable to exaborate "
 			"index expression `" << *msb_ << "'" << endl;
 		  des->errors += 1;
@@ -324,6 +324,9 @@ NetExpr*PETernary::elaborate_expr(Design*des, const string&path) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.8  1999/11/10 02:52:24  steve
+ *  Create the vpiMemory handle type.
+ *
  * Revision 1.7  1999/10/18 00:02:21  steve
  *  Catch unindexed memory reference.
  *

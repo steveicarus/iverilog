@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.20 1999/11/01 02:07:41 steve Exp $"
+#ident "$Id: vvm.h,v 1.21 1999/11/10 02:52:24 steve Exp $"
 #endif
 
 # include  <vector>
@@ -254,8 +254,30 @@ template <unsigned WIDTH> class vvm_signal_t  : public __vpiSignal  {
 	    }
 };
 
+template <unsigned WIDTH, unsigned SIZE>
+class vvm_memory_t : public __vpiMemory {
+
+    public:
+      void set_word(unsigned addr, const vvm_bitset_t<WIDTH>&val)
+	    { unsigned base = WIDTH * addr;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    bits[base+idx] = val[idx];
+	    }
+
+      vvm_bitset_t<WIDTH> get_word(unsigned addr) const
+	    { vvm_bitset_t<WIDTH> val;
+	      unsigned base = WIDTH * addr;
+	      for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
+		    val[idx] = bits[base+idx];
+	      return val;
+	    }
+};
+
 /*
  * $Log: vvm.h,v $
+ * Revision 1.21  1999/11/10 02:52:24  steve
+ *  Create the vpiMemory handle type.
+ *
  * Revision 1.20  1999/11/01 02:07:41  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of
