@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.cc,v 1.4 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: PGate.cc,v 1.5 1999/09/14 01:50:35 steve Exp $"
 #endif
 
 # include  "PGate.h"
@@ -30,7 +30,7 @@ PGate::PGate(const string&name,
 	     const svector<PExpr*>*del)
 : name_(name), pins_(pins)
 {
-      delay_.set_delays(del);
+      if (del) delay_.set_delays(del);
 }
 
 PGate::PGate(const string&name,
@@ -38,7 +38,7 @@ PGate::PGate(const string&name,
 	     PExpr*del)
 : name_(name), pins_(pins)
 {
-      delay_.set_delay(del);
+      if (del) delay_.set_delay(del);
 }
 
 PGate::PGate(const string&name, svector<PExpr*>*pins)
@@ -112,6 +112,9 @@ void PGBuiltin::set_range(PExpr*msb, PExpr*lsb)
 
 /*
  * $Log: PGate.cc,v $
+ * Revision 1.5  1999/09/14 01:50:35  steve
+ *  Handle gates without delays.
+ *
  * Revision 1.4  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *
