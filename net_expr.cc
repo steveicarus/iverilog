@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.9 2002/11/06 02:25:13 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.10 2002/11/09 01:40:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -107,6 +107,11 @@ NetEConcat::~NetEConcat()
 {
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    delete parms_[idx];
+}
+
+bool NetEConcat::has_width() const
+{
+      return true;
 }
 
 void NetEConcat::set(unsigned idx, NetExpr*e)
@@ -237,6 +242,9 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.10  2002/11/09 01:40:19  steve
+ *  Postpone parameter width check to evaluation.
+ *
  * Revision 1.9  2002/11/06 02:25:13  steve
  *  No need to keep excess width from an
  *  unsigned constant value, if it can

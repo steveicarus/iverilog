@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.16 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.17 2002/11/09 01:40:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -108,11 +108,6 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
 		       << *ex << endl;
 		  des->errors += 1;
 
-	    } else if (ex->expr_width() == 0) {
-		  cerr << ex->get_line() << ": internal error: "
-		       << "Operand of concatenation has no width: "
-		       << *ex << endl;
-		  des->errors += 1;
 	    }
 
 	    tmp->set(idx, ex);
@@ -222,6 +217,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.17  2002/11/09 01:40:19  steve
+ *  Postpone parameter width check to evaluation.
+ *
  * Revision 1.16  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.268 2002/11/02 03:27:52 steve Exp $"
+#ident "$Id: netlist.h,v 1.269 2002/11/09 01:40:19 steve Exp $"
 #endif
 
 /*
@@ -2428,6 +2428,7 @@ class NetEConcat  : public NetExpr {
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
       virtual NexusSet* nex_input();
+      virtual bool has_width() const;
       virtual bool set_width(unsigned w);
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree();
@@ -3083,6 +3084,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.269  2002/11/09 01:40:19  steve
+ *  Postpone parameter width check to evaluation.
+ *
  * Revision 1.268  2002/11/02 03:27:52  steve
  *  Allow named events to be referenced by
  *  hierarchical names.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.42 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.43 2002/11/09 01:40:19 steve Exp $"
 #endif
 
 # include "config.h"
@@ -752,7 +752,13 @@ NetEConst* NetEConcat::eval_tree()
 			     << "operand has indefinite width: "
 			     << *parms_[idx] << endl;
 			local_errors += 1;
+		  } else if (expr->expr_width() == 0) {
+			cerr << expr->get_line() << ": internal error: "
+			     << "Operand of concatenation has no width: "
+			     << *expr << endl;
+			local_errors += 1;
 		  }
+
 		  gap += expr->expr_width();
 	    }
 
@@ -1134,6 +1140,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.43  2002/11/09 01:40:19  steve
+ *  Postpone parameter width check to evaluation.
+ *
  * Revision 1.42  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.
