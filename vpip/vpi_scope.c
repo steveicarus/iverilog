@@ -17,14 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_scope.c,v 1.1 2001/03/14 19:27:44 steve Exp $"
+#ident "$Id: vpi_scope.c,v 1.2 2001/10/21 23:37:49 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <stdlib.h>
 # include  <assert.h>
 
-static char* scope_get_str(int code, vpiHandle obj)
+static const char* scope_get_str(int code, vpiHandle obj)
 {
       struct __vpiScope*ref = (struct __vpiScope*)obj;
 
@@ -150,6 +150,9 @@ void vpip_attach_to_scope(struct __vpiScope*ref, vpiHandle obj)
 
 /*
  * $Log: vpi_scope.c,v $
+ * Revision 1.2  2001/10/21 23:37:49  steve
+ *  Kill const-nonconst warning.
+ *
  * Revision 1.1  2001/03/14 19:27:44  steve
  *  Rearrange VPI support libraries.
  *
