@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm_func.h,v 1.8 1999/09/11 04:43:17 steve Exp $"
+#ident "$Id: vvm_func.h,v 1.9 1999/09/23 04:39:52 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -308,15 +308,27 @@ vvm_bitset_t<1> vvm_binop_lt(const vvm_bitset_t<LW>&l,
       return result;
 }
 
+/*
+ * The <= operator takes operands of natural width and returns a
+ * single bit. The result is V1 if l <= r, otherwise V0;
+ */
 template <unsigned LW, unsigned RW>
 vvm_bitset_t<1> vvm_binop_le(const vvm_bitset_t<LW>&l,
 			     const vvm_bitset_t<RW>&r)
 {
-      assert(LW == RW);
       vvm_bitset_t<1> result;
       result[0] = V1;
-      for (unsigned idx = 0 ;  idx < LW ;  idx += 1)
+      const unsigned common = (LW < RW)? LW : RW;
+      for (unsigned idx = 0 ;  idx < common ;  idx += 1)
 	    result[0] = less_with_cascade(l[idx], r[idx], result[0]);
+
+      if (LW > RW) {
+	    for (unsigned idx = LW ;  idx < RW ;  idx += 1)
+		  if (l[idx] != V0) {
+			result[0] = V0;
+			break;
+		  }
+      }
 
       return result;
 }
@@ -357,6 +369,9 @@ vvm_bitset_t<W> vvm_ternary(vvm_bit_t c, const vvm_bitset_t<W>&t,
 
 /*
  * $Log: vvm_func.h,v $
+ * Revision 1.9  1999/09/23 04:39:52  steve
+ *  The <= operator takes different width operands.
+ *
  * Revision 1.8  1999/09/11 04:43:17  steve
  *  Support ternary and <= operators in vvm.
  *
