@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.46 2003/10/08 23:17:39 steve Exp $"
+#ident "$Id: Makefile.in,v 1.47 2003/10/10 03:31:40 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -49,6 +49,7 @@ LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
 ifeq (@enable_vvp32@,yes)
+vpidir32 = $(libdir)/ivl/@vpidir2@
 ALL32 = all32
 INSTALL32 = install32
 UNINSTALL32 = uninistall32
@@ -85,8 +86,6 @@ sys_readmem_lex.c: sys_readmem_lex.lex
 
 ifeq (@enable_vvp32@,yes)
 
-vpidir32 = $(libdir)/ivl/@vpidir2@
-
 all32: bin32 bin32/system.vpi
 
 bin32:
@@ -98,14 +97,14 @@ bin32/%.o: %.c
 bin32/system.vpi: $(addprefix bin32/,$O)
 	$(CC) -m32 @shared@ -o $@ $(addprefix bin32/,$O) -L../vvp/bin32 $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-install32: all32 $(vpidir2)/system.vpi
+install32: all32 $(vpidir32)/system.vpi
 
-$(vpidir2)/system.vpi: bin32/system.vpi
-	$(INSTALL_PROGRAM) bin32/system.vpi $(vpidir2)/system.vpi
-	$(STRIP) $(strip_dynamic) $(vpidir2)/system.vpi
+$(vpidir32)/system.vpi: bin32/system.vpi
+	$(INSTALL_PROGRAM) bin32/system.vpi $(vpidir32)/system.vpi
+	$(STRIP) $(strip_dynamic) $(vpidir32)/system.vpi
 
 uninstall32:
-	rm -f $(vpidir2)/system.vpi
+	rm -f $(vpidir32)/system.vpi
 endif
 
 clean:
