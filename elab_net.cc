@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.74 2001/09/14 04:16:52 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.75 2001/09/14 04:20:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -512,32 +512,6 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 		  break;
 	    }
 
-#if 0
-	    gate = new NetLogic(scope, des->local_symbol(path),
-				1+dwidth, NetLogic::OR);
-	    connect(gate->pin(0), osig->pin(0));
-	    for (unsigned idx = 0 ;  idx < dwidth ;  idx += 1) {
-		  NetLogic*cmp = new NetLogic(scope, des->local_symbol(path),
-					      3, NetLogic::XOR);
-		  if (idx < lsig->pin_count())
-			connect(cmp->pin(1), lsig->pin(idx));
-		  else
-			connect(cmp->pin(1), zero->pin(0));
-
-		  if (idx < rsig->pin_count())
-			connect(cmp->pin(2), rsig->pin(idx));
-		  else
-			connect(cmp->pin(2), zero->pin(0));
-
-		  connect(cmp->pin(0), gate->pin(idx+1));
-		  des->add_node(cmp);
-
-		  NetNet*tmp = new NetNet(scope, des->local_symbol(path),
-					  NetNet::WIRE);
-		  tmp->local_flag(true);
-		  connect(cmp->pin(0), tmp->pin(0));
-	    }
-#else
 	      /* Oh well, do the general case with a NetCompare. */
 	    { NetCompare*cmp = new NetCompare(scope, des->local_symbol(path),
 					      dwidth);
@@ -557,7 +531,6 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, const string&path,
 	      connect(cmp->pin_ANEB(), osig->pin(0));
 	      gate = cmp;
 	    }
-#endif
 	    break;
 
 	  default:
@@ -1924,6 +1897,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.75  2001/09/14 04:20:49  steve
+ *  dead code.
+ *
  * Revision 1.74  2001/09/14 04:16:52  steve
  *  Elaborate == to NetCompare instead of XNOR and AND
  *  gates. This allows code generators to generate
