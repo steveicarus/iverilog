@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.20 1999/12/16 02:42:15 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.21 1999/12/16 18:54:32 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -98,7 +98,7 @@ class target_xnf  : public target_t {
       static void draw_sym_with_lcaname(ostream&os, string lca,
 					const NetNode*net);
       static void draw_xor(ostream&os, const NetAddSub*, unsigned idx);
-      enum adder_type {FORCE0, LOWER, UPPER, DOUBLE };
+      enum adder_type {FORCE0, LOWER, DOUBLE, LOWER_W_CO, EXAMINE_CI };
       static void draw_carry(ostream&os, const NetAddSub*, unsigned idx,
 			     enum adder_type);
 
@@ -374,42 +374,41 @@ void target_xnf::draw_carry(ostream &os, const NetAddSub*gate, unsigned idx,
 	    "LIBVER=2.0.0" << endl;
 
       // Less significant bit addends, if any
-      if ( type == LOWER || type == DOUBLE ) {
+      if ( type == LOWER || type == DOUBLE || type == LOWER_W_CO ) {
 	    draw_pin(os, "A0", gate->pin_DataA(idx));
 	    draw_pin(os, "B0", gate->pin_DataB(idx));
       }
 
       // More significant bit addends, if any
-      if ( type == UPPER || type == DOUBLE ) {
-	    unsigned int i = (type==UPPER)?idx:(idx+1);
-	    draw_pin(os, "A1", gate->pin_DataA(i));
-	    draw_pin(os, "B1", gate->pin_DataB(i));
+      if ( type == DOUBLE ) {
+	    draw_pin(os, "A1", gate->pin_DataA(idx+1));
+	    draw_pin(os, "B1", gate->pin_DataB(idx+1));
       }
 
-      // Carry input
-      if ( type != FORCE0 && type != UPPER ) {
-	  os  << "    PIN, CIN, I, " << name_cout << "<" <<
-			idx << ">" << endl;
+      // All but FORCE0 cells have carry input
+      if ( type != FORCE0 ) {
+	  os  << "    PIN, CIN, I, " << name_cout << "<" << idx << ">" << endl;
       }
 
       // Connect the Cout0 to a signal so that I can connect
       // it to the adder.
-      if ( type == LOWER || type == DOUBLE ) {
+      switch (type) {
+	  case LOWER:
+	  case DOUBLE:
 	    os << "    PIN, COUT0, O, " << name_cout << "<" << (idx+1) <<
 		  ">" << endl;
+	    break;
+	  case EXAMINE_CI:
+	  case LOWER_W_CO:
+	    draw_pin(os, "COUT0", gate->pin_Cout());
+	    break;
       }
 
       // Connect the Cout, this will connect to the next Cin
-      if ( type == FORCE0 || type == UPPER || type == DOUBLE ) {
+      if ( type == FORCE0 || type == DOUBLE ) {
 	    unsigned int to = (type==FORCE0)?(0):(idx+2);
-	    if (type==UPPER) to=idx+1;
 	    os << "    PIN, COUT, O, " << name_cout << "<" << to <<
 		  ">" << endl;
-      }
-
-      // Carry In for mode UPPER comes from a strange place
-      if ( type == UPPER ) {
-	    os << "    PIN, A0, I, " << name_cout << "<dummy>" << endl;
       }
 
       // These are the mode inputs from the CY_xx pseudo-device
@@ -419,25 +418,23 @@ void target_xnf::draw_carry(ostream &os, const NetAddSub*gate, unsigned idx,
       }
       os << "END" << endl;
 
-      // Complete the dummy force used above
-       if ( type == UPPER ) {
-	    os << "PWR, 0, " << name_cout << "<dummy>" << endl;
-      }
-
       // On to the CY_xx pseudo-device itself
       os << "SYM, " << name_cym << "<" << (idx) << ">, ";
       switch (type) {
-	case FORCE0:
+	  case FORCE0:
 	    os << "CY4_37, CYMODE=FORCE-0" << endl;
 	    break;
-	case LOWER:
+	  case LOWER:
 	    os << "CY4_01, CYMODE=ADD-F-CI" << endl;
 	    break;
-	case UPPER:
-	    os << "CY4_03, CYMODE=ADD-G-F1" << endl;
+	  case LOWER_W_CO:
+	    os << "CY4_01, CYMODE=ADD-F-CI" << endl;
 	    break;
-	case DOUBLE:
+	  case DOUBLE:
 	    os << "CY4_02, CYMODE=ADD-FG-CI" << endl;
+	    break;
+	  case EXAMINE_CI:
+	    os << "CY4_42, CYMODE-EXAMINE-CI" << endl;
 	    break;
       }
       for (unsigned cn = 0 ;  cn < 8 ;  cn += 1) {
@@ -464,32 +461,57 @@ void target_xnf::lpm_add_sub(ostream&os, const NetAddSub*gate)
 {
       unsigned width = gate->width();
 
-      // Don't handle carry output yet
-      assert (! gate->pin_Cout().is_linked());
-      unsigned carry_width = width-1;
-
-	/* Make the force-0 cary mode object to initialize the bottom
+	/* Make the force-0 carry mode object to initialize the bottom
 	   bits of the carry chain. Label this with the width instead
 	   of the bit position so that symbols don't clash. */
-      if (carry_width%2) {
-            draw_carry(os, gate, width, FORCE0);
-      } else {
-	    draw_carry(os, gate, 0, UPPER);
-      }
+
+      draw_carry(os, gate, width+1, FORCE0);
+
 
 	/* Now make the 2 bit adders that chain from the cin
-	   initializer and up. Save the tail bit (if there is one) for
-	   later. */
-      for (unsigned idx = 1-(carry_width%2) ;  idx < carry_width-1 ;  idx += 2) {
+	   initializer and up. Save the tail bits for later. */
+      for (unsigned idx = 0 ;  idx < width-2 ;  idx += 2)
 	    draw_carry(os, gate, idx, DOUBLE);
+
+	/* Always have one or two tail bits. The situation gets a
+	   little tricky if we want the carry output, so handle that
+	   here.
+
+	   If the carry-out is connected, and there are an even number
+	   of data bits, we need to see the cout from the CLB. This is
+	   done by configuring the top CLB CY device as ADD-FG-CI (to
+	   activate cout) and create an extra CLB CY device on top of
+	   the carry chain configured EXAMINE-CI to put the carry into
+	   the G function block.
+
+	   IF the carry-out is connected and there are an odd number
+	   of data bits, then the top CLB can be configured to carry
+	   the top bit in the F unit and deliver the carry out through
+	   the G unit.
+
+	   If the carry-out is not connected, then configure this top
+	   CLB as ADD-F-CI. The draw_xor for the top bit will include
+	   the F carry if needed. */
+
+      if (gate->pin_Cout().is_linked()) {
+	    if (width%2 == 0) {
+		  draw_carry(os, gate, width-2, DOUBLE);
+		  draw_carry(os, gate, width, EXAMINE_CI);
+	    } else {
+		  draw_carry(os, gate, width-1, LOWER_W_CO);
+	    }
+
+      } else {
+	    if (width%2 == 0)
+		  draw_carry(os, gate, width-2, LOWER);
+	    else
+		  draw_carry(os, gate, width-1, LOWER);
       }
 
-	/* Always have a tail bit */
-      draw_carry(os, gate, carry_width-1, LOWER);
-
-      for (unsigned idx = 0 ;  idx < width ;  ++idx) {
+	/* Now draw all the single bit (plus carry in) adders from XOR
+	   gates. This puts the F and G units to use. */
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
 	    draw_xor(os, gate, idx);
-      }
 
 }
 
@@ -687,6 +709,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.21  1999/12/16 18:54:32  steve
+ *  Capture the carry out of carry-chain addition.
+ *
  * Revision 1.20  1999/12/16 02:42:15  steve
  *  Simulate carry output on adders.
  *
