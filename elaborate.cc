@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.300 2004/03/08 00:47:44 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.301 2004/05/25 03:42:58 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2022,8 +2022,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       }
 
 	// If the condition expression is more then 1 bits, then
-	// generate a comparison operator to get the result down to
-	// one bit. Turn <e> into |<e>;
+	// generate a reduction operator to get the result down to
+	// one bit. In other words, Turn <e> into |<e>;
 
       if (expr->expr_width() < 1) {
 	    cerr << get_line() << ": internal error: "
@@ -2037,30 +2037,51 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    expr = cmp;
       }
 
-      assert(expr->expr_width() == 1);
-      expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
-      NetExpr*tmp = expr->eval_tree();
-      if (tmp) {
-	    delete expr;
-	    expr = tmp;
-      }
-
 	/* Detect the unusual case that the wait expression is
 	   constant. Constant true is OK (it becomes transparent) but
 	   constant false is almost certainly not what is intended. */
+      assert(expr->expr_width() == 1);
       if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
 	    verinum val = ce->value();
 	    assert(val.len() == 1);
+
+	      /* Constant true -- wait(1) <s1> reduces to <s1>. */
 	    if (val[0] == verinum::V1) {
 		  delete expr;
 		  assert(enet);
 		  return enet;
 	    }
 
+	      /* Otherwise, false. wait(0) blocks permanently. */
+
 	    cerr << get_line() << ": warning: wait expression is "
 		 << "constant false." << endl;
 	    cerr << get_line() << ":        : The statement will "
 		 << "block permanently." << endl;
+
+	      /* Create an event wait and an otherwise unreferenced
+		 event variable to force a perpetual wait. */
+	    NetEvent*wait_event = new NetEvent(scope->local_symbol());
+	    scope->add_event(wait_event);
+
+	    NetEvWait*wait = new NetEvWait(0);
+	    wait->add_event(wait_event);
+	    wait->set_line(*this);
+
+	    delete expr;
+	    delete enet;
+	    return wait;
+      }
+
+	/* Invert the sense of the test with an exclusive NOR. In
+	   other words, if this adjusted expression returns TRUE, then
+	   wait. */
+      assert(expr->expr_width() == 1);
+      expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
+      NetExpr*tmp = expr->eval_tree();
+      if (tmp) {
+	    delete expr;
+	    expr = tmp;
       }
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());
@@ -2102,7 +2123,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       if (enet == 0)
 	    return loop;
 
-	/* Create a sequential block to conbine the wait loop and the
+	/* Create a sequential block to combine the wait loop and the
 	   delayed statement. */
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
       block->append(loop);
@@ -2679,6 +2700,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.301  2004/05/25 03:42:58  steve
+ *  Handle wait with constant-false expression.
+ *
  * Revision 1.300  2004/03/08 00:47:44  steve
  *  primitive ports can bind bi name.
  *
