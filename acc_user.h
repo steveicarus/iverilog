@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: acc_user.h,v 1.2 2002/05/30 02:06:05 steve Exp $"
+#ident "$Id: acc_user.h,v 1.3 2002/06/02 19:03:29 steve Exp $"
 #endif
 
 /*
@@ -42,16 +42,31 @@
 
 EXTERN_C_START
 
+/*
+ * This is a declaration of the "handle" type that is compatible with
+ * the vpiHandle from vpi_user.h.
+ */
+typedef struct __vpiHandle *handle;
+
 extern int acc_error_flag;
 
 extern int acc_initialize(void);
+
 extern void acc_close(void);
+
+extern handle acc_handle_tfarg(int n);
+
+extern handle add_next_topmod(handle prev_topmod);
+
 extern char*acc_product_version(void);
 
 EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.3  2002/06/02 19:03:29  steve
+ *  Add acc_handle_tfarg and acc_next_topmode
+ *
  * Revision 1.2  2002/05/30 02:06:05  steve
  *  Implement acc_product_version.
  *
