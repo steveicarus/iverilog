@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_nexus.cc,v 1.9 2000/08/02 00:57:03 steve Exp $"
+#ident "$Id: vvm_nexus.cc,v 1.10 2000/10/23 00:32:48 steve Exp $"
 #endif
 
 # include  "vvm_nexus.h"
@@ -30,7 +30,7 @@ vvm_nexus::vvm_nexus()
       recvrs_ = 0;
       ival_ = 0;
       nival_ = 0;
-      value_ = HiZ;
+      value_ = 0;
       force_ = 0;
       forcer_ = 0;
       forcer_key_ = 0;
@@ -317,6 +317,9 @@ void vvm_delayed_assign(vvm_nexus&l_val, vpip_bit_t r_val,
 
 /*
  * $Log: vvm_nexus.cc,v $
+ * Revision 1.10  2000/10/23 00:32:48  steve
+ *  Nexus value is initially unknown so that it propogates for sure.
+ *
  * Revision 1.9  2000/08/02 00:57:03  steve
  *  tri01 support in vvm.
  *
