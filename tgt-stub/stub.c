@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.55 2002/04/22 03:15:25 steve Exp $"
+#ident "$Id: stub.c,v 1.56 2002/04/25 05:03:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,6 +68,13 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 		fprintf(out, ", %s>\n", sign);
 		break;
 	  }
+
+	  case IVL_EX_SELECT:
+	    fprintf(out, "%*s<bit select, width=%u, %s>\n", ind, "",
+		    width, sign);
+	    show_expression(ivl_expr_oper1(net), ind+3);
+	    show_expression(ivl_expr_oper2(net), ind+3);
+	    break;
 
 	  case IVL_EX_STRING:
 	    fprintf(out, "%*s<string=\"%s\", width=%u>\n", ind, "",
@@ -618,6 +625,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.56  2002/04/25 05:03:11  steve
+ *  Dump bit select expressions.
+ *
  * Revision 1.55  2002/04/22 03:15:25  steve
  *  Keep delays applied to BUFZ devices.
  *
