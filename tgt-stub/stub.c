@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.39 2001/04/29 23:17:38 steve Exp $"
+#ident "$Id: stub.c,v 1.40 2001/05/03 01:52:45 steve Exp $"
 #endif
 
 /*
@@ -323,7 +323,9 @@ static int show_process(ivl_process_t net, void*x)
 static void show_event(ivl_event_t net)
 {
       unsigned idx;
-      fprintf(out, "  event %s;\n", ivl_event_name(net));
+      fprintf(out, "  event %s (%u pos, %u neg, %u any);\n",
+	      ivl_event_name(net), ivl_event_npos(net),
+	      ivl_event_nneg(net), ivl_event_nany(net));
 
       for (idx = 0 ;  idx < ivl_event_nany(net) ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_event_any(net, idx);
@@ -548,6 +550,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.40  2001/05/03 01:52:45  steve
+ *  dll build of many probes forgot to index the probe.
+ *
  * Revision 1.39  2001/04/29 23:17:38  steve
  *  Carry drive strengths in the ivl_nexus_ptr_t, and
  *  handle constant devices in targets.'

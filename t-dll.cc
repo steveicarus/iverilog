@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.38 2001/04/29 23:17:38 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.39 2001/05/03 01:52:45 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -313,7 +313,7 @@ void dll_target::event(const NetEvent*net)
       if (net->nprobe() >= 1) {
 
 	    for (unsigned idx = 0 ;  idx < net->nprobe() ;  idx += 1) {
-		  const NetEvProbe*pr = net->probe(0);
+		  const NetEvProbe*pr = net->probe(idx);
 		  switch (pr->edge()) {
 		      case NetEvProbe::ANYEDGE:
 			obj->nany += pr->pin_count();
@@ -893,6 +893,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.39  2001/05/03 01:52:45  steve
+ *  dll build of many probes forgot to index the probe.
+ *
  * Revision 1.38  2001/04/29 23:17:38  steve
  *  Carry drive strengths in the ivl_nexus_ptr_t, and
  *  handle constant devices in targets.'
