@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.158 2002/08/19 02:39:16 steve Exp $"
+#ident "$Id: parse.y,v 1.159 2002/09/01 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -31,6 +31,7 @@ extern void lex_start_table();
 extern void lex_end_table();
 
 static svector<PExpr*>* active_range = 0;
+static bool active_signed = false;
 
 /*
  * These are some common strength pairs that are used as defaults when
@@ -1619,7 +1620,8 @@ parameter_assign
 			delete tmp;
 			tmp = 0;
 		  } else {
-			pform_set_parameter($1, active_range, tmp);
+			pform_set_parameter($1, active_signed,
+					    active_range, tmp);
 		  }
 		  delete $1;
 		}
@@ -1627,8 +1629,15 @@ parameter_assign
 
 parameter_assign_decl
 	: parameter_assign_list
-	| range { active_range = $1; } parameter_assign_list
+	| range { active_range = $1; active_signed = false; }
+          parameter_assign_list
 		{ active_range = 0;
+		  active_signed = false;
+		}
+	| K_signed range { active_range = $2; active_signed = true; }
+          parameter_assign_list
+		{ active_range = 0;
+		  active_signed = false;
 		}
 	;
 

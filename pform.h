@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.63 2002/08/19 02:39:17 steve Exp $"
+#ident "$Id: pform.h,v 1.64 2002/09/01 03:01:48 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -197,6 +197,7 @@ extern void pform_set_type_attrib(const string&name, const string&key,
 				  char*value);
 
 extern void pform_set_parameter(const string&name,
+				bool signed_flag,
 				svector<PExpr*>*range,
 				PExpr*expr);
 extern void pform_set_localparam(const string&name, PExpr*expr);
@@ -258,6 +259,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.64  2002/09/01 03:01:48  steve
+ *  Properly cast signedness of parameters with ranges.
+ *
  * Revision 1.63  2002/08/19 02:39:17  steve
  *  Support parameters with defined ranges.
  *

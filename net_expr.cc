@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.6 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.7 2002/09/01 03:01:48 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -110,6 +110,30 @@ unsigned NetEConcat::repeat() const
       return repeat_value_;
 }
 
+NetEParam::NetEParam()
+: des_(0)
+{
+}
+
+NetEParam::NetEParam(Design*d, NetScope*s, const hname_t&n)
+: des_(d), scope_(s), name_(n)
+{
+}
+
+NetEParam::~NetEParam()
+{
+}
+
+bool NetEParam::has_width() const
+{
+      return false;
+}
+
+NetEParam* NetEParam::dup_expr() const
+{
+      return new NetEParam(des_, scope_, name_);
+}
+
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid)
 : expr_(exp), base_(base)
 {
@@ -147,6 +171,9 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.7  2002/09/01 03:01:48  steve
+ *  Properly cast signedness of parameters with ranges.
+ *
  * Revision 1.6  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

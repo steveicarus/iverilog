@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.15 2002/08/19 02:39:16 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.16 2002/09/01 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -64,13 +64,21 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	    scope->set_parameter((*cur).first, new NetEParam);
+	    NetEParam*tmp = new NetEParam;
+	    if ((*cur).second.msb)
+		  tmp->cast_signed( (*cur).second.signed_flag );
+
+	    scope->set_parameter((*cur).first, tmp);
       }
 
       for (mparm_it_t cur = localparams.begin()
 		 ; cur != localparams.end() ;  cur ++) {
 
-	    scope->set_parameter((*cur).first, new NetEParam);
+	    NetEParam*tmp = new NetEParam;
+	    if ((*cur).second.msb)
+		  tmp->cast_signed( (*cur).second.signed_flag );
+
+	    scope->set_parameter((*cur).first, tmp);
       }
 
 
@@ -111,9 +119,16 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 
 		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(val)) {
 			verinum tval (tmp->value(), width);
+			tval.has_sign((*cur).second.signed_flag);
 			val = new NetEConst(tval);
 			delete tmp;
 		  }
+
+		    /* If the parameter has a range, then the
+		       signedness is taken from the parameter
+		       declaration, and the signedness of the
+		       expression is ignored. */
+		  val->cast_signed( (*cur).second.signed_flag );
 	    }
 
 	    val = scope->set_parameter((*cur).first, val);
@@ -497,6 +512,9 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.16  2002/09/01 03:01:48  steve
+ *  Properly cast signedness of parameters with ranges.
+ *
  * Revision 1.15  2002/08/19 02:39:16  steve
  *  Support parameters with defined ranges.
  *

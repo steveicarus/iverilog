@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.198 2002/08/19 00:06:12 steve Exp $"
+#ident "$Id: netlist.cc,v 1.199 2002/09/01 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2029,30 +2029,6 @@ NetEMemory* NetEMemory::dup_expr() const
       assert(0);
 }
 
-NetEParam::NetEParam()
-: des_(0)
-{
-}
-
-NetEParam::NetEParam(Design*d, NetScope*s, const hname_t&n)
-: des_(d), scope_(s), name_(n)
-{
-}
-
-NetEParam::~NetEParam()
-{
-}
-
-bool NetEParam::has_width() const
-{
-      return false;
-}
-
-NetEParam* NetEParam::dup_expr() const
-{
-      return new NetEParam(des_, scope_, name_);
-}
-
 NetEScope::NetEScope(NetScope*s)
 : scope_(s)
 {
@@ -2324,6 +2300,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.199  2002/09/01 03:01:48  steve
+ *  Properly cast signedness of parameters with ranges.
+ *
  * Revision 1.198  2002/08/19 00:06:12  steve
  *  Allow release to handle removal of target net.
  *

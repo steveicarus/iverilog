@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.101 2002/08/19 02:39:17 steve Exp $"
+#ident "$Id: pform.cc,v 1.102 2002/09/01 03:01:48 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1166,7 +1166,8 @@ void pform_set_reg_idx(const char*name, PExpr*l, PExpr*r)
       cur->set_memory_idx(l, r);
 }
 
-void pform_set_parameter(const string&name, svector<PExpr*>*range, PExpr*expr)
+void pform_set_parameter(const string&name, bool signed_flag,
+			 svector<PExpr*>*range, PExpr*expr)
 {
       assert(expr);
       pform_cur_module->parameters[name].expr = expr;
@@ -1181,7 +1182,7 @@ void pform_set_parameter(const string&name, svector<PExpr*>*range, PExpr*expr)
 	    pform_cur_module->parameters[name].msb = 0;
 	    pform_cur_module->parameters[name].lsb = 0;
       }
-      pform_cur_module->parameters[name].signed_flag = false;
+      pform_cur_module->parameters[name].signed_flag = signed_flag;
 
       pform_cur_module->param_names.push_back(name);
 }
@@ -1359,6 +1360,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.102  2002/09/01 03:01:48  steve
+ *  Properly cast signedness of parameters with ranges.
+ *
  * Revision 1.101  2002/08/19 02:39:17  steve
  *  Support parameters with defined ranges.
  *
