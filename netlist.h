@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.215 2001/10/07 03:38:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.216 2001/10/16 02:19:27 steve Exp $"
 #endif
 
 /*
@@ -523,7 +523,8 @@ class NetCompare  : public NetNode {
 class NetDivide  : public NetNode {
 
     public:
-      NetDivide(const string&n, unsigned width, unsigned wa, unsigned wb);
+      NetDivide(NetScope*scope, const string&n,
+		unsigned width, unsigned wa, unsigned wb);
       ~NetDivide();
 
       unsigned width_r() const;
@@ -2848,6 +2849,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.216  2001/10/16 02:19:27  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.215  2001/10/07 03:38:08  steve
  *  parameter names do not have defined size.
  *

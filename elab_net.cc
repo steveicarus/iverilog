@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_net.cc,v 1.75 2001/09/14 04:20:49 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.76 2001/10/16 02:19:26 steve Exp $"
 #endif
 
 # include "config.h"
@@ -586,7 +586,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, const string&path,
       }
 
 	// Create a device with the calculated dimensions.
-      NetDivide*div = new NetDivide(des->local_symbol(path), rwidth,
+      NetDivide*div = new NetDivide(scope, des->local_symbol(path), rwidth,
 				    lsig->pin_count(),
 				    rsig->pin_count());
       des->add_node(div);
@@ -1897,6 +1897,9 @@ NetNet* PEUnary::elaborate_net(Design*des, const string&path,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.76  2001/10/16 02:19:26  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.75  2001/09/14 04:20:49  steve
  *  dead code.
  *

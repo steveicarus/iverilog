@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.172 2001/10/07 03:38:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.173 2001/10/16 02:19:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -973,9 +973,9 @@ const Link& NetCompare::pin_DataB(unsigned idx) const
       return pin(8+width_+idx);
 }
 
-NetDivide::NetDivide(const string&n, unsigned wr,
+NetDivide::NetDivide(NetScope*sc, const string&n, unsigned wr,
 		     unsigned wa, unsigned wb)
-: NetNode(n, wr+wa+wb), width_r_(wr), width_a_(wa), width_b_(wb)
+: NetNode(sc, n, wr+wa+wb), width_r_(wr), width_a_(wa), width_b_(wb)
 {
       unsigned p = 0;
       for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
@@ -2429,6 +2429,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.173  2001/10/16 02:19:27  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.172  2001/10/07 03:38:08  steve
  *  parameter names do not have defined size.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.83 2001/09/30 16:45:10 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.84 2001/10/16 02:19:27 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -208,6 +208,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CMP_GE =  1,
       IVL_LPM_CMP_GT =  2,
       IVL_LPM_CMP_NE = 11,
+      IVL_LPM_DIVIDE = 12,
       IVL_LPM_FF     =  3,
       IVL_LPM_MULT   =  4,
       IVL_LPM_MUX    =  5,
@@ -963,6 +964,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.84  2001/10/16 02:19:27  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.83  2001/09/30 16:45:10  steve
  *  Fix some Cygwin DLL handling. (Venkat Iyer)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.67 2001/09/16 22:19:42 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.68 2001/10/16 02:19:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -548,6 +548,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -582,6 +583,7 @@ extern "C" ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -619,6 +621,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
       switch (net->type) {
 	  case IVL_LPM_ADD:
+	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    assert(idx < net->u_.arith.width);
@@ -737,6 +740,7 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_DIVIDE:
 	  case IVL_LPM_MULT:
 	  case IVL_LPM_SUB:
 	    return net->u_.arith.width;
@@ -1385,6 +1389,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.68  2001/10/16 02:19:27  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.67  2001/09/16 22:19:42  steve
  *  Support attributes to logic gates.
  *

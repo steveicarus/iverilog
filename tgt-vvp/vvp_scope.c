@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.49 2001/10/15 02:58:27 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.50 2001/10/16 02:19:27 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -230,6 +230,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_SHIFTR:
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_DIVIDE:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
 			sprintf(result, "L_%s[%u]",
@@ -891,6 +892,9 @@ static void draw_lpm_add(ivl_lpm_t net)
 	  case IVL_LPM_MULT:
 	    type = "mult";
 	    break;
+	  case IVL_LPM_DIVIDE:
+	    type = "div";
+	    break;
 	  default:
 	    assert(0);
       }
@@ -1089,6 +1093,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_SUB:
 	  case IVL_LPM_MULT:
+	  case IVL_LPM_DIVIDE:
 	    draw_lpm_add(net);
 	    return;
 
@@ -1208,6 +1213,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.50  2001/10/16 02:19:27  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.49  2001/10/15 02:58:27  steve
  *  Carry the type of the scope (Stephan Boettcher)
  *

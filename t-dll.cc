@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.65 2001/10/11 00:13:19 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.66 2001/10/16 02:19:27 steve Exp $"
 #endif
 
 # include "config.h"
@@ -954,6 +954,64 @@ void dll_target::lpm_compare(const NetCompare*net)
       scope_add_lpm(obj->scope, obj);
 }
 
+void dll_target::lpm_divide(const NetDivide*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_DIVIDE;
+      obj->name  = strdup(net->name());
+      assert(net->scope());
+      obj->scope = find_scope(des_.root_, net->scope());
+      assert(obj->scope);
+
+      unsigned wid = net->width_r();
+
+      obj->u_.arith.width = wid;
+
+      obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
+      obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
+      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    const Nexus*nex;
+
+	    nex = net->pin_Result(idx).nexus();
+	    assert(nex->t_cookie());
+
+	    obj->u_.arith.q[idx] = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.arith.q[idx], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    if (idx < net->width_a()) {
+		  nex = net->pin_DataA(idx).nexus();
+		  assert(nex);
+		  assert(nex->t_cookie());
+
+		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    } else {
+		  obj->u_.arith.a[idx] = 0;
+	    }
+
+
+	    if (idx < net->width_b()) {
+		  nex = net->pin_DataB(idx).nexus();
+		  assert(nex);
+		  assert(nex->t_cookie());
+
+		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    } else {
+		  obj->u_.arith.b[idx] = 0;
+	    }
+      }
+
+      scope_add_lpm(obj->scope, obj);
+}
+
 void dll_target::lpm_ff(const NetFF*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
@@ -1559,6 +1617,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.66  2001/10/16 02:19:27  steve
+ *  Support IVL_LPM_DIVIDE for structural divide.
+ *
  * Revision 1.65  2001/10/11 00:13:19  steve
  *  Initialize attributes for bufz devices.
  *
