@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_tfarg.c,v 1.3 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: a_handle_tfarg.c,v 1.4 2003/03/14 04:58:50 steve Exp $"
 #endif
 
 #include  <acc_user.h>
@@ -37,8 +37,13 @@ handle acc_handle_tfarg(int n)
 	    /* find nth arg */
 	    while (n > 0) {
 		  rtn_h = vpi_scan(sys_i);
+		  if (rtn_h == 0)
+			break;
 		  n--;
 	    }
+
+	    if (rtn_h) vpi_free_object(sys_i);
+
       } else {
 	    rtn_h = (vpiHandle) 0;
       }
@@ -53,6 +58,9 @@ handle acc_handle_tfinst(void)
 
 /*
  * $Log: a_handle_tfarg.c,v $
+ * Revision 1.4  2003/03/14 04:58:50  steve
+ *  Free the iterator when Im done.
+ *
  * Revision 1.3  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_tfarg.c,v 1.4 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: a_fetch_tfarg.c,v 1.5 2003/03/14 04:58:50 steve Exp $"
 #endif
 
 #include  <vpi_user.h>
@@ -43,6 +43,7 @@ int acc_fetch_tfarg_int(int n)
 	    value.format=vpiIntVal;
 	    vpi_get_value(arg_h, &value);
 	    rtn = value.value.integer; 
+	    vpi_free_object(sys_i);
       } else {
 	    rtn = 0;
       }
@@ -78,6 +79,9 @@ char *acc_fetch_tfarg_str(int n)
 
 /*
  * $Log: a_fetch_tfarg.c,v $
+ * Revision 1.5  2003/03/14 04:58:50  steve
+ *  Free the iterator when Im done.
+ *
  * Revision 1.4  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *
