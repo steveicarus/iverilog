@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvm.h,v 1.14 1999/10/06 01:28:18 steve Exp $"
+#ident "$Id: vvm.h,v 1.15 1999/10/13 03:15:51 steve Exp $"
 #endif
 
 # include  <vector>
@@ -126,8 +126,8 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	    { for (unsigned idx = 0 ;  idx < WIDTH ;  idx += 1)
 		  bits_[idx] = Vz;
 	    }
-      vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
-	    { bits_ = that.bits_; }
+	//vvm_bitset_t(const vvm_bitset_t<WIDTH>&that)
+	//    { bits_ = that.bits_; }
       vvm_bitset_t(const vvm_bits_t&that)
 	    { unsigned wid = WIDTH;
 	      if (that.get_width() < WIDTH)
@@ -154,11 +154,11 @@ template <unsigned WIDTH> class vvm_bitset_t  : public vvm_bits_t {
 	      return result;
 	    }
 
-      vvm_bitset_t<WIDTH>& operator= (const vvm_bitset_t<WIDTH>&that)
-	    { if (this == &that) return *this;
-	      bits_ = that.bits_;
-	      return *this;
-	    }
+	//vvm_bitset_t<WIDTH>& operator= (const vvm_bitset_t<WIDTH>&that)
+	//    { if (this == &that) return *this;
+	//      bits_ = that.bits_;
+	//      return *this;
+	//    }
 
     private:
       vvm_bit_t bits_[WIDTH];
@@ -304,6 +304,9 @@ template <unsigned WIDTH> class vvm_signal_t  : public vvm_monitor_t {
 
 /*
  * $Log: vvm.h,v $
+ * Revision 1.15  1999/10/13 03:15:51  steve
+ *  Remove useless operator=.
+ *
  * Revision 1.14  1999/10/06 01:28:18  steve
  *  The $finish task should work immediately.
  *
