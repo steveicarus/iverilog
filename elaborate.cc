@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.32 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.33 1999/06/03 05:16:25 steve Exp $"
 #endif
 
 /*
@@ -1015,7 +1015,31 @@ NetProc* PCase::elaborate(Design*des, const string&path) const
 
 NetProc* PCondit::elaborate(Design*des, const string&path) const
 {
+	// Elaborate and try to evaluate the conditional expression.
       NetExpr*expr = expr_->elaborate_expr(des, path);
+      NetExpr*tmp = expr->eval_tree();
+      if (tmp) {
+	    delete expr;
+	    expr = tmp;
+      }
+
+	// If the condition of the conditional statement is constant,
+	// then look at the value and elaborate either the if statement
+	// or the else statement. I don't need both. If there is no
+	// else_ statement, the use an empty block as a noop.
+      if (NetEConst*ce = dynamic_cast<NetEConst*>(expr)) {
+	    verinum val = ce->value();
+	    delete expr;
+	    if (val[0] == verinum::V1)
+		  return if_->elaborate(des, path);
+	    else if (else_)
+		  return else_->elaborate(des, path);
+	    else
+		  return new NetBlock(NetBlock::SEQU);
+      }
+					  
+	// Well, I actually need to generate code to handle the
+	// conditional, so elaborate.
       NetProc*i = if_->elaborate(des, path);
       NetProc*e = else_? else_->elaborate(des, path) : 0;
 
@@ -1248,6 +1272,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.33  1999/06/03 05:16:25  steve
+ *  Compile time evalutation of constant expressions.
+ *
  * Revision 1.32  1999/06/02 15:38:46  steve
  *  Line information with nets.
  *

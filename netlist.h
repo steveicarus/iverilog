@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.34 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: netlist.h,v 1.35 1999/06/03 05:16:25 steve Exp $"
 #endif
 
 /*
@@ -337,6 +337,12 @@ class NetExpr  : public LineInfo {
 	// Coerce the expression to have a specific width. If the
 	// coersion works, then return true. Otherwise, return false.
       virtual bool set_width(unsigned);
+
+	// This method evaluates the expression and returns an
+	// equivilent expression that is reduced as far as compile
+	// time knows how. Essentially, this is designed to fold
+	// constants.
+      virtual NetExpr*eval_tree();
 
 	// Make a duplicate of myself, and subexpressions if I have
 	// any. This is a deep copy operation.
@@ -876,10 +882,17 @@ class NetEBinary  : public NetExpr {
 
       virtual bool set_width(unsigned w);
 
+	// If both of my subexpressions are constants, then I can
+	// probably evaluate this part of the expression at compile
+	// time.
+      virtual NetExpr* eval_tree();
+
       virtual NetEBinary* dup_expr() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
+
+      NetExpr*eval_eqeq();
 
     private:
       char op_;
@@ -1165,6 +1178,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.35  1999/06/03 05:16:25  steve
+ *  Compile time evalutation of constant expressions.
+ *
  * Revision 1.34  1999/06/02 15:38:46  steve
  *  Line information with nets.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.30 1999/06/02 15:38:46 steve Exp $"
+#ident "$Id: netlist.cc,v 1.31 1999/06/03 05:16:25 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -404,6 +404,11 @@ bool NetExpr::set_width(unsigned w)
       return false;
 }
 
+NetExpr* NetExpr::eval_tree()
+{
+      return 0;
+}
+
 NetEBinary::NetEBinary(char op, NetExpr*l, NetExpr*r)
 : op_(op), left_(l), right_(r)
 {
@@ -426,7 +431,9 @@ bool NetEBinary::set_width(unsigned w)
 	  case 'n': /* != */
 	    assert(w == 1);
 	    expr_width(w);
-	    flag = right_->set_width(left_->expr_width());
+	    flag = left_->set_width(right_->expr_width());
+	    if (!flag)
+		  flag = right_->set_width(left_->expr_width());
 	    break;
 
 	  case 'l': // left shift  (<<)
@@ -466,6 +473,50 @@ bool NetEBinary::set_width(unsigned w)
 NetEBinary* NetEBinary::dup_expr() const
 {
       assert(0);
+}
+
+NetExpr* NetEBinary::eval_eqeq()
+{
+      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      if (l == 0) return 0;
+      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      if (r == 0) return 0;
+
+      const verinum&lv = l->value();
+      const verinum&rv = r->value();
+
+      if (lv.len() < rv.len())
+	    return 0;
+
+      verinum result(verinum::V1, 1);
+      for (unsigned idx = 0 ; idx < lv.len(); idx += 1) {
+	    if (lv[idx] != rv[idx])
+		  result = verinum::V0;
+      }
+
+      return new NetEConst(result);
+}
+
+NetExpr* NetEBinary::eval_tree()
+{
+      NetExpr*tmp = left_->eval_tree();
+      if (tmp) {
+	    delete left_;
+	    left_ = tmp;
+      }
+      tmp = right_->eval_tree();
+      if (tmp){
+	    delete right_;
+	    right_ = tmp;
+      }
+
+      switch (op_) {
+	  case 'e':
+	    return eval_eqeq();
+
+	  default:
+	    return 0;
+      }
 }
 
 NetEConst::~NetEConst()
@@ -539,11 +590,9 @@ NetESignal::~NetESignal()
 
 bool NetESignal::set_width(unsigned w)
 {
-      if (w != pin_count()) {
-	    cerr << get_line() << ": " << *this << " cannot be made "
-		 << w << " bits wide." << endl;
+      if (w != pin_count())
 	    return false;
-      }
+
       assert(w == pin_count());
       expr_width(w);
       return true;
@@ -1069,6 +1118,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.31  1999/06/03 05:16:25  steve
+ *  Compile time evalutation of constant expressions.
+ *
  * Revision 1.30  1999/06/02 15:38:46  steve
  *  Line information with nets.
  *
