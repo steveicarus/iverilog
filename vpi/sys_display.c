@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.18 2000/10/28 00:51:42 steve Exp $"
+#ident "$Id: sys_display.c,v 1.19 2000/11/04 01:52:57 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -28,6 +28,7 @@
 
 struct strobe_cb_info {
       char*name;
+      vpiHandle scope;
       vpiHandle*items;
       unsigned nitems;
 };
@@ -163,8 +164,7 @@ static int format_str(vpiHandle scope, unsigned int mcd,
       return idx;
 }
 
-static void do_display(vpiHandle scope, unsigned int mcd,
-		       struct strobe_cb_info*info)
+static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 {
       s_vpi_value value;
       int idx;
@@ -182,7 +182,7 @@ static void do_display(vpiHandle scope, unsigned int mcd,
 		  if (vpi_get(vpiConstType, item) == vpiStringConst) {
 			value.format = vpiStringVal;
 			vpi_get_value(item, &value);
-			idx += format_str(scope, mcd, value.value.str,
+			idx += format_str(info->scope, mcd, value.value.str,
 					  info->nitems-idx-1,
 					  info->items+idx+1);
 		  } else {
@@ -222,10 +222,10 @@ static int sys_display_calltf(char *name)
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
       assert(scope);
-
+      info.scope = scope;
       array_from_iterator(&info, argv);
 
-      do_display(scope, 1, &info);
+      do_display(1, &info);
 
       free(info.items);
 
@@ -247,7 +247,7 @@ static int strobe_cb(p_cb_data cb)
 {
       struct strobe_cb_info*info = (struct strobe_cb_info*)cb->user_data;
 
-      do_display(0, 1, info);
+      do_display(1, info);
 
       vpi_printf("\n");
 
@@ -264,6 +264,7 @@ static int sys_strobe_calltf(char*name)
       struct t_vpi_time time;
 
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle scope = vpi_handle(vpiScope, sys);
 
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
@@ -271,6 +272,7 @@ static int sys_strobe_calltf(char*name)
 
       array_from_iterator(info, argv);
       info->name = strdup(name);
+      info->scope= scope;
 
       time.type = vpiSimTime;
       time.low = 0;
@@ -293,13 +295,13 @@ static int sys_strobe_calltf(char*name)
  * though that monitor may be watching many variables).
  */
 
-static struct strobe_cb_info monitor_info = { 0, 0, 0 };
+static struct strobe_cb_info monitor_info = { 0, 0, 0, 0 };
 static int monitor_scheduled = 0;
 static vpiHandle *monitor_callbacks = 0;
 
 static int monitor_cb_2(p_cb_data cb)
 {
-      do_display(0, 1, &monitor_info);
+      do_display(1, &monitor_info);
       vpi_printf("\n");
       monitor_scheduled = 0;
       return 0;
@@ -344,6 +346,7 @@ static int sys_monitor_calltf(char*name)
       struct t_vpi_time time;
 
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle scope = vpi_handle(vpiScope, sys);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
       if (monitor_callbacks) {
@@ -363,6 +366,7 @@ static int sys_monitor_calltf(char*name)
 
       array_from_iterator(&monitor_info, argv);
       monitor_info.name = strdup(name);
+      monitor_info.scope = scope;
 
       monitor_callbacks = calloc(monitor_info.nitems, sizeof(vpiHandle));
 
@@ -465,7 +469,7 @@ static int sys_fdisplay_calltf(char *name)
       mcd = value.value.integer;
 
       array_from_iterator(&info, argv);
-      do_display(0, mcd, &info);
+      do_display(mcd, &info);
       free(info.items);
 
       if (strcmp(name,"$fdisplay") == 0)
@@ -581,6 +585,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.19  2000/11/04 01:52:57  steve
+ *  Scope information is needed by all types of display tasks.
+ *
  * Revision 1.18  2000/10/28 00:51:42  steve
  *  Add scope to threads in vvm, pass that scope
  *  to vpi sysTaskFunc objects, and add vpi calls
