@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_callback.cc,v 1.17 2002/05/19 05:18:16 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.18 2002/05/28 22:55:20 steve Exp $"
 #endif
 
 /*
@@ -416,14 +416,14 @@ int vpi_remove_cb(vpiHandle ref)
 
 void callback_execute(struct __vpiCallback*cur)
 {
-      assert(vpi_mode_flag == VPI_MODE_NONE);
+      const vpi_mode_t save_mode = vpi_mode_flag;
       vpi_mode_flag = VPI_MODE_RWSYNC;
 
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
       (cur->cb_data.cb_rtn)(&cur->cb_data);
 
-      vpi_mode_flag = VPI_MODE_NONE;
+      vpi_mode_flag = save_mode;
 }
 
 /*
@@ -459,6 +459,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.18  2002/05/28 22:55:20  steve
+ *  Callbacks can happen during calltf functions.
+ *
  * Revision 1.17  2002/05/19 05:18:16  steve
  *  Add callbacks for vpiNamedEvent objects.
  *
