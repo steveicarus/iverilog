@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.130 2000/04/04 03:20:15 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.131 2000/04/09 16:55:42 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -793,14 +793,18 @@ void target_vvm::event(ostream&os, const NetEvent*event)
 
 void target_vvm::end_design(ostream&os, const Design*mod)
 {
-      os << "static struct __vpiStringConst string_table[" <<
-	    string_counter+1 << "];" << endl;
-      os << "static struct __vpiNumberConst number_table[" <<
-	    number_counter+1 << "];" << endl;
-      os << "static vvm_nexus_wire nexus_wire_table[" <<
-	    nexus_wire_counter << "];" << endl;
-      os << "static vpip_bit_t signal_bit_table[" <<
-	    signal_bit_counter << "];" << endl;
+      if (string_counter > 0)
+	    os << "static struct __vpiStringConst string_table[" <<
+		  string_counter+1 << "];" << endl;
+      if (number_counter > 0)
+	    os << "static struct __vpiNumberConst number_table[" <<
+		  number_counter+1 << "];" << endl;
+      if (nexus_wire_counter > 0)
+	    os << "static vvm_nexus_wire nexus_wire_table[" <<
+		  nexus_wire_counter << "];" << endl;
+      if (signal_bit_counter > 0)
+	    os << "static vpip_bit_t signal_bit_table[" <<
+		  signal_bit_counter << "];" << endl;
 
       defn.close();
 
@@ -2578,6 +2582,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.131  2000/04/09 16:55:42  steve
+ *  Donot create tables that have no entries.
+ *
  * Revision 1.130  2000/04/04 03:20:15  steve
  *  Simulate named event trigger and waits.
  *
