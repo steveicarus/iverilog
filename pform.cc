@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.cc,v 1.108 2003/02/02 19:02:39 steve Exp $"
+#ident "$Id: pform.cc,v 1.109 2003/02/27 06:45:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1231,10 +1231,26 @@ void pform_set_localparam(const string&name, PExpr*expr)
       pform_cur_module->localparams[name].signed_flag = false;
 }
 
+void pform_set_specparam(const string&name, PExpr*expr)
+{
+      assert(expr);
+      pform_cur_module->specparams[name] = expr;
+}
+
 void pform_set_defparam(const hname_t&name, PExpr*expr)
 {
       assert(expr);
       pform_cur_module->defparms[name] = expr;
+}
+
+/*
+ * XXXX Not implemented yet.
+ */
+extern void pform_make_specify_path(list<char*>*src, char pol,
+				    bool full_flag, list<char*>*dst)
+{
+      delete src;
+      delete dst;
 }
 
 void pform_set_port_type(const struct vlltype&li,
@@ -1396,6 +1412,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.109  2003/02/27 06:45:11  steve
+ *  specparams as far as pform.
+ *
  * Revision 1.108  2003/02/02 19:02:39  steve
  *  Add support for signed ports and nets.
  *

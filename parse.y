@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.172 2003/02/07 23:16:09 steve Exp $"
+#ident "$Id: parse.y,v 1.173 2003/02/27 06:45:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -200,6 +200,9 @@ const static struct str_pair_t str_strength = { PGate::STRONG, PGate::STRONG };
 %type <statement_list> statement_list
 
 %type <range_delay> range_delay
+
+%type <letter> spec_polarity
+%type <texts>  specify_path_identifiers
 
 %token K_TAND
 %right '?' ':'
@@ -2163,8 +2166,12 @@ specify_simple_path_decl
 	;
 
 specify_simple_path
-	: '(' specify_path_identifiers spec_polarity K_EG expression ')'
-	| '(' specify_path_identifiers spec_polarity K_SG expression ')'
+	: '(' specify_path_identifiers spec_polarity
+              K_EG specify_path_identifiers ')'
+		{ pform_make_specify_path($2, $3, false, $5); }
+	| '(' specify_path_identifiers spec_polarity
+              K_SG specify_path_identifiers ')'
+		{ pform_make_specify_path($2, $3, true, $5); }
 	| '(' error ')'
 		{ yyerror(@2, "Invalid simple path");
 		  yyerrok;
@@ -2172,16 +2179,40 @@ specify_simple_path
 	;
 
 specify_path_identifiers
-	: IDENTIFIER { }
-	| IDENTIFIER '[' expr_primary ']' { }
-	| specify_path_identifiers ',' IDENTIFIER { }
-	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']' { }
+	: IDENTIFIER
+		{ list<char*>*tmp = new list<char*>;
+		  tmp->push_back($1);
+		  $$ = tmp;
+		}
+	| IDENTIFIER '[' expr_primary ']'
+		{ list<char*>*tmp = new list<char*>;
+		  tmp->push_back($1);
+		  $$ = tmp;
+		}
+	| specify_path_identifiers ',' IDENTIFIER
+		{ list<char*>*tmp = $1;
+		  tmp->push_back($3);
+		  $$ = tmp;
+		}
+	| specify_path_identifiers ',' IDENTIFIER '[' expr_primary ']'
+		{ list<char*>*tmp = $1;
+		  tmp->push_back($3);
+		  $$ = tmp;
+		}
 	;
 
 specparam
 	: IDENTIFIER '=' expression
-		{ delete $1;
-		  delete $3;
+		{ PExpr*tmp = $3;
+		  if (!pform_expression_is_constant(tmp)) {
+			yyerror(@3, "error: specparam value "
+			            "must be a constant expression.");
+			delete tmp;
+			tmp = 0;
+		  } else {
+			pform_set_specparam($1, tmp);
+		  }
+		  delete $1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
 		{ delete $1;
@@ -2205,7 +2236,11 @@ specparam_list
 	| specparam_list ',' specparam
 	;
 
-spec_polarity: '+' | '-' | ;
+spec_polarity
+	: '+'  { $$ = '+'; }
+	| '-'  { $$ = '-'; }
+	|      { $$ = 0;   }
+	;
 
 spec_reference_event
 	: K_posedge expression

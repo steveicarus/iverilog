@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform.h,v 1.67 2003/02/02 19:02:40 steve Exp $"
+#ident "$Id: pform.h,v 1.68 2003/02/27 06:45:11 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -208,6 +208,13 @@ extern void pform_set_localparam(const string&name, PExpr*expr);
 extern void pform_set_defparam(const hname_t&name, PExpr*expr);
 
 /*
+ * Functions related to specify blocks.
+ */
+extern void pform_set_specparam(const string&name, PExpr*expr);
+extern void pform_make_specify_path(list<char*>*src, char pol,
+				    bool full_flag, list<char*>*dst);
+
+/*
  * pform_make_behavior creates processes that are declared with always
  * or initial items.
  */
@@ -268,6 +275,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.68  2003/02/27 06:45:11  steve
+ *  specparams as far as pform.
+ *
  * Revision 1.67  2003/02/02 19:02:40  steve
  *  Add support for signed ports and nets.
  *

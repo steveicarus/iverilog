@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.28 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: Module.h,v 1.29 2003/02/27 06:45:11 steve Exp $"
 #endif
 
 # include  <list>
@@ -76,6 +76,12 @@ class Module : public LineInfo {
       };
       map<string,param_expr_t>parameters;
       map<string,param_expr_t>localparams;
+
+
+	/* specparams are simpler then other params, in that they have
+	   no type information. They are merely constant
+	   expressions. */
+      map<string,PExpr*>specparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
@@ -155,6 +161,9 @@ class Module : public LineInfo {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.29  2003/02/27 06:45:11  steve
+ *  specparams as far as pform.
+ *
  * Revision 1.28  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

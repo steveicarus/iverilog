@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.78 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.79 2003/02/27 06:45:11 steve Exp $"
 #endif
 
 # include "config.h"
@@ -738,6 +738,13 @@ void Module::dump(ostream&out) const
 		  out << "/* ERROR */;" << endl;
       }
 
+      typedef map<string,PExpr*>::const_iterator specparm_iter_t;
+      for (specparm_iter_t cur = specparams.begin()
+		 ; cur != specparams.end() ; cur ++) {
+	    out << "    specparam " << (*cur).first << " = "
+		<< *(*cur).second << ";" << endl;
+      }
+
       for (parm_hiter_t cur = defparms.begin()
 		 ; cur != defparms.end() ;  cur ++) {
 	    out << "    defparam " << (*cur).first << " = ";
@@ -856,6 +863,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.79  2003/02/27 06:45:11  steve
+ *  specparams as far as pform.
+ *
  * Revision 1.78  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.
