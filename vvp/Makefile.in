@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.28 2001/10/09 02:28:16 steve Exp $"
+#ident "$Id: Makefile.in,v 1.29 2001/10/21 21:59:50 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -94,11 +94,23 @@ parse.h parse.cc: $(srcdir)/parse.y
 lexor.cc: $(srcdir)/lexor.lex
 	flex -s -olexor.cc $(srcdir)/lexor.lex
 
+vvp.pdf: $(srcdir)/vvp.man
+	man -t $(srcdir)/vvp.man | ps2pdf - vvp.pdf
+
+ifeq (@WIN32@,yes)
+INSTALL_DOC = $(prefix)/vvp.pdf
+INSTALL_DOCDIR =
+all: vvp.pdf
+else
+INSTALL_DOC = $(mandir)/man1/vvp.1
+INSTALL_DOCDIR = $(mandir)/man1
+endif
+
 Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp $(mandir)/man1/vvp.1
+install: all installdirs $(bindir)/vvp $(INSTALL_DOC)
 
 $(bindir)/vvp: ./vvp
 	$(INSTALL_PROGRAM) ./vvp $(bindir)/vvp
@@ -106,8 +118,11 @@ $(bindir)/vvp: ./vvp
 $(mandir)/man1/vvp.1: $(srcdir)/vvp.man
 	$(INSTALL_DATA) $(srcdir)/vvp.man $(mandir)/man1/vvp.1
 
+$(prefix)/vvp.pdf: vvp.pdf
+	$(INSTALL_DATA) vvp.pdf $(prefix)/vvp.pdf
+
 installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(bindir) $(mandir)/man1
+	$(srcdir)/mkinstalldirs $(bindir) $(INSTALL_DOCDIR)
 
 
 uninstall:

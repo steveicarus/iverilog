@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 2001/08/10 00:39:42 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 2001/10/21 21:59:49 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -74,8 +74,19 @@ build_string.o: build_string.c globals.h
 lexor.o: lexor.c parse.h globals.h
 parse.o: parse.c globals.h
 
+iverilog.pdf: $(srcdir)/iverilog.man
+	man -t $(srcdir)/iverilog.man | ps2pdf - iverilog.pdf
 
-install: all installdirs $(bindir)/iverilog@EXEEXT@ $(mandir)/man1/iverilog.1
+ifeq (@WIN32@,yes)
+INSTALL_DOC = $(prefix)/iverilog.pdf
+INSTALL_DOCDIR =
+all: iverilog.pdf
+else
+INSTALL_DOC = $(mandir)/man1/iverilog.1
+INSTALL_DOCDIR = $(mandir)/man1
+endif
+
+install: all installdirs $(bindir)/iverilog@EXEEXT@ $(INSTALL_DOC)
 
 $(bindir)/iverilog@EXEEXT@: ./iverilog@EXEEXT@
 	$(INSTALL_PROGRAM) ./iverilog@EXEEXT@ $(bindir)/iverilog@EXEEXT@
@@ -83,8 +94,11 @@ $(bindir)/iverilog@EXEEXT@: ./iverilog@EXEEXT@
 $(mandir)/man1/iverilog.1: $(srcdir)/iverilog.man
 	$(INSTALL_DATA) $(srcdir)/iverilog.man $(mandir)/man1/iverilog.1
 
+$(prefix)/iverilog.pdf: iverilog.pdf
+	$(INSTALL_DATA) iverilog.pdf $(prefix)/iverilog.pdf
+
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(bindir) $(mandir)/man1
+	$(srcdir)/../mkinstalldirs $(bindir) $(INSTALL_DOCDIR)
 
 uninstall:
 	rm -f $(bindir)/iverilog@EXEEXT@
