@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.cc,v 1.19 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: vvm_gates.cc,v 1.20 2000/12/10 06:42:00 steve Exp $"
 #endif
 
 # include  "vvm_gates.h"
@@ -313,8 +313,8 @@ void vvm_bufif1::take_value(unsigned key, vpip_bit_t val)
       }
 }
 
-vvm_bufz::vvm_bufz()
-: vvm_1bit_out(0)
+vvm_bufz::vvm_bufz(unsigned delay)
+: vvm_1bit_out(delay)
 {
 }
 
@@ -665,6 +665,9 @@ void vvm_notif1::take_value(unsigned key, vpip_bit_t val)
 
 /*
  * $Log: vvm_gates.cc,v $
+ * Revision 1.20  2000/12/10 06:42:00  steve
+ *  Support delays on continuous assignment from idents. (PR#40)
+ *
  * Revision 1.19  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1

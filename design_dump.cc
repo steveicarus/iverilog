@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.105 2000/12/04 17:37:03 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.106 2000/12/10 06:41:59 steve Exp $"
 #endif
 
 /*
@@ -228,7 +228,9 @@ void NetAssign_::dump_node(ostream&o, unsigned ind) const
 void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetBUFZ: " << name()
-	<< " scope=" << (scope()? scope()->name() : "") << endl;
+	<< " scope=" << (scope()? scope()->name() : "")
+	<< " delay=(" << rise_time() << "," << fall_time() << "," <<
+	    decay_time() << ")" << endl;
       dump_node_pins(o, ind+4);
 }
 
@@ -994,6 +996,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.106  2000/12/10 06:41:59  steve
+ *  Support delays on continuous assignment from idents. (PR#40)
+ *
  * Revision 1.105  2000/12/04 17:37:03  steve
  *  Add Attrib class for holding NetObj attributes.
  *

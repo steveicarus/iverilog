@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elaborate.cc,v 1.199 2000/12/06 06:31:09 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.200 2000/12/10 06:41:59 steve Exp $"
 #endif
 
 /*
@@ -118,7 +118,7 @@ void PGAssign::elaborate(Design*des, const string&path) const
 	    if (rid->pin_count() < cnt)
 		  cnt = rid->pin_count();
 
-	    if (rid->type() == lval->type()) {
+	    if ((rid->type() == lval->type()) && (rise_time == 0)) {
 		  unsigned idx;
 		  for (idx = 0 ;  idx < cnt; idx += 1)
 			connect(lval->pin(idx), rid->pin(idx));
@@ -139,6 +139,9 @@ void PGAssign::elaborate(Design*des, const string&path) const
 						  des->local_symbol(path));
 			connect(lval->pin(idx), dev->pin(0));
 			connect(rid->pin(idx), dev->pin(1));
+			dev->rise_time(rise_time);
+			dev->fall_time(fall_time);
+			dev->decay_time(decay_time);
 			dev->pin(0).drive0(drive0);
 			dev->pin(0).drive1(drive1);
 			des->add_node(dev);
@@ -2333,6 +2336,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.200  2000/12/10 06:41:59  steve
+ *  Support delays on continuous assignment from idents. (PR#40)
+ *
  * Revision 1.199  2000/12/06 06:31:09  steve
  *  Check lvalue of procedural continuous assign (PR#29)
  *

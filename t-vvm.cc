@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.187 2000/12/09 06:17:20 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.188 2000/12/10 06:41:59 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1906,8 +1906,8 @@ bool target_vvm::bufz(const NetBUFZ*gate)
       string nexus;
       unsigned ncode;
 
-      out << "static vvm_bufz " << mname << ";" << endl;
-
+      out << "static vvm_bufz " << mname
+	  << "(" << gate->rise_time() << ");" << endl;
       nexus = gate->pin(0).nexus()->name();
       ncode = nexus_wire_map[nexus];
 
@@ -3370,6 +3370,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.188  2000/12/10 06:41:59  steve
+ *  Support delays on continuous assignment from idents. (PR#40)
+ *
  * Revision 1.187  2000/12/09 06:17:20  steve
  *  unary expressions as parameters (PR#42, PR#68)
  *

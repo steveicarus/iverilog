@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vvm_gates.h,v 1.67 2000/11/11 01:52:09 steve Exp $"
+#ident "$Id: vvm_gates.h,v 1.68 2000/12/10 06:42:00 steve Exp $"
 #endif
 
 # include  "vvm.h"
@@ -901,7 +901,7 @@ class vvm_udp_sequ1 : public vvm_udp_comb
  */
 class vvm_bufz  : public vvm_nexus::recvr_t, public vvm_1bit_out {
     public:
-      explicit vvm_bufz();
+      explicit vvm_bufz(unsigned delay =0);
       ~vvm_bufz();
 
       void init_I(unsigned idx, vpip_bit_t val);
@@ -1006,6 +1006,9 @@ class vvm_posedge  : public vvm_nexus::recvr_t {
 
 /*
  * $Log: vvm_gates.h,v $
+ * Revision 1.68  2000/12/10 06:42:00  steve
+ *  Support delays on continuous assignment from idents. (PR#40)
+ *
  * Revision 1.67  2000/11/11 01:52:09  steve
  *  change set for support of nmos, pmos, rnmos, rpmos, notif0, and notif1
  *  change set to correct behavior of bufif0 and bufif1
