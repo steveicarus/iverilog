@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.75 1999/11/05 19:36:36 steve Exp $"
+#ident "$Id: parse.y,v 1.76 1999/11/15 04:43:52 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -874,8 +874,7 @@ identifier
 	: IDENTIFIER
 		{ $$ = $1; }
 	| HIDENTIFIER
-		{ yyerror(@1, "sorry: qualified identifiers not supported.");
-		  $$ = $1;
+		{ $$ = $1;
 		}
 	;
 
