@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.51 2001/10/18 17:30:25 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.52 2001/10/21 23:38:16 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -811,7 +811,7 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
 	    fprintf(vvp_out,
 		    "CLK_%s .event posedge, ",
 		    vvp_mangle_id(ivl_lpm_name(net)));
-	    draw_input_from_net(pin);
+	    draw_input_from_net(clk);
 	    fprintf(vvp_out, ";\n");
       }
 
@@ -1211,6 +1211,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.52  2001/10/21 23:38:16  steve
+ *  wrong variable for clk input to memory.
+ *
  * Revision 1.51  2001/10/18 17:30:25  steve
  *  Support rnpmos devices. (Philip Blundell)
  *
