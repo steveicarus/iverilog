@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.6 2001/09/30 05:18:46 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.7 2002/01/24 04:19:39 steve Exp $"
 #endif
 
 
@@ -157,6 +157,8 @@ typedef struct t_vpi_value {
 #define vpiSysTaskCall 57
 #define vpiTask        59
 #define vpiTimeVar     63
+#define vpiLeftRange   79
+#define vpiRightRange  83
 #define vpiScope       84
 #define vpiSysTfCall   85
 #define vpiArgument    89
@@ -309,6 +311,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.7  2002/01/24 04:19:39  steve
+ *  Add the vpiLeft.. and vpiRightRange constants
+ *
  * Revision 1.6  2001/09/30 05:18:46  steve
  *  Reduce VCD output by removing duplicates. (Stephan Boettcher)
  *
