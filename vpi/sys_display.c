@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.24 2001/03/22 02:23:40 steve Exp $"
+#ident "$Id: sys_display.c,v 1.25 2001/06/25 03:11:41 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -425,12 +425,16 @@ static int sys_fopen_calltf(char *name)
 
       vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
-      vpiHandle item = vpi_scan(argv);
-      vpiHandle mode = vpi_scan(argv);
+      vpiHandle item = argv ? vpi_scan(argv) : 0;
+      vpiHandle mode = item ? vpi_scan(argv) : 0;
 
       if (item == 0) {
 	    vpi_printf("%s: file name parameter missing.\n", name);
 	    return 0;
+      }
+
+      if (mode == 0) {
+	    argv = 0;
       }
 
       if (vpi_get(vpiType, item) != vpiConstant) {
@@ -717,6 +721,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.25  2001/06/25 03:11:41  steve
+ *  More robust about incorrect arguments.
+ *
  * Revision 1.24  2001/03/22 02:23:40  steve
  *  fgetc patch from Peter Monta.
  *
