@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.32 2001/03/30 05:49:52 steve Exp $"
+#ident "$Id: stub.c,v 1.33 2001/03/31 17:36:39 steve Exp $"
 #endif
 
 /*
@@ -161,6 +161,29 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 		      show_statement(cur, ind+4);
 		}
 		fprintf(out, "%*send\n", ind, "");
+		break;
+	  }
+
+	  case IVL_ST_CASEX:
+	  case IVL_ST_CASEZ:
+	  case IVL_ST_CASE: {
+		unsigned cnt = ivl_stmt_case_count(net);
+		unsigned idx;
+		fprintf(out, "%*scase (...) <%u cases>\n", ind, "", cnt);
+		show_expression(ivl_stmt_cond_expr(net), ind+4);
+
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_expr_t ex = ivl_stmt_case_expr(net, idx);
+		      ivl_statement_t st = ivl_stmt_case_stmt(net, idx);
+		      if (ex == 0)
+			    fprintf(out, "%*sdefault\n", ind+4, "");
+		      else
+			    show_expression(ex, ind+4);
+
+		      show_statement(st, ind+4);
+		}
+
+		fprintf(out, "%*sendcase\n", ind, "");
 		break;
 	  }
 
@@ -460,6 +483,9 @@ DECLARE_CYGWIN_DLL(DllMain);
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.33  2001/03/31 17:36:39  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.32  2001/03/30 05:49:52  steve
  *  Generate code for fork/join statements.
  *

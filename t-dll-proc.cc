@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.16 2001/03/30 23:24:02 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.17 2001/03/31 17:36:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -175,6 +175,54 @@ bool dll_target::proc_block(const NetBlock*net)
       stmt_cur_ = save_cur_;
 
       return flag;
+}
+
+void dll_target::proc_case(const NetCase*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+
+      switch (net->type()) {
+	  case NetCase::EQ:
+	    stmt_cur_->type_ = IVL_ST_CASE;
+	    break;
+	  case NetCase::EQX:
+	    stmt_cur_->type_ = IVL_ST_CASEX;
+	    break;
+	  case NetCase::EQZ:
+	    stmt_cur_->type_ = IVL_ST_CASEZ;
+	    break;
+      }
+      assert(stmt_cur_->type_ != IVL_ST_NONE);
+
+      assert(expr_ == 0);
+      net->expr()->expr_scan(this);
+      stmt_cur_->u_.case_.cond = expr_;
+      expr_ = 0;
+
+      unsigned ncase = net->nitems();
+      stmt_cur_->u_.case_.ncase = ncase;
+
+      stmt_cur_->u_.case_.case_ex = new ivl_expr_t[ncase];
+      stmt_cur_->u_.case_.case_st = new struct ivl_statement_s[ncase];
+
+      ivl_statement_t save_cur = stmt_cur_;
+
+      for (unsigned idx = 0 ;  idx < ncase ;  idx += 1) {
+	    const NetExpr*ex = net->expr(idx);
+	    if (ex) {
+		  net->expr(idx)->expr_scan(this);
+		  save_cur->u_.case_.case_ex[idx] = expr_;
+		  expr_ = 0;
+	    } else {
+		  save_cur->u_.case_.case_ex[idx] = 0;
+	    }
+
+	    stmt_cur_ = save_cur->u_.case_.case_st + idx;
+	    net->stat(idx)->emit_proc(this);
+      }
+
+      stmt_cur_ = save_cur;
 }
 
 void dll_target::proc_condit(const NetCondit*net)
@@ -364,6 +412,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.17  2001/03/31 17:36:39  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.16  2001/03/30 23:24:02  steve
  *  Make empty event sub-expression a noop.
  *

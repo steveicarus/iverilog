@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.6 2001/03/31 02:00:44 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.7 2001/03/31 17:36:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -48,7 +48,7 @@ static inline void clr_bit(unsigned addr)
       allocation_map[addr] &= ~(1 << bit);
 }
 
-static inline void clr_vector(struct vector_info vec)
+void clr_vector(struct vector_info vec)
 {
       unsigned idx;
       for (idx = 0 ;  idx < vec.wid ;  idx += 1)
@@ -400,6 +400,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.7  2001/03/31 17:36:39  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.6  2001/03/31 02:00:44  steve
  *  Generate code for + and concat expressions.
  *

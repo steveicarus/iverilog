@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.27 2001/03/30 05:49:52 steve Exp $"
+#ident "$Id: t-dll.h,v 1.28 2001/03/31 17:36:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -79,6 +79,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       struct ivl_statement_s*stmt_cur_;
       void proc_assign(const NetAssign*);
       bool proc_block(const NetBlock*);
+      void proc_case(const NetCase*);
       void proc_condit(const NetCondit*);
       bool proc_delay(const NetPDelay*);
       void proc_stask(const NetSTask*);
@@ -346,6 +347,13 @@ struct ivl_statement_s {
 		  unsigned nstmt_;
 	    } block_;
 
+	    struct { /* IVL_ST_CASE, IVL_ST_CASEX, IVL_ST_CASEZ */
+		  ivl_expr_t cond;
+		  unsigned ncase;
+		  ivl_expr_t*case_ex;
+		  struct ivl_statement_s*case_st;
+	    } case_;
+
 	    struct { /* IVL_ST_CONDIT */
 		    /* This is the condition expression */
 		  ivl_expr_t cond_;
@@ -387,6 +395,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.28  2001/03/31 17:36:39  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.27  2001/03/30 05:49:52  steve
  *  Generate code for fork/join statements.
  *

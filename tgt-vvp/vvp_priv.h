@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.5 2001/03/27 06:27:41 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.6 2001/03/31 17:36:39 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -52,6 +52,12 @@ extern void draw_nexus_input(ivl_nexus_t nex);
 /*
  * The draw_eval_expr function writes out the code to evaluate a
  * behavioral expression.
+ *
+ * Expression results are placed into a vector allocated in the bit
+ * space of the thread. The vector_info structure represents that
+ * allocation. When the caller is done with the bits, it must release
+ * the vector with clr_vector so that the code generator can reuse
+ * those bits.
  */
 struct vector_info {
       unsigned short base;
@@ -59,9 +65,15 @@ struct vector_info {
 };
 
 extern struct vector_info draw_eval_expr(ivl_expr_t exp);
+extern struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned w);
+
+extern void clr_vector(struct vector_info vec);
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.6  2001/03/31 17:36:39  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.5  2001/03/27 06:27:41  steve
  *  Generate code for simple @ statements.
  *

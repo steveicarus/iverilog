@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.39 2001/03/30 05:49:52 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.40 2001/03/31 17:36:38 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -247,6 +247,9 @@ typedef enum ivl_statement_type_e {
       IVL_ST_NOOP   = 1,
       IVL_ST_ASSIGN,
       IVL_ST_BLOCK,
+      IVL_ST_CASE,
+      IVL_ST_CASEX,
+      IVL_ST_CASEZ,
       IVL_ST_CONDIT,
       IVL_ST_DELAY,
       IVL_ST_DELAYX,
@@ -676,7 +679,13 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
   /* IVL_ST_BLOCK, IVL_ST_FORK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
-  /* IVL_ST_CONDIT */
+  /* IVL_ST_CASE */
+extern unsigned ivl_stmt_case_count(ivl_statement_t net);
+  /* IVL_ST_CASE */
+extern ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned i);
+  /* IVL_ST_CASE */
+extern ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned i);
+  /* IVL_ST_CONDIT, IVL_ST_CASE */
 extern ivl_expr_t      ivl_stmt_cond_expr(ivl_statement_t net);
   /* IVL_ST_CONDIT */
 extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
@@ -721,6 +730,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.40  2001/03/31 17:36:38  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.39  2001/03/30 05:49:52  steve
  *  Generate code for fork/join statements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.27 2001/03/30 05:49:52 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.28 2001/03/31 17:36:38 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -580,10 +580,64 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
       }
 }
 
+extern "C" unsigned ivl_stmt_case_count(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_CASE:
+	  case IVL_ST_CASEX:
+	  case IVL_ST_CASEZ:
+	    return net->u_.case_.ncase;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_expr_t ivl_stmt_case_expr(ivl_statement_t net, unsigned idx)
+{
+      switch (net->type_) {
+	  case IVL_ST_CASE:
+	  case IVL_ST_CASEX:
+	  case IVL_ST_CASEZ:
+	    assert(idx < net->u_.case_.ncase);
+	    return net->u_.case_.case_ex[idx];
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+extern "C" ivl_statement_t ivl_stmt_case_stmt(ivl_statement_t net, unsigned idx)
+{
+      switch (net->type_) {
+	  case IVL_ST_CASE:
+	  case IVL_ST_CASEX:
+	  case IVL_ST_CASEZ:
+	    assert(idx < net->u_.case_.ncase);
+	    return net->u_.case_.case_st + idx;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
 extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 {
-      assert(net && (net->type_ == IVL_ST_CONDIT));
-      return net->u_.condit_.cond_;
+      switch (net->type_) {
+	  case IVL_ST_CONDIT:
+	    return net->u_.condit_.cond_;
+
+	  case IVL_ST_CASE:
+	  case IVL_ST_CASEX:
+	  case IVL_ST_CASEZ:
+	    return net->u_.case_.cond;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
 }
 
 extern "C" ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net)
@@ -727,6 +781,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.28  2001/03/31 17:36:38  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.27  2001/03/30 05:49:52  steve
  *  Generate code for fork/join statements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.12 2001/03/30 05:49:53 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.13 2001/03/31 17:36:39 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -129,6 +129,77 @@ static int show_stmt_assign(ivl_statement_t net)
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
 	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
       }
+
+      return 0;
+}
+
+static int show_stmt_case(ivl_statement_t net)
+{
+      ivl_expr_t exp = ivl_stmt_cond_expr(net);
+      struct vector_info cond = draw_eval_expr(exp);
+      unsigned count = ivl_stmt_case_count(net);
+
+      unsigned local_base = local_count;
+
+      unsigned idx, default_case;
+
+      local_count += count + 1;
+
+	/* First draw the branch table.  All the non-default cases
+	   generate a branch out of here, to the code that implements
+	   the case. The default will fall through all the tests. */
+      default_case = count;
+
+      for (idx = 0 ;  idx < count ;  idx += 1) {
+	    ivl_expr_t cex = ivl_stmt_case_expr(net, idx);
+	    struct vector_info cvec;
+
+	    if (cex == 0) {
+		  default_case = idx;
+		  continue;
+	    }
+
+	    cvec = draw_eval_expr_wid(cex, cond.wid);
+
+	    fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n", cond.base,
+		    cvec.base, cond.wid);
+	    fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 6;\n",
+		    thread_count, local_base+idx);
+
+	    
+	      /* Done with the case expression */
+	    clr_vector(cvec);
+      }
+
+	/* Done with the condition expression */
+      clr_vector(cond);
+
+	/* Emit code for the default case. */
+      if (default_case < count) {
+	    ivl_statement_t cst = ivl_stmt_case_stmt(net, default_case);
+	    show_statement(cst);
+      }
+
+	/* Jump to the out of the case. */
+      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+	      local_base+count);
+
+      for (idx = 0 ;  idx < count ;  idx += 1) {
+	    ivl_statement_t cst = ivl_stmt_case_stmt(net, idx);
+
+	    if (idx == default_case)
+		  continue;
+
+	    fprintf(vvp_out, "T_%d.%d\n", thread_count, local_base+idx);
+	    show_statement(cst);
+
+	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+		    local_base+count);
+
+      }
+
+	/* The out of the case. */
+      fprintf(vvp_out, "T_%d.%d\n",  thread_count, local_base+count);
 
       return 0;
 }
@@ -307,6 +378,10 @@ static int show_statement(ivl_statement_t net)
 		break;
 	  }
 
+	  case IVL_ST_CASE:
+	    rc += show_stmt_case(net);
+	    break;
+
 	  case IVL_ST_CONDIT:
 	    rc += show_stmt_condit(net);
 	    break;
@@ -394,6 +469,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.13  2001/03/31 17:36:39  steve
+ *  Generate vvp code for case statements.
+ *
  * Revision 1.12  2001/03/30 05:49:53  steve
  *  Generate code for fork/join statements.
  *
