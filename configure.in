@@ -215,6 +215,6 @@ AC_SUBST(vpidir1)
 AC_SUBST(vpidir2)
 AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
-AC_CONFIG_SUBDIRS(vpi vvp tgt-vvp tgt-fpga libveriuser cadpli)
+AC_CONFIG_SUBDIRS(vvp vpi tgt-vvp tgt-fpga libveriuser cadpli)
 
 AC_OUTPUT(Makefile ivlpp/Makefile driver/Makefile driver-vpi/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-verilog/Makefile tgt-pal/Makefile)
