@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.49 2001/04/05 03:20:57 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.50 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -160,6 +160,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
       IVL_EX_SUBSIG,
+      IVL_EX_UFUNC,
       IVL_EX_UNARY
 } ivl_expr_type_t;
 
@@ -361,6 +362,8 @@ extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
 
   /* IVL_EX_NUMBER */
 extern const char* ivl_expr_bits(ivl_expr_t net);
+  /* IVL_EX_UFUNC */
+extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
@@ -371,9 +374,9 @@ extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
   /* */
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
-  /* IVL_EX_CONCAT */
+  /* IVL_EX_CONCAT IVL_EX_UFUNC */
 extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
-  /* IVL_EX_CONCAT */
+  /* IVL_EX_CONCAT IVL_EX_UFUNC */
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);
@@ -561,6 +564,15 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    Every scope has a hierarchical name. This name is also a prefix
  *    of all the names of objects contained within the scope.
  *
+ * ivl_scope_port
+ * ivl_scope_ports
+ *    Scopes that are functions or tasks have ports defined by
+ *    signals. These methods access the ports by name.
+ *
+ *    If this scope represents a function, then the ports list
+ *    includes the return value, as port 0. The remaining ports are
+ *    the input ports in order.
+ *
  * ivl_scope_sig
  * ivl_scope_sigs
  *    Scopes have 0 or more signals in them. These signals are
@@ -587,6 +599,8 @@ extern ivl_net_logic_t ivl_scope_log(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_lpms(ivl_scope_t net);
 extern ivl_lpm_t    ivl_scope_lpm(ivl_scope_t, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
+extern unsigned     ivl_scope_ports(ivl_scope_t net);
+extern const char*  ivl_scope_port(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
 extern ivl_scope_type_t ivl_scope_type(ivl_scope_t net);
@@ -745,6 +759,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.50  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.49  2001/04/05 03:20:57  steve
  *  Generate vvp code for the repeat statement.
  *

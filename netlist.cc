@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.158 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: netlist.cc,v 1.159 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1708,7 +1708,7 @@ const NetExpr* NetSTask::parm(unsigned idx) const
       return parms_[idx];
 }
 
-NetEUFunc::NetEUFunc(NetFuncDef*def, NetESignal*res, svector<NetExpr*>&p)
+NetEUFunc::NetEUFunc(NetScope*def, NetESignal*res, svector<NetExpr*>&p)
 : func_(def), result_(res), parms_(p)
 {
       expr_width(result_->expr_width());
@@ -1741,7 +1741,7 @@ const NetExpr* NetEUFunc::parm(unsigned idx) const
       return parms_[idx];
 }
 
-const NetFuncDef* NetEUFunc::definition() const
+const NetScope* NetEUFunc::func() const
 {
       return func_;
 }
@@ -1761,7 +1761,7 @@ NetUTask::~NetUTask()
 {
 }
 
-const string& NetUTask::name() const
+const string NetUTask::name() const
 {
       return task_->name();
 }
@@ -2470,6 +2470,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.159  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.158  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

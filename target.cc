@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.51 2001/04/02 02:28:13 steve Exp $"
+#ident "$Id: target.cc,v 1.52 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -43,7 +43,7 @@ void target_t::memory(const NetMemory*)
 	    "Unhandled memory." << endl;
 }
 
-void target_t::func_def(const NetFuncDef*)
+void target_t::func_def(const NetScope*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled function definition." << endl;
@@ -389,6 +389,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.52  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.51  2001/04/02 02:28:13  steve
  *  Generate code for task calls.
  *

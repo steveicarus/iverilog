@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.36 2001/04/05 03:20:57 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.37 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -145,6 +145,22 @@ extern "C" const char* ivl_expr_bits(ivl_expr_t net)
       return net->u_.number_.bits_;
 }
 
+extern "C" ivl_scope_t ivl_expr_def(ivl_expr_t net)
+{
+      assert(net);
+
+      switch (net->type_) {
+
+	  case IVL_EX_UFUNC:
+	    return net->u_.ufunc_.def;
+
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       switch (net->type_) {
@@ -218,9 +234,15 @@ extern "C" ivl_expr_t ivl_expr_parm(ivl_expr_t net, unsigned idx)
 {
       assert(net);
       switch (net->type_) {
+
 	  case IVL_EX_CONCAT:
 	    assert(idx < net->u_.concat_.parms);
 	    return net->u_.concat_.parm[idx];
+
+	  case IVL_EX_UFUNC:
+	    assert(idx < net->u_.ufunc_.parms);
+	    return net->u_.ufunc_.parm[idx];
+
 	  default:
 	    assert(0);
 	    return 0;
@@ -231,8 +253,12 @@ extern "C" unsigned ivl_expr_parms(ivl_expr_t net)
 {
       assert(net);
       switch (net->type_) {
+
 	  case IVL_EX_CONCAT:
 	    return net->u_.concat_.parms;
+
+	  case IVL_EX_UFUNC:
+	    return net->u_.ufunc_.parms;
 
 	  default:
 	    assert(0);
@@ -500,6 +526,21 @@ extern "C" ivl_lpm_t ivl_scope_lpm(ivl_scope_t net, unsigned idx)
 extern "C" const char* ivl_scope_name(ivl_scope_t net)
 {
       return net->name_;
+}
+
+extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      return net->ports;
+}
+
+extern "C" const char* ivl_scope_port(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_FUNCTION);
+      assert(idx < net->ports);
+      return net->port[idx];
 }
 
 extern "C" unsigned ivl_scope_sigs(ivl_scope_t net)
@@ -843,6 +884,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.37  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.36  2001/04/05 03:20:57  steve
  *  Generate vvp code for the repeat statement.
  *

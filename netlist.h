@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.201 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: netlist.h,v 1.202 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 /*
@@ -1944,7 +1944,7 @@ class NetTaskDef {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetFuncDef*, NetESignal*, svector<NetExpr*>&);
+      NetEUFunc(NetScope*, NetESignal*, svector<NetExpr*>&);
       ~NetEUFunc();
 
       const string name() const;
@@ -1953,7 +1953,7 @@ class NetEUFunc  : public NetExpr {
       unsigned parm_count() const;
       const NetExpr* parm(unsigned idx) const;
 
-      const NetFuncDef* definition() const;
+      const NetScope* func() const;
 
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
@@ -1962,7 +1962,7 @@ class NetEUFunc  : public NetExpr {
       virtual NetEUFunc*dup_expr() const;
 
     private:
-      NetFuncDef*func_;
+      NetScope*func_;
       NetESignal*result_;
       svector<NetExpr*> parms_;
 
@@ -1982,7 +1982,7 @@ class NetUTask  : public NetProc {
       NetUTask(NetScope*);
       ~NetUTask();
 
-      const string& name() const;
+      const string name() const;
 
       const NetScope* task() const;
 
@@ -2872,6 +2872,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.202  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.201  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

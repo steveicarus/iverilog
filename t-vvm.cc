@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.204 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.205 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -151,7 +151,7 @@ class target_vvm : public target_t {
       virtual void signal(const NetNet*);
       virtual void memory(const NetMemory*);
       virtual void task_def(const NetScope*);
-      virtual void func_def(const NetFuncDef*);
+      virtual void func_def(const NetScope*);
 
       virtual void lpm_add_sub(const NetAddSub*);
       virtual void lpm_clshift(const NetCLShift*);
@@ -586,7 +586,7 @@ void vvm_proc_rval::expr_ternary(const NetETernary*expr)
  */
 void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 {
-      const NetFuncDef*def = expr->definition();
+      const NetFuncDef*def = expr->func()->func_def();
       const unsigned pcnt = expr->parm_count();
       assert(pcnt == (def->port_count()-1));
 
@@ -1387,8 +1387,9 @@ void target_vvm::task_def(const NetScope*scope)
  * writes the result) then the caller copies the result out of the
  * magic result register.
  */
-void target_vvm::func_def(const NetFuncDef*def)
+void target_vvm::func_def(const NetScope*scope)
 {
+      const NetFuncDef*def = scope->func_def();
       thread_step_ = 0;
       const string name = mangle(def->name());
 
@@ -3638,6 +3639,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.205  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.204  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

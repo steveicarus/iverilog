@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.36 2001/02/10 20:29:39 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.37 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 
@@ -281,7 +281,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope) const
       assert(res);
       NetESignal*eres = new NetESignal(res);
       assert(eres);
-      NetEUFunc*func = new NetEUFunc(def, eres, parms);
+      NetEUFunc*func = new NetEUFunc(dscope, eres, parms);
       return func;
 }
 
@@ -611,6 +611,9 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.37  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.36  2001/02/10 20:29:39  steve
  *  In the context of range declarations, use elab_and_eval instead
  *  of the less robust eval_const methods.

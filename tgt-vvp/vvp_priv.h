@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.7 2001/04/02 02:28:13 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.8 2001/04/06 02:28:03 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -39,6 +39,7 @@ extern FILE* vvp_out;
 extern int draw_process(ivl_process_t net, void*x);
 
 extern int draw_task_definition(ivl_scope_t scope);
+extern int draw_func_definition(ivl_scope_t scope);
 
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
@@ -73,6 +74,9 @@ extern void clr_vector(struct vector_info vec);
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.8  2001/04/06 02:28:03  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.7  2001/04/02 02:28:13  steve
  *  Generate code for task calls.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.13 2001/04/05 01:38:24 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.14 2001/04/06 02:28:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -264,6 +264,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       if (ivl_scope_type(net) == IVL_SCT_TASK)
 	    draw_task_definition(net);
 
+      if (ivl_scope_type(net) == IVL_SCT_FUNCTION)
+	    draw_func_definition(net);
 
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
@@ -271,6 +273,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.14  2001/04/06 02:28:03  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.13  2001/04/05 01:38:24  steve
  *  Generate signed .net and .var statements.
  *

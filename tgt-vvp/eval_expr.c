@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.13 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.14 2001/04/06 02:28:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -485,6 +485,69 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
       return res;
 }
 
+/*
+ * A call to a user defined function generates a result that is the
+ * result of this expression.
+ *
+ * The result of the function is placed by the function execution into
+ * a signal within the scope of the function that also has a basename
+ * the same as the function. The ivl_target API handled the result
+ * mapping already, and we get the name of the result signal as
+ * parameter 0 of the function definition.
+ */
+
+static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
+{
+      unsigned idx;
+      unsigned swid = ivl_expr_width(exp);
+      ivl_scope_t def = ivl_expr_def(exp);
+      const char*name = ivl_scope_port(def, 0);
+      struct vector_info res;
+
+	/* evaluate the expressions and send the results to the
+	   function ports. */
+
+      assert(ivl_expr_parms(exp) == (ivl_scope_ports(def)-1));
+      for (idx = 0 ;  idx < ivl_expr_parms(exp) ;  idx += 1) {
+	    const char*port = ivl_scope_port(def, idx+1);
+	    unsigned pin, bit;
+
+	    res = draw_eval_expr(ivl_expr_parm(exp, idx));
+	    bit = res.base;
+	    for (pin = 0 ;  pin < res.wid ;  pin += 1) {
+		  fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
+			  port, pin, bit);
+		  if (bit >= 4)
+			bit += 1;
+	    }
+
+	    clr_vector(res);
+      }
+
+
+	/* Call the function */
+      fprintf(vvp_out, "    %%fork TD_%s;\n", ivl_scope_name(def));
+      fprintf(vvp_out, "    %%join;\n");
+
+	/* The return value is in a signal that has the name of the
+	   expression. Load that into the thread and return the
+	   vector result. */
+
+      res.base = allocate_vector(wid);
+      res.wid  = wid;
+
+      for (idx = 0 ;  idx < swid ;  idx += 1)
+	    fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
+		    res.base+idx, name, idx);
+
+	/* Pad the signal value with zeros. */
+      if (swid < wid)
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		    res.base+swid, wid-swid);
+
+      return res;
+}
+
 static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
@@ -555,6 +618,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    res = draw_signal_expr(exp, wid);
 	    break;
 
+	  case IVL_EX_UFUNC:
+	    res = draw_ufunc_expr(exp, wid);
+	    break;
+
 	  case IVL_EX_UNARY:
 	    res = draw_unary_expr(exp, wid);
 	    break;
@@ -570,6 +637,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.14  2001/04/06 02:28:03  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.13  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *

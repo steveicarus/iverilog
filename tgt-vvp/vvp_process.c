@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.25 2001/04/05 03:20:58 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.26 2001/04/06 02:28:03 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -699,8 +699,27 @@ int draw_task_definition(ivl_scope_t scope)
       return rc;
 }
 
+int draw_func_definition(ivl_scope_t scope)
+{
+      int rc = 0;
+      ivl_statement_t def = ivl_scope_def(scope);
+
+      fprintf(vvp_out, "TD_%s ;\n", ivl_scope_name(scope));
+
+      assert(def);
+      rc += show_statement(def);
+
+      fprintf(vvp_out, "    %%end;\n");
+
+      thread_count += 1;
+      return rc;
+}
+
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.26  2001/04/06 02:28:03  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.25  2001/04/05 03:20:58  steve
  *  Generate vvp code for the repeat statement.
  *

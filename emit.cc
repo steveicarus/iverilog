@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.57 2001/04/02 02:28:12 steve Exp $"
+#ident "$Id: emit.cc,v 1.58 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 /*
@@ -354,7 +354,7 @@ void NetScope::emit_defs(struct target_t*tgt) const
 	    break;
 
 	  case FUNC:
-	    tgt->func_def(this->func_def());
+	    tgt->func_def(this);
 	    break;
 	  case TASK:
 	    tgt->task_def(this);
@@ -478,6 +478,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.58  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.57  2001/04/02 02:28:12  steve
  *  Generate code for task calls.
  *

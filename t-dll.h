@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.35 2001/04/05 03:20:58 steve Exp $"
+#ident "$Id: t-dll.h,v 1.36 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -91,6 +91,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_wait(const NetEvWait*);
       void proc_while(const NetWhile*);
 
+      void func_def(const NetScope*);
       void task_def(const NetScope*);
 
       struct ivl_expr_s*expr_;
@@ -99,6 +100,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_const(const NetEConst*);
       void expr_scope(const NetEScope*);
       void expr_sfunc(const NetESFunc*);
+      void expr_ufunc(const NetEUFunc*);
       void expr_unary(const NetEUnary*);
       void expr_signal(const NetESignal*);
 
@@ -162,6 +164,12 @@ struct ivl_expr_s {
 		  ivl_expr_t msb_;
 		  ivl_expr_t lsb_;
 	    } subsig_;
+
+	    struct {
+		  ivl_scope_t def;
+		  ivl_expr_t    *parm;
+		  unsigned short parms;
+	    } ufunc_;
 
 	    struct {
 		  char op_;
@@ -311,8 +319,11 @@ struct ivl_scope_s {
       unsigned nlpm_;
       ivl_lpm_t* lpm_;
 
-	/* Scopes that are tasks have a definition. */
+	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
+
+      unsigned ports;
+      char **port;
 };
 
 /*
@@ -416,6 +427,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.36  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.35  2001/04/05 03:20:58  steve
  *  Generate vvp code for the repeat statement.
  *

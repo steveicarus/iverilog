@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.50 2001/04/02 02:28:13 steve Exp $"
+#ident "$Id: target.h,v 1.51 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -70,7 +70,7 @@ struct target_t {
 
 	/* Output a defined task. */
       virtual void task_def(const NetScope*);
-      virtual void func_def(const NetFuncDef*);
+      virtual void func_def(const NetScope*);
 
 	/* LPM style components are handled here. */
       virtual void lpm_add_sub(const NetAddSub*);
@@ -160,6 +160,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.51  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.50  2001/04/02 02:28:13  steve
  *  Generate code for task calls.
  *

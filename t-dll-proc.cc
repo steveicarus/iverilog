@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.23 2001/04/05 03:20:57 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.24 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -88,6 +88,28 @@ void dll_target::task_def(const NetScope*net)
       scope->def = stmt_cur_;
       stmt_cur_ = 0;
 
+}
+
+void dll_target::func_def(const NetScope*net)
+{
+      ivl_scope_t scope = lookup_scope_(net);
+      const NetFuncDef*def = net->func_def();
+
+      assert(stmt_cur_ == 0);
+      stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
+      assert(stmt_cur_);
+      def->proc()->emit_proc(this);
+
+      assert(stmt_cur_);
+      scope->def = stmt_cur_;
+      stmt_cur_ = 0;
+
+      scope->ports = def->port_count();
+      if (scope->ports > 0) {
+	    scope->port = new char*[scope->ports];
+	    for (unsigned idx = 0 ;  idx < scope->ports ;  idx += 1)
+		  scope->port[idx] = strdup(def->port(idx)->name());
+      }
 }
 
 /*
@@ -554,6 +576,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.24  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.23  2001/04/05 03:20:57  steve
  *  Generate vvp code for the repeat statement.
  *

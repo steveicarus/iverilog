@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.10 2001/04/05 01:12:28 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.11 2001/04/06 02:28:02 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -157,6 +157,35 @@ void dll_target::expr_signal(const NetESignal*net)
       expr_->u_.subsig_.name_ = strdup(net->name().c_str());
 }
 
+void dll_target::expr_ufunc(const NetEUFunc*net)
+{
+      assert(expr_ == 0);
+
+      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr);
+
+      expr->type_ = IVL_EX_UFUNC;
+      expr->width_= net->expr_width();
+      expr->signed_ = net->has_sign()? 1 : 0;
+
+      expr->u_.ufunc_.def = lookup_scope_(net->func());
+      assert(expr->u_.ufunc_.def->type_ == IVL_SCT_FUNCTION);
+
+      unsigned cnt = net->parm_count();
+      expr->u_.ufunc_.parms = cnt;
+      expr->u_.ufunc_.parm = new ivl_expr_t[cnt];
+
+	/* make up the parameter expressions. */
+      for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
+	    net->parm(idx)->expr_scan(this);
+	    assert(expr_);
+	    expr->u_.ufunc_.parm[idx] = expr_;
+	    expr_ = 0;
+      }
+
+      expr_ = expr;
+}
+
 void dll_target::expr_unary(const NetEUnary*net)
 {
       assert(expr_ == 0);
@@ -175,6 +204,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.11  2001/04/06 02:28:02  steve
+ *  Generate vvp code for functions with ports.
+ *
  * Revision 1.10  2001/04/05 01:12:28  steve
  *  Get signed compares working correctly in vvp.
  *
