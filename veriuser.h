@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: veriuser.h,v 1.15 2002/06/07 16:21:12 steve Exp $"
+#ident "$Id: veriuser.h,v 1.16 2002/06/11 03:29:14 steve Exp $"
 #endif
 
 /*
@@ -94,8 +94,8 @@ extern void io_printf (const char *, ...)
       __attribute__((format (printf,1,2)));
 extern char* mc_scan_plusargs(char*plusarg);
 
-extern int tf_asyncoff(void);
-extern int tf_asyncon(void);
+extern int tf_asynchoff(void);
+extern int tf_asynchon(void);
 
 extern int tf_dofinish(void);
 
@@ -130,6 +130,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.16  2002/06/11 03:29:14  steve
+ *  Get tf_asynchon/off name right.
+ *
  * Revision 1.15  2002/06/07 16:21:12  steve
  *  Add tf_putlongp and tf_putp.
  *
