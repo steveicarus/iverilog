@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.4 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.5 1998/11/13 06:23:17 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -63,7 +63,7 @@ const NetNet* find_link_signal(const NetObj*net, unsigned pin, unsigned&bidx)
 }
 
 NetObj::NetObj(const string&n, unsigned np)
-: name_(n), npins_(np), delay1_(0), delay2_(0), delay3_(0)
+: name_(n), npins_(np), delay1_(0), delay2_(0), delay3_(0), mark_(false)
 {
       pins_ = new Link[npins_];
       for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
@@ -265,20 +265,6 @@ NetNet* Design::find_signal(const string&name)
       return 0;
 }
 
-void Design::scan_signals(SigFunctor*fun)
-{
-      if (signals_ == 0)
-	    return;
-
-      NetNet*cur = signals_->sig_next_;
-      do {
-	    NetNet*next = cur->sig_next_;
-	    fun->sig_function(cur);
-	    cur = next;
-      } while (cur != signals_->sig_next_);
-}
-
-
 void Design::add_node(NetNode*net)
 {
       assert(net->design_ == 0);
@@ -317,9 +303,40 @@ void Design::add_process(NetProcTop*pro)
       procs_ = pro;
 }
 
+void Design::clear_node_marks()
+{
+      if (nodes_ == 0)
+	    return;
+
+      NetNode*cur = nodes_;
+      do {
+	    cur->set_mark(false);
+	    cur = cur->node_next_;
+      } while (cur != nodes_);
+}
+
+NetNode* Design::find_node(bool (*func)(const NetNode*))
+{
+      if (nodes_ == 0)
+	    return 0;
+
+      NetNode*cur = nodes_->node_next_;
+      do {
+	    if ((cur->test_mark() == false) && func(cur))
+		  return cur;
+
+	    cur = cur->node_next_;
+      } while (cur != nodes_->node_next_);
+
+      return 0;
+}
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.5  1998/11/13 06:23:17  steve
+ *  Introduce netlist optimizations with the
+ *  cprop function to do constant propogation.
+ *
  * Revision 1.4  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.4 1998/11/09 18:55:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.5 1998/11/13 06:23:17 steve Exp $"
 #endif
 
 /*
@@ -117,6 +117,9 @@ class NetObj {
       void delay2(unsigned d) { delay2_ = d; }
       void delay3(unsigned d) { delay3_ = d; }
 
+      bool test_mark() const { return mark_; }
+      void set_mark(bool flag=true) { mark_ = flag; }
+
       Link&pin(unsigned idx) { return pins_[idx]; }
       const Link&pin(unsigned idx) const { return pins_[idx]; }
 
@@ -130,6 +133,8 @@ class NetObj {
       unsigned delay1_;
       unsigned delay2_;
       unsigned delay3_;
+
+      bool mark_;
 };
 
 /*
@@ -667,12 +672,8 @@ class Design {
       void dump(ostream&) const;
       void emit(ostream&, struct target_t*) const;
 
-      class SigFunctor {
-	  public:
-	    virtual void sig_function(NetNet*) =0;
-      };
-
-      void scan_signals(SigFunctor*);
+      void clear_node_marks();
+      NetNode*find_node(bool (*test)(const NetNode*));
 
     private:
 	// List all the signals in the design.
@@ -709,6 +710,10 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.5  1998/11/13 06:23:17  steve
+ *  Introduce netlist optimizations with the
+ *  cprop function to do constant propogation.
+ *
  * Revision 1.4  1998/11/09 18:55:34  steve
  *  Add procedural while loops,
  *  Parse procedural for loops,

@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.2 1998/11/07 17:05:05 steve Exp $"
+#ident "$Id: main.cc,v 1.3 1998/11/13 06:23:17 steve Exp $"
 #endif
 
 # include  <stdio.h>
 # include  <iostream.h>
 # include  <fstream>
+# include  <queue>
 # include  <unistd.h>
 # include  "pform.h"
 # include  "netlist.h"
@@ -36,23 +37,52 @@ string start_module = "";
 
 extern Design* elaborate(const list<Module*>&modules, const string&root);
 extern void emit(ostream&o, const Design*, const char*);
+
+extern void cprop(Design*des);
 extern void stupid(Design*des);
+
+typedef void (*net_func)(Design*);
+static struct net_func_map {
+      const char*name;
+      void (*func)(Design*);
+} func_table[] = {
+      { "stupid", &stupid },
+      { "cprop",  &cprop },
+      { 0, 0 }
+};
+
+net_func name_to_net_func(const string&name)
+{
+      for (unsigned idx = 0 ;  func_table[idx].name ;  idx += 1)
+	    if (name == func_table[idx].name)
+		  return func_table[idx].func;
+
+      return 0;
+}
+
 
 int main(int argc, char*argv[])
 {
       bool dump_flag = false;
-      bool optimize_flag = false;
       const char* out_path = 0;
       int opt;
       unsigned flag_errors = 0;
+      queue<net_func> net_func_queue;
 
-      while ((opt = getopt(argc, argv, "DOo:s:t:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "DF:o:s:t:")) != EOF) switch (opt) {
 	  case 'D':
 	    dump_flag = true;
 	    break;
-	  case 'O':
-	    optimize_flag = true;
-	    break;
+	  case 'F': {
+		net_func tmp = name_to_net_func(optarg);
+		if (tmp == 0) {
+		      cerr << "No such design transform function ``"
+			   << optarg << "''." << endl;
+		      break;
+		}
+		net_func_queue.push(tmp);
+		break;
+	  }
 	  case 'o':
 	    out_path = optarg;
 	    break;
@@ -114,8 +144,10 @@ int main(int argc, char*argv[])
 	    return 1;
       }
 
-      if (optimize_flag) {
-	    stupid(des);
+      while (!net_func_queue.empty()) {
+	    net_func func = net_func_queue.front();
+	    net_func_queue.pop();
+	    func(des);
       }
 
       if (dump_flag) {
@@ -144,6 +176,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.3  1998/11/13 06:23:17  steve
+ *  Introduce netlist optimizations with the
+ *  cprop function to do constant propogation.
+ *
  * Revision 1.2  1998/11/07 17:05:05  steve
  *  Handle procedural conditional, and some
  *  of the conditional expressions.

@@ -17,63 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: stupid.cc,v 1.1 1998/11/03 23:29:05 steve Exp $"
+#ident "$Id: stupid.cc,v 1.2 1998/11/13 06:23:17 steve Exp $"
 #endif
 
 # include  "netlist.h"
-# include  <vector>
 
-vector<NetObj::Link*>* list_link_nodes(NetObj::Link&link)
-{
-      NetObj*net;
-      unsigned npin;
-      vector<NetObj::Link*>*result = new vector<NetObj::Link*>;
-
-      link.cur_link(net, npin);
-      NetObj*cur = net;
-      unsigned cpin = npin;
-      do {
-	    if (dynamic_cast<NetNode*>(cur))
-		  result->push_back(&cur->pin(cpin));
-
-	    cur->pin(cpin).next_link(cur, cpin);
-      } while ((cur != net) || (cpin != npin));
-
-      return result;
-}
-
-/*
- * This function scans a design and removes artifacts from the
- * elaboration step, and maybe a few other stupid inefficiencies.
- */
-
-class Functor  : public Design::SigFunctor {
-
-    public:
-      virtual void sig_function(NetNet*);
-};
-
-
-void Functor::sig_function(NetNet*net)
-{
-      for (unsigned idx = 0 ;  idx < net->pin_count() ;  idx += 1) {
-	    vector<NetObj::Link*>*nodes = list_link_nodes(net->pin(idx));
-#if 0
-	    cerr << "XXXX " << net->name() << "[" << idx << "] "
-		  "nodes->size() == " << nodes->size() << endl;
-#endif
-	    delete nodes;
-      }
-}
 
 void stupid(Design*des)
 {
-      Functor fun;
-      des->scan_signals(&fun);
 }
 
 /*
  * $Log: stupid.cc,v $
+ * Revision 1.2  1998/11/13 06:23:17  steve
+ *  Introduce netlist optimizations with the
+ *  cprop function to do constant propogation.
+ *
  * Revision 1.1  1998/11/03 23:29:05  steve
  *  Introduce verilog to CVS.
  *

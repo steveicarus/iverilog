@@ -8,7 +8,7 @@ CXXFLAGS = -O -g -Wall -Wno-uninitialized
 #TT = t-debug.o t-vvm.o
 TT = t-verilog.o t-vvm.o
 
-O = main.o design_dump.o elaborate.o emit.o eval.o lexor.o mangle.o \
+O = main.o cprop.o design_dump.o elaborate.o emit.o eval.o lexor.o mangle.o \
 netlist.o parse.o parse_misc.o pform.o pform_dump.o stupid.o verinum.o \
 target.o targets.o Module.o PExpr.o Statement.o $(TT)
 
