@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.8 2001/03/31 19:00:44 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.9 2001/04/02 00:24:31 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -145,6 +145,13 @@ struct __vpiStringConst {
 
 vpiHandle vpip_make_string_const(char*text);
 
+struct __vpiBinaryConst {
+      struct __vpiHandle base;
+      unsigned nbits;
+      unsigned char*bits;
+};
+
+vpiHandle vpip_make_binary_const(long val);
 
 /*
  * This function is called before any compilation to load VPI
@@ -184,6 +191,9 @@ vpiHandle vpip_sim_time(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.9  2001/04/02 00:24:31  steve
+ *  Take numbers as system task parameters.
+ *
  * Revision 1.8  2001/03/31 19:00:44  steve
  *  Add VPI support for the simulation time.
  *

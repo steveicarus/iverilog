@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.15 2001/04/01 06:40:45 steve Exp $"
+#ident "$Id: parse.y,v 1.16 2001/04/02 00:24:30 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -256,10 +256,10 @@ argument_list
 argument
 	: T_STRING
 		{ $$ = vpip_make_string_const($1); }
+	| T_NUMBER
+		{ $$ = vpip_make_binary_const($1); }
 	| T_SYMBOL
-		{ $$ = compile_vpi_lookup($1);
-		  free($1);
-		}
+		{ $$ = compile_vpi_lookup($1); free($1); }
 	;
 
 
@@ -308,6 +308,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.16  2001/04/02 00:24:30  steve
+ *  Take numbers as system task parameters.
+ *
  * Revision 1.15  2001/04/01 06:40:45  steve
  *  Support empty statements for hanging labels.
  *

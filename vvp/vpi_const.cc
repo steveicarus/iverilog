@@ -17,11 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_const.cc,v 1.1 2001/03/18 04:35:18 steve Exp $"
+#ident "$Id: vpi_const.cc,v 1.2 2001/04/02 00:24:31 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
 # include  <malloc.h>
+# include  <string.h>
 # include  <assert.h>
 
 static int string_get(int code, vpiHandle ref)
@@ -82,8 +83,74 @@ vpiHandle vpip_make_string_const(char*text)
 }
 
 
+static int binary_get(int code, vpiHandle ref)
+{
+      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (code) {
+	  case vpiConstType:
+	    return vpiBinaryConst;
+
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
+
+static void binary_value(vpiHandle ref, p_vpi_value vp)
+{
+      struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
+      assert(ref->vpi_type->type_code == vpiConstant);
+
+      switch (vp->format) {
+
+	  default:
+	    vp->format = vpiSuppressVal;
+	    break;
+      }
+}
+
+static const struct __vpirt vpip_binary_rt = {
+      vpiConstant,
+      binary_get,
+      0,
+      binary_value,
+      0,
+      0,
+      0
+};
+
+vpiHandle vpip_make_binary_const(long val)
+{
+      struct __vpiBinaryConst*obj;
+
+      obj = (struct __vpiBinaryConst*)
+	    malloc(sizeof (struct __vpiBinaryConst));
+      obj->base.vpi_type = &vpip_binary_rt;
+
+      obj->nbits = 8*sizeof(long);
+      obj->bits = (unsigned char*)malloc(obj->nbits / 4);
+      memset(obj->bits, 0, obj->nbits / 4);
+
+      for (unsigned idx = 0 ;  idx < obj->nbits ;  idx += 1) {
+	    unsigned nibble = idx / 4;
+
+	    if (val & 1)
+		  obj->bits[nibble] |= 1 << 2 * (idx%4);
+
+	    val >>= 1;
+      }
+
+      return &(obj->base);
+}
+
+
 /*
  * $Log: vpi_const.cc,v $
+ * Revision 1.2  2001/04/02 00:24:31  steve
+ *  Take numbers as system task parameters.
+ *
  * Revision 1.1  2001/03/18 04:35:18  steve
  *  Add support for string constants to VPI.
  *
