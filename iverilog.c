@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.5 2000/04/26 03:33:32 steve Exp $"
+#ident "$Id: iverilog.c,v 1.6 2000/04/26 21:11:41 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -45,8 +45,8 @@ static int t_null(char*cmd, unsigned ncmd)
       sprintf(tmp, " | %s/ivl ", base);
       rc = strlen(tmp);
       cmd = realloc(cmd, ncmd+rc+1);
-      ncmd += rc;
       strcpy(cmd+ncmd, tmp);
+      ncmd += rc;
 
       if (start) {
 	    sprintf(tmp, " -s%s", start);
@@ -207,19 +207,20 @@ int main(int argc, char **argv)
 
 	/* Start building the preprocess command line. */
 
-      sprintf(tmp, "%s/ivlpp");
+      sprintf(tmp, "%s/ivlpp", base);
       if (verbose_flag)
 	    strcat(tmp, " -v");
 
       ncmd = strlen(tmp);
       cmd = malloc(ncmd + 1);
+      strcpy(cmd, tmp);
 
 	/* Add all the verilog source files to the preprocess command line. */
 
       for (idx = optind ;  idx < argc ;  idx += 1) {
 	    sprintf(tmp, " %s", argv[idx]);
 	    cmd = realloc(cmd, ncmd+strlen(tmp)+1);
-	    strcat(cmd, tmp);
+	    strcpy(cmd+ncmd, tmp);
 	    ncmd += strlen(tmp);
       }
 
@@ -257,6 +258,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.6  2000/04/26 21:11:41  steve
+ *  Mussed up command string mashing.
+ *
  * Revision 1.5  2000/04/26 03:33:32  steve
  *  Do not set width too small to hold significant bits.
  *
