@@ -31,7 +31,7 @@ make prefix=$RPM_BUILD_ROOT/usr install
 
 %files
 
-%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt netlist.txt t-dll.txt vpi.txt vvm.txt xnf.txt tgt-fpga/fpga.txt xilinx-hint.txt
+%attr(-,root,root) %doc COPYING README.txt BUGS.txt QUICK_START.txt ieee1364-notes.txt mingw.txt netlist.txt t-dll.txt vpi.txt xnf.txt tgt-fpga/fpga.txt xilinx-hint.txt
 %attr(-,root,root) %doc examples/*
 
 %attr(-,root,root) /usr/man/man1/iverilog.1.gz
@@ -49,7 +49,6 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/lib/ivl/fpga.tgt
 %attr(-,root,root) /usr/lib/ivl/iverilog.conf
 %attr(-,root,root) /usr/lib/libvpi.a
-%attr(-,root,root) /usr/lib/libvvm.a
 %attr(-,root,root) /usr/lib/libvpip.a
 %attr(-,root,root) /usr/lib/libveriuser.a
 %attr(-,root,root) /usr/include/ivl_target.h
@@ -57,10 +56,3 @@ make prefix=$RPM_BUILD_ROOT/usr install
 %attr(-,root,root) /usr/include/vpi_user.h
 %attr(-,root,root) /usr/include/acc_user.h
 %attr(-,root,root) /usr/include/veriuser.h
-%attr(-,root,root) /usr/include/vvm.h
-%attr(-,root,root) /usr/include/vvm_calltf.h
-%attr(-,root,root) /usr/include/vvm_func.h
-%attr(-,root,root) /usr/include/vvm_gates.h
-%attr(-,root,root) /usr/include/vvm_nexus.h
-%attr(-,root,root) /usr/include/vvm_signal.h
-%attr(-,root,root) /usr/include/vvm_thread.h
