@@ -21,7 +21,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sref.h,v 1.1 1999/05/01 02:57:53 steve Exp $"
+#ident "$Id: sref.h,v 1.2 1999/07/18 05:52:47 steve Exp $"
 #endif
 
 # include  <assert.h>
@@ -47,6 +47,7 @@ template <class T1, class T2> class sref_back {
       svector<const T2*>* back_list() const;
 
     private:
+      void desert_(sref<T1,T2>*);
       sref<T1,T2>*sback_;
 };
 
@@ -56,7 +57,7 @@ template <class T1, class T2> class sref {
 
     public:
       sref(T1*d) : dest_(d) { insert_(); }
-      virtual ~sref() { desert_(); }
+      virtual ~sref() { dest_->desert_(this); }
 
       T1*fore_ptr() { return dest_; }
       const T1*fore_ptr() const { return dest_; }
@@ -75,8 +76,6 @@ template <class T1, class T2> class sref {
 	      }
 	    }
 
-	// Not implemented yet.
-      void desert_() { assert(0); }
 };
 
 template <class T1,class T2>
@@ -102,8 +101,31 @@ svector<const T2*>* sref_back<T1,T2>::back_list() const
       return result;
 }
 
+template <class T1, class T2> void sref_back<T1,T2>::desert_(sref<T1,T2>*item)
+{
+      if (item == sback_)
+	    sback_ = item->next_;
+
+      if (item == sback_) {
+	    sback_ = 0;
+
+      } else {
+	    sref<T1,T2>*cur = sback_;
+	    while (cur->next_ != item) {
+		  assert(cur->next_);
+		  cur = cur->next_;
+	    }
+
+	    cur->next_ = item->next_;
+      }
+}
+
 /*
  * $Log: sref.h,v $
+ * Revision 1.2  1999/07/18 05:52:47  steve
+ *  xnfsyn generates DFF objects for XNF output, and
+ *  properly rewrites the Design netlist in the process.
+ *
  * Revision 1.1  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
  *

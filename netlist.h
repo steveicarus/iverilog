@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.48 1999/07/17 22:01:13 steve Exp $"
+#ident "$Id: netlist.h,v 1.49 1999/07/18 05:52:47 steve Exp $"
 #endif
 
 /*
@@ -768,19 +768,22 @@ class NetPDelay  : public NetProc {
 
 /*
  * The NetPEvent is associated with NetNEvents. The NetPEvent receives
- * eventss from any one of the associated NetNEvents and in response
+ * events from any one of the associated NetNEvents and in response
  * causes the attached statement to be executed. Objects of this type
  * are not nodes, but require a name anyhow so that backends can
  * generate objects to refer to it.
+ *
+ * The NetPEvent is the procedural part of the event.
  */
 class NetNEvent;
 class NetPEvent : public NetProc, public sref_back<NetPEvent,NetNEvent> {
 
     public:
-      NetPEvent(const string&n, NetProc*st)
-      : name_(n), statement_(st) { }
+      NetPEvent(const string&n, NetProc*st);
+      ~NetPEvent();
 
       string name() const { return name_; }
+      const NetProc* statement() const;
 
       virtual void emit_proc(ostream&, struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -805,8 +808,8 @@ class NetNEvent  : public NetNode, public sref<NetPEvent,NetNEvent> {
     public:
       enum Type { ANYEDGE, POSEDGE, NEGEDGE, POSITIVE };
 
-      NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
-      : NetNode(ev, wid), sref<NetPEvent,NetNEvent>(pe), edge_(e) { }
+      NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe);
+      ~NetNEvent();
 
       Type type() const { return edge_; }
 
@@ -946,7 +949,8 @@ class NetProcTop  : public LineInfo {
     public:
       enum Type { KINITIAL, KALWAYS };
 
-      NetProcTop(Type t, NetProc*st) : type_(t), statement_(st) { }
+      NetProcTop(Type t, NetProc*st);
+      ~NetProcTop();
 
       Type type() const { return type_; }
       const NetProc*statement() const { return statement_; }
@@ -1276,6 +1280,7 @@ class Design {
 
 	// PROCESSES
       void add_process(NetProcTop*);
+      void delete_process(NetProcTop*);
 
 	// Iterate over the design...
       void dump(ostream&) const;
@@ -1313,6 +1318,7 @@ class Design {
 
 	// List the processes in the design.
       NetProcTop*procs_;
+      NetProcTop*procs_idx_;
 
       map<string,string> flags_;
 
@@ -1368,6 +1374,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.49  1999/07/18 05:52:47  steve
+ *  xnfsyn generates DFF objects for XNF output, and
+ *  properly rewrites the Design netlist in the process.
+ *
  * Revision 1.48  1999/07/17 22:01:13  steve
  *  Add the functor interface for functor transforms.
  *

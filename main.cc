@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.20 1999/07/17 22:01:13 steve Exp $"
+#ident "$Id: main.cc,v 1.21 1999/07/18 05:52:46 steve Exp $"
 #endif
 
 const char NOTICE[] =
@@ -82,6 +82,7 @@ extern void propinit(Design*des);
 extern void sigfold(Design*des);
 extern void nobufz(Design*des);
 extern void xnfio(Design*des);
+extern void xnfsyn(Design*des);
 
 typedef void (*net_func)(Design*);
 static struct net_func_map {
@@ -93,6 +94,7 @@ static struct net_func_map {
       { "propinit", &propinit },
       { "sigfold", &sigfold },
       { "xnfio",   &xnfio },
+      { "xnfsyn",  &xnfsyn },
       { 0, 0 }
 };
 
@@ -270,6 +272,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.21  1999/07/18 05:52:46  steve
+ *  xnfsyn generates DFF objects for XNF output, and
+ *  properly rewrites the Design netlist in the process.
+ *
  * Revision 1.20  1999/07/17 22:01:13  steve
  *  Add the functor interface for functor transforms.
  *

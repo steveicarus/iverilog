@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.8 1999/07/17 22:01:13 steve Exp $"
+#ident "$Id: Makefile.in,v 1.9 1999/07/18 05:52:46 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -53,7 +53,7 @@ clean:
 	cd ivlpp ; make clean
 
 TT = t-null.o t-verilog.o t-vvm.o t-xnf.o
-FF = nobufz.o propinit.o sigfold.o xnfio.o
+FF = nobufz.o propinit.o sigfold.o xnfio.o xnfsyn.o
 
 O = main.o cprop.o design_dump.o elaborate.o emit.o eval.o functor.o \
 lexor.o mangle.o netlist.o parse.o parse_misc.o pform.o pform_dump.o \

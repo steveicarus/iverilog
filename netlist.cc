@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.45 1999/07/17 19:51:00 steve Exp $"
+#ident "$Id: netlist.cc,v 1.46 1999/07/18 05:52:46 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -273,6 +273,16 @@ NetProc::~NetProc()
 {
 }
 
+NetProcTop::NetProcTop(Type t, NetProc*st)
+: type_(t), statement_(st)
+{
+}
+
+NetProcTop::~NetProcTop()
+{
+      delete statement_;
+}
+
 NetAssign_::NetAssign_(const string&n, unsigned w)
 : NetNode(n, w)
 {
@@ -429,6 +439,37 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)
 : expr_(ex), if_(i), else_(e)
 {
+}
+
+NetNEvent::NetNEvent(const string&ev, unsigned wid, Type e, NetPEvent*pe)
+: NetNode(ev, wid), sref<NetPEvent,NetNEvent>(pe), edge_(e)
+{
+}
+
+NetNEvent::~NetNEvent()
+{
+}
+
+NetPEvent::NetPEvent(const string&n, NetProc*st)
+: name_(n), statement_(st)
+{
+}
+
+NetPEvent::~NetPEvent()
+{
+      svector<const NetNEvent*>*back = back_list();
+      if (back) {
+	    for (unsigned idx = 0 ;  idx < back->count() ;  idx += 1) {
+		  NetNEvent*ne = (*back)[idx];
+		  delete ne;
+	    }
+	    delete back;
+      }
+}
+
+const NetProc* NetPEvent::statement() const
+{
+      return statement_;
 }
 
 NetSTask::NetSTask(const string&na, const svector<NetExpr*>&pa)
@@ -1331,6 +1372,28 @@ void Design::add_process(NetProcTop*pro)
       procs_ = pro;
 }
 
+void Design::delete_process(NetProcTop*top)
+{
+      assert(top);
+      if (procs_ == top) {
+	    procs_ = top->next_;
+
+      } else {
+	    NetProcTop*cur = procs_;
+	    while (cur->next_ != top) {
+		  assert(cur->next_);
+		  cur = cur->next_;
+	    }
+
+	    cur->next_ = top->next_;
+      }
+
+      if (procs_idx_ == top)
+	    procs_idx_ = top->next_;
+
+      delete top;
+}
+
 void Design::clear_node_marks()
 {
       if (nodes_ == 0)
@@ -1389,6 +1452,10 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.46  1999/07/18 05:52:46  steve
+ *  xnfsyn generates DFF objects for XNF output, and
+ *  properly rewrites the Design netlist in the process.
+ *
  * Revision 1.45  1999/07/17 19:51:00  steve
  *  netlist support for ternary operator.
  *

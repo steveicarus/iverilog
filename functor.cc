@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.1 1999/07/17 22:01:13 steve Exp $"
+#ident "$Id: functor.cc,v 1.2 1999/07/18 05:52:46 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -47,12 +47,20 @@ void Design::functor(functor_t*fun)
       }
 
 	// apply to processes
-      for (NetProcTop*idx = procs_ ;  idx ;  idx = idx->next_)
+      procs_idx_ = procs_;
+      while (procs_idx_) {
+	    NetProcTop*idx = procs_idx_;
+	    procs_idx_ = idx->next_;
 	    fun->process(this, idx);
+      }
 }
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.2  1999/07/18 05:52:46  steve
+ *  xnfsyn generates DFF objects for XNF output, and
+ *  properly rewrites the Design netlist in the process.
+ *
  * Revision 1.1  1999/07/17 22:01:13  steve
  *  Add the functor interface for functor transforms.
  *
