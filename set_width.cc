@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.26 2003/01/26 21:02:21 steve Exp $"
+#ident "$Id: set_width.cc,v 1.27 2003/02/06 17:50:23 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,8 +38,9 @@
 
 bool NetExpr::set_width(unsigned w)
 {
-      cerr << typeid(*this).name() << ": set_width(unsigned) "
-	    "not implemented." << endl;
+      cerr << get_line() << ": internal warning:  "
+	   <<typeid(*this).name() << ": set_width(unsigned) "
+	   << "not implemented." << endl;
       expr_width(w);
       return false;
 }
@@ -283,6 +284,17 @@ bool NetEConst::set_width(unsigned w)
       }
 }
 
+/*
+ * Real constants can have whatever width the environment wants,
+ * because it isn't really a vector. The environment will convert this
+ * to a vector at the right time.
+ */
+bool NetECReal::set_width(unsigned w)
+{
+      expr_width(w);
+      return true;
+}
+
 bool NetEMemory::set_width(unsigned w)
 {
       if (w != mem_->width())
@@ -371,6 +383,9 @@ bool NetEUReduce::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.27  2003/02/06 17:50:23  steve
+ *  Real constants have no defined vector width
+ *
  * Revision 1.26  2003/01/26 21:02:21  steve
  *  Remember to save signedness of number.
  *

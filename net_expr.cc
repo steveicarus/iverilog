@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.12 2003/01/27 00:14:37 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.13 2003/02/06 17:50:23 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -273,6 +273,11 @@ const verireal& NetECReal::value() const
       return value_;
 }
 
+bool NetECReal::has_width() const
+{
+      return false;
+}
+
 NetECReal* NetECReal::dup_expr() const
 {
       NetECReal*tmp = new NetECReal(value_);
@@ -405,6 +410,9 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.13  2003/02/06 17:50:23  steve
+ *  Real constants have no defined vector width
+ *
  * Revision 1.12  2003/01/27 00:14:37  steve
  *  Support in various contexts the $realtime
  *  system task.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.274 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.275 2003/02/06 17:50:23 steve Exp $"
 #endif
 
 /*
@@ -1028,6 +1028,13 @@ class NetECReal  : public NetExpr {
       ~NetECReal();
 
       const verireal&value() const;
+
+	// Reals can be used in vector expressions. Conversions will
+	// be done at the right time.
+      virtual bool set_width(unsigned w);
+
+	// This type has no self-determined width. This is false.
+      virtual bool has_width() const;
 
 	// The type of this expression is ET_REAL
       TYPE expr_type() const;
@@ -3191,6 +3198,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.275  2003/02/06 17:50:23  steve
+ *  Real constants have no defined vector width
+ *
  * Revision 1.274  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *
