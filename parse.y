@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.64 1999/09/17 02:06:26 steve Exp $"
+#ident "$Id: parse.y,v 1.65 1999/09/22 02:00:48 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -1578,7 +1578,7 @@ statement
 	| lpvalue '=' delay expression ';'
 		{ PExpr*del = (*$3)[0];
 		  if ($3->count() != 1)
-			yyerror(@1, "Sorry, delay lists not supported here.");
+			yyerror(@1, "sorry: Delay lists not supported here.");
 		  PAssign*tmp = new PAssign($1,del,$4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
@@ -1587,8 +1587,21 @@ statement
 	| lpvalue K_LE delay expression ';'
 		{ PExpr*del = (*$3)[0];
 		  if ($3->count() != 1)
-			yyerror(@1, "Sorry, delay lists not supported here.");
+			yyerror(@1, "sorry: Delay lists not supported here.");
 		  PAssignNB*tmp = new PAssignNB($1,del,$4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| lpvalue '=' event_control expression ';'
+		{ PAssign*tmp = new PAssign($1,$3,$4);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+		  $$ = tmp;
+		}
+	| lpvalue K_LE event_control expression ';'
+		{ yyerror(@1, "sorry: Event controls not supported here.");
+		  PAssignNB*tmp = new PAssignNB($1,$4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;

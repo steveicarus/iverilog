@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.cc,v 1.14 1999/09/04 19:11:46 steve Exp $"
+#ident "$Id: Statement.cc,v 1.15 1999/09/22 02:00:48 steve Exp $"
 #endif
 
 # include  "Statement.h"
@@ -27,10 +27,20 @@ Statement::~Statement()
 {
 }
 
+PAssign_::PAssign_(PExpr*lval, PExpr*ex)
+: event_(0), lval_(lval), rval_(ex)
+{
+}
+
 PAssign_::PAssign_(PExpr*lval, PExpr*de, PExpr*ex)
-: lval_(lval), rval_(ex)
+: event_(0), lval_(lval), rval_(ex)
 {
       if (de) delay_.set_delay(de);
+}
+
+PAssign_::PAssign_(PExpr*lval, PEventStatement*ev, PExpr*ex)
+: event_(ev), lval_(lval), rval_(ex)
+{
 }
 
 PAssign_::~PAssign_()
@@ -40,11 +50,16 @@ PAssign_::~PAssign_()
 }
 
 PAssign::PAssign(PExpr*lval, PExpr*ex)
-: PAssign_(lval, 0, ex)
+: PAssign_(lval, ex)
 {
 }
 
 PAssign::PAssign(PExpr*lval, PExpr*d, PExpr*ex)
+: PAssign_(lval, d, ex)
+{
+}
+
+PAssign::PAssign(PExpr*lval, PEventStatement*d, PExpr*ex)
 : PAssign_(lval, d, ex)
 {
 }
@@ -54,7 +69,7 @@ PAssign::~PAssign()
 }
 
 PAssignNB::PAssignNB(PExpr*lval, PExpr*ex)
-: PAssign_(lval, 0, ex)
+: PAssign_(lval, ex)
 {
 }
 
@@ -148,6 +163,9 @@ PWhile::~PWhile()
 
 /*
  * $Log: Statement.cc,v $
+ * Revision 1.15  1999/09/22 02:00:48  steve
+ *  assignment with blocking event delay.
+ *
  * Revision 1.14  1999/09/04 19:11:46  steve
  *  Add support for delayed non-blocking assignments.
  *

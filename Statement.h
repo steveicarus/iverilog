@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Statement.h,v 1.18 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: Statement.h,v 1.19 1999/09/22 02:00:48 steve Exp $"
 #endif
 
 # include  <string>
@@ -29,6 +29,7 @@
 # include  "LineInfo.h"
 class PExpr;
 class Statement;
+class PEventStatement;
 
 /*
  * The PProcess is the root of a behavioral process. Each process gets
@@ -78,7 +79,9 @@ class Statement : public LineInfo {
  */
 class PAssign_  : public Statement {
     public:
+      explicit PAssign_(PExpr*lval, PExpr*ex);
       explicit PAssign_(PExpr*lval, PExpr*de, PExpr*ex);
+      explicit PAssign_(PExpr*lval, PEventStatement*de, PExpr*ex);
       virtual ~PAssign_() =0;
 
       const PExpr* lval() const  { return lval_; }
@@ -90,6 +93,7 @@ class PAssign_  : public Statement {
 			    NetExpr*&mux) const;
 
       PDelays delay_;
+      PEventStatement*event_;
 
     private:
       PExpr* lval_;
@@ -101,6 +105,7 @@ class PAssign  : public PAssign_ {
     public:
       explicit PAssign(PExpr*lval, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*de, PExpr*ex);
+      explicit PAssign(PExpr*lval, PEventStatement*de, PExpr*ex);
       ~PAssign();
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -260,6 +265,10 @@ class PEventStatement  : public Statement {
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, const string&path) const;
 
+	// This method is used to elaborate, but attach a previously
+	// elaborated statement to the event.
+      NetProc* elaborate_st(Design*des, const string&path, NetProc*st) const;
+
     private:
       svector<PEEvent*>expr_;
       Statement*statement_;
@@ -337,6 +346,9 @@ class PWhile  : public Statement {
 
 /*
  * $Log: Statement.h,v $
+ * Revision 1.19  1999/09/22 02:00:48  steve
+ *  assignment with blocking event delay.
+ *
  * Revision 1.18  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *

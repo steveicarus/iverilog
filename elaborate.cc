@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.93 1999/09/20 02:21:10 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.94 1999/09/22 02:00:48 steve Exp $"
 #endif
 
 /*
@@ -1618,11 +1618,15 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 		#<d> a = tmp;
 	     end
 
+	   If the delay is an event delay, then the transform is
+	   similar, with the event delay replacing the time delay. It
+	   is an event delay if the event_ member has a value.
+
 	   This rewriting of the expression allows me to not bother to
 	   actually and literally represent the delayed assign in the
 	   netlist. The compound statement is exactly equivalent. */
 
-      if (rise_time) {
+      if (rise_time || event_) {
 	    string n = des->local_symbol(path);
 	    unsigned wid = reg->pin_count();
 
@@ -1658,12 +1662,31 @@ NetProc* PAssign::elaborate(Design*des, const string&path) const
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		  connect(a2->pin(idx), reg->pin(idx));
 
-	      /* And build up the complex statement. */
-	    NetPDelay*de = new NetPDelay(rise_time, a2);
+	      /* Generate the delay statement with the final
+		 assignment attached to it. If this is an event delay,
+		 elaborate the PEventStatement. Otherwise, create the
+		 right NetPDelay object. */
+	    NetProc*st;
+	    if (event_) {
+		  st = event_->elaborate_st(des, path, a2);
+		  if (st == 0) {
+			cerr << event_->get_line() << ": error: "
+			      "unable to elaborate event expression."
+			     << endl;
+			des->errors += 1;
+			return 0;
+		  }
+		  assert(st);
 
+	    } else {
+		  NetPDelay*de = new NetPDelay(rise_time, a2);
+		  st = de;
+	    }
+
+	      /* And build up the complex statement. */
 	    NetBlock*bl = new NetBlock(NetBlock::SEQU);
 	    bl->append(a1);
-	    bl->append(de);
+	    bl->append(st);
 
 	    return bl;
       }
@@ -2132,14 +2155,9 @@ NetProc* PDelayStatement::elaborate(Design*des, const string&path) const
  * happens when the source has something like "@(E) ;". Note the null
  * statement.
  */
-NetProc* PEventStatement::elaborate(Design*des, const string&path) const
+NetProc* PEventStatement::elaborate_st(Design*des, const string&path,
+				    NetProc*enet) const
 {
-      NetProc*enet = 0;
-      if (statement_) {
-	    enet = statement_->elaborate(des, path);
-	    if (enet == 0)
-		  return 0;
-      }
 
 	/* Create a single NetPEvent, and a unique NetNEvent for each
 	   conjuctive event. An NetNEvent can have many pins only if
@@ -2170,6 +2188,18 @@ NetProc* PEventStatement::elaborate(Design*des, const string&path) const
       }
 
       return pe;
+}
+
+NetProc* PEventStatement::elaborate(Design*des, const string&path) const
+{
+      NetProc*enet = 0;
+      if (statement_) {
+	    enet = statement_->elaborate(des, path);
+	    if (enet == 0)
+		  return 0;
+      }
+
+      return elaborate_st(des, path, enet);
 }
 
 /*
@@ -2583,6 +2613,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.94  1999/09/22 02:00:48  steve
+ *  assignment with blocking event delay.
+ *
  * Revision 1.93  1999/09/20 02:21:10  steve
  *  Elaborate parameters in phases.
  *
