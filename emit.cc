@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.21 1999/09/15 01:55:06 steve Exp $"
+#ident "$Id: emit.cc,v 1.22 1999/09/20 02:21:10 steve Exp $"
 #endif
 
 /*
@@ -287,6 +287,12 @@ void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_memory(this);
 }
 
+void NetEParam::expr_scan(struct expr_scan_t*tgt) const
+{
+      cerr << get_line() << ":internal error: unexpected NetEParam."
+	   << endl;
+}
+
 void NetEUFunc::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_ufunc(this);
@@ -331,6 +337,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.22  1999/09/20 02:21:10  steve
+ *  Elaborate parameters in phases.
+ *
  * Revision 1.21  1999/09/15 01:55:06  steve
  *  Elaborate non-blocking assignment to memories.
  *

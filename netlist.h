@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.66 1999/09/18 01:53:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.67 1999/09/20 02:21:10 steve Exp $"
 #endif
 
 /*
@@ -364,7 +364,7 @@ class NetMemory  {
  */
 class NetExpr  : public LineInfo {
     public:
-      explicit NetExpr(unsigned w =0) : width_(w)  { }
+      explicit NetExpr(unsigned w =0);
       virtual ~NetExpr() =0;
 
       virtual void expr_scan(struct expr_scan_t*) const =0;
@@ -1249,6 +1249,7 @@ class NetEConcat  : public NetExpr {
 
       virtual bool set_width(unsigned w);
       virtual NetEConcat* dup_expr() const;
+      virtual NetExpr* eval_tree();
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -1260,8 +1261,7 @@ class NetEConcat  : public NetExpr {
 class NetEConst  : public NetExpr {
 
     public:
-      NetEConst(const verinum&val)
-      : NetExpr(val.len()), value_(val) { }
+      explicit NetEConst(const verinum&val);
       ~NetEConst();
 
       const verinum&value() const { return value_; }
@@ -1274,6 +1274,32 @@ class NetEConst  : public NetExpr {
 
     private:
       verinum value_;
+};
+
+/*
+ * This clas is a placeholder for a parameter expression. When
+ * parameters are first created, an instance of this object is used to
+ * hold the place where the parameter exression goes. Then, when the
+ * parameters are resolved, these objects are removed.
+ *
+ * If the parameter object is created with a path and name, then the
+ * object represents a reference to a parameter that is known to exist.
+ */
+class NetEParam  : public NetExpr {
+    public:
+      NetEParam();
+      NetEParam(const string&path, const string&name);
+      ~NetEParam();
+
+      virtual bool set_width(unsigned w);
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEParam* dup_expr() const;
+
+      virtual void dump(ostream&) const;
+
+    private:
+      string path_;
+      string name_;
 };
 
 /*
@@ -1585,6 +1611,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.67  1999/09/20 02:21:10  steve
+ *  Elaborate parameters in phases.
+ *
  * Revision 1.66  1999/09/18 01:53:08  steve
  *  Detect constant lessthen-equal expressions.
  *

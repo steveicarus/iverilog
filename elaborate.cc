@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.92 1999/09/18 22:23:50 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.93 1999/09/20 02:21:10 steve Exp $"
 #endif
 
 /*
@@ -1377,8 +1377,9 @@ NetExpr* PEConcat::elaborate_expr(Design*des, const string&path) const
       if (repeat_) {
 	    verinum*vrep = repeat_->eval_const(des, path);
 	    if (vrep == 0) {
-		  cerr << get_line() << ": concatenation repeat expression"
-			" cannot be evaluated." << endl;
+		  cerr << get_line() << ": error: "
+			"concatenation repeat expression cannot be evaluated."
+		       << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -1415,121 +1416,6 @@ NetExpr* PEString::elaborate_expr(Design*des, const string&path) const
       NetEConst*tmp = new NetEConst(value());
       tmp->set_line(*this);
       return tmp;
-}
-
-NetExpr* PEIdent::elaborate_expr(Design*des, const string&path) const
-{
-	// System identifiers show up in the netlist as identifiers.
-      if (text_[0] == '$')
-	    return new NetEIdent(text_, 64);
-
-      string name = path+"."+text_;
-
-	// If the identifier name a parameter name, then return
-	// the expression that it represents.
-      if (const NetExpr*ex = des->find_parameter(path, text_))
-	    return ex->dup_expr();
-
-	// If the identifier names a signal (a register or wire)
-	// then create a NetESignal node to handle it.
-      if (NetNet*net = des->find_signal(path, text_)) {
-
-	      // If this is a part select of a signal, then make a new
-	      // temporary signal that is connected to just the
-	      // selected bits.
-	    if (lsb_) {
-		  assert(msb_);
-		  verinum*lsn = lsb_->eval_const(des, path);
-		  verinum*msn = msb_->eval_const(des, path);
-		  if ((lsn == 0) || (msn == 0)) {
-			cerr << get_line() << ": Part select expresions "
-			      " must be constant expressions." << endl;
-			des->errors += 1;
-			return 0;
-		  }
-
-		  assert(lsn);
-		  assert(msn);
-		  unsigned long lsv = lsn->as_ulong();
-		  unsigned long msv = msn->as_ulong();
-		  unsigned long wid = 1 + ((msv>lsv)? (msv-lsv) : (lsv-msv));
-		  assert(wid <= net->pin_count());
-		  assert(net->sb_to_idx(msv) >= net->sb_to_idx(lsv));
-
-		  string tname = des->local_symbol(path);
-		  NetESignal*tmp = new NetESignal(tname, wid);
-		  tmp->set_line(*this);
-
-		    // Connect the pins from the lsb up to the msb.
-		  unsigned off = net->sb_to_idx(lsv);
-		  for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
-			connect(tmp->pin(idx), net->pin(idx+off));
-
-		  des->add_node(tmp);
-		  return tmp;
-	    }
-
-	      // If the bit select is constant, then treat it similar
-	      // to the part select, so that I save the effort of
-	      // making a mux part in the netlist.
-	    verinum*msn;
-	    if (msb_ && (msn = msb_->eval_const(des, path))) {
-		  assert(idx_ == 0);
-		  unsigned long msv = msn->as_ulong();
-
-		  string tname = des->local_symbol(path);
-		  NetESignal*tmp = new NetESignal(tname, 1);
-		  tmp->set_line(*this);
-		  connect(tmp->pin(0), net->pin(msv));
-
-		  des->add_node(tmp);
-		  return tmp;
-	    }
-
-	    NetESignal*node = new NetESignal(net);
-	    des->add_node(node);
-	    assert(idx_ == 0);
-
-	      // Non-constant bit select? punt and make a subsignal
-	      // device to mux the bit in the net.
-	    if (msb_) {
-		  NetExpr*ex = msb_->elaborate_expr(des, path);
-		  NetESubSignal*ss = new NetESubSignal(node, ex);
-		  ss->set_line(*this);
-		  return ss;
-	    }
-
-	      // All else fails, return the signal itself as the
-	      // expression.
-	    assert(msb_ == 0);
-	    return node;
-      }
-
-	// If the identifier names a memory, then this is a
-	// memory reference and I must generate a NetEMemory
-	// object to handle it.
-      if (NetMemory*mem = des->find_memory(name)) {
-	    assert(msb_ != 0);
-	    assert(lsb_ == 0);
-	    assert(idx_ == 0);
-	    NetExpr*i = msb_->elaborate_expr(des, path);
-	    if (i == 0) {
-		  cerr << get_line() << ": Unable to exaborate "
-			"index expression `" << *msb_ << "'" << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-
-	    NetEMemory*node = new NetEMemory(mem, i);
-	    node->set_line(*this);
-	    return node;
-      }
-
-	// I cannot interpret this identifier. Error message.
-      cerr << get_line() << ": Unable to bind wire/reg/memory "
-	    "`" << path << "." << text_ << "'" << endl;
-      des->errors += 1;
-      return 0;
 }
 
 NetExpr* PExpr::elaborate_expr(Design*des, const string&path) const
@@ -2513,8 +2399,20 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
       bool result_flag = true;
 
 	// Generate all the parameters that this instance of this
-	// module introduce to the design.
+	// module introduce to the design. This needs to be done in
+	// two passes. The first pass marks the parameter names as
+	// available so that they can be discovered when the second
+	// pass references them during elaboration.
       typedef map<string,PExpr*>::const_iterator mparm_it_t;
+
+	// So this loop elaborates the parameters, ...
+      for (mparm_it_t cur = parameters.begin()
+		 ; cur != parameters.end() ;  cur ++) {
+	    string pname = path + "." + (*cur).first;
+	    des->set_parameter(pname, new NetEParam);
+      }
+
+	// and this loop elaborates the expressions.
       for (mparm_it_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 	    string pname = path + "." + (*cur).first;
@@ -2533,6 +2431,45 @@ bool Module::elaborate(Design*des, const string&path, svector<PExpr*>*overrides_
 	          NetExpr*expr = (*overrides_)[idx]->elaborate_expr(des, path);
 	          des->set_parameter(pname, expr);
             }
+      }
+
+	// Finally, evaluate the parameter value. This step collapses
+	// the parameters to NetEConst values.
+      for (mparm_it_t cur = parameters.begin()
+		 ; cur != parameters.end() ;  cur ++) {
+
+	      // Get the NetExpr for the parameter.
+	    string pname = path + "." + (*cur).first;
+	    const NetExpr*expr = des->find_parameter(path, (*cur).first);
+	    assert(expr);
+
+	      // If it's already a NetEConst, then this parameter is done.
+	    if (dynamic_cast<const NetEConst*>(expr))
+		  continue;
+
+	      // Get a non-constant copy of the expression to evaluate...
+	    NetExpr*nexpr = expr->dup_expr();
+	    if (nexpr == 0) {
+		  cerr << (*cur).second->get_line() << ": internal error: "
+			"unable to dup expression: " << *expr << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	      // Try to evaluate the expression.
+	    nexpr = nexpr->eval_tree();
+	    if (nexpr == 0) {
+		  cerr << (*cur).second->get_line() << ": internal error: "
+			"unable to evaluate parm expression: " <<
+			*expr << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	      // The evaluate worked, replace the old expression with
+	      // this constant value.
+	    assert(nexpr);
+	    des->set_parameter(pname, nexpr);
       }
 
 	// Get all the explicitly declared wires of the module and
@@ -2646,6 +2583,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.93  1999/09/20 02:21:10  steve
+ *  Elaborate parameters in phases.
+ *
  * Revision 1.92  1999/09/18 22:23:50  steve
  *  Match bit widths comming out of task output ports.
  *

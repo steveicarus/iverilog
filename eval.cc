@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval.cc,v 1.7 1999/09/18 01:52:48 steve Exp $"
+#ident "$Id: eval.cc,v 1.8 1999/09/20 02:21:10 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -68,6 +68,12 @@ verinum* PEIdent::eval_const(const Design*des, const string&path) const
       if (expr == 0)
 	    return 0;
 
+      if (dynamic_cast<const NetEParam*>(expr)) {
+	    cerr << get_line() << ": sorry: I cannot evaluate ``" <<
+		  text_ << "'' in this context." << endl;
+	    return 0;
+      }
+
       const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       assert(eval);
       return new verinum(eval->value());
@@ -86,6 +92,9 @@ verinum* PETernary::eval_const(const Design*, const string&) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.8  1999/09/20 02:21:10  steve
+ *  Elaborate parameters in phases.
+ *
  * Revision 1.7  1999/09/18 01:52:48  steve
  *  Remove spurious message.
  *

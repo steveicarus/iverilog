@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.65 1999/09/18 01:53:08 steve Exp $"
+#ident "$Id: netlist.cc,v 1.66 1999/09/20 02:21:10 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -729,6 +729,11 @@ NetUTask::~NetUTask()
 {
 }
 
+NetExpr::NetExpr(unsigned w)
+: width_(w)
+{
+}
+
 NetExpr::~NetExpr()
 {
 }
@@ -739,11 +744,6 @@ bool NetExpr::set_width(unsigned w)
 	    "not implemented." << endl;
       expr_width(w);
       return false;
-}
-
-NetExpr* NetExpr::eval_tree()
-{
-      return 0;
 }
 
 NetEBAdd::NetEBAdd(char op, NetExpr*l, NetExpr*r)
@@ -920,84 +920,6 @@ NetEBinary* NetEBinary::dup_expr() const
       assert(0);
 }
 
-/*
- * Some of the derived classes can be evaluated by the compiler, this
- * method provides the common aid of evaluating the parameter
- * expressions.
- */
-void NetEBinary::eval_sub_tree_()
-{
-      NetExpr*tmp = left_->eval_tree();
-      if (tmp) {
-	    delete left_;
-	    left_ = tmp;
-      }
-      tmp = right_->eval_tree();
-      if (tmp){
-	    delete right_;
-	    right_ = tmp;
-      }
-}
-
-
-NetExpr* NetEBComp::eval_eqeq_()
-{
-      NetEConst*l = dynamic_cast<NetEConst*>(left_);
-      if (l == 0) return 0;
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
-      if (r == 0) return 0;
-
-      const verinum&lv = l->value();
-      const verinum&rv = r->value();
-
-      if (lv.len() < rv.len())
-	    return 0;
-
-      verinum result(verinum::V1, 1);
-      for (unsigned idx = 0 ; idx < lv.len(); idx += 1) {
-	    if (lv[idx] != rv[idx])
-		  result = verinum::V0;
-      }
-
-      return new NetEConst(result);
-}
-
-NetExpr* NetEBComp::eval_leeq_()
-{
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
-      if (r == 0) return 0;
-
-      verinum rv = r->value();
-
-	/* Detect the case where the right side is greater that or
-	   equal to the largest value the left side can possibly
-	   have. */
-      unsigned long lv = (1 << left_->expr_width()) - 1;
-      if (lv <= rv.as_ulong()) {
-	    verinum result(verinum::V1, 1);
-	    return new NetEConst(result);
-      }
-
-      return 0;
-}
-
-      
-NetExpr* NetEBComp::eval_tree()
-{
-      eval_sub_tree_();
-
-      switch (op_) {
-	  case 'e':
-	    return eval_eqeq_();
-
-	  case 'L':
-	    return eval_leeq_();
-
-	  default:
-	    return 0;
-      }
-}
-
 NetEConcat::NetEConcat(unsigned cnt, unsigned r)
 : parms_(cnt), repeat_(r)
 {
@@ -1015,7 +937,7 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       assert(idx < parms_.count());
       assert(parms_[idx] == 0);
       parms_[idx] = e;
-      expr_width( expr_width() + e->expr_width() );
+      expr_width( expr_width() + repeat_*e->expr_width() );
 }
 
 /*
@@ -1043,7 +965,7 @@ bool NetEConcat::set_width(unsigned w)
 
 NetEConcat* NetEConcat::dup_expr() const
 {
-      NetEConcat*dup = new NetEConcat(parms_.count());
+      NetEConcat*dup = new NetEConcat(parms_.count(), repeat_);
       for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
 	    if (parms_[idx]) {
 		  assert(parms_[idx]->dup_expr());
@@ -1055,17 +977,20 @@ NetEConcat* NetEConcat::dup_expr() const
       return dup;
 }
 
+NetEConst::NetEConst(const verinum&val)
+: NetExpr(val.len()), value_(val)
+{
+}
+
 NetEConst::~NetEConst()
 {
 }
 
 bool NetEConst::set_width(unsigned w)
 {
-      if (w > value_.len()) {
-	    cerr << get_line() << ": Cannot expand " << *this
-		 << " to " << w << " bits." << endl;
+      if (w > value_.len())
 	    return false;
-      }
+
       assert(w <= value_.len());
       value_ = verinum(value_, w);
       expr_width(w);
@@ -1133,6 +1058,29 @@ bool NetEMemory::set_width(unsigned w)
 NetEMemory* NetEMemory::dup_expr() const
 {
       assert(0);
+}
+
+NetEParam::NetEParam()
+{
+}
+
+NetEParam::NetEParam(const string&p, const string&n)
+: path_(p), name_(n)
+{
+}
+
+NetEParam::~NetEParam()
+{
+}
+
+bool NetEParam::set_width(unsigned)
+{
+      return false;
+}
+
+NetEParam* NetEParam::dup_expr() const
+{
+      return 0;
 }
 
 NetESignal::NetESignal(NetNet*n)
@@ -1870,6 +1818,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.66  1999/09/20 02:21:10  steve
+ *  Elaborate parameters in phases.
+ *
  * Revision 1.65  1999/09/18 01:53:08  steve
  *  Detect constant lessthen-equal expressions.
  *

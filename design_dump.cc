@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.41 1999/09/19 01:06:36 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.42 1999/09/20 02:21:10 steve Exp $"
 #endif
 
 /*
@@ -644,6 +644,11 @@ void NetEMemory::dump(ostream&o) const
       o << "]";
 }
 
+void NetEParam::dump(ostream&o) const
+{
+      o << "<" << path_ << "." << name_ << ">";
+}
+
 void NetESignal::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Expression Node (NetESignal): " <<
@@ -748,6 +753,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.42  1999/09/20 02:21:10  steve
+ *  Elaborate parameters in phases.
+ *
  * Revision 1.41  1999/09/19 01:06:36  steve
  *  dump the repeat count, if applicable.
  *
