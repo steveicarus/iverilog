@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.99 2000/05/31 01:31:52 steve Exp $"
+#ident "$Id: parse.y,v 1.100 2000/06/27 16:00:40 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -356,6 +356,22 @@ delay_value
 		  delete $5;
 		}
 	;
+	
+delay_value_list
+	: delay_value_list ',' delay_value
+		{ 
+		}
+	| delay_value
+		{ 
+		}
+	|
+		{ 
+		}
+	| delay_value_list ','
+		{ 
+		}
+	;
+
 
 delay_value_simple
 	: NUMBER
@@ -1752,8 +1768,8 @@ register_variable_list
 
 specify_item
 	: K_specparam specparam_list ';'
-	| specify_simple_path '=' '(' expression_list ')' ';'
-		{ delete $4;
+	| specify_simple_path '=' '(' delay_value_list ')' ';'
+		{
 		}
 	;
 
