@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.127 2000/05/27 19:33:23 steve Exp $"
+#ident "$Id: netlist.cc,v 1.128 2000/06/12 03:57:10 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2230,7 +2230,7 @@ NetEParam::~NetEParam()
 
 NetEParam* NetEParam::dup_expr() const
 {
-      return 0;
+      return new NetEParam(des_, scope_, name_);
 }
 
 NetEScope::NetEScope(NetScope*s)
@@ -2636,6 +2636,9 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.128  2000/06/12 03:57:10  steve
+ *  NetEParam supports dup_expr.
+ *
  * Revision 1.127  2000/05/27 19:33:23  steve
  *  Merge similar probes within a module.
  *
