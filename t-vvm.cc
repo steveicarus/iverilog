@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.197 2000/12/17 05:33:11 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.198 2001/01/01 01:41:09 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -259,6 +259,7 @@ class target_vvm : public target_t {
       unsigned signal_bit_counter;
       unsigned signal_counter;
 
+    public:
       map<string,unsigned>nexus_wire_map;
       unsigned nexus_wire_counter;
 
@@ -593,15 +594,27 @@ void vvm_proc_rval::expr_ufunc(const NetEUFunc*expr)
 	   the parameter port register. */
       for (unsigned idx = 0 ;  idx < pcnt ;  idx += 1) {
 	    assert(expr->parm(idx));
-	    assert(def->port(idx+1));
+
+	    const NetNet*pnet = def->port(idx+1);
+	    assert(pnet);
 
 	    expr->parm(idx)->expr_scan(this);
-	    string bname = mangle(def->port(idx+1)->name());
-	    for (unsigned bit = 0 ; 
-		 bit < expr->parm(idx)->expr_width() ;  bit += 1) {
+	    tgt_->defn << "      // " << pnet->name() << " == "
+		       << result << endl;
 
-		  tgt_->defn << "      " << bname << ".bits["<<bit<<"] = "
-			     << result << "["<<bit<<"];" << endl;
+	    unsigned wid = expr->parm(idx)->expr_width();
+	    if (pnet->pin_count() < wid)
+		  wid = pnet->pin_count();
+
+	    string bname = mangle(def->port(idx+1)->name());
+	    for (unsigned bit = 0 ;  bit < wid ;  bit += 1) {
+
+		  string nexus = pnet->pin(bit).nexus()->name();
+		  unsigned ncode = tgt_->nexus_wire_map[nexus];
+
+		  tgt_->defn << "      nexus_wire_table["<<ncode<<"]"
+			     << ".reg_assign(" << result << "["<<bit<<"]"
+			     << ");" << endl;
 	    }
       }
 
@@ -3608,6 +3621,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.198  2001/01/01 01:41:09  steve
+ *  reg_assign into function ports. (PR#95)
+ *
  * Revision 1.197  2000/12/17 05:33:11  steve
  *  Generate smaller code for reg assigns.
  *
