@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.cc,v 1.11 2005/01/30 05:06:49 steve Exp $"
+#ident "$Id: vvp_net.cc,v 1.12 2005/02/03 04:55:13 steve Exp $"
 
 # include  "vvp_net.h"
 # include  <stdio.h>
@@ -26,12 +26,14 @@
 /* *** BIT operations *** */
 vvp_bit4_t add_with_carry(vvp_bit4_t a, vvp_bit4_t b, vvp_bit4_t&c)
 {
-      if ((a|b|c) > 1) {
+      if (bit4_is_xz(a) || bit4_is_xz(b) || bit4_is_xz(c)) {
 	    c = BIT4_X;
 	    return BIT4_X;
       }
 
-      int sum = a + b + c;
+	// NOTE: This relies on the facts that XZ values have been
+	// weeded out, and that BIT4_1 is 1 and BIT4_0 is 0.
+      int sum = (int)a + (int)b + (int)c;
 
       switch (sum) {
 	  case 0:
@@ -70,6 +72,32 @@ vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b)
       if (bit4_is_xz(b))
 	    return BIT4_X;
       return BIT4_1;
+}
+
+vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b)
+{
+      if (a == BIT4_1)
+	    return BIT4_1;
+      if (b == BIT4_1)
+	    return BIT4_1;
+      if (bit4_is_xz(a))
+	    return BIT4_X;
+      if (bit4_is_xz(b))
+	    return BIT4_X;
+      return BIT4_0;
+}
+
+vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b)
+{
+      if (bit4_is_xz(a))
+	    return BIT4_X;
+      if (bit4_is_xz(b))
+	    return BIT4_X;
+      if (a == BIT4_0)
+	    return b;
+      if (b == BIT4_0)
+	    return a;
+      return BIT4_0;
 }
 
 vvp_bit4_t operator ~ (vvp_bit4_t a)
@@ -864,6 +892,9 @@ vvp_bit4_t compare_gtge_signed(const vvp_vector4_t&a,
 
 /*
  * $Log: vvp_net.cc,v $
+ * Revision 1.12  2005/02/03 04:55:13  steve
+ *  Add support for reduction logic gates.
+ *
  * Revision 1.11  2005/01/30 05:06:49  steve
  *  Get .arith/sub working.
  *

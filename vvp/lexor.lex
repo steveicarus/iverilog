@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.47 2005/01/22 01:06:20 steve Exp $"
+#ident "$Id: lexor.lex,v 1.48 2005/02/03 04:55:13 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -105,6 +105,12 @@
 ".param"    { return K_PARAM; }
 ".part"     { return K_PART; }
 ".part/pv"  { return K_PART_PV; }
+".reduce/and" { return K_REDUCE_AND; }
+".reduce/or"  { return K_REDUCE_OR; }
+".reduce/xor" { return K_REDUCE_XOR; }
+".reduce/nand" { return K_REDUCE_NAND; }
+".reduce/nor"  { return K_REDUCE_NOR; }
+".reduce/xnor" { return K_REDUCE_XNOR; }
 ".resolv"   { return K_RESOLV; }
 ".scope"    { return K_SCOPE; }
 ".shift/l"  { return K_SHIFTL; }
@@ -186,6 +192,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.48  2005/02/03 04:55:13  steve
+ *  Add support for reduction logic gates.
+ *
  * Revision 1.47  2005/01/22 01:06:20  steve
  *  Implement the .cmp/eeq LPM node.
  *

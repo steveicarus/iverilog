@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.60 2005/01/22 01:06:20 steve Exp $"
+#ident "$Id: compile.h,v 1.61 2005/02/03 04:55:13 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -134,6 +134,13 @@ extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
+extern void compile_reduce_and(char*label, struct symb_s arg);
+extern void compile_reduce_or(char*label, struct symb_s arg);
+extern void compile_reduce_xor(char*label, struct symb_s arg);
+extern void compile_reduce_nand(char*label, struct symb_s arg);
+extern void compile_reduce_nor(char*label, struct symb_s arg);
+extern void compile_reduce_xnor(char*label, struct symb_s arg);
+
 extern void compile_shiftl(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_shiftr(char*label, long width,
@@ -287,6 +294,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.61  2005/02/03 04:55:13  steve
+ *  Add support for reduction logic gates.
+ *
  * Revision 1.60  2005/01/22 01:06:20  steve
  *  Implement the .cmp/eeq LPM node.
  *

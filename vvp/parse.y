@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.64 2005/01/22 01:06:20 steve Exp $"
+#ident "$Id: parse.y,v 1.65 2005/02/03 04:55:13 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -62,6 +62,8 @@ extern FILE*yyin;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_CONCAT
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM K_PART K_PART_PV
+%token K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
 %token K_MEM K_MEM_P K_MEM_I
@@ -270,6 +272,23 @@ statement
 		  compile_cmp_gt($1, $3, true, obj.cnt, obj.vect);
 		}
 
+        | T_LABEL K_REDUCE_AND symbol ';'
+                { compile_reduce_and($1, $3); }
+
+        | T_LABEL K_REDUCE_OR symbol ';'
+                { compile_reduce_or($1, $3); }
+
+        | T_LABEL K_REDUCE_XOR symbol ';'
+                { compile_reduce_xor($1, $3); }
+
+        | T_LABEL K_REDUCE_NAND symbol ';'
+                { compile_reduce_nand($1, $3); }
+
+        | T_LABEL K_REDUCE_NOR symbol ';'
+                { compile_reduce_nor($1, $3); }
+
+        | T_LABEL K_REDUCE_XNOR symbol ';'
+                { compile_reduce_xnor($1, $3); }
 
 	| T_LABEL K_SHIFTL T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
@@ -650,6 +669,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.65  2005/02/03 04:55:13  steve
+ *  Add support for reduction logic gates.
+ *
  * Revision 1.64  2005/01/22 01:06:20  steve
  *  Implement the .cmp/eeq LPM node.
  *

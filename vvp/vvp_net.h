@@ -18,7 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: vvp_net.h,v 1.11 2005/01/30 05:06:49 steve Exp $"
+#ident "$Id: vvp_net.h,v 1.12 2005/02/03 04:55:13 steve Exp $"
 
 # include  <assert.h>
 
@@ -56,6 +56,8 @@ extern bool bit4_is_xz(vvp_bit4_t a);
      for 4-value bit operations. */
 extern vvp_bit4_t operator ~ (vvp_bit4_t a);
 extern vvp_bit4_t operator & (vvp_bit4_t a, vvp_bit4_t b);
+extern vvp_bit4_t operator | (vvp_bit4_t a, vvp_bit4_t b);
+extern vvp_bit4_t operator ^ (vvp_bit4_t a, vvp_bit4_t b);
 
 /*
  * This class represents scaler values collected into vectors. The
@@ -509,6 +511,9 @@ class vvp_fun_signal  : public vvp_net_fun_t {
 
 /*
  * $Log: vvp_net.h,v $
+ * Revision 1.12  2005/02/03 04:55:13  steve
+ *  Add support for reduction logic gates.
+ *
  * Revision 1.11  2005/01/30 05:06:49  steve
  *  Get .arith/sub working.
  *

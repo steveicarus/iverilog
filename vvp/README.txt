@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: README.txt,v 1.55 2005/01/28 05:34:25 steve Exp $
+ *  $Id: README.txt,v 1.56 2005/02/03 04:55:13 steve Exp $
  */
 
 VVP SIMULATION ENGINE
@@ -481,6 +481,24 @@ functor.
 The initial output value is (W+X+Y+Z) bits of 'bx. As input values are
 propagated, the bits are placed in the correct place in the output
 vector value, and a new output value is propagated.
+
+
+REDUCTION LOGIC
+
+The reduction logic statements take in a single vector, and propagate
+a single bit.
+
+        <label> .reduce/and  <symbol> ;
+        <label> .reduce/or   <symbol> ;
+        <label> .reduce/xor  <symbol> ;
+        <label> .reduce/nand <symbol> ;
+        <label> .reduce/nor  <symbol> ;
+        <label> .reduce/xnor <symbol> ;
+
+the device has a single input, which is a vector of any width. The
+device performs the logic on all the bits of the vector (a la Verilog)
+and produces and propagates a single bit width vector.
+
 
 FORCE STATEMENTS (old method - remove me):
 
