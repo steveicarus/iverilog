@@ -25,7 +25,7 @@
   *
   *  Compile this program with the command:
   *
-  *      verilog hello.vl
+  *      iverilog -ohello hello.vl
   *  
   *  After churning for a little while, the program will create the output
   *  file "hello" which is compiled, linked and ready to run. Run this
@@ -33,7 +33,9 @@
   *  
   *      ./hello
   *  
-  *  and the program will print the message to its output. Easy!
+  *  and the program will print the message to its output. Easy! For
+  *  more on how to make the iverilog command work, see the iverilog
+  *  manual page.
   */
 
 module main();

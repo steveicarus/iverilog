@@ -24,7 +24,7 @@
   *  Like any other Verilog simulation, compile this program with the
   *  command:
   *  
-  *      verilog show_vcd.vl
+  *      iverilog show_vcd.vl
   *  
   *  This will generate the show_vcd command in the current directory.
   *  When you run the command, you will see the output from all the

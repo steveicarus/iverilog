@@ -16,8 +16,21 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  *
- *   $Id: sqrt.vl,v 1.1 1999/12/05 21:08:56 steve Exp $"
+ *   $Id: sqrt.vl,v 1.2 2000/09/23 17:46:11 steve Exp $"
  */
+
+ /*
+  * This example shows that Icarus Verilog can run non-trivial
+  * programs, too. This uses a variety of Verilog language features
+  * to implement the module of a square-root device. The program
+  * uses IEEE1364-1995 language features and should work correctly
+  * on any Verilog compiler.
+  *
+  * Run the file with Icarus Verilog under UNIX using the command:
+  *
+  *     % iverilog -osqrt sqrt.v
+  *     % ./sqrt
+  */
 
  /*
   * This module approximates the square root of an unsigned 32bit
