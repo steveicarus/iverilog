@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: netlist.txt,v 1.1 1999/05/27 04:13:08 steve Exp $"
+#ident "$Id: netlist.txt,v 1.2 1999/07/21 01:15:29 steve Exp $"
 
 
 Note that the netlist.h header contains detailed descriptions of how
@@ -36,6 +36,59 @@ translating it to a (hopefully) better netlist after each step. The
 complete netlist is then passed to the code generator, the emit
 function, where the final code (in the target format) is produced.
 
+STRUCTURAL ITEMS: NetNode and NetNet
+
+Components and wires, memories and registers all at their base are
+either NetNode objects or NetNet objects. Even these classes are
+derived from the NetObj class.
+
+All NetNode and NetNet objects have a name and some number of
+pins. The name usually comes from the Verilog source that represents
+that object, although objects that are artifacts of elaboration will
+have a generated (and probably unreadable) name. The pins are the
+ports into the device. NetNode objects have a pin for each pin of the
+component it represents, and NetNet objects have a pin for each signal
+in the vector.
+
+Node and net pins can be connected together via the connect
+function. Connections are transitive (A==B and B==c means A==C) so
+connections accumulate on a link as items are connected to it. The
+descructors for nets and nodes automatically arrange for pins to be
+disconnected when the item is deleted, so that the netlist can be
+changed during processing.
+
+BEHAVIORAL ITEMS: NetProcTop, NetProc and derived classes
+
+Behavioral items are not in general linked to the netlist. Instead,
+they represent elabrated behavioral statements. The type of the object
+implies what the behavior of the statement does. For example, a
+NetCondit object represents an ``if'' statement, and carries a
+condition expression and up to two alternative sub-statements.
+
+At the root of a process is a NetProcTop object. This class carries a
+type flag (initial or always) and a single NetProc object. The
+contained statement may, depending on the derived class, refer to
+other statements, compound statements, so on. But at the root of the
+tree is the NetProcTop object. The Design class keeps a list of the
+elaborated NetProcTop objects. That list represents the list of
+processes in the design.
+
+INTERACTION OF BEHAVIORAL AND STRUCTURAL: NetAssign_
+
+The behavioral statements in a Verilog design effect the structural
+aspects through assignments to registers. Registers are structural
+items represented by the NetNet class, linked to the assignment
+statement through pins. This implies that the l-value of an assignment
+is structural. It also implies that the statement itself is
+structural, and indeed it is derived from NetNode.
+
+The NetAssign_ class is also derived from the NetProc class because
+what it does is brought on by executing the process. By multiple
+inheritance we have therefore that the assignment is both a NetNode
+and a NetProc. The NetAssign_ node has pins that represent the l-value
+of the statement, and carries behavioral expressions that represent
+the r-value of the assignment.
+
 EXPRESSIONS
 
 Expressions are represented as a tree of NetExpr nodes. The NetExpr
@@ -44,19 +97,21 @@ node, including virtual methods to help with dealing with nested
 complexities of expressions.
 
 Expressions (as expressed in the source and p-form) may also be
-elaborated structurally, where it makes sense. In this case, the
-expression is represented as the equivilent set of gates. For example,
+elaborated structurally, where it makes sense. For example, assignment
+l-value expressions are represented as connections to pins. Also,
 continuous assignment module items are elaborated as gates instead of
-as a procedural expression as it is really a structural
-description. Event expressions are also elaborated structurally as
-events are like devices that trigger behavioral statements.
+as a procedural expression. Event expressions are also elaborated
+structurally as events are like devices that trigger behavioral
+statements.
+
+However, typical expressions the behavioral description are
+represented as a tree of NetExpr nodes. The derived clas of the node
+encodes what kind of operator the node represents.
 
 EXPRESSION BIT WIDTH
 
-The NetExpr class represents an expression. The expression has a bit
-width that it either explicitly specified, or implied by context or
-contents.
-
+The expression (represented by the NetExpr class) has a bit width that
+it either explicitly specified, or implied by context or contents.
 When each node of the expression is first constructed during
 elaboration, it is given, by type and parameters, an idea what its
 width should be. It certain cases, this is definitive, for example
@@ -68,7 +123,7 @@ widths of the sub expressions. For example, the bitwise AND (&)
 operator has a bit size implied by its operands, whereas the
 comparison (==) operator has a bit size of 1. The building up of the
 elaborated expression checks and adjusts the bit widths as the
-expression is built up, util finally the context of the expression
+expression is built up, until finally the context of the expression
 takes the final bit width and makes any final adjustments.
 
 The NetExpr::expr_width() method returns the calculated (or guessed)
@@ -90,8 +145,23 @@ XXXX certain that the bit width does not matter. In this case, I
 XXXX really should tell the expression node about it so that it can
 XXXX pick a practical (and optimal) width.
 
+INTERACTION OF EXPRESSIONS AND STRUCTURE: NetESignal
+
+The NetAssign_ class described above is the means for processes to
+manipulate the net, but values are read from the net by NetESignal
+objects. These objects are class NetExpr because they can appear in
+expressions (and have width) but are also class NetNode because they
+connect to and receive signals from the structural aspects of the
+design.
+
+The pins of a NetESignal object are passive. The values at the pin are
+only sampled with the process evaluates the expression that includes
+the NetESignal object.
 
  $Log: netlist.txt,v $
+ Revision 1.2  1999/07/21 01:15:29  steve
+  Document netlist semantics.
+
  Revision 1.1  1999/05/27 04:13:08  steve
   Handle expression bit widths with non-fatal errors.
 
