@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.17 2002/08/12 01:35:01 steve Exp $"
+#ident "$Id: veriuser.h,v 1.18 2002/12/19 21:37:04 steve Exp $"
 #endif
 
 /*
@@ -56,6 +56,47 @@
 
 EXTERN_C_START
 
+#ifndef PLI_TYPES
+#define PLI_TYPES
+typedef signed int     PLI_INT32;
+typedef unsigned int   PLI_UINT32;
+typedef signed short   PLI_INT16;
+typedef unsigned short PLI_UINT12;
+typedef signed char    PLI_BYTE8;
+typedef unsigned char  PLI_UBYTE8;
+#endif
+
+/*
+ * defines for tf_message
+ */
+#define ERR_MESSAGE 1
+#define ERR_WARNING 2
+#define ERR_ERROR   3
+#define ERR_INTERNAL 4
+#define ERR_SYSTEM   5
+
+/*
+ * These are some defines for backwards compatibility. They should not
+ * be used in new code.
+ */
+#ifndef TRUE
+# define TRUE 1
+#endif
+#ifndef FALSE
+# define FALSE 0
+#endif
+#ifndef __cplusplus
+# ifndef true
+#  define true 1
+# endif
+# ifndef false
+#  define false 0
+# endif
+# ifndef bool
+#  define bool int
+# endif
+#endif
+
 /*
  * structure for veriusertfs array
  */
@@ -74,6 +115,20 @@ typedef struct t_tfcell
       char  reserved[20];            /* reserved */
 } s_tfcell, *p_tfcell;
 
+/*
+ * Normal PLI1.0 modules export a veriusertfs array that contains all
+ * the function definitions for use by the simulator. The user code is
+ * expected to supply that array.
+ *
+ * However, Icarus Verilog doesn't normally look for the veriusertfs
+ * array, it instead looks for the vlog_startup_routines array, as
+ * declared in vpi_user.h. So the veriuser library includes the
+ * veriusertfs_register function that can be used to do the PLI 1.0
+ * setup. Create a vlog_startup_routines table like this if you are
+ * just interested in making your PLI1 functions work:
+ *
+ * void (*vlog_startup_routines[])() = { &veriusertfs_register };
+ */
 extern s_tfcell veriusertfs[];
 extern void veriusertfs_register();
 
@@ -88,6 +143,64 @@ extern void veriusertfs_register();
 #define reason_finish 9
 #define reason_endofcompile 16
 
+/* These are values returned by tf_typep */
+#define tf_nullparam    0
+#define TF_NULLPARAM    tf_nullparam
+#define tf_string       1
+#define TF_STRING       tf_string
+#define tf_readonly     10
+#define TF_READONLY     tf_readonly
+#define tf_readwrite    11
+#define TF_READWRITE    tf_readwrite
+#define tf_rwbitselect  12
+#define TF_RWBITSELECT  tf_rwbitselect
+#define tf_rwpartselect 13
+#define TF_RWPARTSELECT tf_rwpartselect
+#define tf_rwmemselect  14
+#define TF_RWMEMSELECT  tf_rwmemselect
+#define tf_readonlyreal 15
+#define TF_READONLYREAL tf_readonlyreal
+#define tf_readwritereal 16
+#define TF_READWRITEREAD tf_readwritereal
+
+typedef struct t_tfnodeinfo {
+      PLI_INT16 node_type;
+      PLI_INT16 padding;
+      union {
+	    struct t_vecval *vecval_p;
+	    struct t_strengthval *strengthval_p;
+	    PLI_BYTE8 *memoryval_p;
+	    double *read_value_p;
+      } node_value;
+      char* node_symbol;
+      PLI_INT32 node_ngroups;
+      PLI_INT32 node_vec_size;
+      PLI_INT32 node_sign;
+      PLI_INT32 node_ms_index;
+      PLI_INT32 node_ls_index;
+      PLI_INT32 node_mem_size;
+      PLI_INT32 node_lhs_element;
+      PLI_INT32 node_rhs_element;
+      PLI_INT32*node_handle;
+} s_tfnodeinfo, *p_tfnodeinfo;
+
+/* values used in the node_type of the tfnodeinfo structure. */
+#define tf_null_node    100
+#define TF_NULL_NODE    tf_null_node
+#define tf_reg_node     101
+#define TF_REG_NODE     tf_reg_node
+#define tf_integer_node 102
+#define TF_INTEGER_NODE tf_integer_node
+#define tf_time_node    103
+#define TF_TIME_NODE    tf_time_node
+#define tf_netvector_node 104
+#define TF_NETVECTOR_NODE tf_netvector_node
+#define tf_netscalar_node 105
+#define TF_NETSCALAR_NODE tf_netscalar_node
+#define tf_memory_node    106
+#define TF_MEMORY_NODE    tf_memory_node
+#define tf_real_node      107
+#define TF_REAL_NODE      tf_real_node
 
 /* Extern functions from the library. */
 extern void io_printf (const char *, ...)
@@ -114,6 +227,12 @@ extern int tf_getlongtime(int*high_bits);
 
 extern int tf_getp(int pnum);
 
+extern PLI_BYTE8* tf_getworkarea(void);
+
+extern PLI_INT32 tf_message(PLI_INT32 level, char*facility,
+			    char*messno, char*fmt, ...)
+      __attribute__((format (printf,4,5)));
+
 extern int tf_nump(void);
 
 /* IEEE1364 NOTE: tf_putlongp is listed as returning in in the header
@@ -123,6 +242,15 @@ extern void tf_putlongp(int pnum, int lowvalue, int highvalue);
 
 extern void tf_putp(int pnum, int value);
 
+/* IEEE1364 NOTE: tf_setworkarea is listed as taking a PLI_BYTE8*, but
+   that is silly, it really takes any kind of pointer. Taking void* is
+   compatible with those who pass a PLI_BYTE8*. */
+extern PLI_INT32 tf_setworkarea(void*workarea);
+
+extern char* tf_spname(void);
+
+extern PLI_INT32 tf_typep(PLI_INT32 narg);
+
 extern void tf_warning(const char*, ...)
       __attribute__((format (printf,1,2)));
 
@@ -130,6 +258,11 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.18  2002/12/19 21:37:04  steve
+ *  Add tf_message, tf_get/setworkarea, and
+ *  ty_typep functions, along with defines
+ *  related to these functions.
+ *
  * Revision 1.17  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: io_print.c,v 1.3 2002/08/12 01:35:02 steve Exp $"
+#ident "$Id: io_print.c,v 1.4 2002/12/19 21:37:04 steve Exp $"
 #endif
 
 # include  <vpi_user.h>
@@ -56,8 +56,29 @@ void tf_error(const char *fmt, ...)
       va_end(ap);
 }
 
+PLI_INT32 tf_message(PLI_INT32 level, char*facility,
+		     char*messno, char*fmt, ...)
+{
+      va_list ap;
+
+      vpi_printf("%s[%s] ", facility, messno);
+
+      va_start(ap, fmt);
+      vpi_vprintf(fmt, ap);
+      va_end(ap);
+
+      vpi_printf("\n");
+      return 0;
+}
+
+
 /*
  * $Log: io_print.c,v $
+ * Revision 1.4  2002/12/19 21:37:04  steve
+ *  Add tf_message, tf_get/setworkarea, and
+ *  ty_typep functions, along with defines
+ *  related to these functions.
+ *
  * Revision 1.3  2002/08/12 01:35:02  steve
  *  conditional ident string using autoconfig.
  *
