@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: acc_user.h,v 1.8 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: acc_user.h,v 1.9 2003/04/12 18:57:13 steve Exp $"
 #endif
 
 /*
@@ -114,6 +114,25 @@ typedef struct t_setval_value {
       } value;
 } s_setval_value, *p_setval_value, s_acc_value, *p_acc_value;
 
+typedef struct t_strengths {
+      PLI_UBYTE8 logic_value;
+      PLI_UBYTE8 strength1;
+      PLI_UBYTE8 strength2;
+} s_strengths, *p_strengths;
+
+typedef struct t_vc_record {
+      PLI_INT32 vc_reason;
+      PLI_INT32 vc_hightime;
+      PLI_INT32 vc_lowtime;
+      void*     user_data;
+      union {
+	    PLI_UBYTE8 logic_value;
+	    double real_value;
+	    handle vector_handle;
+	    s_strengths strengths_s;
+      } out_value;
+} s_vc_record, *p_vc_record;
+
 typedef struct t_location {
       PLI_INT32 line_no;
       const char*filename;
@@ -152,8 +171,12 @@ typedef struct t_timescale_info {
 } s_timescale_info, *p_timescale_info;
 extern void acc_fetch_timescale_info(handle obj, p_timescale_info info);
 
+extern PLI_INT32 acc_fetch_size(handle obj);
+
 extern PLI_INT32 acc_fetch_type(handle obj);
 extern char* acc_fetch_type_str(PLI_INT32 type);
+
+extern char* acc_fetch_value(handle obj, const char*fmt, s_acc_value*value);
 
 extern handle acc_handle_object(const char*name);
 extern handle acc_handle_parent(handle obj);
@@ -171,12 +194,20 @@ extern char*acc_product_version(void);
 extern int acc_set_value(handle obj, p_setval_value value,
 			 p_setval_delay delay);
 
+extern void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
+			void*data, PLI_INT32 vcl_flag);
+extern  void acc_vcl_delete(handle obj, PLI_INT32(*consumer)(p_vc_record),
+			    void*data, PLI_INT32 vcl_flag);
+
 extern char* acc_version(void);
 
 EXTERN_C_END
 
 /*
  * $Log: acc_user.h,v $
+ * Revision 1.9  2003/04/12 18:57:13  steve
+ *  More acc_ function stubs.
+ *
  * Revision 1.8  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: getsimtime.c,v 1.4 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: getsimtime.c,v 1.5 2003/04/12 18:57:14 steve Exp $"
 #endif
 
 #include  <veriuser.h>
@@ -44,8 +44,19 @@ PLI_INT32 tf_igettimeprecision(void*obj)
       return vpi_get(vpiTimePrecision, 0);
 }
 
+PLI_INT32 tf_gettime(void)
+{
+      s_vpi_time time;
+      time.type = vpiSimTime;
+      vpi_get_time (0 /* NULL */, &time);
+      return time.low;
+}
+
 /*
  * $Log: getsimtime.c,v $
+ * Revision 1.5  2003/04/12 18:57:14  steve
+ *  More acc_ function stubs.
+ *
  * Revision 1.4  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *

@@ -17,19 +17,30 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type.c,v 1.2 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: a_fetch_type.c,v 1.3 2003/04/12 18:57:14 steve Exp $"
 #endif
 
 # include  <acc_user.h>
 # include  <vpi_user.h>
 # include  <assert.h>
 
+PLI_INT32 acc_fetch_size(handle obj)
+{
+      return vpi_get(vpiSize, obj);
+}
+
 PLI_INT32 acc_fetch_type(handle obj)
 {
       switch (vpi_get(vpiType, obj)) {
 
 	  case vpiConstant:
-	    return accConstant;
+	      /*XXXX SWIFT PLI tasks seem to assume that string
+		constants show up an accParameter, instead of
+		accConstant. */
+	    if (vpi_get(vpiConstType, obj) == vpiStringConst)
+		  return accParameter;
+	    else
+		  return accConstant;
 
 	  case vpiNet:
 	    return accNet;
@@ -51,6 +62,9 @@ PLI_INT32 acc_fetch_type(handle obj)
 
 /*
  * $Log: a_fetch_type.c,v $
+ * Revision 1.3  2003/04/12 18:57:14  steve
+ *  More acc_ function stubs.
+ *
  * Revision 1.2  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_type_str.c,v 1.4 2003/03/13 05:07:46 steve Exp $"
+#ident "$Id: a_fetch_type_str.c,v 1.5 2003/04/12 18:57:14 steve Exp $"
 #endif
 
 #include  <assert.h>
@@ -28,6 +28,9 @@
 char* acc_fetch_type_str(PLI_INT32 type)
 {
       switch (type) {
+	  case accNet:
+	    return "accNet";
+
 	  case accReg:
 	    return "accReg";
 
@@ -47,6 +50,9 @@ char* acc_fetch_type_str(PLI_INT32 type)
 
 /*
  * $Log: a_fetch_type_str.c,v $
+ * Revision 1.5  2003/04/12 18:57:14  steve
+ *  More acc_ function stubs.
+ *
  * Revision 1.4  2003/03/13 05:07:46  steve
  *  Declaration warnings.
  *

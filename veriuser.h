@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: veriuser.h,v 1.22 2003/03/13 04:35:09 steve Exp $"
+#ident "$Id: veriuser.h,v 1.23 2003/04/12 18:57:13 steve Exp $"
 #endif
 
 /*
@@ -251,6 +251,8 @@ extern int tf_getlongtime(int*high_bits);
 
 extern int tf_getp(int pnum);
 
+extern PLI_INT32 tf_gettime(void);
+
 extern PLI_INT32 tf_gettimeprecision(void);
 extern PLI_INT32 tf_igettimeprecision(void*);
 
@@ -288,6 +290,9 @@ EXTERN_C_END
 
 /*
  * $Log: veriuser.h,v $
+ * Revision 1.23  2003/04/12 18:57:13  steve
+ *  More acc_ function stubs.
+ *
  * Revision 1.22  2003/03/13 04:35:09  steve
  *  Add a bunch of new acc_ and tf_ functions.
  *
