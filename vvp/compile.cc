@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.171 2004/05/19 03:26:24 steve Exp $"
+#ident "$Id: compile.cc,v 1.172 2004/06/16 16:33:26 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -921,6 +921,36 @@ void compile_arith_sum(char*label, long wid, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, wid, argc, argv);
 }
 
+void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if ((long)argc != 2*wid) {
+	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_eq(wid);
+
+      make_arith(arith, label, wid, argc, argv);
+}
+
+void compile_cmp_ne(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if ((long)argc != 2*wid) {
+	    fprintf(stderr, "%s; .cmp has wrong number of symbols\n", label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_ne(wid);
+
+      make_arith(arith, label, wid, argc, argv);
+}
+
 void compile_cmp_ge(char*label, long wid, bool signed_flag,
 		    unsigned argc, struct symb_s*argv)
 {
@@ -1548,6 +1578,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.172  2004/06/16 16:33:26  steve
+ *  Add structural equality compare nodes.
+ *
  * Revision 1.171  2004/05/19 03:26:24  steve
  *  Support delayed/non-blocking assignment to reals and others.
  *

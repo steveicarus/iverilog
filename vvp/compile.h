@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.53 2003/09/04 20:26:31 steve Exp $"
+#ident "$Id: compile.h,v 1.54 2004/06/16 16:33:26 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -107,6 +107,10 @@ extern void compile_arith_sum(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_sub(char*label, long width,
 			      unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eq(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_ne(char*label, long width,
+			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ge(char*label, long width, bool signed_flag,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_gt(char*label, long width, bool signed_flag,
@@ -264,6 +268,9 @@ extern void compile_net(char*label, char*name,
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.54  2004/06/16 16:33:26  steve
+ *  Add structural equality compare nodes.
+ *
  * Revision 1.53  2003/09/04 20:26:31  steve
  *  Add $push flag for threads.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.41 2003/08/26 16:26:02 steve Exp $"
+#ident "$Id: lexor.lex,v 1.42 2004/06/16 16:33:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -88,6 +88,8 @@
 ".arith/mult" { return K_ARITH_MULT; }
 ".arith/sub"  { return K_ARITH_SUB; }
 ".arith/sum"  { return K_ARITH_SUM; }
+".cmp/eq"   { return K_CMP_EQ; }
+".cmp/ne"   { return K_CMP_NE; }
 ".cmp/ge"   { return K_CMP_GE; }
 ".cmp/ge.s" { return K_CMP_GE_S; }
 ".cmp/gt"   { return K_CMP_GT; }
@@ -179,6 +181,9 @@ int yywrap()
 
 /*
  * $Log: lexor.lex,v $
+ * Revision 1.42  2004/06/16 16:33:26  steve
+ *  Add structural equality compare nodes.
+ *
  * Revision 1.41  2003/08/26 16:26:02  steve
  *  ifdef idents correctly.
  *

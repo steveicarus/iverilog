@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.15 2003/04/11 05:15:38 steve Exp $"
+#ident "$Id: arith.h,v 1.16 2004/06/16 16:33:26 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -101,6 +101,22 @@ class vvp_arith_sub  : public vvp_wide_arith_ {
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
+class vvp_cmp_eq  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_eq(unsigned wid);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+};
+
+class vvp_cmp_ne  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_ne(unsigned wid);
+      void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
+
+};
+
 class vvp_cmp_ge  : public vvp_arith_ {
 
     public:
@@ -139,6 +155,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.16  2004/06/16 16:33:26  steve
+ *  Add structural equality compare nodes.
+ *
  * Revision 1.15  2003/04/11 05:15:38  steve
  *  Add signed versions of .cmp/gt/ge
  *

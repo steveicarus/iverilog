@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.cc,v 1.26 2003/08/01 00:58:34 steve Exp $"
+#ident "$Id: arith.cc,v 1.27 2004/06/16 16:33:26 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -383,10 +383,80 @@ void vvp_arith_sub::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
       output_val_(base, push);
 }
 
+vvp_cmp_eq::vvp_cmp_eq(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_eq::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+{
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
+      unsigned out_val = 1;
+
+      for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base,idx-1);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned val = obj->ival;
+	    if (val & 0x0a) {
+		  out_val = 2;
+		  break;
+	    }
+
+	    unsigned a = (val & 0x01)? 1 : 0;
+	    unsigned b = (val & 0x04)? 1 : 0;
+
+	    if (a != b) {
+		  out_val = 0;
+		  break;
+	    }
+      }
+
+      put_oval(out_val, push);
+}
+
+vvp_cmp_ne::vvp_cmp_ne(unsigned wid)
+: vvp_arith_(wid)
+{
+}
+
+void vvp_cmp_ne::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
+{
+      put(i, val);
+      vvp_ipoint_t base = ipoint_make(i,0);
+
+      unsigned out_val = 0;
+
+      for (unsigned idx = wid_ ;  idx > 0 ;  idx -= 1) {
+	    vvp_ipoint_t ptr = ipoint_index(base,idx-1);
+	    functor_t obj = functor_index(ptr);
+
+	    unsigned val = obj->ival;
+	    if (val & 0x0a) {
+		  out_val = 2;
+		  break;
+	    }
+
+	    unsigned a = (val & 0x01)? 1 : 0;
+	    unsigned b = (val & 0x04)? 1 : 0;
+
+	    if (a != b) {
+		  out_val = 1;
+		  break;
+	    }
+      }
+
+      put_oval(out_val, push);
+}
+
+
 vvp_cmp_ge::vvp_cmp_ge(unsigned wid, bool flag)
 : vvp_arith_(wid), signed_flag_(flag)
 {
 }
+
 
 
 void vvp_cmp_ge::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
@@ -610,6 +680,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.27  2004/06/16 16:33:26  steve
+ *  Add structural equality compare nodes.
+ *
  * Revision 1.26  2003/08/01 00:58:34  steve
  *  Fix arithmetic operators in 64bit processors.
  *

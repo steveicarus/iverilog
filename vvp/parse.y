@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: parse.y,v 1.56 2003/09/04 20:26:31 steve Exp $"
+#ident "$Id: parse.y,v 1.57 2004/06/16 16:33:26 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -58,7 +58,7 @@ extern FILE*yyin;
 
 
 %token K_ARITH_DIV K_ARITH_MOD K_ARITH_MULT K_ARITH_SUB K_ARITH_SUM
-%token K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
+%token K_CMP_EQ K_CMP_NE K_CMP_GE K_CMP_GE_S K_CMP_GT K_CMP_GT_S
 %token K_EVENT K_EVENT_OR K_FUNCTOR K_NET K_NET_S K_PARAM
 %token K_RESOLV K_SCOPE K_SHIFTL K_SHIFTR K_THREAD K_TIMESCALE K_UFUNC
 %token K_UDP K_UDP_C K_UDP_S
@@ -214,6 +214,16 @@ statement
 	| T_LABEL K_ARITH_SUM T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_arith_sum($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_EQ T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_eq($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_NE T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_ne($1, $3, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_CMP_GE T_NUMBER ',' symbols ';'
@@ -617,6 +627,9 @@ int compile_design(const char*path)
 
 /*
  * $Log: parse.y,v $
+ * Revision 1.57  2004/06/16 16:33:26  steve
+ *  Add structural equality compare nodes.
+ *
  * Revision 1.56  2003/09/04 20:26:31  steve
  *  Add $push flag for threads.
  *
