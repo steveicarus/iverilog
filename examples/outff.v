@@ -23,7 +23,7 @@
  *
  * To compile this for XNF, try a command like this:
  *
- *    verilog -X -fpart=XC4010XLPQ160 -fncf=outff.ncf outff.v
+ *    iverilog -txnf -fpart=XC4010XLPQ160 -ooutff.xnf -fncf=outff.ncf outff.v
  *
  * That command causes an outff.xnf and outff.ncf file to be created.
  * Next, make the outff.ngd file with the command:
