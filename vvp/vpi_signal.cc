@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.12 2001/05/14 00:42:32 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.13 2001/05/15 15:09:08 steve Exp $"
 #endif
 
 /*
@@ -169,6 +169,25 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 	    : (rfp->lsb - rfp->msb + 1);
 
       switch (vp->format) {
+
+	  case vpiIntVal:
+	    assert(wid <= 8 * sizeof vp->value.integer);
+	    vp->value.integer = 0;
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  vvp_ipoint_t fptr = ipoint_index(rfp->bits, idx);
+		  switch (functor_oval(fptr)) {
+		      case 0:
+			break;
+		      case 1:
+			vp->value.integer |= 1<<idx;
+			break;
+		      default:
+			idx = wid;
+			vp->value.integer = 0;
+			break;
+		  }
+	    }
+	    break;
 
 	  case vpiBinStrVal:
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -407,6 +426,9 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.13  2001/05/15 15:09:08  steve
+ *  Add the glossary file.
+ *
  * Revision 1.12  2001/05/14 00:42:32  steve
  *  test width of target with bit size of long.
  *

@@ -1,4 +1,4 @@
-.TH iverilog 1 "$Date: 2001/01/20 19:02:05 $" Version "$Date: 2001/01/20 19:02:05 $"
+.TH iverilog 1 "$Date: 2001/05/15 15:09:08 $" Version "$Date: 2001/05/15 15:09:08 $"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -10,9 +10,10 @@ iverilog - Icarus Verilog compiler
 .PP
 \fIiverilog\fP is a compiler that translates Verilog source code into
 executable programs for simulation, or other netlist formats for
-further processing. The currenty supported targets are \fIvvm\fP (for
-executable simulation) and \fIxnf\fP for synthesis. Other target
-types are added as code generators are implemented.
+further processing. The currently supported targets are \fIvvm\fP (for
+executable simulation) and \fIvvp\fP for simulation, and \fIxnf\fP for
+synthesis. Other target types are added as code generators are
+implemented.
 
 .SH OPTIONS
 .l
@@ -56,7 +57,7 @@ expanded and removed. This is useful, for example, to preprocess
 verilog source for use by other compilers.
 .TP 8
 .B -I\fIincludedir\fP 
-Append directory \fIincludepdir\fP to list of directoriess searched
+Append directory \fIincludepdir\fP to list of directories searched
 for Verilog include files. The \fB-I\fP switch may be used many times
 to specify several directories to search, the directories are searched
 in the order they appear on the command line.
@@ -64,7 +65,7 @@ in the order they appear on the command line.
 .B -m\fImodule\fP
 Add this module to the list of VPI modules to be loaded by the
 simulation. Many modules can be specified, and all will be loaded, in
-the order specified.
+the order specified. The system module is implicit and always included.
 .TP 8
 .B -N\fIpath\fP
 This is used for debugging the compiler proper. Dump the final netlist
@@ -133,6 +134,12 @@ This is the default. The target is an executable program that uses the
 vvm simulation runtime. The compiler actually generates C++ code, then
 compiles and links that code to make the output executable.
 .TP 8
+.B vvp
+The vvp target generates code for the vvp runtime. The output is a
+complete program that simulates the design (like with vvm) but must be
+run by the \fivvp\fP command. This target is much faster then the
+\fBvvm\fP target, but not quite as complete.
+.TP 8
 .B xnf
 This is the Xilinx Netlist Format used by many tools for placing
 devices in FPGAs or other programmable devices. The Icarus Verilog XNF
@@ -159,15 +166,19 @@ the current directory
 
 To compile hello.v to an executable file called a.out:
 
-	verilog hello.v
+	iverilog hello.v
 
 To compile hello.v to an executable file called hello:
 
-	verilog -o hello hello.v
+	iverilog -o hello hello.v
+
+To compile and run using the vvp runtime:
+
+	iverilog -ohello.vvp -tvvp hello.v
 
 To compile hello.v to a file in XNF-format called hello.xnf
 
-	verilog -txnf -ohello.xnf hello.v
+	iverilog -txnf -ohello.xnf hello.v
 
 
 .SH "AUTHOR"
