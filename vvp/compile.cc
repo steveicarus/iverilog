@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.125 2002/04/21 22:29:49 steve Exp $"
+#ident "$Id: compile.cc,v 1.126 2002/05/07 04:15:43 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -355,7 +355,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
       if (!val.ptr) {
 	    // check for thread vector  T<base,wid>
 	    unsigned base, wid;
-	    unsigned n;
+	    unsigned n = 0;
 	    char ss[32];
 	    if (2 <= sscanf(label, "T<%u,%u>%n", &base, &wid, &n) 
 		&& n == strlen(label)) {
@@ -1410,6 +1410,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.126  2002/05/07 04:15:43  steve
+ *  Fix uninitialized memory accesses.
+ *
  * Revision 1.125  2002/04/21 22:29:49  steve
  *  Add the assign/d instruction for computed delays.
  *

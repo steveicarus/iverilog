@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.cc,v 1.22 2002/01/03 04:19:02 steve Exp $"
+#ident "$Id: arith.cc,v 1.23 2002/05/07 04:15:43 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -58,8 +58,8 @@ void vvp_arith_::output_val_(vvp_ipoint_t base, bool push, unsigned long sum)
 vvp_wide_arith_::vvp_wide_arith_(unsigned wid)
       : vvp_arith_(wid)
 {
-      unsigned np = (wid + pagesize - 1)/pagesize;
-      sum_ = (unsigned long *)malloc(np*sizeof(unsigned long));
+      pagecount_ = (wid + pagesize - 1)/pagesize;
+      sum_ = (unsigned long *)calloc(pagecount_, sizeof(unsigned long));
       assert(sum_);
 }
 
@@ -308,7 +308,8 @@ void vvp_arith_sum::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    if (pbit >= pagesize) {
 		  pbit = 0;
 		  page += 1;
-		  sum_[page] = carry;
+		  if (page < pagecount_)
+			sum_[page] = carry;
 		  carry = 0;
 	    }
       }
@@ -370,7 +371,8 @@ void vvp_arith_sub::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 	    if (pbit >= pagesize) {
 		  pbit = 0;
 		  page += 1;
-		  sum_[page] = carry;
+		  if (page < pagecount_)
+			sum_[page] = carry;
 		  carry = 0;
 	    }
       }
@@ -549,6 +551,9 @@ void vvp_shiftr::set(vvp_ipoint_t i, bool push, unsigned val, unsigned)
 
 /*
  * $Log: arith.cc,v $
+ * Revision 1.23  2002/05/07 04:15:43  steve
+ *  Fix uninitialized memory accesses.
+ *
  * Revision 1.22  2002/01/03 04:19:02  steve
  *  Add structural modulus support down to vvp.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: arith.h,v 1.12 2002/01/03 04:19:02 steve Exp $"
+#ident "$Id: arith.h,v 1.13 2002/05/07 04:15:43 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -47,6 +47,7 @@ class vvp_wide_arith_  : public vvp_arith_ {
 
     protected:
       static const unsigned pagesize = 8*sizeof(unsigned long);
+      unsigned pagecount_;
       unsigned long *sum_;
 
       void output_val_(vvp_ipoint_t base, bool push);
@@ -134,6 +135,9 @@ class vvp_shiftr  : public vvp_arith_ {
 
 /*
  * $Log: arith.h,v $
+ * Revision 1.13  2002/05/07 04:15:43  steve
+ *  Fix uninitialized memory accesses.
+ *
  * Revision 1.12  2002/01/03 04:19:02  steve
  *  Add structural modulus support down to vvp.
  *
