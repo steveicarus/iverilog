@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.16 1999/11/17 01:31:28 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.17 1999/11/17 18:52:09 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -70,6 +70,7 @@
 # include  "netlist.h"
 # include  "target.h"
 # include  <fstream>
+# include  <strstream>
 
 class target_xnf  : public target_t {
 
@@ -89,6 +90,7 @@ class target_xnf  : public target_t {
 
     private:
       static string mangle(const string&);
+      static string choose_sig_name(const NetObj::Link*lnk);
       static void draw_pin(ostream&os, const string&name,
 			   const NetObj::Link&lnk);
       static void draw_sym_with_lcaname(ostream&os, string lca,
@@ -121,6 +123,52 @@ string target_xnf::mangle(const string&name)
       return result;
 }
 
+/*
+ * This method takes a signal and pin number as a nexus. Scan the
+ * nexus to decide which name to use if there are lots of attached
+ * signals.
+ */
+string target_xnf::choose_sig_name(const NetObj::Link*lnk)
+{
+      const NetNet*sig = dynamic_cast<const NetNet*>(lnk->get_obj());
+      unsigned pin = lnk->get_pin();
+
+      for (const NetObj::Link*cur = lnk->next_link()
+		 ;  cur != lnk ;  cur = cur->next_link()) {
+
+	    const NetNet*cursig = dynamic_cast<const NetNet*>(cur->get_obj());
+	    if (cursig == 0)
+		  continue;
+
+	    if (sig == 0) {
+		  sig = cursig;
+		  pin = cur->get_pin();
+		  continue;
+	    }
+
+	    if ((cursig->pin_count() == 1) && (sig->pin_count() > 1))
+		  continue;
+
+	    if (cursig->local_flag() && !sig->local_flag())
+		  continue;
+
+	    if (cursig->name() < sig->name())
+		  continue;
+
+	    sig = cursig;
+	    pin = cur->get_pin();
+      }
+
+      assert(sig);
+      ostrstream tmp;
+      tmp << mangle(sig->name());
+      if (sig->pin_count() > 1)
+	    tmp << "<" << pin << ">";
+      tmp << ends;
+
+      return tmp.str();
+}
+
 void target_xnf::draw_pin(ostream&os, const string&name,
 			  const NetObj::Link&lnk)
 {
@@ -141,26 +189,11 @@ void target_xnf::draw_pin(ostream&os, const string&name,
 	    type = 'O';
 	    break;
       }
-	    
-      unsigned cpin;
-      const NetObj*cur;
-      for (lnk.next_link(cur, cpin)
-		 ; cur->pin(cpin) != lnk
-		 ; cur->pin(cpin).next_link(cur, cpin)) {
 
-	    const NetNet*sig = dynamic_cast<const NetNet*>(cur);
-	    if (sig) {
-		  os << "    PIN, " << use_name << ", " << type << ", "
-		     << mangle(sig->name());
-		  if (sig->pin_count() > 1)
-			os << "<" << cpin << ">";
-
-		  if (inv)
-			os << ",,INV";
-
-		  os << endl;
-	    }
-      }
+      os << "    PIN, " << use_name << ", " << type << ", " <<
+	    choose_sig_name(&lnk);
+      if (inv) os << ",,INV";
+      os << endl;
 }
 
 static string scrape_pin_name(string&list)
@@ -506,18 +539,8 @@ void target_xnf::net_const(ostream&os, const NetConst*c)
       // find a way to make a method out of this.
       unsigned cpin;
       const NetObj*cur;
-      for (lnk.next_link(cur, cpin)
-		 ; cur->pin(cpin) != lnk
-		 ; cur->pin(cpin).next_link(cur, cpin)) {
 
-	    const NetNet*sig = dynamic_cast<const NetNet*>(cur);
-	    if (sig) {
-		os << "PWR, " << v << ", " << mangle(sig->name());
-		if (sig->pin_count() > 1)
-                        os << "<" << cpin << ">";
-		os << endl;
-	    }
-      }
+      os << "    PWR, " << v << ", " << choose_sig_name(&lnk) << endl;
 }
 
 /*
@@ -615,6 +638,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.17  1999/11/17 18:52:09  steve
+ *  Add algorithm for choosing nexus name from attached signals.
+ *
  * Revision 1.16  1999/11/17 01:31:28  steve
  *  Clean up warnings that add_sub got from Alliance
  *
