@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: d-virtex.c,v 1.4 2001/09/11 05:52:31 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.5 2001/09/12 04:35:25 steve Exp $"
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -72,7 +72,7 @@ static const char*virtex_library_text =
 "      (cell GND (cellType GENERIC)\n"
 "            (view Netlist_representation\n"
 "              (viewType NETLIST)\n"
-"              (interface (port G (direction OUTPUT)))))\n"
+"              (interface (port GROUND (direction OUTPUT)))))\n"
 "      (cell INV (cellType GENERIC)\n"
 "            (view Netlist_representation\n"
 "              (viewType NETLIST)\n"
@@ -122,7 +122,7 @@ static const char*virtex_library_text =
 "      (cell VCC (cellType GENERIC)\n"
 "            (view Netlist_representation\n"
 "              (viewType NETLIST)\n"
-"              (interface (port P (direction OUTPUT)))))\n"
+"              (interface (port VCC (direction OUTPUT)))))\n"
 "      (cell XORCY (cellType GENERIC)\n"
 "            (view Netlist_representation\n"
 "              (viewType NETLIST)\n"
@@ -400,11 +400,11 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			edif_uref);
 
 		fprintf(xnf, "(net U%uVM0 (joined"
-			" (portRef P (instanceRef U%uV0))"
+			" (portRef VCC (instanceRef U%uV0))"
 			" (portRef CI (instanceRef U%uM0))))\n",
 			edif_uref, edif_uref, edif_uref);
 		fprintf(xnf, "(net U%uGM0 (joined"
-			" (portRef G (instanceRef U%uG0))"
+			" (portRef GROUND (instanceRef U%uG0))"
 			" (portRef DI (instanceRef U%uM0))))\n",
 			edif_uref, edif_uref, edif_uref);
 		fprintf(xnf, "(net U%uLM0 (joined"
@@ -446,7 +446,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			      edif_uref, idx, edif_uref, idx-1,
 			      edif_uref, idx);
 		      fprintf(xnf, "(net U%uGM%u (joined"
-			      " (portRef G (instanceRef U%uG%u))"
+			      " (portRef GROUND (instanceRef U%uG%u))"
 			      " (portRef DI (instanceRef U%uM%u))))\n",
 			      edif_uref, idx, edif_uref, idx,
 			      edif_uref, idx);
@@ -495,7 +495,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			      edif_uref, pairs, edif_uref, pairs-1,
 			      edif_uref, pairs);
 		      fprintf(xnf, "(net U%uGM%u (joined"
-			      " (portRef G (instanceRef U%uG%u))"
+			      " (portRef GROUND (instanceRef U%uG%u))"
 			      " (portRef DI (instanceRef U%uM%u))))\n",
 			      edif_uref, pairs, edif_uref, pairs,
 			      edif_uref, pairs);
@@ -544,7 +544,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 			      edif_uref, pairs, edif_uref, pairs-1,
 			      edif_uref, pairs);
 		      fprintf(xnf, "(net U%uGM%u (joined"
-			      " (portRef G (instanceRef U%uG%u))"
+			      " (portRef GROUND (instanceRef U%uG%u))"
 			      " (portRef DI (instanceRef U%uM%u))))\n",
 			      edif_uref, pairs, edif_uref, pairs,
 			      edif_uref, pairs);
@@ -564,7 +564,7 @@ static void edif_show_virtex_eq(ivl_lpm_t net)
 
 		}
 
-		sprintf(jbuf, "(portRef O (instanceRef U%uL%u))",
+		sprintf(jbuf, "(portRef O (instanceRef U%uM%u))",
 			edif_uref, pairs);
 		edif_set_nexus_joint(ivl_lpm_q(net, 0), jbuf);
 
@@ -748,6 +748,13 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.5  2001/09/12 04:35:25  steve
+ *  Xilinx uses GROUND and VCC as pin names for the
+ *  GND and VCC devices.
+ *
+ *  Connect the top end of the EQ chain to the MUXCY
+ *  instead of to the LUT. The MUXCY has the real output.
+ *
  * Revision 1.4  2001/09/11 05:52:31  steve
  *  Use carry mux to implement wide identity compare,
  *  Place property item in correct place in LUT cell list.
