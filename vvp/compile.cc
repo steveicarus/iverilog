@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.116 2001/12/15 01:54:38 steve Exp $"
+#ident "$Id: compile.cc,v 1.117 2001/12/15 02:11:51 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -858,13 +858,13 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       functor_t obj = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor_s(3);
+	    obj = new resolv_functor_s(HiZ);
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor_s(0);
+	    obj = new resolv_functor_s(Pu0);
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor_s(1);
+	    obj = new resolv_functor_s(Pu1);
 
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
@@ -1350,6 +1350,9 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.117  2001/12/15 02:11:51  steve
+ *  Give tri0 and tri1 their proper strengths.
+ *
  * Revision 1.116  2001/12/15 01:54:38  steve
  *  Support tri0 and tri1 resolvers.
  *

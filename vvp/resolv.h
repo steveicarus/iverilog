@@ -19,32 +19,35 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.h,v 1.4 2001/12/15 01:54:39 steve Exp $"
+#ident "$Id: resolv.h,v 1.5 2001/12/15 02:11:51 steve Exp $"
 #endif
 
 # include  "functor.h"
 
 /*
  * This functor type resolves its inputs using the verilog method of
- * combining signals, and outputs that resolved value. If the result
- * is HiZ, then drive the hiz_value instead. This supports tri0 and
- * tri1.
+ * combining signals, and outputs that resolved value. The puller
+ * value is also blended with the result. This helps with the
+ * implementation of tri0 and tri1, which have pull constants attached.
  */
 class resolv_functor_s: public functor_s {
 
     public:
-      explicit resolv_functor_s(unsigned hiz_value);
+      explicit resolv_functor_s(unsigned char hiz_value);
       ~resolv_functor_s();
 
       virtual void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 
     private:
       unsigned char istr[4];
-      unsigned hiz_;
+      unsigned char hiz_;
 };
 
 /*
  * $Log: resolv.h,v $
+ * Revision 1.5  2001/12/15 02:11:51  steve
+ *  Give tri0 and tri1 their proper strengths.
+ *
  * Revision 1.4  2001/12/15 01:54:39  steve
  *  Support tri0 and tri1 resolvers.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: resolv.cc,v 1.10 2001/12/15 01:54:39 steve Exp $"
+#ident "$Id: resolv.cc,v 1.11 2001/12/15 02:11:51 steve Exp $"
 #endif
 
 # include  "resolv.h"
@@ -133,11 +133,10 @@ static unsigned blend(unsigned a, unsigned b)
       return res;
 }
 
-resolv_functor_s::resolv_functor_s(unsigned hiz_value)
+resolv_functor_s::resolv_functor_s(unsigned char pull)
 {
       istr[0]=istr[1]=istr[2]=istr[3]=StX;
-      assert(hiz_value < 4);
-      hiz_ = hiz_value;
+      hiz_ = pull;
 }
 
 resolv_functor_s::~resolv_functor_s()
@@ -154,14 +153,15 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
       unsigned pp = ipoint_port(i);
       istr[pp] = str;
 
-      unsigned sval = istr[0];
+      unsigned sval = hiz_;
+      sval = blend(sval, istr[0]);
       sval = blend(sval, istr[1]);
       sval = blend(sval, istr[2]);
       sval = blend(sval, istr[3]);
 
       unsigned val;
       if (sval == HiZ) {
-	    val = hiz_;
+	    val = 3;
 
       } else switch (sval & 0x88) {
 	  case 0x00:
@@ -187,6 +187,9 @@ void resolv_functor_s::set(vvp_ipoint_t i, bool push, unsigned, unsigned str)
 
 /*
  * $Log: resolv.cc,v $
+ * Revision 1.11  2001/12/15 02:11:51  steve
+ *  Give tri0 and tri1 their proper strengths.
+ *
  * Revision 1.10  2001/12/15 01:54:39  steve
  *  Support tri0 and tri1 resolvers.
  *
