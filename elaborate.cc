@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.297 2004/02/20 18:53:34 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.298 2004/03/07 20:04:10 steve Exp $"
 #endif
 
 # include "config.h"
@@ -928,12 +928,7 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
  */
 static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
-
-      NetExpr*dex = expr->elaborate_expr(des, scope);
-      if (NetExpr*tmp = dex->eval_tree()) {
-	    delete dex;
-	    dex = tmp;
-      }
+      NetExpr*dex = elab_and_eval(des, scope, expr);
 
 	/* If the delay expression is a real constant or vector
 	   constant, then evaluate it, scale it to the local time
@@ -1010,17 +1005,9 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the r-value expression, then try to evaluate it. */
 
       assert(rval());
-      NetExpr*rv = rval()->elaborate_expr(des, scope);
-      if (rv == 0)
-	    return 0;
-
+      NetExpr*rv = elab_and_eval(des, scope, rval());
       assert(rv);
 
-	/* Try to evaluate the expression, at least as far as possible. */
-      if (NetExpr*tmp = rv->eval_tree()) {
-	    delete rv;
-	    rv = tmp;
-      }
 
 	/* Rewrite delayed assignments as assignments that are
 	   delayed. For example, a = #<d> b; becomes:
@@ -1233,20 +1220,11 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetExpr*expr = expr_->elaborate_expr(des, scope);
+      NetExpr*expr = elab_and_eval(des, scope, expr_);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate this case"
 		  " expression." << endl;
 	    return 0;
-      }
-
-	/* Try to evaluate the case expression. */
-      if (! dynamic_cast<NetEConst*>(expr)) {
-	    NetExpr*tmp = expr->eval_tree();
-	    if (tmp != 0) {
-		  delete expr;
-		  expr = tmp;
-	    }
       }
 
 	/* Count the items in the case statement. Note that there may
@@ -1294,17 +1272,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur->expr[e]);
-		  gu = cur->expr[e]->elaborate_expr(des, scope);
-
-		    /* Try to evaluate the guard expression down to a
-		       simple constant. */
-		  if (! dynamic_cast<NetEConst*>(gu)) {
-			NetExpr*tmp = gu->eval_tree();
-			if (tmp != 0) {
-			      delete gu;
-			      gu = tmp;
-			}
-		  }
+		  gu = elab_and_eval(des, scope, cur->expr[e]);
 
 		  if (cur->stat)
 			st = cur->stat->elaborate(des, scope);
@@ -1322,17 +1290,12 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
       assert(scope);
 
 	// Elaborate and try to evaluate the conditional expression.
-      NetExpr*expr = expr_->elaborate_expr(des, scope);
+      NetExpr*expr = elab_and_eval(des, scope, expr_);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate"
 		  " condition expression." << endl;
 	    des->errors += 1;
 	    return 0;
-      }
-      NetExpr*tmp = expr->eval_tree();
-      if (tmp) {
-	    delete expr;
-	    expr = tmp;
       }
 
 	// If the condition of the conditional statement is constant,
@@ -1540,7 +1503,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    if (port->port_type() == NetNet::POUTPUT)
 		  continue;
 
-	    NetExpr*rv = parms_[idx]->elaborate_expr(des, scope);
+	    NetExpr*rv = elab_and_eval(des, scope, parms_[idx]);
 	    NetAssign_*lv = new NetAssign_(port);
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
@@ -1953,6 +1916,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       const PExpr *pe = expr_[0]->expr();
 
+	/* Elaborate wait expression. Don't eval yet, we will do that
+	   shortly, after we apply a reduction or. */
       NetExpr*expr = pe->elaborate_expr(des, scope);
       if (expr == 0) {
 	    cerr << get_line() << ": error: Unable to elaborate"
@@ -2188,18 +2153,15 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
-      NetExpr*ce = cond_->elaborate_expr(des, scope);
+      NetExpr*ce = elab_and_eval(des, scope, cond_);
       if (ce == 0) {
 	    delete top;
 	    return 0;
       }
 
-      if (NetExpr*tmp = ce->eval_tree()) {
-	    if (dynamic_cast<NetEConst*>(tmp)) {
-		  cerr << get_line() << ": warning: condition expression "
-			"of for-loop is constant." << endl;
-	    }
-	    ce = tmp;
+      if (dynamic_cast<NetEConst*>(ce)) {
+	    cerr << get_line() << ": warning: condition expression "
+		  "of for-loop is constant." << endl;
       }
 
 
@@ -2265,17 +2227,12 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetExpr*expr = expr_->elaborate_expr(des, scope);
+      NetExpr*expr = elab_and_eval(des, scope, expr_);
       if (expr == 0) {
 	    cerr << get_line() << ": Unable to elaborate"
 		  " repeat expression." << endl;
 	    des->errors += 1;
 	    return 0;
-      }
-      NetExpr*tmp = expr->eval_tree();
-      if (tmp) {
-	    delete expr;
-	    expr = tmp;
       }
 
       NetProc*stat = statement_->elaborate(des, scope);
@@ -2392,7 +2349,7 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
-      NetWhile*loop = new NetWhile(cond_->elaborate_expr(des, scope),
+      NetWhile*loop = new NetWhile(elab_and_eval(des, scope, cond_),
 				   statement_->elaborate(des, scope));
       return loop;
 }
@@ -2627,6 +2584,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.298  2004/03/07 20:04:10  steve
+ *  MOre thorough use of elab_and_eval function.
+ *
  * Revision 1.297  2004/02/20 18:53:34  steve
  *  Addtrbute keys are perm_strings.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.h,v 1.18 2003/09/19 03:30:05 steve Exp $"
+#ident "$Id: netmisc.h,v 1.19 2004/03/07 20:04:11 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -66,14 +66,18 @@ extern unsigned count_lval_width(const class NetAssign_*first);
 
 /*
  * This function elaborates an expression, and tries to evaluate it
- * right away. It is useful for those places where the user is
- * supposed to supply a constant expression.
+ * right away. If the expression can be evaluated, this returns a
+ * constant expression. If it cannot be evaluated, it returns whatever
+ * it can. If the expression cannot be elaborated, return 0.
  */
 class PExpr;
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe);
 
 /*
  * $Log: netmisc.h,v $
+ * Revision 1.19  2004/03/07 20:04:11  steve
+ *  MOre thorough use of elab_and_eval function.
+ *
  * Revision 1.18  2003/09/19 03:30:05  steve
  *  Fix name search in elab_lval.
  *
