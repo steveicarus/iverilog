@@ -17,13 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.4 1998/11/16 05:03:52 steve Exp $"
+#ident "$Id: main.cc,v 1.5 1998/11/18 04:25:22 steve Exp $"
 #endif
 
 # include  <stdio.h>
 # include  <iostream.h>
 # include  <fstream>
 # include  <queue>
+# include  <map>
 # include  <unistd.h>
 # include  "pform.h"
 # include  "netlist.h"
@@ -34,6 +35,25 @@ extern void pform_parse();
 const char*vl_file = "";
 const char*target = "verilog";
 string start_module = "";
+
+map<string,string> flags;
+
+static void parm_to_flagmap(const string&flag)
+{
+      string key, value;
+      unsigned off = flag.find('=');
+      if (off > flag.size()) {
+	    key = flag;
+	    value = "";
+
+      } else {
+	    key = flag.substr(0, off);
+	    value = flag.substr(off+1);
+      }
+
+      flags[key] = value;
+}
+
 
 extern Design* elaborate(const list<Module*>&modules, const string&root);
 extern void emit(ostream&o, const Design*, const char*);
@@ -72,7 +92,7 @@ int main(int argc, char*argv[])
       unsigned flag_errors = 0;
       queue<net_func> net_func_queue;
 
-      while ((opt = getopt(argc, argv, "DF:ho:s:t:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "DF:f:ho:s:t:")) != EOF) switch (opt) {
 	  case 'D':
 	    dump_flag = true;
 	    break;
@@ -81,11 +101,15 @@ int main(int argc, char*argv[])
 		if (tmp == 0) {
 		      cerr << "No such design transform function ``"
 			   << optarg << "''." << endl;
+		      flag_errors += 1;
 		      break;
 		}
 		net_func_queue.push(tmp);
 		break;
 	  }
+	  case 'f':
+	    parm_to_flagmap(optarg);
+	    break;
 	  case 'h':
 	    help_flag = true;
 	    break;
@@ -160,6 +184,9 @@ int main(int argc, char*argv[])
 	    return 1;
       }
 
+      des->set_flags(flags);
+
+
       while (!net_func_queue.empty()) {
 	    net_func func = net_func_queue.front();
 	    net_func_queue.pop();
@@ -192,6 +219,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.5  1998/11/18 04:25:22  steve
+ *  Add -f flags for generic flag key/values.
+ *
  * Revision 1.4  1998/11/16 05:03:52  steve
  *  Add the sigfold function that unlinks excess
  *  signal nodes, and add the XNF target.

@@ -17,8 +17,22 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.1 1998/11/16 05:03:53 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.2 1998/11/18 04:25:22 steve Exp $"
 #endif
+
+/* XNF BACKEND
+ * This target supports generating Xilinx Netlist Format netlists for
+ * use by Xilinx tools, and other tools that accepts Xilinx designs.
+ *
+ * FLAGS
+ * The XNF backend uses the following flags from the command line to
+ * affect the generated file:
+ *
+ *   part=<foo>
+ *	Specify the part type. The part string is written into the
+ *	PART record. Valid types are defined by Xilinx or the
+ *	receiving tools
+ */
 
 # include  "netlist.h"
 # include  "target.h"
@@ -55,11 +69,11 @@ string target_xnf::mangle(const string&name)
 }
 
 
-void target_xnf::start_design(ostream&os, const Design*)
+void target_xnf::start_design(ostream&os, const Design*des)
 {
       os << "LCANET,6" << endl;
       os << "PROG,verilog,0.0,\"Steve's Verilog\"" << endl;
-      os << "PART,4000-10" << endl;
+      os << "PART," << des->get_flag("part") << endl;
 }
 
 void target_xnf::end_design(ostream&os, const Design*)
@@ -124,6 +138,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.2  1998/11/18 04:25:22  steve
+ *  Add -f flags for generic flag key/values.
+ *
  * Revision 1.1  1998/11/16 05:03:53  steve
  *  Add the sigfold function that unlinks excess
  *  signal nodes, and add the XNF target.

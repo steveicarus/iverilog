@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.6 1998/11/16 05:03:53 steve Exp $"
+#ident "$Id: netlist.h,v 1.7 1998/11/18 04:25:22 steve Exp $"
 #endif
 
 /*
@@ -29,6 +29,7 @@
  * processors.
  */
 # include  <string>
+# include  <map>
 # include  "verinum.h"
 
 class NetNode;
@@ -654,6 +655,17 @@ class Design {
     public:
       Design() : signals_(0), nodes_(0), procs_(0) { }
 
+	/* The flags are a generic way of accepting command line
+	   parameters/flags and passing them to the processing steps
+	   that deal with the design. The compilation driver sets the
+	   entire flags map after elaboration is done. Subsequent
+	   steps can then use the get_flag() function to get the value
+	   of an interesting key. */
+
+      void set_flags(const map<string,string>&f) { flags_ = f; }
+
+      string get_flag(const string&key) const;
+
 
 	// SIGNALS
 
@@ -688,6 +700,8 @@ class Design {
 	// List the processes in the design.
       NetProcTop*procs_;
 
+      map<string,string> flags_;
+
     private: // not implemented
       Design(const Design&);
       Design& operator= (const Design&);
@@ -713,6 +727,9 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.7  1998/11/18 04:25:22  steve
+ *  Add -f flags for generic flag key/values.
+ *
  * Revision 1.6  1998/11/16 05:03:53  steve
  *  Add the sigfold function that unlinks excess
  *  signal nodes, and add the XNF target.

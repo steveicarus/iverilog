@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.6 1998/11/16 05:03:53 steve Exp $"
+#ident "$Id: netlist.cc,v 1.7 1998/11/18 04:25:22 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -218,6 +218,15 @@ void NetEUnary::set_width(unsigned w)
       expr_width(w);
 }
 
+string Design::get_flag(const string&key) const
+{
+      map<string,string>::const_iterator tmp = flags_.find(key);
+      if (tmp == flags_.end())
+	    return "";
+      else
+	    return (*tmp).second;
+}
+
 void Design::add_signal(NetNet*net)
 {
       assert(net->design_ == 0);
@@ -361,6 +370,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.7  1998/11/18 04:25:22  steve
+ *  Add -f flags for generic flag key/values.
+ *
  * Revision 1.6  1998/11/16 05:03:53  steve
  *  Add the sigfold function that unlinks excess
  *  signal nodes, and add the XNF target.
