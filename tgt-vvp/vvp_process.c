@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.34 2001/05/17 04:37:02 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.35 2001/05/24 04:31:00 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -365,7 +365,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    if (idx == default_case)
 		  continue;
 
-	    fprintf(vvp_out, "T_%d.%d\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
 	    show_statement(cst, sscope);
 
 	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
@@ -374,7 +374,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       }
 
 	/* The out of the case. */
-      fprintf(vvp_out, "T_%d.%d\n",  thread_count, local_base+count);
+      fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
 
       return 0;
 }
@@ -854,6 +854,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.35  2001/05/24 04:31:00  steve
+ *  Attach noops to case labels.
+ *
  * Revision 1.34  2001/05/17 04:37:02  steve
  *  Behavioral ternary operators for vvp.
  *
