@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.85 2002/06/16 19:19:16 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.86 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1823,6 +1823,7 @@ void dll_target::signal(const NetNet*net)
       obj->signed_= net->get_signed()? 1 : 0;
       obj->lsb_index = net->lsb();
       obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
+      obj->isint_ = false;
 
       switch (net->port_type()) {
 
@@ -1847,6 +1848,7 @@ void dll_target::signal(const NetNet*net)
 
 	  case NetNet::REG:
 	    obj->type_ = IVL_SIT_REG;
+	    obj->isint_ = net->get_isint();
 	    break;
 
 	  case NetNet::SUPPLY0:
@@ -1948,6 +1950,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.86  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.85  2002/06/16 19:19:16  steve
  *  Generate runtime code to normalize indices.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.99 2002/06/11 03:34:33 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.100 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -913,6 +913,7 @@ extern ivl_nexus_t ivl_signal_pin(ivl_signal_t net, unsigned idx);
 extern unsigned    ivl_signal_pins(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
+extern int         ivl_signal_integer(ivl_signal_t net);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
@@ -1050,6 +1051,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.100  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.99  2002/06/11 03:34:33  steve
  *  Spelling patch (Larry Doolittle)
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform.cc,v 1.98 2002/05/26 01:39:02 steve Exp $"
+#ident "$Id: pform.cc,v 1.99 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1104,13 +1104,9 @@ void pform_set_function(const char*name, NetNet::Type ntype,
 	    delete ra;
       }
 
-	/* If the return type of the function is INTEGER, then convert
-	   it to a signed reg, and generate a range for it. The
-	   parse.y uses IMPLICIT_REG as a signal that this is an
-	   integer, because there is no such thing as
-	   NetNet::INTEGER. */
-      if (ntype == NetNet::IMPLICIT_REG) {
-	    out->set_wire_type(NetNet::REG);
+	/* If the return type of the function is INTEGER, then
+	   generate a range for it. */
+      if (ntype == NetNet::INTEGER) {
 	    out->set_signed(true);
 	    out->set_range(new PENumber(new verinum(INTEGER_WIDTH-1, INTEGER_WIDTH)),
 			   new PENumber(new verinum(0UL, INTEGER_WIDTH)));
@@ -1214,11 +1210,11 @@ static void pform_set_reg_integer(const char*nm)
       hname_t name = hier_name(nm);
       PWire*cur = pform_cur_module->get_wire(name);
       if (cur == 0) {
-	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT);
+	    cur = new PWire(name, NetNet::INTEGER, NetNet::NOT_A_PORT);
 	    cur->set_signed(true);
 	    pform_cur_module->add_wire(cur);
       } else {
-	    bool rc = cur->set_wire_type(NetNet::REG);
+	    bool rc = cur->set_wire_type(NetNet::INTEGER);
 	    assert(rc);
 	    cur->set_signed(true);
       }
@@ -1347,6 +1343,9 @@ int pform_parse(const char*path, FILE*file)
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.99  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.98  2002/05/26 01:39:02  steve
  *  Carry Verilog 2001 attributes with processes,
  *  all the way through to the ivl_target API.

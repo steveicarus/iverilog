@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.11 2002/05/24 19:05:30 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.12 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 
@@ -152,6 +152,7 @@ typedef struct t_vpi_value {
 /* OBJECT CODES */
 #define vpiConstant     7
 #define vpiFunction    20
+#define vpiIntegerVar  25
 #define vpiIterator    27
 #define vpiMemory      29
 #define vpiMemoryWord  30
@@ -325,6 +326,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.12  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.11  2002/05/24 19:05:30  steve
  *  support GCC __attributes__ for printf formats.
  *

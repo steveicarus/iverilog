@@ -17,11 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.81 2002/05/27 00:08:45 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.82 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
-
 # include  "t-dll.h"
 
 /* THE FOLLOWING ARE FUNCTIONS THAT ARE CALLED FROM THE TARGET. */
@@ -143,7 +142,7 @@ extern "C" unsigned ivl_const_pins(ivl_net_const_t net)
 extern "C" int ivl_const_signed(ivl_net_const_t net)
 {
       assert(net);
-      return net->signed_ == 1;
+      return net->signed_;
 }
 
 extern "C" const char* ivl_event_name(ivl_event_t net)
@@ -1197,7 +1196,12 @@ extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
 
 extern "C" int ivl_signal_signed(ivl_signal_t net)
 {
-      return net->signed_ != 0;
+      return net->signed_;
+}
+
+extern "C" int ivl_signal_integer(ivl_signal_t net)
+{
+      return net->isint_;
 }
 
 extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
@@ -1543,6 +1547,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.82  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.81  2002/05/27 00:08:45  steve
  *  Support carrying the scope of named begin-end
  *  blocks down to the code generator, and have

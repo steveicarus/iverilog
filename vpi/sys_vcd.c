@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_vcd.c,v 1.29 2002/05/23 01:07:26 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.30 2002/06/21 04:59:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -542,6 +542,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiNet:  type = "wire";    if(0){
+	  case vpiIntegerVar:
 	  case vpiReg:  type = "reg";    }
 
 	    if (skip)
@@ -695,6 +696,7 @@ static int sys_dumpvars_calltf(char*name)
 		case vpiConstant:
 		case vpiNet:
 		case vpiReg:
+		case vpiIntegerVar:
 		case vpiMemoryWord:
 		  value.format = vpiIntVal;
 		  vpi_get_value(item, &value);
@@ -784,6 +786,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.30  2002/06/21 04:59:36  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.29  2002/05/23 01:07:26  steve
  *  Ignore Named events in vcd signal scan.
  *

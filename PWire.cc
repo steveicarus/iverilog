@@ -17,22 +17,33 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.cc,v 1.8 2002/01/26 05:28:28 steve Exp $"
+#ident "$Id: PWire.cc,v 1.9 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
-
 # include  "PWire.h"
 # include  <assert.h>
 
 PWire::PWire(const hname_t&n, NetNet::Type t, NetNet::PortType pt)
-: hname_(n), type_(t), port_type_(pt), signed_(false), lidx_(0), ridx_(0)
+: hname_(n), type_(t), port_type_(pt), signed_(false), isint_(false),
+lidx_(0), ridx_(0)
 {
+      if (t == NetNet::INTEGER) {
+	    type_ = NetNet::REG;
+	    signed_ = true;
+	    isint_ = true;
+      }
 }
 
 PWire::PWire(char*n, NetNet::Type t, NetNet::PortType pt)
-: hname_(n), type_(t), port_type_(pt), signed_(false), lidx_(0), ridx_(0)
+: hname_(n), type_(t), port_type_(pt), signed_(false), isint_(false),
+lidx_(0), ridx_(0)
 {
+      if (t == NetNet::INTEGER) {
+	    type_ = NetNet::REG;
+	    signed_ = true;
+	    isint_ = true;
+      }
 }
 
 NetNet::Type PWire::get_wire_type() const
@@ -57,6 +68,10 @@ bool PWire::set_wire_type(NetNet::Type t)
 	    if (t == NetNet::REG) { type_ = t; return true; }
 	    return false;
 	  case NetNet::REG:
+	    if (t == NetNet::INTEGER) {
+		  isint_ = true;
+		  return true;
+	    }
 	    if (t == NetNet::REG) return true;
 	    return false;
 	  default:
@@ -103,6 +118,11 @@ bool PWire::get_signed() const
       return signed_;
 }
 
+bool PWire::get_isint() const
+{
+      return isint_;
+}
+
 void PWire::set_range(PExpr*m, PExpr*l)
 {
       msb_ = svector<PExpr*>(msb_,m);
@@ -120,6 +140,9 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 
 /*
  * $Log: PWire.cc,v $
+ * Revision 1.9  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.8  2002/01/26 05:28:28  steve
  *  Detect scalar/vector declarion mismatch.
  *

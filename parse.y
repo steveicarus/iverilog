@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.156 2002/06/11 13:58:04 steve Exp $"
+#ident "$Id: parse.y,v 1.157 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1960,7 +1960,7 @@ range_opt
   /* This is used to express the return type of a function. */
 range_or_type_opt
 	: range      { $$.range = $1; $$.ntype = NetNet::REG; }
-	| K_integer  { $$.range = 0;  $$.ntype = NetNet::IMPLICIT_REG; }
+	| K_integer  { $$.range = 0;  $$.ntype = NetNet::INTEGER; }
 	| K_real     { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
 	| K_realtime { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }
 	| K_time     { $$.range = 0;  $$.ntype = NetNet::IMPLICIT; }

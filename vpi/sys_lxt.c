@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_lxt.c,v 1.4 2002/06/03 03:56:06 steve Exp $"
+#ident "$Id: sys_lxt.c,v 1.5 2002/06/21 04:59:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -536,6 +536,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiNet:  type = "wire";    if(0){
+	  case vpiIntegerVar:
 	  case vpiReg:  type = "reg";    }
 
 	    if (skip)
@@ -690,6 +691,7 @@ static int sys_dumpvars_calltf(char*name)
 	    switch (vpi_get(vpiType, item)) {
 		case vpiConstant:
 		case vpiNet:
+		case vpiIntegerVar:
 		case vpiReg:
 		case vpiMemoryWord:
 		  value.format = vpiIntVal;
@@ -780,6 +782,9 @@ void sys_lxt_register()
 
 /*
  * $Log: sys_lxt.c,v $
+ * Revision 1.5  2002/06/21 04:59:36  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.4  2002/06/03 03:56:06  steve
  *  Ignore memories and named events.
  *

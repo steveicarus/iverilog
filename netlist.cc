@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.191 2002/06/19 04:20:03 steve Exp $"
+#ident "$Id: netlist.cc,v 1.192 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -381,6 +381,16 @@ bool NetNet::get_signed() const
 void NetNet::set_signed(bool flag)
 {
       signed_ = flag;
+}
+
+bool NetNet::get_isint() const
+{
+      return isint_;
+}
+
+void NetNet::set_isint(bool flag)
+{
+      isint_ = flag;
 }
 
 long NetNet::lsb() const
@@ -2332,6 +2342,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.192  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.191  2002/06/19 04:20:03  steve
  *  Remove NetTmp and add NetSubnet class.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_sig.cc,v 1.22 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: elab_sig.cc,v 1.23 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include "config.h"
@@ -517,6 +517,7 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig->set_line(*this);
 	    sig->port_type(port_type_);
 	    sig->set_signed(get_signed());
+	    sig->set_isint(get_isint());
 
 	    for (unsigned idx = 0 ;  idx < nattrib ;  idx += 1)
 		  sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
@@ -525,6 +526,9 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_sig.cc,v $
+ * Revision 1.23  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.22  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

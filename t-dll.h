@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.85 2002/06/16 20:39:12 steve Exp $"
+#ident "$Id: t-dll.h,v 1.86 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -503,6 +503,7 @@ struct ivl_signal_s {
 
       unsigned width_  :24;
       unsigned signed_ : 1;
+      unsigned isint_  : 1;
 
 	/* These encode the run-time index for the least significant
 	   bit, and the distance to the second bit. */
@@ -609,6 +610,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.86  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.85  2002/06/16 20:39:12  steve
  *  Normalize run-time index expressions for bit selects
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.243 2002/06/19 04:20:03 steve Exp $"
+#ident "$Id: netlist.h,v 1.244 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 /*
@@ -323,8 +323,7 @@ class NetNode  : public NetObj {
  * NetNet. NetNet objects also appear as side effects of synthesis or
  * other abstractions.
  *
- * Note that there are no INTEGER types. Express a verilog integer as
- * a ``reg signed'' instead. The parser automatically does this for us.
+ * Note that INTEGER types are an alias for a ``reg signed [31:0]''.
  *
  * NetNet objects have a name and exist within a scope, so the
  * constructor takes a pointer to the containing scope. The object
@@ -339,7 +338,7 @@ class NetNode  : public NetObj {
 class NetNet  : public NetObj, public LineInfo {
 
     public:
-      enum Type { IMPLICIT, IMPLICIT_REG, WIRE, TRI, TRI1, SUPPLY0,
+      enum Type { IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1, SUPPLY0,
 		  SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG };
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
@@ -359,6 +358,11 @@ class NetNet  : public NetObj, public LineInfo {
 	   signed. Otherwise, it is unsigned. */
       bool get_signed() const;
       void set_signed(bool);
+
+	/* Used to maintain original type of net since integers are
+	   implemented as 'reg signed [31;0]' in Icarus */
+      bool get_isint() const;
+      void set_isint(bool);
 
 	/* These methods return the msb and lsb indices for the most
 	   significant and least significant bits. These are signed
@@ -399,6 +403,7 @@ class NetNet  : public NetObj, public LineInfo {
       Type   type_;
       PortType port_type_;
       bool signed_;
+      bool isint_;		// original type of integer
 
       long msb_, lsb_;
 
@@ -2924,6 +2929,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.244  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.243  2002/06/19 04:20:03  steve
  *  Remove NetTmp and add NetSubnet class.
  *

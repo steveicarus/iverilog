@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_display.c,v 1.38 2002/05/31 04:26:54 steve Exp $"
+#ident "$Id: sys_display.c,v 1.39 2002/06/21 04:59:36 steve Exp $"
 #endif
 
 # include "config.h"
@@ -531,6 +531,7 @@ static void do_display(unsigned int mcd, struct strobe_cb_info*info)
 
 		case vpiNet:
 		case vpiReg:
+		case vpiIntegerVar:
 		case vpiMemoryWord:
 		  value.format = info->default_format;
 		  vpi_get_value(item, &value);
@@ -743,8 +744,9 @@ static int sys_monitor_calltf(char*name)
 	    switch (vpi_get(vpiType, monitor_info.items[idx])) {
 		case vpiNet:
 		case vpiReg:
+		case vpiIntegerVar:
 		    /* Monitoring reg and net values involves setting
-		       a collback for value changes. pass the storage
+		       a callback for value changes. pass the storage
 		       pointer for the callback itself as user_data so
 		       that the callback can refresh itself. */
 		  cb.user_data = (char*)(monitor_callbacks+idx);
@@ -847,11 +849,16 @@ static int sys_fdisplay_calltf(char *name)
       }
 
       type = vpi_get(vpiType, item);
-      if (type != vpiReg && type != vpiRealVal) {
-	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
-		       name, type);
-	    vpi_free_object(argv);
-	    return 0;
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_free_object(argv);
+	      return 0;
       }
 
       value.format = vpiIntVal;
@@ -890,11 +897,17 @@ static int sys_fclose_calltf(char *name)
 	    return 0;
       }
       type = vpi_get(vpiType, item);
-      if (type != vpiReg && type != vpiRealVal) {
-	    vpi_printf("ERROR: %s mcd parameter must be of integral type, got vpiType=%d\n",
-		       name, type);
-	    vpi_free_object(argv);
-	    return 0;
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s mcd parameter must be of integral type",
+		name);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_free_object(argv);
+	      return 0;
       }
 
       value.format = vpiIntVal;
@@ -921,11 +934,16 @@ static int sys_fputc_calltf(char *name)
       }
 
       type = vpi_get(vpiType, item);
-      if (type != vpiReg && type != vpiRealVal) {
-	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
-		       name, type);
-	    vpi_free_object(argv);
-	    return 0;
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_free_object(argv);
+	      return 0;
       }
 
       value.format = vpiIntVal;
@@ -956,11 +974,16 @@ static int sys_fgetc_calltf(char *name)
       }
 
       type = vpi_get(vpiType, item);
-      if (type != vpiReg && type != vpiRealVal) {
-	    vpi_printf("ERROR: %s mcd parameter must be of integral, got vpiType=%d\n",
-		       name, type);
-	    vpi_free_object(argv);
-	    return 0;
+      switch (type) {
+	    case vpiReg:
+	    case vpiRealVal:
+	    case vpiIntegerVar:
+	      break;
+	    default:
+	      vpi_printf("ERROR: %s mcd parameter must be of integral", name);
+	      vpi_printf(", got vpiType=%d\n", type);
+	      vpi_free_object(argv);
+	      return 0;
       }
 
       value.format = vpiIntVal;
@@ -1273,6 +1296,9 @@ void sys_display_register()
 
 /*
  * $Log: sys_display.c,v $
+ * Revision 1.39  2002/06/21 04:59:36  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.38  2002/05/31 04:26:54  steve
  *  Add support for $timeformat.
  *

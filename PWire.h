@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PWire.h,v 1.12 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: PWire.h,v 1.13 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -64,6 +64,7 @@ class PWire : public LineInfo {
 
       void set_signed(bool flag);
       bool get_signed() const;
+      bool get_isint() const;
 
       void set_range(PExpr*msb, PExpr*lsb);
 
@@ -81,6 +82,7 @@ class PWire : public LineInfo {
       NetNet::Type type_;
       NetNet::PortType port_type_;
       bool signed_;
+      bool isint_;		// original type of integer
 
 	// These members hold expressions for the bit width of the
 	// wire. If they do not exist, the wire is 1 bit wide.
@@ -99,6 +101,9 @@ class PWire : public LineInfo {
 
 /*
  * $Log: PWire.h,v $
+ * Revision 1.13  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.12  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute

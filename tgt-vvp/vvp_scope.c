@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.70 2002/04/23 05:18:05 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.71 2002/06/21 04:59:35 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -527,7 +527,8 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
 
-      const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
+      const char*signed_flag = ivl_signal_integer(sig) ? "/i" :
+			       ivl_signal_signed(sig)? "/s" : "";
 
       fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
 	      vvp_mangle_id(ivl_signal_name(sig)), signed_flag,
@@ -1572,6 +1573,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.71  2002/06/21 04:59:35  steve
+ *  Carry integerness throughout the compilation.
+ *
  * Revision 1.70  2002/04/23 05:18:05  steve
  *  Tail size was wrong.
  *
