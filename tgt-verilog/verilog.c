@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: verilog.c,v 1.7 2000/10/05 05:03:02 steve Exp $"
+#ident "$Id: verilog.c,v 1.8 2000/10/06 23:46:51 steve Exp $"
 #endif
 
 /*
@@ -80,6 +80,10 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
       switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
 	    fprintf(out, "      and %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUF:
+	    fprintf(out, "      buf %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_OR:
@@ -180,7 +184,9 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
       switch (code) {
 	  case IVL_ST_ASSIGN:
-	    fprintf(out, "%*s? = ?;\n", ind, "");
+	    fprintf(out, "%*s? = ", ind, "");
+	    show_expression(ivl_stmt_rval(net));
+	    fprintf(out, ";\n");
 	    break;
 
 	  case IVL_ST_BLOCK: {
@@ -274,6 +280,11 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.8  2000/10/06 23:46:51  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.7  2000/10/05 05:03:02  steve
  *  xor and constant devices.
  *

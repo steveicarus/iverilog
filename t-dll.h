@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.8 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: t-dll.h,v 1.9 2000/10/06 23:46:51 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -132,25 +132,83 @@ struct ivl_expr_s {
       } u_;
 };
 
+/*
+ * This object represents a vector constant, possibly signed, in a
+ * structural context.
+ */
 struct ivl_net_const_s {
       unsigned width_  :24;
       unsigned signed_ : 1;
-      char *bits_;
+
+      union {
+	    char bit_[sizeof(char*)];
+	    char *bits_;
+      } b;
+
+      union {
+	    ivl_nexus_t pin_;
+	    ivl_nexus_t*pins_;
+      } n;
 };
 
+/*
+ * Logic gates (just about everything that has a single output) are
+ * represented structurally by instances of this object.
+ */
 struct ivl_net_logic_s {
-      const NetLogic*dev_;
+      ivl_logic_t type_;
+      unsigned npins_;
+      ivl_nexus_t*pins_;
 };
 
+
+struct ivl_nexus_s {
+      const Nexus*self;
+};
+
+/*
+ * All we know about a process it its type (initial or always) and the
+ * single statement that is it.
+ */
 struct ivl_process_s {
       ivl_process_type_t type_;
       ivl_statement_t stmt_;
 };
 
+/*
+ * Scopes are kept in a tree. Each scope points to its first child,
+ * and also to any siblings. Thus a parent can scan all its children
+ * by following its child pointer then following sibling pointers from
+ * there.
+ */
 struct ivl_scope_s {
       ivl_scope_t child_, sibling_;
 
       const NetScope*self;
+
+      unsigned nsigs_;
+      ivl_signal_t*sigs_;
+};
+
+/*
+ * A signal is a think like a wire, a reg, or whatever. It has a type,
+ * and if it is a port is also has a directory. Signals are collected
+ * into scopes (which also point back to me) and have pins that
+ * connect to the rest of the netlist.
+ */
+struct ivl_signal_s {
+      ivl_signal_type_t type_;
+      ivl_signal_port_t port_;
+
+      unsigned width_  :24;
+      unsigned signed_ : 1;
+
+      ivl_scope_t scope_;
+
+      union {
+	    ivl_nexus_t pin_;
+	    ivl_nexus_t*pins_;
+      } n;
 };
 
 /*
@@ -161,6 +219,11 @@ struct ivl_scope_s {
 struct ivl_statement_s {
       enum ivl_statement_type_e type_;
       union {
+	    struct { /* IVL_ST_ASSIGN */
+		  unsigned lwidth_  :24;
+		  ivl_expr_t rval_;
+	    } assign_;
+
 	    struct { /* IVL_ST_BLOCK */
 		  struct ivl_statement_s*stmt_;
 		  unsigned nstmt_;
@@ -207,6 +270,11 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.9  2000/10/06 23:46:51  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.8  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

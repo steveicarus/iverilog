@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_link.cc,v 1.3 2000/08/26 00:54:03 steve Exp $"
+#ident "$Id: net_link.cc,v 1.4 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -200,6 +200,7 @@ Nexus::Nexus()
 {
       name_ = 0;
       list_ = 0;
+      t_cookie_ = 0;
 }
 
 Nexus::~Nexus()
@@ -274,6 +275,18 @@ const Link* Nexus::first_nlink() const
       return list_;
 }
 
+void* Nexus::t_cookie() const
+{
+      return t_cookie_;
+}
+
+void* Nexus::t_cookie(void*val)const
+{
+      void*tmp = t_cookie_;
+      t_cookie_ = val;
+      return tmp;
+}
+
 const char* Nexus::name() const
 {
       if (name_)
@@ -337,6 +350,11 @@ const char* Nexus::name() const
 
 /*
  * $Log: net_link.cc,v $
+ * Revision 1.4  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.3  2000/08/26 00:54:03  steve
  *  Get at gate information for ivl_target interface.
  *

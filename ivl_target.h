@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.15 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.16 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -78,7 +78,9 @@ _BEGIN_DECL
  *    or always statements from the verilog source.
  *
  * ivl_scope_t
- *    Elaborated scopes within a design are represented by this type.
+ *    Elaborated scopes within a design are represented by this
+ *    type. Objects of this type also act as containers for scoped
+ *    objects such as signals.
  *
  * ivl_statement_t
  *    Statements within processes are represented by one of these. The
@@ -91,6 +93,10 @@ _BEGIN_DECL
  * that returns a "char*". The latter is a pointer to the least
  * significant bit value. Bit values are represented by the characters
  * '0', '1', 'x' and 'z'. Strengths are stored elsewhere.
+ *
+ * -- A Note About Names --
+ * The names of objects are complete, hierarchical names. That is,
+ * they include the instance name of the module that contains them.
  */
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
@@ -234,7 +240,7 @@ extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
-  /* */
+  /* IVL_EX_STRING */
 extern const char* ivl_expr_string(ivl_expr_t net);
   /* any expression */
 extern unsigned    ivl_expr_width(ivl_expr_t net);
@@ -318,12 +324,16 @@ extern ivl_statement_t ivl_stmt_cond_false(ivl_statement_t net);
 extern ivl_statement_t ivl_stmt_cond_true(ivl_statement_t net);
   /* IVL_ST_DELAY */
 extern unsigned long ivl_stmt_delay_val(ivl_statement_t net);
+  /* IVL_ST_ASSIGN */
+extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
+  /* IVL_ST_ASSIGN */
+extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_WAIT, IVL_ST_WHILE */
 extern ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net);
 
@@ -433,6 +443,11 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.16  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.15  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: stub.c,v 1.13 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: stub.c,v 1.14 2000/10/06 23:46:51 steve Exp $"
 #endif
 
 /*
@@ -73,7 +73,11 @@ int target_net_const(const char*name, ivl_net_const_t net)
       for (idx = 0 ;  idx < wid ;  idx += 1)
 	    fprintf(out, "%c", bits[wid-1-idx]);
 
-      fprintf(out, "\n");
+      fprintf(out, " (%s", ivl_nexus_name(ivl_const_pin(net, 0)));
+      for (idx = 1 ;  idx < wid ;  idx += 1)
+	    fprintf(", %s", ivl_nexus_name(ivl_const_pin(net, idx)));
+
+      fprintf(out, ")\n");
       return 0;
 }
 
@@ -90,6 +94,10 @@ int target_net_logic(const char*name, ivl_net_logic_t net)
       switch (ivl_logic_type(net)) {
 	  case IVL_LO_AND:
 	    fprintf(out, "and %s (%s", name,
+		    ivl_nexus_name(ivl_logic_pin(net, 0)));
+	    break;
+	  case IVL_LO_BUF:
+	    fprintf(out, "buf %s (%s", name,
 		    ivl_nexus_name(ivl_logic_pin(net, 0)));
 	    break;
 	  case IVL_LO_OR:
@@ -202,7 +210,9 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 
       switch (code) {
 	  case IVL_ST_ASSIGN:
-	    fprintf(out, "%*sASSIGN: ? = ?\n", ind, "");
+	    fprintf(out, "%*sASSIGN <lwidth=%u>\n", ind, "",
+		    ivl_stmt_lwidth(net));
+	    show_expression(ivl_stmt_rval(net), ind+4);
 	    break;
 
 	  case IVL_ST_BLOCK: {
@@ -291,6 +301,11 @@ int target_process(ivl_process_t net)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.14  2000/10/06 23:46:51  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.13  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.98 2000/09/26 01:35:42 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.99 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 /*
@@ -74,8 +74,8 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (local_flag_)
 	    o << " (local)";
       o << " (eref=" << get_eref() << ")";
-      if (scope_)
-	    o << " scope=" << scope_->name();
+      if (scope())
+	    o << " scope=" << scope()->name();
       o << " #(" << rise_time() << "," << fall_time() << "," <<
 	    decay_time() << ") init=";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
@@ -971,6 +971,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.99  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.98  2000/09/26 01:35:42  steve
  *  Remove the obsolete NetEIdent class.
  *

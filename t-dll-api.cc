@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.9 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.10 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -44,7 +44,20 @@ extern "C" const char*ivl_get_root_name(ivl_design_t des)
 extern "C" const char*ivl_const_bits(ivl_net_const_t net)
 {
       assert(net);
-      return net->bits_;
+      if (net->width_ <= sizeof(char*))
+	    return net->b.bit_;
+      else
+	    return net->b.bits_;
+}
+
+extern "C" ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->width_);
+      if (net->width_ == 1)
+	    return net->n.pin_;
+      else
+	    return net->n.pins_[idx];
 }
 
 extern "C" unsigned ivl_const_pins(ivl_net_const_t net)
@@ -142,31 +155,23 @@ extern "C" unsigned ivl_expr_width(ivl_expr_t net)
 
 extern "C" ivl_logic_t ivl_logic_type(ivl_net_logic_t net)
 {
-      switch (net->dev_->type()) {
-	  case NetLogic::AND:
-	    return IVL_LO_AND;
-	  case NetLogic::OR:
-	    return IVL_LO_OR;
-	  case NetLogic::XOR:
-	    return IVL_LO_XOR;
-      }
-      assert(0);
-      return IVL_LO_NONE;
+      return net->type_;
 }
 
 extern "C" unsigned ivl_logic_pins(ivl_net_logic_t net)
 {
-      return net->dev_->pin_count();
+      return net->npins_;
 }
 
 extern "C" ivl_nexus_t ivl_logic_pin(ivl_net_logic_t net, unsigned pin)
 {
-      return (ivl_nexus_t) (net->dev_->pin(pin).nexus());
+      assert(pin < net->npins_);
+      return net->pins_[pin];
 }
 
 extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
 {
-      const Nexus*nex = (const Nexus*)net;
+      const Nexus*nex = net->self;
       return nex->name();
 }
 
@@ -182,71 +187,17 @@ extern "C" ivl_statement_t ivl_process_stmt(ivl_process_t net)
 
 extern "C" unsigned ivl_signal_pins(ivl_signal_t net)
 {
-      const NetNet*sig = (const NetNet*)net;
-      return sig->pin_count();
+      return net->width_;
 }
 
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
 {
-      const NetNet*sig = (const NetNet*)net;
-
-      switch (sig->port_type()) {
-
-	  case NetNet::PINPUT:
-	    return IVL_SIP_INPUT;
-
-	  case NetNet::POUTPUT:
-	    return IVL_SIP_OUTPUT;
-
-	  case NetNet::PINOUT:
-	    return IVL_SIP_INOUT;
-      }
-
-      return IVL_SIP_NONE;
+      return net->port_;
 }
 
 extern "C" ivl_signal_type_t ivl_signal_type(ivl_signal_t net)
 {
-      const NetNet*sig = (const NetNet*)net;
-      switch (sig->type()) {
-
-	  case NetNet::REG:
-	  case NetNet::INTEGER:
-	    return IVL_SIT_REG;
-
-	  case NetNet::SUPPLY0:
-	    return IVL_SIT_SUPPLY0;
-
-	  case NetNet::SUPPLY1:
-	    return IVL_SIT_SUPPLY1;
-
-	  case NetNet::TRI:
-	    return IVL_SIT_TRI;
-
-	  case NetNet::TRI0:
-	    return IVL_SIT_TRI0;
-
-	  case NetNet::TRI1:
-	    return IVL_SIT_TRI1;
-
-	  case NetNet::TRIAND:
-	    return IVL_SIT_TRIAND;
-
-	  case NetNet::TRIOR:
-	    return IVL_SIT_TRIOR;
-
-	  case NetNet::WAND:
-	    return IVL_SIT_WAND;
-
-	  case NetNet::WIRE:
-	  case NetNet::IMPLICIT:
-	    return IVL_SIT_WIRE;
-
-	  case NetNet::WOR:
-	    return IVL_SIT_WOR;
-      }
-
-      return IVL_SIT_NONE;
+      return net->type_;
 }
 
 extern "C" ivl_statement_type_t ivl_statement_type(ivl_statement_t net)
@@ -298,6 +249,12 @@ extern "C" unsigned long ivl_stmt_delay_val(ivl_statement_t net)
       return net->u_.delay_.delay_;
 }
 
+extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
+{
+      assert(net->type_ == IVL_ST_ASSIGN);
+      return net->u_.assign_.lwidth_;
+}
+
 extern "C" const char* ivl_stmt_name(ivl_statement_t net)
 {
       switch (net->type_) {
@@ -334,6 +291,18 @@ extern "C" unsigned ivl_stmt_parm_count(ivl_statement_t net)
       return 0;
 }
 
+extern "C" ivl_expr_t ivl_stmt_rval(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_ASSIGN:
+	    return net->u_.assign_.rval_;
+	  default:
+	    assert(0);
+      }
+
+      return 0;
+}
+
 extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 {
       switch (net->type_) {
@@ -352,6 +321,11 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.10  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.9  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

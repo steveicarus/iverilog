@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.140 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: netlist.cc,v 1.141 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -163,7 +163,20 @@ Link* find_next_output(Link*lnk)
 }
 
 NetObj::NetObj(const string&n, unsigned np)
-: npins_(np), delay1_(0), delay2_(0), delay3_(0)
+: scope_(0), npins_(np), delay1_(0), delay2_(0), delay3_(0)
+{
+      name_ = new char[n.length()+1];
+      strcpy(name_, n.c_str());
+
+      pins_ = new Link[npins_];
+      for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
+	    pins_[idx].node_ = this;
+	    pins_[idx].pin_  = idx;
+      }
+}
+
+NetObj::NetObj(NetScope*s, const string&n, unsigned np)
+: scope_(s), npins_(np), delay1_(0), delay2_(0), delay3_(0)
 {
       name_ = new char[n.length()+1];
       strcpy(name_, n.c_str());
@@ -179,6 +192,16 @@ NetObj::~NetObj()
 {
       delete[]name_;
       delete[]pins_;
+}
+
+NetScope* NetObj::scope()
+{
+      return scope_;
+}
+
+const NetScope* NetObj::scope() const
+{
+      return scope_;
 }
 
 void NetObj::set_attributes(const map<string,string>&attr)
@@ -272,11 +295,11 @@ NetNode* NetNode::next_node()
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
-: NetObj(n, npins), sig_next_(0), sig_prev_(0), scope_(s),
+: NetObj(s, n, npins), sig_next_(0), sig_prev_(0),
     type_(t), port_type_(NOT_A_PORT), msb_(npins-1), lsb_(0),
     local_flag_(false), eref_count_(0)
 {
-      assert(scope_);
+      assert(s);
 
       verinum::V init_value = verinum::Vz;
       switch (t) {
@@ -294,16 +317,16 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, unsigned npins)
 	    pin(idx).set_init(init_value);
       }
 
-      scope_->add_signal(this);
+      scope()->add_signal(this);
 }
 
 NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
-: NetObj(n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
-    sig_prev_(0), scope_(s), type_(t),
+: NetObj(s, n, ((ms>ls)?ms-ls:ls-ms) + 1), sig_next_(0),
+    sig_prev_(0), type_(t),
     port_type_(NOT_A_PORT), msb_(ms), lsb_(ls), local_flag_(false),
     eref_count_(0)
 {
-      assert(scope_);
+      assert(s);
 
       verinum::V init_value = verinum::Vz;
       switch (t) {
@@ -321,19 +344,14 @@ NetNet::NetNet(NetScope*s, const string&n, Type t, long ms, long ls)
 	    pin(idx).set_init(init_value);
       }
 
-      scope_->add_signal(this);
+      s->add_signal(this);
 }
 
 NetNet::~NetNet()
 {
       assert(eref_count_ == 0);
-      if (scope_)
-	    scope_->rem_signal(this);
-}
-
-NetScope* NetNet::scope()
-{
-      return scope_;
+      if (scope())
+	    scope()->rem_signal(this);
 }
 
 NetNet::Type NetNet::type() const
@@ -359,11 +377,6 @@ long NetNet::lsb() const
 long NetNet::msb() const
 {
       return msb_;
-}
-
-const NetScope* NetNet::scope() const
-{
-      return scope_;
 }
 
 unsigned NetNet::sb_to_idx(long sb) const
@@ -2423,6 +2436,11 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.141  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.140  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

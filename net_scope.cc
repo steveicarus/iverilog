@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_scope.cc,v 1.9 2000/08/27 15:51:50 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.10 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -233,7 +233,7 @@ void NetScope::add_signal(NetNet*net)
 
 void NetScope::rem_signal(NetNet*net)
 {
-      assert(net->scope_ == this);
+      assert(net->scope() == this);
       if (signals_ == net)
 	    signals_ = net->sig_prev_;
 
@@ -355,6 +355,11 @@ string NetScope::local_symbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.10  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.9  2000/08/27 15:51:50  steve
  *  t-dll iterates signals, and passes them to the
  *  target module.

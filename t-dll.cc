@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.10 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.11 2000/10/06 23:46:51 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -43,8 +43,8 @@ bool dll_target::start_design(const Design*des)
       des_.root_ = (ivl_scope_t)calloc(1, sizeof(struct ivl_scope_s));
       des_.root_->self = des->find_root_scope();
 
-      start_design_ = (start_design_f)dlsym(dll_, "target_start_design");
-      end_design_   = (end_design_f)  dlsym(dll_, "target_end_design");
+      start_design_ = (start_design_f)dlsym(dll_, LU "target_start_design" TU);
+      end_design_   = (end_design_f)  dlsym(dll_, LU "target_end_design" TU);
 
       net_bufz_   = (net_bufz_f)  dlsym(dll_, LU "target_net_bufz" TU);
       net_const_  = (net_const_f) dlsym(dll_, LU "target_net_const" TU);
@@ -95,11 +95,37 @@ void dll_target::event(const NetEvent*net)
 
 void dll_target::logic(const NetLogic*net)
 {
-      struct ivl_net_logic_s obj;
-      obj.dev_ = net;
+      struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
+
+      switch (net->type()) {
+	  case NetLogic::AND:
+	    obj->type_ = IVL_LO_AND;
+	    break;
+	  case NetLogic::BUF:
+	    obj->type_ = IVL_LO_BUF;
+	    break;
+	  case NetLogic::OR:
+	    obj->type_ = IVL_LO_OR;
+	    break;
+	  case NetLogic::XOR:
+	    obj->type_ = IVL_LO_XOR;
+	    break;
+	  default:
+	    assert(0);
+	    obj->type_ = IVL_LO_NONE;
+	    break;
+      }
+
+      obj->npins_ = net->pin_count();
+      obj->pins_ = new ivl_nexus_t[obj->npins_];
+      for (unsigned idx = 0 ;  idx < obj->npins_ ;  idx += 1) {
+	    const Nexus*nex = net->pin(idx).nexus();
+	    assert(nex->t_cookie());
+	    obj->pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+      }
 
       if (net_logic_) {
-	    (net_logic_)(net->name(), &obj);
+	    (net_logic_)(net->name(), obj);
 
       } else {
 	    cerr << dll_path_ << ": internal error: target DLL lacks "
@@ -112,27 +138,53 @@ void dll_target::logic(const NetLogic*net)
 bool dll_target::net_const(const NetConst*net)
 {
       unsigned idx;
-      ivl_net_const_t obj = (ivl_net_const_t)
-	    calloc(1, sizeof(struct ivl_net_const_s));
+      char*bits;
+
+      struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
       obj->width_ = net->pin_count();
-      obj->bits_ = (char*)malloc(obj->width_);
+      if (obj->width_ <= sizeof(char*)) {
+	    bits = obj->b.bit_;
+
+      } else {
+	    obj->b.bits_ = (char*)malloc(obj->width_);
+	    bits = obj->b.bits_;
+      }
+
       for (idx = 0 ;  idx < obj->width_ ;  idx += 1)
 	    switch (net->value(idx)) {
 		case verinum::V0:
-		  obj->bits_[idx] = '0';
+		  bits[idx] = '0';
 		  break;
 		case verinum::V1:
-		  obj->bits_[idx] = '1';
+		  bits[idx] = '1';
 		  break;
 		case verinum::Vx:
-		  obj->bits_[idx] = 'x';
+		  bits[idx] = 'x';
 		  break;
 		case verinum::Vz:
-		  obj->bits_[idx] = 'z';
+		  bits[idx] = 'z';
 		  break;
 	    }
 
+	/* Connect to all the nexus objects. Note that the one-bit
+	   case can be handled more efficiently without allocating
+	   array space. */
+      if (obj->width_ == 1) {
+	    const Nexus*nex = net->pin(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->n.pin_ = (ivl_nexus_t) nex->t_cookie();
+
+      } else {
+	    obj->n.pins_ = new ivl_nexus_t[obj->width_];
+	    for (unsigned idx = 0 ;  idx < obj->width_ ;  idx += 1) {
+		  const Nexus*nex = net->pin(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->n.pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+	    }
+      }
+
+	/* All done, call the target_net_const function if it exists. */
       if (net_const_) {
 	    int rc = (net_const_)(net->name(), obj);
 	    return rc == 0;
@@ -161,6 +213,11 @@ void dll_target::net_probe(const NetEvProbe*net)
       return;
 }
 
+/*
+ * This function locates an ivl_scope_t object that matches the
+ * NetScope object. The search works by looking for the parent scope,
+ * then scanning the parent scope for the NetScope object.
+ */
 static ivl_scope_t find_scope(ivl_scope_t root, const NetScope*cur)
 {
       ivl_scope_t parent, tmp;
@@ -205,8 +262,155 @@ void dll_target::scope(const NetScope*net)
 
 void dll_target::signal(const NetNet*net)
 {
+      ivl_signal_t obj = (ivl_signal_t)calloc(1, sizeof(struct ivl_signal_s));
+
+	/* Attach the signal to the ivl_scope_t object that contains
+	   it. This involves growing the sigs_ array in the scope
+	   object, or creating the sigs_ array if this is the first
+	   signal. */
+      obj->scope_ = find_scope(des_.root_, net->scope());
+      assert(obj->scope_);
+
+      if (obj->scope_->nsigs_ == 0) {
+	    assert(obj->scope_->sigs_ == 0);
+	    obj->scope_->nsigs_ = 1;
+	    obj->scope_->sigs_ = (ivl_signal_t*)malloc(sizeof(ivl_signal_t));
+
+      } else {
+	    assert(obj->scope_->sigs_);
+	    obj->scope_->nsigs_ += 1;
+	    obj->scope_->sigs_ = (ivl_signal_t*)
+		  realloc(obj->scope_->sigs_,
+			  obj->scope_->nsigs_*sizeof(ivl_signal_t));
+	    obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
+      }
+
+	/* Save the privitive properties of the signal in the
+	   ivl_signal_t object. */
+
+      obj->width_ = net->pin_count();
+      obj->signed_= 0;
+
+      switch (net->port_type()) {
+
+	  case NetNet::PINPUT:
+	    obj->port_ = IVL_SIP_INPUT;
+	    break;
+
+	  case NetNet::POUTPUT:
+	    obj->port_ = IVL_SIP_OUTPUT;
+	    break;
+
+	  case NetNet::PINOUT:
+	    obj->port_ = IVL_SIP_INOUT;
+	    break;
+
+	  default:
+	    obj->port_ = IVL_SIP_NONE;
+	    break;
+      }
+
+      switch (net->type()) {
+
+	  case NetNet::REG:
+	  case NetNet::INTEGER:
+	    obj->type_ = IVL_SIT_REG;
+	    break;
+
+	  case NetNet::SUPPLY0:
+	    obj->type_ = IVL_SIT_SUPPLY0;
+	    break;
+
+	  case NetNet::SUPPLY1:
+	    obj->type_ = IVL_SIT_SUPPLY1;
+	    break;
+
+	  case NetNet::TRI:
+	    obj->type_ = IVL_SIT_TRI;
+	    break;
+
+	  case NetNet::TRI0:
+	    obj->type_ = IVL_SIT_TRI0;
+	    break;
+
+	  case NetNet::TRI1:
+	    obj->type_ = IVL_SIT_TRI1;
+	    break;
+
+	  case NetNet::TRIAND:
+	    obj->type_ = IVL_SIT_TRIAND;
+	    break;
+
+	  case NetNet::TRIOR:
+	    obj->type_ = IVL_SIT_TRIOR;
+	    break;
+
+	  case NetNet::WAND:
+	    obj->type_ = IVL_SIT_WAND;
+	    break;
+
+	  case NetNet::WIRE:
+	  case NetNet::IMPLICIT:
+	    obj->type_ = IVL_SIT_WIRE;
+	    break;
+
+	  case NetNet::WOR:
+	    obj->type_ = IVL_SIT_WOR;
+	    break;
+
+	  default:
+	    obj->type_ = IVL_SIT_NONE;
+	    break;
+      }
+
+	/* Get the nexus objects for all the pins of the signal. If
+	   the signal has only one pin, then write the single
+	   ivl_nexus_t object into n.pin_. Otherwise, make an array of
+	   ivl_nexus_t cookies.
+
+	   When I create an ivl_nexus_t object, store it in the
+	   t_cookie of the Nexus object so that I find it again when I
+	   next encounter the nexus. */
+
+      if (obj->width_ == 1) {
+	    const Nexus*nex = net->pin(0).nexus();
+	    if (nex->t_cookie()) {
+		  obj->n.pin_ = (ivl_nexus_t)nex->t_cookie();
+
+	    } else {
+		  ivl_nexus_t tmp = (ivl_nexus_t)
+			calloc(1, sizeof(struct ivl_nexus_s));
+		  tmp->self = nex;
+		  nex->t_cookie(tmp);
+		  obj->n.pin_ = tmp;
+	    }
+
+      } else {
+	    unsigned idx;
+
+	    obj->n.pins_ = (ivl_nexus_t*)
+		  calloc(obj->width_, sizeof(ivl_nexus_t));
+
+	    for (idx = 0 ;  idx < obj->width_ ;  idx += 1) {
+		  const Nexus*nex = net->pin(idx).nexus();
+		  if (nex->t_cookie()) {
+			obj->n.pins_[idx] = (ivl_nexus_t)nex->t_cookie();
+
+		  } else {
+			ivl_nexus_t tmp = (ivl_nexus_t)
+			      calloc(1, sizeof(struct ivl_nexus_s));
+			tmp->self = nex;
+			nex->t_cookie(tmp);
+			obj->n.pins_[idx] = tmp;
+		  }
+	    }
+      }
+
+	/* Invoke the target_net_signal function of the loaded target
+	   module, if it exists. */
+
       if (net_signal_) {
-	    int rc = (net_signal_)(net->name(), (ivl_signal_t)net);
+	    int rc = (net_signal_)(net->name(), obj);
 	    return;
 
       } else {
@@ -221,6 +425,11 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.11  2000/10/06 23:46:51  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.10  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

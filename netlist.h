@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.171 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: netlist.h,v 1.172 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 /*
@@ -74,7 +74,11 @@ class NetObj {
     public:
     public:
       explicit NetObj(const string&n, unsigned npins);
+      explicit NetObj(NetScope*s, const string&n, unsigned npins);
       virtual ~NetObj();
+
+      NetScope* scope();
+      const NetScope* scope() const;
 
       const char* name() const { return name_; }
 
@@ -103,6 +107,7 @@ class NetObj {
       void dump_obj_attr(ostream&, unsigned) const;
 
     private:
+      NetScope*scope_;
       char* name_;
       Link*pins_;
       const unsigned npins_;
@@ -220,6 +225,10 @@ class Link {
  * The links in a nexus are grouped into a singly linked list, with
  * the nexus pointing to the first Link. Each link in turn points to
  * the next link in the nexus, with the last link pointing to 0.
+ *
+ * The t_cookie() is a void* that targets can use to store information
+ * in a Nexus. ivl guarantees that the t_cookie will be 0 when the
+ * target is invoked.
  */
 class Nexus {
 
@@ -236,12 +245,16 @@ class Nexus {
       Link*first_nlink();
       const Link* first_nlink()const;
 
+      void* t_cookie() const;
+      void* t_cookie(void*) const;
+
     private:
       Link*list_;
       void unlink(Link*);
       void relink(Link*);
 
       mutable char* name_; /* Cache the calculated name for the Nexus. */
+      mutable void* t_cookie_;
 
     private: // not implemented
       Nexus(const Nexus&);
@@ -309,9 +322,6 @@ class NetNet  : public NetObj, public LineInfo {
 
       virtual ~NetNet();
 
-      NetScope* scope();
-      const NetScope* scope() const;
-
       Type type() const;
 
       PortType port_type() const;
@@ -347,7 +357,6 @@ class NetNet  : public NetObj, public LineInfo {
       NetNet*sig_next_, *sig_prev_;
 
     private:
-      NetScope*scope_;
       Type   type_;
       PortType port_type_;
 
@@ -2796,6 +2805,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.172  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.171  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.7 2000/10/05 05:03:01 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.8 2000/10/06 23:46:50 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -76,8 +76,7 @@ bool dll_target::process(const NetProcTop*net)
       return false;
 }
 
-/*XXXX
- * Currently, this doesn't do anything really, so stub it out.
+/*
  */
 void dll_target::proc_assign(const NetAssign*net)
 {
@@ -85,6 +84,13 @@ void dll_target::proc_assign(const NetAssign*net)
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
       stmt_cur_->type_ = IVL_ST_ASSIGN;
+
+      stmt_cur_->u_.assign_.lwidth_ = net->lwidth();
+
+      assert(expr_ == 0);
+      net->rval()->expr_scan(this);
+      stmt_cur_->u_.assign_.rval_ = expr_;
+      expr_ = 0;
 }
 
 
@@ -212,10 +218,10 @@ void dll_target::proc_stask(const NetSTask*net)
 	    calloc(nparms, sizeof(ivl_expr_t));
 
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
-	    expr_ = 0;
 	    if (net->parm(idx))
 		  net->parm(idx)->expr_scan(this);
 	    stmt_cur_->u_.stask_.parms_[idx] = expr_;
+	    expr_ = 0;
       }
 
 }
@@ -269,6 +275,11 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.8  2000/10/06 23:46:50  steve
+ *  ivl_target updates, including more complete
+ *  handling of ivl_nexus_t objects. Much reduced
+ *  dependencies on pointers to netlist objects.
+ *
  * Revision 1.7  2000/10/05 05:03:01  steve
  *  xor and constant devices.
  *
