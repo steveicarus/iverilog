@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.126 2002/06/05 18:52:14 steve Exp $"
+#ident "$Id: Makefile.in,v 1.127 2002/06/06 18:48:02 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -117,6 +117,7 @@ distclean: clean
 	rm -f driver/Makefile
 	rm -f config.status config.cache config.log
 	rm -f Makefile
+	rm -f tgt-pal/Makefile tgt-stub/Makefile tgt-verilog/Makefile
 
 ifeq (@ENABLE_VVM@,yes)
 TT_VVM = mangle.o t-vvm.o
