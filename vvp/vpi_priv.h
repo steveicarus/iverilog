@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.25 2002/01/06 00:48:39 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.26 2002/01/06 17:50:50 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -240,8 +240,19 @@ vpiHandle vpip_sim_time(void);
 extern int vpip_get_time_precision(void);
 extern void vpip_set_time_precision(int pres);
 
+
+/*
+**  Functions defined in vpi_scope.cc, to keep track of functor scope.
+*/
+
+extern vpiHandle ipoint_get_scope(vvp_ipoint_t ipt);
+extern void functor_set_scope(vpiHandle scope);
+
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.26  2002/01/06 17:50:50  steve
+ *  Support scope for functors. (Stephan Boettcher)
+ *
  * Revision 1.25  2002/01/06 00:48:39  steve
  *  VPI access to root module scopes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.37 2001/12/18 05:32:11 steve Exp $"
+#ident "$Id: functor.cc,v 1.38 2002/01/06 17:50:50 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -58,6 +58,11 @@ void functor_init(void)
 {
 	// allocate the ZERO functor.
       functor_allocate(1);
+}
+
+unsigned functor_limit()
+{
+      return functor_count;
 }
 
 /*
@@ -196,6 +201,9 @@ void functor_s::debug_print(vvp_ipoint_t fnc)
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.38  2002/01/06 17:50:50  steve
+ *  Support scope for functors. (Stephan Boettcher)
+ *
  * Revision 1.37  2001/12/18 05:32:11  steve
  *  Improved functor debug dumps.
  *

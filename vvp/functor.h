@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.43 2002/01/06 03:15:13 steve Exp $"
+#ident "$Id: functor.h,v 1.44 2002/01/06 17:50:50 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -116,6 +116,11 @@ extern void functor_init(void);
  * the return value is the address of the first in the vector.
  */
 extern vvp_ipoint_t functor_allocate(unsigned wid);
+
+/*
+** Return the number of allocated functors
+*/
+extern unsigned functor_limit();
 
 /*
  * Given an ipoint_t pointer, return a C pointer to the functor. This
@@ -381,6 +386,9 @@ extern vvp_fvector_t vvp_fvector_continuous_new(unsigned size, vvp_ipoint_t p);
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.44  2002/01/06 17:50:50  steve
+ *  Support scope for functors. (Stephan Boettcher)
+ *
  * Revision 1.43  2002/01/06 03:15:13  steve
  *  Support weak functor inputs.
  *

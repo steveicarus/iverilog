@@ -17,12 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_scope.cc,v 1.11 2002/01/06 00:48:39 steve Exp $"
+#ident "$Id: vpi_scope.cc,v 1.12 2002/01/06 17:50:50 steve Exp $"
 #endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "symbols.h"
+# include  "functor.h"
 #ifdef HAVE_MALLOC_H
 # include  <malloc.h>
 #endif
@@ -105,6 +106,93 @@ static vpiHandle module_iter(int code, vpiHandle obj)
       return 0;
 }
 
+/*
+**  Keeping track of functor scope.  When the scope changes during
+**  compilation, we record the current number of functors in a list.
+**
+**  Why are we doing this?  The SDF annotator needs this for
+**  INTERCONNECT delays.  The INTERCONNECT delay is specified between
+**  a source modules output port and a target module input port, which
+**  are connected with a wire.  The vpiSignal for both ports point to
+**  the same functor output, together with all other ports that may be
+**  connected to the same wire.  The SDF annotator need to find those
+**  functors which are inside the scope of the target module, which
+**  are driven by the source functor.  And even this is only an
+**  aproximation, in case the wire is connected to multiple inputs of
+**  the same module.  But those should have the same delays anyway.
+**
+*/
+
+struct functor_scope_s {
+      vpiHandle scope;
+      unsigned start;
+};
+
+static struct functor_scope_s * functor_scopes = 0;
+static unsigned n_functor_scopes = 0;
+static unsigned a_functor_scopes = 0;
+
+void functor_set_scope(vpiHandle scope)
+{
+      unsigned nfun = functor_limit();
+
+      if (n_functor_scopes) {
+	    functor_scope_s *last = &functor_scopes[n_functor_scopes - 1];
+
+	    if (last->scope == scope) {
+		  return;
+	    }
+	    
+	    if (last->start == nfun) {
+		  last->scope = scope;
+		  return;
+	    }
+      }
+      
+      n_functor_scopes += 1;
+      if (n_functor_scopes >= a_functor_scopes) {
+	    a_functor_scopes += 512;
+	    functor_scopes = (struct functor_scope_s *)
+		  realloc(functor_scopes, 
+			  a_functor_scopes*sizeof(struct functor_scope_s));
+	    assert(functor_scopes);
+      }
+
+      functor_scope_s *last = &functor_scopes[n_functor_scopes - 1];
+      last->start = nfun;
+      last->scope = scope;
+}
+
+/*
+**  Lockup the scope of a functor.
+**
+**  Cannot use bserach, since we are not looking for an exact match
+*/
+vpiHandle ipoint_get_scope(vvp_ipoint_t ipt)
+{
+      if (n_functor_scopes == 0)
+	    return NULL;
+
+      unsigned fidx = ipt/4;
+      
+      unsigned first = 0;
+      unsigned last = n_functor_scopes;
+      while (first < last) {
+	    unsigned next = (first+last)/2;
+	    functor_scope_s *cur = &functor_scopes[next];
+
+	    if (cur->start > fidx)
+		  last = next;
+	    else if (next == first)
+		  break;
+	    else 
+		  first = next;
+      }
+
+      functor_scope_s *cur = &functor_scopes[first];
+      return cur->scope;
+}
+
 static const struct __vpirt vpip_scope_module_rt = {
       vpiModule,
       0,
@@ -183,19 +271,19 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
       struct __vpiScope*scope = new struct __vpiScope;
 
       switch(type[2]) {
-	  case 'd': /* type == module */
+	  case 'd': /* type == moDule */
 	    scope->base.vpi_type = &vpip_scope_module_rt;
 	    break;
-	  case 'n': /* type == function */
+	  case 'n': /* type == fuNction */
 	    scope->base.vpi_type = &vpip_scope_function_rt;
 	    break;
-	  case 's': /* type == task */
+	  case 's': /* type == taSk */
 	    scope->base.vpi_type = &vpip_scope_task_rt;
 	    break;
-	  case 'r': /* type == fork */
+	  case 'r': /* type == foRk */
 	    scope->base.vpi_type = &vpip_scope_fork_rt;
 	    break;
-	  case 'g': /* type == begin */
+	  case 'g': /* type == beGin */
 	    scope->base.vpi_type = &vpip_scope_begin_rt;
 	    break;
 	  default:
@@ -231,12 +319,15 @@ void compile_scope_decl(char*label, char*type, char*name, char*parent)
 	    vpip_root_table_ptr[vpip_root_table_cnt] = &scope->base;
 	    vpip_root_table_cnt = cnt;
       }
+
+      functor_set_scope(&current_scope->base);
 }
 
 void compile_scope_recall(char*symbol)
 {
       compile_vpi_lookup((vpiHandle*)&current_scope, symbol);
       assert(current_scope);
+      functor_set_scope(&current_scope->base);
 }
 
 struct __vpiScope* vpip_peek_current_scope(void)
@@ -252,6 +343,9 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 
 /*
  * $Log: vpi_scope.cc,v $
+ * Revision 1.12  2002/01/06 17:50:50  steve
+ *  Support scope for functors. (Stephan Boettcher)
+ *
  * Revision 1.11  2002/01/06 00:48:39  steve
  *  VPI access to root module scopes.
  *
