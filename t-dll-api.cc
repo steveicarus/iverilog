@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-api.cc,v 1.30 2001/04/01 06:52:27 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.31 2001/04/02 00:28:35 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -245,6 +245,13 @@ extern "C" unsigned ivl_expr_repeat(ivl_expr_t net)
       assert(net);
       assert(net->type_ == IVL_EX_CONCAT);
       return net->u_.concat_.rept;
+}
+
+extern "C" ivl_scope_t ivl_expr_scope(ivl_expr_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_EX_SCOPE);
+      return net->u_.scope_.scope;
 }
 
 extern "C" int ivl_expr_signed(ivl_expr_t net)
@@ -805,6 +812,9 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.31  2001/04/02 00:28:35  steve
+ *  Support the scope expression node.
+ *
  * Revision 1.30  2001/04/01 06:52:27  steve
  *  support the NetWhile statement.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.43 2001/04/01 06:52:27 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.44 2001/04/02 00:28:35 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -155,6 +155,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_BINARY,
       IVL_EX_CONCAT,
       IVL_EX_NUMBER,
+      IVL_EX_SCOPE,
       IVL_EX_SFUNC,
       IVL_EX_SIGNAL,
       IVL_EX_STRING,
@@ -372,6 +373,8 @@ extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);
+  /* IVL_EX_SCOPE */
+extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
   /* IVL_EX_STRING */
@@ -722,6 +725,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.44  2001/04/02 00:28:35  steve
+ *  Support the scope expression node.
+ *
  * Revision 1.43  2001/04/01 06:52:27  steve
  *  support the NetWhile statement.
  *

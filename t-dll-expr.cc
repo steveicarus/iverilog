@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) & !defined(macintosh)
-#ident "$Id: t-dll-expr.cc,v 1.8 2001/03/29 02:52:39 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.9 2001/04/02 00:28:35 steve Exp $"
 #endif
 
 # include  "t-dll.h"
@@ -120,6 +120,17 @@ void dll_target::expr_const(const NetEConst*net)
       }
 }
 
+void dll_target::expr_scope(const NetEScope*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr_);
+
+      expr_->type_ = IVL_EX_SCOPE;
+      expr_->u_.scope_.scope = lookup_scope_(net->scope());
+}
+
 void dll_target::expr_sfunc(const NetESFunc*net)
 {
       assert(expr_ == 0);
@@ -162,6 +173,9 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.9  2001/04/02 00:28:35  steve
+ *  Support the scope expression node.
+ *
  * Revision 1.8  2001/03/29 02:52:39  steve
  *  Add unary ~ operator to tgt-vvp.
  *

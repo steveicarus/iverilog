@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.30 2001/04/01 06:52:28 steve Exp $"
+#ident "$Id: t-dll.h,v 1.31 2001/04/02 00:28:35 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -91,6 +91,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_binary(const NetEBinary*);
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
+      void expr_scope(const NetEScope*);
       void expr_sfunc(const NetESFunc*);
       void expr_unary(const NetEUnary*);
       void expr_signal(const NetESignal*);
@@ -137,6 +138,10 @@ struct ivl_expr_s {
 	    struct {
 		  char*bits_;
 	    } number_;
+
+	    struct {
+		  ivl_scope_t scope;
+	    } scope_;
 
 	    struct {
 		  char*name_;
@@ -394,6 +399,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.31  2001/04/02 00:28:35  steve
+ *  Support the scope expression node.
+ *
  * Revision 1.30  2001/04/01 06:52:28  steve
  *  support the NetWhile statement.
  *
