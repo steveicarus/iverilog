@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.80 2003/02/27 20:38:12 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.81 2003/02/28 20:21:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1224,11 +1224,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_system_task_call(ivl_statement_t net)
 {
-      unsigned idx;
       unsigned parm_count = ivl_stmt_parm_count(net);
-      struct vector_info *vec = 0x0;
-      unsigned int vecs= 0;
-      unsigned int veci= 0;
       
       if (parm_count == 0) {
 	    fprintf(vvp_out, "    %%vpi_call \"%s\";\n", ivl_stmt_name(net));
@@ -1236,172 +1232,7 @@ static int show_system_task_call(ivl_statement_t net)
 	    return 0;
       }
 
-	/* Figure out how many expressions are going to be evaluated
-	   for this task call. I won't need to evaluate expressions
-	   for items that are VPI objects directly. */
-      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
-	    
-	    switch (ivl_expr_type(expr)) {
-
-		    /* These expression types can be handled directly,
-		       with VPI handles of their own. Therefore, skip
-		       them in the process of evaluating expressions. */
-		case IVL_EX_NONE:
-		case IVL_EX_NUMBER:
-		case IVL_EX_STRING:
-		case IVL_EX_SCOPE:
-		case IVL_EX_SFUNC:
-		case IVL_EX_VARIABLE:
-		  continue;
-
-		case IVL_EX_SIGNAL:
-		    /* If the signal node is narrower then the signal
-		       itself, then this is a part select so I'm going
-		       to need to evaluate the expression.
-
-		       If I don't need to do any evaluating, then skip
-		       it as I'll be passing the handle to the signal
-		       itself. */
-		  if (ivl_expr_width(expr) !=
-		      ivl_signal_pins(ivl_expr_signal(expr))) {
-			break;
-		  } else {
-			continue;
-		  }
-
-
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr)) {
-			continue;
-		  }
-
-		    /* Everything else will need to be evaluated and
-		       passed as a constant to the vpi task. */
-		default:
-		  break;
-	    }
-
-	    vec = (struct vector_info *)
-		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
-
-	    switch (ivl_expr_value(expr)) {
-		case IVL_VT_VECTOR:
-		  vec[vecs] = draw_eval_expr(expr, 0);
-		  break;
-		case IVL_VT_REAL:
-		  vec[vecs].base = draw_eval_real(expr);
-		  vec[vecs].wid = 0;
-		  break;
-		default:
-		  assert(0);
-	    }
-	    vecs++;
-      }
-      
-      fprintf(vvp_out, "    %%vpi_call \"%s\"", ivl_stmt_name(net));
-      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    ivl_expr_t expr = ivl_stmt_parm(net, idx);
-
-	    switch (ivl_expr_type(expr)) {
-		case IVL_EX_NONE:
-		  fprintf(vvp_out, ", \" \"");
-		  continue;
-
-		case IVL_EX_NUMBER: {
-		      unsigned bit, wid = ivl_expr_width(expr);
-		      const char*bits = ivl_expr_bits(expr);
-
-		      fprintf(vvp_out, ", %u'%sb", wid,
-			      ivl_expr_signed(expr)? "s" : "");
-		      for (bit = wid ;  bit > 0 ;  bit -= 1)
-			    fputc(bits[bit-1], vvp_out);
-		      continue;
-		}
-
-		case IVL_EX_SIGNAL:
-		    /* If this is a part select, then the value was
-		       calculated above. Otherwise, just pass the
-		       signal. */
-		  if (ivl_expr_width(expr) !=
-		      ivl_signal_pins(ivl_expr_signal(expr))) {
-			break;
-		  } else {
-			fprintf(vvp_out, ", V_%s", 
-				vvp_signal_label(ivl_expr_signal(expr)));
-			continue;
-		  }
-
-		case IVL_EX_VARIABLE: {
-		      ivl_variable_t var = ivl_expr_variable(expr);
-		      fprintf(vvp_out, ", W_%s", vvp_word_label(var));
-		      continue;
-		}
-
-		case IVL_EX_STRING:
-		  fprintf(vvp_out, ", \"%s\"", 
-			  ivl_expr_string(expr));
-		  continue;
-
-		case IVL_EX_SCOPE:
-		  fprintf(vvp_out, ", S_%s",
-			  vvp_mangle_id(ivl_scope_name(ivl_expr_scope(expr))));
-		  continue;
-
-		case IVL_EX_SFUNC:
-		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $time");
-		  else if (strcmp("$stime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $stime");
-		  else if (strcmp("$realtime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $realtime");
-		  else if (strcmp("$simtime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $simtime");
-		  else
-			fprintf(vvp_out, ", ?%s?", ivl_expr_name(expr));
-		  continue;
-		  
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr)) {
-			fprintf(vvp_out, ", M_%s", 
-				vvp_memory_label(ivl_expr_memory(expr)));
-			continue;
-		  }
-		  break;
-
-		default:
-		  break;
-	    }
-	    assert(veci < vecs);
-
-	    switch (ivl_expr_value(expr)) {
-
-		case IVL_VT_VECTOR:
-		  fprintf(vvp_out, ", T<%u,%u,%s>", vec[veci].base,
-			  vec[veci].wid, ivl_expr_signed(expr)? "s" : "u");
-		  break;
-
-		case IVL_VT_REAL:
-		  fprintf(vvp_out, ", W<%u,r>", vec[veci].base);
-		  break;
-
-		default:
-		  assert(0);
-	    }
-	    veci++;
-      }
-      
-      assert(veci == vecs);
-
-      if (vecs) {
-	    for (idx = 0; idx < vecs; idx++) {
-		  if (vec[idx].wid > 0)
-			clr_vector(vec[idx]);
-	    }
-	    free(vec);
-      }
-
-      fprintf(vvp_out, ";\n");
+      (void) draw_vpi_taskfunc_call(net, 0, 0);
 
 	/* VPI calls can manipulate anything, so clear the expression
 	   lookahead table after the call. */
@@ -1606,6 +1437,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.81  2003/02/28 20:21:13  steve
+ *  Merge vpi_call and vpi_func draw functions.
+ *
  * Revision 1.80  2003/02/27 20:38:12  steve
  *  Handle assign of real values to vectors.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.23 2003/01/26 21:16:00 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.24 2003/02/28 20:21:13 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -63,6 +63,16 @@ extern int draw_func_definition(ivl_scope_t scope);
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
 extern void draw_lpm_mux(ivl_lpm_t net);
+
+/*
+ * This function draws the execution of a vpi_call statement, along
+ * with the tricky handling of arguments. If this is called with a
+ * statement handle, it will generate a %vpi_call
+ * instruction. Otherwise, it will generate a %vpi_func instruction.
+ */
+extern struct vector_info draw_vpi_taskfunc_call(ivl_statement_t net,
+						 ivl_expr_t exp,
+						 unsigned wid);
 
 /*
  * Given a nexus, draw a string that represents the functor output
@@ -181,6 +191,9 @@ extern unsigned thread_count;
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.24  2003/02/28 20:21:13  steve
+ *  Merge vpi_call and vpi_func draw functions.
+ *
  * Revision 1.23  2003/01/26 21:16:00  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.91 2003/02/07 02:46:16 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.92 2003/02/28 20:21:13 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1604,11 +1604,6 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 {
-      unsigned idx;
-      struct vector_info *vec = 0x0;
-      unsigned int vecs= 0;
-      unsigned int veci= 0;
-
       unsigned parm_count = ivl_expr_parms(exp);
       struct vector_info res;
 
@@ -1624,117 +1619,10 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t exp, unsigned wid)
 
       }
 
-	/* Evaluate any expressions that need to be evaluated by the
-	   run-time before passed to the system task. The results are
-	   stored in the vec array. */
-      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    ivl_expr_t expr = ivl_expr_parm(exp, idx);
-	    
-	    switch (ivl_expr_type(expr)) {
-		case IVL_EX_NONE:
-		case IVL_EX_NUMBER:
-		case IVL_EX_SIGNAL:
-		case IVL_EX_STRING:
-		case IVL_EX_SCOPE:
-		case IVL_EX_SFUNC:
-		  continue;
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr)) {
-			continue;
-		  }
-		default:
-		  break;
-	    }
-
-	    vec = (struct vector_info *)
-		  realloc(vec, (vecs+1)*sizeof(struct vector_info));
-	    vec[vecs] = draw_eval_expr(expr, 0);
-	    vecs++;
-      }
-
-	/* Start the complicated expression. */
-
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
-      fprintf(vvp_out, "    %%vpi_func \"%s\", %u, %u",
-	      ivl_expr_name(exp), res.base, res.wid);
-
-	/* Now draw all the parameters to the function. */
-      for (idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    ivl_expr_t expr = ivl_expr_parm(exp, idx);
-
-	    switch (ivl_expr_type(expr)) {
-		case IVL_EX_NONE:
-		  fprintf(vvp_out, ", \" \"");
-		  continue;
-
-		case IVL_EX_NUMBER: {
-		      unsigned bit, wid = ivl_expr_width(expr);
-		      const char*bits = ivl_expr_bits(expr);
-
-		      fprintf(vvp_out, ", %u'b", wid);
-		      for (bit = wid ;  bit > 0 ;  bit -= 1)
-			    fputc(bits[bit-1], vvp_out);
-		      continue;
-		}
-
-		case IVL_EX_SIGNAL:
-		  fprintf(vvp_out, ", V_%s", 
-			  vvp_signal_label(ivl_expr_signal(expr)));
-		  continue;
-
-		case IVL_EX_STRING:
-		  fprintf(vvp_out, ", \"%s\"", 
-			  ivl_expr_string(expr));
-		  continue;
-
-		case IVL_EX_SCOPE:
-		  fprintf(vvp_out, ", S_%s",
-			  vvp_mangle_id(ivl_scope_name(ivl_expr_scope(expr))));
-		  continue;
-
-		case IVL_EX_SFUNC:
-		  if (strcmp("$time", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $time");
-		  else if (strcmp("$stime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $stime");
-		  else if (strcmp("$realtime", ivl_expr_name(expr)) == 0)
-			fprintf(vvp_out, ", $realtime");
-		  else
-			fprintf(vvp_out, ", ?%s?", ivl_expr_name(expr));
-		  continue;
-		  
-		case IVL_EX_MEMORY:
-		  if (!ivl_expr_oper1(expr)) {
-			fprintf(vvp_out, ", M_%s", 
-				vvp_memory_label(ivl_expr_memory(expr)));
-			continue;
-		  }
-		  break;
-
-		default:
-		  break;
-	    }
-	    
-	    fprintf(vvp_out, ", T<%u,%u>", 
-		    vec[veci].base, 
-		    vec[veci].wid);
-	    veci++;
-      }
-      
-      assert(veci == vecs);
-
-      if (vecs) {
-	    for (idx = 0; idx < vecs; idx++)
-		  clr_vector(vec[idx]);
-	    free(vec);
-      }
+      res = draw_vpi_taskfunc_call(0, exp, wid);
 
 	/* New basic block starts after VPI calls. */
       clear_expression_lookaside();
-
-      fprintf(vvp_out, ";\n");
-
 
       return res;
 }
@@ -2114,6 +2002,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.92  2003/02/28 20:21:13  steve
+ *  Merge vpi_call and vpi_func draw functions.
+ *
  * Revision 1.91  2003/02/07 02:46:16  steve
  *  Handle real value subtract and comparisons.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.14 2003/02/27 22:13:22 steve Exp $"
+#ident "$Id: Makefile.in,v 1.15 2003/02/28 20:21:13 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -52,7 +52,8 @@ dep:
 	$(CC) -Wall @ident_support@ -I$(srcdir)/.. $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
 
-O = vvp.o draw_mux.o eval_expr.o eval_real.o vector.o vvp_process.o vvp_scope.o
+O = vvp.o draw_mux.o draw_vpi.o eval_expr.o eval_real.o vector.o \
+vvp_process.o vvp_scope.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
