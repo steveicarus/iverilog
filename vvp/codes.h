@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.41 2002/05/29 16:29:34 steve Exp $"
+#ident "$Id: codes.h,v 1.42 2002/05/31 04:09:58 steve Exp $"
 #endif
 
 
@@ -105,7 +105,7 @@ struct vvp_code_s {
       vvp_code_fun opcode;
 
       union {
-	    unsigned number;
+	    unsigned long number;
 	    vvp_ipoint_t iptr;
 	    vvp_cpoint_t cptr;
 	    vvp_memory_t mem;
@@ -154,6 +154,9 @@ extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.42  2002/05/31 04:09:58  steve
+ *  Slight improvement in %mov performance.
+ *
  * Revision 1.41  2002/05/29 16:29:34  steve
  *  Add %addi, which is faster to simulate.
  *

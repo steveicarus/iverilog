@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.75 2002/05/31 00:05:49 steve Exp $"
+#ident "$Id: vthread.cc,v 1.76 2002/05/31 04:09:58 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -32,6 +32,7 @@
 # include  <malloc.h>
 #endif
 # include  <stdlib.h>
+# include  <limits.h>
 # include  <string.h>
 # include  <assert.h>
 
@@ -1424,17 +1425,47 @@ tally:
       return true;
 }
 
-static bool of_MOV_clr_(vthread_t thr, vvp_code_t cp)
+/*
+ * %mov <dest>, <src>, <wid>
+ *   This instruction is implemented by the of_MOV function
+ *   below. However, durning runtime vvp might notice that the
+ *   parameters have certain properties that make it possible to
+ *   replace the of_MOV opcode with a more specific instruction that
+ *   more directly does the job. All the of_MOV*_ functions are
+ *   functions that of_MOV might use to replace itself.
+ */
+static bool of_MOV0_a_(vthread_t thr, vvp_code_t cp)
 {
-	/* Test that the address is OK just once, then use the clear
-	   method that relies on the results of this test. */
-      unsigned test_addr = cp->bit_idx[0] + cp->number - 1;
-      if (test_addr >= thr->nbits)
-	    thr_check_addr(thr, test_addr);
+      if ((cp->bit_idx[0]+cp->number) > thr->nbits)
+	    thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
 
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_clr_bit_(thr, cp->bit_idx[0]+idx);
 
+      return true;
+}
+
+static bool of_MOV0_b_(vthread_t thr, vvp_code_t cp)
+{
+      if (cp->bit_idx[1] >= thr->nbits)
+	    thr_check_addr(thr, cp->bit_idx[1]);
+
+      thr->bits[cp->bit_idx[0]] &= cp->number;
+      return true;
+}
+
+static bool of_MOV1XZ_(vthread_t thr, vvp_code_t cp)
+{
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx, cp->bit_idx[1]);
+      return true;
+}
+
+static bool of_MOV_(vthread_t thr, vvp_code_t cp)
+{
+      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
+	    thr_put_bit(thr, cp->bit_idx[0]+idx,
+			thr_get_bit(thr, cp->bit_idx[1]+idx));
       return true;
 }
 
@@ -1443,21 +1474,40 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
       assert(cp->bit_idx[0] >= 4);
 
       if (cp->bit_idx[1] >= 4) {
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-		  thr_put_bit(thr,
-			      cp->bit_idx[0]+idx,
-			      thr_get_bit(thr, cp->bit_idx[1]+idx));
+	    cp->opcode = &of_MOV_;
+	    return cp->opcode(thr, cp);
 
       } else if (cp->bit_idx[1] == 0) {
 	      /* Detect the special case where this is really just a
 		 large clear. Rewrite the instruction to skip this
-		 test next time around. */
-	    cp->opcode = &of_MOV_clr_;
-	    return cp->opcode(thr, cp);
+		 test next time around, and use a precoded opcode. */
+
+	    unsigned test_addr = cp->bit_idx[0] + cp->number - 1;
+
+	    unsigned addr1 = cp->bit_idx[0] / (CPU_WORD_BITS/2);
+	    unsigned addr2 = (test_addr) / (CPU_WORD_BITS/2);
+	    if (addr1 == addr2) {
+		  unsigned sh1 = cp->bit_idx[0] % (CPU_WORD_BITS/2);
+		  unsigned sh2 = (test_addr+1)  % (CPU_WORD_BITS/2);
+
+		  unsigned long mask = ULONG_MAX << ((sh2 - sh1) * 2UL);
+		  mask = (~mask) << sh1*2UL;
+
+		  cp->number = ~mask;
+		  cp->bit_idx[0] = addr1;
+		  cp->bit_idx[1] = test_addr;
+		  cp->opcode = &of_MOV0_b_;
+		  return cp->opcode(thr, cp);
+
+	    } else {
+
+		  cp->opcode = &of_MOV0_a_;
+		  return cp->opcode(thr, cp);
+	    }
 
       } else {
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, cp->bit_idx[1]);
+	    cp->opcode = &of_MOV1XZ_;
+	    return cp->opcode(thr, cp);
       }
 
       return true;
@@ -2015,6 +2065,9 @@ bool of_CALL_UFUNC(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.76  2002/05/31 04:09:58  steve
+ *  Slight improvement in %mov performance.
+ *
  * Revision 1.75  2002/05/31 00:05:49  steve
  *  Word oriented bit storage.
  *
