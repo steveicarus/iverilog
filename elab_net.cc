@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.151 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.152 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -723,23 +723,23 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       unsigned rwidth = lwidth;
 
       if (rwidth == 0) {
-	    rwidth = lsig->pin_count();
-	    if (rsig->pin_count() > rwidth)
-		  rwidth = rsig->pin_count();
+	    rwidth = lsig->vector_width();
+	    if (rsig->vector_width() > rwidth)
+		  rwidth = rsig->vector_width();
 
 	    lwidth = rwidth;
       }
 
-      if ((rwidth > lsig->pin_count()) && (rwidth > rsig->pin_count())) {
-	    rwidth = lsig->pin_count();
-	    if (rsig->pin_count() > rwidth)
-		  rwidth = rsig->pin_count();
+      if ((rwidth > lsig->vector_width()) && (rwidth > rsig->vector_width())) {
+	    rwidth = lsig->vector_width();
+	    if (rsig->vector_width() > rwidth)
+		  rwidth = rsig->vector_width();
       }
 
 	// Create a device with the calculated dimensions.
       NetDivide*div = new NetDivide(scope, scope->local_symbol(), rwidth,
-				    lsig->pin_count(),
-				    rsig->pin_count());
+				    lsig->vector_width(),
+				    rsig->vector_width());
       des->add_node(div);
 
       div->set_signed(lsig->get_signed() && rsig->get_signed());
@@ -747,10 +747,8 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 	// Connect the left and right inputs of the divider to the
 	// nets that are the left and right expressions.
 
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ; idx += 1)
-	    connect(div->pin_DataA(idx), lsig->pin(idx));
-      for (unsigned idx = 0 ;  idx < rsig->pin_count() ; idx += 1)
-	    connect(div->pin_DataB(idx), rsig->pin(idx));
+      connect(div->pin_DataA(), lsig->pin(0));
+      connect(div->pin_DataB(), rsig->pin(0));
 
 
 	// Make an output signal that is the width of the l-value.
@@ -763,23 +761,8 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
       osig->local_flag(true);
       osig->set_signed(div->get_signed());
 
-      for (unsigned idx = 0 ;  idx < rwidth ;  idx += 1)
-	    connect(div->pin_Result(idx), osig->pin(idx));
+      connect(div->pin_Result(), osig->pin(0));
 
-
-	// If the lvalue is larger then the result, then pad the
-	// output with constant 0. This can happen for example in
-	// cases like this:
-	//    wire [3;0] a, b;
-	//    wire [7:0] r = a / b;
-
-      if (rwidth < osig->pin_count()) {
-	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
-					verinum::V0);
-	    des->add_node(tmp);
-	    for (unsigned idx = rwidth ;  idx < osig->pin_count() ;  idx += 1)
-		  connect(osig->pin(idx), tmp->pin(0));
-      }
 
       return osig;
 }
@@ -1004,8 +987,8 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
       NetNet*lsig = left_->elaborate_net(des, scope, lwidth, 0, 0, 0);
       if (lsig == 0) return 0;
 
-      if (lsig->pin_count() > lwidth)
-	    lwidth = lsig->pin_count();
+      if (lsig->vector_width() > lwidth)
+	    lwidth = lsig->vector_width();
 
       bool right_flag  =  op_ == 'r' || op_ == 'R';
       bool signed_flag =  op_ == 'R';
@@ -1013,55 +996,122 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	/* Handle the special case of a constant shift amount. There
 	   is no reason in this case to create a gate at all, just
 	   connect the lsig to the osig with the bit positions
-	   shifted. */
+	   shifted. Use a NetPartSelect to select the parts of the
+	   left expression that survive the shift, and a NetConcat to
+	   concatenate a constant for padding. */
       if (verinum*rval = right_->eval_const(des, scope)) {
 	    assert(rval->is_defined());
 	    unsigned dist = rval->as_ulong();
-	    if (dist > lwidth)
-		  dist = lwidth;
 
-	      /* Very special case, constant 0 shift. */
+	      /* Very special case: constant 0 shift. Simply return
+		 the left signal again. */
 	    if (dist == 0) return lsig;
 
+	      /* Another very special case: constant shift the entire
+		 value away. The result is a const. */
+	    if (dist > lwidth) {
+		  assert(0);
+	    }
+
+	      /* The construction that I'm making will ultimately
+		 connect its output to the osig here. This will be the
+		 result that I return from this function. */
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, lwidth);
 	    osig->local_flag(true);
 
-	    NetConst*zero = new NetConst(scope, scope->local_symbol(),
-					 verinum::V0);
-	    des->add_node(zero);
 
-	    if (op_ == 'l') {
-		    /* Left shift means put some zeros on the bottom
-		       of the vector. */
-		  unsigned idx;
-		  for (idx = 0 ;  idx < dist ;  idx += 1)
-			connect(osig->pin(idx), zero->pin(0));
-		  for (    ; (idx<lwidth) && ((idx-dist) < lsig->pin_count())
-			   ; idx += 1)
-			connect(osig->pin(idx), lsig->pin(idx-dist));
-		  for (    ;  idx < lwidth ;  idx += 1)
-			connect(osig->pin(idx), zero->pin(0));
+	      /* Make the constant zero's that I'm going to pad to the
+		 top or bottom of the left expression. Attach a signal
+		 to its output so that I don't have to worry about it
+		 later. If the left expression is less then the
+		 desired width (and we are doing right shifts) then we
+		 can combine the expression padding with the distance
+		 padding to reduce nodes. */
+	    unsigned pad_width = dist;
+	    unsigned part_width = lwidth - dist;
+	    if (op_ == 'r' || op_ == 'R') {
+		  if (lsig->vector_width() < lwidth) {
+			pad_width += lwidth - lsig->vector_width();
+			part_width -= lwidth - lsig->vector_width();
+		  }
+	    } else {
 
-	    } else if (op_ == 'R') {
-		    /* Signed right shift. */
-		  unsigned idx;
-		  unsigned keep = lsig->pin_count()-dist;
-		  for (idx = 0 ;  idx < keep ;  idx += 1)
-			connect(osig->pin(idx), lsig->pin(idx+dist));
-		  for (idx = keep ;  idx < lwidth ;  idx += 1)
-			connect(osig->pin(idx), lsig->pin(keep+dist-1));
+		    /* The left net must be the same width as the
+		       result. The part select that I'm about to make relies
+		       on that. */
+		  lsig = pad_to_width(des, lsig, lwidth);
+
+	    }
+
+	    NetNet*zero = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, pad_width);
+	    zero->local_flag(true);
+	    zero->set_line(*this);
+
+	    if (op_ == 'R') {
+		  NetPartSelect*sign_bit
+			= new NetPartSelect(lsig, lsig->vector_width()-1,
+					    1, NetPartSelect::VP);
+		  des->add_node(sign_bit);
+		  NetReplicate*sign_pad
+			= new NetReplicate(scope, scope->local_symbol(),
+					   pad_width, pad_width);
+		  des->add_node(sign_pad);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::WIRE, 1);
+		  connect(sign_bit->pin(0), tmp->pin(0));
+		  connect(sign_bit->pin(0), sign_pad->pin(1));
+
+		  connect(zero->pin(0), sign_pad->pin(0));
 
 	    } else {
-		    /* Unsigned right shift. */
-		  assert(op_ == 'r');
-		  unsigned idx;
-		  unsigned keep = lsig->pin_count()-dist;
-		  for (idx = 0 ;  idx < keep ;  idx += 1)
-			connect(osig->pin(idx), lsig->pin(idx+dist));
-		  for (idx = keep ;  idx < lwidth ;  idx += 1)
-			connect(osig->pin(idx), zero->pin(0));
+		  NetConst*zero_c = new NetConst(scope, scope->local_symbol(),
+					      verinum(verinum::V0, pad_width));
+		  des->add_node(zero_c);
+		  connect(zero->pin(0), zero_c->pin(0));
 	    }
+
+	      /* Make a concatenation operator that will join the
+		 part-selected right expression at the pad values. */
+	    NetConcat*cc = new NetConcat(scope, scope->local_symbol(),
+					 lwidth, 2);
+	    cc->set_line(*this);
+	    des->add_node(cc);
+	    connect(cc->pin(0), osig->pin(0));
+
+	      /* Make the part select of the left expression and
+		 connect it to the lsb or msb of the concatenation,
+		 depending on the direction of the shift. */
+	    NetPartSelect*part;
+
+	    switch (op_) {
+		case 'l': // Left shift === {lsig, zero}
+		  part = new NetPartSelect(lsig, 0, part_width,
+					   NetPartSelect::VP);
+		  connect(cc->pin(1), zero->pin(0));
+		  connect(cc->pin(2), part->pin(0));
+		  break;
+		case 'R':
+		case 'r': // right-shift === {zero, lsig}
+		  part = new NetPartSelect(lsig, dist, part_width,
+					   NetPartSelect::VP);
+		  connect(cc->pin(1), part->pin(0));
+		  connect(cc->pin(2), zero->pin(0));
+		  break;
+		default:
+		  assert(0);
+	    }
+
+	    des->add_node(part);
+
+	      /* Attach a signal to the part select output (NetConcat
+		 input) */
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, part_width);
+	    tmp->local_flag(true);
+	    tmp->set_line(*this);
+	    connect(part->pin(0), tmp->pin(0));
 
 	    return osig;
       }
@@ -1078,39 +1128,31 @@ NetNet* PEBinary::elaborate_net_shift_(Design*des, NetScope*scope,
 	// Make the shift device itself, and the output
 	// NetNet. Connect the Result output pins to the osig signal
       NetCLShift*gate = new NetCLShift(scope, scope->local_symbol(),
-				       lwidth, rsig->pin_count(),
+				       lwidth, rsig->vector_width(),
 				       right_flag, signed_flag);
+      des->add_node(gate);
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, lwidth);
       osig->local_flag(true);
+      osig->set_signed(signed_flag);
 
-      for (unsigned idx = 0 ;  idx < lwidth ;  idx += 1)
-	    connect(osig->pin(idx), gate->pin_Result(idx));
+      connect(osig->pin(0), gate->pin_Result());
 
 	// Connect the lsig (the left expression) to the Data input,
 	// and pad it if necessary with constant zeros.
-      for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-	    connect(lsig->pin(idx), gate->pin_Data(idx));
-
-      if (lsig->pin_count() < lwidth) {
-	    NetConst*zero = new NetConst(scope, scope->local_symbol(),
-					 verinum::V0);
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::IMPLICIT, 1);
-	    tmp->local_flag(true);
-	    des->add_node(zero);
-	    connect(zero->pin(0), tmp->pin(0));
-	    for (unsigned idx = lsig->pin_count() ; idx < lwidth ;  idx += 1)
-		  connect(zero->pin(0), gate->pin_Data(idx));
-      }
+      assert(lsig->vector_width() == lwidth);
+      connect(lsig->pin(0), gate->pin_Data());
 
 	// Connect the rsig (the shift amount expression) to the
 	// Distance input.
-      for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-	    connect(rsig->pin(idx), gate->pin_Distance(idx));
+      connect(rsig->pin(0), gate->pin_Distance());
 
-      des->add_node(gate);
+      if (debug_elaborate) {
+	    cerr << get_line() << ": debug: "
+		 << "Elaborate LPM_SHIFT: width="<<gate->width()
+		 << ", swidth="<< gate->width_dist() << endl;
+      }
 
       return osig;
 }
@@ -2462,6 +2504,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.152  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.151  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,

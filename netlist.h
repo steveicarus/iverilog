@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.334 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: netlist.h,v 1.335 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 /*
@@ -506,19 +506,13 @@ class NetCLShift  : public NetNode {
       bool right_flag() const;
       bool signed_flag() const;
 
-      Link& pin_Direction();
-      Link& pin_Underflow();
-      Link& pin_Overflow();
-      Link& pin_Data(unsigned idx);
-      Link& pin_Result(unsigned idx);
-      Link& pin_Distance(unsigned idx);
+      Link& pin_Data();
+      Link& pin_Result();
+      Link& pin_Distance();
 
-      const Link& pin_Direction() const;
-      const Link& pin_Underflow() const;
-      const Link& pin_Overflow() const;
-      const Link& pin_Data(unsigned idx) const;
-      const Link& pin_Result(unsigned idx) const;
-      const Link& pin_Distance(unsigned idx) const;
+      const Link& pin_Data() const;
+      const Link& pin_Result() const;
+      const Link& pin_Distance() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -639,13 +633,13 @@ class NetDivide  : public NetNode {
       void set_signed(bool);
       bool get_signed() const;
 
-      Link& pin_DataA(unsigned idx);
-      Link& pin_DataB(unsigned idx);
-      Link& pin_Result(unsigned idx);
+      Link& pin_DataA();
+      Link& pin_DataB();
+      Link& pin_Result();
 
-      const Link& pin_DataA(unsigned idx) const;
-      const Link& pin_DataB(unsigned idx) const;
-      const Link& pin_Result(unsigned idx) const;
+      const Link& pin_DataA() const;
+      const Link& pin_DataB() const;
+      const Link& pin_Result() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -3420,6 +3414,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.335  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.334  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.141 2005/02/13 01:15:07 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.142 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1211,46 +1211,26 @@ void dll_target::lpm_clshift(const NetCLShift*net)
 
       obj->u_.shift.width = net->width();
       obj->u_.shift.select = net->width_dist();
-      unsigned nex_count = obj->u_.shift.width * 2 + obj->u_.shift.select;
-      obj->u_.shift.q = new ivl_nexus_t[nex_count];
-      obj->u_.shift.d = obj->u_.shift.q + obj->u_.shift.width;
-      obj->u_.shift.s = obj->u_.shift.d + obj->u_.shift.width;
 
-      for (unsigned idx = 0 ;  idx < nex_count ;  idx += 1)
-	    obj->u_.shift.q[idx] = 0;
+      const Nexus*nex;
 
-      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
-	    const Nexus*nex;
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
 
-	    nex = net->pin_Result(idx).nexus();
-	    assert(nex && nex->t_cookie());
+      obj->u_.shift.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.shift.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
-	    obj->u_.shift.q[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.shift.q[idx], obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
-      }
+      nex = net->pin_Data().nexus();
+      assert(nex->t_cookie());
 
-      for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
-	    const Nexus*nex;
+      obj->u_.shift.d = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.shift.d, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-	    nex = net->pin_Data(idx).nexus();
-	    assert(nex && nex->t_cookie());
+      nex = net->pin_Distance().nexus();
+      assert(nex->t_cookie());
 
-	    obj->u_.shift.d[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.shift.q[idx], obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
-      }
-
-      for (unsigned idx = 0 ;  idx < net->width_dist() ;  idx += 1) {
-	    const Nexus*nex;
-
-	    nex = net->pin_Distance(idx).nexus();
-	    assert(nex && nex->t_cookie());
-
-	    obj->u_.shift.s[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.shift.s[idx], obj, 0,
-			  IVL_DR_HiZ, IVL_DR_HiZ);
-      }
+      obj->u_.shift.s = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.shift.s, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
       scope_add_lpm(obj->scope, obj);
 }
@@ -1373,62 +1353,28 @@ void dll_target::lpm_divide(const NetDivide*net)
 
       obj->u_.arith.width = wid;
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
-#if 0
-      obj->u_.arith.q = new ivl_nexus_t[3 * obj->u_.arith.width];
-      obj->u_.arith.a = obj->u_.arith.q + obj->u_.arith.width;
-      obj->u_.arith.b = obj->u_.arith.a + obj->u_.arith.width;
 
-      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
-	    const Nexus*nex;
+      const Nexus*nex;
 
-	    nex = net->pin_Result(idx).nexus();
-	    assert(nex->t_cookie());
+      nex = net->pin_Result().nexus();
+      assert(nex->t_cookie());
 
-	    obj->u_.arith.q[idx] = (ivl_nexus_t) nex->t_cookie();
-	    nexus_lpm_add(obj->u_.arith.q[idx], obj, 0,
-			  IVL_DR_STRONG, IVL_DR_STRONG);
+      obj->u_.arith.q = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
 
-	    if (idx < net->width_a()) {
-		  nex = net->pin_DataA(idx).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
+      nex = net->pin_DataA().nexus();
+      assert(nex->t_cookie());
 
-		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
+      obj->u_.arith.a = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
-	    } else if (obj->u_.arith.signed_flag) {
-		    /* If this is signed divide, sign extend the perand. */
-		  nex = net->pin_DataA(net->width_a()-1).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
+      nex = net->pin_DataB().nexus();
+      assert(nex->t_cookie());
 
-		  obj->u_.arith.a[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.a[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    } else {
-		    /* Unsigned divide: pad the operand. */
-		  obj->u_.arith.a[idx] = 0;
-	    }
+      obj->u_.arith.b = (ivl_nexus_t) nex->t_cookie();
+      nexus_lpm_add(obj->u_.arith.b, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
 
 
-	    if (idx < net->width_b()) {
-		  nex = net->pin_DataB(idx).nexus();
-		  assert(nex);
-		  assert(nex->t_cookie());
-
-		  obj->u_.arith.b[idx] = (ivl_nexus_t) nex->t_cookie();
-		  nexus_lpm_add(obj->u_.arith.b[idx], obj, 0,
-				IVL_DR_HiZ, IVL_DR_HiZ);
-
-	    } else {
-		  obj->u_.arith.b[idx] = 0;
-	    }
-      }
-#else
-      cerr << "XXXX t-dll.cc: Forgot how to handle lpm_divide." << endl;
-#endif
       scope_add_lpm(obj->scope, obj);
 }
 
@@ -2222,6 +2168,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.142  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.141  2005/02/13 01:15:07  steve
  *  Replace supply nets with wires connected to pullup/down supply devices.
  *

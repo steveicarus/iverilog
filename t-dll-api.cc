@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.118 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.119 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -770,8 +770,11 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
-	    assert(idx < net->u_.shift.width);
-	    return net->u_.shift.d[idx];
+	    assert(idx <= 1);
+	    if (idx == 0)
+		  return net->u_.shift.d;
+	    else
+		  return net->u_.shift.s;
 
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
@@ -933,8 +936,8 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_SHIFTL:
 	  case IVL_LPM_SHIFTR:
-	    assert(idx < net->u_.shift.width);
-	    return net->u_.shift.q[idx];
+	    assert(idx == 0);
+	    return net->u_.shift.q;
 
 	  case IVL_LPM_UFUNC:
 	    assert(idx < net->u_.ufunc.port_wid[0]);
@@ -978,11 +981,6 @@ extern "C" ivl_nexus_t ivl_lpm_select(ivl_lpm_t net, unsigned idx)
 	    assert(idx == 0);
 	    return net->u_.mux.s;
 
-	  case IVL_LPM_SHIFTL:
-	  case IVL_LPM_SHIFTR:
-	    assert(idx < net->u_.shift.select);
-	    return net->u_.shift.s[idx];
-
 	  default:
 	    assert(0);
 	    return 0;
@@ -996,9 +994,6 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	    return net->u_.ff.swid;
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.swid;
-	  case IVL_LPM_SHIFTL:
-	  case IVL_LPM_SHIFTR:
-	    return net->u_.shift.select;
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.inputs;
 	  default:
@@ -1992,6 +1987,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.119  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.118  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.318 2005/02/10 04:56:58 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.319 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -94,7 +94,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << lval->get_line() << ": debug: PGassign: elaborated l-value"
+	    cerr << get_line() << ": debug: PGassign: elaborated l-value"
 		 << " width=" << lval->vector_width() << endl;
       }
 
@@ -2938,6 +2938,9 @@ Design* elaborate(list<perm_string>roots)
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.319  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.318  2005/02/10 04:56:58  steve
  *  distinguish between single port namy instances, and single instances many sub-ports.
  *

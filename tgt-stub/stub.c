@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.110 2005/02/13 01:15:07 steve Exp $"
+#ident "$Id: stub.c,v 1.111 2005/02/19 02:43:39 steve Exp $"
 #endif
 
 # include "config.h"
@@ -270,6 +270,16 @@ static void show_lpm_add(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
+static void show_lpm_divide(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+
+      fprintf(out, "  LPM_DIVIDE %s: <width=%u>\n",
+	      ivl_lpm_basename(net), width);
+
+      show_lpm_arithmetic_pins(net);
+}
+
 /* IVL_LPM_CMP_EEQ
  * This LPM node supports two-input compare. The output width is
  * actually always 1, the lpm_width is the expected width of the inputs.
@@ -430,6 +440,36 @@ static void show_lpm_mux(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_part(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      unsigned base  = ivl_lpm_base(net);
+      const char*part_type_string = "";
+
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_PART_VP:
+	    part_type_string = "VP";
+	    break;
+	  case IVL_LPM_PART_PV:
+	    part_type_string = "PV";
+	    break;
+	  default:
+	    break;
+      }
+
+      fprintf(out, "  LPM_PART_%s %s: <width=%u, base=%u, signed=%d>\n",
+	      part_type_string, ivl_lpm_basename(net),
+	      width, base, ivl_lpm_signed(net));
+      fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
+      fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
+
+	/* The compiler must assure that the base plus the part select
+	   width fits within the input to the part select. */
+      if (width_of_nexus(ivl_lpm_data(net,0)) < (width+base)) {
+	    fprintf(out, "    ERROR: Part select is out of range.\n");
+	    stub_errors += 1;
+      }
+}
 
 /*
  * The reduction operators have similar characteristics and are
@@ -524,25 +564,9 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_add(net);
 	    break;
 
-	  case IVL_LPM_DIVIDE: {
-		fprintf(out, "  LPM_DIVIDE %s: <width=%u %s>\n",
-			ivl_lpm_basename(net), width,
-			ivl_lpm_signed(net)? "signed" : "unsigned");
-		for (idx = 0 ;  idx < width ;  idx += 1)
-		      fprintf(out, "    Q %u: %s\n", idx,
-			      ivl_nexus_name(ivl_lpm_q(net, idx)));
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_data(net, idx);
-		      fprintf(out, "    Data A %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		for (idx = 0 ;  idx < width ;  idx += 1) {
-		      ivl_nexus_t nex = ivl_lpm_datab(net, idx);
-		      fprintf(out, "    Data B %u: %s\n", idx,
-			      nex? ivl_nexus_name(nex) : "");
-		}
-		break;
-	  }
+	  case IVL_LPM_DIVIDE:
+	    show_lpm_divide(net);
+	    break;
 
 	  case IVL_LPM_CMP_EEQ:
 	    show_lpm_cmp_eeq(net);
@@ -643,23 +667,10 @@ static void show_lpm(ivl_lpm_t net)
 	    show_lpm_mux(net);
 	    break;
 
-	  case IVL_LPM_PART_VP: {
-		fprintf(out, "  LPM_PART_VP %s: <width=%u, base=%u, signed=%d>\n",
-			ivl_lpm_basename(net),
-			width, ivl_lpm_base(net), ivl_lpm_signed(net));
-		fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
-		fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
-		break;
-	  }
-
-	  case IVL_LPM_PART_PV: {
-		fprintf(out, "  LPM_PART_PV %s: <width=%u, base=%u, signed=%d>\n",
-			ivl_lpm_basename(net),
-			width, ivl_lpm_base(net), ivl_lpm_signed(net));
-		fprintf(out, "    O: %s\n", ivl_nexus_name(ivl_lpm_q(net,0)));
-		fprintf(out, "    I: %s\n", ivl_nexus_name(ivl_lpm_data(net,0)));
-		break;
-	  }
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
+	    show_lpm_part(net);
+	    break;
 
 	  case IVL_LPM_REPEAT:
 	    show_lpm_repeat(net);
@@ -1111,6 +1122,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.111  2005/02/19 02:43:39  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.110  2005/02/13 01:15:07  steve
  *  Replace supply nets with wires connected to pullup/down supply devices.
  *

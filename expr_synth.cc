@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.63 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: expr_synth.cc,v 1.64 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -371,16 +371,13 @@ NetNet* NetEBDiv::synthesize(Design*des)
 	  case '/': {
 		NetDivide*div = new NetDivide(scope, scope->local_symbol(),
 					      expr_width(),
-					      lsig->pin_count(),
-					      rsig->pin_count());
+					      lsig->vector_width(),
+					      rsig->vector_width());
 		des->add_node(div);
 
-		for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx += 1)
-		      connect(div->pin_DataA(idx), lsig->pin(idx));
-		for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx += 1)
-		      connect(div->pin_DataB(idx), rsig->pin(idx));
-		for (unsigned idx = 0 ;  idx < osig->pin_count() ;  idx += 1)
-		      connect(div->pin_Result(idx), osig->pin(idx));
+		connect(div->pin_DataA(), lsig->pin(0));
+		connect(div->pin_DataB(), rsig->pin(0));
+		connect(div->pin_Result(),osig->pin(0));
 		break;
 	  }
 
@@ -562,20 +559,18 @@ NetNet* NetEBShift::synthesize(Design*des)
 
       assert(op() == 'l');
       NetCLShift*dev = new NetCLShift(scope, scope->local_symbol(),
-				      osig->pin_count(),
-				      rsig->pin_count(),
+				      osig->vector_width(),
+				      rsig->vector_width(),
 				      right_flag, signed_flag);
+      dev->set_line(*this);
       des->add_node(dev);
 
-      for (unsigned idx = 0 ; idx < dev->width() ;  idx += 1)
-	    connect(dev->pin_Result(idx), osig->pin(idx));
+      connect(dev->pin_Result(), osig->pin(0));
 
-      assert(lsig->pin_count() >= dev->width());
-      for (unsigned idx = 0 ;  idx < dev->width() ;  idx += 1)
-	    connect(dev->pin_Data(idx), lsig->pin(idx));
+      assert(lsig->vector_width() == dev->width());
+      connect(dev->pin_Data(), lsig->pin(0));
 
-      for (unsigned idx = 0 ;  idx < dev->width_dist() ;  idx += 1)
-	    connect(dev->pin_Distance(idx), rsig->pin(idx));
+      connect(dev->pin_Distance(), rsig->pin(0));
 
       return osig;
 }
@@ -850,6 +845,9 @@ NetNet* NetESignal::synthesize(Design*des)
 
 /*
  * $Log: expr_synth.cc,v $
+ * Revision 1.64  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.63  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,

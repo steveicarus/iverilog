@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.121 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: t-dll.h,v 1.122 2005/02/19 02:43:39 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -325,9 +325,7 @@ struct ivl_lpm_s {
 		  unsigned width;
 		  unsigned select;
 		  unsigned signed_flag :1;
-		  ivl_nexus_t*q;
-		  ivl_nexus_t*d;
-		  ivl_nexus_t*s;
+		  ivl_nexus_t q, d, s;
 	    } shift;
 
 	    struct ivl_lpm_arith_s {
@@ -687,6 +685,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.122  2005/02/19 02:43:39  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.121  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,

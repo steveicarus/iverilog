@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.142 2005/02/14 01:51:39 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.143 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -766,6 +766,11 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * the concatentation. The ivl_lpm_size function returns the number of
  * inputs help by the device.
  *
+ * - Divide (IVL_LPM_DIVIDE)
+ * The divide operators take two inputs and generate an output. The
+ * ivl_lpm_width returns the width of the result. The width of the
+ * inputs are their own.
+ *
  * - Multiply (IVL_LPM_MULT)
  * The multiply takes two inputs and generates an output. Unlike other
  * arithmetic nodes, the width only refers to the output. The inputs
@@ -833,6 +838,12 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * vector. The ivl_lpm_size() returns the number of times the input is
  * repeated to get the desired width. The ivl core assures that the
  * input vector is exactly ivl_lpm_width() / ivl_lpm_size() bits.
+ *
+ * - Shifts (IVL_LPM_SHIFTL/SHIFTR)
+ * This node takes two inputs, a vector and a shift distance. The
+ * ivl_lpm_data(0) nexus is the vector input, and the ivl_lpm_data(1)
+ * the shift distance. The vector input is the same width as the
+ * output, but the distance has its own width.
  */
 
 extern const char*    ivl_lpm_name(ivl_lpm_t net); /* (Obsolete) */
@@ -858,7 +869,7 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
   /* IVL_LPM_FF IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
-     IVL_LPM_MUX IVL_LPM_RAM IVL_LPM_SUB */
+     IVL_LPM_MUX IVL_LPM_RAM IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_SUB */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
@@ -1516,6 +1527,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.143  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.142  2005/02/14 01:51:39  steve
  *  Handle bit selects in l-values to assignments.
  *

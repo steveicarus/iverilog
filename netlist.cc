@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.237 2005/02/12 06:25:40 steve Exp $"
+#ident "$Id: netlist.cc,v 1.238 2005/02/19 02:43:38 steve Exp $"
 #endif
 
 # include "config.h"
@@ -842,39 +842,23 @@ const Link& NetAddSub::pin_Result() const
 
 /*
  * The pinout for the NetCLShift is:
- *    0   -- Direction
- *    1   -- Underflow
- *    2   -- Overflow
- *    3   -- Data(0)
- *    3+W -- Result(0)
- *    3+2W -- Distance(0)
+ *    0  -- Result
+ *    1  -- Data
+ *    2  -- Distance
  */
 NetCLShift::NetCLShift(NetScope*s, perm_string n,
 		       unsigned width, unsigned width_dist,
 		       bool right_flag, bool signed_flag)
-: NetNode(s, n, 3+2*width+width_dist),
+: NetNode(s, n, 3),
   width_(width), width_dist_(width_dist),
     right_flag_(right_flag), signed_flag_(signed_flag)
 {
-      pin(0).set_dir(Link::INPUT); pin(0).set_name(
-				     perm_string::literal("Direction"), 0);
-      pin(1).set_dir(Link::OUTPUT); pin(1).set_name(
-				     perm_string::literal("Underflow"), 0);
-      pin(2).set_dir(Link::OUTPUT); pin(2).set_name(
-				     perm_string::literal("Overflow"), 0);
-
-      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    pin(3+idx).set_dir(Link::INPUT);
-	    pin(3+idx).set_name(perm_string::literal("Data"), idx);
-
-	    pin(3+width_+idx).set_dir(Link::OUTPUT);
-	    pin(3+width_+idx).set_name(perm_string::literal("Result"), idx);
-      }
-
-      for (unsigned idx = 0 ;  idx < width_dist_ ;  idx += 1) {
-	    pin(3+2*width_+idx).set_dir(Link::INPUT);
-	    pin(3+2*width_+idx).set_name(perm_string::literal("Distance"), idx);
-      }
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("Data"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("Distance"), 0);
 }
 
 NetCLShift::~NetCLShift()
@@ -901,72 +885,34 @@ bool NetCLShift::signed_flag() const
       return signed_flag_;
 }
 
-#if 0
-Link& NetCLShift::pin_Direction()
-{
-      return pin(0);
-}
-
-const Link& NetCLShift::pin_Direction() const
-{
-      return pin(0);
-}
-#endif
-
-Link& NetCLShift::pin_Underflow()
+Link& NetCLShift::pin_Data()
 {
       return pin(1);
 }
 
-const Link& NetCLShift::pin_Underflow() const
+const Link& NetCLShift::pin_Data() const
 {
       return pin(1);
 }
 
-Link& NetCLShift::pin_Overflow()
+Link& NetCLShift::pin_Result()
+{
+      return pin(0);
+}
+
+const Link& NetCLShift::pin_Result() const
+{
+      return pin(0);
+}
+
+Link& NetCLShift::pin_Distance()
 {
       return pin(2);
 }
 
-const Link& NetCLShift::pin_Overflow() const
+const Link& NetCLShift::pin_Distance() const
 {
       return pin(2);
-}
-
-Link& NetCLShift::pin_Data(unsigned idx)
-{
-      assert(idx < width_);
-      return pin(3+idx);
-}
-
-const Link& NetCLShift::pin_Data(unsigned idx) const
-{
-      assert(idx < width_);
-      return pin(3+idx);
-}
-
-Link& NetCLShift::pin_Result(unsigned idx)
-{
-      assert(idx < width_);
-      return pin(3+width_+idx);
-}
-
-const Link& NetCLShift::pin_Result(unsigned idx) const
-{
-      assert(idx < width_);
-      return pin(3+width_+idx);
-}
-
-Link& NetCLShift::pin_Distance(unsigned idx)
-{
-      assert(idx < width_dist_);
-      return pin(3+2*width_+idx);
-}
-
-const Link& NetCLShift::pin_Distance(unsigned idx) const
-{
-      assert(idx < width_dist_);
-      return pin(3+2*width_+idx);
 }
 
 NetCompare::NetCompare(NetScope*s, perm_string n, unsigned wi)
@@ -1116,22 +1062,15 @@ const Link& NetCompare::pin_DataB() const
 
 NetDivide::NetDivide(NetScope*sc, perm_string n, unsigned wr,
 		     unsigned wa, unsigned wb)
-: NetNode(sc, n, wr+wa+wb),
+: NetNode(sc, n, 3),
     width_r_(wr), width_a_(wa), width_b_(wb), signed_flag_(false)
 {
-      unsigned p = 0;
-      for (unsigned idx = 0 ;  idx < width_r_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::OUTPUT);
-	    pin(p).set_name(perm_string::literal("Result"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_a_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("DataA"), idx);
-      }
-      for (unsigned idx = 0 ;  idx < width_b_ ;  idx += 1, p += 1) {
-	    pin(p).set_dir(Link::INPUT);
-	    pin(p).set_name(perm_string::literal("DataB"), idx);
-      }
+      pin(0).set_dir(Link::OUTPUT);
+      pin(0).set_name(perm_string::literal("Result"), 0);
+      pin(1).set_dir(Link::INPUT);
+      pin(1).set_name(perm_string::literal("DataA"), 0);
+      pin(2).set_dir(Link::INPUT);
+      pin(2).set_name(perm_string::literal("DataB"), 0);
 }
 
 NetDivide::~NetDivide()
@@ -1163,40 +1102,34 @@ bool NetDivide::get_signed() const
       return signed_flag_;
 }
 
-Link& NetDivide::pin_Result(unsigned idx)
+Link& NetDivide::pin_Result()
 {
-      assert(idx < width_r_);
-      return pin(idx);
+      return pin(0);
 }
 
-const Link& NetDivide::pin_Result(unsigned idx) const
+const Link& NetDivide::pin_Result() const
 {
-      assert(idx < width_r_);
-      return pin(idx);
+      return pin(0);
 }
 
-Link& NetDivide::pin_DataA(unsigned idx)
+Link& NetDivide::pin_DataA()
 {
-      assert(idx < width_a_);
-      return pin(idx+width_r_);
+      return pin(1);
 }
 
-const Link& NetDivide::pin_DataA(unsigned idx) const
+const Link& NetDivide::pin_DataA() const
 {
-      assert(idx < width_a_);
-      return pin(idx+width_r_);
+      return pin(1);
 }
 
-Link& NetDivide::pin_DataB(unsigned idx)
+Link& NetDivide::pin_DataB()
 {
-      assert(idx < width_b_);
-      return pin(idx+width_r_+width_a_);
+      return pin(2);
 }
 
-const Link& NetDivide::pin_DataB(unsigned idx) const
+const Link& NetDivide::pin_DataB() const
 {
-      assert(idx < width_b_);
-      return pin(idx+width_r_+width_a_);
+      return pin(2);
 }
 
 NetMult::NetMult(NetScope*sc, perm_string n, unsigned wr,
@@ -2258,6 +2191,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.238  2005/02/19 02:43:38  steve
+ *  Support shifts and divide.
+ *
  * Revision 1.237  2005/02/12 06:25:40  steve
  *  Restructure NetMux devices to pass vectors.
  *  Generate NetMux devices from ternary expressions,
