@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.87 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.88 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -577,6 +577,18 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       }
 }
 
+extern "C" ivl_expr_t ivl_lpm_aset_value(ivl_lpm_t net)
+{
+      assert(net);
+      switch (net->type) {
+	  case IVL_LPM_FF:
+	  case IVL_LPM_RAM:
+	    return net->u_.ff.aset_value;
+	  default:
+	    assert(0);
+	    return 0;
+      }
+}
 extern "C" ivl_scope_t ivl_lpm_define(ivl_lpm_t net)
 {
       assert(net);
@@ -1573,6 +1585,10 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.88  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.87  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *

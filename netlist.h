@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.266 2002/10/21 01:42:08 steve Exp $"
+#ident "$Id: netlist.h,v 1.267 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 /*
@@ -671,9 +671,15 @@ class NetFF  : public NetNode {
       const Link& pin_Data(unsigned) const;
       const Link& pin_Q(unsigned) const;
 
+      void aset_value(const verinum&val);
+      const verinum& aset_value() const;
+
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      verinum aset_value_;
 };
 
 
@@ -3077,6 +3083,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.267  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.266  2002/10/21 01:42:08  steve
  *  Synthesizer support for synchronous begin-end blocks.
  *

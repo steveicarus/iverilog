@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.28 2002/08/12 01:35:00 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.29 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -101,6 +101,38 @@ void dll_target::mul_expr_by_const_(long val)
 
 	/* Replace (x) with (x*valf) */
       expr_ = tmps;
+}
+
+ivl_expr_t dll_target::expr_from_value_(const verinum&val)
+{
+      ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      assert(expr);
+
+      unsigned idx;
+      char*bits;
+      expr->type_ = IVL_EX_NUMBER;
+      expr->width_= val.len();
+      expr->signed_ = val.has_sign()? 1 : 0;
+      expr->u_.number_.bits_ = bits = (char*)malloc(expr->width_);
+      for (idx = 0 ;  idx < expr->width_ ;  idx += 1)
+	    switch (val.get(idx)) {
+		case verinum::V0:
+		  bits[idx] = '0';
+		  break;
+		case verinum::V1:
+		  bits[idx] = '1';
+		  break;
+		case verinum::Vx:
+		  bits[idx] = 'x';
+		  break;
+		case verinum::Vz:
+		  bits[idx] = 'z';
+		  break;
+		default:
+		  assert(0);
+	    }
+
+      return expr;
 }
 
 void dll_target::expr_binary(const NetEBinary*net)
@@ -458,6 +490,10 @@ void dll_target::expr_unary(const NetEUnary*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.29  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.28  2002/08/12 01:35:00  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.134 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.135 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -271,7 +271,8 @@ void NetConst::dump_node(ostream&o, unsigned ind) const
 void NetFF::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "LPM_FF: " << name()
-	<< " scope=" << (scope()? scope()->name() : "") << endl;
+	<< " scope=" << (scope()? scope()->name() : "")
+	<< " aset_value=" << aset_value_ << endl;
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -1003,6 +1004,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.135  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.134  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.94 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: t-dll.h,v 1.95 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -154,6 +154,8 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
+
+      static ivl_expr_t expr_from_value_(const verinum&that);
 };
 
 /*
@@ -282,6 +284,7 @@ struct ivl_lpm_s {
 			ivl_nexus_t pin;
 		  } s;
 		  ivl_memory_t mem; // ram only
+		  ivl_expr_t aset_value;
 	    } ff;
 
 	    struct ivl_lpm_mux_s {
@@ -619,6 +622,10 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.95  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.94  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *

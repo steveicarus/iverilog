@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.200 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: netlist.cc,v 1.201 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -648,6 +648,16 @@ const Link& NetFF::pin_Q(unsigned w) const
       unsigned pn = 9 + w*2;
       assert(pn < pin_count());
       return pin(pn);
+}
+
+void NetFF::aset_value(const verinum&val)
+{
+      aset_value_ = val;
+}
+
+const verinum& NetFF::aset_value() const
+{
+      return aset_value_;
 }
 
 
@@ -2310,6 +2320,10 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.201  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.200  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *

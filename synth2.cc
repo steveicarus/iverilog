@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.16 2002/10/21 01:42:09 steve Exp $"
+#ident "$Id: synth2.cc,v 1.17 2002/10/23 01:47:17 steve Exp $"
 #endif
 
 # include "config.h"
@@ -333,16 +333,24 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    NetNet*tmp_out = new NetNet(scope, "tmp2", NetNet::WIRE,
 					tmp_set.count());
 
+	    verinum tmp_aset = ff->aset_value();
+
 	      /* Create a new DFF to handle this part of the begin-end
 		 block. Connect this NetFF to the associated pins of
-		 the existing wide NetFF device. */
+		 the existing wide NetFF device. While I'm at it, also
+		 copy the aset_value bits for the new ff device. */
 	    NetFF*ff2 = new NetFF(scope, scope->local_hsymbol().c_str(),
 				  tmp_out->pin_count());
 	    des->add_node(ff2);
 
+	    verinum aset_value2 (verinum::V1, ff2->width());
 	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
-		  connect(ff->pin_Data(idx+offset), ff2->pin_Data(idx));
-		  connect(ff->pin_Q(idx+offset), ff2->pin_Q(idx));
+		  unsigned ptr = find_nexus_in_set(nex_map, tmp_set[idx]);
+		  connect(ff->pin_Data(ptr), ff2->pin_Data(idx));
+		  connect(ff->pin_Q(ptr), ff2->pin_Q(idx));
+
+		  if (ptr < tmp_aset.len())
+			aset_value2.set(idx, tmp_aset[ptr]);
 	    }
 	    if (ff->pin_Aclr().is_linked())
 		  connect(ff->pin_Aclr(),  ff2->pin_Aclr());
@@ -352,6 +360,23 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  connect(ff->pin_Clock(), ff2->pin_Clock());
 	    if (ff->pin_Enable().is_linked())
 		  connect(ff->pin_Enable(),ff2->pin_Enable());
+
+	      /* Remember to store the aset value into the new FF. If
+		 this leads to an Aset value of 0 (and Aclr is not
+		 otherwise used) then move the Aset input to Aclr. */
+	    if (tmp_aset.len() == ff->width()) {
+
+		  if ((aset_value2.as_ulong() == 0)
+		      && ff2->pin_Aset().is_linked()
+		      && !ff2->pin_Aclr().is_linked()) {
+
+			connect(ff2->pin_Aclr(), ff2->pin_Aset());
+			ff2->pin_Aset().unlink();
+
+		  } else {
+			ff2->aset_value(aset_value2);
+		  }
+	    }
 
 	      /* Now go on with the synchronous synthesis for this
 		 subset of the statement. */
@@ -415,16 +440,25 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		  if_->synth_async(des, scope, nex_map, asig);
 
 		  assert(asig->pin_count() == ff->width());
-		  assert(asig->pin(0).nexus()->drivers_constant());
-		  switch (asig->pin(0).nexus()->driven_value()) {
-		      case verinum::V0:
+
+		    /* Collect the set/reset value into a verinum. If
+		       this turns out to be entirely 0 values, then
+		       use the Aclr input. Otherwise, use the Aset
+		       input and save the set value. */
+		  verinum tmp (verinum::V0, ff->width());
+		  for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
+
+			assert(asig->pin(bit).nexus()->drivers_constant());
+			tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+		  }
+
+		  assert(tmp.is_defined());
+		  if (tmp.as_ulong() == 0) {
 			connect(ff->pin_Aclr(), ce->pin(0));
-			break;
-		      case verinum::V1:
+
+		  } else {
 			connect(ff->pin_Aset(), ce->pin(0));
-			break;
-		      default:
-			assert(0);
+			ff->aset_value(tmp);
 		  }
 
 		  delete asig;
@@ -655,6 +689,10 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.17  2002/10/23 01:47:17  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.16  2002/10/21 01:42:09  steve
  *  Synthesizer support for synchronous begin-end blocks.
  *

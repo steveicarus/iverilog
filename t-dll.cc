@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.96 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.97 2002/10/23 01:47:18 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1376,9 +1376,14 @@ void dll_target::lpm_ff(const NetFF*net)
 	    assert(nex->t_cookie());
 	    obj->u_.ff.aset = (ivl_nexus_t) nex->t_cookie();
 	    assert(obj->u_.ff.aset);
-	    nexus_lpm_add(obj->u_.ff.aclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+	    nexus_lpm_add(obj->u_.ff.aset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    verinum tmp = net->aset_value();
+	    obj->u_.ff.aset_value = expr_from_value_(tmp);
+
       } else {
 	    obj->u_.ff.aset = 0;
+	    obj->u_.ff.aset_value = 0;
       }
 
       if (obj->u_.ff.width == 1) {
@@ -1974,6 +1979,10 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.97  2002/10/23 01:47:18  steve
+ *  Fix synth2 handling of aset/aclr signals where
+ *  flip-flops are split by begin-end blocks.
+ *
  * Revision 1.96  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *
