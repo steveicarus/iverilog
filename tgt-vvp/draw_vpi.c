@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.5 2003/03/25 02:15:48 steve Exp $"
+#ident "$Id: draw_vpi.c,v 1.6 2003/04/12 23:25:20 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -92,12 +92,22 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		       itself, then this is a part select so I'm going
 		       to need to evaluate the expression.
 
+		       Also, if the signedness of the expression is
+		       different from the signedness of the
+		       signal. This could be caused by a $signed or
+		       $unsigned system function.
+
 		       If I don't need to do any evaluating, then skip
 		       it as I'll be passing the handle to the signal
 		       itself. */
 		  if (ivl_expr_width(expr) !=
 		      ivl_signal_pins(ivl_expr_signal(expr))) {
 			break;
+
+		  } else if (ivl_expr_signed(expr) !=
+			     ivl_signal_signed(ivl_expr_signal(expr))) {
+			break;
+
 		  } else {
 			continue;
 		  }
@@ -161,6 +171,11 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  if (ivl_expr_width(expr) !=
 		      ivl_signal_pins(ivl_expr_signal(expr))) {
 			break;
+
+		  } else if (ivl_expr_signed(expr) !=
+			     ivl_signal_signed(ivl_expr_signal(expr))) {
+			break;
+
 		  } else {
 			fprintf(vvp_out, ", V_%s", 
 				vvp_signal_label(ivl_expr_signal(expr)));
@@ -274,6 +289,9 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
 /*
  * $Log: draw_vpi.c,v $
+ * Revision 1.6  2003/04/12 23:25:20  steve
+ *  Properly pass $signed(signal) to tasks.
+ *
  * Revision 1.5  2003/03/25 02:15:48  steve
  *  Use hash code for scope labels.
  *
