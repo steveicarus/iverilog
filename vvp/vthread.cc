@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.35 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: vthread.cc,v 1.36 2001/05/06 17:42:22 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -663,6 +663,21 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_IX_GET(vthread_t thr, vvp_code_t cp)
+{
+      unsigned long v = 0;
+      for (int i = 0; i<cp->number; i++) {
+	    unsigned char vv = thr_get_bit(thr, cp->bit_idx2 + i);
+	    if (vv&2) {
+		  v = ~0UL;
+		  break;
+	    }
+	    v |= vv << i;
+      }
+      thr->index[cp->bit_idx1 & 3] = v;
+      return true;
+}
+
 
 /*
  * The various JMP instruction work simply by pulling the new program
@@ -978,6 +993,9 @@ bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.36  2001/05/06 17:42:22  steve
+ *  Add the %ix/get instruction. (Stephan Boettcher)
+ *
  * Revision 1.35  2001/05/05 23:55:46  steve
  *  Add the beginnings of an interactive debugger.
  *

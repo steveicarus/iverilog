@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.24 2001/05/05 23:55:46 steve Exp $"
+#ident "$Id: codes.h,v 1.25 2001/05/06 17:42:22 steve Exp $"
 #endif
 
 
@@ -51,6 +51,7 @@ extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_INV(vthread_t thr, vvp_code_t code);
 extern bool of_IX_ADD(vthread_t thr, vvp_code_t code);
+extern bool of_IX_GET(vthread_t thr, vvp_code_t code);
 extern bool of_IX_LOAD(vthread_t thr, vvp_code_t code);
 extern bool of_IX_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_IX_SUB(vthread_t thr, vvp_code_t code);
@@ -128,6 +129,9 @@ extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.25  2001/05/06 17:42:22  steve
+ *  Add the %ix/get instruction. (Stephan Boettcher)
+ *
  * Revision 1.24  2001/05/05 23:55:46  steve
  *  Add the beginnings of an interactive debugger.
  *

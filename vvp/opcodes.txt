@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: opcodes.txt,v 1.18 2001/05/05 23:55:46 steve Exp $
+ *  $Id: opcodes.txt,v 1.19 2001/05/06 17:42:22 steve Exp $
  */
 
 
@@ -141,12 +141,24 @@ bit:
 	z  --> x
 
 
+* %ix/get <idx>, <bit>, <wid>
+
+This instruction loads a thread vector starting at <bit>, size <wid>,
+into the index register <idx>. The <bit> is the lsb of the value in
+thread bit space, and <wid> is the width of the vector.
+
+The function converts the 4-value bits into a binary number, without
+sign extension. If any of the bits of the vector is x or z, then the
+index register gets the value 0.
+
+
 * %ix/load <idx>, <value>
 
 This instruction loads an immediate value into the addressed index
 register. The index register holds numeric values, so the <value> is a
 number. The idx value selects the index register, and may be 0, 1, 2
-or 3.
+or 3. This is different from %is/get, which loads the index register
+from a value in the thread bit vector.
 
 
 * %ix/add <idx>, <value>

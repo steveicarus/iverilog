@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.56 2001/05/06 03:51:37 steve Exp $"
+#ident "$Id: compile.cc,v 1.57 2001/05/06 17:42:22 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -82,6 +82,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%ix/add", of_IX_ADD, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
+      { "%ix/get", of_IX_GET, 2,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%ix/load",of_IX_LOAD,2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/mul", of_IX_MUL, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%ix/sub", of_IX_SUB, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
@@ -1048,6 +1049,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.57  2001/05/06 17:42:22  steve
+ *  Add the %ix/get instruction. (Stephan Boettcher)
+ *
  * Revision 1.56  2001/05/06 03:51:37  steve
  *  Regularize the mode-42 functor handling.
  *
