@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.161 2003/05/23 03:44:34 steve Exp $"
+#ident "$Id: compile.cc,v 1.162 2003/05/24 02:48:37 steve Exp $"
 #endif
 
 # include  "arith.h"
@@ -1255,8 +1255,11 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  // Make sure we dont overflow the short index
-		  assert(opa->argv[idx].numb
-			 < (1<<(8*sizeof(code->bit_idx[0]))));
+		  if (opa->argv[idx].numb > 65535) {
+		      fprintf(stderr, "%lu overflows index for instruction %s\n",
+			  opa->argv[idx].numb, mnem);
+		      assert(0);
+		  }
 
 		  code->bit_idx[0] = opa->argv[idx].numb;
 		  break;
@@ -1268,8 +1271,11 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  // Make sure we dont overflow the short index
-		  assert(opa->argv[idx].numb
-			 < (1<<(8*sizeof(code->bit_idx[1]))));
+		  if (opa->argv[idx].numb > 65535) {
+		      fprintf(stderr, "%d overflows index for instruction %s\n",
+			  (int)opa->argv[idx].numb, mnem);
+		      assert(0);
+		  }
 
 		  code->bit_idx[1] = opa->argv[idx].numb;
 		  break;
@@ -1549,6 +1555,9 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.162  2003/05/24 02:48:37  steve
+ *  More thorough overflow error message.
+ *
  * Revision 1.161  2003/05/23 03:44:34  steve
  *  Assert that parameters fix into opcode.
  *
