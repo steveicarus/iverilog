@@ -391,7 +391,7 @@ Verilog guidance, and especially testing from many people, including
 	Guy Hutchison <ghutchis@pacbell.net>
 	Ales Hvezda <ahvezda@seul.org>
 	Venkat Iyer <venkat@comit.com>
-	Yasuhisa Kato <ykato@mac.com>
+	Yasuhisa Kato <kato@y.email.ne.jp>
         James Lee <jml@jmlzone.com>
 	Peter Monta <pmonta@halibut.imedia.com>
 	Daniel H. Nelsen <dhn@qedinc.com>
@@ -428,7 +428,7 @@ removed from the list) send e-mail to me.
 	Hamish Moffatt <hamish@rising.com.au>
 
       Macintosh -- MacO/S
-	Yasuhisa Kato <ykato@mac.com>
+	Yasuhisa Kato <kato@y.email.ne.jp>
 
       Mac O/S X
         Timothy J. Wood <tjw@omnigroup.com>
