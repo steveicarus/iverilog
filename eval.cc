@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: eval.cc,v 1.27 2002/05/23 03:08:51 steve Exp $"
+#ident "$Id: eval.cc,v 1.28 2002/06/06 18:57:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -142,6 +142,14 @@ verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
       if (expr == 0)
 	    return 0;
 
+      if (msb_ != 0) {
+	    cerr << get_line() << ": internal error: unexpected index "
+		 << "to " << path_ << " in scope " << scope->name() << endl;
+	    cerr << get_line() << ":               : expression is: "
+		 << *msb_ << endl;
+	    return 0;
+      }
+
       assert(msb_ == 0);
 
       if (dynamic_cast<const NetEParam*>(expr)) {
@@ -222,6 +230,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.28  2002/06/06 18:57:04  steve
+ *  Better error for identifier index eval.
+ *
  * Revision 1.27  2002/05/23 03:08:51  steve
  *  Add language support for Verilog-2001 attribute
  *  syntax. Hook this support into existing $attribute
