@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_systask.c,v 1.3 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_systask.c,v 1.4 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -46,7 +46,52 @@ const struct __vpirt vpip_systask_rt = {
 };
 
 /*
+ * A value *can* be put to a vpiSysFuncCall object. This is how the
+ * return value is set. The value that is given should be converted to
+ * bits and set into the return value bit array.
+ */
+static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value val,
+				   p_vpi_time t, int flag)
+{
+      long tmp;
+      int idx;
+
+      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+
+	/* There *must* be a return value array. */
+      assert(rfp->res);
+      assert(rfp->nres > 0);
+
+	/* XXXX For now, only support very specific formats. */
+      assert(val->format == vpiIntVal);
+      assert(rfp->nres <= (8*sizeof val->value.integer));
+
+      tmp = val->value.integer;
+      for (idx = 0 ;  idx < rfp->nres ;  idx += 1) {
+	    rfp->res[idx] =  (tmp&1) ? St1 : St0;
+	    tmp >>= 1;
+      }
+
+      return 0;
+}
+
+const struct __vpirt vpip_sysfunc_rt = {
+      vpiSysFuncCall,
+      0,
+      0,
+      0,
+      sysfunc_put_value,
+      0,
+      systask_iter
+};
+
+/*
  * $Log: vpi_systask.c,v $
+ * Revision 1.4  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.3  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

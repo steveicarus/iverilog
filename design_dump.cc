@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: design_dump.cc,v 1.81 2000/05/02 03:13:30 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.82 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 /*
@@ -822,6 +822,11 @@ void NetEScope::dump(ostream&o) const
       o << "<scope=" << scope_->name() << ">";
 }
 
+void NetESFunc::dump(ostream&o) const
+{
+      o << name_ << "()";
+}
+
 void NetESignal::dump(ostream&o) const
 {
       o << name();
@@ -924,6 +929,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.82  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.81  2000/05/02 03:13:30  steve
  *  Move memories to the NetScope object.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.cc,v 1.121 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: netlist.cc,v 1.122 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -2197,6 +2197,21 @@ const NetScope* NetEScope::scope() const
       return scope_;
 }
 
+NetESFunc::NetESFunc(const string&n, unsigned width)
+: name_(n)
+{
+      expr_width(width);
+}
+
+NetESFunc::~NetESFunc()
+{
+}
+
+const string& NetESFunc::name() const
+{
+      return name_;
+}
+
 NetESignal::NetESignal(NetNet*n)
 : NetExpr(n->pin_count()), net_(n)
 {
@@ -2552,6 +2567,10 @@ bool NetUDP::sequ_glob_(string input, char output)
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.122  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.121  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *

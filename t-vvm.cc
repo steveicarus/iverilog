@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.142 2000/05/02 00:58:12 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.143 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -171,7 +171,8 @@ target_vvm::~target_vvm()
 /*
  * This class emits code for the rvalue of a procedural
  * assignment. The expression is evaluated to fit the width
- * specified.
+ * specified. The result is a vvm_bitset_t or equivilent that can be
+ * used for reading values out.
  */
 class vvm_proc_rval  : public expr_scan_t {
 
@@ -190,6 +191,7 @@ class vvm_proc_rval  : public expr_scan_t {
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*mem);
+      virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*sig);
       virtual void expr_ternary(const NetETernary*);
@@ -303,6 +305,24 @@ void vvm_proc_rval::expr_memory(const NetEMemory*mem)
 	    result << ".as_unsigned(), " << tname << ");" << endl;
 
       result = tname;
+}
+
+void vvm_proc_rval::expr_sfunc(const NetESFunc*fun)
+{
+      os_ << "      // " << fun->get_line() << endl;
+
+      const string retval = make_temp();
+      const unsigned retwid = fun->expr_width();
+
+      os_ << "      vpip_bit_t " << retval << "_bits["<<retwid<<"];" << endl;
+
+      os_ << "      vpip_callfunc(\"" << fun->name() << "\", "
+	  << retval<<"_bits, " << retwid << ");" << endl;
+
+      os_ << "      vvm_bitset_t " << retval << "(" << retval<<"_bits, "
+	  << retwid << ");" << endl;
+
+      result = retval;
 }
 
 /*
@@ -608,9 +628,9 @@ class vvm_parm_rval  : public expr_scan_t {
 
     private:
       virtual void expr_const(const NetEConst*);
-      virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
+      virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
 
     private:
@@ -673,7 +693,7 @@ void vvm_parm_rval::expr_const(const NetEConst*expr)
       return;
 }
 
-void vvm_parm_rval::expr_ident(const NetEIdent*expr)
+void vvm_parm_rval::expr_sfunc(const NetESFunc*expr)
 {
       if (expr->name() == "$time") {
 	    result = string("vpip_sim_time()");
@@ -2692,6 +2712,10 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.143  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.142  2000/05/02 00:58:12  steve
  *  Move signal tables to the NetScope class.
  *

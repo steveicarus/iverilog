@@ -17,17 +17,19 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: sys_table.c,v 1.4 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: sys_table.c,v 1.5 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 extern void sys_finish_register();
 extern void sys_display_register();
+extern void sys_random_register();
 extern void sys_readmem_register();
 extern void sys_vcd_register();
 
 void (*vlog_startup_routines[])() = {
       sys_finish_register,
       sys_display_register,
+      sys_random_register,
       sys_readmem_register,
       sys_vcd_register,
       0
@@ -36,6 +38,10 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.5  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.4  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: netlist.h,v 1.134 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: netlist.h,v 1.135 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 /*
@@ -2027,18 +2027,16 @@ class NetEScope  : public NetExpr {
  * This node represents a system function call in an expression. The
  * object contains the name of the system function, which the backend
  * uses to to VPI matching.
+ *
+ * XXXX NOTE: parameters are not net supported.
  */
 class NetESFunc  : public NetExpr {
 
     public:
-      NetESFunc(const string&name, NetESignal*, svector<NetExpr*>&);
+      NetESFunc(const string&name, unsigned width);
       ~NetESFunc();
 
       const string& name() const;
-
-      const NetESignal*result() const;
-      unsigned parm_count() const;
-      const NetExpr* parm(unsigned idx) const;
 
       virtual bool set_width(unsigned);
       virtual void dump(ostream&) const;
@@ -2048,8 +2046,6 @@ class NetESFunc  : public NetExpr {
 
     private:
       string name_;
-      NetESignal*result_;
-      svector<NetExpr*> parms_;
 
     private: // not implemented
       NetESFunc(const NetESFunc&);
@@ -2505,6 +2501,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.135  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.134  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: dup_expr.cc,v 1.2 2000/02/23 02:56:54 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.3 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -29,8 +29,17 @@ NetEScope* NetEScope::dup_expr() const
       return 0;
 }
 
+NetESFunc* NetESFunc::dup_expr() const
+{
+      return new NetESFunc(name_, expr_width());
+}
+
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.3  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.2  2000/02/23 02:56:54  steve
  *  Macintosh compilers do not support ident.
  *

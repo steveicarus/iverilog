@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.c,v 1.5 2000/02/23 02:56:56 steve Exp $"
+#ident "$Id: vpi_priv.c,v 1.6 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 # include  "vpi_priv.h"
@@ -38,7 +38,8 @@ struct systf_entry {
       s_vpi_systf_data systf_data;
 };
 
-static struct systf_entry*systf_list = 0;
+static struct systf_entry*systf_func_list = 0;
+static struct systf_entry*systf_task_list = 0;
 
 /* This is the handle of the task currently being called. */
 static struct __vpiSysTaskCall*vpip_cur_task;
@@ -49,13 +50,15 @@ void vpip_calltask(const char*fname, unsigned nparms, vpiHandle*parms)
       struct systf_entry*idx;
       struct __vpiSysTaskCall cur_task;
       cur_task.base.vpi_type = &vpip_systask_rt;
-      cur_task.args = parms;
+      cur_task.args  = parms;
       cur_task.nargs = nparms;
+      cur_task.res   = 0;
+      cur_task.nres  = 0;
 
       vpip_cur_task = &cur_task;
 
 	/* Look for a systf function to invoke. */
-      for (idx = systf_list ;  idx ;  idx = idx->next)
+      for (idx = systf_task_list ;  idx ;  idx = idx->next)
 	    if (strcmp(fname, idx->systf_data.tfname) == 0) {
 		  cur_task.info = &idx->systf_data;
 		  idx->systf_data.calltf(idx->systf_data.user_data);
@@ -67,6 +70,39 @@ void vpip_calltask(const char*fname, unsigned nparms, vpiHandle*parms)
 	   right. Print out the function name all the parameters
 	   passed, so that someone can deal with it. */
       vpi_printf("Call %s\n", fname);
+}
+
+/*
+ * System functions are kept in the same sort of table as the system
+ * tasks, and we call them in a similar manner.
+ *
+ * XXXX Haven't handled the return value yet.
+ */
+void vpip_callfunc(const char*fname, vpip_bit_t*res, unsigned nres)
+{
+      struct systf_entry*idx;
+      struct __vpiSysTaskCall cur_task;
+      cur_task.base.vpi_type = &vpip_sysfunc_rt;
+      cur_task.args  = 0;
+      cur_task.nargs = 0;
+      cur_task.res = res;
+      cur_task.nres = nres;
+
+      vpip_cur_task = &cur_task;
+
+	/* Look for a systf function to invoke. */
+      for (idx = systf_func_list ;  idx ;  idx = idx->next)
+	    if (strcmp(fname, idx->systf_data.tfname) == 0) {
+		  cur_task.info = &idx->systf_data;
+		  idx->systf_data.calltf(idx->systf_data.user_data);
+		  return;
+	    }
+
+
+	/* Finally, if nothing is found then something is not
+	   right. Print out the function name all the parameters
+	   passed, so that someone can deal with it. */
+      vpi_printf("Call %s with width==%u\n", fname, nres);
 }
 
 
@@ -168,12 +204,26 @@ void vpi_register_systf(const struct t_vpi_systf_data*systf)
       struct systf_entry*cur = calloc(1, sizeof(struct systf_entry));
       cur->systf_data = *systf;
       cur->systf_data.tfname = strdup(systf->tfname);
-      cur->next = systf_list;
-      systf_list = cur;
+      switch (systf->type) {
+	  case vpiSysFunc:
+	    cur->next = systf_func_list;
+	    systf_func_list = cur;
+	    break;
+	  case vpiSysTask:
+	    cur->next = systf_task_list;
+	    systf_task_list = cur;
+	    break;
+	  default:
+	    assert(0);
+      }
 }
 
 /*
  * $Log: vpi_priv.c,v $
+ * Revision 1.6  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.5  2000/02/23 02:56:56  steve
  *  Macintosh compilers do not support ident.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.cc,v 1.37 2000/04/23 03:45:24 steve Exp $"
+#ident "$Id: target.cc,v 1.38 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -323,6 +323,12 @@ void expr_scan_t::expr_scope(const NetEScope*)
 	    "unhandled expr_scope." << endl;
 }
 
+void expr_scan_t::expr_sfunc(const NetESFunc*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_sfunc." << endl;
+}
+
 void expr_scan_t::expr_signal(const NetESignal*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -361,6 +367,10 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.38  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.37  2000/04/23 03:45:24  steve
  *  Add support for the procedural release statement.
  *

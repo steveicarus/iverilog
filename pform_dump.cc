@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: pform_dump.cc,v 1.55 2000/04/22 04:20:19 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.56 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 /*
@@ -71,10 +71,13 @@ void PEConcat::dump(ostream&out) const
 void PECallFunction::dump(ostream &out) const
 {
       out << name_ << "(";
-      parms_[0]->dump(out);
-      for (unsigned idx = 1; idx < parms_.count(); ++idx) {
-	    out << ", ";
-	    parms_[idx]->dump(out);
+
+      if (parms_.count() > 0) {
+	    parms_[0]->dump(out);
+	    for (unsigned idx = 1; idx < parms_.count(); ++idx) {
+		  out << ", ";
+		  parms_[idx]->dump(out);
+	    }
       }
       out << ")";
 }
@@ -745,6 +748,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.56  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.55  2000/04/22 04:20:19  steve
  *  Add support for force assignment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: set_width.cc,v 1.12 2000/04/28 18:43:23 steve Exp $"
+#ident "$Id: set_width.cc,v 1.13 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 /*
@@ -237,6 +237,11 @@ bool NetEParam::set_width(unsigned)
       return false;
 }
 
+bool NetESFunc::set_width(unsigned w)
+{
+      return w == expr_width();
+}
+
 /*
  * The signal should automatically pad with zeros to get to th desired
  * width. Do not allow signal bits to be truncated, however.
@@ -295,6 +300,10 @@ bool NetEUnary::set_width(unsigned w)
 
 /*
  * $Log: set_width.cc,v $
+ * Revision 1.13  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.12  2000/04/28 18:43:23  steve
  *  integer division in expressions properly get width.
  *

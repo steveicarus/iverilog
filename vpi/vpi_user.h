@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_user.h,v 1.14 2000/03/08 04:36:54 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.15 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -108,6 +108,7 @@ typedef struct t_vpi_value {
 #define vpiNamedFork   35
 #define vpiNet         36
 #define vpiReg         48
+#define vpiSysFuncCall 56
 #define vpiSysTaskCall 57
 #define vpiTask        59
 #define vpiTimeVar     63
@@ -230,6 +231,10 @@ extern void (*vlog_startup_routines[])();
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.15  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.14  2000/03/08 04:36:54  steve
  *  Redesign the implementation of scopes and parameters.
  *  I now generate the scopes and notice the parameters

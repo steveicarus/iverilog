@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: target.h,v 1.36 2000/04/23 03:45:25 steve Exp $"
+#ident "$Id: target.h,v 1.37 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -130,6 +130,7 @@ struct expr_scan_t {
       virtual void expr_ident(const NetEIdent*);
       virtual void expr_memory(const NetEMemory*);
       virtual void expr_scope(const NetEScope*);
+      virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);
       virtual void expr_subsignal(const NetESubSignal*);
       virtual void expr_ternary(const NetETernary*);
@@ -155,6 +156,10 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.37  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.36  2000/04/23 03:45:25  steve
  *  Add support for the procedural release statement.
  *
@@ -185,47 +190,5 @@ extern const struct target *target_table[];
  *
  * Revision 1.30  2000/03/29 04:37:11  steve
  *  New and improved combinational primitives.
- *
- * Revision 1.29  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.28  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.27  1999/11/28 23:42:03  steve
- *  NetESignal object no longer need to be NetNode
- *  objects. Let them keep a pointer to NetNet objects.
- *
- * Revision 1.26  1999/11/27 19:07:58  steve
- *  Support the creation of scopes.
- *
- * Revision 1.25  1999/11/21 00:13:09  steve
- *  Support memories in continuous assignments.
- *
- * Revision 1.24  1999/11/14 23:43:46  steve
- *  Support combinatorial comparators.
- *
- * Revision 1.23  1999/11/14 20:24:28  steve
- *  Add support for the LPM_CLSHIFT device.
- *
- * Revision 1.22  1999/11/04 03:53:26  steve
- *  Patch to synthesize unary ~ and the ternary operator.
- *  Thanks to Larry Doolittle <LRDoolittle@lbl.gov>.
- *
- *  Add the LPM_MUX device, and integrate it with the
- *  ternary synthesis from Larry. Replace the lpm_mux
- *  generator in t-xnf.cc to use XNF EQU devices to
- *  put muxs into function units.
- *
- *  Rewrite elaborate_net for the PETernary class to
- *  also use the LPM_MUX device.
- *
- * Revision 1.21  1999/11/01 02:07:41  steve
- *  Add the synth functor to do generic synthesis
- *  and add the LPM_FF device to handle rows of
- *  flip-flops.
- *
- * Revision 1.20  1999/10/10 01:59:55  steve
- *  Structural case equals device.
  */
 #endif

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.h,v 1.35 2000/04/12 04:23:57 steve Exp $"
+#ident "$Id: PExpr.h,v 1.36 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 # include  <string>
@@ -339,25 +339,31 @@ class PETernary : public PExpr {
 };
 
 /*
- * This class represents a parsed call to a function.
+ * This class represents a parsed call to a function, including calls
+ * to system functions.
  */
 class PECallFunction : public PExpr {
     public:
-      explicit PECallFunction(const string &n, const svector<PExpr *> &parms);
+      explicit PECallFunction(const char*n, const svector<PExpr *> &parms);
+      explicit PECallFunction(const char*n);
       ~PECallFunction();
 
       virtual void dump(ostream &) const;
-      virtual NetExpr*elaborate_expr(Design*des, NetScope*) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope) const;
 
     private:
       string name_;
       svector<PExpr *> parms_;
 
-      NetESFunc* elaborate_sfunc_(Design*des, NetScope*scope) const;
+      NetExpr* elaborate_sfunc_(Design*des, NetScope*scope) const;
 };
 
 /*
  * $Log: PExpr.h,v $
+ * Revision 1.36  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.35  2000/04/12 04:23:57  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: emit.cc,v 1.43 2000/05/02 03:13:31 steve Exp $"
+#ident "$Id: emit.cc,v 1.44 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 /*
@@ -391,6 +391,11 @@ void NetEScope::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_scope(this);
 }
 
+void NetESFunc::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_sfunc(this);
+}
+
 void NetEUFunc::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_ufunc(this);
@@ -429,6 +434,10 @@ bool emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.44  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.43  2000/05/02 03:13:31  steve
  *  Move memories to the NetScope object.
  *
@@ -565,49 +574,5 @@ bool emit(ostream&o, const Design*des, const char*type)
  *
  * Revision 1.8  1999/04/25 00:44:10  steve
  *  Core handles subsignal expressions.
- *
- * Revision 1.7  1999/04/19 01:59:36  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.6  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.5  1999/02/01 00:26:49  steve
- *  Carry some line info to the netlist,
- *  Dump line numbers for processes.
- *  Elaborate prints errors about port vector
- *  width mismatch
- *  Emit better handles null statements.
- *
- * Revision 1.4  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.3  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:28:57  steve
- *  Introduce verilog to CVS.
- *
  */
 

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: elab_expr.cc,v 1.23 2000/05/02 03:13:30 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.24 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 
@@ -142,10 +142,23 @@ NetEBinary* PEBinary::elaborate_expr_base_(Design*des,
       return tmp;
 }
 
-NetESFunc* PECallFunction::elaborate_sfunc_(Design*des, NetScope*) const
+NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*) const
 {
-      cerr << get_line() << ": sorry: system functions not supported."
-	   << endl;
+      if (parms_.count() > 0) {
+	    cerr << get_line() << ": sorry: system function "
+		  "parmaeters not supported." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (name_ == "$time")
+	    return new NetESFunc(name_, 64);
+
+      if (name_ == "$random")
+	    return new NetESFunc(name_, 32);
+
+      cerr << get_line() << ": sorry: system function " << name_
+	   << " not supported." << endl;
       des->errors += 1;
       return 0;
 }
@@ -240,9 +253,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope) const
 
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope) const
 {
-	// System identifiers show up in the netlist as identifiers.
-      if (text_[0] == '$')
-	    return new NetEIdent(text_, 64);
+      assert(text_[0] != '$');
 
 	//string name = path+"."+text_;
       assert(scope);
@@ -456,6 +467,10 @@ NetEUnary* PEUnary::elaborate_expr(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.24  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.23  2000/05/02 03:13:30  steve
  *  Move memories to the NetScope object.
  *

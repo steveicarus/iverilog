@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: PExpr.cc,v 1.16 2000/04/12 04:23:57 steve Exp $"
+#ident "$Id: PExpr.cc,v 1.17 2000/05/04 03:37:58 steve Exp $"
 #endif
 
 # include  "PExpr.h"
@@ -64,8 +64,13 @@ bool PEBinary::is_constant(Module*mod) const
       return left_->is_constant(mod) && right_->is_constant(mod);
 }
 
-PECallFunction::PECallFunction(const string &n, const svector<PExpr *> &parms) 
+PECallFunction::PECallFunction(const char*n, const svector<PExpr *> &parms) 
 : name_(n), parms_(parms)
+{
+}
+
+PECallFunction::PECallFunction(const char*n) 
+: name_(n)
 {
 }
 
@@ -207,6 +212,10 @@ bool PETernary::is_constant(Module*) const
 
 /*
  * $Log: PExpr.cc,v $
+ * Revision 1.17  2000/05/04 03:37:58  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.16  2000/04/12 04:23:57  steve
  *  Named events really should be expressed with PEIdent
  *  objects in the pform,

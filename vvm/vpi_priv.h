@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: vpi_priv.h,v 1.15 2000/04/22 04:20:20 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.16 2000/05/04 03:37:59 steve Exp $"
 #endif
 
 /*
@@ -217,12 +217,16 @@ struct __vpiSignal {
 
 
 extern const struct __vpirt vpip_systask_rt;
+extern const struct __vpirt vpip_sysfunc_rt;
 struct __vpiSysTaskCall {
       struct __vpiHandle base;
 
       s_vpi_systf_data*info;
       vpiHandle*args;
       unsigned nargs;
+
+      vpip_bit_t*res;
+      unsigned nres;
 
       const char*file;
       unsigned lineno;
@@ -285,6 +289,12 @@ extern vpiHandle vpip_make_time_var(struct __vpiTimeVar*ref,
 /* Use this function to call a registered task. */
 extern void vpip_calltask(const char*name, unsigned nparms, vpiHandle*parms);
 
+/*
+ * This calls a system function with a given name. The return value is
+ * taken by the res[] array.
+ */
+extern void vpip_callfunc(const char*name, vpip_bit_t*res, unsigned nres);
+
 extern void vpip_run_value_changes(struct __vpiSignal*sig);
 
 /*
@@ -344,6 +354,10 @@ extern int vpip_finished();
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.16  2000/05/04 03:37:59  steve
+ *  Add infrastructure for system functions, move
+ *  $time to that structure and add $random.
+ *
  * Revision 1.15  2000/04/22 04:20:20  steve
  *  Add support for force assignment.
  *
