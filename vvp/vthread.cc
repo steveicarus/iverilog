@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vthread.cc,v 1.9 2001/03/23 01:53:46 steve Exp $"
+#ident "$Id: vthread.cc,v 1.10 2001/03/23 04:56:03 steve Exp $"
 #endif
 
 # include  "vthread.h"
@@ -128,10 +128,14 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 
 	    if (lv != rv)
 		  eeq = 0;
-	    if ((lv == 0) && (rv != 0))
-		  eq = 0;
-	    if ((lv == 1) && (rv != 1))
-		  eq = 0;
+	    if (eq != 2) {
+		  if ((lv == 0) && (rv != 0))
+			eq = 0;
+		  if ((lv == 1) && (rv != 1))
+			eq = 0;
+		  if ((lv | rv) >= 2)
+			eq = 2;
+	    }
 
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
@@ -240,6 +244,9 @@ bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 
 /*
  * $Log: vthread.cc,v $
+ * Revision 1.10  2001/03/23 04:56:03  steve
+ *  eq is x if either value of cmp/u has x or z.
+ *
  * Revision 1.9  2001/03/23 01:53:46  steve
  *  Support set of functors from thread bits.
  *
