@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.54 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: parse.y,v 1.55 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -120,9 +120,10 @@ extern void lex_end_table();
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
-%type <expr>  delay delay_opt delay_value delay_value_list
 %type <expr>  expression expr_primary
 %type <expr>  lavalue lpvalue
+%type <expr>  delay_value
+%type <exprs> delay delay_opt delay_value_list
 %type <exprs> expression_list
 
 %type <exprs> range range_opt
@@ -247,7 +248,9 @@ defparam_assign_list
 
 delay
 	: '#' delay_value
-		{ $$ = $2;
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $2;
+		  $$ = tmp;
 		}
 	| '#' '(' delay_value_list ')'
 		{ $$ = $3;
@@ -282,11 +285,14 @@ delay_value
 
 delay_value_list
 	: expression
-		{ $$ = $1; }
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
+		  (*tmp)[0] = $1;
+		  $$ = tmp;
+		}
 	| delay_value_list ',' expression
-		{ yyerror(@1, "Sorry, delay value lists not supported.");
-		  $$ = $1;
-		  delete $3;
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
+		  delete $1;
+		  $$ = tmp;
 		}
 	;
 
@@ -986,13 +992,9 @@ module_item
 		  }
 		}
 	| K_assign delay_opt lavalue '=' expression ';'
-		{ PGAssign*tmp = pform_make_pgassign($3, $5);
+		{ PGAssign*tmp = pform_make_pgassign($3, $5, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
-		  if ($2) {
-			yyerror(@2, "Sorry, assign delays not supported.");
-			delete $2;
-		  }
 		}
 	| K_assign error '=' expression ';'
 	| K_always statement
@@ -1051,18 +1053,17 @@ module_item_list
 net_decl_assign
 	: IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($1);
-		  PGAssign*tmp = pform_make_pgassign(id, $3);
+		  PGAssign*tmp = pform_make_pgassign(id, $3, 0);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = $1;
 		}
 	| delay IDENTIFIER '=' expression
 		{ PEIdent*id = new PEIdent($2);
-		  PGAssign*tmp = pform_make_pgassign(id, $4);
+		  PGAssign*tmp = pform_make_pgassign(id, $4, $1);
 		  tmp->set_file(@2.text);
 		  tmp->set_lineno(@2.first_line);
 		  $$ = $2;
-		  yyerror(@1, "Sorry, net assign delay not supported.");
 		}
 	;
 
@@ -1456,7 +1457,10 @@ statement
 		  yyerror(@3, "Error in while loop condition.");
 		}
 	| delay statement_opt
-		{ PDelayStatement*tmp = new PDelayStatement($1, $2);
+		{ PExpr*del = (*$1)[0];
+		  if ($1->count() != 1)
+			yyerror(@1, "Sorry, delay lists not supported here.");
+		  PDelayStatement*tmp = new PDelayStatement(del, $2);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;
@@ -1484,7 +1488,10 @@ statement
 		  $$ = tmp;
 		}
 	| lpvalue '=' delay expression ';'
-		{ PAssign*tmp = new PAssign($1,$3,$4);
+		{ PExpr*del = (*$3)[0];
+		  if ($3->count() != 1)
+			yyerror(@1, "Sorry, delay lists not supported here.");
+		  PAssign*tmp = new PAssign($1,del,$4);
 		  tmp->set_file(@1.text);
 		  tmp->set_lineno(@1.first_line);
 		  $$ = tmp;

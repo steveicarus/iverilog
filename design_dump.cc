@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.33 1999/07/24 02:11:20 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.34 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 /*
@@ -49,8 +49,8 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	    pin_count() << "]";
       if (local_flag_)
 	    o << " (local)";
-      o << " #(" << delay1() << "," << delay2() << "," << delay3() <<
-	    ") init=";
+      o << " #(" << rise_time() << "," << fall_time() << "," <<
+	    decay_time() << ") init=";
       for (unsigned idx = pin_count() ;  idx > 0 ;  idx -= 1)
 	    o << ivalue_[idx-1];
       o << endl;
@@ -70,8 +70,8 @@ void NetMemory::dump(ostream&o, unsigned ind) const
 void NetNode::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "node: ";
-      o << typeid(*this).name() << " #(" << delay1()
-	<< "," << delay2() << "," << delay3() << ") " << name()
+      o << typeid(*this).name() << " #(" << rise_time()
+	<< "," << fall_time() << "," << decay_time() << ") " << name()
 	<< endl;
 
       dump_node_pins(o, ind+4);
@@ -185,8 +185,8 @@ void NetLogic::dump_node(ostream&o, unsigned ind) const
 	    o << "xor";
 	    break;
       }
-      o << " #(" << delay1()
-	<< "," << delay2() << "," << delay3() << ") " << name()
+      o << " #(" << rise_time()
+	<< "," << fall_time() << "," << decay_time() << ") " << name()
 	<< endl;
 
       dump_node_pins(o, ind+4);
@@ -227,8 +227,8 @@ void NetUDP::dump_sequ_(ostream&o, unsigned ind) const
       for (unsigned idx = 0 ;  idx < ind ;  idx += 1)
 	    tmp += " ";
 
-      o << tmp << "Sequential UDP" << " #(" << delay1() <<
-	    "," << delay2() << "," << delay3() << ") " << name() <<
+      o << tmp << "Sequential UDP" << " #(" << rise_time() <<
+	    "," << fall_time() << "," << decay_time() << ") " << name() <<
 	    endl;
 
       for (FSM_::const_iterator ent = fsm_.begin()
@@ -270,7 +270,7 @@ void NetUDP::dump_sequ_(ostream&o, unsigned ind) const
 void NetUDP::dump_comb_(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "Combinational UDP: ";
-      o << " #(" << delay1() << "," << delay2() << "," << delay3() <<
+      o << " #(" << rise_time() << "," << fall_time() << "," << decay_time() <<
 	    ") " << name() << endl;
 
       dump_node_pins(o, ind+4);
@@ -690,6 +690,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.34  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.33  1999/07/24 02:11:20  steve
  *  Elaborate task input ports.
  *

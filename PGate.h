@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: PGate.h,v 1.6 1999/05/29 02:36:17 steve Exp $"
+#ident "$Id: PGate.h,v 1.7 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 # include  "svector.h"
@@ -41,14 +41,19 @@ class Module;
 class PGate : public LineInfo {
       
     public:
-      explicit PGate(const string&name, svector<PExpr*>*pins, long del)
-      : name_(name), delay_(del), pins_(pins) { }
+      explicit PGate(const string&name, svector<PExpr*>*pins,
+		     const svector<PExpr*>*del);
 
-      virtual ~PGate() { }
+      explicit PGate(const string&name, svector<PExpr*>*pins,
+		     PExpr*del);
+
+      explicit PGate(const string&name, svector<PExpr*>*pins);
+
+      virtual ~PGate();
 
       const string& get_name() const { return name_; }
 
-      long get_delay() const { return delay_; }
+      const PExpr* get_delay(unsigned idx) const;
 
       unsigned pin_count() const { return pins_? pins_->count() : 0; }
       const PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
@@ -60,10 +65,11 @@ class PGate : public LineInfo {
       const svector<PExpr*>* get_pins() const { return pins_; }
 
       void dump_pins(ostream&out) const;
+      void dump_delays(ostream&out) const;
 
     private:
       const string name_;
-      const unsigned long delay_;
+      PExpr* delay_[3];
       svector<PExpr*>*pins_;
 
     private: // not implemented
@@ -78,8 +84,9 @@ class PGate : public LineInfo {
 class PGAssign  : public PGate {
 
     public:
-      explicit PGAssign(svector<PExpr*>*pins)
-      : PGate("", pins, 0) { assert(pins->count() == 2); }
+      explicit PGAssign(svector<PExpr*>*pins);
+      explicit PGAssign(svector<PExpr*>*pins, svector<PExpr*>*dels);
+      ~PGAssign();
 
       void dump(ostream&out) const;
       virtual void elaborate(Design*des, const string&path) const;
@@ -108,9 +115,12 @@ class PGBuiltin  : public PGate {
 
     public:
       explicit PGBuiltin(Type t, const string&name,
-			 svector<PExpr*>*pins, long del = 0)
-      : PGate(name, pins, del), type_(t), msb_(0), lsb_(0)
-      {  }
+			 svector<PExpr*>*pins,
+			 svector<PExpr*>*del);
+      explicit PGBuiltin(Type t, const string&name,
+			 svector<PExpr*>*pins,
+			 PExpr*del);
+      ~PGBuiltin();
 
       Type type() const { return type_; }
       void set_range(PExpr*msb, PExpr*lsb);
@@ -138,7 +148,7 @@ class PGModule  : public PGate {
 	// builds everything all at once.
       explicit PGModule(const string&type, const string&name,
 			svector<PExpr*>*pins)
-      : PGate(name, pins, 0), type_(type), pins_(0), npins_(0) { }
+      : PGate(name, pins), type_(type), pins_(0), npins_(0) { }
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
@@ -148,7 +158,7 @@ class PGModule  : public PGate {
       };
       explicit PGModule(const string&type, const string&name,
 			bind_t*pins, unsigned npins)
-      : PGate(name, 0, 0), type_(type), pins_(pins), npins_(npins) { }
+      : PGate(name, 0), type_(type), pins_(pins), npins_(npins) { }
 
 
       virtual void dump(ostream&out) const;
@@ -165,6 +175,11 @@ class PGModule  : public PGate {
 
 /*
  * $Log: PGate.h,v $
+ * Revision 1.7  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.6  1999/05/29 02:36:17  steve
  *  module parameter bind by name.
  *

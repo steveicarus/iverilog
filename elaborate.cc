@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.62 1999/07/31 03:16:54 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.63 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 /*
@@ -232,6 +232,12 @@ void PGAssign::elaborate(Design*des, const string&path) const
       }
 
       do_assign(des, path, lval, rval);
+
+      if (get_delay(0)) {
+	    cerr << get_line() << ": Sorry, elaboration does not support"
+		  " delayed continuous assignments." << endl;
+	    des->errors += 1;
+      }
 }
 
 /*
@@ -281,6 +287,59 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
       NetLogic**cur = new NetLogic*[count];
       assert(cur);
 
+	/* Calculate the gate delays from the delay expressions
+	   given in the source. For logic gates, the decay time
+	   is meaningless because it can never go to high
+	   impedence. However, the bufif devices can generate
+	   'bz output, so we will pretend that anything can.
+
+	   If only one delay value expression is given (i.e. #5
+	   nand(foo,...)) then rise, fall and decay times are
+	   all the same value. If two values are given, rise and
+	   fall times are use, and the decay time is the minimum
+	   of the rise and fall times. Finally, if all three
+	   values are given, they are taken as specified. */
+
+      verinum*dv;
+      unsigned long rise_time, fall_time, decay_time;
+
+      if (get_delay(0)) {
+	    dv = get_delay(0)->eval_const(des, path);
+	    assert(dv);
+	    rise_time = dv->as_ulong();
+	    delete dv;
+
+	    if (get_delay(1)) {
+		  dv = get_delay(1)->eval_const(des, path);
+		  assert(dv);
+		  fall_time = dv->as_ulong();
+		  delete dv;
+
+		  if (get_delay(2)) {
+			dv = get_delay(2)->eval_const(des, path);
+			assert(dv);
+			decay_time = dv->as_ulong();
+			delete dv;
+		  } else {
+			if (rise_time < fall_time)
+			      decay_time = rise_time;
+			else
+			      decay_time = fall_time;
+		  }
+	    } else {
+		  assert(get_delay(2) == 0);
+		  fall_time = rise_time;
+		  decay_time = rise_time;
+	    }
+      } else {
+	    rise_time = 0;
+	    fall_time = 0;
+	    decay_time = 0;
+      }
+
+	/* Now make as many gates as the bit count dictates. Give each
+	   a unique name, and set the delay times. */
+
       for (unsigned idx = 0 ;  idx < count ;  idx += 1) {
 	    strstream tmp;
 	    unsigned index;
@@ -325,9 +384,11 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 		  break;
 	    }
 
-	    cur[idx]->delay1(get_delay());
-	    cur[idx]->delay2(get_delay());
-	    cur[idx]->delay3(get_delay());
+
+	    cur[idx]->rise_time(rise_time);
+	    cur[idx]->fall_time(fall_time);
+	    cur[idx]->decay_time(decay_time);
+
 	    des->add_node(cur[idx]);
       }
 
@@ -1991,6 +2052,11 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.63  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.62  1999/07/31 03:16:54  steve
  *  move binary operators to derived classes.
  *
@@ -2140,114 +2206,5 @@ Design* elaborate(const map<string,Module*>&modules,
  *
  * Revision 1.22  1999/05/01 02:57:53  steve
  *  Handle much more complex event expressions.
- *
- * Revision 1.21  1999/04/29 02:16:26  steve
- *  Parse OR of event expressions.
- *
- * Revision 1.20  1999/04/25 00:44:10  steve
- *  Core handles subsignal expressions.
- *
- * Revision 1.19  1999/04/19 01:59:36  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.18  1999/03/15 02:43:32  steve
- *  Support more operators, especially logical.
- *
- * Revision 1.17  1999/03/01 03:27:53  steve
- *  Prevent the duplicate allocation of ESignal objects.
- *
- * Revision 1.16  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.15  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- * Revision 1.14  1999/02/08 02:49:56  steve
- *  Turn the NetESignal into a NetNode so
- *  that it can connect to the netlist.
- *  Implement the case statement.
- *  Convince t-vvm to output code for
- *  the case statement.
- *
- * Revision 1.13  1999/02/03 04:20:11  steve
- *  Parse and elaborate the Verilog CASE statement.
- *
- * Revision 1.12  1999/02/01 00:26:49  steve
- *  Carry some line info to the netlist,
- *  Dump line numbers for processes.
- *  Elaborate prints errors about port vector
- *  width mismatch
- *  Emit better handles null statements.
- *
- * Revision 1.11  1999/01/25 05:45:56  steve
- *  Add the LineInfo class to carry the source file
- *  location of things. PGate, Statement and PProcess.
- *
- *  elaborate handles module parameter mismatches,
- *  missing or incorrect lvalues for procedural
- *  assignment, and errors are propogated to the
- *  top of the elaboration call tree.
- *
- *  Attach line numbers to processes, gates and
- *  assignment statements.
- *
- * Revision 1.10  1998/12/14 02:01:34  steve
- *  Fully elaborate Sequential UDP behavior.
- *
- * Revision 1.9  1998/12/07 04:53:17  steve
- *  Generate OBUF or IBUF attributes (and the gates
- *  to garry them) where a wire is a pad. This involved
- *  figuring out enough of the netlist to know when such
- *  was needed, and to generate new gates and signales
- *  to handle what's missing.
- *
- * Revision 1.8  1998/12/02 04:37:13  steve
- *  Add the nobufz function to eliminate bufz objects,
- *  Object links are marked with direction,
- *  constant propagation is more careful will wide links,
- *  Signal folding is aware of attributes, and
- *  the XNF target can dump UDP objects based on LCA
- *  attributes.
- *
- * Revision 1.7  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.6  1998/11/23 00:20:22  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.5  1998/11/21 19:19:44  steve
- *  Give anonymous modules a name when elaborated.
- *
- * Revision 1.4  1998/11/11 03:13:04  steve
- *  Handle while loops.
- *
- * Revision 1.3  1998/11/09 18:55:34  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.2  1998/11/07 17:05:05  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:28:56  steve
- *  Introduce verilog to CVS.
- *
  */
 

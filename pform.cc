@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.35 1999/07/31 19:15:21 steve Exp $"
+#ident "$Id: pform.cc,v 1.36 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -267,7 +267,7 @@ void pform_make_udp(const char*name, list<string>*parms,
  * gates and calls the pform_makegate function to make the individual gate.
  */
 void pform_makegate(PGBuiltin::Type type,
-		    unsigned long delay_val,
+		    svector<PExpr*>* delay,
 		    const lgate&info)
 {
       if (info.parms_by_name) {
@@ -277,7 +277,7 @@ void pform_makegate(PGBuiltin::Type type,
 	    return;
       }
 
-      PGBuiltin*cur = new PGBuiltin(type, info.name, info.parms, delay_val);
+      PGBuiltin*cur = new PGBuiltin(type, info.name, info.parms, delay);
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
@@ -288,13 +288,10 @@ void pform_makegate(PGBuiltin::Type type,
 }
 
 void pform_makegates(PGBuiltin::Type type,
-		     PExpr*delay, svector<lgate>*gates)
+		     svector<PExpr*>*delay, svector<lgate>*gates)
 {
-      unsigned long delay_val = delay? evaluate_delay(delay) : 0;
-      delete delay;
-
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
-	    pform_makegate(type, delay_val, (*gates)[idx]);
+	    pform_makegate(type, delay, (*gates)[idx]);
       }
 
       delete gates;
@@ -370,12 +367,20 @@ void pform_make_modgates(const string&type, svector<lgate>*gates)
       delete gates;
 }
 
-PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval)
+PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
+			      svector<PExpr*>*del)
 {
       svector<PExpr*>*wires = new svector<PExpr*>(2);
       (*wires)[0] = lval;
       (*wires)[1] = rval;
-      PGAssign*cur = new PGAssign(wires);
+
+      PGAssign*cur;
+
+      if (del == 0)
+	    cur = new PGAssign(wires);
+      else
+	    cur = new PGAssign(wires, del);
+
       pform_cur_module->add_gate(cur);
       return cur;
 }
@@ -657,6 +662,11 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.36  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.35  1999/07/31 19:15:21  steve
  *  misspelled comment.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.32 1999/07/18 21:17:51 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.33 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -530,36 +530,36 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
       switch (gate->type()) {
 	  case NetLogic::AND:
 	    os << "static vvm_and" << "<" << gate->pin_count()-1 <<
-		  "," << gate->delay1() << "> ";
+		  "," << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::BUFIF0:
-	    os << "static vvm_bufif0<" << gate->delay1() << "> ";
+	    os << "static vvm_bufif0<" << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::BUFIF1:
-	    os << "static vvm_bufif1<" << gate->delay1() << "> ";
+	    os << "static vvm_bufif1<" << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::NAND:
 	    os << "static vvm_nand" << "<" << gate->pin_count()-1 <<
-		  "," << gate->delay1() << "> ";
+		  "," << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::NOR:
 	    os << "static vvm_nor" << "<" << gate->pin_count()-1 <<
-		  "," << gate->delay1() << "> ";
+		  "," << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::NOT:
-	    os << "static vvm_not" << "<" << gate->delay1() << "> ";
+	    os << "static vvm_not" << "<" << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::OR:
 	    os << "static vvm_or" << "<" << gate->pin_count()-1 <<
-		  "," << gate->delay1() << "> ";
+		  "," << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::XNOR:
 	    os << "static vvm_xnor" << "<" << gate->pin_count()-1 <<
-		  "," << gate->delay1() << "> ";
+		  "," << gate->rise_time() << "> ";
 	    break;
 	  case NetLogic::XOR:
 	    os << "static vvm_xor" << "<" << gate->pin_count()-1 <<
-		  "," << gate->delay1() << "> ";
+		  "," << gate->rise_time() << "> ";
 	    break;
       }
 
@@ -1287,6 +1287,11 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.33  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.32  1999/07/18 21:17:51  steve
  *  Add support for CE input to XNF DFF, and do
  *  complete cleanup of replaced design nodes.

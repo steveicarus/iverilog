@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-verilog.cc,v 1.6 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: t-verilog.cc,v 1.7 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 /*
@@ -78,8 +78,8 @@ void target_verilog::signal(ostream&os, const NetNet*net)
       if (net->pin_count() > 1)
 	    os << " [" << net->msb() << ":" << net->lsb() << "]";
 
-      if (net->delay1())
-	    os << " #" << net->delay1();
+      if (net->rise_time())
+	    os << " #" << net->rise_time();
 
       os << " " << mangle(net->name()) << ";" << endl;
 }
@@ -111,7 +111,7 @@ void target_verilog::logic(ostream&os, const NetLogic*net)
 	    break;
       }
 
-      os << " #" << net->delay1() << " " << mangle(net->name()) << "(";
+      os << " #" << net->rise_time() << " " << mangle(net->name()) << "(";
 
       unsigned sidx;
       const NetNet*sig = find_link_signal(net, 0, sidx);
@@ -271,6 +271,11 @@ const struct target tgt_verilog = {
 
 /*
  * $Log: t-verilog.cc,v $
+ * Revision 1.7  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.6  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

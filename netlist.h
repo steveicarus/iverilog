@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.52 1999/07/31 03:16:54 steve Exp $"
+#ident "$Id: netlist.h,v 1.53 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 /*
@@ -58,6 +58,13 @@ struct functor_t;
  * A link can be INPUT, OUTPUT or PASSIVE. An input never drives the
  * signal, and PASSIVE never receives the value of the signal. Wires
  * are PASSIVE, for example.
+ *
+ * A NetObj also has delays specified as rise_time, fall_time and
+ * decay_time. The rise and fall time are the times to transition to 1
+ * or 0 values. The decay_time is the time needed to decay to a 'bz
+ * value, or to decay of the net is a trireg. The exact and precise
+ * interpretation of the rise/fall/decay times is typically left to
+ * the target to properly interpret.
  */
 class NetObj {
 
@@ -143,13 +150,13 @@ class NetObj {
 
       unsigned pin_count() const { return npins_; }
 
-      unsigned delay1() const { return delay1_; }
-      unsigned delay2() const { return delay2_; }
-      unsigned delay3() const { return delay3_; }
+      unsigned rise_time() const { return delay1_; }
+      unsigned fall_time() const { return delay2_; }
+      unsigned decay_time() const { return delay3_; }
 
-      void delay1(unsigned d) { delay1_ = d; }
-      void delay2(unsigned d) { delay2_ = d; }
-      void delay3(unsigned d) { delay3_ = d; }
+      void rise_time(unsigned d) { delay1_ = d; }
+      void fall_time(unsigned d) { delay2_ = d; }
+      void decay_time(unsigned d) { delay3_ = d; }
 
       void set_attributes(const map<string,string>&);
       string attribute(const string&key) const;
@@ -1437,6 +1444,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.53  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.52  1999/07/31 03:16:54  steve
  *  move binary operators to derived classes.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.31 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.32 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 /*
@@ -209,10 +209,23 @@ void PGate::dump_pins(ostream&out) const
       }
 }
 
+void PGate::dump_delays(ostream&out) const
+{
+      if (delay_[0] && delay_[1] && delay_[2])
+	    out << "#(" << *delay_[0] << "," << *delay_[1] << "," <<
+		  *delay_[2] << ")";
+      else if (delay_[0])
+	    out << "#" << *delay_[0];
+      else
+	    out << "#0";
+
+}
+
 void PGate::dump(ostream&out) const
 {
-      out << "    " << typeid(*this).name() << " #"
-	  << get_delay() << " " << get_name() << "(";
+      out << "    " << typeid(*this).name() << " ";
+      dump_delays(out);
+      out << " " << get_name() << "(";
       dump_pins(out);
       out << ");" << endl;
 
@@ -220,26 +233,29 @@ void PGate::dump(ostream&out) const
 
 void PGAssign::dump(ostream&out) const
 {
-      out << "    assign " << *pin(0) << " = " << *pin(1) << ";" << endl;
+      out << "    assign ";
+      dump_delays(out);
+      out << " " << *pin(0) << " = " << *pin(1) << ";" << endl;
 }
 
 void PGBuiltin::dump(ostream&out) const
 {
       switch (type()) {
 	  case PGBuiltin::BUFIF0:
-	    out << "    bufif0 #";
+	    out << "    bufif0 ";
 	    break;
 	  case PGBuiltin::BUFIF1:
-	    out << "    bufif1 #";
+	    out << "    bufif1 ";
 	    break;
 	  case PGBuiltin::NAND:
-	    out << "    nand #";
+	    out << "    nand ";
 	    break;
 	  default:
-	    out << "    builtin gate #";
+	    out << "    builtin gate ";
       }
 
-      out << get_delay() << " " << get_name();
+      dump_delays(out);
+      out << " " << get_name();
 
       if (msb_) {
 	    out << " [" << *msb_ << ":" << *lsb_ << "]";
@@ -578,6 +594,11 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.32  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.31  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *

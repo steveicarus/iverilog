@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.25 1999/07/31 19:14:47 steve Exp $"
+#ident "$Id: pform.h,v 1.26 1999/08/01 16:34:50 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -138,13 +138,14 @@ extern bool pform_expression_is_constant(const PExpr*);
  * name) and connects it to the specified wires.
  */
 extern void pform_makegates(PGBuiltin::Type type,
-			    PExpr*delay,
+			    svector<PExpr*>*delay,
 			    svector<lgate>*gates);
 
 extern void pform_make_modgates(const string&type, svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
-extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval);
+extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
+				     svector<PExpr*>*delays);
 
 
 /* Given a port type and a list of names, make a list of wires that
@@ -166,6 +167,11 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.26  1999/08/01 16:34:50  steve
+ *  Parse and elaborate rise/fall/decay times
+ *  for gates, and handle the rules for partial
+ *  lists of times.
+ *
  * Revision 1.25  1999/07/31 19:14:47  steve
  *  Add functions up to elaboration (Ed Carter)
  *
