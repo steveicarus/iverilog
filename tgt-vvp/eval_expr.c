@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.99 2003/06/15 22:49:32 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.100 2003/06/16 22:14:15 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1618,7 +1618,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t exp, unsigned wid)
       fprintf(vvp_out, "    %%blend  %u, %u, %u; Condition unknown.\n",
 	      tru.base, fal.base, wid);
       fprintf(vvp_out, "    %%jmp  T_%d.%d;\n",
-	      thread_count, lab_out, tst.base);
+	      thread_count, lab_out);
 
       fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
       fprintf(vvp_out, "    %%mov %u, %u, %u; Return false value\n",
@@ -2036,6 +2036,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.100  2003/06/16 22:14:15  steve
+ *  Fix fprintf warning.
+ *
  * Revision 1.99  2003/06/15 22:49:32  steve
  *  More efficient code for ternary expressions.
  *
