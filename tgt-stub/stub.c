@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.74 2003/03/07 06:04:58 steve Exp $"
+#ident "$Id: stub.c,v 1.75 2003/03/10 23:40:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -38,6 +38,7 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned idx;
       const ivl_expr_type_t code = ivl_expr_type(net);
+      ivl_parameter_t par = ivl_expr_parameter(net);
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
       const char*vt = "?";
@@ -84,7 +85,12 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 		for (idx = width ;  idx > 0 ;  idx -= 1)
 		      fprintf(out, "%c", bits[idx-1]);
 
-		fprintf(out, ", %s>\n", sign);
+		fprintf(out, ", %s", sign);
+		if (par != 0)
+		      fprintf(out, ", parameter=%s",
+			      ivl_parameter_basename(par));
+
+		fprintf(out, ">\n");
 		break;
 	  }
 
@@ -96,8 +102,13 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 	    break;
 
 	  case IVL_EX_STRING:
-	    fprintf(out, "%*s<string=\"%s\", width=%u>\n", ind, "",
+	    fprintf(out, "%*s<string=\"%s\", width=%u", ind, "",
 		    ivl_expr_string(net), ivl_expr_width(net));
+	    if (par != 0)
+		      fprintf(out, ", parameter=%s", 
+			      ivl_parameter_basename(par));
+
+	    fprintf(out, ">\n");
 	    break;
 
 	  case IVL_EX_SFUNC:
@@ -145,7 +156,12 @@ static void show_expression(ivl_expr_t net, unsigned ind)
 		    fprintf(out, "%*s<realnum=%f (", ind, "", tmp.rv);
 		    for (idx = sizeof(double) ;  idx > 0 ;  idx -= 1)
 			  fprintf(out, "%02x", tmp.bv[idx-1]);
-		    fprintf(out, ")>\n");
+		    fprintf(out, ")");
+		    if (par != 0)
+			  fprintf(out, ", parameter=%s", 
+				  ivl_parameter_basename(par));
+
+		    fprintf(out, ">\n");
 	      }
 	      break;
 
@@ -488,6 +504,13 @@ static int show_process(ivl_process_t net, void*x)
       return 0;
 }
 
+static void show_parameter(ivl_parameter_t net)
+{
+      const char*name = ivl_parameter_basename(net);
+      fprintf(out, "   parameter %s;\n", name);
+      show_expression(ivl_parameter_expr(net), 7);
+}
+
 static void show_variable(ivl_variable_t net)
 {
       const char*type = "?";
@@ -719,9 +742,9 @@ static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
 
-      fprintf(out, "scope: %s (%u signals, %u logic)",
-	      ivl_scope_name(net), ivl_scope_sigs(net),
-	      ivl_scope_logs(net));
+      fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
+	      ivl_scope_name(net), ivl_scope_params(net),
+	      ivl_scope_sigs(net), ivl_scope_logs(net));
 
       switch (ivl_scope_type(net)) {
 	  case IVL_SCT_MODULE:
@@ -746,6 +769,9 @@ static int show_scope(ivl_scope_t net, void*x)
       }
 
       fprintf(out, " time units = 10e%d\n", ivl_scope_time_units(net));
+
+      for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1)
+	    show_parameter(ivl_scope_param(net, idx));
 
       for (idx = 0 ;  idx < ivl_scope_vars(net) ;  idx += 1)
 	    show_variable(ivl_scope_var(net, idx));
@@ -792,6 +818,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.75  2003/03/10 23:40:54  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.74  2003/03/07 06:04:58  steve
  *  Raw dump of double values for testing purposes.
  *

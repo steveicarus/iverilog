@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.114 2003/03/06 01:24:37 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.115 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -95,6 +95,12 @@ _BEGIN_DECL
  *    there are backward references to all the device pins that point
  *    to it.
  *
+ * ivl_parameter_t
+ *    Scopes have zero or more parameter objects that represent
+ *    parameters that the source defined. The parameter has a value
+ *    that is fully elaborated, with defparams and other parameter
+ *    overrides taken care of.
+ *
  * ivl_process_t
  *    A Verilog process is represented by one of these. A process may
  *    be an "initial" or an "always" process. These come from initial
@@ -120,6 +126,10 @@ _BEGIN_DECL
  * -- A Note About Names --
  * The names of objects are complete, hierarchical names. That is,
  * they include the instance name of the module that contains them.
+ *
+ * basenames are the name of the object without the containing
+ * scope. These names are unique within a scope, but not necessarily
+ * throughout the design.
  */
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_event_s    *ivl_event_t;
@@ -132,6 +142,7 @@ typedef struct ivl_udp_s      *ivl_udp_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
+typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
@@ -438,6 +449,13 @@ extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
  *    node. It can be applied to any expression node, and returns the
  *    *output* width of the expression node.
  *
+ * ivl_expr_parameter
+ *    This function returns the ivl_parameter_t object that represents
+ *    this object, or 0 (nil) if it is not a parameter value. This
+ *    function allows the code generator to detect the case where the
+ *    expression is a parameter. This will normally only return a
+ *    non-nil value for constants.
+ *
  * ivl_expr_opcode
  *    IVL_EX_BINARY and IVL_EX_UNARY expression nodes include an
  *    opcode from this table:
@@ -467,6 +485,8 @@ extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
   /* IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
+  /* and expression */
+extern ivl_parameter_t ivl_expr_parameter(ivl_expr_t net);
   /* IVL_EX_CONCAT IVL_EX_UFUNC */
 extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
   /* IVL_EX_CONCAT IVL_EX_SFUNC IVL_EX_UFUNC */
@@ -811,6 +831,37 @@ extern ivl_net_logic_t ivl_nexus_ptr_log(ivl_nexus_ptr_t net);
 extern ivl_lpm_t    ivl_nexus_ptr_lpm(ivl_nexus_ptr_t net);
 extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 
+/* PARAMETER
+ * Parameters are named constants associated with a scope. The user
+ * may set in the Verilog source the value of parameters, and that
+ * leads to ivl_parameter_t objects contained in the ivl_scope_t
+ * objects.
+ *
+ * Parameters are essentially named constants. These constant values
+ * can be accessed by looking at the scope (using ivl_scope_param) or
+ * they can be discovered when they are used, via the
+ * ivl_expr_parameter function. The fact that a constant has a name
+ * (i.e. is a parameter) does not otherwise impose on the value or
+ * interpretation of the constant expression so far as ivl_target is
+ * concerned. The target may need this information, or may choose to
+ * completely ignore it.
+ *
+ * ivl_parameter_basename
+ *    return the name of the parameter.
+ *
+ * ivl_parameter_scope
+ *    Return the scope of the parameter. The parameter name is only
+ *    unique within its scope.
+ *
+ * ivl_parameter_expr
+ *    Return the value of the parameter. This should be a simple
+ *    constant expression, an IVL_EX_STRING or IVL_EX_NUMBER.
+ */
+extern const char* ivl_parameter_basename(ivl_parameter_t net);
+extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);
+extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
+
+
 /* SCOPE
  * Scopes of various sort have these properties. Use these methods to
  * access them. Scopes come to exist in the elaborated design
@@ -876,6 +927,11 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    ivl_scope_basename is the name of the scope without the included
  *    hierarchy. 
  *
+ * ivl_scope_param
+ * ivl_scope_params
+ *    A scope has zero or more named parameters. These parameters have
+ *    a name and an expression value.
+ *
  * ivl_scope_parent
  *    If this is a non-root scope, then the parent is the scope that
  *    contains this scope. Otherwise, the parent is nil.
@@ -925,6 +981,8 @@ extern unsigned     ivl_scope_vars(ivl_scope_t net);
 extern ivl_variable_t ivl_scope_var(ivl_scope_t net, unsigned idx);
 extern const char*  ivl_scope_name(ivl_scope_t net);
 extern const char*  ivl_scope_basename(ivl_scope_t net);
+extern unsigned     ivl_scope_params(ivl_scope_t net);
+extern ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
@@ -1146,6 +1204,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.115  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.114  2003/03/06 01:24:37  steve
  *  Obsolete the ivl_event_name function.
  *
@@ -1168,86 +1229,5 @@ _END_DECL
  *  implementation of vpiSystemTime the $time functions
  *  to properly account for this. Also add $simtime
  *  to get the simulation time.
- *
- * Revision 1.108  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.107  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.106  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.105  2002/08/24 05:03:40  steve
- *  Missing declaration of ivl_memory_scope.
- *
- * Revision 1.104  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.103  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.102  2002/08/04 18:28:14  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.101  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.100  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.99  2002/06/11 03:34:33  steve
- *  Spelling patch (Larry Doolittle)
- *
- * Revision 1.98  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.97  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.96  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.95  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.94  2002/03/17 19:30:20  steve
- *  Add API to support user defined function.
- *
- * Revision 1.93  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.92  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.91  2002/01/03 04:19:01  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.90  2001/12/15 02:13:17  steve
- *  The IVL_SIT_WIRE type does not exist, it is a
- *  synonym for IVL_SIT_TRI.
- *
- * Revision 1.89  2001/12/06 03:11:00  steve
- *  Add ivl_logic_delay function to ivl_target.
- *
- * Revision 1.88  2001/11/14 03:28:49  steve
- *  DLL target support for force and release.
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.71 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: emit.cc,v 1.72 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -414,6 +414,11 @@ void NetEConst::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_const(this);
 }
 
+void NetEConstParam::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_param(this);
+}
+
 void NetECReal::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_creal(this);
@@ -492,6 +497,9 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.72  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.71  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

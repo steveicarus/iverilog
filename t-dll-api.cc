@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.95 2003/03/06 04:32:40 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.96 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -354,6 +354,20 @@ extern "C" ivl_expr_t ivl_expr_oper3(ivl_expr_t net)
 	    assert(0);
       }
       return 0;
+}
+
+extern "C" ivl_parameter_t ivl_expr_parameter(ivl_expr_t net)
+{
+      switch (net->type_) {
+	  case IVL_EX_NUMBER:
+	    return net->u_.number_.parameter;
+	  case IVL_EX_STRING:
+	    return net->u_.string_.parameter;
+	  case IVL_EX_REALNUM:
+	    return net->u_.real_.parameter;
+	  default:
+	    return 0;
+      }
 }
 
 extern "C" ivl_expr_t ivl_expr_parm(ivl_expr_t net, unsigned idx)
@@ -1091,6 +1105,24 @@ extern "C" ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net)
       return net->l.sig;
 }
 
+extern "C" const char* ivl_parameter_basename(ivl_parameter_t net)
+{
+      assert(net);
+      return net->basename;
+}
+
+extern "C" ivl_expr_t ivl_parameter_expr(ivl_parameter_t net)
+{
+      assert(net);
+      return net->value;
+}
+
+extern "C" ivl_scope_t ivl_parameter_scope(ivl_parameter_t net)
+{
+      assert(net);
+      return net->scope;
+}
+
 extern "C" ivl_process_type_t ivl_process_type(ivl_process_t net)
 {
       return net->type_;
@@ -1252,6 +1284,19 @@ extern "C" const char* ivl_scope_name(ivl_scope_t net)
       push_scope_basename(net, name_buffer);
 
       return name_buffer;
+}
+
+extern "C" unsigned ivl_scope_params(ivl_scope_t net)
+{
+      assert(net);
+      return net->nparam_;
+}
+
+extern "C" ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->nparam_);
+      return net->param_ + idx;
 }
 
 extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
@@ -1752,6 +1797,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.96  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.95  2003/03/06 04:32:40  steve
  *  Wrong sense of need compared to have.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.107 2003/03/06 01:24:37 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.108 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -439,6 +439,80 @@ static void scope_add_var(ivl_scope_t scope, ivl_variable_t net)
       scope->var_[scope->nvar_-1] = net;
 }
 
+ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
+					     const char*name)
+{
+      unsigned idx = 0;
+      while (idx < scope->nparam_) {
+	    if (strcmp(name, scope->param_[idx].basename) == 0)
+		  return scope->param_ + idx;
+
+	    idx += 1;
+      }
+
+      return 0;
+}
+
+/*
+ * This method scans the parameters of the scope, and makes
+ * ivl_parameter_t objects. This involves saving the name and scanning
+ * the expression value.
+ */
+void dll_target::make_scope_parameters(ivl_scope_t scope, const NetScope*net)
+{
+      scope->nparam_ = net->parameters.size();
+      if (scope->nparam_ == 0) {
+	    scope->param_ = 0;
+	    return;
+      }
+
+      scope->param_ = new struct ivl_parameter_s [scope->nparam_];
+
+      unsigned idx = 0;
+      typedef map<string,NetScope::param_expr_t>::const_iterator pit_t;
+
+      for (pit_t cur_pit = net->parameters.begin()
+		 ; cur_pit != net->parameters.end() ;  cur_pit ++) {
+
+	    assert(idx < scope->nparam_);
+	    ivl_parameter_t cur_par = scope->param_ + idx;
+	    cur_par->basename = lex_strings.add( (*cur_pit).first.c_str() );
+	    cur_par->scope = scope;
+
+	    NetExpr*etmp = (*cur_pit).second.expr;
+
+	    if (const NetEConst*e = dynamic_cast<const NetEConst*>(etmp)) {
+
+		  expr_const(e);
+		  assert(expr_);
+
+		  switch (expr_->type_) {
+		      case IVL_EX_STRING:
+			expr_->u_.string_.parameter = cur_par;
+			break;
+		      case IVL_EX_NUMBER:
+			expr_->u_.number_.parameter = cur_par;
+			break;
+		      default:
+			assert(0);
+		  }
+
+	    } else if (const NetECReal*e = dynamic_cast<const NetECReal*>(etmp)) {
+
+		  expr_creal(e);
+		  assert(expr_);
+		  assert(expr_->type_ == IVL_EX_REALNUM);
+		  expr_->u_.real_.parameter = cur_par;
+
+	    }
+
+	    cur_par->value = expr_;
+	    expr_ = 0;
+
+	    idx += 1;
+      }
+}
+
 void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
@@ -459,6 +533,7 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
       root_->mem_ = 0;
       root_->nvar_ = 0;
       root_->var_ = 0;
+      make_scope_parameters(root_, s);
       root_->type_ = IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
       root_->time_units = s->time_unit();
@@ -1819,6 +1894,7 @@ void dll_target::scope(const NetScope*net)
 	    scope->mem_ = 0;
 	    scope->nvar_ = 0;
 	    scope->var_ = 0;
+	    make_scope_parameters(scope, net);
 	    scope->time_units = net->time_unit();
 
 	    switch (net->type()) {
@@ -2023,6 +2099,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.108  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.107  2003/03/06 01:24:37  steve
  *  Obsolete the ivl_event_name function.
  *

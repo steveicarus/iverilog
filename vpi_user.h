@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_user.h,v 1.19 2003/02/17 06:39:47 steve Exp $"
+#ident "$Id: vpi_user.h,v 1.20 2003/03/10 23:40:54 steve Exp $"
 #endif
 
 
@@ -162,6 +162,7 @@ typedef struct t_vpi_value {
 #define vpiNamedEvent  34
 #define vpiNamedFork   35
 #define vpiNet         36
+#define vpiParameter   41
 #define vpiRealVar     47
 #define vpiReg         48
 #define vpiSysFuncCall 56
@@ -372,6 +373,9 @@ EXTERN_C_END
 
 /*
  * $Log: vpi_user.h,v $
+ * Revision 1.20  2003/03/10 23:40:54  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.19  2003/02/17 06:39:47  steve
  *  Add at least minimal implementations for several
  *  acc_ functions. Add support for standard ACC

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.99 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: t-dll.h,v 1.100 2003/03/10 23:40:54 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -133,6 +133,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_memory(const NetEMemory*);
       void expr_const(const NetEConst*);
       void expr_creal(const NetECReal*);
+      void expr_param(const NetEConstParam*);
       void expr_scope(const NetEScope*);
       void expr_select(const NetESelect*);
       void expr_sfunc(const NetESFunc*);
@@ -155,10 +156,16 @@ struct dll_target  : public target_t, public expr_scan_t {
       static ivl_signal_t find_signal(ivl_design_s &des, const NetNet*net);
       static ivl_memory_t find_memory(ivl_design_s &des, const NetMemory*net);
       static ivl_variable_t find_variable(ivl_design_s &des, const NetVariable*net);
+
+      static ivl_parameter_t scope_find_param(ivl_scope_t scope,
+					      const char*name);
+
       void add_root(ivl_design_s &des_, const NetScope *s);
 
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
+
+      void make_scope_parameters(ivl_scope_t scope, const NetScope*net);
 
       static ivl_expr_t expr_from_value_(const verinum&that);
 };
@@ -207,6 +214,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  char*bits_;
+		  ivl_parameter_t parameter;
 	    } number_;
 
 	    struct {
@@ -226,6 +234,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  char*value_;
+		  ivl_parameter_t parameter;
 	    } string_;
 
 	    struct {
@@ -251,6 +260,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  double value;
+		  ivl_parameter_t parameter;
 	    } real_;
 
 	    struct {
@@ -465,7 +475,15 @@ struct ivl_memory_s {
       int root_;
 };
 
-
+/*
+ * This is the implementation of a parameter. Each scope has a list of
+ * these.
+ */
+struct ivl_parameter_s {
+      const char*basename;
+      ivl_scope_t scope;
+      ivl_expr_t  value;
+};
 /*
  * All we know about a process it its type (initial or always) and the
  * single statement that is it. A process also has a scope, although
@@ -512,6 +530,9 @@ struct ivl_scope_s {
 
       unsigned nvar_;
       ivl_variable_t* var_;
+
+      unsigned nparam_;
+      ivl_parameter_t param_;
 
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;
@@ -651,6 +672,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.100  2003/03/10 23:40:54  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.99  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names

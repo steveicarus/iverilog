@@ -17,11 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.70 2003/03/07 02:44:34 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.71 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
-
+# include "compiler.h"
 
 # include  "pform.h"
 # include  "netlist.h"
@@ -428,15 +428,15 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				 bool sys_task_arg) const
 {
       assert(scope);
+      NetScope*found_in;
 
 	// If the identifier name is a parameter name, then return
 	// a reference to the parameter expression.
-      if (const NetExpr*ex = des->find_parameter(scope, path_)) {
+      if (const NetExpr*ex = des->find_parameter(scope, path_, found_in)) {
 	    NetExpr*tmp;
-	    if (dynamic_cast<const NetExpr*>(ex))
-		  tmp = ex->dup_expr();
-	    else
-		  tmp = new NetEParam(des, scope, path_);
+
+	    assert(ex);
+	    tmp = ex? ex->dup_expr() : new NetEParam(des, scope, path_);
 
 	    if (msb_ && lsb_) {
 		    /* If the parameter has a part select, we support
@@ -549,8 +549,20 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			tmp->set_line(*this);
 			tmp = stmp;
 		  }
-	    }
 
+	    } else {
+		    /* No bit or part select. Make the constant into a
+		       NetEConstParam if possible. */
+		  NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
+		  if (ctmp != 0) {
+			const char*name
+			     = lex_strings.add(path_.peek_name(0));
+			NetEConstParam*ptmp
+			     = new NetEConstParam(found_in, name, ctmp->value());
+			delete tmp;
+			tmp = ptmp;
+		  }
+	    }
 
 	    tmp->set_line(*this);
 	    return tmp;
@@ -902,6 +914,9 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.71  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.70  2003/03/07 02:44:34  steve
  *  Implement $realtobits.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.35 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: net_design.cc,v 1.36 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -179,7 +179,38 @@ NetScope* Design::find_scope(NetScope*scope, const hname_t&path) const
  * working up towards the root, looking for the named parameter. The
  * name in this case can be hierarchical, so there is an inner loop to
  * follow the scopes of the name down to to key.
+ *
+ * The expression value of the parameter is returned as the result,
+ * and the scope that contains the parameter is returned in the out
+ * argument found_in.
  */
+const NetExpr* Design::find_parameter(NetScope*scope,
+				      const hname_t&path,
+				      NetScope*&found_in) const
+{
+      for ( ; scope ;  scope = scope->parent()) {
+	    unsigned hidx = 0;
+
+	    NetScope*cur = scope;
+	    while (path.peek_name(hidx+1)) {
+		  cur = cur->child(path.peek_name(hidx));
+		  if (cur == 0)
+			break;
+		  hidx += 1;
+	    }
+
+	    if (cur == 0)
+		  continue;
+
+	    if (const NetExpr*res = cur->get_parameter(path.peek_name(hidx))) {
+		  found_in = cur;
+		  return res;
+	    }
+      }
+
+      return 0;
+}
+
 const NetExpr* Design::find_parameter(const NetScope*scope,
 				      const hname_t&path) const
 {
@@ -199,6 +230,7 @@ const NetExpr* Design::find_parameter(const NetScope*scope,
 
 	    if (const NetExpr*res = cur->get_parameter(path.peek_name(hidx)))
 		  return res;
+
       }
 
       return 0;
@@ -279,8 +311,8 @@ void NetScope::evaluate_parameters(Design*des)
 
       typedef map<string,param_expr_t>::iterator mparm_it_t;
 
-      for (mparm_it_t cur = parameters_.begin()
-		 ; cur != parameters_.end() ;  cur ++) {
+      for (mparm_it_t cur = parameters.begin()
+		 ; cur != parameters.end() ;  cur ++) {
 
 	    long msb = 0;
 	    long lsb = 0;
@@ -376,7 +408,9 @@ void NetScope::evaluate_parameters(Design*des)
 			if (nexpr == 0) {
 			      cerr << (*cur).second.expr->get_line()
 				   << ": internal error: "
-				    "unable to evaluate parameter value: " <<
+				   << "unable to evaluate parameter "
+				   << (*cur).first
+				   << " value: " <<
 				    *expr << endl;
 			      des->errors += 1;
 			      continue;
@@ -651,6 +685,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.36  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.35  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.27 2003/03/06 04:37:12 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.28 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,7 +81,7 @@ NetScope::~NetScope()
 NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr,
 				 NetExpr*msb, NetExpr*lsb, bool signed_flag)
 {
-      param_expr_t&ref = parameters_[key];
+      param_expr_t&ref = parameters[key];
       NetExpr* res = ref.expr;
       ref.expr = expr;
       ref.msb = msb;
@@ -96,7 +96,7 @@ NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr,
 bool NetScope::replace_parameter(const string&key, NetExpr*expr)
 {
       bool flag = true;
-      param_expr_t&ref = parameters_[key];
+      param_expr_t&ref = parameters[key];
 
       NetExpr* res = ref.expr;
 
@@ -115,7 +115,7 @@ bool NetScope::replace_parameter(const string&key, NetExpr*expr)
 
 NetExpr* NetScope::set_localparam(const string&key, NetExpr*expr)
 {
-      param_expr_t&ref = localparams_[key];
+      param_expr_t&ref = localparams[key];
       NetExpr* res = ref.expr;
       ref.expr = expr;
       ref.msb = 0;
@@ -128,12 +128,12 @@ const NetExpr* NetScope::get_parameter(const string&key) const
 {
       map<string,param_expr_t>::const_iterator idx;
 
-      idx = parameters_.find(key);
-      if (idx != parameters_.end())
+      idx = parameters.find(key);
+      if (idx != parameters.end())
 	    return (*idx).second.expr;
 
-      idx = localparams_.find(key);
-      if (idx != localparams_.end())
+      idx = localparams.find(key);
+      if (idx != localparams.end())
 	    return (*idx).second.expr;
 
       return 0;
@@ -448,6 +448,9 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.28  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.27  2003/03/06 04:37:12  steve
  *  lex_strings.add module names earlier.
  *

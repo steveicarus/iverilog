@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.207 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: netlist.cc,v 1.208 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1890,12 +1890,25 @@ bool NetEConst::has_width() const
       return value_.has_len();
 }
 
-NetEConst* NetEConst::dup_expr() const
+NetEConstParam::NetEConstParam(NetScope*s, const char*n, const verinum&v)
+: NetEConst(v), scope_(s), name_(n)
 {
-      NetEConst*tmp = new NetEConst(value_);
-      tmp->set_line(*this);
-      return tmp;
 }
+
+NetEConstParam::~NetEConstParam()
+{
+}
+
+const char* NetEConstParam::name() const
+{
+      return name_;
+}
+
+const NetScope* NetEConstParam::scope() const
+{
+      return scope_;
+}
+
 
 NetEMemory::NetEMemory(NetMemory*m, NetExpr*i)
 : NetExpr(m->width()), mem_(m), idx_(i)
@@ -2178,6 +2191,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.208  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.207  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *

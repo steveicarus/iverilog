@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.108 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.109 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1260,6 +1260,8 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
       NetNet*sig = des->find_signal(scope, path_);
 
       if (sig == 0) {
+	    NetScope*found_in;
+
 	      /* If the identifier is a memory instead of a signal,
 		 then handle it elsewhere. Create a RAM. */
 	    if (NetMemory*mem = des->find_memory(scope, path_))
@@ -1267,7 +1269,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 					    rise, fall, decay);
 
 
-	    if (const NetExpr*pe = des->find_parameter(scope, path_)) {
+	    if (const NetExpr*pe = des->find_parameter(scope, path_, found_in)) {
 
 		  const NetEConst*pc = dynamic_cast<const NetEConst*>(pe);
 		  assert(pc);
@@ -2277,6 +2279,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.109  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.108  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

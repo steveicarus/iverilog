@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.61 2003/01/26 21:15:59 steve Exp $"
+#ident "$Id: target.h,v 1.62 2003/03/10 23:40:54 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -131,6 +131,7 @@ struct target_t {
 struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
+      virtual void expr_param(const NetEConstParam*);
       virtual void expr_creal(const NetECReal*);
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_memory(const NetEMemory*);
@@ -167,6 +168,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.62  2003/03/10 23:40:54  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.61  2003/01/26 21:15:59  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

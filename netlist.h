@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.279 2003/03/06 00:28:42 steve Exp $"
+#ident "$Id: netlist.h,v 1.280 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 /*
@@ -1017,6 +1017,26 @@ class NetEConst  : public NetExpr {
 
     private:
       verinum value_;
+};
+
+class NetEConstParam  : public NetEConst {
+
+    public:
+      explicit NetEConstParam(NetScope*scope, const char*name,
+			      const verinum&val);
+      ~NetEConstParam();
+
+      const char* name() const;
+      const NetScope*scope() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+      virtual NetEConstParam* dup_expr() const;
+
+    private:
+      NetScope*scope_;
+      const char*name_;
 };
 
 /*
@@ -2317,7 +2337,7 @@ class NetEBinary  : public NetExpr {
       NetExpr* left_;
       NetExpr* right_;
 
-      virtual void eval_sub_tree_();
+      void eval_sub_tree_();
 };
 
 /*
@@ -3002,20 +3022,23 @@ class NetScope {
 
       map<hname_t,NetExpr*>defparams;
 
-    private:
-      TYPE type_;
-      const char* name_;
-
-      signed char time_unit_, time_prec_;
-
+    public:
+	/* After everything is all set up, the code generators like
+	   access to these things to make up the parameter lists. */
       struct param_expr_t {
 	    NetExpr*expr;
 	    NetExpr*msb;
 	    NetExpr*lsb;
 	    bool signed_flag;
       };
-      map<string,param_expr_t>parameters_;
-      map<string,param_expr_t>localparams_;
+      map<string,param_expr_t>parameters;
+      map<string,param_expr_t>localparams;
+
+    private:
+      TYPE type_;
+      const char* name_;
+
+      signed char time_unit_, time_prec_;
 
       NetEvent *events_;
       NetVariable*vars_;
@@ -3086,8 +3109,13 @@ class Design {
 
 	/* This method searches for a parameter, starting in the given
 	   scope. This method handles the upward searches that the
-	   NetScope class itself does not support. */
-      const NetExpr*find_parameter(const NetScope*, const hname_t&path) const;
+	   NetScope class itself does not support.
+
+	   The scope of the located expression is stored in the
+	   found_in argument. */
+      const NetExpr*find_parameter( NetScope*, const hname_t&path,
+				    NetScope*&found_in) const;
+      const NetExpr*find_parameter( const NetScope*, const hname_t&path) const;
 
       void run_defparams();
       void evaluate_parameters();
@@ -3207,6 +3235,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.280  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.279  2003/03/06 00:28:42  steve
  *  All NetObj objects have lex_string base names.
  *

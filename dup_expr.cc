@@ -17,13 +17,27 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.10 2003/01/26 21:15:58 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.11 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
 
 # include  "netlist.h"
 # include  <cassert>
+
+NetEConst* NetEConst::dup_expr() const
+{
+      NetEConst*tmp = new NetEConst(value_);
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetEConstParam* NetEConstParam::dup_expr() const
+{
+      NetEConstParam*tmp = new NetEConstParam(scope_, name_, value());
+      tmp->set_line(*this);
+      return tmp;
+}
 
 NetEScope* NetEScope::dup_expr() const
 {
@@ -95,6 +109,9 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.11  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.10  2003/01/26 21:15:58  steve
  *  Rework expression parsing and elaboration to
  *  accommodate real/realtime values and expressions.

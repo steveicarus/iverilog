@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.88 2003/03/06 01:17:46 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.89 2003/03/10 23:40:54 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1570,7 +1570,21 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       }
 
       fprintf(vvp_out, " .timescale %d;\n", ivl_scope_time_units(net));
-      
+
+      for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1) {
+	    ivl_parameter_t par = ivl_scope_param(net, idx);
+	    ivl_expr_t pex = ivl_parameter_expr(par);
+	    switch (ivl_expr_type(pex)) {
+		case IVL_EX_STRING:
+		  fprintf(vvp_out, "P_%p .param \"%s\", string, \"%s\";\n",
+			  par, ivl_parameter_basename(par),
+			  ivl_expr_string(pex));
+		  break;
+		default:
+		  break;
+	    }
+      }
+
 	/* Scan the scope for logic devices. For each device, draw out
 	   a functor that connects pin 0 to the output, and the
 	   remaining pins to inputs. */
@@ -1634,6 +1648,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.89  2003/03/10 23:40:54  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.88  2003/03/06 01:17:46  steve
  *  Use number for event labels.
  *

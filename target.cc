@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.cc,v 1.65 2003/01/30 16:23:08 steve Exp $"
+#ident "$Id: target.cc,v 1.66 2003/03/10 23:40:54 steve Exp $"
 #endif
 
 # include "config.h"
@@ -323,6 +323,11 @@ void expr_scan_t::expr_const(const NetEConst*)
 	    "unhandled expr_const." << endl;
 }
 
+void expr_scan_t::expr_param(const NetEConstParam*that)
+{
+      expr_const(that);
+}
+
 void expr_scan_t::expr_creal(const NetECReal*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
@@ -403,6 +408,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.66  2003/03/10 23:40:54  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.65  2003/01/30 16:23:08  steve
  *  Spelling fixes.
  *

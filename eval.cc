@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.32 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: eval.cc,v 1.33 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -136,6 +136,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
  */
 verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
 {
+      NetScope*found_in;
       assert(scope);
       const NetExpr*expr = des->find_parameter(scope, path_);
 
@@ -226,6 +227,9 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.33  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.32  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.

@@ -17,10 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.47 2003/02/07 02:47:58 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.48 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
+# include "compiler.h"
 
 # include  <iostream>
 
@@ -912,13 +913,22 @@ NetExpr* NetEParam::eval_tree()
 
 	// If the parameter that I refer to is already evaluated, then
 	// return the constant value.
-      if (dynamic_cast<NetEConst*>(nexpr))
-	    return nexpr;
+      if (NetEConst*tmp = dynamic_cast<NetEConst*>(nexpr)) {
+	    verinum val = tmp->value();
+	    const char*name = lex_strings.add(name_.peek_name(0));
+	    NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
+	    ptmp->set_line(*this);
+	    delete nexpr;
+	    return ptmp;
+      }
 
 	// Try to evaluate the expression. If I cannot, then the
 	// expression is not a constant expression and I fail here.
       NetExpr*res = nexpr->eval_tree();
       if (res == 0) {
+	    cerr << get_line() << ": internal error: Unable to evaluate "
+		 << " parameter " << name_ << " expression:"
+		 << *nexpr << endl;
 	    delete nexpr;
 	    return 0;
       }
@@ -926,7 +936,15 @@ NetExpr* NetEParam::eval_tree()
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
       scope_->replace_parameter(name_.peek_name(0), res);
-      return res->dup_expr();
+
+      NetEConst*tmp = dynamic_cast<NetEConst*>(res);
+      assert(tmp);
+
+      verinum val = tmp->value();
+      const char*name = lex_strings.add(name_.peek_name(0));
+      NetEConstParam*ptmp = new NetEConstParam(scope_, name, val);
+
+      return ptmp;
 }
 
 NetEConst* NetESelect::eval_tree()
@@ -1222,6 +1240,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.48  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.47  2003/02/07 02:47:58  steve
  *  NetEBDiv handles real value constant expressions.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.34 2003/03/01 06:25:30 steve Exp $"
+#ident "$Id: t-dll-expr.cc,v 1.35 2003/03/10 23:40:53 steve Exp $"
 #endif
 
 # include "config.h"
@@ -274,6 +274,21 @@ void dll_target::expr_const(const NetEConst*net)
 		  }
 
       }
+}
+
+void dll_target::expr_param(const NetEConstParam*net)
+{
+      ivl_scope_t scope = find_scope(des_, net->scope());
+      ivl_parameter_t par = scope_find_param(scope, net->name());
+
+      if (par == 0) {
+	    cerr << net->get_line() << ": internal error: "
+		 << "Parameter " << net->name() << " missing from "
+		 << ivl_scope_name(scope) << endl;
+      }
+      assert(par);
+      assert(par->value);
+      expr_ = par->value;
 }
 
 void dll_target::expr_creal(const NetECReal*net)
@@ -564,6 +579,9 @@ void dll_target::expr_variable(const NetEVariable*net)
 
 /*
  * $Log: t-dll-expr.cc,v $
+ * Revision 1.35  2003/03/10 23:40:53  steve
+ *  Keep parameter constants for the ivl_target API.
+ *
  * Revision 1.34  2003/03/01 06:25:30  steve
  *  Add the lex_strings string handler, and put
  *  scope names and system task/function names
