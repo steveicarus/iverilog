@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: sys_vcd.c,v 1.5 2000/01/23 23:54:36 steve Exp $"
+#ident "$Id: sys_vcd.c,v 1.6 2000/02/17 06:04:30 steve Exp $"
 #endif
 
 /*
@@ -146,12 +146,11 @@ static int sys_dumpfile_calltf(char*name)
       return 0;
 }
 
-static void scan_scope(unsigned depth, vpiHandle argv)
+static unsigned scan_scope(unsigned depth, vpiHandle argv, unsigned nident)
 {
       struct t_cb_data cb;
       struct vcd_info*info;
       char ident[64];
-      unsigned nident = 0;
 
       vpiHandle item;
       vpiHandle sublist;
@@ -188,7 +187,7 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 		case vpiModule:
 		  sublist = vpi_iterate(vpiInternalScope, item);
 		  if (sublist && (depth > 0))
-			scan_scope(depth-1, sublist);
+			nident = scan_scope(depth-1, sublist, nident);
 		  break;
 
 		default:
@@ -196,6 +195,8 @@ static void scan_scope(unsigned depth, vpiHandle argv)
 	    }
 
       }
+
+      return nident;
 }
 
 static int sys_dumpvars_calltf(char*name)
@@ -214,7 +215,7 @@ static int sys_dumpvars_calltf(char*name)
 
       assert(dump_file);
 
-      scan_scope(99, argv);
+      scan_scope(99, argv, 0);
 
       fprintf(dump_file, "$enddefinitions $end\n");
 
@@ -257,6 +258,9 @@ void sys_vcd_register()
 
 /*
  * $Log: sys_vcd.c,v $
+ * Revision 1.6  2000/02/17 06:04:30  steve
+ *  Fix overlap of identifiers when multiple modules used.
+ *
  * Revision 1.5  2000/01/23 23:54:36  steve
  *  Compile time problems with vpi_user.h
  *
