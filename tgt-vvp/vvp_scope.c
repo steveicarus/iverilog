@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.77 2002/08/12 01:35:04 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.78 2002/09/17 05:37:45 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -330,6 +330,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
       lpm = ivl_nexus_ptr_lpm(nptr);
       if (lpm) switch (ivl_lpm_type(lpm)) {
 
+	  case IVL_LPM_FF:
 	  case IVL_LPM_MUX:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
 		  if (ivl_lpm_q(lpm, idx) == nex) {
@@ -1264,6 +1265,46 @@ static void draw_lpm_eq(ivl_lpm_t net)
       }
 }
 
+static void draw_lpm_ff(ivl_lpm_t net)
+{
+      unsigned width, idx;
+
+      width = ivl_lpm_width(net);
+
+      fprintf(vvp_out, "L_%s/def .udp/sequ \"DFF\", 3, 2,"
+	      " \"?r100\","
+	      " \"?r111\","
+	      " \"?f1?-\","
+	      " \"?\?1?-\","
+	      " \"?*0\?-\";\n", vvp_mangle_id(ivl_lpm_name(net)));
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t tmp;
+
+	    fprintf(vvp_out, "L_%s/%u .udp ",
+		    vvp_mangle_id(ivl_lpm_name(net)), idx);
+
+	    fprintf(vvp_out, "L_%s/def, ", vvp_mangle_id(ivl_lpm_name(net)));
+
+	    tmp = ivl_lpm_clk(net);
+	    draw_input_from_net(tmp);
+
+	    tmp = ivl_lpm_enable(net);
+	    fprintf(vvp_out, ", ");
+	    if (tmp)
+		  draw_input_from_net(tmp);
+	    else
+		  fprintf(vvp_out, "C<1>");
+
+	    tmp = ivl_lpm_data(net, idx);
+	    assert(tmp);
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(tmp);
+
+	    fprintf(vvp_out, ";\n");
+      }
+}
+
 static void draw_lpm_shiftl(ivl_lpm_t net)
 {
       unsigned idx, width, selects;
@@ -1371,6 +1412,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	  case IVL_LPM_CMP_EQ:
 	  case IVL_LPM_CMP_NE:
 	    draw_lpm_eq(net);
+	    return;
+
+	  case IVL_LPM_FF:
+	    draw_lpm_ff(net);
 	    return;
 
 	  case IVL_LPM_CMP_GE:
@@ -1488,6 +1533,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.78  2002/09/17 05:37:45  steve
+ *  Generate vvp code for structural flip-flops.
+ *
  * Revision 1.77  2002/08/12 01:35:04  steve
  *  conditional ident string using autoconfig.
  *
