@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_convert.c,v 1.4 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_convert.c,v 1.5 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include  "vpi_config.h"
@@ -247,40 +247,43 @@ void sys_convert_register()
       s_vpi_systf_data tf_data;
 
       tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$bitstoreal";
+      tf_data.user_data = "$bitstoreal";
+      tf_data.tfname    = tf_data.user_data;
       tf_data.sizetf    = sizetf_64;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_bitstoreal_calltf;
-      tf_data.user_data = tf_data.tfname;
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$itor";
+      tf_data.user_data = "$itor";
+      tf_data.tfname    = tf_data.user_data;
       tf_data.sizetf    = sizetf_64;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_itor_calltf;
-      tf_data.user_data = tf_data.tfname;
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$realtobits";
+      tf_data.user_data = "$realtobits";
+      tf_data.tfname    = tf_data.user_data;
       tf_data.sizetf    = sizetf_64;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_realtobits_calltf;
-      tf_data.user_data = tf_data.tfname;
       vpi_register_systf(&tf_data);
 
       tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$rtoi";
+      tf_data.user_data = "$rtoi";
+      tf_data.tfname    = tf_data.user_data;
       tf_data.sizetf    = sizetf_32;
       tf_data.compiletf = sys_convert_compiletf;
       tf_data.calltf    = sys_rtoi_calltf;
-      tf_data.user_data = tf_data.tfname;
       vpi_register_systf(&tf_data);
 }
 
 /*
  * $Log: sys_convert.c,v $
+ * Revision 1.5  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.4  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

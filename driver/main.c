@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.62 2003/12/12 04:36:48 steve Exp $"
+#ident "$Id: main.c,v 1.63 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -89,6 +89,7 @@ extern const char*optarg;
 #endif
 
 # include  "globals.h"
+#include "cfparse_misc.h"   /* cfparse() */
 
 #ifdef __MINGW32__
 const char sep = '\\';
@@ -213,7 +214,9 @@ static const char*my_tempfile(const char*str, FILE**fout)
 static int t_default(char*cmd, unsigned ncmd)
 {
       unsigned rc;
+#ifdef __MINGW32__
       unsigned ncmd_start = ncmd;
+#endif
 
       snprintf(tmp, sizeof tmp, " | %s/ivl", base);
       rc = strlen(tmp);
@@ -711,6 +714,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.63  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.62  2003/12/12 04:36:48  steve
  *  Fix make check to support -tconf configuration method.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.c,v 1.11 2004/02/10 16:39:33 steve Exp $"
+#ident "$Id: xilinx.c,v 1.12 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include  "edif.h"
@@ -546,9 +546,9 @@ static void edif_cellref_logic(ivl_net_logic_t net, const char*def)
 static void lut_logic(ivl_net_logic_t net, const char*init3,
 		      const char*init4, const char*init5)
 {
-      edif_cellref_t lut;
+      edif_cellref_t lut = NULL;  /* initialization shuts up gcc -Wall */
       edif_joint_t jnt;
-      const char* init;
+      const char* init = NULL;    /* ditto */
 
       assert(ivl_logic_pins(net) <= 5);
       assert(ivl_logic_pins(net) >= 3);
@@ -951,6 +951,9 @@ void xilinx_shiftl(ivl_lpm_t net)
 
 /*
  * $Log: xilinx.c,v $
+ * Revision 1.12  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.11  2004/02/10 16:39:33  steve
  *  Fix direction of Q/D signals of FD devices.
  *

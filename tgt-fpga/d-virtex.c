@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.33 2003/11/12 03:20:14 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.34 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -80,7 +80,7 @@ static void virtex_or_wide(ivl_net_logic_t net)
       edif_cell_t cell_lut4 = xilinx_cell_lut4(xlib);
 
       edif_cellref_t true_out, false_out;
-      edif_cellref_t lut, muxcy, muxcy_down;
+      edif_cellref_t lut, muxcy, muxcy_down=NULL;
       edif_joint_t jnt;
 
       unsigned idx, inputs, lut4_cnt;
@@ -846,6 +846,9 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.34  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.33  2003/11/12 03:20:14  steve
  *  devices need show_cmp_gt
  *

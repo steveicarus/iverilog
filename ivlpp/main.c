@@ -17,7 +17,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.17 2003/09/26 02:08:31 steve Exp $"
+#ident "$Id: main.c,v 1.18 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,6 +47,7 @@ const char VERSION[] = "$Name:  $ $State: Exp $";
 #endif
 # include  <unistd.h>
 # include  <string.h>
+# include  <ctype.h>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
@@ -288,6 +289,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.c,v $
+ * Revision 1.18  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.17  2003/09/26 02:08:31  steve
  *  Detect missing endif markers.
  *

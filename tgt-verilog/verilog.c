@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verilog.c,v 1.27 2002/08/12 01:35:03 steve Exp $"
+#ident "$Id: verilog.c,v 1.28 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -78,8 +78,8 @@ static void draw_scoped_objects(ivl_design_t des)
  */
 static void draw_nexus(ivl_nexus_t nex)
 {
-      ivl_signal_t sig;
-      ivl_nexus_ptr_t ptr;
+      ivl_signal_t sig=NULL;
+      ivl_nexus_ptr_t ptr=NULL;
       unsigned idx;
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -236,10 +236,10 @@ static void show_assign_lval(ivl_lval_t lval)
 {
       ivl_nexus_t nex;
       ivl_nexus_ptr_t ptr;
-      ivl_signal_t sig;
+      ivl_signal_t sig=NULL;
 
       unsigned idx;
-      unsigned lsb;
+      unsigned lsb=0;
 
       assert(ivl_lval_mux(lval) == 0);
       assert(ivl_lval_mem(lval) == 0);
@@ -439,6 +439,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: verilog.c,v $
+ * Revision 1.28  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.27  2002/08/12 01:35:03  steve
  *  conditional ident string using autoconfig.
  *

@@ -20,7 +20,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: cfparse_misc.h,v 1.5 2003/09/26 21:25:58 steve Exp $"
+#ident "$Id: cfparse_misc.h,v 1.6 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 /*
@@ -38,10 +38,15 @@ struct cfltype {
 # define YYLTYPE struct cfltype
 extern YYLTYPE yylloc;
 
+int cflex(void);
+int cferror(const char *);
 int cfparse(void);
 
 /*
  * $Log: cfparse_misc.h,v $
+ * Revision 1.6  2004/02/15 18:03:30  steve
+ *  Cleanup of warnings.
+ *
  * Revision 1.5  2003/09/26 21:25:58  steve
  *  Warnings cleanup.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.42 2003/09/26 02:08:31 steve Exp $"
+#ident "$Id: lexor.lex,v 1.43 2004/02/15 18:03:30 steve Exp $"
 #endif
 
 # include "config.h"
@@ -30,6 +30,7 @@
 #endif
 # include  <stdlib.h>
 # include  <string.h>
+# include  <ctype.h>
 # include  <assert.h>
 
 # include  "parse.h"
