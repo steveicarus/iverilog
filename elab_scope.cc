@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.20 2003/03/06 00:28:41 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.21 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -67,6 +67,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 		 ; cur != parameters.end() ;  cur ++) {
 
 	    NetEParam*tmp = new NetEParam;
+	    tmp->set_line(*((*cur).second.expr));
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
@@ -77,6 +78,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 		 ; cur != localparams.end() ;  cur ++) {
 
 	    NetEParam*tmp = new NetEParam;
+	    tmp->set_line(*((*cur).second.expr));
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
@@ -513,6 +515,11 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.21  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.20  2003/03/06 00:28:41  steve
  *  All NetObj objects have lex_string base names.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.139 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.140 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -915,6 +915,13 @@ void NetECReal::dump(ostream&o) const
       o << value_;
 }
 
+void NetECRealParam::dump(ostream&o) const
+{
+      o << "<" << name_ << "=";
+      NetECReal::dump(o);
+      o << ">";
+}
+
 void NetEEvent::dump(ostream&o) const
 {
       o << "<event=" << event_->name() << ">";
@@ -1033,6 +1040,11 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.140  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.139  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

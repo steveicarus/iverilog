@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.14 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: dup_expr.cc,v 1.15 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -42,6 +42,13 @@ NetEConst* NetEConst::dup_expr() const
 NetEConstParam* NetEConstParam::dup_expr() const
 {
       NetEConstParam*tmp = new NetEConstParam(scope_, name_, value());
+      tmp->set_line(*this);
+      return tmp;
+}
+
+NetECRealParam* NetECRealParam::dup_expr() const
+{
+      NetECRealParam*tmp = new NetECRealParam(scope_, name_, value());
       tmp->set_line(*this);
       return tmp;
 }
@@ -122,6 +129,11 @@ NetEVariable* NetEVariable::dup_expr() const
 
 /*
  * $Log: dup_expr.cc,v $
+ * Revision 1.15  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.14  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.51 2003/04/15 05:06:56 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.52 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -622,27 +622,39 @@ NetExpr* NetEBDiv::eval_tree()
 	    verireal lval = lc->value();
 
 	    if (NetECReal*rc = dynamic_cast<NetECReal*>(right_)) {
+		  NetECReal*tmp = 0;
 		  verireal rval = rc->value();
 
 		  switch (op_) {
 		      case '/':
-			return new NetECReal(lval / rval);
+			tmp = new NetECReal(lval / rval);
+			break;
 
 		      case '%':
-			return new NetECReal(lval % rval);
+			tmp = new NetECReal(lval % rval);
 		  }
+
+		  assert(tmp);
+		  tmp->set_line(*this);
+		  return tmp;
 
 	    } else if (NetEConst*rc = dynamic_cast<NetEConst*>(right_)) {
 
+		  NetECReal*tmp = 0;
 		  verinum rval = rc->value();
 
 		  switch (op_) {
 		      case '/':
-			return new NetECReal(lval / rval);
+			tmp = new NetECReal(lval / rval);
+			break;
 
 		      case '%':
-			return new NetECReal(lval % rval);
+			tmp = new NetECReal(lval % rval);
 		  }
+
+		  assert(tmp);
+		  tmp->set_line(*this);
+		  return tmp;
 
 	    }
 
@@ -735,9 +747,65 @@ NetEConst* NetEBLogic::eval_tree()
       return new NetEConst(verinum(res, 1));
 }
 
-NetEConst* NetEBMult::eval_tree()
+NetExpr* NetEBMult::eval_tree_real_()
+{
+      verireal lval;
+      verireal rval;
+
+      switch (left_->expr_type()) {
+	  case ET_REAL: {
+		NetECReal*lc = dynamic_cast<NetECReal*> (left_);
+		if (lc == 0) return 0;
+		lval = lc->value();
+		break;
+	  }
+
+	  case ET_VECTOR: {
+		NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+		if (lc == 0) return 0;
+		verinum tmp = lc->value();
+		lval = verireal(tmp.as_long());
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+      switch (right_->expr_type()) {
+	  case ET_REAL: {
+		NetECReal*rc = dynamic_cast<NetECReal*> (right_);
+		if (rc == 0) return 0;
+		rval = rc->value();
+		break;
+	  }
+
+	  case ET_VECTOR: {
+		NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+		if (rc == 0) return 0;
+		verinum tmp = rc->value();
+		rval = verireal(tmp.as_long());
+		break;
+	  }
+
+	  default:
+	    assert(0);
+      }
+
+
+      NetECReal*res = new NetECReal(lval * rval);
+      res->set_line(*this);
+      return res;
+}
+
+NetExpr* NetEBMult::eval_tree()
 {
       eval_sub_tree_();
+
+      if (expr_type() == ET_REAL)
+	    return eval_tree_real_();
+
+      assert(expr_type() == ET_VECTOR);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
       if (lc == 0) return 0;
@@ -997,12 +1065,21 @@ NetExpr* NetEParam::eval_tree()
 	    return ptmp;
       }
 
+      if (NetECReal*tmp = dynamic_cast<NetECReal*>(nexpr)) {
+	    verireal val = tmp->value();
+	    const char*name = lex_strings.add(name_.peek_name(0));
+	    NetECRealParam*ptmp = new NetECRealParam(scope_, name, val);
+	    ptmp->set_line(*this);
+	    delete nexpr;
+	    return ptmp;
+      }
+
 	// Try to evaluate the expression. If I cannot, then the
 	// expression is not a constant expression and I fail here.
       NetExpr*res = nexpr->eval_tree();
       if (res == 0) {
 	    cerr << get_line() << ": internal error: Unable to evaluate "
-		 << " parameter " << name_ << " expression:"
+		 << "parameter " << name_ << " expression: "
 		 << *nexpr << endl;
 	    delete nexpr;
 	    return 0;
@@ -1315,6 +1392,11 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.52  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.51  2003/04/15 05:06:56  steve
  *  Handle real constants evaluation > and >=.
  *

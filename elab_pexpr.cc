@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.19 2003/01/27 05:09:17 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.20 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -146,6 +146,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
       }
 
       NetExpr*res = new NetEParam(des, pscope, hname_t(name));
+      res->set_line(*this);
       assert(res);
       delete name;
 
@@ -228,6 +229,11 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.20  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.19  2003/01/27 05:09:17  steve
  *  Spelling fixes.
  *

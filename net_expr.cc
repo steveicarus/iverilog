@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.17 2003/05/20 15:05:33 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.18 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -345,6 +345,26 @@ NetExpr::TYPE NetECReal::expr_type() const
       return ET_REAL;
 }
 
+NetECRealParam::NetECRealParam(NetScope*s, const char*n, const verireal&v)
+: NetECReal(v), scope_(s), name_(n)
+{
+}
+
+NetECRealParam::~NetECRealParam()
+{
+}
+
+const char* NetECRealParam::name() const
+{
+      return name_;
+}
+
+const NetScope* NetECRealParam::scope() const
+{
+      return scope_;
+}
+
+
 NetEParam::NetEParam()
 : des_(0), scope_(0)
 {
@@ -366,7 +386,9 @@ bool NetEParam::has_width() const
 
 NetEParam* NetEParam::dup_expr() const
 {
-      return new NetEParam(des_, scope_, name_);
+      NetEParam*tmp = new NetEParam(des_, scope_, name_);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid)
@@ -462,6 +484,11 @@ NetExpr::TYPE NetESFunc::expr_type() const
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.18  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.17  2003/05/20 15:05:33  steve
  *  Do not try to set constants to width 0.
  *

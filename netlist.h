@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.287 2003/05/01 01:13:57 steve Exp $"
+#ident "$Id: netlist.h,v 1.288 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 /*
@@ -1082,6 +1082,26 @@ class NetECReal  : public NetExpr {
 
     private:
       verireal value_;
+};
+
+class NetECRealParam  : public NetECReal {
+
+    public:
+      explicit NetECRealParam(NetScope*scope, const char*name,
+			      const verireal&val);
+      ~NetECRealParam();
+
+      const char* name() const;
+      const NetScope*scope() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+      virtual NetECRealParam* dup_expr() const;
+
+    private:
+      NetScope*scope_;
+      const char*name_;
 };
 
 /*
@@ -2499,9 +2519,12 @@ class NetEBMult : public NetEBinary {
 
       virtual bool set_width(unsigned w);
       virtual NetEBMult* dup_expr() const;
-      virtual NetEConst* eval_tree();
+      virtual NetExpr* eval_tree();
 
     private:
+
+      NetExpr* eval_tree_real_();
+
 };
 
 
@@ -3280,6 +3303,11 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.288  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.287  2003/05/01 01:13:57  steve
  *  More complete bit range internal error message,
  *  Better test of part select ranges on non-zero

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: emit.cc,v 1.73 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: emit.cc,v 1.74 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -424,6 +424,11 @@ void NetECReal::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_creal(this);
 }
 
+void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_rparam(this);
+}
+
 void NetEMemory::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_memory(this);
@@ -502,6 +507,11 @@ bool emit(const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.74  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.73  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

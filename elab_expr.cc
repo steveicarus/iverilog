@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_expr.cc,v 1.76 2003/04/22 04:48:29 steve Exp $"
+#ident "$Id: elab_expr.cc,v 1.77 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include "config.h"
@@ -469,7 +469,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    NetExpr*tmp;
 
 	    assert(ex);
-	    tmp = ex? ex->dup_expr() : new NetEParam(des, scope, path_);
+	    tmp = ex->dup_expr();
 
 	    if (msb_ && lsb_) {
 		    /* If the parameter has a part select, we support
@@ -961,6 +961,11 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope, bool) const
 
 /*
  * $Log: elab_expr.cc,v $
+ * Revision 1.77  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.76  2003/04/22 04:48:29  steve
  *  Support event names as expressions elements.
  *

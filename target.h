@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.63 2003/04/22 04:48:30 steve Exp $"
+#ident "$Id: target.h,v 1.64 2003/05/30 02:55:32 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -132,6 +132,7 @@ struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_const(const NetEConst*);
       virtual void expr_param(const NetEConstParam*);
+      virtual void expr_rparam(const NetECRealParam*);
       virtual void expr_creal(const NetECReal*);
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_memory(const NetEMemory*);
@@ -169,6 +170,11 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.64  2003/05/30 02:55:32  steve
+ *  Support parameters in real expressions and
+ *  as real expressions, and fix multiply and
+ *  divide with real results.
+ *
  * Revision 1.63  2003/04/22 04:48:30  steve
  *  Support event names as expressions elements.
  *
