@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_table.c,v 1.24 2004/01/21 01:22:53 steve Exp $"
+#ident "$Id: sys_table.c,v 1.25 2004/06/09 22:14:10 steve Exp $"
 #endif
 
 # include "vpi_config.h"
@@ -33,6 +33,7 @@ extern void sys_deposit_register();
 extern void sys_display_register();
 extern void sys_plusargs_register();
 extern void sys_random_register();
+extern void sys_random_mti_register();
 extern void sys_readmem_register();
 extern void sys_time_register();
 extern void sys_vcd_register();
@@ -147,6 +148,7 @@ void (*vlog_startup_routines[])() = {
       sys_display_register,
       sys_plusargs_register,
       sys_random_register,
+      sys_random_mti_register,
       sys_readmem_register,
       sys_time_register,
       sys_lxt_or_vcd_register,
@@ -156,6 +158,10 @@ void (*vlog_startup_routines[])() = {
 
 /*
  * $Log: sys_table.c,v $
+ * Revision 1.25  2004/06/09 22:14:10  steve
+ *  Move Mersenne Twister to $mti_random, and make
+ *  the standard $random standard. Also, add $dist_poisson.
+ *
  * Revision 1.24  2004/01/21 01:22:53  steve
  *  Give the vip directory its own configure and vpi_config.h
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.10 2004/03/15 18:35:37 steve Exp $"
+#ident "$Id: sys_random.c,v 1.11 2004/06/09 22:14:10 steve Exp $"
 #endif
 
 # include "sys_priv.h"
@@ -28,19 +28,205 @@
 # include  <math.h>
 # include  <limits.h>
 
-static long rtl_dist_uniform(long*seed, long start, long end)
-{
-      if (start >= end)
-	    return start;
+#if ULONG_MAX > 4294967295UL
+# define UNIFORM_MAX INT_MAX
+# define UNIFORM_MIN INT_MIN
+#else
+# define UNIFORM_MAX LONG_MAX
+# define UNIFORM_MIN LONG_MIN
+#endif
 
-      if ((start > LONG_MIN) || (end < LONG_MAX)) {
-	    long range = end - start;
-	    return start + random()%range;
+static double uniform(long *seed, long start, long end);
+static long poisson(long *seed, long mean);
+
+long rtl_dist_poisson(long*seed, long mean)
+{
+      long i;
+
+      if (mean > 0) {
+	    i = poisson(seed,mean);
+
       } else {
-	    return random();
+	    vpi_printf("WARNING: Poisson distribution must have "
+		       "a positive mean\n");
+	    i = 0;
       }
+
+      return 0;
 }
 
+/* copied from IEEE1364-2001, with slight midifications for 64bit machines. */
+long rtl_dist_uniform(long*seed, long start, long end)
+{
+	double r;
+	long i;
+
+	if (start >= end) return(start);
+
+	if (end != UNIFORM_MAX)
+	{
+		end++;
+		r = uniform( seed, start, end );
+		if (r >= 0)
+		{
+			i = (long) r;
+		}
+		else
+		{
+			i = (long) (r-1);
+		}
+		if (i<start) i = start;
+		if (i>=end) i = end-1;
+	}
+	else if (start!=UNIFORM_MIN)
+	{
+		start--;
+		r = uniform( seed, start, end) + 1.0;
+		if (r>=0)
+		{
+			i = (long) r;
+		}
+		else
+		{
+			i = (long) (r-1);
+		}
+		if (i<=start) i = start+1;
+		if (i>end) i = end;
+	}
+	else
+	{
+		r = (uniform(seed,start,end)+2147483648.0)/4294967295.0;
+		r = r*4294967296.0-2147483648.0;
+		if (r>=0)
+		{
+			i = (long) r;
+		}
+		else
+		{
+			i = (long) (r-1);
+		}
+	}
+
+	return (i);
+}
+
+static double uniform(long *seed, long start, long end )
+{
+	double d = 0.00000011920928955078125;
+	double a, b, c;
+	unsigned long oldseed, newseed;
+
+	oldseed = *seed;
+	if (oldseed == 0)
+	      oldseed = 259341593;
+
+	if (start >= end) {
+	      a = 0.0;
+	      b = 2147483647.0;
+	} else {
+	      a = (double)start;
+	      b = (double)end;
+	}
+
+	/* Original routine used signed arithmetic, and the (frequent)
+	 * overflows trigger "Undefined Behavior" according to the
+	 * C standard (both c89 and c99).  Using unsigned arithmetic
+	 * forces a conforming C implementation to get the result
+	 * that the IEEE-1364-2001 committee wants.
+	 */
+	newseed = 69069 * oldseed + 1;
+
+	/* Emulate a 32-bit unsigned long, even if the native machine
+	 * uses wider words.
+	 */
+#if ULONG_MAX > 4294967295UL
+	newseed = newseed & 4294967295UL;
+#endif
+	*seed = newseed;
+
+
+#if 0
+	/* Cadence-donated conversion from unsigned int to double */
+	{
+		union { float s; unsigned stemp; } u;
+		u.stemp = (newseed >> 9) | 0x3f800000;
+		c = (double) u.s;
+	}
+#else
+	/* Equivalent conversion without assuming IEEE 32-bit float */
+	/* constant is 2^(-23) */
+	c = 1.0 + (newseed >> 9) * 0.00000011920928955078125;
+#endif
+
+
+	c = c + (c*d);
+	c = ((b - a) * c - 1.0) + a;
+
+	return c;
+}
+
+/* copied from IEEE1364-2001, with slight midifications for 64bit machines. */
+static long poisson(long*seed, long mean)
+{
+      long n;
+      double p, q;
+
+      n = 0;
+      q = -(double)mean;
+      p = exp(q);
+      q = uniform(seed, 0, 1);
+      while (p < q) {
+	    n++;
+	    q = uniform(seed,0,1) * q;
+      }
+
+      return n;
+}
+
+static int sys_dist_poisson_calltf(char*name)
+{
+      s_vpi_value val;
+      vpiHandle call_handle;
+      vpiHandle argv;
+      vpiHandle seed, mean;
+
+      long i_seed, i_mean;
+
+      call_handle = vpi_handle(vpiSysTfCall, 0);
+      assert(call_handle);
+
+	/* The presence of correct parameters should be checked at
+	   compile time by the compiletf function. */
+      argv = vpi_iterate(vpiArgument, call_handle);
+      assert(argv);
+      seed = vpi_scan(argv);
+      assert(seed);
+      mean = vpi_scan(argv);
+      assert(mean);
+      vpi_free_object(argv);
+
+      val.format = vpiIntVal;
+      vpi_get_value(seed, &val);
+      i_seed = val.value.integer;
+
+      vpi_get_value(mean, &val);
+      i_mean = val.value.integer;
+
+      val.format = vpiIntVal;
+      val.value.integer = rtl_dist_poisson(&i_seed, i_mean);
+      vpi_put_value(call_handle, &val, 0, vpiNoDelay);
+
+      val.format = vpiIntVal;
+      val.value.integer = i_seed;
+      vpi_put_value(seed, &val, 0, vpiNoDelay);
+
+      return 0;
+}
+
+static int sys_dist_poisson_sizetf(char*x)
+{
+      return 32;
+}
 
 static int sys_dist_uniform_calltf(char*name)
 {
@@ -96,33 +282,13 @@ static int sys_dist_uniform_sizetf(char*x)
       return 32;
 }
 
-/*
- * Implement the $random system function using the ``Mersenne
- * Twister'' random number generator MT19937.
- */
-
-/* make sure this matches N+1 in mti19937int.c */
-#define NP1	624+1
-
-/* Icarus seed cookie */
-#define COOKIE	0x1ca1ca1c
-
-static struct context_s global_context = {
-#if defined(__GCC__)
-    .mti =
-#else
-    // For MSVC simply use the fact that mti is located first
-#endif
-        NP1 };
-
 static int sys_random_calltf(char*name)
 {
       s_vpi_value val;
       vpiHandle call_handle;
       vpiHandle argv;
       vpiHandle seed = 0;
-      int i_seed = 0;
-      struct context_s *context;
+      long i_seed = 0;
 
       call_handle = vpi_handle(vpiSysTfCall, 0);
       assert(call_handle);
@@ -137,37 +303,17 @@ static int sys_random_calltf(char*name)
 	    val.format = vpiIntVal;
 	    vpi_get_value(seed, &val);
 	    i_seed = val.value.integer;
-
-	      /* Since there is a seed use the current 
-	         context or create a new one */
-	    context = (struct context_s *)vpi_get_userdata(call_handle);
-	    if (!context) {
-		  context = (struct context_s *)calloc(1, sizeof(*context));
-		  context->mti = NP1;
-		  assert(context);
-
-		    /* squrrel away context */
-		  vpi_put_userdata(call_handle, (void *)context);
-	    }
-
-	      /* If the argument is not the Icarus cookie, then
-		 reseed context */
-	    if (i_seed != COOKIE)
-	          sgenrand(context, i_seed);
-      } else {
-	    /* use global context */
-          context = &global_context;
       }
 
       val.format = vpiIntVal;
-      val.value.integer = genrand(context);
+      val.value.integer = rtl_dist_uniform(&i_seed, INT_MIN, INT_MAX);
 
       vpi_put_value(call_handle, &val, 0, vpiNoDelay);
 
-        /* mark seed with cookie */
-      if (seed && i_seed != COOKIE) {
+        /* Send updated seed back to seed parameter. */
+      if (seed) {
 	    val.format = vpiIntVal;
-	    val.value.integer = COOKIE;		
+	    val.value.integer = i_seed;		
 	    vpi_put_value(seed, &val, 0, vpiNoDelay);
       }
 
@@ -192,6 +338,13 @@ void sys_random_register()
       vpi_register_systf(&tf_data);
 
       tf_data.type   = vpiSysFunc;
+      tf_data.tfname = "$dist_poisson";
+      tf_data.calltf = sys_dist_poisson_calltf;
+      tf_data.compiletf = 0;
+      tf_data.sizetf = sys_dist_poisson_sizetf;
+      tf_data.user_data = "$dist_poisson";
+
+      tf_data.type   = vpiSysFunc;
       tf_data.tfname = "$dist_uniform";
       tf_data.calltf = sys_dist_uniform_calltf;
       tf_data.compiletf = 0;
@@ -202,38 +355,9 @@ void sys_random_register()
 
 /*
  * $Log: sys_random.c,v $
- * Revision 1.10  2004/03/15 18:35:37  steve
- *  Assume struct initializers are GCC specific.
- *
- * Revision 1.9  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.8  2003/11/10 20:15:33  steve
- *  Simply MSVC compatibility patch.
- *
- * Revision 1.7  2003/05/15 00:38:29  steve
- *  Eliminate some redundant vpi_put_values.
- *
- * Revision 1.6  2003/05/14 04:18:16  steve
- *  Use seed to store random number context.
- *
- * Revision 1.5  2002/08/12 01:35:05  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.3  2001/02/16 00:26:38  steve
- *  Use Mersenne Twister 19937 pseudo-random number generator
- *  for the $random system task, and support the seed paramter.
- *
- * Revision 1.2  2000/07/08 22:41:07  steve
- *  Add the dist_uniform function.
- *
- * Revision 1.1  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
+ * Revision 1.11  2004/06/09 22:14:10  steve
+ *  Move Mersenne Twister to $mti_random, and make
+ *  the standard $random standard. Also, add $dist_poisson.
  *
  */
 

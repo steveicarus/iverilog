@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.54 2004/03/11 06:06:59 steve Exp $"
+#ident "$Id: Makefile.in,v 1.55 2004/06/09 22:14:10 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -64,7 +64,8 @@ dep:
 	mv $*.d dep
 
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
-sys_finish.o sys_plusargs.o sys_random.o sys_readmem.o sys_readmem_lex.o \
+sys_finish.o sys_plusargs.o sys_random.o sys_random_mti.o \
+sys_readmem.o sys_readmem_lex.o \
 sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o priv.o stringheap.o
 
 ifeq (@HAVE_LIBZ@,yes)

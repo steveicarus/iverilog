@@ -387,6 +387,14 @@ language that are defined.
 	general possible to predict what the simulation precision will
 	turn out to be.
 
+    $mti_random()
+    $mti_dist_uniform
+	These functions are similar to the IEEE1364 standard $random
+	functions, but they use the Mersenne Twister (MT19937)
+	algorithm. This is considered an excellent random number
+	generator, but does not generate the same sequence as the
+	standardized $random.
+
     Builtin system functions
 
 	Certain of the system functions have well defined meanings, so
