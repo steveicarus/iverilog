@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.39 2001/07/19 04:55:06 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.40 2001/07/28 01:18:07 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -649,11 +649,22 @@ static int show_system_task_call(ivl_statement_t net)
 	    switch (ivl_expr_type(expr)) {
 		case IVL_EX_NONE:
 		case IVL_EX_NUMBER:
-		case IVL_EX_SIGNAL:
 		case IVL_EX_STRING:
 		case IVL_EX_SCOPE:
 		case IVL_EX_SFUNC:
 		  continue;
+
+		case IVL_EX_SIGNAL:
+		    /* If the signal node is narrower then the signal
+		       itself, then this is a part select so I'm going
+		       to need to evaluate the expression. */
+		  if (ivl_expr_width(expr) !=
+		      ivl_signal_pins(ivl_expr_signal(expr))) {
+			break;
+		  } else {
+			continue;
+		  }
+
 		case IVL_EX_MEMORY:
 		  if (!ivl_expr_oper1(expr)) {
 			continue;
@@ -688,9 +699,17 @@ static int show_system_task_call(ivl_statement_t net)
 		}
 
 		case IVL_EX_SIGNAL:
-		  fprintf(vvp_out, ", V_%s", 
-			  vvp_mangle_id(ivl_expr_name(expr)));
-		  continue;
+		    /* If this is a part select, then the value was
+		       calculated above. Otherwise, just pass the
+		       signal. */
+		  if (ivl_expr_width(expr) !=
+		      ivl_signal_pins(ivl_expr_signal(expr))) {
+			break;
+		  } else {
+			fprintf(vvp_out, ", V_%s", 
+				vvp_mangle_id(ivl_expr_name(expr)));
+			continue;
+		  }
 
 		case IVL_EX_STRING:
 		  fprintf(vvp_out, ", \"%s\"", 
@@ -720,10 +739,8 @@ static int show_system_task_call(ivl_statement_t net)
 		default:
 		  break;
 	    }
-	    
-	    fprintf(vvp_out, ", T<%u,%u>", 
-		    vec[veci].base, 
-		    vec[veci].wid);
+	    assert(veci < vecs);
+	    fprintf(vvp_out, ", T<%u,%u>", vec[veci].base, vec[veci].wid);
 	    veci++;
       }
       
@@ -914,6 +931,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.40  2001/07/28 01:18:07  steve
+ *  Evaluate part selects when passed to system tasks.
+ *
  * Revision 1.39  2001/07/19 04:55:06  steve
  *  Support calculated delays in vvp.tgt.
  *
