@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.10 2001/04/01 21:47:29 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.11 2001/04/01 22:26:21 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -435,14 +435,15 @@ static struct vector_info draw_unary_expr(ivl_expr_t exp, unsigned wid)
 {
       struct vector_info res;
       ivl_expr_t sub = ivl_expr_oper1(exp);
-      res = draw_eval_expr_wid(sub, wid);
 
       switch (ivl_expr_opcode(exp)) {
 	  case '~':
+	    res = draw_eval_expr_wid(sub, wid);
 	    fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
 	    break;
 
 	  case '!':
+	    res = draw_eval_expr(sub);
 	    if (res.wid > 1) {
 		    /* a ! on a vector is implemented with a reduction
 		       nor. Generate the result into the first bit of
@@ -515,6 +516,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.11  2001/04/01 22:26:21  steve
+ *  Unary ! is a reduction operator.
+ *
  * Revision 1.10  2001/04/01 21:47:29  steve
  *  Implement the unary ! operator.
  *
