@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_net.cc,v 1.120 2003/09/23 03:31:28 steve Exp $"
+#ident "$Id: elab_net.cc,v 1.121 2003/10/20 01:44:28 steve Exp $"
 #endif
 
 # include "config.h"
@@ -1490,7 +1490,16 @@ NetNet* PEIdent::elaborate_net_ram_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	/* Even if this expression must be fully self determined, the
+	   index expression does not, so make sure this flag is off
+	   while elaborating the address expression. */
+      const bool must_be_self_determined_save = must_be_self_determined_flag;
+      must_be_self_determined_flag = false;
+
       NetNet*adr = msb_->elaborate_net(des, scope, 0, 0, 0, 0);
+
+      must_be_self_determined_flag = must_be_self_determined_save;
+
       if (adr == 0)
 	    return 0;
 
@@ -2387,6 +2396,9 @@ NetNet* PEUnary::elaborate_net(Design*des, NetScope*scope,
 
 /*
  * $Log: elab_net.cc,v $
+ * Revision 1.121  2003/10/20 01:44:28  steve
+ *  memory index need not be self determined width.
+ *
  * Revision 1.120  2003/09/23 03:31:28  steve
  *  Catch unsized expressions in continuous assigns.
  *
