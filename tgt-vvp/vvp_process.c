@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.29 2001/04/21 00:55:46 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.30 2001/04/21 03:26:23 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -141,8 +141,10 @@ static int show_stmt_assign(ivl_statement_t net)
 	if (ivl_lval_pins(lval) < wid)
 	      wid = ivl_lval_pins(lval);
 
-	for (idx = 0 ;  idx < wid ;  idx += 1)
-	      set_to_nexus(ivl_lval_pin(lval, idx), res.base+idx);
+	for (idx = 0 ;  idx < wid ;  idx += 1) {
+	      unsigned bidx = res.base < 4? res.base : (res.base+idx);
+	      set_to_nexus(ivl_lval_pin(lval, idx), bidx);
+	}
 
 	for (idx = wid ;  idx < ivl_lval_pins(lval) ;  idx += 1)
 	      set_to_nexus(ivl_lval_pin(lval, idx), 0);
@@ -749,6 +751,9 @@ int draw_func_definition(ivl_scope_t scope)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.30  2001/04/21 03:26:23  steve
+ *  Right shift by constant.
+ *
  * Revision 1.29  2001/04/21 00:55:46  steve
  *  Generate code for disable.
  *
