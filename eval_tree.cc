@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.49 2003/03/15 18:07:58 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.50 2003/04/14 03:40:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -706,19 +706,26 @@ NetEConst* NetEBShift::eval_tree()
       verinum rv = re->value();
       verinum lv = le->value();
 
-	/* Calculate the width of the result. If it is not fixed, then
-	   get it from the left operand. */
+	/* Make an early estimate of the expression width. */
       unsigned wid = expr_width();
-      if (wid == 0)
-	    wid = left_->expr_width();
 
       if (rv.is_defined()) {
 
 	    unsigned shift = rv.as_ulong();
 
+	    if ((wid == 0) || ! lv.has_len()) {
+		    /* If the caller doesn't care what the width is,
+		       then calcuate a width from the trimmed left
+		       expression, plus the shift. This avoids
+		       data loss. */
+		  lv = trim_vnum(lv);
+		  wid = lv.len();
+		  if (op() == 'l')
+			wid = lv.len() + shift;
+	    }
 
 	    assert(wid);
-	    verinum nv (verinum::V0, wid);
+	    verinum nv (verinum::V0, wid, lv.has_len());
 
 	    if (op() == 'r') {
 		  unsigned cnt = wid;
@@ -747,7 +754,9 @@ NetEConst* NetEBShift::eval_tree()
 	    res = new NetEConst(nv);
 
       } else {
-	    assert(wid);
+	    if (wid == 0)
+		  wid = left_->expr_width();
+
 	    verinum nv (verinum::Vx, wid);
 	    res = new NetEConst(nv);
       }
@@ -1242,6 +1251,10 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.50  2003/04/14 03:40:21  steve
+ *  Make some effort to preserve bits while
+ *  operating on constant values.
+ *
  * Revision 1.49  2003/03/15 18:07:58  steve
  *  More resilient WRT right expression width of GT.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.38 2003/04/03 04:30:00 steve Exp $"
+#ident "$Id: verinum.cc,v 1.39 2003/04/14 03:40:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -309,7 +309,7 @@ bool verinum::is_zero() const
  * If the input value has a definite length, then that value is just
  * returned as is.
  */
-static verinum trim_vnum(const verinum&that)
+verinum trim_vnum(const verinum&that)
 {
       unsigned tlen;
 
@@ -409,7 +409,7 @@ ostream& operator<< (ostream&o, const verinum&v)
 	   out as a decimal number. */
       if (v.is_defined()) {
 	    if (v.has_sign())
-		  o << "'sd" << v.as_ulong();
+		  o << "'sd" << v.as_long();
 	    else
 		  o << "'d" << v.as_ulong();
 	    return o;
@@ -571,8 +571,10 @@ verinum v_not(const verinum&left)
 
 /*
  * Addition works a bit at a time, from the least significant up to
- * the most significant. The result is signed only if either of the
- * operands is signed.
+ * the most significant. The result is signed only if both of the
+ * operands are signed. The result is also expanded as needed to
+ * prevent overflow. It is up to the caller to shrink the result back
+ * down if that is the desire.
  */
 verinum operator + (const verinum&left, const verinum&right)
 {
@@ -582,20 +584,37 @@ verinum operator + (const verinum&left, const verinum&right)
       unsigned max = left.len();
       if (right.len() > max) max = right.len();
 
-      verinum val (verinum::V0, max);
-      val.has_sign( left.has_sign() || right.has_sign() );
+      bool signed_flag = left.has_sign() && right.has_sign();
+      verinum::V*val_bits = new verinum::V[max+1];
 
       verinum::V carry = verinum::V0;
       for (unsigned idx = 0 ;  idx < min ;  idx += 1)
-	    val.set(idx, add_with_carry(left[idx], right[idx], carry));
+	    val_bits[idx] = add_with_carry(left[idx], right[idx], carry);
+
+      verinum::V rpad = signed_flag? right[right.len()-1] : verinum::V0;
+      verinum::V lpad = signed_flag? left[left.len()-1] : verinum::V0;
 
       if (left.len() > right.len()) {
-	    for (unsigned idx = min ;  idx < max ;  idx += 1)
-		  val.set(idx,add_with_carry(left[idx], verinum::V0, carry));
+
+	    for (unsigned idx = min ;  idx < left.len() ;  idx += 1)
+		  val_bits[idx] = add_with_carry(left[idx], rpad, carry);
+
       } else {
-	    for (unsigned idx = min ;  idx < max ;  idx += 1)
-		  val.set(idx, add_with_carry(verinum::V0, right[idx], carry));
+
+	    for (unsigned idx = min ;  idx < right.len() ;  idx += 1)
+		  val_bits[idx] = add_with_carry(lpad, right[idx], carry);
       }
+
+      if (signed_flag) {
+	    val_bits[max] = add_with_carry(lpad, rpad, carry);
+	    if (val_bits[max] != val_bits[max-1])
+		  max += 1;
+      }
+
+      verinum val (val_bits, max, false);
+      val.has_sign(signed_flag);
+
+      delete[]val_bits;
 
       return val;
 }
@@ -826,6 +845,10 @@ verinum::V operator & (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.39  2003/04/14 03:40:21  steve
+ *  Make some effort to preserve bits while
+ *  operating on constant values.
+ *
  * Revision 1.38  2003/04/03 04:30:00  steve
  *  Prevent overrun comparing verinums to zero.
  *
@@ -872,47 +895,5 @@ verinum::V operator & (verinum::V l, verinum::V r)
  *
  * Revision 1.24  2001/02/07 21:47:13  steve
  *  Fix expression widths for rvalues and parameters (PR#131,132)
- *
- * Revision 1.23  2001/02/07 02:46:31  steve
- *  Support constant evaluation of / and % (PR#124)
- *
- * Revision 1.22  2001/01/02 03:23:40  steve
- *  Evaluate constant &, | and unary ~.
- *
- * Revision 1.21  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.20  2000/09/28 03:55:55  steve
- *  handel, by truncation, verinums that are to long for long integers.
- *
- * Revision 1.19  2000/09/27 18:28:37  steve
- *  multiply in parameter expressions.
- *
- * Revision 1.18  2000/09/07 22:37:10  steve
- *  The + operator now preserves signedness.
- *
- * Revision 1.17  2000/06/12 03:56:51  steve
- *  Fix subract of short value form long one.
- *
- * Revision 1.16  2000/02/23 04:43:43  steve
- *  Some compilers do not accept the not symbol.
- *
- * Revision 1.15  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.14  2000/01/07 03:45:49  steve
- *  Initial support for signed constants.
- *
- * Revision 1.13  2000/01/06 05:57:06  steve
- *  Only sign-extend unsized numbers.
- *
- * Revision 1.12  1999/11/06 16:00:17  steve
- *  Put number constants into a static table.
- *
- * Revision 1.11  1999/10/22 23:57:53  steve
- *  do the <= in bits, not numbers.
- *
- * Revision 1.10  1999/10/10 23:29:37  steve
- *  Support evaluating + operator at compile time.
  */
 

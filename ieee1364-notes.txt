@@ -203,6 +203,34 @@ interpreted as a loop head, and this is what Icarus Verilog does, as
 well as all the other major Verilog tools, but the standard does not
 say this.
 
+* UNSIZED NUMERIC CONSTANTS ARE NOT LIMITED TO 32 BITS
+
+The Verilog standard allows Verilog implementations to limit the size
+of unsized constants to a bit width of at least 32. That means that a
+constant 17179869183 (36'h3_ffff_ffff) may overflow some compilers. In
+fact, it is common to limit these values to 32bits. However, a
+compiler may just as easily choose another width limit, for example
+64bits. That value is equally good.
+
+However, it is not *required* that an implementation truncate at 32
+bits, and in fact Icarus Verilog does not truncate at all. It will
+make the unsized constant as big as it needs to be to hold the value
+accurately. This is especially useful in situations like this;
+
+	    reg [width-1:0] foo = 17179869183;
+
+The programmer wants the constant to take on the width of the reg,
+which in this example is parameterized. Since constant sizes cannot be
+parameterized, the programmer ideally gives an unsized constant, which
+the compiler then expands/contracts to match the l-value.
+
+Also, by choosing to not ever truncate, Icarus Verilog can handle code
+written for a 64bit compiler as easily as for a 32bit compiler. In
+particular, any constants that the user does not expect to be
+arbitrarily truncated by his compiler will also not be truncated by
+Icarus Verilog, no matter what that other compiler chooses as a
+truncation point.
+
 
 * UNSIZED EXPRESSIONS AS PARAMETERS TO CONCATENATION {}
 
@@ -470,8 +498,12 @@ of 4-value behavior in the dead zone, and appears more user friendly
 when viewed by reasonable viewers.
 
 
-$Id: ieee1364-notes.txt,v 1.15 2003/02/16 23:39:08 steve Exp $
+$Id: ieee1364-notes.txt,v 1.16 2003/04/14 03:40:21 steve Exp $
 $Log: ieee1364-notes.txt,v $
+Revision 1.16  2003/04/14 03:40:21  steve
+ Make some effort to preserve bits while
+ operating on constant values.
+
 Revision 1.15  2003/02/16 23:39:08  steve
  NaN in dead zones of VCD dumps.
 

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.23 2003/04/03 04:30:00 steve Exp $"
+#ident "$Id: verinum.h,v 1.24 2003/04/14 03:40:21 steve Exp $"
 #endif
 
 # include  <string>
@@ -103,6 +103,9 @@ class verinum {
       bool string_flag_;
 };
 
+/* Return a verinum that is minimal. That is, it has only the length
+   needed to accurately represent the contained value, signed or not. */
+extern verinum trim_vnum(const verinum&);
 
 extern ostream& operator<< (ostream&, const verinum&);
 extern ostream& operator<< (ostream&, verinum::V);
@@ -113,11 +116,6 @@ extern verinum::V operator & (verinum::V l, verinum::V r);
 extern verinum::V operator == (const verinum&left, const verinum&right);
 extern verinum::V operator <= (const verinum&left, const verinum&right);
 extern verinum::V operator <  (const verinum&left, const verinum&right);
-extern verinum operator + (const verinum&left, const verinum&right);
-extern verinum operator - (const verinum&left, const verinum&right);
-extern verinum operator * (const verinum&left, const verinum&right);
-extern verinum operator / (const verinum&left, const verinum&right);
-extern verinum operator % (const verinum&left, const verinum&right);
 
 inline verinum::V operator > (const verinum&left, const verinum&right)
 { return right < left; }
@@ -128,10 +126,27 @@ inline verinum::V operator >= (const verinum&left, const verinum&right)
 inline verinum::V operator != (const verinum&left, const verinum&right)
 { return (left == right)? verinum::V0 : verinum::V1; }
 
+
+/* These are arithmetic operators. These generally work to produce
+   results that do not overflow. That means the result may expand or
+   contract to hold the bits needed to hold the operation results
+   accurately. It is up to the caller to truncate or pad if a specific
+   width is expected. */
+extern verinum operator + (const verinum&left, const verinum&right);
+extern verinum operator - (const verinum&left, const verinum&right);
+extern verinum operator * (const verinum&left, const verinum&right);
+extern verinum operator / (const verinum&left, const verinum&right);
+extern verinum operator % (const verinum&left, const verinum&right);
+
+/* Bitwise not returns the ones complement. */
 extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.24  2003/04/14 03:40:21  steve
+ *  Make some effort to preserve bits while
+ *  operating on constant values.
+ *
  * Revision 1.23  2003/04/03 04:30:00  steve
  *  Prevent overrun comparing verinums to zero.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.34 2003/03/26 06:16:18 steve Exp $"
+#ident "$Id: eval.cc,v 1.35 2003/04/14 03:40:21 steve Exp $"
 #endif
 
 # include "config.h"
@@ -47,9 +47,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
       switch (op_) {
 	  case '+': {
 		if (l->is_defined() && r->is_defined()) {
-		      long lv = l->as_long();
-		      long rv = r->as_long();
-		      res = new verinum(lv+rv, l->len());
+		      res = new verinum(*l + *r);
 		} else {
 		      res = new verinum(verinum::Vx, l->len());
 		}
@@ -57,9 +55,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 	  }
 	  case '-': {
 		if (l->is_defined() && r->is_defined()) {
-		      long lv = l->as_long();
-		      long rv = r->as_long();
-		      res = new verinum(lv-rv, l->len());
+		      res = new verinum(*l - *r);
 		} else {
 		      res = new verinum(verinum::Vx, l->len());
 		}
@@ -67,9 +63,7 @@ verinum* PEBinary::eval_const(const Design*des, const NetScope*scope) const
 	  }
 	  case '*': {
 		if (l->is_defined() && r->is_defined()) {
-		      long lv = l->as_long();
-		      long rv = r->as_long();
-		      res = new verinum(lv * rv, l->len());
+		      res = new verinum(*l * *r);
 		} else {
 		      res = new verinum(verinum::Vx, l->len());
 		}
@@ -247,6 +241,10 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.35  2003/04/14 03:40:21  steve
+ *  Make some effort to preserve bits while
+ *  operating on constant values.
+ *
  * Revision 1.34  2003/03/26 06:16:18  steve
  *  Evaluate > and < in constant expressions.
  *
