@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: main.cc,v 1.57 2002/05/28 02:25:03 steve Exp $"
+#ident "$Id: main.cc,v 1.58 2002/05/28 20:40:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -80,7 +80,6 @@ generation_t generation_flag = GN_DEFAULT;
 
 map<string,string> flags;
 
-list<const char*> library_dirs;
 list<const char*> library_suff;
 
 char*ivlpp_string = 0;
@@ -98,6 +97,15 @@ bool error_implicit = false;
  * Verbose messages enabled.
  */
 bool verbose_flag = false;
+
+/*
+ * In library searches, Windows file names are never case sensitive.
+ */
+#if defined(__MINGW32__)
+const bool CASE_SENSITIVE = false;
+#else
+const bool CASE_SENSITIVE = true;
+#endif
 
 /*
  * Read the contents of a config file. This file is a temporary
@@ -138,7 +146,10 @@ static void read_iconfig_file(const char*ipath)
 		  ivlpp_string = strdup(cp);
 
 	    } else if (strcmp(buf, "-y") == 0) {
-		  library_dirs.push_back(strdup(cp));
+		  build_library_index(cp, CASE_SENSITIVE);
+
+	    } else if (strcmp(buf, "-yl") == 0) {
+		  build_library_index(cp, false);
 
 	    } else if (strcmp(buf, "-Y") == 0) {
 		  library_suff.push_back(strdup(cp));
@@ -255,6 +266,8 @@ int main(int argc, char*argv[])
 
       struct tms cycles[5];
 
+      library_suff.push_back(".v");
+
       flags["VPI_MODULE_LIST"] = "system";
       flags["-o"] = "a.out";
       min_typ_max_flag = TYP;
@@ -341,7 +354,7 @@ int main(int argc, char*argv[])
 	    warn_en = optarg;
 	    break;
 	  case 'y':
-	    library_dirs.push_back(optarg);
+	    build_library_index(optarg, CASE_SENSITIVE);
 	    break;
 	  case 'Y':
 	    library_suff.push_back(optarg);
@@ -358,6 +371,7 @@ int main(int argc, char*argv[])
 	    cout << "Icarus Verilog version " << VERSION << endl <<
 "usage: ivl <options> <file>\n"
 "options:\n"
+"\t-C <name>        Config file from driver.\n"
 "\t-F <name>        Apply netlist function <name>.\n"
 "\t-h               Print usage information, and exit.\n"
 "\t-m <module>      Load vpi module <module>.\n"
@@ -399,12 +413,6 @@ int main(int argc, char*argv[])
 	      }
       }
 	      
-
-	/* If there were no -Y flags, then create a minimal library
-	   suffix search list. */
-      if (library_suff.empty()) {
-	    library_suff.push_back(".v");
-      }
 
 	/* Scan the warnings enable string for warning flags. */
       for (const char*cp = warn_en ;  *cp ;  cp += 1) switch (*cp) {
@@ -583,6 +591,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.58  2002/05/28 20:40:37  steve
+ *  ivl indexes the search path for libraries, and
+ *  supports case insensitive module-to-file lookup.
+ *
  * Revision 1.57  2002/05/28 02:25:03  steve
  *  Pass library paths through -Cfile instead of command line.
  *

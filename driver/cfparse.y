@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.6 2002/01/02 02:39:34 steve Exp $"
+#ident "$Id: cfparse.y,v 1.7 2002/05/28 20:40:37 steve Exp $"
 #endif
 
 
@@ -58,7 +58,7 @@ static void translate_file_name(char*text)
 };
 
 %token TOK_Da TOK_Dv TOK_Dy
-%token TOK_DEFINE TOK_INCDIR TOK_LIBEXT
+%token TOK_DEFINE TOK_INCDIR TOK_LIBDIR TOK_LIBDIR_NOCASE TOK_LIBEXT
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -104,6 +104,16 @@ item
 
         | TOK_Dy TOK_STRING
 		{ process_library_switch($2);
+		  free($2);
+		}
+
+        | TOK_LIBDIR TOK_PLUSARG
+		{ process_library_switch($2);
+		  free($2);
+		}
+
+        | TOK_LIBDIR_NOCASE TOK_PLUSARG
+		{ process_library_nocase_switch($2);
 		  free($2);
 		}
 

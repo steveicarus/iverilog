@@ -16,7 +16,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: main.c,v 1.40 2002/05/28 02:25:03 steve Exp $"
+#ident "$Id: main.c,v 1.41 2002/05/28 20:40:37 steve Exp $"
 
 # include "config.h"
 
@@ -303,6 +303,11 @@ static void process_warning_switch(const char*name)
 void process_library_switch(const char *name)
 {
       fprintf(iconfig_file, "-y:%s\n", name);
+}
+
+void process_library_nocase_switch(const char *name)
+{
+      fprintf(iconfig_file, "-yl:%s\n", name);
 }
 
 void process_library2_switch(const char *name)
@@ -716,6 +721,10 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.41  2002/05/28 20:40:37  steve
+ *  ivl indexes the search path for libraries, and
+ *  supports case insensitive module-to-file lookup.
+ *
  * Revision 1.40  2002/05/28 02:25:03  steve
  *  Pass library paths through -Cfile instead of command line.
  *

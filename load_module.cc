@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: load_module.cc,v 1.6 2002/05/28 00:50:39 steve Exp $"
+#ident "$Id: load_module.cc,v 1.7 2002/05/28 20:40:37 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -25,65 +25,165 @@
 # include  "parse_api.h"
 # include  "compiler.h"
 # include  <iostream.h>
+# include  <map>
+# include  <string>
+# include  <sys/types.h>
+# include  <dirent.h>
+# include  <ctype.h>
 
+
+/*
+ * The module library items are maps of key names to file name within
+ * the directory.
+ */
+struct module_library {
+      char*dir;
+      bool key_case_sensitive;
+      map<string,const char*>name_map;
+      struct module_library*next;
+};
+
+static struct module_library*library_list = 0;
+static struct module_library*library_last = 0;
 
 const char dir_character = '/';
 extern FILE *depend_file;
 
+/*
+ * Use the type name as a key, and search the module library for a
+ * file name that has that key.
+ */
 bool load_module(const char*type)
 {
       char path[4096];
+      char*ltype = strdup(type);
 
-      for (list<const char*>::iterator cur = library_dirs.begin()
-		 ; cur != library_dirs.end()
-		 ; cur ++ ) {
-	    for (list<const char*>::iterator suf = library_suff.begin()
-		       ; suf != library_suff.end()
-		       ; suf ++ ) {
+      for (char*tmp = ltype ; *tmp ;  tmp += 1)
+	    *tmp = tolower(*tmp);
 
-		  sprintf(path, "%s%c%s%s", *cur, dir_character, type, *suf);
+      for (struct module_library*lcur = library_list
+		 ; lcur != 0 ;  lcur = lcur->next) {
+
+	    const char*key = lcur->key_case_sensitive? type : ltype;
+	    map<string,const char*>::const_iterator cur;
+	    cur = lcur->name_map.find(key);
+	    if (cur == lcur->name_map.end())
+		  continue;
+
+	    sprintf(path, "%s%c%s", lcur->dir, dir_character, (*cur).second);
+
+	    if(depend_file) {
+		  fprintf(depend_file, "%s\n", path);
+	    }
+
+	    if (ivlpp_string) {
+		  char*cmdline = (char*)malloc(strlen(ivlpp_string) +
+					       strlen(path) + 2);
+		  strcpy(cmdline, ivlpp_string);
+		  strcat(cmdline, " ");
+		  strcat(cmdline, path);
+		  FILE*file = popen(cmdline, "r");
+
+		  if (verbose_flag)
+			cerr << "Executing: " << cmdline << endl;
+
+		  pform_parse(path, file);
+		  fclose(file);
+		  free(cmdline);
+
+	    } else {
+		  if (verbose_flag)
+			cerr << "Loading library file "
+			     << path << "." << endl;
 
 		  FILE*file = fopen(path, "r");
-		  if (file == 0)
-			continue;
-		  if(depend_file) {
-			  fprintf(depend_file, "%s\n", path);
-		  }
-
-		  if (ivlpp_string) {
-			fclose(file);
-			char*cmdline = (char*)malloc(strlen(ivlpp_string) +
-						     strlen(path) + 2);
-			strcpy(cmdline, ivlpp_string);
-			strcat(cmdline, " ");
-			strcat(cmdline, path);
-			file = popen(cmdline, "r");
-
-			if (verbose_flag)
-			      cerr << "Executing: " << cmdline << endl;
-
-			pform_parse(path, file);
-			fclose(file);
-
-		  } else {
-			if (verbose_flag)
-			      cerr << "Loading library file "
-				   << path << "." << endl;
-
-			pform_parse(path, file);
-
-			fclose(file);
-		  }
-
-		  return true;
+		  assert(file);
+		  pform_parse(path, file);
+		  fclose(file);
 	    }
+
+	    return true;
       }
+
 
       return false;
 }
 
 /*
+ * This function takes the name of a library directory that the caller
+ * passed, and builds a name index for it.
+ */
+int build_library_index(const char*path, bool key_case_sensitive)
+{
+      DIR*dir = opendir(path);
+      if (dir == 0)
+	    return -1;
+
+      if (verbose_flag) {
+	    cerr << "Indexing library: " << path << endl;
+      }
+
+      struct module_library*mlp = new struct module_library;
+      mlp->dir = strdup(path);
+      mlp->key_case_sensitive = key_case_sensitive;
+
+      while (struct dirent*de = readdir(dir)) {
+	    unsigned namsiz = strlen(de->d_name);
+	    char*key = 0;
+
+	    for (list<const char*>::iterator suf = library_suff.begin()
+		       ; suf != library_suff.end()
+		       ; suf ++ ) {
+		  const char*sufptr = *suf;
+		  unsigned sufsiz = strlen(sufptr);
+
+		  if (sufsiz >= namsiz)
+			continue;
+
+		  if (strcmp(de->d_name + (namsiz-sufsiz), sufptr) != 0)
+			continue;
+
+		  key = new char[namsiz-sufsiz+1];
+		  strncpy(key, de->d_name, namsiz-sufsiz);
+		  key[namsiz-sufsiz] = 0;
+		  break;
+	    }
+
+	    if (key == 0)
+		  continue;
+
+	      /* If the key is not to be case sensitive, then change
+		 it to lowercase. */
+	    if (! key_case_sensitive)
+		  for (char*tmp = key ;  *tmp ;  tmp += 1)
+			*tmp = tolower(*tmp);
+
+	    mlp->name_map[key] = strdup(de->d_name);
+	    delete[]key;
+      }
+
+      closedir(dir);
+
+      if (library_last) {
+	    assert(library_list);
+	    library_last->next = mlp;
+	    mlp->next = 0;
+	    library_last = mlp;
+      } else {
+	    library_list = mlp;
+	    library_last = mlp;
+	    mlp->next = 0;
+      }
+
+      return 0;
+}
+
+/*
  * $Log: load_module.cc,v $
+ * Revision 1.7  2002/05/28 20:40:37  steve
+ *  ivl indexes the search path for libraries, and
+ *  supports case insensitive module-to-file lookup.
+ *
  * Revision 1.6  2002/05/28 00:50:39  steve
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library

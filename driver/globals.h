@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: globals.h,v 1.13 2002/05/28 00:50:40 steve Exp $"
+#ident "$Id: globals.h,v 1.14 2002/05/28 20:40:37 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -65,6 +65,7 @@ extern void process_file_name(const char*name);
 
   /* Add the name to the list of library directories. */
 extern void process_library_switch(const char*name);
+extern void process_library_nocase_switch(const char*name);
 extern void process_library2_switch(const char*name);
 
   /* Add a new include file search directory */
@@ -88,6 +89,10 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.14  2002/05/28 20:40:37  steve
+ *  ivl indexes the search path for libraries, and
+ *  supports case insensitive module-to-file lookup.
+ *
  * Revision 1.13  2002/05/28 00:50:40  steve
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library

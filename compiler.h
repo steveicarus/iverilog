@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: compiler.h,v 1.11 2002/05/28 00:50:39 steve Exp $"
+#ident "$Id: compiler.h,v 1.12 2002/05/28 20:40:37 steve Exp $"
 #endif
 
 # include  <list>
@@ -75,9 +75,9 @@ extern bool warn_timescale;
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 
-/* This is an ordered list of libraries to search. */
-extern list<const char*>library_dirs;
+/* This is an ordered list of library suffixxes to search. */
 extern list<const char*>library_suff;
+extern int build_library_index(const char*path, bool key_case_sensitive);
 
 /* This is the generation of Verilog that the compiler is asked to
    support. */
@@ -95,6 +95,10 @@ extern char*ivlpp_string;
 
 /*
  * $Log: compiler.h,v $
+ * Revision 1.12  2002/05/28 20:40:37  steve
+ *  ivl indexes the search path for libraries, and
+ *  supports case insensitive module-to-file lookup.
+ *
  * Revision 1.11  2002/05/28 00:50:39  steve
  *  Add the ivl -C flag for bulk configuration
  *  from the driver, and use that to run library
@@ -111,25 +115,5 @@ extern char*ivlpp_string;
  *
  * Revision 1.7  2001/11/16 05:07:19  steve
  *  Add support for +libext+ in command files.
- *
- * Revision 1.6  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.5  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.4  2000/08/20 04:13:56  steve
- *  Add ivl_target support for logic gates, and
- *  make the interface more accessible.
- *
- * Revision 1.3  2000/03/17 21:50:25  steve
- *  Switch to control warnings.
- *
- * Revision 1.2  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.1  1999/06/06 20:42:48  steve
- *  Make compiler width a compile time constant.
- *
  */
 #endif
