@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.213 2003/04/24 05:26:25 steve Exp $"
+#ident "$Id: netlist.cc,v 1.214 2003/04/27 16:33:16 steve Exp $"
 #endif
 
 # include "config.h"
@@ -2061,7 +2061,11 @@ NetEBitSel* NetEBitSel::dup_expr() const
 NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
 : cond_(c), true_val_(t), false_val_(f)
 {
-      expr_width(true_val_->expr_width());
+	// use widest result
+      if (true_val_->expr_width() > false_val_->expr_width())
+            expr_width(true_val_->expr_width());
+      else
+            expr_width(false_val_->expr_width());
       cast_signed(c->has_sign() && t->has_sign() && f->has_sign());
 }
 
@@ -2179,6 +2183,9 @@ const NetProc*NetTaskDef::proc() const
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.214  2003/04/27 16:33:16  steve
+ *  Better guess of defualt ternary width.
+ *
  * Revision 1.213  2003/04/24 05:26:25  steve
  *  NetSubsignal inherits port type from source.
  *
