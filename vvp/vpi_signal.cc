@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_signal.cc,v 1.10 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: vpi_signal.cc,v 1.11 2001/05/09 04:23:19 steve Exp $"
 #endif
 
 /*
@@ -27,6 +27,7 @@
 
 # include  "vpi_priv.h"
 # include  "functor.h"
+# include  <stdio.h>
 # include  <malloc.h>
 # include  <assert.h>
 
@@ -399,6 +400,10 @@ vpiHandle vpip_make_net(char*name, int msb, int lsb, bool signed_flag,
 
 /*
  * $Log: vpi_signal.cc,v $
+ * Revision 1.11  2001/05/09 04:23:19  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.10  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.9 2001/05/08 23:32:26 steve Exp $"
+#ident "$Id: main.cc,v 1.10 2001/05/09 04:23:19 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -40,16 +40,12 @@ int main(int argc, char*argv[])
 {
       int opt;
       unsigned flag_errors = 0;
-      const char*dump_path = 0;
       const char*design_path = 0;
       bool debug_flag = false;
 
-      while ((opt = getopt(argc, argv, "D:dM:m:")) != EOF) switch (opt) {
+      while ((opt = getopt(argc, argv, "dM:m:")) != EOF) switch (opt) {
 	  case 'd':
 	    debug_flag = true;
-	    break;
-	  case 'D':
-	    dump_path = optarg;
 	    break;
 	  case 'M':
 	    module_path = optarg;
@@ -86,12 +82,6 @@ int main(int argc, char*argv[])
 	    return rc;
       compile_cleanup();
 
-      if (dump_path) {
-	    FILE*fd = fopen(dump_path, "w");
-	    compile_dump(fd);
-	    fclose(fd);
-      }
-
       if (compile_errors > 0) {
 	    fprintf(stderr, "%s: Program not runnable, %u errors.\n",
 		    design_path, compile_errors);
@@ -108,6 +98,10 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.10  2001/05/09 04:23:19  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.9  2001/05/08 23:32:26  steve
  *  Add to the debugger the ability to view and
  *  break on functors.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.60 2001/05/09 02:53:25 steve Exp $"
+#ident "$Id: compile.cc,v 1.61 2001/05/09 04:23:18 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -1110,23 +1110,6 @@ void compile_cleanup(void)
       }
 }
 
-void compile_dump(FILE*fd)
-{
-      fprintf(fd, "FUNCTOR SYMBOL TABLE:\n");
-      sym_dump(sym_functors, fd);
-      fprintf(fd, "FUNCTORS:\n");
-      functor_dump(fd);
-      fprintf(fd, "UNRESOLVED PORT INPUTS:\n");
-      for (struct resolv_list_s*cur = resolv_list ;  cur ;  cur = cur->next)
-	    fprintf(fd, "    %08x: %s\n", cur->port, cur->source);
-
-      fprintf(fd, "CODE SPACE SYMBOL TABLE:\n");
-      sym_dump(sym_codespace, fd);
-
-      fprintf(fd, "CODE SPACE DISASSEMBLY:\n");
-      codespace_dump(fd);
-}
-
 /*
  * These functions are in support of the debugger.
  *
@@ -1143,6 +1126,10 @@ vvp_ipoint_t debug_lookup_functor(const char*name)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.61  2001/05/09 04:23:18  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.60  2001/05/09 02:53:25  steve
  *  Implement the .resolv syntax.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.cc,v 1.7 2001/04/13 03:55:18 steve Exp $"
+#ident "$Id: codes.cc,v 1.8 2001/05/09 04:23:18 steve Exp $"
 #endif
 
 # include  "codes.h"
@@ -102,40 +102,13 @@ vvp_code_t codespace_index(vvp_cpoint_t point)
       return code_table[point]->table[index1]->table + index0;
 }
 
-void codespace_dump(FILE*fd)
-{
-      for (unsigned idx = 0 ;  idx < code_count ;  idx += 1) {
-	    fprintf(fd, "  %8x: ", idx);
-	    vvp_code_t cop = codespace_index(idx);
-
-	    if (cop->opcode == &of_ASSIGN) {
-		  fprintf(fd, "%%assign 0x%u, %u, %u\n",
-			  cop->iptr, cop->bit_idx1, cop->bit_idx2);
-
-	    } else if (cop->opcode == &of_DELAY) {
-		  fprintf(fd, "%%delay %lu\n", (unsigned long)cop->number);
-
-	    } else if (cop->opcode == &of_END) {
-		  fprintf(fd, "%%end\n");
-
-	    } else if (cop->opcode == &of_JMP) {
-		  fprintf(fd, "%%jmp 0x%u\n", cop->cptr);
-
-	    } else if (cop->opcode == &of_JMP0) {
-		  fprintf(fd, "%%jmp/0 0x%u\n", cop->cptr);
-
-	    } else if (cop->opcode == &of_SET) {
-		  fprintf(fd, "%%set 0x%u, %u\n", cop->iptr, cop->bit_idx1);
-
-	    } else {
-		  fprintf(fd, "opcode %p\n", cop->opcode);
-	    }
-      }
-}
-
 
 /*
  * $Log: codes.cc,v $
+ * Revision 1.8  2001/05/09 04:23:18  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.7  2001/04/13 03:55:18  steve
  *  More complete reap of all threads.
  *

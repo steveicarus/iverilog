@@ -19,14 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: codes.h,v 1.25 2001/05/06 17:42:22 steve Exp $"
+#ident "$Id: codes.h,v 1.26 2001/05/09 04:23:18 steve Exp $"
 #endif
 
 
 # include  "pointers.h"
 # include  "memory.h"
 # include  "vthread.h"
-# include  <stdio.h>
 
 typedef struct vvp_code_s *vvp_code_t;
 typedef bool (*vvp_code_fun)(vthread_t thr, vvp_code_t code);
@@ -125,10 +124,13 @@ extern vvp_cpoint_t codespace_next(void);
  */
 extern vvp_code_t codespace_index(vvp_cpoint_t ptr);
 
-extern void codespace_dump(FILE*fd);
 
 /*
  * $Log: codes.h,v $
+ * Revision 1.26  2001/05/09 04:23:18  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.25  2001/05/06 17:42:22  steve
  *  Add the %ix/get instruction. (Stephan Boettcher)
  *
@@ -165,49 +167,5 @@ extern void codespace_dump(FILE*fd);
  *
  * Revision 1.15  2001/04/01 22:25:33  steve
  *  Add the reduction nor instruction.
- *
- * Revision 1.14  2001/04/01 07:22:08  steve
- *  Implement the less-then and %or instructions.
- *
- * Revision 1.13  2001/04/01 06:40:44  steve
- *  Support empty statements for hanging labels.
- *
- * Revision 1.12  2001/04/01 06:12:13  steve
- *  Add the bitwise %and instruction.
- *
- * Revision 1.11  2001/04/01 04:34:28  steve
- *  Implement %cmp/x and %cmp/z instructions.
- *
- * Revision 1.10  2001/03/31 17:36:02  steve
- *  Add the jmp/1 instruction.
- *
- * Revision 1.9  2001/03/31 01:59:58  steve
- *  Add the ADD instrunction.
- *
- * Revision 1.8  2001/03/30 04:55:22  steve
- *  Add fork and join instructions.
- *
- * Revision 1.7  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.6  2001/03/25 03:54:26  steve
- *  Add JMP0XZ and postpone net inputs when needed.
- *
- * Revision 1.5  2001/03/22 05:08:00  steve
- *  implement %load, %inv, %jum/0 and %cmp/u
- *
- * Revision 1.4  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.3  2001/03/16 01:44:34  steve
- *  Add structures for VPI support, and all the %vpi_call
- *  instruction. Get linking of VPI modules to work.
- *
- * Revision 1.2  2001/03/11 23:06:49  steve
- *  Compact the vvp_code_s structure.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
  */
 #endif

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.cc,v 1.2 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: symbols.cc,v 1.3 2001/05/09 04:23:19 steve Exp $"
 #endif
 
 # include  "symbols.h"
@@ -269,31 +269,12 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 }
 
 
-static void dump_tree(struct tree_node_*cur, unsigned ind, FILE*fd)
-{
-      if (cur->leaf_flag) {
-
-	    fprintf(fd, "%*s%p: %u keys\n", ind, "", cur, cur->count);
-	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1) {
-		  fprintf(fd, "%*s    %3d: key=%s, val=0x%lx\n", ind, "",
-			  idx, cur->leaf[idx].key, cur->leaf[idx].val.num);
-	    }
-
-      } else {
-	    fprintf(fd, "%*s%p: %u children\n", ind, "", cur, cur->count);
-	    for (unsigned idx = 0 ;  idx < cur->count ;  idx += 1) {
-		  dump_tree(cur->child[idx], ind+4, fd);
-	    }
-      }
-}
-
-void sym_dump(symbol_table_t tbl, FILE*fd)
-{
-      dump_tree(tbl->root, 0, fd);
-}
-
 /*
  * $Log: symbols.cc,v $
+ * Revision 1.3  2001/05/09 04:23:19  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.2  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

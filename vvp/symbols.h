@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: symbols.h,v 1.2 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: symbols.h,v 1.3 2001/05/09 04:23:19 steve Exp $"
 #endif
 
 /*
@@ -39,7 +39,6 @@
  */
 
 # include  "config.h"
-# include  <stdio.h>
 
 /*
  * This is the basic type of a symbol table. It is opaque. Don't even
@@ -79,12 +78,11 @@ void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val);
 symbol_value_t sym_get_value(symbol_table_t tbl, const char*key);
 
 /*
- * Diagnostic dump of the symbol table.
- */
-extern void sym_dump(symbol_table_t tbl, FILE*fd);
-
-/*
  * $Log: symbols.h,v $
+ * Revision 1.3  2001/05/09 04:23:19  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.2  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

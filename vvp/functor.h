@@ -19,11 +19,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.20 2001/05/09 02:53:25 steve Exp $"
+#ident "$Id: functor.h,v 1.21 2001/05/09 04:23:18 steve Exp $"
 #endif
 
 # include  "pointers.h"
-# include  <stdio.h>
 
 
 /*
@@ -239,11 +238,6 @@ inline unsigned functor_oval(vvp_ipoint_t fptr)
       return fp->oval & 3;
 }
 
-/*
- * Dump a readable version of the functor address space to the file.
- */
-extern void functor_dump(FILE*fd);
-
 
 extern const unsigned char ft_AND[];
 extern const unsigned char ft_BUF[];
@@ -260,6 +254,10 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.21  2001/05/09 04:23:18  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.20  2001/05/09 02:53:25  steve
  *  Implement the .resolv syntax.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.cc,v 1.18 2001/05/09 02:53:25 steve Exp $"
+#ident "$Id: functor.cc,v 1.19 2001/05/09 04:23:18 steve Exp $"
 #endif
 
 # include  "functor.h"
@@ -313,16 +313,6 @@ void functor_propagate(vvp_ipoint_t ptr)
       }
 }
 
-void functor_dump(FILE*fd)
-{
-      for (unsigned idx = 1 ;  idx < functor_count ;  idx += 1) {
-	    functor_t cur = functor_index(idx*4);
-	    fprintf(fd, "%08x: out=%x port={%x %x %x %x}\n",
-		    (idx*4), cur->out, cur->port[0],
-		    cur->port[1], cur->port[2], cur->port[3]);
-      }
-}
-
 /*
  * The variable functor is special. This is the truth table for it.
  */
@@ -349,6 +339,10 @@ const unsigned char ft_var[16] = {
 
 /*
  * $Log: functor.cc,v $
+ * Revision 1.19  2001/05/09 04:23:18  steve
+ *  Now that the interactive debugger exists,
+ *  there is no use for the output dump.
+ *
  * Revision 1.18  2001/05/09 02:53:25  steve
  *  Implement the .resolv syntax.
  *
@@ -386,30 +380,5 @@ const unsigned char ft_var[16] = {
  *
  * Revision 1.9  2001/03/31 19:29:23  steve
  *  Fix compilation warnings.
- *
- * Revision 1.8  2001/03/29 03:46:36  steve
- *  Support named events as mode 2 functors.
- *
- * Revision 1.7  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.6  2001/03/25 00:35:35  steve
- *  Add the .net statement.
- *
- * Revision 1.5  2001/03/22 05:28:16  steve
- *  no longer need out message.
- *
- * Revision 1.4  2001/03/22 05:08:00  steve
- *  implement %load, %inv, %jum/0 and %cmp/u
- *
- * Revision 1.3  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.2  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- * Revision 1.1  2001/03/11 00:29:38  steve
- *  Add the vvp engine to cvs.
- *
  */
 
