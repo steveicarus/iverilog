@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_priv.h,v 1.2 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: vpi_priv.h,v 1.3 2001/03/18 04:35:18 steve Exp $"
 #endif
 
 # include  "vpi_user.h"
@@ -72,6 +72,8 @@ struct __vpiIterator {
       unsigned  next;
 };
 
+extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args);
+
 /*
  * Scopes are created by .scope statements in the source.
  */
@@ -112,6 +114,18 @@ struct __vpiSysTaskCall {
 extern struct __vpiSysTaskCall*vpip_cur_task;
 
 /*
+ * These are implemented in vpi_const.cc. These are vpiHandles for
+ * constants.
+ */
+struct __vpiStringConst {
+      struct __vpiHandle base;
+      const char*value;
+};
+
+vpiHandle vpip_make_string_const(char*text);
+
+
+/*
  * This function is called before any compilation to load VPI
  * modules. This gives the modules a chance to announce their
  * contained functions before compilation commences. It is called only
@@ -127,9 +141,15 @@ extern void vpip_load_modules(unsigned cnt, const char*tab[], const char*path);
  * The %vpi_call instruction has as its only parameter the handle that
  * is returned by the vpip_build_vpi_call. This includes all the
  * information needed by vpip_execute_vpi_call to actually execute the
- * call.
+ * call. However, the vpiSysTaskCall that is the returned handle,
+ * holds a parameter argument list that is passed in here.
+ *
+ * Note that the argv array is saved in the handle, should should not
+ * be released by the caller.
  */
-extern vpiHandle vpip_build_vpi_call(const char*name);
+extern vpiHandle vpip_build_vpi_call(const char*name,
+				     unsigned argc,
+				     vpiHandle*argv);
 
 extern void vpip_execute_vpi_call(vpiHandle obj);
 
@@ -143,6 +163,9 @@ extern void scope_cleanup(void);
 
 /*
  * $Log: vpi_priv.h,v $
+ * Revision 1.3  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.2  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.5 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: Makefile.in,v 1.6 2001/03/18 04:35:18 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -54,7 +54,8 @@ clean:
 distclean: clean
 	rm -f config.h Makefile config.cache config.log config.status
 
-V = vpi_modules.o vpi_iter.o vpi_mcd.o vpi_priv.o vpi_scope.o vpi_tasks.o
+V = vpi_modules.o vpi_const.o vpi_iter.o vpi_mcd.o vpi_priv.o \
+vpi_scope.o vpi_tasks.o
 
 O = main.o parse.o parse_misc.o lexor.o compile.o functor.o symbols.o \
 codes.o vthread.o schedule.o tables.o $V

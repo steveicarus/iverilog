@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vpi_tasks.cc,v 1.2 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: vpi_tasks.cc,v 1.3 2001/03/18 04:35:18 steve Exp $"
 #endif
 
 /*
@@ -58,11 +58,7 @@ static vpiHandle systask_iter(int type, vpiHandle ref)
       if (rfp->nargs == 0)
 	    return 0;
 
-#if 0
       return vpip_make_iterator(rfp->nargs, rfp->args);
-#else
-      return 0;
-#endif
 }
 
 static const struct __vpirt vpip_systask_rt = {
@@ -143,7 +139,9 @@ static struct __vpiUserSystf* vpip_find_systf(const char*name)
  * describes the call, and return it. The %vpi_call instruction will
  * store this handle for when it is executed.
  */
-vpiHandle vpip_build_vpi_call(const char*name)
+vpiHandle vpip_build_vpi_call(const char*name,
+			      unsigned argc,
+			      vpiHandle*argv)
 {
       struct __vpiSysTaskCall*obj = (struct __vpiSysTaskCall*)
 	    calloc(1, sizeof (struct __vpiSysTaskCall));
@@ -151,8 +149,8 @@ vpiHandle vpip_build_vpi_call(const char*name)
       obj->base.vpi_type = &vpip_systask_rt;
       obj->scope = vpip_peek_current_scope();
       obj->defn  = vpip_find_systf(name);
-      obj->nargs = 0;
-      obj->args  = 0;
+      obj->nargs = argc;
+      obj->args  = argv;
 
 	/* If there is a compiletf function, call it here. */
       if (obj->defn->info.compiletf)
@@ -192,6 +190,9 @@ void vpi_register_systf(const struct t_vpi_systf_data*ss)
 
 /*
  * $Log: vpi_tasks.cc,v $
+ * Revision 1.3  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.2  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

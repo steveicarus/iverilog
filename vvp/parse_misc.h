@@ -19,8 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.h,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: parse_misc.h,v 1.2 2001/03/18 04:35:18 steve Exp $"
 #endif
+
+
+# include  "vpi_priv.h"
 
 /*
  * This method is called to compile the design file. The input is read
@@ -48,8 +51,21 @@ struct textv_s {
 extern void textv_init(struct textv_s*obj);
 extern void textv_add(struct textv_s*obj, char*item);
 
+
+
+struct argv_s {
+      unsigned  argc;
+      vpiHandle*argv;
+};
+
+extern void argv_init(struct argv_s*obj);
+extern void argv_add(struct argv_s*obj, vpiHandle);
+
 /*
  * $Log: parse_misc.h,v $
+ * Revision 1.2  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *

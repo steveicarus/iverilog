@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.5 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: compile.cc,v 1.6 2001/03/18 04:35:18 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -308,7 +308,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
       free(mnem);
 }
 
-void compile_vpi_call(char*label, char*name)
+void compile_vpi_call(char*label, char*name, unsigned argc, vpiHandle*argv)
 {
       vvp_cpoint_t ptr = codespace_allocate();
 
@@ -328,7 +328,7 @@ void compile_vpi_call(char*label, char*name)
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name);
+      code->handle = vpip_build_vpi_call(name, argc, argv);
 
 	/* Done with the lexor-allocated name string. */
       free(name);
@@ -434,6 +434,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.6  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.5  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

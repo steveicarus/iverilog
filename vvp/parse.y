@@ -18,6 +18,9 @@ extern FILE*yyin;
       unsigned long numb;
       struct textv_s textv;
       comp_operands_t opa;
+
+      struct argv_s argv;
+      vpiHandle vpi;
 };
 
 
@@ -30,7 +33,11 @@ extern FILE*yyin;
 %token <text> T_SYMBOL
 
 %type <textv> symbols
-%type <opa> operand operands operands_opt
+%type <text> label_opt
+%type <opa>  operand operands operands_opt
+
+%type <argv> argument_opt argument_list
+%type <vpi>  argument
 
 %%
 
@@ -62,22 +69,17 @@ statement
      operands. The meaning of and restrictions on the operands depends
      on the specific instruction. */
 
-	| T_LABEL T_INSTR operands_opt ';'
+	| label_opt T_INSTR operands_opt ';'
 		{ compile_code($1, $2, $3);
 		}
 
-	|         T_INSTR operands_opt ';'
-		{ compile_code(0, $1, $2);
-		}
 
   /* %vpi_call statements are instructions that have unusual operand
      requirements so are handled by their own rules. */
 
-	| T_LABEL K_vpi_call T_STRING ';'
-		{ compile_vpi_call($1, $3); }
+	| label_opt K_vpi_call T_STRING argument_opt ';'
+		{ compile_vpi_call($1, $3, $4.argc, $4.argv); }
 
-	|         K_vpi_call T_STRING ';'
-		{ compile_vpi_call(0, $2); }
 
   /* Scope statements come in two forms. There are the scope
      declaration and the scope recall. */
@@ -105,6 +107,14 @@ statement
 		{ compile_variable($1); }
 	;
 
+
+  /* There are a few places where the label is optional. This rule
+     returns the label value if present, or 0 if not. */
+
+label_opt
+	: T_LABEL { $$ = $1; }
+	|         { $$ = 0; }
+	;
 
 operands_opt
 	: operands { $$ = $1; }
@@ -143,6 +153,42 @@ operand
 		  $$ = opa;
 		}
 	;
+
+
+  /* The argument_list is a list of vpiHandle objects that can be
+     passed to a %vpi_call statement (and hence built into a
+     vpiCallSysTask handle). We build up an arbitrary sized list with
+     the struct argv_s type. */
+
+argument_opt
+	: ',' argument_list
+		{ $$ = $2; }
+	|
+		{ struct argv_s tmp;
+		  argv_init(&tmp);
+		  $$ = tmp;
+		}
+	;
+
+argument_list
+	: argument
+		{ struct argv_s tmp;
+		  argv_init(&tmp);
+		  argv_add(&tmp, $1);
+		  $$ = tmp;
+		}
+	| argument_list ',' argument
+		{ struct argv_s tmp = $1;
+		  argv_add(&tmp, $3);
+		  $$ = tmp;
+		}
+	;
+
+argument
+	: T_STRING
+		{ $$ = vpip_make_string_const($1); }
+	;
+
 
   /* functor operands can only be a list of symbols. */
 symbols

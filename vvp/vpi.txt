@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
  *
- *  $Id: vpi.txt,v 1.3 2001/03/18 00:37:55 steve Exp $
+ *  $Id: vpi.txt,v 1.4 2001/03/18 04:35:18 steve Exp $
  */
 
 
@@ -83,6 +83,13 @@ instruction op-code, but in the vpiSysTfCall object that the compiler
 creates and that the %vpi_call instruction ultimately refers to. All
 the arguments must be some sort of object that can be represented by a
 vpiHandle at compile time.
+
+Arguments are handled at compile time by the parser, which uses the
+argument_list rule to build a list of vpiHandle objects. Each argument
+in the argument_list invokes whatever function is appropriate for the
+token in order to make a vpiHandle object for the argument_list. When
+all this is done, an array of vpiHandles is passed to code to create a
+vpiSysTfCall object that has all that is needed to make the call.
 
 
 SCOPES

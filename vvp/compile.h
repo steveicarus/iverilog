@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.h,v 1.4 2001/03/18 00:37:55 steve Exp $"
+#ident "$Id: compile.h,v 1.5 2001/03/18 04:35:18 steve Exp $"
 #endif
 
 # include  <stdio.h>
+# include  "vpi_user.h"
 
 /*
  * The functions described here are the compile time support
@@ -77,7 +78,8 @@ struct comp_operands_s {
 typedef struct comp_operands_s*comp_operands_t;
 
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
-extern void compile_vpi_call(char*label, char*name);
+extern void compile_vpi_call(char*label, char*name,
+			     unsigned argc, vpiHandle*argv);
 
 /*
  * The parser uses these functions to compile .scope statements.
@@ -105,6 +107,9 @@ extern void compile_dump(FILE*fd);
 
 /*
  * $Log: compile.h,v $
+ * Revision 1.5  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.4  2001/03/18 00:37:55  steve
  *  Add support for vpi scopes.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000  Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001  Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse_misc.cc,v 1.1 2001/03/11 00:29:39 steve Exp $"
+#ident "$Id: parse_misc.cc,v 1.2 2001/03/18 04:35:18 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -40,13 +40,30 @@ void textv_init(struct textv_s*obj)
 
 void textv_add(struct textv_s*obj, char*item)
 {
-      obj->text = realloc(obj->text, (obj->cnt+1) * sizeof(char*));
+      obj->text = (char**)realloc(obj->text, (obj->cnt+1) * sizeof(char*));
       obj->text[obj->cnt] = item;
       obj->cnt += 1;
 }
 
+void argv_init(struct argv_s*obj)
+{
+      obj->argc = 0;
+      obj->argv = 0;
+}
+
+void argv_add(struct argv_s*obj, vpiHandle item)
+{
+      obj->argv = (vpiHandle*)
+	    realloc(obj->argv, (obj->argc+1)*sizeof(vpiHandle));
+      obj->argv[obj->argc] = item;
+      obj->argc += 1;
+}
+
 /*
  * $Log: parse_misc.cc,v $
+ * Revision 1.2  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.1  2001/03/11 00:29:39  steve
  *  Add the vvp engine to cvs.
  *

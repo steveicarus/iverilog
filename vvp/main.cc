@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: main.cc,v 1.2 2001/03/16 01:44:34 steve Exp $"
+#ident "$Id: main.cc,v 1.3 2001/03/18 04:35:18 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -32,6 +32,8 @@
 const char*module_path = ".";
 unsigned module_cnt = 0;
 const char*module_tab[64];
+
+extern void vpi_mcd_init(void);
 
 int main(int argc, char*argv[])
 {
@@ -64,6 +66,12 @@ int main(int argc, char*argv[])
 
       design_path = argv[optind];
 
+	/* This is needed to get the MCD I/O routines ready for
+	   anything. It is done early because it is plausible that the
+	   compile might affect it, and it is cheap to do. */
+
+      vpi_mcd_init();
+
       compile_init();
       vpip_load_modules(module_cnt, module_tab, module_path);
       compile_design(design_path);
@@ -81,6 +89,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.3  2001/03/18 04:35:18  steve
+ *  Add support for string constants to VPI.
+ *
  * Revision 1.2  2001/03/16 01:44:34  steve
  *  Add structures for VPI support, and all the %vpi_call
  *  instruction. Get linking of VPI modules to work.
