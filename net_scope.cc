@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.19 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: net_scope.cc,v 1.20 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -78,33 +78,63 @@ NetScope::~NetScope()
 	    free(module_name_);
 }
 
-NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr)
+NetExpr* NetScope::set_parameter(const string&key, NetExpr*expr,
+				 NetExpr*msb, NetExpr*lsb, bool signed_flag)
 {
-      NetExpr*&ref = parameters_[key];
-      NetExpr* res = ref;
-      ref = expr;
+      param_expr_t&ref = parameters_[key];
+      NetExpr* res = ref.expr;
+      ref.expr = expr;
+      ref.msb = msb;
+      ref.lsb = lsb;
+      ref.signed_flag = signed_flag;
       return res;
+}
+
+/*
+ * Return false if this creates a new parameter.
+ */
+bool NetScope::replace_parameter(const string&key, NetExpr*expr)
+{
+      bool flag = true;
+      param_expr_t&ref = parameters_[key];
+
+      NetExpr* res = ref.expr;
+
+      if (res) {
+	    delete res;
+      } else {
+	    flag = false;
+	    ref.msb = 0;
+	    ref.lsb = 0;
+	    ref.signed_flag = false;
+      }
+
+      ref.expr = expr;
+      return flag;
 }
 
 NetExpr* NetScope::set_localparam(const string&key, NetExpr*expr)
 {
-      NetExpr*&ref = localparams_[key];
-      NetExpr* res = ref;
-      ref = expr;
+      param_expr_t&ref = localparams_[key];
+      NetExpr* res = ref.expr;
+      ref.expr = expr;
+      ref.msb = 0;
+      ref.lsb = 0;
+      ref.signed_flag = false;
       return res;
 }
 
 const NetExpr* NetScope::get_parameter(const string&key) const
 {
-      map<string,NetExpr*>::const_iterator idx;
+      map<string,param_expr_t>::const_iterator idx;
 
       idx = parameters_.find(key);
       if (idx != parameters_.end())
-	    return (*idx).second;
+	    return (*idx).second.expr;
 
       idx = localparams_.find(key);
       if (idx != localparams_.end())
-	    return (*idx).second;
+	    return (*idx).second.expr;
 
       return 0;
 }
@@ -402,6 +432,10 @@ string NetScope::local_hsymbol()
 
 /*
  * $Log: net_scope.cc,v $
+ * Revision 1.20  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.19  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.264 2002/09/26 03:18:04 steve Exp $"
+#ident "$Id: netlist.h,v 1.265 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 /*
@@ -2764,9 +2764,16 @@ class NetScope {
 	   the scope. The return value from set_parameter is the
 	   previous expression, if there was one. */
 
-      NetExpr* set_parameter(const string&name, NetExpr*val);
+      NetExpr* set_parameter(const string&name, NetExpr*val,
+			     NetExpr*msb, NetExpr*lsb, bool signed_flag);
       NetExpr* set_localparam(const string&name, NetExpr*val);
       const NetExpr*get_parameter(const string&name) const;
+
+	/* These are used by defparam elaboration to replace the
+	   expression with a new expression, without affecting the
+	   range or signed_flag. Return false if the name does not
+	   exist. */
+      bool replace_parameter(const string&name, NetExpr*val);
 
 	/* These methods set or access events that live in this
 	   scope. */
@@ -2868,8 +2875,14 @@ class NetScope {
 
       signed char time_unit_, time_prec_;
 
-      map<string,NetExpr*>parameters_;
-      map<string,NetExpr*>localparams_;
+      struct param_expr_t {
+	    NetExpr*expr;
+	    NetExpr*msb;
+	    NetExpr*lsb;
+	    bool signed_flag;
+      };
+      map<string,param_expr_t>parameters_;
+      map<string,param_expr_t>localparams_;
 
       NetEvent *events_;
       NetNet   *signals_;
@@ -3057,6 +3070,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.265  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.264  2002/09/26 03:18:04  steve
  *  Generate vvp code for asynch set/reset of NetFF.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.16 2002/09/01 03:01:48 steve Exp $"
+#ident "$Id: elab_scope.cc,v 1.17 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -68,7 +68,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp);
+	    scope->set_parameter((*cur).first, tmp, 0, 0, false);
       }
 
       for (mparm_it_t cur = localparams.begin()
@@ -78,7 +78,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    if ((*cur).second.msb)
 		  tmp->cast_signed( (*cur).second.signed_flag );
 
-	    scope->set_parameter((*cur).first, tmp);
+	    scope->set_parameter((*cur).first, tmp, 0, 0, false);
       }
 
 
@@ -94,6 +94,9 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
+	    NetExpr*msb = 0;
+	    NetExpr*lsb = 0;
+	    bool signed_flag = false;
 
 	      /* If the parameter declaration includes msb and lsb,
 		 then use them to calculate a width for the
@@ -101,37 +104,15 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 		 parameter value is coerced to have the correct
 		 and defined width. */
 	    if ((*cur).second.msb) {
-		  verinum*msb = (*cur).second.msb ->eval_const(des, scope);
+		  msb = (*cur).second.msb ->elaborate_pexpr(des, scope);
 		  assert(msb);
-		  verinum*lsb = (*cur).second.lsb ->eval_const(des, scope);
-		  assert(lsb);
-
-		  long msl = msb->as_long();
-		  long lsl = lsb->as_long();
-		  delete msb;
-		  delete lsb;
-
-		  unsigned width;
-		  if (msl >= lsl)
-			width = msl - lsl + 1;
-		  else
-			width = lsl - msl + 1;
-
-		  if (NetEConst*tmp = dynamic_cast<NetEConst*>(val)) {
-			verinum tval (tmp->value(), width);
-			tval.has_sign((*cur).second.signed_flag);
-			val = new NetEConst(tval);
-			delete tmp;
-		  }
-
-		    /* If the parameter has a range, then the
-		       signedness is taken from the parameter
-		       declaration, and the signedness of the
-		       expression is ignored. */
-		  val->cast_signed( (*cur).second.signed_flag );
+		  lsb = (*cur).second.lsb ->elaborate_pexpr(des, scope);
+		  signed_flag = (*cur).second.signed_flag;
 	    }
 
-	    val = scope->set_parameter((*cur).first, val);
+	    val->cast_signed(signed_flag);
+	    val = scope->set_parameter((*cur).first, val,
+				       msb, lsb, signed_flag);
 	    assert(val);
 	    delete val;
       }
@@ -143,7 +124,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
 	    assert(ex);
 
 	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    val = scope->set_parameter((*cur).first, val);
+	    val = scope->set_parameter((*cur).first, val, 0, 0, false);
 	    assert(val);
 	    delete val;
       }
@@ -351,9 +332,12 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	    PExpr*tmp = (*cur).second;
 	    NetExpr*val = tmp->elaborate_pexpr(des, sc);
-	    val = my_scope->set_parameter((*cur).first, val);
-	    assert(val);
-	    delete val;
+	    bool flag = my_scope->replace_parameter((*cur).first, val);
+	    if (! flag) {
+		  cerr << val->get_line() << ": warning: parameter "
+		       << (*cur).first << " not found in "
+		       << sc->name() << "." << endl;
+	    }
       }
 }
 
@@ -512,6 +496,10 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_scope.cc,v $
+ * Revision 1.17  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.16  2002/09/01 03:01:48  steve
  *  Properly cast signedness of parameters with ranges.
  *

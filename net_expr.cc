@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.7 2002/09/01 03:01:48 steve Exp $"
+#ident "$Id: net_expr.cc,v 1.8 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -111,7 +111,7 @@ unsigned NetEConcat::repeat() const
 }
 
 NetEParam::NetEParam()
-: des_(0)
+: des_(0), scope_(0)
 {
 }
 
@@ -171,6 +171,10 @@ bool NetESelect::set_width(unsigned w)
 
 /*
  * $Log: net_expr.cc,v $
+ * Revision 1.8  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.7  2002/09/01 03:01:48  steve
  *  Properly cast signedness of parameters with ranges.
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2002 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.27 2002/08/16 05:18:27 steve Exp $"
+#ident "$Id: net_design.cc,v 1.28 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -242,13 +242,11 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
-	    NetExpr*tmp = targ_scope->set_parameter(name, val);
-	    if (tmp == 0) {
+	    bool flag = targ_scope->replace_parameter(name, val);
+	    if (! flag) {
 		  cerr << val->get_line() << ": warning: parameter "
-		       << name << " not found in " << targ_scope->name()
-		       << "." << endl;
-	    } else {
-		  delete tmp;
+		       << name << " not found in "
+		       << targ_scope->name() << "." << endl;
 	    }
 
 	    delete[]name;
@@ -276,34 +274,129 @@ void NetScope::evaluate_parameters(Design*des)
 	// scanning code. Now the parameter expression can be fully
 	// evaluated, or it cannot be evaluated at all.
 
-      typedef map<string,NetExpr*>::iterator mparm_it_t;
+      typedef map<string,param_expr_t>::iterator mparm_it_t;
 
       for (mparm_it_t cur = parameters_.begin()
 		 ; cur != parameters_.end() ;  cur ++) {
 
-	      // Get the NetExpr for the parameter.
-	    NetExpr*expr = (*cur).second;
-	    assert(expr);
+	    long msb = 0;
+	    long lsb = 0;
+	    bool range_flag = false;
+	    NetExpr*expr;
 
-	      // If it's already a NetEConst, then this parameter is done.
-	    if (dynamic_cast<const NetEConst*>(expr))
-		  continue;
+	      /* Evaluate the msb expression, if it is present. */
+	    expr = (*cur).second.msb;
 
-	      // Try to evaluate the expression.
-	    NetExpr*nexpr = expr->eval_tree();
-	    if (nexpr == 0) {
-		  cerr << (*cur).second->get_line() << ": internal error: "
-			"unable to evaluate parm expression: " <<
-			*expr << endl;
-		  des->errors += 1;
-		  continue;
+	    if (expr) {
+
+		  NetEConst*tmp = dynamic_cast<NetEConst*>(expr);
+
+		  if (! tmp) {
+
+			NetExpr*nexpr = expr->eval_tree();
+			if (nexpr == 0) {
+			      cerr << (*cur).second.expr->get_line()
+				   << ": internal error: "
+				   << "unable to evaluate msb expression "
+				   << "for parameter " << (*cur).first << ": "
+				   << *expr << endl;
+			      des->errors += 1;
+			      continue;
+			}
+
+			assert(nexpr);
+			delete expr;
+			(*cur).second.msb = nexpr;
+
+			tmp = dynamic_cast<NetEConst*>(nexpr);
+		  }
+
+		  assert(tmp);
+		  msb = tmp->value().as_long();
+		  range_flag = true;
 	    }
 
-	      // The evaluate worked, replace the old expression with
-	      // this constant value.
-	    assert(nexpr);
-	    delete expr;
-	    (*cur).second = nexpr;
+	      /* Evaluate the lsb expression, if it is present. */
+	    expr = (*cur).second.lsb;
+	    if (expr) {
+
+		  NetEConst*tmp = dynamic_cast<NetEConst*>(expr);
+
+		  if (! tmp) {
+
+			NetExpr*nexpr = expr->eval_tree();
+			if (nexpr == 0) {
+			      cerr << (*cur).second.expr->get_line()
+				   << ": internal error: "
+				   << "unable to evaluate lsb expression "
+				   << "for parameter " << (*cur).first << ": "
+				   << *expr << endl;
+			      des->errors += 1;
+			      continue;
+			}
+
+			assert(nexpr);
+			delete expr;
+			(*cur).second.lsb = nexpr;
+
+			tmp = dynamic_cast<NetEConst*>(nexpr);
+		  }
+
+		  assert(tmp);
+		  lsb = tmp->value().as_long();
+
+		  assert(range_flag);
+	    }
+
+
+	      /* Evaluate the parameter expression, if necessary. */
+	    expr = (*cur).second.expr;
+	    assert(expr);
+	    if (! dynamic_cast<const NetEConst*>(expr)) {
+
+		    // Try to evaluate the expression.
+		  NetExpr*nexpr = expr->eval_tree();
+		  if (nexpr == 0) {
+			cerr << (*cur).second.expr->get_line()
+			     << ": internal error: "
+			      "unable to evaluate parameter value: " <<
+			      *expr << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+		    // The evaluate worked, replace the old expression with
+		    // this constant value.
+		  assert(nexpr);
+		  delete expr;
+		  (*cur).second.expr = nexpr;
+
+		    // Set the signedness flag.
+		  (*cur).second.expr->cast_signed( (*cur).second.signed_flag );
+	    }
+
+	      /* If the parameter has range information, then make
+		 sure the value is set right. */
+	    if (range_flag) {
+		  long wid = (msb >= lsb)? msb - lsb : lsb - msb;
+		  wid += 1;
+
+		  NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr);
+		  assert(val);
+
+		  verinum value = val->value();
+
+		  if (! (value.has_len()
+			 && (value.len() == wid)
+			 && (value.has_sign() == (*cur).second.signed_flag))) {
+
+			verinum tmp (value, wid);
+			tmp.has_sign ( (*cur).second.signed_flag );
+			delete val;
+			val = new NetEConst(tmp);
+			(*cur).second.expr = val;
+		  }
+	    }
       }
 
 }
@@ -500,6 +593,10 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.28  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.27  2002/08/16 05:18:27  steve
  *  Fix intermix of node functors and node delete.
  *
@@ -518,86 +615,5 @@ void Design::delete_process(NetProcTop*top)
  *
  * Revision 1.22  2001/10/20 05:21:51  steve
  *  Scope/module names are char* instead of string.
- *
- * Revision 1.21  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.20  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.19  2001/04/02 02:28:12  steve
- *  Generate code for task calls.
- *
- * Revision 1.18  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.17  2000/12/16 01:45:48  steve
- *  Detect recursive instantiations (PR#2)
- *
- * Revision 1.16  2000/09/24 17:41:13  steve
- *  fix null pointer when elaborating undefined task.
- *
- * Revision 1.15  2000/08/26 00:54:03  steve
- *  Get at gate information for ivl_target interface.
- *
- * Revision 1.14  2000/08/12 17:59:48  steve
- *  Limit signal scope search at module boundaries.
- *
- * Revision 1.13  2000/07/30 18:25:43  steve
- *  Rearrange task and function elaboration so that the
- *  NetTaskDef and NetFuncDef functions are created during
- *  signal enaboration, and carry these objects in the
- *  NetScope class instead of the extra, useless map in
- *  the Design class.
- *
- * Revision 1.12  2000/07/23 02:41:32  steve
- *  Excessive assert.
- *
- * Revision 1.11  2000/07/22 22:09:03  steve
- *  Parse and elaborate timescale to scopes.
- *
- * Revision 1.10  2000/07/16 04:56:08  steve
- *  Handle some edge cases during node scans.
- *
- * Revision 1.9  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.8  2000/05/02 16:27:38  steve
- *  Move signal elaboration to a seperate pass.
- *
- * Revision 1.7  2000/05/02 03:13:31  steve
- *  Move memories to the NetScope object.
- *
- * Revision 1.6  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.5  2000/04/28 16:50:53  steve
- *  Catch memory word parameters to tasks.
- *
- * Revision 1.4  2000/04/10 05:26:06  steve
- *  All events now use the NetEvent class.
- *
- * Revision 1.3  2000/03/11 03:25:52  steve
- *  Locate scopes in statements.
- *
- * Revision 1.2  2000/03/10 06:20:48  steve
- *  Handle defparam to partial hierarchical names.
- *
- * Revision 1.1  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
  */
 

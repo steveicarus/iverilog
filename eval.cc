@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.31 2002/10/13 05:01:07 steve Exp $"
+#ident "$Id: eval.cc,v 1.32 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -145,7 +145,8 @@ verinum* PEIdent::eval_const(const Design*des, const NetScope*scope) const
       const NetEConst*eval = dynamic_cast<const NetEConst*>(expr);
       if (eval == 0) {
 	    cerr << get_line() << ": internal error: Unable to evaluate "
-		 << "constant expression: " << *expr << endl;
+		 << "constant expression (parameter=" << path_
+		 << "): " << *expr << endl;
 	    return 0;
       }
 
@@ -225,6 +226,10 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 
 /*
  * $Log: eval.cc,v $
+ * Revision 1.32  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.31  2002/10/13 05:01:07  steve
  *  More verbose eval_const assert message.
  *

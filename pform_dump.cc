@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.76 2002/08/19 02:39:17 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.77 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -712,6 +712,8 @@ void Module::dump(ostream&out) const
       for (parm_iter_t cur = parameters.begin()
 		 ; cur != parameters.end() ; cur ++) {
 	    out << "    parameter ";
+	    if ((*cur).second.signed_flag)
+		  out << "signed ";
 	    if ((*cur).second.msb)
 		  out << "[" << *(*cur).second.msb << ":"
 		      << *(*cur).second.lsb << "] ";
@@ -846,6 +848,10 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.77  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.76  2002/08/19 02:39:17  steve
  *  Support parameters with defined ranges.
  *

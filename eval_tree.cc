@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.41 2002/08/12 01:34:59 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.42 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -884,7 +884,7 @@ NetExpr* NetEParam::eval_tree()
 
 	// The result can be saved as the value of the parameter for
 	// future reference, and return a copy to the caller.
-      scope_->set_parameter(name_.peek_name(0), res);
+      scope_->replace_parameter(name_.peek_name(0), res);
       return res->dup_expr();
 }
 
@@ -1134,6 +1134,10 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.42  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.41  2002/08/12 01:34:59  steve
  *  conditional ident string using autoconfig.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: design_dump.cc,v 1.133 2002/08/19 00:06:11 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.134 2002/10/19 22:59:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -699,17 +699,26 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump the parameters for this scope. */
       {
-	    map<string,NetExpr*>::const_iterator pp;
+	    map<string,param_expr_t>::const_iterator pp;
 	    for (pp = parameters_.begin()
 		       ; pp != parameters_.end() ;  pp ++) {
-		  o << "    parameter " << (*pp).first << " = "  <<
-			*(*pp).second << ";" << endl;
+		  o << "    parameter ";
+
+		  if ((*pp).second.signed_flag)
+			o << "signed ";
+
+		  if ((*pp).second.msb)
+			o << "[" << *(*pp).second.msb
+			  << ":" << *(*pp).second.lsb << "] ";
+
+		  o << (*pp).first << " = "  <<
+			*(*pp).second.expr << ";" << endl;
 	    }
 
 	    for (pp = localparams_.begin()
 		       ; pp != localparams_.end() ;  pp ++) {
 		  o << "    localparam " << (*pp).first << " = "  <<
-			*(*pp).second << ";" << endl;
+			*(*pp).second.expr << ";" << endl;
 	    }
       }
 
@@ -925,7 +934,10 @@ void NetEMemory::dump(ostream&o) const
 
 void NetEParam::dump(ostream&o) const
 {
-      o << "<" << scope_->name() << "." << name_ << ">";
+      if (scope_ != 0)
+	    o << "<" << scope_->name() << "." << name_ << ">";
+      else
+	    o << "<" << name_ << ">";
 }
 
 void NetETernary::dump(ostream&o) const
@@ -991,6 +1003,10 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.134  2002/10/19 22:59:49  steve
+ *  Redo the parameter vector support to allow
+ *  parameter names in range expressions.
+ *
  * Revision 1.133  2002/08/19 00:06:11  steve
  *  Allow release to handle removal of target net.
  *
