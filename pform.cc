@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.39 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: pform.cc,v 1.40 1999/08/27 15:08:37 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -382,6 +382,20 @@ PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       return cur;
 }
 
+void pform_make_pgassign_list(svector<PExpr*>*alist,
+			      svector<PExpr*>*del,
+			      const string& text,
+			      unsigned lineno)
+{
+	PGAssign*tmp;
+	for (unsigned idx = 0 ;  idx < alist->count()/2 ;  idx += 1) {
+	      tmp = pform_make_pgassign((*alist)[2*idx],
+					(*alist)[2*idx+1], del);
+	      tmp->set_file(text);
+	      tmp->set_lineno(lineno);
+	}
+}
+
 void pform_makewire(const vlltype&li, const string&nm,
 		    NetNet::Type type)
 {
@@ -668,6 +682,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.40  1999/08/27 15:08:37  steve
+ *  continuous assignment lists.
+ *
  * Revision 1.39  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

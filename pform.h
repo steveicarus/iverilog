@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.29 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: pform.h,v 1.30 1999/08/27 15:08:37 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -148,7 +148,10 @@ extern void pform_make_modgates(const string&type,
 /* Make a continuous assignment node, with optional bit- or part- select. */
 extern PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
 				     svector<PExpr*>*delays);
-
+extern void pform_make_pgassign_list(svector<PExpr*>*alist,
+				     svector<PExpr*>*del,
+				     const string& text,
+				     unsigned lineno);
 
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
@@ -169,6 +172,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.30  1999/08/27 15:08:37  steve
+ *  continuous assignment lists.
+ *
  * Revision 1.29  1999/08/25 22:22:41  steve
  *  elaborate some aspects of functions.
  *

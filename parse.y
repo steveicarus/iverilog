@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.60 1999/08/25 22:22:41 steve Exp $"
+#ident "$Id: parse.y,v 1.61 1999/08/27 15:08:37 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -129,6 +129,7 @@ extern void lex_end_table();
 %type <expr>  delay_value
 %type <exprs> delay delay_opt delay_value_list
 %type <exprs> expression_list
+%type <exprs> assign assign_list
 
 %type <exprs> range range_opt
 %type <nettype>  net_type
@@ -923,6 +924,26 @@ lpvalue
 		}
 	;
 
+assign
+	: lavalue '=' expression
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(2);
+		  (*tmp)[0] = $1;
+		  (*tmp)[1] = $3;
+		  $$ = tmp;
+		}
+	;
+
+assign_list
+	: assign_list ',' assign
+		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, *$3);
+		  delete $1;
+		  delete $3;
+		  $$ = tmp;
+		}
+	| assign
+		{ $$ = $1; }
+	;
+
 module
 	: K_module IDENTIFIER list_of_ports_opt ';'
 		{ pform_startmodule($2, $3);
@@ -994,11 +1015,8 @@ module_item
 		{ pform_make_modgates($1, $2, $3);
 		  delete $1;
 		}
-	| K_assign delay_opt lavalue '=' expression ';'
-		{ PGAssign*tmp = pform_make_pgassign($3, $5, $2);
-		  tmp->set_file(@1.text);
-		  tmp->set_lineno(@1.first_line);
-		}
+	| K_assign delay_opt assign_list ';'
+		{ pform_make_pgassign_list($3, $2, @1.text, @1.first_line); }
 	| K_assign error '=' expression ';'
 	| K_always statement
 		{ PProcess*tmp = pform_make_behavior(PProcess::PR_ALWAYS, $2);
