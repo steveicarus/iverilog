@@ -1,4 +1,4 @@
-.TH vvp 1 "$Date: 2002/07/12 16:30:44 $" Version "$Date: 2002/07/12 16:30:44 $"
+.TH vvp 1 "$Date: 2003/02/20 00:50:28 $" Version "$Date: 2003/02/20 00:50:28 $"
 .SH NAME
 vvp - Icarus Verilog vvp runtime engine
 
@@ -58,6 +58,25 @@ available to the standard system tasks, but can still be accessed via
 PLI code via the \fIvpi_get_vlog_info\fP function. This means that
 vpi modules may use arguments that do not start with + and be assured
 that they do not interfere with user defined plus-args.
+.PP
+There are a few extended arguments that are interpreted by the
+standard system module, which implements the standard system tasks and
+so is always included. These flags arguments are described here.
+.TP 8
+.B -vcd
+This extended argument sets the wave dump format to VCD. This is the
+default in the absence of any \fBIVERILOG_DUMPER\fP environment
+variable. The VCD dump files are large and ponderous, but are also
+maximally compatible with third party tools that read waveform dumps.
+
+.TP 8
+.B -lxt\fR|\fP-lxt-speed\fR|\fP-lxt-space
+These extended arguments set the wave dump format to lxt, possibly with
+format optimizations. The \fB-lxt-space\fP flag sets the output
+format to lxt with full compression enabled. The resulting files are
+quite small. The \fB-lxt-speed\fP chooses the lxt compression mode
+that leads to the best execution time and the fastest read time, at
+the expense of some file size.
 
 .SH ENVIRONMENT
 .PP
@@ -77,7 +96,7 @@ Steve Williams (steve@icarus.com)
 
 .SH SEE ALSO
 iverilog(1),
-iverilog-vpi(0),
+iverilog-vpi(1),
 .BR "<http://www.icarus.com/eda/verilog/>"
 
 .SH COPYRIGHT
