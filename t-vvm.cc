@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.151 2000/05/20 02:48:51 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.152 2000/05/25 01:45:35 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -2143,9 +2143,37 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 	    return;
       }
 
-      string rval = emit_proc_rval(defn, this, net->rval());
+
+      string rval;
+
+
+	/* Handle another special case, that of an r-value that is a
+	   simple identifier. In this case we don't need to generate
+	   the vvm_bitset_t but can pull the result directly out of
+	   the identifier memory. It is OK to turn the r-value string
+	   into a simple vpip_bit_t array (the .bits member of the
+	   signal) because we know that we will only be using the []
+	   operator on it. */
+
+      if (const NetESignal*rs = dynamic_cast<const NetESignal*>(net->rval())) {
+
+	    assert((net->pin_count() <= rs->pin_count())
+		   || (net->bmux() && (rs->pin_count() >= 1)));
+	    rval = mangle(rs->name()) + ".bits";
+
+      } else {
+
+	    rval = emit_proc_rval(defn, this, net->rval());
+      }
+
 
       defn << "      // " << net->get_line() << ": " << endl;
+
+
+	/* Now, if there is a mux on the l-value, generate a code to
+	   assign a single bit to one of the bits of the
+	   l-value. Otherwise, generate code for a complete
+	   assignment. */
 
       if (net->bmux()) {
 
@@ -3015,6 +3043,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.152  2000/05/25 01:45:35  steve
+ *  Optimize assignment from signals.
+ *
  * Revision 1.151  2000/05/20 02:48:51  steve
  *  Add vpi numbers to the bits table.
  *
