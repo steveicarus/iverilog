@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.43 2002/11/09 01:40:19 steve Exp $"
+#ident "$Id: eval_tree.cc,v 1.44 2002/12/05 02:14:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -894,6 +894,53 @@ NetExpr* NetEParam::eval_tree()
       return res->dup_expr();
 }
 
+NetEConst* NetESelect::eval_tree()
+{
+      NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
+      if (expr == 0) {
+	    NetExpr*tmp = expr_->eval_tree();
+	    if (tmp != 0) {
+		  delete expr_;
+		  expr_ = tmp;
+	    }
+
+	    expr = dynamic_cast<NetEConst*>(expr_);
+      }
+
+      NetEConst*base = dynamic_cast<NetEConst*>(base_);
+      if (base == 0) {
+	    NetExpr*tmp = base_->eval_tree();
+	    if (tmp != 0) {
+		  delete base_;
+		  base_ = tmp;
+	    }
+
+	    base = dynamic_cast<NetEConst*>(base_);
+      }
+
+      if (expr == 0)
+	    return 0;
+      if (base == 0)
+	    return 0;
+
+      verinum eval = expr->value();
+      verinum oval (verinum::V0, expr_width(), true);
+      long bval = base->value().as_long();
+
+      for (long idx = 0 ;  idx < expr_width() ;  idx += 1) {
+	    if ((bval >= eval.len()) || (bval < 0))
+		  oval.set(idx, verinum::Vx);
+	    else 
+		  oval.set(idx, eval.get(bval));
+
+	    bval += 1;
+      }
+
+      NetEConst*res = new NetEConst(oval);
+      return res;
+}
+
+
 /*
  * A ternary expression evaluation is controlled by the condition
  * expression. If the condition evaluates to true or false, then
@@ -1140,6 +1187,9 @@ NetEConst* NetEUReduce::eval_tree()
 
 /*
  * $Log: eval_tree.cc,v $
+ * Revision 1.44  2002/12/05 02:14:33  steve
+ *  Support bit select in constant expressions.
+ *
  * Revision 1.43  2002/11/09 01:40:19  steve
  *  Postpone parameter width check to evaluation.
  *

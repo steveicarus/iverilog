@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.269 2002/11/09 01:40:19 steve Exp $"
+#ident "$Id: netlist.h,v 1.270 2002/12/05 02:14:33 steve Exp $"
 #endif
 
 /*
@@ -2494,6 +2494,7 @@ class NetESelect  : public NetExpr {
       virtual bool set_width(unsigned w);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEConst* eval_tree();
       virtual NetESelect* dup_expr() const;
 
     private:
@@ -3084,6 +3085,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.270  2002/12/05 02:14:33  steve
+ *  Support bit select in constant expressions.
+ *
  * Revision 1.269  2002/11/09 01:40:19  steve
  *  Postpone parameter width check to evaluation.
  *

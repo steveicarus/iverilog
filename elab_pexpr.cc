@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.17 2002/11/09 01:40:19 steve Exp $"
+#ident "$Id: elab_pexpr.cc,v 1.18 2002/12/05 02:14:33 steve Exp $"
 #endif
 
 # include "config.h"
@@ -145,15 +145,26 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      if (msb_ || lsb_ || idx_) {
-	    cerr << get_line() << ": error: Cannot bit/part select "
-		  "bits of parameters." << endl;
-	    des->errors += 1;
-      }
-
       NetExpr*res = new NetEParam(des, pscope, hname_t(name));
       assert(res);
       delete name;
+
+      assert(idx_ == 0);
+      if (msb_ && lsb_) {
+	    cerr << get_line() << ": sorry: Cannot part select "
+		  "bits of parameters." << endl;
+	    des->errors += 1;
+
+      } else if (msb_) {
+
+	      /* We have here a bit select. Insert a NetESelect node
+		 to handle it. */
+	    NetExpr*tmp = msb_->elaborate_pexpr(des, scope);
+	    if (tmp != 0) {
+		  res = new NetESelect(res, tmp, 1);
+	    }
+      }
+
       return res;
 }
 
@@ -217,6 +228,9 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
 
 /*
  * $Log: elab_pexpr.cc,v $
+ * Revision 1.18  2002/12/05 02:14:33  steve
+ *  Support bit select in constant expressions.
+ *
  * Revision 1.17  2002/11/09 01:40:19  steve
  *  Postpone parameter width check to evaluation.
  *
