@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.76 2003/11/13 03:10:38 steve Exp $"
+#ident "$Id: main.cc,v 1.77 2003/11/13 04:09:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -180,6 +180,23 @@ static void process_generation_flag(const char*gen)
 	    generation_flag = GN_DEFAULT;
 }
 
+static void parm_to_flagmap(const string&flag)
+{
+      string key;
+      const char*value;
+      unsigned off = flag.find('=');
+      if (off > flag.size()) {
+	    key = flag;
+	    value = "";
+
+      } else {
+	    key = flag.substr(0, off);
+	    value = strdup(flag.substr(off+1).c_str());
+      }
+
+      flags[key] = value;
+}
+
 /*
  * Read the contents of a config file. This file is a temporary
  * configuration file made by the compiler driver to carry the bulky
@@ -208,6 +225,9 @@ static void process_generation_flag(const char*gen)
  *
  *    depfile:<path>
  *        Give the path to an output dependency file.
+ *
+ *    flag:<name>=<string>
+ *        Generic compiler flag strings.
  *
  *    functor:<name>
  *        Append a named functor to the processing path.
@@ -266,6 +286,10 @@ static void read_iconfig_file(const char*ipath)
 
 	    if (strcmp(buf, "depfile") == 0) {
 		  depfile_name = strdup(cp);
+
+	    } else if (strcmp(buf, "flag") == 0) {
+		  string parm = cp;
+		  parm_to_flagmap(parm);
 
 	    } else if (strcmp(buf,"functor") == 0) {
 		net_func tmp = name_to_net_func(cp);
@@ -350,23 +374,6 @@ static void read_iconfig_file(const char*ipath)
 
 	    }
       }
-}
-
-static void parm_to_flagmap(const string&flag)
-{
-      string key;
-      const char*value;
-      unsigned off = flag.find('=');
-      if (off > flag.size()) {
-	    key = flag;
-	    value = "";
-
-      } else {
-	    key = flag.substr(0, off);
-	    value = strdup(flag.substr(off+1).c_str());
-      }
-
-      flags[key] = value;
 }
 
 extern Design* elaborate(list <const char*>root);
@@ -700,6 +707,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.77  2003/11/13 04:09:49  steve
+ *  Pass flags through the temporary config file.
+ *
  * Revision 1.76  2003/11/13 03:10:38  steve
  *  ivl -F and -t flags are onpassed throught the -C file.
  *

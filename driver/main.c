@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.58 2003/11/01 04:21:57 steve Exp $"
+#ident "$Id: main.c,v 1.59 2003/11/13 04:09:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -113,8 +113,6 @@ char*inc_list = 0;
 char*def_list = 0;
 char*mod_list = 0;
 char*command_filename = 0;
-
-char*f_list = 0;
 
 /* These are used to collect the list of file names that will be
    passed to ivlpp. Keep the list in a file because it can be a long
@@ -477,17 +475,7 @@ int main(int argc, char **argv)
 		case 'f':
 		  fprintf(stderr, "warning: The -f flag is moved to -p\n");
 		case 'p':
-		  if (f_list == 0) {
-			f_list = malloc(strlen(" -p")+strlen(optarg)+1);
-			strcpy(f_list, " -p");
-			strcat(f_list, optarg);
-		  } else {
-			f_list = realloc(f_list, strlen(f_list) +
-					 strlen(" -p") +
-					 strlen(optarg) + 1);
-			strcat(f_list, " -p");
-			strcat(f_list, optarg);
-		  }
+		  fprintf(iconfig_file, "flag:%s\n", optarg);
 		  break;
 
 		case 'g':
@@ -715,6 +703,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: main.c,v $
+ * Revision 1.59  2003/11/13 04:09:49  steve
+ *  Pass flags through the temporary config file.
+ *
  * Revision 1.58  2003/11/01 04:21:57  steve
  *  Add support for a target static config file.
  *

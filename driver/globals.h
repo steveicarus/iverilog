@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: globals.h,v 1.17 2003/11/01 04:21:57 steve Exp $"
+#ident "$Id: globals.h,v 1.18 2003/11/13 04:09:49 steve Exp $"
 #endif
 
 # include  <stddef.h>
@@ -30,15 +30,6 @@ extern const char*base;
   /* This is the path to the iconfig file sent to ivl. */
 extern char* iconfig_path;
 extern char* iconfig_common_path;
-
-  /* This is a list of all the -f<key>=<value> options from the
-     command line, concatenated together. */
-extern char*f_list;
-
-extern char*mod_list;
-
-  /* This is the optional -Tmin|typ|max setting. */
-extern const char*mtm;
 
   /* Ths is the optional -M<dependfile> value, if one was supplied. */
 extern const char*depfile;
@@ -57,9 +48,6 @@ extern int synth_flag;
 
   /* This is the name of the selected target. */
 extern const char*targ;
-
-  /* This is the language generation flag. */
-extern const char*generation;
 
   /* Perform variable substitutions on the string. */
 extern char* substitutions(const char*str);
@@ -93,6 +81,9 @@ extern int build_string(char*out, size_t olen, const char*pattern);
 
 /*
  * $Log: globals.h,v $
+ * Revision 1.18  2003/11/13 04:09:49  steve
+ *  Pass flags through the temporary config file.
+ *
  * Revision 1.17  2003/11/01 04:21:57  steve
  *  Add support for a target static config file.
  *

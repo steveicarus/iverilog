@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: build_string.c,v 1.14 2003/11/01 04:21:57 steve Exp $"
+#ident "$Id: build_string.c,v 1.15 2003/11/13 04:09:49 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,26 +81,12 @@ int build_string(char*output, size_t olen, const char*pattern)
 			olen -= strlen(iconfig_common_path);
 			break;
 
-		      case 'f':
-			if (f_list) {
-			      strcpy(output, f_list);
-			      output += strlen(f_list);
-			      olen -= strlen(f_list);
-			}
-			break;
-
 		      case 'N':
 			if (npath) {
 			      strcpy(output, npath);
 			      output += strlen(npath);
 			      olen -= strlen(npath);
 			}
-			break;
-
-		      case 't':
-			strcpy(output, targ);
-			output += strlen(targ);
-			olen -= strlen(targ);
 			break;
 
 		  }
@@ -118,6 +104,9 @@ int build_string(char*output, size_t olen, const char*pattern)
 
 /*
  * $Log: build_string.c,v $
+ * Revision 1.15  2003/11/13 04:09:49  steve
+ *  Pass flags through the temporary config file.
+ *
  * Revision 1.14  2003/11/01 04:21:57  steve
  *  Add support for a target static config file.
  *
@@ -129,39 +118,5 @@ int build_string(char*output, size_t olen, const char*pattern)
  *
  * Revision 1.11  2002/08/12 01:35:01  steve
  *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2002/05/28 02:25:03  steve
- *  Pass library paths through -Cfile instead of command line.
- *
- * Revision 1.9  2002/05/28 00:50:39  steve
- *  Add the ivl -C flag for bulk configuration
- *  from the driver, and use that to run library
- *  modules through the preprocessor.
- *
- * Revision 1.8  2002/05/24 01:13:00  steve
- *  Support language generation flag -g.
- *
- * Revision 1.7  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.6  2001/11/16 05:07:19  steve
- *  Add support for +libext+ in command files.
- *
- * Revision 1.5  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- * Revision 1.4  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.3  2001/07/03 04:09:25  steve
- *  Generate verbuse status messages (Stephan Boettcher)
- *
- * Revision 1.2  2000/10/28 03:45:47  steve
- *  Use the conf file to generate the vvm ivl string.
- *
- * Revision 1.1  2000/10/08 22:36:56  steve
- *  iverilog with an iverilog.conf configuration file.
- *
  */
 
