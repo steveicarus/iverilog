@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.11 2000/10/08 04:01:55 steve Exp $"
+#ident "$Id: t-dll.h,v 1.12 2000/10/13 03:39:27 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -176,10 +176,12 @@ struct __nexus_ptr {
       union {
 	    ivl_signal_t    sig; /* type 0 */
 	    ivl_net_logic_t log; /* type 1 */
+	    ivl_net_const_t con; /* type 2 */
       } l;
 };
 # define __NEXUS_PTR_SIG 0
 # define __NEXUS_PTR_LOG 1
+# define __NEXUS_PTR_CON 2
 
 struct ivl_nexus_s {
       unsigned nptr_;
@@ -298,6 +300,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.12  2000/10/13 03:39:27  steve
+ *  Include constants in nexus targets.
+ *
  * Revision 1.11  2000/10/08 04:01:55  steve
  *  Back pointers in the nexus objects into the devices
  *  that point to it.

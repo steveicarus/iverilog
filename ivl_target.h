@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.18 2000/10/08 04:01:54 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.19 2000/10/13 03:39:27 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -386,7 +386,7 @@ typedef int  (*start_design_f)(ivl_design_t des);
 typedef void (*end_design_f)(ivl_design_t des);
 
 
-/* target_net_const
+/* target_net_const (optional)
 
    The "target_net_const" function is called for structural constant
    values that appear in the design. */
@@ -453,6 +453,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.19  2000/10/13 03:39:27  steve
+ *  Include constants in nexus targets.
+ *
  * Revision 1.18  2000/10/08 04:01:54  steve
  *  Back pointers in the nexus objects into the devices
  *  that point to it.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.cc,v 1.13 2000/10/08 04:01:55 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.14 2000/10/13 03:39:27 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -85,6 +85,19 @@ static void nexus_log_add(ivl_nexus_t nex, ivl_net_logic_t net, unsigned pin)
       nex->ptrs_[top-1].pin_ = pin;
       nex->ptrs_[top-1].l.log= net;
 }
+
+static void nexus_con_add(ivl_nexus_t nex, ivl_net_const_t net, unsigned pin)
+{
+      unsigned top = nex->nptr_ + 1;
+      nex->ptrs_ = (struct __nexus_ptr*)
+	    realloc(nex->ptrs_, top * sizeof(struct __nexus_ptr));
+      nex->nptr_ = top;
+
+      nex->ptrs_[top-1].type_= __NEXUS_PTR_CON;
+      nex->ptrs_[top-1].pin_ = pin;
+      nex->ptrs_[top-1].l.con= net;
+}
+
 
 void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 {
@@ -200,9 +213,6 @@ bool dll_target::bufz(const NetBUFZ*net)
       if (net_logic_) {
 	    (net_logic_)(net->name(), obj);
 
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_logic function." << endl;
       }
 
       return true;
@@ -265,9 +275,6 @@ void dll_target::logic(const NetLogic*net)
       if (net_logic_) {
 	    (net_logic_)(net->name(), obj);
 
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_logic function." << endl;
       }
 }
 
@@ -310,6 +317,7 @@ bool dll_target::net_const(const NetConst*net)
 	    const Nexus*nex = net->pin(0).nexus();
 	    assert(nex->t_cookie());
 	    obj->n.pin_ = (ivl_nexus_t) nex->t_cookie();
+	    nexus_con_add(obj->n.pin_, obj, 0);
 
       } else {
 	    obj->n.pins_ = new ivl_nexus_t[obj->width_];
@@ -317,6 +325,7 @@ bool dll_target::net_const(const NetConst*net)
 		  const Nexus*nex = net->pin(idx).nexus();
 		  assert(nex->t_cookie());
 		  obj->n.pins_[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_con_add(obj->n.pins_[idx], obj, idx);
 	    }
       }
 
@@ -324,14 +333,9 @@ bool dll_target::net_const(const NetConst*net)
       if (net_const_) {
 	    int rc = (net_const_)(net->name(), obj);
 	    return rc == 0;
-
-      } else {
-	    cerr << dll_path_ << ": internal error: target DLL lacks "
-		 << "target_net_const function." << endl;
-	    return false;
       }
 
-      return false;
+      return true;
 }
 
 void dll_target::net_probe(const NetEvProbe*net)
@@ -547,6 +551,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.14  2000/10/13 03:39:27  steve
+ *  Include constants in nexus targets.
+ *
  * Revision 1.13  2000/10/08 04:01:55  steve
  *  Back pointers in the nexus objects into the devices
  *  that point to it.
