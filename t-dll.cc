@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.121 2003/09/03 23:33:29 steve Exp $"
+#ident "$Id: t-dll.cc,v 1.122 2003/11/10 20:59:04 steve Exp $"
 #endif
 
 # include "config.h"
@@ -562,8 +562,8 @@ void dll_target::add_root(ivl_design_s &des_, const NetScope *s)
 bool dll_target::start_design(const Design*des)
 {
       list<NetScope *> root_scopes;
-      dll_path_ = des->get_flag("DLL");
-      dll_ = ivl_dlopen(dll_path_.c_str());
+      const char*dll_path_ = des->get_flag("DLL");
+      dll_ = ivl_dlopen(dll_path_);
       if (dll_ == 0) {
 	    cerr << "error: " << dll_path_ << " failed to load." << endl;
 	    cerr << dll_path_ << ": " << dlerror() << endl;
@@ -2159,6 +2159,9 @@ extern const struct target tgt_dll = { "dll", &dll_target_obj };
 
 /*
  * $Log: t-dll.cc,v $
+ * Revision 1.122  2003/11/10 20:59:04  steve
+ *  Design::get_flag returns const char* instead of string.
+ *
  * Revision 1.121  2003/09/03 23:33:29  steve
  *  Pass FF synchronous set values to code generator.
  *

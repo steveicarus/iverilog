@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.305 2003/11/08 20:06:21 steve Exp $"
+#ident "$Id: netlist.h,v 1.306 2003/11/10 20:59:03 steve Exp $"
 #endif
 
 /*
@@ -3165,9 +3165,9 @@ class Design {
 	   steps can then use the get_flag() function to get the value
 	   of an interesting key. */
 
-      void set_flags(const map<string,string>&f) { flags_ = f; }
+      void set_flags(const map<string,const char*>&f) { flags_ = f; }
 
-      string get_flag(const string&key) const;
+      const char* get_flag(const string&key) const;
 
       NetScope* make_root_scope(const char*name);
       NetScope* find_root_scope();
@@ -3259,7 +3259,7 @@ class Design {
       NetProcTop*procs_;
       NetProcTop*procs_idx_;
 
-      map<string,string> flags_;
+      map<string,const char*> flags_;
 
       int des_precision_;
 
@@ -3310,6 +3310,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.306  2003/11/10 20:59:03  steve
+ *  Design::get_flag returns const char* instead of string.
+ *
  * Revision 1.305  2003/11/08 20:06:21  steve
  *  Spelling fixes in comments.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.41 2003/09/20 01:05:36 steve Exp $"
+#ident "$Id: net_design.cc,v 1.42 2003/11/10 20:59:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -462,9 +462,9 @@ void NetScope::evaluate_parameters(Design*des)
 
 }
 
-string Design::get_flag(const string&key) const
+const char* Design::get_flag(const string&key) const
 {
-      map<string,string>::const_iterator tmp = flags_.find(key);
+      map<string,const char*>::const_iterator tmp = flags_.find(key);
       if (tmp == flags_.end())
 	    return "";
       else
@@ -617,6 +617,9 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.42  2003/11/10 20:59:03  steve
+ *  Design::get_flag returns const char* instead of string.
+ *
  * Revision 1.41  2003/09/20 01:05:36  steve
  *  Obsolete find_symbol and find_event from the Design class.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.104 2003/09/03 23:33:30 steve Exp $"
+#ident "$Id: t-dll-api.cc,v 1.105 2003/11/10 20:59:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -32,7 +32,7 @@
 
 extern "C" const char*ivl_design_flag(ivl_design_t des, const char*key)
 {
-      return des->self->get_flag(key).c_str();
+      return des->self->get_flag(key);
 }
 
 extern "C" int ivl_design_process(ivl_design_t des,
@@ -1913,6 +1913,9 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
 
 /*
  * $Log: t-dll-api.cc,v $
+ * Revision 1.105  2003/11/10 20:59:03  steve
+ *  Design::get_flag returns const char* instead of string.
+ *
  * Revision 1.104  2003/09/03 23:33:30  steve
  *  Pass FF synchronous set values to code generator.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.106 2003/09/03 23:33:29 steve Exp $"
+#ident "$Id: t-dll.h,v 1.107 2003/11/10 20:59:04 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -95,7 +95,6 @@ struct dll_target  : public target_t, public expr_scan_t {
       void memory(const NetMemory*);
 
       ivl_dll_t dll_;
-      string dll_path_;
 
       ivl_design_s des_;
 
@@ -684,6 +683,9 @@ struct ivl_variable_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.107  2003/11/10 20:59:04  steve
+ *  Design::get_flag returns const char* instead of string.
+ *
  * Revision 1.106  2003/09/03 23:33:29  steve
  *  Pass FF synchronous set values to code generator.
  *

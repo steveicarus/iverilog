@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.74 2003/11/01 04:22:30 steve Exp $"
+#ident "$Id: main.cc,v 1.75 2003/11/10 20:59:03 steve Exp $"
 #endif
 
 # include "config.h"
@@ -81,7 +81,8 @@ const char*target = "null";
 
 generation_t generation_flag = GN_DEFAULT;
 
-map<string,string> flags;
+map<string,const char*> flags;
+char*vpi_module_list = 0;
 
 map<string,unsigned> missing_modules;
 
@@ -280,10 +281,22 @@ static void read_iconfig_file(const char*ipath)
 		  ivlpp_string = strdup(cp);
 
 	    } else if (strcmp(buf,"module") == 0) {
-		  flags["VPI_MODULE_LIST"] = flags["VPI_MODULE_LIST"]+","+cp;
+		  if (vpi_module_list == 0) {
+			vpi_module_list = strdup(cp);
+
+		  } else {
+			char*tmp = (char*)realloc(vpi_module_list,
+						  strlen(vpi_module_list)
+						  + strlen(cp)
+						  + 2);
+			strcat(tmp, ",");
+			strcat(tmp, cp);
+			vpi_module_list = tmp;
+		  }
+		  flags["VPI_MODULE_LIST"] = vpi_module_list;
 
 	    } else if (strcmp(buf, "out") == 0) {
-		  flags["-o"] = cp;
+		  flags["-o"] = strdup(cp);
 
 	    } else if (strcmp(buf, "root") == 0) {
 		  roots.push_back(strdup(cp));
@@ -335,7 +348,8 @@ static void read_iconfig_file(const char*ipath)
 
 static void parm_to_flagmap(const string&flag)
 {
-      string key, value;
+      string key;
+      const char*value;
       unsigned off = flag.find('=');
       if (off > flag.size()) {
 	    key = flag;
@@ -343,7 +357,7 @@ static void parm_to_flagmap(const string&flag)
 
       } else {
 	    key = flag.substr(0, off);
-	    value = flag.substr(off+1);
+	    value = strdup(flag.substr(off+1).c_str());
       }
 
       flags[key] = value;
@@ -702,6 +716,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.75  2003/11/10 20:59:03  steve
+ *  Design::get_flag returns const char* instead of string.
+ *
  * Revision 1.74  2003/11/01 04:22:30  steve
  *  Accept functors in the config file.
  *
