@@ -165,10 +165,10 @@ command line.
 
 4.0 Running Verilog
 
-The preferred way to invoke the compiler with the verilog(1)
+The preferred way to invoke the compiler with the iverilog(1)
 command. This program invokes the preprocessor (ivlpp) and the
 compiler (ivl) with the proper command line options to get the job
-done in a friendly way. See the verilog(1) man page for usage details.
+done in a friendly way. See the iverilog(1) man page for usage details.
 
 4.1 Running IVL Directly
 
@@ -265,8 +265,6 @@ names a primitive earlier in the compilation unit and the statement is
 placed in global scope, instead of within a module. The semicolon is
 not part of a type attribute.
 
-Currently, type attributes are only supported for UDP types.
-
 Note that attributes are also occasionally used for communication
 between processing steps. Processing steps that are aware of others
 may place attributes on netlist objects to communicate information to
@@ -289,22 +287,19 @@ endmodule
 
 --------------------------------------------------------------
 
-Insure that "verilog" is on your search path, and the vpi library 
+Insure that "iverilog" is on your search path, and the vpi library 
 is available.
 
 For csh - 
 
-  setenv PATH /usr/local/bin:$PATH
-  setenv VPI_MODULE_PATH /usr/local/lib/ivl
-
-  verilog hello.vl
+  iverilog hello.vl
 
 (The above presumes that /usr/local/include and /usr/local/lib are
 part of the compiler search path, which is usually the case for gcc.)
 
 To run the program
 
-  ./hello
+  ./a.out
 
 
 5.0 Unsupported Constructs
@@ -319,9 +314,6 @@ current state of support for Verilog.
 
   - `timescale directive
 
-  - force/release/assign/deassign procedural assignments not
-    supported.
-
   - block disable not supported, i.e.:
 
             begin : foo
@@ -329,8 +321,6 @@ current state of support for Verilog.
 		disable foo; // sorry
 		[...]
 	    end
-
-  - fork/join is not supported in vvm runtime
 
   - Functions in structural contexts are not supported.
 
@@ -343,8 +333,6 @@ current state of support for Verilog.
 
             assign foo = a * b; // sorry
             always @(a or b) foo = a * b; // sorry
-
-  - event data type is not supported.
 
   - real data type not supported.
 
@@ -359,9 +347,7 @@ current state of support for Verilog.
             reg [7:0] del;
 	    always #(reg) $display($time,,"del = %d", del); // sorry
 
-  - drive strengths are parsed, bug ignored.
-
-Specify blocks are parsed but ignored in general.
+  - Specify blocks are parsed but ignored in general.
 
 
 6.0 CREDITS
