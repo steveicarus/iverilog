@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.41 2003/10/26 04:54:56 steve Exp $"
+#ident "$Id: verinum.cc,v 1.42 2004/02/17 06:52:55 steve Exp $"
 #endif
 
 # include "config.h"
@@ -467,12 +467,16 @@ verinum::V operator <= (const verinum&left, const verinum&right)
 	    if (right[idx-1] != verinum::V0) return verinum::V1;
       }
 
+      idx = right.len();
+      if (left.len() < idx) idx = left.len();
+
       while (idx > 0) {
 	    if (left[idx-1] == verinum::Vx) return verinum::Vx;
 	    if (left[idx-1] == verinum::Vz) return verinum::Vx;
 	    if (right[idx-1] == verinum::Vx) return verinum::Vx;
 	    if (right[idx-1] == verinum::Vz) return verinum::Vx;
 	    if (left[idx-1] > right[idx-1]) return verinum::V0;
+	    if (left[idx-1] < right[idx-1]) return verinum::V1;
 	    idx -= 1;
       }
 
@@ -694,6 +698,68 @@ verinum operator * (const verinum&left, const verinum&right)
       return trim_vnum(result);
 }
 
+verinum operator << (const verinum&that, unsigned shift)
+{
+      verinum result(verinum::V0, that.len() + shift, that.has_len());
+
+      for (unsigned idx = 0 ;  idx < that.len() ;  idx += 1)
+	    result.set(idx+shift, that.get(idx));
+
+      return result;
+}
+
+verinum operator >> (const verinum&that, unsigned shift)
+{
+      if (shift >= that.len()) {
+	    if (that.has_sign()) {
+		  verinum result (that.get(that.len()-1), 1);
+		  result.has_sign(true);
+		  return result;
+	    } else {
+		  verinum result(verinum::V0, 1);
+		  return result;
+	    }
+      }
+
+      verinum result(that.has_sign()? that.get(that.len()-1) : verinum::V0,
+		     that.len() - shift, that.has_len());
+
+      for (unsigned idx = shift ;  idx < that.len() ;  idx += 1)
+	    result.set(idx-shift, that.get(idx));
+
+      return result;
+}
+
+static verinum unsigned_divide(verinum num, verinum den)
+{
+      unsigned nwid = num.len();
+      while (nwid > 0 && (num.get(nwid-1) == verinum::V0))
+	    nwid -= 1;
+
+      unsigned dwid = den.len();
+      while (dwid > 0 && (den.get(dwid-1) == verinum::V0))
+	    dwid -= 1;
+
+      if (dwid > nwid)
+	    return verinum(verinum::V0, 1);
+
+      den = den << (nwid-dwid);
+
+      unsigned idx = nwid - dwid + 1;
+      verinum result (verinum::V0, idx);
+      while (idx > 0) {
+	    if (den <= num) {
+		  verinum dif = num - den;
+		  num = dif;
+		  result.set(idx-1, verinum::V1);
+	    }
+	    den = den >> 1;
+	    idx -= 1;
+      }
+
+      return result;
+}
+
 /*
  * This operator divides the left number by the right number. If
  * either value is signed, the result is signed. If both values have a
@@ -716,7 +782,7 @@ verinum operator / (const verinum&left, const verinum&right)
 
 	/* If the right expression is a zero value, then the result is
 	   filled with 'bx bits. */
-      if (right.as_ulong() == 0) {
+      if (right.is_zero()) {
 	    verinum result (verinum::Vx, use_len, has_len_flag);
 	    result.has_sign(left.has_sign() || right.has_sign());
 	    return result;
@@ -743,16 +809,19 @@ verinum operator / (const verinum&left, const verinum&right)
 
       } else {
 
-	      /* XXXX FIXME XXXX Use native unsigned division to do
-		 the work. This does not work if the result is too
-		 large for the native integer. */
-	    assert(use_len <= 8*sizeof(unsigned long));
-	    unsigned long l = left.as_ulong();
-	    unsigned long r = right.as_ulong();
-	    unsigned long v = l / r;
-	    for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
-		  result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
-		  v >>= 1;
+	    if (use_len <= 8 * sizeof(unsigned long)) {
+		    /* Use native unsigned division to do the work. */
+
+		  unsigned long l = left.as_ulong();
+		  unsigned long r = right.as_ulong();
+		  unsigned long v = l / r;
+		  for (unsigned idx = 0 ;  idx < use_len ;  idx += 1) {
+			result.set(idx,  (v & 1)? verinum::V1 : verinum::V0);
+			v >>= 1;
+		  }
+
+	    } else {
+		  result = unsigned_divide(left, right);
 	    }
       }
 
@@ -857,6 +926,9 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
 /*
  * $Log: verinum.cc,v $
+ * Revision 1.42  2004/02/17 06:52:55  steve
+ *  Support unsigned divide of huge numbers.
+ *
  * Revision 1.41  2003/10/26 04:54:56  steve
  *  Support constant evaluation of binary ^ operator.
  *

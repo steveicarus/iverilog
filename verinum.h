@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.25 2003/10/26 04:54:56 steve Exp $"
+#ident "$Id: verinum.h,v 1.26 2004/02/17 06:52:55 steve Exp $"
 #endif
 
 # include  <string>
@@ -139,11 +139,17 @@ extern verinum operator * (const verinum&left, const verinum&right);
 extern verinum operator / (const verinum&left, const verinum&right);
 extern verinum operator % (const verinum&left, const verinum&right);
 
+extern verinum operator<< (const verinum&left, unsigned shift);
+extern verinum operator>> (const verinum&left, unsigned shift);
+
 /* Bitwise not returns the ones complement. */
 extern verinum v_not(const verinum&left);
 
 /*
  * $Log: verinum.h,v $
+ * Revision 1.26  2004/02/17 06:52:55  steve
+ *  Support unsigned divide of huge numbers.
+ *
  * Revision 1.25  2003/10/26 04:54:56  steve
  *  Support constant evaluation of binary ^ operator.
  *
