@@ -11,6 +11,10 @@ AC_SUBST(EXEEXT)
 
 AC_PROG_INSTALL
 
+# vvp32 is by default disabled
+#enable_vvp32=no
+AC_SUBST(enable_vvp32)
+
 AC_CHECK_HEADERS(malloc.h)
 
 AC_CHECK_SIZEOF(unsigned long long)
@@ -213,6 +217,7 @@ then
 fi
 
 AC_SUBST(vpidir1)
-AC_MSG_RESULT(${vpidir1})
+AC_SUBST(vpidir2)
+AC_MSG_RESULT(${vpidir1} ${vpidir2})
 
 AC_OUTPUT(Makefile)

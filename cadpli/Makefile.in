@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 2003/10/06 21:27:05 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 2003/10/09 01:07:20 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -48,7 +48,19 @@ CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@
 
-all: dep cadpli.vpl
+SHARED = @shared@
+
+all:
+
+ifeq (@enable_vvp32@,yes)
+vpidir32 = $(libdir)/ivl/@vpidir2@
+ALL32 = all32
+INSTALL32 = install32
+UNINSTALL32 = uninistall32
+include $(srcdir)/enable_vvp32.mk
+endif
+
+all: dep cadpli.vpl $(ALL32)
 
 # No specific check operations.
 check: all
@@ -76,7 +88,7 @@ clean:
 distclean: clean
 	rm -f Makefile config.status config.log config.cache
 
-install: all installdirs $(vpidir)/cadpli.vpl
+install: all installdirs $(vpidir)/cadpli.vpl $(INSTALL32)
 
 $(vpidir)/cadpli.vpl: ./cadpli.vpl
 	$(INSTALL_PROGRAM) ./cadpli.vpl $(vpidir)/cadpli.vpl
@@ -84,8 +96,11 @@ $(vpidir)/cadpli.vpl: ./cadpli.vpl
 installdirs: ../mkinstalldirs
 	$(srcdir)/../mkinstalldirs $(vpidir)
 
-uninstall:
+uninstall: $(UNINSTALL32)
 	rm -f $(vpidir)/cadpli.vpl
 
+ifeq (@enable_vvp32@,yes)
+include $(srcdir)/enable_vvp32.mk
+endif
 
 -include $(patsubst %.o, dep/%.d, $O)
