@@ -20,7 +20,7 @@
   ftp://ftp.gnu.org/gnu/gperf/gperf-2.7.2.tar.gz
 
 
-3)  Configure, build and install the Icarus Verilog sources.
+3)  Configure, build and install the Icarus Verilog sources as normal.
 
   The only change you need to make here is to use a configure command like:
 

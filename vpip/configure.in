@@ -9,6 +9,14 @@ AC_CYGWIN
 AC_EXEEXT
 
 
+# Darwin requires -no-cpp-precomp
+case "${host}" in
+    *-*-darwin*)
+	CPPFLAGS="-no-cpp-precomp"
+	CFLAGS="-no-cpp-precomp"
+	;;
+esac
+
 WIN32=no
 AC_MSG_CHECKING("for shared library link flag")
 shared=-shared
@@ -21,11 +29,11 @@ case "${host}" in
      *-*-hpux*)
 	shared="-b"
 	;;
-     *-*-darwin1.4)
-	shared="-bundle -undefined suppress -flat_namespace"
+     *-*-darwin1.[0123])
+	shared="-bundle -undefined suppress"
 	;;
      *-*-darwin*)
-	shared="-bundle -undefined suppress"
+	shared="-bundle -undefined suppress -flat_namespace"
 	;;
 esac
 AC_SUBST(shared)

@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.8 2001/05/20 15:09:40 steve Exp $"
+#ident "$Id: Makefile.in,v 1.9 2001/11/17 17:57:58 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -41,6 +41,7 @@ INSTALL_DATA = @INSTALL_DATA@
 
 CPPFLAGS = @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = @CXXFLAGS@
+CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 all: stub.tgt

@@ -42,6 +42,14 @@ fi
 AC_SUBST(DLLIB)
 
 
+# Darwin requires -no-cpp-precomp
+case "${host}" in
+    *-*-darwin*)
+	CPPFLAGS="-no-cpp-precomp"
+	CFLAGS="-no-cpp-precomp"
+	;;
+esac
+
 # see how we can give some resource usage stats with -v
 # Linux does not provide mem stats in rusage, use /proc/self/statm.
 
