@@ -18,7 +18,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.6 1999/10/16 20:48:15 steve Exp $"
+#ident "$Id: Makefile.in,v 1.7 2000/01/01 20:57:51 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -60,16 +60,16 @@ lexor.c: lexor.lex
 parse.h parse.c: parse.y
 	bison --verbose -t -d parse.y -o parse.c
 
-install: all installdirs $(bindir)/ivlpp
+install: all installdirs $(libdir)/ivl/ivlpp
 
-$(bindir)/ivlpp: ivlpp
-	$(INSTALL_PROGRAM) ./ivlpp $(bindir)/ivlpp
+$(libdir)/ivl/ivlpp: ivlpp
+	$(INSTALL_PROGRAM) ./ivlpp $(libdir)/ivl/ivlpp
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(bindir)
+	$(srcdir)/../mkinstalldirs $(libdir)/ivl
 
 uninstall:
-	rm -f $(bindir)/ivlpp
+	rm -f $(libdir)/ivl/ivlpp
 
 lexor.o: lexor.c parse.h globals.h
 main.o: main.c globals.h

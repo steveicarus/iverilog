@@ -142,7 +142,7 @@ void preprocess(void)
 
   argument = (char *)malloc(256);
 
-  sprintf(argument, "ivlpp %s %s -L -o%s %s",
+  sprintf(argument, LIBDIR "ivl/ivlpp %s %s -L -o%s %s",
 	  P_IF_SET(ivlppdefines),
 	  P_IF_SET(ivlppincdir),
 	  tmpPPfile,
@@ -171,7 +171,7 @@ void compile(void)
 
   /* VPI_MODULE_PATH should be better integrated. */
   /* HACK */
-  sprintf(argument, "ivl %s %s %s %sVPI_MODULE_PATH=%s -o %s %s",
+  sprintf(argument, LIBDIR "/ivl/ivl %s %s %s %sVPI_MODULE_PATH=%s -o %s %s",
 	  P_IF_SET(topmodule),
 	  target.targetinfo.compsw, target.targetinfo.name,
 	  VPImodpath.compsw, VPImodpath.name,

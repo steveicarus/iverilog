@@ -21,7 +21,7 @@
 # Added support for functors, especially for the XNF target. <steve@icarus.com>
 
 # Setup variables
-execPath=@bindir@
+execPath=@libdir@/ivl
 execIVLPP=${execPath}/ivlpp
 execIVL=${execPath}/ivl
 execCpp=@CXX@
