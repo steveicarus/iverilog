@@ -17,10 +17,11 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: iverilog-vpi.sh,v 1.1 2002/04/07 00:47:10 steve Exp $"
+#ident "$Id: iverilog-vpi.sh,v 1.2 2002/05/10 03:54:46 steve Exp $"
 
 # These are the variables used for compiling files
 CC=gcc
+CXX=gcc
 CFLAGS="@PIC@ -O"
 
 # These are used for linking...
@@ -28,7 +29,8 @@ LD=gcc
 LDFLAGS="@SHARED@"
 LDLIBS=-lvpi
 
-SRC=
+CCSRC=
+CXSRC=
 OBJ=
 LIB=
 OUT=
@@ -42,9 +44,15 @@ do
     case $parm
     in
 
-    *.c) SRC="$SRC $parm"
+    *.c) CCSRC="$SRC $parm"
          if [ x$OUT = x ]; then
 	    OUT=`basename $parm .c`
+	 fi
+	 ;;
+
+    *.cc) CXSRC="$SRC $parm"
+         if [ x$OUT = x ]; then
+	    OUT=`basename $parm .cc`
 	 fi
 	 ;;
 
@@ -71,13 +79,24 @@ OUT=$OUT".vpi"
 
 # Compile all the source files into object files
 for src
-in $SRC
+in $CCSRC
 do
     base=`basename $src .c`
     obj=$base".o"
 
     echo "Compiling $src..."
     $CC -c -o $obj $src
+    OBJ="$OBJ $obj"
+done
+
+for src
+in $CXSRC
+do
+    base=`basename $src .cc`
+    obj=$base".o"
+
+    echo "Compiling $src..."
+    $CXX -c -o $obj $src
     OBJ="$OBJ $obj"
 done
 
