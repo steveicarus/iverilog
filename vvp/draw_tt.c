@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: draw_tt.c,v 1.3 2001/03/25 20:45:09 steve Exp $"
+#ident "$Id: draw_tt.c,v 1.4 2001/04/01 21:31:46 steve Exp $"
 #endif
 
 # include  <stdio.h>
@@ -43,6 +43,38 @@ static void draw_AND(void)
 			      else if ((i0 == 1) && (i1 == 1) && 
 				       (i2 == 1) && (i3 == 1))
 				    val = 1;
+			      else
+				    val = 2;
+
+			      byte |= val << (i0*2);
+			}
+
+			printf("0x%02x, ", byte);
+		  }
+	    }
+
+      printf("};\n");
+}
+
+static void draw_BUF(void)
+{
+      unsigned i0, i1, i2, i3;
+
+      printf("const unsigned char ft_BUF[64] = {");
+
+      for (i3 = 0 ;  i3 < 4 ;  i3 += 1)
+	    for (i2 = 0 ;  i2 < 4 ;  i2 += 1) {
+		  printf("\n    ");
+		  for (i1 = 0 ;  i1 < 4 ;  i1 += 1) {
+			unsigned idx = (i3 << 4) | (i2 << 2) | i1;
+			unsigned char byte = 0;
+
+			for (i0 = 0 ; i0 < 4 ;  i0 += 1) {
+			      unsigned val;
+			      if (i0 == 1)
+				    val = 1;
+			      else if (i0 == 0)
+				    val = 0;
 			      else
 				    val = 2;
 
@@ -257,6 +289,7 @@ main()
 {
       printf("# include  \"functor.h\"\n");
       draw_AND();
+      draw_BUF();
       draw_NOR();
       draw_NOT();
       draw_OR();
@@ -267,6 +300,9 @@ main()
 
 /*
  * $Log: draw_tt.c,v $
+ * Revision 1.4  2001/04/01 21:31:46  steve
+ *  Add the buf functor type.
+ *
  * Revision 1.3  2001/03/25 20:45:09  steve
  *  Add vpiOctStrVal access to signals.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: functor.h,v 1.7 2001/03/29 03:46:36 steve Exp $"
+#ident "$Id: functor.h,v 1.8 2001/04/01 21:31:46 steve Exp $"
 #endif
 
 # include  "pointers.h"
@@ -137,6 +137,7 @@ extern void functor_dump(FILE*fd);
 
 
 extern const unsigned char ft_AND[];
+extern const unsigned char ft_BUF[];
 extern const unsigned char ft_NOR[];
 extern const unsigned char ft_NOT[];
 extern const unsigned char ft_OR[];
@@ -144,6 +145,9 @@ extern const unsigned char ft_var[];
 
 /*
  * $Log: functor.h,v $
+ * Revision 1.8  2001/04/01 21:31:46  steve
+ *  Add the buf functor type.
+ *
  * Revision 1.7  2001/03/29 03:46:36  steve
  *  Support named events as mode 2 functors.
  *

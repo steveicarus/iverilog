@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: compile.cc,v 1.26 2001/04/01 07:22:08 steve Exp $"
+#ident "$Id: compile.cc,v 1.27 2001/04/01 21:31:46 steve Exp $"
 #endif
 
 # include  "compile.h"
@@ -254,6 +254,9 @@ void compile_functor(char*label, char*type, unsigned init,
 
       } else if (strcmp(type, "AND") == 0) {
 	    obj->table = ft_AND;
+
+      } else if (strcmp(type, "BUF") == 0) {
+	    obj->table = ft_BUF;
 
       } else if (strcmp(type, "NOR") == 0) {
 	    obj->table = ft_NOR;
@@ -708,6 +711,9 @@ void compile_dump(FILE*fd)
 
 /*
  * $Log: compile.cc,v $
+ * Revision 1.27  2001/04/01 21:31:46  steve
+ *  Add the buf functor type.
+ *
  * Revision 1.26  2001/04/01 07:22:08  steve
  *  Implement the less-then and %or instructions.
  *

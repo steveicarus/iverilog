@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.12 2001/03/31 19:00:43 steve Exp $"
+#ident "$Id: Makefile.in,v 1.13 2001/04/01 21:31:46 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -80,6 +80,8 @@ tables.cc: draw_tt.c
 lexor.o: lexor.cc parse.h
 
 parse.o: parse.cc
+
+tables.o: tables.cc
 
 parse.h parse.cc: $(srcdir)/parse.y
 	bison --verbose -t -d $(srcdir)/parse.y -o parse.cc
