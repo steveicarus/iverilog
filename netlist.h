@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.267 2002/10/23 01:47:17 steve Exp $"
+#ident "$Id: netlist.h,v 1.268 2002/11/02 03:27:52 steve Exp $"
 #endif
 
 /*
@@ -2995,7 +2995,7 @@ class Design {
       NetScope* find_task(const hname_t&key);
 
         // Events
-      NetEvent* find_event(NetScope*scope, const hname_t path);
+      NetEvent* find_event(NetScope*scope, const hname_t&path);
 
 	// NODES
       void add_node(NetNode*);
@@ -3083,6 +3083,10 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.268  2002/11/02 03:27:52  steve
+ *  Allow named events to be referenced by
+ *  hierarchical names.
+ *
  * Revision 1.267  2002/10/23 01:47:17  steve
  *  Fix synth2 handling of aset/aclr signals where
  *  flip-flops are split by begin-end blocks.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.28 2002/10/19 22:59:49 steve Exp $"
+#ident "$Id: net_design.cc,v 1.29 2002/11/02 03:27:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -501,7 +501,7 @@ NetScope* Design::find_task(const hname_t&key)
       return 0;
 }
 
-NetEvent* Design::find_event(NetScope*scope, hname_t path)
+NetEvent* Design::find_event(NetScope*scope, const hname_t&path)
 {
       assert(scope);
 
@@ -510,8 +510,12 @@ NetEvent* Design::find_event(NetScope*scope, hname_t path)
 		  return ev;
 	    }
 
-	    if (scope->type() == NetScope::MODULE)
+	      // If this is a simple name, then do not scan up scopes
+	      // past a module scope. This is a Verilog scoping rule.
+	    if ((path.component_count() == 1)
+		&& (scope->type() == NetScope::MODULE))
 		  break;
+
 	    scope = scope->parent();
       }
 
@@ -593,6 +597,10 @@ void Design::delete_process(NetProcTop*top)
 
 /*
  * $Log: net_design.cc,v $
+ * Revision 1.29  2002/11/02 03:27:52  steve
+ *  Allow named events to be referenced by
+ *  hierarchical names.
+ *
  * Revision 1.28  2002/10/19 22:59:49  steve
  *  Redo the parameter vector support to allow
  *  parameter names in range expressions.

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.h,v 1.3 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: HName.h,v 1.4 2002/11/02 03:27:51 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -61,6 +61,10 @@ class hname_t {
       const char*peek_name(unsigned idx) const;
       const char*peek_tail_name() const;
 
+	// Return the number of components in the hierarchical
+	// name. If this is a simple name, this will return 1.
+      unsigned component_count() const;
+
       friend ostream& operator<< (ostream&, const hname_t&);
 
     private:
@@ -79,6 +83,10 @@ extern bool operator == (const hname_t&, const hname_t&);
 
 /*
  * $Log: HName.h,v $
+ * Revision 1.4  2002/11/02 03:27:51  steve
+ *  Allow named events to be referenced by
+ *  hierarchical names.
+ *
  * Revision 1.3  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *

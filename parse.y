@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: parse.y,v 1.162 2002/10/13 05:01:44 steve Exp $"
+#ident "$Id: parse.y,v 1.163 2002/11/02 03:27:52 steve Exp $"
 #endif
 
 # include "config.h"
@@ -551,11 +551,11 @@ dr_strength1
 	;
 
 event_control
-	: '@' IDENTIFIER
-		{ PEIdent*tmpi = new PEIdent(hname_t($2));
+	: '@' identifier
+		{ PEIdent*tmpi = new PEIdent(*$2);
 		  tmpi->set_file(@2.text);
 		  tmpi->set_lineno(@2.first_line);
-		  delete[]$2;
+		  delete $2;
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
 		  PEventStatement*tmps = new PEventStatement(tmpe);
 		  tmps->set_file(@1.text);

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.cc,v 1.4 2002/08/12 01:34:58 steve Exp $"
+#ident "$Id: HName.cc,v 1.5 2002/11/02 03:27:52 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -73,6 +73,11 @@ hname_t::~hname_t()
 	    delete[]array_;
 	    break;
       }
+}
+
+unsigned hname_t::component_count() const
+{
+      return count_;
 }
 
 void hname_t::append(const char*text)
@@ -253,6 +258,10 @@ ostream& operator<< (ostream&out, const hname_t&that)
 
 /*
  * $Log: HName.cc,v $
+ * Revision 1.5  2002/11/02 03:27:52  steve
+ *  Allow named events to be referenced by
+ *  hierarchical names.
+ *
  * Revision 1.4  2002/08/12 01:34:58  steve
  *  conditional ident string using autoconfig.
  *
