@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.cc,v 1.51 2000/01/02 01:59:28 steve Exp $"
+#ident "$Id: pform.cc,v 1.52 2000/01/09 05:50:49 steve Exp $"
 #endif
 
 # include  "compiler.h"
@@ -307,7 +307,7 @@ void pform_makegates(PGBuiltin::Type type,
  */
 static void pform_make_modgate(const string&type,
 			       const string&name,
-			       svector<PExpr*>*overrides,
+			       struct parmvalue_t*overrides,
 			       svector<PExpr*>*wires,
 			       const string&fn, unsigned ln)
 {
@@ -318,15 +318,32 @@ static void pform_make_modgate(const string&type,
 	    return;
       }
 
-      PGate*cur = new PGModule(type, name, overrides, wires);
+      PGModule*cur = new PGModule(type, name, wires);
       cur->set_file(fn);
       cur->set_lineno(ln);
+
+      if (overrides && overrides->by_name) {
+	    unsigned cnt = overrides->by_name->count();
+	    named<PExpr*>*byname = new named<PExpr*>[cnt];
+
+	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
+		  portname_t*curp = (*overrides->by_name)[idx];
+		  byname[idx].name = curp->name;
+		  byname[idx].parm = curp->parm;
+	    }
+
+	    cur->set_parameters(byname, cnt);
+
+      } else if (overrides && overrides->by_order) {
+	    cur->set_parameters(overrides->by_order);
+      }
+
       pform_cur_module->add_gate(cur);
 }
 
 static void pform_make_modgate(const string&type,
 			       const string&name,
-			       svector<PExpr*>*overrides,
+			       struct parmvalue_t*overrides,
 			       svector<portname_t*>*bind,
 			       const string&fn, unsigned ln)
 {
@@ -338,26 +355,44 @@ static void pform_make_modgate(const string&type,
       }
 
       unsigned npins = bind->count();
-      PGModule::bind_t*pins = new PGModule::bind_t[npins];
+      named<PExpr*>*pins = new named<PExpr*>[npins];
       for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
 	    portname_t*curp = (*bind)[idx];
 	    pins[idx].name = curp->name;
 	    pins[idx].parm = curp->parm;
       }
 
-      PGate*cur = new PGModule(type, name, overrides, pins, npins);
+      PGModule*cur = new PGModule(type, name, pins, npins);
       cur->set_file(fn);
       cur->set_lineno(ln);
+
+      if (overrides && overrides->by_name) {
+	    unsigned cnt = overrides->by_name->count();
+	    named<PExpr*>*byname = new named<PExpr*>[cnt];
+
+	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
+		  portname_t*curp = (*overrides->by_name)[idx];
+		  byname[idx].name = curp->name;
+		  byname[idx].parm = curp->parm;
+	    }
+
+	    cur->set_parameters(byname, cnt);
+
+      } else if (overrides && overrides->by_order) {
+
+	    cur->set_parameters(overrides->by_order);
+      }
+
       pform_cur_module->add_gate(cur);
 }
 
 void pform_make_modgates(const string&type,
-			 svector<PExpr*>*overrides,
+			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
-      if (overrides)
-	    for (unsigned idx = 0 ;  idx < overrides->count() ;  idx += 1)
-		  if (! pform_expression_is_constant((*overrides)[idx])) {
+      if (overrides && overrides->by_order)
+	    for (unsigned idx = 0 ;  idx < overrides->by_order->count() ;  idx += 1)
+		  if (! pform_expression_is_constant((*overrides->by_order)[idx])) {
 			VLerror("error: Parameter override expression"
 				" must be constant.");
 			return;
@@ -773,6 +808,9 @@ int pform_parse(const char*path, map<string,Module*>&modules,
 
 /*
  * $Log: pform.cc,v $
+ * Revision 1.52  2000/01/09 05:50:49  steve
+ *  Support named parameter override lists.
+ *
  * Revision 1.51  2000/01/02 01:59:28  steve
  *  Forgot to handle no overrides at all.
  *
@@ -819,155 +857,5 @@ int pform_parse(const char*path, map<string,Module*>&modules,
  * Revision 1.37  1999/08/03 04:14:49  steve
  *  Parse into pform arbitrarily complex module
  *  port declarations.
- *
- * Revision 1.36  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.35  1999/07/31 19:15:21  steve
- *  misspelled comment.
- *
- * Revision 1.34  1999/07/31 19:14:47  steve
- *  Add functions up to elaboration (Ed Carter)
- *
- * Revision 1.33  1999/07/24 02:11:20  steve
- *  Elaborate task input ports.
- *
- * Revision 1.32  1999/07/10 01:03:18  steve
- *  remove string from lexical phase.
- *
- * Revision 1.31  1999/07/03 02:12:52  steve
- *  Elaborate user defined tasks.
- *
- * Revision 1.30  1999/06/24 04:24:18  steve
- *  Handle expression widths for EEE and NEE operators,
- *  add named blocks and scope handling,
- *  add registers declared in named blocks.
- *
- * Revision 1.29  1999/06/21 01:02:16  steve
- *  Fix merging of UDP port type in decls.
- *
- * Revision 1.28  1999/06/17 05:34:42  steve
- *  Clean up interface of the PWire class,
- *  Properly match wire ranges.
- *
- * Revision 1.27  1999/06/15 03:44:53  steve
- *  Get rid of the STL vector template.
- *
- * Revision 1.26  1999/06/13 23:51:16  steve
- *  l-value part select for procedural assignments.
- *
- * Revision 1.25  1999/06/12 20:35:27  steve
- *  parse more verilog.
- *
- * Revision 1.24  1999/06/12 03:42:17  steve
- *  Assert state of bit range expressions.
- *
- * Revision 1.23  1999/06/06 20:45:39  steve
- *  Add parse and elaboration of non-blocking assignments,
- *  Replace list<PCase::Item*> with an svector version,
- *  Add integer support.
- *
- * Revision 1.22  1999/06/02 15:38:46  steve
- *  Line information with nets.
- *
- * Revision 1.21  1999/05/31 15:45:59  steve
- *  makegates infinite loop fixed.
- *
- * Revision 1.20  1999/05/29 02:36:17  steve
- *  module parameter bind by name.
- *
- * Revision 1.19  1999/05/20 04:31:45  steve
- *  Much expression parsing work,
- *  mark continuous assigns with source line info,
- *  replace some assertion failures with Sorry messages.
- *
- * Revision 1.18  1999/05/16 05:08:42  steve
- *  Redo constant expression detection to happen
- *  after parsing.
- *
- *  Parse more operators and expressions.
- *
- * Revision 1.17  1999/05/10 00:16:58  steve
- *  Parse and elaborate the concatenate operator
- *  in structural contexts, Replace vector<PExpr*>
- *  and list<PExpr*> with svector<PExpr*>, evaluate
- *  constant expressions with parameters, handle
- *  memories as lvalues.
- *
- *  Parse task declarations, integer types.
- *
- * Revision 1.16  1999/05/08 20:19:20  steve
- *  Parse more things.
- *
- * Revision 1.15  1999/05/07 04:26:49  steve
- *  Parse more complex continuous assign lvalues.
- *
- * Revision 1.14  1999/05/06 04:37:17  steve
- *  Get rid of list<lgate> types.
- *
- * Revision 1.13  1999/05/06 04:09:28  steve
- *  Parse more constant expressions.
- *
- * Revision 1.12  1999/05/02 23:25:32  steve
- *  Enforce module instance names.
- *
- * Revision 1.11  1999/04/19 01:59:37  steve
- *  Add memories to the parse and elaboration phases.
- *
- * Revision 1.10  1999/02/21 17:01:57  steve
- *  Add support for module parameters.
- *
- * Revision 1.9  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- * Revision 1.8  1999/01/25 05:45:56  steve
- *  Add the LineInfo class to carry the source file
- *  location of things. PGate, Statement and PProcess.
- *
- *  elaborate handles module parameter mismatches,
- *  missing or incorrect lvalues for procedural
- *  assignment, and errors are propogated to the
- *  top of the elaboration call tree.
- *
- *  Attach line numbers to processes, gates and
- *  assignment statements.
- *
- * Revision 1.7  1998/12/09 04:02:47  steve
- *  Support the include directive.
- *
- * Revision 1.6  1998/12/01 00:42:14  steve
- *  Elaborate UDP devices,
- *  Support UDP type attributes, and
- *  pass those attributes to nodes that
- *  are instantiated by elaboration,
- *  Put modules into a map instead of
- *  a simple list.
- *
- * Revision 1.5  1998/11/25 02:35:53  steve
- *  Parse UDP primitives all the way to pform.
- *
- * Revision 1.4  1998/11/23 00:20:23  steve
- *  NetAssign handles lvalues as pin links
- *  instead of a signal pointer,
- *  Wire attributes added,
- *  Ability to parse UDP descriptions added,
- *  XNF generates EXT records for signals with
- *  the PAD attribute.
- *
- * Revision 1.3  1998/11/11 00:01:51  steve
- *  Check net ranges in declarations.
- *
- * Revision 1.2  1998/11/07 17:05:06  steve
- *  Handle procedural conditional, and some
- *  of the conditional expressions.
- *
- *  Elaborate signals and identifiers differently,
- *  allowing the netlist to hold signal information.
- *
- * Revision 1.1  1998/11/03 23:29:03  steve
- *  Introduce verilog to CVS.
- *
  */
 

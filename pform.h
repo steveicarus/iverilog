@@ -19,10 +19,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform.h,v 1.32 1999/12/30 19:06:14 steve Exp $"
+#ident "$Id: pform.h,v 1.33 2000/01/09 05:50:49 steve Exp $"
 #endif
 
 # include  "netlist.h"
+# include  "named.h"
 # include  "Module.h"
 # include  "Statement.h"
 # include  "PGate.h"
@@ -65,9 +66,12 @@ struct vlltype;
 
 /* This is information about port name information for named port
    connections. */
-struct portname_t {
-      string name;
-      PExpr*parm;
+
+typedef struct named<PExpr*> portname_t;
+
+struct parmvalue_t {
+      svector<PExpr*>*by_order;
+      svector<struct portname_t*>*by_name;
 };
 
 /* The lgate is gate instantiation information. */
@@ -144,7 +148,7 @@ extern void pform_makegates(PGBuiltin::Type type,
 			    svector<lgate>*gates);
 
 extern void pform_make_modgates(const string&type,
-				svector<PExpr*>*overrides,
+				struct parmvalue_t*overrides,
 				svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
@@ -176,6 +180,9 @@ extern void pform_dump(ostream&out, Module*mod);
 
 /*
  * $Log: pform.h,v $
+ * Revision 1.33  2000/01/09 05:50:49  steve
+ *  Support named parameter override lists.
+ *
  * Revision 1.32  1999/12/30 19:06:14  steve
  *  Support reg initial assignment syntax.
  *

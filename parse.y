@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: parse.y,v 1.81 2000/01/02 01:59:52 steve Exp $"
+#ident "$Id: parse.y,v 1.82 2000/01/09 05:50:49 steve Exp $"
 #endif
 
 # include  "parse_misc.h"
@@ -45,6 +45,7 @@ extern void lex_end_table();
 
       portname_t*portname;
       svector<portname_t*>*portnames;
+      struct parmvalue_t*parmvalue;
 
       PExpr*expr;
       svector<PExpr*>*exprs;
@@ -115,8 +116,8 @@ extern void lex_end_table();
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> function_item function_item_list
 
-%type <portname> port_name
-%type <portnames> port_name_list
+%type <portname> port_name parameter_value_byname
+%type <portnames> port_name_list parameter_value_byname_list
 
 %type <citem>  case_item
 %type <citems> case_items
@@ -127,7 +128,7 @@ extern void lex_end_table();
 %type <expr>  expression expr_primary
 %type <expr>  lavalue lpvalue
 %type <expr>  delay_value delay_value_simple
-%type <exprs> delay1 delay3 delay3_opt parameter_value_opt
+%type <exprs> delay1 delay3 delay3_opt
 %type <exprs> expression_list
 %type <exprs> assign assign_list
 
@@ -135,6 +136,7 @@ extern void lex_end_table();
 %type <nettype>  net_type
 %type <gatetype> gatetype
 %type <porttype> port_type
+%type <parmvalue> parameter_value_opt
 
 %type <task> task_body
 %type <function> func_body
@@ -1232,11 +1234,41 @@ parameter_assign_list
      a list of expressions in a syntax much line a delay list. (The
      difference being the list can have any length.) The pform that
      attaches the expression list to the module checks that the
-     expressions are constant. */
+     expressions are constant.
+
+     Although the BNF in IEEE1364-1995 implies that parameter value
+     lists must be in parentheses, in practice most compilers will
+     accept simple expressions outside of parentheses if there is only
+     one value, so I'll accept simple numbers here.
+
+     The parameter value by name syntax is OVI enhancement BTF-B06 as
+     approved by WG1364 on 6/28/1998. */
 
 parameter_value_opt
 	: '#' '(' expression_list ')'
-		{ $$ = $3; }
+		{ struct parmvalue_t*tmp = new struct parmvalue_t;
+		  tmp->by_order = $3;
+		  tmp->by_name = 0;
+		  $$ = tmp;
+		}
+	| '#' '(' parameter_value_byname_list ')'
+		{ struct parmvalue_t*tmp = new struct parmvalue_t;
+		  tmp->by_order = 0;
+		  tmp->by_name = $3;
+		  $$ = tmp;
+		}
+	| '#' NUMBER
+		{ assert($2);
+		  PENumber*tmp = new PENumber($2);
+		  tmp->set_file(@1.text);
+		  tmp->set_lineno(@1.first_line);
+
+		  struct parmvalue_t*lst = new struct parmvalue_t;
+		  lst->by_order = new svector<PExpr*>(1);
+		  (*lst->by_order)[0] = tmp;
+		  lst->by_name = 0;
+		  $$ = lst;
+		}
 	| '#' error
 		{ yyerror(@1, "error: syntax error in parameter value "
 			  "assignment list.");
@@ -1246,7 +1278,37 @@ parameter_value_opt
 		{ $$ = 0; }
 	;
 
-  /* The port (of a module) is a fairle complex item. Each port is
+parameter_value_byname
+	: PORTNAME '(' expression ')'
+		{ portname_t*tmp = new portname_t;
+		  tmp->name = $1;
+		  tmp->parm = $3;
+		  free($1);
+		  $$ = tmp;
+		}
+	| PORTNAME '(' ')'
+		{ portname_t*tmp = new portname_t;
+		  tmp->name = $1;
+		  tmp->parm = 0;
+		  free($1);
+		  $$ = tmp;
+		}
+	;
+
+parameter_value_byname_list
+	: parameter_value_byname
+		{ svector<portname_t*>*tmp = new svector<portname_t*>(1);
+		  (*tmp)[0] = $1;
+		  $$ = tmp;
+		}
+	| parameter_value_byname_list ',' parameter_value_byname
+		{ svector<portname_t*>*tmp = new svector<portname_t*>(*$1,$3);
+		  delete $1;
+		  $$ = tmp;
+		}
+	;
+
+  /* The port (of a module) is a fairly complex item. Each port is
      handled as a Module::port_t object. A simple port reference has a
      name and a PWire object, but more complex constructs are possible
      where the name can be attached to a list of PWire objects.

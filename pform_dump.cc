@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: pform_dump.cc,v 1.45 1999/10/10 01:59:55 steve Exp $"
+#ident "$Id: pform_dump.cc,v 1.46 2000/01/09 05:50:49 steve Exp $"
 #endif
 
 /*
@@ -283,7 +283,10 @@ void PGBuiltin::dump(ostream&out) const
 void PGModule::dump(ostream&out) const
 {
       out << "    " << type_ << " ";
+
+	// If parameters are overridden by order, dump them.
       if (overrides_) {
+	    assert(parms_ == 0);
             out << "#(";
 	    out << *((*overrides_)[0]);
 	    for (unsigned idx = 1 ;  idx < overrides_->count() ;  idx += 1) {
@@ -291,6 +294,19 @@ void PGModule::dump(ostream&out) const
 	    }
 	    out << ") ";
       }
+
+	// If parameters are overridden by name, dump them.
+      if (parms_) {
+	    assert(overrides_ == 0);
+	    out << "#(";
+	    out << "." << parms_[0].name << "(" << *parms_[0].parm << ")";
+	    for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
+		  out << ", ." << parms_[idx].name << "(" <<
+			*parms_[idx].parm << ")";
+	    }
+	    out << ") ";
+      }
+
       out << get_name() << "(";
       if (pins_) {
 	    out << "." << pins_[0].name << "(";
@@ -675,6 +691,9 @@ void PUdp::dump(ostream&out) const
 
 /*
  * $Log: pform_dump.cc,v $
+ * Revision 1.46  2000/01/09 05:50:49  steve
+ *  Support named parameter override lists.
+ *
  * Revision 1.45  1999/10/10 01:59:55  steve
  *  Structural case equals device.
  *

@@ -19,12 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: Module.h,v 1.11 1999/12/11 05:45:41 steve Exp $"
+#ident "$Id: Module.h,v 1.12 2000/01/09 05:50:48 steve Exp $"
 #endif
 
 # include  <list>
 # include  <map>
 # include  "svector.h"
+# include  "named.h"
 # include  <string>
 class PExpr;
 class PGate;
@@ -95,7 +96,9 @@ class Module {
       const list<PProcess*>& get_behaviors() const { return behaviors_; }
 
       void dump(ostream&out) const;
-      bool elaborate(Design*, NetScope*scope, svector<PExpr*>*overrides_) const;
+      bool elaborate(Design*, NetScope*scope,
+		     named<PExpr*>*parms, unsigned nparms,
+		     svector<PExpr*>*overrides_) const;
 
     private:
       const string name_;
@@ -115,6 +118,9 @@ class Module {
 
 /*
  * $Log: Module.h,v $
+ * Revision 1.12  2000/01/09 05:50:48  steve
+ *  Support named parameter override lists.
+ *
  * Revision 1.11  1999/12/11 05:45:41  steve
  *  Fix support for attaching attributes to primitive gates.
  *

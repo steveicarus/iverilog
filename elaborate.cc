@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: elaborate.cc,v 1.138 2000/01/02 19:39:03 steve Exp $"
+#ident "$Id: elaborate.cc,v 1.139 2000/01/09 05:50:48 steve Exp $"
 #endif
 
 /*
@@ -325,6 +325,11 @@ void PGBuiltin::elaborate(Design*des, const string&path) const
 		case XOR:
 		  cur[idx] = new NetLogic(inm, pin_count(), NetLogic::XOR);
 		  break;
+		default:
+		  cerr << get_line() << ": internal error: unhandled "
+			"gate type." << endl;
+		  des->errors += 1;
+		  return;
 	    }
 
 	    cur[idx]->set_attributes(attributes);
@@ -457,7 +462,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, const string&path) const
 	// elaboration causes the module to generate a netlist with
 	// the ports represented by NetNet objects. I will find them
 	// later.
-      rmod->elaborate(des, my_scope, overrides_);
+      rmod->elaborate(des, my_scope, parms_, nparms_, overrides_);
 
 	// Now connect the ports of the newly elaborated designs to
 	// the expressions that are the instantiation parameters. Scan
@@ -1765,7 +1770,9 @@ NetProc* PWhile::elaborate(Design*des, const string&path) const
       return loop;
 }
 
-bool Module::elaborate(Design*des, NetScope*scope, svector<PExpr*>*overrides_) const
+bool Module::elaborate(Design*des, NetScope*scope,
+		       named<PExpr*>*parms, unsigned nparms,
+		       svector<PExpr*>*overrides_) const
 {
       const string path = scope->name();
       bool result_flag = true;
@@ -1797,13 +1804,23 @@ bool Module::elaborate(Design*des, NetScope*scope, svector<PExpr*>*overrides_) c
 	// FIXME: need to release the replaced expression.
 
       if (overrides_) {
+	    assert(parms == 0);
             list<string>::const_iterator cur = param_names.begin();
             for (unsigned idx = 0 ;  idx < overrides_->count(); idx += 1, cur++) {
 	          string pname = path + "." + (*cur);
 	          NetExpr*expr = (*overrides_)[idx]->elaborate_expr(des, path);
 	          des->set_parameter(pname, expr);
             }
+
+      } else if (parms) {
+
+	    for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
+		  string pname = path + "." + parms[idx].name;
+		  NetExpr*expr =  parms[idx].parm->elaborate_expr(des, path);
+		  des->set_parameter(pname, expr);
+	    }
       }
+
 
 	// Finally, evaluate the parameter value. This step collapses
 	// the parameters to NetEConst values.
@@ -1950,7 +1967,7 @@ Design* elaborate(const map<string,Module*>&modules,
 
       modlist = &modules;
       udplist = &primitives;
-      bool rc = rmod->elaborate(des, scope, (svector<PExpr*>*)0);
+      bool rc = rmod->elaborate(des, scope, 0, 0, (svector<PExpr*>*)0);
       modlist = 0;
       udplist = 0;
 
@@ -1964,6 +1981,9 @@ Design* elaborate(const map<string,Module*>&modules,
 
 /*
  * $Log: elaborate.cc,v $
+ * Revision 1.139  2000/01/09 05:50:48  steve
+ *  Support named parameter override lists.
+ *
  * Revision 1.138  2000/01/02 19:39:03  steve
  *  Structural reduction XNOR.
  *
