@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.116 2005/03/03 04:34:42 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.117 2005/03/12 23:45:33 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1475,7 +1475,6 @@ static struct vector_info draw_signal_expr(ivl_expr_t exp, unsigned wid)
 void draw_memory_index_expr(ivl_memory_t mem, ivl_expr_t ae)
 {
       int root = ivl_memory_root(mem);
-      unsigned width = ivl_memory_width(mem);
 
       switch (ivl_expr_type(ae)) {
 	  case IVL_EX_NUMBER: {
@@ -1778,19 +1777,12 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       assert(ivl_expr_parms(exp) == (ivl_scope_ports(def)-1));
       for (idx = 0 ;  idx < ivl_expr_parms(exp) ;  idx += 1) {
 	    ivl_signal_t port = ivl_scope_port(def, idx+1);
-	    unsigned pin, bit;
 
 	    res = draw_eval_expr_wid(ivl_expr_parm(exp, idx),
-				     ivl_signal_pins(port), 0);
-	    bit = res.base;
-	    assert(res.wid <= ivl_signal_pins(port));
-	    for (pin = 0 ;  pin < res.wid ;  pin += 1) {
-		  fprintf(vvp_out, "    %%set V_%s[%u], %u;\n",
-			  vvp_signal_label(port),
-			  pin, bit);
-		  if (bit >= 4)
-			bit += 1;
-	    }
+				     ivl_signal_width(port), 0);
+	    assert(res.wid <= ivl_signal_width(port));
+	    fprintf(vvp_out, "    %%set/v V_%s, %u, %u;\n",
+		    vvp_signal_label(port), res.base, res.wid);
 
 	    clr_vector(res);
       }
@@ -1812,13 +1804,11 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
       res.wid  = wid;
 
       { unsigned load_wid = swid;
-        if (load_wid > ivl_signal_pins(retval))
-	      load_wid = ivl_signal_pins(retval);
+        if (load_wid > ivl_signal_width(retval))
+	      load_wid = ivl_signal_width(retval);
 
-	for (idx = 0 ;  idx < load_wid ;  idx += 1)
-	      fprintf(vvp_out, "    %%load  %u, V_%s[%u];\n",
-		      res.base+idx,
-		      vvp_signal_label(retval), idx);
+	fprintf(vvp_out, "    %%load/v  %u, V_%s, %u;\n",
+		res.base, vvp_signal_label(retval), load_wid);
 
 	if (load_wid < swid)
 	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
@@ -2127,6 +2117,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.117  2005/03/12 23:45:33  steve
+ *  Handle function/task port vectors.
+ *
  * Revision 1.116  2005/03/03 04:34:42  steve
  *  Rearrange how memories are supported as vvp_vector4 arrays.
  *
