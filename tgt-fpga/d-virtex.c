@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.16 2002/10/28 02:05:56 steve Exp $"
+#ident "$Id: d-virtex.c,v 1.17 2002/10/30 03:58:45 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -68,6 +68,12 @@ static const char*virtex_library_text =
 "              (interface\n"
 "                 (port O (direction OUTPUT))\n"
 "                 (port I (direction INPUT)))))\n"
+"      (cell BUFG (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port O (direction OUTPUT))\n"
+"                 (port I (direction INPUT)))))\n"
 "      (cell FDCE (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -75,13 +81,18 @@ static const char*virtex_library_text =
 "                 (port Q (direction OUTPUT))\n"
 "                 (port D (direction INPUT))\n"
 "                 (port C (direction INPUT))\n"
-"                 (port CE (direction INPUT)))))\n"
-"      (cell GBUF (cellType GENERIC)\n"
+"                 (port CE (direction INPUT))\n"
+"                 (port CLR (direction INPUT)))))\n"
+"      (cell FDCPE (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
 "              (interface\n"
-"                 (port O (direction OUTPUT))\n"
-"                 (port I (direction INPUT)))))\n"
+"                 (port Q (direction OUTPUT))\n"
+"                 (port D (direction INPUT))\n"
+"                 (port C (direction INPUT))\n"
+"                 (port CE (direction INPUT))\n"
+"                 (port PRE (direction INPUT))\n"
+"                 (port CLR (direction INPUT)))))\n"
 "      (cell GND (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -367,7 +378,7 @@ void edif_show_cellref_logic(ivl_net_logic_t net, const char*cellref)
       strncpy(tmpname, cellref, cp-cellref);
       tmpname[cp-cellref] = 0;
 
-      fprintf(xnf, "(instance (rename U%u (string \"%s\"))"
+      fprintf(xnf, "(instance (rename U%u \"%s\")"
 	      " (viewRef net (cellRef %s (libraryRef VIRTEX))))\n",
 	      edif_uref, ivl_logic_name(net), tmpname);
 
@@ -1161,12 +1172,18 @@ static void edif_show_virtex_add(ivl_lpm_t net)
       unsigned nref = 0;
       unsigned ha_init = 6;
 
+      edif_uref += 1;
+
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_ADD:
 	    ha_init = 6;
+	    fprintf(xnf, "(comment \"U%u implements %u bit ADD.\")\n",
+		    edif_uref, ivl_lpm_width(net));
 	    break;
 	  case IVL_LPM_SUB:
 	    ha_init = 9;
+	    fprintf(xnf, "(comment \"U%u implements %u bit SUB.\")\n",
+		    edif_uref, ivl_lpm_width(net));
 	    break;
 	  default:
 	    assert(0);
@@ -1175,7 +1192,6 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 	/* Handle the special case that the adder is only one bit
 	   wide. Generate an XOR gate to perform the half-add. */
       if (ivl_lpm_width(net) == 1) {
-	    edif_uref += 1;
 
 	    edif_show_lut2(ivl_lpm_name(net), edif_uref,
 			   ivl_lpm_q(net, 0),
@@ -1186,22 +1202,49 @@ static void edif_show_virtex_add(ivl_lpm_t net)
       }
 
       assert(ivl_lpm_width(net) > 1);
-      edif_uref += 1;
 
 	/* First, draw the bottom bit slice of the adder. This
 	   includes the LUT2 device to perform the addition, and a
 	   MUXCY_L device to send the carry up to the next bit. */
-      fprintf(xnf, "(instance (rename U%u_L0 \"%s\"[0])"
-	      " (property INIT (string \"%u\"))", edif_uref,
+      fprintf(xnf, "(instance (rename U%u_L0 \"%s[0]\")"
+	      " (viewRef net (cellRef LUT2 (libraryRef VIRTEX)))"
+	      " (property INIT (string \"%u\")))\n", edif_uref,
 	      ivl_lpm_name(net), ha_init);
-      fprintf(xnf, " (viewRef net"
-	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
       fprintf(xnf, "(instance U%u_M0", edif_uref);
       fprintf(xnf, " (viewRef net"
 	      " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
 
-      sprintf(jbuf, "(portRef I0 (instanceRef U%u_L0))", edif_uref);
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_ADD:
+	    fprintf(xnf, "(instance U%u_FILL "
+		    " (viewRef net"
+		    " (cellRef GND (libraryRef VIRTEX))))\n",
+		    edif_uref);
+	    fprintf(xnf, "(net U%u_FILLN (joined"
+		    " (portRef GROUND (instanceRef U%u_FILL))"
+		    " (portRef CI (instanceRef U%u_M0))))\n",
+		    edif_uref, edif_uref, edif_uref);
+	    break;
+
+	  case IVL_LPM_SUB:
+	    fprintf(xnf, "(instance U%u_FILL "
+		    " (viewRef net"
+		    " (cellRef VCC (libraryRef VIRTEX))))\n",
+		    edif_uref);
+	    fprintf(xnf, "(net U%u_FILLN (joined"
+		    " (portRef VCC (instanceRef U%u_FILL))"
+		    " (portRef CI (instanceRef U%u_M0))))\n",
+		    edif_uref, edif_uref, edif_uref);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      sprintf(jbuf, "(portRef I0 (instanceRef U%u_L0))"
+	      " (portRef DI (instanceRef U%u_M0))",
+	      edif_uref, edif_uref);
       edif_set_nexus_joint(ivl_lpm_data(net, 0), jbuf);
 
       sprintf(jbuf, "(portRef I1 (instanceRef U%u_L0))", edif_uref);
@@ -1219,19 +1262,20 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 	   device, the other devices have local names. */
       for (idx = 1 ;  idx < (ivl_lpm_width(net)-1) ; idx += 1) {
 
-	    fprintf(xnf, "(instance U%u_L%u) (property INIT (string \"%u\"))",
+	    fprintf(xnf, "(instance U%u_L%u"
+		    " (viewRef net"
+		    " (cellRef LUT2 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"%u\")))\n",
 		    edif_uref, idx, ha_init);
-	    fprintf(xnf, " (viewRef net"
-		    " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
 	    fprintf(xnf, "(instance U%u_M%u", edif_uref, idx);
 	    fprintf(xnf, " (viewRef net"
 		    " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
 
-	    fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")",
+	    fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")"
+		    " (viewRef net"
+		    " (cellRef XORCY (libraryRef VIRTEX))))\n",
 		    edif_uref, idx, ivl_lpm_name(net), idx);
-	    fprintf(xnf, " (viewRef net"
-		    " (cellRef XORCY (libraryRef VIRTEX))))\n");
 
 	    fprintf(xnf, "(net U%uN%u (joined"
 		    " (portRef O (instanceRef U%u_L%u))"
@@ -1247,8 +1291,9 @@ static void edif_show_virtex_add(ivl_lpm_t net)
 		    edif_uref, nref++, edif_uref, idx, edif_uref, idx,
 		    edif_uref, idx-1);
 
-	    sprintf(jbuf, "(portRef I0 (instanceRef U%u_L%u))",
-		    edif_uref, idx);
+	    sprintf(jbuf, "(portRef I0 (instanceRef U%u_L%u))"
+		    " (portRef DI (instanceRef U%u_M%u))",
+		    edif_uref, idx, edif_uref, idx);
 	    edif_set_nexus_joint(ivl_lpm_data(net, idx), jbuf);
 
 	    sprintf(jbuf, "(portRef I1 (instanceRef U%u_L%u))",
@@ -1261,10 +1306,11 @@ static void edif_show_virtex_add(ivl_lpm_t net)
       }
 
 
-      fprintf(xnf, "(instance U%u_L%u) (property INIT (string \"%u\"))",
+      fprintf(xnf, "(instance U%u_L%u"
+	      " (viewRef net"
+	      " (cellRef LUT2 (libraryRef VIRTEX)))"
+	      " (property INIT (string \"%u\")))\n",
 	      edif_uref, idx, ha_init);
-      fprintf(xnf, " (viewRef net"
-	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
       fprintf(xnf, "(instance (rename U%u_X%u \"%s[%u]\")",
 	      edif_uref, idx, ivl_lpm_name(net), idx);
@@ -1319,15 +1365,19 @@ static void virtex_show_cmp_ge(ivl_lpm_t net)
 	/* First, draw the bottom bit slice of the comparator. This
 	   includes the LUT2 device to perform the addition, and a
 	   MUXCY_L device to send the carry up to the next bit. */
-      fprintf(xnf, "(instance (rename U%u_L0 \"%s\"[0])"
-	      " (property INIT (string \"9\"))", edif_uref,
+      fprintf(xnf, "(instance (rename U%u_L0 \"%s[0]\")"
+	      " (viewRef net"
+	      " (cellRef LUT2 (libraryRef VIRTEX)))"
+	      " (property INIT (string \"9\")))\n", edif_uref,
 	      ivl_lpm_name(net));
-      fprintf(xnf, " (viewRef net"
-	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
-
       fprintf(xnf, "(instance U%u_M0", edif_uref);
       fprintf(xnf, " (viewRef net"
 	      " (cellRef MUXCY_L (libraryRef VIRTEX))))\n");
+
+      fprintf(xnf, "(net U%uN%u (joined"
+	      " (portRef O (instanceRef U%u_L0))"
+	      " (portRef S (instanceRef U%u_M0))))\n",
+	      edif_uref, nref++, edif_uref, edif_uref);
 
       sprintf(jbuf, "(portRef I0 (instanceRef U%u_L0))", edif_uref);
       edif_set_nexus_joint(ivl_lpm_data(net, 0), jbuf);
@@ -1366,16 +1416,15 @@ static void virtex_show_cmp_ge(ivl_lpm_t net)
       }
 
 	/* Now draw all the inside bit slices. These include the LUT2
-	   device for the basic add, the MUXCY_L device to propagate
-	   the carry, and an XORCY device to generate the real
-	   output. The XORCY device carries the name of the LPM
-	   device, the other devices have local names. */
-      for (idx = 1 ;  idx < (ivl_lpm_width(net)-1) ; idx += 1) {
+	   device for the NOR2 and the MUXCY_L device to propagate
+	   the result. */
+      for (idx = 1 ;  idx < (ivl_lpm_width(net)) ; idx += 1) {
 
-	    fprintf(xnf, "(instance U%u_L%u) (property INIT (string \"9\"))",
+	    fprintf(xnf, "(instance U%u_L%u"
+		    " (viewRef net"
+		    " (cellRef LUT2 (libraryRef VIRTEX)))"
+		    " (property INIT (string \"9\")))\n",
 		    edif_uref, idx);
-	    fprintf(xnf, " (viewRef net"
-		    " (cellRef LUT2 (libraryRef VIRTEX))))\n");
 
 	    fprintf(xnf, "(instance U%u_M%u", edif_uref, idx);
 	    fprintf(xnf, " (viewRef net"
@@ -1406,35 +1455,8 @@ static void virtex_show_cmp_ge(ivl_lpm_t net)
       }
 
 
-      fprintf(xnf, "(instance U%u_L%u) (property INIT (string \"9\"))",
-	      edif_uref, idx);
-      fprintf(xnf, " (viewRef net"
-	      " (cellRef LUT2 (libraryRef VIRTEX))))\n");
-
-      fprintf(xnf, "(net U%uN%u (joined"
-	      " (portRef O (instanceRef U%u_L%u))"
-	      " (portRef LI (instanceRef U%u_X%u))))\n",
-	      edif_uref, nref++, edif_uref, idx, edif_uref, idx);
-
-      fprintf(xnf, "(net U%uN%u (joined"
-	      " (portRef CI (instanceRef U%u_X%u))"
-	      " (portRef LO (instanceRef U%u_M%u))))\n",
-	      edif_uref, nref++, edif_uref, idx, edif_uref, idx-1);
-
-      sprintf(jbuf, "(portRef I0 (instanceRef U%u_L%u))",
-	      edif_uref, idx);
-      edif_set_nexus_joint(ivl_lpm_data(net, idx), jbuf);
-
-      sprintf(jbuf, "(portRef I1 (instanceRef U%u_L%u))",
-	      edif_uref, idx);
-      edif_set_nexus_joint(ivl_lpm_datab(net, idx), jbuf);
-
-      sprintf(jbuf, "(portRef DI (instanceRef U%u_M%u))",
-	      edif_uref, idx);
-      edif_set_nexus_joint(ivl_lpm_data(net, idx), jbuf);
-
       sprintf(jbuf, "(portRef LO (instanceRef U%u_M%u))",
-	      edif_uref, idx);
+	      edif_uref, idx-1);
       edif_set_nexus_joint(ivl_lpm_q(net, 0), jbuf);
 }
 
@@ -1546,14 +1568,25 @@ static void virtex_show_shiftl(ivl_lpm_t net)
 	   through, and the B side which is shifted based on the
 	   selector identity. */
       for (sdx = 0 ;  sdx < (nsel-1) ;  sdx += 1) {
-	    unsigned shift = 1 << sdx;
+	    unsigned shift = 2 << sdx;
 
-	    for (qdx = 0 ;  qdx < shift ;  qdx += 1) {
+	    for (qdx = 0 ;  qdx < (width-shift) ;  qdx += 1) {
+		  fprintf(xnf, "(net U%uC%uR%uN (joined"
+			  " (portRef O (instanceRef U%uC%uR%u))"
+			  " (portRef I0 (instanceRef U%uC%uR%u))"
+			  " (portRef I1 (instanceRef U%uC%uR%u))))\n",
+			  edif_uref, sdx, qdx,
+			  edif_uref, sdx, qdx,
+			  edif_uref, sdx+1, qdx,
+			  edif_uref, sdx+1, qdx + shift);
+	    }
+
+	    for (qdx = (width-shift) ;  qdx < width ;  qdx += 1) {
 		  fprintf(xnf, "(net U%uC%uR%uN (joined"
 			  " (portRef O (instanceRef U%uC%uR%u))"
 			  " (portRef I0 (instanceRef U%uC%uR%u))))\n",
 			  edif_uref, sdx, qdx,
-			  edif_uref, sdx+1, qdx,
+			  edif_uref, sdx, qdx,
 			  edif_uref, sdx+1, qdx);
 
 		  fprintf(xnf, "(instance U%uC%uR%uG"
@@ -1565,19 +1598,8 @@ static void virtex_show_shiftl(ivl_lpm_t net)
 			  " (portRef I1 (instanceRef U%uC%uR%u))"
 			  " (portRef GROUND (instanceRef U%uC%uR%uG))))\n",
 			  edif_uref, sdx+1, qdx,
-			  edif_uref, sdx+1, qdx,
+			  edif_uref, sdx+1, (qdx+shift)%width,
 			  edif_uref, sdx+1, qdx);
-	    }
-
-	    for (qdx = shift ;  qdx < width ;  qdx += 1) {
-		  fprintf(xnf, "(net U%uC%uR%uN (joined"
-			  " (portRef O (instanceRef U%uC%uR%u))"
-			  " (portRef I0 (instanceRef U%uC%uR%u))"
-			  " (portRef I1 (instancdRef U%uC%uR%u))))\n",
-			  edif_uref, sdx, qdx,
-			  edif_uref, sdx, qdx,
-			  edif_uref, sdx+1, qdx,
-			  edif_uref, sdx+1, qdx - shift);
 	    }
       }
 
@@ -1602,6 +1624,11 @@ const struct device_s d_virtex_edif = {
 
 /*
  * $Log: d-virtex.c,v $
+ * Revision 1.17  2002/10/30 03:58:45  steve
+ *  Fix up left shift to pass compile,
+ *  fix up ADD/SUB to generate missing pieces,
+ *  Add the asynch set/reset to DFF devices.
+ *
  * Revision 1.16  2002/10/28 02:05:56  steve
  *  Add Virtex code generators for left shift,
  *  subtraction, and GE comparators.

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic-edif.c,v 1.10 2002/10/28 02:05:56 steve Exp $"
+#ident "$Id: d-generic-edif.c,v 1.11 2002/10/30 03:58:45 steve Exp $"
 #endif
 
 # include  "device.h"
@@ -174,7 +174,18 @@ static const char*external_library_text =
 "                 (port Q (direction OUTPUT))\n"
 "                 (port D (direction INPUT))\n"
 "                 (port C (direction INPUT))\n"
-"                 (port CE (direction INPUT)))))\n"
+"                 (port CE (direction INPUT))\n"
+"                 (port CLR (direction INPUT)))))\n"
+"      (cell FDCPE (cellType GENERIC)\n"
+"            (view net\n"
+"              (viewType NETLIST)\n"
+"              (interface\n"
+"                 (port Q (direction OUTPUT))\n"
+"                 (port D (direction INPUT))\n"
+"                 (port C (direction INPUT))\n"
+"                 (port CE (direction INPUT))\n"
+"                 (port PRE (direction INPUT))\n"
+"                 (port CLR (direction INPUT)))))\n"
 "      (cell GND (cellType GENERIC)\n"
 "            (view net\n"
 "              (viewType NETLIST)\n"
@@ -226,11 +237,11 @@ static void edif_show_consts(ivl_design_t des)
 		  switch (val[pin]) {
 		      case '0':
 			name = "GND";
-			port = "G";
+			port = "GROUND";
 			break;
 		      case '1':
 			name = "VCC";
-			port = "P";
+			port = "VCC";
 			break;
 		      default:
 			name = "???";
@@ -355,6 +366,19 @@ void edif_show_generic_dff(ivl_lpm_t net)
       ivl_nexus_t nex;
       char jbuf[1024];
       unsigned idx;
+      ivl_nexus_t aclr = ivl_lpm_async_clr(net);
+      ivl_nexus_t aset = ivl_lpm_async_set(net);
+      ivl_expr_t avalue = 0;
+      const char*abits = 0;
+      const char*fdcell = "FDCE";
+
+      if (aset != 0) {
+	    fdcell = "FDCPE";
+	    avalue = ivl_lpm_aset_value(net);
+	    assert(avalue);
+	    abits = ivl_expr_bits(avalue);
+	    assert(abits);
+      }
 
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
 
@@ -363,7 +387,8 @@ void edif_show_generic_dff(ivl_lpm_t net)
 	    fprintf(xnf, "(instance (rename U%u \"%s[%u]\")",
 		    edif_uref, ivl_lpm_name(net), idx);
 	    fprintf(xnf, " (viewRef net"
-		    " (cellRef FDCE (libraryRef VIRTEX))))\n");
+		    " (cellRef %s (libraryRef VIRTEX))))\n",
+		    fdcell);
 
 	    nex = ivl_lpm_q(net, idx);
 	    sprintf(jbuf, "(portRef Q (instanceRef U%u))", edif_uref);
@@ -380,6 +405,25 @@ void edif_show_generic_dff(ivl_lpm_t net)
 	    if ((nex = ivl_lpm_enable(net))) {
 		  sprintf(jbuf, "(portRef CE (instanceRef U%u))", edif_uref);
 		  edif_set_nexus_joint(nex, jbuf);
+	    }
+
+	    if (aclr) {
+		  sprintf(jbuf, "(portRef CLR (instanceRef U%u))", edif_uref);
+		  edif_set_nexus_joint(aclr, jbuf);
+	    }
+
+
+	    if (aset) {
+	       if (abits[idx] == '1') {
+		     sprintf(jbuf, "(portRef PRE (instanceRef U%u))", 
+			     edif_uref);
+		     edif_set_nexus_joint(aset, jbuf);
+	       } else {
+		     assert(aclr == 0);
+		     sprintf(jbuf, "(portRef CLR (instanceRef U%u))",
+			     edif_uref);
+		     edif_set_nexus_joint(aset, jbuf);
+	       }
 	    }
       }
 }
@@ -404,6 +448,11 @@ const struct device_s d_generic_edif = {
 
 /*
  * $Log: d-generic-edif.c,v $
+ * Revision 1.11  2002/10/30 03:58:45  steve
+ *  Fix up left shift to pass compile,
+ *  fix up ADD/SUB to generate missing pieces,
+ *  Add the asynch set/reset to DFF devices.
+ *
  * Revision 1.10  2002/10/28 02:05:56  steve
  *  Add Virtex code generators for left shift,
  *  subtraction, and GE comparators.
