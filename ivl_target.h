@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: ivl_target.h,v 1.35 2001/03/20 01:44:13 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.36 2001/03/27 06:27:40 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -143,6 +143,13 @@ typedef struct ivl_statement_s*ivl_statement_t;
  * explicit values so that the binary API is a bit more resilient to
  * changes and additions to the enumerations.
  */
+
+
+typedef enum ivl_edge_type_e {
+      IVL_EDGE_ANY = 0,
+      IVL_EDGE_POS = 1,
+      IVL_EDGE_NEG = 2
+} ivl_edge_type_t;
 
 /* This is the type of an ivl_expr_t object. */
 typedef enum ivl_expr_type_e {
@@ -628,6 +635,8 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 
   /* IVL_ST_BLOCK */
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
+  /* IVL_ST_WAIT */
+extern ivl_edge_type_t ivl_stmt_edge(ivl_statement_t net);
   /* IVL_ST_BLOCK */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_CONDIT */
@@ -650,6 +659,9 @@ extern const char* ivl_stmt_name(ivl_statement_t net);
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */
 extern unsigned ivl_stmt_parm_count(ivl_statement_t net);
+  /* IVL_ST_WAIT */
+extern unsigned ivl_stmt_pins(ivl_statement_t net);
+extern ivl_nexus_t ivl_stmt_pin(ivl_statement_t net, unsigned idx);
   /* IVL_ST_ASSIGN */
 extern ivl_expr_t ivl_stmt_rval(ivl_statement_t net);
   /* IVL_ST_DELAY, IVL_ST_WAIT, IVL_ST_WHILE */
@@ -673,6 +685,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.36  2001/03/27 06:27:40  steve
+ *  Generate code for simple @ statements.
+ *
  * Revision 1.35  2001/03/20 01:44:13  steve
  *  Put processes in the proper scope.
  *

@@ -18,7 +18,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll-proc.cc,v 1.11 2001/03/20 01:44:14 steve Exp $"
+#ident "$Id: t-dll-proc.cc,v 1.12 2001/03/27 06:27:40 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -274,6 +274,34 @@ bool dll_target::proc_wait(const NetEvWait*net)
       stmt_cur_->u_.wait_.stmt_ = (struct ivl_statement_s*)
 	    calloc(1, sizeof(struct ivl_statement_s));
 
+      if (net->nevents() != 1) {
+	    cerr << "internal error: multiple events not supported." << endl;
+	    return false;
+      }
+
+      NetEvent*ev = net->event(0);
+      assert(ev->nprobe() == 1);
+
+      const NetEvProbe*pr = ev->probe(0);
+      assert(pr->pin_count() == 1);
+
+      switch (pr->edge()) {
+	  case NetEvProbe::ANYEDGE:
+	    stmt_cur_->u_.wait_.edge_ = IVL_EDGE_ANY;
+	    break;
+	  case NetEvProbe::NEGEDGE:
+	    stmt_cur_->u_.wait_.edge_ = IVL_EDGE_NEG;
+	    break;
+	  case NetEvProbe::POSEDGE:
+	    stmt_cur_->u_.wait_.edge_ = IVL_EDGE_POS;
+	    break;
+      }
+
+      const Nexus*nex = pr->pin(0).nexus();
+      assert(nex);
+      assert(nex->t_cookie());
+      stmt_cur_->u_.wait_.cond_ = (ivl_nexus_t) nex->t_cookie();
+
       ivl_statement_t save_cur_ = stmt_cur_;
       stmt_cur_ = stmt_cur_->u_.wait_.stmt_;
       bool flag = net->emit_recurse(this);
@@ -305,6 +333,9 @@ void dll_target::proc_while(const NetWhile*net)
 
 /*
  * $Log: t-dll-proc.cc,v $
+ * Revision 1.12  2001/03/27 06:27:40  steve
+ *  Generate code for simple @ statements.
+ *
  * Revision 1.11  2001/03/20 01:44:14  steve
  *  Put processes in the proper scope.
  *

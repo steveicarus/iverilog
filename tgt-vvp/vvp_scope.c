@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.5 2001/03/25 19:36:12 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.6 2001/03/27 06:27:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -36,7 +36,7 @@
  *
  * XXXX This function does not yet support multiple drivers.
  */
-static void draw_nexus_input(ivl_nexus_t nex)
+void draw_nexus_input(ivl_nexus_t nex)
 {
       ivl_net_logic_t lptr;
       ivl_signal_t sptr;
@@ -103,6 +103,61 @@ static void draw_net_in_scope(ivl_signal_t sig)
       fprintf(vvp_out, ";\n");
 }
 
+static void draw_logic_in_scope(ivl_net_logic_t lptr)
+{
+	    unsigned pdx;
+      const char*ltype = "?";
+      unsigned init_val = 0;
+
+	/* Skip BUFZ objects. Things that have a bufz as input
+	   will use the input to bufz instead. */
+      if (ivl_logic_type(lptr) == IVL_LO_BUFZ)
+	    return;
+
+
+      switch (ivl_logic_type(lptr)) {
+
+	  case IVL_LO_AND:
+	    ltype = "AND";
+	    init_val = 0x55;
+	    break;
+
+	  case IVL_LO_NOR:
+	    ltype = "NOR";
+	    break;
+
+	  case IVL_LO_NOT:
+	    ltype = "NOT";
+	    break;
+
+	  case IVL_LO_OR:
+	    ltype = "OR";
+	    break;
+
+	  default:
+	    ltype = "?";
+	    break;
+      }
+
+      assert(ivl_logic_pins(lptr) <= 5);
+
+      for (pdx = 1 ; pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
+	    unsigned mask = 3 << (pdx - 1);
+	    init_val = (init_val & ~mask) | (2 << (pdx - 1));
+      }
+
+      fprintf(vvp_out, "L_%s .functor %s, 0x%x",
+	      ivl_logic_name(lptr), ltype, init_val);
+
+      for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
+	    ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
+	    fprintf(vvp_out, ", ");
+	    draw_nexus_input(nex);
+      }
+
+      fprintf(vvp_out, ";\n");
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -121,54 +176,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	   remaining pins to inputs. */
 
       for (idx = 0 ;  idx < ivl_scope_logs(net) ;  idx += 1) {
-	    unsigned pdx;
 	    ivl_net_logic_t lptr = ivl_scope_log(net, idx);
-	    const char*ltype = "?";
-	    unsigned init_val = 0;
-
-	      /* Skip BUFZ objects. Things that have a bufz as input
-		 will use the input to bufz instead. */
-	    if (ivl_logic_type(lptr) == IVL_LO_BUFZ)
-		  continue;
-
-
-	    switch (ivl_logic_type(lptr)) {
-
-		case IVL_LO_AND:
-		  ltype = "AND";
-		  init_val = 0x55;
-		  break;
-
-		case IVL_LO_NOR:
-		  ltype = "NOR";
-		  break;
-
-		case IVL_LO_NOT:
-		  ltype = "NOT";
-		  break;
-
-		default:
-		  ltype = "?";
-		  break;
-	    }
-
-	    assert(ivl_logic_pins(lptr) <= 5);
-
-	    for (pdx = 1 ; pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
-		  unsigned mask = 3 << (pdx - 1);
-		  init_val = (init_val & ~mask) | (2 << (pdx - 1));
-	    }
-
-	    fprintf(vvp_out, "L_%s .functor %s, 0x%x",
-		    ivl_logic_name(lptr), ltype, init_val);
-
-	    for (pdx = 1 ;  pdx < ivl_logic_pins(lptr) ;  pdx += 1) {
-		  ivl_nexus_t nex = ivl_logic_pin(lptr, pdx);
-		  fprintf(vvp_out, ", ");
-		  draw_nexus_input(nex);
-	    }
-
-	    fprintf(vvp_out, ";\n");
+	    draw_logic_in_scope(lptr);
       }
 
 
@@ -194,6 +203,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.6  2001/03/27 06:27:41  steve
+ *  Generate code for simple @ statements.
+ *
  * Revision 1.5  2001/03/25 19:36:12  steve
  *  Draw AND NOR and NOT gates.
  *

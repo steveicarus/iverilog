@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_priv.h,v 1.4 2001/03/27 03:31:07 steve Exp $"
+#ident "$Id: vvp_priv.h,v 1.5 2001/03/27 06:27:41 steve Exp $"
 #endif
 
 # include  "ivl_target.h"
@@ -40,6 +40,14 @@ extern int draw_process(ivl_process_t net, void*x);
 
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
+/*
+ * Given a nexus, draw a string that represents the functor output
+ * that feeds the nexus. This function can be used to get the input to
+ * a functor, event, or even a %load in cases where I have the
+ * ivl_nexus_t object.
+ */
+extern void draw_nexus_input(ivl_nexus_t nex);
+
 
 /*
  * The draw_eval_expr function writes out the code to evaluate a
@@ -54,6 +62,9 @@ extern struct vector_info draw_eval_expr(ivl_expr_t exp);
 
 /*
  * $Log: vvp_priv.h,v $
+ * Revision 1.5  2001/03/27 06:27:41  steve
+ *  Generate code for simple @ statements.
+ *
  * Revision 1.4  2001/03/27 03:31:07  steve
  *  Support error code from target_t::end_design method.
  *

@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-dll.h,v 1.23 2001/03/27 03:31:06 steve Exp $"
+#ident "$Id: t-dll.h,v 1.24 2001/03/27 06:27:40 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -356,7 +356,8 @@ struct ivl_statement_s {
 	    } trig_;
 
 	    struct { /* IVL_ST_WAIT */
-		  int cond_; /* XXXX */
+		  ivl_edge_type_t edge_;
+		  ivl_nexus_t cond_;
 		  ivl_statement_t stmt_;
 	    } wait_;
 
@@ -369,6 +370,9 @@ struct ivl_statement_s {
 
 /*
  * $Log: t-dll.h,v $
+ * Revision 1.24  2001/03/27 06:27:40  steve
+ *  Generate code for simple @ statements.
+ *
  * Revision 1.23  2001/03/27 03:31:06  steve
  *  Support error code from target_t::end_design method.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_process.c,v 1.8 2001/03/27 03:31:07 steve Exp $"
+#ident "$Id: vvp_process.c,v 1.9 2001/03/27 06:27:41 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -145,21 +145,21 @@ static int show_stmt_condit(ivl_statement_t net)
       lab_false = local_count++;
       lab_out = local_count++;
 
-      fprintf(vvp_out, "    %%jmp/0xz  T_%05d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0xz  T_%d.%d, %u;\n",
 	      thread_count, lab_false, cond.base);
 
       rc += show_statement(ivl_stmt_cond_true(net));
 
       if (ivl_stmt_cond_false(net)) {
-	    fprintf(vvp_out, "    %%jmp T_%05d.%d;\n", thread_count, lab_out);
-	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_false);
+	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
+	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_false);
 
 	    rc += show_statement(ivl_stmt_cond_false(net));
 
-	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_out);
+	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_out);
 
       } else {
-	    fprintf(vvp_out, "T_%05d.%u\n", thread_count, lab_false);
+	    fprintf(vvp_out, "T_%d.%u\n", thread_count, lab_false);
       }
 
       return rc;
@@ -191,6 +191,18 @@ static int show_stmt_delay(ivl_statement_t net)
 static int show_stmt_noop(ivl_statement_t net)
 {
       return 0;
+}
+
+static int show_stmt_wait(ivl_statement_t net)
+{
+      ivl_nexus_t nex;
+
+      assert(ivl_stmt_pins(net) == 1);
+      nex = ivl_stmt_pin(net, 0);
+
+      fprintf(vvp_out, "    %%wait L_%s;\n", ivl_nexus_name(nex));
+
+      return show_statement(ivl_stmt_sub_stmt(net));
 }
 
 static int show_system_task_call(ivl_statement_t net)
@@ -269,6 +281,10 @@ static int show_statement(ivl_statement_t net)
 	    rc += show_system_task_call(net);
 	    break;
 
+	  case IVL_ST_WAIT:
+	    rc += show_stmt_wait(net);
+	    break;
+
 	  default:
 	    fprintf(stderr, "vvp.tgt: Unable to draw statement type %u\n",
 		    code);
@@ -277,6 +293,48 @@ static int show_statement(ivl_statement_t net)
       }
 
       return rc;
+}
+
+static void show_stmt_event_wait(ivl_statement_t net)
+{
+      ivl_edge_type_t edge = ivl_stmt_edge(net);
+      ivl_nexus_t nex;
+
+      const char*estr = "";
+
+      assert(ivl_stmt_pins(net) == 1);
+      nex = ivl_stmt_pin(net, 0);
+
+      switch (edge) {
+	  case IVL_EDGE_POS:
+	    estr = "posedge";
+	    break;
+	  case IVL_EDGE_NEG:
+	    estr = "negedge";
+	    break;
+	  case IVL_EDGE_ANY:
+	    estr = "anyedge";
+	    break;
+      }
+
+      fprintf(vvp_out, "L_%s .event %s, ", ivl_nexus_name(nex), estr);
+      draw_nexus_input(nex);
+      fprintf(vvp_out, ";\n");
+
+}
+
+static void show_stmt_events(ivl_statement_t net)
+{
+      switch (ivl_statement_type(net)) {
+	  case IVL_ST_WAIT:
+	    show_stmt_event_wait(net);
+	    return;
+	  case IVL_ST_DELAY:
+	    show_stmt_events(ivl_stmt_sub_stmt(net));
+	    return;
+	  default:
+	    return;
+      }
 }
 
 /*
@@ -289,16 +347,21 @@ int draw_process(ivl_process_t net, void*x)
 {
       int rc = 0;
       ivl_scope_t scope = ivl_process_scope(net);
+      ivl_statement_t stmt = ivl_process_stmt(net);
 
       local_count = 0;
       fprintf(vvp_out, "    .scope S_%s;\n", ivl_scope_name(scope));
 
+	/* Show any .event statements that are needed to support this
+	   thread. */
+      show_stmt_events(stmt);
+
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
-      fprintf(vvp_out, "T_%05d\n", thread_count);
+      fprintf(vvp_out, "T_%d\n", thread_count);
 
 	/* Draw the contents of the thread. */
-      rc += show_statement(ivl_process_stmt(net));
+      rc += show_statement(stmt);
 
 
 	/* Terminate the thread with either an %end instruction (initial
@@ -311,13 +374,13 @@ int draw_process(ivl_process_t net, void*x)
 	    break;
 
 	  case IVL_PR_ALWAYS:
-	    fprintf(vvp_out, "    %%jmp T_%05d;\n", thread_count);
+	    fprintf(vvp_out, "    %%jmp T_%d;\n", thread_count);
 	    break;
       }
 
 	/* Now write out the .thread directive that tells vvp where
 	   the thread starts. */
-      fprintf(vvp_out, "    .thread T_%05d;\n", thread_count);
+      fprintf(vvp_out, "    .thread T_%d;\n", thread_count);
 
 
       thread_count += 1;
@@ -326,6 +389,9 @@ int draw_process(ivl_process_t net, void*x)
 
 /*
  * $Log: vvp_process.c,v $
+ * Revision 1.9  2001/03/27 06:27:41  steve
+ *  Generate code for simple @ statements.
+ *
  * Revision 1.8  2001/03/27 03:31:07  steve
  *  Support error code from target_t::end_design method.
  *
