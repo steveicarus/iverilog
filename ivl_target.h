@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.145 2005/03/05 05:47:42 steve Exp $"
+#ident "$Id: ivl_target.h,v 1.146 2005/03/09 04:53:40 steve Exp $"
 #endif
 
 #ifdef __cplusplus
@@ -837,6 +837,18 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * are. All the data inputs have the same width, the width of the
  * ivl_lpm_q output.
  *
+ * - Memory port (IVL_LPM_RAM)
+ * These are structural ports into a memory device. They represent
+ * address/data ports of a memory device that the context can hook to
+ * for read or write. Read devices have an ivl_lpm_q output port that
+ * is the data being read.
+ *
+ * The ivl_lpm_memory function returns the ivl_memory_t for the memory
+ * that the port access. The ivl_lpm_width for the port then must
+ * match the ivl_memory_width of the memory device.
+ *
+ * Read or write, the ivl_lpm_select nexus is the address.
+ *
  * - Reduction operators (IVL_LPM_RE_*)
  * These devices have one input, a vector, and generate a single bit
  * result. The width from the ivl_lpm_width is the width of the input
@@ -1544,6 +1556,9 @@ _END_DECL
 
 /*
  * $Log: ivl_target.h,v $
+ * Revision 1.146  2005/03/09 04:53:40  steve
+ *  Generate code for new form of memory ports.
+ *
  * Revision 1.145  2005/03/05 05:47:42  steve
  *  Handle memory words in l-value concatenations.
  *

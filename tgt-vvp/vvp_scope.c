@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.119 2005/02/13 01:15:07 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.120 2005/03/09 04:53:40 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -1250,11 +1250,8 @@ static void draw_event_in_scope(ivl_event_t obj)
       }
 }
 
-inline static void draw_lpm_ram(ivl_lpm_t net)
+static void draw_lpm_ram(ivl_lpm_t net)
 {
-      unsigned idx;
-      unsigned width = ivl_lpm_width(net);
-      unsigned awidth = ivl_lpm_selects(net);
       ivl_memory_t mem = ivl_lpm_memory(net);
       ivl_nexus_t clk = ivl_lpm_clk(net);
       ivl_nexus_t pin;
@@ -1265,31 +1262,22 @@ inline static void draw_lpm_ram(ivl_lpm_t net)
 	    fprintf(vvp_out, ";\n");
       }
 
-      fprintf(vvp_out, "L_%p .mem/port", net);
-      fprintf(vvp_out,
-	      " M_%s, %d,0, %d,\n  ",
-	      vvp_memory_label(mem),
-	      width-1,
-	      awidth);
+      fprintf(vvp_out, "L_%p .mem/port M_%s, ", net, vvp_memory_label(mem));
 
-      for (idx = 0 ;  idx < awidth ;  idx += 1) {
-	    pin = ivl_lpm_select(net, idx);
-	    if (idx) fprintf(vvp_out, ", ");
-	    draw_input_from_net(pin);
-      }
+      pin = ivl_lpm_select(net,0);
+      draw_input_from_net(pin);
 
       if (clk) {
-	    fprintf(vvp_out, ",\n  CLK_%p, ",  net);
+	    fprintf(vvp_out, ", CLK_%p, ",  net);
 	    pin = ivl_lpm_enable(net);
 	    if (pin)
 		  draw_input_from_net(pin);
 	    else
 		  fprintf(vvp_out, "C<1>");
-	    for (idx=0; idx<width; idx++) {
-		  pin = ivl_lpm_data(net, idx);
-		  fprintf(vvp_out, ", ");
-		  draw_input_from_net(pin);
-	    }
+
+	    pin = ivl_lpm_data(net, 0);
+	    fprintf(vvp_out, ", ");
+	    draw_input_from_net(pin);
       }
 
       fprintf(vvp_out, ";\n");
@@ -2029,6 +2017,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.120  2005/03/09 04:53:40  steve
+ *  Generate code for new form of memory ports.
+ *
  * Revision 1.119  2005/02/13 01:15:07  steve
  *  Replace supply nets with wires connected to pullup/down supply devices.
  *

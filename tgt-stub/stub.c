@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.113 2005/03/05 05:47:42 steve Exp $"
+#ident "$Id: stub.c,v 1.114 2005/03/09 04:53:40 steve Exp $"
 #endif
 
 # include "config.h"
@@ -483,6 +483,34 @@ static void show_lpm_part(ivl_lpm_t net)
       }
 }
 
+static void show_lpm_ram(ivl_lpm_t net)
+{
+      ivl_nexus_t nex;
+      unsigned width = ivl_lpm_width(net);
+      ivl_memory_t mem = ivl_lpm_memory(net);
+
+      fprintf(out, "  LPM_RAM: <width=%u>\n", width);
+      nex = ivl_lpm_q(net, 0);
+      fprintf(out, "    Q: %s\n", ivl_nexus_name(nex));
+      nex = ivl_lpm_select(net, 0);
+      fprintf(out, "    Address: %s\n", ivl_nexus_name(nex));
+
+
+      if (width_of_nexus(ivl_lpm_q(net,0)) != width) {
+	    fprintf(out, "    ERROR: Data width doesn't match nexus width=%u\n",
+		    width_of_nexus(ivl_lpm_q(net,0)));
+	    stub_errors += 1;
+      }
+
+	/* The width of the port must match the width of the memory
+	   word. the compile assures that for us. */
+      if (width != ivl_memory_width(mem)) {
+	    fprintf(out, "    ERROR: Width doesn't match memory word width=%u\n",
+		    ivl_memory_width(mem));
+	    stub_errors += 1;
+      }
+}
+
 /*
  * The reduction operators have similar characteristics and are
  * displayed here.
@@ -594,6 +622,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_CONCAT:
 	    show_lpm_concat(net);
+	    break;
+
+	  case IVL_LPM_RAM:
+	    show_lpm_ram(net);
 	    break;
 
 	  case IVL_LPM_RE_AND:
@@ -1137,6 +1169,9 @@ int target_design(ivl_design_t des)
 
 /*
  * $Log: stub.c,v $
+ * Revision 1.114  2005/03/09 04:53:40  steve
+ *  Generate code for new form of memory ports.
+ *
  * Revision 1.113  2005/03/05 05:47:42  steve
  *  Handle memory words in l-value concatenations.
  *
