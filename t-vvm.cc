@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.8 1998/12/20 02:05:41 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.9 1999/01/01 01:46:01 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -62,6 +62,7 @@ class target_vvm : public target_t {
 
       ostrstream delayed;
       ostrstream init_code;
+      ostrstream start_code;
       unsigned process_counter;
       unsigned thread_step_;
 
@@ -264,6 +265,9 @@ void target_vvm::start_design(ostream&os, const Design*mod)
 
       init_code << "static void design_init(vvm_simulation&sim)" << endl;
       init_code << "{" << endl;
+
+      start_code << "static void design_start(vvm_simulation&sim)" << endl;
+      start_code << "{" << endl;
 }
 
 void target_vvm::end_design(ostream&os, const Design*mod)
@@ -274,9 +278,13 @@ void target_vvm::end_design(ostream&os, const Design*mod)
       init_code << "}" << endl << ends;
       os << init_code.str();
 
+      start_code << "}" << endl << ends;
+      os << start_code.str();
+
       os << "main()" << endl << "{" << endl;
       os << "      vvm_simulation sim;" << endl;
       os << "      design_init(sim);" << endl;
+      os << "      design_start(sim);" << endl;
 
       for (unsigned idx = 0 ;  idx < process_counter ;  idx += 1)
 	    os << "      thread" << (idx+1) << "_t thread_" <<
@@ -389,6 +397,9 @@ void target_vvm::logic(ostream&os, const NetLogic*gate)
 	    mangle(gate->name()) << "_output_fun);" << endl;
 
       emit_gate_outputfun_(gate);
+
+      start_code << "      " << mangle(gate->name()) <<
+	    ".start(&sim);" << endl;
 }
 
 void target_vvm::bufz(ostream&os, const NetBUFZ*gate)
@@ -767,6 +778,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.9  1999/01/01 01:46:01  steve
+ *  Add startup after initialization.
+ *
  * Revision 1.8  1998/12/20 02:05:41  steve
  *  Function to calculate wire initial value.
  *
