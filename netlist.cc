@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.cc,v 1.80 1999/11/02 04:55:34 steve Exp $"
+#ident "$Id: netlist.cc,v 1.81 1999/11/04 01:12:42 steve Exp $"
 #endif
 
 # include  <cassert>
@@ -1587,7 +1587,7 @@ bool NetUDP::set_table(const string&input, char output)
 	      /* XXXX Need to check to make sure that the input vector
 		 contains a legal combination of characters. In
 		 combinational UDPs, only 0, 1 and x are allowed. */
-	    assert(0);
+	    cm_[input] = output;
 
 	    return true;
       }
@@ -1969,6 +1969,9 @@ NetNet* Design::find_signal(bool (*func)(const NetNet*))
 
 /*
  * $Log: netlist.cc,v $
+ * Revision 1.81  1999/11/04 01:12:42  steve
+ *  Elaborate combinational UDP devices.
+ *
  * Revision 1.80  1999/11/02 04:55:34  steve
  *  Add the synthesize method to NetExpr to handle
  *  synthesis of expressions, and use that method

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: design_dump.cc,v 1.53 1999/11/01 02:07:40 steve Exp $"
+#ident "$Id: design_dump.cc,v 1.54 1999/11/04 01:12:41 steve Exp $"
 #endif
 
 /*
@@ -297,6 +297,12 @@ void NetUDP::dump_comb_(ostream&o, unsigned ind) const
       o << setw(ind) << "" << "Combinational UDP: ";
       o << " #(" << rise_time() << "," << fall_time() << "," << decay_time() <<
 	    ") " << name() << endl;
+
+      for (CM_::const_iterator ent = cm_.begin()
+		 ; ent != cm_.end() ;  ent++) {
+	    o << setw(ind+6) << "" << (*ent).first << " --> " <<
+		  (*ent).second << endl;
+      }
 
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -805,6 +811,9 @@ void Design::dump(ostream&o) const
 
 /*
  * $Log: design_dump.cc,v $
+ * Revision 1.54  1999/11/04 01:12:41  steve
+ *  Elaborate combinational UDP devices.
+ *
  * Revision 1.53  1999/11/01 02:07:40  steve
  *  Add the synth functor to do generic synthesis
  *  and add the LPM_FF device to handle rows of

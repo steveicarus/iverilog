@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: netlist.h,v 1.83 1999/11/02 04:55:34 steve Exp $"
+#ident "$Id: netlist.h,v 1.84 1999/11/04 01:12:42 steve Exp $"
 #endif
 
 /*
@@ -569,7 +569,7 @@ class NetLogic  : public NetNode {
  * In any case, pin 0 is an output, and all the remaining pins are
  * inputs.
  *
- * The truth table is canonically represented as a finite state
+ * The sequential truth table is canonically represented as a finite state
  * machine with the current state representing the inputs and the
  * current output, and the next state carrying the new output value to
  * use. All the outgoing transitions from a state represent a single
@@ -598,18 +598,18 @@ class NetLogic  : public NetNode {
  *      _   -- 10 or x0  (Note that this is not the output '-'.)
  *      %   -- 0x or 1x
  *
+ * SEQUENTIAL
+ * These objects have a single bit of memory. The logic table includes
+ * an entry for the current value, and allows edges on the inputs. In
+ * canonical form, inly then entries that generate 0, 1 or - (no change)
+ * are listed.
+ *
  * COMBINATIONAL
  * The logic table is a map between the input levels and the
  * output. Each input pin can have the value 0, 1 or x and the output
  * can have the values 0 or 1. If the input matches nothing, the
  * output is x. In canonical form, only the entries that generate 0 or
  * 1 are listed.
- *
- * SEQUENTIAL
- * These objects have a single bit of memory. The logic table includes
- * an entry for the current value, and allows edges on the inputs. In
- * canonical form, inly then entries that generate 0, 1 or - (no change)
- * are listed.
  *
  */
 class NetUDP  : public NetNode {
@@ -636,7 +636,7 @@ class NetUDP  : public NetNode {
       bool is_sequential() const { return sequential_; }
 
     private:
-      const bool sequential_;
+      bool sequential_;
       char init_;
 
       struct state_t_;
@@ -662,6 +662,11 @@ class NetUDP  : public NetNode {
       bool sequ_glob_(string, char out);
 
       state_t_*find_state_(const string&);
+
+	// A combinational primitive is more simply represented as a
+	// simple map of input signals to a single output.
+      typedef map<string,char> CM_;
+      CM_ cm_;
 
       void dump_sequ_(ostream&o, unsigned ind) const;
       void dump_comb_(ostream&o, unsigned ind) const;
@@ -1794,6 +1799,9 @@ extern ostream& operator << (ostream&, NetNet::Type);
 
 /*
  * $Log: netlist.h,v $
+ * Revision 1.84  1999/11/04 01:12:42  steve
+ *  Elaborate combinational UDP devices.
+ *
  * Revision 1.83  1999/11/02 04:55:34  steve
  *  Add the synthesize method to NetExpr to handle
  *  synthesis of expressions, and use that method
