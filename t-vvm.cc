@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.23 1999/06/09 03:00:06 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.24 1999/06/10 04:03:43 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -796,18 +796,7 @@ void target_vvm::proc_assign(ostream&os, const NetAssign*net)
 {
       string rval = emit_proc_rval(os, 8, net->rval());
 
-      const NetNet*lval;
-      unsigned msb, lsb;
-      net->find_lval_range(lval, msb, lsb);
-
-      if ((lsb == 0) && (msb == (lval->pin_count()-1))) {
-	    os << "        // " << net->get_line() << ": "
-	       << lval->name() << " = ";
-	    net->rval()->dump(os);
-	    os << endl;
-      } else {
-	    assert(0);
-      }
+      os << "        // " << net->get_line() << ": " << endl;
 
 	/* Not only is the lvalue signal assigned to, send the bits to
 	   all the other pins that are connected to this signal. */
@@ -1147,6 +1136,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.24  1999/06/10 04:03:43  steve
+ *  Do not bother trying to print lvalue name in comment.
+ *
  * Revision 1.23  1999/06/09 03:00:06  steve
  *  Add support for procedural concatenation expression.
  *
