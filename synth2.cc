@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.14 2002/09/26 03:42:10 steve Exp $"
+#ident "$Id: synth2.cc,v 1.15 2002/10/20 19:19:37 steve Exp $"
 #endif
 
 # include "config.h"
@@ -227,6 +227,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 {
       NetNet*ssig = expr_->synthesize(des);
       assert(ssig);
+
+      if (if_ == 0)
+	    return false;
+      if (else_ == 0) {
+	    cerr << get_line() << ": error: Asynchronous if statement"
+		 << " is missing the else clause." << endl;
+	    return false;
+      }
 
       assert(if_ != 0);
       assert(else_ != 0);
@@ -498,6 +506,8 @@ void synth2_f::process(class Design*des, class NetProcTop*top)
       if (top->is_synchronous()) do {
 	    bool flag = top->synth_sync(des);
 	    if (! flag) {
+		  cerr << top->get_line() << ": error: "
+		       << "Unable to synthesize synchronous process." << endl;
 		  des->errors += 1;
 		  return;
 	    }
@@ -548,6 +558,9 @@ void synth2(Design*des)
 
 /*
  * $Log: synth2.cc,v $
+ * Revision 1.15  2002/10/20 19:19:37  steve
+ *  Handle conditional error cases better.
+ *
  * Revision 1.14  2002/09/26 03:42:10  steve
  *  Remove excess debug messages.
  *
