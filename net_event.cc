@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: net_event.cc,v 1.9 2000/07/29 03:55:38 steve Exp $"
+#ident "$Id: net_event.cc,v 1.10 2000/09/19 03:00:36 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -40,7 +40,7 @@ NetEvent::~NetEvent()
       while (probes_) {
 	    NetEvProbe*tmp = probes_->enext_;
 	    delete probes_;
-	    tmp = probes_;
+	    probes_ = tmp;
       }
 }
 
@@ -383,6 +383,9 @@ NetProc* NetEvWait::statement()
 
 /*
  * $Log: net_event.cc,v $
+ * Revision 1.10  2000/09/19 03:00:36  steve
+ *  Typo stepping ot next probe in delete.
+ *
  * Revision 1.9  2000/07/29 03:55:38  steve
  *  fix problem coalescing events w/ probes.
  *
