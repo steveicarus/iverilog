@@ -20,12 +20,29 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: cfparse_misc.h,v 1.2 2001/11/12 18:47:32 steve Exp $"
+#ident "$Id: cfparse_misc.h,v 1.3 2002/01/02 02:39:34 steve Exp $"
 #endif
 
+/*
+ * The vlltype supports the passing of detailed source file location
+ * information between the lexical analyzer and the parser. Defining
+ * YYLTYPE compels the lexor to use this type and not something other.
+ */
+struct cfltype {
+      unsigned first_line;
+      unsigned first_column;
+      unsigned last_line;
+      unsigned last_column;
+      const char*text;
+};
+# define YYLTYPE struct cfltype
+extern YYLTYPE yylloc;
 
 /*
  * $Log: cfparse_misc.h,v $
+ * Revision 1.3  2002/01/02 02:39:34  steve
+ *  Use my own cfltype to defend against bison 1.30.
+ *
  * Revision 1.2  2001/11/12 18:47:32  steve
  *  Support +incdir in command files, and ignore other
  *  +args flags. Also ignore -a and -v flags.

@@ -18,11 +18,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: cfparse.y,v 1.5 2001/12/08 04:13:07 steve Exp $"
+#ident "$Id: cfparse.y,v 1.6 2002/01/02 02:39:34 steve Exp $"
 #endif
 
 
 # include  "globals.h"
+# include  "cfparse_misc.h"
 # include  <ctype.h>
 
 /*
