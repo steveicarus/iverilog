@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.6 1998/12/09 02:43:19 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.7 1999/07/17 03:39:11 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -175,7 +175,7 @@ void target_xnf::draw_sym_with_lcaname(ostream&os, string lca,
 void target_xnf::start_design(ostream&os, const Design*des)
 {
       os << "LCANET,6" << endl;
-      os << "PROG,verilog,0.0,\"Steve's Verilog\"" << endl;
+      os << "PROG,verilog,0.0,\"Icarus Verilog\"" << endl;
       os << "PART," << des->get_flag("part") << endl;
 }
 
@@ -333,6 +333,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.7  1999/07/17 03:39:11  steve
+ *  simplified process scan for targets.
+ *
  * Revision 1.6  1998/12/09 02:43:19  steve
  *  Fix 2pin logic gates.
  *

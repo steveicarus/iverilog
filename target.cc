@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.cc,v 1.13 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: target.cc,v 1.14 1999/07/17 03:39:11 steve Exp $"
 #endif
 
 # include  "target.h"
@@ -91,12 +91,15 @@ void target_t::net_event(ostream&os, const NetNEvent*)
 	    "Unhandled EVENT net node." << endl;
 }
 
-void target_t::start_process(ostream&os, const NetProcTop*)
+void target_t::process(ostream&os, const NetProcTop*top)
 {
+      top->statement()->emit_proc(os, this);
 }
 
 void target_t::proc_assign(ostream&os, const NetAssign*)
 {
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled procedural assignment." << endl;
 }
 
 void target_t::proc_assign_mem(ostream&os, const NetAssignMem*)
@@ -174,10 +177,6 @@ void target_t::proc_while(ostream&os, const NetWhile*net)
       net->dump(cerr, 6);
 }
 
-void target_t::end_process(ostream&os, const NetProcTop*)
-{
-}
-
 void target_t::end_design(ostream&os, const Design*)
 {
 }
@@ -236,6 +235,9 @@ void expr_scan_t::expr_binary(const NetEBinary*ex)
 
 /*
  * $Log: target.cc,v $
+ * Revision 1.14  1999/07/17 03:39:11  steve
+ *  simplified process scan for targets.
+ *
  * Revision 1.13  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-vvm.cc,v 1.30 1999/07/10 03:00:05 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.31 1999/07/17 03:39:11 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -50,7 +50,7 @@ class target_vvm : public target_t {
       virtual void net_const(ostream&os, const NetConst*);
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
-      virtual void start_process(ostream&os, const NetProcTop*);
+      virtual void process(ostream&os, const NetProcTop*);
       virtual void proc_assign(ostream&os, const NetAssign*);
       virtual void proc_assign_mem(ostream&os, const NetAssignMem*);
       virtual void proc_assign_nb(ostream&os, const NetAssignNB*);
@@ -64,8 +64,10 @@ class target_vvm : public target_t {
       virtual void proc_while(ostream&os, const NetWhile*);
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
-      virtual void end_process(ostream&os, const NetProcTop*);
       virtual void end_design(ostream&os, const Design*);
+
+      void start_process(ostream&os, const NetProcTop*);
+      void end_process(ostream&os, const NetProcTop*);
 
     private:
       void emit_gate_outputfun_(const NetNode*);
@@ -417,6 +419,13 @@ void target_vvm::end_design(ostream&os, const Design*mod)
 
       os << "      sim.run();" << endl;
       os << "}" << endl;
+}
+
+void target_vvm::process(ostream&os, const NetProcTop*top)
+{
+      start_process(os, top);
+      top->statement()->emit_proc(os, this);
+      end_process(os, top);
 }
 
 void target_vvm::signal(ostream&os, const NetNet*sig)
@@ -1267,6 +1276,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.31  1999/07/17 03:39:11  steve
+ *  simplified process scan for targets.
+ *
  * Revision 1.30  1999/07/10 03:00:05  steve
  *  Proper initialization of registers.
  *

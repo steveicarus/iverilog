@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: target.h,v 1.13 1999/07/03 02:12:52 steve Exp $"
+#ident "$Id: target.h,v 1.14 1999/07/17 03:39:11 steve Exp $"
 #endif
 
 # include  "netlist.h"
@@ -74,8 +74,9 @@ struct target_t {
       virtual void net_esignal(ostream&os, const NetESignal*);
       virtual void net_event(ostream&os, const NetNEvent*);
 
-	/* Output a process (called for each process) */
-      virtual void start_process(ostream&os, const NetProcTop*);
+	/* Output a process (called for each process). It is up to the
+	   target to recurse if desired. */
+      virtual void process(ostream&os, const NetProcTop*);
 
 	/* Various kinds of process nodes are dispatched through these. */
       virtual void proc_assign(ostream&os, const NetAssign*);
@@ -92,9 +93,6 @@ struct target_t {
 
       virtual void proc_event(ostream&os, const NetPEvent*);
       virtual void proc_delay(ostream&os, const NetPDelay*);
-
-	/* (called for each process) */
-      virtual void end_process(ostream&os, const NetProcTop*);
 
 	/* Done with the design. */
       virtual void end_design(ostream&os, const Design*);
@@ -131,6 +129,9 @@ extern const struct target *target_table[];
 
 /*
  * $Log: target.h,v $
+ * Revision 1.14  1999/07/17 03:39:11  steve
+ *  simplified process scan for targets.
+ *
  * Revision 1.13  1999/07/03 02:12:52  steve
  *  Elaborate user defined tasks.
  *

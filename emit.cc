@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: emit.cc,v 1.16 1999/07/07 04:20:57 steve Exp $"
+#ident "$Id: emit.cc,v 1.17 1999/07/17 03:39:11 steve Exp $"
 #endif
 
 /*
@@ -72,12 +72,7 @@ void NetBUFZ::emit_node(ostream&o, struct target_t*tgt) const
 
 void NetProcTop::emit(ostream&o, struct target_t*tgt) const
 {
-      assert(statement_);
-      tgt->start_process(o, this);
-
-      statement_->emit_proc(o, tgt);
-
-      tgt->end_process(o, this);
+      tgt->process(o, this);
 }
 
 void NetProc::emit_proc(ostream&o, struct target_t*tgt) const
@@ -308,6 +303,9 @@ void emit(ostream&o, const Design*des, const char*type)
 
 /*
  * $Log: emit.cc,v $
+ * Revision 1.17  1999/07/17 03:39:11  steve
+ *  simplified process scan for targets.
+ *
  * Revision 1.16  1999/07/07 04:20:57  steve
  *  Emit vvm for user defined tasks.
  *
