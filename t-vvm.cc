@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.201 2001/01/16 03:57:46 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.202 2001/02/13 04:11:24 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -3196,7 +3196,11 @@ void target_vvm::proc_condit(const NetCondit*net)
       out << "static bool " << thread_class_ << "_step_"
 	 << out_step << "_(vvm_thread*thr);" << endl;
 
-      defn << "      if (B_IS1(" << expr << "[0]))" << endl;
+      if (net->expr()->expr_width() == 1)
+	    defn << "      if (B_IS1(" << expr << "[0]))" << endl;
+      else
+	    defn << "      if (B_IS1(vvm_unop_or(" << expr << ")))" << endl;
+
       defn << "        thr->step_ = &" << thread_class_ << "_step_" <<
 	    if_step << "_;" << endl;
       defn << "      else" << endl;
@@ -3548,7 +3552,11 @@ void target_vvm::proc_while(const NetWhile*net)
 
       defn << "// " << net->expr()->get_line() <<
 	    ": test while condition." << endl;
-      defn << "      if (!B_IS1(" << expr << "[0])) {" << endl;
+      if (net->expr()->expr_width() == 1) {
+	    defn << "      if (!B_IS1(" << expr << "[0])) {" << endl;
+      } else {
+	    defn << "      if (!B_IS1(vvm_unop_or(" << expr << "))) {" << endl;
+      }
       defn << "          thr->step_ = &" << thread_class_ << "_step_"
 	   << out_step << "_;" << endl;
       defn << "          return true;" << endl;
@@ -3627,6 +3635,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.202  2001/02/13 04:11:24  steve
+ *  Generate proper code for wide condition expressions.
+ *
  * Revision 1.201  2001/01/16 03:57:46  steve
  *  Get rid of gate templates.
  *
