@@ -16,7 +16,7 @@
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
 #
-#ident "$Id: Makefile.in,v 1.56 2003/10/06 18:58:33 steve Exp $"
+#ident "$Id: Makefile.in,v 1.57 2003/10/08 23:09:09 steve Exp $"
 #
 #
 SHELL = /bin/sh
@@ -54,12 +54,18 @@ LIBS = @LIBS@ @EXTRALIBS@
 dllib=@DLLIB@
 rdynamic=@rdynamic@
 
-CPPFLAGS += -DMODULE_DIR=\"$(libdir)/ivl/@vpidir1@\"
+MDIR1 = -DMODULE_DIR1=\"$(libdir)/ivl/@vpidir1@\"
 ifneq (x@vpidir2@,x)
-CPPFLAGS += -DMODULE_DIR2=\"$(libdir)/ivl/@vpidir2@\"
+MDIR2 = -DMODULE_DIR2=\"$(libdir)/ivl/@vpidir2@\"
 endif
 
-all: dep vvp@EXEEXT@ libvpi.a
+ifeq (@enable_vvp32@,yes)
+ALL32 = all32
+INSTALL32 = install32
+UNINSTALL32 = uninstall32
+endif
+
+all: dep vvp@EXEEXT@ libvpi.a $(ALL32)
 
 clean:
 	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
@@ -106,7 +112,11 @@ dep:
 	mkdir dep
 
 %.o: %.cc
-	$(CXX) @ident_support@ $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $*.o
+	$(CXX) @ident_support@ $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
+	mv $*.d dep/$*.d
+
+%.o: %.c
+	$(CC) @ident_support@ $(CPPFLAGS) $(MDIR1) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
@@ -115,19 +125,30 @@ tables.cc: $(srcdir)/draw_tt.c
 	rm draw_tt@EXEEXT@
 
 ifeq (@enable_vvp32@,yes)
+
+all32: bin32 vvp32
+
 bin32:
 	mkdir bin32
 
-bin32/%.o: %.cc bin32
-	$(CXX) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $@
+bin32/%.o: %.cc
+	$(CXX) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
 
-bin32/%.o: %.c bin32
-	$(CC) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(CXXFLAGS) -MD -c $< -o $@
+bin32/%.o: %.c
+	$(CC) -m32 -DHAVE_CVS_IDENT=1 $(CPPFLAGS) $(MDIR2) $(CXXFLAGS) -MD -c $< -o $@
 
 bin32/lexor.o: lexor.cc parse.h
 
-vvp32: $(addprefix bin32/,$O)
+vvp32: $(addprefix bin32/,$O) bin32/libvpi.a
 	$(CXX) -m32 $(rdynamic) $(CXXFLAGS) $(LDFLAGS) -o vvp32 $(addprefix bin32/,$O) $(LIBS) $(dllib)
+
+bin32/libvpi.a: libvpi.c
+	$(CC) -m32 -c -o bin32/libvpi.o $(srcdir)/libvpi.c
+	rm -f bin32/libvpi.a
+	ar cqv bin32/libvpi.a bin32/libvpi.o
+	$(RANLIB) bin32/libvpi.a
+
+-include $(patsubst bin32/%.o, bin32/%.d, $(addprefix bin32/,$O))
 endif
 
 lexor.o: lexor.cc parse.h
@@ -161,7 +182,7 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir64)/libvpi.a $(INSTALL_DOC)
+install: all installdirs $(bindir)/vvp@EXEEXT@ $(libdir64)/libvpi.a $(INSTALL_DOC) $(INSTALL32)
 
 $(bindir)/vvp@EXEEXT@: ./vvp@EXEEXT@
 	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(bindir)/vvp@EXEEXT@
@@ -179,7 +200,21 @@ installdirs: $(srcdir)/mkinstalldirs
 	$(srcdir)/mkinstalldirs $(bindir) $(libdir) $(libdir64) $(INSTALL_DOCDIR)
 
 
-uninstall:
+ifeq (@enable_vvp32@,yes)
+install32: all32 $(libdir)/libvpi.a $(bindir)/vvp32
+
+$(libdir)/libvpi.a: bin32/libvpi.a
+	$(INSTALL_DATA) bin32/libvpi.a $(libdir)/libvpi.a
+
+$(bindir)/vvp32: ./vvp32
+	$(INSTALL_PROGRAM) ./vvp32 $(bindir)/vvp32
+
+uninstall32:
+	rm -f $(libdir)/libvpi.a
+	rm -f $(bindir)/vvp32
+endif
+
+uninstall: $(UNINSTALL32)
 	rm -f $(bindir)/vvp@EXEEXT@
 	rm -f $(libdir64)/libvpi.a
 	rm -f $(mandir)/man1/vvp.1

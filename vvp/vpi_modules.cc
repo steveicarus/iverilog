@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_modules.cc,v 1.16 2003/10/02 21:30:40 steve Exp $"
+#ident "$Id: vpi_modules.cc,v 1.17 2003/10/08 23:09:09 steve Exp $"
 #endif
 
 # include  "config.h"
@@ -32,18 +32,23 @@ typedef void (*vlog_startup_routines_t)(void);
 
 
 const char* vpip_module_path[64] = {
-      MODULE_DIR,
+#ifdef MODULE_DIR1
+      MODULE_DIR1,
+#endif
 #ifdef MODULE_DIR2
       MODULE_DIR2,
 #endif
       0
 };
 
-#ifdef MODULE_DIR2
-unsigned vpip_module_path_cnt = 2;
-#else
-unsigned vpip_module_path_cnt = 1;
+unsigned vpip_module_path_cnt = 0
+#ifdef MODULE_DIR1
+         + 1
 #endif
+#ifdef MODULE_DIR2
+         + 1
+#endif
+;
 
 void vpip_load_module(const char*name)
 {
@@ -144,6 +149,9 @@ void vpip_load_module(const char*name)
 
 /*
  * $Log: vpi_modules.cc,v $
+ * Revision 1.17  2003/10/08 23:09:09  steve
+ *  Completely support vvp32 when enabled.
+ *
  * Revision 1.16  2003/10/02 21:30:40  steve
  *  Configure control for the vpi subdirectory.
  *
