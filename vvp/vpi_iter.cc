@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_iter.cc,v 1.5 2002/08/12 01:35:09 steve Exp $"
+#ident "$Id: vpi_iter.cc,v 1.6 2003/02/17 00:58:38 steve Exp $"
 #endif
 
 /*
@@ -37,7 +37,7 @@ static int iterator_free_object(vpiHandle ref)
 	    free(hp->args);
 
       free(hp);
-      return 0;
+      return 1;
 }
 
 static const struct __vpirt vpip_iterator_rt = {
@@ -90,6 +90,9 @@ vpiHandle vpi_scan(vpiHandle ref)
 
 /*
  * $Log: vpi_iter.cc,v $
+ * Revision 1.6  2003/02/17 00:58:38  steve
+ *  Strict correctness of vpi_free_object results.
+ *
  * Revision 1.5  2002/08/12 01:35:09  steve
  *  conditional ident string using autoconfig.
  *

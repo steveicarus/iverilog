@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.27 2003/02/10 05:20:10 steve Exp $"
+#ident "$Id: vpi_callback.cc,v 1.28 2003/02/17 00:58:38 steve Exp $"
 #endif
 
 /*
@@ -45,7 +45,7 @@ static int free_simple_callback(vpiHandle ref)
       assert(ref->vpi_type);
       assert(ref->vpi_type->type_code == vpiCallback);
       delete ref;
-      return 0;
+      return 1;
 }
 
 const struct __vpirt callback_rt = {
@@ -465,7 +465,7 @@ int vpi_remove_cb(vpiHandle ref)
       struct __vpiCallback*obj = (struct __vpiCallback*)ref;
       obj->cb_data.cb_rtn = 0;
 
-      return 0;
+      return 1;
 }
 
 void callback_execute(struct __vpiCallback*cur)
@@ -534,6 +534,9 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
 /*
  * $Log: vpi_callback.cc,v $
+ * Revision 1.28  2003/02/17 00:58:38  steve
+ *  Strict correctness of vpi_free_object results.
+ *
  * Revision 1.27  2003/02/10 05:20:10  steve
  *  Add value change callbacks to real variables.
  *
