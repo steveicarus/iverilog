@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: t-xnf.cc,v 1.13 1999/11/05 07:10:45 steve Exp $"
+#ident "$Id: t-xnf.cc,v 1.14 1999/11/05 18:43:12 steve Exp $"
 #endif
 
 /* XNF BACKEND
@@ -460,7 +460,7 @@ void target_xnf::lpm_mux(ostream&os, const NetMux*net)
 
       for (unsigned idx = 0 ;  idx < net->width() ;  idx += 1) {
 
-	    os << "SYM, " << mangle(net->name()) << "<" << idx << ">"
+	    os << "SYM, " << mangle(net->name()) << "<" << idx << ">,"
 	       << " EQN, EQN=(I0 * I2) + (~I0 * I1)" << endl;
 
 	    draw_pin(os, "I0", net->pin_Sel(0));
@@ -591,6 +591,9 @@ extern const struct target tgt_xnf = { "xnf", &target_xnf_obj };
 
 /*
  * $Log: t-xnf.cc,v $
+ * Revision 1.14  1999/11/05 18:43:12  steve
+ *  fix syntax of EQN record.
+ *
  * Revision 1.13  1999/11/05 07:10:45  steve
  *  Include the obvious XOR gates in the adders.
  *
