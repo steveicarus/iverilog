@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.50 2001/10/16 01:27:17 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.51 2001/10/18 16:41:49 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -768,6 +768,53 @@ static struct vector_info draw_number_expr(ivl_expr_t exp, unsigned wid)
 }
 
 /*
+ * A string in an expression is made up by copying constant bits into
+ * the allocated vector.
+ */
+static struct vector_info draw_string_expr(ivl_expr_t exp, unsigned wid)
+{
+      struct vector_info res;
+      const char *p = ivl_expr_string(exp);
+      unsigned ewid, nwid;
+      unsigned bit = 0, idx;
+
+      res.wid  = wid;
+      nwid = wid;
+      ewid = ivl_expr_width(exp);
+      if (ewid < nwid)
+	    nwid = ewid;
+
+      p += (ewid / 8) - 1;
+
+	/* The string needs to be represented as an allocated
+	   vector. Allocate the vector and use %mov instructions to
+	   load the constant bit values. */
+      res.base = allocate_vector(wid);
+
+      idx = 0;
+      while (idx < nwid) {
+	    unsigned this_bit = ((*p) & (1 << bit)) ? 1 : 0;
+
+	    fprintf(vvp_out, "    %%mov %u, %d, 1;\n",
+		    res.base+idx, this_bit);
+
+	    bit++;
+	    if (bit == 8) {
+		  bit = 0;
+		  p--;
+	    }
+
+	    idx++;
+      }
+
+	/* Pad the number up to the expression width. */
+      if (idx < wid)
+	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
+
+      return res;
+}
+
+/*
  * Evaluating a signal expression means loading the bits of the signal
  * into the thread bits. Remember to account for the part select by
  * offsetting the read from the lsi (least significant index) of the
@@ -1232,10 +1279,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t exp, unsigned wid)
 	    break;
 
 	  case IVL_EX_STRING:
-	    fprintf(stderr, "vvp error: unhandled expr type STRING\n");
-	    assert(0);
-	    res.base = 0;
-	    res.wid = 0;
+	    res = draw_string_expr(exp, wid);
 	    break;
 
 	  case IVL_EX_BINARY:
@@ -1289,6 +1333,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.51  2001/10/18 16:41:49  steve
+ *  Evaluate string expressions (Philip Blundell)
+ *
  * Revision 1.50  2001/10/16 01:27:17  steve
  *  Generate %div instructions for binary /.
  *
