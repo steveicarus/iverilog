@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: eval_expr.c,v 1.63 2002/06/02 18:57:17 steve Exp $"
+#ident "$Id: eval_expr.c,v 1.64 2002/07/01 00:52:47 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -703,8 +703,6 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
 	      unsigned add_wid = lv.wid - base;
 
 	      imm >>= 16;
-	      if ((imm != 0) && (add_wid > 17))
-		    add_wid = 17;
 
 	      fprintf(vvp_out, "    %%addi %u, %lu, %u;\n",
 		      lv.base+base, tmp, add_wid);
@@ -1722,6 +1720,9 @@ struct vector_info draw_eval_expr(ivl_expr_t exp)
 
 /*
  * $Log: eval_expr.c,v $
+ * Revision 1.64  2002/07/01 00:52:47  steve
+ *  Carry can propagate to the otp in addi.
+ *
  * Revision 1.63  2002/06/02 18:57:17  steve
  *  Generate %cmpi/u where appropriate.
  *
