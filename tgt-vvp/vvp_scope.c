@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: vvp_scope.c,v 1.12 2001/04/02 02:28:13 steve Exp $"
+#ident "$Id: vvp_scope.c,v 1.13 2001/04/05 01:38:24 steve Exp $"
 #endif
 
 # include  "vvp_priv.h"
@@ -75,9 +75,11 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
 
-      fprintf(vvp_out, "V_%s .var \"%s\", %d, %d;\n",
-	      ivl_signal_name(sig), ivl_signal_basename(sig),
-	      msb, lsb);
+      const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
+
+      fprintf(vvp_out, "V_%s .var%s \"%s\", %d, %d;\n",
+	      ivl_signal_name(sig), signed_flag,
+	      ivl_signal_basename(sig), msb, lsb);
 }
 
 /*
@@ -90,9 +92,11 @@ static void draw_net_in_scope(ivl_signal_t sig)
       int msb = ivl_signal_pins(sig) - 1;
       int lsb = 0;
 
-      fprintf(vvp_out, "V_%s .net \"%s\", %d, %d",
-	      ivl_signal_name(sig), ivl_signal_basename(sig),
-	      msb, lsb);
+      const char*signed_flag = ivl_signal_signed(sig)? "/s" : "";
+
+      fprintf(vvp_out, "V_%s .net%s \"%s\", %d, %d",
+	      ivl_signal_name(sig), signed_flag,
+	      ivl_signal_basename(sig), msb, lsb);
 
       for (idx = 0 ;  idx < ivl_signal_pins(sig) ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_signal_pin(sig, idx);
@@ -267,6 +271,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
 /*
  * $Log: vvp_scope.c,v $
+ * Revision 1.13  2001/04/05 01:38:24  steve
+ *  Generate signed .net and .var statements.
+ *
  * Revision 1.12  2001/04/02 02:28:13  steve
  *  Generate code for task calls.
  *
