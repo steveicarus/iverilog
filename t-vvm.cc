@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT) && !defined(macintosh)
-#ident "$Id: t-vvm.cc,v 1.152 2000/05/25 01:45:35 steve Exp $"
+#ident "$Id: t-vvm.cc,v 1.153 2000/05/25 06:02:12 steve Exp $"
 #endif
 
 # include  <iostream>
@@ -1069,15 +1069,21 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
       string net_name = mangle(sig->name());
 
       for (unsigned idx = 0 ;  idx < sig->pin_count() ;  idx += 1) {
+	    bool new_nexus_flag = false;
 	    string nexus = nexus_from_link(&sig->pin(idx));
 	    unsigned ncode = nexus_wire_map[nexus];
 	    if (ncode == 0) {
-		  nexus_wire_map[nexus] = ncode = nexus_wire_counter;
+		  nexus_wire_map[nexus] = (ncode = nexus_wire_counter);
 		  nexus_wire_counter += 1;
+		  new_nexus_flag = true;
 	    }
 
 	    init_code << "      nexus_wire_table[" << ncode <<
 		  "].connect(&" << net_name << ", " << idx << ");" << endl;
+
+	      // Propogate the initial value to inputs throughout.
+	    if (new_nexus_flag)
+		  emit_init_value_(sig->pin(idx), sig->get_ival(idx));
       }
 
       os << "static vvm_signal_t " << net_name << ";" << endl;
@@ -1118,9 +1124,6 @@ void target_vvm::signal(ostream&os, const NetNet*sig)
 		  break;
 	    }
 	    init_code << ");" << endl;
-
-	      // Propogate the initial value to inputs throughout.
-	    emit_init_value_(sig->pin(idx), sig->get_ival(idx));
       }
 }
 
@@ -3043,6 +3046,9 @@ extern const struct target tgt_vvm = {
 };
 /*
  * $Log: t-vvm.cc,v $
+ * Revision 1.153  2000/05/25 06:02:12  steve
+ *  Emin init code only once per nexus.
+ *
  * Revision 1.152  2000/05/25 01:45:35  steve
  *  Optimize assignment from signals.
  *
