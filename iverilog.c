@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #if !defined(WINNT)
-#ident "$Id: iverilog.c,v 1.3 2000/04/21 22:54:47 steve Exp $"
+#ident "$Id: iverilog.c,v 1.4 2000/04/23 21:14:32 steve Exp $"
 #endif
 
 #include <stdio.h>
@@ -32,6 +32,8 @@
 const char*base = IVL_ROOT;
 const char*opath = "a.out";
 const char*targ  = "vvm";
+const char*start = 0;
+
 int verbose_flag = 0;
 
 static char cmdline[8192];
@@ -43,6 +45,10 @@ static int t_null()
       strcat(cmdline, " | ");
       strcat(cmdline, base);
       strcat(cmdline, "/ivl ");
+      if (start) {
+	    strcat(cmdline, " -s ");
+	    strcat(cmdline, start);
+      }
       if (verbose_flag)
 	    strcat(cmdline, "-v ");
       strcat(cmdline, "-- -");
@@ -69,6 +75,10 @@ static int t_vvm()
       strcat(cmdline, opath);
       strcat(cmdline, ".cc -tvvm -Fcprop -Fnodangle -fVPI_MODULE_PATH=");
       strcat(cmdline, base);
+      if (start) {
+	    strcat(cmdline, " -s ");
+	    strcat(cmdline, start);
+      }
       strcat(cmdline, " -- -");
       if (verbose_flag)
 	    printf("translate: %s\n", cmdline);
@@ -105,6 +115,10 @@ static int t_xnf()
       strcat(cmdline, base);
       strcat(cmdline, "/ivl -o ");
       strcat(cmdline, opath);
+      if (start) {
+	    strcat(cmdline, " -s ");
+	    strcat(cmdline, start);
+      }
       strcat(cmdline, " -txnf -Fcprop -Fsynth -Fnodangle -Fxnfio");
       strcat(cmdline, " -- -");
       if (verbose_flag)
@@ -120,7 +134,7 @@ int main(int argc, char **argv)
       int opt, idx;
       char*cp;
 
-      while ((opt = getopt(argc, argv, "B:Eo:t:v")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:Eo:s:t:v")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
@@ -131,6 +145,9 @@ int main(int argc, char **argv)
 		  break;
 		case 'o':
 		  opath = optarg;
+		  break;
+		case 's':
+		  start = optarg;
 		  break;
 		case 't':
 		  targ = optarg;
@@ -153,6 +170,11 @@ int main(int argc, char **argv)
       if (verbose_flag) {
 	    strcpy(cp, " -v");
 	    cp += strlen(cp);
+      }
+
+      if (optind == argc) {
+	    fprintf(stderr, "%s: No input files.\n", argv[0]);
+	    return 1;
       }
 
       for (idx = optind ;  idx < argc ;  idx += 1) {
@@ -190,6 +212,9 @@ int main(int argc, char **argv)
 
 /*
  * $Log: iverilog.c,v $
+ * Revision 1.4  2000/04/23 21:14:32  steve
+ *  The -s flag.
+ *
  * Revision 1.3  2000/04/21 22:54:47  steve
  *  module path in vvm target.
  *
