@@ -19,7 +19,7 @@ const char COPYRIGHT[] =
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 #ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.71 2003/09/25 00:25:14 steve Exp $"
+#ident "$Id: main.cc,v 1.72 2003/09/26 02:17:14 steve Exp $"
 #endif
 
 # include "config.h"
@@ -585,6 +585,13 @@ int main(int argc, char*argv[])
 
       des->set_flags(flags);
 
+	/* Done iwth all the pform data. Delete the modules. */
+      for (map<string,Module*>::iterator idx = pform_modules.begin()
+		 ; idx != pform_modules.end() ; idx ++) {
+
+	    delete (*idx).second;
+	    (*idx).second = 0;
+      }
 
       if (verbose_flag) {
 	    if (times_flag) {
@@ -677,6 +684,9 @@ int main(int argc, char*argv[])
 
 /*
  * $Log: main.cc,v $
+ * Revision 1.72  2003/09/26 02:17:14  steve
+ *  Delete pform when done with it.
+ *
  * Revision 1.71  2003/09/25 00:25:14  steve
  *  Summary list of missing modules.
  *
